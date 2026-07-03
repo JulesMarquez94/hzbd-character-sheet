@@ -1,0 +1,91 @@
+/* src/components/character-blocks/AttributesCard.css */
+
+.attributes-block-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  height: 100%;
+}
+
+/* Header bar styling matching your spreadsheet banner */
+.stats-header-banner {
+  background-color: #444;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  padding: 4px 0;
+  margin: -20px -20px 10px -20px; /* Bleeds out to edges of parent card */
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+/* Profile Grid layout (Level, Coins, XP, Name) */
+.profile-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.profile-data-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1e1e1e;
+  border: 1px solid #555;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.profile-data-box.full-width {
+  grid-column: span 2;
+}
+
+.data-value-box {
+  background-color: #fff;
+  color: #000;
+  font-weight: bold;
+  padding: 2px 10px;
+  border-radius: 3px;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Attribute Row Layout (Physique, Instinct, Mind) */
+.attributes-section-title {
+  background-color: #555;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  margin: 5px 0;
+}
+
+.attributes-flex-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.attribute-score-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #222;
+  border: 1px solid #666;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.attribute-label-span {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.attribute-large-number {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #f39c12; /* Clean golden color for primary attributes */
+}

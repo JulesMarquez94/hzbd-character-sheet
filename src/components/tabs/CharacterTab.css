@@ -1,0 +1,82 @@
+/* ==========================================================================
+   1. MOBILE DEFAULT STYLES (Under 768px width)
+   ========================================================================== */
+
+/* Show the horizontal sub-tab bar on mobile */
+.mobile-sub-blocks-nav {
+  display: flex;
+  overflow-x: auto; /* Allows side-scrolling if buttons overflow a tiny phone */
+  gap: 8px;
+  padding: 0 15px 15px 15px;
+  border-bottom: 1px solid #444;
+  margin-bottom: 15px;
+}
+
+.mobile-sub-blocks-nav button {
+  background-color: #222;
+  color: #aaa;
+  border: 1px solid #444;
+  padding: 8px 14px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.mobile-sub-blocks-nav button.active-btn {
+  background-color: #f39c12;
+  color: #000;
+  font-weight: bold;
+  border-color: #f39c12;
+}
+
+/* On mobile, hide ALL the block sections by default */
+.character-grid .character-card-block {
+  display: none;
+  background-color: #2a2a2a;
+  border: 2px solid #444;
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 250px;
+  color: #fff;
+}
+
+/* ONLY display the section that matches the active sub-tab state */
+.character-grid .character-card-block.active-sub-tab {
+  display: block;
+}
+
+
+/* ==========================================================================
+   2. TABLET LAYOUT (Widths over 768px -> 2x3 Grid)
+   ========================================================================== */
+@media (min-width: 768px) {
+  /* Hide the sub-tabs bar completely on tablets and desktop */
+  .mobile-sub-blocks-nav {
+    display: none;
+  }
+
+  /* Force ALL cards to display, bypassing the active tab filtering */
+  .character-grid .character-card-block {
+    display: block !important;
+  }
+
+  .character-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+}
+
+
+/* ==========================================================================
+   3. DESKTOP 1920 LAYOUT (Widths over 1200px -> 3x2 Grid)
+   ========================================================================== */
+@media (min-width: 1200px) {
+  .character-grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1920px;
+    margin: 0 auto;
+  }
+}
