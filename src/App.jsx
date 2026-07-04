@@ -1,83 +1,97 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CharacterSheet from './components/CharacterSheet'
-
-const initialCharacters = [
-  {
-    id: "char-2",              
-    name: "Merlin",
-    level: 1,
-    xp: 120,
-    coins: 45,
-    avatar: "wizard_premade",  
-    note: "Scratched his name into the Prancing Pony table.",
-    attributes: {
-      physique: 4,
-      instinct: 5,
-      mind: 7
-    }
-  },
-  {
-    id: "char-1",              
-    name: "Gandalf",
-    level: 1,
-    xp: 250,
-    coins: 120,
-    avatar: "warlock_premade",  
-    note: "Sliped down a massive hole.",
-    attributes: {
-      physique: 5,
-      instinct: 6,
-      mind: 6
-    }
-  }
-]
+import Auth from './components/Auth'
+import { supabase } from './supabaseClient'
 
 function App() {
-  const [characters, setCharacters] = useState(initialCharacters);
-  const [activeCharacterId, setActiveCharacterId] = useState(null);
-  const [activeTab, setActiveTab] = useState('character');
+  const [session, setSession] = useState(null)
+  const [characters, setCharacters] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeCharacterId, setActiveCharacterId] = useState(null)
+  const [activeTab, setActiveTab] = useState('character')
 
-  const activeCharacter = characters.find(char => char.id === activeCharacterId);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
 
-  function addHero() {
-    const newHero = {
-      id: "char-3", 
-      name: "Elendil",
-      level: 2,
-      avatar: "fighter_premade",
-      note: "Holding a broken sword."
-    };
-    setCharacters([...characters, newHero]);
-  } 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    async function fetchCharactersFromCloud() {
+      if (!session) return;
+
+      setLoading(true)
+      const { data, error } = await supabase.from('characters').select('*')
+      
+      if (error) {
+        console.error("❌ Database connection error:", error.message)
+      } else if (data) {
+        setCharacters(data)
+      }
+      setLoading(false)
+    }
+
+    fetchCharactersFromCloud()
+  }, [session])
+
+  const activeCharacter = characters.find(char => char.id === activeCharacterId)
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    setActiveCharacterId(null)
+  }
+
+  if (session && loading) {
+    return <div>🔮 Loading heroes from the cloud...</div>
+  }
 
   return (
     <>
-      {activeCharacterId === null ? (
-        <div>
-          <h1>Hello, Vite!</h1>
-          <button onClick={addHero}>Add Hero</button>
-          
-          {characters.map((character) => {
-            return (
-              <div key={character.id}>
-                <h2>{character.name}</h2>
-                <p>Level: {character.level}</p>
-                <p>Notes: {character.note}</p>
-                <button onClick={() => setActiveCharacterId(character.id)}>
-                  View Sheet
-                </button>
-              </div>
-            )
-          })}
-        </div>
+      {!session ? (
+        <Auth />
       ) : (
-        /* The component replaces the old messy code block */
-        <CharacterSheet 
-          activeCharacter={activeCharacter}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          setActiveCharacterId={setActiveCharacterId}
-        />
+        <>
+          <div>
+            <span>Logged in as: <strong>{session.user.email}</strong></span>
+            <button onClick={handleSignOut}>
+              Log Out
+            </button>
+          </div>
+
+          {activeCharacterId === null ? (
+            <div>
+              <h1>Hello, Vite!</h1>
+              
+              {characters.length === 0 ? (
+                <p>No heroes found. Your custom database table is empty!</p>
+              ) : (
+                characters.map((character) => (
+                  <div key={character.id}>
+                    <h2>{character.name}</h2>
+                    <p>Level: {character.level}</p>
+                    <p>Notes: {character.note}</p>
+                    <button onClick={() => setActiveCharacterId(character.id)}>
+                      View Sheet
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <CharacterSheet 
+              activeCharacter={activeCharacter}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              setActiveCharacterId={setActiveCharacterId}
+            />
+          )}
+        </>
       )}
     </>
   )

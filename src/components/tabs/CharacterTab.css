@@ -5,7 +5,7 @@
 /* Show the horizontal sub-tab bar on mobile */
 .mobile-sub-blocks-nav {
   display: flex;
-  overflow-x: auto; /* Allows side-scrolling if buttons overflow a tiny phone */
+  overflow-x: auto;
   gap: 8px;
   padding: 0 15px 15px 15px;
   border-bottom: 1px solid #444;
