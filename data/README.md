@@ -22,6 +22,7 @@ reaches GitHub. Only `README.md` and `templates/` are tracked.
 | ----- | ------ | --------- |
 | Spells · Primal Spells | 2026-08-19, 24 spells | `src/lib/weapons.js` (`SPELLS`) |
 | General Rules · Basic Abilities | 2026-08-19, 10 actions | `src/lib/actions.js` (`BASIC_ACTIONS`) |
+| Card art, from both Image columns | 2026-08-19, 34 pictures | `src/lib/cardArt.js` |
 
 `templates/` holds the current state of both, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -44,7 +45,7 @@ two secondary ones.
 | `Main Effect` | yes | The card text. Paragraph breaks are real line breaks in the cell, Alt+Enter. |
 | `Secondary Type` | no | The rider's name: `MULTICAST`, `OVERCAST`, `UPKEEP`, `BLOOD TITHE`. Blank if the card has no second half. |
 | `Secondary Effect` | no | The rider's text. Blank whenever `Secondary Type` is blank. |
-| `Image` | no | Card art. See the note below, the links in there do not work yet. |
+| `Image` | no | Card art. A postimg page link is fine, see below. |
 
 ## Three things the sheets do not carry
 
@@ -55,10 +56,10 @@ codex gets big.
 **1. There is no `id` column, and that is the risky one.**
 
 An `id` is what a saved character points at. A Mycomancer's prepared spells are
-stored as `picks: ['bramble-whip', …]`, and `{{Bramble Whip}}` links resolve
-through the same key. With no column for it, an id has to be guessed from the
-name, and a renamed spell then reads as a brand new one and silently drops off
-every character who had picked it.
+stored as `picks: ['bramble-whip', …]`, `{{Bramble Whip}}` links resolve through
+the same key, and `src/lib/cardArt.js` keys every picture by it. With no column
+for it, an id has to be guessed from the name, and a renamed spell then reads as
+a brand new one and silently drops off every character who had picked it.
 
 This already happened once: `SHARPEN SENSES` was `Sharpen Sense` in the codex.
 The name was updated and the id `sharpen-sense` deliberately left alone.
@@ -82,28 +83,35 @@ deals one type and says so plainly. A `Damage` column would make it certain.
 
 ## The Image column
 
-Every row has one and none of them can be used yet. They are postimg *page*
-links, `https://postimg.cc/tYJMvMY1`, which serve an HTML page rather than an
-image. A card needs the direct link, the kind `BARKSKIN` already has:
+Resolved and working. The sheet writes postimg *page* links such as
+`https://postimg.cc/tYJMvMY1`, which serve an HTML page rather than an image, so
+the importer follows each one and keeps the direct link out of the page's
+`og:image` tag. Keep writing page links in the sheet, that is fine.
 
-```
-https://i.postimg.cc/NF2kKvZm/BARKSKIN.png
-```
+The resolved links live in `src/lib/cardArt.js`, keyed by card id, and are
+attached to the cards by `withArt()`. All 34 rows across both sheets resolved
+and all 34 load. Only Climb has no picture, because Climb is not on the sheet.
 
-On postimg that is the "Direct link" option rather than the page URL. Once the
-column holds those, the art wires into the card's own `art_url` field with no
-other change.
+Two things worth knowing:
+
+- **The pictures are big.** Several are 3 MB PNGs at 1280x956. They are served
+  by postimg rather than by the site, so they cost the reader's bandwidth
+  instead of Cloudflare's, but a wall of twenty-four cards is a slow page on a
+  phone. Re-exporting them nearer 600px wide would fix it.
+- **Who sees them is a tier question.** Card art is a paid capability, so a
+  `free` account gets the empty plate and `premium` upward get the picture. The
+  rule is written once in `src/lib/tiers.js` and applied once in
+  `src/components/useCodexArt.js`.
 
 ## How card text is written
 
-`Main Effect` and `Secondary Effect` are written the way the printed cards
-read. The markers are plain text and survive a spreadsheet cell untouched, so
-type them literally. The sheet can also just write prose, and the marker is
-added on the way in, which is what happened with this first pull.
+`Main Effect` and `Secondary Effect` are written the way the printed cards read.
+The markers are plain text and survive a spreadsheet cell untouched, so type
+them literally. The sheet can also just write prose and have the markers added
+on the way in, which is what happened with the first pull.
 
 | Marker | What it prints |
 | ------ | -------------- |
-| `**bold**` | Bold, exactly as on the printed cards. |
 | `{stat}` | **The card's own attribute.** This is the modular one. See below. |
 | `{mind}` `{physique}` `{instinct}` | A named attribute, when the card means that one for every caster. |
 | `{damage}` | The card's own damage type. |
@@ -113,6 +121,34 @@ added on the way in, which is what happened with this first pull.
 | `[[1d6 + 2*stat]]` | A live value, printed as `1d6 + 12` and clickable for the breakdown. |
 | `[[speed]]` | This character's Movement Speed, for the cards that say how far you go. |
 | `{{Investigate}}` | A link to another card, opened on top of this one. |
+
+### Only three things stand out
+
+An attribute, a damage type and a defined term. Nothing else.
+
+The card bodies used to carry `**bold**` for emphasis as well, on distances,
+durations and whichever clause mattered. That was taken back out of every card
+in the codex: 749 bolded phrases across 155 cards, because a card with thirty
+emphasised phrases has nothing emphasised at all. The renderer still understands
+the marker for cards a player types into their own Abilities tab, but no card in
+the codex uses it.
+
+So when you write a sheet: if a word is a defined term it goes in
+`src/lib/keywords.js` and lights itself. If it is not, it stays plain.
+
+### Do not gloss a defined term
+
+Terms like Grit, Shield, advantage, Empowered, touch and Long Rest carry their
+own explanation, shown when the reader points at them. Write "the target becomes
+poisoned", never "poisoned (takes damage each turn)".
+
+The matcher lights a term wherever it appears, which cuts both ways. A card must
+not use a defined word to mean an ordinary one. Four had to be reworded:
+
+- "something critical" lit the natural-20 rule, so it became "something worth knowing"
+- "give up the initiative" lit turn order, so it became "hold back"
+- `Gore Armor` naming itself lit Armor, so its rider says "this spell"
+- `Vampiric Touch` naming itself lit touch, same fix
 
 ### Why `{stat}` and not `{mind}`
 
@@ -127,23 +163,26 @@ So: `{stat}` unless the attribute is genuinely fixed. The Blood Tithe riders are
 the exception in the current codex, and they are written `{physique}` on
 purpose, because what a tithe costs is paid by the body whatever you cast with.
 
-### Do not gloss a defined term
+## Still wanted: a statuses tab
 
-Terms like **Grit**, **Shield**, **advantage**, **Empowered** and **Long Rest**
-carry their own explanation, shown when the reader points at them. Write "the
-target becomes **poisoned**", never "poisoned (takes damage each turn)".
+The glossary now holds every term the new cards use, so `touch`, `rooted`,
+`poisoned` and the rest light up and answer when you point at them. Eight of
+those definitions are **provisional**: a best reading of what the cards using
+them imply, not something transcribed from a rules sheet. They are marked
+`provisional: true` in `src/lib/keywords.js` so they are one grep away.
 
-The matcher lights a term wherever it appears, which cuts both ways. `Gore
-Armor` printing its own name lit *Armor* as the damage-reduction stat, and
-"something critical" lit *critical* as the natural-20 rule. Both were reworded.
-If a card needs a term the glossary lacks, it gets added to
-`src/lib/keywords.js` rather than explained on the card.
+| Term | Where it appears |
+| ---- | ---------------- |
+| `poisoned` | Snake!, Force Inebriation |
+| `rooted` | Entangling Roots, Thorn Rampart |
+| `prone` | Shove |
+| `grappled` | Grapple |
+| `stunned` | Containment Sphere |
+| `incapacitated` | Bird View |
+| `unconscious` | Pack Bond, Stabilize |
+| `elevates` | Verdant Field |
 
-## Still wanted
-
-**A statuses tab.** The new spells name `poisoned`, `rooted`, `asleep`,
-`incapacitated` and `unconscious`, and the basic actions name `grappled` and
-`prone`. None of them are in the glossary, so they print as plain bold with
-nothing behind them. They were left that way rather than given invented
-definitions. A `General Rules · Statuses` tab with a name and a sentence each is
-all it takes to light every one of them.
+A `General Rules · Statuses` tab with a name and a sentence each replaces every
+one of them. Two other things that tab could settle: what Elevate actually does
+to a spell, and whether Verdant Field's "Plant spells" means the Flora family,
+which is how it is currently written.

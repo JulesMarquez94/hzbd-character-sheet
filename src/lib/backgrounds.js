@@ -113,8 +113,8 @@ function insight({ id, name, tags, domain, note = '' }) {
     summary: skillSummary('Advantage on checks', domain),
     wp: 1,
     body:
-      `Whenever you make a **skill check** ${domain}, you can spend **1 Willpower** ` +
-      'to give yourself **advantage**.' +
+      `Whenever you make a skill check ${domain}, you can spend 1 Willpower ` +
+      'to give yourself advantage.' +
       (note ? `\n\n${note}` : ''),
   };
 }
@@ -129,8 +129,8 @@ function reroll({ id, name, tags, domain, note = '' }) {
     summary: skillSummary('Reroll a failed check', domain),
     wp: 2,
     body:
-      `When you **fail a skill check** ${domain}, you can spend **2 Willpower** ` +
-      'to **reroll it**.\n\nOnce per skill check — a second failure stands.' +
+      `When you fail a skill check ${domain}, you can spend 2 Willpower ` +
+      'to reroll it.\n\nOnce per skill check — a second failure stands.' +
       (note ? `\n\n${note}` : ''),
   };
 }
@@ -145,8 +145,8 @@ const APOTHECARY = {
   summary: 'Craft a Health Potion or a Poison from Supplies on a long rest.',
   tags: ['Background Skill', 'Labour', 'Craft'],
   body:
-    'Whenever you take a **Long Rest**, you can take this action to craft either a ' +
-    '**Health Potion** by expending **20 Supplies**, or a **Poison** by expending **40**.',
+    'Whenever you take a Long Rest, you can take this action to craft either a ' +
+    'Health Potion by expending 20 Supplies, or a Poison by expending 40.',
 };
 
 const NEGOTIATOR = {
@@ -157,8 +157,8 @@ const NEGOTIATOR = {
   tags: ['Background Skill', 'Social'],
   wp: 2,
   body:
-    'When you **fail a skill check** in an attempt to **barter** or **persuade**, you can ' +
-    'spend **2 Willpower** once to **reroll** it.',
+    'When you fail a skill check in an attempt to barter or persuade, you can ' +
+    'spend 2 Willpower once to reroll it.',
 };
 
 const ARCANE_MARSHAL = {
@@ -169,9 +169,9 @@ const ARCANE_MARSHAL = {
   tags: ['Background Skill', 'Investigation', 'Lore'],
   wp: 1,
   body:
-    'Whenever you make a **skill check** related to **investigating arcane crime**, or to ' +
-    '**gathering insight on people**, you can spend **1 Willpower** to give yourself ' +
-    '**advantage**.',
+    'Whenever you make a skill check related to investigating arcane crime, or to ' +
+    'gathering insight on people, you can spend 1 Willpower to give yourself ' +
+    'advantage.',
 };
 
 const QUARTERMASTER = {
@@ -181,9 +181,9 @@ const QUARTERMASTER = {
   summary: 'Half again as many Supplies for your coin, and more found on a long rest.',
   tags: ['Background Skill', 'Labour', 'Supplies'],
   body:
-    'Whenever you buy **Supplies**, you receive **half as many again** as you paid for.\n\n' +
-    'Whenever you take a **Long Rest**, you can take this action to go through the party’s ' +
-    'packs and recover **10 Supplies** that were about to be wasted.',
+    'Whenever you buy Supplies, you receive half as many again as you paid for.\n\n' +
+    'Whenever you take a Long Rest, you can take this action to go through the party’s ' +
+    'packs and recover 10 Supplies that were about to be wasted.',
 };
 
 const FIELD_MEDIC = {
@@ -194,18 +194,18 @@ const FIELD_MEDIC = {
   tags: ['Background Skill', 'Support', 'Supplies'],
   wp: 1,
   body:
-    'When an **entity** within your reach drops to **0 Health or below**, you can spend ' +
-    '**1 Willpower** and expend **10 Supplies** to stabilise them: they stop bleeding out ' +
+    'When an entity within your reach drops to 0 Health or below, you can spend ' +
+    '1 Willpower and expend 10 Supplies to stabilise them: they stop bleeding out ' +
     'at their current Health.\n\n' +
-    'Whenever you take a **Long Rest**, you can take this action to expend **15 Supplies** ' +
-    'and lift one lingering **injury or affliction** from an ally.',
+    'Whenever you take a Long Rest, you can take this action to expend 15 Supplies ' +
+    'and lift one lingering injury or affliction from an ally.',
 };
 
 const PATHFINDER = insight({
   id: 'pathfinder',
   name: 'Pathfinder',
   tags: ['Survival'],
-  domain: 'to **navigate**, to **find a route**, or to **travel without becoming lost**',
+  domain: 'to navigate, to find a route, or to travel without becoming lost',
 });
 
 /* ----- criminal ----- */
@@ -214,21 +214,21 @@ const CUTPURSE = insight({
   id: 'cutpurse',
   name: 'Cutpurse',
   tags: ['Stealth'],
-  domain: 'to **palm** something, **pick a pocket**, or **conceal an object on your person**',
+  domain: 'to palm something, pick a pocket, or conceal an object on your person',
 });
 
 const SHADOW_STEP = insight({
   id: 'shadow-step',
   name: 'Shadow Step',
   tags: ['Stealth'],
-  domain: 'to **move unseen**, **hide**, or **go unheard**',
+  domain: 'to move unseen, hide, or go unheard',
 });
 
 const LOCKBREAKER = insight({
   id: 'lockbreaker',
   name: 'Lockbreaker',
   tags: ['Stealth', 'Craft'],
-  domain: 'to **open a lock**, **disarm a trap**, or **find the seam in a mechanism**',
+  domain: 'to open a lock, disarm a trap, or find the seam in a mechanism',
 });
 
 const FENCE = {
@@ -240,9 +240,9 @@ const FENCE = {
   wp: 1,
   body:
     'You always know who buys what, and what it is really worth.\n\n' +
-    'You sell **stolen or unmarked goods** at their **full value**, and can spend ' +
-    '**1 Willpower** to give yourself **advantage** on a **skill check** to **appraise** ' +
-    'something or to **find a buyer** for it.',
+    'You sell stolen or unmarked goods at their full value, and can spend ' +
+    '1 Willpower to give yourself advantage on a skill check to appraise ' +
+    'something or to find a buyer for it.',
 };
 
 /* ----- artisan ----- */
@@ -251,14 +251,14 @@ const APPRAISER = insight({
   id: 'appraiser',
   name: 'Appraiser',
   tags: ['Craft', 'Coin'],
-  domain: 'to judge an object’s **worth**, **materials**, **maker**, or **authenticity**',
+  domain: 'to judge an object’s worth, materials, maker, or authenticity',
 });
 
 const TINKER = insight({
   id: 'tinker',
   name: 'Tinker',
   tags: ['Craft'],
-  domain: 'to understand, repair, or improvise a **mechanism or device**',
+  domain: 'to understand, repair, or improvise a mechanism or device',
 });
 
 const SMITH = {
@@ -268,9 +268,9 @@ const SMITH = {
   summary: 'Repair a damaged piece of gear at a forge on a long rest, for Supplies.',
   tags: ['Background Skill', 'Labour', 'Craft'],
   body:
-    'Whenever you take a **Long Rest**, you can take this action to work at a forge or bench, ' +
-    'expending **30 Supplies** to repair a damaged piece of **gear** back to working order, ' +
-    'or **60 Supplies** to reforge a **Common weapon or armor piece** into any other of the ' +
+    'Whenever you take a Long Rest, you can take this action to work at a forge or bench, ' +
+    'expending 30 Supplies to repair a damaged piece of gear back to working order, ' +
+    'or 60 Supplies to reforge a Common weapon or armor piece into any other of the ' +
     'same rarity.',
 };
 
@@ -280,7 +280,7 @@ const DRILLMASTER = insight({
   id: 'drillmaster',
   name: 'Drillmaster',
   tags: ['Warfare', 'Social'],
-  domain: 'to **give an order**, **hold a formation**, or **intimidate through discipline**',
+  domain: 'to give an order, hold a formation, or intimidate through discipline',
 });
 
 const VETERANS_EYE = insight({
@@ -288,14 +288,14 @@ const VETERANS_EYE = insight({
   name: 'Veteran’s Eye',
   tags: ['Warfare'],
   domain:
-    'to read a **battlefield**, judge an enemy’s **strength or readiness**, or spot an **ambush**',
+    'to read a battlefield, judge an enemy’s strength or readiness, or spot an ambush',
 });
 
 const SIEGEWRIGHT = insight({
   id: 'siegewright',
   name: 'Siegewright',
   tags: ['Warfare', 'Craft'],
-  domain: 'to **fortify a position**, **breach one**, or work a **siege engine**',
+  domain: 'to fortify a position, breach one, or work a siege engine',
 });
 
 /* ----- noble ----- */
@@ -304,35 +304,35 @@ const COURTIER = insight({
   id: 'courtier',
   name: 'Courtier',
   tags: ['Social'],
-  domain: 'to observe **etiquette**, **read a room**, or move through a **court** unremarked',
+  domain: 'to observe etiquette, read a room, or move through a court unremarked',
 });
 
 const HERALDRY = insight({
   id: 'heraldry',
   name: 'Heraldry',
   tags: ['Lore', 'Social'],
-  domain: 'to recognise a **house, seal, banner or bloodline** — or the **forgery** of one',
+  domain: 'to recognise a house, seal, banner or bloodline — or the forgery of one',
 });
 
 const COMMANDING_PRESENCE = reroll({
   id: 'commanding-presence',
   name: 'Commanding Presence',
   tags: ['Social'],
-  domain: 'made to **command**, **overawe**, or be **obeyed without argument**',
+  domain: 'made to command, overawe, or be obeyed without argument',
 });
 
 const WELL_CONNECTED = insight({
   id: 'well-connected',
   name: 'Well Connected',
   tags: ['Social'],
-  domain: 'to find **the right person** in a settlement, or to get an **introduction** to them',
+  domain: 'to find the right person in a settlement, or to get an introduction to them',
 });
 
 const PATRON = reroll({
   id: 'patron',
   name: 'Patron',
   tags: ['Social', 'Coin'],
-  domain: 'made to **gain access**, **secure lodging**, or **be believed**',
+  domain: 'made to gain access, secure lodging, or be believed',
   note:
     'You are trading on your house’s name rather than your own — a table may rule it worth ' +
     'less the further you travel from it.',
@@ -344,21 +344,21 @@ const LOREKEEPER = insight({
   id: 'lorekeeper',
   name: 'Lorekeeper',
   tags: ['Lore'],
-  domain: 'to recall **history**, place a **text**, or name a **ruin, dynasty or event**',
+  domain: 'to recall history, place a text, or name a ruin, dynasty or event',
 });
 
 const NATURALIST = insight({
   id: 'naturalist',
   name: 'Naturalist',
   tags: ['Lore', 'Survival'],
-  domain: 'to identify a **creature, plant, venom or disease**, or predict how it behaves',
+  domain: 'to identify a creature, plant, venom or disease, or predict how it behaves',
 });
 
 const CARTOGRAPHER = insight({
   id: 'cartographer',
   name: 'Cartographer',
   tags: ['Lore', 'Survival'],
-  domain: 'to read or draw a **map**, or to **retrace a route** you have walked once before',
+  domain: 'to read or draw a map, or to retrace a route you have walked once before',
 });
 
 const LINGUIST = insight({
@@ -366,14 +366,14 @@ const LINGUIST = insight({
   name: 'Linguist',
   tags: ['Lore'],
   domain:
-    'to decipher a **script, cipher or dead tongue**, or to make yourself understood without one',
+    'to decipher a script, cipher or dead tongue, or to make yourself understood without one',
 });
 
 const THEORIST = reroll({
   id: 'theorist',
   name: 'Theorist',
   tags: ['Lore'],
-  domain: 'made to identify a **spell, enchantment or ritual**, or to work out what it will do',
+  domain: 'made to identify a spell, enchantment or ritual, or to work out what it will do',
 });
 
 /* ----- wanderer ----- */
@@ -385,9 +385,9 @@ const FORAGER = {
   summary: 'Work the land on a long rest outside a settlement, and come back with Supplies.',
   tags: ['Background Skill', 'Labour', 'Supplies'],
   body:
-    'Whenever you take a **Long Rest** outside a settlement, you can take this action to work ' +
-    'the land around the camp — snares, water, roots, deadfall — and gain **15 Supplies**.\n\n' +
-    'Barren ground, a frozen waste or a dead marsh may give up **nothing at all**. That is ' +
+    'Whenever you take a Long Rest outside a settlement, you can take this action to work ' +
+    'the land around the camp — snares, water, roots, deadfall — and gain 15 Supplies.\n\n' +
+    'Barren ground, a frozen waste or a dead marsh may give up nothing at all. That is ' +
     'the table’s call.',
 };
 
@@ -395,21 +395,21 @@ const BEAST_SENSE = insight({
   id: 'beast-sense',
   name: 'Beast Sense',
   tags: ['Survival'],
-  domain: 'to **track**, **calm**, or **handle** an animal',
+  domain: 'to track, calm, or handle an animal',
 });
 
 const WEATHER_READ = insight({
   id: 'weather-read',
   name: 'Weather Read',
   tags: ['Survival'],
-  domain: 'to predict the **weather**, find **shelter**, or judge whether ground is safe to cross',
+  domain: 'to predict the weather, find shelter, or judge whether ground is safe to cross',
 });
 
 const TRAPPER = insight({
   id: 'trapper',
   name: 'Trapper',
   tags: ['Survival', 'Stealth'],
-  domain: 'to **set a snare**, or to **spot one** set for you',
+  domain: 'to set a snare, or to spot one set for you',
 });
 
 /* ----- sailor ----- */
@@ -418,21 +418,21 @@ const SEA_LEGS = insight({
   id: 'sea-legs',
   name: 'Sea Legs',
   tags: ['Survival'],
-  domain: 'to keep your **balance**, **climb rigging**, or resist being **moved or knocked down**',
+  domain: 'to keep your balance, climb rigging, or resist being moved or knocked down',
 });
 
 const STORMWISE = insight({
   id: 'stormwise',
   name: 'Stormwise',
   tags: ['Survival'],
-  domain: 'to **handle a vessel**, read a **sky or a current**, or ride out **foul weather**',
+  domain: 'to handle a vessel, read a sky or a current, or ride out foul weather',
 });
 
 const DOCKSIDE_WORD = insight({
   id: 'dockside-word',
   name: 'Dockside Word',
   tags: ['Social'],
-  domain: 'to gather **rumour, cargo manifests or gossip** in any port',
+  domain: 'to gather rumour, cargo manifests or gossip in any port',
 });
 
 /* ----- devout ----- */
@@ -441,21 +441,21 @@ const SCRIPTURE = insight({
   id: 'scripture',
   name: 'Scripture',
   tags: ['Lore'],
-  domain: 'to recall **doctrine**, place a **relic or sacred site**, or recognise the **profane**',
+  domain: 'to recall doctrine, place a relic or sacred site, or recognise the profane',
 });
 
 const ALMSGIVER = insight({
   id: 'almsgiver',
   name: 'Almsgiver',
   tags: ['Social'],
-  domain: 'to be given **shelter, food or safe passage** by common folk',
+  domain: 'to be given shelter, food or safe passage by common folk',
 });
 
 const COMFORTER = reroll({
   id: 'comforter',
   name: 'Comforter',
   tags: ['Social'],
-  domain: 'made to **calm**, **console**, or **steady** someone who is afraid',
+  domain: 'made to calm, console, or steady someone who is afraid',
 });
 
 const VIGIL = {
@@ -465,9 +465,9 @@ const VIGIL = {
   summary: 'Keep vigil over the camp on a long rest, for Supplies, and every ally feels it.',
   tags: ['Background Skill', 'Labour', 'Support'],
   body:
-    'Whenever you take a **Long Rest**, you can take this action to keep vigil over the camp, ' +
-    'expending **20 Supplies** in oil, salt and incense.\n\n' +
-    'Every ally who rests under it ends the rest with a **Shield** equal to your {mind}.',
+    'Whenever you take a Long Rest, you can take this action to keep vigil over the camp, ' +
+    'expending 20 Supplies in oil, salt and incense.\n\n' +
+    'Every ally who rests under it ends the rest with a Shield equal to your {mind}.',
 };
 
 /* --------------------------------------------------------------- the codex

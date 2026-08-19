@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import TagFilter from './TagFilter.jsx';
+import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import PickBlock from './PickBlock.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
@@ -54,6 +55,7 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
   const [choosing, setChoosing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [outfitting, setOutfitting] = useState(false);
+  const codexArt = useCodexArt();
 
   const state = backgroundState(character);
   const { background, written, taken } = state;
@@ -94,8 +96,12 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
         <>
           <div className="pick-face">
             <span
-              className={`pick-art${background.art ? '' : ' pick-art-empty'}`}
-              style={background.art ? { backgroundImage: `url("${background.art}")` } : undefined}
+              className={`pick-art${codexArt(background.art) ? '' : ' pick-art-empty'}`}
+              style={
+                codexArt(background.art)
+                  ? { backgroundImage: `url("${codexArt(background.art)}")` }
+                  : undefined
+              }
               aria-hidden="true"
             />
             <span className="pick-face-body">
@@ -775,6 +781,7 @@ function KitOutfitter({ background, character, patch, onClose }) {
  */
 function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
   const stack = useCardStack();
+  const codexArt = useCodexArt();
   const [open, setOpen] = useState(null);
   const filter = useTagFilter(usedBackgroundTags(), { searchable: true });
 
@@ -816,8 +823,12 @@ function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
         <div className="talent-page">
           <header className="talent-page-head">
             <span
-              className={`talent-page-art${shown.art ? '' : ' talent-page-art-empty'}`}
-              style={shown.art ? { backgroundImage: `url("${shown.art}")` } : undefined}
+              className={`talent-page-art${codexArt(shown.art) ? '' : ' talent-page-art-empty'}`}
+              style={
+                codexArt(shown.art)
+                  ? { backgroundImage: `url("${codexArt(shown.art)}")` }
+                  : undefined
+              }
               aria-hidden="true"
             />
             <div className="talent-page-intro">
@@ -876,9 +887,13 @@ function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
                 onClick={() => setOpen(background.id)}
               >
                 <span
-                  className={`talent-tile-art${background.art ? '' : ' talent-tile-art-empty'}`}
+                  className={`talent-tile-art${
+                    codexArt(background.art) ? '' : ' talent-tile-art-empty'
+                  }`}
                   style={
-                    background.art ? { backgroundImage: `url("${background.art}")` } : undefined
+                    codexArt(background.art)
+                      ? { backgroundImage: `url("${codexArt(background.art)}")` }
+                      : undefined
                   }
                 >
                   {current?.id === background.id && <span className="talent-tile-held">Yours</span>}

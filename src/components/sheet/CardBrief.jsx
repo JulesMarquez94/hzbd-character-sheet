@@ -1,4 +1,5 @@
 import CostOrbs from '../CostOrbs.jsx';
+import useCodexArt from '../useCodexArt.js';
 import { cardBanner, cardGist, damageStyle } from '../../lib/cardText.js';
 
 /**
@@ -51,13 +52,16 @@ export default function CardBrief({
   held = false,
   children = null,
 }) {
+  const codexArt = useCodexArt();
+
   // Tags become chips; a hand-written banner has nothing to cut up, so it
   // stays a banner.
   const tags = card.type_line ? [] : card.tags ?? [];
   const banner = tags.length > 0 ? null : cardBanner(card);
   const damage = modifiers?.damage ? [modifiers.damage] : card.damage ?? [];
-  // The card's own art first, the family's second. See the note above.
-  const plate = card.art_url ?? art ?? null;
+  // The card's own art first, the family's second. See the note above. Both
+  // come out of the codex, so both are behind the tier gate.
+  const plate = codexArt(card.art_url ?? art);
   const line = card.summary ?? cardGist(card, { character, modifiers });
 
   return (

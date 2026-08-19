@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from 'react';
 import CardText from './CardText.jsx';
 import CostOrbs from './CostOrbs.jsx';
 import { cardBanner } from '../lib/cardText.js';
+import useCodexArt from './useCodexArt.js';
 import './AbilityCard.css';
 
 /**
@@ -140,15 +141,14 @@ export default function AbilityCard({
   footer = null,
   fit = true,
   modifiers = null,
+  artSource = 'codex',
 }) {
-  const {
-    name,
-    body,
-    sub_name: subName,
-    sub_body: subBody,
-    art_url: artUrl,
-    kind = 'ability',
-  } = ability;
+  const { name, body, sub_name: subName, sub_body: subBody, kind = 'ability' } = ability;
+
+  // The picture is the codex's, so it is a paid one — see useCodexArt.js. A
+  // tier that has not bought it gets the empty plate this card already draws
+  // for a spell nobody has painted yet.
+  const artUrl = useCodexArt()(ability.art_url, artSource);
 
   const typeLine = cardBanner(ability);
   const apCost = ability.ap_cost ?? ability.ap;

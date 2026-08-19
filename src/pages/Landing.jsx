@@ -1,22 +1,28 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import AbilityCard from '../components/AbilityCard.jsx';
+/* From spells.js and not weapons.js on purpose: weapons.js assembles the whole
+   card registry, so reaching one spell through it would put talents, lineages
+   and backgrounds into the bundle a first-time visitor downloads. */
+import { SPELLS } from '../lib/spells.js';
 import './Landing.css';
 
-const SHOWCASE = {
-  name: 'Blood Spear',
-  type_line: 'Novice Spell - Nature - Blood',
-  kind: 'spell',
-  ap_cost: 3,
-  wp_cost: 2,
-  body:
-    'You manifest a spear of blood and hurl it at an entity **you can see** within **9 meters (30 feet)**.\n\n' +
-    'Make a **Mind Ranged Attack** against the target. On a hit, you deal **3d6 + 3 x Mind** in **Sharp** damage.',
-  sub_name: 'Blood Tithe',
-  sub_body:
-    'When casting this spell, you may **sacrifice Health** equal to your **Physique**.\n\n' +
-    'If you do so, the attack is made with **Advantage** and the damage is **Empowered** by **1**.',
-};
+/**
+ * The card in the shop window.
+ *
+ * It used to be a hand-written copy of Blood Spear, which went stale the moment
+ * the spell sheet was pulled: it still said Nature where the school is now
+ * Primal, still cost 2 Willpower where it costs 3, and printed "3d6 + 3 x Mind"
+ * as flat text because it had no character to resolve against. It is the real
+ * card now, so it can never say anything the codex does not.
+ *
+ * `SAMPLE` is the character it is printed for. A card with nobody holding it
+ * prints no roll bonus and a flat zero where the dice bonus goes, which is the
+ * one thing this card must not do — the live numbers are what it is here to
+ * show off.
+ */
+const SHOWCASE = SPELLS.find((spell) => spell.id === 'blood-spear');
+const SAMPLE = { physique: 4, instinct: 4, mind: 6, level: 3 };
 
 const PILLARS = [
   {
@@ -92,7 +98,9 @@ export default function Landing() {
         </div>
 
         <div className="showcase-card">
-          <AbilityCard ability={SHOWCASE} />
+          {/* `promo`, so the one card on the front page is not the one card
+              with an empty plate — see showsArt in tiers.js. */}
+          <AbilityCard ability={SHOWCASE} character={SAMPLE} artSource="promo" />
         </div>
       </section>
 

@@ -60,7 +60,7 @@ const SHARPSENSE = {
   id: 'sharpsense',
   name: 'Sharpsense',
   summary: 'Advantage on any skill check that uses one of your five senses.',
-  body: 'You gain **advantage** on skill checks that use one of your five senses.',
+  body: 'You gain advantage on skill checks that use one of your five senses.',
 };
 
 const FERAL_INSTINCT = {
@@ -69,7 +69,7 @@ const FERAL_INSTINCT = {
   name: 'Feral Instinct',
   summary: 'Once a combat, react twice to the same action.',
   body:
-    'Once per combat, you can **react twice to the same action**.\n\nThis increases to twice per combat at **level 10**.',
+    'Once per combat, you can react twice to the same action.\n\nThis increases to twice per combat at level 10.',
 };
 
 const POISONOUS = {
@@ -78,7 +78,7 @@ const POISONOUS = {
   name: 'Poisonous',
   summary: 'Sharp weapons deal 1 extra damage per die rolled.',
   body:
-    'Your body produces a poisonous secretion that increases the damage you deal with **sharp weapons** by **1 per damage die rolled**.\n\nThis increases to **2** at **level 10**.',
+    'Your body produces a poisonous secretion that increases the damage you deal with sharp weapons by 1 per damage die rolled.\n\nThis increases to 2 at level 10.',
 };
 
 const COLD_BLOODED = {
@@ -86,7 +86,7 @@ const COLD_BLOODED = {
   id: 'cold-blooded',
   name: 'Cold Blooded',
   summary: 'Advantage on Cunning.',
-  body: 'You have an **advantage** in **Cunning**.',
+  body: 'You have an advantage in Cunning.',
 };
 
 const AMPHIBIAN = {
@@ -94,7 +94,7 @@ const AMPHIBIAN = {
   id: 'amphibian',
   name: 'Amphibian',
   summary: 'Breathe underwater, and keep full speed while swimming.',
-  body: 'You can **breathe underwater**, and retain your full speed while **swimming**.',
+  body: 'You can breathe underwater, and retain your full speed while swimming.',
 };
 
 const LIGHT_BODY = {
@@ -102,7 +102,7 @@ const LIGHT_BODY = {
   id: 'light-body',
   name: 'Light Body',
   summary: 'Movement Speed +2.',
-  body: 'Your **Movement Speed** increases by **+2**.',
+  body: 'Your Movement Speed increases by +2.',
 };
 
 const RESILIENCE = {
@@ -110,7 +110,7 @@ const RESILIENCE = {
   id: 'resilience',
   name: 'Resilience',
   summary: '6 health per point of Fortitude and Physique instead of 5.',
-  body: 'You gain **6 health** per point in **Fortitude** and {physique} instead of **5**.',
+  body: 'You gain 6 health per point in Fortitude and {physique} instead of 5.',
 };
 
 /**
@@ -179,14 +179,14 @@ export const LINEAGES = [
         kind: 'ability',
         ap: 2,
         body:
-          'Once after a **long rest**, you can manifest Celestial wings for **1 hour**.\n\nWhile the wings last, you can **fly** at a speed equal to your **Movement Speed**.',
+          'Once after a long rest, you can manifest Celestial wings for 1 hour.\n\nWhile the wings last, you can fly at a speed equal to your Movement Speed.',
       }),
       own('Celestial', {
         id: 'bolster-blessing',
         name: 'Bolster Blessing',
         summary: 'You learn Bolster, and its first multicast is free each long rest.',
         body:
-          'You learn the **Bolster** spell.\n\nYour first **multicast** is free for you and one additional ally after a **long rest**. You can multicast to one more ally, but must pay the price for each above the first.\n\nThis increases to the first three allies at **level 10**.',
+          'You learn the Bolster spell.\n\nYour first multicast is free for you and one additional ally after a long rest. You can multicast to one more ally, but must pay the price for each above the first.\n\nThis increases to the first three allies at level 10.',
       }),
     ],
   },
@@ -204,7 +204,7 @@ export const LINEAGES = [
         id: 'draconic-hide',
         name: 'Draconic Hide',
         summary: 'Defense +1.',
-        body: 'Your **Defense** increases by **+1**.',
+        body: 'Your Defense increases by +1.',
       }),
       own('Draconic', {
         id: 'chromatic-resistance',
@@ -212,7 +212,7 @@ export const LINEAGES = [
         summary: 'Resistance to one damage type, named by the colour of your scales.',
         choice: SCALE_COLOUR,
         body:
-          'You gain **resistance** to {choice} damage.\n\nYour scales say which: red is {damage:Fire}, white {damage:Cold}, blue {damage:Lightning}, black {damage:Decay}, purple {damage:Psychic} and yellow {damage:Sacred}.',
+          'You gain resistance to {choice} damage.\n\nYour scales say which: red is {damage:Fire}, white {damage:Cold}, blue {damage:Lightning}, black {damage:Decay}, purple {damage:Psychic} and yellow {damage:Sacred}.',
       }),
     ],
   },
@@ -242,7 +242,7 @@ export const LINEAGES = [
         name: 'Fey Flight',
         summary: 'Permanent flight, paid for with 3 health per point instead of 5.',
         body:
-          'You permanently gain the ability to **fly**.\n\nHowever, you gain **3 health** per level in **Fortitude** and {physique} instead of **5**.',
+          'You permanently gain the ability to fly.\n\nHowever, you gain 3 health per level in Fortitude and {physique} instead of 5.',
       }),
     ],
   },
@@ -285,7 +285,7 @@ export const LINEAGES = [
         kind: 'ability',
         ap: 2,
         body:
-          'Once after a **long rest**, you can manifest Infernal wings for **1 hour**.\n\nWhile the wings last, you can **fly** at a speed equal to your **Movement Speed**.',
+          'Once after a long rest, you can manifest Infernal wings for 1 hour.\n\nWhile the wings last, you can fly at a speed equal to your Movement Speed.',
       }),
       own('Infernal', {
         id: 'dark-bargain',
@@ -293,7 +293,7 @@ export const LINEAGES = [
         summary: 'You learn Dark Bargain, and its first two overcasts are free each long rest.',
         choice: CASTING_ABILITY,
         body:
-          'You learn the **Dark Bargain** spell, cast with {choice}.\n\nYour first two **overcasts** of this spell are free after a **long rest**; this increases to the first four at **level 10**.',
+          'You learn the Dark Bargain spell, cast with {choice}.\n\nYour first two overcasts of this spell are free after a long rest; this increases to the first four at level 10.',
       }),
     ],
   },
@@ -316,7 +316,7 @@ export const LINEAGES = [
         id: 'quick-mind',
         name: 'Quick Mind',
         summary: 'Mind +1.',
-        body: 'Your {mind} increases by **+1**.',
+        body: 'Your {mind} increases by +1.',
       }),
     ],
   },
@@ -334,7 +334,7 @@ export const LINEAGES = [
         id: 'sticky',
         name: 'Sticky',
         summary: 'You can walk on walls and ceilings.',
-        body: 'You can walk on **walls and ceilings**.',
+        body: 'You can walk on walls and ceilings.',
       }),
       COLD_BLOODED,
       POISONOUS,
@@ -366,7 +366,7 @@ export const LINEAGES = [
         name: 'Furnace Heart',
         summary: 'Once a round, burn health for 2 Reaction Points.',
         body:
-          'Once per round, you can burn **health** equal to **5 + your level** to gain **2 Reaction Points**.',
+          'Once per round, you can burn health equal to 5 + your level to gain 2 Reaction Points.',
       }),
       own('Scorchbound', {
         id: 'produce-fire',
@@ -374,7 +374,7 @@ export const LINEAGES = [
         summary: 'You learn Produce Fire, and its first overcast is free each long rest.',
         choice: CASTING_ABILITY,
         body:
-          'You learn the **Produce Fire** spell, cast with {choice}.\n\nYour first **overcast** of this spell is free after a **long rest**; this increases to the first two at **level 10**.',
+          'You learn the Produce Fire spell, cast with {choice}.\n\nYour first overcast of this spell is free after a long rest; this increases to the first two at level 10.',
       }),
     ],
   },
@@ -392,7 +392,7 @@ export const LINEAGES = [
         id: 'windborn-stride',
         name: 'Windborn Stride',
         summary: 'Movement Speed +2.',
-        body: 'Your **Movement Speed** is increased by **+2**.',
+        body: 'Your Movement Speed is increased by +2.',
       }),
       own('Skybound', {
         id: 'wind-grace',
@@ -400,7 +400,7 @@ export const LINEAGES = [
         summary: 'Once a turn, your next Move Action costs no Action Points.',
         kind: 'ability',
         wp: 1,
-        body: 'Once per turn, you can make your next **Move Action** cost no **Action Points**.',
+        body: 'Once per turn, you can make your next Move Action cost no Action Points.',
       }),
       own('Skybound', {
         id: 'gravity-control',
@@ -408,7 +408,7 @@ export const LINEAGES = [
         summary: 'You learn Gravity Control, and its first two castings are free each long rest.',
         choice: CASTING_ABILITY,
         body:
-          'You learn the **Gravity Control** spell, cast with {choice}.\n\nYour first two castings of this spell are free after a **long rest**; this increases to the first four at **level 10**.',
+          'You learn the Gravity Control spell, cast with {choice}.\n\nYour first two castings of this spell are free after a long rest; this increases to the first four at level 10.',
       }),
     ],
   },
@@ -438,7 +438,7 @@ export const LINEAGES = [
         id: 'hardened-frame',
         name: 'Hardened Frame',
         summary: 'Physique +1.',
-        body: 'Your {physique} increases by **+1**.',
+        body: 'Your {physique} increases by +1.',
       }),
     ],
   },
@@ -456,7 +456,7 @@ export const LINEAGES = [
         id: 'stoneskin',
         name: 'Stoneskin',
         summary: 'Defense +1.',
-        body: 'Your **Defense** increases by **+1**.',
+        body: 'Your Defense increases by +1.',
       }),
       own('Stonebound', {
         id: 'stone-shape',
@@ -464,7 +464,7 @@ export const LINEAGES = [
         summary: 'You learn Stone Shape, and its first overcast is free each long rest.',
         choice: CASTING_ABILITY,
         body:
-          'You learn the **Stone Shape** spell, cast with {choice}.\n\nYour first **overcast** of this spell is free after a **long rest**; this increases to the first two at **level 10**.',
+          'You learn the Stone Shape spell, cast with {choice}.\n\nYour first overcast of this spell is free after a long rest; this increases to the first two at level 10.',
       }),
     ],
   },
@@ -482,7 +482,7 @@ export const LINEAGES = [
         id: 'rising-tide',
         name: 'Rising Tide',
         summary: 'Willpower +1 at every odd level.',
-        body: 'Your **Willpower** increases by **+1** at every **odd level**.',
+        body: 'Your Willpower increases by +1 at every odd level.',
       }),
       own('Tidebound', {
         id: 'create-water',
@@ -490,7 +490,7 @@ export const LINEAGES = [
         summary: 'You learn Create Water, and its first two overcasts are free each long rest.',
         choice: CASTING_ABILITY,
         body:
-          'You learn the **Create Water** spell, cast with {choice}.\n\nYour first two **overcasts** of this spell are free after a **long rest**; this increases to the first four at **level 10**.',
+          'You learn the Create Water spell, cast with {choice}.\n\nYour first two overcasts of this spell are free after a long rest; this increases to the first four at level 10.',
       }),
     ],
   },
@@ -509,7 +509,7 @@ export const LINEAGES = [
         name: 'Undying',
         summary: '8 health per point instead of 5, but reaching 0 kills you outright.',
         body:
-          'You gain **8 health** per point in **Fortitude** and {physique} instead of **5**.\n\nHowever, if your health reaches **0**, you instantly **die**.\n\nLong rests restore only a **quarter** of your health, and short rests restore **none**.',
+          'You gain 8 health per point in Fortitude and {physique} instead of 5.\n\nHowever, if your health reaches 0, you instantly die.\n\nLong rests restore only a quarter of your health, and short rests restore none.',
       }),
       own('Undead', {
         id: 'corpse-feed',
@@ -518,7 +518,7 @@ export const LINEAGES = [
         kind: 'ability',
         ap: 6,
         body:
-          'You feed on a fresh corpse, regaining a **quarter** of your health.\n\nThis can be used once per **short rest**.',
+          'You feed on a fresh corpse, regaining a quarter of your health.\n\nThis can be used once per short rest.',
       }),
     ],
   },
@@ -537,7 +537,7 @@ export const LINEAGES = [
         id: 'primal-instincts',
         name: 'Primal Instincts',
         summary: 'Instinct +1.',
-        body: 'Your {instinct} increases by **+1**.',
+        body: 'Your {instinct} increases by +1.',
       }),
     ],
   },

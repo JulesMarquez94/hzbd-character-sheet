@@ -1,33 +1,51 @@
 /**
  * The glossary — the words on a card that mean something exact.
  *
- * A printed card emphasises a lot of things: distances, conditions, the clause
- * that matters. On screen that emphasis was doing two jobs at once and doing
- * neither well, so they are now split:
+ * Exactly three things on a card are allowed to stand out from the prose, and
+ * this file holds the third:
  *
- *   **bold**   is emphasis. It says "this clause is the important one" and
- *              nothing more — quiet, uncoloured, the printed weight.
- *   a keyword  is a *defined term*. It wears its own colour and answers what it
- *              means when you point at it.
+ *   an attribute    Mind, Instinct, Physique, in that attribute's colour
+ *   a damage type   Sharp, Decay, Force, in its own
+ *   a keyword       a *defined term*. It wears its colour and answers what it
+ *                   means when you point at it.
  *
- * Only the second is highlighted, which is what makes highlighting worth
- * anything: three coloured words on a card are read, thirty are wallpaper.
+ * Nothing else. The card bodies used to carry `**bold**` for emphasis as well
+ * — distances, durations, the clause that mattered — and that emphasis was
+ * removed from the codex outright, because a card with thirty emphasised
+ * phrases has nothing emphasised at all. The renderer still understands the
+ * marker, for cards a player types into their own Abilities tab, but no card
+ * in this codex uses it. If you are tempted to bold something, either it is a
+ * defined term and belongs in this file, or it is prose and belongs plain.
  *
- * A keyword is matched wherever it appears — inside bold or out — so Willpower
- * is violet every time it is printed, and never violet in one card and plain in
- * the next. The colours are the sheet's own: a resource keyword wears exactly
- * the colour its bar, orb or pip wears on the Character tab.
+ * A keyword is matched wherever it appears, so Willpower is violet every time
+ * it is printed and never violet in one card and plain in the next. The
+ * colours are the sheet's own: a resource keyword wears exactly the colour its
+ * bar, orb or pip wears on the Character tab.
  *
  * ------------------------------------------------------------- writing cards
- * Because a keyword now carries its own explanation, a card must NOT spell one
- * out in parentheses. Write "you gain **advantage**", never "you gain advantage
- * (roll twice and take the higher)" — the reader points at the word. If a term
- * needs explaining and is not in this file, the fix is to add it here, not to
- * gloss it in the card body.
+ * Because a keyword carries its own explanation, a card must NOT spell one out
+ * in parentheses. Write "you gain advantage", never "you gain advantage (roll
+ * twice and take the higher)" — the reader points at the word. If a term needs
+ * explaining and is not in this file, the fix is to add it here, not to gloss
+ * it in the card body.
+ *
+ * A term is lit wherever it appears, which cuts both ways: a card must not use
+ * a defined word to mean an ordinary one. "Something critical" lit the
+ * natural-20 rule, "give up the initiative" lit turn order, and a card naming
+ * itself lit Armor inside Gore Armor and touch inside Vampiric Touch. All four
+ * were reworded rather than exempted, because an exemption would have to be
+ * remembered every time and a rewording never does.
  *
  * `detail` is a sentence or two, written to be read in a tooltip while
  * something else is happening at the table. Not rules lawyering — the shape of
  * the thing.
+ *
+ * `provisional: true` marks a term whose wording here is a best reading of what
+ * the cards using it imply, rather than something transcribed from a rules
+ * sheet. Every status carries it: the designer's General Rules workbook has a
+ * Basic Abilities tab and no statuses tab yet, so these are placeholders that
+ * read sensibly and are waiting to be corrected. Nothing renders differently
+ * for it; it is a list of what still needs the designer's word.
  */
 
 /**
@@ -260,6 +278,157 @@ export const KEYWORDS = [
     terms: ['marked'],
     color: 'var(--dmg-psychic)',
     detail: 'Singled out. Whoever marked it knows where it is and hits it more easily.',
+  },
+  {
+    id: 'poisoned',
+    terms: ['poisoned'],
+    color: 'var(--dmg-decay)',
+    provisional: true,
+    detail: 'Sickened by something in the blood. What it costs you is the designer’s to set.',
+  },
+  {
+    id: 'rooted',
+    terms: ['rooted'],
+    color: 'var(--dmg-decay)',
+    provisional: true,
+    detail:
+      'Held to the ground. You can still act and still attack, but you cannot move from where you stand.',
+  },
+  {
+    id: 'asleep',
+    terms: ['asleep'],
+    color: 'var(--dmg-psychic)',
+    detail:
+      'Out cold, and unaware. Any damage wakes you, and so does an entity spending an action to shake you.',
+  },
+  {
+    id: 'prone',
+    terms: ['prone'],
+    color: 'var(--stat-health)',
+    provisional: true,
+    detail: 'On the floor. Getting back up is the first thing your next turn pays for.',
+  },
+  {
+    id: 'grappled',
+    terms: ['grappled'],
+    color: 'var(--stat-health)',
+    provisional: true,
+    detail: 'Held by somebody. You cannot move away while the grip lasts.',
+  },
+  {
+    id: 'stunned',
+    terms: ['stunned'],
+    color: 'var(--dmg-lightning)',
+    provisional: true,
+    detail: 'Reeling. You take no actions until it passes.',
+  },
+  {
+    id: 'incapacitated',
+    terms: ['incapacitated'],
+    color: 'var(--stat-health)',
+    provisional: true,
+    detail: 'Present but unable to act. You take no actions and no reactions.',
+  },
+  {
+    id: 'unconscious',
+    terms: ['unconscious'],
+    color: 'var(--stat-health)',
+    provisional: true,
+    detail: 'Down and unaware. You act at all only once somebody brings you round.',
+  },
+  {
+    id: 'dying',
+    terms: ['dying'],
+    color: 'var(--stat-health)',
+    detail:
+      'Below 0 Health and going. Stabilize stops it, and a second full bar of damage ends it.',
+  },
+
+  /* ------------------------------------------------------------- distances
+   * The two ranges the cards name instead of a number. Everything else prints
+   * its metres, so these are the only two a reader has to be told.
+   */
+  {
+    id: 'touch',
+    terms: ['touch'],
+    color: 'var(--focus-cyan)',
+    detail:
+      'Close enough to put a hand on. The shortest range there is: you have to be right beside what you are targeting.',
+  },
+  {
+    id: 'reach',
+    terms: ['reach'],
+    color: 'var(--focus-cyan)',
+    detail:
+      'As far as you can strike without moving your feet. Yours unless the thing in your hands says otherwise.',
+  },
+  {
+    id: 'line-of-sight',
+    terms: ['line of sight'],
+    color: 'var(--focus-cyan)',
+    detail: 'An unbroken view of the target. Total cover breaks it, and so does darkness.',
+  },
+  {
+    id: 'total-cover',
+    terms: ['total cover'],
+    color: 'var(--focus-cyan)',
+    detail: 'Something solid entirely between you and it. Nothing that needs to see it can reach it.',
+  },
+
+  /* ---------------------------------------------------------- when it happens
+   * The two moments a card can hang an effect on. Both are named on cards that
+   * tick, and neither means "some time during your turn".
+   */
+  {
+    id: 'turn-start',
+    terms: ['Turn Start'],
+    color: 'var(--stat-ap)',
+    detail:
+      'The moment your turn opens, before you have spent anything. Upkeeps are paid here and effects that tick, tick here.',
+  },
+  {
+    id: 'turn-end',
+    terms: ['Turn End'],
+    color: 'var(--stat-ap)',
+    detail: 'The moment your turn closes, after everything you chose to do with it.',
+  },
+
+  /* -------------------------------------------------------------- the riders
+   * The optional second half a card can carry. The names are the designer's
+   * and they mean four different things, which is exactly why they are terms.
+   */
+  {
+    id: 'overcast',
+    terms: ['Overcast'],
+    color: 'var(--haze-glow)',
+    detail: 'Spend more than the spell asks to make it do more. Always optional, always your call.',
+  },
+  {
+    id: 'multicast',
+    terms: ['Multicast'],
+    color: 'var(--haze-glow)',
+    detail: 'Spend more than the spell asks to catch more targets with it.',
+  },
+  {
+    id: 'upkeep',
+    terms: ['Upkeep'],
+    color: 'var(--haze-glow)',
+    detail:
+      'A toll paid at every Turn Start to keep a spell running. Miss one and the spell ends there.',
+  },
+  {
+    id: 'blood-tithe',
+    terms: ['Blood Tithe'],
+    color: 'var(--stat-health)',
+    detail:
+      'A price paid in Health rather than Willpower, and always in Physique whatever you cast with.',
+  },
+  {
+    id: 'elevated',
+    terms: ['elevates', 'elevated', 'elevate'],
+    color: 'var(--level-amber)',
+    provisional: true,
+    detail: 'Cast as though the spell were a step stronger than it is.',
   },
 ];
 

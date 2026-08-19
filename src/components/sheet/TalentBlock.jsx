@@ -5,6 +5,7 @@ import PickBlock from './PickBlock.jsx';
 import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import TagFilter from './TagFilter.jsx';
+import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { loadoutOf, rankPreview } from '../../lib/loadouts.js';
@@ -144,12 +145,13 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, onView, onU
   const info = rankInfo(rank);
   const cards = talent ? cardsAtRank(talent, rank) : [];
   const stack = useCardStack();
+  const art = useCodexArt()(talent?.art);
 
   return (
     <article className="talent-summary">
       <header className="talent-summary-head">
-        {talent?.art ? (
-          <img className="talent-summary-art" src={talent.art} alt="" />
+        {art ? (
+          <img className="talent-summary-art" src={art} alt="" />
         ) : (
           <span className="talent-summary-art talent-summary-art-empty" aria-hidden="true" />
         )}
@@ -300,12 +302,13 @@ function takeLabel(option) {
 /** One rectangle on the overview wall: art, name, a line, and what it buys. */
 function TalentTile({ option, onOpen }) {
   const { talent, held, ok, reason } = option;
+  const art = useCodexArt()(talent.art);
 
   return (
     <button type="button" className="talent-tile" onClick={onOpen}>
       <span
         className="talent-tile-art"
-        style={talent.art ? { backgroundImage: `url("${talent.art}")` } : undefined}
+        style={art ? { backgroundImage: `url("${art}")` } : undefined}
       >
         {held > 0 && <span className="talent-tile-held">Rank {held}</span>}
       </span>
@@ -338,11 +341,12 @@ function TalentTile({ option, onOpen }) {
 function TalentPresentation({ option, character }) {
   const { talent, held } = option;
   const stack = useCardStack();
+  const art = useCodexArt()(talent.art);
 
   return (
     <div className="talent-page">
       <header className="talent-page-head">
-        {talent.art && <img className="talent-page-art" src={talent.art} alt="" />}
+        {art && <img className="talent-page-art" src={art} alt="" />}
         <div className="talent-page-intro">
           <h3 className="talent-page-name">{talent.name}</h3>
           <p className="talent-page-tagline">{talent.tagline}</p>

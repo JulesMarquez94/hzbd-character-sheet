@@ -6,7 +6,9 @@ import { getKeyword, keywordPattern } from '../lib/keywords.js';
 /**
  * Card and item rules text, rendered the way the printed cards read.
  *
- *   **bold**            emphasis
+ *   **bold**            emphasis. Still understood, for cards a player types
+ *                       into their own Abilities tab, but no card in the codex
+ *                       uses it any more — see the note in keywords.js
  *   {stat} {mind} …     an attribute by name, in that attribute's colour
  *   {damage}            the card's damage type as a coloured chip — already
  *                       swapped for whatever an enchantment turned it into

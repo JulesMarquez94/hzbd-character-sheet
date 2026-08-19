@@ -52,10 +52,12 @@
  * list the sheet does not vouch for.
  */
 
+import { withArt } from './cardArt.js';
+
 /** The Action Point ceiling a variable-cost action will offer to spend. */
 export const VARIABLE_CAP = 12;
 
-export const BASIC_ACTIONS = [
+export const BASIC_ACTIONS = withArt([
   {
     id: 'move',
     name: 'Move',
@@ -65,7 +67,7 @@ export const BASIC_ACTIONS = [
     wp: null,
     stat: 'instinct',
     summary: 'Cover ground up to your Movement Speed.',
-    body: 'You move a distance up to your **Movement Speed**: [[speed]] meters.',
+    body: 'You move a distance up to your Movement Speed: [[speed]] meters.',
   },
   {
     id: 'jump',
@@ -77,7 +79,7 @@ export const BASIC_ACTIONS = [
     stat: 'physique',
     summary: 'Leap your Movement Speed across, your own height up.',
     body:
-      'You jump a distance up to your **Movement Speed**, [[speed]] meters, and a height equal to your own **height**.',
+      'You jump a distance up to your Movement Speed, [[speed]] meters, and a height equal to your own height.',
   },
   {
     /* Off the V4 cheatsheet, not the sheet — see the note at the top. */
@@ -90,7 +92,7 @@ export const BASIC_ACTIONS = [
     stat: 'physique',
     summary: 'Go up a vertical surface at half your Movement Speed.',
     body:
-      'You climb a vertical surface a distance up to **half your Movement Speed**.\n\n' +
+      'You climb a vertical surface a distance up to half your Movement Speed.\n\n' +
       'Your Game Master might ask for a roll, depending on what you are climbing.',
   },
   {
@@ -104,7 +106,7 @@ export const BASIC_ACTIONS = [
     summary: 'Read a room or read an enemy, and learn something worth knowing.',
     body:
       'While in combat, you attempt to ascertain the weakness or the strength of an enemy, or to find a weak point or a hazard in the place you are fighting in.\n\n' +
-      'Make a **{mind}** {roll:mind} or **{instinct}** {roll:instinct} roll against an enemy entity’s **Grit**, or against an environment difficulty rating your Game Master sets.\n\n' +
+      'Make a {mind} {roll:mind} or {instinct} {roll:instinct} roll against an enemy entity’s Grit, or against an environment difficulty rating your Game Master sets.\n\n' +
       /* The sheet writes "critical information" here. Critical is a defined
          term meaning a natural 20, and it is lit wherever it appears, so that
          wording would offer the crit rule as the explanation of a word being
@@ -125,7 +127,7 @@ export const BASIC_ACTIONS = [
     summary: 'Handle something in the world. The Game Master sets the price.',
     body:
       'You interact with an object or with your surroundings: opening a door, pulling a lever, picking something up off the floor.\n\n' +
-      'What it costs in **Action Points** is the Game Master’s to set.',
+      'What it costs in Action Points is the Game Master’s to set.',
   },
   {
     id: 'hide',
@@ -137,8 +139,8 @@ export const BASIC_ACTIONS = [
     stat: 'instinct',
     summary: 'Break line of sight and stay unfound until someone goes looking.',
     body:
-      'If no enemy has **line of sight** on you, you may attempt to hide with an **{instinct} roll** {roll:instinct} against the **Grit** of every enemy.\n\n' +
-      'Every enemy whose **Grit** you beat loses sight of you.\n\n' +
+      'If no enemy has line of sight on you, you may attempt to hide with an {instinct} roll {roll:instinct} against the Grit of every enemy.\n\n' +
+      'Every enemy whose Grit you beat loses sight of you.\n\n' +
       'On their turn they use {{Investigate}} to attempt to find you.',
   },
   {
@@ -151,9 +153,9 @@ export const BASIC_ACTIONS = [
     stat: 'physique',
     summary: 'Take hold of something within reach and stop it leaving.',
     body:
-      'You attempt to restrain an entity within your **reach**.\n\n' +
-      'Make a **{physique} roll** {roll:physique} against the target’s **Reflex**.\n\n' +
-      'On a success, the target is **grappled**.',
+      'You attempt to restrain an entity within your reach.\n\n' +
+      'Make a {physique} roll {roll:physique} against the target’s Reflex.\n\n' +
+      'On a success, the target is grappled.',
   },
   {
     id: 'shove',
@@ -165,9 +167,9 @@ export const BASIC_ACTIONS = [
     stat: 'physique',
     summary: 'Put something on the floor, or put it somewhere else.',
     body:
-      'You use force to push an entity **you can touch** away from you.\n\n' +
-      'Make a **{physique} attack roll** {roll:physique} against the target.\n\n' +
-      'On a hit, you push the target back **1.5 meters (3 feet)** or knock it **prone**.',
+      'You use force to push an entity you can touch away from you.\n\n' +
+      'Make a {physique} attack roll {roll:physique} against the target.\n\n' +
+      'On a hit, you push the target back 1.5 meters (3 feet) or knock it prone.',
   },
   {
     id: 'anticipate',
@@ -181,8 +183,11 @@ export const BASIC_ACTIONS = [
     stat: 'instinct',
     summary: 'Hold back. Action Points become Reaction Points, one for one.',
     body:
-      'You give up the initiative and wait on someone else instead.\n\n' +
-      'Convert any number of **Action Points** into **Reaction Points**, one for one. Nothing is spent by this: the points move from one pool to the other, and no pool may pass its own maximum.',
+      /* Not "you give up the initiative": Initiative is a defined term meaning
+         turn order, and it is lit wherever it appears, so that wording offered
+         the turn-order rule as the explanation of an ordinary English phrase. */
+      'You hold back and wait on someone else instead.\n\n' +
+      'Convert any number of Action Points into Reaction Points, one for one. Nothing is spent by this: the points move from one pool to the other, and no pool may pass its own maximum.',
   },
   {
     id: 'stabilize',
@@ -194,9 +199,9 @@ export const BASIC_ACTIONS = [
     stat: 'mind',
     summary: 'Stop a dying ally dying. They stay down, but they stay.',
     body:
-      'You attempt to stabilize a dying entity within your **reach**.\n\n' +
-      'Make a **{mind} roll** {roll:mind} against the target’s negative **Health** divided by **5**.\n\n' +
-      'On a success they are no longer dying and sit at **0 Health**. They remain **unconscious** until healed.',
+      'You attempt to stabilize a dying entity within your reach.\n\n' +
+      'Make a {mind} roll {roll:mind} against the target’s negative Health divided by 5.\n\n' +
+      'On a success they are no longer dying and sit at 0 Health. They remain unconscious until healed.',
   },
   {
     id: 'inventory',
@@ -208,7 +213,7 @@ export const BASIC_ACTIONS = [
     stat: 'physique',
     summary: 'Get into your pack for something that is not on your belt.',
     body:
-      'You retrieve, stow or swap an item stored in your **pack**.\n\n' +
-      'Items on your **belt** can be reached freely. Getting into your pack is what this action costs.',
+      'You retrieve, stow or swap an item stored in your pack.\n\n' +
+      'Items on your belt can be reached freely. Getting into your pack is what this action costs.',
   },
-];
+]);

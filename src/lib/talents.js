@@ -105,10 +105,10 @@ export const TALENTS = [
         wp: null,
         stat: 'instinct',
         body:
-          'While wielding a **weapon** that includes a **shield**, you gain an **advantage** on {instinct} **contested rolls** {roll:instinct} and your **Defense** is increased by **1**.\n\n' +
-          'You learn a number of **Novice Martial Moves** equal to **1 + your Rank in Guardian**.\n\n' +
-          'At **Rank 2**, you can learn **Adept Martial Moves**, and at **Rank 3**, you gain access to **Master Martial Moves**.\n\n' +
-          'After successfully **blocking damage** with a **shield**, your next **weapon attack** costs **1 less Action Point** and can be used immediately after the block, even if you have already used a **reaction** to an **action**.',
+          'While wielding a weapon that includes a shield, you gain an advantage on {instinct} contested rolls {roll:instinct} and your Defense is increased by 1.\n\n' +
+          'You learn a number of Novice Martial Moves equal to 1 + your Rank in Guardian.\n\n' +
+          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.\n\n' +
+          'After successfully blocking damage with a shield, your next weapon attack costs 1 less Action Point and can be used immediately after the block, even if you have already used a reaction to an action.',
       },
       {
         id: 'intercept',
@@ -122,8 +122,8 @@ export const TALENTS = [
         stat: 'instinct',
         body:
           'You prepare to intercept the next hit.\n\n' +
-          'The next time an **adjacent entity** makes a successful roll to hit or is the victim of one, you can choose to take the hit instead.\n\n' +
-          'If you intercept a hit that **deals damage**, you can use your **Shield & One-handed Block ability** without paying its action point cost, even if you have already used a **reaction** on the same **action**.',
+          'The next time an adjacent entity makes a successful roll to hit or is the victim of one, you can choose to take the hit instead.\n\n' +
+          'If you intercept a hit that deals damage, you can use your Shield & One-handed Block ability without paying its action point cost, even if you have already used a reaction on the same action.',
       },
       {
         id: 'just-in-time',
@@ -136,9 +136,9 @@ export const TALENTS = [
         wp: null,
         stat: 'instinct',
         body:
-          'You can now use {{Intercept}} on any **entity** you can see and could reach with a **Move Action**.\n\n' +
-          'When you do, you **move** to an empty space in **melee range** of that **entity**, and the cost of {{Intercept}} is increased by **1 Action Point**.\n\n' +
-          'Additionally your **Movement Speed** is increased by **1**.',
+          'You can now use {{Intercept}} on any entity you can see and could reach with a Move Action.\n\n' +
+          'When you do, you move to an empty space in melee range of that entity, and the cost of {{Intercept}} is increased by 1 Action Point.\n\n' +
+          'Additionally your Movement Speed is increased by 1.',
       },
       {
         id: 'given-opportunity',
@@ -151,7 +151,7 @@ export const TALENTS = [
         wp: 2,
         stat: 'instinct',
         body:
-          'After you use {{Intercept}}, you can use this ability to allow the **entity** for which you **intercepted** to make a **free reaction weapon attack**.',
+          'After you use {{Intercept}}, you can use this ability to allow the entity for which you intercepted to make a free reaction weapon attack.',
       },
       {
         id: 'bastions-fury',
@@ -164,9 +164,9 @@ export const TALENTS = [
         wp: null,
         stat: 'instinct',
         body:
-          'Whenever you {{Intercept}} a hit, you gain **1 Reaction Point**.\n\n' +
-          'Whenever you **block** an **attack**, the damage of your next **weapon attack** is increased by the amount of damage you **blocked**.\n\n' +
-          'Finally, your **Martial Moves** cost **1** less **Action Point** if they are used with a **weapon attack** whose **cost** has been reduced by {{Shield Expertise}}.',
+          'Whenever you {{Intercept}} a hit, you gain 1 Reaction Point.\n\n' +
+          'Whenever you block an attack, the damage of your next weapon attack is increased by the amount of damage you blocked.\n\n' +
+          'Finally, your Martial Moves cost 1 less Action Point if they are used with a weapon attack whose cost has been reduced by {{Shield Expertise}}.',
       },
     ],
   },
@@ -218,10 +218,10 @@ export const TALENTS = [
         wp: null,
         stat: 'instinct',
         body:
-          'Your deep connection with the mycelial network lets you cast **Nature Spells**. You learn a number of **Nature School spells** equal to **2 + 2 x your Rank in Mycomancer.**\n\n' +
-          'After a successful **short** or **long rest**, you can swap out any number of **spells** you know to any other eligible **spell**.\n\n' +
-          'At **Rank 2**, you can learn **Adept Nature Spells**, and at **Rank 3**, you gain access to **Master Nature Spells**.\n\n' +
-          'You also have a unique ability to draw power from the dead. By touching a fresh cadaver as you **cast a spell**, you can reduce its cost by 1 **Willpower**. You can use this **once per spell cast**.',
+          'Your deep connection with the mycelial network lets you cast Nature Spells. You learn a number of Nature School spells equal to 2 + 2 x your Rank in Mycomancer.\n\n' +
+          'After a successful short or long rest, you can swap out any number of spells you know to any other eligible spell.\n\n' +
+          'At Rank 2, you can learn Adept Nature Spells, and at Rank 3, you gain access to Master Nature Spells.\n\n' +
+          'You also have a unique ability to draw power from the dead. By touching a fresh cadaver as you cast a spell, you can reduce its cost by 1 Willpower. You can use this once per spell cast.',
       },
       {
         id: 'mycelium-network',
@@ -234,10 +234,10 @@ export const TALENTS = [
         wp: null,
         stat: 'instinct',
         body:
-          'As a **Mycomancer**, you have an **advantage** on **rolls** related to natural elements or their exploration.\n\n' +
-          'When **casting spells**, you can use your {instinct} **attribute** instead of your {mind} **attribute**.\n\n' +
-          'You are **proficient** with any **weapon** that relies on your {instinct} **attribute**.\n\n' +
-          'During a **long rest**, you can perform the **Mycelial Communion action**. When you do, make a **roll** using your **Mycomancer rank** as a **roll modifier**. On a **success**, you learn the answers to **3** yes or no questions about anything within 5 kilometers (3 miles) of you. On a **critical success**, you learn the answers to **5** such questions instead.',
+          'As a Mycomancer, you have an advantage on rolls related to natural elements or their exploration.\n\n' +
+          'When casting spells, you can use your {instinct} attribute instead of your {mind} attribute.\n\n' +
+          'You are proficient with any weapon that relies on your {instinct} attribute.\n\n' +
+          'During a long rest, you can perform the Mycelial Communion action. When you do, make a roll using your Mycomancer rank as a roll modifier. On a success, you learn the answers to 3 yes or no questions about anything within 5 kilometers (3 miles) of you. On a critical success, you learn the answers to 5 such questions instead.',
       },
       {
         id: 'fungal-bloom',
@@ -250,10 +250,10 @@ export const TALENTS = [
         wp: 4,
         stat: 'instinct',
         body:
-          'You release a cloud of spores that affects **all entities** within **9 meters (30 feet)**.\n\n' +
-          '**Allies** within the range of the cloud gain a **shield** equal to your {instinct} attribute.\n\n' +
-          '**Enemies** within the range of the cloud take {damage:Necrotic} damage equal to your {instinct} attribute.\n\n' +
-          'If there is a **fresh cadaver** within range, it explodes into spores, replicating the ability for free from the cadaver’s location. This effect also triggers if an enemy dies from the **damage** dealt by {{Fungal Bloom}}.',
+          'You release a cloud of spores that affects all entities within 9 meters (30 feet).\n\n' +
+          'Allies within the range of the cloud gain a shield equal to your {instinct} attribute.\n\n' +
+          'Enemies within the range of the cloud take {damage:Necrotic} damage equal to your {instinct} attribute.\n\n' +
+          'If there is a fresh cadaver within range, it explodes into spores, replicating the ability for free from the cadaver’s location. This effect also triggers if an enemy dies from the damage dealt by {{Fungal Bloom}}.',
       },
       {
         id: 'mycelial-bond',
@@ -266,8 +266,8 @@ export const TALENTS = [
         wp: 1,
         stat: 'instinct',
         body:
-          'You **bond** with a **willing entity** you can **touch**, making them a temporary part of the fungal network until your next **long rest**.\n\n' +
-          'While **bonded**, you can communicate **telepathically** with all **bonded entities**.',
+          'You bond with a willing entity you can touch, making them a temporary part of the fungal network until your next long rest.\n\n' +
+          'While bonded, you can communicate telepathically with all bonded entities.',
       },
       {
         id: 'sporatic-infusion',
@@ -293,11 +293,11 @@ export const TALENTS = [
         wp: null,
         stat: 'instinct',
         body:
-          'Your **Mycelial Bonds** now last until you choose to dismiss them.\n\n' +
-          'However, now the number of **entities** you can have **bonded** at the same time cannot exceed half of your {instinct} **attribute**.\n\n' +
-          'Additionally, whenever you use {{Fungal Invocation}} to reduce the **cost** of a **spell**, all **bonded** members of your network regain **1 Willpower**.\n\n' +
-          'When you **cast** a **spell** that **targets yourself**, you can choose to have it also **target** all of your **Mycelial Bonded** entities without increasing the spell’s cost.\n' +
-          'You must take a **long rest** before you can use this feature again.',
+          'Your Mycelial Bonds now last until you choose to dismiss them.\n\n' +
+          'However, now the number of entities you can have bonded at the same time cannot exceed half of your {instinct} attribute.\n\n' +
+          'Additionally, whenever you use {{Fungal Invocation}} to reduce the cost of a spell, all bonded members of your network regain 1 Willpower.\n\n' +
+          'When you cast a spell that targets yourself, you can choose to have it also target all of your Mycelial Bonded entities without increasing the spell’s cost.\n' +
+          'You must take a long rest before you can use this feature again.',
       },
       {
         id: 'moldy-reanimation',
@@ -310,10 +310,10 @@ export const TALENTS = [
         wp: 2,
         stat: 'instinct',
         body:
-          'You can reanimate the **cadaver** of a **Minion entity** you can **touch**.\n\n' +
-          'The reanimated **Minion** follows your orders and fights for you until your next **long rest**, but it is mindless.\n\n' +
-          'It takes its turn at the **end of your turn**, and before it acts, you can give it a new order as a free action. If you don’t give it an order, it will rush and attack the closest enemy.\n\n' +
-          'This ability fails if you try to reanimate the cadaver of a **Minion** that is a higher level than you.',
+          'You can reanimate the cadaver of a Minion entity you can touch.\n\n' +
+          'The reanimated Minion follows your orders and fights for you until your next long rest, but it is mindless.\n\n' +
+          'It takes its turn at the end of your turn, and before it acts, you can give it a new order as a free action. If you don’t give it an order, it will rush and attack the closest enemy.\n\n' +
+          'This ability fails if you try to reanimate the cadaver of a Minion that is a higher level than you.',
       },
     ],
   },

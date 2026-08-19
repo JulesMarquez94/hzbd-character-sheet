@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import TagFilter from './TagFilter.jsx';
+import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import PickBlock from './PickBlock.jsx';
@@ -29,6 +30,7 @@ function pickedOn(card, choices) {
 export default function LineagePick({ value, character, patch, step = null, readOnly = false }) {
   const [choosing, setChoosing] = useState(false);
   const stack = useCardStack();
+  const codexArt = useCodexArt();
 
   const written = String(value ?? '').trim();
   const lineage = getLineage(written);
@@ -49,8 +51,12 @@ export default function LineagePick({ value, character, patch, step = null, read
         <>
           <div className="pick-face">
             <span
-              className={`pick-art${lineage.art ? '' : ' pick-art-empty'}`}
-              style={lineage.art ? { backgroundImage: `url("${lineage.art}")` } : undefined}
+              className={`pick-art${codexArt(lineage.art) ? '' : ' pick-art-empty'}`}
+              style={
+                codexArt(lineage.art)
+                  ? { backgroundImage: `url("${codexArt(lineage.art)}")` }
+                  : undefined
+              }
               aria-hidden="true"
             />
             <span className="pick-face-body">
@@ -150,6 +156,7 @@ export default function LineagePick({ value, character, patch, step = null, read
 function LineageChooser({ current, character, readOnly, onTake, onClose }) {
   const [open, setOpen] = useState(null);
   const stack = useCardStack();
+  const codexArt = useCodexArt();
   const filter = useTagFilter(usedLineageTags(), { searchable: true });
 
   const shown = open ? getLineage(open) : null;
@@ -189,8 +196,12 @@ function LineageChooser({ current, character, readOnly, onTake, onClose }) {
         <div className="talent-page">
           <header className="talent-page-head">
             <span
-              className={`talent-page-art${shown.art ? '' : ' talent-page-art-empty'}`}
-              style={shown.art ? { backgroundImage: `url("${shown.art}")` } : undefined}
+              className={`talent-page-art${codexArt(shown.art) ? '' : ' talent-page-art-empty'}`}
+              style={
+                codexArt(shown.art)
+                  ? { backgroundImage: `url("${codexArt(shown.art)}")` }
+                  : undefined
+              }
               aria-hidden="true"
             />
             <div className="talent-page-intro">
@@ -243,8 +254,14 @@ function LineageChooser({ current, character, readOnly, onTake, onClose }) {
                 onClick={() => setOpen(lineage.id)}
               >
                 <span
-                  className={`talent-tile-art${lineage.art ? '' : ' talent-tile-art-empty'}`}
-                  style={lineage.art ? { backgroundImage: `url("${lineage.art}")` } : undefined}
+                  className={`talent-tile-art${
+                    codexArt(lineage.art) ? '' : ' talent-tile-art-empty'
+                  }`}
+                  style={
+                    codexArt(lineage.art)
+                      ? { backgroundImage: `url("${codexArt(lineage.art)}")` }
+                      : undefined
+                  }
                 >
                   {current?.id === lineage.id && (
                     <span className="talent-tile-held">Yours</span>

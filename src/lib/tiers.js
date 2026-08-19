@@ -116,16 +116,22 @@ export function can(tier, capability) {
  * this is the one place it is written down, so whoever wires the plates up
  * later cannot get the exception wrong.
  *
- * **The exception:** art a player put on their own sheet is theirs. A portrait
- * they uploaded, an image in their lore — those show to everybody at every
- * tier, always. The gate is on the *codex's* art, which is the thing being
- * given away, never on the player's own.
+ * **Two exceptions**, and both are about whose picture it is rather than what
+ * it is worth:
  *
- * Nothing calls this yet. The plates still render as they always have; this is
- * here so that turning the rule on later is one import and one condition
- * rather than a hunt through every component that draws a picture.
+ *   lore    art a player put on their own sheet — a portrait they uploaded, an
+ *           image in their lore. Theirs, so it shows at every tier, always.
+ *   promo   the sample card on the landing page. That card is the shop window:
+ *           gating it would hide the thing being sold from everybody who has
+ *           not bought it yet, which is exactly backwards. A signed-out visitor
+ *           reads as `free`, so without this the one card on the front page
+ *           would be the one card with no picture on it.
+ *
+ * Everything else is the codex's, which is the thing being given away, and it
+ * goes through the gate. It is applied in exactly one place: the useCodexArt
+ * hook in src/components/useCodexArt.js.
  */
 export function showsArt(tier, source = 'codex') {
-  if (source === 'lore') return true;
+  if (source === 'lore' || source === 'promo') return true;
   return can(tier, 'art');
 }

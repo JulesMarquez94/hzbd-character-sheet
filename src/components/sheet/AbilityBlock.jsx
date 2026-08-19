@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import CardBrief from './CardBrief.jsx';
+import useCodexArt from '../useCodexArt.js';
 import { ChoicePicker } from './LineagePick.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
 import { useCardStack } from '../../context/card-stack.js';
@@ -29,13 +30,15 @@ import { setTalentPicks } from '../../lib/talents.js';
 export default function AbilityBlock({ source, character, patch, readOnly = false }) {
   const stack = useCardStack();
   const count = sourceCount(source);
+  // The block's own plate. The briefs below gate their own, inside CardBrief.
+  const art = useCodexArt()(source.art);
 
   return (
     <div className={`cell-scroll ability-block src-${source.kind}`}>
       <header className="ability-source-head">
         <span
-          className={`ability-source-art${source.art ? '' : ' ability-source-art-empty'}`}
-          style={source.art ? { backgroundImage: `url("${source.art}")` } : undefined}
+          className={`ability-source-art${art ? '' : ' ability-source-art-empty'}`}
+          style={art ? { backgroundImage: `url("${art}")` } : undefined}
           aria-hidden="true"
         />
         <span className="ability-source-title">
