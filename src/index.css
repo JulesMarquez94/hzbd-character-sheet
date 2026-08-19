@@ -1,0 +1,693 @@
+/* =========================================
+   HAZEBOUND MASTER DESIGN TOKENS
+   ========================================= */
+:root {
+    /* Base Colors */
+    --bg-black: #091115;
+    --panel-teal: #13222A;
+    --text-silver: #EAF2F8;
+    --text-muted: #788B95;
+    /* The tier above silver, for the word that has to win its line — a stat's
+       own number, the heading inside a frame. It was pure white in forty
+       places and a token in none. */
+    --text-bright: #FFFFFF;
+    --copper: #C88A4B;
+    /* Copper lifted, for hover. Three slightly different brighter coppers had
+       grown up in three files; this is the one. */
+    --copper-bright: #E59F57;
+
+    /* Accents */
+    --haze-purple: #5A2D82;
+    --haze-glow: #9D5BFF;
+    --focus-cyan: #00E5FF;
+    --danger-red: #E53935;
+    --level-amber: #FFB300;
+    /* The fourth choice colour. Every other choice on the Advancement tab wears
+       the colour of the cards it deals; the attribute spread deals none, so it
+       takes the one hue the others leave free. */
+    --vital-green: #2ECC71;
+
+    /* Type tints. --danger-red, --vital-green and --haze-glow are grounds and
+       borders — at type size on a dark panel they go muddy, so each keeps a
+       lighter twin that is only ever used as text. */
+    --danger-rose: #FF8A85;
+    --success-mint: #7EE2A8;
+    --haze-lilac: #C9A4FF;
+
+    /* Damage Types */
+    --dmg-blunt: #9E9E9E;
+    --dmg-sharp: #E2E8F0;
+    --dmg-force: #A066FF;
+    --dmg-fire: #FF5722;
+    --dmg-frost: #81D4FA;
+    --dmg-lightning: #FFEB3B;
+    --dmg-psychic: #E91E63;
+    --dmg-decay: #4CAF50;
+    --dmg-sacred: #FFF59D;
+
+    /* Defense Types */
+    --def-healing: #2ECC71;
+    --def-shield: #00E5FF;
+
+    /* Attributes */
+    --attr-physique: #FF9800;
+    --attr-mind: #29B6F6;
+    --attr-instinct: #EF5350;
+
+    /* Resources & Stats */
+    --stat-health: #B30000;
+    --stat-shield: #2979FF;
+    --stat-ap: #FBC02D;
+    --stat-rp: #F57C00;
+    --stat-wp: #9C27B0;
+    --stat-karma: #3D5AFE;
+    --stat-armor: #607D8B;
+    --stat-speed: #FF5252;
+    --stat-init: #26A69A;
+    --stat-coin: #FBC02D;
+    /* Supplies are a crate, not a purse — warm wood, never mistaken for coin gold. */
+    --stat-supply: #B08968;
+
+    /* Item rarity */
+    /* Purple belongs to Willpower and Magic Burden, so Epic is pink. */
+    --rarity-common: #9E9E9E;
+    --rarity-uncommon: #2ECC71;
+    --rarity-rare: #2979FF;
+    --rarity-epic: #FF4FA3;
+    --rarity-legendary: #FF7A1A;
+
+    /* Talent rank pips */
+    --rank-1-blue: #4A90E2;
+    --rank-2-purple: #A040FF;
+    --rank-3-gold: #FFB300;
+
+    /* Structure */
+    --hairline: rgba(148, 167, 176, 0.12);
+    --inset-bg: rgba(9, 17, 21, 0.35);
+
+    /* Art plates. Every window that holds card art shares one ground, and the
+       ones with no art yet share one haze floor under their radial glow. */
+    --art-ground: #0D1418;
+    --art-haze: linear-gradient(160deg, #16232B 0%, #090F13 100%);
+
+    /* The one size. A card and a Character-tab block are the same object at
+       the same footprint — a hard 360x640 on every screen, never stretched,
+       never shrunk. The page reflows around them; they do not reflow. Lives
+       here rather than in sheet.css because cards are printed on pages the
+       sheet never loads. */
+    --block-w: 360px;
+    --block-h: 640px;
+
+    /* Stacking order. Six named layers, so a new overlay never has to guess a
+       number and land between two that were meant to touch. Anything a
+       component stacks inside itself stays a single digit and stays local. */
+    --z-sticky: 900;        /* the sheet's tab bar */
+    --z-header: 1000;       /* the site header, above it */
+    --z-drawer: 1010;       /* the panels those two open */
+    --z-overlay: 2000;      /* modal backdrops, and the drag ghost that behaves like one */
+    --z-overlay-top: 2100;  /* what must sit above an overlay: card stack, refusal alert */
+    --z-tip: 3000;          /* tooltips, always last */
+
+    /* Typography Definitions */
+    --font-headings: 'Cinzel', serif;
+    --font-body: 'Montserrat', sans-serif;
+    --font-card-display: 'Anton', 'Cinzel', sans-serif;
+}
+
+/* =========================================
+   GLOBAL HTML/BODY RESET
+   ========================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-black);
+    color: var(--text-silver);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+#root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================================
+   GLOBAL TYPOGRAPHY CLASSES
+   ========================================= */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-headings);
+    color: var(--text-silver);
+}
+
+.heading-hero {
+    font-size: 4rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    line-height: 1.1;
+}
+
+.heading-section {
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--copper);
+}
+
+/* =========================================
+   LAYOUT
+   ========================================= */
+.container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.container-wide {
+    max-width: 1400px;
+}
+
+.page {
+    flex-grow: 1;
+    padding: 3rem 0 5rem;
+}
+
+/* Section title with a trailing badge, used on the dashboard and sheet */
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-family: var(--font-headings);
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(120, 139, 149, 0.1);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.75rem;
+}
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    text-decoration: none;
+    text-align: center;
+    border: none;
+    padding: 0.85rem 2rem;
+    background-color: rgba(234, 242, 248, 0.05);
+    border: 1px solid rgba(234, 242, 248, 0.2);
+    color: var(--text-silver);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-copper {
+    background-color: var(--copper);
+    color: var(--bg-black);
+    border-color: var(--copper);
+    box-shadow: 0 4px 15px rgba(200, 138, 75, 0.2);
+}
+
+.btn-copper:hover {
+    background-color: var(--copper-bright);
+    box-shadow: 0 6px 20px rgba(200, 138, 75, 0.4);
+}
+
+.btn-purple-outline {
+    background: transparent;
+    border: 2px solid var(--haze-purple);
+    color: var(--text-silver);
+}
+
+.btn-purple-outline:hover {
+    background: rgba(90, 45, 130, 0.1);
+    border-color: var(--haze-glow);
+    box-shadow: 0 0 15px rgba(157, 91, 255, 0.2);
+}
+
+.btn-minimal {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid rgba(120, 139, 149, 0.2);
+}
+
+.btn-minimal:hover {
+    color: var(--text-silver);
+    background: rgba(255, 255, 255, 0.02);
+    border-color: var(--text-muted);
+}
+
+.btn-danger {
+    background-color: rgba(229, 57, 53, 0.08);
+    border: 1px solid rgba(229, 57, 53, 0.35);
+    color: var(--danger-red);
+}
+
+.btn-danger:hover {
+    background-color: var(--danger-red);
+    color: var(--text-silver);
+}
+
+.btn-sm {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* =========================================
+   PANELS & FRAMES
+   ========================================= */
+.panel {
+    background-color: var(--panel-teal);
+    border: 1px solid var(--hairline);
+    border-top: 3px solid var(--haze-purple);
+    border-radius: 6px;
+    padding: 1.1rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.frame {
+    background-color: var(--inset-bg);
+    border: 1px solid rgba(148, 167, 176, 0.08);
+    border-radius: 6px;
+    padding: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.frame-heading {
+    font-family: var(--font-headings);
+    font-size: 0.78rem;
+    letter-spacing: 1.5px;
+    color: var(--text-bright);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+/* =========================================
+   FORMS
+   ========================================= */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    text-align: left;
+}
+
+.form-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    background-color: var(--bg-black);
+    border: 1px solid rgba(120, 139, 149, 0.2);
+    padding: 0.75rem 0.9rem;
+    color: var(--text-silver);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-textarea {
+    min-height: 110px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    border-color: var(--focus-cyan);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: rgba(120, 139, 149, 0.6);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.form-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.form-error {
+    background-color: rgba(229, 57, 53, 0.08);
+    border: 1px solid rgba(229, 57, 53, 0.35);
+    color: var(--danger-rose);
+    border-radius: 4px;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+    text-align: left;
+}
+
+.form-success {
+    background-color: rgba(46, 204, 113, 0.07);
+    border: 1px solid rgba(46, 204, 113, 0.35);
+    color: var(--success-mint);
+    border-radius: 4px;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+    text-align: left;
+}
+
+.link {
+    color: var(--copper);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.link:hover {
+    color: var(--focus-cyan);
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+}
+
+/* =========================================
+   TAGS & BADGES
+   ========================================= */
+.tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.22rem 0.55rem;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.tag-level {
+    background-color: rgba(255, 179, 0, 0.1);
+    border: 1px solid rgba(255, 179, 0, 0.3);
+    color: var(--level-amber);
+}
+
+.tag-lineage {
+    background-color: #102C36;
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    color: var(--text-bright);
+}
+
+.tag-talent {
+    background-color: rgba(90, 45, 130, 0.45);
+    border: 1px solid rgba(157, 91, 255, 0.3);
+    color: rgba(234, 242, 248, 0.85);
+}
+
+.tag-muted {
+    background-color: rgba(234, 242, 248, 0.05);
+    border: 1px solid rgba(234, 242, 248, 0.15);
+    color: var(--text-muted);
+}
+
+.rank-pips {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.pip {
+    width: 5px;
+    height: 5px;
+    transform: rotate(45deg);
+    border: 1px solid rgba(120, 139, 149, 0.4);
+    background-color: transparent;
+}
+
+.rank-pips .pip:nth-child(1).filled { background-color: var(--rank-1-blue); border-color: var(--rank-1-blue); box-shadow: 0 0 6px rgba(74, 144, 226, 0.4); }
+.rank-pips .pip:nth-child(2).filled { background-color: var(--rank-2-purple); border-color: var(--rank-2-purple); box-shadow: 0 0 6px rgba(160, 64, 255, 0.5); }
+.rank-pips .pip:nth-child(3).filled { background-color: var(--rank-3-gold); border-color: var(--rank-3-gold); box-shadow: 0 0 6px rgba(255, 179, 0, 0.6); }
+
+/* =========================================
+   MODAL
+   ========================================= */
+/* A dialog never grows past the screen it is on. The backdrop used to scroll
+   a taller-than-viewport window, which put the cards below the fold and the
+   footer somewhere off the bottom; now the window is capped to the viewport,
+   the header and footer stay put, and only the body scrolls. */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(4, 8, 10, 0.82);
+    backdrop-filter: blur(4px);
+    z-index: var(--z-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1.25rem;
+    overflow: hidden;
+}
+
+.modal-window {
+    background-color: var(--panel-teal);
+    border: 1px solid rgba(200, 138, 75, 0.25);
+    border-top: 3px solid var(--copper);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100dvh - 3rem);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7);
+    animation: modal-in 0.16s ease-out;
+}
+
+.modal-window-wide {
+    max-width: 900px;
+}
+
+/* Wide enough for three cards at their real 360px footprint, side by side. */
+.modal-window-page {
+    max-width: 1180px;
+}
+
+@keyframes modal-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--hairline);
+    flex-shrink: 0;
+}
+
+.modal-header h2 {
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* The one part that scrolls. A wall of cards can run to any length without
+   ever pushing the title off the top or the take button off the bottom. */
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    /* Reserve the scrollbar track. Without it the bar is laid inside the
+       padding box and the content runs up under it. */
+    scrollbar-gutter: stable;
+    min-height: 0;
+    flex: 1;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.1rem 1.5rem;
+    border-top: 1px solid var(--hairline);
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.icon-btn {
+    background: rgba(234, 242, 248, 0.04);
+    border: 1px solid rgba(148, 167, 176, 0.25);
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.icon-btn:hover {
+    border-color: var(--copper);
+    color: var(--text-bright);
+    background-color: rgba(200, 138, 75, 0.15);
+}
+
+/* =========================================
+   UTILITIES
+   ========================================= */
+.muted { color: var(--text-muted); }
+.center { text-align: center; }
+.stack { display: flex; flex-direction: column; gap: 1rem; }
+.row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.spacer { flex-grow: 1; }
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    border: 2px dashed rgba(120, 139, 149, 0.2);
+    border-radius: 6px;
+}
+
+.loading-veil {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    color: var(--text-muted);
+    font-family: var(--font-headings);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+/* Skull that sits beside the name of a character whose health has hit
+   −health_max. Shared by the sheet and the dashboard cards. */
+.dead-mark {
+    display: inline-flex;
+    vertical-align: -0.16em;
+    margin-right: 0.35rem;
+    color: var(--danger-red);
+}
+
+.skull-icon {
+    width: 1em;
+    height: 1em;
+    filter: drop-shadow(0 0 5px rgba(229, 57, 53, 0.55));
+}
+
+@media (max-width: 640px) {
+    .container { padding: 0 1.25rem; }
+    .heading-hero { font-size: 2.5rem; }
+}
+
+/* ---------- CHOICE BUTTONS ----------
+   Copper is the site's primary — "create a character", "save". It is not the
+   right colour for a *choice*, because every choice was wearing it and none of
+   them read as belonging to anything.
+
+   A choice now wears the colour of the thing it chooses. `--pick-accent` is set
+   by the panel the choice lives in (and carried into the dialog it opens), so
+   every control inside the Background pick is cyan, everything inside Lineage
+   violet, everything inside Talents amber. Three shades of the same idea:
+
+     .btn-pick   outlined  — make (or change) the choice this panel is for
+     .btn-sub    quiet     — a smaller decision *inside* one already made
+     .btn-take   filled    — commit, and only ever in a dialog's footer
+*/
+.btn-pick {
+    background: transparent;
+    border-color: color-mix(in srgb, var(--pick-accent, var(--copper)) 55%, transparent);
+    color: var(--pick-accent, var(--copper));
+}
+
+.btn-pick:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--pick-accent, var(--copper)) 12%, transparent);
+    border-color: var(--pick-accent, var(--copper));
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--pick-accent, var(--copper)) 22%, transparent);
+}
+
+.btn-sub {
+    background: transparent;
+    border-color: rgba(148, 167, 176, 0.28);
+    color: var(--text-silver);
+    font-size: 0.76rem;
+    letter-spacing: 0.6px;
+}
+
+.btn-sub:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--pick-accent, var(--copper)) 60%, transparent);
+    color: var(--pick-accent, var(--copper));
+}
+
+.btn-take {
+    background-color: var(--pick-accent, var(--copper));
+    color: var(--bg-black);
+    border-color: var(--pick-accent, var(--copper));
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--pick-accent, var(--copper)) 25%, transparent);
+}
+
+.btn-take:hover:not(:disabled) {
+    box-shadow: 0 6px 22px color-mix(in srgb, var(--pick-accent, var(--copper)) 45%, transparent);
+    filter: brightness(1.1);
+}
+
+.btn-pick:disabled,
+.btn-sub:disabled,
+.btn-take:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

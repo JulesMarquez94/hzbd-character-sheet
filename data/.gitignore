@@ -1,0 +1,7 @@
+# Sheet drops are local only. Never commit game data pulled out of Google Sheets.
+*.csv
+*.tsv
+*.xlsx
+
+# The templates and the schema notes are the importer's contract, so they stay tracked.
+!templates/*.csv

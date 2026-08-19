@@ -1,0 +1,40 @@
+id,Name,Tags,AP,WP,Main Effect,Image
+move,Move,"Basic Action, Movement",1,,You move a distance up to your **Movement Speed**: [[speed]] meters.,
+jump,Jump,"Basic Action, Movement",2,,"You jump a distance up to your **Movement Speed**, [[speed]] meters, and a height equal to your own **height**.",
+climb,Climb,"Basic Action, Movement",1,,"You climb a vertical surface a distance up to **half your Movement Speed**.
+
+Your Game Master might ask for a roll, depending on what you are climbing.",
+investigate,Investigate,Basic Action,2,,"While in combat, you attempt to ascertain the weakness or the strength of an enemy, or to find a weak point or a hazard in the place you are fighting in.
+
+Make a **{mind}** {roll:mind} or **{instinct}** {roll:instinct} roll against an enemy entity’s **Grit**, or against an environment difficulty rating your Game Master sets.
+
+On a success you learn something worth knowing: what could help you in this fight, or the strengths and the weaknesses of the foe.",
+interact,Interact,Basic Action,X,,"You interact with an object or with your surroundings: opening a door, pulling a lever, picking something up off the floor.
+
+What it costs in **Action Points** is the Game Master’s to set.",
+hide,Hide,"Basic Action, Cunning",2,,"If no enemy has **line of sight** on you, you may attempt to hide with an **{instinct} roll** {roll:instinct} against the **Grit** of every enemy.
+
+Every enemy whose **Grit** you beat loses sight of you.
+
+On their turn they use {{Investigate}} to attempt to find you.",
+grapple,Grapple,Basic Action,2,,"You attempt to restrain an entity within your **reach**.
+
+Make a **{physique} roll** {roll:physique} against the target’s **Reflex**.
+
+On a success, the target is **grappled**.",
+shove,Shove,Basic Action,2,,"You use force to push an entity **you can touch** away from you.
+
+Make a **{physique} attack roll** {roll:physique} against the target.
+
+On a hit, you push the target back **1.5 meters (3 feet)** or knock it **prone**.",
+anticipate,Anticipate,"Basic Action, Reaction",X,,"You give up the initiative and wait on someone else instead.
+
+Convert any number of **Action Points** into **Reaction Points**, one for one. Nothing is spent by this: the points move from one pool to the other, and no pool may pass its own maximum.",
+stabilize,Stabilize,Basic Action,4,,"You attempt to stabilize a dying entity within your **reach**.
+
+Make a **{mind} roll** {roll:mind} against the target’s negative **Health** divided by **5**.
+
+On a success they are no longer dying and sit at **0 Health**. They remain **unconscious** until healed.",
+inventory,Inventory,Basic Action,4,,"You retrieve, stow or swap an item stored in your **pack**.
+
+Items on your **belt** can be reached freely. Getting into your pack is what this action costs.",

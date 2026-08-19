@@ -1,0 +1,170 @@
+.auth-page {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 4rem 1.5rem 5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-page::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(90, 45, 130, 0.13) 0%, rgba(9, 17, 21, 0) 70%);
+  pointer-events: none;
+}
+
+.auth-card {
+  background-color: var(--panel-teal);
+  border-top: 3px solid var(--copper);
+  border-bottom: 1px solid rgba(200, 138, 75, 0.1);
+  width: 100%;
+  max-width: 460px;
+  padding: 2.75rem 2.5rem;
+  border-radius: 6px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  z-index: 1;
+  text-align: center;
+}
+
+.auth-header {
+  margin-bottom: 2rem;
+}
+
+.auth-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--haze-purple);
+  box-shadow: 0 0 15px rgba(90, 45, 130, 0.4);
+  margin-bottom: 1rem;
+}
+
+.auth-header h1 {
+  font-size: 1.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.auth-header p {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 0.25rem;
+}
+
+.auth-options {
+  display: flex;
+  justify-content: flex-end;
+  margin: -0.35rem 0 1.5rem;
+  font-size: 0.85rem;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.terms-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  user-select: none;
+  line-height: 1.45;
+  text-align: left;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 1.75rem;
+}
+
+.terms-row input {
+  accent-color: var(--copper);
+  cursor: pointer;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.auth-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(120, 139, 149, 0.1);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------- POST-SIGNUP CONFIRMATION ---------- */
+.confirm-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.confirm-badge {
+  width: 56px;
+  height: 56px;
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid var(--focus-cyan);
+  color: var(--focus-cyan);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+}
+
+.confirm-state p {
+  color: var(--text-muted);
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+
+.confirm-email {
+  color: var(--text-silver);
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .auth-card { padding: 2rem 1.5rem; }
+}
+
+/* ---------- ACCOUNT TIER ----------
+   What kind of account this is. Read-only: a tier is set by an admin, and the
+   database refuses it any other way (see guard_account_tier in schema.sql). */
+.tier-line {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.tier-badge {
+  padding: 0.15rem 0.55rem;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-family: var(--font-headings);
+  font-size: 0.7rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.tier-free { color: var(--text-muted); }
+.tier-premium { color: var(--level-amber); }
+.tier-friend { color: var(--def-healing); }
+.tier-admin { color: var(--haze-glow); }

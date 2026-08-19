@@ -1,100 +1,78 @@
-import { useState, useEffect } from 'react'
-import CharacterSheet from './components/CharacterSheet'
-import Auth from './components/Auth'
-import { supabase } from './supabaseClient'
+import { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.jsx';
+import Header from './components/Header.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
-function App() {
-  const [session, setSession] = useState(null)
-  const [characters, setCharacters] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [activeCharacterId, setActiveCharacterId] = useState(null)
-  const [activeTab, setActiveTab] = useState('character')
+import Landing from './pages/Landing.jsx';
+import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+// The sheet and its codex are most of the bundle. Loading them on demand keeps
+// the public pages light: a visitor on the landing page never downloads them.
+const Codex = lazy(() => import('./pages/Codex.jsx'));
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
+const CharacterSheet = lazy(() => import('./pages/CharacterSheet.jsx'));
+const Account = lazy(() => import('./pages/Account.jsx'));
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  useEffect(() => {
-    async function fetchCharactersFromCloud() {
-      if (!session) return;
-
-      setLoading(true)
-      const { data, error } = await supabase.from('characters').select('*')
-      
-      if (error) {
-        console.error("❌ Database connection error:", error.message)
-      } else if (data) {
-        setCharacters(data)
-      }
-      setLoading(false)
-    }
-
-    fetchCharactersFromCloud()
-  }, [session])
-
-  const activeCharacter = characters.find(char => char.id === activeCharacterId)
-
-  async function handleSignOut() {
-    await supabase.auth.signOut()
-    setActiveCharacterId(null)
-  }
-
-  if (session && loading) {
-    return <div>🔮 Loading heroes from the cloud...</div>
-  }
-
-  return (
-    <>
-      {!session ? (
-        <Auth />
-      ) : (
-        <>
-          <div>
-            <span>Logged in as: <strong>{session.user.email}</strong></span>
-            <button onClick={handleSignOut}>
-              Log Out
-            </button>
-          </div>
-
-          {activeCharacterId === null ? (
-            <div>
-              <h1>Hello, Vite!</h1>
-              
-              {characters.length === 0 ? (
-                <p>No heroes found. Your custom database table is empty!</p>
-              ) : (
-                characters.map((character) => (
-                  <div key={character.id}>
-                    <h2>{character.name}</h2>
-                    <p>Level: {character.level}</p>
-                    <p>Notes: {character.note}</p>
-                    <button onClick={() => setActiveCharacterId(character.id)}>
-                      View Sheet
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          ) : (
-            <CharacterSheet 
-              activeCharacter={activeCharacter}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              setActiveCharacterId={setActiveCharacterId}
-            />
-          )}
-        </>
-      )}
-    </>
-  )
+/**
+ * The router keeps one mounted element across `/characters/A` ->
+ * `/characters/B`, which would leave A's sheet — pending autosaves, fold
+ * state, the lot — live under B's URL while B loads, and let a stray click
+ * write A's numbers onto B's row. Keying by id remounts the sheet fresh for
+ * every character.
+ */
+function SheetRoute(props) {
+  const { id } = useParams();
+  return <CharacterSheet key={id} {...props} />;
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Header />
+
+        <Suspense fallback={<div className="loading-veil">Unrolling the sheet…</div>}>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Signup />} />
+            <Route path="/codex" element={<Codex />} />
+
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            {/* Public: anyone with the link can read a sheet. Editing is gated
+                inside the component (and by RLS). */}
+            <Route path="/characters/:id" element={<SheetRoute />} />
+            {/* The same sheet with the tabs off: level-1 choices, then lore. */}
+            <Route
+              path="/characters/:id/new"
+              element={
+                <ProtectedRoute>
+                  <SheetRoute creating />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute>
+                  <Account />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

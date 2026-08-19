@@ -1,0 +1,756 @@
+/* =========================================================
+   HAZEBOUND ABILITY CARD
+
+   The printed cards' anatomy — art plate, chevron type-banner,
+   cost orbs, rules text — cut in the site's own materials:
+   teal-black panel, hairline edge, and one accent colour per
+   kind of card. Copper for what you do with your hands, violet
+   for what magic does, amber for what you have learned.
+
+   A card is one size everywhere it is printed — the same 360x640 a block on
+   the Character tab takes. It never stretches to its column and never shrinks
+   to a phone: what gives instead is the type inside it, which every card fits
+   to its own box. Layouts put as many across as will go and scroll the rest.
+   ========================================================= */
+
+.ability-card {
+  --ac-accent: var(--copper);
+  --ac-accent-soft: rgba(200, 138, 75, 0.22);
+
+  position: relative;
+  width: var(--block-w);
+  height: var(--block-h);
+  flex: none;
+  background:
+    radial-gradient(120% 60% at 50% 100%, rgba(9, 17, 21, 0.9) 0%, transparent 70%),
+    linear-gradient(172deg, #17272F 0%, #0D1A20 100%);
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  /* The accent caps the card the way a purple edge caps every block on the
+     sheet — it is how a Hazebound panel starts. */
+  border-top: 2px solid color-mix(in srgb, var(--ac-accent) 65%, transparent);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.6),
+    0 0 30px -18px var(--ac-accent),
+    inset 0 0 0 1px rgba(9, 17, 21, 0.6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  color: var(--text-silver);
+}
+
+/* Magic — spells and the enchantments laid on gear. */
+.ac-kind-spell,
+.ac-kind-passive {
+  --ac-accent: var(--haze-glow);
+  --ac-accent-soft: rgba(157, 91, 255, 0.22);
+}
+
+/* What a character has learned rather than what they carry. */
+.ac-kind-talent {
+  --ac-accent: var(--level-amber);
+  --ac-accent-soft: rgba(255, 179, 0, 0.2);
+}
+
+.ac-kind-skill {
+  --ac-accent: var(--focus-cyan);
+  --ac-accent-soft: rgba(0, 229, 255, 0.18);
+}
+
+/* What hangs on the belt. Green is what you carry and spend — the colour the
+   pack chip and the charge dots already wear. */
+.ac-kind-item {
+  --ac-accent: var(--def-healing);
+  --ac-accent-soft: rgba(46, 204, 113, 0.2);
+}
+
+.ability-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--ac-accent-soft);
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(9, 17, 21, 0.6);
+}
+
+/* Transparent overlay so the whole card is clickable without nesting
+   interactive elements inside a <button>. */
+.ac-hitbox {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ac-hitbox:focus-visible {
+  outline: 3px solid var(--focus-cyan);
+  outline-offset: -3px;
+}
+
+/* ---------- ART PLATE ---------- */
+/* Art is 4 wide by 3 high on every card. */
+.ac-art {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background-color: var(--art-ground);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* The art doesn't stop at a hard line — it sinks into the card, the way the
+   haze does everywhere else on the site. */
+.ac-art::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 34%;
+  z-index: 1;
+  background: linear-gradient(to bottom, transparent 0%, rgba(13, 26, 32, 0.75) 65%, #0D1A20 100%);
+  pointer-events: none;
+}
+
+/* No art yet — the plate keeps its 4:3 window and fills it with haze. The
+   window is the card's proportion and never gives: what gives is the type
+   below it, which fits itself to whatever room is left. */
+.ac-art-empty {
+  background-image:
+    radial-gradient(circle at 30% 25%, rgba(157, 91, 255, 0.35), transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(0, 229, 255, 0.18), transparent 55%),
+    var(--art-haze);
+}
+
+.ac-art-empty::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.025) 0 2px,
+    transparent 2px 8px
+  );
+}
+
+/* ---------- COST ORBS ----------
+   One filled orb per resource with the number in it: gold for Action Points,
+   violet for Willpower. Used on the card and beside abilities on the sheet. */
+.ac-costs {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: flex-end;
+}
+
+/* No frame — a lit disc of the resource's own colour, the way the Action
+   Point pips read on the Character tab, with the number in white on top. */
+.cost-orb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: var(--font-headings);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-bright);
+  /* An outline rather than a drop shadow: the numeral keeps its edge on any
+     of the resource colours. */
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.9),
+    0 1px 1px rgba(0, 0, 0, 0.85),
+    0 -1px 1px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- SPARKLE MARK ---------- */
+.ac-spark {
+  position: absolute;
+  bottom: 22px;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  color: var(--ac-accent);
+  opacity: 0.9;
+  filter: drop-shadow(0 0 6px currentColor);
+  z-index: 2;
+}
+
+/* ---------- TYPE BANNER ----------
+   The banner straddles the seam: half of it over the art, half over the
+   rules text, so the two halves of the card read as one plate. It is a
+   rectangle with a point on each end — the same plaque on every card, not an
+   arrow pointing anywhere. */
+.ac-banner {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+  width: 82%;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ac-accent) 26%, #1B2C36) 0%,
+      color-mix(in srgb, var(--ac-accent) 12%, #0F1D24) 100%);
+  clip-path: polygon(5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%, 0 50%);
+  padding: 0.42rem 1.5rem;
+  text-align: center;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.6));
+}
+
+/* One line, always — useFitLine steps the lettering down rather than letting
+   a long banner wrap and buckle the plaque. */
+.ac-banner span {
+  font-family: var(--font-card-display);
+  font-size: calc(0.95rem * var(--ac-line-fit, 1));
+  letter-spacing: calc(1.4px * var(--ac-line-fit, 1));
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--ac-accent) 45%, var(--text-silver));
+  text-transform: uppercase;
+  line-height: 1.2;
+  display: inline-block;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* ---------- RULES TEXT ---------- */
+/* The extra top padding is the half-banner hanging over this half. */
+.ac-body {
+  padding: 1.5rem 0.8rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex-grow: 1;
+  min-height: 0;
+  /* The last resort for a card too dense even at the smallest readable type.
+     Everything that fits is fitted first — see useFitText. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* A card name is set at ONE size on every card. It deliberately does not ride
+   --ac-fit: tying it to the body made a dense card print a small name and a
+   sparse card a large one, so no two cards agreed. The rules text absorbs all
+   of the shrinking instead, and a long name wraps rather than shrinking. */
+.ac-title {
+  position: relative;
+  font-family: var(--font-card-display);
+  font-size: 1.72rem;
+  line-height: 1.05;
+  color: var(--text-silver);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0.15rem 0 0.75rem;
+  padding-bottom: calc(0.55rem * var(--ac-fit, 1));
+  word-break: break-word;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+/* The accent rule under a heading, the way the sheet divides its sections. */
+.ac-title::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--ac-accent), transparent);
+  opacity: 0.85;
+}
+
+.ac-title-sub {
+  font-size: 1.34rem;
+  margin-top: calc(1rem * var(--ac-fit, 1));
+}
+
+.ac-text p {
+  font-family: var(--font-body);
+  font-size: calc(0.92rem * var(--ac-fit, 1));
+  line-height: 1.5;
+  /* Rules text is what a card is *for* — kept near full brightness so a dealt
+     card reads at arm's length rather than only up close. */
+  color: rgba(234, 242, 248, 0.94);
+  margin-bottom: calc(0.7rem * var(--ac-fit, 1));
+}
+
+.ac-text p:last-child {
+  margin-bottom: 0;
+}
+
+/* Emphasis is weight and nothing else. Colour belongs to keywords now — see
+   src/lib/keywords.js — and a card where everything is coloured has nothing
+   highlighted at all. */
+.ac-text strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+/* ---------- ROW OF SMALL BUTTONS UNDER THE CARD ---------- */
+.ac-actions {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  padding: 0.55rem 0.7rem;
+  background-color: rgba(9, 17, 21, 0.6);
+  border-top: 1px solid rgba(148, 167, 176, 0.15);
+}
+
+/* ---------- LIVE VALUES, LINKS & FOOTER ---------- */
+/* A number worked out from the holder's own attributes. Tapping it opens the
+   card that shows where it came from. */
+.ac-value {
+  font: inherit;
+  font-weight: 800;
+  color: var(--text-silver);
+  background-color: var(--ac-accent-soft);
+  border: none;
+  border-bottom: 1px dashed var(--ac-accent);
+  border-radius: 3px;
+  padding: 0 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ac-value:hover,
+.ac-value:focus-visible {
+  background-color: color-mix(in srgb, var(--ac-accent) 38%, transparent);
+  color: var(--text-bright);
+  outline: none;
+}
+
+.ac-value-flat {
+  cursor: default;
+  border-bottom: none;
+}
+
+/* The bonus on a roll rides alongside the phrase that asks for it rather than
+   standing in for a number in the sentence, so it is set quieter and tighter
+   than a live value. */
+.ac-roll {
+  font-size: 0.92em;
+  padding: 0 3px;
+  background-color: transparent;
+  border: 1px solid var(--ac-accent-soft);
+  color: var(--text-silver);
+}
+
+/* A term that has a card of its own. Violet, because what it opens is always
+   a working or a spell. */
+.ac-link {
+  font: inherit;
+  font-weight: 800;
+  color: var(--haze-glow);
+  background: none;
+  border: none;
+  border-bottom: 1px dashed rgba(157, 91, 255, 0.6);
+  padding: 0;
+  cursor: pointer;
+}
+
+.ac-link:hover,
+.ac-link:focus-visible {
+  color: var(--haze-lilac);
+  border-bottom-color: var(--haze-lilac);
+  outline: none;
+}
+
+.ac-stat {
+  font-weight: 800;
+}
+
+/* A damage type, in its colour from the design tokens, with the faint glow
+   the sheet gives anything lit. */
+.dmg-word {
+  font-weight: 800;
+  white-space: nowrap;
+  text-shadow: 0 0 12px color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.ac-foot {
+  margin-top: auto;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(148, 167, 176, 0.18);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.ac-foot b {
+  font-family: var(--font-headings);
+  font-size: 0.85rem;
+  color: var(--ac-accent);
+}
+
+/* =========================================================
+   THE CARD STACK
+   Cards dealt on top of the sheet, each one closing on its
+   own × or with Escape.
+   ========================================================= */
+.card-stack {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay-top);
+  background-color: rgba(4, 8, 10, 0.82);
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+
+.card-window {
+  position: absolute;
+  /* Centred vertically while there is room for a whole card, and pinned near
+     the top — with the pile scrolling — once the screen is shorter than one.
+     A card never gives up its height to fit a window. */
+  top: max(1.5rem, calc(50% - var(--block-h) / 2));
+  left: 50%;
+  width: var(--block-w);
+  transform: translate(calc(-50% + var(--depth) * 18px), calc(var(--depth) * 16px));
+  animation: card-deal 0.16s ease-out;
+}
+
+@keyframes card-deal {
+  from { opacity: 0; transform: translate(calc(-50% + var(--depth) * 18px), calc(var(--depth) * 16px + 22px)); }
+}
+
+/* Cards buried under the top one stay readable but step back. */
+.card-window:not(.is-top) {
+  filter: brightness(0.72) saturate(0.85);
+}
+
+.card-window .ability-card:hover {
+  transform: none;
+}
+
+.card-window-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 10;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #08090B;
+  background-color: var(--panel-teal);
+  color: var(--text-silver);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.card-window-close:hover {
+  background-color: var(--danger-red);
+  color: var(--text-bright);
+}
+
+/* ---------- THE ITEM ITSELF ----------
+   Not a card the game prints — the long look at a piece of gear: what it
+   does, what has been worked into it, what it teaches, and where it came
+   from. Every name in it opens on top. */
+.item-card {
+  display: flex;
+  flex-direction: column;
+  max-height: min(560px, calc(100vh - 4rem));
+  background-color: var(--panel-teal);
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  border-top: 3px solid var(--copper);
+  border-radius: 6px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7);
+}
+
+.item-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--hairline);
+  flex-shrink: 0;
+}
+
+.item-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.item-card-title h3 {
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  color: var(--text-silver);
+}
+
+.item-card-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 1rem;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.item-card-blurb {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.item-card-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.item-card-effect {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.item-card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.7rem;
+}
+
+.item-card-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+.item-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  list-style: none;
+}
+
+.item-card-list li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.item-card-link {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--haze-glow);
+  background: none;
+  border: none;
+  border-bottom: 1px dashed rgba(157, 91, 255, 0.6);
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.item-card-link:hover {
+  color: var(--haze-lilac);
+}
+
+/* Violet is the colour of Magic Burden, so it stays on the workings; the
+   cards an item teaches are copper like every other ability on the sheet. */
+.item-card-link-card {
+  color: var(--copper);
+  border-bottom-color: rgba(200, 138, 75, 0.6);
+}
+
+.item-card-link-card:hover {
+  color: var(--copper-bright);
+}
+
+.item-card-note {
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  flex: 1 1 100%;
+}
+
+.item-card-costs {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.item-card-lore p {
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.item-card-lore p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- THE WORKING BEHIND A VALUE ---------- */
+.value-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: var(--panel-teal);
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  border-top: 3px solid var(--copper);
+  border-radius: 6px;
+  padding: 1rem 1.1rem 0.9rem;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7);
+}
+
+.value-card-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.value-card-total {
+  font-family: var(--font-card-display);
+  font-size: 1.9rem;
+  line-height: 1;
+  color: var(--text-silver);
+}
+
+.value-card-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.value-card-parts li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 6px;
+}
+
+.value-part-num {
+  font-family: var(--font-headings);
+  font-size: 0.95rem;
+  color: var(--text-silver);
+  min-width: 42px;
+}
+
+.value-part-detail {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.value-card-source {
+  font-family: var(--font-headings);
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(120, 139, 149, 0.6);
+}
+
+/* There is no compact variant: one card, one size, one set of type sizes
+   everywhere. A card that has more to say fits its own text down — it never
+   gets a smaller box to say it in. */
+
+/* =========================================================
+   KEYWORDS — the words on a card that mean something exact
+
+   Emphasis is weight; a keyword is colour. Only defined terms
+   are lit, which is the whole point: three coloured words on a
+   card get read, thirty are wallpaper. The registry and every
+   explanation live in src/lib/keywords.js.
+   ========================================================= */
+.ac-kw {
+  /* Set inline, per keyword, from the registry. */
+  color: var(--kw-color, var(--copper));
+  font: inherit;
+  font-weight: 700;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: help;
+  /* A dotted rule under the word rather than a box around it: the text has to
+     stay a sentence, not become a row of chips. */
+  border-bottom: 1px dotted color-mix(in srgb, var(--kw-color, var(--copper)) 55%, transparent);
+  /* The words must break with the prose they sit inside. */
+  display: inline;
+  text-align: inherit;
+  line-height: inherit;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.ac-kw:hover,
+.ac-kw:focus-visible {
+  border-bottom-color: var(--kw-color, var(--copper));
+  text-shadow: 0 0 10px color-mix(in srgb, var(--kw-color, var(--copper)) 45%, transparent);
+  outline: none;
+}
+
+/* ---------- the explanation ----------
+   Portalled to the body, because a dealt card is a stacked, transformed window
+   with its own clipped edge — anything drawn inside it would be cut off. */
+.kw-tip {
+  position: fixed;
+  /* Above the card stack (2100), which is itself above a modal (2000) — a
+     keyword is read on a card that is already on top of everything else. */
+  z-index: var(--z-tip);
+  transform: translate(-50%, -100%);
+  width: max-content;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--kw-color, var(--copper)) 45%, transparent);
+  border-left: 2px solid var(--kw-color, var(--copper));
+  border-radius: 4px;
+  background-color: rgba(6, 12, 15, 0.97);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  text-align: left;
+}
+
+/* Not enough headroom above the word — the bubble drops under it instead. */
+.kw-tip.flip {
+  transform: translate(-50%, 0);
+}
+
+.kw-tip-term {
+  font-family: var(--font-headings);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--kw-color, var(--copper));
+}
+
+.kw-tip-detail {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text-silver);
+}
