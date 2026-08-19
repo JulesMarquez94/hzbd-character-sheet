@@ -97,19 +97,14 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
   return (
     <CardStackProvider character={character}>
       <div className="abilities-tab">
-        <Overview overview={overview} sources={sources.length} />
-
-        {sources.length > 1 && !readOnly && patch && (
-          <div className="sheet-arrange-bar">
-            <button
-              type="button"
-              className="btn btn-minimal btn-sm"
-              onClick={() => setArranging(true)}
-            >
-              Arrange blocks
-            </button>
-          </div>
-        )}
+        {/* The arrange button rides the end of the overview line rather than
+            taking a row of its own beneath it — see the note over
+            .sheet-arrange-bar in sheet.css. */}
+        <Overview
+          overview={overview}
+          sources={sources.length}
+          onArrange={sources.length > 1 && !readOnly && patch ? () => setArranging(true) : null}
+        />
 
         {arranging && (
           <BlockArrange
@@ -173,31 +168,51 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
  * below already answer "where from", and the question this answers is the other
  * one. Passives get their own number because they are the half of a sheet
  * nobody remembers they have.
+ *
+ * The line ends with that number and with the arrange button, grouped: one
+ * right-hand end to the header rather than two, at one width rather than two.
  */
-function Overview({ overview, sources }) {
-  if (overview.total === 0) return null;
+function Overview({ overview, sources, onArrange }) {
+  const counted = overview.total > 0;
+  const end = overview.passive > 0 || Boolean(onArrange);
+
+  if (!counted && !end) return null;
 
   return (
     <div className="abilities-overview">
-      <span className="abilities-total">
-        <span className="abilities-total-n">{overview.total}</span>
-        <span className="abilities-total-label">
-          {overview.total === 1 ? 'ability' : 'abilities'} from {sources}{' '}
-          {sources === 1 ? 'source' : 'sources'}
-        </span>
-      </span>
-
-      <span className="abilities-kinds">
-        {overview.kinds.map((kind) => (
-          <span className={`abilities-kind ac-kind-${kind.id}`} key={kind.id}>
-            <b>{kind.count}</b> {kind.count === 1 ? kind.label : kind.plural}
+      {counted && (
+        <>
+          <span className="abilities-total">
+            <span className="abilities-total-n">{overview.total}</span>
+            <span className="abilities-total-label">
+              {overview.total === 1 ? 'ability' : 'abilities'} from {sources}{' '}
+              {sources === 1 ? 'source' : 'sources'}
+            </span>
           </span>
-        ))}
-      </span>
 
-      {overview.passive > 0 && (
-        <span className="abilities-passive" title="Always true of you. Nothing to spend, ever.">
-          {overview.passive} always on
+          <span className="abilities-kinds">
+            {overview.kinds.map((kind) => (
+              <span className={`abilities-kind ac-kind-${kind.id}`} key={kind.id}>
+                <b>{kind.count}</b> {kind.count === 1 ? kind.label : kind.plural}
+              </span>
+            ))}
+          </span>
+        </>
+      )}
+
+      {end && (
+        <span className="overview-end">
+          {overview.passive > 0 && (
+            <span className="abilities-passive" title="Always true of you. Nothing to spend, ever.">
+              {overview.passive} always on
+            </span>
+          )}
+
+          {onArrange && (
+            <button type="button" className="btn btn-minimal btn-sm" onClick={onArrange}>
+              Arrange blocks
+            </button>
+          )}
         </span>
       )}
     </div>

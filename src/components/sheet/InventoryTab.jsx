@@ -117,19 +117,13 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
   return (
     <CardStackProvider character={character}>
       <div className="inventory-tab">
-        <Overview overview={overview} />
-
-        {!readOnly && patch && (
-          <div className="sheet-arrange-bar">
-            <button
-              type="button"
-              className="btn btn-minimal btn-sm"
-              onClick={() => setArranging(true)}
-            >
-              Arrange blocks
-            </button>
-          </div>
-        )}
+        {/* The arrange button rides the end of the overview line, the way the
+            Abilities tab's does — see the note over .sheet-arrange-bar in
+            sheet.css. */}
+        <Overview
+          overview={overview}
+          onArrange={!readOnly && patch ? () => setArranging(true) : null}
+        />
 
         {arranging && (
           <BlockArrange
@@ -168,10 +162,11 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
  *
  * Three of the four places have a ceiling and say so; the pack, which has
  * none, reports a bare count. Burden is the one number here that can be
- * *wrong*, so it sits at the end on its own, the way the Abilities tab's
- * always-on count does.
+ * *wrong*, so it sits at the end, the way the Abilities tab's always-on count
+ * does — sharing that end with the arrange button rather than leaving it a row
+ * of its own underneath.
  */
-function Overview({ overview }) {
+function Overview({ overview, onArrange }) {
   const { burden } = overview;
 
   return (
@@ -195,15 +190,23 @@ function Overview({ overview }) {
         ))}
       </span>
 
-      <span
-        className={`inv-burden${burden.over > 0 ? ' is-over' : ''}`}
-        title={
-          burden.over > 0
-            ? `Overburdened by ${burden.over}. Shed some worn magic.`
-            : 'Magic Burden across everything worn, held and clipped on.'
-        }
-      >
-        {burden.used} / {burden.max} burden
+      <span className="overview-end">
+        <span
+          className={`inv-burden${burden.over > 0 ? ' is-over' : ''}`}
+          title={
+            burden.over > 0
+              ? `Overburdened by ${burden.over}. Shed some worn magic.`
+              : 'Magic Burden across everything worn, held and clipped on.'
+          }
+        >
+          {burden.used} / {burden.max} burden
+        </span>
+
+        {onArrange && (
+          <button type="button" className="btn btn-minimal btn-sm" onClick={onArrange}>
+            Arrange blocks
+          </button>
+        )}
       </span>
     </div>
   );

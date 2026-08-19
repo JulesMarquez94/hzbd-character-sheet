@@ -206,6 +206,18 @@ body.sheet-fixed #root {
 
 /* ---------- CANVAS ---------- */
 .sheet-canvas {
+  /* THE MEASURE — the width the grid below actually takes at this breakpoint:
+     the blocks across it, plus the gaps between them. Every row above the grid
+     is sized against this, so the counts, the arrange button and the filter all
+     begin and end on a block edge.
+
+     They used to be canvas-wide while the grid was centred inside the canvas,
+     which ran the overview and the filter 52px past the blocks on either side,
+     and left the arrange button — already grid-aligned — right-aligned to a
+     different edge than the count directly above it. Restated wherever the
+     column count changes, down in RESPONSIVE. */
+  --sheet-measure: calc(var(--block-w) * 3 + 32px);
+
   max-width: 1290px;
   width: 100%;
   margin: 0 auto;
@@ -318,13 +330,37 @@ body.sheet-fixed #root {
    a dead strip you could not scroll from, and dragging block 6 above block 1
    meant holding a finger at the edge through four screens of auto-scroll.
 
+   This row is the Character tab's alone. The Abilities and Inventory tabs open
+   with an overview line and hang the button off the end of that instead; a
+   button on a row of its own directly under a right-aligned count is two
+   right-aligned things at two different widths, which reads as one thing that
+   has come apart.
+
    See src/components/sheet/BlockArrange.jsx. */
 .sheet-arrange-bar {
   display: flex;
   justify-content: flex-end;
-  width: min(100%, calc(var(--block-w) * 3 + 32px));
+  width: min(100%, var(--sheet-measure));
   margin: 0 auto;
   flex: none;
+}
+
+/* The right-hand end of an overview line: the one number on it that can be
+   wrong, and the button that rearranges the blocks. They are grouped so they
+   share a single margin-left, rather than each finding its own way right on a
+   row of its own. */
+.overview-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+/* Trimmed to the scale of the line it sits on, which is 0.62rem micro-caps.
+   A full btn-sm made the overview taller than the number that leads it. */
+.overview-end .btn {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.64rem;
 }
 
 /* The list inside the modal. Six short rows, all of them on screen at once on
@@ -2041,8 +2077,11 @@ body.sheet-fixed #root {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.55rem 1.1rem;
-  padding: 0.15rem 0 0;
+  gap: 0.5rem 1.1rem;
+  /* One block edge to the other, and closed by the filter row's rule below. */
+  width: min(100%, var(--sheet-measure));
+  margin-inline: auto;
+  padding: 0.1rem 0 0;
 }
 
 .abilities-total {
@@ -2088,7 +2127,6 @@ body.sheet-fixed #root {
 }
 
 .abilities-passive {
-  margin-left: auto;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.7px;
@@ -2104,11 +2142,15 @@ body.sheet-fixed #root {
 .abilities-empty {
   font-size: 0.74rem;
   color: var(--text-muted);
-  margin: 0.2rem 0 0.5rem;
+  width: min(100%, var(--sheet-measure));
+  margin: 0.4rem auto 0.5rem;
 }
 
+/* Measured to the grid like the line above it, so the rule that closes the
+   header lands on the block edges rather than on the canvas padding. */
 .abilities-tab .tag-filter-bar {
-  margin-top: 0.45rem;
+  width: min(100%, var(--sheet-measure));
+  margin: 0.55rem auto 0;
 }
 
 .abilities-tab .sheet-grid-6 {
@@ -2133,8 +2175,14 @@ body.sheet-fixed #root {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.55rem 1.1rem;
-  padding: 0.15rem 0 0;
+  gap: 0.5rem 1.1rem;
+  width: min(100%, var(--sheet-measure));
+  margin-inline: auto;
+  /* This tab has no filter row under the overview, so the overview carries the
+     rule that closes the header itself: the same hairline on the same block
+     edges, so both tabs open the same way. */
+  padding: 0.1rem 0 0.7rem;
+  border-bottom: 1px solid rgba(148, 167, 176, 0.12);
 }
 
 .inv-tallies {
@@ -2185,7 +2233,6 @@ body.sheet-fixed #root {
 /* Burden is the one number here that can be wrong. The meter in the armor
    block is the readout; this is the alarm, visible from the inventory. */
 .inv-burden {
-  margin-left: auto;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.7px;
@@ -4439,6 +4486,9 @@ body.sheet-fixed #root {
   .sheet-grid-6 {
     grid-template-columns: repeat(2, var(--block-w));
   }
+  .sheet-canvas {
+    --sheet-measure: calc(var(--block-w) * 2 + 16px);
+  }
 }
 
 @media (max-width: 820px) {
@@ -4446,6 +4496,9 @@ body.sheet-fixed #root {
   .sheet-grid-6 {
     grid-template-columns: var(--block-w);
     gap: 12px;
+  }
+  .sheet-canvas {
+    --sheet-measure: var(--block-w);
   }
 
   /* Tab row and its desktop controls fold into the burger. */
@@ -4462,13 +4515,6 @@ body.sheet-fixed #root {
 
   /* No side padding — a 360px block wants the whole 360px screen. */
   .sheet-canvas { padding: 0.6rem 0 0.7rem; }
-
-  /* The grid centres itself in what is left, so the line above it lines up
-     with the block edge rather than the screen edge. */
-  .inventory-overview {
-    padding-left: 8px;
-    padding-right: 8px;
-  }
 
   .sheet-grid { grid-template-columns: minmax(0, 1fr); }
   .editor-split { grid-template-columns: 1fr; }
