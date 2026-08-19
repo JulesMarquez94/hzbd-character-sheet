@@ -10,7 +10,7 @@ import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { brewPreview } from '../../lib/brews.js';
-import { loadoutOf, rankPreview } from '../../lib/loadouts.js';
+import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
 import {
   TALENT_RANKS,
   cardsAtRank,
@@ -49,9 +49,10 @@ export default function TalentPick({
 }) {
   const [choosing, setChoosing] = useState(false);
   const [viewing, setViewing] = useState(null);
-  /* A set that lets you choose its cards asks the moment it is taken, and only
-     then. After that the choice is a button on the set, because the card that
-     grants those cards lets you swap them at every rest. */
+  /* A set that lets you choose its cards asks the moment the choice is bought:
+     when the set is taken, and again at every rank that widens the hand. After
+     that it is a button on the set, because the card that grants those cards
+     lets you swap them at every rest. */
   const [justTook, setJustTook] = useState(null);
 
   return (
@@ -118,13 +119,19 @@ export default function TalentPick({
           onTake={(id) => {
             patch({ talents: chooseAt(character.talents, slot.level, id) });
             setChoosing(false);
-            // Only on the way in. A set already held is ranking up, and its
-            // cards are chosen from the panel rather than pushed at you again.
-            /* Only a set that hands over a *hand* asks on the way in. A set that
-               brews chooses nothing now: a Brew is composed at the moment it is
-               used, so there is nothing to push at anybody here. */
-            const held = list.some((entry) => entry.id === id);
-            if (!held && loadoutOf(id)) setJustTook(id);
+            /* Whenever this level just bought you cards to choose, the pool
+               opens on top of the take rather than waiting to be found on the
+               block: a Rank 1 Mycomancer chooses four spells, and Rank 2 chooses
+               the two more it knows. A rank that only opens a tier without
+               widening the hand pushes nothing at you — you already have as many
+               spells as you can hold, and swapping them is a rest's business.
+
+               A set that brews chooses nothing at any rank: a Brew is composed
+               at the moment it is used, so there is nothing to push here. */
+            const spec = loadoutOf(id);
+            const held = list.find((entry) => entry.id === id);
+            const from = held ? held.taken.length : 0;
+            if (spec && knownAt(spec, from + 1) > knownAt(spec, from)) setJustTook(id);
           }}
           onClose={() => setChoosing(false)}
         />

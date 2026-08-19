@@ -39,7 +39,11 @@ import { appendLedger, formatNumber, newLedgerId } from '../../lib/characterMode
  *
  * Choosing the background is only the first of three steps, so the block is
  * built as three, each one plainly unfinished until it is done: pick the trade,
- * keep your skills, take your kit. The chooser writes the plain name into the
+ * keep your skills, take your kit. Taking a trade walks you straight through
+ * the other two rather than dropping you back on the sheet to find them: the
+ * skill pool opens the moment the trade is yours, and the outfitter opens when
+ * the skills are settled. Both are still buttons on the block afterwards, so
+ * changing your mind never means starting again. The chooser writes the plain name into the
  * character row's own `background` text column, the same one that predates this
  * codex — a name it does not recognise is shown as written rather than cleared,
  * because a table is free to invent its own.
@@ -52,9 +56,12 @@ import { appendLedger, formatNumber, newLedgerId } from '../../lib/characterMode
  * and nothing else.
  */
 export default function BackgroundPick({ character, patch, step = null, readOnly = false }) {
-  const [choosing, setChoosing] = useState(false);
-  const [picking, setPicking] = useState(false);
-  const [outfitting, setOutfitting] = useState(false);
+  /* Which window is open: the wall of trades, the skill pool, the outfitter, or
+     nothing. The walking flag says whether we got here by taking a trade a moment
+     ago, which is what decides whether closing one window opens the next. Opening
+     the skill pool from the block on its own closes back to the block. */
+  const [open, setOpen] = useState(null);
+  const [walking, setWalking] = useState(false);
   const codexArt = useCodexArt();
 
   const state = backgroundState(character);
@@ -69,7 +76,27 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
   function chooseBackground(next) {
     // Skills belong to the pool that offered them, so a new trade starts empty.
     patch({ background: next.name, background_skills: [] });
-    setChoosing(false);
+    /* Straight on to what the trade taught you. A kit cannot already be held
+       here — a held kit pins the background, see the pin above — so the walk
+       is always skills first, then the outfitter. */
+    setWalking(true);
+    setOpen(skillPicks(next) > 0 ? 'skills' : 'kit');
+  }
+
+  /* Closing the skill pool during the walk hands over to the outfitter; closing
+     it any other time is just closing it. */
+  function closeSkills() {
+    if (walking && !taken) {
+      setOpen('kit');
+      return;
+    }
+    setWalking(false);
+    setOpen(null);
+  }
+
+  function done() {
+    setWalking(false);
+    setOpen(null);
   }
 
   return (
@@ -116,7 +143,10 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
             character={character}
             patch={patch}
             readOnly={readOnly}
-            onOpen={() => setPicking(true)}
+            onOpen={() => {
+              setWalking(false);
+              setOpen('skills');
+            }}
             onCard={(skill) => stack?.openCard(skill)}
           />
 
@@ -125,7 +155,10 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
             character={character}
             patch={patch}
             readOnly={readOnly}
-            onOpen={() => setOutfitting(true)}
+            onOpen={() => {
+              setWalking(false);
+              setOpen('kit');
+            }}
           />
         </>
       ) : written ? (
@@ -148,7 +181,10 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
           <button
             type="button"
             className="btn btn-pick btn-sm"
-            onClick={() => setChoosing(true)}
+            onClick={() => {
+              setWalking(false);
+              setOpen('choose');
+            }}
             disabled={Boolean(pinned)}
             title={pinned ?? undefined}
           >
@@ -156,7 +192,11 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
           </button>
         )}
         {readOnly && background && (
-          <button type="button" className="btn btn-minimal btn-sm" onClick={() => setChoosing(true)}>
+          <button
+            type="button"
+            className="btn btn-minimal btn-sm"
+            onClick={() => setOpen('choose')}
+          >
             Read it
           </button>
         )}
@@ -176,33 +216,34 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
         )}
       </div>
 
-      {choosing && (
+      {open === 'choose' && (
         <BackgroundChooser
           current={background}
           character={character}
           readOnly={readOnly}
           onTake={chooseBackground}
-          onClose={() => setChoosing(false)}
+          onClose={done}
         />
       )}
 
-      {picking && background && (
+      {open === 'skills' && background && (
         <SkillChooser
           state={state}
           character={character}
           readOnly={readOnly}
+          walking={walking && !taken}
           onTake={(id) => patch({ background_skills: takeSkill(background, state.skillIds, id) })}
           onDrop={(id) => patch({ background_skills: dropSkill(background, state.skillIds, id) })}
-          onClose={() => setPicking(false)}
+          onClose={closeSkills}
         />
       )}
 
-      {outfitting && background && !taken && (
+      {open === 'kit' && background && !taken && (
         <KitOutfitter
           background={background}
           character={character}
           patch={patch}
-          onClose={() => setOutfitting(false)}
+          onClose={done}
         />
       )}
     </PickBlock>
@@ -850,7 +891,12 @@ function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
               <span className="talent-page-rank-label">
                 {shown.name} · Skills, keep {skillPicks(shown)} of {shown.skills.length}
               </span>
-              <span className="talent-page-rank-note">Chosen once, at level 1</span>
+              {/* What happens next, rather than when it happened. It used to
+                  read "Chosen once, at level 1" over a pool this page cannot
+                  pick from, which read as a choice nobody could find. */}
+              <span className="talent-page-rank-note">
+                {current?.id === shown.id ? 'Yours to change any time' : 'You pick them as you take it'}
+              </span>
             </div>
             <div className="card-brief-wall">
               {shown.skills.map((skill) => (
@@ -953,7 +999,7 @@ function KitPreview({ background }) {
  * paragraph of rules text — it has to be readable in full before it is chosen,
  * which is why these are cards at their real footprint and not a list of names.
  */
-function SkillChooser({ state, character, readOnly, onTake, onDrop, onClose }) {
+function SkillChooser({ state, character, readOnly, walking = false, onTake, onDrop, onClose }) {
   const stack = useCardStack();
   const { background, skillIds, picks, remaining } = state;
 
@@ -969,8 +1015,10 @@ function SkillChooser({ state, character, readOnly, onTake, onDrop, onClose }) {
             {skillIds.length} of {picks} chosen
           </span>
           <span className="spacer" />
+          {/* During the walk this button is the way on to the kit, and says so.
+              Opened on its own it only closes. */}
           <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
-            Done
+            {walking ? 'Next: your kit' : 'Done'}
           </button>
         </>
       }

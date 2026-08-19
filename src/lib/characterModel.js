@@ -185,7 +185,7 @@ export function normalizeSourceOrder(value, ids) {
  *
  *   Health max  = physique * 10 + level * 10
  *   Defense     = instinct, + gear   (a full armor set may swap the base:
- *                                     Light -> Reflex, Spelled -> Grit, and
+ *                                     Light -> Reflex, Magic -> Grit, and
  *                                     Heavy adds half of Armor on top)
  *   Armor       = gear only          (the summed `armor` of what is worn)
  *   Initiative  = instinct + level
@@ -212,14 +212,14 @@ export function deriveStats({ physique, instinct, mind, level, equipment }) {
   // flat bonus worn, plus Heavy Armor's half-Armor rider.
   let avoidBase = i;
   if (gear.fullSet === 'Light Armor') avoidBase = reflex;
-  if (gear.fullSet === 'Spelled Armor') avoidBase = grit;
+  if (gear.fullSet === 'Magic Armor') avoidBase = grit;
   let avoid = avoidBase + gear.defenseFlat;
   if (gear.fullSet === 'Heavy Armor') avoid += Math.floor(gear.armorTotal / 2);
 
   return {
     health_max,
     // A shield's base cap is never independently set — it's always half of
-    // health_max; worn gear (the Spelled Robe) can raise it by Mind.
+    // health_max; worn gear (the Supreme Runed set) can raise it by Mind.
     shield_cap: Math.floor(health_max / 2) + (gear.shieldCapMind ? m : 0),
     willpower_max: Math.floor(2 * lvl + 2 * m + 10),
     avoid: Math.floor(avoid),

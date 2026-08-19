@@ -9,7 +9,7 @@ import { ARMOR_SETS, RARITY_COLORS, itemBurden, itemCharges, rarityColor } from 
 /* ------------------------------------------------------------ stat colours */
 
 /**
- * Longest names first, so "Spelled Armor" (a set, deliberately uncoloured)
+ * Longest names first, so "Magic Armor" (a set, deliberately uncoloured)
  * wins before "Armor" (the stat) could bite into it. Matching is
  * case-sensitive on purpose: rules text capitalises stat names, so "armor
  * slots" stays plain prose.

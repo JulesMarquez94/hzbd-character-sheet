@@ -1,7 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import './Header.css';
+
+/**
+ * The site bar, which reads the same on every page but one.
+ *
+ * A character sheet carries its own bar directly under this one — the tab row,
+ * the save light, the share button — and two full bars stacked on top of each
+ * other ate the height the sheet's own blocks need. So on a sheet this one
+ * folds into the burger it already has for phones, at every width: the
+ * wordmark, and one button holding everything else. Nothing is dropped, only
+ * put away.
+ */
+function foldsToBurger(pathname) {
+  return pathname.startsWith('/characters/');
+}
 
 export default function Header() {
   const { user, displayName, signOut, isConfigured } = useAuth();
@@ -10,6 +24,7 @@ export default function Header() {
   const menuRef = useRef(null);
   const navRef = useRef(null);
   const navigate = useNavigate();
+  const folded = foldsToBurger(useLocation().pathname);
 
   // Close the account dropdown on any outside click or Escape.
   useEffect(() => {
@@ -57,7 +72,7 @@ export default function Header() {
   }
 
   return (
-    <header className="site-header">
+    <header className={`site-header${folded ? ' is-folded' : ''}`}>
       <nav className="nav-container">
         <Link to="/" className="nav-brand">
           <img src="/Hazebound-icon.png" alt="" className="nav-logo" />
@@ -132,7 +147,8 @@ export default function Header() {
           )}
         </div>
 
-        {/* Everything above collapses into this below 860px. */}
+        {/* Everything above collapses into this below 860px — and at every
+            width on a character sheet, which has a bar of its own. */}
         <div className="nav-burger-wrap" ref={navRef}>
           <button
             type="button"

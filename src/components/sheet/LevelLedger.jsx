@@ -6,7 +6,14 @@ import SkillPick from './SkillPick.jsx';
 import TalentPick from './TalentBlock.jsx';
 import { advancementState } from '../../lib/talents.js';
 import { backgroundState } from '../../lib/backgrounds.js';
-import { getSkill, levelGrants, levelPicksState, nextLevelPromise } from '../../lib/levelPicks.js';
+import {
+  getSkill,
+  levelGrants,
+  levelPicksState,
+  levelQuestions,
+  lineageSettled,
+  nextLevelPromise,
+} from '../../lib/levelPicks.js';
 
 /**
  * The ledger: one block per level the character has reached, oldest at the top,
@@ -77,14 +84,11 @@ function LevelBlock({ level, character, talents, picks, patch, readOnly, unit })
 
   /* What this level asked for, and how much of it has been answered. One panel
      needs no step number; more than one is a sequence, and reads as one only if
-     the panels are numbered. */
-  const asked = [];
-  if (grants.talent) asked.push(Boolean(slot?.filled));
-  if (grants.lineage) asked.push(Boolean(String(character.lineage ?? '').trim()));
-  if (grants.background) asked.push(Boolean(background.complete && background.taken));
-  if (grants.boosts) asked.push(picks.spreadDone);
-  if (grants.attribute) asked.push(Boolean(entry.attribute));
-  if (grants.skill) asked.push(Boolean(entry.skill));
+     the panels are numbered.
+
+     Asked in levelPicks.js rather than here, because the tab bar counts the
+     same questions to badge itself and the two must never disagree. */
+  const asked = levelQuestions(character, level, { talents, picks, background });
 
   const done = asked.filter(Boolean).length;
   const complete = done === asked.length;
@@ -214,7 +218,13 @@ function summarise({ grants, slot, character, picks, entry }) {
   }
   if (grants.lineage) {
     const lineage = String(character.lineage ?? '').trim();
-    said.push(lineage || 'no lineage yet');
+    said.push(
+      lineage
+        ? lineageSettled(character)
+          ? lineage
+          : `${lineage}, a question still open`
+        : 'no lineage yet'
+    );
   }
   if (grants.background) {
     const background = String(character.background ?? '').trim();

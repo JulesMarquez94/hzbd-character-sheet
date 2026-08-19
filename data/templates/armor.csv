@@ -1,0 +1,64 @@
+id,Name,Tags,Main Effect,w,Lore,Image
+chainmail-chausses,Chainmail Chausses,"COMMON, Leg Gear, Heavy Armor"," +3 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+chainmail-coif,Chainmail Coif,"COMMON, Head Gear, Heavy Armor"," +3 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+chainmail-hauberk,Chainmail Hauberk,"COMMON, Torso Gear, Heavy Armor"," +3 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+full-plate-cuirass,Full Plate Cuirass,"EPIC, Torso Gear, Heavy Armor"," +5 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+full-plate-helm,Full Plate Helm,"EPIC, Head Gear, Heavy Armor"," +5 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+full-plate-pants,Full Plate Pants,"EPIC, Leg Gear, Heavy Armor"," +5 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+greater-runed-hood,Greater Runed Hood,"RARE, Head Gear, Magic Armor","When you enter combat, you start with a Shield equal to 2 times your Mind.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+greater-runed-leggings,Greater Runed Leggings,"RARE, Leg Gear, Magic Armor","When you enter combat, you start with a Shield equal to 2 times your Mind.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+greater-runed-robes,Greater Runed Robes,"RARE, Torso Gear, Magic Armor","When you enter combat, you start with a Shield equal to 2 times your Mind.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+half-plate-cuirass,Half Plate Cuirass,"RARE, Torso Gear, Heavy Armor"," +4 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+half-plate-greaves,Half Plate Greaves,"RARE, Leg Gear, Heavy Armor"," +4 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+half-plate-helm,Half Plate Helm,"RARE, Head Gear, Heavy Armor"," +4 Armor
+
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+leather-pants,Leather Breeches,"COMMON, Leg Gear, Light Armor"," +1 Defense
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,
+leather-helm,Leather Helm,"COMMON, Head Gear, Light Armor"," +1 Defense
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,
+leather-vest,Leather Tunic,"COMMON, Torso Gear, Light Armor"," +1 Defense
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,
+runed-hood,Runed Hood,"COMMON, Head Gear, Magic Armor","When you enter combat, you start with a Shield equal to your Mind.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+runed-leggings,Runed Leggings,"COMMON, Leg Gear, Magic Armor","When you enter combat, you start with a Shield equal to your Mind.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+runed-robes,Runed Robes,"COMMON, Torso Gear, Magic Armor","When you enter combat, you start with a Shield equal to your Mind.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+supreme-runed-hood,Supreme Runed Hood,"EPIC, Head Gear, Magic Armor","When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+supreme-runed-leggings,Supreme Runed Leggings,"EPIC, Leg Gear, Magic Armor","When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+supreme-runed-robes,Supreme Runed Robes,"EPIC, Torso Gear, Magic Armor","When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.
+
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,

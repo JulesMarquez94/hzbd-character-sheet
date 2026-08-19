@@ -17,6 +17,14 @@
  * A long rest ends what a short rest ends, and never the other way round: an
  * effect written "until your next Long Rest" survives a nap.
  *
+ * -------------------------------------------------------------- the preparing
+ * A rest is also when a caster decides what they are carrying tomorrow. A set
+ * that chooses its own cards says on the card itself which rests may re-choose
+ * them — a Mycomancer's spells may be swapped after a short or a long one — so
+ * the rest window offers the swap, and the swap rides in the rest's own patch.
+ * Backing out of the rest backs out of the swap with it: nothing is written
+ * until "Yes, rest" is pressed, which is the whole point of this file.
+ *
  * ---------------------------------------------------------------- the labour
  * A long rest is also when work gets done. Several background skills are
  * actions taken *during* a long rest and paid for in Supplies — crafting a
@@ -40,6 +48,7 @@ import { appendLedger, clamp, formatNumber, newLedgerId } from './characterModel
 import { normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
 import { normalizeLevelPicks } from './levelPicks.js';
+import { pickChanges } from './loadouts.js';
 
 /** What each rest costs and what it gives back. */
 export const RESTS = {
@@ -162,14 +171,25 @@ export function restLabours(character) {
 
 /* ----------------------------------------------------------------- the plan */
 
+/** "Bramble Whip and Rot Touch", "one, two and three". No Oxford comma. */
+function listOut(words) {
+  if (words.length <= 1) return words[0] ?? '';
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
 /**
  * What a rest is about to do, said in lines, and the one patch that does it.
  *
  * `labours` is what the player chose to do during it: `[{ card, amount, gain }]`,
  * already priced. They ride in the same patch and the same ledger as the rest
  * itself, so one rest is one write however much work was done in it.
+ *
+ * `prepared` is the whole `talents` value as the player has just re-prepared it
+ * in the window — the hands a choosing set carries out of the camp. It rides in
+ * the same patch for the same reason, so a rest that is cancelled or refused
+ * leaves yesterday's spells exactly where they were.
  */
-export function restPlan(character, kind, labours = []) {
+export function restPlan(character, kind, labours = [], prepared = null) {
   const rest = getRest(kind);
   if (!rest) return null;
 
@@ -278,6 +298,29 @@ export function restPlan(character, kind, labours = []) {
         detail: 'Willpower comes back on a long rest.',
         tone: 'gain',
       });
+    }
+  }
+
+  /* ---- what was re-prepared while the fire burned down ---- */
+  if (prepared) {
+    const changes = pickChanges(character?.talents, prepared);
+
+    if (changes.length > 0) {
+      patch.talents = prepared;
+
+      for (const change of changes) {
+        const said = [];
+        if (change.dropped.length > 0) said.push(`${listOut(change.dropped)} put down`);
+        if (change.learned.length > 0) said.push(`${listOut(change.learned)} taken up`);
+        const moved = Math.max(change.dropped.length, change.learned.length);
+
+        lines.push({
+          key: `prepared-${change.talent.id}`,
+          label: `${change.spec.label}: ${moved} changed`,
+          detail: `${said.join(', ')}.`,
+          tone: 'gain',
+        });
+      }
     }
   }
 

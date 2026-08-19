@@ -27,21 +27,41 @@ function pickedOn(card, choices) {
   return card.choice.options.find((option) => option.id === choices?.[card.id]) ?? null;
 }
 
+/** The cards of a lineage that leave something to the player. Often none. */
+function asksOf(lineage) {
+  return (lineage?.cards ?? []).filter((card) => card.choice);
+}
+
+/** How many of those are still unanswered. */
+function openAsks(lineage, choices) {
+  return asksOf(lineage).filter((card) => !pickedOn(card, choices)).length;
+}
+
 export default function LineagePick({ value, character, patch, step = null, readOnly = false }) {
-  const [choosing, setChoosing] = useState(false);
+  /* One window in one of two states: reading the wall of ancestries, or
+     settling what the one you took leaves to you. null is closed. */
+  const [mode, setMode] = useState(null);
   const stack = useCardStack();
   const codexArt = useCodexArt();
 
   const written = String(value ?? '').trim();
   const lineage = getLineage(written);
   const choices = character?.choices ?? {};
+  const asks = asksOf(lineage);
+  const unanswered = openAsks(lineage, choices);
 
   // One card's answer at a time; the rest of the bag is left alone.
   const answer = (cardId, optionId) =>
     patch({ choices: { ...choices, [cardId]: optionId } });
 
   return (
-    <PickBlock kind="lineage" step={step} title="Lineage" done={Boolean(written)}>
+    <PickBlock
+      kind="lineage"
+      step={step}
+      title="Lineage"
+      done={Boolean(written) && unanswered === 0}
+      state={!written ? 'Waiting on you' : unanswered > 0 ? 'Half done' : 'Chosen'}
+    >
       <p className="pick-lead">
         Your <b>lineage</b> is your ancestry: the blood your character comes from, and what it left
         in them. You choose it once, now, and it never changes.
@@ -108,12 +128,22 @@ export default function LineagePick({ value, character, patch, step = null, read
 
       <div className="pick-tools">
         {!readOnly && (
-          <button type="button" className="btn btn-pick btn-sm" onClick={() => setChoosing(true)}>
+          <button type="button" className="btn btn-pick btn-sm" onClick={() => setMode('choose')}>
             {written ? 'Change lineage' : 'Choose a Lineage'}
           </button>
         )}
+        {/* The same window the take walks you into, reopened. The chips above
+            still change an answer where it sits; this is for the player who
+            scrolled past them. */}
+        {!readOnly && asks.length > 0 && (
+          <button type="button" className="btn btn-sub btn-sm" onClick={() => setMode('settle')}>
+            {unanswered > 0
+              ? `Answer ${unanswered} question${unanswered === 1 ? '' : 's'}`
+              : 'Change what it asked you'}
+          </button>
+        )}
         {readOnly && lineage && (
-          <button type="button" className="btn btn-minimal btn-sm" onClick={() => setChoosing(true)}>
+          <button type="button" className="btn btn-minimal btn-sm" onClick={() => setMode('choose')}>
             Read it
           </button>
         )}
@@ -131,16 +161,24 @@ export default function LineagePick({ value, character, patch, step = null, read
         )}
       </div>
 
-      {choosing && (
+      {/* Keyed on the mode, so walking from the wall into the settle step
+          remounts the window on the right view. */}
+      {mode && (
         <LineageChooser
+          key={mode}
+          settling={mode === 'settle'}
           current={lineage}
           character={character}
           readOnly={readOnly}
           onTake={(name) => {
             patch(setLineage(character, name));
-            setChoosing(false);
+            /* A lineage whose cards ask something asks it here, in the window
+               that just handed it over, rather than sending you back out to
+               find a row of chips under a card on the sheet. */
+            setMode(asksOf(getLineage(name)).length > 0 ? 'settle' : null);
           }}
-          onClose={() => setChoosing(false)}
+          onAnswer={answer}
+          onClose={() => setMode(null)}
         />
       )}
     </PickBlock>
@@ -150,16 +188,37 @@ export default function LineagePick({ value, character, patch, step = null, read
 /* --------------------------------------------------------------- chooser */
 
 /**
- * The same two views the talent chooser uses: a wall of ancestries, and the one
- * you open. Eighteen is far too many to read through, so the wall filters.
+ * Three views on one window: a wall of ancestries, the one you open, and — the
+ * moment you take it — what it leaves you to decide.
+ *
+ * Eighteen ancestries are far too many to read through, so the wall filters.
+ * The third view is the point of the flow. Half the lineages ask a question on
+ * one of their cards: which damage type your scales resist, which attribute you
+ * cast the blood's spell with. Being asked it here, while the window that handed
+ * you the blood is still open, is the difference between answering it and never
+ * noticing it was asked.
  */
-function LineageChooser({ current, character, readOnly, onTake, onClose }) {
-  const [open, setOpen] = useState(null);
+function LineageChooser({
+  current,
+  character,
+  readOnly,
+  settling = false,
+  onTake,
+  onAnswer,
+  onClose,
+}) {
+  const [open, setOpen] = useState(settling ? (current?.id ?? null) : null);
   const stack = useCardStack();
   const codexArt = useCodexArt();
   const filter = useTagFilter(usedLineageTags(), { searchable: true });
 
+  const choices = character?.choices ?? {};
   const shown = open ? getLineage(open) : null;
+  const asks = settling ? asksOf(shown) : [];
+  const answered = asks.filter((card) => pickedOn(card, choices)).length;
+  // How many questions the lineage being read leaves open to a player, for the
+  // note over its cards. None is the commonest answer.
+  const questions = asksOf(shown).length;
   const visible = LINEAGES.filter(
     (lineage) =>
       filter.matches(lineage.tags) && filter.text(lineage.name, lineage.tagline, lineage.blurb)
@@ -167,12 +226,22 @@ function LineageChooser({ current, character, readOnly, onTake, onClose }) {
 
   return (
     <Modal
-      title={shown ? shown.name : 'Choose a Lineage'}
+      title={shown ? (settling ? `${shown.name}: What It Asks You` : shown.name) : 'Choose a Lineage'}
       onClose={onClose}
       size="page"
       accent={PICK_ACCENTS.lineage}
       footer={
-        shown ? (
+        settling && shown ? (
+          <>
+            <span className={`pick-count${answered < asks.length ? ' is-open' : ''}`}>
+              {answered} of {asks.length} answered
+            </span>
+            <span className="spacer" />
+            <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
+              Done
+            </button>
+          </>
+        ) : shown ? (
           <>
             <button type="button" className="btn btn-minimal btn-sm" onClick={() => setOpen(null)}>
               ← All lineages
@@ -192,7 +261,49 @@ function LineageChooser({ current, character, readOnly, onTake, onClose }) {
         ) : null
       }
     >
-      {shown ? (
+      {settling && shown ? (
+        <div className="talent-page">
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            <b>{shown.name}</b> is yours.{' '}
+            {asks.length === 1
+              ? 'One of its cards leaves something to you'
+              : `${asks.length} of its cards leave something to you`}
+            , and that is all there is left to say. Tap an answer and the card rewrites itself
+            around it. You can change any of them later, from the block or from here.
+          </p>
+
+          <section className="talent-page-rank">
+            <div className="talent-page-rank-head">
+              <span className="talent-page-rank-label">{shown.name} · What it leaves to you</span>
+              <span className="talent-page-rank-note">
+                {answered} of {asks.length} answered
+              </span>
+            </div>
+            <div className="card-brief-wall">
+              {asks.map((card) => {
+                const picked = pickedOn(card, choices);
+                return (
+                  <CardBrief
+                    key={card.id}
+                    card={card}
+                    character={character}
+                    modifiers={picked ? { choice: picked } : null}
+                    art={shown.art}
+                    onOpen={() => stack?.openCard(card, picked ? { choice: picked } : null)}
+                  >
+                    <ChoicePicker
+                      card={card}
+                      picked={picked}
+                      readOnly={readOnly}
+                      onPick={(optionId) => onAnswer(card.id, optionId)}
+                    />
+                  </CardBrief>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      ) : shown ? (
         <div className="talent-page">
           <header className="talent-page-head">
             <span
@@ -215,7 +326,16 @@ function LineageChooser({ current, character, readOnly, onTake, onClose }) {
           <section className="talent-page-rank">
             <div className="talent-page-rank-head">
               <span className="talent-page-rank-label">{shown.name} · What it gives you</span>
-              <span className="talent-page-rank-note">Chosen once, at level 1</span>
+              {/* What this section is, rather than when it happened. It used to
+                  read "Chosen once, at level 1" over four cards this page has
+                  no way of choosing, which read as a choice nobody could find. */}
+              <span className="talent-page-rank-note">
+                {questions === 0
+                  ? 'Yours as printed, nothing to choose'
+                  : questions === 1
+                    ? 'One of these asks you a question'
+                    : `${questions} of these ask you a question`}
+              </span>
             </div>
             <div className="card-brief-wall">
               {shown.cards.map((card) => (

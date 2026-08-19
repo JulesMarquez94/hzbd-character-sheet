@@ -213,6 +213,12 @@ export const TALENTS = [
       cast: 'instinct',
       known: [null, 4, 6, 8],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      /* Which rests may re-prepare the hand, straight off Fungal Invocation:
+         "After a successful short or long rest, you can swap out any number of
+         spells you know to any other eligible spell." The rest window reads
+         this to decide whether to offer the swap while the camp is being made,
+         which is where the swap actually happens at a table. */
+      swap: ['short', 'long'],
       note: 'After a short or long rest you can swap any of them for others you are eligible for, so nothing here is spent for good.',
     },
     blurb:

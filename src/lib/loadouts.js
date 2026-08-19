@@ -19,6 +19,12 @@
  * handing the set back takes its spells with it. They are not level-bound:
  * swapping spells after a long rest is not undoing a level, and the card that
  * grants them says so in as many words.
+ *
+ * -------------------------------------------------------------------- rests
+ * Which is why a rest can re-prepare them, and why the rest window asks. The
+ * permission is the set's own `swap` list, transcribed off the granting card,
+ * and the bottom of this file is what a rest needs to honour it: who may swap,
+ * and what actually changed when they did.
  */
 
 import { CARDS } from './weapons.js';
@@ -194,6 +200,83 @@ export function toggleLoadoutPick(talents, talentId, cardId, known) {
     return setTalentPicks(talents, talentId, [...picks.slice(1), cardId]);
   }
   return setTalentPicks(talents, talentId, [...picks, cardId]);
+}
+
+/* ------------------------------------------------------------------ rests */
+
+/**
+ * Whether a set may re-choose its hand on a rest of this kind.
+ *
+ * The permission belongs to the set, transcribed off the card that hands the
+ * cards over — a Mycomancer's Fungal Invocation says "after a successful short
+ * or long rest", so the spec carries `swap: ['short', 'long']`. A spec that
+ * names no rest is offered none: a rest is not the place to invent a rule the
+ * card never printed, and the panel on the sheet can still change a hand at any
+ * time.
+ */
+export function swapsAtRest(spec, kind) {
+  return Array.isArray(spec?.swap) && spec.swap.includes(kind);
+}
+
+/**
+ * Every set this character holds that may re-prepare itself on this rest, each
+ * with the whole state its chooser needs.
+ *
+ * A set that knows nothing yet — a rank that hands out no cards — is left out:
+ * there is nothing to swap, and an empty pool in the rest window is a row that
+ * only asks to be tapped and then apologises.
+ */
+export function restSwaps(talents, kind) {
+  const rows = [];
+
+  for (const entry of normalizeTalents(talents)) {
+    const talent = getTalent(entry.id);
+    if (!talent || !swapsAtRest(loadoutOf(talent), kind)) continue;
+
+    const state = loadoutState(talents, talent);
+    if (state && state.known > 0) rows.push({ talent, state });
+  }
+
+  return rows;
+}
+
+/** A card's printed name, or its id when this build's codex has no such card. */
+function nameOfCard(id) {
+  return CARDS.find((card) => card.id === id)?.name ?? id;
+}
+
+/**
+ * What changed between two talent records, set by set — named rather than
+ * counted, because "Bramble Whip put down, Spore Cloud taken up" is what the
+ * player is about to agree to, and "2 changed" is not.
+ *
+ * Only sets that choose their cards are looked at, and only the ones that
+ * actually moved come back.
+ */
+export function pickChanges(before, after) {
+  const was = new Map(normalizeTalents(before).map((entry) => [entry.id, entry.picks ?? []]));
+  const rows = [];
+
+  for (const entry of normalizeTalents(after)) {
+    const talent = getTalent(entry.id);
+    const spec = loadoutOf(talent);
+    if (!spec) continue;
+
+    const held = entry.picks ?? [];
+    const previous = was.get(entry.id) ?? [];
+    const dropped = previous.filter((id) => !held.includes(id));
+    const learned = held.filter((id) => !previous.includes(id));
+    if (dropped.length === 0 && learned.length === 0) continue;
+
+    rows.push({
+      talent,
+      spec,
+      dropped: dropped.map(nameOfCard),
+      learned: learned.map(nameOfCard),
+    });
+  }
+
+  return rows;
 }
 
 /**

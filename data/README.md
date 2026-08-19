@@ -27,12 +27,70 @@ reaches GitHub. Only `README.md` and `templates/` are tracked.
 | Talent Set · Cauldron Keeper · Ability | 2026-08-19, 4 cards + 18 Ingredients | `src/lib/talents.js`, `src/lib/ingredients.js` |
 | General Rules · Status & Terms | 2026-08-19, 26 terms | `src/lib/keywords.js` |
 | Cauldron Keeper art, both tabs | 2026-08-19, 22 cards + 1 plate | `public/cards/`, `public/talents/` |
+| Equipment · Armor | 2026-08-19, 21 pieces | `src/lib/items.js` (`ARMOR_ITEMS`) |
 
-`templates/` holds the current state of both, exported back out in the sheet's
+`templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
 else: the codex also carries one Arcane spell, Containment Sphere, which no
 sheet covers yet. Diff a fresh download against those to see exactly what
 changed before asking for a pull.
+
+## The armor
+
+Twenty-one pieces replaced the nine that were there, pulled on 2026-08-19 from
+`Equipment, Enchantments and Items - Armor`. Three sets of three slots, and each
+set now runs three tiers where it used to run one:
+
+| Set | Common | Rare | Epic |
+| --- | ------ | ---- | ---- |
+| Heavy | Chainmail, +3 Armor | Half Plate, +4 | Full Plate, +5 |
+| Magic | Runed, Shield = Mind | Greater Runed, 2x Mind | Supreme Runed, 3x Mind and a bigger cap |
+| Light | Leather, +1 Defense | — | — |
+
+**Verified by round trip, not asserted.** Every row's `Tags` and `Main Effect`
+were rebuilt out of the codex fields and compared to the sheet cell,
+whitespace-normalised. All 21 names, tags, rarities and numbers match. Twelve
+cells differ, and all twelve are one of the two deliberate reads below.
+
+### Two things the sheet says twice, differently
+
+1. **`Magic Armor` in the Tags column, "Spelled Armor" in the Set Bonus sentence**,
+   on all nine of those pieces. They are the same set: the tag is what identifies
+   set membership everywhere else (a Heavy Armor tag against "filled with Heavy
+   Armor"), and it is consistent across all nine rows, so the tag was taken as the
+   name and the bonus sentence now says **Magic Armor** too. This renamed the set
+   in code as well: `characterModel.js` reads `fullSet === 'Magic Armor'` for the
+   Grit rule. **Say the word and it goes back to Spelled Armor instead** — it is
+   one string in `ARMOR_SETS` and one line in `characterModel.js`.
+2. **"your Defense is equal to your Reflex.."** on the Leather rows, kept as one
+   full stop.
+
+### What did not change, and is still open
+
+Light Armor's full set still says Defense "is equal to your Reflex" while the
+three pieces each add `+1 Defense` on top, so a full Leather set reads Reflex + 3.
+That is the sheet's own numbers, unchanged by this pull, and it is the same open
+question it was before: zero the pieces, skip flats when a set swaps the base, or
+reword the card.
+
+### Ids, and the two that were kept
+
+There is still no `id` column, so ids were read off the names —
+`chainmail-coif`, `supreme-runed-robes`. Two are deliberately not:
+
+| Sheet name | id | Why |
+| ---------- | -- | --- |
+| Leather Tunic | `leather-vest` | same slot, set, rarity and +1 Defense as the old Leather Vest |
+| Leather Breeches | `leather-pants` | same, for Leather Pants |
+
+They are the same piece renamed, and an id is what a saved character points at,
+so renaming it would quietly strip the armor off anyone wearing it. Same call as
+`sharpen-sense`. The other seven old ids (`spelled-*`, `mail-*`) are gone,
+because those pieces changed mechanically as well as by name — a character still
+wearing one will find that slot empty.
+
+`templates/armor.csv` has all 21 with their ids in the first column, so pasting
+that one column back into the sheet makes the next pull mechanical.
 
 ## The Cauldron Keeper
 
@@ -61,6 +119,19 @@ the literal shape of the window. "The combined Action Point and Willpower cost o
 all chosen Ingredients" is summed with its working shown, less 1 Action Point per
 Quicksilver and 1 for Efficient Brewing, floored at zero. Tiers open Novice at
 Rank 1, Adept at 2, Master at 3.
+
+The window is three rows of slots, one row per kind, because that is what the
+configuration sentence is: a Catalyst is one slot because there is exactly one of
+it, Essences are as many slots as the rank allows, and Infusions always end in one
+more open slot because "any number" has no last one. An empty slot is a `+` that
+opens the shelf filtered to what that slot takes. It replaced a wall of eighteen
+Ingredient rows standing open under three areas that could not themselves be
+pressed. Same grammar as the armor block: tap the slot, the codex opens.
+
+A mixed Brew is called **Brew** and wears BREW's own picture. It was named after
+its Essence alone ("Four-Leaf Clover Brew"), which reads as that Ingredient's own
+card and says nothing about the Catalyst, and its plate fell through to the talent
+set's wide plate for want of art of its own.
 
 Nothing finished is stored, because "the resulting Brew takes effect immediately".
 The only thing that persists is whether the Cauldron is out, on the talent entry as

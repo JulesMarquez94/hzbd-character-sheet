@@ -86,6 +86,44 @@ body.sheet-fixed #root {
   gap: 1rem;
 }
 
+/* ---------- WHAT IS WAITING ON YOU ----------
+ * Unspent choices, counted on the one tab where they can be spent. Amber, which
+ * is the colour a level wears everywhere else on the sheet, and dark text on it
+ * so a single digit reads at 0.6rem.
+ */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 7px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background-color: var(--level-amber);
+  color: #0B1418;
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  vertical-align: middle;
+  box-shadow: 0 0 8px rgba(255, 179, 0, 0.35);
+}
+
+/* The same news on a folded tab bar, where there is no room for a number. */
+.tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--level-amber);
+  box-shadow: 0 0 8px rgba(255, 179, 0, 0.55);
+  flex-shrink: 0;
+}
+
+.sheet-drawer .dropdown-link .tab-badge {
+  margin-left: 8px;
+}
+
 /* ---------- SAVE INDICATOR ---------- */
 .save-indicator {
   display: inline-flex;
@@ -4374,6 +4412,57 @@ body.sheet-fixed #root {
   padding: 1.5rem 0;
 }
 
+/* The list comes in two parts — what your pack holds, then the rest of the
+   codex — and each part says which it is. The heading stays put while its own
+   list scrolls under it, so "am I still in my own kit?" is never a question
+   you have to scroll back up to answer. */
+.browser-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.browser-group-head {
+  position: sticky;
+  top: -1px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background-color: var(--panel-teal);
+  border-bottom: 1px solid rgba(148, 167, 176, 0.14);
+  padding: 0.3rem 0 0.35rem;
+  z-index: 1;
+}
+
+.browser-group-label {
+  font-family: var(--font-headings);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--copper);
+}
+
+/* Your own pack is the copper heading; the codex under it is not yours yet. */
+.browser-group-codex .browser-group-label {
+  color: var(--text-muted);
+}
+
+.browser-group-note {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.browser-group-empty {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  padding: 0.15rem 0 0.35rem;
+}
+
 .browser-item {
   position: relative;
   display: flex;
@@ -7104,6 +7193,24 @@ body.sheet-fixed #root {
   background-color: color-mix(in srgb, var(--focus-cyan) 8%, var(--inset-bg));
 }
 
+/* A row that re-prepares a hand rather than spending Supplies, so it wears the
+   talent set's own amber instead of the crate's copper. Nothing here costs
+   anything: the only question is what you carry out of the camp. */
+.rest-labour.is-prepare {
+  border-left-color: var(--level-amber);
+}
+
+.rest-labour.is-prepare .rest-labour-head:hover .rest-labour-name,
+.rest-labour.is-prepare .rest-labour-head:focus-visible .rest-labour-name {
+  color: var(--level-amber);
+}
+
+.rest-labour.is-prepare .rest-opt {
+  border-color: color-mix(in srgb, var(--level-amber) 40%, transparent);
+  color: var(--level-amber);
+  min-width: 0;
+}
+
 .rest-labour.is-passed {
   opacity: 0.5;
 }
@@ -7241,51 +7348,134 @@ body.sheet-fixed #root {
   color: var(--copper);
 }
 
-/* ---------- what has gone in ----------
-   One chip per Ingredient, and the chip is the way back out. */
-.brew-doses {
+/* ---------- the slots ----------
+   BREW's configuration, drawn rather than described: a Catalyst is one slot
+   because there is exactly one of it, Essences are as many slots as the rank
+   allows, and Infusions always end in one more open slot because "any number"
+   has no last one.
+
+   An empty slot is the `+`, and it is the only way in — the shelf opens behind
+   it, filtered to what that slot takes. Same grammar as the armor block: tap the
+   slot, the codex opens. */
+.brew-slots {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
 }
 
-.brew-dose {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px dashed rgba(148, 167, 176, 0.28);
-  border-radius: 999px;
+.brew-slot {
+  display: flex;
+  align-items: stretch;
+  /* Every slot is the same tile whether it is full or waiting, so the three rows
+     line up down the left edge and an empty row still reads as a slot. */
+  min-height: 2.9rem;
+  /* 10rem is the width at which two slots stop fitting a phone column, so a
+     narrow screen gives every slot its own row rather than wrapping
+     "Lightning in a Bottle" across three lines in half of one. */
+  min-width: 10rem;
+  flex: 1 1 10rem;
+  max-width: 16rem;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
   background-color: var(--inset-bg);
-  font-size: 0.7rem;
-  color: var(--text-muted);
 }
 
-.brew-dose.is-filled {
-  border: 1px solid var(--def-healing);
-  background-color: color-mix(in srgb, var(--def-healing) 14%, var(--inset-bg));
-  color: var(--text-silver);
+/* ---------- a slot with something in it ---------- */
+.brew-slot.is-filled {
+  border-left: 2px solid var(--def-healing);
+  background-color: color-mix(in srgb, var(--def-healing) 9%, var(--inset-bg));
+}
+
+/* The body is a button: tapping an Ingredient deals its card, which is the only
+   way to read the words the Brew is quoting. */
+.brew-slot-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
   cursor: pointer;
 }
 
-.brew-dose.is-filled:disabled {
-  cursor: default;
+.brew-slot-name {
+  font-family: var(--font-headings);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text-bright);
+  overflow-wrap: anywhere;
 }
 
-.brew-dose-name {
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-.brew-dose-drop {
-  font-size: 0.85rem;
-  line-height: 1;
+.brew-slot-meta {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
-.brew-dose.is-filled:hover .brew-dose-drop,
-.brew-dose.is-filled:focus-visible .brew-dose-drop {
+.brew-slot-drop {
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  border-left: 1px solid var(--hairline);
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.brew-slot-drop:hover,
+.brew-slot-drop:focus-visible {
   color: var(--copper-bright);
+  background-color: color-mix(in srgb, var(--copper) 12%, transparent);
+}
+
+/* ---------- a slot still waiting ---------- */
+.brew-slot-add {
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.5rem;
+  border: 1px dashed rgba(148, 167, 176, 0.3);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.brew-slot-add:hover:not(:disabled),
+.brew-slot-add:focus-visible:not(:disabled) {
+  border-color: color-mix(in srgb, var(--def-healing) 55%, transparent);
+  background-color: color-mix(in srgb, var(--def-healing) 10%, var(--inset-bg));
+  color: var(--text-silver);
+}
+
+.brew-slot-add:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.brew-slot-plus {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--def-healing);
+}
+
+.brew-slot-add-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+/* On a phone the row holds one slot anyway, so the cap only leaves a stub of
+   dead space beside it. Let it fill, the way an equipment slot does. */
+@media (max-width: 600px) {
+  .brew-slot {
+    max-width: none;
+  }
 }
 
 /* ---------- what the brewer has to decide ----------
@@ -7442,8 +7632,8 @@ body.sheet-fixed #root {
 
 /* ---------- what comes out ----------
    The Brew as its own brief, rebuilt on every tap. Sticky where there is a second
-   column to be sticky in: the shelf is far longer than the preview, and scrolling
-   it should not scroll the thing you are watching change. */
+   column to be sticky in, so a long Brew — every Ingredient's cost worked out
+   under it — keeps the card itself in view while the rows below scroll. */
 .brew-preview {
   display: flex;
   flex-direction: column;

@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
+import { LoadoutChooser } from './LoadoutPick.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { formatNumber } from '../../lib/characterModel.js';
 import { getRest, labourAffordable, restLabours, restPlan } from '../../lib/rest.js';
+import { restSwaps, toggleLoadoutPick } from '../../lib/loadouts.js';
+import { setTalentPicks } from '../../lib/talents.js';
 
 /**
  * Taking a rest, said out loud before it happens.
@@ -18,6 +21,12 @@ import { getRest, labourAffordable, restLabours, restPlan } from '../../lib/rest
  * each with the numbers its own card names. Crafting a potion for Supplies is
  * a thing you do while resting, so this is where it is done, and picking an
  * amount folds it into the same write and the same ledger as the rest itself.
+ *
+ * Both kinds also re-prepare. A set that chooses its own cards names the rests
+ * that may re-choose them — a Mycomancer swaps spells "after a successful short
+ * or long rest" — so the pool is opened from here, before the rest is taken,
+ * which is when a player actually decides what tomorrow looks like. The new hand
+ * rides in the rest's own patch: cancel the rest and you cancel the swap.
  */
 export default function RestPrompt({ kind, character, onRest, onClose }) {
   const rest = getRest(kind);
@@ -29,10 +38,22 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      tapping the one you already hold puts it back. */
   const [chosen, setChosen] = useState(null);
 
+  /* The talents column as this window has re-prepared it, or null while it is
+     untouched. Nothing is written until the rest is taken. */
+  const [prepared, setPrepared] = useState(null);
+  /* Which set's pool is open on top of this window, by talent id. */
+  const [swapping, setSwapping] = useState(null);
+
+  const talents = prepared ?? character.talents;
+
   const labours = useMemo(
     () => (kind === 'long' ? restLabours(character) : []),
     [kind, character]
   );
+
+  // Every set that may re-choose its hand on a rest of this kind.
+  const swaps = useMemo(() => restSwaps(talents, kind), [talents, kind]);
+  const swapRow = swaps.find((row) => row.talent.id === swapping) ?? null;
 
   const picked = useMemo(() => {
     if (!chosen) return [];
@@ -40,7 +61,10 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     return row ? [{ card: row.card, amount: chosen.amount, gain: chosen.gain }] : [];
   }, [chosen, labours]);
 
-  const plan = useMemo(() => restPlan(character, kind, picked), [character, kind, picked]);
+  const plan = useMemo(
+    () => restPlan(character, kind, picked, prepared),
+    [character, kind, picked, prepared]
+  );
 
   const holds = (card, option) =>
     chosen?.id === card.id && chosen.amount === option.amount && chosen.gain === option.gain;
@@ -113,6 +137,55 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
             hold enough. Nothing here happens: no Supplies move, nothing is restored and nothing
             ends. Find {formatNumber(plan.short)} more first{picked.length > 0 ? ', or do less work in camp' : ''}.
           </p>
+        )}
+
+        {/* ---------- WHAT YOU PREPARE ---------- *
+            Offered on whichever rest the granting card allows, and only to the
+            sets that allow it. Changing a hand here changes nothing yet: the new
+            picks sit in this window until the rest is taken, and appear in the
+            list above as a line like everything else the rest writes. */}
+        {swaps.length > 0 && (
+          <>
+            <span className="fx-label">
+              What you prepare
+              <span className="rest-labour-rule">Yours to change until you rest</span>
+            </span>
+
+            <div className="rest-labours">
+              {swaps.map(({ talent, state }) => (
+                <div className="rest-labour is-prepare" key={talent.id}>
+                  <button
+                    type="button"
+                    className="rest-labour-head"
+                    onClick={() => setSwapping(talent.id)}
+                    title={`Open the ${state.spec.label.toLowerCase()} ${talent.name} carries`}
+                  >
+                    <span className="rest-labour-name">
+                      {talent.name} · {state.spec.label}
+                    </span>
+                    <span className="rest-labour-line">
+                      {state.picks.length > 0
+                        ? state.picks
+                            .map((pick) => pick.card?.name ?? pick.id)
+                            .join(' · ')
+                        : `Nothing prepared. This set knows ${state.known}.`}
+                    </span>
+                  </button>
+
+                  <span className="rest-labour-opts">
+                    <button
+                      type="button"
+                      className={`rest-opt${state.remaining > 0 ? ' is-gain' : ''}`}
+                      onClick={() => setSwapping(talent.id)}
+                      title={`Change what ${talent.name} carries out of this rest`}
+                    >
+                      {state.remaining > 0 ? `Choose ${state.remaining}` : 'Swap'}
+                    </button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* ---------- THE WORK OF THE CAMP ---------- */}
@@ -188,6 +261,21 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
           </>
         )}
       </div>
+
+      {/* The same pool the block opens, writing into this window instead of
+          into the character. */}
+      {swapRow && (
+        <LoadoutChooser
+          talent={swapRow.talent}
+          character={character}
+          state={swapRow.state}
+          onToggle={(cardId) =>
+            setPrepared(toggleLoadoutPick(talents, swapRow.talent.id, cardId, swapRow.state.known))
+          }
+          onClear={() => setPrepared(setTalentPicks(talents, swapRow.talent.id, []))}
+          onClose={() => setSwapping(null)}
+        />
+      )}
     </Modal>
   );
 }

@@ -297,6 +297,17 @@
   font-weight: 700;
 }
 
+/* ---------- FOLDED, ON A CHARACTER SHEET ----------
+ * A sheet carries its own bar right under this one, so here the site nav is
+ * the wordmark and the burger and nothing else — the same drawer the phone
+ * gets, opened at any width. The height it gives back goes to the blocks.
+ */
+.site-header.is-folded .nav-actions { display: none; }
+.site-header.is-folded .nav-burger-wrap { display: block; }
+.site-header.is-folded .nav-container { padding: 0.4rem 1.25rem; }
+.site-header.is-folded .nav-logo { width: 30px; height: 30px; }
+.site-header.is-folded .nav-wordmark { font-size: 1.05rem; letter-spacing: 1.5px; }
+
 @media (max-width: 860px) {
   .nav-actions { display: none; }
   .nav-burger-wrap { display: block; }

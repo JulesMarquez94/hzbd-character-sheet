@@ -35,12 +35,13 @@
 import { ATTRIBUTE_BASE, ATTRIBUTE_KEYS, attributeLabel, baseValues } from './attributes.js';
 import {
   BACKGROUND_CARDS,
+  backgroundState,
   getBackground,
   getBackgroundSkill,
   normalizeBackgroundSkills,
 } from './backgrounds.js';
 import { getLineage } from './lineages.js';
-import { normalizeTalents, pruneTalents } from './talents.js';
+import { advancementState, normalizeTalents, pruneTalents } from './talents.js';
 import { MAX_LEVEL } from './characterModel.js';
 
 /** What a level hands out. The one place the even / odd rule is written down. */
@@ -68,6 +69,83 @@ export function nextLevelPromise(level) {
       ? 'another talent choice: a new set, or the next rank of one you hold'
       : 'an attribute point, and a new skill',
   };
+}
+
+/* --------------------------------------------------- what is still waiting *
+ * One list of questions per level, and one count across the whole ledger.
+ *
+ * Every block on the Advancement tab already asked its level's questions and
+ * said how many were still open; the tab bar wants the same total so it can
+ * wear it as a badge, and two places counting the same thing is two places to
+ * disagree. So the questions are asked here, once, and both read the answer.
+ */
+
+/**
+ * Whether the lineage is settled: chosen, and every question its cards leave to
+ * the player answered.
+ *
+ * A lineage is one choice with up to one follow-up. Half of them ask nothing at
+ * all; the other half ask which damage type your scales resist, or which
+ * attribute you cast the blood's spell with, and an unanswered one leaves a card
+ * on the sheet with a blank in the middle of its sentence. An ancestry written in
+ * by hand asks nothing this codex knows about, so a name is all it needs.
+ */
+export function lineageSettled(character) {
+  const written = String(character?.lineage ?? '').trim();
+  const lineage = getLineage(written);
+  if (!lineage) return Boolean(written);
+
+  const choices = character?.choices ?? {};
+  return lineage.cards.every(
+    (card) =>
+      !card.choice || card.choice.options.some((option) => option.id === choices[card.id])
+  );
+}
+
+/**
+ * What one level asked for, as one boolean per question: true where it has been
+ * answered. The order is the order the panels stand in on the block.
+ *
+ * The third argument is state already derived for the whole character — its
+ * talents, its level picks and its background — so a ledger of twelve levels
+ * derives it once rather than twelve times over.
+ */
+export function levelQuestions(character, level, { talents, picks, background }) {
+  const grants = levelGrants(level);
+  const asked = [];
+
+  if (grants.talent) {
+    asked.push(Boolean(talents.slots.find((slot) => slot.level === level)?.filled));
+  }
+  if (grants.lineage) asked.push(lineageSettled(character));
+  if (grants.background) asked.push(Boolean(background?.complete && background?.taken));
+  if (grants.boosts) asked.push(Boolean(picks.spreadDone));
+  if (grants.attribute) asked.push(Boolean(picks.at(level).attribute));
+  if (grants.skill) asked.push(Boolean(picks.at(level).skill));
+
+  return asked;
+}
+
+/**
+ * How many choices this character still has open, across every level they have
+ * reached. Zero is the ordinary answer; anything else is what the Advancement
+ * tab wears as a badge, because a level's worth of unspent choices is the one
+ * thing on the sheet nobody should have to go looking for.
+ */
+export function openChoices(character, level) {
+  if (!character) return 0;
+
+  const state = {
+    talents: advancementState(character.talents, level),
+    picks: levelPicksState(character, level),
+    background: backgroundState(character),
+  };
+
+  let open = 0;
+  for (const n of ledgerLevels(level)) {
+    open += levelQuestions(character, n, state).filter((answered) => !answered).length;
+  }
+  return open;
 }
 
 /* ---------------------------------------------------------- reading the row */

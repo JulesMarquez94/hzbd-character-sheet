@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import { getCharacter, updateCharacter } from '../lib/api.js';
 import { levelForXp, syncDerived } from '../lib/characterModel.js';
-import { pruneToLevel } from '../lib/levelPicks.js';
+import { openChoices, pruneToLevel } from '../lib/levelPicks.js';
 import { subscribeToTable } from '../lib/realtime.js';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
@@ -228,6 +228,20 @@ export default function CharacterSheet({ creating = false }) {
     });
   }, [id, canEdit]);
 
+  /* Choices the character has reached but not spent — a talent set, a skill, an
+     attribute point, a question a lineage card asked. The Advancement tab is the
+     only place any of them can be made, and it is also the tab nobody opens
+     unless something sends them there, so the count rides on the tab itself. A
+     reader who cannot edit is told nothing: it would be a nag about somebody
+     else's character.
+
+     Derived up here rather than below with the rest of the labels, because a
+     hook cannot live after the early returns. */
+  const waiting = useMemo(
+    () => (canEdit && character ? openChoices(character, levelForXp(character.xp)) : 0),
+    [canEdit, character]
+  );
+
   if (loading) return <div className="loading-veil">Unrolling the sheet…</div>;
 
   if (error && !character) {
@@ -250,6 +264,10 @@ export default function CharacterSheet({ creating = false }) {
     saved: 'All changes saved',
     error: 'Save failed',
   }[saveState];
+
+  /* The same news as a sentence, for the tooltip and the phone. */
+  const waitingSays =
+    waiting === 1 ? 'One choice is waiting on you' : `${waiting} choices are waiting on you`;
 
   /* Someone following the creation link to a sheet that is not theirs gets the
      sheet, not a set of choosers that would refuse to write anything. */
@@ -289,6 +307,11 @@ export default function CharacterSheet({ creating = false }) {
                 onClick={() => setTab(name)}
               >
                 {name}
+                {name === 'Advancement' && waiting > 0 && (
+                  <span className="tab-badge" title={waitingSays}>
+                    {waiting}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -300,8 +323,14 @@ export default function CharacterSheet({ creating = false }) {
               className={`sheet-burger${tabMenuOpen ? ' open' : ''}`}
               aria-expanded={tabMenuOpen}
               onClick={() => setTabMenuOpen((open) => !open)}
+              title={waiting > 0 ? waitingSays : undefined}
             >
               <span className="sheet-burger-label">{tab}</span>
+              {/* Folded away, the badge on the Advancement row goes with it, so
+                  the closed burger carries the dot instead. */}
+              {waiting > 0 && tab !== 'Advancement' && (
+                <span className="tab-dot" aria-label={waitingSays} />
+              )}
               <span className="burger" aria-hidden="true">
                 <span />
                 <span />
@@ -322,6 +351,11 @@ export default function CharacterSheet({ creating = false }) {
                     }}
                   >
                     {name}
+                    {name === 'Advancement' && waiting > 0 && (
+                      <span className="tab-badge" title={waitingSays}>
+                        {waiting}
+                      </span>
+                    )}
                   </button>
                 ))}
 

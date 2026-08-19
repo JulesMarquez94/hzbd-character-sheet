@@ -38,6 +38,7 @@
  * weapons.js, which imports talents.js, which this imports.
  */
 
+import { artFor, thumbFor } from './cardArt.js';
 import { INGREDIENTS, INGREDIENT_PARTS, getIngredient } from './ingredients.js';
 import { getTalent, normalizeTalents, setTalentCauldron } from './talents.js';
 
@@ -317,11 +318,17 @@ function listAnd(words) {
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
-/** What a mixed Brew is called: what is in it, and that it is a Brew. */
-export function brewName(draft) {
-  const { essences } = draftParts(draft);
-  if (essences.length === 0) return 'Brew';
-  return `${listAnd(essences.map((ing) => ing.name))} Brew`;
+/**
+ * What a mixed Brew is called.
+ *
+ * The set’s own noun, and nothing else. It used to be named after its Essence
+ * ("Four-Leaf Clover Brew"), which reads as that Ingredient’s own card and says
+ * nothing about the Catalyst, which is what decides where the Brew even lands.
+ * What is in it is on the card, under every Ingredient’s name, and in the
+ * summary line under the title.
+ */
+export function brewName(limits) {
+  return limits?.spec?.noun ?? 'Brew';
 }
 
 /**
@@ -372,7 +379,12 @@ export function brewCard(draft, limits) {
 
   return {
     id: 'brew-mixed',
-    name: brewName(draft),
+    name: brewName(limits),
+    /* BREW's own picture. The card is mixed rather than printed, so it is not in
+       the codex and `withArt` never sees it; the art is the same art all the
+       same, because this is what that card does. */
+    art_url: artFor('brew'),
+    art_thumb: thumbFor('brew'),
     kind: 'brew',
     tags: ['Cauldron keeper', 'Brew'],
     ap: cost.ap,

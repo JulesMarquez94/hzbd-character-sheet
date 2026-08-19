@@ -35,9 +35,18 @@ import {
  *
  *   "At least 1 Essence, exactly 1 Catalyst, and any number of Infusions."
  *
- * So there are three areas, in that order, each holding what has gone into it and
- * each enforcing its own half of the rule. Under them is the shelf of Ingredients
- * this rank knows, and beside them the Brew as it currently stands, priced live.
+ * So the Cauldron is **three rows of slots**, in that order, and a slot is the
+ * whole interaction: an empty one is a `+` you press, which opens the shelf for
+ * that kind alone, and a filled one is the Ingredient with an × to take it back
+ * out. Essences hold as many slots as the rank allows, the Catalyst holds exactly
+ * one, and Infusions grow a fresh `+` after every one added, because "any number"
+ * is a row that never runs out of room.
+ *
+ * That is the same grammar the armor block uses — tap the slot, the codex opens —
+ * and it replaced a wall of eighteen Ingredient rows standing open under three
+ * areas that could not themselves be pressed. The shelf still exists and still
+ * reads the same; it is behind the `+` now, filtered to the one kind the slot
+ * wants, which is also the only place the tier and the reach of a rank matter.
  *
  * ------------------------------------------------------------------- the price
  * "You must pay the combined Action Point and Willpower cost of all chosen
@@ -56,6 +65,8 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
   const limits = brewLimits(character?.talents, talent);
   const [draft, setDraft] = useState(blankBrew);
   const [paying, setPaying] = useState(null);
+  /** Which kind of Ingredient the shelf is open for, or null while it is shut. */
+  const [picking, setPicking] = useState(null);
 
   const stack = useCardStack();
 
@@ -70,7 +81,8 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
   const modifiers = brewModifiers(draft);
   const problems = brewProblems(draft, limits);
   const ready = brewReady(draft, limits) && out;
-  const options = ingredientOptions(draft, limits);
+  const shelves = shelfByPart(ingredientOptions(draft, limits));
+  const open = picking ? shelves.find((group) => group.id === picking) : null;
 
   /** The one write a confirmed Brew makes: the points, and nothing else. */
   function confirm(mode, amount) {
@@ -136,14 +148,16 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
         <div className="brew-window">
           <div className="brew-build">
             {/* ---- the configuration, in the order BREW names it ---- */}
-            {shelfByPart(options).map((group) => (
-              <Slot
+            {shelves.map((group) => (
+              <SlotRow
                 key={group.id}
                 group={group}
                 draft={draft}
                 limits={limits}
                 readOnly={readOnly || !out}
+                onAdd={() => setPicking(group.id)}
                 onDrop={(index) => setDraft((current) => dropIngredient(current, group.id, index))}
+                onRead={(ing) => stack?.openCard(ing)}
               />
             ))}
 
@@ -153,35 +167,6 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
               readOnly={readOnly || !out}
               onChoose={(id, value) => setDraft((current) => setBrewChoice(current, id, value))}
             />
-
-            {/* ---- the shelf ---- */}
-            <section className="brew-step">
-              <div className="brew-step-head">
-                <span className="brew-step-label">The shelf</span>
-                <span className="brew-step-note">
-                  {options.filter((option) => option.ok).length} within reach
-                </span>
-              </div>
-
-              {shelfByPart(options).map((group) => (
-                <div className="brew-shelf" key={group.id}>
-                  <span className="brew-shelf-tier">
-                    {group.plural} · {group.rule}
-                  </span>
-                  {group.options.map((option) => (
-                    <IngredientRow
-                      key={option.ingredient.id}
-                      option={option}
-                      readOnly={readOnly || !out}
-                      onAdd={() =>
-                        setDraft((current) => addIngredient(current, option.ingredient.id, limits))
-                      }
-                      onOpen={() => stack?.openCard(option.ingredient)}
-                    />
-                  ))}
-                </div>
-              ))}
-            </section>
           </div>
 
           {/* ---- what comes out ---- */}
@@ -197,7 +182,6 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
                   card={card}
                   character={character}
                   modifiers={modifiers}
-                  art={talent.art}
                   onOpen={() => stack?.openCard(card, modifiers)}
                 />
                 <p className="brew-preview-hint">
@@ -226,6 +210,18 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
         </div>
       </Modal>
 
+      {open && (
+        <Shelf
+          group={open}
+          onClose={() => setPicking(null)}
+          onAdd={(id) => {
+            setDraft((current) => addIngredient(current, id, limits));
+            setPicking(null);
+          }}
+          onRead={(ing) => stack?.openCard(ing)}
+        />
+      )}
+
       {paying && (
         <UsePrompt
           request={paying}
@@ -241,13 +237,19 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
 /* ------------------------------------------------------------------ the slots */
 
 /**
- * One of the three areas of the configuration, holding what has gone in.
+ * One row of the configuration: every slot of one kind, filled or waiting.
  *
- * The heading carries the designer's own rule for that area ("Exactly one", "At
- * least one", "Any number") rather than a count, because the rule is the thing a
- * player has to know and the count is visible in the row underneath.
+ * How many slots there are *is* the rule, drawn rather than described. A Catalyst
+ * is one slot because there is exactly one. Essences are as many slots as the rank
+ * allows. Infusions are what is in already plus one more, always, because "any
+ * number" has no last slot.
+ *
+ * So the heading carries the designer's own words for that kind ("Exactly one",
+ * "Any number") rather than a count the row already shows. Essences are the
+ * exception and count themselves out, because theirs is the ceiling that moves
+ * with rank and Improved Recipes.
  */
-function Slot({ group, draft, limits, readOnly, onDrop }) {
+function SlotRow({ group, draft, limits, readOnly, onAdd, onDrop, onRead }) {
   const parts = draftParts(draft);
   const held =
     group.id === 'catalyst'
@@ -256,41 +258,149 @@ function Slot({ group, draft, limits, readOnly, onDrop }) {
         ? parts.essences
         : parts.infusions;
 
-  const room = group.id === 'essence' ? `${held.length} of ${limits.essences}` : null;
+  /* Infusions never fill up, so the row always ends in one open slot. The other
+     two have a ceiling and show every slot it allows, filled or not. */
+  const total = group.id === 'infusion' ? held.length + 1 : group.id === 'essence' ? limits.essences : 1;
+  const openSlots = Math.max(0, total - held.length);
+  /* The Essence ceiling is the one that moves with rank, so it is the one worth
+     counting out. The other two say the rule instead, in the designer's words. */
+  const room = group.id === 'essence' ? `${held.length} of ${total}` : group.rule;
 
   return (
     <section className="brew-step">
       <div className="brew-step-head">
         <span className="brew-step-label">{group.plural}</span>
         <span className={`brew-step-note${held.length === 0 && group.id !== 'infusion' ? ' is-open' : ''}`}>
-          {room ?? group.rule}
+          {room}
         </span>
       </div>
 
-      <div className="brew-doses">
-        {held.length === 0 ? (
-          <span className="brew-dose">
-            <span className="brew-dose-name">{group.id === 'infusion' ? 'none' : 'empty'}</span>
-          </span>
-        ) : (
-          held.map((ing, index) => (
+      <div className="brew-slots">
+        {held.map((ing, index) => (
+          <div className="brew-slot is-filled" key={`${ing.id}-${index}`}>
             <button
-              key={`${ing.id}-${index}`}
               type="button"
-              className="brew-dose is-filled"
-              disabled={readOnly}
-              title="Take it back out"
-              onClick={() => onDrop(index)}
+              className="brew-slot-body"
+              onClick={() => onRead(ing)}
+              title={`Read the ${ing.name} card`}
             >
-              <span className="brew-dose-name">{ing.name}</span>
-              <span className="brew-dose-drop" aria-hidden="true">
-                ×
+              <span className="brew-slot-name">{ing.name}</span>
+              <span className="brew-slot-meta">
+                {ing.tier} · {ing.ap} AP · {ing.wp} WP
               </span>
             </button>
-          ))
-        )}
+
+            {!readOnly && (
+              <button
+                type="button"
+                className="brew-slot-drop"
+                onClick={() => onDrop(index)}
+                title="Take it back out"
+                aria-label={`Take the ${ing.name} back out`}
+              >
+                ×
+              </button>
+            )}
+          </div>
+        ))}
+
+        {Array.from({ length: openSlots }, (_, index) => (
+          <button
+            key={`open-${index}`}
+            type="button"
+            className="brew-slot brew-slot-add"
+            disabled={readOnly}
+            onClick={onAdd}
+            title={readOnly ? undefined : `Add ${anA(group.label)}`}
+          >
+            <span className="brew-slot-plus" aria-hidden="true">
+              +
+            </span>
+            <span className="brew-slot-add-label">{group.label}</span>
+          </button>
+        ))}
       </div>
     </section>
+  );
+}
+
+/* ----------------------------------------------------------------- the shelf */
+
+/**
+ * The shelf, opened by a slot and filtered to what that slot takes.
+ *
+ * It used to stand open under the configuration, all eighteen Ingredients of it,
+ * which is the longest thing in the window and the part a player reads least
+ * often. Behind the `+` it answers the question actually being asked — what goes
+ * in *this* slot — and the Ingredients that cannot go in it say why on their own
+ * button rather than being listed at all.
+ */
+function Shelf({ group, onClose, onAdd, onRead }) {
+  const within = group.options.filter((option) => option.ok).length;
+
+  return (
+    <Modal
+      title={`Add ${anA(group.label)}`}
+      onClose={onClose}
+      accent={PICK_ACCENTS.talent}
+      footer={
+        <>
+          <span className="brew-step-note">{within} within reach</span>
+          <span className="spacer" />
+          <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
+            Close
+          </button>
+        </>
+      }
+    >
+      <p className="frame-foot" style={{ marginTop: 0 }}>
+        {group.rule}.
+      </p>
+
+      <div className="brew-shelf">
+        {group.options.map((option) => (
+          <IngredientRow
+            key={option.ingredient.id}
+            option={option}
+            onAdd={() => onAdd(option.ingredient.id)}
+            onOpen={() => onRead(option.ingredient)}
+          />
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+/** One Ingredient on the shelf: what it costs, what it does, and the way in. */
+function IngredientRow({ option, onAdd, onOpen }) {
+  const { ingredient, ok, reason, held } = option;
+
+  return (
+    <div className={`brew-reagent${held > 0 ? ' is-in' : ''}`}>
+      <button type="button" className="brew-reagent-body" onClick={onOpen} title="Read the card">
+        <span className="brew-reagent-name">
+          {ingredient.name}
+          {held > 0 && <span className="brew-reagent-held">{held} in</span>}
+        </span>
+        <span className="item-tags">
+          <span className="item-tag tag-card">{ingredient.tier}</span>
+          <span className="brew-reagent-cost">
+            {ingredient.ap} AP · {ingredient.wp} WP
+          </span>
+        </span>
+        <span className="brew-reagent-line">{ingredient.summary}</span>
+      </button>
+
+      <button
+        type="button"
+        className={`btn btn-sm ${ok ? 'btn-take' : 'btn-minimal'}`}
+        disabled={!ok}
+        title={ok ? undefined : reason}
+        onClick={onAdd}
+      >
+        {ok ? 'Add' : reason}
+      </button>
+    </div>
   );
 }
 
@@ -346,43 +456,6 @@ function Decisions({ draft, readOnly, onChoose }) {
         </div>
       ))}
     </section>
-  );
-}
-
-/* ----------------------------------------------------------------- the shelf */
-
-/** One Ingredient on the shelf: what it costs, what it does, and the way in. */
-function IngredientRow({ option, readOnly, onAdd, onOpen }) {
-  const { ingredient, ok, reason, held } = option;
-
-  return (
-    <div className={`brew-reagent${held > 0 ? ' is-in' : ''}`}>
-      <button type="button" className="brew-reagent-body" onClick={onOpen} title="Read the card">
-        <span className="brew-reagent-name">
-          {ingredient.name}
-          {held > 0 && <span className="brew-reagent-held">{held} in</span>}
-        </span>
-        <span className="item-tags">
-          <span className="item-tag tag-card">{ingredient.tier}</span>
-          <span className="brew-reagent-cost">
-            {ingredient.ap} AP · {ingredient.wp} WP
-          </span>
-        </span>
-        <span className="brew-reagent-line">{ingredient.summary}</span>
-      </button>
-
-      {!readOnly && (
-        <button
-          type="button"
-          className={`btn btn-sm ${ok ? 'btn-take' : 'btn-minimal'}`}
-          disabled={!ok}
-          title={ok ? undefined : reason}
-          onClick={onAdd}
-        >
-          {ok ? 'Add' : reason}
-        </button>
-      )}
-    </div>
   );
 }
 
@@ -529,4 +602,9 @@ export function BrewRankNote({ talent, rank }) {
 function listAnd(words) {
   if (words.length <= 1) return String(words[0] ?? '');
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/** "an Essence", "a Catalyst" — the three kinds are the only words this sees. */
+function anA(word) {
+  return `${/^[aeiou]/i.test(word) ? 'an' : 'a'} ${word}`;
 }

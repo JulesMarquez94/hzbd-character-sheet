@@ -3,7 +3,7 @@
  * for what a loadout of equipped items does to a character.
  *
  * Everything in the game is described by tags ("Common", "Head Gear",
- * "Spelled Armor", …): the browser filters on them and future item types just
+ * "Magic Armor", …): the browser filters on them and future item types just
  * bring their own tags. Mechanical, always-on effects live in dedicated
  * fields (`defense`, `armor`, `burden`, `shieldCapBonus`); anything the table
  * resolves by hand stays as `effect` text.
@@ -249,9 +249,9 @@ export function rarityColor(item) {
  * printed on each piece.
  */
 export const ARMOR_SETS = {
-  'Spelled Armor': {
+  'Magic Armor': {
     bonus:
-      'If all three armor slots are filled with Spelled Armor, your Defense is based off your Grit.',
+      'If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.',
     active: 'Your Defense is based off your Grit.',
   },
   'Heavy Armor': {
@@ -279,16 +279,19 @@ export const ARMOR_SETS = {
  *              so the card doesn't repeat it in words)
  *   shieldCapBonus — 'mind' raises the Shield cap by the wearer's Mind
  *
- * Names follow <Material> <Piece>, and a set shares one material word.
+ * Every set runs three tiers, one piece per slot each: Common, Rare and
+ * Epic. The names are the sheet’s own, so the tier is read off the name
+ * (Chainmail → Half Plate → Full Plate, Runed → Greater → Supreme)
+ * rather than out of a field of its own.
  */
 const ARMOR_ITEMS = [
-  /* ----- Spelled set — cloth for casters, all about Shields ----- */
+  /* ----- Runed set — cloth for casters, all about Shields ----- */
   {
-    id: 'spelled-helm',
-    name: 'Spelled Helm',
+    id: 'runed-hood',
+    name: 'Runed Hood',
     slots: ['head'],
-    tags: ['Common', 'Head Gear', 'Spelled Armor'],
-    set: 'Spelled Armor',
+    tags: ['Common', 'Head Gear', 'Magic Armor'],
+    set: 'Magic Armor',
     defense: 0,
     armor: 0,
     burden: 0,
@@ -300,43 +303,122 @@ const ARMOR_ITEMS = [
     onCombatStart: { shield: 'mind' },
   },
   {
-    id: 'spelled-robe',
-    name: 'Spelled Robe',
+    id: 'runed-robes',
+    name: 'Runed Robes',
     slots: ['torso'],
-    tags: ['Common', 'Torso Gear', 'Spelled Armor'],
-    set: 'Spelled Armor',
+    tags: ['Common', 'Torso Gear', 'Magic Armor'],
+    set: 'Magic Armor',
     defense: 0,
     armor: 0,
     burden: 0,
-    effect: 'Increases your maximum Shield capacity by an amount equal to your Mind.',
+    effect: 'When you enter combat, you start with a Shield equal to your Mind.',
+    onCombatStart: { shield: 'mind' },
+  },
+  {
+    id: 'runed-leggings',
+    name: 'Runed Leggings',
+    slots: ['legs'],
+    tags: ['Common', 'Leg Gear', 'Magic Armor'],
+    set: 'Magic Armor',
+    defense: 0,
+    armor: 0,
+    burden: 0,
+    effect: 'When you enter combat, you start with a Shield equal to your Mind.',
+    onCombatStart: { shield: 'mind' },
+  },
+  {
+    id: 'greater-runed-hood',
+    name: 'Greater Runed Hood',
+    slots: ['head'],
+    tags: ['Rare', 'Head Gear', 'Magic Armor'],
+    set: 'Magic Armor',
+    defense: 0,
+    armor: 0,
+    burden: 0,
+    effect: 'When you enter combat, you start with a Shield equal to 2 times your Mind.',
+    onCombatStart: { shield: 'mind', times: 2 },
+  },
+  {
+    id: 'greater-runed-robes',
+    name: 'Greater Runed Robes',
+    slots: ['torso'],
+    tags: ['Rare', 'Torso Gear', 'Magic Armor'],
+    set: 'Magic Armor',
+    defense: 0,
+    armor: 0,
+    burden: 0,
+    effect: 'When you enter combat, you start with a Shield equal to 2 times your Mind.',
+    onCombatStart: { shield: 'mind', times: 2 },
+  },
+  {
+    id: 'greater-runed-leggings',
+    name: 'Greater Runed Leggings',
+    slots: ['legs'],
+    tags: ['Rare', 'Leg Gear', 'Magic Armor'],
+    set: 'Magic Armor',
+    defense: 0,
+    armor: 0,
+    burden: 0,
+    effect: 'When you enter combat, you start with a Shield equal to 2 times your Mind.',
+    onCombatStart: { shield: 'mind', times: 2 },
+  },
+  {
+    id: 'supreme-runed-hood',
+    name: 'Supreme Runed Hood',
+    slots: ['head'],
+    tags: ['Epic', 'Head Gear', 'Magic Armor'],
+    set: 'Magic Armor',
+    defense: 0,
+    armor: 0,
+    burden: 0,
+    effect:
+      'When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.',
+    onCombatStart: { shield: 'mind', times: 3 },
     shieldCapBonus: 'mind',
   },
   {
-    id: 'spelled-wraps',
-    name: 'Spelled Wraps',
-    slots: ['legs'],
-    tags: ['Common', 'Leg Armor', 'Spelled Armor'],
-    set: 'Spelled Armor',
+    id: 'supreme-runed-robes',
+    name: 'Supreme Runed Robes',
+    slots: ['torso'],
+    tags: ['Epic', 'Torso Gear', 'Magic Armor'],
+    set: 'Magic Armor',
     defense: 0,
     armor: 0,
     burden: 0,
-    effect: 'When your Shield breaks, gain +1 Defense until the start of your next turn.',
+    effect:
+      'When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.',
+    onCombatStart: { shield: 'mind', times: 3 },
+    shieldCapBonus: 'mind',
+  },
+  {
+    id: 'supreme-runed-leggings',
+    name: 'Supreme Runed Leggings',
+    slots: ['legs'],
+    tags: ['Epic', 'Leg Gear', 'Magic Armor'],
+    set: 'Magic Armor',
+    defense: 0,
+    armor: 0,
+    burden: 0,
+    effect:
+      'When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.',
+    onCombatStart: { shield: 'mind', times: 3 },
+    shieldCapBonus: 'mind',
   },
 
-  /* ----- Mail set — heavy plate, all flat damage reduction ----- */
+  /* ----- Plate set — heavy armor, all flat damage reduction ----- */
   {
-    id: 'mail-helm',
-    name: 'Mail Helm',
+    id: 'chainmail-coif',
+    name: 'Chainmail Coif',
     slots: ['head'],
     tags: ['Common', 'Head Gear', 'Heavy Armor'],
     set: 'Heavy Armor',
     defense: 0,
-    armor: 2,
+    armor: 3,
     burden: 0,
   },
   {
-    id: 'mail-shirt',
-    name: 'Mail Shirt',
+    id: 'chainmail-hauberk',
+    name: 'Chainmail Hauberk',
     slots: ['torso'],
     tags: ['Common', 'Torso Gear', 'Heavy Armor'],
     set: 'Heavy Armor',
@@ -345,17 +427,82 @@ const ARMOR_ITEMS = [
     burden: 0,
   },
   {
-    id: 'mail-greaves',
-    name: 'Mail Greaves',
+    id: 'chainmail-chausses',
+    name: 'Chainmail Chausses',
     slots: ['legs'],
-    tags: ['Common', 'Leg Armor', 'Heavy Armor'],
+    tags: ['Common', 'Leg Gear', 'Heavy Armor'],
     set: 'Heavy Armor',
     defense: 0,
-    armor: 2,
+    armor: 3,
+    burden: 0,
+  },
+  {
+    id: 'half-plate-helm',
+    name: 'Half Plate Helm',
+    slots: ['head'],
+    tags: ['Rare', 'Head Gear', 'Heavy Armor'],
+    set: 'Heavy Armor',
+    defense: 0,
+    armor: 4,
+    burden: 0,
+  },
+  {
+    id: 'half-plate-cuirass',
+    name: 'Half Plate Cuirass',
+    slots: ['torso'],
+    tags: ['Rare', 'Torso Gear', 'Heavy Armor'],
+    set: 'Heavy Armor',
+    defense: 0,
+    armor: 4,
+    burden: 0,
+  },
+  {
+    id: 'half-plate-greaves',
+    name: 'Half Plate Greaves',
+    slots: ['legs'],
+    tags: ['Rare', 'Leg Gear', 'Heavy Armor'],
+    set: 'Heavy Armor',
+    defense: 0,
+    armor: 4,
+    burden: 0,
+  },
+  {
+    id: 'full-plate-helm',
+    name: 'Full Plate Helm',
+    slots: ['head'],
+    tags: ['Epic', 'Head Gear', 'Heavy Armor'],
+    set: 'Heavy Armor',
+    defense: 0,
+    armor: 5,
+    burden: 0,
+  },
+  {
+    id: 'full-plate-cuirass',
+    name: 'Full Plate Cuirass',
+    slots: ['torso'],
+    tags: ['Epic', 'Torso Gear', 'Heavy Armor'],
+    set: 'Heavy Armor',
+    defense: 0,
+    armor: 5,
+    burden: 0,
+  },
+  {
+    id: 'full-plate-pants',
+    name: 'Full Plate Pants',
+    slots: ['legs'],
+    tags: ['Epic', 'Leg Gear', 'Heavy Armor'],
+    set: 'Heavy Armor',
+    defense: 0,
+    armor: 5,
     burden: 0,
   },
 
-  /* ----- Leather set — light armor, all about not being hit ----- */
+  /* ----- Leather set — light armor, all about not being hit -----
+   *
+   * `leather-vest` and `leather-pants` keep their old ids under the sheet's
+   * new names. Same slot, same set, same rarity, same +1 Defense: it is the
+   * same piece renamed, and an id is what a saved character points at. Same
+   * call as `sharpen-sense`. */
   {
     id: 'leather-helm',
     name: 'Leather Helm',
@@ -368,7 +515,7 @@ const ARMOR_ITEMS = [
   },
   {
     id: 'leather-vest',
-    name: 'Leather Vest',
+    name: 'Leather Tunic',
     slots: ['torso'],
     tags: ['Common', 'Torso Gear', 'Light Armor'],
     set: 'Light Armor',
@@ -378,9 +525,9 @@ const ARMOR_ITEMS = [
   },
   {
     id: 'leather-pants',
-    name: 'Leather Pants',
+    name: 'Leather Breeches',
     slots: ['legs'],
-    tags: ['Common', 'Leg Armor', 'Light Armor'],
+    tags: ['Common', 'Leg Gear', 'Light Armor'],
     set: 'Light Armor',
     defense: 1,
     armor: 0,
@@ -407,12 +554,17 @@ export function itemsForSlot(slotKey) {
  * The three pieces of one armor set, keyed by slot. A starting kit hands out a
  * whole set at once, so this is what turns "Light Armor" into the three ids
  * that make it.
+ *
+ * Common only, the same law `startingWeapons` reads by: a set now runs three
+ * tiers and the kit is written as "one full Common set". Without the rarity
+ * filter this would hand out whichever tier happened to be listed first.
  */
-export function armorSetPieces(setName) {
+export function armorSetPieces(setName, rarity = 'Common') {
   const pieces = {};
   for (const { key } of ARMOR_SLOTS) {
     const piece = ARMOR_ITEMS.find(
-      (item) => item.set === setName && item.slots.includes(key)
+      (item) =>
+        item.set === setName && item.slots.includes(key) && itemRarity(item) === rarity
     );
     if (piece) pieces[key] = piece.id;
   }
@@ -518,8 +670,9 @@ export function equipmentEffects(equipment) {
  * Separate from `equipmentEffects` above because those are always-on modifiers
  * the derived stats read on every render, and these fire exactly once, when
  * Start Combat is pressed. An item declares it with an `onCombatStart` rider
- * naming the attribute the value comes from: `{ shield: 'mind' }` is the
- * Spelled Helm's "you start with a Shield equal to your Mind".
+ * naming the attribute the value comes from, and how many of it: `{ shield:
+ * 'mind' }` is the Runed Hood's "a Shield equal to your Mind", `{ shield:
+ * 'mind', times: 2 }` the Greater Runed Hood's "2 times your Mind".
  *
  * Returns what each piece gives and why, so the block can name the item that
  * did it rather than silently moving a number.
@@ -532,8 +685,9 @@ export function combatStartEffects(character) {
     .filter((item) => item?.onCombatStart)
     .map((item) => {
       const from = item.onCombatStart.shield;
-      const value = Math.max(0, Math.floor(Number(character?.[from]) || 0));
-      return { item, shield: value, from };
+      const times = Math.max(1, Math.floor(Number(item.onCombatStart.times) || 1));
+      const value = Math.max(0, Math.floor(Number(character?.[from]) || 0)) * times;
+      return { item, shield: value, from, times };
     })
     .filter((entry) => entry.shield > 0);
 }
