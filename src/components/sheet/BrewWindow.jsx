@@ -15,11 +15,13 @@ import {
   brewPreview,
   brewProblems,
   brewReady,
+  brewShortfall,
   draftParts,
   dropIngredient,
   ingredientOptions,
   setBrewChoice,
   shelfByPart,
+  shortfallLine,
 } from '../../lib/brews.js';
 
 /**
@@ -78,7 +80,11 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
      must be given the same one or the card would change on opening. */
   const modifiers = brewModifiers(draft);
   const problems = brewProblems(draft, limits);
-  const ready = brewReady(draft, limits);
+  /* What the pools cannot cover. A Brew is priced by what went in it rather than
+     printed on a card, so this is the only screen that can say so before the
+     points are asked for. See brewShortfall. */
+  const short = brewShortfall(cost, character);
+  const ready = brewReady(draft, limits) && !short;
   const shelves = shelfByPart(ingredientOptions(draft, limits));
   const open = picking ? shelves.find((group) => group.id === picking) : null;
 
@@ -110,7 +116,9 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
                 type="button"
                 className="btn btn-take btn-sm"
                 disabled={!ready}
-                title={ready ? undefined : problems.join(' ')}
+                title={
+                  ready ? undefined : short ? short.map(shortfallLine).join(' ') : problems.join(' ')
+                }
                 onClick={() =>
                   setPaying({
                     name: card.name,
@@ -185,6 +193,20 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
                 An empty Cauldron. It starts reading like a card once it has an Essence and a
                 Catalyst in it.
               </p>
+            )}
+
+            {short && (
+              <div className="brew-missing is-short">
+                <span className="brew-missing-head">You cannot pay for this</span>
+                {short.map((row) => (
+                  <span className="brew-missing-line" key={row.resource}>
+                    {shortfallLine(row)}
+                  </span>
+                ))}
+                <span className="brew-missing-line brew-missing-foot">
+                  Take something back out of the Cauldron, or rest before you brew it.
+                </span>
+              </div>
             )}
 
             {problems.length > 0 && (

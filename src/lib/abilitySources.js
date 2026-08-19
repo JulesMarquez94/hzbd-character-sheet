@@ -402,10 +402,25 @@ export function abilityOverview(sources) {
   };
 }
 
-/** A card you never play: it is simply true of you while you hold it. */
+/**
+ * A card you never play: it is simply true of you while you hold it.
+ *
+ * `Long Rest` counts, and is the Enchanter's word. Their sheet writes it in the
+ * slot every other set fills with `Ability` or `Passive`, on two cards that cost
+ * nothing: ENCHANTING ("you have learned the art of imbuing an item") and WIELDER
+ * OF WONDER ("the enchanter body is able to withstand"). Both are true of the
+ * character from the moment they take the set; the tag says when the work those
+ * capabilities allow gets done, not that the card is a move. Without this they
+ * would sit on the combat quick bar as free actions, which is the one place a
+ * night's labour cannot be taken.
+ *
+ * A card tagged `Long Rest` that does carry a cost is a move and stays one.
+ */
 export function isPassive(card) {
   if (card?.kind === 'passive') return true;
-  return !card?.ap && !card?.wp && (card?.tags ?? []).includes('Passive');
+  if (card?.ap || card?.wp) return false;
+  const tags = card?.tags ?? [];
+  return tags.includes('Passive') || tags.includes('Long Rest');
 }
 
 /**

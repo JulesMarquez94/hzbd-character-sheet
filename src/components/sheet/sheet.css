@@ -7398,7 +7398,13 @@ body.sheet-fixed #root {
 }
 
 /* The body is a button: tapping an Ingredient deals its card, which is the only
-   way to read the words the Brew is quoting. */
+   way to read the words the Brew is quoting.
+
+   Nothing in this stylesheet resets buttons, so a button that does not say what it
+   looks like wears the browser's own: a light grey fill, a raised border and the
+   system font. That is what covered the slot's green and left the Ingredient's
+   name white on near-white. Every other tile-as-button here declares the same
+   three, and now so does this one. */
 .brew-slot-body {
   display: flex;
   flex-direction: column;
@@ -7406,6 +7412,10 @@ body.sheet-fixed #root {
   flex: 1;
   min-width: 0;
   padding: 0.4rem 0.5rem;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  color: inherit;
   text-align: left;
   cursor: pointer;
 }
@@ -7427,11 +7437,17 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
+/* The × keeps only the hairline that divides it off the body. Same reason as
+   above: `border` and `background` are cleared first, or the default chrome
+   draws the other three sides. */
 .brew-slot-drop {
   display: flex;
   align-items: center;
   padding: 0 0.5rem;
+  border: none;
   border-left: 1px solid var(--hairline);
+  background: none;
+  font-family: var(--font-body);
   font-size: 0.95rem;
   line-height: 1;
   color: var(--text-muted);
@@ -7451,6 +7467,7 @@ body.sheet-fixed #root {
   gap: 0.4rem;
   padding: 0.45rem 0.5rem;
   border: 1px dashed rgba(148, 167, 176, 0.3);
+  font-family: var(--font-body);
   color: var(--text-muted);
   cursor: pointer;
 }
@@ -7490,7 +7507,7 @@ body.sheet-fixed #root {
 }
 
 /* ---------- what the brewer has to decide ----------
-   Four Ingredients ask something as they go in, and their own text is what says
+   Three Ingredients ask something as they go in, and their own text is what says
    so. Asked here, once each, and only while they are in the Cauldron. */
 .brew-decision {
   display: flex;
@@ -7536,6 +7553,7 @@ body.sheet-fixed #root {
   border: 1px solid rgba(148, 167, 176, 0.28);
   border-radius: 999px;
   background-color: rgba(9, 17, 21, 0.5);
+  font-family: var(--font-body);
   font-size: 0.68rem;
   color: var(--text-muted);
   cursor: pointer;
@@ -7705,6 +7723,30 @@ body.sheet-fixed #root {
 .brew-missing-line {
   font-size: 0.7rem;
   line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* ---------- and one you cannot pay for ----------
+   A complete Brew whose total the pools will not cover is a different thing from
+   an unfinished one, so it wears the red every refusal on this sheet wears rather
+   than the copper of a count still to fill. The same red as .use-denied, which is
+   the notice this one saves the player a press to reach. */
+.brew-missing.is-short {
+  border-color: rgba(229, 57, 53, 0.45);
+  border-left-color: var(--danger-red);
+  background-color: rgba(229, 57, 53, 0.1);
+}
+
+.brew-missing.is-short .brew-missing-head {
+  color: var(--danger-red);
+}
+
+.brew-missing.is-short .brew-missing-line {
+  color: var(--text-silver);
+}
+
+/* What to do about it, which is advice rather than a number. */
+.brew-missing.is-short .brew-missing-foot {
   color: var(--text-muted);
 }
 

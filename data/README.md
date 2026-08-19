@@ -24,15 +24,19 @@ reaches GitHub. Only `README.md` and `templates/` are tracked.
 | General Rules · Basic Abilities | 2026-08-19, 10 actions | `src/lib/actions.js` (`BASIC_ACTIONS`) |
 | Card art, from both Image columns | 2026-08-19, 34 pictures | `public/cards/` + `src/lib/cardArt.js` |
 | Talent Set · Cauldron Keeper · Overview | 2026-08-19, 1 set | `src/lib/talents.js` (`TALENTS`) |
-| Talent Set · Cauldron Keeper · Ability | 2026-08-19, 4 cards + 18 Ingredients | `src/lib/talents.js`, `src/lib/ingredients.js` |
+| Talent Set · Cauldron Keeper · Ability | 2026-08-19, 4 cards + 19 Ingredients | `src/lib/talents.js`, `src/lib/ingredients.js` |
 | General Rules · Status & Terms | 2026-08-19, 26 terms | `src/lib/keywords.js` |
 | Cauldron Keeper art, both tabs | 2026-08-19, 22 cards + 1 plate | `public/cards/`, `public/talents/` |
 | Equipment · Armor | 2026-08-19, 21 pieces | `src/lib/items.js` (`ARMOR_ITEMS`) |
+| Talent Set · Enchanter · Ability | 2026-08-19, 3 cards | `src/lib/talents.js` (`TALENTS`) |
+| Talent Set · Enchanter · Overview | 2026-08-19, written here | `src/lib/talents.js`, exported back to `data/` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
 else: the codex also carries one Arcane spell, Containment Sphere, which no
-sheet covers yet. Diff a fresh download against those to see exactly what
+sheet covers yet. `cauldron-keeper-ingredients.csv` carries an extra **Sheet AP**
+column beside the live one, so the Catalyst balance pass below reads as a diff
+rather than a claim. Diff a fresh download against those to see exactly what
 changed before asking for a pull.
 
 ## The armor
@@ -107,7 +111,7 @@ was transcribed rather than interpreted.
 | Tab | Landed as |
 | --- | --------- |
 | `Overview` | the set's head in `talents.js`: `Name`, `Tags`, `Summary` and `Overview` all byte for byte |
-| `Ability` | 4 set cards in `talents.js`, 18 Ingredients in `ingredients.js` |
+| `Ability` | 4 set cards in `talents.js`, 19 Ingredients in `ingredients.js` (18 rows, one split in two) |
 | `Developpement Notes` | the brewing window, `src/components/sheet/BrewWindow.jsx` |
 | `Status & Terms` | 26 glossary entries in `keywords.js` |
 
@@ -116,7 +120,12 @@ markers inserted.** `2d6 + 2 x Instinct` became `[[2d6 + 2*stat]]` so the number
 resolves against the brewer, and a damage type became `{damage:Cold}` so it prints
 in its own colour. That claim is checked rather than asserted: a round trip maps
 every marker back to the designer's written form and compares it to their cell,
-and it passes on all 18, along with every AP, WP and tag.
+and it passes. **Nine cells differ now and every one of the nine is a decision on
+record**: the six Catalyst Action Points, Volcanic Shard's tag, the Clover split and
+Efficient Brewing's reading. Nineteen rows on the sheet carry an Ingredient tag (the
+18 Ingredients, plus Efficient Brewing, which is tagged `Adept Catalyst`) and ten of
+them match cell for cell, along with every remaining AP, WP and tag. The three
+readings below and the second pass above say why each of the nine differs.
 
 ### What BREW's text buys
 
@@ -153,6 +162,61 @@ thing they meant to press. The Overview's own words are "bearing a soul-bound
 Cauldron that bubbles continuously upon their back", so the sheet takes it as read.
 Bound Cauldron still costs its 2 Action Points and still says every word it says.
 Nothing checks it.
+
+### Second pass, 19 Aug 2026
+
+Four changes after playing with the window. Three are the designer's calls and one
+was a bug.
+
+**1. The Clover is two Ingredients now.** FOUR-LEAF CLOVER was one Essence that
+asked the brewer for a state, Lucky or Unlucky. It is now **LUCKY CLOVER** and
+**UNLUCKY CLOVER**, two Novice Essences at 1 AP and 1 WP each. Nothing was
+reworded: each keeps the sheet's own sentence for its own half, byte for byte, and
+the line of flavour above it is his with one word turned over ("a rare, lucky
+plant" / "a rare, unlucky plant"). Two Essences rather than one means Improved
+Recipes can carry both at once, and the decision is made by reaching for a shelf
+rather than by answering a question after the Ingredient is already in the pot. The
+`four-leaf-clover` id is gone and strips nothing off anybody: a Brew "takes effect
+immediately" and is stored nowhere, so no saved sheet has ever pointed at an
+Ingredient. **Three Ingredients ask something as they go in now, not four.**
+Neither Clover has art, on purpose.
+
+**2. Every Catalyst costs 1 Action Point more.** A balance pass, so the round trip
+flags all six cells on purpose:
+
+| Catalyst | Sheet | Now |
+| -------- | ----- | --- |
+| Eye of the Seeker | 1 AP | 2 AP |
+| Puffball Mushroom | 1 AP | 2 AP |
+| Sampled Catalyst | 1 AP | 2 AP |
+| Sticky Resin | 1 AP | 2 AP |
+| Lightning in a Bottle | 2 AP | 3 AP |
+| Sacred Chalk | 1 AP | 2 AP |
+
+Every Brew needs exactly one Catalyst, so this is a flat +1 on the floor price of
+brewing at all: the cheapest Novice Brew was 2 Action Points and is now 3, less
+whatever Quicksilver and Efficient Brewing take back off it. Willpower is untouched.
+`templates/cauldron-keeper-ingredients.csv` prints both numbers side by side.
+
+**3. A Brew you cannot pay for is refused in the window.** It used to be pressable,
+and `UsePrompt` would refuse it afterwards. That is the right place for a card with
+a printed cost. A Brew has none: its cost is whatever went in the pot, so a Keeper
+could assemble four Ingredients, press the only button in the window, and only then
+be told the total was never payable. `brewShortfall` in `brews.js` measures the live
+total against the pools, the window prints it in the red every refusal on this sheet
+wears, and "Brew it" is disabled with the shortfall as its reason. **Either pool
+counts for the Action Points**, because a Brew is asked about action-or-reaction like
+every other use, so it is only unpayable when neither pool covers it. Willpower has
+no second pool. The warning sits above "Still needed", which stays what it was: what
+the *rule* wants, in the designer's own words.
+
+**4. The filled slot was drawing the browser's own button.** `.brew-slot-body` and
+`.brew-slot-drop` never declared `background`, `border` or `font-family`, and this
+stylesheet has no global button reset on purpose — every button here says what it
+looks like. So a slot with an Ingredient in it wore a light grey fill with a raised
+border, which covered the slot's green and left the Ingredient's name white on
+near-white. Fixed on both, plus the font on `.brew-slot-add` and `.brew-chip`, which
+were quietly rendering in the system font.
 
 ### Three readings that need the designer's word
 
@@ -194,6 +258,113 @@ Still provisional, because the tab does not cover them: **stunned** (which Amber
 Shard leans on), **unconscious**, asleep, marked and dying. **Poison** was added as
 a damage type for Toxic Toad, with its own token so Draconic Scale can grant
 resistance to it without granting resistance to Decay.
+
+## The Enchanter
+
+Two tabs arrived, **Ability** and **Developpement Notes**, and the Overview was
+handed over rather than exported: "you are in charge for the overview page." So
+this one is the reverse of the Cauldron Keeper pull. The cards are transcribed and
+the Overview is written.
+
+| Tab | Landed as |
+| --- | --------- |
+| `Ability` | 3 set cards in `talents.js`, all Rank 1 |
+| `Overview` | written here, and exported back out to `data/Talent Set - Enchanter - Overview.csv` |
+| `Developpement Notes` | **not built.** See "What the notes still ask for" below |
+
+**The three cards are the Ability tab, cell for cell.** A round trip maps every
+marker back to the written form and compares it to the cell: 16 of 16 fields match,
+tags, AP and WP included. No marker was needed on any of the three, because none of
+them rolls anything or deals damage.
+
+### The Overview tab, written
+
+`Name`, `Tags`, `Summary` and `Overview` are in the codex and in a CSV in the
+sheet's own column order, so the workbook can hold the same words. Paste it in as a
+new tab and the next pull is a diff.
+
+It is written out twice on purpose. `data/Talent Set - Enchanter - Overview.csv` sits
+where a drop of that tab would land, so a fresh download diffs straight against it.
+`templates/enchanter-overview.csv` is the same file **tracked**, because drops are
+gitignored and this one is authored rather than exported: without the tracked copy
+the only place the words survive is `talents.js`.
+
+| Column | What it says | Why |
+| ------ | ------------ | --- |
+| `Tags` | `Support, Mind` | Support because an Enchanter arms other people. Mind because nothing they do is rolled: what an enchantment costs is Magic Burden, and what a body can carry is `Level + Mind + 10` (`magicBurdenMax` in `items.js`). Mind is what lets an Enchanter wear their own work. |
+| `Summary` | "An artisan of Willpower who turns ordinary gear into lasting wonder." | The shape the other three sets use: a noun, then what it turns into what. |
+| `Overview` | three paragraphs | Built from the set's own lexicon and nothing else, the way Guardian and Mycomancer build every card name out of words in their own blurb: imbuement, Willpower, wonder, wielder, supplies, Long Rest, Magic Burden. |
+| `Image` | **empty** | There is no plate. Paste a postimg link in that column, run `npm run art`, and `/talents/enchanter.jpg` appears; until then the wall and the page draw the empty haze plate, the same as any card without art. |
+
+### Ranks 2 and 3 hand out no cards
+
+All three cards are Novice. What the next two ranks buy is written *inside* two of
+them, and nowhere else:
+
+- ENCHANTING: "At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept
+  enchantments, and at Rank 3 you learn Master enchantments."
+- WIELDER OF WONDER: "The amount of such enchantments you can have is equal to your
+  rank in enchanter."
+
+The presentation page prints a rank only when that rank hands something over, so
+without this the Enchanter's page would have stopped after Rank 1 and a player at
+level 4 deciding on Rank 2 would have found nothing there. So the set carries an
+`enchanting` spec beside its cards — a fourth shape of choice next to a fixed hand,
+a `loadout` and a `brewing` spec — and `enchantPreview` in `talents.js` turns it
+into the one line each rank needs. It is arithmetic on those two sentences and
+needs no codex, which is why it lives in the leaf.
+
+**The note counts nothing, deliberately.** The Brew note says "+13 Novice
+Ingredients" because the Ingredient shelf is long and rank-gated. The enchantment
+shelf cannot be counted yet: the Equipment · Enchantments tab has 13 rows and all
+13 are Novice, `weapons.js` holds only 4 of them, and those 4 carry no tier tag at
+all. A number there would be a number about the codex rather than about the rank.
+**Pull that tab with a tier on each row and the count can be added.**
+
+### One reading that changed code
+
+**`Long Rest` in the tag slot.** The Enchanter's sheet writes it where every other
+set writes `Ability` or `Passive`, on ENCHANTING and WIELDER OF WONDER, both of
+which cost nothing. The tag was kept and `isPassive` in `abilitySources.js` was
+taught the word instead. Without that, `combatBar.js` would have offered both on
+the combat quick bar as free actions — the one place a night's labour cannot be
+taken — and left them out of the recap that is supposed to hold every card exactly
+once. Both cards are true of the character from the moment the set is taken ("you
+have learned the art", "the enchanter body is able to withstand"); the tag says when
+the work they allow gets done. A card tagged `Long Rest` that does carry a cost is
+still a move.
+
+### What the notes still ask for, and is not built
+
+The Developpement Notes are a system, not a card, and none of it is in yet. Taking
+the Enchanter today gives three cards whose words the table plays. Listed here so
+the next build has the list:
+
+1. **Making an enchanted item.** A "get an enchanted item" button in each equipment
+   codex: pick any item, apply an enchantment, and it becomes an enchanted sword in
+   your inventory, nameable, and able to carry more than one. `items.js` already
+   models `enchants: [{ id, spell? }]` on an item, so the data shape exists.
+2. **A Trinket block.** Slots for items that exist to carry enchantments — rings,
+   necklaces — any number of them. The Inventory block shrinks from three blocks to
+   two to make room.
+3. **Sharing an item by code.** An item's info panel offers a share link, and both
+   the inventory and the codex get an "add by code" button.
+4. **Ephemeral Enchantment on the tracker.** Using it from the quick action adds a
+   temporary effect automatically, searchable by the other player if it was cast on
+   them, **and it has to move the character sheet**: an ephemeral +1 Instinct
+   changes Instinct.
+
+### Two numbers to settle first
+
+1. **70 supplies per Magic Burden, against 750 coin per Magic Burden.** ENCHANTING
+   prices the work at "70 times the Magic Burden value". `ENCHANTMENTS` in
+   `weapons.js` prices the same enchantments at 750 x burden in coin (a burden-4
+   Infusion costs 3000). Crafting being cheaper than buying is normal, but 70 is
+   under a tenth of retail, and 700 would land at 93% of it. **Is 70 the number, or
+   is it 700?**
+2. **NOVICE IMBUEMENT's burden.** The Enchantments tab says 4. `weapons.js` says 3.
+   The tab is newer, so the tab is probably right, but that pull has not happened
+   and nothing was changed on a guess.
 
 ## The columns
 

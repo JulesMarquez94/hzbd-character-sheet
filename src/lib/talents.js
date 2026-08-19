@@ -448,6 +448,112 @@ export const TALENTS = [
       },
     ],
   },
+
+  {
+    id: 'enchanter',
+    name: 'Enchanter',
+    /* The Overview tab did not arrive with the drop: the Ability tab and the
+       Developpement Notes did, and the Overview was handed over to be written
+       here. So `tagline`, `tags` and `blurb` are house-written rather than
+       transcribed, and they are exported back out to
+       data/Talent Set - Enchanter - Overview.csv in the sheet's own column
+       order so the workbook can hold the same words. Every card below is the
+       Ability tab, byte for byte. */
+    tagline: 'An artisan of Willpower who turns ordinary gear into lasting wonder.',
+    /* No plate yet. Paste a postimg link into the Overview tab's Image column
+       and `npm run art` writes /talents/enchanter.jpg; until then the wall and
+       the page draw the empty plate, the same as any card without art. */
+    art: null,
+    /* Written as "Support, Mind". Mind because nothing an Enchanter does is
+       rolled: what an enchantment costs is Magic Burden, and how much of it a
+       body can carry is Level + Mind + 10 (`magicBurdenMax` in items.js). Mind
+       is what lets an Enchanter wear their own work. */
+    tags: ['mind', 'support'],
+    stat: 'mind',
+    /* A fourth shape of choice, beside a fixed hand, a `loadout` of picked cards
+       and a `brewing` spec. Ranks 2 and 3 add no cards at all: they widen what
+       ENCHANTING may lay and what WIELDER OF WONDER may wear, and neither number
+       can be counted off a card. Both are transcribed straight off those two
+       cards, indexed by rank, so the presentation page can print a rank that
+       hands out nothing new to read.
+
+         "At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept
+          enchantments, and at Rank 3 you learn Master enchantments."
+         "The amount of such enchantments you can have is equal to your rank
+          in enchanter."
+
+       `supplyRate` is ENCHANTING's own 70, kept here rather than parsed back out
+       of its prose the way every other number on the sheet is kept. Nothing reads
+       it yet: the enchanting window the Developpement Notes ask for is unbuilt,
+       and this is the one place it will look for the price. */
+    enchanting: {
+      id: 'enchanting',
+      label: 'Enchanting',
+      noun: 'enchantment',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      worn: [null, 1, 2, 3],
+      supplyRate: 70,
+    },
+    blurb:
+      'The Enchanter is a master of imbuement, working their own Willpower into steel, leather and stone until it stays there. Through patient labour taken at the fire rather than in the thick of a fight, they have perfected the art of making an ordinary thing extraordinary, bought once in supplies and carried from that night onward.\n\n' +
+      'They excel at arming everyone around them. From a blade that takes on Fire to a hood that answers the first clash of a fight with a Shield, what they make holds from one fight to the next, and the only price a companion pays is the Magic Burden of carrying it. And where there is no night to spare, they can push an enchantment into an item at a touch, spending their own Willpower for an hour of borrowed wonder that weighs on no one.\n\n' +
+      'An Enchanter\u2019s presence is a source of quiet, compounding advantage, felt on everything the party carries long after the making. They are wielders of wonder themselves, and whatever they can work into a companion\u2019s gear they can bear upon their own person.',
+    cards: [
+      {
+        id: 'enchanting',
+        rank: 1,
+        name: 'Enchanting',
+        summary: 'Lay an enchantment on an item over a Long Rest, for 70 supplies per Magic Burden.',
+        kind: 'talent',
+        /* The sheet's third tag is "Long Rest" where every other set writes
+           "Ability" or "Passive". It is kept, and `isPassive` in
+           abilitySources.js was taught the word instead: a card that costs
+           nothing and is worked at a Long Rest is not a move the quick bar can
+           offer mid-fight. What it grants ("you have learned the art") is true
+           of you from the moment you take it, which is what the recap means. */
+        tags: ['Enchanter', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You have learned the art of imbuing an item with Willpower.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest actions to enchant.\n\n' +
+          'Enchanting an item costs you an amount of supplies equal to 70 times the Magic Burden value of the enchantment.\n\n' +
+          'At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept enchantments, and at Rank 3 you learn Master enchantments.',
+      },
+      {
+        id: 'ephemeral-enchantment',
+        rank: 1,
+        name: 'Ephemeral Enchantment',
+        summary: 'Enchant an item you touch for an hour, for Willpower equal to its Magic Burden.',
+        kind: 'talent',
+        tags: ['Enchanter', 'Novice Talent', 'Ability'],
+        ap: 3,
+        /* The sheet's own "x": what it costs is the enchantment's Magic Burden,
+           which is not known until one is chosen. Same shape as BREW's cost. */
+        wp: 'X',
+        stat: 'mind',
+        body:
+          'You temporarily enchant an item you can touch for the next 1 hour.\n\n' +
+          'When doing so, you choose an enchantment you know, applying its effect to the wielder of the item.\n\n' +
+          'Ephemeral Enchantment costs an amount of Willpower equal to the enchantment\u2019s Magic Burden.\n\n' +
+          'This does not count toward the wielder\u2019s Magic Burden and makes the item Attuned to the person wielding it at the moment of enchantment.',
+      },
+      {
+        id: 'wielder-of-wonder',
+        rank: 1,
+        name: 'Wielder of Wonder',
+        summary: 'Enchantments apply to your own person, one for every rank you hold.',
+        kind: 'talent',
+        tags: ['Enchanter', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------------ lookups */
@@ -485,6 +591,48 @@ export function cardsAtRank(talent, rank) {
 /** Everything a character holding this talent at `rank` has earned from it. */
 export function cardsThroughRank(talent, rank) {
   return (talent?.cards ?? []).filter((card) => card.rank <= rank);
+}
+
+/* --------------------------------------------------------- the enchanting spec
+ *
+ * The Enchanter's ranks 2 and 3 add no cards. They widen what ENCHANTING may lay
+ * and what WIELDER OF WONDER may wear, and a presentation page that only printed
+ * ranks with cards in them would print nothing at all for either. So the spec is
+ * read here, the way loadouts.js reads a `loadout` and brews.js a `brewing`, and
+ * this one needs no codex to answer: it is arithmetic on two of the set's own
+ * sentences, which is why it can live in the leaf.
+ */
+
+/** The enchanting spec a set carries, or null for every set that lays nothing. */
+export function enchantingOf(talent) {
+  const set = typeof talent === 'string' ? getTalent(talent) : talent;
+  return set?.enchanting ?? null;
+}
+
+/**
+ * What a rank of an enchanting set opens, in the shape the presentation page's
+ * other two notes already hand it: the tiers reachable, the tiers newly opened
+ * over the rank below, and how many enchantments the Enchanter wears themselves.
+ */
+export function enchantPreview(talent, rank) {
+  const spec = enchantingOf(talent);
+  if (!spec) return null;
+
+  const tiers = spec.tiers?.[rank] ?? [];
+  const below = spec.tiers?.[rank - 1] ?? [];
+  const worn = spec.worn?.[rank] ?? 0;
+
+  return {
+    spec,
+    tiers,
+    opened: tiers.filter((tier) => !below.includes(tier)),
+    /* What the rank below could already lay from, so a rank says what it *adds*
+       rather than repeating the price of enchanting three times over. */
+    kept: tiers.filter((tier) => below.includes(tier)),
+    worn,
+    /* Rank 1 is the first one, so it grows over nothing rather than over zero. */
+    grew: worn > (spec.worn?.[rank - 1] ?? 0),
+  };
 }
 
 /* -------------------------------------------------------------- the choices

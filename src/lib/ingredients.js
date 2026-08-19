@@ -28,8 +28,18 @@
  * cost of all chosen Ingredients", so a Brew's cost is the sum of what went into
  * it. brews.js does that sum.
  *
+ * **One deliberate divergence, on the designer's word (19 Aug 2026): every Catalyst
+ * costs 1 Action Point more than the sheet prints.** A balance pass rather than a
+ * transcription slip, so the round trip flags all six cells on purpose. Every Brew
+ * needs exactly one Catalyst, which makes this a flat +1 on the floor price of
+ * brewing at all: the cheapest Novice Brew was 2 Action Points and is now 3, less
+ * whatever Quicksilver and Efficient Brewing take back off it.
+ *
+ * data/templates/cauldron-keeper-ingredients.csv holds the current state next to
+ * the sheet's own numbers, so the change can be carried back to the workbook.
+ *
  * ------------------------------------------------------------------ the choices
- * Four Ingredients ask the brewer to decide something as they go in, and their
+ * Three Ingredients ask the brewer to decide something as they go in, and their
  * own text is what says so ("the brewer chooses", "the brewer names"). That
  * decision belongs to the Brew rather than to the character, so it is stored on
  * the recipe and not in `character.choices`. See brews.js.
@@ -45,9 +55,22 @@ export const INGREDIENTS = withArt([
    * Improved Recipes may carry two so long as they are not the same one.
    */
 
+  /* FOUR-LEAF CLOVER, split in two on the designer's word (19 Aug 2026). It was
+     one Essence that asked the brewer for a state, Lucky or Unlucky, and it is now
+     the two Ingredients that state named. Nothing was reworded to do it: each
+     keeps the sheet's own sentence for its own half, byte for byte, and the line
+     of flavour above it is his with one word turned over.
+
+     Two Essences rather than one, so Improved Recipes can carry both at once and
+     the choice is made by reaching for a shelf rather than by answering a question
+     after the Ingredient is already in. The old `four-leaf-clover` id goes with no
+     character to strip: a Brew "takes effect immediately" and is stored nowhere,
+     so no saved sheet has ever pointed at an Ingredient.
+
+     Neither carries art yet, on purpose. */
   {
-    id: 'four-leaf-clover',
-    name: 'Four-Leaf Clover',
+    id: 'lucky-clover',
+    name: 'Lucky Clover',
     part: 'essence',
     tier: 'Novice',
     kind: 'ingredient',
@@ -55,18 +78,25 @@ export const INGREDIENTS = withArt([
     ap: 1,
     wp: 1,
     stat: 'instinct',
-    summary: 'Hands out Advantage, or Disadvantage, on the next roll.',
-    choice: {
-      label: 'Lucky or Unlucky',
-      options: [
-        { id: 'lucky', label: 'Lucky' },
-        { id: 'unlucky', label: 'Unlucky' },
-      ],
-    },
+    summary: 'Advantage on the next roll.',
     body:
       'You drop a rare, lucky plant into the brew.\n\n' +
-      'The brewer chooses a state for the brew: Lucky or Unlucky.\n\n' +
-      'Entities affected by a Lucky Brew gain Advantage on their next Skill Check or Attack Roll.\n\n' +
+      'Entities affected by a Lucky Brew gain Advantage on their next Skill Check or Attack Roll.',
+  },
+
+  {
+    id: 'unlucky-clover',
+    name: 'Unlucky Clover',
+    part: 'essence',
+    tier: 'Novice',
+    kind: 'ingredient',
+    tags: ['Cauldron keeper', 'Novice Essence'],
+    ap: 1,
+    wp: 1,
+    stat: 'instinct',
+    summary: 'Disadvantage on the next roll.',
+    body:
+      'You drop a rare, unlucky plant into the brew.\n\n' +
       'Entities affected by an Unlucky Brew gain Disadvantage on their next Skill Check or Attack Roll.',
   },
 
@@ -239,7 +269,7 @@ export const INGREDIENTS = withArt([
     tier: 'Novice',
     kind: 'ingredient',
     tags: ['Cauldron keeper', 'Novice Catalyst'],
-    ap: 1,
+    ap: 2,
     wp: 1,
     stat: 'instinct',
     summary: 'Aims the Brew at one target you can see within 9 meters.',
@@ -255,7 +285,7 @@ export const INGREDIENTS = withArt([
     tier: 'Novice',
     kind: 'ingredient',
     tags: ['Cauldron keeper', 'Novice Catalyst'],
-    ap: 1,
+    ap: 2,
     wp: 3,
     stat: 'instinct',
     summary: 'Bubbles the Brew out over everything within 6 meters.',
@@ -271,7 +301,7 @@ export const INGREDIENTS = withArt([
     tier: 'Adept',
     kind: 'ingredient',
     tags: ['Cauldron keeper', 'Adept Catalyst'],
-    ap: 1,
+    ap: 2,
     wp: 2,
     stat: 'instinct',
     summary: 'A piece of somebody carries the Brew to them at any distance.',
@@ -288,7 +318,7 @@ export const INGREDIENTS = withArt([
     tier: 'Adept',
     kind: 'ingredient',
     tags: ['Cauldron keeper', 'Adept Catalyst'],
-    ap: 1,
+    ap: 2,
     wp: 1,
     stat: 'instinct',
     summary: 'Coats a weapon, and the next hit with it delivers the Brew.',
@@ -305,7 +335,7 @@ export const INGREDIENTS = withArt([
     tier: 'Master',
     kind: 'ingredient',
     tags: ['Cauldron keeper', 'Master Catalyst'],
-    ap: 2,
+    ap: 3,
     wp: 5,
     stat: 'instinct',
     summary: 'A storm cloud that keeps applying the Brew for 5 turns.',
@@ -323,7 +353,7 @@ export const INGREDIENTS = withArt([
     tier: 'Master',
     kind: 'ingredient',
     tags: ['Cauldron keeper', 'Master Catalyst'],
-    ap: 1,
+    ap: 2,
     wp: 1,
     stat: 'instinct',
     summary: 'A glyph that waits on the ground until somebody walks into it.',

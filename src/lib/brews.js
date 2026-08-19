@@ -261,6 +261,58 @@ export function brewReady(draft, limits) {
 }
 
 /**
+ * Whether the character can pay for the draft as it stands, and what falls short.
+ *
+ * The window used to let any complete Brew be pressed and leave the refusal to
+ * `UsePrompt`, which is where a use finds out it cannot be paid for. That is the
+ * right place for a card whose cost is printed on it. A Brew's cost is not printed
+ * anywhere: it is whatever the brewer just put in the pot, so a Cauldron Keeper can
+ * assemble four Ingredients, press the one button in the window and only then be
+ * told the total was never payable. The window prices the Brew live, so it is the
+ * window that should say so.
+ *
+ * **Either pool counts for the Action Points.** A Brew is asked about the same way
+ * every other use is — action or reaction — so it is only unpayable when *neither*
+ * pool covers it. Willpower has no second pool and is short or it is not.
+ *
+ * `null` when there is nothing to complain about, which includes an empty Cauldron:
+ * a Brew that does not exist yet has its own line to say so.
+ */
+export function brewShortfall(cost, character) {
+  if (!character || !cost) return null;
+
+  const ap = Number(cost.ap) || 0;
+  const wp = Number(cost.wp) || 0;
+  if (ap === 0 && wp === 0) return null;
+
+  const action = Number(character.ap) || 0;
+  const reaction = Number(character.reaction) || 0;
+  const willpower = Number(character.willpower) || 0;
+
+  const short = [];
+  /* The better of the two pools, because either one may pay it. Both numbers ride
+     along so the line can name them: "6 needed, you have 1, or 4 as a Reaction" is
+     what a player can act on, where a bare 4 leaves them wondering which pool it
+     came out of. */
+  if (ap > Math.max(action, reaction)) {
+    short.push({ resource: 'Action Points', need: ap, action, reaction });
+  }
+  if (wp > willpower) {
+    short.push({ resource: 'Willpower', need: wp, have: willpower });
+  }
+
+  return short.length > 0 ? short : null;
+}
+
+/** One shortfall as a sentence. The Action Point row has two pools to report. */
+export function shortfallLine(row) {
+  if (row.resource === 'Willpower') {
+    return `Willpower: ${row.need} needed, ${row.have} left.`;
+  }
+  return `Action Points: ${row.need} needed. You have ${row.action}, or ${row.reaction} as a Reaction.`;
+}
+
+/**
  * Every Ingredient measured against the draft: what may go in, how much is
  * already in, and for the rest the one line saying why not.
  *
@@ -320,7 +372,7 @@ export function brewModifiers(draft) {
  * What a mixed Brew is called.
  *
  * The set’s own noun, and nothing else. It used to be named after its Essence
- * ("Four-Leaf Clover Brew"), which reads as that Ingredient’s own card and says
+ * ("Lucky Clover Brew"), which reads as that Ingredient’s own card and says
  * nothing about the Catalyst, which is what decides where the Brew even lands.
  * What is in it is on the window that mixed it, Ingredient by Ingredient, and
  * the summary line under the title says what it all comes to.

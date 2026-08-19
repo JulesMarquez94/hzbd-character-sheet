@@ -16,6 +16,7 @@ import {
   cardsAtRank,
   chooseAt,
   clearAt,
+  enchantPreview,
   optionsAt,
   rankInfo,
   talentTags,
@@ -319,7 +320,7 @@ function TalentTile({ option, onOpen }) {
   return (
     <button type="button" className="talent-tile" onClick={onOpen}>
       <span
-        className="talent-tile-art"
+        className={`talent-tile-art${art ? '' : ' talent-tile-art-empty'}`}
         style={art ? { backgroundImage: `url("${art}")` } : undefined}
       >
         {held > 0 && <span className="talent-tile-held">Rank {held}</span>}
@@ -358,7 +359,11 @@ function TalentPresentation({ option, character }) {
   return (
     <div className="talent-page">
       <header className="talent-page-head">
-        {art && <img className="talent-page-art" src={art} alt="" />}
+        {art ? (
+          <img className="talent-page-art" src={art} alt="" />
+        ) : (
+          <span className="talent-page-art talent-page-art-empty" aria-hidden="true" />
+        )}
         <div className="talent-page-intro">
           <h3 className="talent-page-name">{talent.name}</h3>
           <p className="talent-page-tagline">{talent.tagline}</p>
@@ -374,7 +379,14 @@ function TalentPresentation({ option, character }) {
         const cards = cardsAtRank(talent, rank);
         const choice = rankPreview(talent, rank);
         const brewing = brewPreview(talent, rank);
-        if (cards.length === 0 && !choice?.known && !brewing?.tiers?.length) return null;
+        const enchanting = enchantPreview(talent, rank);
+        if (
+          cards.length === 0 &&
+          !choice?.known &&
+          !brewing?.tiers?.length &&
+          !enchanting?.tiers?.length
+        )
+          return null;
 
         return (
           <section className="talent-page-rank" key={rank}>
@@ -409,6 +421,11 @@ function TalentPresentation({ option, character }) {
             {/* And for a set that mixes rather than chooses: how much wider the
                 Cauldron gets, which is not countable off the card text. */}
             <BrewRankNote talent={talent} rank={rank} />
+
+            {/* And for the set whose ranks 2 and 3 hand out no cards at all:
+                which enchantments come within reach, and how many of them an
+                Enchanter wears themselves. */}
+            <EnchantRankNote talent={talent} rank={rank} />
           </section>
         );
       })}
@@ -417,6 +434,57 @@ function TalentPresentation({ option, character }) {
 }
 
 /* ------------------------------------------------------------------ parts */
+
+/** How many enchantments a rank wears, said as the sentence reads. */
+const WORN_ORDINAL = [null, 'one', 'a second', 'a third'];
+
+/**
+ * What a rank of an enchanting set opens.
+ *
+ * The Enchanter is the one set whose ranks 2 and 3 add no cards: what they buy is
+ * written inside ENCHANTING and WIELDER OF WONDER, which the page has already
+ * printed at Rank 1 and which a reader deciding on Rank 2 would have to go back
+ * and re-read. So this says it where the decision is made. Every word of it is
+ * off those two cards.
+ *
+ * It counts nothing, unlike the Brew note. Every enchantment on the Equipment
+ * sheet is a Novice one and the four the codex holds carry no tier at all, so a
+ * number here would be a number about the codex rather than about the rank. See
+ * data/README.md.
+ */
+function EnchantRankNote({ talent, rank }) {
+  const preview = enchantPreview(talent, rank);
+  if (!preview || preview.tiers.length === 0) return null;
+
+  const { spec, opened, kept, worn, grew } = preview;
+
+  return (
+    <div className="loadout-note">
+      <span className="loadout-note-body">
+        <b>
+          {opened.length > 0
+            ? `${listAnd(opened)} enchantments open`
+            : 'Nothing new opens at this rank'}
+        </b>
+        <span className="loadout-note-line">
+          {/* The price is on ENCHANTING, which the first rank prints right above
+              this. Saying it again at Rank 2 and Rank 3 would be the same sentence
+              three times over, so the later ranks say what they add instead. */}
+          {kept.length === 0
+            ? `Laid on an item over a Long Rest, ${spec.supplyRate} supplies for every point of Magic Burden`
+            : `On top of the ${listAnd(kept)} ${kept.length === 1 ? 'shelf' : 'shelves'} you already lay from`}
+          {grew ? `, and ${WORN_ORDINAL[worn] ?? worn} worn on your own person` : ''}.
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/** "Novice and Adept", "Novice, Adept and Master". No Oxford comma. */
+function listAnd(words) {
+  if (words.length <= 1) return String(words[0] ?? '');
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
 
 /** Three dots: filled to the rank held, hollow for the ranks still to come. */
 function RankPips({ rank }) {
