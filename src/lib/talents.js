@@ -328,7 +328,10 @@ export const TALENTS = [
   {
     id: 'cauldron-keeper',
     name: 'Cauldron Keeper',
-    tagline: 'An opportunistic alchemist who turns battlefield chaos into custom brews.',
+    /* The sheet's Summary column, byte for byte. It is the designer's line and
+       not a slot for a shorter one: this was paraphrased once and it was wrong. */
+    tagline:
+      'An opportunistic alchemist who transforms raw battlefield chaos into potent, custom brews.',
     art: '/talents/cauldron-keeper.jpg',
     tags: ['instinct', 'support'],
     stat: 'instinct',
