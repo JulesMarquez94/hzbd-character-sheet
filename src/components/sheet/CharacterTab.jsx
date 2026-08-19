@@ -5,7 +5,7 @@ import LoadoutBlock from './LoadoutBlock.jsx';
 import PassiveBlock from './PassiveBlock.jsx';
 import TurnBlock from './TurnBlock.jsx';
 import { AttrTile, CoinIcon, CrateIcon, KarmaPill, PipRow, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
-import useBlockReorder from './useBlockReorder.js';
+import BlockArrange from './BlockArrange.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import {
@@ -80,14 +80,29 @@ const DEFENSE_LINE = [
 const PLACEHOLDERS = [];
 
 /**
+ * What each block is, in words. The arranger shows a list of rows rather than
+ * the blocks themselves, so it needs a name for each one, and these are the
+ * names the block comments above use.
+ */
+const BLOCK_NAMES = {
+  1: { name: 'Identity & Attributes', note: 'Name, lineage, background, the three attributes' },
+  2: { name: 'Combat Profile', note: 'Defense, Armor, Reflex, Grit, Initiative, Speed' },
+  3: { name: 'Loadout', note: 'What you are holding, and what it lets you do' },
+  4: { name: 'Quick Bar', note: 'Everything you can spend points on, in reaching order' },
+  5: { name: 'Always On', note: 'The passives you never have to play' },
+  6: { name: 'Turn & Effects', note: 'The clock, and what is currently on you' },
+};
+
+/**
  * Block 1 is a readout, not a form. Name, lineage, background and the three
  * attributes are set on the Advancement tab or moved by gear and temporary
  * effects — the only things you change from here are XP, coins and supplies,
  * and all three go through a ledger so every movement carries a reason.
  *
- * The blocks themselves are the player's to arrange: each carries a grip that
- * drags it to another slot, and the order is stored on the character, so it
- * follows the sheet rather than the browser it was set in.
+ * The blocks themselves are the player's to arrange, from the Arrange blocks
+ * button above the grid rather than by dragging them where they sit. The order
+ * is stored on the character, so it follows the sheet rather than the browser
+ * it was set in. See BlockArrange.jsx for why it is a list and not a drag.
  */
 export default function CharacterTab({ character, readOnly = false, patch, unit = 'metric' }) {
   // Which ledger is open: 'xp', 'wealth', 'supplies', 'health', 'shield',
@@ -108,16 +123,18 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   // damage past it is fatal.
   const hp = healthState(character.health, character.health_max);
 
-  const savedOrder = useMemo(() => normalizeBlockOrder(character.block_order), [
+  const order = useMemo(() => normalizeBlockOrder(character.block_order), [
     character.block_order,
   ]);
   const saveOrder = useCallback((next) => patch({ block_order: next }), [patch]);
 
-  const { order, ghost, dragId, registerCell, gripProps } = useBlockReorder({
-    order: savedOrder,
-    onChange: saveOrder,
-    disabled: readOnly,
-  });
+  /* Arranging happens in a modal rather than on the tab itself. Dragging a
+     block where it sits could not work on a phone, where one block fills the
+     screen and moving it three places meant a long wait on auto-scroll — and
+     the grip that started the drag had to take the touch gesture away from the
+     browser, which is half of why this tab was hard to scroll. See the note at
+     the top of BlockArrange.jsx. */
+  const [arranging, setArranging] = useState(false);
 
   /* The contents of each block, keyed by the id the order refers to. Only the
      arrangement moves — a block is the same block wherever it lands. */
@@ -377,49 +394,35 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      whole tab — a card opened from a block sits in front of every block. */
   return (
     <CardStackProvider character={character}>
-      <div className={`sheet-grid-6${dragId ? ' is-reordering' : ''}`}>
-        {order.map((id, index) => (
+      {!readOnly && (
+        <div className="sheet-arrange-bar">
+          <button
+            type="button"
+            className="btn btn-minimal btn-sm"
+            onClick={() => setArranging(true)}
+          >
+            Arrange blocks
+          </button>
+        </div>
+      )}
+
+      <div className="sheet-grid-6">
+        {order.map((id) => (
           <section
             key={id}
-            ref={(node) => registerCell(id, node)}
-            className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}${
-              dragId === id ? ' is-dragging' : ''
-            }`}
+            className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}`}
           >
-            {!readOnly && (
-              <button
-                type="button"
-                className="cell-grip"
-                title="Drag to move this block — or focus it and use the arrow keys"
-                aria-label={`Block ${id}, position ${index + 1} of ${order.length}. Drag, or press the arrow keys, to move it.`}
-                {...gripProps(id)}
-              >
-                <span className="grip-dots" aria-hidden="true" />
-              </button>
-            )}
             {blocks[id]}
           </section>
         ))}
 
-        {/* The copy under the pointer. The block itself stays put as the empty
-            slot it came from, so nothing has to animate out of the way. */}
-        {ghost && (
-          <div
-            className="sheet-cell cell-ghost"
-            style={{
-              left: `${ghost.x - ghost.offX}px`,
-              top: `${ghost.y - ghost.offY}px`,
-              width: `${ghost.w}px`,
-              height: `${ghost.h}px`,
-            }}
-            aria-hidden="true"
-            inert
-          >
-            <span className="cell-grip">
-              <span className="grip-dots" />
-            </span>
-            {blocks[ghost.id]}
-          </div>
+        {arranging && (
+          <BlockArrange
+            order={order}
+            describe={(id) => BLOCK_NAMES[id]}
+            onChange={saveOrder}
+            onClose={() => setArranging(false)}
+          />
         )}
 
         {ledgerKind && (

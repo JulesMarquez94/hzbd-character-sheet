@@ -1,7 +1,7 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import AbilityBlock from './AbilityBlock.jsx';
 import TagFilter from './TagFilter.jsx';
-import useBlockReorder from './useBlockReorder.js';
+import BlockArrange from './BlockArrange.jsx';
 import { useTagFilter } from './useTagFilter.js';
 import { CardStackProvider } from '../CardStack.jsx';
 import {
@@ -68,11 +68,12 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
   );
   const saveOrder = useCallback((next) => patch?.({ ability_order: next }), [patch]);
 
-  const { order, ghost, dragId, registerCell, gripProps } = useBlockReorder({
-    order: savedOrder,
-    onChange: saveOrder,
-    disabled: readOnly || !patch,
-  });
+  /* Arranged from a list in a modal rather than by dragging the blocks where
+     they sit — see the note at the top of BlockArrange.jsx. The list holds every
+     source, including any the filter is hiding, so narrowing the page no longer
+     narrows what can be moved. */
+  const [arranging, setArranging] = useState(false);
+  const order = savedOrder;
 
   const shown = useMemo(() => new Map(visible.map((source) => [source.id, source])), [visible]);
   const laidOut = order.filter((id) => shown.has(id));
@@ -97,6 +98,31 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
     <CardStackProvider character={character}>
       <div className="abilities-tab">
         <Overview overview={overview} sources={sources.length} />
+
+        {sources.length > 1 && !readOnly && patch && (
+          <div className="sheet-arrange-bar">
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              onClick={() => setArranging(true)}
+            >
+              Arrange blocks
+            </button>
+          </div>
+        )}
+
+        {arranging && (
+          <BlockArrange
+            title="Arrange your ability blocks"
+            order={order}
+            describe={(id) => {
+              const source = sources.find((entry) => entry.id === id);
+              return source ? { name: source.title, note: source.note } : null;
+            }}
+            onChange={saveOrder}
+            onClose={() => setArranging(false)}
+          />
+        )}
 
         {sources.length > 0 && (
           <TagFilter
@@ -126,52 +152,12 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
               </p>
             )}
 
-            <div className={`sheet-grid-6${dragId ? ' is-reordering' : ''}`}>
-              {laidOut.map((id, index) => (
-                <section
-                  key={id}
-                  ref={(node) => registerCell(id, node)}
-                  className={`sheet-cell src-${shown.get(id).kind}${
-                    dragId === id ? ' is-dragging' : ''
-                  }`}
-                >
-                  {!readOnly && patch && (
-                    <button
-                      type="button"
-                      className="cell-grip"
-                      title="Drag to move this block — or focus it and use the arrow keys"
-                      aria-label={`${shown.get(id).title}, block ${index + 1} of ${
-                        laidOut.length
-                      }. Drag, or press the arrow keys, to move it.`}
-                      {...gripProps(id)}
-                    >
-                      <span className="grip-dots" aria-hidden="true" />
-                    </button>
-                  )}
+            <div className="sheet-grid-6">
+              {laidOut.map((id) => (
+                <section key={id} className={`sheet-cell src-${shown.get(id).kind}`}>
                   {block(id)}
                 </section>
               ))}
-
-              {/* The copy under the pointer. The block itself stays put as the
-                  empty slot it came from, so nothing has to animate away. */}
-              {ghost && shown.has(ghost.id) && (
-                <div
-                  className={`sheet-cell cell-ghost src-${shown.get(ghost.id).kind}`}
-                  style={{
-                    left: `${ghost.x - ghost.offX}px`,
-                    top: `${ghost.y - ghost.offY}px`,
-                    width: `${ghost.w}px`,
-                    height: `${ghost.h}px`,
-                  }}
-                  aria-hidden="true"
-                  inert
-                >
-                  <span className="cell-grip">
-                    <span className="grip-dots" />
-                  </span>
-                  {block(ghost.id)}
-                </div>
-              )}
             </div>
           </>
         )}

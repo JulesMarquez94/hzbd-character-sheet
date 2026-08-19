@@ -59,9 +59,14 @@ export default function CardBrief({
   const tags = card.type_line ? [] : card.tags ?? [];
   const banner = tags.length > 0 ? null : cardBanner(card);
   const damage = modifiers?.damage ? [modifiers.damage] : card.damage ?? [];
-  // The card's own art first, the family's second. See the note above. Both
-  // come out of the codex, so both are behind the tier gate.
-  const plate = codexArt(card.art_url ?? art);
+  /* The card's own art first, the family's second. See the note above. Both
+     come out of the codex, so both are behind the tier gate.
+
+     The thumbnail ahead of the full picture: this plate is 92px wide and 58px
+     in a list, and a wall of two dozen briefs asking for 47 KB apiece to draw
+     92 pixels is the slowest thing on the sheet. The cut is ~6 KB. A family's
+     art has no thumbnail, so it falls through to itself. */
+  const plate = codexArt(card.art_thumb ?? card.art_url ?? art);
   const line = card.summary ?? cardGist(card, { character, modifiers });
 
   return (

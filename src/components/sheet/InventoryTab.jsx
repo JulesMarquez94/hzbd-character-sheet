@@ -1,9 +1,9 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import ArmorBlock from './ArmorBlock.jsx';
 import BeltBlock from './BeltBlock.jsx';
 import PackBlock from './PackBlock.jsx';
 import WeaponBlock from './WeaponBlock.jsx';
-import useBlockReorder from './useBlockReorder.js';
+import BlockArrange from './BlockArrange.jsx';
 import { useEquipSlots } from './useEquipSlots.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
 import { normalizeSourceOrder } from '../../lib/characterModel.js';
@@ -73,11 +73,10 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
   );
   const saveOrder = useCallback((next) => patch?.({ inventory_order: next }), [patch]);
 
-  const { order, ghost, dragId, registerCell, gripProps } = useBlockReorder({
-    order: savedOrder,
-    onChange: saveOrder,
-    disabled: readOnly || !patch,
-  });
+  /* Arranged from a list in a modal rather than by dragging the blocks where
+     they sit — see the note at the top of BlockArrange.jsx. */
+  const [arranging, setArranging] = useState(false);
+  const order = savedOrder;
 
   const slotProps = { character, equipment, pack, belt, equip, unequip, readOnly };
   const beltProps = {
@@ -120,24 +119,31 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
       <div className="inventory-tab">
         <Overview overview={overview} />
 
-        <div className={`sheet-grid-6${dragId ? ' is-reordering' : ''}`}>
-          {order.map((id, index) => (
-            <section
-              key={id}
-              ref={(node) => registerCell(id, node)}
-              className={`sheet-cell${dragId === id ? ' is-dragging' : ''}`}
+        {!readOnly && patch && (
+          <div className="sheet-arrange-bar">
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              onClick={() => setArranging(true)}
             >
-              {!readOnly && patch && (
-                <button
-                  type="button"
-                  className="cell-grip"
-                  title="Drag to move this block — or focus it and use the arrow keys"
-                  aria-label={`${labelOf(id)}, block ${index + 1} of ${order.length}. Drag, or press the arrow keys, to move it.`}
-                  {...gripProps(id)}
-                >
-                  <span className="grip-dots" aria-hidden="true" />
-                </button>
-              )}
+              Arrange blocks
+            </button>
+          </div>
+        )}
+
+        {arranging && (
+          <BlockArrange
+            title="Arrange your inventory blocks"
+            order={order}
+            describe={(id) => ({ name: labelOf(id), note: null })}
+            onChange={saveOrder}
+            onClose={() => setArranging(false)}
+          />
+        )}
+
+        <div className="sheet-grid-6">
+          {order.map((id) => (
+            <section key={id} className="sheet-cell">
               {blocks[id]}
             </section>
           ))}
@@ -148,27 +154,6 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
           <section className="sheet-cell sheet-cell-wide">
             <PackBlock {...packProps} />
           </section>
-
-          {/* The copy under the pointer. The block itself stays put as the empty
-              slot it came from, so nothing has to animate out of the way. */}
-          {ghost && (
-            <div
-              className="sheet-cell cell-ghost"
-              style={{
-                left: `${ghost.x - ghost.offX}px`,
-                top: `${ghost.y - ghost.offY}px`,
-                width: `${ghost.w}px`,
-                height: `${ghost.h}px`,
-              }}
-              aria-hidden="true"
-              inert
-            >
-              <span className="cell-grip">
-                <span className="grip-dots" />
-              </span>
-              {blocks[ghost.id]}
-            </div>
-          )}
         </div>
       </div>
 

@@ -22,7 +22,7 @@ reaches GitHub. Only `README.md` and `templates/` are tracked.
 | ----- | ------ | --------- |
 | Spells · Primal Spells | 2026-08-19, 24 spells | `src/lib/weapons.js` (`SPELLS`) |
 | General Rules · Basic Abilities | 2026-08-19, 10 actions | `src/lib/actions.js` (`BASIC_ACTIONS`) |
-| Card art, from both Image columns | 2026-08-19, 34 pictures | `src/lib/cardArt.js` |
+| Card art, from both Image columns | 2026-08-19, 34 pictures | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of both, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -81,27 +81,54 @@ The damage type is currently read out of the `Main Effect` prose, so `2d6 + 2 x
 Mind in Decay damage` becomes `damage: ['Decay']`. That works while a spell
 deals one type and says so plainly. A `Damage` column would make it certain.
 
-## The Image column
+## The Image column, and `npm run art`
 
-Resolved and working. The sheet writes postimg *page* links such as
-`https://postimg.cc/tYJMvMY1`, which serve an HTML page rather than an image, so
-the importer follows each one and keeps the direct link out of the page's
-`og:image` tag. Keep writing page links in the sheet, that is fine.
+Keep writing postimg page links in the sheet. They serve HTML rather than an
+image, and the importer follows each one to the `og:image` behind it.
 
-The resolved links live in `src/lib/cardArt.js`, keyed by card id, and are
-attached to the cards by `withArt()`. All 34 rows across both sheets resolved
-and all 34 load. Only Climb has no picture, because Climb is not on the sheet.
+What it does **not** do is point the site at postimg. Doing that cost readers
+**26.2 MB across 34 pictures**, several of them 3 MB PNGs at 1280x956, arriving
+at 200 to 450 KB/s from a host that stalled for 155 seconds on a single file
+during testing. The plate that shows them is 360x270.
 
-Two things worth knowing:
+So the art is pulled once, resized, and shipped with the site:
 
-- **The pictures are big.** Several are 3 MB PNGs at 1280x956. They are served
-  by postimg rather than by the site, so they cost the reader's bandwidth
-  instead of Cloudflare's, but a wall of twenty-four cards is a slow page on a
-  phone. Re-exporting them nearer 600px wide would fix it.
-- **Who sees them is a tier question.** Card art is a paid capability, so a
-  `free` account gets the empty plate and `premium` upward get the picture. The
-  rule is written once in `src/lib/tiers.js` and applied once in
-  `src/components/useCodexArt.js`.
+```bash
+npm run art
+```
+
+[scripts/pull-card-art.mjs](../scripts/pull-card-art.mjs) reads the Image column
+out of every CSV in this folder, matches each row to a card by name, downloads
+the picture, and writes two WebP files into `public/cards/`:
+
+| File | Size | Drawn by |
+| ---- | ---- | -------- |
+| `<id>.webp` | 720px wide, ~47 KB | the dealt card, whose plate is 360x270 |
+| `<id>-thumb.webp` | 200px wide, ~6 KB | a brief, whose plate is 92px and 58px in a list |
+
+Then it rewrites `src/lib/cardArt.js`, which is generated and should not be
+edited by hand.
+
+**26.2 MB became 1.78 MB.** A wall of twenty-four briefs went from roughly 18 MB
+to 160 KB, and Cloudflare serves all of it from the edge instead of postimg.
+
+Re-runnable and idempotent: a picture already on disk is skipped, so adding one
+spell costs one download rather than thirty-four. Pass `--force` to re-fetch
+everything, which is what you want after replacing an image in the sheet.
+
+`public/_headers` gives `/cards/*` a day of freshness and a month of
+stale-while-revalidate. Not `immutable`, deliberately: the filename does not
+change when the picture does, so an immutable copy would never be replaced for
+anyone who had already seen the old one.
+
+Two cards have no picture, both correctly: **Climb**, which is not on the sheet,
+and **Containment Sphere**, which no sheet covers yet.
+
+**Who sees them is a separate question.** Card art is a paid capability, so a
+`free` account gets the empty plate and `premium` upward get the picture. The
+rule is written once in `src/lib/tiers.js` and applied once in
+`src/components/useCodexArt.js`. The one exception is the sample card on the
+landing page, which is marked `promo` and shows to everybody.
 
 ## How card text is written
 
