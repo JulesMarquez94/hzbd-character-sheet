@@ -3,7 +3,9 @@ import UsePrompt from './UsePrompt.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
 import { GroupHead } from './parts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
+import { BrewBench } from './BrewBench.jsx';
 import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
+import { benchFor, brewState, emptyBrewAt, setBrewAt } from '../../lib/brews.js';
 
 /**
  * The Character tab's fourth block: the quick bar.
@@ -40,6 +42,10 @@ import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
 export default function ActiveBlock({ character, patch, readOnly = false }) {
   // The use waiting on the action-or-reaction question, or null.
   const [request, setRequest] = useState(null);
+  /* The talent set whose bench a paid-for use has opened, or null. The set is
+     held rather than its state, so the rack is re-read after every write and a
+     Brew bottled here appears on it at once. */
+  const [bench, setBench] = useState(null);
 
   const groups = useMemo(() => quickBar(character), [character]);
   const total = moveCount(groups);
@@ -53,6 +59,7 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
       wp: move.wp,
       variable: move.variable,
       converts: move.converts,
+      opens: move.opens,
       card: move.card,
       modifiers: move.modifiers,
       note: move.note,
@@ -64,6 +71,13 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
   function confirmUse(mode, amount) {
     const body = spendUse(request, character, mode, amount);
     if (Object.keys(body).length > 0) patch(body);
+
+    /* A card may say that using it opens something. Quick Stir is the only one
+       so far, and the point of paying for a stir is to mix: making the player
+       close this and go and find the Cauldron would waste the tap they just
+       made. The points are spent either way, exactly as the prompt said. */
+    if (request.opens === 'brews') setBench(benchFor(character.talents, request.card?.id));
+
     setRequest(null);
   }
 
@@ -106,6 +120,21 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
           character={character}
           onCancel={() => setRequest(null)}
           onConfirm={confirmUse}
+        />
+      )}
+
+      {bench && (
+        <BrewBench
+          talent={bench}
+          character={character}
+          state={brewState(character.talents, bench)}
+          readOnly={readOnly}
+          paidFor
+          onBottle={(slot, draft) =>
+            patch({ talents: setBrewAt(character.talents, bench.id, slot, draft) })
+          }
+          onEmpty={(slot) => patch({ talents: emptyBrewAt(character.talents, bench.id, slot) })}
+          onClose={() => setBench(null)}
         />
       )}
     </div>

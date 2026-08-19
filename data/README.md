@@ -23,12 +23,65 @@ reaches GitHub. Only `README.md` and `templates/` are tracked.
 | Spells · Primal Spells | 2026-08-19, 24 spells | `src/lib/weapons.js` (`SPELLS`) |
 | General Rules · Basic Abilities | 2026-08-19, 10 actions | `src/lib/actions.js` (`BASIC_ACTIONS`) |
 | Card art, from both Image columns | 2026-08-19, 34 pictures | `public/cards/` + `src/lib/cardArt.js` |
+| Talent Set · Cauldron Keeper · Overview | 2026-08-19, 1 set | `src/lib/talents.js` (`TALENTS`) |
+| Cauldron Keeper overview art | 2026-08-19, 1 picture | `public/talents/cauldron-keeper.jpg` |
 
 `templates/` holds the current state of both, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
 else: the codex also carries one Arcane spell, Containment Sphere, which no
 sheet covers yet. Diff a fresh download against those to see exactly what
 changed before asking for a pull.
+
+## The Cauldron Keeper, and what its Overview tab did not carry
+
+The drop was one tab, `Talent Set - Cauldron Keeper - Overview.csv`, with five
+columns: `Name`, `Tags`, `Summary`, `Overview` and `Image`. Those map cleanly
+onto a talent set's head, and all five were taken as written:
+
+| Column | Landed as |
+| ------ | --------- |
+| `Name` | `name`, and the id `cauldron-keeper` |
+| `Tags` | `tags: ['instinct', 'support']`, exactly the two the sheet lists |
+| `Summary` | `tagline` |
+| `Overview` | `blurb`, all three paragraphs verbatim |
+| `Image` | empty in the CSV, supplied by hand later the same day |
+
+**Everything below the head is designed rather than transcribed**, because the
+workbook has no other tab yet. That is seven cards across three ranks and the
+whole Brew system, and it is the one pull so far that needed judgement rather
+than typing. It is all in two places on purpose, so replacing it is a delete and
+a paste rather than an excavation:
+
+- `src/lib/talents.js`, the `cauldron-keeper` entry: the seven cards, and the
+  `brewing` spec that holds the three numbers that scale (bottles `3, 4, 5`,
+  Reagents per Brew `1, 2, 3`, and the tier table).
+- `src/lib/brews.js`, the three Bases and nine Reagents, with the header
+  explaining what each number was calibrated against.
+
+The Reagent numbers are set against Novice spells that cost the same, so they
+are at least consistent with the printed codex: a Flask of Rot Cap is
+Bramble Whip's 2 AP · 1 WP for `1d6 + 2*stat`, Heartroot is Renew's instant
+half, and Bonemeal is what one Action Point and one Willpower buys off
+Barkskin's Overcast. **A `Talent Set · Cauldron Keeper · Cards` tab replaces all
+of it**, and a `Reagents` tab beside it replaces the shelf.
+
+Two rulings would settle the rest: whether re-mixing mid-fight really costs an
+Action Point (Quick Stir is written that way), and whether an area Brew should
+be paid for in Willpower the way it is here (a Vapor charges 2 Willpower a
+Reagent where a Flask charges 1) or in something else.
+
+## Talent set art is not `npm run art`
+
+`scripts/pull-card-art.mjs` matches Image links to *cards*, writing 720px WebP
+into `public/cards/`. A talent set's overview picture is a different plate: it is
+the 640x640 square behind `talent.art`, it lives in `public/talents/<id>.jpg`,
+and the importer does not know about it. The Cauldron Keeper's was pulled by
+hand, from the same kind of postimg page link the sheets carry, cropped square
+and written at quality 82 to land at 66 KB, beside Guardian's 58 KB and
+Mycomancer's 74 KB.
+
+Worth folding into `npm run art` the next time a set arrives, keyed off a
+`Talent Set` sheet's own `Image` column.
 
 ## The columns
 

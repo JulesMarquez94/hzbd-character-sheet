@@ -3,11 +3,13 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import PickBlock from './PickBlock.jsx';
 import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
+import BrewSection, { BrewRankNote } from './BrewBench.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { brewingOf, brewPreview } from '../../lib/brews.js';
 import { loadoutOf, rankPreview } from '../../lib/loadouts.js';
 import {
   TALENT_RANKS,
@@ -119,7 +121,7 @@ export default function TalentPick({
             // Only on the way in. A set already held is ranking up, and its
             // cards are chosen from the panel rather than pushed at you again.
             const held = list.some((entry) => entry.id === id);
-            if (!held && loadoutOf(id)) setJustTook(id);
+            if (!held && (loadoutOf(id) || brewingOf(id))) setJustTook(id);
           }}
           onClose={() => setChoosing(false)}
         />
@@ -188,14 +190,26 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, onView, onU
           {/* The cards this set leaves to you. Shown on the slot holding its
               highest rank, since that is the one whose count is current. */}
           {rank === entry.rank && (
-            <LoadoutSection
-              talent={talent}
-              talents={character.talents}
-              character={character}
-              patch={patch}
-              readOnly={readOnly}
-              autoOpen={justTook === talent.id}
-            />
+            <>
+              <LoadoutSection
+                talent={talent}
+                talents={character.talents}
+                character={character}
+                patch={patch}
+                readOnly={readOnly}
+                autoOpen={justTook === talent.id}
+              />
+              {/* The same place, for the set that mixes its cards instead of
+                  choosing them. Both step aside when the set does neither. */}
+              <BrewSection
+                talent={talent}
+                talents={character.talents}
+                character={character}
+                patch={patch}
+                readOnly={readOnly}
+                autoOpen={justTook === talent.id}
+              />
+            </>
           )}
         </>
       ) : (
@@ -361,7 +375,8 @@ function TalentPresentation({ option, character }) {
       {TALENT_RANKS.map(({ rank, title, minLevel }) => {
         const cards = cardsAtRank(talent, rank);
         const choice = rankPreview(talent, rank);
-        if (cards.length === 0 && !choice?.known) return null;
+        const brewing = brewPreview(talent, rank);
+        if (cards.length === 0 && !choice?.known && !brewing?.bottles) return null;
 
         return (
           <section className="talent-page-rank" key={rank}>
@@ -392,6 +407,10 @@ function TalentPresentation({ option, character }) {
                 that says "you learn two spells" should be readable as which
                 two you would be choosing from. */}
             <LoadoutRankNote talent={talent} rank={rank} character={character} />
+
+            {/* And for a set that mixes rather than chooses: how much wider the
+                Cauldron gets, which is not countable off the card text. */}
+            <BrewRankNote talent={talent} rank={rank} />
           </section>
         );
       })}

@@ -105,6 +105,10 @@ function move(key, card, { name, source, modifiers = null, note = null, extra = 
     wp: card?.wp ?? null,
     variable: Boolean(card?.variable),
     converts: card?.converts ?? null,
+    /* What using this opens once it is paid for. Quick Stir is the only card so
+       far: it buys the right to re-mix a Brew, and the bench is the thing it
+       bought. Carried as data on the card, never read out of its prose. */
+    opens: card?.opens ?? null,
     spent: false,
     ...rest,
   };

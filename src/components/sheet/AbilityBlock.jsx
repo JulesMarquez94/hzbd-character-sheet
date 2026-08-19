@@ -3,8 +3,10 @@ import CardBrief from './CardBrief.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { ChoicePicker } from './LineagePick.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
+import { BrewBench } from './BrewBench.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { answerOn, sourceCount } from '../../lib/abilitySources.js';
+import { emptyBrewAt, setBrewAt } from '../../lib/brews.js';
 import { toggleLoadoutPick } from '../../lib/loadouts.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
@@ -137,6 +139,15 @@ function Section({ part, source, character, patch, readOnly, onOpen }) {
           readOnly={readOnly || !patch}
         />
       )}
+
+      {part.brewing && (
+        <BrewTools
+          brewing={part.brewing}
+          character={character}
+          patch={patch}
+          readOnly={readOnly || !patch}
+        />
+      )}
     </section>
   );
 }
@@ -192,6 +203,62 @@ function LoadoutTools({ loadout, character, patch, readOnly }) {
           }
           onClear={() => patch({ talents: setTalentPicks(character.talents, talent.id, []) })}
           onClose={() => setChoosing(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * The Cauldron, raised from the block its Brews are listed in.
+ *
+ * The same argument the loadout makes: which Brews a Keeper has ready is not a
+ * level's decision, it is one they revisit at every rest and in the middle of
+ * every fight, so the bench belongs on the tab where the Brews are read as much
+ * as on the one where the rank was bought.
+ *
+ * The bench itself spends nothing, here or anywhere. This tab is a read of what
+ * a character holds, and mixing is only the writing down of a recipe. What a
+ * fight charges for a stir is an Action Point on the Character tab, and the
+ * bench says so when a fight is live.
+ */
+function BrewTools({ brewing, character, patch, readOnly }) {
+  const [mixing, setMixing] = useState(false);
+  const { talent, state } = brewing;
+
+  return (
+    <>
+      {state.illegal > 0 && (
+        <p className="pick-notice is-warning">
+          {state.illegal} of these Brews {state.illegal === 1 ? 'is' : 'are'} no longer legal at
+          your rank. Re-mix{' '}
+          {state.illegal === 1 ? 'it' : 'them'} below.
+        </p>
+      )}
+
+      {!readOnly && (
+        <div className="pick-tools pick-tools-tight">
+          <button type="button" className="btn btn-sub btn-sm" onClick={() => setMixing(true)}>
+            {state.mixed === 0
+              ? `Mix your first ${state.spec.noun}`
+              : state.empty > 0
+                ? `Open the Cauldron · ${state.empty} ${plural('bottle', state.empty)} empty`
+                : 'Open the Cauldron'}
+          </button>
+        </div>
+      )}
+
+      {mixing && (
+        <BrewBench
+          talent={talent}
+          character={character}
+          state={state}
+          readOnly={readOnly}
+          onBottle={(slot, draft) =>
+            patch({ talents: setBrewAt(character.talents, talent.id, slot, draft) })
+          }
+          onEmpty={(slot) => patch({ talents: emptyBrewAt(character.talents, talent.id, slot) })}
+          onClose={() => setMixing(false)}
         />
       )}
     </>

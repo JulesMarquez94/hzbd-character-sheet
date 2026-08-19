@@ -147,6 +147,14 @@ for (const row of sheets()) {
   if (!name) continue;
 
   const id = ids.get(name.toLowerCase());
+
+  /* A row this importer does not own: nothing in the card codex by that name,
+     and no picture asked for either. A Talent Set sheet's Overview row is one of
+     those, and warning about it on every run would only train the reader to skip
+     the list. A row with a *link* and no card still warns, because that is how a
+     renamed spell announces itself. */
+  if (!id && !link) continue;
+
   if (!id) { problems.push(`${name}: the codex has no card by that name`); continue; }
   if (!link) { problems.push(`${name}: no link in the Image column`); continue; }
 

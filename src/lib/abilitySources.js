@@ -12,17 +12,19 @@
  * and a Rank 2 section, and no card ever appears without saying where it came
  * from.
  *
- * A source may also carry a *choice*. Most sets teach a fixed hand; a
+ * A source may also carry a *choice*, and there are two shapes of that. A
  * Mycomancer picks four Primal spells out of the school and may swap them at
- * every rest. Which cards those are is loadouts.js's business, so a source only
- * points at the set and lets the block raise the very chooser the Advancement
- * tab raises.
+ * every rest; a Cauldron Keeper mixes their own cards out of a vessel and a
+ * handful of Reagents. Which cards those are is loadouts.js's and brews.js's
+ * business, so a source only points at the set and lets the block raise the very
+ * bench or chooser the Advancement tab raises.
  *
  * This file reads the codex and the character. It writes nothing, and it is the
  * only place that knows what counts as a source.
  */
 
 import { getBackground, getBackgroundSkill, normalizeBackgroundSkills } from './backgrounds.js';
+import { brewState, brewingOf } from './brews.js';
 import { EQUIPMENT_SLOTS, getItem, normalizeEquipment } from './items.js';
 import { getLineage } from './lineages.js';
 import { normalizeLevelPicks } from './levelPicks.js';
@@ -208,14 +210,16 @@ function talentSources(character) {
       sections,
     };
 
+    /* What the set left to the player, as its own block or blocks. Two shapes
+       so far, and a set could carry both, so they are gathered rather than
+       returned one at a time. */
+    const open = [];
+
     // The cards this set left to the player. loadoutState knows how many the
     // rank knows and which of the stored picks are still legal at it.
     const loadout = loadoutOf(talent) ? loadoutState(character?.talents, talent) : null;
-    if (!loadout) return [set];
-
-    return [
-      set,
-      {
+    if (loadout) {
+      open.push({
         id: `loadout:${talent.id}`,
         kind: 'loadout',
         title: loadout.spec.label,
@@ -235,8 +239,38 @@ function talentSources(character) {
             loadout: { talent, state: loadout },
           },
         ],
-      },
-    ];
+      });
+    }
+
+    /* The cards this set *mixes*. A Keeper's rack is the same kind of standing,
+       re-decided-at-every-rest hand a Mycomancer's prepared spells are, so it
+       gets the same treatment: its own block, named for the mechanic and noted
+       with whose it is. The cards in it exist nowhere but here — brewState
+       composes them out of the recipes on the character. */
+    const brewing = brewingOf(talent) ? brewState(character?.talents, talent) : null;
+    if (brewing) {
+      open.push({
+        id: `brews:${talent.id}`,
+        kind: 'brew',
+        title: brewing.spec.label,
+        note: `${talent.name} · ${brewing.mixed} of ${brewing.bottles} mixed, re-mixed at any rest`,
+        art: talent.art ?? null,
+        sections: [
+          {
+            ...section(
+              `brews-${brewing.spec.id}`,
+              `${plural('Brew', brewing.bottles)} on the rack`,
+              brewing.cards.map((card) => entry(card)),
+              `${brewing.mixed} of ${brewing.bottles} mixed`
+            ),
+            // Everything the block needs to raise the bench and colour the count.
+            brewing: { talent, state: brewing },
+          },
+        ],
+      });
+    }
+
+    return [set, ...open];
   });
 }
 
@@ -377,6 +411,7 @@ const KIND_ORDER = [
   { id: 'talent', label: 'Talent', plural: 'Talents' },
   { id: 'skill', label: 'Skill', plural: 'Skills' },
   { id: 'spell', label: 'Spell', plural: 'Spells' },
+  { id: 'brew', label: 'Brew', plural: 'Brews' },
   { id: 'ability', label: 'Ability', plural: 'Abilities' },
 ];
 

@@ -58,9 +58,13 @@
   --ac-accent-soft: rgba(0, 229, 255, 0.18);
 }
 
-/* What hangs on the belt. Green is what you carry and spend — the colour the
-   pack chip and the charge dots already wear. */
-.ac-kind-item {
+/* What hangs on the belt, and what is bottled to go on it. Green is what you
+   carry and spend — the colour the pack chip and the charge dots already wear —
+   and a Cauldron Keeper's Brew is exactly that: mixed, carried, and gone once it
+   is used. It takes the same green rather than a colour of its own, because the
+   colour law here is about what a colour *means*, not about which class. */
+.ac-kind-item,
+.ac-kind-brew {
   --ac-accent: var(--def-healing);
   --ac-accent-soft: rgba(46, 204, 113, 0.2);
 }

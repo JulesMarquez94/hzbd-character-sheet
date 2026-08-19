@@ -393,6 +393,31 @@ export const KEYWORDS = [
     detail: 'The moment your turn closes, after everything you chose to do with it.',
   },
 
+  /* ------------------------------------------------------------ what is mixed
+   * A Cauldron Keeper's two nouns. Both wear the green of what you carry and
+   * spend, which is the colour their cards wear (see .ac-kind-brew) and the same
+   * green as the pack chip and the charge dots.
+   *
+   * The Cauldron itself is deliberately *not* here. It would light inside the
+   * set's own name every time a card said "your Rank in Cauldron Keeper", which
+   * is the fault Gore Armor and Vampiric Touch were reworded for. A word that
+   * cannot be a term without colliding with a name stays prose.
+   */
+  {
+    id: 'brew',
+    terms: ['Brews', 'Brew'],
+    color: 'var(--def-healing)',
+    detail:
+      'A mixture a Cauldron Keeper carries ready: one vessel and the Reagents tipped into it. Re-mixed at any rest, and mid-fight with a Quick Stir.',
+  },
+  {
+    id: 'reagent',
+    terms: ['Reagents', 'Reagent'],
+    color: 'var(--def-healing)',
+    detail:
+      'What a Brew is made of. One clause each, and a second dose of the same Reagent makes that clause stronger rather than adding another.',
+  },
+
   /* -------------------------------------------------------------- the riders
    * The optional second half a card can carry. The names are the designer's
    * and they mean four different things, which is exactly why they are terms.
@@ -415,6 +440,13 @@ export const KEYWORDS = [
     color: 'var(--haze-glow)',
     detail:
       'A toll paid at every Turn Start to keep a spell running. Miss one and the spell ends there.',
+  },
+  {
+    id: 'overbrew',
+    terms: ['Overbrew'],
+    color: 'var(--haze-glow)',
+    detail:
+      'Spend more than the Brew asks to have every Reagent in it roll twice its dice. A Master Keeper prints it on every Brew they mix.',
   },
   {
     id: 'blood-tithe',

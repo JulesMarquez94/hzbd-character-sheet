@@ -25,6 +25,14 @@
  * `{{Intercept}}` to link another card. They are folded into the global card
  * registry by weapons.js, so every link resolves.
  *
+ * ---------------------------------------------------------- what a set holds
+ * A set may also leave something to the player, and there are two shapes of
+ * that. A `loadout` spec picks cards out of the codex (loadouts.js); a
+ * `brewing` spec builds cards out of parts (brews.js). Both are described here
+ * as plain data and resolved elsewhere, which is what keeps this file a leaf,
+ * and both are stored on the character's own talent entry so that handing the
+ * set back takes its cards with it.
+ *
  * ------------------------------------------------------------ what to roll
  * A card that asks for a roll against another entity has exactly two shapes,
  * and every new card has to pick one:
@@ -317,6 +325,148 @@ export const TALENTS = [
       },
     ],
   },
+  {
+    id: 'cauldron-keeper',
+    name: 'Cauldron Keeper',
+    tagline: 'An opportunistic alchemist who turns battlefield chaos into custom brews.',
+    art: '/talents/cauldron-keeper.jpg',
+    tags: ['instinct', 'support'],
+    stat: 'instinct',
+    /* The third shape a set's choice can take, and the only one that builds its
+       cards instead of picking them. A Mycomancer chooses spells out of a
+       school; a Keeper chooses a vessel and what goes in it, and the card that
+       comes out did not exist until they mixed it.
+
+       The numbers are read straight off Special Brew: the Cauldron holds 2 +
+       your rank in Brews, a Brew takes as many Reagents as your rank, and the
+       Reagent tiers open the way a spell school's do. Indexed by rank so the
+       data stays plain, and composed into real cards by brews.js, which is what
+       keeps this file a leaf. */
+    brewing: {
+      id: 'special-brew',
+      label: 'Special Brew',
+      noun: 'brew',
+      bottles: [null, 3, 4, 5],
+      doses: [null, 1, 2, 3],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      note: 'Re-mixing is free at any rest, so nothing here is mixed for good. Doing it in the middle of a fight is a Quick Stir.',
+    },
+    blurb:
+      'The Cauldron Keeper is a master of mobile brewcraft, bearing a soul-bound Cauldron that bubbles continuously upon their back. Through deep alchemical instinct, they have perfected the art of distilling raw energy and harvested reagents on the move, turning the heat of combat into an ever-boiling laboratory.\n\n' +
+      'They excel at adapting to the flow of battle, rapidly mixing volatile concoctions to address any threat. From releasing clouds of restorative vapors and protective shields to hurling corrosive, armor-melting sludges, their ability to customize Brews mid-fight leaves foes struggling to predict their next move.\n\n' +
+      'A Cauldron Keeper’s presence is a source of endless adaptability, ensuring their party is never caught unprepared by turning the remnants of battle into an ever-shifting arsenal for victory.',
+    cards: [
+      {
+        id: 'special-brew',
+        rank: 1,
+        name: 'Special Brew',
+        summary: 'Your Cauldron keeps mixed Brews ready: more of them, and deeper, at every rank.',
+        kind: 'talent',
+        tags: ['Talent', 'Cauldron Keeper', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        body:
+          'Your Cauldron is soul-bound and never off the boil. It keeps a number of Brews ready equal to 2 + your Rank in Cauldron Keeper.\n\n' +
+          'A Brew is one Base, which decides how it leaves the Cauldron and what it costs, and a number of Reagents equal to your Rank in Cauldron Keeper. A second dose of the same Reagent makes that Reagent stronger rather than adding another effect.\n\n' +
+          'At Rank 2 you can use Adept Reagents, and at Rank 3 you gain access to Master Reagents.\n\n' +
+          'After a successful short or long rest you can re-mix any number of your Brews for free. Doing it in the middle of a fight is a {{Quick Stir}}.',
+      },
+      {
+        id: 'ever-boiling-cauldron',
+        rank: 1,
+        name: 'Ever-Boiling Cauldron',
+        summary: 'A death nearby cheapens your next Brew, and a long rest refills the crate.',
+        kind: 'talent',
+        tags: ['Talent', 'Cauldron Keeper', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        body:
+          'As a Cauldron Keeper, you have an advantage on rolls related to alchemy, poisons and the properties of what grows {roll:instinct}.\n\n' +
+          'You are proficient with any weapon that relies on your {instinct} attribute.\n\n' +
+          'Whenever an entity dies within 6 meters (20 feet) of you, your Cauldron catches what is left of it. The next Brew you use before the end of the fight costs 1 less Willpower.\n\n' +
+          'During a long rest you can pick over the ground you fought on. When you do, make a roll using your Cauldron Keeper rank as a roll modifier. On a success you gain 5 Supplies, and on a critical success 10 Supplies instead.',
+      },
+      {
+        id: 'quick-stir',
+        rank: 1,
+        name: 'Quick Stir',
+        summary: 'Re-mix one Brew in the middle of a fight. Free at any rest.',
+        kind: 'talent',
+        tags: ['Talent', 'Cauldron Keeper', 'Ability'],
+        ap: 1,
+        wp: null,
+        stat: 'instinct',
+        /* Mechanics as data, never read out of the prose: the sheet raises the
+           brewing bench once this use is paid for. See ActiveBlock.jsx. */
+        opens: 'brews',
+        body:
+          'You reach back over your shoulder, tip something new into the Cauldron and stir.\n\n' +
+          'Re-mix one of your Brews: change its Base, its Reagents or both. The Brew you had is gone, and the new one is ready at once.\n\n' +
+          'Outside a fight this costs nothing, and a short or long rest lets you re-mix as many of them as you like.',
+      },
+      {
+        id: 'read-the-fight',
+        rank: 2,
+        name: 'Read the Fight',
+        summary: 'Quick Stir becomes a reaction, and the first one each turn is free.',
+        kind: 'talent',
+        tags: ['Talent', 'Cauldron Keeper', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        body:
+          'You have stopped waiting for your own turn to decide what the fight needs.\n\n' +
+          'You can use {{Quick Stir}} as a reaction, even if you have already used a reaction to an action.\n\n' +
+          'Additionally, the first {{Quick Stir}} you make on each of your turns costs no Action Points.',
+      },
+      {
+        id: 'pass-the-flask',
+        rank: 2,
+        name: 'Pass the Flask',
+        summary: 'Hand a ready Brew to an ally. They pay the Action Points and none of the Willpower.',
+        kind: 'talent',
+        tags: ['Talent', 'Cauldron Keeper', 'Ability'],
+        ap: 2,
+        wp: 1,
+        stat: 'instinct',
+        body:
+          'You bottle one of the Brews you have ready and press it into the hands of an entity within reach.\n\n' +
+          'Until the end of the fight they can use that Brew once, paying its Action Point cost themselves and none of its Willpower. The Brew stays ready in your Cauldron as well.\n\n' +
+          'You can only have one Brew passed out at a time.',
+      },
+      {
+        id: 'overbrew',
+        rank: 3,
+        name: 'Overbrew',
+        summary: 'Every Brew can be pushed: twice the dice for 2 more Action Points and Willpower.',
+        kind: 'talent',
+        tags: ['Talent', 'Cauldron Keeper', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        body:
+          'You have learned exactly how far a Brew can be pushed before the Cauldron objects.\n\n' +
+          'Every Brew you mix now carries an Overbrew. When you use one you may spend 2 additional Action Points and 2 additional Willpower, and if you do, every Reagent in it rolls twice its dice.',
+      },
+      {
+        id: 'boil-over',
+        rank: 3,
+        name: 'Boil Over',
+        summary: 'Every Brew you have ready goes off at once around you, and none of them cost Willpower.',
+        kind: 'talent',
+        tags: ['Talent', 'Cauldron Keeper', 'Ability'],
+        ap: 4,
+        wp: 3,
+        stat: 'instinct',
+        body:
+          'You unstopper the Cauldron and let it have what it has been asking for.\n\n' +
+          'Every Brew you have ready goes off at once in a 6 meter (20 foot) radius around you, on every entity you choose inside it, and you pay none of their Willpower.\n\n' +
+          'You must take a long rest before you can use this ability again.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------------ lookups */
@@ -427,11 +577,47 @@ export function normalizeTalents(value) {
       picks: [...new Set((Array.isArray(entry.picks) ? entry.picks : []).filter(
         (pick) => typeof pick === 'string' && pick
       ))],
+      // Recipes for a set that *mixes* what it teaches, such as a Cauldron
+      // Keeper's Brews. Positional, and a null is an empty bottle: that is what
+      // keeps one Brew's card id still while the bottle beside it is refilled.
+      // Only the shape is kept here, the same way picks keeps only ids. What is
+      // a real Base, a real Reagent, or legal at the rank held is brews.js's
+      // business, and this file may not import it.
+      brews: trimRack((Array.isArray(entry.brews) ? entry.brews : []).map(brewRow)),
       custom: !talent,
     });
   }
 
   return repairSlots(staged);
+}
+
+/**
+ * One stored recipe, reduced to the shape a column should hold: which Base, in
+ * what order the Reagents went in, and a name if the player wrote one. A bottle
+ * with no vessel, or nothing in it, is an empty bottle.
+ */
+function brewRow(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const base = typeof raw.base === 'string' ? raw.base.trim() : '';
+  const reagents = (Array.isArray(raw.reagents) ? raw.reagents : []).filter(
+    (id) => typeof id === 'string' && id
+  );
+  if (!base || reagents.length === 0) return null;
+
+  const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+  return { base, reagents, ...(name ? { name } : {}) };
+}
+
+/**
+ * A rack with its trailing empty bottles cut off, so a Keeper who has mixed one
+ * Brew out of five stores one entry rather than four nulls behind it. The gaps
+ * *between* filled bottles stay, because a bottle's position is its identity.
+ */
+function trimRack(brews) {
+  const rack = Array.isArray(brews) ? [...brews] : [];
+  while (rack.length > 0 && !rack[rack.length - 1]) rack.pop();
+  return rack;
 }
 
 /**
@@ -563,13 +749,17 @@ export function optionsAt(list, level, { all = false } = {}) {
 
 /** What actually goes in the `talents` column. Derived fields are dropped. */
 export function serializeTalents(list) {
-  return list.map(({ id, name, rank, taken, picks }) => ({
-    id,
-    name,
-    rank,
-    taken,
-    ...(picks?.length ? { picks } : {}),
-  }));
+  return list.map(({ id, name, rank, taken, picks, brews }) => {
+    const rack = trimRack(brews);
+    return {
+      id,
+      name,
+      rank,
+      taken,
+      ...(picks?.length ? { picks } : {}),
+      ...(rack.length ? { brews: rack } : {}),
+    };
+  });
 }
 
 /**
@@ -583,6 +773,21 @@ export function setTalentPicks(talents, talentId, picks) {
 
   return serializeTalents(
     list.map((entry) => (entry.id === talentId ? { ...entry, picks: clean } : entry))
+  );
+}
+
+/**
+ * Write down the rack of a set that mixes its own cards. Stored against the set
+ * rather than against the level for the same reason picks are: the set is what
+ * does the mixing, and a Cauldron Keeper stirring something new into a bottle
+ * mid-fight is not undoing a level.
+ */
+export function setTalentBrews(talents, talentId, brews) {
+  const list = normalizeTalents(talents);
+  const rack = trimRack((Array.isArray(brews) ? brews : []).map(brewRow));
+
+  return serializeTalents(
+    list.map((entry) => (entry.id === talentId ? { ...entry, brews: rack } : entry))
   );
 }
 
