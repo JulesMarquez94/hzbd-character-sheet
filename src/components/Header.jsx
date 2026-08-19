@@ -1,18 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
+import SiteMenu from './SiteMenu.jsx';
 import './Header.css';
 
 /**
- * The site bar, which reads the same on every page but one.
+ * The site bar, which reads the same on every page but two.
  *
- * A character sheet carries its own bar directly under this one — the tab row,
- * the save light, the share button — and two full bars stacked on top of each
- * other ate the height the sheet's own blocks need. So on a sheet this one
- * folds into the burger it already has for phones, at every width: the
- * wordmark, and one button holding everything else. Nothing is dropped, only
- * put away.
+ * A character sheet carries its own bar — the tab row, the save light, the share
+ * button, the units — and two full bars stacked on top of each other ate the
+ * height the sheet's blocks need. So on a sheet this bar is not drawn at all: the
+ * burger moves into the sheet's own bar, at the end past the unit toggle, and the
+ * wordmark goes with the bar it lived in. Nothing is dropped, only moved.
+ *
+ * The creation wizard shares that URL and has no bar of its own, so it keeps this
+ * one, folded to the wordmark and the burger.
  */
+function standsDownFor(pathname) {
+  return /^\/characters\/[^/]+\/?$/.test(pathname);
+}
+
+/** Folded: the wordmark and the burger, and nothing else. */
 function foldsToBurger(pathname) {
   return pathname.startsWith('/characters/');
 }
@@ -20,11 +28,9 @@ function foldsToBurger(pathname) {
 export default function Header() {
   const { user, displayName, signOut, isConfigured } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
   const menuRef = useRef(null);
-  const navRef = useRef(null);
   const navigate = useNavigate();
-  const folded = foldsToBurger(useLocation().pathname);
+  const { pathname } = useLocation();
 
   // Close the account dropdown on any outside click or Escape.
   useEffect(() => {
@@ -45,31 +51,24 @@ export default function Header() {
     };
   }, [menuOpen]);
 
-  // Same treatment for the mobile burger drawer.
-  useEffect(() => {
-    if (!navOpen) return;
-
-    function onPointerDown(e) {
-      if (navRef.current && !navRef.current.contains(e.target)) setNavOpen(false);
-    }
-    function onKeyDown(e) {
-      if (e.key === 'Escape') setNavOpen(false);
-    }
-
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [navOpen]);
-
   async function handleSignOut() {
     setMenuOpen(false);
-    setNavOpen(false);
     await signOut();
     navigate('/');
   }
+
+  /* On a sheet this bar stands down. The missing-env banner is the one thing it
+     still has to say, because without those keys the sheet under it loads
+     nothing and the reason is worth reading. */
+  if (standsDownFor(pathname)) {
+    return isConfigured ? null : (
+      <header className="site-header">
+        <ConfigWarning />
+      </header>
+    );
+  }
+
+  const folded = foldsToBurger(pathname);
 
   return (
     <header className={`site-header${folded ? ' is-folded' : ''}`}>
@@ -147,72 +146,22 @@ export default function Header() {
           )}
         </div>
 
-        {/* Everything above collapses into this below 860px — and at every
-            width on a character sheet, which has a bar of its own. */}
-        <div className="nav-burger-wrap" ref={navRef}>
-          <button
-            type="button"
-            className={`burger${navOpen ? ' open' : ''}`}
-            aria-label="Menu"
-            aria-expanded={navOpen}
-            onClick={() => setNavOpen((open) => !open)}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-
-          {navOpen && (
-            <div className="nav-drawer" role="menu" onClick={() => setNavOpen(false)}>
-              {user && (
-                <div className="drawer-identity">
-                  <span className="account-dot" />
-                  {displayName}
-                </div>
-              )}
-
-              <NavLink to="/" className="dropdown-link" end>
-                Home
-              </NavLink>
-              <NavLink to="/codex" className="dropdown-link">
-                Codex
-              </NavLink>
-
-              {user ? (
-                <>
-                  <NavLink to="/dashboard" className="dropdown-link">
-                    My Characters
-                  </NavLink>
-                  <NavLink to="/account" className="dropdown-link">
-                    Account Settings
-                  </NavLink>
-                  <div className="dropdown-divider" />
-                  <button type="button" className="dropdown-link logout" onClick={handleSignOut}>
-                    Log Out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="dropdown-divider" />
-                  <Link to="/login" className="dropdown-link">
-                    Log In
-                  </Link>
-                  <Link to="/register" className="dropdown-link accent">
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Everything above collapses into this below 860px — and at every width
+            on the creation wizard, which is a sheet without a bar. */}
+        <SiteMenu />
       </nav>
 
-      {!isConfigured && (
-        <div className="config-warning">
-          Supabase is not configured — copy <code>.env.example</code> to <code>.env.local</code>, add your
-          project URL and anon key, then restart <code>npm run dev</code>.
-        </div>
-      )}
+      {!isConfigured && <ConfigWarning />}
     </header>
+  );
+}
+
+/** Said on every page, because nothing on any of them will load without it. */
+function ConfigWarning() {
+  return (
+    <div className="config-warning">
+      Supabase is not configured — copy <code>.env.example</code> to <code>.env.local</code>, add your
+      project URL and anon key, then restart <code>npm run dev</code>.
+    </div>
   );
 }

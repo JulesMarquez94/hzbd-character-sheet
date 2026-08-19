@@ -47,6 +47,13 @@ set now runs three tiers where it used to run one:
 | Magic | Runed, Shield = Mind | Greater Runed, 2x Mind | Supreme Runed, 3x Mind and a bigger cap |
 | Light | Leather, +1 Defense | — | — |
 
+**The Magic pieces stack.** Each of the three says "When you enter combat, you start
+with a Shield equal to your Mind" on its own, so a full Runed set starts a fight
+with three times Mind, a Greater set with six and a Supreme set with nine — capped
+by the Shield the character can actually hold, which Supreme raises by Mind.
+`combatShieldGrant` in `combatTurn.js` sums what every worn piece gives; it used to
+take the best single piece, which meant two thirds of a full set did nothing.
+
 **Verified by round trip, not asserted.** Every row's `Tags` and `Main Effect`
 were rebuilt out of the codex fields and compared to the sheet cell,
 whitespace-normalised. All 21 names, tags, rarities and numbers match. Twelve
@@ -126,17 +133,26 @@ it, Essences are as many slots as the rank allows, and Infusions always end in o
 more open slot because "any number" has no last one. An empty slot is a `+` that
 opens the shelf filtered to what that slot takes. It replaced a wall of eighteen
 Ingredient rows standing open under three areas that could not themselves be
-pressed. Same grammar as the armor block: tap the slot, the codex opens.
+pressed. Same grammar as the armor block: tap the slot, the codex opens. The shelf
+prints its Ingredients as the same card briefs every other pool on the sheet prints
+— art plate, cost orbs, chips — because an Ingredient is a card and had no business
+reading like a table row.
 
 A mixed Brew is called **Brew** and wears BREW's own picture. It was named after
 its Essence alone ("Four-Leaf Clover Brew"), which reads as that Ingredient's own
 card and says nothing about the Catalyst, and its plate fell through to the talent
-set's wide plate for want of art of its own.
+set's wide plate for want of art of its own. It quotes what went into it without
+naming any of it: the Brew is one effect read in the order it resolves, and the
+Ingredients are on the window that mixed it.
 
 Nothing finished is stored, because "the resulting Brew takes effect immediately".
-The only thing that persists is whether the Cauldron is out, on the talent entry as
-`cauldron: 'summoned'`, since BREW needs it Summoned and Bound Cauldron is what
-summons it.
+Nothing else is stored either: **the Cauldron is assumed to be at the brewer's
+side, always.** The talent entry used to carry `cauldron: 'summoned'` and the
+window refused to brew without it, which put a button between the player and the
+thing they meant to press. The Overview's own words are "bearing a soul-bound
+Cauldron that bubbles continuously upon their back", so the sheet takes it as read.
+Bound Cauldron still costs its 2 Action Points and still says every word it says.
+Nothing checks it.
 
 ### Three readings that need the designer's word
 
@@ -147,7 +163,10 @@ summons it.
    a Brew with nothing to affect. Reading it as the Adept Talent also completes the
    rank structure at 2/1/1. Its tags were corrected to match Improved Recipes.
 2. **VOLCANIC SHARD is tagged an Infusion** but deals damage like an Essence and
-   costs 2 AP where every other Infusion costs 0. Left exactly as tagged.
+   costs 2 AP where every other Infusion costs 0. **Answered 19 Aug 2026: it is an
+   Essence.** `ingredients.js` files it with the Essences, Novice, tagged `Novice
+   Essence`. The sheet's cell still says Infusion, so the round trip flags that one
+   cell on purpose and the entry carries a comment saying why.
 3. **Duplicate Infusions are allowed.** "Any number of Infusions" says nothing
    against it, and Improved Recipes forbids duplicate *Essences* by name, which is
    the only such restriction on the sheet. So two Quicksilvers cut 2 Action Points.

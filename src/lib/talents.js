@@ -375,16 +375,16 @@ export const TALENTS = [
         id: 'bound-cauldron',
         rank: 1,
         name: 'Bound Cauldron',
-        summary: 'Summon the Cauldron or send it away. You need it to brew.',
+        summary: 'Summon the Cauldron or send it away.',
         kind: 'talent',
         tags: ['Cauldron keeper', 'Novice Talent', 'Ability'],
         ap: 2,
         wp: null,
         stat: 'instinct',
-        /* Mechanics as data, never read out of the prose: using this flips the
-           Cauldron between Summoned and Dismissed, in the same write as the
-           Action Points. See src/lib/brews.js. */
-        toggles: 'cauldron',
+        /* No rider, on purpose: the sheet assumes the Cauldron is at your side
+           and never checks, so using this spends the Action Points and nothing
+           else. The card's own words about Summoning and Dismissing stand, and
+           the table plays them. See src/lib/brews.js. */
         body:
           'You are bound to an enchanted Cauldron.\n\n' +
           'You can use this action to Summon it or Dismiss it.\n\n' +
@@ -558,12 +558,6 @@ export function normalizeTalents(value) {
       picks: [...new Set((Array.isArray(entry.picks) ? entry.picks : []).filter(
         (pick) => typeof pick === 'string' && pick
       ))],
-      /* Whether a Cauldron Keeper's Cauldron is Summoned. Bound Cauldron keeps it
-         "in an extradimensional space no one can access" until it is summoned, and
-         BREW only works "While your Cauldron is Summoned", so this is a fact about
-         the character rather than about a level. Anything unrecognised reads as
-         dismissed, which is the state a character who has pressed nothing is in. */
-      cauldron: entry.cauldron === 'summoned' ? 'summoned' : null,
       custom: !talent,
     });
   }
@@ -700,14 +694,12 @@ export function optionsAt(list, level, { all = false } = {}) {
 
 /** What actually goes in the `talents` column. Derived fields are dropped. */
 export function serializeTalents(list) {
-  return list.map(({ id, name, rank, taken, picks, cauldron }) => ({
+  return list.map(({ id, name, rank, taken, picks }) => ({
     id,
     name,
     rank,
     taken,
     ...(picks?.length ? { picks } : {}),
-    // Only written when it is out. Dismissed is the default and costs no column.
-    ...(cauldron ? { cauldron } : {}),
   }));
 }
 
@@ -725,19 +717,6 @@ export function setTalentPicks(talents, talentId, picks) {
   );
 }
 
-/**
- * Summon a set's Cauldron, or send it away. Stored against the set rather than
- * against the level for the same reason picks are: the set is what the Cauldron
- * belongs to, and handing the set back takes the Cauldron with it.
- */
-export function setTalentCauldron(talents, talentId, cauldron) {
-  const list = normalizeTalents(talents);
-  const state = cauldron === 'summoned' ? 'summoned' : null;
-
-  return serializeTalents(
-    list.map((entry) => (entry.id === talentId ? { ...entry, cauldron: state } : entry))
-  );
-}
 
 /** Spend the choice at `level` on a talent — a new set, or its next rank. */
 export function chooseAt(talents, level, talentId) {

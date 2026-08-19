@@ -130,6 +130,11 @@ export function normalizeTurn(value) {
  * What the bell would actually set the Shield to, or null when it moves
  * nothing — the grant is capped, and never takes away Shield already held.
  * The button's note reads from here too, so what it promises is what happens.
+ *
+ * The pieces add up. Each one says "you start with a Shield equal to your Mind"
+ * on its own, so a full Runed set is that sentence three times and grants three
+ * times Mind. What stops it is the cap, never the best piece winning. `items`
+ * is every piece that gave, so the note can name what did it.
  */
 export function combatShieldGrant(character) {
   const granted = combatStartEffects(character);
@@ -137,11 +142,11 @@ export function combatShieldGrant(character) {
 
   const cap = shieldCapFor(character);
   const held = Math.max(0, Math.floor(Number(character?.shield) || 0));
-  const best = Math.max(...granted.map((entry) => entry.shield));
-  const next = Math.min(cap, Math.max(held, best));
+  const total = granted.reduce((sum, entry) => sum + entry.shield, 0);
+  const next = Math.min(cap, Math.max(held, total));
   if (next === held) return null;
 
-  return { next, item: granted.find((entry) => entry.shield >= best)?.item ?? null };
+  return { next, items: granted.map((entry) => entry.item) };
 }
 
 export function startCombat(character) {

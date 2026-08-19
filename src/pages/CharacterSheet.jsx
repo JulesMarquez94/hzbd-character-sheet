@@ -5,6 +5,7 @@ import { getCharacter, updateCharacter } from '../lib/api.js';
 import { levelForXp, syncDerived } from '../lib/characterModel.js';
 import { openChoices, pruneToLevel } from '../lib/levelPicks.js';
 import { subscribeToTable } from '../lib/realtime.js';
+import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
 import InventoryTab from '../components/sheet/InventoryTab.jsx';
@@ -429,6 +430,11 @@ export default function CharacterSheet({ creating = false }) {
                 Metric
               </button>
             </div>
+
+            {/* The site nav, which has no bar of its own here: a sheet gets this
+                bar and nothing above it, so the way off the sheet is the last
+                thing on it. See SiteMenu.jsx and standsDownFor in Header.jsx. */}
+            <SiteMenu />
           </div>
         </div>
       </div>

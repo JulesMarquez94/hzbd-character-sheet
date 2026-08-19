@@ -164,6 +164,17 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
 const MOVES = { combat: startCombat, turn: startTurn, end: endTurn };
 
 /**
+ * Who gave the Shield.
+ *
+ * One piece is named, because a note that says which item did it is worth having.
+ * Several are not: a full Runed set is three pieces adding up, and naming all
+ * three inside a sentence that is already a list of three reads as neither.
+ */
+function grantSource(grant) {
+  return grant.items.length === 1 ? `your ${grant.items[0].name}` : 'your gear';
+}
+
+/**
  * What the button is about to do, said before it does it.
  *
  * Entering a fight is the only move that hands anything over, so it is the one
@@ -182,7 +193,7 @@ function turnNote(turn, character) {
   const parts = [
     `Action Points to ${character.ap_max}`,
     'Reaction Points to 0',
-    ...(grant ? [`Shield to ${grant.next} from your ${grant.item?.name ?? 'gear'}`] : []),
+    ...(grant ? [`Shield to ${grant.next} from ${grantSource(grant)}`] : []),
   ];
 
   // "A, B and C" — no comma before the and, per the house voice.

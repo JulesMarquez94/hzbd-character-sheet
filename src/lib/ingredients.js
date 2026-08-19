@@ -86,6 +86,28 @@ export const INGREDIENTS = withArt([
       'A target entity affected by the Brew regains [[2d6 + 2*stat]] in Health.',
   },
 
+  /* The one place this file departs from the sheet, and on the designer's own
+     say-so: the Ability sheet files this as a "Novice Infusion", which Jules
+     corrected to an Essence on 19 Aug 2026. Fire damage *is* what the Brew
+     does, so it belongs with the Essences. The sheet still says Infusion, so a
+     round-trip check will flag it — this comment is why. */
+  {
+    id: 'volcanic-shard',
+    name: 'Volcanic Shard',
+    part: 'essence',
+    tier: 'Novice',
+    kind: 'ingredient',
+    tags: ['Cauldron keeper', 'Novice Essence'],
+    ap: 2,
+    wp: 1,
+    stat: 'instinct',
+    damage: ['Fire'],
+    summary: 'Fire damage.',
+    body:
+      'You drop a fire-infused ingredient in the brew.\n\n' +
+      'Entities affected by the Brew take [[3d6 + 3*stat]] in {damage:Fire} damage.',
+  },
+
   {
     id: 'draconic-scale',
     name: 'Draconic Scale',
@@ -331,23 +353,6 @@ export const INGREDIENTS = withArt([
     body:
       'You add a shimmering, fast-moving liquid to the brew to streamline its potency.\n\n' +
       'When this infusion is added to the Brew, reduce the Action Point cost of the Brew by 1.',
-  },
-
-  {
-    id: 'volcanic-shard',
-    name: 'Volcanic Shard',
-    part: 'infusion',
-    tier: 'Novice',
-    kind: 'ingredient',
-    tags: ['Cauldron keeper', 'Novice Infusion'],
-    ap: 2,
-    wp: 1,
-    stat: 'instinct',
-    damage: ['Fire'],
-    summary: 'Adds Fire damage to whatever else the Brew is doing.',
-    body:
-      'You drop a fire-infused ingredient in the brew.\n\n' +
-      'Entities affected by the Brew take [[3d6 + 3*stat]] in {damage:Fire} damage.',
   },
 
   {

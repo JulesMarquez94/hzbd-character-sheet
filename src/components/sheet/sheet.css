@@ -178,6 +178,17 @@ body.sheet-fixed #root {
   color: var(--bg-black);
 }
 
+/* ---------- THE SITE NAV, ON THIS BAR ----------
+ * There is no site bar above a sheet — it stands down so its height goes to the
+ * blocks (see standsDownFor in Header.jsx) — so its burger is the last thing on
+ * this one, past the units. Header.css keeps that button hidden above 860px,
+ * where the site bar would have shown links instead; here it is the only way off
+ * the sheet, so it shows at every width, phone included.
+ */
+.sheet-tabbar-right .nav-burger-wrap {
+  display: block;
+}
+
 /* ---------- SHEET TAB BURGER (mobile) ---------- */
 .sheet-burger-wrap {
   display: none;
@@ -7547,63 +7558,13 @@ body.sheet-fixed #root {
   cursor: default;
 }
 
-/* ---------- the shelf ---------- */
-.brew-shelf {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.35rem;
-}
-
-/* The kind, and the designer's rule for it, so the shelf repeats the
-   configuration rather than making the reader remember it. */
-.brew-shelf-tier {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--copper);
-}
-
-.brew-reagent {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid var(--hairline);
-  border-radius: 4px;
-  background-color: var(--inset-bg);
-}
-
-/* Already in the Cauldron, so the row reads as held rather than offered. */
-.brew-reagent.is-in {
-  border-left: 2px solid var(--def-healing);
-}
-
-/* The body is a button: tapping an Ingredient deals its card, which is the only
-   way to read the words the Brew is quoting. */
-.brew-reagent-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-  cursor: pointer;
-}
-
-.brew-reagent-name {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  font-family: var(--font-headings);
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--text-bright);
-}
-
+/* ---------- the shelf ----------
+   The Ingredients are printed as the same briefs every other card pool prints —
+   the wall, the art plate, the chips — so the shelf keeps no row of its own. See
+   IngredientRow in BrewWindow.jsx. What is left here is the one thing a brief
+   cannot say for itself: how many doses are in the Cauldron already. */
 .brew-reagent-held {
+  align-self: flex-start;
   padding: 1px 6px;
   border: 1px solid color-mix(in srgb, var(--def-healing) 45%, transparent);
   border-radius: 999px;
@@ -7615,20 +7576,6 @@ body.sheet-fixed #root {
   white-space: nowrap;
 }
 
-/* An Ingredient's own two numbers, which is what gets summed. */
-.brew-reagent-cost {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.brew-reagent-line {
-  font-size: 0.7rem;
-  line-height: 1.45;
-  color: var(--text-muted);
-}
 
 /* ---------- what comes out ----------
    The Brew as its own brief, rebuilt on every tap. Sticky where there is a second

@@ -105,12 +105,10 @@ function move(key, card, { name, source, modifiers = null, note = null, extra = 
     wp: card?.wp ?? null,
     variable: Boolean(card?.variable),
     converts: card?.converts ?? null,
-    /* What using this opens once it is paid for, and what state it flips. BREW
-       opens the brewing window, because what a Brew costs is not known until it is
-       mixed; Bound Cauldron flips the Cauldron between Summoned and Dismissed.
-       Both ride as data on the card, never read out of its prose. */
+    /* What using this opens once it is paid for. BREW opens the brewing window,
+       because what a Brew costs is not known until it is mixed. It rides as data on
+       the card, never read out of its prose. */
     opens: card?.opens ?? null,
-    toggles: card?.toggles ?? null,
     spent: false,
     ...rest,
   };

@@ -28,11 +28,15 @@
  * -------------------------------------------------------- nothing is stored
  * A Brew "takes effect immediately", so there is no shelf of finished Brews and
  * this file keeps none. What is mixed is a *draft*, held in the window while the
- * player assembles it, priced live, and gone the moment it is drunk. The only
- * thing that outlives the window is the Cauldron itself: Bound Cauldron says
- * "While the Cauldron is Dismissed, it is kept in an extradimensional space", and
- * BREW says "While your Cauldron is Summoned", so whether it is out is a fact
- * about the character and is stored on their talent entry.
+ * player assembles it, priced live, and gone the moment it is drunk. Nothing here
+ * outlives the window.
+ *
+ * ------------------------------------------------------- the Cauldron is there
+ * The Cauldron is assumed present, always. Bound Cauldron summons it and sends it
+ * away in the fiction, and this file used to record which and refuse to brew while
+ * it was away — one more thing to press before the thing you meant to press. A
+ * Cauldron Keeper is written as "bearing a soul-bound Cauldron that bubbles
+ * continuously upon their back", so the sheet takes it at its word and never asks.
  *
  * This file reads the Ingredient codex and the character. Nothing here may import
  * weapons.js, which imports talents.js, which this imports.
@@ -40,7 +44,7 @@
 
 import { artFor, thumbFor } from './cardArt.js';
 import { INGREDIENTS, INGREDIENT_PARTS, getIngredient } from './ingredients.js';
-import { getTalent, normalizeTalents, setTalentCauldron } from './talents.js';
+import { getTalent, normalizeTalents } from './talents.js';
 
 /* ------------------------------------------------------------------ the spec */
 
@@ -312,20 +316,14 @@ export function brewModifiers(draft) {
 
 /* ------------------------------------------------------- the composed Brew */
 
-/** "Toxic Toad and Ice Shard". No Oxford comma. */
-function listAnd(words) {
-  if (words.length <= 1) return String(words[0] ?? '');
-  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
-}
-
 /**
  * What a mixed Brew is called.
  *
  * The set’s own noun, and nothing else. It used to be named after its Essence
  * ("Four-Leaf Clover Brew"), which reads as that Ingredient’s own card and says
  * nothing about the Catalyst, which is what decides where the Brew even lands.
- * What is in it is on the card, under every Ingredient’s name, and in the
- * summary line under the title.
+ * What is in it is on the window that mixed it, Ingredient by Ingredient, and
+ * the summary line under the title says what it all comes to.
  */
 export function brewName(limits) {
   return limits?.spec?.noun ?? 'Brew';
@@ -337,16 +335,21 @@ export function brewName(limits) {
  * The opening line of every Ingredient card is flavour about dropping the thing
  * into the pot ("You drop a bloated, neon-colored frog into the brew"), which is
  * worth reading once on the Ingredient's own card and not four times over on the
- * Brew. So the Brew quotes the paragraphs *after* it, unchanged, under the
- * Ingredient's name.
+ * Brew. So the Brew quotes the paragraphs *after* it, unchanged.
  *
- * One more paragraph is left out, and only where it has already been answered: the
+ * It quotes them without naming what they came from. A Brew is one effect rather
+ * than a bill of materials: what is wanted at the table is what happens, in the
+ * order it happens. What went in is still on the window that mixed it, and every
+ * Ingredient's own card is one tap away there.
+ *
+ * One paragraph is left out, and only where it has already been answered: the
  * line that *asks* the brewer to decide. Draconic Scale says "The brewer chooses
  * one of the following damage types: Fire, Cold, …" and the Brew has no business
- * reciting nine options when the header beside the name already says (Fire). The
- * test is deliberately narrow, on paragraphs that open with "The brewer", so
- * Purifying Crystal keeps its "When this infusion is added to the Brew, the brewer
- * chooses …", which is not an instruction but the whole of what it does.
+ * reciting nine options when the answer is printed in front of the paragraph it
+ * governs. The test is deliberately narrow, on paragraphs that open with "The
+ * brewer", so Purifying Crystal keeps its "When this infusion is added to the
+ * Brew, the brewer chooses …", which is not an instruction but the whole of what
+ * it does.
  *
  * Nothing is reworded and nothing is summarised. The Ingredient's own card is one
  * tap away and says every word.
@@ -359,7 +362,9 @@ function contribution(ing, draft) {
     (para) => !(said && /^The brewer (chooses|names)\b/.test(para))
   );
 
-  return `${ing.name}${said ? ` (${said})` : ''}: ${rules.join(' ')}`;
+  /* The answer is still printed, because the paragraph it governs calls it "the
+     chosen damage type" and nothing else on the Brew would say which. */
+  return `${said ? `(${said}) ` : ''}${rules.join(' ')}`;
 }
 
 /**
@@ -391,9 +396,9 @@ export function brewCard(draft, limits) {
     wp: cost.wp,
     stat: 'instinct',
     ...(damage.length > 0 ? { damage } : {}),
-    summary: `${catalyst.summary} ${listAnd(essences.map((ing) => ing.name))}${
-      infusions.length > 0 ? `, with ${listAnd(infusions.map((ing) => ing.name))}` : ''
-    }.`,
+    /* Each Ingredient's own one-line summary, in the order the card below reads
+       them — what the Brew does, not what was dropped in it. */
+    summary: [catalyst, ...essences, ...infusions].map((ing) => ing.summary).join(' '),
     body: [catalyst, ...essences, ...infusions]
       .map((ing) => contribution(ing, draft))
       .join('\n\n'),
@@ -402,42 +407,13 @@ export function brewCard(draft, limits) {
 
 /* ------------------------------------------------------------- the Cauldron */
 
-export const CAULDRON_SUMMONED = 'summoned';
-export const CAULDRON_DISMISSED = 'dismissed';
-
-/**
- * Whether the Cauldron is out.
- *
- * Dismissed is the default, and that is Bound Cauldron's own reading rather than a
- * convenience: the Cauldron sits "in an extradimensional space no one can access"
- * until 2 Action Points are spent to Summon it, so a character who has pressed
- * nothing has not summoned it.
- */
-export function cauldronState(talents, talentId) {
-  const entry = normalizeTalents(talents).find((row) => row.id === talentId);
-  return entry?.cauldron === CAULDRON_SUMMONED ? CAULDRON_SUMMONED : CAULDRON_DISMISSED;
-}
-
-export function cauldronIsOut(talents, talentId) {
-  return cauldronState(talents, talentId) === CAULDRON_SUMMONED;
-}
-
-/** Summon it or send it away. The 2 Action Points are the block's business. */
-export function setCauldron(talents, talentId, state) {
-  return setTalentCauldron(
-    talents,
-    talentId,
-    state === CAULDRON_SUMMONED ? CAULDRON_SUMMONED : CAULDRON_DISMISSED
-  );
-}
-
 /**
  * The set whose Cauldron a card belongs to.
  *
- * BREW carries `opens: 'brew'` and Bound Cauldron carries `toggles: 'cauldron'`,
- * and the block that took the payment then has to know *whose* Cauldron. It is
- * answered off the codex rather than written on the card: the set that taught the
- * card owns the Cauldron, and the character has to actually hold the set.
+ * BREW carries `opens: 'brew'`, and the block that took the payment then has to
+ * know *whose* Cauldron to open. It is answered off the codex rather than written
+ * on the card: the set that taught the card owns the Cauldron, and the character
+ * has to actually hold the set.
  */
 export function brewSetFor(talents, cardId) {
   if (!cardId) return null;

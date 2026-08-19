@@ -15,7 +15,6 @@ import {
   brewPreview,
   brewProblems,
   brewReady,
-  cauldronIsOut,
   draftParts,
   dropIngredient,
   ingredientOptions,
@@ -72,7 +71,6 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
 
   if (!limits) return null;
 
-  const out = cauldronIsOut(character?.talents, talent.id);
   const cost = brewCost(draft, limits);
   const card = brewCard(draft, limits);
   /* Mana Crystal changes every die the Brew rolls, so it rides as a modifier the
@@ -80,7 +78,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
      must be given the same one or the card would change on opening. */
   const modifiers = brewModifiers(draft);
   const problems = brewProblems(draft, limits);
-  const ready = brewReady(draft, limits) && out;
+  const ready = brewReady(draft, limits);
   const shelves = shelfByPart(ingredientOptions(draft, limits));
   const open = picking ? shelves.find((group) => group.id === picking) : null;
 
@@ -130,20 +128,13 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
           </>
         }
       >
-        {!out ? (
-          <p className="pick-notice is-warning">
-            Your Cauldron is Dismissed, and a Brew needs it Summoned. Use <b>Bound Cauldron</b> from
-            the Quick Bar first: it costs 2 Action Points and brings the Cauldron to your side.
-          </p>
-        ) : (
-          <p className="frame-foot" style={{ marginTop: 0 }}>
-            At rank {limits.rank} you brew with the {listAnd(limits.tiers)}{' '}
-            {limits.tiers.length === 1 ? 'shelf' : 'shelves'}.{' '}
-            {limits.essences > 1
-              ? 'Improved Recipes lets you carry two Essences, so long as they are not the same one.'
-              : 'One Essence, until Improved Recipes at Rank 3.'}
-          </p>
-        )}
+        <p className="frame-foot" style={{ marginTop: 0 }}>
+          At rank {limits.rank} you brew with the {listAnd(limits.tiers)}{' '}
+          {limits.tiers.length === 1 ? 'shelf' : 'shelves'}.{' '}
+          {limits.essences > 1
+            ? 'Improved Recipes lets you carry two Essences, so long as they are not the same one.'
+            : 'One Essence, until Improved Recipes at Rank 3.'}
+        </p>
 
         <div className="brew-window">
           <div className="brew-build">
@@ -154,7 +145,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
                 group={group}
                 draft={draft}
                 limits={limits}
-                readOnly={readOnly || !out}
+                readOnly={readOnly}
                 onAdd={() => setPicking(group.id)}
                 onDrop={(index) => setDraft((current) => dropIngredient(current, group.id, index))}
                 onRead={(ing) => stack?.openCard(ing)}
@@ -164,7 +155,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
             {/* ---- what still has to be decided ---- */}
             <Decisions
               draft={draft}
-              readOnly={readOnly || !out}
+              readOnly={readOnly}
               onChoose={(id, value) => setDraft((current) => setBrewChoice(current, id, value))}
             />
           </div>
@@ -196,7 +187,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
               </p>
             )}
 
-            {problems.length > 0 && out && (
+            {problems.length > 0 && (
               <div className="brew-missing">
                 <span className="brew-missing-head">Still needed</span>
                 {problems.map((line) => (
@@ -213,6 +204,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
       {open && (
         <Shelf
           group={open}
+          character={character}
           onClose={() => setPicking(null)}
           onAdd={(id) => {
             setDraft((current) => addIngredient(current, id, limits));
@@ -335,13 +327,14 @@ function SlotRow({ group, draft, limits, readOnly, onAdd, onDrop, onRead }) {
  * in *this* slot — and the Ingredients that cannot go in it say why on their own
  * button rather than being listed at all.
  */
-function Shelf({ group, onClose, onAdd, onRead }) {
+function Shelf({ group, character, onClose, onAdd, onRead }) {
   const within = group.options.filter((option) => option.ok).length;
 
   return (
     <Modal
       title={`Add ${anA(group.label)}`}
       onClose={onClose}
+      wide
       accent={PICK_ACCENTS.talent}
       footer={
         <>
@@ -357,11 +350,12 @@ function Shelf({ group, onClose, onAdd, onRead }) {
         {group.rule}.
       </p>
 
-      <div className="brew-shelf">
+      <div className="card-brief-wall">
         {group.options.map((option) => (
           <IngredientRow
             key={option.ingredient.id}
             option={option}
+            character={character}
             onAdd={() => onAdd(option.ingredient.id)}
             onOpen={() => onRead(option.ingredient)}
           />
@@ -371,36 +365,41 @@ function Shelf({ group, onClose, onAdd, onRead }) {
   );
 }
 
-/** One Ingredient on the shelf: what it costs, what it does, and the way in. */
-function IngredientRow({ option, onAdd, onOpen }) {
+/**
+ * One Ingredient on the shelf, printed as the brief every other pool prints.
+ *
+ * It used to be a row of this window's own making, which drew no art and read
+ * nothing like the spell pool it sits two taps away from. An Ingredient is a card,
+ * so it is shown the way a card is shown: the art plate, the name with its cost
+ * orbs, its chips, and its one line. The way in hangs underneath, exactly where a
+ * spell pool hangs "Learn this spell", and a refusal states itself on that button
+ * rather than being hidden.
+ *
+ * How many doses are in already is said under the brief, because Quicksilver and
+ * the Infusions can go in more than once and the count is the only thing the brief
+ * itself cannot show.
+ */
+function IngredientRow({ option, character, onAdd, onOpen }) {
   const { ingredient, ok, reason, held } = option;
 
   return (
-    <div className={`brew-reagent${held > 0 ? ' is-in' : ''}`}>
-      <button type="button" className="brew-reagent-body" onClick={onOpen} title="Read the card">
-        <span className="brew-reagent-name">
-          {ingredient.name}
-          {held > 0 && <span className="brew-reagent-held">{held} in</span>}
+    <CardBrief card={ingredient} character={character} held={held > 0} onOpen={onOpen}>
+      {held > 0 && (
+        <span className="brew-reagent-held">
+          {held} in the Cauldron
         </span>
-        <span className="item-tags">
-          <span className="item-tag tag-card">{ingredient.tier}</span>
-          <span className="brew-reagent-cost">
-            {ingredient.ap} AP · {ingredient.wp} WP
-          </span>
-        </span>
-        <span className="brew-reagent-line">{ingredient.summary}</span>
-      </button>
+      )}
 
       <button
         type="button"
-        className={`btn btn-sm ${ok ? 'btn-take' : 'btn-minimal'}`}
+        className={`btn btn-sm card-brief-btn ${ok ? 'btn-take' : 'btn-minimal'}`}
         disabled={!ok}
         title={ok ? undefined : reason}
         onClick={onAdd}
       >
         {ok ? 'Add' : reason}
       </button>
-    </div>
+    </CardBrief>
   );
 }
 
@@ -518,28 +517,21 @@ function CostWorking({ cost }) {
 /* ----------------------------------------------- the Abilities tab's tools */
 
 /**
- * What the Ingredients block on the Abilities tab carries: whether the Cauldron is
- * out, and the way into the window.
+ * What the Ingredients block on the Abilities tab carries: the way into the
+ * window.
  *
- * The Cauldron is Summoned with Bound Cauldron, which costs 2 Action Points, so
- * this tab only ever *reports* it. Nothing on the Abilities tab spends anything,
- * and that law is older than this set.
+ * It used to report whether the Cauldron was Summoned, and refuse the way in
+ * while it was not. The Cauldron is assumed present now (see brews.js), so the
+ * block is the door and nothing else. Nothing on the Abilities tab spends
+ * anything, and that law is older than this set.
  */
 export function BrewTools({ talent, character, patch, readOnly = false }) {
   const [mixing, setMixing] = useState(false);
-  const out = cauldronIsOut(character?.talents, talent.id);
   const limits = brewLimits(character?.talents, talent);
   if (!limits) return null;
 
   return (
     <>
-      <p className="pick-line">
-        <b>{out ? 'Cauldron Summoned' : 'Cauldron Dismissed'}</b>
-        {out
-          ? '. A Brew can be mixed while it is out.'
-          : '. Summon it with Bound Cauldron, from the Quick Bar on the Character tab.'}
-      </p>
-
       {!readOnly && (
         <div className="pick-tools pick-tools-tight">
           <button type="button" className="btn btn-sub btn-sm" onClick={() => setMixing(true)}>

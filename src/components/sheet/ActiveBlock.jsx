@@ -5,7 +5,7 @@ import { GroupHead } from './parts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
-import { brewSetFor, cauldronIsOut, setCauldron, CAULDRON_DISMISSED, CAULDRON_SUMMONED } from '../../lib/brews.js';
+import { brewSetFor } from '../../lib/brews.js';
 
 /**
  * The Character tab's fourth block: the quick bar.
@@ -58,7 +58,6 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
       variable: move.variable,
       converts: move.converts,
       opens: move.opens,
-      toggles: move.toggles,
       card: move.card,
       modifiers: move.modifiers,
       note: move.note,
@@ -71,24 +70,7 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
     const body = spendUse(request, character, mode, amount);
     if (Object.keys(body).length > 0) patch(body);
 
-    /* A card may say that using it flips something. Bound Cauldron summons the
-       Cauldron or sends it away, and that goes in the same single write as the
-       Action Points, so the sheet is never half-way through the action. */
-    if (request.toggles === 'cauldron') {
-      const set = brewSetFor(character.talents, request.card?.id);
-      if (set) {
-        patch({
-          ...body,
-          talents: setCauldron(
-            character.talents,
-            set.id,
-            cauldronIsOut(character.talents, set.id) ? CAULDRON_DISMISSED : CAULDRON_SUMMONED
-          ),
-        });
-      }
-    }
-
-    /* And a card may say that using it opens something. BREW does: what a Brew
+    /* A card may say that using it opens something. BREW does: what a Brew
        costs is the sum of what goes into it, so the window is where the cost is
        worked out and where it is paid. The prompt this confirmed was BREW's own
        printed "x", which spends nothing. */
