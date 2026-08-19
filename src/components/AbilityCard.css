@@ -418,12 +418,24 @@
   top: max(1.5rem, calc(50% - var(--block-h) / 2));
   left: 50%;
   width: var(--block-w);
-  transform: translate(calc(-50% + var(--depth) * 18px), calc(var(--depth) * 16px));
+
+  /* How far this card sits to the right of the one under it — 18px a card,
+     but never further than the room left beside a 360 card at this width.
+     A phone has none of that room, so the pile steps straight down there
+     instead of walking its own top card off the side of the screen and
+     turning the backdrop into a sideways scroll. The 2rem held back is the
+     gutter the closing chip hangs in. */
+  --card-shift: min(
+    var(--depth, 0) * 18px,
+    max(0px, (100vw - var(--block-w)) / 2 - 2rem)
+  );
+
+  transform: translate(calc(-50% + var(--card-shift)), calc(var(--depth, 0) * 16px));
   animation: card-deal 0.16s ease-out;
 }
 
 @keyframes card-deal {
-  from { opacity: 0; transform: translate(calc(-50% + var(--depth) * 18px), calc(var(--depth) * 16px + 22px)); }
+  from { opacity: 0; transform: translate(calc(-50% + var(--card-shift)), calc(var(--depth, 0) * 16px + 22px)); }
 }
 
 /* Cards buried under the top one stay readable but step back. */
@@ -455,6 +467,35 @@
 .card-window-close:hover {
   background-color: var(--danger-red);
   color: var(--text-bright);
+}
+
+/* ---------- THE PILE ON A PHONE ----------
+   A card is 360 wide on every screen, so on a screen this narrow it *is* the
+   screen: 20px of gutter either side at 400, and 7 at 375. The chip that closes
+   a card hangs 14px past its corner, which is how the backdrop came to scroll
+   sideways on every phone there is. So the chip comes inside, to the card's
+   top-left corner — the one corner empty on all three kinds of card. The cost
+   orbs own the top-right of a printed card and they are not moving for a piece
+   of site furniture. */
+@media (max-width: 400px) {
+  .card-window-close {
+    top: 8px;
+    right: auto;
+    left: 8px;
+    /* Bigger, because it is now a target on glass rather than a corner tab. */
+    width: 34px;
+    height: 34px;
+  }
+
+  /* The two panels that are not printed cards do have something in that
+     corner, so they make room for it. */
+  .card-window .item-card-head {
+    padding-left: 3.2rem;
+  }
+
+  .card-window .value-card {
+    padding-top: 3rem;
+  }
 }
 
 /* ---------- THE ITEM ITSELF ----------

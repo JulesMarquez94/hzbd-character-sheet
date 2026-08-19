@@ -863,7 +863,15 @@ body.sheet-fixed #root {
   gap: 1.1rem;
 }
 
+/* The tabs that are documents rather than blocks: Lore, Advancement and the
+   creation wizard. Nothing in them is a fixed size, so all three should reflow
+   down to any screen — and `width` is what makes them. Without it the auto
+   margins leave the panel shrink-to-fit inside the canvas column, and
+   shrink-to-fit floors at the widest line it can find: one heading row of three
+   words that will not break was holding the whole tab thirty pixels wider than
+   a small phone, and the canvas scrolled sideways to cover it. */
 .tab-narrow {
+  width: 100%;
   max-width: 860px;
   margin: 0 auto;
 }
@@ -1870,7 +1878,7 @@ body.sheet-fixed #root {
    ========================================================= */
 .talent-wall {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
   gap: 0.85rem;
   margin-top: 0.8rem;
 }
@@ -3752,7 +3760,7 @@ body.sheet-fixed #root {
    full row, one when it has shrunk to a single block. */
 .pack-shelf {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr));
   align-content: start;
   gap: 5px;
 }
@@ -4184,7 +4192,42 @@ body.sheet-fixed #root {
   margin-top: 0.35rem;
   padding-top: 0.9rem;
   border-top: 1px solid rgba(148, 167, 176, 0.12);
+  /* The last resort, and only below 360: a card is one size, so on a screen
+     narrower than one there is nowhere left for it to go. Everything down to
+     360 is handled by the rule below instead. */
   overflow-x: auto;
+}
+
+/* ---------- THE USE PROMPT ON A PHONE ----------
+   This is the one dialog that prints a whole card, and a card is a hard 360
+   wide wherever it is printed. A dialog inset from both edges of a 375 screen
+   is narrower than that, which had the card scrolling sideways inside the
+   prompt. So this dialog — and only this one, which is what the :has is for —
+   gives up the gutters either side of it and runs its own padding in tighter,
+   which is exactly the 360 the card needs. */
+@media (max-width: 480px) {
+  .modal-backdrop:has(.use-card) {
+    padding-inline: 0;
+  }
+
+  /* Flush with both edges of the screen, so the hairline down each side has
+     nothing left to divide — and those two pixels are two the card needs. */
+  .modal-backdrop:has(.use-card) .modal-window {
+    border-inline-width: 0;
+    border-radius: 0;
+  }
+
+  .modal-backdrop:has(.use-card) .modal-header,
+  .modal-backdrop:has(.use-card) .modal-body,
+  .modal-backdrop:has(.use-card) .modal-footer {
+    padding-inline: 0.9rem;
+  }
+
+  /* And the card takes back the body's own padding, so it stands in the full
+     width of the dialog rather than inside it. */
+  .modal-backdrop:has(.use-card) .use-card {
+    margin-inline: -0.9rem;
+  }
 }
 
 .use-denied {
@@ -4749,7 +4792,7 @@ body.sheet-fixed #root {
 
 .kit-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
   gap: 0.5rem;
 }
 
@@ -5495,7 +5538,7 @@ body.sheet-fixed #root {
    ========================================================= */
 .card-brief-wall {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(275px, 100%), 1fr));
   gap: 0.7rem;
   margin-top: 0.8rem;
 }

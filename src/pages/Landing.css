@@ -110,7 +110,7 @@
 /* ---------- PILLARS ---------- */
 .pillars {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 2rem;
   padding-top: 2rem;
   padding-bottom: 6rem;
@@ -158,4 +158,21 @@
   }
   .hero { padding: 4rem 1.5rem 3rem; }
   .hero-buttons { flex-direction: column; align-items: stretch; max-width: 320px; margin: 0 auto; }
+}
+
+/* The sample is a real card, which means a hard 360 wide like every card on the
+   site. Below 400px the page's own 20px gutters no longer leave room for one,
+   and the column was being forced past the screen edge — a strip of the card
+   cut off, with `overflow-x: hidden` on the body making sure nobody could
+   scroll to it. So this one row gives its gutters up and the copy takes them
+   back, which is the 360 the card needs and no more. */
+@media (max-width: 400px) {
+  .showcase {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 0;
+  }
+
+  .showcase-copy {
+    padding-inline: 1.25rem;
+  }
 }
