@@ -7167,129 +7167,40 @@ body.sheet-fixed #root {
 }
 
 /* ==========================================================================
-   THE CAULDRON  —  a Cauldron Keeper's brewing bench (BrewBench.jsx)
+   THE CAULDRON  —  the Brew crafting window (BrewWindow.jsx)
    ==========================================================================
-   Every other chooser on this sheet is a wall of things that already exist. A
-   Brew does not exist until it is mixed, so this is a bench rather than a wall:
-   the rack, then one bottle open on it with the vessel, what goes in, the shelf
-   it comes off, and the card it comes out as, side by side.
+   BREW's own text is the process, and the window is that sentence made literal:
+   "At least 1 Essence, exactly 1 Catalyst, and any number of Infusions". So the
+   left column is those three areas in that order, then the shelf they are filled
+   from, and the right column is the Brew as it stands with its price worked out.
 
-   Green throughout, the same green the Brew cards wear (.ac-kind-brew) and the
-   same the pack chip and charge dots wear: what you carry, and spend. */
+   Green throughout, the same green a Brew card wears (.ac-kind-brew) and the same
+   the pack chip and charge dots wear: what you carry, and spend. */
 
-/* ---------- the rack ----------
-   Bottles wide enough for a brief and its two buttons, as many across as the
-   dialog can hold. At five bottles on a phone that is one column, which is the
-   right answer. */
-.brew-rack {
+.brew-window {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 0.7rem;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.6fr);
+  gap: 1rem;
+  align-items: start;
   margin-top: 0.9rem;
 }
 
-.brew-bottle {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  padding: 0.65rem;
-  border: 1px solid var(--hairline);
-  border-top: 2px solid color-mix(in srgb, var(--def-healing) 55%, transparent);
-  border-radius: 4px;
-  background-color: var(--inset-bg);
-}
-
-/* An empty bottle is a space, not a thing: dashed, and no accent cap, so a rack
-   reads as "three mixed, two to go" without counting. */
-.brew-bottle.is-empty {
-  border: 1px dashed rgba(148, 167, 176, 0.26);
-  justify-content: space-between;
-}
-
-.brew-bottle.is-illegal {
-  border-top-color: var(--copper-bright);
-}
-
-.brew-bottle-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.brew-bottle-slot {
-  font-family: var(--font-headings);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 1.1px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.brew-bottle-state {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: var(--def-healing);
-  white-space: nowrap;
-}
-
-.brew-bottle.is-empty .brew-bottle-state {
-  color: var(--text-muted);
-}
-
-.brew-bottle-hint {
-  margin: 0;
-  font-size: 0.72rem;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-.brew-bottle-tools {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-/* ---------- the mixer ----------
-   Two columns where there is room: what you are doing on the left, what it
-   comes out as on the right. Under 900px the preview drops beneath, because a
-   90px-wide card brief is worse than a scroll. */
-.brew-mixer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.brew-mixer-tools {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.brew-mixer-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-.brew-mixer-parts {
+.brew-build {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
   min-width: 0;
 }
 
+/* Under 900px the preview drops beneath the build. A 90px-wide card brief is
+   worse than a scroll. */
 @media (max-width: 900px) {
-  .brew-mixer-grid {
+  .brew-window {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-/* ---------- one step of the mix ---------- */
+/* ---------- one step of the process ---------- */
 .brew-step {
   display: flex;
   flex-direction: column;
@@ -7314,6 +7225,7 @@ body.sheet-fixed #root {
   color: var(--text-bright);
 }
 
+/* The designer's own rule for that area, or the count where a cap exists. */
 .brew-step-note {
   font-size: 0.62rem;
   font-weight: 700;
@@ -7323,77 +7235,14 @@ body.sheet-fixed #root {
   white-space: nowrap;
 }
 
-/* Room left in the Brew is worth noticing, the same copper every unfinished
+/* An area the rule still needs something in wears the copper every unfinished
    count on this sheet wears. */
 .brew-step-note.is-open {
   color: var(--copper);
 }
 
-/* ---------- the vessel ---------- */
-.brew-bases {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.5rem;
-}
-
-.brew-base {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.6rem;
-  border: 1px solid var(--hairline);
-  border-radius: 4px;
-  background-color: var(--inset-bg);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.brew-base:hover:not(:disabled),
-.brew-base:focus-visible:not(:disabled) {
-  border-color: color-mix(in srgb, var(--def-healing) 45%, transparent);
-}
-
-.brew-base.is-on {
-  border-color: var(--def-healing);
-  background-color: color-mix(in srgb, var(--def-healing) 10%, var(--inset-bg));
-}
-
-.brew-base:disabled {
-  cursor: default;
-}
-
-.brew-base-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-}
-
-.brew-base-name {
-  font-family: var(--font-headings);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  color: var(--text-bright);
-}
-
-.brew-base-reach {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  color: var(--def-healing);
-}
-
-.brew-base-line {
-  font-size: 0.7rem;
-  line-height: 1.45;
-  color: var(--text-muted);
-}
-
-/* ---------- what goes in ----------
-   One slot per Reagent the rank allows, so the depth of a Brew is something you
-   see rather than something you read. A filled slot is the way back out. */
+/* ---------- what has gone in ----------
+   One chip per Ingredient, and the chip is the way back out. */
 .brew-doses {
   display: flex;
   flex-wrap: wrap;
@@ -7428,15 +7277,84 @@ body.sheet-fixed #root {
   letter-spacing: 0.3px;
 }
 
+.brew-dose-drop {
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
 .brew-dose.is-filled:hover .brew-dose-drop,
 .brew-dose.is-filled:focus-visible .brew-dose-drop {
   color: var(--copper-bright);
 }
 
-.brew-dose-drop {
-  font-size: 0.85rem;
-  line-height: 1;
+/* ---------- what the brewer has to decide ----------
+   Four Ingredients ask something as they go in, and their own text is what says
+   so. Asked here, once each, and only while they are in the Cauldron. */
+.brew-decision {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--copper);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+.brew-decision-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: var(--font-headings);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-bright);
+}
+
+.brew-decision-asks {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-muted);
+}
+
+.brew-decision-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.brew-chip {
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(148, 167, 176, 0.28);
+  border-radius: 999px;
+  background-color: rgba(9, 17, 21, 0.5);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.brew-chip:hover:not(:disabled),
+.brew-chip:focus-visible:not(:disabled) {
+  border-color: var(--def-healing);
+  color: var(--text-silver);
+}
+
+.brew-chip.is-on {
+  border-color: var(--def-healing);
+  background-color: color-mix(in srgb, var(--def-healing) 18%, transparent);
+  color: var(--text-bright);
+}
+
+.brew-chip:disabled {
+  cursor: default;
 }
 
 /* ---------- the shelf ---------- */
@@ -7447,6 +7365,8 @@ body.sheet-fixed #root {
   margin-top: 0.35rem;
 }
 
+/* The kind, and the designer's rule for it, so the shelf repeats the
+   configuration rather than making the reader remember it. */
 .brew-shelf-tier {
   font-size: 0.6rem;
   font-weight: 700;
@@ -7465,17 +7385,21 @@ body.sheet-fixed #root {
   background-color: var(--inset-bg);
 }
 
-/* Already in the Brew, so the row reads as held rather than offered. */
+/* Already in the Cauldron, so the row reads as held rather than offered. */
 .brew-reagent.is-in {
   border-left: 2px solid var(--def-healing);
 }
 
+/* The body is a button: tapping an Ingredient deals its card, which is the only
+   way to read the words the Brew is quoting. */
 .brew-reagent-body {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
   flex: 1;
   min-width: 0;
+  text-align: left;
+  cursor: pointer;
 }
 
 .brew-reagent-name {
@@ -7501,6 +7425,15 @@ body.sheet-fixed #root {
   white-space: nowrap;
 }
 
+/* An Ingredient's own two numbers, which is what gets summed. */
+.brew-reagent-cost {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .brew-reagent-line {
   font-size: 0.7rem;
   line-height: 1.45;
@@ -7508,9 +7441,9 @@ body.sheet-fixed #root {
 }
 
 /* ---------- what comes out ----------
-   The Brew as its own brief, rebuilt on every tap. Sticky where there is a
-   second column to be sticky in: the shelf is longer than the preview, and
-   scrolling the shelf should not scroll the thing you are watching change. */
+   The Brew as its own brief, rebuilt on every tap. Sticky where there is a second
+   column to be sticky in: the shelf is far longer than the preview, and scrolling
+   it should not scroll the thing you are watching change. */
 .brew-preview {
   display: flex;
   flex-direction: column;
@@ -7536,31 +7469,118 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
-.brew-name {
+/* ---------- the price, with its working ----------
+   "You must pay the combined Action Point and Willpower cost of all chosen
+   Ingredients." Four Ingredients is four costs added up, and a bare total gives a
+   player nothing to check against the cards on the table. */
+.brew-working {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 2px;
   padding-top: 0.55rem;
   border-top: 1px solid var(--hairline);
 }
 
-.brew-name-label {
+.brew-working-head {
+  margin-bottom: 0.2rem;
   font-family: var(--font-headings);
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 1.1px;
   text-transform: uppercase;
   color: var(--copper);
 }
 
+.brew-working-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.brew-working-nums {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A reduction is a different kind of line from a cost, so it reads as one. */
+.brew-working-row.is-cut {
+  color: var(--def-healing);
+}
+
+.brew-working-row.is-total {
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--hairline);
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.brew-working-note {
+  margin-top: 0.3rem;
+  font-size: 0.65rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* The total in the footer, beside the button that spends it. */
+.brew-total {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.brew-total-part {
+  padding: 1px 8px;
+  border: 1px solid rgba(148, 167, 176, 0.22);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-silver);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- what the rule still wants ----------
+   Printed in the designer's own words, straight out of BREW: "At least 1
+   Essence.", "Exactly 1 Catalyst." */
+.brew-missing {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--copper-bright);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.5);
+}
+
+.brew-missing-head {
+  font-family: var(--font-headings);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--copper-bright);
+}
+
+.brew-missing-line {
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* ---------- the free-text answer (Skillseed Nut names a skill) ---------- */
 .brew-input {
-  width: 100%;
-  padding: 0.45rem 0.55rem;
+  min-width: 0;
+  flex: 1;
+  padding: 0.35rem 0.5rem;
   background-color: rgba(9, 17, 21, 0.5);
   border: 1px solid var(--hairline);
   border-radius: 4px;
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-silver);
   transition: border-color 0.15s ease;
 }

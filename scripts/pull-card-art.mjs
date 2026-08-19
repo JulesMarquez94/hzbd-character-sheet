@@ -41,6 +41,12 @@ import sharp from 'sharp';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA = path.join(ROOT, 'data');
 const OUT = path.join(ROOT, 'public', 'cards');
+/* A talent set's overview picture is not a card plate. It sits behind
+   `talent.art` at 640x640, square, and the sets' own sheets carry its link in the
+   same Image column, so it is placed here rather than by hand. */
+const TALENT_OUT = path.join(ROOT, 'public', 'talents');
+const TALENT_SIZE = 640;
+const TALENT_QUALITY = 82;
 
 /* The plate on a dealt card is 360x270 CSS pixels and `background-size: cover`.
    720 is that at 2x, which is as much as any screen can show of it. Quality 78
@@ -95,9 +101,32 @@ function sheets() {
 
 /** Printed name -> card id, so the sheet never has to carry ids it does not have. */
 async function cardIds() {
-  const { SPELLS } = await import(path.join(ROOT, 'src/lib/spells.js').replace(/\\/g, '/').replace(/^/, 'file:///'));
-  const { BASIC_ACTIONS } = await import(path.join(ROOT, 'src/lib/actions.js').replace(/\\/g, '/').replace(/^/, 'file:///'));
-  return new Map([...SPELLS, ...BASIC_ACTIONS].map((c) => [c.name.toLowerCase(), c.id]));
+  const load = (file) =>
+    import(path.join(ROOT, file).replace(/\\/g, '/').replace(/^/, 'file:///'));
+
+  const { SPELLS } = await load('src/lib/spells.js');
+  const { BASIC_ACTIONS } = await load('src/lib/actions.js');
+  /* A talent set's own sheet carries Image links too, and a Cauldron Keeper's
+     Ingredients are cards like any other. TALENTS is reached for its cards rather
+     than the sets themselves: a set's overview picture is a different plate that
+     lives in public/talents/ and this script does not own it. */
+  const { INGREDIENTS } = await load('src/lib/ingredients.js');
+  const { TALENT_CARDS } = await load('src/lib/talents.js');
+
+  return new Map(
+    [...SPELLS, ...BASIC_ACTIONS, ...INGREDIENTS, ...TALENT_CARDS].map((c) => [
+      c.name.toLowerCase(),
+      c.id,
+    ])
+  );
+}
+
+/** Printed set name -> talent id, for the Overview row of a Talent Set sheet. */
+async function talentIds() {
+  const { TALENTS } = await import(
+    path.join(ROOT, 'src/lib/talents.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return new Map(TALENTS.map((t) => [t.name.toLowerCase(), t.id]));
 }
 
 /* -------------------------------------------------------------------- postimg */
@@ -129,10 +158,40 @@ async function download(url, tries = 3) {
   }
 }
 
+/* --------------------------------------------------------------- talent plates */
+
+/** One set's overview picture: square, 640px, beside Guardian's and Mycomancer's. */
+async function pullTalentArt(setId, name, link) {
+  const file = path.join(TALENT_OUT, `${setId}.jpg`);
+  if (existsSync(file) && !FORCE) {
+    talentSkipped += 1;
+    return;
+  }
+  try {
+    const buf = await download(await directLink(link));
+    const out = await sharp(buf)
+      .resize({ width: TALENT_SIZE, height: TALENT_SIZE, fit: 'cover', position: 'centre' })
+      .jpeg({ quality: TALENT_QUALITY, mozjpeg: true })
+      .toBuffer();
+    writeFileSync(file, out);
+    talentFetched += 1;
+    console.log(
+      `${setId.padEnd(20)} talent plate ${TALENT_SIZE}x${TALENT_SIZE} jpeg ${(out.length / 1024).toFixed(0)} KB`
+    );
+  } catch (err) {
+    problems.push(`${name}: ${err.message}`);
+  }
+}
+
+let talentFetched = 0;
+let talentSkipped = 0;
+
 /* ---------------------------------------------------------------------- main */
 
 const ids = await cardIds();
+const sets = await talentIds();
 mkdirSync(OUT, { recursive: true });
+mkdirSync(TALENT_OUT, { recursive: true });
 
 const art = new Map();
 const problems = [];
@@ -148,11 +207,18 @@ for (const row of sheets()) {
 
   const id = ids.get(name.toLowerCase());
 
-  /* A row this importer does not own: nothing in the card codex by that name,
-     and no picture asked for either. A Talent Set sheet's Overview row is one of
-     those, and warning about it on every run would only train the reader to skip
-     the list. A row with a *link* and no card still warns, because that is how a
-     renamed spell announces itself. */
+  /* A Talent Set sheet's Overview row names the *set*, not a card, and its picture
+     is the square plate behind talent.art. Placed here, then done with. */
+  const setId = sets.get(name.toLowerCase());
+  if (!id && setId) {
+    if (link) await pullTalentArt(setId, name, link);
+    continue;
+  }
+
+  /* A row this importer does not own: nothing in the card codex by that name, and
+     no picture asked for either. Warning about it on every run would only train the
+     reader to skip the list. A row with a *link* and no card still warns, because
+     that is how a renamed spell announces itself. */
   if (!id && !link) continue;
 
   if (!id) { problems.push(`${name}: the codex has no card by that name`); continue; }
@@ -272,6 +338,9 @@ export function withArt(cards) {
 /* ------------------------------------------------------------------ the report */
 
 console.log(`\n${fetched} fetched, ${skipped} already on disk, ${art.size} in the lookup`);
+if (talentFetched || talentSkipped) {
+  console.log(`${talentFetched} talent plate(s) fetched, ${talentSkipped} already on disk`);
+}
 console.log(`${thumbsMade} thumbnail(s) cut, ${(thumbBytes / 1024).toFixed(0)} KB across ${art.size}`);
 if (fetched > 0) {
   console.log(

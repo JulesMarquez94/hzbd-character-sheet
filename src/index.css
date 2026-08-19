@@ -43,6 +43,9 @@
     --dmg-lightning: #FFEB3B;
     --dmg-psychic: #E91E63;
     --dmg-decay: #4CAF50;
+    /* Poison sits beside Decay and must not be mistaken for it: brighter, and
+       acid rather than mould. */
+    --dmg-poison: #A8E063;
     --dmg-sacred: #FFF59D;
 
     /* Defense Types */

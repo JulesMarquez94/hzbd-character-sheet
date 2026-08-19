@@ -24,7 +24,8 @@
  */
 
 import { getBackground, getBackgroundSkill, normalizeBackgroundSkills } from './backgrounds.js';
-import { brewState, brewingOf } from './brews.js';
+import { brewLimits, brewingOf, knownIngredients } from './brews.js';
+import { INGREDIENT_PARTS } from './ingredients.js';
 import { EQUIPMENT_SLOTS, getItem, normalizeEquipment } from './items.js';
 import { getLineage } from './lineages.js';
 import { normalizeLevelPicks } from './levelPicks.js';
@@ -242,31 +243,40 @@ function talentSources(character) {
       });
     }
 
-    /* The cards this set *mixes*. A Keeper's rack is the same kind of standing,
-       re-decided-at-every-rest hand a Mycomancer's prepared spells are, so it
-       gets the same treatment: its own block, named for the mechanic and noted
-       with whose it is. The cards in it exist nowhere but here — brewState
-       composes them out of the recipes on the character. */
-    const brewing = brewingOf(talent) ? brewState(character?.talents, talent) : null;
+    /* What this set brews *from*. Not a hand and not a rack: a finished Brew
+       "takes effect immediately" and is never stored, so what a Keeper actually
+       holds is the shelf their rank has opened. One section per kind, in the order
+       BREW names them, because that order is the configuration rule.
+
+       `aside` marks the block as one to read rather than to play from. An
+       Ingredient is not a move: you never use Volcanic Shard, you put it in
+       something. The Character tab's two blocks both skip it and offer BREW
+       instead, which is the card that is actually played. */
+    const brewing = brewingOf(talent) ? brewLimits(character?.talents, talent) : null;
     if (brewing) {
+      const known = knownIngredients(brewing.spec, brewing.rank);
       open.push({
-        id: `brews:${talent.id}`,
-        kind: 'brew',
-        title: brewing.spec.label,
-        note: `${talent.name} · ${brewing.mixed} of ${brewing.bottles} mixed, re-mixed at any rest`,
+        id: `ingredients:${talent.id}`,
+        kind: 'ingredient',
+        title: 'Ingredients',
+        note: `${talent.name} · ${known.length} known, ${listOut(brewing.tiers)}`,
         art: talent.art ?? null,
-        sections: [
-          {
-            ...section(
-              `brews-${brewing.spec.id}`,
-              `${plural('Brew', brewing.bottles)} on the rack`,
-              brewing.cards.map((card) => entry(card)),
-              `${brewing.mixed} of ${brewing.bottles} mixed`
-            ),
-            // Everything the block needs to raise the bench and colour the count.
-            brewing: { talent, state: brewing },
-          },
-        ],
+        aside: true,
+        sections: INGREDIENT_PARTS.map((part) => {
+          const rows = known.filter((ing) => ing.part === part.id);
+          return rows.length === 0
+            ? null
+            : {
+                ...section(
+                  `ingredient-${part.id}`,
+                  part.plural,
+                  rows.map((card) => entry(card)),
+                  part.rule
+                ),
+                // Only the first section carries the tools, so the block has one.
+                brewing: part.id === INGREDIENT_PARTS[0].id ? { talent, limits: brewing } : null,
+              };
+        }).filter(Boolean),
       });
     }
 

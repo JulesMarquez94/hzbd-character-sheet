@@ -105,10 +105,12 @@ function move(key, card, { name, source, modifiers = null, note = null, extra = 
     wp: card?.wp ?? null,
     variable: Boolean(card?.variable),
     converts: card?.converts ?? null,
-    /* What using this opens once it is paid for. Quick Stir is the only card so
-       far: it buys the right to re-mix a Brew, and the bench is the thing it
-       bought. Carried as data on the card, never read out of its prose. */
+    /* What using this opens once it is paid for, and what state it flips. BREW
+       opens the brewing window, because what a Brew costs is not known until it is
+       mixed; Bound Cauldron flips the Cauldron between Summoned and Dismissed.
+       Both ride as data on the card, never read out of its prose. */
     opens: card?.opens ?? null,
+    toggles: card?.toggles ?? null,
     spent: false,
     ...rest,
   };
@@ -185,6 +187,11 @@ function chargeNote(remaining, consumable, item) {
 /** One group per source that holds something playable, in the codex's order. */
 function knownGroups(character) {
   return abilitySources(character)
+    /* A source can hold cards that are neither played nor standing. A Cauldron
+       Keeper's Ingredients are the case: you never use one, you put it in a Brew,
+       and BREW is the card that gets played. The Abilities tab reads them; neither
+       block here lists them. */
+    .filter((source) => !source.aside)
     .map((source) => {
       const moves = rowsOf(source)
         .filter(({ card }) => !isStanding(card))
@@ -286,6 +293,7 @@ export function passiveRecap(character) {
   const skills = [];
 
   for (const source of abilitySources(character)) {
+    if (source.aside) continue;
     for (const { card, modifiers, section } of rowsOf(source)) {
       if (!isStanding(card)) continue;
 

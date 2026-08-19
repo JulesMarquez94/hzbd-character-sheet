@@ -41,11 +41,24 @@
  * the thing.
  *
  * `provisional: true` marks a term whose wording here is a best reading of what
- * the cards using it imply, rather than something transcribed from a rules
- * sheet. Every status carries it: the designer's General Rules workbook has a
- * Basic Abilities tab and no statuses tab yet, so these are placeholders that
- * read sensibly and are waiting to be corrected. Nothing renders differently
- * for it; it is a list of what still needs the designer's word.
+ * the cards using it imply, rather than something transcribed from a rules sheet.
+ *
+ * **Most of those are gone.** The designer's General Rules · Status & Terms tab
+ * arrived on 2026-08-19 with 26 definitions, and every term it covers now carries
+ * their wording verbatim. Three of them corrected the codex rather than filling a
+ * blank, and they are worth knowing about:
+ *
+ *   Advantage    is a d4 added to the roll, not a reroll kept high. Disadvantage
+ *                is the same d4 subtracted. Both stack and cancel 1-to-1.
+ *   Empowered    adds a die (2d6 becomes 3d6). **Elevate** is the one that grows
+ *                the die (d6 becomes d8). The codex had one doing the other's job;
+ *                see the note in cardText.js.
+ *   Critical Hit is a maximum result on an Attack Roll. It cannot be "a natural
+ *                20": a Roll in this game is 2d6 plus an attribute.
+ *
+ * What is still provisional is what their tab does not cover: asleep, stunned,
+ * marked, unconscious and dying. Amber Shard leans on stunned, so that one is
+ * worth asking about.
  */
 
 /**
@@ -163,7 +176,9 @@ export const KEYWORDS = [
     id: 'movement-speed',
     terms: ['Movement Speed'],
     color: 'var(--stat-speed)',
-    detail: 'How far one Move action carries you, and how far you jump.',
+    detail:
+      'The maximum distance in meters (or feet) you can cover when taking the Move or Jump ' +
+      'action.',
   },
 
   /* ------------------------------------------------- what happens to a roll */
@@ -171,13 +186,19 @@ export const KEYWORDS = [
     id: 'advantage',
     terms: ['advantage'],
     color: 'var(--def-healing)',
-    detail: 'Roll the die twice and keep the higher result.',
+    detail:
+      'When making a roll with Advantage, roll a d4 and add the value to your total result. ' +
+      'Advantage stacks (each instance adds an additional d4). Advantage and Disadvantage ' +
+      'cancel each other out on a 1-to-1 basis.',
   },
   {
     id: 'disadvantage',
     terms: ['disadvantage'],
     color: 'var(--stat-health)',
-    detail: 'Roll the die twice and keep the lower result.',
+    detail:
+      'When making a roll with Disadvantage, roll a d4 and subtract the value from your ' +
+      'total result. Disadvantage stacks (each instance adds an additional d4 subtraction). ' +
+      'Disadvantage and Advantage cancel each other out on a 1-to-1 basis.',
   },
   {
     id: 'reroll',
@@ -190,7 +211,8 @@ export const KEYWORDS = [
     terms: ['skill check', 'skill checks'],
     color: 'var(--copper)',
     detail:
-      'A roll against a difficulty the table sets, for anything that is not an attack. You add the attribute it calls on.',
+      'A Roll made to determine the success or failure of a non-combat or specialized task, ' +
+      'adding the appropriate Attribute to the result.',
   },
   {
     id: 'contested-roll',
@@ -203,13 +225,17 @@ export const KEYWORDS = [
     terms: ['Empowered'],
     color: 'var(--level-amber)',
     detail:
-      'Every damage die steps up a category — a d6 becomes a d8. No die may pass a d12.',
+      'Increases the total number of your Damage Dice and Healing Dice by 1. Whenever a ' +
+      'spell or ability calls for rolling dice, you roll 1 additional die of that same type ' +
+      '(2d6 becomes 3d6).',
   },
   {
     id: 'critical',
-    terms: ['critical'],
+    terms: ['Critical Hit', 'critical'],
     color: 'var(--level-amber)',
-    detail: 'A natural 20 on the die. It lands however high the target’s Defense is.',
+    detail:
+      'A maximum success outcome on an Attack Roll that guarantees a hit and maximizes or ' +
+      'amplifies damage dealt or secondary effects.',
   },
 
   /* --------------------------------------------------------- what you swing */
@@ -245,13 +271,16 @@ export const KEYWORDS = [
     terms: ['Long Rest'],
     color: 'var(--copper)',
     detail:
-      'A full night stopped. Pools come back, and anything crafted or tended is done across it.',
+      'An 8-hour break that consumes 10 Supplies. Successfully completing a Long Rest fully ' +
+      'restores your Health and Willpower, and allows you to perform 1 Long Rest Action.',
   },
   {
     id: 'short-rest',
     terms: ['Short Rest'],
     color: 'var(--copper)',
-    detail: 'A breather in the field — enough to catch some of what you have spent, not all of it.',
+    detail:
+      'A 1-hour break that consumes 5 Supplies. If completed uninterrupted, you regain half ' +
+      'of your maximum Health.',
   },
 
   /* ------------------------------------------------------------ the world */
@@ -283,16 +312,17 @@ export const KEYWORDS = [
     id: 'poisoned',
     terms: ['poisoned'],
     color: 'var(--dmg-decay)',
-    provisional: true,
-    detail: 'Sickened by something in the blood. What it costs you is the designer’s to set.',
+    detail:
+      'A Poisoned entity suffers Disadvantage on all actions until they complete a Long ' +
+      'Rest or regain any amount of Health.',
   },
   {
     id: 'rooted',
     terms: ['rooted'],
     color: 'var(--dmg-decay)',
-    provisional: true,
     detail:
-      'Held to the ground. You can still act and still attack, but you cannot move from where you stand.',
+      'A Rooted entity cannot take the Move or Jump action and is immune to any effect that ' +
+      'would push or pull it.',
   },
   {
     id: 'asleep',
@@ -305,15 +335,18 @@ export const KEYWORDS = [
     id: 'prone',
     terms: ['prone'],
     color: 'var(--stat-health)',
-    provisional: true,
-    detail: 'On the floor. Getting back up is the first thing your next turn pays for.',
+    detail:
+      'The target is on the ground, attacks are made with disadvantage and move action ' +
+      'costs are doubled. When the entity uses a move action the prone condition ends.',
   },
   {
     id: 'grappled',
     terms: ['grappled'],
     color: 'var(--stat-health)',
-    provisional: true,
-    detail: 'Held by somebody. You cannot move away while the grip lasts.',
+    detail:
+      'A Grappled entity cannot use movement actions and has disadvantage on attacks. Once ' +
+      'per turn a grappled entity can make a Physique roll against the grappler\'s Reflex. ' +
+      'On a success they free themselves.',
   },
   {
     id: 'stunned',
@@ -326,8 +359,7 @@ export const KEYWORDS = [
     id: 'incapacitated',
     terms: ['incapacitated'],
     color: 'var(--stat-health)',
-    provisional: true,
-    detail: 'Present but unable to act. You take no actions and no reactions.',
+    detail: 'An Incapacitated entity cannot move, take Actions, or spend Reaction Points.',
   },
   {
     id: 'unconscious',
@@ -352,8 +384,7 @@ export const KEYWORDS = [
     id: 'touch',
     terms: ['touch'],
     color: 'var(--focus-cyan)',
-    detail:
-      'Close enough to put a hand on. The shortest range there is: you have to be right beside what you are targeting.',
+    detail: 'Refers to an entity or object adjacent to you that you can physically touch.',
   },
   {
     id: 'reach',
@@ -393,29 +424,48 @@ export const KEYWORDS = [
     detail: 'The moment your turn closes, after everything you chose to do with it.',
   },
 
-  /* ------------------------------------------------------------ what is mixed
-   * A Cauldron Keeper's two nouns. Both wear the green of what you carry and
-   * spend, which is the colour their cards wear (see .ac-kind-brew) and the same
-   * green as the pack chip and the charge dots.
+  /* ------------------------------------------------------- what a Keeper mixes
+   * The Cauldron Keeper's nouns. None of them are on the Status & Terms tab, but
+   * all four are defined outright by BREW's own card text, which is quoted here
+   * rather than paraphrased. They wear the green of what you carry and spend,
+   * which is the colour their cards wear (see .ac-kind-brew).
    *
-   * The Cauldron itself is deliberately *not* here. It would light inside the
-   * set's own name every time a card said "your Rank in Cauldron Keeper", which
-   * is the fault Gore Armor and Vampiric Touch were reworded for. A word that
-   * cannot be a term without colliding with a name stays prose.
+   * The Cauldron itself is deliberately not here. It would light inside the set's
+   * own name every time a card said "Cauldron keeper", which is the fault Gore
+   * Armor and Vampiric Touch were reworded for.
    */
   {
     id: 'brew',
     terms: ['Brews', 'Brew'],
     color: 'var(--def-healing)',
     detail:
-      'A mixture a Cauldron Keeper carries ready: one vessel and the Reagents tipped into it. Re-mixed at any rest, and mid-fight with a Quick Stir.',
+      'Ingredients combined to unleash a magical effect: at least 1 Essence, exactly 1 Catalyst, and any number of Infusions. It costs the combined Action Point and Willpower cost of everything in it, and takes effect immediately.',
   },
   {
-    id: 'reagent',
-    terms: ['Reagents', 'Reagent'],
+    id: 'ingredient',
+    terms: ['Ingredients', 'Ingredient'],
     color: 'var(--def-healing)',
     detail:
-      'What a Brew is made of. One clause each, and a second dose of the same Reagent makes that clause stronger rather than adding another.',
+      'What a Brew is made of. A Keeper gains access to Novice Ingredients at Rank 1, Adept at Rank 2 and Master at Rank 3.',
+  },
+  {
+    id: 'essence',
+    terms: ['Essences', 'Essence'],
+    color: 'var(--def-healing)',
+    detail:
+      'The Ingredient that decides what a Brew does. Every Brew needs at least one, and Improved Recipes allows two that are not the same.',
+  },
+  {
+    id: 'catalyst',
+    terms: ['Catalysts', 'Catalyst'],
+    color: 'var(--def-healing)',
+    detail: 'The Ingredient that decides who a Brew reaches. Exactly one in every Brew.',
+  },
+  {
+    id: 'infusion',
+    terms: ['Infusions', 'Infusion'],
+    color: 'var(--def-healing)',
+    detail: 'An Ingredient stirred in on top. A Brew may take any number of them.',
   },
 
   /* -------------------------------------------------------------- the riders
@@ -442,13 +492,6 @@ export const KEYWORDS = [
       'A toll paid at every Turn Start to keep a spell running. Miss one and the spell ends there.',
   },
   {
-    id: 'overbrew',
-    terms: ['Overbrew'],
-    color: 'var(--haze-glow)',
-    detail:
-      'Spend more than the Brew asks to have every Reagent in it roll twice its dice. A Master Keeper prints it on every Brew they mix.',
-  },
-  {
     id: 'blood-tithe',
     terms: ['Blood Tithe'],
     color: 'var(--stat-health)',
@@ -457,10 +500,99 @@ export const KEYWORDS = [
   },
   {
     id: 'elevated',
-    terms: ['elevates', 'elevated', 'elevate'],
+    terms: ['Elevated', 'elevates', 'elevated', 'elevate'],
     color: 'var(--level-amber)',
-    provisional: true,
-    detail: 'Cast as though the spell were a step stronger than it is.',
+    detail:
+      'Increases the die size category of your Damage Dice and Healing Dice by one step (a ' +
+      'd6 becomes a d8). Elevate stacks, but cannot increase a die size beyond a d12.',
+  },
+  /* ------------------------------------------------- the rest of the rules sheet
+   * Added when the designer's General Rules · Status & Terms tab arrived. Every
+   * detail here is their own wording.
+   *
+   * ROLL is deliberately absent. It is on their sheet ("roll 2d6 and add the
+   * appropriate Attribute") and it is a real defined term, but the word appears on
+   * 49 of the codex's cards, and lighting a third of every card is the exact
+   * failure this file's own header warns about. Worth a decision rather than a
+   * default.
+   */
+  {
+    id: 'damage-dice',
+    terms: ['Damage Dice'],
+    color: 'var(--dmg-sharp)',
+    detail: 'Refers to the dice you indicated by ability to deal damage.',
+  },
+  {
+    id: 'healing-dice',
+    terms: ['Healing Dice'],
+    color: 'var(--def-healing)',
+    detail: 'The specific dice indicated by an ability or spell used to determine Health restored.',
+  },
+  {
+    id: 'see',
+    terms: ['see'],
+    color: 'var(--focus-cyan)',
+    detail:
+      'Refers to an entity, object, or location to which you have a direct and clear line ' +
+      'of sight.',
+  },
+  {
+    id: 'turn',
+    terms: ['Turn'],
+    color: 'var(--stat-ap)',
+    detail:
+      'Indicates the active phase in combat assigned to a specific entity. Each turn ' +
+      'features a Turn Start and Turn End. Effects measured in turns lose 1 turn of ' +
+      'duration at each Turn Start.',
+  },
+  {
+    id: 'jump-distance',
+    terms: ['Jump Distance'],
+    color: 'var(--stat-speed)',
+    detail:
+      'The maximum horizontal distance in meters (or feet) you can cover when taking the ' +
+      'Jump action.',
+  },
+  {
+    id: 'jump-height',
+    terms: ['Jump Height'],
+    color: 'var(--stat-speed)',
+    detail:
+      'The maximum vertical distance in meters (or feet) you can clear when taking the Jump ' +
+      'action.',
+  },
+  {
+    id: 'melee',
+    terms: ['Melee'],
+    color: 'var(--dmg-sharp)',
+    detail:
+      'An attack or spell range targeting entities that are directly adjacent to you or ' +
+      'within physical reach.',
+  },
+  {
+    id: 'ranged',
+    terms: ['Ranged'],
+    color: 'var(--dmg-sharp)',
+    detail:
+      'An attack or spell range targeting entities at a distance up to the maximum ' +
+      'specified range in meters (or feet).',
+  },
+  {
+    id: 'attack-roll',
+    terms: ['Attack Roll'],
+    color: 'var(--copper)',
+    detail:
+      'A Roll made to hit a target. The attack succeeds if the total result equals or ' +
+      'exceeds the target\'s Defense or targeted Attribute.',
+  },
+  {
+    id: 'sacrifice',
+    terms: ['Sacrifice', 'Sacrificing'],
+    color: 'var(--stat-health)',
+    detail:
+      'When Sacrificing a resource or value (such as Health or Willpower), you ignore all ' +
+      'reduction, mitigation, or prevention effects to directly subtract the indicated ' +
+      'amount.',
   },
 ];
 

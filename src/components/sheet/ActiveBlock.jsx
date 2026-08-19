@@ -3,9 +3,9 @@ import UsePrompt from './UsePrompt.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
 import { GroupHead } from './parts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
-import { BrewBench } from './BrewBench.jsx';
+import BrewWindow from './BrewWindow.jsx';
 import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
-import { benchFor, brewState, emptyBrewAt, setBrewAt } from '../../lib/brews.js';
+import { brewSetFor, cauldronIsOut, setCauldron, CAULDRON_DISMISSED, CAULDRON_SUMMONED } from '../../lib/brews.js';
 
 /**
  * The Character tab's fourth block: the quick bar.
@@ -42,10 +42,8 @@ import { benchFor, brewState, emptyBrewAt, setBrewAt } from '../../lib/brews.js'
 export default function ActiveBlock({ character, patch, readOnly = false }) {
   // The use waiting on the action-or-reaction question, or null.
   const [request, setRequest] = useState(null);
-  /* The talent set whose bench a paid-for use has opened, or null. The set is
-     held rather than its state, so the rack is re-read after every write and a
-     Brew bottled here appears on it at once. */
-  const [bench, setBench] = useState(null);
+  /* The talent set whose brewing window a paid-for use has opened, or null. */
+  const [brewing, setBrewing] = useState(null);
 
   const groups = useMemo(() => quickBar(character), [character]);
   const total = moveCount(groups);
@@ -60,6 +58,7 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
       variable: move.variable,
       converts: move.converts,
       opens: move.opens,
+      toggles: move.toggles,
       card: move.card,
       modifiers: move.modifiers,
       note: move.note,
@@ -72,11 +71,28 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
     const body = spendUse(request, character, mode, amount);
     if (Object.keys(body).length > 0) patch(body);
 
-    /* A card may say that using it opens something. Quick Stir is the only one
-       so far, and the point of paying for a stir is to mix: making the player
-       close this and go and find the Cauldron would waste the tap they just
-       made. The points are spent either way, exactly as the prompt said. */
-    if (request.opens === 'brews') setBench(benchFor(character.talents, request.card?.id));
+    /* A card may say that using it flips something. Bound Cauldron summons the
+       Cauldron or sends it away, and that goes in the same single write as the
+       Action Points, so the sheet is never half-way through the action. */
+    if (request.toggles === 'cauldron') {
+      const set = brewSetFor(character.talents, request.card?.id);
+      if (set) {
+        patch({
+          ...body,
+          talents: setCauldron(
+            character.talents,
+            set.id,
+            cauldronIsOut(character.talents, set.id) ? CAULDRON_DISMISSED : CAULDRON_SUMMONED
+          ),
+        });
+      }
+    }
+
+    /* And a card may say that using it opens something. BREW does: what a Brew
+       costs is the sum of what goes into it, so the window is where the cost is
+       worked out and where it is paid. The prompt this confirmed was BREW's own
+       printed "x", which spends nothing. */
+    if (request.opens === 'brew') setBrewing(brewSetFor(character.talents, request.card?.id));
 
     setRequest(null);
   }
@@ -123,18 +139,13 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
         />
       )}
 
-      {bench && (
-        <BrewBench
-          talent={bench}
+      {brewing && (
+        <BrewWindow
+          talent={brewing}
           character={character}
-          state={brewState(character.talents, bench)}
+          patch={patch}
           readOnly={readOnly}
-          paidFor
-          onBottle={(slot, draft) =>
-            patch({ talents: setBrewAt(character.talents, bench.id, slot, draft) })
-          }
-          onEmpty={(slot) => patch({ talents: emptyBrewAt(character.talents, bench.id, slot) })}
-          onClose={() => setBench(null)}
+          onClose={() => setBrewing(null)}
         />
       )}
     </div>

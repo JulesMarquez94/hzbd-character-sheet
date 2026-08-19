@@ -41,6 +41,7 @@
  */
 
 import { SPELLS } from './spells.js';
+import { INGREDIENTS } from './ingredients.js';
 import { UTILITY_CARDS } from './utility.js';
 import { TALENT_CARDS } from './talents.js';
 import { LINEAGE_CARDS } from './lineages.js';
@@ -817,6 +818,10 @@ export const CARDS = [
   ...ENCHANTMENTS,
   ...UTILITY_CARDS,
   ...TALENT_CARDS,
+  /* A Cauldron Keeper's Ingredients. Not talent cards: a rank does not hand them
+     over, it opens a tier of them, and what a Brew is made of is chosen at the
+     moment it is mixed. See brews.js. */
+  ...INGREDIENTS,
   ...LINEAGE_CARDS,
   ...BACKGROUND_CARDS,
   ...ACTION_CARDS,

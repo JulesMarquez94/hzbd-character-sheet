@@ -1,228 +1,45 @@
 /**
- * Special Brew — the Cauldron Keeper's own kind of choice.
+ * Brewing: the Cauldron Keeper's own kind of choice.
  *
- * Most talent sets teach a fixed hand. A Mycomancer picks their hand out of a
- * school (see loadouts.js). A Cauldron Keeper does neither: they *compose* what
- * they hold. A Brew is a Base and one or more Reagents, and the card it makes
- * does not exist in any codex until this character mixes it.
+ * A talent set can leave something to the player in three shapes now. Most teach
+ * a fixed hand. A Mycomancer carries a `loadout` and *picks* cards out of a
+ * school (loadouts.js). A Cauldron Keeper carries a `brewing` spec and
+ * *composes* one, out of Ingredients, at the moment they use it.
  *
- * So this file is the third shape a talent's choice can take, and the only one
- * that has to *write* a card rather than look one up:
+ * ------------------------------------------------------------------ the rule
+ * BREW's own card text is the whole rule, and this file does nothing it does not
+ * say:
  *
- *   loadouts.js   picks ids out of CARDS
- *   brews.js      builds a card out of parts
+ *   "While your Cauldron is Summoned, you can combine Ingredients to unleash a
+ *    magical effect. You choose Ingredients from your known list in the following
+ *    configuration: At least 1 Essence, exactly 1 Catalyst, and any number of
+ *    Infusions. You must pay the combined Action Point and Willpower cost of all
+ *    chosen Ingredients. The resulting Brew takes effect immediately.
+ *    You gain access to Novice Ingredients at Rank 1, Adept Ingredients at Rank 2,
+ *    and Master Ingredients at Rank 3."
  *
- * ------------------------------------------------------------------ the parts
- *   a Base      how the Brew leaves the Cauldron: poured, hurled or breathed.
- *               It sets the Action Point cost, who it reaches, and what each
- *               Reagent costs in Willpower once it is in there.
- *   a Reagent   what the Brew actually does. One clause each, and a second dose
- *               of the same Reagent makes that clause stronger rather than
- *               adding a new one.
+ * Two cards bend it, and both are the designer's:
  *
- * ------------------------------------------------------------------ the scale
- * Three things grow with the Keeper's Rank, and nothing else does:
+ *   Improved Recipes   Rank 3. "you can now have up to two Essences. They cannot
+ *                      be the same Essence."
+ *   Efficient Brewing  Rank 2. "The cost of your Brew Action is reduced by 1
+ *                      Action Point."
  *
- *   how many Brews the Cauldron holds ready      3, 4, 5
- *   how many Reagents fit in one Brew            1, 2, 3
- *   which Reagent tiers are open                 Novice, +Adept, +Master
+ * -------------------------------------------------------- nothing is stored
+ * A Brew "takes effect immediately", so there is no shelf of finished Brews and
+ * this file keeps none. What is mixed is a *draft*, held in the window while the
+ * player assembles it, priced live, and gone the moment it is drunk. The only
+ * thing that outlives the window is the Cauldron itself: Bound Cauldron says
+ * "While the Cauldron is Dismissed, it is kept in an extradimensional space", and
+ * BREW says "While your Cauldron is Summoned", so whether it is out is a fact
+ * about the character and is stored on their talent entry.
  *
- * Everything else scales the way every card in this codex scales: off the
- * character's own attribute, through tokens. A Reagent's clause is written as
- * token text (`[[2d6 + 2*stat]]`, `{damage:Decay}`) and resolved against the
- * holder at render time, exactly like a printed card, never as a number baked
- * in here. Doses multiply the *dice*, so two Rot Caps read `2d6 + 2*stat`.
- *
- * ------------------------------------------------------------ the calibration
- * The Reagent numbers are not invented from nothing. They are set against the
- * Novice spells that cost the same:
- *
- *   Bramble Whip  2 AP · 1 WP           ->  1d6 + 2*stat damage   = Flask + Rot Cap
- *   Renew         2 AP · 2 WP           ->  1d6 + stat Health     = Heartroot
- *   Barkskin      overcast, 1 AP · 1 WP ->  1d6 + stat Shield     = Bonemeal
- *
- * So one dose is worth about what one Willpower buys elsewhere in the codex,
- * and a Master Reagent is worth two.
- *
- * ------------------------------------------------------------------ the storage
- * Recipes live on the talent entry as `brews`, beside a Mycomancer's `picks`,
- * for the same reason: handing the set back takes its Brews with it. The array
- * is positional and holds `null` for an empty bottle, the way the utility belt
- * holds an empty loop, so a Brew's card id (`brew-2`) stays put while the
- * bottle beside it is emptied and refilled.
- *
- * This file reads the character and writes recipes. It knows nothing about the
- * card registry, so nothing here can drag weapons.js in.
+ * This file reads the Ingredient codex and the character. Nothing here may import
+ * weapons.js, which imports talents.js, which this imports.
  */
 
-import { getTalent, normalizeTalents, setTalentBrews } from './talents.js';
-
-/* ---------------------------------------------------------------- the bases */
-
-/**
- * How the Brew leaves the Cauldron.
- *
- * `wpPer` is the Willpower one Reagent costs in this vessel, and it is where an
- * area Brew is paid for: a cloud that takes hold of everything you choose in it
- * is worth twice a flask thrown at one target, and the Action Point cost alone
- * was never going to say so.
- *
- * `lead` is the card's opening, written in the same tokens a printed card is.
- * It has to end by establishing who "they" are, because every Reagent clause
- * after it says "they".
- */
-export const BREW_BASES = [
-  {
-    id: 'draught',
-    name: 'Draught',
-    ap: 1,
-    wpPer: 1,
-    reach: 'One entity within reach, or yourself',
-    summary: 'Poured out for one pair of hands. The cheapest way to move a Brew.',
-    lead:
-      'You tip the Cauldron into a waiting hand, or drink it down yourself.\n\n' +
-      'One entity within reach takes the draught.',
-  },
-  {
-    id: 'flask',
-    name: 'Flask',
-    ap: 2,
-    wpPer: 1,
-    reach: 'One entity you can see within 12 meters',
-    summary: 'Bottled and thrown. Needs a hit, and reaches across the room.',
-    lead:
-      'You bottle the Brew as it boils and hurl it at an entity you can see within 12 meters (40 feet).\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit the flask breaks over them.',
-  },
-  {
-    id: 'vapor',
-    name: 'Vapor',
-    ap: 3,
-    wpPer: 2,
-    reach: 'Everyone you choose in a 4 meter radius',
-    summary: 'A cloud that spares whoever you want spared. Twice the Willpower.',
-    lead:
-      'You stoke the Cauldron until it belches vapor in a 4 meter (15 foot) radius, centered on a point you can see within 9 meters (30 feet).\n\n' +
-      'Every entity you choose inside the cloud breathes it in.',
-  },
-];
-
-const BASE_BY_ID = new Map(BREW_BASES.map((base) => [base.id, base]));
-
-export function getBase(id) {
-  return id ? BASE_BY_ID.get(id) ?? null : null;
-}
-
-/* -------------------------------------------------------------- the reagents */
-
-/**
- * What a Brew is made of. One clause each, and `line(doses)` writes that clause
- * for however many doses of it went in.
- *
- * A function rather than a template with a number dropped into it, because
- * doses do not all scale the same way and pretending they do would be a lie in
- * the data: Rot Cap rolls more dice, Aqua Fortis eats more Armor, Nightshade
- * lasts longer, and Ashglass rolls more dice while knocking you down exactly
- * once however much of it you drank.
- *
- * `tier` is read against the set's own tier table, so it is the same word the
- * spell codex uses and a rank opens Reagents the way it opens spells.
- */
-export const REAGENTS = [
-  /* ------------------------------------------------------------- Novice ---- */
-  {
-    id: 'heartroot',
-    name: 'Heartroot',
-    tier: 'Novice',
-    effect: 'Health back',
-    summary: 'Bitter red root. Closes what is open.',
-    line: (n) => `Heartroot: they regain [[${n}d6 + stat]] in Health.`,
-  },
-  {
-    id: 'bonemeal',
-    name: 'Bonemeal',
-    tier: 'Novice',
-    effect: 'a Shield',
-    summary: 'Ground bone and lime. Sets hard over the skin.',
-    line: (n) => `Bonemeal: they gain [[${n}d6 + stat]] in Shield.`,
-  },
-  {
-    id: 'rot-cap',
-    name: 'Rot Cap',
-    tier: 'Novice',
-    effect: 'Decay damage',
-    damage: 'Decay',
-    summary: 'A fungus that hurries everything it touches toward the ground.',
-    line: (n) => `Rot Cap: they take [[${n}d6 + 2*stat]] in {damage:Decay} damage.`,
-  },
-  {
-    id: 'emberbloom',
-    name: 'Emberbloom',
-    tier: 'Novice',
-    effect: 'Fire damage',
-    damage: 'Fire',
-    summary: 'A flower that kept the summer it grew in. Catches on contact.',
-    line: (n) => `Emberbloom: they take [[${n}d6 + 2*stat]] in {damage:Fire} damage.`,
-  },
-
-  /* -------------------------------------------------------------- Adept ---- */
-  {
-    id: 'aqua-fortis',
-    name: 'Aqua Fortis',
-    tier: 'Adept',
-    effect: 'Armor melted',
-    summary: 'The strong water. Eats plate faster than it eats the body inside it.',
-    line: (n) => `Aqua Fortis: their Armor is reduced by ${2 * n} until the end of the fight.`,
-  },
-  {
-    id: 'nightshade',
-    name: 'Nightshade',
-    tier: 'Adept',
-    effect: 'poisoned',
-    /* No `damage` on purpose. The chip beside a card's cost means "this deals
-       that type", and Nightshade deals none: it leaves the target poisoned, and
-       what that costs them is the status's business. */
-    summary: 'Distilled from the berry. Works its way in and stays there.',
-    line: (n) => `Nightshade: they become poisoned for ${3 * n} turns.`,
-  },
-  {
-    id: 'quicksilver',
-    name: 'Quicksilver',
-    tier: 'Adept',
-    effect: 'quicker on their feet',
-    summary: 'Living metal. Whoever holds it cannot stand still.',
-    line: (n) => `Quicksilver: their Movement Speed is increased by ${2 * n} for 3 turns.`,
-  },
-
-  /* ------------------------------------------------------------- Master ---- */
-  {
-    id: 'ashglass',
-    name: 'Ashglass',
-    tier: 'Master',
-    /* No "and" in a label: these are joined into one line by the Brew's own
-       summary, and "Force damage and a knock-down and Armor melted" is what an
-       "and" in here reads as. */
-    effect: 'Force damage with a knock-down',
-    damage: 'Force',
-    summary: 'Glass blown from a fire that was put out badly. Goes off on impact.',
-    line: (n) =>
-      `Ashglass: they take [[${2 * n}d6 + 2*stat]] in {damage:Force} damage and are knocked prone.`,
-  },
-  {
-    id: 'aether-salt',
-    name: 'Aether Salt',
-    tier: 'Master',
-    effect: 'Willpower back',
-    summary: 'Scraped off the inside of the Cauldron. Tastes of a storm.',
-    line: (n) => `Aether Salt: they regain [[${n}d4]] Willpower.`,
-  },
-];
-
-const REAGENT_BY_ID = new Map(REAGENTS.map((reagent) => [reagent.id, reagent]));
-
-export function getReagent(id) {
-  return id ? REAGENT_BY_ID.get(id) ?? null : null;
-}
+import { INGREDIENTS, INGREDIENT_PARTS, getIngredient } from './ingredients.js';
+import { getTalent, normalizeTalents, setTalentCauldron } from './talents.js';
 
 /* ------------------------------------------------------------------ the spec */
 
@@ -232,341 +49,385 @@ export function brewingOf(talent) {
   return set?.brewing ?? null;
 }
 
-/** How many Brews the Cauldron keeps ready at a rank. */
-export function bottlesAt(spec, rank) {
-  return spec?.bottles?.[rank] ?? 0;
-}
-
-/** How many Reagents fit in one Brew at a rank. */
-export function dosesAt(spec, rank) {
-  return spec?.doses?.[rank] ?? 0;
-}
-
-/** Which Reagent tiers a rank may draw on. */
+/** Which Ingredient tiers a rank has access to. */
 export function tiersAt(spec, rank) {
   return spec?.tiers?.[rank] ?? [];
 }
 
-/** The tiers a rank opens that the rank below it could not reach. */
+/** The tiers a rank opens that the rank below could not reach. */
 export function openedAt(spec, rank) {
   const below = tiersAt(spec, rank - 1);
   return tiersAt(spec, rank).filter((tier) => !below.includes(tier));
 }
 
-/* --------------------------------------------------------------- the recipes */
-
-/** No rank reaches past this, so nothing stored may either. */
-const MAX_DOSES = 3;
-
-/** The most bottles any rank holds, for a normalize with no rank to hand. */
-export const MAX_BOTTLES = 5;
-
-/** A hand-written Brew name. Long enough to be a name, short enough for a chip. */
-export const BREW_NAME_MAX = 28;
-
-/** One stored recipe, or null when the bottle is empty. */
-function recipe(raw) {
-  if (!raw || typeof raw !== 'object') return null;
-
-  const base = getBase(raw.base);
-  const reagents = (Array.isArray(raw.reagents) ? raw.reagents : [])
-    .filter((id) => getReagent(id))
-    .slice(0, MAX_DOSES);
-
-  /* A bottle with no vessel, or nothing in it, is an empty bottle whatever else
-     the row says. Unknown Reagent ids are dropped rather than kept: unlike a
-     spell id there is no card behind one to show the player instead. */
-  if (!base || reagents.length === 0) return null;
-
-  const name = String(raw.name ?? '').trim().slice(0, BREW_NAME_MAX);
-  return { base: base.id, reagents, ...(name ? { name } : {}) };
+/** How many Essences one Brew may hold at a rank. One, or two at Master. */
+export function essenceCap(spec, rank) {
+  return spec?.essences?.[rank] ?? 0;
 }
 
-/**
- * A stored `brews` value is only ever a hint. Whatever comes in, this hands
- * back a positional array of recipes and nulls, at least as long as the rack.
- *
- * Rank is deliberately *not* enforced, in either direction. A rank given back
- * can leave a bottle holding more Reagents than it should *and* leave Brews
- * standing past the end of a rack that has shrunk, and neither is poured away
- * here: brewState marks them and the bench offers to pour them out. Cutting the
- * array to the rank would have been one line and would have destroyed the fifth
- * Brew of every Keeper who ever lost a level.
- *
- * Trailing empties are cut before the rack is measured, so a rack that shrank
- * while its last bottles were empty has lost nothing and reads at its new size.
- */
-export function normalizeBrews(value, bottles = MAX_BOTTLES) {
-  let list = value;
-  if (typeof list === 'string') {
-    try {
-      list = JSON.parse(list);
-    } catch {
-      list = null;
-    }
-  }
-
-  const stored = (Array.isArray(list) ? list : []).slice(0, MAX_BOTTLES).map(recipe);
-  while (stored.length > 0 && !stored[stored.length - 1]) stored.pop();
-
-  const room = Math.max(Math.max(0, Math.floor(Number(bottles) || 0)), stored.length);
-  const rack = [...stored];
-  while (rack.length < room) rack.push(null);
-  return rack;
-}
-
-/** What one character's talent entry holds, legal or not. */
-export function heldBrews(talents, talentId) {
-  const entry = normalizeTalents(talents).find((row) => row.id === talentId);
-  return entry?.brews ?? [];
-}
-
-/* ------------------------------------------------------------ writing a brew */
-
-/**
- * Bottle a recipe into one slot. A draft with no vessel or nothing in it empties
- * the bottle instead, which is what makes "Pour it out" the same one write.
- */
-export function setBrewAt(talents, talentId, slot, draft) {
-  // A set that does not brew has no rack, so there is no bottle to write into.
-  const spec = brewingOf(talentId);
-  if (!spec) return talents;
-
-  const entry = normalizeTalents(talents).find((row) => row.id === talentId);
-  if (!entry) return talents;
-
-  const bottles = bottlesAt(spec, entry.rank);
-  const rack = normalizeBrews(entry.brews, bottles);
-
-  const at = Math.floor(Number(slot));
-  if (!(at >= 0 && at < rack.length)) return talents;
-
-  const clean = recipe(draft);
-  /* A bottle standing past the end of the rack can only be poured out. Mixing
-     into one would be writing down a Brew the rank cannot hold. */
-  if (clean && at >= bottles) return talents;
-
-  const next = [...rack];
-  next[at] = clean;
-  return setTalentBrews(talents, talentId, next);
-}
-
-/** Pour one bottle out. */
-export function emptyBrewAt(talents, talentId, slot) {
-  return setBrewAt(talents, talentId, slot, null);
-}
-
-/* ------------------------------------------------------- composing the card */
-
-/** The doses in a recipe, grouped in the order they were first added. */
-export function dosesOf(reagents) {
-  const order = [];
-  const count = new Map();
-  for (const id of reagents ?? []) {
-    if (!getReagent(id)) continue;
-    if (!count.has(id)) order.push(id);
-    count.set(id, (count.get(id) ?? 0) + 1);
-  }
-  return order.map((id) => ({ reagent: getReagent(id), doses: count.get(id) }));
-}
-
-/** "Rot Cap and Nightshade", the way the codex lists things. No Oxford comma. */
-function listAnd(words) {
-  if (words.length <= 1) return words[0] ?? '';
-  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
-}
-
-/**
- * What a Brew is called when nobody has named it.
- *
- * Its Reagents and its vessel, which is exactly what one bottle has that the
- * one beside it does not: "Rot Cap Flask", "Heartroot and Bonemeal Draught". A
- * player who wants it called Mother's Ruin says so, and that name is stored on
- * the recipe.
- */
-export function brewName(draft) {
-  const parts = dosesOf(draft?.reagents);
-  const base = getBase(draft?.base);
-  if (parts.length === 0 || !base) return 'Empty Bottle';
-  return `${listAnd(parts.map((part) => part.reagent.name))} ${base.name}`;
-}
-
-/** The rank at which every Brew starts printing its Overbrew half. */
-export const OVERBREW_RANK = 3;
-
-/**
- * A recipe as a card, printed for whoever holds it.
- *
- * Written in the same tokens every card in this codex is written in, so its
- * numbers are resolved against the character by the same renderer, and a Keeper
- * who raises their Instinct sees every bottle on the rack get stronger without
- * touching one of them.
- *
- * At Rank 3 the card grows a second half. Overbrew is a passive the Keeper
- * takes, and a rider that fires on every Brew belongs printed on the Brew
- * rather than remembered off another card.
- */
-export function brewCard(draft, { slot = 0, rank = 1 } = {}) {
-  const clean = recipe(draft);
-  if (!clean) return null;
-
-  const base = getBase(clean.base);
-  const parts = dosesOf(clean.reagents);
-  const damage = [...new Set(parts.map((part) => part.reagent.damage).filter(Boolean))];
-
-  return {
-    /* Positional, and stable while the bottle beside it changes. It is what the
-       quick bar and a held effect both key on. */
-    id: `brew-${slot + 1}`,
-    name: clean.name || brewName(clean),
-    kind: 'brew',
-    tags: ['Brew', base.name],
-    ap: base.ap,
-    wp: base.wpPer * clean.reagents.length,
-    stat: 'instinct',
-    ...(damage.length > 0 ? { damage } : {}),
-    summary: `${base.reach}. ${listAnd(parts.map((part) => part.reagent.effect))}.`,
-    body: [base.lead, ...parts.map((part) => part.reagent.line(part.doses))].join('\n\n'),
-    ...(rank >= OVERBREW_RANK
-      ? {
-          sub_name: 'Overbrew',
-          sub_body:
-            'When you use this Brew you may spend 2 additional Action Points and 2 additional Willpower.\n\n' +
-            'If you do, every Reagent in it rolls twice its dice.',
-        }
-      : {}),
-  };
-}
-
-/* ----------------------------------------------------------------- the shelf */
-
-/**
- * Every Reagent measured against the Brew being mixed: what may go in, how much
- * of it is already in there, and for the rest the one line saying why not.
- *
- * Two refusals, and they read differently at the table. A closed tier is a rank
- * away. A full Brew is a dose you have to take back out first.
- */
-export function reagentOptions({ spec, rank, draft }) {
+/** Every Ingredient a rank knows, in the codex's order. */
+export function knownIngredients(spec, rank) {
   const tiers = tiersAt(spec, rank);
-  const capacity = dosesAt(spec, rank);
-  const doses = dosesOf(draft?.reagents);
-  const filled = (draft?.reagents ?? []).length;
-
-  return REAGENTS.map((reagent) => {
-    const held = doses.find((part) => part.reagent.id === reagent.id)?.doses ?? 0;
-    const row = { reagent, tier: reagent.tier, held };
-
-    if (tiers.length > 0 && !tiers.includes(reagent.tier)) {
-      return { ...row, ok: false, reason: `${reagent.tier} needs a higher rank` };
-    }
-    if (filled >= capacity) {
-      return { ...row, ok: false, reason: 'This Brew is full' };
-    }
-    return { ...row, ok: true };
-  });
-}
-
-/** The shelf cut into its tiers, in the order the ranks open them. */
-export function reagentsByTier(options) {
-  const order = ['Novice', 'Adept', 'Master'];
-  const groups = new Map();
-  for (const option of options) {
-    const key = option.tier ?? 'Unfiled';
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(option);
-  }
-  return [...groups]
-    .sort(([a], [b]) => {
-      const ai = order.indexOf(a);
-      const bi = order.indexOf(b);
-      return (ai < 0 ? order.length : ai) - (bi < 0 ? order.length : bi);
-    })
-    .map(([label, list]) => ({ label, options: list }));
-}
-
-/* --------------------------------------------------------------- the whole rack */
-
-/** One bottle on the rack, said the way the bench prints it. */
-function bottle(stored, { spec, rank, slot, bottles }) {
-  const parts = dosesOf(stored?.reagents);
-  const capacity = dosesAt(spec, rank);
-  const tiers = tiersAt(spec, rank);
-
-  /* A bottle can fall out of legality without anybody touching it: a rank given
-     back shrinks how deep a Brew may go, and a sheet can arrive from a build
-     whose ranks this one has not reached. Both are said on the bottle, and
-     neither is poured away. */
-  const over = Math.max(0, (stored?.reagents?.length ?? 0) - capacity);
-  const closed = parts
-    .filter((part) => tiers.length > 0 && !tiers.includes(part.reagent.tier))
-    .map((part) => part.reagent);
-
-  // Standing past the end of a rack that has shrunk. Nothing about the Brew is
-  // wrong; there is simply no longer a bottle for it.
-  const beyond = slot >= bottles;
-
-  return {
-    slot,
-    recipe: stored,
-    card: brewCard(stored, { slot, rank }),
-    parts,
-    base: getBase(stored?.base),
-    filled: Boolean(stored),
-    over,
-    closed,
-    beyond,
-    ok: Boolean(stored) && over === 0 && closed.length === 0 && !beyond,
-  };
+  return INGREDIENTS.filter((row) => tiers.includes(row.tier));
 }
 
 /**
- * Everything the bench needs about one Keeper's Cauldron: the rack, how deep a
- * Brew may go, which tiers are open, and how much of the rack stands empty.
+ * What this character's rank and cards allow, gathered once so the window and the
+ * validator can never disagree about it.
+ *
+ * `essences` is a ceiling and the floor is BREW's "at least 1". They are separate
+ * numbers because the floor is BREW's rule and the ceiling is Improved Recipes',
+ * and only the ceiling moves with rank.
  */
-export function brewState(talents, talent) {
+export function brewLimits(talents, talent) {
   const spec = brewingOf(talent);
   if (!spec) return null;
 
   const id = talent.id ?? talent;
   const entry = normalizeTalents(talents).find((row) => row.id === id);
   const rank = entry?.rank ?? 0;
-  const bottles = bottlesAt(spec, rank);
-
-  const rack = normalizeBrews(entry?.brews, bottles).map((stored, slot) =>
-    bottle(stored, { spec, rank, slot, bottles })
-  );
-  const mixed = rack.filter((row) => row.filled);
 
   return {
     spec,
     rank,
-    rack,
-    /* What the rank holds, and what is actually standing on the rack. They are
-       the same number until a rank is given back. */
-    bottles,
-    racked: rack.length,
-    capacity: dosesAt(spec, rank),
     tiers: tiersAt(spec, rank),
-    mixed: mixed.length,
-    // Only the bottles that can still be mixed into. A bottle past the end of
-    // the rack is not an opening, it is an overflow.
-    empty: rack.filter((row) => !row.filled && !row.beyond).length,
-    /* Held Brews this rank can no longer legally hold. Shown, never poured. */
-    illegal: mixed.filter((row) => !row.ok).length,
-    cards: mixed.map((row) => row.card),
+    essences: essenceCap(spec, rank),
+    catalysts: spec.catalysts?.[rank] ?? 1,
+    /* Both riders are just "does the character hold that card", which is a
+       question about rank and nothing else, because a rank hands over all of its
+       cards at once. */
+    improvedRecipes: rank >= 3,
+    efficientBrewing: rank >= 2,
   };
 }
 
+/* ----------------------------------------------------------------- the draft */
+
+/** An empty Cauldron. `choices` holds what the brewer decided, keyed by Ingredient. */
+export function blankBrew() {
+  return { essences: [], catalyst: null, infusions: [], choices: {} };
+}
+
+/** The Ingredients in a draft, in the order the finished Brew reads them. */
+export function draftParts(draft) {
+  const essences = (draft?.essences ?? []).map(getIngredient).filter(Boolean);
+  const catalyst = getIngredient(draft?.catalyst);
+  const infusions = (draft?.infusions ?? []).map(getIngredient).filter(Boolean);
+  return {
+    essences,
+    catalyst,
+    infusions,
+    all: [catalyst, ...essences, ...infusions].filter(Boolean),
+  };
+}
+
+/** How many doses of one Ingredient a draft holds. */
+export function doseOf(draft, id) {
+  const ing = getIngredient(id);
+  if (!ing) return 0;
+  if (ing.part === 'catalyst') return draft?.catalyst === id ? 1 : 0;
+  const list = ing.part === 'essence' ? draft?.essences : draft?.infusions;
+  return (list ?? []).filter((held) => held === id).length;
+}
+
 /**
- * The set whose bench a card opens.
+ * Add one Ingredient to a draft, obeying the configuration rule rather than
+ * checking it afterwards.
  *
- * A card can carry `opens: 'brews'` (Quick Stir does) and the block that took
- * the payment then has to know *whose* Cauldron to raise. It is answered off the
- * codex rather than written on the card: the set that taught the card is the set
- * that owns the bench, and the character has to actually hold it.
+ * A Catalyst *replaces* rather than refuses: "exactly 1 Catalyst" means reaching
+ * for a second one is a change of mind, not a mistake, and making the player take
+ * the first one out first would be a rule enforced against them.
  */
-export function benchFor(talents, cardId) {
+export function addIngredient(draft, id, limits) {
+  const ing = getIngredient(id);
+  if (!ing || !limits) return draft;
+  if (!limits.tiers.includes(ing.tier)) return draft;
+
+  if (ing.part === 'catalyst') {
+    return { ...draft, catalyst: id };
+  }
+  if (ing.part === 'essence') {
+    const held = draft.essences ?? [];
+    if (held.length >= limits.essences) return draft;
+    // Improved Recipes: "They cannot be the same Essence."
+    if (held.includes(id)) return draft;
+    return { ...draft, essences: [...held, id] };
+  }
+  /* "any number of Infusions", and nothing says the same one may not go in twice.
+     Improved Recipes forbids duplicate Essences by name, which is the only such
+     restriction the designer wrote. Flagged for them. */
+  return { ...draft, infusions: [...(draft.infusions ?? []), id] };
+}
+
+/** Take one Ingredient back out. An Essence or Infusion goes by position. */
+export function dropIngredient(draft, part, index) {
+  if (part === 'catalyst') return { ...draft, catalyst: null };
+  const key = part === 'essence' ? 'essences' : 'infusions';
+  return { ...draft, [key]: (draft[key] ?? []).filter((_, at) => at !== index) };
+}
+
+/** Write down what the brewer decided for an Ingredient that asks. */
+export function setBrewChoice(draft, id, value) {
+  return { ...draft, choices: { ...(draft.choices ?? {}), [id]: value } };
+}
+
+/** What the brewer answered for one Ingredient, as the label it should print. */
+export function brewAnswer(draft, ing) {
+  const answer = draft?.choices?.[ing?.id];
+  if (answer === undefined || answer === null || String(answer).trim() === '') return null;
+  return ing.choice?.options?.find((option) => option.id === answer)?.label ?? String(answer);
+}
+
+/* ------------------------------------------------------------------ the price */
+
+/**
+ * What the Brew costs, with the working, so the window can show where every point
+ * went rather than a bare total.
+ *
+ * The sum is the designer's: "the combined Action Point and Willpower cost of all
+ * chosen Ingredients". Two things take Action Points back off it, and both say so
+ * on their own card: Quicksilver ("reduce the Action Point cost of the Brew by 1")
+ * once for every dose stirred in, and Efficient Brewing ("The cost of your Brew
+ * Action is reduced by 1 Action Point") once, for holding it.
+ *
+ * The floor is 0. Neither card says a Brew can pay Action Points back, and no pool
+ * on this sheet is ever driven below zero.
+ */
+export function brewCost(draft, limits) {
+  const { all, infusions } = draftParts(draft);
+
+  const apParts = all.map((ing) => ({ label: ing.name, ap: Number(ing.ap) || 0 }));
+  const wpParts = all.map((ing) => ({ label: ing.name, wp: Number(ing.wp) || 0 }));
+
+  const grossAp = apParts.reduce((sum, part) => sum + part.ap, 0);
+  const wp = wpParts.reduce((sum, part) => sum + part.wp, 0);
+
+  const cuts = [];
+  const quicksilver = infusions.filter((ing) => ing.id === 'quicksilver').length;
+  if (quicksilver > 0) {
+    cuts.push({ label: quicksilver > 1 ? `Quicksilver x${quicksilver}` : 'Quicksilver', ap: quicksilver });
+  }
+  if (limits?.efficientBrewing) cuts.push({ label: 'Efficient Brewing', ap: 1 });
+
+  const cut = cuts.reduce((sum, row) => sum + row.ap, 0);
+
+  return {
+    ap: Math.max(0, grossAp - cut),
+    wp,
+    grossAp,
+    cut,
+    apParts,
+    wpParts,
+    cuts,
+    /* True when the reductions ran past the floor, so the window can say so
+       rather than printing a total that quietly ignored one of them. */
+    floored: grossAp - cut < 0,
+  };
+}
+
+/* ---------------------------------------------------------------- the checks */
+
+/**
+ * What the draft still needs, in the designer's own terms. One line each, so the
+ * window prints them as they are rather than deciding what to say.
+ */
+export function brewProblems(draft, limits) {
+  if (!limits) return ['This character does not brew.'];
+
+  const { essences, catalyst, all } = draftParts(draft);
+  const problems = [];
+
+  if (essences.length < 1) problems.push('At least 1 Essence.');
+  if (!catalyst) problems.push('Exactly 1 Catalyst.');
+
+  // Every Ingredient that asks the brewer something has to have been answered.
+  for (const ing of all) {
+    if (!ing.choice) continue;
+    if (brewAnswer(draft, ing) === null) {
+      problems.push(`${ing.name}: ${ing.choice.label.toLowerCase()}.`);
+    }
+  }
+
+  return problems;
+}
+
+export function brewReady(draft, limits) {
+  return brewProblems(draft, limits).length === 0;
+}
+
+/**
+ * Every Ingredient measured against the draft: what may go in, how much is
+ * already in, and for the rest the one line saying why not.
+ *
+ * A Catalyst is never refused for being full, because reaching for another swaps
+ * it. See addIngredient.
+ */
+export function ingredientOptions(draft, limits) {
+  if (!limits) return [];
+
+  const { essences } = draftParts(draft);
+
+  return INGREDIENTS.map((ing) => {
+    const held = doseOf(draft, ing.id);
+    const row = { ingredient: ing, held };
+
+    if (!limits.tiers.includes(ing.tier)) {
+      return { ...row, ok: false, reason: `${ing.tier} needs a higher rank` };
+    }
+    if (ing.part === 'essence') {
+      if (held > 0) return { ...row, ok: false, reason: 'In already, and Essences cannot repeat' };
+      if (essences.length >= limits.essences) {
+        return {
+          ...row,
+          ok: false,
+          reason: limits.essences === 1 ? 'One Essence at this rank' : 'Two Essences is the most',
+        };
+      }
+    }
+    return { ...row, ok: true };
+  });
+}
+
+/** The shelf cut into its kinds, in the order BREW names them. */
+export function shelfByPart(options) {
+  return INGREDIENT_PARTS.map((part) => ({
+    ...part,
+    options: options.filter((option) => option.ingredient.part === part.id),
+  })).filter((group) => group.options.length > 0);
+}
+
+/**
+ * What the Infusions do to the Brew's own numbers.
+ *
+ * Mana Crystal says "The Brew's effects are Empowered and Elevated", which is not
+ * a clause to print but a change to every die the Brew rolls. So it rides as a
+ * modifier on the composed card, the way an enchantment rides a weapon's, and the
+ * renderer applies it: 2d6 becomes 3d8. Stirring in two of them stacks.
+ */
+export function brewModifiers(draft) {
+  const crystals = draftParts(draft).infusions.filter((ing) => ing.id === 'mana-crystal').length;
+  return crystals > 0 ? { empower: crystals, elevate: crystals } : null;
+}
+
+/* ------------------------------------------------------- the composed Brew */
+
+/** "Toxic Toad and Ice Shard". No Oxford comma. */
+function listAnd(words) {
+  if (words.length <= 1) return String(words[0] ?? '');
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/** What a mixed Brew is called: what is in it, and that it is a Brew. */
+export function brewName(draft) {
+  const { essences } = draftParts(draft);
+  if (essences.length === 0) return 'Brew';
+  return `${listAnd(essences.map((ing) => ing.name))} Brew`;
+}
+
+/**
+ * One Ingredient's contribution to the finished Brew.
+ *
+ * The opening line of every Ingredient card is flavour about dropping the thing
+ * into the pot ("You drop a bloated, neon-colored frog into the brew"), which is
+ * worth reading once on the Ingredient's own card and not four times over on the
+ * Brew. So the Brew quotes the paragraphs *after* it, unchanged, under the
+ * Ingredient's name.
+ *
+ * One more paragraph is left out, and only where it has already been answered: the
+ * line that *asks* the brewer to decide. Draconic Scale says "The brewer chooses
+ * one of the following damage types: Fire, Cold, …" and the Brew has no business
+ * reciting nine options when the header beside the name already says (Fire). The
+ * test is deliberately narrow, on paragraphs that open with "The brewer", so
+ * Purifying Crystal keeps its "When this infusion is added to the Brew, the brewer
+ * chooses …", which is not an instruction but the whole of what it does.
+ *
+ * Nothing is reworded and nothing is summarised. The Ingredient's own card is one
+ * tap away and says every word.
+ */
+function contribution(ing, draft) {
+  const paras = String(ing.body).split(/\n\n+/);
+  const said = brewAnswer(draft, ing);
+
+  const rules = (paras.length > 1 ? paras.slice(1) : paras).filter(
+    (para) => !(said && /^The brewer (chooses|names)\b/.test(para))
+  );
+
+  return `${ing.name}${said ? ` (${said})` : ''}: ${rules.join(' ')}`;
+}
+
+/**
+ * The draft as a card, printed for whoever is brewing it.
+ *
+ * Read in the order it resolves: the Catalyst first, because who the Brew reaches
+ * decides what the rest of the sentences are even about, then the Essences, then
+ * whatever was stirred in on top. Every number is still a token, resolved against
+ * the brewer by the same renderer that prints a spell.
+ */
+export function brewCard(draft, limits) {
+  const { essences, catalyst, infusions, all } = draftParts(draft);
+  if (essences.length === 0 || !catalyst) return null;
+
+  const cost = brewCost(draft, limits);
+  const damage = [...new Set(all.flatMap((ing) => ing.damage ?? []))];
+
+  return {
+    id: 'brew-mixed',
+    name: brewName(draft),
+    kind: 'brew',
+    tags: ['Cauldron keeper', 'Brew'],
+    ap: cost.ap,
+    wp: cost.wp,
+    stat: 'instinct',
+    ...(damage.length > 0 ? { damage } : {}),
+    summary: `${catalyst.summary} ${listAnd(essences.map((ing) => ing.name))}${
+      infusions.length > 0 ? `, with ${listAnd(infusions.map((ing) => ing.name))}` : ''
+    }.`,
+    body: [catalyst, ...essences, ...infusions]
+      .map((ing) => contribution(ing, draft))
+      .join('\n\n'),
+  };
+}
+
+/* ------------------------------------------------------------- the Cauldron */
+
+export const CAULDRON_SUMMONED = 'summoned';
+export const CAULDRON_DISMISSED = 'dismissed';
+
+/**
+ * Whether the Cauldron is out.
+ *
+ * Dismissed is the default, and that is Bound Cauldron's own reading rather than a
+ * convenience: the Cauldron sits "in an extradimensional space no one can access"
+ * until 2 Action Points are spent to Summon it, so a character who has pressed
+ * nothing has not summoned it.
+ */
+export function cauldronState(talents, talentId) {
+  const entry = normalizeTalents(talents).find((row) => row.id === talentId);
+  return entry?.cauldron === CAULDRON_SUMMONED ? CAULDRON_SUMMONED : CAULDRON_DISMISSED;
+}
+
+export function cauldronIsOut(talents, talentId) {
+  return cauldronState(talents, talentId) === CAULDRON_SUMMONED;
+}
+
+/** Summon it or send it away. The 2 Action Points are the block's business. */
+export function setCauldron(talents, talentId, state) {
+  return setTalentCauldron(
+    talents,
+    talentId,
+    state === CAULDRON_SUMMONED ? CAULDRON_SUMMONED : CAULDRON_DISMISSED
+  );
+}
+
+/**
+ * The set whose Cauldron a card belongs to.
+ *
+ * BREW carries `opens: 'brew'` and Bound Cauldron carries `toggles: 'cauldron'`,
+ * and the block that took the payment then has to know *whose* Cauldron. It is
+ * answered off the codex rather than written on the card: the set that taught the
+ * card owns the Cauldron, and the character has to actually hold the set.
+ */
+export function brewSetFor(talents, cardId) {
   if (!cardId) return null;
 
   for (const held of normalizeTalents(talents)) {
@@ -578,30 +439,31 @@ export function benchFor(talents, cardId) {
   return null;
 }
 
+/* ------------------------------------------------------------- the preview */
+
 /**
- * What a rank of the Cauldron opens, for the presentation page that has not
- * taken it yet. The same shape rankPreview hands the loadout note, so the page
- * can print either without knowing which kind of set it is reading.
+ * What a rank opens, for the presentation page that has not taken the set yet.
+ * The same shape rankPreview hands the loadout note, so the page can print either
+ * without knowing which kind of set it is reading.
  */
 export function brewPreview(talent, rank) {
   const spec = brewingOf(talent);
   if (!spec) return null;
 
-  const bottles = bottlesAt(spec, rank);
-  const capacity = dosesAt(spec, rank);
-  const opened = openedAt(spec, rank);
   const tiers = tiersAt(spec, rank);
+  const opened = openedAt(spec, rank);
 
   return {
     spec,
-    bottles,
-    gained: Math.max(0, bottles - bottlesAt(spec, rank - 1)),
-    capacity,
-    deeper: capacity > dosesAt(spec, rank - 1),
     tiers,
     opened,
-    /* What the rank adds to the shelf, which is what the note counts. */
-    count: REAGENTS.filter((reagent) => opened.includes(reagent.tier)).length,
-    reach: REAGENTS.filter((reagent) => tiers.includes(reagent.tier)).length,
+    essences: essenceCap(spec, rank),
+    deeper: essenceCap(spec, rank) > essenceCap(spec, rank - 1),
+    count: INGREDIENTS.filter((ing) => opened.includes(ing.tier)).length,
+    reach: INGREDIENTS.filter((ing) => tiers.includes(ing.tier)).length,
+    byPart: INGREDIENT_PARTS.map((part) => ({
+      ...part,
+      count: INGREDIENTS.filter((ing) => ing.part === part.id && opened.includes(ing.tier)).length,
+    })),
   };
 }

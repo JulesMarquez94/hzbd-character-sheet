@@ -24,7 +24,9 @@ reaches GitHub. Only `README.md` and `templates/` are tracked.
 | General Rules · Basic Abilities | 2026-08-19, 10 actions | `src/lib/actions.js` (`BASIC_ACTIONS`) |
 | Card art, from both Image columns | 2026-08-19, 34 pictures | `public/cards/` + `src/lib/cardArt.js` |
 | Talent Set · Cauldron Keeper · Overview | 2026-08-19, 1 set | `src/lib/talents.js` (`TALENTS`) |
-| Cauldron Keeper overview art | 2026-08-19, 1 picture | `public/talents/cauldron-keeper.jpg` |
+| Talent Set · Cauldron Keeper · Ability | 2026-08-19, 4 cards + 18 Ingredients | `src/lib/talents.js`, `src/lib/ingredients.js` |
+| General Rules · Status & Terms | 2026-08-19, 26 terms | `src/lib/keywords.js` |
+| Cauldron Keeper art, both tabs | 2026-08-19, 22 cards + 1 plate | `public/cards/`, `public/talents/` |
 
 `templates/` holds the current state of both, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -32,56 +34,76 @@ else: the codex also carries one Arcane spell, Containment Sphere, which no
 sheet covers yet. Diff a fresh download against those to see exactly what
 changed before asking for a pull.
 
-## The Cauldron Keeper, and what its Overview tab did not carry
+## The Cauldron Keeper
 
-The drop was one tab, `Talent Set - Cauldron Keeper - Overview.csv`, with five
-columns: `Name`, `Tags`, `Summary`, `Overview` and `Image`. Those map cleanly
-onto a talent set's head, and all five were taken as written:
+Four tabs, pulled together on 2026-08-19. The **Ability** tab is the design and it
+was transcribed rather than interpreted.
 
-| Column | Landed as |
-| ------ | --------- |
-| `Name` | `name`, and the id `cauldron-keeper` |
-| `Tags` | `tags: ['instinct', 'support']`, exactly the two the sheet lists |
-| `Summary` | `tagline` |
-| `Overview` | `blurb`, all three paragraphs verbatim |
-| `Image` | empty in the CSV, supplied by hand later the same day |
+| Tab | Landed as |
+| --- | --------- |
+| `Overview` | the set's head in `talents.js`: `Name`, `Tags`, `Summary` and `Overview` all byte for byte |
+| `Ability` | 4 set cards in `talents.js`, 18 Ingredients in `ingredients.js` |
+| `Developpement Notes` | the brewing window, `src/components/sheet/BrewWindow.jsx` |
+| `Status & Terms` | 26 glossary entries in `keywords.js` |
 
-**Everything below the head is designed rather than transcribed**, because the
-workbook has no other tab yet. That is seven cards across three ranks and the
-whole Brew system, and it is the one pull so far that needed judgement rather
-than typing. It is all in two places on purpose, so replacing it is a delete and
-a paste rather than an excavation:
+**Every Ingredient body is the sheet's own Main Effect cell with nothing but
+markers inserted.** `2d6 + 2 x Instinct` became `[[2d6 + 2*stat]]` so the number
+resolves against the brewer, and a damage type became `{damage:Cold}` so it prints
+in its own colour. That claim is checked rather than asserted: a round trip maps
+every marker back to the designer's written form and compares it to their cell,
+and it passes on all 18, along with every AP, WP and tag.
 
-- `src/lib/talents.js`, the `cauldron-keeper` entry: the seven cards, and the
-  `brewing` spec that holds the three numbers that scale (bottles `3, 4, 5`,
-  Reagents per Brew `1, 2, 3`, and the tier table).
-- `src/lib/brews.js`, the three Bases and nine Reagents, with the header
-  explaining what each number was calibrated against.
+### What BREW's text buys
 
-The Reagent numbers are set against Novice spells that cost the same, so they
-are at least consistent with the printed codex: a Flask of Rot Cap is
-Bramble Whip's 2 AP · 1 WP for `1d6 + 2*stat`, Heartroot is Renew's instant
-half, and Bonemeal is what one Action Point and one Willpower buys off
-Barkskin's Overcast. **A `Talent Set · Cauldron Keeper · Cards` tab replaces all
-of it**, and a `Reagents` tab beside it replaces the shelf.
+The card is the whole rule and the code adds nothing to it. "At least 1 Essence,
+exactly 1 Catalyst, and any number of Infusions" is enforced by `brews.js` and is
+the literal shape of the window. "The combined Action Point and Willpower cost of
+all chosen Ingredients" is summed with its working shown, less 1 Action Point per
+Quicksilver and 1 for Efficient Brewing, floored at zero. Tiers open Novice at
+Rank 1, Adept at 2, Master at 3.
 
-Two rulings would settle the rest: whether re-mixing mid-fight really costs an
-Action Point (Quick Stir is written that way), and whether an area Brew should
-be paid for in Willpower the way it is here (a Vapor charges 2 Willpower a
-Reagent where a Flask charges 1) or in something else.
+Nothing finished is stored, because "the resulting Brew takes effect immediately".
+The only thing that persists is whether the Cauldron is out, on the talent entry as
+`cauldron: 'summoned'`, since BREW needs it Summoned and Bound Cauldron is what
+summons it.
 
-## Talent set art is not `npm run art`
+### Three readings that need the designer's word
 
-`scripts/pull-card-art.mjs` matches Image links to *cards*, writing 720px WebP
-into `public/cards/`. A talent set's overview picture is a different plate: it is
-the 640x640 square behind `talent.art`, it lives in `public/talents/<id>.jpg`,
-and the importer does not know about it. The Cauldron Keeper's was pulled by
-hand, from the same kind of postimg page link the sheets carry, cropped square
-and written at quality 82 to land at 66 KB, beside Guardian's 58 KB and
-Mycomancer's 74 KB.
+1. **EFFICIENT BREWING is tagged `Adept Catalyst`** and is implemented as the Adept
+   Talent, Passive. It carries no AP and no WP where every real Catalyst carries
+   both, its text is about the Brew Action rather than about who a Brew reaches, and
+   BREW needs exactly one Catalyst, so a Catalyst that only cut the cost would leave
+   a Brew with nothing to affect. Reading it as the Adept Talent also completes the
+   rank structure at 2/1/1. Its tags were corrected to match Improved Recipes.
+2. **VOLCANIC SHARD is tagged an Infusion** but deals damage like an Essence and
+   costs 2 AP where every other Infusion costs 0. Left exactly as tagged.
+3. **Duplicate Infusions are allowed.** "Any number of Infusions" says nothing
+   against it, and Improved Recipes forbids duplicate *Essences* by name, which is
+   the only such restriction on the sheet. So two Quicksilvers cut 2 Action Points.
 
-Worth folding into `npm run art` the next time a set arrives, keyed off a
-`Talent Set` sheet's own `Image` column.
+### What the Status & Terms tab corrected
+
+Three of the 26 did not fill a blank, they fixed something:
+
+- **Advantage** is a d4 added to the roll, not a reroll kept high. The codex said
+  "roll twice and keep the higher".
+- **Empowered** adds a die (2d6 becomes 3d6); **Elevate** grows the die (d6 becomes
+  d8, capped at d12). One function in `cardText.js` was doing the second job under
+  the first name, so `empowerDie` became `elevateDie` and `empowerCount` was added.
+  **This changes printed numbers on every card an Empowering enchantment touches**,
+  which is the correct change and worth knowing about.
+- **Critical Hit** is a maximum result on an Attack Roll. It cannot be "a natural
+  20": a Roll here is 2d6 plus an attribute.
+
+**ROLL was deliberately left out of the glossary.** It is a real defined term on the
+sheet, but the word appears on 49 of the 166 cards, and lighting a third of every
+card is the exact failure `keywords.js` warns about in its own header. Say the word
+and it goes in.
+
+Still provisional, because the tab does not cover them: **stunned** (which Amber
+Shard leans on), **unconscious**, asleep, marked and dying. **Poison** was added as
+a damage type for Toxic Toad, with its own token so Draconic Scale can grant
+resistance to it without granting resistance to Decay.
 
 ## The columns
 
