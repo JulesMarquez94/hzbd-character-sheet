@@ -50,6 +50,7 @@ import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './
 import { normalizeLevelPicks } from './levelPicks.js';
 import { pickChanges, restSwaps } from './loadouts.js';
 import { minionRest } from './minions.js';
+import { feralRest } from './feral.js';
 import {
   changeCost,
   enchantChanges,
@@ -537,6 +538,20 @@ export function restPlan(character, kind, labours = [], prepared = null) {
   if (creatures) {
     Object.assign(patch, creatures.patch);
     lines.push(...creatures.lines);
+  }
+
+  /* ---- and what shape you are in ----
+     FERAL FORM: "You remain in your Feral Form until all Shield is gone or you
+     take a Short Rest." So a rest is one of the two things that takes the hide
+     off, and it takes the Shield with it, exactly as the button on the block
+     does — the Shield *was* the form. Which duration a form belongs to is on its
+     own spec, and `rest.ends` is the same list the tracker above is closed
+     against, so a long rest ends a short-rest form and never the other way
+     round. See feral.js. */
+  const shapes = feralRest(character, kind, rest.ends);
+  if (shapes) {
+    Object.assign(patch, shapes.patch);
+    lines.push(...shapes.lines);
   }
 
   /* ---- willpower: a long rest only, which is what the glossary says ---- */

@@ -301,6 +301,13 @@ alter table public.characters add column if not exists effects     jsonb not nul
 -- A talent set that hands you a body rather than a card: the Draconic Bond's
 -- draconic ally, and whatever follows it.
 alter table public.characters add column if not exists minions     jsonb not null default '{}'::jsonb;
+-- And one that hands you a second shape of your own rather than a second body:
+-- the Feral Curse's feral form, keyed by the set that granted it —
+-- { "feral-curse": { beast, name, portrait_url, dc, on } }. `dc` is where the
+-- Feral Rage difficulty has climbed to and `on` is whether they have given in.
+-- The form's *clock* is not in here: it is the `shield` column above, because the
+-- card says the form lasts "until all Shield is gone".
+alter table public.characters add column if not exists feral       jsonb not null default '{}'::jsonb;
 -- Rings, chains and cloaks. A plain list of item ids with no ceiling on it, which
 -- is why it is not in the `equipment` map: that has one key per place and a fixed
 -- set of keys, and a character wearing nine rings is wearing nine rings.

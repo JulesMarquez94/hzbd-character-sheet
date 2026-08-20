@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import ActiveBlock from './ActiveBlock.jsx';
+import FeralBlock from './FeralBlock.jsx';
 import LedgerModal from './LedgerModal.jsx';
 import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
@@ -19,6 +20,7 @@ import {
   shieldCapFor,
   xpProgress,
 } from '../../lib/characterModel.js';
+import { feralBlockIds, feralState } from '../../lib/feral.js';
 import { minionBlockIds, minionState } from '../../lib/minions.js';
 import { normalizeTalents } from '../../lib/talents.js';
 
@@ -88,8 +90,9 @@ const PLACEHOLDERS = [];
  * names the block comments above use.
  *
  * The six are every character's. A talent set that puts a creature on the board
- * adds two more that are not in this table, because their names are the
- * creature's own — see `describeBlock` below.
+ * adds two more that are not in this table, and one that turns its holder into
+ * something adds a third, because all three of those are named after the thing
+ * rather than after the block — see `describeBlock` below.
  */
 const BLOCK_NAMES = {
   1: { name: 'Identity & Attributes', note: 'Name, lineage, background, the three attributes' },
@@ -142,7 +145,16 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      when it is handed back, so the stored arrangement is matched against what
      actually exists rather than assumed to be six numbers. */
   const minions = useMemo(() => minionState(character), [character]);
-  const grown = useMemo(() => minionBlockIds(character), [character]);
+
+  /* And the shapes they can turn into. One block each rather than two: a form
+     has no stat block of its own and no turn of its own to spend, so what it
+     needs is a picture, a difficulty and three presses. See feral.js. */
+  const forms = useMemo(() => feralState(character), [character]);
+
+  const grown = useMemo(
+    () => [...minionBlockIds(character), ...feralBlockIds(character)],
+    [character]
+  );
 
   const order = useMemo(() => normalizeBlockOrder(character.block_order, grown), [
     character.block_order,
@@ -156,6 +168,17 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   const describeBlock = useCallback(
     (id) => {
       if (BLOCK_NAMES[id]) return BLOCK_NAMES[id];
+
+      const shape = /^feral:(.+)$/.exec(String(id));
+      if (shape) {
+        const form = forms.find((row) => row.id === shape[1]);
+        return form
+          ? {
+              name: form.title,
+              note: `${form.talent.name}: the beast, the difficulty and the change`,
+            }
+          : { name: String(id), note: null };
+      }
 
       const match = /^minion:([^:]+)(?::(bar))?$/.exec(String(id));
       const minion = match ? minions.find((row) => row.id === match[1]) : null;
@@ -171,7 +194,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             note: `${minion.spec.label}: attributes, defenses, Health and Shield`,
           };
     },
-    [minions]
+    [minions, forms]
   );
 
   /* Arranging happens in a modal rather than on the tab itself. Dragging a
@@ -464,6 +487,16 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ])
     ),
 
+    /* ============ A FORM'S ONE ============
+       Only there when a set can turn this character into something. Same
+       360x640 and the same place in the order as any other block. */
+    ...Object.fromEntries(
+      forms.map((form) => [
+        `feral:${form.id}`,
+        <FeralBlock character={character} form={form} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
     ...Object.fromEntries(
       PLACEHOLDERS.map((n) => [
         n,
@@ -496,7 +529,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             key={id}
             className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}${
               String(id).startsWith('minion:') ? ' cell-minion' : ''
-            }`}
+            }${String(id).startsWith('feral:') ? ' cell-feral' : ''}`}
           >
             {blocks[id]}
           </section>

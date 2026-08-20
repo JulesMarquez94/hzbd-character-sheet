@@ -128,17 +128,31 @@ device and anyone viewing the sheet sees the same layout.
 A **Martial Move** is a third kind of card, beside a spell and a talent card: a trained manoeuvre
 you buy *before* an attack, which then rides the next weapon attack you make.
 
-Two sets teach them — a Guardian's Shield Expertise and a Duelist's Dexterous — and each hands
-over a hand to choose out of the pool in `src/lib/martial.js`, the same way a Mycomancer chooses
-spells. How many you know grows with your rank, and Rank 2 opens the Adept moves while Rank 3
-opens Master.
+Three sets teach them — a Guardian's Shield Expertise, a Duelist's Dexterous and a Feral Cursed's
+Beast Within — and each hands over a hand to choose out of the pool in `src/lib/martial.js`, the
+same way a Mycomancer chooses spells. How many you know grows with your rank, and Rank 2 opens the
+Adept moves while Rank 3 opens Master.
 
 Paying for one lays it on the **Temporary Effects** tracker, where it sits until you swing. While
 it is there, every place the sheet prints that attack says what it is carrying — *"This attack
 will Wing Clip and Reckless"* — and the card prints the advantage as a green arrow with the number
 of d4 in it. Making the attack spends the move, hit or miss. One move rides a swing; a Master
-Duelist's Sharp allows two, and a chip with nowhere to ride says so rather than taking your
-Willpower.
+Duelist's Sharp and a Master Feral Cursed's Bestial Frenzy each allow two, and a chip with nowhere
+to ride says so rather than taking your Willpower.
+
+### The Feral Form
+
+A **Feral Curse** does not hand you a card or a creature, it hands you a second shape of your own.
+Entering it costs half the Health you have left and buys twice as much Shield, and the Shield is the
+clock: the form lasts until it empties or until a short rest. Inside it you swing with advantage,
+your Claws & Teeth land a bigger die, and your belt, your spells and every ability that is not the
+curse's own are out of reach until it ends.
+
+That gets a block of its own on the Character tab, movable like the six: the beast you chose and
+what you call it, the Feral Rage difficulty with the two presses that move it, the hide with the
+sentence about what emptying it does, and one button in and one button out. Nothing on it ticks —
+being in the form is *having Shield left*, so an attack that eats the last of it ends the form on
+the next render, and the Armor a Feral Hide was granting comes off in the same frame.
 
 ### Ability cards
 

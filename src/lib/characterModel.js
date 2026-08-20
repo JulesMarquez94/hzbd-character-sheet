@@ -8,6 +8,7 @@ import { EMPTY_EQUIPMENT, characterGrants, equipmentEffects, gearEnchantIds } fr
 import { ephemeralGrants, wornIds } from './enchanting.js';
 import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
+import { feralArmor } from './feral.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -94,6 +95,14 @@ export const BLANK_CHARACTER = {
   // the same creature. A pool that is absent reads as full. minions.js owns
   // the shape, and a sheet with no such set never writes the column.
   minions: {},
+  // The forms a talent set can turn this character into, keyed by the set that
+  // granted one: { "feral-curse": { beast, name, portrait_url, dc, on } }. A
+  // Feral Cursed's identity and the state of their curse together — which
+  // carnivore it is, where the Feral Rage difficulty has climbed to, and whether
+  // they have given in. The form's *clock* is not here: it is the Shield pool,
+  // because the card says "until all Shield is gone". feral.js owns the shape,
+  // and a sheet with no such set never writes the column.
+  feral: {},
   // Everything a level handed out that isn't a talent, keyed by the level that
   // granted it: the +2 / +1 spread at level 1, and an attribute point and a
   // learned skill at every odd level after. levelPicks.js owns the shape.
@@ -150,11 +159,12 @@ export const SHEET_BLOCK_IDS = [1, 2, 3, 4, 5, 6];
  * `extra` is the blocks that are not always there. The six numbered ones are
  * every character's; a talent set that puts a creature on the board adds two
  * more, named `minion:<set>` and `minion:<set>:bar` (see minionBlockIds in
- * minions.js). Those arrive when the set is taken and leave when it is handed
- * back, so they are matched the way normalizeSourceOrder matches an Abilities
- * tab that grew a block: still present keeps its place, gone is dropped, and
- * new is appended rather than pushed into the middle of an arrangement
- * somebody has already made.
+ * minions.js), and one that turns its holder into something adds a single
+ * `feral:<set>` (see feralBlockIds in feral.js). Those arrive when the set is
+ * taken and leave when it is handed back, so they are matched the way
+ * normalizeSourceOrder matches an Abilities tab that grew a block: still
+ * present keeps its place, gone is dropped, and new is appended rather than
+ * pushed into the middle of an arrangement somebody has already made.
  */
 export function normalizeBlockOrder(value, extra = []) {
   let list = value;
@@ -287,8 +297,15 @@ export function deriveStats(character, extra = null) {
      grants "3 armor" and Armor is a stat, so it is one number: the meter reads it,
      and Heavy Armor's "half of Armor" rider reads the same one rather than a
      smaller Armor of its own. Flagged in data/README.md as an interaction the
-     designer has not ruled on. */
-  const armorTotal = gear.armorTotal + Math.floor(flat('armor'));
+     designer has not ruled on.
+
+     And the hide, for a Feral Cursed who is wearing one. FERAL HIDE grants "half
+     your Instinct" while the form is running, which is a share of an attribute
+     rather than a flat number, so `i` goes down with the call: every worn and
+     running bonus is already in it, and the unbent column is not. The form ends
+     the instant its Shield runs out, so this comes off on the same render that
+     empties the bar. See feral.js. */
+  const armorTotal = gear.armorTotal + Math.floor(flat('armor')) + feralArmor(character, i);
 
   // Defense: the base attribute (or the set-bonus replacement), plus every
   // flat bonus worn, plus Heavy Armor's half-Armor rider.

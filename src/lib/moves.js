@@ -65,6 +65,7 @@ import { getMartialMove, isMartialMove } from './martial.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
 import { heldItem, normalizeEquipment } from './items.js';
 import { isWeaponAttack, trickRider } from './tricks.js';
+import { feralRiders } from './feral.js';
 
 /** What anybody who knows a move may have waiting on one swing. */
 export const MOVE_ALLOWANCE = 1;
@@ -402,7 +403,8 @@ export function martialDefense(character) {
 /**
  * One weapon attack's modifiers with everything waiting on it folded in: what the
  * blade itself gives, what a Trickster has bought, what Martial Moves are riding,
- * and what the set that trained this hand grants for holding this kind of weapon.
+ * what the set that trained this hand grants for holding this kind of weapon, and
+ * what shape the swinger is in.
  *
  * `base` is the item's own (`wieldModifiers` in items.js). This is the one
  * function the three places that print an attack call, so the chip on the quick
@@ -415,12 +417,19 @@ export function martialDefense(character) {
 export function attackModifiers(character, card, base) {
   const trick = trickRider(character?.effects, card);
   const moves = moveRider(character?.effects, card);
-  const worn = isWeaponAttack(card) ? weaponRiders(character) : null;
-  const passive = Number(worn?.advantage) || 0;
+  const swings = isWeaponAttack(card);
+  const worn = swings ? weaponRiders(character) : null;
+  /* And the Feral Curse's form, which grants advantage on every attack roll and
+     another die to the natural weapon's own. Read here rather than in
+     `weaponRiders` because it hangs on the *shape you are in* and not on the tag
+     of the thing in your hand — see feralRiders in feral.js. */
+  const hide = swings ? feralRiders(character) : null;
+  const passive = (Number(worn?.advantage) || 0) + (Number(hide?.advantage) || 0);
 
-  if (!trick && !moves && passive === 0) return base;
+  if (!trick && !moves && passive === 0 && !hide) return base;
 
-  const empower = (Number(base?.empower) || 0) + (Number(moves?.empower) || 0);
+  const empower =
+    (Number(base?.empower) || 0) + (Number(moves?.empower) || 0) + (Number(hide?.empower) || 0);
   const elevate =
     (Number(base?.elevate) || 0) + (Number(trick?.elevate) || 0) + (Number(moves?.elevate) || 0);
 
@@ -446,7 +455,7 @@ export function attackModifiers(character, card, base) {
     disadvantage: Number(base?.disadvantage) || 0,
     /* And where it came from, so the badge can say. An arrow with a 3 in it and no
        explanation is a number the reader has to go and reconstruct. */
-    advantageFrom: advantageSources(worn, moves),
+    advantageFrom: advantageSources(worn, moves, hide),
     /* What the sheet prints beside the attack, and deliberately not on the card:
        "when possible updating the attack text to say (not on the card) that this
        attack will MARTIAL MOVE NAME". */
@@ -461,18 +470,20 @@ function instinctOf(character) {
 
 /**
  * Everything lending advantage to this swing, named: the sets that grant it for
- * the weapon in hand, then the moves riding it, in that order. Only the ones
- * actually granting any, so a set that hangs a Defense bonus on the same weapon is
- * not credited with an arrow it had nothing to do with.
+ * the weapon in hand, then the form the swinger is in, then the moves riding it,
+ * in that order. Only the ones actually granting any, so a set that hangs a
+ * Defense bonus on the same weapon, or a form that only grants a die of Empowered
+ * on some other weapon, is not credited with an arrow it had nothing to do with.
  */
-function advantageSources(worn, moves) {
-  const sets = (worn?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
+function advantageSources(worn, moves, hide) {
+  const held = (worn?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
+  const shape = (hide?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
 
   /* `moveRider` hands the moves back in the order they were paid for. A move with
      no advantage of its own is riding the swing but not bending the roll, so it is
      left off — it is named on the attack row instead, which is where what a move
      *does* belongs. */
-  return [...sets, ...(moves?.advantaged ?? [])];
+  return [...held, ...shape, ...(moves?.advantaged ?? [])];
 }
 
 /**

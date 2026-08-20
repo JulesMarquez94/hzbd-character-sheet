@@ -43,6 +43,7 @@ import {
 import { getLineage } from './lineages.js';
 import { advancementState, normalizeTalents, pruneTalents } from './talents.js';
 import { minionOf, minionSettled } from './minions.js';
+import { feralOf, feralSettled } from './feral.js';
 import { MAX_LEVEL } from './characterModel.js';
 
 /** What a level hands out. The one place the even / odd rule is written down. */
@@ -126,6 +127,14 @@ export function levelQuestions(character, level, { talents, picks, background })
        the way an unanswered lineage card does. */
     if (slot?.filled && slot.rank === 1 && minionOf(slot.talent)) {
       asked.push(minionSettled(character, slot.talent.id));
+    }
+
+    /* And a set that turns you into something asks the same kind of second
+       question at the same level. BEAST WITHIN: "When you become Feral Cursed,
+       you choose a Carnivore Mammal." Only Rank 1 asks — the curse is caught
+       once, and the ranks above it are the same animal getting better at it. */
+    if (slot?.filled && slot.rank === 1 && feralOf(slot.talent)) {
+      asked.push(feralSettled(character, slot.talent.id));
     }
   }
   if (grants.lineage) asked.push(lineageSettled(character));

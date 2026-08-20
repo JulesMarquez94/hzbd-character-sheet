@@ -1,0 +1,29 @@
+id,Name,Tags,AP,WP,Main Effect,Source,Image
+feral-form,FERAL FORM,"Feral Curse, Novice Talent, Passive",,,"Whenever you enter your Feral Form, you lose half your current Health and gain twice as much Shield.
+
+You remain in your Feral Form until all Shield is gone or you take a Short Rest.
+
+While in this form you have advantage on all attack rolls and your Claws & Teeth attacks are Empowered by 1.
+
+In this form you are unable to use items, or abilities and spells that are not Feral Curse ones.",sheet,
+feral-rage,FERAL RAGE,"Feral Curse, Novice Talent, Passive",,,"Whenever you lose Health or spend Willpower, you have a chance to transform into your Feral Form.
+
+Each time, make an Instinct roll with a difficulty of 8. On a failure the difficulty increases by 1 for your next roll. It resets to 8 on a transformation.
+
+You can choose to willingly fail the roll.",sheet,
+beast-within,BEAST WITHIN,"Feral Curse, Novice Talent, Passive",,,"When you become Feral Cursed, you choose a Carnivore Mammal. This beast represents how your ability manifests.
+
+While your hands are empty, you can use the Claws & Teeth weapon. You learn a number of Novice Martial Moves equal to 2 + your Rank in Feral Curse, which you can use with Claws & Teeth.
+
+Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.
+
+At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.",sheet,
+bestial-sense,BESTIAL SENSE,"Feral Curse, Novice Talent, Passive",,,You have advantage on Skill Checks related to using your 5 senses.,sheet,
+feral-hide,FERAL HIDE,"Feral Curse, Adept Talent, Passive",,,"While you are in your Feral Form, your Armor is increased by half your Instinct, rounded down.",house,
+call-the-beast,CALL THE BEAST,"Feral Curse, Adept Talent, Ability",1,2,"You stop holding it in. You enter your Feral Form without making a Feral Rage roll, and the difficulty of your next one resets to 8.
+
+You lose half your current Health and gain twice as much Shield, as Feral Form says.",house,
+bestial-frenzy,BESTIAL FRENZY,"Feral Curse, Master Talent, Passive",,,"You can now use two Martial Moves on the same Weapon Attack, or use one Martial Move just before a Weapon Attack reaction.",house,
+beast-and-drifter,BEAST AND DRIFTER,"Feral Curse, Master Talent, Passive",,,"While you are in your Feral Form you can use your own abilities and spells, whatever taught them to you.
+
+Your hands are still a beast’s, so you remain unable to use items.",house,

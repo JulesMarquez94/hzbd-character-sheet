@@ -59,7 +59,22 @@ import {
 } from './items.js';
 import { getCard, itemEnchantments } from './weapons.js';
 import { isWeaponAttack, spendTricks } from './tricks.js';
+import {
+  canEnterForm,
+  enterForm,
+  feralLocks,
+  formFor,
+  leaveForm,
+  passesForm,
+  sourceSet,
+} from './feral.js';
 import { addEffect } from './combatTurn.js';
+import {
+  LEDGER_NOTE_MAX,
+  appendLedger,
+  newLedgerId,
+  shieldCapFor,
+} from './characterModel.js';
 import {
   attackModifiers,
   canLayMove,
@@ -174,10 +189,17 @@ function handGroup(character) {
  * shown: block 3 is where you notice a loop is empty, and this block has no
  * width to spend saying nothing.
  */
-function beltGroup(character) {
+function beltGroup(character, locks) {
   const belt = normalizeBelt(character?.belt);
   // A loop that has not opened yet cannot be reached, whatever is stored in it.
   const open = beltSlotCount(character);
+
+  /* And the one thing that can shut every loop at once. FERAL FORM: "in this
+     form you are unable to use items", and the belt is where this sheet uses
+     one — armor is worn and a weapon is wielded, but a loop is reached for. A
+     loop is offered refused rather than hidden, wearing the reason, which is what
+     it already does for a flask with no charges left. */
+  const shut = passesForm(null, locks, { item: true });
 
   const moves = belt
     .map((entry, index) => ({ state: beltEntry(character, entry), index }))
@@ -194,8 +216,10 @@ function beltGroup(character) {
         name: card?.name ?? item.name,
         source: `${item.name} — loop ${index + 1}`,
         note: charges > 0 ? chargeNote(remaining, consumable, item) : null,
-        extra: nextBelt ? { belt: nextBelt } : null,
-        spent,
+        extra: shut.ok && nextBelt ? { belt: nextBelt } : null,
+        spent: spent || !shut.ok,
+        spentLabel: shut.ok ? undefined : 'No hands',
+        spentNote: shut.ok ? undefined : shut.reason,
         charges,
         used,
         item,
@@ -216,7 +240,7 @@ function chargeNote(remaining, consumable, item) {
 }
 
 /** One group per source that holds something playable, in the codex's order. */
-function knownGroups(character) {
+function knownGroups(character, locks) {
   /* Whether there is room for another Martial Move on the next swing. Asked once
      for the whole bar rather than once per chip: the answer is about the
      character, not the card, and working it out means reading every set that
@@ -230,6 +254,12 @@ function knownGroups(character) {
        block here lists them. */
     .filter((source) => !source.aside)
     .map((source) => {
+      /* Which set this block belongs to, for the one lock that cares. A form
+         forbids "non-Feral Curse abilities or spells", and the pool that set hands
+         over is tagged `Martial Move` rather than with the set's own word, so the
+         block it sits in is what says whose it is. */
+      const set = sourceSet(source.id);
+
       const moves = rowsOf(source)
         /* And a card somebody else on your sheet plays is not on your bar. A
            draconic ally's Wyrm Bolt costs *its* Action Points, so offering it
@@ -241,6 +271,8 @@ function knownGroups(character) {
             source: `${card.name} — ${source.title}`,
             modifiers,
             ...martialUse(character, card, room),
+            ...feralUse(character, card, set),
+            ...formRefusal(card, locks, { set }),
           })
         );
 
@@ -286,6 +318,135 @@ function martialUse(character, card, room) {
 }
 
 /**
+ * What a Feral Form does to a chip it will not let you play, or nothing at all
+ * for everybody who is not in one.
+ *
+ * Refused and not hidden, which is the same call the belt and the Martial Move
+ * allowance both make: a card that has quietly vanished reads as a bug, while one
+ * wearing the reason reads as a rule. It is spread *after* `martialUse`, so a
+ * move the form forbids says so rather than saying there is no room for it —
+ * being unable to hold the card at all is the truer refusal of the two.
+ *
+ * `extra` is cleared with it. Nothing here is ever confirmed, since the chip is
+ * dead, but a refused row carrying a written-out effects list is a loaded gun.
+ */
+function formRefusal(card, locks, opts) {
+  if (!locks) return {};
+
+  const pass = passesForm(card, locks, opts);
+  if (pass.ok) return {};
+
+  return { spent: true, spentLabel: 'Not in form', spentNote: pass.reason, extra: null };
+}
+
+/**
+ * The extra a card that transforms its holder carries, or nothing at all for
+ * every other card. CALL THE BEAST, and nothing else yet.
+ *
+ * A transformation is a write with two halves and a ceiling on one of them, and
+ * it is exactly the shape `extra` was built for: the chip charges the printed
+ * Action Point and Willpower, and the same confirmation applies the Health, the
+ * Shield, the flag and the two ledger lines. One write, so a form entered off the
+ * bar and one entered off the block cannot end up different.
+ *
+ * Refused, wearing the reason, when there is nothing for it to do: you are
+ * already in the form, or half of what you have left rounds to nothing. Same
+ * shape the belt gives an empty flask.
+ */
+function feralUse(character, card, set) {
+  if (card?.opens !== 'feral' || !set) return {};
+
+  const form = formFor(character, set);
+  if (!form) return {};
+
+  const can = canEnterForm(character, form);
+
+  return {
+    note: can.ok
+      ? `${leadIn(character, form)} The difficulty goes back to ${form.base}.`
+      : can.reason,
+    extra: can.ok ? enterFormBody(character, form, card.name) : null,
+    spent: !can.ok,
+    spentLabel: form.inForm ? 'Already' : 'No blood',
+    spentNote: can.reason,
+  };
+}
+
+/** "25 Health for 25 Shield." What the chip says before it is tapped. */
+function leadIn(character, form) {
+  const result = enterForm(character, form, { cap: shieldCapFor(character) });
+  return `${result.spend} Health for ${result.granted} Shield.`;
+}
+
+/* ---------------------------------------------------- entering and leaving */
+
+/**
+ * Entering a Feral Form, as one patch body: the two pools, the flag, the
+ * difficulty back at its floor, and a ledger line for each pool that moved.
+ *
+ * Here rather than on the block for the same reason `spendUse` is here: there are
+ * two ways in — the block's own Transform button and CALL THE BEAST on this bar —
+ * and a form entered one way must be identical to one entered the other. The
+ * Shield ceiling is worked out here too, because feral.js may not import
+ * characterModel.js (it is imported *by* it, for `feralArmor`).
+ *
+ * Health and Shield both go through the ledger, because every other movement of
+ * either on this sheet is logged and this is the largest one a character will
+ * ever make on purpose.
+ */
+export function enterFormBody(character, form, why = 'Feral Rage') {
+  const result = enterForm(character, form, { cap: shieldCapFor(character) });
+
+  return {
+    ...result.patch,
+    ledger: ledgerRows(character, [
+      { kind: 'health', delta: -result.spend, balance: result.health, note: `${why}: the price` },
+      { kind: 'shield', delta: result.granted, balance: result.shield, note: `${why}: the hide` },
+    ]),
+  };
+}
+
+/**
+ * Leaving it, and the Shield it throws away.
+ *
+ * "there is a butto to end trnasformation that also remove all shield" — so the
+ * hide does not come off and leave its Shield behind. That Shield *was* the form.
+ */
+export function leaveFormBody(character, form) {
+  const result = leaveForm(character, form);
+  if (result.dropped === 0) return result.patch;
+
+  return {
+    ...result.patch,
+    ledger: ledgerRows(character, [
+      { kind: 'shield', delta: -result.dropped, balance: 0, note: `${form.spec.label} ended` },
+    ]),
+  };
+}
+
+/** Several movements, one write, in the order they happened. */
+function ledgerRows(character, rows) {
+  let ledger = character?.ledger;
+
+  for (const row of rows) {
+    if (row.delta === 0) continue;
+    ledger = appendLedger(
+      { ...character, ledger },
+      {
+        id: newLedgerId(),
+        ts: new Date().toISOString(),
+        kind: row.kind,
+        delta: row.delta,
+        note: String(row.note).slice(0, LEDGER_NOTE_MAX),
+        balance: row.balance,
+      }
+    );
+  }
+
+  return ledger;
+}
+
+/**
  * What an enchantment has bound into something you are holding.
  *
  * NOVICE IMBUEMENT is the one enchantment that carries a spell instead of a
@@ -300,7 +461,7 @@ function martialUse(character, card, room) {
  * puts what it laid, and the spell rides on the effect that laid it. Its cost is
  * the spell's own, printed unchanged: "paying its costs as normal".
  */
-function imbuedGroup(character) {
+function imbuedGroup(character, locks) {
   const moves = runningEnchants(character?.effects)
     .map(({ effect }) => ({ effect, card: getCard(effect.spell) }))
     .filter((row) => row.card)
@@ -308,6 +469,10 @@ function imbuedGroup(character) {
       move(`imbued:${effect.id}:${card.id}`, card, {
         source: `${card.name} — bound in by ${effect.name}`,
         note: effect.note || null,
+        /* A casting bound into a thing you are holding is both halves of what a
+           form forbids: somebody else's spell, out of an item. Refused on either
+           lock, with no `set` to appeal to. */
+        ...formRefusal(card, locks, {}),
       })
     );
 
@@ -389,14 +554,23 @@ function basicGroup() {
  */
 export function quickBar(character) {
   if (!character) return [];
+
+  /* What shape the character is in, asked once for the whole bar rather than once
+     per chip. Null for everybody who is not mid-transformation, which is nearly
+     everybody, and every group below then does exactly what it did before. See
+     feralLocks in feral.js. */
+  const locks = feralLocks(character);
+
   return [
     handGroup(character),
-    beltGroup(character),
+    beltGroup(character, locks),
     /* Before what you know: a bound casting is an hour old and is the thing most
        easily forgotten, which is the whole argument for where anything sits on
        this bar. */
-    imbuedGroup(character),
-    ...knownGroups(character),
+    imbuedGroup(character, locks),
+    ...knownGroups(character, locks),
+    /* And the basic actions, never refused. A wolf still moves, hides and shoves,
+       and a form that could not walk would be a bug rather than a rule. */
     basicGroup(),
   ].filter(Boolean);
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import PickBlock from './PickBlock.jsx';
+import FeralSection from './FeralPick.jsx';
 import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
 import MinionSection from './MinionPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
@@ -14,6 +15,7 @@ import { useCardStack } from '../../context/card-stack.js';
 import { brewPreview } from '../../lib/brews.js';
 import { enchantmentsAt } from '../../lib/enchantments.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
+import { feralOf } from '../../lib/feral.js';
 import { minionOf } from '../../lib/minions.js';
 import {
   TALENT_RANKS,
@@ -153,6 +155,11 @@ export default function TalentPick({
                Rank 2 Draconic Bond is a deeper bond with an ally that already
                has a name. */
             if (rank === 1 && minionOf(id)) setJustTook(id);
+
+            /* And the same for a set that hands over a *shape*. BEAST WITHIN:
+               "when you become Feral Cursed, you choose a Carnivore Mammal" —
+               which is this exact moment, and only this one. */
+            if (rank === 1 && feralOf(id)) setJustTook(id);
           }}
           onClose={() => setChoosing(false)}
         />
@@ -236,6 +243,19 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, onView, onU
               bond was formed at and the only one that asks. */}
           {rank === 1 && talent.minion && (
             <MinionSection
+              talent={talent}
+              character={character}
+              patch={patch}
+              readOnly={readOnly}
+              autoOpen={justTook === talent.id}
+            />
+          )}
+
+          {/* And what it turns them into, for a set that grants a shape. Same
+              slot rule and the same reason: the curse is caught once, and the
+              ranks above it are the same animal getting better at it. */}
+          {rank === 1 && talent.feral && (
+            <FeralSection
               talent={talent}
               character={character}
               patch={patch}

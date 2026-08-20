@@ -2180,3 +2180,314 @@ four now say `object-position: 50% 0` and take the boots: block 1's plate, the L
 tab's editor, the creature's plate and the creature's editor, plus the dashboard
 card. Faces are at the top of pictures of people — the same reason
 `.talent-summary-art` has biased upward since it was written.
+
+## The Feral Curse, 2026-08-20
+
+Four cards on the `Ability` tab, a `Developpement Notes` tab of one paragraph
+describing a whole new kind of block, no `Overview` tab and no picture folder.
+Plus an ask in chat, which is the part that makes this set different from every
+other one in `data/`:
+
+> "now I need you to do the feral curse i had, yo uare in charge of making hte
+> overview and extrapolating ability for the feral curse at rank 2 and 3 at rank
+> three there need to be soemtihgn that allow amrital move as reaciton to do two
+> at once."
+
+So **half of this set is house-written**, and which half is marked in the data
+rather than described here: the four Rank 2 and Rank 3 cards carry `house: true`
+in `talents.js`, the same flag the eight house-written Martial Moves wear in
+`martial.js`, and `data/templates/feral-cursed-ability.csv` has a `Source` column
+saying `sheet` or `house` for every row. That flag is the list of what to
+overwrite the day a sheet arrives for them.
+
+| Rank | Cards | Whose |
+| ---- | ----- | ----- |
+| 1 · Novice | Feral Form, Feral Rage, Beast Within, Bestial Sense | the sheet's |
+| 2 · Adept | Feral Hide, Call the Beast | house |
+| 3 · Master | Bestial Frenzy, Beast and Drifter | house |
+
+Instinct throughout, house-assigned: FERAL RAGE rolls it, BESTIAL SENSE is the
+five senses, and both Claws & Teeth cards are Instinct attacks. Tags guessed as
+"Martial, Defense, Instinct" — Defense because the form is bought in Shield and
+thickened in Armor, which is the only reason a transformation costing half your
+blood is worth making.
+
+### What the four Rank 1 cards actually say
+
+Worth reading them together, because two of them are stranger than they look.
+
+**FERAL FORM** is a trade and a clock. Half your *current* Health for twice as
+much Shield, and the Shield is the timer: "you remain in your Feral Form until all
+Shield is gone or you take a Short Rest." In exchange you get advantage on every
+attack roll and a die on your teeth, and you lose your items, your spells and
+every ability that is not this set's.
+
+**FERAL RAGE** is the one nobody expects. It fires on losing Health or spending
+Willpower, and it lets a Feral Cursed **choose to fail** the roll — with nothing
+anywhere on the card letting them choose to pass it. At Rank 1 the beast can only
+be refused, never called. And refusing it makes it *harder* to reach next time:
+"on a failure the difficulty increase by 1 for your enxt roll", resetting to 8
+only when a transformation happens. So restraint is rewarded with a quieter beast
+and a worse chance of having it when it is wanted. That hole is what CALL THE
+BEAST was written to fill, and it is the single most interesting thing on the tab.
+
+**BEAST WITHIN** is a Martial Move pool with a mouth. Same count and same ladder
+the Duelist's DEXTEROUS prints, off a different set's card, so it hangs on the
+`loadout` spec with no new code:
+
+| Set | Rank 1 | Rank 2 | Rank 3 | Tiers |
+| --- | ------ | ------ | ------ | ----- |
+| Feral Curse (2 + rank) | 3 | 4 | 5 | Novice → +Adept → +Master |
+| Duelist (2 + rank) | 3 | 4 | 5 | Novice → +Adept → +Master |
+| Guardian (1 + rank) | 2 | 3 | 4 | Novice → +Adept → +Master |
+
+It prints the swap sentence DEXTEROUS prints, so it carries `swap: ['long']` and
+appears in the long rest window's action list. A Feral Cursed and a Duelist in the
+same character have **two** allowances out of one pool, which is the literal
+reading and the same one the Guardian/Duelist pair already gets.
+
+**BESTIAL SENSE** is one sentence and needed a verb.
+
+### The four house-written ones, and why each exists
+
+Every name is built out of the set's own words — Feral, Bestial, Beast, Rage —
+because that is the convention the Guardian and the Mycomancer set and the one
+thing an extrapolation must not break. None of them invents a status: Armor,
+Shield, advantage, Empowered and Short Rest are all in the glossary already.
+
+**FERAL HIDE** (Adept, Passive) — *"While you are in your Feral Form, your Armor
+is increased by half your Instinct, rounded down."* The form's clock **is** its
+Shield, so a card granting more Shield would buy a longer fight rather than a
+better one. Armor is the same effect said the other way round, since every hit
+then costs the clock less, and it is a number the sheet already knows how to hold
+— `deriveStats` reads it, so the Armor tile moves the moment the form does and
+moves back on the render the Shield empties.
+
+**CALL THE BEAST** (Adept, Ability, 1 AP / 2 WP) — the beast called instead of
+refused, with the Feral Rage difficulty reset to 8. It exists because FERAL RAGE
+leaves no way to pass a roll on purpose, which is a hole and not a flourish. The
+Willpower is not decoration either: "whenever you lose Health or spend Willpower,
+you have a chance to transform" is the set's own trigger, so paying Willpower to
+force what Willpower already risks is this card agreeing with the one above it.
+
+**BESTIAL FRENZY** (Master, Passive) — the card that was asked for by name.
+*"You can now use two Martial Moves on the same Weapon Attack, or use one Martial
+Move just before a Weapon Attack reaction."* That is SHARP's text, **deliberately
+unchanged**: two cards that move the same allowance have to say it the same way,
+or a table reading one of them will assume the other does something else. It is
+also the same two spec keys — `martial.perAttack` and `martial.onReaction` — so
+the rule stayed parsed out of a card exactly once. A character holding a Master
+Duelist *and* a Master Feral Cursed gets **two, not three**: `moveAllowance` takes
+the highest rather than summing, because each card raises the same allowance
+rather than adding one of its own.
+
+**BEAST AND DRIFTER** (Master, Passive) — the form stops locking your own
+abilities and spells away, and keeps locking items away. It answers the sentence
+on FERAL FORM that costs a Feral Cursed most, and answers two thirds of it: a paw
+is the reason items were locked, and mastering a curse does not give you thumbs.
+
+### The form is a state, not a card
+
+`src/lib/feral.js` is new and is written the way `minions.js` was, for the same
+reason the Draconic Bond's notes gave: a set's spec describes, a resolver
+resolves, and `talents.js` stays a leaf. Everything in the spec is a card's own
+sentence:
+
+| The card | The spec |
+| -------- | -------- |
+| "you lose half your current Health and gain twice as much Shield" | `enter: { spend: 0.5, gain: 2 }` |
+| "until all Shield is gone or you take a Short Rest" | `ends: 'short'`, and the Shield read off the character |
+| "a difficulty of 8 … increases by 1 … resets to 8 on a transformation" | `rage: { base: 8, step: 1 }` |
+| "advantage on all attack rolls" | `advantage: 1` |
+| "your Claws & Teeth attacks are Empowered by 1" | `empower: { weapon: 'Natural', label: 'Claws & Teeth', amount: 1 }` |
+| "unable to use items, non-Feral Curse abilities or spells" | `locks: { items: true, foreign: true, tag: 'Feral Curse' }` |
+| BEAST AND DRIFTER | `opens: [null, null, null, { foreign: true }]` |
+| FERAL HIDE | `armor: [null, 0, 0.5, 0.5]` |
+| CALL THE BEAST | `willing: [null, false, true, true]` |
+| "you choose a Carnivore Mammal" | `beasts.options`, eight of them |
+
+**The clock is the Shield pool.** Not a counter and not a duration on the tracker:
+the card says "until all Shield is gone", so being in the form is `on && shield > 0`
+and the sheet only has to look. Nothing ticks, and an attack that eats the last of
+the Shield ends the form on the very next render with no press and no write — the
+Armor from FERAL HIDE comes off in the same frame, the belt unlocks in the same
+frame, and the block says "Spent".
+
+Storage is one `feral` jsonb column keyed by the set:
+`{ "feral-curse": { beast, name, portrait_url, dc, on } }`. **Re-run
+`supabase/schema.sql`** or the column is dropped from writes with a console
+warning.
+
+### One block, and what is not on it
+
+"The feral curse add a new block, which is the feral form block … The feral form
+blcok o nthe caracter sheet as Image with name of the beast. A tracker that show
+you the DC you are at, a button that you can click to increment the DC as you
+succed your roll and a transform button that make the proper changes to your
+hcaracter as you transform such as lossing health gaining shield."
+
+**One** block, where a creature gets two. A creature needed two because it has a
+stat block *and* a turn to spend; a form has neither — its stats are the
+character's own, bent, and it spends the character's points. What it needs is the
+picture, the difficulty, the clock and three presses, and that fits one 360x640
+cell with room left over. `normalizeBlockOrder` takes `feral:<set>` the same way
+it already took the two minion ids, so the block moves in the arranger like any
+other and the arrangement follows the sheet.
+
+It borrows the creature block's identity row wholesale — `.minion-id`,
+`.minion-plate`, `.minion-name`, `.minion-chip` — and that is deliberate. A
+picture of a thing you turn into and a picture of a thing standing beside you are
+the same 72px square, and two blocks that draw the same row two ways is how two
+blocks drift apart.
+
+**The starter Martial Moves the note asks for are not on it.** They are a
+`loadout`, so they are chosen in the panel every other picked hand on this sheet
+is chosen in: on the Abilities tab, and on the set's own block on the Advancement
+tab. A second chooser built for one set would be the one place the sheet asked for
+a hand differently.
+
+**The Shield bar on it is a readout.** It is the same pool block 2 draws and moves
+through the ledger; this block's claim on it is only the sentence about what
+emptying it does, so it has no click.
+
+### The difficulty button says the opposite of the note
+
+The note asks for a button that increments the difficulty **"as you succed your
+roll"**. FERAL RAGE says the increase is on a **failure**. The card wins, and the
+button is labelled in the card's own terms — *"Held it in, +1"* — because that is
+what a failed roll means here: you did not transform. If the note is right and the
+roll is a *resistance* roll, the label is one string and the reading flips.
+**Worth a ruling.**
+
+The roll itself is never asked for. Same law every other die on this sheet keeps:
+the sheet is told that Health moved and never what moved it, so a sheet that asked
+for a Feral Rage roll would ask on every scratch.
+
+### Two ways in, one write
+
+`enterFormBody` lives in `combatBar.js` beside `spendUse`, and both ways into the
+form go through it — the block's Transform button, and CALL THE BEAST on the quick
+bar, which pays its printed Action Point and Willpower and carries the
+transformation as its `extra` so the whole thing is a single write. A form entered
+one way is therefore identical to one entered the other, including the Feral Rage
+reset, which is FERAL RAGE's own next sentence and has nowhere left to be
+forgotten.
+
+Health and Shield both move through the **ledger**, because every other movement
+of either on this sheet is logged and this is the largest one a character will
+ever make on purpose. The lines read *"Feral Rage: the price"*, *"Feral Rage: the
+hide"*, *"Call the Beast: the hide"* and *"Feral Form ended"*.
+
+Ending it takes the Shield with it — "there is a butto to end trnasformation that
+also remove all shield" — so the button says how much it is about to throw away
+before it does.
+
+### The locks, and what "items" means
+
+FERAL FORM forbids "items, non-Feral Curse abilities or spells", and the quick bar
+now refuses those chips rather than hiding them, wearing the reason. That is the
+same call the belt already makes for an empty flask and the Martial Move allowance
+makes for a full tracker: a card that has quietly vanished reads as a bug, one
+wearing the reason reads as a rule.
+
+| Group | In the form |
+| ----- | ----------- |
+| In Hand | **allowed.** A weapon is wielded, not used — and the Empowered die lands here |
+| On the Belt | refused, *No hands*. The belt is where this sheet uses an item |
+| Bound In | refused. Somebody else's spell, out of an item: both locks at once |
+| The set's own block | allowed |
+| Its Martial Moves | **allowed**, and this needed care — see below |
+| Any other set, lineage or gear | refused, *Not in form*. Unless BEAST AND DRIFTER |
+| Basic Actions | **never refused.** A wolf still moves, hides and shoves |
+
+**"items" is read as the belt.** Armor is worn and a weapon is wielded; a loop is
+reached for, and it is the only place this sheet lets you *use* an item. A stricter
+reading is available — paws cannot hold a sword either, so a Feral Cursed with a
+longsword equipped could not attack at all — and it was not built, because it would
+make the set unplayable for anybody who had not equipped Claws & Teeth first.
+**Worth a ruling.**
+
+**A Feral Cursed's Martial Moves are tagged `Martial Move, Novice` and never with
+the set's own word**, so a tag test alone would have refused the very cards BEAST
+WITHIN says the beast fights with. So `passesForm` checks the *set* the block
+belongs to as well as the card's tags, off the quick bar's own source id
+(`talent:feral-curse`, `loadout:feral-curse`). A **Duelist's** copy of the same
+move is still refused, which is the literal reading and a good one: it was trained
+for a blade.
+
+### The advantage reaches every attack, because there is only one kind left
+
+"Advantage on all attack rolls" is folded into `attackModifiers`, which runs for
+weapon attacks. That is not a shortcut — inside the form a weapon attack is the
+*only* attack there is, since the same card forbids spells and every ability that
+is not this set's. The one gap is a Master who has taken BEAST AND DRIFTER and can
+attack with a spell again: that attack roll does not get the arrow. **One line in
+`feralRiders` if it should.**
+
+The arrow itself credits the set by name, so a Feral Cursed's Claws - Shred reads
+*"1 d4 of advantage on this roll — from Feral Curse"* and prints `2d6 + 8` where
+the card prints `1d6`.
+
+### How the transcription was proved
+
+The same round trip every set since the Mycomancer has had: each card's `Name`,
+`Tags`, `AP` and `Main Effect` rebuilt out of the codex fields and compared to the
+sheet cell, quote- and whitespace-normalised. **15 of 20 comparisons match across
+the 4 transcribed rows.** All four tag lists, every AP and WP, and three of four
+names match exactly. The five differences are each one of the reads below.
+
+| Card | Read |
+| ---- | ---- |
+| FERAL FORM | "Advantage" → advantage, the glossary's own casing · "your Teeth & Claws attack are Empowered by 1" → "your **Claws & Teeth** attacks" · "non-freal curse abilities or spells" → "abilities and spells that are not Feral Curse ones" |
+| FERAL RAGE | "loose health" → lose Health · "change" → chance · "int" → into · "diffuclity" → difficulty · "enxt" → next · "increase" → increases · the last two sentences were run together and are set as two |
+| BEAST WITHIN | "whci hyou" → "which you" · "tooth and claw" and "Tooth & Claw" → **Claws & Teeth** · "your rank in Feral Cursed.." → "your Rank in Feral Curse." · "Martial moves" → Martial Moves · two double spaces closed up · the implementer's parenthesis dropped and built instead |
+| BESTIAL SENSE | **the card's own name**: "BEATIAL SENSE" → Bestial Sense · "You Advantage on Skill Checks" → "You have advantage on Skill Checks" |
+
+The name correction is the only one in the set and carries no risk, because the id
+`bestial-sense` is new and nothing has ever pointed at the other spelling. Every
+other change exists so a **defined term lights** rather than sitting in the
+sentence as plain text, which is the same trade WYRM BOLT's "Range Attack" made.
+
+**Claws & Teeth is bolded and not linked.** Every other `{{double brace}}` in the
+codex names a *card*, and `getCard` resolves a card id or a printed card name, so
+`{{Claws & Teeth}}` would have been the only dead link in 252 cards — the weapon's
+own two cards are Claws - Shred and Teeth - Bite, and neither of them is what those
+sentences are about.
+
+### Five things for the designer
+
+1. **"Gain twice as much Shield" runs straight into the Shield cap.** Shield caps
+   at half your maximum Health, and half your *current* Health doubled is exactly
+   that cap when you are at full Health. So a full-Health transformation pays 60
+   and receives 60 rather than 120: break even, plus the advantage and the die.
+   The cap is enforced because `syncDerived` clamps the column on the next render
+   regardless, so ignoring it would have been silently clipped instead of honestly
+   reported — the block and the chip both say *"45 Health for 60 Shield"* and name
+   what the ceiling took. If the curse is meant to ignore the cap, that is one key
+   on the `feral` spec and one line in `deriveStats`. **This is the biggest open
+   question in the set.**
+2. **A weapon slot that "permanently beomce tooth and claw" is not built**, and it
+   contradicts BEAST WITHIN's own previous clause: a slot that always holds the
+   weapon is a pair of hands that is never empty. What *is* built is the tag, so
+   the Empowered die lands on Claws & Teeth whichever hand it is in and whoever
+   put it there. Say which of the two sentences wins.
+3. **Three spellings for one weapon appear on the tab** — "Teeth & Claws",
+   "Tooth & Claw" and "tooth and claw" — and the codex's own name is
+   `Claws & Teeth`. All three were set as that. Renaming the item is a one-line
+   change in `weapons.js` if the set's spelling should win instead.
+4. **The difficulty climbs on a failure, not a success.** See above. The note and
+   the card disagree and the card won.
+5. **A spent form whose Shield is restored by somebody else reads as running
+   again.** "Until all Shield is gone" is read as a *state* rather than an event,
+   so a Guardian's Shield laid on a Feral Cursed whose hide had just run out puts
+   them back in the form. The other reading — the form ended and stays ended — is
+   one line in `feralState`. Both are defensible; this one is what the sentence
+   says.
+
+### No pictures yet
+
+No `data/Feral cursed/` folder arrived, so the set's plate and all eight card
+plates are absent and every one of them draws the empty art window an unpainted
+card has always drawn. The set's `art` is `null` rather than a path that is not
+there, for the reason the Duelist's is. Drop the overview picture in, run
+`npm run art:cards`, and point `art` at `/talents/feral-curse.jpg`.

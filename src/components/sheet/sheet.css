@@ -8431,6 +8431,197 @@ body.sheet-fixed #root {
 }
 
 /* =========================================================
+   THE FERAL FORM BLOCK
+
+   The other thing a talent set can add to this tab. A creature
+   gets two blocks because it has a stat block and a turn of
+   its own; a form gets one, because its stats are yours and
+   it spends your points.
+
+   It borrows the creature block's identity row wholesale —
+   .minion-id, .minion-plate, .minion-name, .minion-chip — and
+   that is deliberate rather than lazy. A picture of a thing
+   you turn into and a picture of a thing standing beside you
+   are the same 72px square, and two blocks that draw the same
+   row two ways is how two blocks drift apart.
+
+   What marks the cell out is the top edge: talent amber like
+   a creature's, because the same kind of choice granted it.
+   ========================================================= */
+.sheet-cell.cell-feral {
+  border-top-color: var(--level-amber);
+}
+
+.feral-block {
+  gap: 0.5rem;
+}
+
+/* Same rule the creature's and block 2's bars share, for the same reason: the
+   Shield here is the *same pool* block 2 draws, so it has to be the same bar. */
+.feral-block .meter {
+  padding: 0.45rem 0.7rem;
+  gap: 5px;
+}
+
+/* Transformed. Health red, because that is what bought it — the one state on
+   this sheet a player should be able to see from across the table. */
+.block-count.is-feral,
+.minion-chip.is-feral {
+  color: var(--danger-rose);
+}
+
+.minion-chip.is-feral {
+  border-color: color-mix(in srgb, var(--stat-health) 55%, transparent);
+  background-color: color-mix(in srgb, var(--stat-health) 16%, rgba(9, 17, 21, 0.55));
+}
+
+/* The carnivore it is. Copper rather than red: choosing a wolf is identity, and
+   nothing mechanical turns on which one it is. */
+.feral-chip-beast {
+  border-color: rgba(200, 138, 75, 0.45);
+  color: var(--copper);
+}
+
+/* ---------- the difficulty tracker ----------
+   "A tracker that show you the DC you are at." One number, big enough to read
+   without looking for it, and a line beside it saying how far it has climbed.
+   Not a meter: a difficulty has no ceiling to draw a bar against. */
+.feral-dc {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 5px;
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  background-color: rgba(9, 17, 21, 0.5);
+}
+
+.feral-dc-value {
+  flex: none;
+  min-width: 2.2rem;
+  text-align: center;
+  font-family: var(--font-headings);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--attr-instinct);
+}
+
+.feral-dc-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feral-dc-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.feral-dc-note {
+  font-size: 0.66rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.feral-tools {
+  display: flex;
+  gap: 6px;
+}
+
+.feral-tools .btn {
+  flex: 1;
+}
+
+/* ---------- what the form is doing, and the way in and out ---------- */
+.feral-line {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.feral-line-quiet {
+  font-size: 0.62rem;
+  font-style: italic;
+}
+
+/* A list and not a paragraph. Five short clauses about what you may and may not
+   do is the kind of thing a player scans mid-fight rather than reads. */
+.feral-does {
+  margin: 0;
+  padding-left: 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--text-silver);
+}
+
+.feral-does li::marker {
+  color: var(--copper);
+}
+
+.feral-wide {
+  width: 100%;
+}
+
+/* The one press that costs half your blood. Health red on the edge, so it never
+   reads as the same kind of button as the two above it. */
+.feral-transform {
+  border-color: color-mix(in srgb, var(--stat-health) 60%, transparent);
+  color: var(--danger-rose);
+}
+
+.feral-transform:hover:not(:disabled),
+.feral-transform:focus-visible:not(:disabled) {
+  border-color: var(--danger-rose);
+  background-color: color-mix(in srgb, var(--stat-health) 14%, transparent);
+}
+
+/* ---------- the beast, in the naming window ----------
+   Eight presses and a field, not a menu of eight. The card says any Carnivore
+   Mammal, so the buttons fill the field rather than being the only answers it
+   will take: a fisher cat is typed in and nothing breaks. */
+.feral-beast-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 0.5rem;
+}
+
+.feral-beast {
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  background-color: rgba(9, 17, 21, 0.5);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-silver);
+  transition: border-color 0.14s ease, background-color 0.14s ease, color 0.14s ease;
+}
+
+.feral-beast:hover,
+.feral-beast:focus-visible {
+  border-color: rgba(200, 138, 75, 0.55);
+  color: var(--copper-bright);
+}
+
+.feral-beast.is-on {
+  border-color: var(--copper);
+  background-color: color-mix(in srgb, var(--copper) 12%, rgba(9, 17, 21, 0.5));
+  color: var(--copper-bright);
+}
+
+/* =========================================================
    THE LONG REST ACTION SLOT
 
    A rest buys one action. It used to be offered as four
