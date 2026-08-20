@@ -21,6 +21,12 @@
  * hands over whatever your gear gives at the bell (see combatStartEffects in
  * items.js).
  *
+ * **One thing breaks that**, and only at the bell: PREPARED, an enchantment that
+ * says "you start each combat with 3 reaction points". So the fight does not
+ * begin at nothing for whoever is carrying it — worn, running or worked into
+ * something in their hands. See combatReactionGrant below.
+ * The two *turn* boundaries are untouched by it, the same as everything else.
+ *
  * Starting a turn is the only other thing that changes anything:
  *
  *   Action Points come back to full. This is the game's own rule, printed in
@@ -38,7 +44,8 @@
  * Reaction Points are deliberately left alone by the two *turn* boundaries.
  * They are earned during a round and spent on somebody else's turn, so the top
  * of your own turn is exactly the wrong moment to clear them. The start of the
- * whole fight is the right one, and that is the only place it happens.
+ * whole fight is the right one, and that is the only place it happens — which is
+ * also the only place anything is allowed to put points *in*.
  *
  * --------------------------------------------------------------- the effects
  * An effect is a name, how long it has left, and something to read.
@@ -61,7 +68,14 @@
 
 import { allSourceCards, abilitySources } from './abilitySources.js';
 import { refillMinions } from './minions.js';
-import { combatStartEffects, getItem, normalizeBelt, normalizeEquipment } from './items.js';
+import {
+  combatReactionEffects,
+  combatStartEffects,
+  getItem,
+  normalizeBelt,
+  normalizeEquipment,
+} from './items.js';
+import { allGrants } from './enchanting.js';
 import { shieldCapFor } from './characterModel.js';
 import { getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
@@ -151,6 +165,35 @@ export function combatShieldGrant(character) {
   return { next, items: granted.map((entry) => entry.item) };
 }
 
+/**
+ * What the bell puts in the Reaction pool, or null when nothing does.
+ *
+ * Reaction Points are earned inside a round, so the honest starting number is
+ * zero and that is what every character gets. PREPARED is the exception, and it
+ * is a flat grant rather than a roll: "you start each combat with 3 reaction
+ * points."
+ *
+ * Three places it can be coming from, and they add up: laid on the character's own
+ * person, running on them for the hour, and worked into something they are wearing
+ * or holding. Patien is the third — see combatReactionEffects in items.js, which
+ * is where an item's own riders are read.
+ *
+ * Capped at the pool's own maximum, and never below the zero the bell would have
+ * set anyway: an enchantment cannot make a fight start worse. `items` is whatever
+ * gear gave, so the note can name what did it.
+ */
+export function combatReactionGrant(character) {
+  const gear = combatReactionEffects(character);
+  const granted =
+    Math.max(0, Math.floor(allGrants(character).reactionAtCombat)) +
+    gear.reduce((sum, entry) => sum + entry.reaction, 0);
+  if (granted === 0) return null;
+
+  const cap = Math.max(0, Math.floor(Number(character?.reaction_max) || 0));
+  const next = Math.min(cap, granted);
+  return next > 0 ? { next, granted, items: gear.map((entry) => entry.item) } : null;
+}
+
 export function startCombat(character) {
   const patch = {
     turn_state: { n: 0, live: false, inCombat: true },
@@ -160,6 +203,9 @@ export function startCombat(character) {
 
   const grant = combatShieldGrant(character);
   if (grant) patch.shield = grant.next;
+
+  const braced = combatReactionGrant(character);
+  if (braced) patch.reaction = braced.next;
 
   /* Whatever else is on the board with you comes to the bell in the same state
      you do: Action Points full, Reaction Points at nothing. A creature that is

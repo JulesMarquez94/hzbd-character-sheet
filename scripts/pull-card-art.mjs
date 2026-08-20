@@ -166,13 +166,32 @@ function parseCSV(text) {
  */
 const NOT_A_DROP = new Set(['templates']);
 
+/**
+ * Which tab a row came from, and whether that tab carries a link anywhere.
+ *
+ * A Symbol so it can never be mistaken for a column: a header row is the
+ * designer's to name, and any string key here would be a name they are not
+ * allowed to use.
+ *
+ * A tab with no links at all has no art yet, which is a different thing from a
+ * row that lost the link it had. See the link pass, which warns about the second
+ * and stays quiet about the first.
+ */
+const TAB = Symbol('tab');
+
 function sheets() {
   if (!existsSync(DATA)) return [];
 
   const read = (file) => {
     const rows = parseCSV(readFileSync(file, 'utf8'));
     const head = rows[0].map((h) => h.trim());
-    return rows.slice(1).map((r) => Object.fromEntries(head.map((h, i) => [h, (r[i] ?? '').trim()])));
+    const out = rows
+      .slice(1)
+      .map((r) => Object.fromEntries(head.map((h, i) => [h, (r[i] ?? '').trim()])));
+
+    const linked = out.some((row) => /^https?:\/\//i.test(row.Image ?? ''));
+    for (const row of out) row[TAB] = { name: path.basename(file), linked };
+    return out;
   };
 
   const csv = (dir) => readdirSync(dir).filter((f) => f.toLowerCase().endsWith('.csv'));
@@ -196,6 +215,15 @@ async function cardIds() {
 
   const { SPELLS } = await load('src/lib/spells.js');
   const { BASIC_ACTIONS } = await load('src/lib/actions.js');
+  /* A weapon's two moves, an enchantment and a belt item's one card could not carry
+     a picture at all until the one-off drop on 2026-08-20 brought some, and the
+     three modules were wrapped in `withArt` the same day. Reached here so that a
+     file dropped for one of them is placed rather than silently lost — before this
+     the only registries loaded were the four below, and "Prepared.png" would have
+     been reported as a name the codex has never heard of. */
+  const { WEAPON_ABILITIES, ACTION_CARDS } = await load('src/lib/weapons.js');
+  const { ENCHANTMENTS } = await load('src/lib/enchantments.js');
+  const { UTILITY_CARDS } = await load('src/lib/utility.js');
   /* A talent set's own sheet carries Image links too, and a Cauldron Keeper's
      Ingredients are cards like any other. TALENTS is reached for its cards rather
      than the sets themselves: a set's overview picture is a different plate that
@@ -203,12 +231,38 @@ async function cardIds() {
   const { INGREDIENTS } = await load('src/lib/ingredients.js');
   const { TALENT_CARDS } = await load('src/lib/talents.js');
 
+  /* Not the whole of `CARDS`. A lineage trait and a background skill are cards in
+     the registry, but their modules hand the same object out twice — once flattened
+     into LINEAGE_CARDS and once on the lineage itself — so attaching art to the
+     flattened copy alone would give a picture to the codex and not to the sheet.
+     Until those two are wrapped the way talents.js wraps its sets, a file named for
+     one is better reported than half-placed. */
   return new Map(
-    [...SPELLS, ...BASIC_ACTIONS, ...INGREDIENTS, ...TALENT_CARDS].map((c) => [
-      c.name.toLowerCase(),
-      c.id,
-    ])
+    [
+      ...SPELLS,
+      ...BASIC_ACTIONS,
+      ...INGREDIENTS,
+      ...TALENT_CARDS,
+      ...WEAPON_ABILITIES,
+      ...ACTION_CARDS,
+      ...ENCHANTMENTS,
+      ...UTILITY_CARDS,
+    ].map((c) => [c.name.toLowerCase(), c.id])
   );
+}
+
+/**
+ * Every printed item name, so the shared folder can tell whose file is whose.
+ *
+ * Only `data/OF/` needs it. A set folder holds cards and a plate and nothing
+ * else, so a name it cannot place there is a real problem and is still reported as
+ * one.
+ */
+async function itemNames() {
+  const { ITEMS } = await import(
+    path.join(ROOT, 'src/lib/items.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return new Set(ITEMS.map((item) => flatten(item.name)));
 }
 
 /** Printed set name -> talent id, for the Overview row of a Talent Set sheet. */
@@ -273,16 +327,33 @@ let talentSkipped = 0;
 
 /* ------------------------------------------------------------ the folder pass */
 
+/** The folder both scripts walk. Kept in step with pull-item-art.mjs. */
+const ONE_OFF = 'of';
+
 /**
- * Every picture under a `data/` subfolder named for a talent set, as
+ * Every picture under a `data/` subfolder this script owns, as
  * `{ set, file, name }`. A folder is claimed by the set it belongs to, so
  * dropping `data/Enchanter/` in beside it needs no line here.
+ *
+ * ------------------------------------------------------------------ the one-off
+ * `data/OF/` is claimed as well, and pull-item-art.mjs claims it too. It is where
+ * a one-off lands: a sword, a trident, a tome, and the cards two of them carry.
+ * Those arrive one at a time rather than as a set, so there is no set folder they
+ * could go in.
+ *
+ * Both scripts walking one folder is the point, and each stays quiet about the
+ * other's files — see `itemNames` above. It is not a set folder, so the talent
+ * plate branch never fires for it: there is no set called OF for a plate to belong
+ * to. A name that is both a card and an item, which "Druidic Tome" is, is placed by
+ * both on purpose — the card plate and the belt tile are different crops.
  */
 function pictures(setIds) {
   if (!existsSync(DATA)) return [];
 
+  const mine = (name) => setIds.has(flatten(name)) || flatten(name) === ONE_OFF;
+
   return readdirSync(DATA, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && setIds.has(flatten(entry.name)))
+    .filter((entry) => entry.isDirectory() && mine(entry.name))
     .flatMap((dir) =>
       readdirSync(path.join(DATA, dir.name))
         .filter((file) => IMAGE_FILE.test(file))
@@ -324,6 +395,7 @@ async function writeTalentPlate(setId, buf) {
 
 const ids = await cardIds();
 const sets = await talentIds();
+const items = await itemNames();
 mkdirSync(OUT, { recursive: true });
 mkdirSync(TALENT_OUT, { recursive: true });
 
@@ -398,6 +470,16 @@ for (const picture of folder) {
      Cards are resolved first, so a card that happened to share the set's name
      would still be dealt as a card. */
   if (!id) {
+    /* In the shared folder, an item's picture is not this script's to place and not
+       this script's to complain about. A name that is neither a card nor an item
+       still is: that is a misspelling, and both scripts will say so, which is the
+       right number of times for a file nobody can place. */
+    if (flatten(picture.set) === ONE_OFF) {
+      if (items.has(flat)) continue;
+      problems.push(`${picture.set}/${picture.name}: the codex has no card by that name (nor an item)`);
+      continue;
+    }
+
     const setId = setIdByFolder.get(flatten(picture.set));
     const named = setId && bare(PLATE_ALIASES[setId] ?? '') === flat;
     if (setId && (named || flat.startsWith(flatten(picture.set)))) {
@@ -481,11 +563,27 @@ for (const row of sheets()) {
      that is how a renamed spell announces itself. */
   if (!id && !link) continue;
 
-  if (!id) { problems.push(`${name}: the codex has no card by that name`); continue; }
+  if (!id) {
+    problems.push(`${name}: the codex has no card by that name (${row[TAB]?.name ?? 'a drop in data/'})`);
+    continue;
+  }
   /* Already placed from a folder, and its Image column is empty because the
      picture never went to postimg in the first place. Nothing to report. */
   if (!link && art.has(id)) continue;
-  if (!link) { problems.push(`${name}: no link in the Image column`); continue; }
+  if (!link) {
+    /* A tab that carries no link at all is waiting on its art rather than missing
+       it, and every row in it would otherwise say the same thing — the
+       Enchantments tab alone is 23 rows, which is exactly the wall of noise this
+       list is meant not to become. What still warns is a row with no link on a tab
+       where other rows have one, because that is a picture that went missing.
+
+       Before the registry widened on 2026-08-20 these rows were quiet for the
+       wrong reason: an enchantment's name resolved to nothing, so the row read as
+       one this importer did not own. It owns them now. */
+    if (!row[TAB]?.linked) continue;
+    problems.push(`${name}: no link in the Image column`);
+    continue;
+  }
 
   const file = path.join(OUT, `${id}.webp`);
 

@@ -10,6 +10,11 @@
  * a card needs a sentence. A round trip checks the `effect` strings, the tags and
  * the burdens, never the bodies.
  *
+ * **Two rows here are not off that sheet**, and both are marked where they sit:
+ * PREPARED, which Jules handed over in as many words on 2026-08-20, and UNIQUE
+ * IMBUEMENT, which is what a Unique spell needs in order to reach an item at all.
+ * A round trip against the sheet skips them rather than failing on them.
+ *
  * **The tiers are real now**, which is what the Enchanter's ranks 2 and 3 were
  * waiting on: ENCHANTING opens Novice at Rank 1, Adept at 2 and Master at 3, and
  * until this pull there was nothing on the other two shelves to open.
@@ -41,6 +46,8 @@
  *                 printed on every card that rolls it.
  *   healthMax     flat points of maximum Health.
  *   shieldAtCombat a dice expression rolled into Shield when combat starts.
+ *   reactionAtCombat flat Reaction Points handed over when combat starts. The
+ *                 one rider that fills a pool the bell otherwise empties.
  *   damageType    replaces the damage type of the weapon it is laid on.
  *   empower       steps every damage die that weapon rolls up a category.
  *   willpowerMax  flat points of maximum Willpower.
@@ -56,8 +63,14 @@
  * is computed: `cost` and `supplies` are written out per row rather than derived
  * from `burden`, so a row the designer reprices stays that price.
  *
- * This file is data only. It imports nothing.
+ * This file is data and its own art, and cardArt.js is the only thing it imports —
+ * itself a leaf that imports nothing, so this stays reachable without the codex
+ * coming with it. An enchantment could not carry a picture at all until the
+ * one-off drop on 2026-08-20 brought one; `art_url` is null for every row that
+ * still has none.
  */
+
+import { withArt } from './cardArt.js';
 
 /** What an Enchanter pays in Supplies for every point of Magic Burden. */
 export const SUPPLIES_PER_BURDEN = 70;
@@ -65,7 +78,7 @@ export const SUPPLIES_PER_BURDEN = 70;
 /** What a shop charges in coin for the same, which is a different economy. */
 export const COIN_PER_BURDEN = 750;
 
-export const ENCHANTMENTS = [
+export const ENCHANTMENTS = withArt([
   /* ------------------------------------------------------------ the body ----
    * The five that change what the wielder *is* rather than what their weapon
    * does. These are the ones WIELDER OF WONDER is for, and the ones an
@@ -329,6 +342,32 @@ export const ENCHANTMENTS = [
   },
 
   {
+    /* **Not off the sheet.** Jules handed this one over in chat on 2026-08-20,
+       word for word, with its burden: "PREPARED: You start each combat with 3
+       reaction points. 4 burden." Priced from the two rates the rest of the shelf
+       is priced from — 750 a point in coin, 70 a point in Supplies — which is
+       what Celerity, the other burden-4 Adept, already charges.
+
+       It is the only thing in the game that arrives at the bell with Reaction
+       Points already in hand. Every other route to one earns it inside the round:
+       ANTICIPATE converts Action Points, and the Avian lineage burns Health. See
+       `reactionAtCombat` in combatTurn.js for the pool it actually fills. */
+    id: 'prepared',
+    name: 'Prepared',
+    kind: 'passive',
+    tags: ['Adept Enchantment', 'Body'],
+    tier: 'Adept',
+    burden: 4,
+    cost: 3000,
+    supplies: 280,
+    reactionAtCombat: 3,
+    effect: 'You start each combat with 3 reaction points.',
+    body:
+      'The wielder comes to the bell already braced.\n\n' +
+      'Starting a fight hands them 3 Reaction Points, where everyone else begins a fight with none and earns theirs inside the round.',
+  },
+
+  {
     id: 'crawler',
     name: 'Crawler',
     kind: 'passive',
@@ -434,7 +473,50 @@ export const ENCHANTMENTS = [
       'A single Master Spell is bound into the item.\n\n' +
       'Whoever wields it may cast that spell, paying its costs as normal, whether or not they can cast spells of their own.',
   },
-];
+
+  /* ------------------------------------------------------------ the unique ----
+   * One, and no rank opens it.
+   *
+   * A Unique Spell is not on any school's shelf — it exists on one item and
+   * nowhere else (Deep Sea Accretion, on the Deep Sea Trident, is the first).
+   * Something still has to be the working that binds it, because an item-carried
+   * spell reaches the Abilities tab through its `enchants` entry and through
+   * nothing else (see gearSource in abilitySources.js).
+   *
+   * So this is that working, and `unique` is what keeps it off the Enchanter's
+   * shelf: no rank lists a Unique tier, and `enchantOptions` drops the row
+   * outright rather than refusing it as "needs a higher rank", which is the one
+   * thing a higher rank will never fix.
+   */
+
+  {
+    id: 'unique-imbuement',
+    name: 'Unique Imbuement',
+    kind: 'passive',
+    tags: ['Unique Enchantment', 'Imbuement'],
+    tier: 'Unique',
+    /* No Enchanter lays this. It comes on the item. */
+    unique: true,
+    /* Level with Master Imbuement, which is the top of the ladder, and priced at
+       the shelf's own two rates. Unique is not a rank above Master: burden on this
+       sheet tracks what a working is *worth*, and a Unique spell is rarer than a
+       Master one rather than stronger. Deep Sea Accretion, the first of them, sits
+       around Adept for power.
+
+       Jules's to reprice. Sitting it above Master instead would put the Deep Sea
+       Trident past what a level-1 character can carry at all (capacity is Level +
+       Mind + 10), which is a real decision and not one to make by feel. */
+    burden: 9,
+    cost: 6750,
+    supplies: 630,
+    spell: true,
+    spellTier: 'Unique',
+    effect: 'Enchant an item with a UNIQUE spell, allowing the wielder to cast this spell.',
+    body:
+      'A single Unique Spell is bound into the item, and there is nowhere else that spell can be found.\n\n' +
+      'Whoever wields it may cast that spell, paying its costs as normal, whether or not they can cast spells of their own.',
+  },
+]);
 
 const BY_ID = new Map(ENCHANTMENTS.map((entry) => [entry.id, entry]));
 const BY_NAME = new Map(ENCHANTMENTS.map((entry) => [entry.name.toLowerCase(), entry]));

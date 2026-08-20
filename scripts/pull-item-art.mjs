@@ -17,7 +17,7 @@
  * The whole set comes out around 0.75 MB, which is 88x smaller than the folder.
  *
  * ------------------------------------------------------------------ the flow
- *   1. walk data/<Folder>/ for pictures — Armor today, Weapons the day one lands
+ *   1. walk data/<Folder>/ for pictures — a shelf's folder, or the one-off folder
  *   2. match each file to a codex item by its printed name
  *   3. resize, encode, write public/items/
  *   4. rewrite src/lib/itemArt.js
@@ -159,12 +159,25 @@ const { ITEMS, CATEGORY_ORDER, itemCategory } = await import(
   path.join(ROOT, 'src/lib/items.js').replace(/\\/g, '/').replace(/^/, 'file:///')
 );
 
+/**
+ * Every printed card name, so the shared folder can tell whose file is whose.
+ *
+ * Only `data/OF/` needs this. A shelf folder holds items and nothing else, so a
+ * name it cannot place there is a real problem and is reported as one. The one-off
+ * folder holds both kinds, and a card's picture sitting in it is pull-card-art.mjs's
+ * to place, not a mistake for this script to report.
+ */
+const { CARDS } = await import(
+  path.join(ROOT, 'src/lib/weapons.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+);
+const cardNames = new Set(CARDS.map((card) => flatten(card.name)));
+
 const idByName = new Map(ITEMS.map((item) => [item.name.toLowerCase(), item.id]));
 
 /* --------------------------------------------------------------- the folders */
 
 /**
- * Every picture under a `data/` subfolder named for an inventory shelf, as
+ * Every picture under a `data/` subfolder this script owns, as
  * `{ folder, file, name }`.
  *
  * A folder is claimed by the shelf it fills — `data/Armor/` is the Armor shelf
@@ -173,14 +186,32 @@ const idByName = new Map(ITEMS.map((item) => [item.name.toLowerCase(), item.id])
  * where every drop lands, and a folder of *card* art (`data/Mycomancer/`) is
  * pull-card-art.mjs's to place, not this script's. Claiming every subfolder
  * would have this one reporting two talent cards as items it cannot find.
+ *
+ * ------------------------------------------------------------------ the one-off
+ * `data/OF/` is the exception, and it is claimed by both scripts. Jules put it
+ * there on 2026-08-20 for "images for one off things": a sword, a trident, a tome,
+ * and the cards two of them carry. A one-off arrives as one thing rather than as a
+ * shelf or a set, so there is no folder it could be named for, and this is the
+ * folder it lands in instead.
+ *
+ * Both scripts walking it is the point. Each places what it recognises and stays
+ * quiet about the rest — see `cardNames` above — so a card in there is not
+ * reported here as an item that cannot be found. A name that is *both*, which
+ * "Druidic Tome" is, gets placed twice on purpose: the belt tile and the card
+ * plate are different crops of the same picture.
  */
 const SHELVES = new Set(CATEGORY_ORDER.map(flatten));
+
+/** The folder both scripts walk. Kept in step with pull-card-art.mjs. */
+const ONE_OFF = 'of';
 
 function pictures() {
   if (!existsSync(DATA)) return [];
 
+  const mine = (name) => SHELVES.has(flatten(name)) || flatten(name) === ONE_OFF;
+
   return readdirSync(DATA, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && SHELVES.has(flatten(entry.name)))
+    .filter((entry) => entry.isDirectory() && mine(entry.name))
     .flatMap((dir) =>
       readdirSync(path.join(DATA, dir.name))
         .filter((file) => IMAGE_FILE.test(file))
@@ -240,7 +271,16 @@ for (const picture of pictures()) {
 
   const id = itemIdFor(picture.name);
   if (!id) {
-    problems.push(`${picture.folder}/${picture.name}: the codex has no item by that name`);
+    /* In the shared folder, a card's picture is not this script's to place and not
+       this script's to complain about. A name that is neither an item nor a card
+       still is: that is a misspelling, and both scripts will say so, which is the
+       right number of times for a file nobody can place. */
+    const shared = flatten(picture.folder) === ONE_OFF;
+    if (shared && cardNames.has(flatten(picture.name))) continue;
+    problems.push(
+      `${picture.folder}/${picture.name}: the codex has no item by that name` +
+        (shared ? ' (nor a card)' : '')
+    );
     continue;
   }
 
@@ -288,7 +328,9 @@ for (const picture of pictures()) {
 
 /* An item on a shelf this run covered that still has no picture. Only the
    shelves that were actually scanned are reported, so a codex full of weapons
-   does not read as 21 problems on an Armor-only drop. */
+   does not read as 21 problems on an Armor-only drop. `OF` flattens to a name no
+   category carries, so the one-off folder asks for nothing here: it is a handful
+   of pictures, not a shelf that ought to be complete. */
 const scanned = new Set([...folders].map(flatten));
 for (const item of ITEMS) {
   if (!scanned.has(flatten(itemCategory(item)))) continue;

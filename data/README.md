@@ -51,6 +51,7 @@ doing on its own.
 | Talent Set · Draconic Bond · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
 | Draconic Bond art, from the `Draconic Bond/` folder | **2026-08-20, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | Talent Set · Enchanter · Ability, amended | **2026-08-20, 4 cards** (3 on 08-19) | `src/lib/talents.js`, exported to `data/templates/` |
+| One-off things, handed over in chat | **2026-08-20, 5 of them** | see [the one-offs](#the-one-offs-2026-08-20) |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -62,6 +63,12 @@ column beside the live one, so the Catalyst balance pass below reads as a diff
 rather than a claim, and `enchantments.csv` carries what each one costs to lay and
 what its sentence was turned into mechanically. Diff a fresh download against those to see exactly what
 changed before asking for a pull.
+
+**`enchantments.csv` is the sheet's 23 rows and not the codex's 25.** PREPARED and
+UNIQUE IMBUEMENT came from chat rather than from the tab, so putting them in the
+template would make every future diff read as two rows the designer has lost.
+They are marked in `src/lib/enchantments.js` where they sit, and a round trip
+skips them. If they reach the sheet, the template is where they land.
 
 ## The armor
 
@@ -992,6 +999,197 @@ level. **The drop in `data/` is left exactly as it arrived.**
    labour at the same price, and the wielder carries both burdens. It also fills
    a rank that until now added no card at all.
 
+## The one-offs, 2026-08-20
+
+Five things, handed over in chat rather than on a tab, and one folder to hold
+their pictures.
+
+> "First: Add an Adept Enchantment 'PREPARED: You start each combat with 3
+> reaction points.' 4 burden. The create en enchanted one-hand sword called
+> Patien whci that enchantement, making it rare."
+>
+> "Second: create a 'UNIQUE SPELL - ELEMENAL - WATER' … Then make a tride (its a
+> bo start with sharp damage) enchante with this special spell on it. The triden
+> is also enchant with cold enhancement."
+>
+> "Then a special called Druidic Tome - which hte player can have on their
+> utility belt. The item can be used ocne a day to auto succeed on a skill check
+> related to nature."
+
+| What | Where it landed |
+| ---- | --------------- |
+| PREPARED, an Adept enchantment, 4 burden | `src/lib/enchantments.js` |
+| Patien, a Rare one-handed sword carrying it | `src/lib/weapons.js` (`WEAPONS`) |
+| Deep Sea Accretion, the first Unique spell | `src/lib/spells.js` |
+| Trident, and the Deep Sea Trident that carries the spell | `src/lib/weapons.js`, both arrays |
+| Druidic Tome, a belt item | `src/lib/utility.js`, both arrays |
+
+### PREPARED, and the one pool the bell used to empty
+
+Nothing in the game had ever put a Reaction Point *in*. They are earned inside a
+round — ANTICIPATE converts Action Points, the Avian lineage burns Health — and
+the start of a fight is the one place the sheet clears them, on purpose:
+`startCombat` sets them to nothing because a new fight has none earned yet.
+
+"You start each combat with 3 reaction points" is the first thing to contradict
+that, so it needed a rider rather than a sentence. `reactionAtCombat` is that
+rider, summed in `grantsFrom` beside the rest and read once, at the bell, by the
+new `combatReactionGrant` in `combatTurn.js`. It is capped at `reaction_max` and
+can never leave a fight starting worse than it would have, which is the shape
+`combatShieldGrant` already had. The Start Combat button's note reads from it, so
+what the button promises is what it does.
+
+Priced from the shelf's own two rates: 750 a point of burden in coin, 70 in
+Supplies, which is what Celerity — the other burden-4 Adept — already charges.
+
+**Three places it can come from, and they add up.** Laid on the character's own
+person, running on them for the hour, and worked into something they are wearing
+or holding. The third is Patien, and it needed a second reader:
+`allGrants` is what is laid on the *character*, and an enchantment on a **thing**
+never reached it. It never had to — the three enchanted weapons already in the
+codex carry a damage type, a light and a spell, and all three of those are read
+off `item.enchants` somewhere else. Patien is the first item to carry a rider
+that moves a pool, so `combatReactionEffects` in `items.js` is where an item's
+riders are read from now. Worn and in hand only: what is in the pack is not on
+you, and a loop on the belt is reached for rather than carried into the fight.
+
+**One gap is still open.** An item carrying VITALITY or RESILIENCE would still
+hand its wielder nothing, because `deriveStats` reads only the worn and running
+halves. Nothing in the codex does carry one, so nothing is wrong today. Closing
+it means changing numbers `syncDerived` bakes into stored columns, which is a
+bigger change than one bell-time grant and wants your word first.
+
+### A Unique spell, and how it reaches an item
+
+DEEP SEA ACCRETION is tagged `Unique Spell · Elemental · Water`, and none of
+those three words existed before. **Unique is not a rank.** It is a spell that
+lives on one item and nowhere else, and two gates already keep it out of every
+pool without a line being added to either: `loadoutOptions` refuses a card whose
+school is not the set's and Elemental is nobody's school, and `spellsAt` matches
+the tier word, which Novice, Adept and Master do not.
+
+What it *did* need is a working to bind it, because an item-carried spell reaches
+the Abilities tab through its `enchants` entry and through nothing else (see
+`gearSource` in `abilitySources.js`). So UNIQUE IMBUEMENT is new, and it carries a
+`unique` flag that `enchantOptions` drops outright. Every other row a rank cannot
+reach comes back marked "Adept needs a higher rank", which is true and useful; a
+Unique Imbuement is not waiting on a rank and never will be.
+
+Two edits to the words as given, and nothing else: "5 Hour" reads "5 hours", and
+"each Ice Spikes consumed" reads "each Ice Spike consumed".
+
+**Both halves say `{mind}` rather than `{stat}`**, which is the exception
+`spells.js` allows rather than the rule it sets. The cap is "half your Mind" and
+there is no live token for a half, so the codex writes those as the attribute's
+name — DEEPENING CONNECTION already writes "half of your `{instinct}`". Having the
+cap name Mind while the attack said `{stat}` would let a set that recast the spell
+in Instinct build spikes against one attribute and throw them with another.
+
+### The trident, and what its enchantments do not touch
+
+"A bo staff with sharp damage", so the two cards are the Bo Staff's two moves with
+the type changed: same reach, same Action Points, same Willpower on the sweep.
+Its own cards rather than the staff's, because the type is on the card and not on
+the item — reusing `bo-staff-slam` would have printed Blunt on a trident, and an
+infusion on the trident would have changed what every bo staff in the game deals.
+Slam is Impale here, since the thing has a point on the end now.
+
+The Deep Sea Trident carries **two** workings, which is one more than the
+Enchanter's own rule allows and the same licence GRAVE-LANTERN BLADE already takes
+with three: the rule is what an Enchanter may *lay*, not what the world may
+contain. Cold Infusion turns the prongs' Sharp into Cold and Empowers them, so
+Impale prints `3d6` in Cold. The spell it carries is dealt **without** the item's
+modifiers, on purpose, so the Ice Spikes stay Sharp: an infusion changes what the
+weapon hits for, not what a spell cast through it hits for.
+
+### Two things for the designer
+
+1. **The Deep Sea Trident's name is not yours.** You asked for "a trident" and
+   left it there, so it is named the way the codex names its other enchanted
+   weapons — Cold-Infused Sword, Grave-Lantern Blade. Renaming it costs the id
+   and the two art filenames and nothing else. Its rarity is a guess too: Epic,
+   because Grave-Lantern Blade is Rare with three ordinary workings and this holds
+   a spell no shelf stocks.
+2. **UNIQUE IMBUEMENT weighs 9, level with Master Imbuement.** Burden on this
+   sheet tracks what a working is worth, and a Unique spell is rarer than a Master
+   one rather than stronger — Deep Sea Accretion sits around Adept for power.
+   Sitting it above Master instead would put the trident past what a level-1
+   character can carry at all, capacity being Level + Mind + 10, which is a real
+   decision and not one to make by feel.
+
+### The Druidic Tome says a day and tracks a rest
+
+The sheet has no clock and no calendar: Short Rest and Long Rest are the only two
+boundaries it knows. So the card prints the day you named and `recharge` is the
+long one, which at a table that rests nightly is the same sentence.
+
+No Action Points and no Willpower, the way Thief's Picks costs neither — a skill
+check is not a turn. What counts as "related to nature" is the table's, which is
+how every other domain on the sheet works, and the card names the same ground the
+Naturalist background skill names so the two do not drift.
+
+### `data/OF/` — the folder both importers walk
+
+A one-off arrives as one thing rather than as a shelf or a set, so it has no
+folder it could be named for. `data/OF/` is the folder it lands in instead, and it
+is the first directory under `data/` that **both** art scripts claim.
+
+Each places what it recognises and stays quiet about the rest:
+`pull-item-art.mjs` reads the card registry only so it can tell that a card's
+picture is not its business, and `pull-card-art.mjs` reads the item registry for
+the same reason. A name that is neither is reported by both, which is the right
+number of times for a file nobody can place. A name that is **both** — "Druidic
+Tome" is, and every belt item is — is placed twice on purpose: the card plate and
+the belt tile are different crops of one picture.
+
+Drop the pictures in named for the thing they show, then run `npm run art`:
+
+| File in `data/OF/` | Where it lands |
+| ------------------ | -------------- |
+| `Patien.jpg` | `public/items/patien.webp` |
+| `Trident.jpg` | `public/items/trident.webp` |
+| `Deep Sea Trident.jpg` | `public/items/deep-sea-trident.webp` |
+| `Druidic Tome.jpg` | `public/items/druidic-tome.webp` **and** `public/cards/druidic-tome.webp` |
+| `Deep Sea Accretion.jpg` | `public/cards/deep-sea-accretion.webp` |
+| `Prepared.jpg` | `public/cards/prepared.webp` |
+| `Trident - Impale.jpg` | `public/cards/trident-impale.webp` |
+
+Punctuation and case are flattened before matching, so `deep sea trident.png` is
+the same file. A picture redrawn under the same name replaces itself; when two
+files claim one thing the newest wins and the run names the one it set aside.
+
+### Three registries that could not carry a picture
+
+`WEAPON_ABILITIES`, `ENCHANTMENTS` and `UTILITY_CARDS` were never wrapped in
+`withArt`, because until this drop nothing in them had a picture. A file placed
+for one would have shipped in `public/cards/` and been read by nothing, which is
+the worst way to lose art: silently. All three are wrapped now, and
+`pull-card-art.mjs` reaches them, so `Prepared.png` is placed rather than reported
+as a name the codex has never heard of.
+
+Not `LINEAGE_CARDS` or `BACKGROUND_CARDS`. Those modules hand the same object out
+twice — once flattened into the registry and once on the lineage or background
+itself — so wrapping the flat copy alone would give a picture to the codex and not
+to the sheet. Until they are wrapped the way `talents.js` wraps its sets, a file
+named for one is better reported than half-placed.
+
+### The run's report got quieter, and on purpose
+
+Widening the registry had a cost: an enchantment's name now resolves to a card,
+so all 23 rows of the Enchantments tab started reporting "no link in the Image
+column" on every run — the exact wall of noise that list is meant not to become.
+
+A tab that carries no link **anywhere** is waiting on its art rather than missing
+it, so its rows are quiet now. What still warns is a row with no link on a tab
+where other rows have one, because that is a picture that went missing. Three
+Enchanter rows went quiet for the same reason, correctly.
+
+One problem is left on a clean run, and it is real: `FOUR-LEAF CLOVER: the codex
+has no card by that name`. That Ingredient was split into Lucky Clover and Unlucky
+Clover on 19 Aug 2026 and the sheet still carries the old row, which is exactly
+what the warning is for. `public/cards/four-leaf-clover.webp` is an orphan from
+before the split and can go whenever the row does.
+
 ## The columns
 
 The sheets already have a shape and the importer reads that shape rather than
@@ -1206,8 +1404,13 @@ only folders named for an inventory shelf.
 
 They are placed now, by the other importer. `pull-card-art.mjs` grew the folder
 pass this section used to say was missing: it claims folders named for a
-**talent set** the same way this one claims folders named for a shelf, and the
-two never reach for the same directory. See "the two sources" below.
+**talent set** the same way this one claims folders named for a shelf. See "the
+two sources" below.
+
+**One directory is shared, and only one.** `data/OF/` holds one-off things, which
+arrive as one thing rather than as a shelf or a set, so both scripts walk it and
+each stays quiet about the other's files. See
+[the one-offs](#the-one-offs-2026-08-20).
 
 **Who sees them** is the same question and the same answer as card art: a paid
 capability, `showsArt` in `src/lib/tiers.js`, applied in

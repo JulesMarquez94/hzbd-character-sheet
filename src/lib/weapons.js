@@ -40,6 +40,7 @@
  * two — there is no third target number.
  */
 
+import { withArt } from './cardArt.js';
 import { SPELLS } from './spells.js';
 import { ENCHANTMENTS, getEnchantment } from './enchantments.js';
 import { INGREDIENTS } from './ingredients.js';
@@ -90,7 +91,7 @@ export { SPELLS };
  * then shows the card, so the reader never has to be told what they just spent
  * points on.
  */
-export const ACTION_CARDS = [
+export const ACTION_CARDS = withArt([
   {
     id: 'swap-weapons',
     name: 'Swap Weapons',
@@ -103,7 +104,7 @@ export const ACTION_CARDS = [
       'You stow the weapon in your hands and draw the one you were carrying, so the two change places.\n\n' +
       'Whatever the drawn weapon teaches is yours from this moment; the stowed one takes its cards back with it.',
   },
-];
+]);
 
 /* ------------------------------------------------------------ weapon cards */
 
@@ -111,7 +112,7 @@ export const ACTION_CARDS = [
  * Every weapon teaches two cards: the plain attack it makes, and the special
  * move that costs more (and usually Willpower) to pull off.
  */
-export const WEAPON_ABILITIES = [
+export const WEAPON_ABILITIES = withArt([
   /* ----- Bo Staff ----- */
   {
     id: 'bo-staff-slam',
@@ -135,6 +136,44 @@ export const WEAPON_ABILITIES = [
     wp: 1,
     stat: 'instinct',
     damage: ['Blunt'],
+    body:
+      'Make an {stat} Melee Attack {roll} against all entities within 3 Meter (10 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
+  },
+
+  /* ----- Trident -----
+   * The Bo Staff's two moves with the damage type changed, which is the whole of
+   * what a trident is: Jules put it as "a bo staff with sharp damage" on
+   * 2026-08-20. Same reach, same points, same Willpower on the sweep — the prongs
+   * only change what the hit is made of.
+   *
+   * Its own cards rather than the staff's, because the type is on the card and not
+   * on the item. Reusing bo-staff-slam would have printed Blunt on a trident, and
+   * an infusion on the trident would have changed what every bo staff in the game
+   * deals. Slam is Impale here, since the thing now has a point on the end.
+   */
+  {
+    id: 'trident-impale',
+    name: 'Trident - Impale',
+    kind: 'ability',
+    tags: ['Melee', 'Weapon Attack'],
+    ap: 4,
+    wp: null,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Melee Attack {roll} against an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
+  },
+  {
+    id: 'trident-swipe',
+    name: 'Trident - Swipe',
+    kind: 'ability',
+    tags: ['Melee', 'Special Weapon Attack'],
+    ap: 4,
+    wp: 1,
+    stat: 'instinct',
+    damage: ['Sharp'],
     body:
       'Make an {stat} Melee Attack {roll} against all entities within 3 Meter (10 Feet) of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
@@ -551,7 +590,7 @@ export const WEAPON_ABILITIES = [
       'Make an {stat} Melee Attack {roll} against an entity within 1.5 Meter (5 Feet) of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage and gain Shield equal to [[stat]].',
   },
-];
+]);
 
 /* -------------------------------------------------------------- the weapons */
 
@@ -571,6 +610,15 @@ export const WEAPONS = [
     blurb: 'A hardwood stave the length of a man, swung in wide arcs.',
     burden: 0,
     abilities: ['bo-staff-slam', 'bo-staff-swipe'],
+  },
+  {
+    id: 'trident',
+    name: 'Trident',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Melee Weapon', 'Two-Handed'],
+    blurb: 'A three-pronged fishing spear, held like a stave and used like one.',
+    burden: 0,
+    abilities: ['trident-impale', 'trident-swipe'],
   },
   {
     id: 'daggers',
@@ -738,6 +786,53 @@ export const WEAPONS = [
     lore:
       'Hedge-work, not guild-work: the vines were grown into the barrel rather than chased onto it, and they are still alive.\n\n' +
       'The spell bound inside answers once, then sulks until its bearer has slept.',
+  },
+  {
+    /* Jules's, named by them on 2026-08-20: "an enchanted one-hand sword called
+       Patien with that enchantment, making it rare." The enchantment is PREPARED,
+       which is where the name comes from — the blade is the waiting, not the
+       swing. It teaches the plain one-handed cards and changes nothing about how
+       it hits; what it changes is what its wielder brings to the bell. */
+    id: 'patien',
+    name: 'Patien',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Rare', 'Melee Weapon', 'One-Handed'],
+    blurb: 'A plain one-handed sword that never seems to be caught off guard.',
+    burden: 0,
+    abilities: ['one-handed-strike', 'one-handed-swift-strike'],
+    enchants: [{ id: 'prepared' }],
+    enchantText: 'This blade is enchanted with {{Prepared}}.',
+    lore:
+      'Its maker is not recorded and its edge is unremarkable. What is remarkable is that nobody carrying it has ever been the last to move.\n\n' +
+      'Duellists call the feeling the half-second, and swear the blade is already turning before they have decided to turn it. The guild examiners who took one apart found nothing in the steel and wrote it up as temperament.',
+  },
+  {
+    /* The trident Deep Sea Accretion lives on, and the only thing in the codex
+       carrying a Unique Imbuement. Epic rather than Rare: Grave-Lantern Blade is
+       Rare with three ordinary workings, and this holds a spell no shelf stocks.
+
+       **Two workings, and the codex names them separately.** Cold Infusion turns
+       the prongs' Sharp into Cold, which is the trident's own two cards. The
+       imbuement's spell is dealt without the item's modifiers on purpose (see
+       gearSource in abilitySources.js), so Deep Sea Accretion's Ice Spikes stay
+       Sharp: the infusion changes what the weapon hits for, not what a spell cast
+       through it hits for.
+
+       Named here rather than by Jules, who asked for "a trident" and left it at
+       that. Renaming it means this id and the two art filenames, nothing else. */
+    id: 'deep-sea-trident',
+    name: 'Deep Sea Trident',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Epic', 'Melee Weapon', 'Two-Handed'],
+    blurb: 'A barnacled trident that sheds frost and keeps ice in orbit around whoever holds it.',
+    burden: 0,
+    abilities: ['trident-impale', 'trident-swipe'],
+    enchants: [{ id: 'unique-imbuement', spell: 'deep-sea-accretion' }, { id: 'cold-infusion' }],
+    enchantText:
+      'Two workings share this haft: a {{Unique Imbuement}} holding {{Deep Sea Accretion}}, and {{Cold Infusion}} in the prongs.',
+    lore:
+      'Dredged up rather than forged, off a shelf where the water is cold enough that the pressure keeps it from freezing.\n\n' +
+      'It is heavier out of the sea than in it, and the ice it grows will not melt indoors. Every owner has been told the same thing by the last one: spend freely, and count the shards.',
   },
   {
     id: 'grave-lantern-blade',

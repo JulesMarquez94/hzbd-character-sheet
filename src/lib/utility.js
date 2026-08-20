@@ -17,10 +17,17 @@
  * Card bodies are authored with the same markers as every other card in the
  * game — see the header of weapons.js for what each one means.
  *
- * Healing Potion and Terra Cotta Disk are the printed cards. The rest are
- * stand-ins written in the same voice, so there is something to fill a belt
- * with until their own cards exist.
+ * Healing Potion and Terra Cotta Disk are the printed cards. Druidic Tome is
+ * Jules's, handed over in chat on 2026-08-20. The rest are stand-ins written in
+ * the same voice, so there is something to fill a belt with until their own cards
+ * exist.
+ *
+ * The cards carry art from 2026-08-20, when the one-off drop brought a picture for
+ * the Druidic Tome. `art_url` is null for the rest, which is every card that has
+ * no picture yet rather than a card that cannot have one.
  */
+
+import { withArt } from './cardArt.js';
 
 /* --------------------------------------------------------------- the cards */
 
@@ -28,7 +35,7 @@
  * One card per item, named the same as the item it belongs to — reaching for
  * a potion is the whole of what a potion does.
  */
-export const UTILITY_CARDS = [
+export const UTILITY_CARDS = withArt([
   /* ----- consumables ----- */
   {
     id: 'healing-potion',
@@ -110,6 +117,35 @@ export const UTILITY_CARDS = [
       'Open, it lights 9 meters (30 feet) around you and burns for 6 hours on one filling of oil. Closed, it keeps its flame and shows nothing.',
   },
   {
+    /* Jules's, 2026-08-20: "a special called Druidic Tome — which the player can
+       have on their utility belt. The item can be used once a day to auto succeed
+       on a skill check related to nature."
+
+       **A day, printed; a Long Rest, tracked.** The sheet has no clock and no
+       calendar — Short Rest and Long Rest are the only two boundaries it knows —
+       so `recharge` is the long one and the card prints the day the designer said.
+       At a table that rests nightly they are the same sentence.
+
+       No Action Points and no Willpower, the way Thief's Picks costs neither: a
+       skill check is not a turn, and nothing about looking something up in a book
+       is paid for in combat.
+
+       What counts as "related to nature" is the table's, which is how every other
+       domain on this sheet works — see the Background skills, where Naturalist is
+       "a creature, plant, venom or disease". The card names that same ground so
+       the two do not drift. */
+    id: 'druidic-tome',
+    name: 'Druidic Tome',
+    kind: 'item',
+    tags: ['Item', 'Usable'],
+    ap: null,
+    wp: null,
+    body:
+      'You look the answer up instead of guessing at it.\n\n' +
+      'Once a day, you succeed automatically on a skill check to do with the natural world — a plant, a beast, a venom or disease, the weather, or the ground you are standing on.\n\n' +
+      'The tome is spent once it has answered, and has nothing more to say until you have taken a Long Rest.',
+  },
+  {
     id: 'thiefs-picks',
     name: "Thief's Picks",
     kind: 'item',
@@ -120,7 +156,7 @@ export const UTILITY_CARDS = [
       'Working the picks opens a mundane lock, given 1 minute, a free hand, and quiet enough to hear the pins.\n\n' +
       'A lock built against picking, or one held shut by a working, is beyond them.',
   },
-];
+]);
 
 /* --------------------------------------------------------------- the items */
 
@@ -216,6 +252,21 @@ export const UTILITY_ITEMS = [
     burden: 0,
     abilities: ['storm-lantern'],
     blurb: 'A shuttered lamp that keeps its flame in any wind.',
+  },
+  {
+    id: 'druidic-tome',
+    name: 'Druidic Tome',
+    slots: ['belt'],
+    tags: ['Rare', 'Usable', 'Relic'],
+    use: 'usable',
+    charges: 1,
+    recharge: 'Long Rest',
+    burden: 0,
+    abilities: ['druidic-tome'],
+    blurb: 'A living book — bark boards, pressed leaves, and an index that rearranges itself.',
+    lore:
+      'Circle work, copied out of the standing groves and never twice the same way. Two tomes opened side by side will not agree on their page numbers and will agree on every answer.\n\n' +
+      'It gives one a day and no more. Pressed for a second, the leaves close over the page and the book smells strongly of wet earth.',
   },
   {
     id: 'thiefs-picks',

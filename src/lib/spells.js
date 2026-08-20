@@ -22,9 +22,9 @@ import { withArt } from './cardArt.js';
  * school it belongs to, and the family inside that school. Those three are what
  * a talent set draws on, so they are the tags and not prose.
  *
- *   tier    Novice Spell · Adept Spell · Master Spell
- *   school  Primal · Nature · Arcane
- *   family  Flora · Wild · Life · Blood · Energy
+ *   tier    Novice Spell · Adept Spell · Master Spell · Unique Spell
+ *   school  Primal · Nature · Arcane · Elemental
+ *   family  Flora · Wild · Life · Blood · Energy · Water
  *
  * ------------------------------------------------------------------ modular
  * Nothing here names an attribute it does not have to. Every spell is written
@@ -33,6 +33,18 @@ import { withArt } from './cardArt.js';
  * carries `cast: 'instinct'` (see castModifier in loadouts.js), so the same
  * card printed in their hand reads Instinct and prints Instinct's numbers.
  * Write `{mind}` on a spell only if it must be Mind for every caster alive.
+ *
+ * ---------------------------------------------------------------- the unique
+ * **A Unique Spell is not a rank.** It is a spell that exists on one item and
+ * nowhere else, so no talent set can ever prepare it and no rank opens it: it
+ * arrives through a Unique Imbuement on the thing that carries it (see
+ * enchantments.js) and leaves again when the item does.
+ *
+ * Two gates already keep it out of every pool without a line being added to
+ * either. `loadoutOptions` refuses a card whose school is not the set's, and
+ * Elemental is nobody's school; `spellsAt` in EnchantWindow.jsx matches the
+ * tier word, and Novice, Adept and Master do not match Unique. So the only way
+ * to hold one is to hold the item.
  *
  * The one attribute named outright is {physique}, on the Blood Tithe halves:
  * what a tithe costs is paid by the body, not by whatever the caster happens to
@@ -494,5 +506,39 @@ export const SPELLS = withArt([
     sub_name: 'Overcast',
     sub_body:
       'When a trapped entity attempts to break out of the sphere, you may spend 2 Willpower. If you do, that entity makes their breakout roll with Disadvantage.',
+  },
+
+  /* --------------------------------------------------- Elemental · Water ---- */
+  {
+    /* Not off the Primal sheet. Jules handed this one over in chat on 2026-08-20
+       as "UNIQUE SPELL - ELEMENTAL - WATER", and the trident it lives on came
+       with it. Two spellings corrected on the way in and nothing else: "5 Hour"
+       reads "5 hours", and "each Ice Spikes consumed" reads "each Ice Spike
+       consumed". "ELEMENAL" in the heading is Elemental.
+
+       **{mind}, not {stat}**, both halves, which is the exception the header
+       above allows rather than the rule it sets. The cap is "half your Mind" and
+       there is no live token for a half — the codex writes those as the
+       attribute's name, the way Deepening Connection writes "half of your
+       {instinct}". Having the cap name Mind while the attack said {stat} would
+       let a set that recast this in Instinct build spikes against one attribute
+       and throw them with another. Nothing can recast it — Elemental is nobody's
+       school — so both halves name the one attribute the designer named. */
+    id: 'deep-sea-accretion',
+    name: 'Deep Sea Accretion',
+    summary: 'A freezing aura turns spent Willpower into orbiting Ice Spikes. Overcast throws them all at once.',
+    kind: 'spell',
+    tags: ['Unique Spell', 'Elemental', 'Water'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    damage: ['Sharp'],
+    body:
+      'For the next 5 hours, you manifest a freezing aura that crystallizes your spent energy into jagged shards of ice.\n\n' +
+      'Every 4 Willpower you spend, you form an Ice Spike that orbits your body, up to a maximum equal to half your {mind}.',
+    sub_name: 'Overcast',
+    sub_body:
+      'You may spend 3 Action Points to hurl all active Ice Spikes at a single target you can see within 18 meters (60 feet).\n\n' +
+      'Make a {mind} Ranged Attack {roll} against the target. On a hit, you deal [[1d6 + mind]] in {damage} damage for each Ice Spike consumed.',
   },
 ]);

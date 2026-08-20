@@ -829,6 +829,48 @@ export function combatStartEffects(character) {
     .filter((entry) => entry.shield > 0);
 }
 
+/**
+ * The Reaction Points equipped gear hands over at the bell, per item.
+ *
+ * PREPARED is the only enchantment that grants any, and Patien is the only thing
+ * in the codex carrying it: "you start each combat with 3 reaction points."
+ *
+ * ------------------------------------------------- why this is not in allGrants
+ * `allGrants` in enchanting.js is what is laid on the *character* — on their own
+ * person, or running on them for the hour. An enchantment on a **thing** never
+ * reached it, and never had to: the three enchanted weapons in the codex carry a
+ * damage type, a light and a spell, and all three of those are read off
+ * `item.enchants` somewhere else (`itemModifiers`, `gearSource`). Patien is the
+ * first item to carry a rider that moves a *pool*, so this is where an item's
+ * riders are read from.
+ *
+ * **The wider gap is still open**, and it is flagged in data/README.md: an item
+ * carrying VITALITY or RESILIENCE would still hand its wielder nothing, because
+ * `deriveStats` reads only the worn and running halves. Nothing in the codex does
+ * carry one, and closing it means changing numbers that `syncDerived` bakes into
+ * stored columns — a bigger change than one bell-time grant.
+ *
+ * `heldItem` rather than `getItem`, so an Enchanter who laid PREPARED on their own
+ * blade is holding a blade that has it. Worn and in-hand only: what is in the pack
+ * is not on you, and a loop on the belt is reached for rather than carried into
+ * the fight.
+ */
+export function combatReactionEffects(character) {
+  const worn = normalizeEquipment(character?.equipment);
+
+  return Object.keys(worn)
+    .map((slot) => heldItem(character, worn[slot]))
+    .filter(Boolean)
+    .map((item) => ({
+      item,
+      reaction: itemEnchantments(item).reduce(
+        (sum, { enchantment }) => sum + Math.max(0, Math.floor(Number(enchantment.reactionAtCombat) || 0)),
+        0
+      ),
+    }))
+    .filter((entry) => entry.reaction > 0);
+}
+
 /* ------------------------------------------------------------- the overview */
 
 /**

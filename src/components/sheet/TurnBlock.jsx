@@ -6,6 +6,7 @@ import { isEnchanter } from '../../lib/enchanting.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
+  combatReactionGrant,
   combatShieldGrant,
   dropEffect,
   endCombat,
@@ -214,9 +215,13 @@ function turnNote(turn, character) {
   // Read from the same math as the button, so with enough Shield already up
   // the note stops promising a grant that would not happen.
   const grant = combatShieldGrant(character);
+  /* PREPARED is the one thing that comes to the bell with reactions in hand, so
+     the note says the number the pool will actually hold rather than the zero
+     every other character starts on. */
+  const braced = combatReactionGrant(character);
   const parts = [
     `Action Points to ${character.ap_max}`,
-    'Reaction Points to 0',
+    `Reaction Points to ${braced ? braced.next : 0}`,
     ...(grant ? [`Shield to ${grant.next} from ${grantSource(grant)}`] : []),
   ];
 

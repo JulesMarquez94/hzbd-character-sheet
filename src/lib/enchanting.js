@@ -361,6 +361,9 @@ function noGrants() {
     /* Printed rather than computed. Barrier grants "2d6 in Shield", which is a
        roll the table makes; the sheet says so and does not invent a number. */
     shieldRolls: [],
+    /* What the bell hands over in Reaction Points. A flat number rather than a
+       roll, and PREPARED is the only thing that grants one. */
+    reactionAtCombat: 0,
     spells: [],
     burden: 0,
     any: false,
@@ -386,6 +389,7 @@ export function grantsFrom(ids) {
     total.speed += Number(entry.speed) || 0;
     total.armor += Math.floor(Number(entry.armor) || 0);
     total.restSupplies += Math.floor(Number(entry.restSupplies) || 0);
+    total.reactionAtCombat += Math.floor(Number(entry.reactionAtCombat) || 0);
     if (entry.shieldAtCombat) total.shieldRolls.push({ id: entry.id, name: entry.name, roll: entry.shieldAtCombat });
   }
 
@@ -435,6 +439,7 @@ export function allGrants(character) {
     speed: worn.speed + ephemeral.speed,
     armor: worn.armor + ephemeral.armor,
     restSupplies: worn.restSupplies + ephemeral.restSupplies,
+    reactionAtCombat: worn.reactionAtCombat + ephemeral.reactionAtCombat,
     shieldRolls: [...worn.shieldRolls, ...ephemeral.shieldRolls],
     spells: ephemeral.spells,
     burden: worn.burden,
@@ -486,13 +491,20 @@ export function restSupplyCut(character) {
  * way every other pool on the sheet reads.
  */
 
+/*
+ * A `unique` enchantment is dropped rather than refused. Every other row a rank
+ * cannot reach comes back marked "Adept needs a higher rank", which is true and
+ * useful; a Unique Imbuement is not waiting on a rank and never will be, so
+ * offering it dead would be a promise the shelf cannot keep. It comes on the
+ * item and nowhere else.
+ */
 export function enchantOptions(character, { held = [], room = Infinity } = {}) {
   const state = enchanterState(character);
   if (!state) return [];
 
   const taken = new Set(held);
 
-  return ENCHANTMENTS.map((entry) => {
+  return ENCHANTMENTS.filter((entry) => !entry.unique).map((entry) => {
     const row = { enchantment: entry, held: taken.has(entry.id) };
 
     if (!state.tiers.includes(entry.tier)) {
