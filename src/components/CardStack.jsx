@@ -6,9 +6,11 @@ import { CardStackContext } from '../context/card-stack.js';
 import { lockScroll } from '../lib/scrollLock.js';
 import { formatNumber } from '../lib/characterModel.js';
 import { ARMOR_SETS } from '../lib/items.js';
+import { forgedRecord } from '../lib/forged.js';
 import { getCard, itemEnchantments } from '../lib/weapons.js';
 import { wieldModifiers } from '../lib/items.js';
 import { ItemIcon, ItemTags, ItemValues, StatText } from './sheet/itemParts.jsx';
+import ShareCode from './sheet/ShareCode.jsx';
 import useCodexArt from './useCodexArt.js';
 
 /**
@@ -163,8 +165,12 @@ function ItemCard({ item, character, onCard, onValue }) {
      reference panel rather than a printed card, so with no picture to draw it
      grows no plate at all — the head keeps its glyph tile and the panel is
      exactly what it was before there were pictures. */
-  const artUrl = useCodexArt()(item.art_url);
+  const artUrl = useCodexArt()(item.art_url, item.artOwn ? 'lore' : 'codex');
   const enchantments = itemEnchantments(item);
+  /* Null for everything the codex shipped. A piece this player made carries the
+     code that reproduces it, and this card is the long look at an item, so this
+     is where it belongs as well as on the equip prompt. */
+  const made = forgedRecord(character, item.id);
   /* Equipped, this prints what the wielder's own enchantments do to it too;
      stowed, it prints only what is worked into the item. wieldModifiers decides
      which, because only items.js knows what is equipped. */
@@ -273,6 +279,16 @@ function ItemCard({ item, character, onCard, onValue }) {
             <div className="item-card-lore">
               <CardText text={item.lore} character={character} onValue={onValue} onLink={onCard} />
             </div>
+          </section>
+        )}
+
+        {/* Last, under everything the item *is*: a made piece carries the code
+            that reproduces it, and handing it over is the last thing anybody
+            does with an item rather than the first. */}
+        {made && (
+          <section className="item-card-section">
+            <span className="item-card-label">Made by you</span>
+            <ShareCode record={made} label="Hand it to somebody" />
           </section>
         )}
       </div>

@@ -11,10 +11,20 @@
  * Weapons live in weapons.js — they are items like any other, they just also
  * teach two ability cards while they are held. Belt items live in utility.js
  * for the same reason: one card each, and charges the belt counts down.
+ * Trinkets live in trinkets.js, and are the opposite kind of shelf: twelve
+ * pieces of jewellery with no numbers at all, there to hold a working.
+ *
+ * ------------------------------------------------------------------- the forge
+ * An id in an equipment slot is usually a codex id. It may also be a **forged**
+ * id — a piece the player made, whose record lives on their own sheet (see
+ * forged.js). `heldItem` is the one place either kind becomes an item, so nothing
+ * downstream had to learn that there are two kinds.
  */
 
 import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
-import { damageEnchants, laidEntries, wornGrants } from './enchanting.js';
+import { allGrants, damageEnchants, laidEntries, wornGrants } from './enchanting.js';
+import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
+import { TRINKET_ITEMS } from './trinkets.js';
 import { UTILITY_ITEMS } from './utility.js';
 import { withArt } from './itemArt.js';
 
@@ -44,6 +54,18 @@ export const EQUIPMENT_SLOTS = [...ARMOR_SLOTS, ...WEAPON_SLOTS];
 export const BELT_SLOT_KEY = 'belt';
 export const BELT_MAX = 5;
 export const BELT_DEFAULT = 3;
+
+/**
+ * Trinkets are not in the equipment map either, and for the opposite reason to
+ * the belt's. The belt is out because a loop *remembers* something; trinkets are
+ * out because there is no number of them. The map has one key per place and a
+ * fixed set of keys — a character wearing nine rings is wearing nine rings, so
+ * they live in their own column as a plain list, the way the pack does.
+ *
+ * A trinket is worn: it counts against Magic Burden, and whatever is worked into
+ * it is on the person wearing it. See `wornItems`.
+ */
+export const TRINKET_SLOT_KEY = 'trinket';
 
 /** One key per slot; the value is an item id or null. */
 export const EMPTY_EQUIPMENT = {
@@ -141,13 +163,97 @@ export function itemCategory(item) {
 
   const slots = item?.slots ?? [];
   if (slots.includes(BELT_SLOT_KEY)) return 'Belt Gear';
+  if (slots.includes(TRINKET_SLOT_KEY)) return 'Trinkets';
   if (WEAPON_SLOTS.some((slot) => slots.includes(slot.key))) return 'Weapons';
   if (ARMOR_SLOTS.some((slot) => slots.includes(slot.key))) return 'Armor';
   return 'Other';
 }
 
 /** Top to bottom, the order the inventory stacks its shelves in. */
-export const CATEGORY_ORDER = ['Armor', 'Weapons', 'Belt Gear', 'Other', 'Notes & Oddments'];
+export const CATEGORY_ORDER = [
+  'Armor',
+  'Weapons',
+  'Trinkets',
+  'Belt Gear',
+  'Other',
+  'Notes & Oddments',
+];
+
+/* ---------------------------------------------------------------- trinkets */
+
+/**
+ * The trinkets a character is wearing, as the sheet reads them: a plain list of
+ * ids with no ceiling and no empty places in it. A stored list may hold nulls
+ * from a half-written save or ids the codex no longer knows; the nulls go and
+ * the unknown ids stay, because `heldItem` guards every read anyway and a save
+ * may simply be newer than this build.
+ *
+ * No cap. The pack has none either, for the same reason: there is no number of
+ * things a character may own.
+ */
+export function normalizeTrinkets(value) {
+  let source = value;
+  if (typeof source === 'string') {
+    try {
+      source = JSON.parse(source);
+    } catch {
+      source = null;
+    }
+  }
+  if (!Array.isArray(source)) return [];
+
+  return source.map((entry) => (typeof entry === 'string' ? entry : null)).filter(Boolean);
+}
+
+/* ------------------------------------------------------------------ the forge */
+
+/**
+ * Every id this character's sheet points at, wherever it sits. The one answer to
+ * "does anything still refer to this?".
+ *
+ * `next` is whatever a write is about to change, so the question can be asked of
+ * the sheet as it will be rather than as it was — the only useful moment to ask
+ * it is while throwing something away.
+ */
+function heldIds(character, next = {}) {
+  const equipment = normalizeEquipment(next.equipment ?? character?.equipment);
+  const pack = normalizePack(next.pack ?? character?.pack);
+  const belt = normalizeBelt(next.belt ?? character?.belt);
+  const trinkets = normalizeTrinkets(next.trinkets ?? character?.trinkets);
+
+  return new Set([
+    ...Object.values(equipment).filter(Boolean),
+    ...pack.filter((entry) => typeof entry === 'string'),
+    ...belt.map((entry) => entry?.id).filter(Boolean),
+    ...trinkets,
+  ]);
+}
+
+/**
+ * The forged registry with every record nothing points at any more taken out.
+ *
+ * A forged record is the *identity* of one thing, so it has to die with that
+ * thing: throwing a ring away and leaving its record behind would grow the column
+ * forever and leave a Long Rest offering to enchant a ring nobody owns. Ids are
+ * never reused, so a pruned record can never come back by accident.
+ *
+ * Hands back null when nothing needs pruning, so the common write carries no
+ * `forged` key at all and a sheet with no forged items never writes the column.
+ */
+export function pruneForged(character, next = {}) {
+  const forged = normalizeForged(character?.forged);
+  const ids = Object.keys(forged);
+  if (ids.length === 0) return null;
+
+  const kept = heldIds(character, next);
+  if (ids.every((id) => kept.has(id))) return null;
+
+  const out = {};
+  for (const id of ids) {
+    if (kept.has(id)) out[id] = forged[id];
+  }
+  return out;
+}
 
 /* -------------------------------------------------------------------- belt */
 
@@ -195,9 +301,14 @@ export function itemCharges(item) {
  * something that never runs out; `spent` means there is nothing left to use —
  * which for a consumable is the end of it, and for a usable item only means
  * waiting for whatever fills it again.
+ *
+ * It takes the character so a forged flask resolves. Without it, a piece the
+ * player made and clipped on read as *nothing in the loop* — the id was in the
+ * belt and the block drew an empty slot over it, which is the one shape of bug
+ * that loses a thing without ever saying so.
  */
-export function beltEntry(entry) {
-  const item = getItem(entry?.id);
+export function beltEntry(character, entry) {
+  const item = heldItem(character, entry?.id);
   if (!item) return null;
 
   const charges = itemCharges(item);
@@ -214,8 +325,8 @@ export function beltEntry(entry) {
 }
 
 /** A consumable with nothing left in it — the one thing the belt destroys. */
-export function isUsedUp(entry) {
-  const state = beltEntry(entry);
+export function isUsedUp(character, entry) {
+  const state = beltEntry(character, entry);
   return Boolean(state?.spent && state.consumable);
 }
 
@@ -612,7 +723,7 @@ const ARMOR_ITEMS = [
  * then. Everything downstream reads items through `getItem`, so this is the
  * one place the pictures have to be attached.
  */
-export const ITEMS = withArt([...ARMOR_ITEMS, ...WEAPONS, ...UTILITY_ITEMS]);
+export const ITEMS = withArt([...ARMOR_ITEMS, ...WEAPONS, ...TRINKET_ITEMS, ...UTILITY_ITEMS]);
 
 const ITEMS_BY_ID = new Map(ITEMS.map((item) => [item.id, item]));
 
@@ -635,17 +746,142 @@ export function getItem(id) {
  * Hands back the codex item itself when nothing has been laid, so the common case
  * allocates nothing and every identity check downstream still holds.
  *
- * **Keyed by item id.** Two longswords are one longsword to this sheet, which is
- * the limit an item *instance* would lift. See normalizeLaid.
+ * ------------------------------------------------------- and the ones they made
+ * **This is the one place a forged id becomes an item.** A piece the player made
+ * at the forge is not in the codex at all: its id is minted on their sheet and
+ * its record says which codex piece it is made from and what was worked into it
+ * (see forged.js). Resolved here, and here only, so every block, browser, meter
+ * and quick-bar row already knows what one is.
+ *
+ * A forged id is what lifted the old limit. `laid` is still keyed by item id, but
+ * a forged id *is* an instance, so two silver rings with different work in them
+ * are two different rings — and laying a working on one of them lays it on that
+ * one. Two of the same **codex** piece are still one piece to `laid`, which is
+ * the honest reading of a record keyed by id.
  */
 export function heldItem(character, id) {
-  const item = getItem(id);
+  const item = forgedFor(character, id) ?? getItem(id);
   if (!item || !character) return item;
 
   const laid = laidEntries(character, id);
   if (laid.length === 0) return item;
 
   return { ...item, enchants: [...(item.enchants ?? []), ...laid] };
+}
+
+/**
+ * Everything this character has made, as items, for one slot.
+ *
+ * The codex browser answers "what could go here?", and a ring the player forged
+ * could very much go there. Without this the browser could not offer one at all:
+ * it lists the codex, and a forged piece is on the sheet rather than in the
+ * codex — so the piece somebody had just made was the one thing the window that
+ * made it could not then put on.
+ *
+ * Slotted off the *base*, because that is where a forged item's slots come from.
+ * Hand it a key nothing is slotted for — `pack`, say — and this is empty, which
+ * is what keeps the inventory's own browser a list of the codex.
+ */
+export function forgedForSlot(character, slotKey) {
+  return Object.keys(normalizeForged(character?.forged))
+    .map((id) => heldItem(character, id))
+    .filter((item) => item?.slots?.includes(slotKey));
+}
+
+/**
+ * Where on this character an id already sits, said in two words, or null when
+ * nothing on them holds it.
+ *
+ * **This is what keeps an instance in one place.** A codex id may repeat as often
+ * as the player owns copies — three healing potions are three ids. A forged id is
+ * one *thing*: the same id in two trinket places, or in a hand and on a loop at
+ * once, would be two rows that are secretly one ring, and taking one off would
+ * take the other with it.
+ *
+ * The pack is deliberately not a placement. That is where a thing waits to be
+ * put somewhere, so a piece in the pack is available and a piece on the body is
+ * not.
+ */
+export function placementOf(character, id) {
+  if (!id) return null;
+
+  const worn = normalizeEquipment(character?.equipment);
+  for (const slot of EQUIPMENT_SLOTS) {
+    if (worn[slot.key] === id) return slot.label;
+  }
+  if (normalizeTrinkets(character?.trinkets).includes(id)) return 'a trinket';
+
+  const loop = normalizeBelt(character?.belt).findIndex((entry) => entry?.id === id);
+  return loop >= 0 ? `belt slot ${loop + 1}` : null;
+}
+
+/** A forged id as the item it describes, or null for everything else. */
+function forgedFor(character, id) {
+  if (!character || !isForgedId(id)) return null;
+  const record = forgedRecord(character, id);
+  return record ? forgedItem(record, getItem(record.base)) : null;
+}
+
+/**
+ * Every item on this character's person: what is worn, what is in hand, and every
+ * trinket. The one answer to "what is actually on you", so nothing has to walk
+ * the slots and then remember the trinkets as an afterthought.
+ *
+ * **Not the belt, and not the pack.** A loop is reached for rather than carried
+ * into the fight, and what is in the pack is not on you at all. That is the line
+ * `combatReactionEffects` already drew for Patien, and it is the same line here.
+ * The belt is still counted for Magic Burden, because worked magic weighs the
+ * same wherever it is carried — weight and effect are different questions.
+ *
+ * `heldItem`, so a forged piece and an Enchanter's own laid work both count.
+ */
+export function wornItems(character) {
+  const worn = normalizeEquipment(character?.equipment);
+
+  return [
+    ...EQUIPMENT_SLOTS.map(({ key }) => worn[key]),
+    ...normalizeTrinkets(character?.trinkets),
+  ]
+    .map((id) => heldItem(character, id))
+    .filter(Boolean);
+}
+
+/**
+ * Every enchantment worked into something on this character's person, by id.
+ *
+ * This is the half of the stacking sum that `enchanting.js` cannot reach: it is a
+ * leaf and does not know what a codex item is, let alone what is equipped. So the
+ * ids are collected here and handed to it — see `characterGrants` below.
+ *
+ * Duplicates are left in. Deduplication is one rule and it belongs in one place,
+ * which is `grantsFrom`: two rings carrying Primal Sense have to be *seen* as two
+ * before they can be counted as one.
+ */
+export function gearEnchantIds(character) {
+  return wornItems(character).flatMap((item) =>
+    itemEnchantments(item).map(({ enchantment }) => enchantment.id)
+  );
+}
+
+/**
+ * Everything enchanted on this character, from all three places it can come
+ * from, with the same-source law applied once across the lot.
+ *
+ * Three places: laid on their own person by WIELDER OF WONDER, running on them
+ * for the hour by EPHEMERAL ENCHANTMENT, and worked into something they are
+ * wearing. **An effect does not stack with itself from the same source.** Primal
+ * Sense on two rings is one point of Instinct; Primal Sense on a ring and again
+ * on the Enchanter's own person is still one point. A point from a lineage and a
+ * point from a ring are different sources and do stack — nothing here touches
+ * those, because they are not enchantments.
+ *
+ * This is the composed reading of `allGrants`, and it is composed here because
+ * this is the only file that imports both the codex and the enchanting rules.
+ * Everything that wants the whole picture — `deriveStats`, the bell, the price of
+ * a rest — calls this rather than `allGrants` directly.
+ */
+export function characterGrants(character) {
+  return allGrants(character, gearEnchantIds(character));
 }
 
 export function itemsForSlot(slotKey) {
@@ -741,18 +977,29 @@ export function itemBurden(item) {
 }
 
 /**
- * The summed burden of the whole loadout — worn, held, and clipped to the
- * belt. Worked magic weighs the same wherever it is carried.
+ * The summed burden of the whole loadout — worn, held, on a trinket, and clipped
+ * to the belt. Worked magic weighs the same wherever it is carried.
+ *
+ * **It takes the character now**, not a loose equipment map. Two call sites used
+ * to hand it `(equipment, belt)` with no character at all — the codex browser and
+ * the equip prompt, which are the two places that *refuse* an item for being over
+ * capacity. Without the character they could not see an Enchanter's own body
+ * slots, could not see a working laid on a blade and could not see a forged piece
+ * at all, so both read low and let a player equip past their capacity. One
+ * argument, and the number is the same everywhere it is printed.
  */
-export function magicBurdenUsed(equipment, belt = [], character = null) {
-  const worn = normalizeEquipment(equipment);
-  const resolve = (id) => (character ? heldItem(character, id) : getItem(id));
+export function magicBurdenUsed(character) {
+  const worn = normalizeEquipment(character?.equipment);
+  const resolve = (id) => heldItem(character, id);
 
   let total = 0;
   for (const slot of Object.keys(worn)) {
     total += itemBurden(resolve(worn[slot]));
   }
-  for (const entry of normalizeBelt(belt)) {
+  for (const id of normalizeTrinkets(character?.trinkets)) {
+    total += itemBurden(resolve(id));
+  }
+  for (const entry of normalizeBelt(character?.belt)) {
     total += itemBurden(resolve(entry?.id));
   }
 
@@ -769,10 +1016,16 @@ export function magicBurdenUsed(equipment, belt = [], character = null) {
 
 /* -------------------------------------------------------- equipment effects */
 
-/** The set name if all three armor slots wear it, else null. */
-export function armorSetName(equipment) {
-  const worn = normalizeEquipment(equipment);
-  const pieces = ARMOR_SLOTS.map(({ key }) => getItem(worn[key]));
+/**
+ * The set name if all three armor slots wear it, else null.
+ *
+ * Takes the character, because a forged breastplate is only a breastplate to a
+ * sheet that can resolve it — `getItem` on a forged id is null, which read as
+ * "no set" and quietly broke the set bonus of anyone who had renamed a piece.
+ */
+export function armorSetName(character) {
+  const worn = normalizeEquipment(character?.equipment);
+  const pieces = ARMOR_SLOTS.map(({ key }) => heldItem(character, worn[key]));
   if (pieces.some((item) => !item?.set)) return null;
   const [first] = pieces;
   return pieces.every((item) => item.set === first.set) ? first.set : null;
@@ -782,12 +1035,13 @@ export function armorSetName(equipment) {
  * Every always-on modifier the current loadout applies, in one bag. The
  * derived-stat maths in characterModel reads this — nothing else should need
  * to walk the slots by hand.
+ *
+ * Trinkets are in it: nothing in the trinket codex carries a number of its own,
+ * but a forged piece is made from *any* base, and a renamed breastplate worn in
+ * the torso slot has to keep its Armor.
  */
-export function equipmentEffects(equipment) {
-  const worn = normalizeEquipment(equipment);
-  const items = Object.keys(worn)
-    .map((slot) => getItem(worn[slot]))
-    .filter(Boolean);
+export function equipmentEffects(character) {
+  const items = wornItems(character);
 
   return {
     /** Flat additions to Defense from individual pieces. */
@@ -797,7 +1051,7 @@ export function equipmentEffects(equipment) {
     /** True while something worn raises the Shield cap by Mind. */
     shieldCapMind: items.some((item) => item.shieldCapBonus === 'mind'),
     burden: items.reduce((sum, item) => sum + itemBurden(item), 0),
-    fullSet: armorSetName(worn),
+    fullSet: armorSetName(character),
   };
 }
 
@@ -813,12 +1067,12 @@ export function equipmentEffects(equipment) {
  *
  * Returns what each piece gives and why, so the block can name the item that
  * did it rather than silently moving a number.
+ *
+ * `wornItems`, so a forged Runed Hood still starts the fight with its Shield and a
+ * trinket made from one counts too.
  */
 export function combatStartEffects(character) {
-  const worn = normalizeEquipment(character?.equipment);
-
-  return Object.keys(worn)
-    .map((slot) => getItem(worn[slot]))
+  return wornItems(character)
     .filter((item) => item?.onCombatStart)
     .map((item) => {
       const from = item.onCombatStart.shield;
@@ -830,37 +1084,30 @@ export function combatStartEffects(character) {
 }
 
 /**
- * The Reaction Points equipped gear hands over at the bell, per item.
+ * Which pieces of worn gear hand Reaction Points over at the bell, and how many
+ * each of them gives.
  *
- * PREPARED is the only enchantment that grants any, and Patien is the only thing
- * in the codex carrying it: "you start each combat with 3 reaction points."
+ * PREPARED is the only enchantment that grants any: "you start each combat with 3
+ * reaction points." Patien carries it in the codex, and anything a player forges
+ * can carry it too.
  *
- * ------------------------------------------------- why this is not in allGrants
- * `allGrants` in enchanting.js is what is laid on the *character* — on their own
- * person, or running on them for the hour. An enchantment on a **thing** never
- * reached it, and never had to: the three enchanted weapons in the codex carry a
- * damage type, a light and a spell, and all three of those are read off
- * `item.enchants` somewhere else (`itemModifiers`, `gearSource`). Patien is the
- * first item to carry a rider that moves a *pool*, so this is where an item's
- * riders are read from.
+ * ------------------------------------------ what this is for, and what it is not
+ * **It is no longer the number.** `characterGrants` is: an item's workings now
+ * reach the same sum an Enchanter's own body slots reach, from all three places
+ * at once, with the same-source law applied across the lot. That is what the bell
+ * reads.
  *
- * **The wider gap is still open**, and it is flagged in data/README.md: an item
- * carrying VITALITY or RESILIENCE would still hand its wielder nothing, because
- * `deriveStats` reads only the worn and running halves. Nothing in the codex does
- * carry one, and closing it means changing numbers that `syncDerived` bakes into
- * stored columns — a bigger change than one bell-time grant.
+ * This is the *attribution* — which piece did it, so the button's note can name
+ * the ring rather than silently moving a pool. Summing both would count PREPARED
+ * twice, so `combatReactionGrant` in combatTurn.js takes the number from one and
+ * the names from here.
  *
- * `heldItem` rather than `getItem`, so an Enchanter who laid PREPARED on their own
- * blade is holding a blade that has it. Worn and in-hand only: what is in the pack
- * is not on you, and a loop on the belt is reached for rather than carried into
- * the fight.
+ * `wornItems`, so a forged piece counts, an Enchanter's own laid work counts, and
+ * a trinket counts. What is in the pack is not on you, and a loop on the belt is
+ * reached for rather than carried into the fight.
  */
 export function combatReactionEffects(character) {
-  const worn = normalizeEquipment(character?.equipment);
-
-  return Object.keys(worn)
-    .map((slot) => heldItem(character, worn[slot]))
-    .filter(Boolean)
+  return wornItems(character)
     .map((item) => ({
       item,
       reaction: itemEnchantments(item).reduce(
@@ -887,6 +1134,7 @@ export function inventoryOverview(character) {
   const equipment = normalizeEquipment(character?.equipment);
   const belt = normalizeBelt(character?.belt);
   const pack = normalizePack(character?.pack);
+  const trinkets = normalizeTrinkets(character?.trinkets);
   const loops = beltSlotCount(character);
 
   const filled = (keys) => keys.filter((key) => equipment[key]).length;
@@ -894,11 +1142,14 @@ export function inventoryOverview(character) {
   const tallies = [
     { id: 'worn', label: 'Worn', filled: filled(ARMOR_SLOTS.map((s) => s.key)), of: ARMOR_SLOTS.length },
     { id: 'hand', label: 'In Hand', filled: filled(WEAPON_SLOTS.map((s) => s.key)), of: WEAPON_SLOTS.length },
+    /* No ceiling, so it reports a bare count — the second tally to do so, and for
+       the pack's own reason: there is no number of rings a character may wear. */
+    { id: 'trinket', label: 'Trinkets', filled: trinkets.length, of: null },
     { id: 'belt', label: 'On Belt', filled: belt.filter((entry, i) => i < loops && entry).length, of: loops },
     { id: 'pack', label: 'In Pack', filled: pack.length, of: null },
   ];
 
-  const used = magicBurdenUsed(equipment, belt, character);
+  const used = magicBurdenUsed(character);
   const max = magicBurdenMax(character ?? {});
 
   return {
@@ -915,11 +1166,14 @@ export function inventoryOverview(character) {
  * Rarity is its own kind so that picking Common and Rare widens ("either")
  * while picking Common and Head Gear narrows — the same law the Abilities tab
  * filters by. A written-in thing carries no tags and so answers no chip.
+ *
+ * Through `heldItem`, so a forged piece offers its own tags — `Enchanted` among
+ * them, which is how a player with forty things finds the six they made.
  */
-export function packTags(pack) {
+export function packTags(character, pack) {
   const seen = new Map();
   for (const entry of pack) {
-    const item = isCustomEntry(entry) ? null : getItem(entry);
+    const item = isCustomEntry(entry) ? null : heldItem(character, entry);
     for (const tag of item?.tags ?? []) {
       if (!seen.has(tag)) seen.set(tag, { id: tag, label: tag, kind: tag in RARITY_COLORS ? 'rarity' : 'kind' });
     }

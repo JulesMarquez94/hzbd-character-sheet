@@ -69,13 +69,13 @@
 import { allSourceCards, abilitySources } from './abilitySources.js';
 import { refillMinions } from './minions.js';
 import {
+  characterGrants,
   combatReactionEffects,
   combatStartEffects,
-  getItem,
+  heldItem,
   normalizeBelt,
   normalizeEquipment,
 } from './items.js';
-import { allGrants } from './enchanting.js';
 import { shieldCapFor } from './characterModel.js';
 import { getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
@@ -175,19 +175,22 @@ export function combatShieldGrant(character) {
  *
  * Three places it can be coming from, and they add up: laid on the character's own
  * person, running on them for the hour, and worked into something they are wearing
- * or holding. Patien is the third — see combatReactionEffects in items.js, which
- * is where an item's own riders are read.
+ * or holding. `characterGrants` is all three at once, with the same-source law
+ * applied across them — two rings carrying PREPARED brace you once.
+ *
+ * `combatReactionEffects` is read for the *names* only. It used to be added to the
+ * number as well, back when an item's riders reached nothing else; now that they
+ * reach `characterGrants` too, adding both would count PREPARED twice.
  *
  * Capped at the pool's own maximum, and never below the zero the bell would have
  * set anyway: an enchantment cannot make a fight start worse. `items` is whatever
  * gear gave, so the note can name what did it.
  */
 export function combatReactionGrant(character) {
-  const gear = combatReactionEffects(character);
-  const granted =
-    Math.max(0, Math.floor(allGrants(character).reactionAtCombat)) +
-    gear.reduce((sum, entry) => sum + entry.reaction, 0);
+  const granted = Math.max(0, Math.floor(characterGrants(character).reactionAtCombat));
   if (granted === 0) return null;
+
+  const gear = combatReactionEffects(character);
 
   const cap = Math.max(0, Math.floor(Number(character?.reaction_max) || 0));
   const next = Math.min(cap, granted);
@@ -523,12 +526,12 @@ export function trackableCards(character, { all = false } = {}) {
 
   const equipment = normalizeEquipment(character?.equipment);
   for (const slot of ['main_hand', 'off_hand']) {
-    const item = getItem(equipment[slot]);
+    const item = heldItem(character, equipment[slot]);
     for (const id of item?.abilities ?? []) add(getCard(id), item.name);
   }
 
   for (const entry of normalizeBelt(character?.belt)) {
-    const item = getItem(entry?.id);
+    const item = heldItem(character, entry?.id);
     for (const id of item?.abilities ?? []) add(getCard(id), item.name);
   }
 

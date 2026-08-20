@@ -4,8 +4,8 @@
  * creation form all agree on what a character is.
  */
 
-import { EMPTY_EQUIPMENT, equipmentEffects } from './items.js';
-import { allGrants, ephemeralGrants, wornGrants } from './enchanting.js';
+import { EMPTY_EQUIPMENT, characterGrants, equipmentEffects, gearEnchantIds } from './items.js';
+import { ephemeralGrants, wornIds } from './enchanting.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -65,6 +65,17 @@ export const BLANK_CHARACTER = {
   belt: [],
   // How many of the five belt loops are open. Three to begin with.
   belt_slots: 3,
+  // Rings, chains, cloaks — worn, and with no ceiling on how many. A plain list
+  // rather than a slot map for exactly that reason; see normalizeTrinkets in
+  // items.js. They count against Magic Burden and whatever is worked into one is
+  // on the person wearing it.
+  trinkets: [],
+  // Items this player made, keyed by the instance id the rest of the sheet points
+  // at: { "forged-a1b2": { base, ench, name, art } }. The item *instance* — what
+  // lets two silver rings hold different workings, lets one be named, and lets one
+  // be handed to another player as a code. forged.js owns the shape, and a sheet
+  // that has never made one never writes the column.
+  forged: {},
 
   // The background chosen at level 1. The plain name lives in the `background`
   // column above; these two are what it handed out. `background_skills` is the
@@ -116,9 +127,9 @@ export const BLANK_CHARACTER = {
   // fixed length: a source arrives when it is taken and leaves when it is
   // handed back. Empty means nobody has arranged them yet.
   ability_order: [],
-  // Left-to-right order of the Inventory tab's three fixed blocks, by block id
-  // ("armor", "weapons", "belt"). Must be listed here: the save path only
-  // writes columns named in this object (see pickCharacterFields in api.js).
+  // Left-to-right order of the Inventory tab's four fixed blocks, by block id
+  // ("armor", "weapons", "trinkets", "belt"). Must be listed here: the save path
+  // only writes columns named in this object (see pickCharacterFields in api.js).
   inventory_order: [],
 };
 
@@ -225,6 +236,13 @@ export function normalizeSourceOrder(value, ids) {
  * off the talents column and `syncDerived` bakes them into the stored columns
  * exactly the way a worn breastplate is baked in.
  *
+ * **And so does a working in a ring.** That gap used to be open and it is closed
+ * here: `characterGrants` reads all three places at once — the Enchanter's own
+ * person, what is running on them for the hour, and what is worked into anything
+ * they are wearing — with the same-source law applied once across the lot. Primal
+ * Sense on two rings is one point of Instinct; a point from a lineage and a point
+ * from a ring are different sources and both count.
+ *
  * Five riders land here: an attribute (which moves everything it buys), and flat
  * points of maximum Health, maximum Willpower, Movement Speed and Armor. Anything
  * an enchantment does that is *not* one of those is a printed rule the table
@@ -235,9 +253,14 @@ export function normalizeSourceOrder(value, ids) {
  * stored, because a stored bonus has no way of ever coming back off. Only
  * `liveCharacter` passes it, and only for what the sheet *shows*. See
  * enchanting.js.
+ *
+ * It takes the whole character now rather than five named fields, because "what is
+ * worked into what you are wearing" needs the equipment map, the trinkets and the
+ * forge registry together. Every call site already spread a character in.
  */
-export function deriveStats({ physique, instinct, mind, level, equipment, talents }, extra = null) {
-  const worn = wornGrants(talents);
+export function deriveStats(character, extra = null) {
+  const { physique, instinct, mind, level } = character;
+  const worn = characterGrants(character).worn;
 
   const add = (key) =>
     (worn.attributes[key] ?? 0) + Math.floor(Number(extra?.attributes?.[key]) || 0);
@@ -255,7 +278,7 @@ export function deriveStats({ physique, instinct, mind, level, equipment, talent
   const reflex = Math.floor(p + i);
   const grit = Math.floor(i + m);
 
-  const gear = equipmentEffects(equipment);
+  const gear = equipmentEffects(character);
 
   /* Armor is worn pieces plus whatever has been laid on the wielder. Resilience
      grants "3 armor" and Armor is a stat, so it is one number: the meter reads it,
@@ -298,7 +321,7 @@ export function shieldCap(healthMax) {
 
 /** The shield cap with worn gear applied — what the sheet should display. */
 export function shieldCapFor(character) {
-  const gear = equipmentEffects(character?.equipment);
+  const gear = equipmentEffects(character);
   const bonus = gear.shieldCapMind ? Math.floor(Number(character?.mind) || 0) : 0;
   return shieldCap(character?.health_max) + bonus;
 }
@@ -324,7 +347,7 @@ export function shieldCapFor(character) {
 export function liveCharacter(character) {
   if (!character) return character;
 
-  const grants = allGrants(character);
+  const grants = characterGrants(character);
   if (!grants.any) return character;
 
   /* The attribute *columns* are the level ledger's, and nothing here may write
@@ -355,9 +378,15 @@ export function liveCharacter(character) {
  * Only the ephemeral half: a worn enchantment is permanent and the stored
  * columns already carry it, so the only thing worth flagging as *running* is the
  * hour-long kind. Empty when nothing is.
+ *
+ * The permanent ids go in so the same-source law can bite here too: an hour of
+ * borrowed Primal Sense on somebody already wearing one moves nothing, and a row
+ * saying "+1 Instinct" beside a tile that did not move would be the sheet
+ * contradicting itself.
  */
 export function liveShift(character) {
-  const grants = ephemeralGrants(character?.effects);
+  const standing = [...wornIds(character?.talents), ...gearEnchantIds(character)];
+  const grants = ephemeralGrants(character?.effects, standing);
   if (!grants.any) return [];
 
   const said = [];

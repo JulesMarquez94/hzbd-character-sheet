@@ -1,14 +1,18 @@
 import Modal from '../Modal.jsx';
+import ShareCode from './ShareCode.jsx';
 import { ItemIcon, ItemTags, ItemValues, SlotGlyph, StatText } from './itemParts.jsx';
 import {
   ARMOR_SLOTS,
   BELT_SLOT_KEY,
   EQUIPMENT_SLOTS,
-  getItem,
+  TRINKET_SLOT_KEY,
+  heldItem,
   itemBurden,
   magicBurdenMax,
   magicBurdenUsed,
+  placementOf,
 } from '../../lib/items.js';
+import { forgedRecord } from '../../lib/forged.js';
 
 /**
  * Putting something on, asked from the inventory rather than from the slot.
@@ -27,6 +31,12 @@ import {
  * Magic Burden is checked the way the codex browser checks it: the outgoing
  * piece's burden is freed before the incoming piece's is counted, so a straight
  * swap of like for like never reads as over capacity.
+ *
+ * ---------------------------------------------------------------- and the code
+ * This is also where a made item hands over its code. Clicking a row in the
+ * inventory opens this window, so this is the answer to "click on it to get the
+ * code" — no extra control anywhere, and the code sits next to the thing it
+ * describes.
  */
 export default function EquipPrompt({
   item,
@@ -35,16 +45,31 @@ export default function EquipPrompt({
   equipment,
   belt,
   beltSlots,
+  trinkets = [],
   onEquip,
   onClip,
+  onWear,
   onDetails,
   onClose,
 }) {
-  const targets = targetsFor(item, { equipment, belt, beltSlots, onEquip, onClip });
+  const targets = targetsFor(item, {
+    character,
+    equipment,
+    belt,
+    beltSlots,
+    trinkets,
+    onEquip,
+    onClip,
+    onWear,
+  });
 
   const burdenMax = magicBurdenMax(character);
-  const burdenUsed = magicBurdenUsed(equipment, belt);
+  const burdenUsed = magicBurdenUsed(character);
   const incoming = itemBurden(item);
+  const made = forgedRecord(character, item.id);
+  /* Where this piece already is, for a made one — null for everything the codex
+     shipped, of which a player may own as many copies as they like. */
+  const placedOn = made ? placementOf(character, item.id) : null;
 
   return (
     <Modal
@@ -81,6 +106,10 @@ export default function EquipPrompt({
           </p>
         )}
 
+        {/* A thing you made carries its own code. Anybody you hand it to gets
+            the same item, workings, name, picture and all. */}
+        {made && <ShareCode record={made} />}
+
         {targets.length === 0 ? (
           <p className="pick-line">
             There is nowhere on you this goes. It stays in your inventory until the table says
@@ -98,6 +127,10 @@ export default function EquipPrompt({
                 // Already in this exact place: there is no swap to make —
                 // unless a part-spent copy is waiting to be refreshed.
                 const here = target.holding?.id === item.id && !target.refresh;
+                /* And a made piece is one *thing*, so if it is already on the
+                   character somewhere else this is not a place it can also go.
+                   See placementOf. */
+                const alreadyOn = here ? null : placedOn;
 
                 return (
                   <div className="equip-target" key={target.id}>
@@ -118,6 +151,15 @@ export default function EquipPrompt({
 
                     {here ? (
                       <span className="browser-equipped-mark">{target.hereLabel}</span>
+                    ) : alreadyOn ? (
+                      <button
+                        type="button"
+                        className="btn btn-sm browser-blocked"
+                        disabled
+                        title={`It is already on you, in ${alreadyOn}. Take it off first — there is only one of it.`}
+                      >
+                        On you
+                      </button>
                     ) : blocked ? (
                       <button
                         type="button"
@@ -159,9 +201,9 @@ export default function EquipPrompt({
 
 /**
  * Every place on the character this piece fits, in the order the tab reads:
- * armor down the body, then the two weapons, then the belt.
+ * armor down the body, then the two weapons, then the trinkets, then the belt.
  */
-function targetsFor(piece, { equipment, belt, beltSlots, onEquip, onClip }) {
+function targetsFor(piece, { character, equipment, belt, beltSlots, trinkets, onEquip, onClip, onWear }) {
   const slots = piece.slots ?? [];
   const targets = [];
 
@@ -175,8 +217,24 @@ function targetsFor(piece, { equipment, belt, beltSlots, onEquip, onClip }) {
       glyph: slot.key,
       verb: armor ? 'Wear it here' : 'Hold it here',
       hereLabel: armor ? 'Worn' : 'In hand',
-      holding: getItem(equipment[slot.key]),
+      holding: heldItem(character, equipment[slot.key]),
       commit: () => onEquip(slot.key, piece),
+    });
+  }
+
+  /* One target, not one per ring worn. A trinket is a list rather than a set of
+     slots, so there is nothing to choose between and nothing to displace: it
+     goes on the end. Offering "Trinket 1", "Trinket 2" … would be asking a
+     question with only one answer, five times over. */
+  if (slots.includes(TRINKET_SLOT_KEY) && onWear) {
+    targets.push({
+      id: 'trinket',
+      label: trinkets.length > 0 ? `Trinkets · ${trinkets.length} on` : 'Trinkets',
+      glyph: 'trinket',
+      verb: 'Put it on',
+      hereLabel: 'On you',
+      holding: null,
+      commit: () => onWear(piece),
     });
   }
 
@@ -196,7 +254,7 @@ function targetsFor(piece, { equipment, belt, beltSlots, onEquip, onClip }) {
         verb: refresh ? 'Clip a fresh one' : 'Clip it here',
         hereLabel: 'On belt',
         refresh,
-        holding: getItem(entry?.id),
+        holding: heldItem(character, entry?.id),
         commit: () => onClip(index, piece),
       });
     }

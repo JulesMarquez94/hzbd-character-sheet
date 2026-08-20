@@ -49,13 +49,13 @@ import { enchanterState, runningEnchants } from './enchanting.js';
 import { getEnchantment } from './enchantments.js';
 import { isMinionCard, minionModifiers } from './minions.js';
 import {
-  EQUIPMENT_SLOTS,
   beltEntry,
   beltSlotCount,
   heldItem,
   wieldModifiers,
   normalizeBelt,
   normalizeEquipment,
+  wornItems,
 } from './items.js';
 import { getCard, itemEnchantments } from './weapons.js';
 
@@ -160,7 +160,7 @@ function beltGroup(character) {
   const open = beltSlotCount(character);
 
   const moves = belt
-    .map((entry, index) => ({ state: beltEntry(entry), index }))
+    .map((entry, index) => ({ state: beltEntry(character, entry), index }))
     .filter(({ state, index }) => state && index < open)
     .map(({ state, index }) => {
       const { item, charges, used, remaining, consumable, spent } = state;
@@ -372,15 +372,11 @@ function standing(card, modifiers, from) {
  * for: true of you right now, and the first thing forgotten.
  */
 function workings(character) {
-  const equipment = normalizeEquipment(character?.equipment);
-
-  const rows = EQUIPMENT_SLOTS.flatMap(({ key }) => {
-    const item = heldItem(character, equipment[key]);
-    if (!item) return [];
-    return itemEnchantments(item).map(({ enchantment }) =>
-      standing(enchantment, null, item.name)
-    );
-  });
+  /* `wornItems` rather than the equipment map alone, so a ring counts. A trinket
+     is where a working usually ends up — it is worn for nothing else. */
+  const rows = wornItems(character).flatMap((item) =>
+    itemEnchantments(item).map(({ enchantment }) => standing(enchantment, null, item.name))
+  );
 
   /* Called Enchantments, because that is what they are and what the card that
      laid them calls them. "Workings" was this block's own word for the same

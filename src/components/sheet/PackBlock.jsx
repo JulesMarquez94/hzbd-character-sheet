@@ -9,7 +9,7 @@ import { useCardStack } from '../../context/card-stack.js';
 import {
   CATEGORY_ORDER,
   ITEMS,
-  getItem,
+  heldItem,
   isCustomEntry,
   itemCategory,
   packTags,
@@ -45,12 +45,15 @@ export default function PackBlock({
   belt,
   beltSlots,
   pack,
+  trinkets,
   equip,
   clipToBelt,
+  wearTrinket,
   addToPack,
   addCustomToPack,
   updateCustomInPack,
   discardFromPack,
+  onForge,
   readOnly = false,
 }) {
   const [browsing, setBrowsing] = useState(false);
@@ -63,9 +66,9 @@ export default function PackBlock({
      by what a thing says, offering the tags it finds as you type, and a chip
      for each one taken. Rarity is its own group, so Common and Rare widen
      while Common and Head Gear narrow. */
-  const filter = useTagFilter(packTags(pack), { searchable: true });
+  const filter = useTagFilter(packTags(character, pack), { searchable: true });
 
-  const shelves = shelvePack(pack, filter);
+  const shelves = shelvePack(character, pack, filter);
   const carried = pack.length;
   const shown = shelves.reduce(
     (total, shelf) => total + shelf.rows.reduce((sum, row) => sum + row.indices.length, 0),
@@ -206,11 +209,14 @@ export default function PackBlock({
           character={character}
           equipment={equipment}
           pack={pack}
-          belt={belt}
           onEquip={(slotKey, item) => {
             addToPack(item);
             setBrowsing(false);
           }}
+          /* The +1 on every row does the same thing "Add" does here, so it stays
+             out of this one browser: two buttons a row apart doing one job is
+             worse than one. */
+          onForge={onForge}
           onClose={() => setBrowsing(false)}
           readOnly={readOnly}
         />
@@ -224,12 +230,17 @@ export default function PackBlock({
           equipment={equipment}
           belt={belt}
           beltSlots={beltSlots}
+          trinkets={trinkets}
           onEquip={(slotKey, item) => {
             equip(slotKey, item);
             setEquipping(null);
           }}
           onClip={(index, item) => {
             clipToBelt(index, item);
+            setEquipping(null);
+          }}
+          onWear={(item) => {
+            wearTrinket(item);
             setEquipping(null);
           }}
           /* The item's own page is dealt on top of the prompt rather than in
@@ -374,12 +385,14 @@ function CustomItemForm({ entry, onSave, onClose }) {
  * asks what a thing *is* and the box asks what it says. A written-in thing
  * carries no tags, so a chip sets it aside and only the box can find it.
  */
-function shelvePack(pack, filter) {
+function shelvePack(character, pack, filter) {
   const rows = new Map();
 
   pack.forEach((entry, index) => {
     const custom = isCustomEntry(entry);
-    const item = custom ? entry : getItem(entry);
+    // `heldItem`, so a piece the player made shelves under its own name and its
+    // own kind rather than being skipped as an id the codex has never heard of.
+    const item = custom ? entry : heldItem(character, entry);
     // An id the codex no longer knows is skipped rather than shown as a blank.
     if (!item) return;
     if (!filter.matches(item.tags)) return;

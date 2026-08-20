@@ -145,6 +145,29 @@ const GLYPH_PATHS = {
       <path d="M9 10.5V7.6a3 3 0 0 1 6 0v2.9" />
     </>
   ),
+  /* A trinket, drawn as the commonest one: a band with a stone set in it. */
+  trinket: (
+    <>
+      <circle cx="12" cy="14.5" r="6" />
+      <path d="M9.6 9.1 12 4l2.4 5.1" />
+      <path d="M9.6 9.1h4.8" />
+    </>
+  ),
+  /* A chain rather than a band, for what hangs round the neck. */
+  necklace: (
+    <>
+      <path d="M5 4.5a9 9 0 0 0 7 8.5 9 9 0 0 0 7-8.5" />
+      <path d="M12 13v2.2" />
+      <path d="M12 15.2 14.4 18 12 20.5 9.6 18Z" />
+    </>
+  ),
+  /* And a hanging fold, for what goes over the shoulders. */
+  cloak: (
+    <>
+      <path d="M8.5 3.5 4.5 7l2 13.5h11L19.5 7l-4-3.5" />
+      <path d="M8.5 3.5a3.5 3.5 0 0 0 7 0" />
+    </>
+  ),
   /* Whatever the codex has never heard of: a page with something written on it. */
   note: (
     <>
@@ -170,6 +193,10 @@ function glyphForItem(item) {
   if (tags.includes('Shielded')) return 'off_hand';
   if (tags.includes('Melee Weapon')) return 'main_hand';
   if (tags.includes('Ranged Weapon')) return 'bow';
+  // A trinket says what kind it is in its tags, and a ring and a cloak are not
+  // the same shape. Everything else on the shelf falls back to the band.
+  if (tags.includes('Necklace')) return 'necklace';
+  if (tags.includes('Cloak')) return 'cloak';
   return item?.slots?.[0] ?? 'head';
 }
 
@@ -214,10 +241,17 @@ export function SlotGlyph({ slot, item, card }) {
  * on the sheet and 52 in the equip prompt, a browser list draws nine of them at
  * once, and the 128px cut is 2 KB against the item card's 26. Same rule, and
  * the same reason, as a card brief's plate.
+ *
+ * A picture the *player* pointed at is theirs and shows at every account tier,
+ * the way an uploaded portrait does — only the codex's own art is behind the
+ * gate. `artOwn` is what a forged item sets to say which it is carrying.
  */
 export function ItemIcon({ item, size = 40 }) {
   const color = rarityColor(item);
-  const plate = useCodexArt()(item?.art_thumb ?? item?.art_url ?? null);
+  const plate = useCodexArt()(
+    item?.art_thumb ?? item?.art_url ?? null,
+    item?.artOwn ? 'lore' : 'codex'
+  );
 
   return (
     <span

@@ -301,6 +301,17 @@ alter table public.characters add column if not exists effects     jsonb not nul
 -- A talent set that hands you a body rather than a card: the Draconic Bond's
 -- draconic ally, and whatever follows it.
 alter table public.characters add column if not exists minions     jsonb not null default '{}'::jsonb;
+-- Rings, chains and cloaks. A plain list of item ids with no ceiling on it, which
+-- is why it is not in the `equipment` map: that has one key per place and a fixed
+-- set of keys, and a character wearing nine rings is wearing nine rings.
+alter table public.characters add column if not exists trinkets    jsonb not null default '[]'::jsonb;
+-- Items this player made, keyed by the instance id the rest of the row points at:
+-- { "forged-a1b2": { base, ench, name, art } }. The base is a codex id and is the
+-- whole of what the thing *is*, so nothing mechanical is copied in here and a
+-- piece the designer reprices is repriced in every ring made out of it. This is
+-- the item instance: two silver rings with different workings, a named piece, and
+-- one handed to another player as a code.
+alter table public.characters add column if not exists forged      jsonb not null default '{}'::jsonb;
 
 create index if not exists characters_user_id_idx on public.characters (user_id);
 

@@ -124,12 +124,15 @@ export function normalizeWorn(value) {
 /**
  * What has been laid on what, as `{ [itemId]: [enchantId, ...] }`.
  *
- * **Keyed by item id, not by item instance.** A character owns one longsword as
- * far as this sheet is concerned, so laying Fire Infusion on "longsword" lays it
- * on the longsword. Naming an enchanted piece, carrying two of the same item with
- * different work on them, and sharing one by code are all the Developpement
- * Notes' own asks and all still unbuilt: they need an item instance, which the
- * inventory does not have. See data/README.md.
+ * **Keyed by item id, and that is now enough.** A *forged* id is an instance (see
+ * forged.js), so laying Fire Infusion on one silver ring lands on that ring and
+ * nowhere else. Two of the same **codex** piece are still one piece to this
+ * record — laying on "longsword" lays it on the longsword — which is the honest
+ * reading of a map keyed by id, and is what the forge is for when a player wants
+ * two blades with different work in them.
+ *
+ * Naming a piece and sharing one by code were the other two Developpement Notes
+ * asks that needed the instance. Both are in, and neither touched this file.
  */
 export function normalizeLaid(value) {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -347,6 +350,11 @@ function safeParse(value) {
 
 /* ------------------------------------------------------------------ the sums */
 
+/** The same list with each id once, in the order it was first met. */
+function dedupe(ids) {
+  return [...new Set((Array.isArray(ids) ? ids : []).map(String).filter(Boolean))];
+}
+
 /** A blank set of grants, so every caller reads the same shape. */
 function noGrants() {
   return {
@@ -370,11 +378,28 @@ function noGrants() {
   };
 }
 
-/** Everything a list of enchantment ids adds up to. */
+/**
+ * Everything a list of enchantment ids adds up to.
+ *
+ * ------------------------------------------------------------ the same-source law
+ * **An effect does not stack with itself.** "Unless they say otherwise, effects do
+ * not stack from the same source", and one enchantment is one source however many
+ * things it is written into: Primal Sense on two rings is a single point of
+ * Instinct, and Primal Sense on a ring and again on the Enchanter's own person is
+ * still a single point. A point from a lineage and a point from a ring are two
+ * different sources and do stack — nothing here can see a lineage, which is
+ * exactly why the rule can be applied wholesale at this one point.
+ *
+ * So the list is deduplicated on the way in, and every caller hands its ids in
+ * *with* their duplicates so this is the only place that has to know the rule.
+ * Where the same working is on two rings the player is still charged Magic Burden
+ * for both, because burden is what a thing weighs rather than what it does — see
+ * `itemBurden`, which never comes through here.
+ */
 export function grantsFrom(ids) {
   const total = noGrants();
 
-  for (const id of Array.isArray(ids) ? ids : []) {
+  for (const id of dedupe(ids)) {
     const entry = getEnchantment(id);
     if (!entry) continue;
 
@@ -396,26 +421,41 @@ export function grantsFrom(ids) {
   return total;
 }
 
+/** The enchantments on the Enchanter's own person, by id. */
+export function wornIds(talents) {
+  const entry = normalizeTalents(talents).find((row) => row.id === ENCHANTER_ID);
+  return entry ? normalizeWorn(entry.worn) : [];
+}
+
 /**
- * What is permanently on this character: their own person, and everything they
- * have laid on what they are carrying.
+ * What WIELDER OF WONDER has put on this character's own person, and nothing
+ * else.
  *
- * This is the one `deriveStats` reads, which is why it takes the talents column
- * rather than the whole character — characterModel.js may not hand this file a
- * character it is halfway through computing.
+ * **Not the whole permanent half any more** — that is `allGrants(...).worn`, which
+ * folds in what is worked into their gear. This is the body slots alone, and the
+ * one thing that still needs them alone is the Magic Burden meter: an item's own
+ * burden is already counted by `itemBurden`, so a sum that included gear here
+ * would charge every enchanted ring twice.
+ *
+ * Takes the talents column rather than the whole character, because
+ * characterModel.js may not hand this file a character it is halfway through
+ * computing.
  */
 export function wornGrants(talents) {
-  const entry = normalizeTalents(talents).find((row) => row.id === ENCHANTER_ID);
-  if (!entry) return noGrants();
-  return grantsFrom(normalizeWorn(entry.worn));
+  return grantsFrom(wornIds(talents));
 }
 
 /**
  * What is on them for the next hour. Ephemeral enchantments carry no Magic
  * Burden by their own card, so the burden this reports is zeroed.
+ *
+ * `already` is what is *permanently* on them, so the same-source law can bite
+ * across the two halves as well as inside each: an hour of borrowed Primal Sense
+ * on somebody who is already wearing one is an hour of nothing.
  */
-export function ephemeralGrants(effects) {
-  const running = runningEnchants(effects);
+export function ephemeralGrants(effects, already = []) {
+  const standing = new Set(already.map(String));
+  const running = runningEnchants(effects).filter((row) => !standing.has(row.enchantment.id));
   const total = grantsFrom(running.map((row) => row.enchantment.id));
 
   total.burden = 0;
@@ -423,10 +463,25 @@ export function ephemeralGrants(effects) {
   return total;
 }
 
-/** The two together, for anything that wants the whole picture at once. */
-export function allGrants(character) {
-  const worn = wornGrants(character?.talents);
-  const ephemeral = ephemeralGrants(character?.effects);
+/**
+ * All three together, for anything that wants the whole picture at once.
+ *
+ * `gear` is the enchantment ids worked into what the character is wearing — the
+ * third place a working can come from, and the one this file cannot see for
+ * itself: it is a leaf and has no idea what a codex item is, let alone what is
+ * equipped. So items.js collects them and hands them in. Call `characterGrants`
+ * there rather than this directly; it is the composed reading and it is what
+ * every consumer wants.
+ *
+ * `worn` on the way out means **permanent** — the body slots and the gear
+ * together — because that is the half `deriveStats` bakes into stored columns and
+ * the half a rest cannot take back off. `ephemeral` is the hour-long half, minus
+ * anything the permanent half already carries.
+ */
+export function allGrants(character, gear = []) {
+  const permanent = [...wornIds(character?.talents), ...gear];
+  const worn = grantsFrom(permanent);
+  const ephemeral = ephemeralGrants(character?.effects, permanent);
 
   return {
     attributes: {
@@ -442,7 +497,11 @@ export function allGrants(character) {
     reactionAtCombat: worn.reactionAtCombat + ephemeral.reactionAtCombat,
     shieldRolls: [...worn.shieldRolls, ...ephemeral.shieldRolls],
     spells: ephemeral.spells,
-    burden: worn.burden,
+    /* What is worked into a *person*. An item's own burden is counted by
+       `itemBurden` where the item is, so folding the gear ids in here as well
+       would charge every enchanted ring twice — the meter reads `wornGrants`
+       for exactly that reason. See magicBurdenUsed. */
+    burden: grantsFrom(wornIds(character?.talents)).burden,
     any: worn.any || ephemeral.any,
     worn,
     ephemeral,
@@ -477,12 +536,15 @@ export function damageEnchants(character) {
  * OZ'EM PICK: "the cost in supplies of short and long rest are reduced by 2." The
  * only enchantment on the sheet that moves a rest rather than a stat, and the
  * reduction is read from both what is worn and what is running, because an hour of
- * borrowed frugality is still frugality. Floored where it is spent, in rest.js,
- * rather than here: this reports what the enchantments say, and a rest that would
- * cost less than nothing costs nothing.
+ * borrowed frugality is still frugality — and from a Pick worked into a ring,
+ * which is why the gear ids have to come in. rest.js hands them over through
+ * `characterGrants`; this signature is kept so nothing else had to move.
+ *
+ * Floored where it is spent, in rest.js, rather than here: this reports what the
+ * enchantments say, and a rest that would cost less than nothing costs nothing.
  */
-export function restSupplyCut(character) {
-  return allGrants(character).restSupplies;
+export function restSupplyCut(character, gear = []) {
+  return allGrants(character, gear).restSupplies;
 }
 
 /* ------------------------------------------------------------------ the shelf

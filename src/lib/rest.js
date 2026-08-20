@@ -55,10 +55,9 @@ import {
   enchantChanges,
   enchanterState,
   layingCost,
-  restSupplyCut,
 } from './enchanting.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
-import { getItem } from './items.js';
+import { characterGrants, heldItem } from './items.js';
 
 /** What each rest costs and what it gives back. */
 export const RESTS = {
@@ -91,6 +90,10 @@ export function getRest(kind) {
  * is a function rather than the number on `RESTS`. Floored at nothing, because a
  * rest that paid you would be a strange kind of rest.
  *
+ * `characterGrants` rather than the enchanting file's own reading, so a Pick
+ * worked into a ring cuts the price the same as one laid on the Enchanter — and
+ * two rings carrying it cut it once, which is the same-source law.
+ *
  * Everything that prices a rest goes through here: the plan, and the two
  * affordability checks that offer a chip dead rather than letting it fail at the
  * last button.
@@ -98,7 +101,7 @@ export function getRest(kind) {
 export function restPrice(character, kind) {
   const rest = getRest(kind);
   if (!rest) return 0;
-  return Math.max(0, rest.supplies - restSupplyCut(character));
+  return Math.max(0, rest.supplies - characterGrants(character).restSupplies);
 }
 
 /* ------------------------------------------------------------- the labours */
@@ -214,8 +217,8 @@ function enchantName(id) {
  * What the thing being enchanted is called. An id the codex no longer knows still
  * gets a line rather than a blank, because the Supplies were spent either way.
  */
-function itemName(id) {
-  return getItem(id)?.name ?? String(id);
+function itemName(character, id) {
+  return heldItem(character, id)?.name ?? String(id);
 }
 
 /**
@@ -446,14 +449,14 @@ export function restPlan(character, kind, labours = [], prepared = null) {
       const enchantment = getEnchantment(row.id);
       const price = layingCost(enchantment);
       const before = supplies;
-      move(-price, `${enchantment.name} laid on ${itemName(row.itemId)}`);
+      move(-price, `${enchantment.name} laid on ${itemName(character, row.itemId)}`);
 
       lines.push({
         key: `laid-${row.itemId}-${row.id}`,
         label: `${enchantment.name}: ${price} Supplies`,
         detail:
           supplies >= 0
-            ? `Worked into ${itemName(row.itemId)}, at ${SUPPLIES_PER_BURDEN} a point of Magic Burden.`
+            ? `Worked into ${itemName(character, row.itemId)}, at ${SUPPLIES_PER_BURDEN} a point of Magic Burden.`
             : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
         tone: supplies >= 0 ? 'cost' : 'warn',
       });
@@ -464,7 +467,7 @@ export function restPlan(character, kind, labours = [], prepared = null) {
       lines.push({
         key: `stripped-${row.itemId}-${row.id}`,
         label: `${getEnchantment(row.id)?.name ?? row.id} stripped`,
-        detail: `Off ${itemName(row.itemId)}. The Supplies it cost do not come back.`,
+        detail: `Off ${itemName(character, row.itemId)}. The Supplies it cost do not come back.`,
         tone: 'end',
       });
     }

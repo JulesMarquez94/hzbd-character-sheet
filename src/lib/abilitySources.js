@@ -26,7 +26,7 @@
 import { getBackground, getBackgroundSkill, normalizeBackgroundSkills } from './backgrounds.js';
 import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
-import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment } from './items.js';
+import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from './items.js';
 import { getLineage } from './lineages.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
@@ -303,12 +303,25 @@ function talentSources(character) {
  * A spell an enchantment carries is a different matter: it is an ability the
  * bearer gains for as long as the item is equipped, so it belongs with every
  * other ability they hold, under the item that grants it.
+ *
+ * Trinkets are in it, and they are the likeliest place a carried spell will be
+ * found: a ring exists to hold a working, where a breastplate is worn for its own
+ * sake. Each one is titled "Trinket" rather than by a slot, because a trinket has
+ * no slot to be named — see normalizeTrinkets in items.js.
  */
 function gearSource(character) {
   const equipment = normalizeEquipment(character?.equipment);
+  const places = [
+    ...EQUIPMENT_SLOTS.map(({ key, label }) => ({ key, label, id: equipment[key] })),
+    ...normalizeTrinkets(character?.trinkets).map((id, index) => ({
+      key: `trinket-${index}`,
+      label: 'Trinket',
+      id,
+    })),
+  ];
 
-  const sections = EQUIPMENT_SLOTS.map(({ key, label }) => {
-    const item = heldItem(character, equipment[key]);
+  const sections = places.map(({ key, label, id }) => {
+    const item = heldItem(character, id);
     if (!item) return null;
 
     /* Which spell is carried is the *item's* to say, not the enchantment's:

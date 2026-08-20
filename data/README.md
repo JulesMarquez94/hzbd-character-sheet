@@ -52,6 +52,9 @@ doing on its own.
 | Draconic Bond art, from the `Draconic Bond/` folder | **2026-08-20, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | Talent Set · Enchanter · Ability, amended | **2026-08-20, 4 cards** (3 on 08-19) | `src/lib/talents.js`, exported to `data/templates/` |
 | One-off things, handed over in chat | **2026-08-20, 5 of them** | see [the one-offs](#the-one-offs-2026-08-20) |
+| Trinkets, written here | **2026-08-20, 12 accessories** | `src/lib/trinkets.js` |
+| The item instance, and its share code | **2026-08-20, asked for in chat** | `src/lib/forged.js`, two new columns |
+| The same-source stacking law | **2026-08-20, ruled in chat** | `grantsFrom`, `itemModifiers`, `characterGrants` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -396,10 +399,10 @@ The Developpement Notes are a system rather than a card. The list, with what is 
 
 | The ask | State |
 | ------- | ----- |
-| Making an enchanted item: pick an item, apply an enchantment, carry more than one | **in**, at a Long Rest. Any number per item |
-| Naming one | **out.** Needs an item instance |
-| Sharing one by code, and adding one by code | **out.** Same reason |
-| A Trinket block, and the Inventory tab shrinking to two blocks for it | **out** |
+| Making an enchanted item: pick an item, apply an enchantment, carry more than one | **in**, at a Long Rest, and **in** at the forge with no rank gate |
+| Naming one | **in**, as of 20 Aug 2026. See [the item instance](#the-item-instance-20-aug-2026) |
+| Sharing one by code, and adding one by code | **in**, same date. `HZBD1.…` |
+| A Trinket block | **in**, same date. The tab is five blocks now rather than shrinking to two |
 | Ephemeral Enchantment writing to the tracker from the quick action | **in**, and from the tracker's own prompt |
 | An ephemeral +1 Instinct moving the character sheet | **in**, along with everything Instinct buys |
 | Another player searching for an effect laid on them | **out.** Nothing writes to another character's row |
@@ -522,17 +525,19 @@ damage type and Empowering the weapon block prints, the cards an item teaches, t
 Magic Burden meter, and the recap's Enchantments group. Nothing had to be taught
 what an Enchanter is.
 
-### What is still not built
+### What was not built then, and is now
 
-**An item instance.** `laid` is keyed by item *id*, so two longswords are one
-longsword and an enchantment laid on one is laid on both. Lifting that is what the
-last of the Developpement Notes' asks need: **naming** an enchanted piece, and
-**sharing one by code** with another player. Both were left out rather than faked,
-because a share code for a thing with no identity of its own has nothing to point
-at.
+**An item instance.** `laid` is keyed by item *id*, so two longswords were one
+longsword and an enchantment laid on one was laid on both. That was what the last
+of the Developpement Notes' asks all needed — naming an enchanted piece, and
+sharing one by code — and all three were left out rather than faked, because a
+share code for a thing with no identity of its own has nothing to point at.
 
-Also still out: the **Trinket block** the notes ask for, and the two blocks the
-Inventory tab would shrink to in order to make room for it.
+**It exists as of 20 Aug 2026.** See [the item instance](#the-item-instance-20-aug-2026)
+below. `laid` is still keyed by id and did not have to change: a forged id *is* an
+instance, so laying a working on one silver ring lands on that ring. Two of the
+same **codex** piece are still one piece to `laid`, which is the honest reading of
+a record keyed by id and is what the forge is for.
 
 ### The second Enchantments pull, 20 Aug 2026
 
@@ -1053,11 +1058,13 @@ that moves a pool, so `combatReactionEffects` in `items.js` is where an item's
 riders are read from now. Worn and in hand only: what is in the pack is not on
 you, and a loop on the belt is reached for rather than carried into the fight.
 
-**One gap is still open.** An item carrying VITALITY or RESILIENCE would still
-hand its wielder nothing, because `deriveStats` reads only the worn and running
-halves. Nothing in the codex does carry one, so nothing is wrong today. Closing
-it means changing numbers `syncDerived` bakes into stored columns, which is a
-bigger change than one bell-time grant and wants your word first.
+**One gap was still open, and it is closed now.** An item carrying VITALITY or
+RESILIENCE handed its wielder nothing, because `deriveStats` read only the worn and
+running halves. Closing it meant changing numbers `syncDerived` bakes into stored
+columns, which wanted your word first — and the stacking ruling **was** that word,
+since it only means anything if a working in a ring does something. See
+[the same-source law](#the-same-source-law-20-aug-2026). `characterGrants` in
+`items.js` is the composed reading now, and this function is only the attribution.
 
 ### A Unique spell, and how it reaches an item
 
@@ -1500,3 +1507,194 @@ A `General Rules · Statuses` tab with a name and a sentence each replaces every
 one of them. Two other things that tab could settle: what Elevate actually does
 to a spell, and whether Verdant Field's "Plant spells" means the Flora family,
 which is how it is currently written.
+
+## The item instance, 20 Aug 2026
+
+The one missing thing named at the end of the Enchanter build, and the three
+Developpement Notes asks that were waiting on it. All of it landed together
+because none of it works alone.
+
+Two new columns. **Re-run `supabase/schema.sql`.**
+
+| Column | Holds |
+| ------ | ----- |
+| `trinkets` | a plain list of item ids, no ceiling |
+| `forged` | `{ "forged-a1b2": { base, ench, name, art } }` — one record per made thing |
+
+### Trinkets
+
+A fifth block on the Inventory tab, and the only one on the site with no slot
+count. Armor has three places and hands have two; a character wearing nine rings
+is wearing nine rings, so it is a list with one empty place always waiting at the
+bottom of it and a bare count in its head.
+
+That is also why they are **not** in the `equipment` map: that map has one key per
+place and a fixed set of keys. `normalizeTrinkets` in `items.js` owns the shape.
+
+Twelve pieces in `src/lib/trinkets.js`, and every one of them is mundane on
+purpose — four rings, three things for the neck, a cloak, a belt, a bracelet, a
+circlet, a brooch. No numbers, no cards, no rules text, Common across the board.
+**A trinket is the empty vessel.** Before this shelf existed every working had to
+compete with a breastplate for a slot; now you wear a silver ring because it will
+hold a Primal Sense, not because a silver ring is worth wearing.
+
+The notes asked for the tab to shrink to two blocks to make room. It did not: the
+grid already reflows three across, two across and one across by width, so a fifth
+block costs nothing and the four fixed ones are still the player's to arrange.
+
+### The forge
+
+`+ Make an Enchanted Item` on the codex browser's own head, between the title and
+the close, from whichever block opened it. One base piece, any number of workings,
+an optional name and an optional picture. It lands in the inventory rather than on
+the character, because making a ring is not putting it on.
+
+**It is not ENCHANTING.** That card is a night's labour: gated by the Enchanter's
+rank, priced at 70 Supplies a point of Magic Burden, capped at one working an item
+until Rank 3, and done inside a Long Rest (`EnchantRest.jsx`, untouched). The
+forge is how an enchanted item *arrives* — found, bought, awarded — so it has no
+rank gate, no price and no cap. Nobody paid Supplies for the Deep Sea Trident
+either, and the codex ships it with two workings on it.
+
+What the forge does refuse is the **same working twice in one piece**: two Primal
+Senses is one point of Instinct for eight points of burden, so the shelf marks the
+second "Take it out" rather than selling it.
+
+An Imbuement is asked which spell it carries, in the window that granted it, the
+same way `EnchantWindow` asks. Master Imbuement still says "no Master spells in
+the codex yet" and lets you make it anyway.
+
+### The code
+
+```
+HZBD1.<base64url payload>.<checksum>
+```
+
+The payload is the base id, the workings, the name and the picture — and **no
+instance id**, so pasting a code makes a *new* item to the same design. Two
+players cannot be holding the same ring. A two-working named ring is about 190
+characters.
+
+The checksum is FNV-1a in base 36, and it is there so a paste that lost a
+character fails loudly. Without it a truncated code still decodes, into a
+different item, and nobody finds out until the table argues about a damage type.
+A code carrying a working this build does not know is read anyway and says how
+many rows it dropped.
+
+Where a code appears: on the forge preview before the thing exists, on the equip
+prompt (which is what clicking an inventory row opens), and on the item's own
+card. `ShareCode.jsx` is all three.
+
+A pasted `art` field that is not `http(s)` is dropped rather than rendered — a
+pasted code is a stranger's data, and that field ends up in an `img` tag.
+
+### One instance, one place
+
+A codex id may repeat as often as the player owns copies: three healing potions
+are three ids. A forged id is one *thing*, so it may sit in exactly one place —
+`placementOf` in `items.js` is the check, and the browser, the equip prompt and
+every writer in `useEquipSlots` all apply it. Refused rather than moved: "take it
+off, then put it on" is what a hand does with a ring, and moving it would mean
+every commit path lifting the id out of three other columns first.
+
+The pack is deliberately **not** a placement. That is where a thing waits.
+
+`+1` never appears on a made row for the same reason — a second pack entry
+pointing at one instance would be two rows secretly sharing a record. A second of
+those is made by pasting its code again, which mints a new instance.
+
+`pruneForged` runs on every write out of `useEquipSlots`: a record whose thing has
+been thrown away dies with it, so the column cannot grow forever and a Long Rest
+never offers to enchant a ring nobody owns.
+
+### Getting a second one
+
+`+1` beside every row's main button in the codex browser, on every block. It was
+genuinely impossible before: "Equip" already took the copy in your pack rather
+than conjuring one, so there was no way at all to say "get me another". It is the
+codex rather than a shop, so nothing is charged — the ledger is where coin moves.
+
+## The same-source law, 20 Aug 2026
+
+Jules, in as many words: *"unless they say otherwise effects don't stack from the
+same source. So the instinct enchant, if you have it on two rings, it is still
+only a +1. However you can have a +1 from the lineage and a +1 from the ring that
+does stack. It just cannot be the same source twice."*
+
+**One enchantment is one source**, however many things it is written into. So:
+
+| | |
+| --- | --- |
+| Primal Sense on two rings | +1 Instinct |
+| Primal Sense on a ring **and** on the Enchanter's own person | +1 Instinct |
+| Primal Sense on a ring, and an hour of Ephemeral Primal Sense | +1 Instinct |
+| Primal Sense on a ring, and a lineage that grants Instinct | **+2.** Different sources |
+| Fire Infusion in the blade and Fire Infusion on the hands | Fire, Empowered by 1 |
+| Decay in the blade and Lightning on the hands | Decay or Lightning, Empowered by 2 |
+
+It is applied in exactly two places, both of them the one place their kind of sum
+happens: `grantsFrom` in `enchanting.js` deduplicates the id list on the way in,
+and `itemModifiers` in `weapons.js` folds each enchantment once (the damage type
+already deduplicated; the Empower that rides with it now does too).
+
+**Magic Burden is not an effect.** Two rings carrying Primal Sense weigh eight and
+grant one point, because burden is what a thing *weighs* rather than what it does.
+`itemBurden` never goes through `grantsFrom`.
+
+### The gap this closed
+
+The Enchanter build flagged one open thing: *"an item carrying VITALITY or
+RESILIENCE would still hand its wielder nothing, because `deriveStats` reads only
+the worn and running halves ... closing it means changing numbers `syncDerived`
+bakes into stored columns, which is a bigger change than one bell-time grant and
+wants your word first."*
+
+The stacking ruling **is** that word — it only means anything if a working in a
+ring does something — so the gap is closed. `characterGrants` in `items.js` is the
+composed reading: the Enchanter's own body slots, what is running for the hour, and
+what is worked into anything worn, held or on a trinket, with the law applied once
+across all three. `deriveStats` reads it, and `syncDerived` bakes the permanent
+half into the stored columns exactly as a worn breastplate is baked in.
+
+**What counts as "on you"** is worn, in hand, and on a trinket — `wornItems`. Not
+the belt and not the pack: a loop is reached for rather than carried into a fight,
+and what is in the pack is not on you. That is the line `combatReactionEffects`
+already drew for Patien, kept. Burden still counts the belt, because weight and
+effect are different questions. **Say the word if the belt should grant as well** —
+it is one line in `wornItems`.
+
+### What moved, and one number that had been wrong
+
+- `magicBurdenUsed` takes the character now instead of a loose `(equipment, belt)`
+  pair. **Two call sites were passing no character at all** — the codex browser and
+  the equip prompt, which are the two places that *refuse* an item for being over
+  capacity. Neither could see the Enchanter's own body slots or a working laid on a
+  blade, so both read low and let a player equip past their capacity.
+- `armorSetName` and `equipmentEffects` take the character too, and resolve through
+  `heldItem`: a renamed breastplate is still a breastplate, where `getItem` on a
+  forged id is null and read as "no set".
+- `beltEntry` and `isUsedUp` take the character, so a forged flask in a loop is not
+  drawn as an empty loop with an id still stored in it.
+- `combatReactionGrant` takes its *number* from `characterGrants` and only its
+  *names* from `combatReactionEffects`. Summing both would brace you twice.
+- `LoadoutBlock` prints `wieldModifiers` rather than `itemModifiers`, so an
+  Enchanter's own Fire Infusion changes the chip on the Character tab and not only
+  the one on the Inventory tab.
+
+## Two bugs, 20 Aug 2026
+
+**The creature's quick bar overlapped its tracker.** `.active-block > .block-head`
+is sticky with a −0.9rem top margin, so it lands flush on the block's edge. The
+creature's action block wears **two** heads — its own, and the tracker's
+`.block-head.fx-head` halfway down — and the second was taking that negative
+margin and riding 14px up over the last row of action chips, with `z-index: 2` to
+put it on top. The rule is `:not(.fx-head)` now. A second sticky head would have
+been wrong anyway: two things pinned to the same `top` stack on each other the
+moment either list scrolls.
+
+**Portraits cropped from the middle.** A picture that is not its frame's shape has
+to lose something, and a centred crop loses half the head and half the boots. All
+four now say `object-position: 50% 0` and take the boots: block 1's plate, the Lore
+tab's editor, the creature's plate and the creature's editor, plus the dashboard
+card. Faces are at the top of pictures of people — the same reason
+`.talent-summary-art` has biased upward since it was written.

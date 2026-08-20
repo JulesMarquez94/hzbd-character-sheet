@@ -46,12 +46,15 @@
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* Cropped from the top, the same as the sheet's own plate: a picture that is not
+   this frame's shape loses its bottom rather than half its head. */
 .char-portrait img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% 0;
 }
 
 .portrait-initials {

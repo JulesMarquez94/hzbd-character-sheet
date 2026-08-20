@@ -6,7 +6,7 @@ import WornEnchants from './WornEnchants.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { formatNumber } from '../../lib/characterModel.js';
 import { enchantChanges } from '../../lib/enchanting.js';
-import { getItem } from '../../lib/items.js';
+import { heldItem } from '../../lib/items.js';
 import { getEnchantment } from '../../lib/enchantments.js';
 import { getRest, labourAffordable, restActions, restPlan } from '../../lib/rest.js';
 import { pickChanges, toggleLoadoutPick } from '../../lib/loadouts.js';
@@ -470,10 +470,10 @@ function summarise(action, { chosen, character, talents }) {
 
   const said = [];
   for (const row of changes.laidDropped) {
-    said.push(`${enchantName(row.id)} stripped off ${itemName(row.itemId)}`);
+    said.push(`${enchantName(row.id)} stripped off ${itemName(character, row.itemId)}`);
   }
   for (const row of changes.laidAdded) {
-    said.push(`${enchantName(row.id)} laid on ${itemName(row.itemId)}`);
+    said.push(`${enchantName(row.id)} laid on ${itemName(character, row.itemId)}`);
   }
   return said.length > 0
     ? { done: true, says: said.join(', ') }
@@ -484,8 +484,8 @@ function enchantName(id) {
   return getEnchantment(id)?.name ?? String(id);
 }
 
-function itemName(id) {
-  return getItem(id)?.name ?? String(id);
+function itemName(character, id) {
+  return heldItem(character, id)?.name ?? String(id);
 }
 
 /** "one, two and three". No Oxford comma. */

@@ -929,13 +929,25 @@ export function itemEnchantments(item) {
  * Lightning", each in its own colour, so this hands back a list.
  *
  * A type named twice is named once. Two Fire Infusions are one Fire.
+ *
+ * ----------------------------------------------------------- and one Empower
+ * **The Empower does not stack with itself either.** "Unless they say otherwise,
+ * effects do not stack from the same source", and a Fire Infusion in the blade
+ * plus a Fire Infusion on the hands holding it is one source named twice: the
+ * damage type was already deduplicated, and the Empowering that rides with it is
+ * now deduplicated by the same key. Two *different* infusions still both count —
+ * Decay in the blade and Lightning on the hands is "Decay or Lightning",
+ * Empowered by 2 — because those are two sources.
  */
 export function itemModifiers(item, extra = []) {
   const damage = [];
+  const counted = new Set();
   let empower = 0;
 
   const fold = (enchantment) => {
-    if (!enchantment) return;
+    if (!enchantment || counted.has(enchantment.id)) return;
+    counted.add(enchantment.id);
+
     if (enchantment.damageType && !damage.includes(enchantment.damageType)) {
       damage.push(enchantment.damageType);
     }

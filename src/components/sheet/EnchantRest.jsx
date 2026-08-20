@@ -5,12 +5,13 @@ import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
   CATEGORY_ORDER,
-  getItem,
+  heldItem,
   isCustomEntry,
   itemCategory,
   normalizeBelt,
   normalizeEquipment,
   normalizePack,
+  normalizeTrinkets,
 } from '../../lib/items.js';
 import { enchanterState, itemRoom, laidOn, layOn, layingCost, stripFrom } from '../../lib/enchanting.js';
 import { layingAffordable } from '../../lib/rest.js';
@@ -184,16 +185,23 @@ export default function EnchantAction({ character, talents, kind, onClose, onDra
 
 /**
  * Everything this character carries that could take a working: what is worn, what
- * is in hand, what is clipped to the belt and what is in the pack.
+ * is in hand, what is on a trinket, what is clipped to the belt and what is in
+ * the pack.
  *
  * A written note is left out. Those are "a scrap of paper with a note on it, a
  * stone worth keeping" with nothing mechanical about them, and an enchantment laid
  * on one would have nothing to attach to.
+ *
+ * `heldItem`, so a piece the player made is offered by its own name. It is also
+ * the one place the *instance* matters: `laid` is keyed by id, and a forged id is
+ * an instance, so a working laid on one silver ring lands on that ring rather
+ * than on every silver ring the character owns.
  */
 function carriedItems(character) {
   const equipment = normalizeEquipment(character?.equipment);
   const ids = [
     ...Object.values(equipment),
+    ...normalizeTrinkets(character?.trinkets),
     ...normalizeBelt(character?.belt).map((entry) => entry?.id),
     ...normalizePack(character?.pack).filter((entry) => !isCustomEntry(entry)),
   ];
@@ -206,7 +214,7 @@ function carriedItems(character) {
     if (!id || seen.has(id)) continue;
     seen.add(id);
 
-    const item = getItem(id);
+    const item = heldItem(character, id);
     if (item) items.push(item);
   }
 

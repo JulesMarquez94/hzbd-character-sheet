@@ -18,12 +18,19 @@ const openDialogs = [];
  * a choice that already has a colour — amber for talents, violet for lineage,
  * cyan for a background — and the dialog carries it so the reader never loses
  * track of which of the three they are inside.
+ *
+ * `action` rides in the header, between the title and the close, for the one
+ * control that is *about* the dialog rather than in it. The codex browser's "make
+ * an enchanted item" is the case it was added for: everything in the body answers
+ * "which of these", and that button answers "none of these". At the foot it would
+ * have read as the way out of the dialog, which it is not.
  */
 export default function Modal({
   title,
   onClose,
   children,
   footer,
+  action = null,
   wide = false,
   size = null,
   accent = null,
@@ -66,6 +73,7 @@ export default function Modal({
       >
         <div className="modal-header">
           <h2>{title}</h2>
+          {action && <span className="modal-header-action">{action}</span>}
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
             ×
           </button>

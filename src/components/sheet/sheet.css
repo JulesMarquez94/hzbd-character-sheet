@@ -621,10 +621,17 @@ body.sheet-fixed #root {
   position: relative;
 }
 
+/*
+ * Cropped from the top, never the middle. A portrait that is not the frame's
+ * shape has to lose something, and what a centred crop loses is half the head
+ * and half the boots — so it takes the boots. Faces are at the top of pictures
+ * of people; the same reason the talent plates bias upward.
+ */
 .id-portrait img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% 0;
 }
 
 .id-initials {
@@ -2547,10 +2554,12 @@ body.sheet-fixed #root {
   font-size: 0.75rem;
 }
 
+/* The same crop as the block-1 plate, so the editor shows what the sheet will. */
 .portrait-frame img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% 0;
 }
 
 .portrait-fields {
@@ -4465,6 +4474,13 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
+/* And what you made is neither. It takes the haze violet worked magic wears
+   everywhere else on the sheet, so a made piece is told from a bought one
+   before its name is read. */
+.browser-group-made .browser-group-label {
+  color: var(--haze-glow);
+}
+
 .browser-group-note {
   font-size: 0.62rem;
   text-transform: uppercase;
@@ -6018,8 +6034,19 @@ body.sheet-fixed #root {
    padding stays open above the head, and a chip scrolls up through it. Pulled
    the padding's width higher, the head lands flush on the block's edge and
    carries its own ground across the full width. */
-.active-block > .block-head,
-.passive-block > .block-head {
+/*
+ * `:not(.fx-head)` because a block may wear **two** heads and only the first one
+ * is the block's own. The creature's action block (`.minion-actions`) is an
+ * `.active-block` carrying its own tracker underneath, and that tracker's heading
+ * is a `.block-head` too — so it was taking this rule's negative top margin and
+ * riding 14px up over the last row of action chips. That is the small overlap
+ * between the quick bar and the tracker.
+ *
+ * A second head must not be sticky in any case: two things pinned to the same
+ * `top: -0.9rem` would stack on each other the moment either list scrolled.
+ */
+.active-block > .block-head:not(.fx-head),
+.passive-block > .block-head:not(.fx-head) {
   position: sticky;
   top: -0.9rem;
   z-index: 2;
@@ -8033,10 +8060,13 @@ body.sheet-fixed #root {
   justify-content: center;
 }
 
+/* Top-aligned like every other portrait on the sheet. A creature's picture is
+   the same shape problem: what a square plate cannot show should be the tail. */
 .minion-plate img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% 0;
 }
 
 /* No picture is the same haze plate an unpainted card draws, so an empty one
@@ -8285,6 +8315,7 @@ body.sheet-fixed #root {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% 0;
 }
 
 .minion-fields {
@@ -8463,5 +8494,314 @@ body.sheet-fixed #root {
 .rest-slot-tools {
   display: flex;
   gap: 4px;
+  flex: none;
+}
+
+/* =========================================================
+   TRINKETS
+
+   The one block on the Inventory tab with no ceiling. Its
+   rows are the armor block's `.equip-slot` unchanged — a
+   ring has to look like a helm, because both are things
+   you are wearing — and everything below is the two facts
+   an armor slot never has to state: what has been worked
+   into it, and what that costs to carry.
+   ========================================================= */
+.trinket-block {
+  gap: 0.5rem;
+}
+
+/* A list rather than a set of slots, so a row has no slot label to sit under.
+   That room goes to the burden instead, which is the number this block exists
+   to make visible. */
+.trinket-slot .equip-item-head {
+  align-items: baseline;
+}
+
+/* What the ring costs its wearer, in the colour Magic Burden is drawn in
+   everywhere else on the sheet. */
+.trinket-burden {
+  flex: none;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--haze-glow);
+}
+
+/* How many of them are actually doing something, in the block's own count, so
+   the head answers that without a row being opened. */
+.trinket-worked {
+  color: var(--haze-glow);
+}
+
+/* And the working itself, printed on the row. A trinket's whole worth is this
+   line: the codex piece under it has no numbers at all, so a row without this
+   would say nothing about why the ring is on. */
+.trinket-working {
+  display: block;
+  font-size: 0.64rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.trinket-working b {
+  color: var(--haze-glow);
+  font-weight: 700;
+}
+
+/* The empty place at the end of the list. Dashed, the same as every other
+   "there could be something here" on the sheet, and never numbered: it is the
+   end of a list rather than slot six. */
+.trinket-empty {
+  border-style: dashed;
+}
+
+/* An id this build cannot resolve. Still shown, still removable — see the note
+   in TrinketBlock.jsx. */
+.trinket-unknown {
+  border-left-color: color-mix(in srgb, var(--danger-red) 45%, transparent);
+}
+
+/* =========================================================
+   THE FORGE
+
+   Making an enchanted item. The same two-column grammar as
+   the Ephemeral Enchantment window it sits beside — the
+   shelf on the left, what is about to exist on the right —
+   because it is the same kind of screen and a player should
+   not have to learn a second one.
+   ========================================================= */
+
+/* The paste box, above everything. It is first because reading a code skips
+   every step under it, and it is fenced off for the same reason: it is not part
+   of the sequence, it is a way past the sequence. */
+.forge-paste {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px dashed rgba(157, 91, 255, 0.35);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.4);
+}
+
+.forge-paste-label {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--haze-glow);
+}
+
+.forge-paste-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.forge-paste-row .form-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+}
+
+.forge-paste-row .btn {
+  flex: none;
+}
+
+/* What the last read had to say. Muted for a success, because the window
+   filling in is the real answer there; the failure is the one that has to be
+   read. */
+.forge-note {
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.forge-note.is-bad {
+  color: var(--danger-rose);
+}
+
+/* ---------- the piece it is made from ---------- */
+.forge-base {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid color-mix(in srgb, var(--copper) 60%, transparent);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.5);
+}
+
+.forge-base-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.forge-base-name {
+  font-family: var(--font-headings);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.2;
+}
+
+/* Two hundred codex entries need a ceiling and a scrollbar, not a page. */
+.forge-base-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 138, 75, 0.35) transparent;
+}
+
+.forge-base-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.45);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.forge-base-row:hover,
+.forge-base-row:focus-visible {
+  border-color: color-mix(in srgb, var(--copper) 55%, transparent);
+  background-color: rgba(9, 17, 21, 0.8);
+}
+
+/* ---------- what is about to exist ----------
+   A face rather than a card: the picture, the name it will carry and what it
+   will weigh. It is a preview of a thing, so it is drawn as the thing. */
+.forge-face {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.forge-plate {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(157, 91, 255, 0.3);
+  border-radius: 4px;
+  background-color: var(--bg-black);
+  background-size: cover;
+  background-position: 50% 0;
+  overflow: hidden;
+}
+
+.forge-face-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.forge-face-burden {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--haze-glow);
+}
+
+/* The one warning this window gives, and it is a warning rather than a refusal:
+   a piece may be made whatever it weighs. What it cannot do is be worn. */
+.forge-over {
+  color: var(--danger-rose);
+}
+
+.forge-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.forge-list-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.4rem 0.5rem;
+  border-left: 2px solid color-mix(in srgb, var(--haze-glow) 55%, transparent);
+  border-radius: 3px;
+  background-color: rgba(9, 17, 21, 0.5);
+  align-items: flex-start;
+}
+
+/* ---------- the code ----------
+   Monospaced and wrapping, because it is read out character by character as
+   often as it is copied, and it is long enough to need two lines. */
+.forge-code {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.forge-code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.forge-code-value {
+  display: block;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.7);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  color: var(--haze-glow);
+  /* A code has no spaces in it, so it has to be told it may break anywhere.
+     Without this it runs off the side of the panel it sits in. */
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+/* ---------- +1 on a codex row ----------
+   The same round tool button the info and discard glyphs are, so a browser
+   row's controls read as one rail rather than a button and two glyphs. */
+.browser-add-btn {
+  font-family: var(--font-headings);
+  font-weight: 700;
+  color: var(--def-healing);
+  border-color: color-mix(in srgb, var(--def-healing) 40%, transparent);
+}
+
+.browser-add-btn:hover,
+.browser-add-btn:focus-visible {
+  color: var(--def-healing);
+  border-color: var(--def-healing);
+}
+
+/* The one control that is *about* a dialog rather than in it, on the header
+   between the title and the close. margin-left: auto puts it hard against the
+   close rather than floating in the middle of the bar, so the title keeps the
+   left edge it has in every other dialog. */
+.modal-header-action {
+  margin-left: auto;
   flex: none;
 }

@@ -32,6 +32,8 @@ export default function BeltBlock({
   unclipBelt,
   discardBelt,
   setBeltUsed,
+  addToPack,
+  onForge,
   readOnly = false,
 }) {
   const [browseIndex, setBrowseIndex] = useState(null);
@@ -51,7 +53,7 @@ export default function BeltBlock({
       {Array.from({ length: BELT_MAX }, (_, index) => {
         if (index >= beltSlots) return <LockedLoop key={index} index={index} />;
 
-        const state = beltEntry(belt[index]);
+        const state = beltEntry(character, belt[index]);
 
         if (!state) {
           return (
@@ -93,13 +95,12 @@ export default function BeltBlock({
       {browseIndex !== null && (
         <ItemBrowser
           slot={{ key: BELT_SLOT_KEY, label: `Belt Slot ${browseIndex + 1}` }}
-          current={beltEntry(belt[browseIndex])?.item ?? null}
+          current={beltEntry(character, belt[browseIndex])?.item ?? null}
           equipLabel="Clip On"
           equippedLabel="On Belt"
           character={character}
           equipment={equipment}
           pack={pack}
-          belt={belt}
           onEquip={(slotKey, item) => {
             clipToBelt(browseIndex, item);
             setBrowseIndex(null);
@@ -108,6 +109,8 @@ export default function BeltBlock({
             unclipBelt(browseIndex);
             setBrowseIndex(null);
           }}
+          onAdd={addToPack}
+          onForge={onForge}
           onClose={() => setBrowseIndex(null)}
           readOnly={readOnly}
         />

@@ -7,12 +7,13 @@ import {
   BELT_MAX,
   beltEntry,
   beltSlotCount,
-  getItem,
+  heldItem,
   normalizeBelt,
   normalizeEquipment,
   rarityColor,
+  wieldModifiers,
 } from '../../lib/items.js';
-import { getCard, itemModifiers } from '../../lib/weapons.js';
+import { getCard } from '../../lib/weapons.js';
 import { shortName, spendUse } from '../../lib/combatBar.js';
 
 /**
@@ -46,9 +47,13 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
   const belt = normalizeBelt(character.belt);
   const beltSlots = beltSlotCount(character);
 
-  const primary = getItem(equipment.main_hand);
-  const secondary = getItem(equipment.off_hand);
-  const modifiers = itemModifiers(primary);
+  const primary = heldItem(character, equipment.main_hand);
+  const secondary = heldItem(character, equipment.off_hand);
+  /* `wieldModifiers` rather than `itemModifiers`: an Enchanter's own workings
+     travel with their hands, and this block prints what the weapon does in
+     *these* hands. It was reading the blade alone, so a Fire Infusion on the
+     Enchanter changed the chip on the Inventory tab and not the one here. */
+  const modifiers = wieldModifiers(character, primary);
 
   /* What the weapon itself does — its own two attacks, printed for whoever is
      holding it. A spell an enchantment carries is not one of them: that is
@@ -201,7 +206,7 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
           );
         }
 
-        const state = beltEntry(belt[index]);
+        const state = beltEntry(character, belt[index]);
 
         if (!state) {
           return (

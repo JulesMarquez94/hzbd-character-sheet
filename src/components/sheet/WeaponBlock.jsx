@@ -19,7 +19,16 @@ import { getCard, itemEnchantments } from '../../lib/weapons.js';
  * slot (swap, or send it back to the pack), the ⓘ opens the item itself with
  * its lore and workings, and each ability box opens that card.
  */
-export default function WeaponBlock({ character, equipment, pack, belt, equip, unequip, readOnly = false }) {
+export default function WeaponBlock({
+  character,
+  equipment,
+  pack,
+  equip,
+  unequip,
+  addToPack,
+  onForge,
+  readOnly = false,
+}) {
   const [browseSlot, setBrowseSlot] = useState(null);
   const stack = useCardStack();
 
@@ -79,7 +88,6 @@ export default function WeaponBlock({ character, equipment, pack, belt, equip, u
           character={character}
           equipment={equipment}
           pack={pack}
-          belt={belt}
           onEquip={(slotKey, item) => {
             equip(slotKey, item);
             setBrowseSlot(null);
@@ -88,6 +96,8 @@ export default function WeaponBlock({ character, equipment, pack, belt, equip, u
             unequip(slotKey);
             setBrowseSlot(null);
           }}
+          onAdd={addToPack}
+          onForge={onForge}
           onClose={() => setBrowseSlot(null)}
           readOnly={readOnly}
         />

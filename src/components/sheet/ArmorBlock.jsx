@@ -21,16 +21,25 @@ import {
  * The Magic Burden meter here counts the whole loadout, weapons included —
  * an enchanted blade weighs on it exactly like an enchanted helm.
  */
-export default function ArmorBlock({ character, equipment, pack, belt, equip, unequip, readOnly = false }) {
+export default function ArmorBlock({
+  character,
+  equipment,
+  pack,
+  equip,
+  unequip,
+  addToPack,
+  onForge,
+  readOnly = false,
+}) {
   const [browseSlot, setBrowseSlot] = useState(null);
   const stack = useCardStack();
 
   const burdenMax = magicBurdenMax(character);
-  const burdenUsed = magicBurdenUsed(equipment, belt, character);
+  const burdenUsed = magicBurdenUsed(character);
   const overBurden = burdenUsed > burdenMax;
   const burdenColor = overBurden ? 'var(--danger-red)' : 'var(--haze-glow)';
 
-  const fullSet = armorSetName(equipment);
+  const fullSet = armorSetName(character);
   const setInfo = fullSet ? ARMOR_SETS[fullSet] : null;
   const worn = ARMOR_SLOTS.filter((slot) => equipment[slot.key]).length;
 
@@ -154,9 +163,10 @@ export default function ArmorBlock({ character, equipment, pack, belt, equip, un
           character={character}
           equipment={equipment}
           pack={pack}
-          belt={belt}
           onEquip={equipItem}
           onUnequip={unequipItem}
+          onAdd={addToPack}
+          onForge={onForge}
           onClose={() => setBrowseSlot(null)}
           readOnly={readOnly}
         />

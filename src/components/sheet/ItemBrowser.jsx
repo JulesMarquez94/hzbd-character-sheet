@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import {
   ARMOR_SETS,
-  getItem,
+  forgedForSlot,
+  heldItem,
   itemBurden,
   itemsForSlot,
   magicBurdenMax,
   magicBurdenUsed,
+  placementOf,
 } from '../../lib/items.js';
 import { getCard } from '../../lib/weapons.js';
 import { useCardStack } from '../../context/card-stack.js';
@@ -95,13 +97,28 @@ function TagFilter({ tags, active, onToggle }) {
  * The belt does not live in the equipment map, so a loop hands its own
  * `current` in and names its buttons: you clip a potion on, you do not wear
  * it.
+ *
+ * ------------------------------------------------------------- a second one
+ * Owning one of a thing was never a reason not to own two. Every row carries a
+ * **+1** beside its main button that drops another copy straight into the
+ * inventory — a second dagger, a third healing potion, the matching ring. It is
+ * the codex, not a shop, so nothing is charged for; the ledger is where coin
+ * moves.
+ *
+ * Equipping already took a carried copy from the pack rather than conjuring one,
+ * which is exactly why this had to be its own button: "Equip" answers "wear the
+ * one I have", and there was no way at all to say "get me another".
+ *
+ * ---------------------------------------------------------------- the forge
+ * `onForge` puts the way into the forge on the browser's own head, between the
+ * title and the close — the codex is where you go looking for a thing, so it is
+ * where "the thing I want is not in here" has to be answered.
  */
 export default function ItemBrowser({
   slot,
   character,
   equipment,
   pack,
-  belt = [],
   items,
   current: currentOverride,
   equipLabel = 'Equip',
@@ -109,6 +126,8 @@ export default function ItemBrowser({
   checkBurden = true,
   onEquip,
   onUnequip,
+  onAdd = null,
+  onForge = null,
   onClose,
   readOnly,
 }) {
@@ -116,8 +135,18 @@ export default function ItemBrowser({
   const [activeTags, setActiveTags] = useState([]);
   const stack = useCardStack();
 
-  const compatible = useMemo(() => items ?? itemsForSlot(slot.key), [items, slot.key]);
-  const current = currentOverride !== undefined ? currentOverride : getItem(equipment[slot.key]);
+  /* The codex for this slot, and whatever this character has *made* for it. A
+     forged piece is on the sheet rather than in the codex, so without the second
+     half the ring somebody had just made was the one thing this window could not
+     offer them. Theirs come first: they are the answer to "have I got one". */
+  const compatible = useMemo(
+    () => [...forgedForSlot(character, slot.key), ...(items ?? itemsForSlot(slot.key))],
+    [character, items, slot.key]
+  );
+  /* `heldItem`, so a slot holding something the player made names it rather than
+     drawing a blank where the codex has no such id. */
+  const current =
+    currentOverride !== undefined ? currentOverride : heldItem(character, equipment[slot.key]);
 
   // Every tag carried by an item this slot accepts, in first-seen order.
   const allTags = useMemo(() => {
@@ -135,20 +164,33 @@ export default function ItemBrowser({
 
   // Swapping frees the worn piece's burden before the new piece's is added.
   const burdenMax = magicBurdenMax(character);
-  const burdenUsed = magicBurdenUsed(equipment, belt);
+  const burdenUsed = magicBurdenUsed(character);
   const burdenFreed = itemBurden(current);
 
   const packCount = (id) => pack.filter((packId) => packId === id).length;
 
-  /* Two lists, one above the other: what is in your pack, then everything
-     else. Both are filtered by the same search, so a tag or a name narrows
-     the pair together and neither can quietly hide a match. */
-  const carried = filtered.filter((item) => packCount(item.id) > 0);
-  const elsewhere = filtered.filter((item) => packCount(item.id) === 0);
-  const carriesAny = compatible.some((item) => packCount(item.id) > 0);
+  /* Three lists, one above the other, and all three narrowed by the same search
+     so a tag or a name moves the lot together and none of them can quietly hide
+     a match.
+
+     The made ones are their own group rather than being folded into the pack,
+     because "Everything else in the codex" is a lie about a ring somebody made
+     last night, and a forged piece may equally be *worn* — in which case it is
+     not in the pack either. What it always is, is theirs. */
+  const made = filtered.filter((item) => item.forged);
+  const carried = filtered.filter((item) => !item.forged && packCount(item.id) > 0);
+  const elsewhere = filtered.filter((item) => !item.forged && packCount(item.id) === 0);
+  const carriesAny = compatible.some((item) => !item.forged && packCount(item.id) > 0);
+  const madeAny = compatible.some((item) => item.forged);
   const searching = Boolean(query.trim()) || activeTags.length > 0;
 
   const groups = [
+    madeAny && {
+      id: 'made',
+      label: 'Made by you',
+      items: made,
+      empty: 'Nothing you made matches that.',
+    },
     {
       id: 'carried',
       label: 'In your inventory',
@@ -163,14 +205,28 @@ export default function ItemBrowser({
       items: elsewhere,
       empty: searching ? 'Nothing else matches that.' : 'The codex holds nothing else for this slot.',
     },
-  ];
+  ].filter(Boolean);
 
   function toggleTag(tag) {
     setActiveTags((tags) => (tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]));
   }
 
   return (
-    <Modal title={`${slot.label} — Codex`} onClose={onClose}>
+    <Modal
+      title={`${slot.label} — Codex`}
+      onClose={onClose}
+      /* On the head rather than at the foot, because it is a different question
+         from the one the list answers: everything below is "which of these", and
+         this is "none of these". The Modal puts it between the title and the
+         close for exactly that reason. */
+      action={
+        !readOnly && onForge ? (
+          <button type="button" className="btn btn-minimal btn-sm" onClick={onForge}>
+            + Make an Enchanted Item
+          </button>
+        ) : null
+      }
+    >
       <div className="item-browser">
         {current && (
           <div className="browser-current">
@@ -216,6 +272,10 @@ export default function ItemBrowser({
                 ) : (
                   group.items.map((item) => {
                     const equipped = current?.id === item.id;
+                    /* A made piece is one *thing*, so it cannot be in two places
+                       at once — see placementOf. Where it already is, the row says
+                       so instead of offering to put it on twice. */
+                    const alreadyOn = equipped || !item.forged ? null : placementOf(character, item.id);
                     const projected = burdenUsed - burdenFreed + itemBurden(item);
                     // Burden is what you carry *on* you — a thing in your pack is
                     // just weight, so the inventory never blocks on it.
@@ -274,9 +334,44 @@ export default function ItemBrowser({
                             i
                           </button>
 
+                          {/* Owning one is not a reason not to own two. This is
+                              the only way to say "get me another": the main
+                              button takes the copy already in the pack.
+
+                              Never on a made piece. Its id is an *instance*, so
+                              a second pack entry pointing at it would be two
+                              rows that are secretly one ring. A second of those
+                              is made by pasting its code again, which mints a
+                              new instance — and the code is on the row's own
+                              card and on its equip prompt. */}
+                          {!readOnly && onAdd && !item.forged && (
+                            <button
+                              type="button"
+                              className="item-info-btn browser-add-btn"
+                              onClick={() => onAdd(item)}
+                              title={
+                                inPack > 0
+                                  ? `Get another ${item.name} — you would have ${inPack + 1}`
+                                  : `Get a ${item.name}, into your inventory`
+                              }
+                              aria-label={`Add another ${item.name} to your inventory`}
+                            >
+                              +1
+                            </button>
+                          )}
+
                           {!readOnly &&
                             (equipped ? (
                               <span className="browser-equipped-mark">{equippedLabel}</span>
+                            ) : alreadyOn ? (
+                              <button
+                                type="button"
+                                className="btn btn-sm browser-blocked"
+                                disabled
+                                title={`${item.name} is already on you, in ${alreadyOn}. Take it off first — there is only one of it.`}
+                              >
+                                On you
+                              </button>
                             ) : blocked ? (
                               <button
                                 type="button"
