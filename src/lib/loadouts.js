@@ -208,8 +208,9 @@ export function toggleLoadoutPick(talents, talentId, cardId, known) {
  * Whether a set may re-choose its hand on a rest of this kind.
  *
  * The permission belongs to the set, transcribed off the card that hands the
- * cards over — a Mycomancer's Fungal Invocation says "after a successful short
- * or long rest", so the spec carries `swap: ['short', 'long']`. A spec that
+ * cards over — a Mycomancer's Fungal Invocation says "whenever you take a long
+ * rest, you can use your long rest action to change any number of learned
+ * spells", so the spec carries `swap: ['long']`. A spec that
  * names no rest is offered none: a rest is not the place to invent a rule the
  * card never printed, and the panel on the sheet can still change a hand at any
  * time.

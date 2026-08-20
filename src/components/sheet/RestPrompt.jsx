@@ -24,8 +24,8 @@ import { setTalentPicks } from '../../lib/talents.js';
  * amount folds it into the same write and the same ledger as the rest itself.
  *
  * Both kinds also re-prepare. A set that chooses its own cards names the rests
- * that may re-choose them — a Mycomancer swaps spells "after a successful short
- * or long rest" — so the pool is opened from here, before the rest is taken,
+ * that may re-choose them — a Mycomancer changes spells with "your long rest
+ * action" — so the pool is opened from here, before the rest is taken,
  * which is when a player actually decides what tomorrow looks like. The new hand
  * rides in the rest's own patch: cancel the rest and you cancel the swap.
  *

@@ -20,7 +20,7 @@
  * -------------------------------------------------------------- the preparing
  * A rest is also when a caster decides what they are carrying tomorrow. A set
  * that chooses its own cards says on the card itself which rests may re-choose
- * them — a Mycomancer's spells may be swapped after a short or a long one — so
+ * them — a Mycomancer's spells are changed with the long rest's own action — so
  * the rest window offers the swap, and the swap rides in the rest's own patch.
  * Backing out of the rest backs out of the swap with it: nothing is written
  * until "Yes, rest" is pressed, which is the whole point of this file.

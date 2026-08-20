@@ -186,6 +186,12 @@ export const TALENTS = [
   {
     id: 'mycomancer',
     name: 'Mycomancer',
+    /* Tagline and blurb are the Overview tab's, and that tab was not in the
+       2026-08-20 drop. Both still describe the cadaver economy the Ability tab
+       withdrew that day — "turning the dead into power", "they turn fallen foes
+       into a resource" — and neither has been rewritten here, because inventing
+       replacement prose for a tab that simply did not export is how a set stops
+       being the designer's. Flagged rather than fixed; see data/README.md. */
     tagline: 'A conduit of the mycelial network, turning the dead into power.',
     art: '/talents/mycomancer.jpg',
     tags: ['instinct', 'spellcasting', 'support', 'control'],
@@ -194,16 +200,16 @@ export const TALENTS = [
        The numbers are read straight off Fungal Invocation: you know 2 + 2 x your
        rank in spells, Adept opens at Rank 2 and Master at Rank 3. Indexed by
        rank so the data stays plain, and resolved against the card codex by
-       loadouts.js, which is what keeps this file a leaf.
-
-       The card says "Nature School" while the pool below is Primal, which is
-       where the printed spells actually are. The designer's own two words to
-       reconcile; changing `school` here is the whole switch. */
+       loadouts.js, which is what keeps this file a leaf. */
     loadout: {
       id: 'primal-spells',
       label: 'Primal Spells',
       noun: 'spell',
       kind: 'spell',
+      /* The card said "Nature School" while the pool below was Primal, which is
+         where the printed spells actually are. The 2026-08-20 sheet settled it
+         in Primal's favour, in all three places the card names the school, so
+         there is nothing left here to reconcile. */
       school: 'Primal',
       /* Mycelium Network: a Mycomancer casts with Instinct where the spell is
          printed for Mind. The rule belongs to the set rather than to the
@@ -214,12 +220,14 @@ export const TALENTS = [
       known: [null, 4, 6, 8],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       /* Which rests may re-prepare the hand, straight off Fungal Invocation:
-         "After a successful short or long rest, you can swap out any number of
-         spells you know to any other eligible spell." The rest window reads
-         this to decide whether to offer the swap while the camp is being made,
-         which is where the swap actually happens at a table. */
-      swap: ['short', 'long'],
-      note: 'After a short or long rest you can swap any of them for others you are eligible for, so nothing here is spent for good.',
+         "Whenever you take a long rest, you can use your long rest action to
+         change any number of learned spells." A long rest and no other — the
+         short rest was withdrawn on 2026-08-20, and the swap now costs the long
+         rest's action rather than riding along free. The rest window reads this
+         to decide whether to offer the swap while the camp is being made, which
+         is where the swap actually happens at a table. */
+      swap: ['long'],
+      note: 'Your long rest action can change any number of them, so nothing here is spent for good.',
     },
     blurb:
       'Mycomancers are living conduits of nature’s life and death cycle, their bodies host to a symbiotic mycelial network. This connection allows them to commune with and command the flora around them, weaving powerful spells that can either usher in renewal or accelerate decay.\n\n' +
@@ -229,39 +237,35 @@ export const TALENTS = [
         id: 'fungal-invocation',
         rank: 1,
         name: 'Fungal Invocation',
-        summary: 'Cast Nature spells, more of them each rank, and a fresh corpse cheapens one.',
+        summary: 'Cast Primal spells, more of them each rank, and change them on a long rest.',
         kind: 'talent',
         tags: ['Talent', 'Mycomancer', 'Passive'],
         ap: null,
         wp: null,
         stat: 'instinct',
         body:
-          'Your deep connection with the mycelial network lets you cast Nature Spells. You learn a number of Nature School spells equal to 2 + 2 x your Rank in Mycomancer.\n\n' +
-          'After a successful short or long rest, you can swap out any number of spells you know to any other eligible spell.\n\n' +
-          'At Rank 2, you can learn Adept Nature Spells, and at Rank 3, you gain access to Master Nature Spells.\n\n' +
-          'You also have a unique ability to draw power from the dead. By touching a fresh cadaver as you cast a spell, you can reduce its cost by 1 Willpower. You can use this once per spell cast.',
+          'Your deep connection with the mycelial network lets you cast Primal Spells. You learn a number of Primal School spells equal to 2 + 2 x your Rank in Mycomancer.\n\n' +
+          'Whenever you take a long rest, you can use your long rest action to change any number of learned spells.\n\n' +
+          'At Rank 2, you can learn Adept Primal Spells, and at Rank 3, you gain access to Master Primal Spells.',
       },
       {
         id: 'mycelium-network',
         rank: 1,
         name: 'Mycelium Network',
-        summary: 'Cast with Instinct instead of Mind, and question the network on a long rest.',
+        summary: 'Your Mycomancer spells cast off Instinct instead of Mind.',
         kind: 'talent',
         tags: ['Talent', 'Mycomancer', 'Passive'],
         ap: null,
         wp: null,
         stat: 'instinct',
         body:
-          'As a Mycomancer, you have an advantage on rolls related to natural elements or their exploration.\n\n' +
-          'When casting spells, you can use your {instinct} attribute instead of your {mind} attribute.\n\n' +
-          'You are proficient with any weapon that relies on your {instinct} attribute.\n\n' +
-          'During a long rest, you can perform the Mycelial Communion action. When you do, make a roll using your Mycomancer rank as a roll modifier. On a success, you learn the answers to 3 yes or no questions about anything within 5 kilometers (3 miles) of you. On a critical success, you learn the answers to 5 such questions instead.',
+          'When casting your Mycomancer spells, you use your {instinct} attribute instead of your {mind} Attribute.',
       },
       {
         id: 'fungal-bloom',
         rank: 1,
         name: 'Fungal Bloom',
-        summary: 'Spores that shield allies and burn enemies, spreading from every corpse they make.',
+        summary: 'A cloud of spores: allies inside gain Shield, enemies inside take Decay.',
         kind: 'talent',
         tags: ['Talent', 'Mycomancer', 'Ability'],
         ap: 4,
@@ -270,8 +274,7 @@ export const TALENTS = [
         body:
           'You release a cloud of spores that affects all entities within 9 meters (30 feet).\n\n' +
           'Allies within the range of the cloud gain a shield equal to your {instinct} attribute.\n\n' +
-          'Enemies within the range of the cloud take {damage:Necrotic} damage equal to your {instinct} attribute.\n\n' +
-          'If there is a fresh cadaver within range, it explodes into spores, replicating the ability for free from the cadaver’s location. This effect also triggers if an enemy dies from the damage dealt by {{Fungal Bloom}}.',
+          'Enemies within the range of the cloud take {damage:Decay} damage equal to your {instinct} attribute.',
       },
       {
         id: 'mycelial-bond',
@@ -288,23 +291,23 @@ export const TALENTS = [
           'While bonded, you can communicate telepathically with all bonded entities.',
       },
       {
-        id: 'sporatic-infusion',
+        id: 'sporadic-infusion',
         rank: 2,
-        name: 'Sporatic Infusion',
-        summary: "An ally's next hit deals extra Necrotic damage equal to your Instinct.",
+        name: 'Sporadic Infusion',
+        summary: 'A bonded ally’s next landed attack carries 4d6 + 4 x Instinct in Decay.',
         kind: 'talent',
         tags: ['Talent', 'Mycomancer', 'Ability'],
-        ap: 1,
-        wp: 1,
+        ap: 4,
+        wp: 5,
         stat: 'instinct',
         body:
-          'You can use this ability to make an ally’s next successful attack deal additional {damage:Necrotic} damage equal to your {instinct} attribute.',
+          'You empower an ally through your mycelial bond, the next time this ally lands an attack they deal an additional [[4d6 + 4*stat]] in {damage:Decay} damage.',
       },
       {
         id: 'deepening-connection',
         rank: 3,
         name: 'Deepening Connection',
-        summary: 'Bonds last until dismissed, and every cheapened spell heals those bonded.',
+        summary: 'Bonds last until dismissed, capped at half your Instinct, and you can cast through one.',
         kind: 'talent',
         tags: ['Talent', 'Mycomancer', 'Passive'],
         ap: null,
@@ -313,25 +316,7 @@ export const TALENTS = [
         body:
           'Your Mycelial Bonds now last until you choose to dismiss them.\n\n' +
           'However, now the number of entities you can have bonded at the same time cannot exceed half of your {instinct} attribute.\n\n' +
-          'Additionally, whenever you use {{Fungal Invocation}} to reduce the cost of a spell, all bonded members of your network regain 1 Willpower.\n\n' +
-          'When you cast a spell that targets yourself, you can choose to have it also target all of your Mycelial Bonded entities without increasing the spell’s cost.\n' +
-          'You must take a long rest before you can use this feature again.',
-      },
-      {
-        id: 'moldy-reanimation',
-        rank: 3,
-        name: 'Moldy Reanimation',
-        summary: 'Reanimate a minion corpse to fight for you until your next long rest.',
-        kind: 'talent',
-        tags: ['Talent', 'Mycomancer', 'Ability'],
-        ap: 4,
-        wp: 2,
-        stat: 'instinct',
-        body:
-          'You can reanimate the cadaver of a Minion entity you can touch.\n\n' +
-          'The reanimated Minion follows your orders and fights for you until your next long rest, but it is mindless.\n\n' +
-          'It takes its turn at the end of your turn, and before it acts, you can give it a new order as a free action. If you don’t give it an order, it will rush and attack the closest enemy.\n\n' +
-          'This ability fails if you try to reanimate the cadaver of a Minion that is a higher level than you.',
+          'When you cast a spell, you can choose to cast it through a Mycelial bonded ally, using them as a point of origin.',
       },
     ],
   },

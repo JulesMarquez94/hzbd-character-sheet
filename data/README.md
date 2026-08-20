@@ -44,6 +44,8 @@ doing on its own.
 | Talent Set · Enchanter · Ability | 2026-08-19, 3 cards | `src/lib/talents.js` (`TALENTS`) |
 | Talent Set · Enchanter · Overview | 2026-08-19, written here | `src/lib/talents.js`, exported back to `data/` |
 | Equipment · Enchantments | **2026-08-20, 23 enchantments** (13 on 08-19) | `src/lib/enchantments.js` (`ENCHANTMENTS`) |
+| Talent Set · Mycomancer · Ability | **2026-08-20, 6 cards** (a rewrite, see below) | `src/lib/talents.js` (`TALENTS`) |
+| Mycomancer art, from the `Mycomancer/` folder | **2026-08-20, 6 cards + 1 plate** | `public/cards/`, `public/talents/` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -687,6 +689,66 @@ And two that are a reading rather than a ruling, both flagged in code:
    printed die on it works. It is the one rider that moves no number by itself. Say
    the word and combat start can roll it.
 
+## The Mycomancer, rewritten 2026-08-20
+
+The `Ability` tab arrived again, and it is not an edit — it is a different set.
+Six cards where there were seven, and the whole **cadaver economy** is gone:
+touching a fresh corpse no longer cheapens a spell, a corpse in range no longer
+replicates FUNGAL BLOOM, and MOLDY REANIMATION does not exist. What replaced it
+is a bond economy, and every card now points at the network rather than at the
+dead.
+
+Transcribed straight off the tab. What changed, card by card:
+
+| Card | Then | Now |
+| ---- | ---- | --- |
+| Fungal Invocation | "Nature Spells"; swap after a **short or long** rest; a fresh cadaver cheapens a spell by 1 WP | "**Primal** Spells"; change them with your **long rest action**; no cadaver clause at all |
+| Mycelium Network | four paragraphs — advantage on nature rolls, cast off Instinct, weapon proficiency, Mycelial Communion | one sentence: your Mycomancer spells cast off Instinct instead of Mind |
+| Fungal Bloom | Necrotic; a cadaver in range replicated it for free | **Decay**; the cadaver clause is gone |
+| Mycelial Bond | — | unchanged, word for word |
+| Sporatic Infusion | **1 AP / 1 WP**, extra damage equal to Instinct | **Sporadic** Infusion, **4 AP / 5 WP**, `4d6 + 4 x Instinct` in Decay, through the bond |
+| Deepening Connection | bonds persist; cheapened spells fed bonded allies 1 WP; self-targeting spells shared, once per long rest | bonds persist, capped at half Instinct, and you may **cast through a bonded ally** as the point of origin |
+| Moldy Reanimation | 4 AP / 2 WP, reanimate a Minion cadaver | **not on the sheet.** Removed. |
+
+### What that moved in code
+
+- **`loadout.swap` is `['long']`**, where it was `['short', 'long']`. The rest
+  window reads that list to decide whether to offer the swap, so a Mycomancer's
+  short rest no longer opens the spell pool. Three comments quoting the old
+  wording — in `rest.js`, `loadouts.js` and `RestPrompt.jsx` — were corrected
+  with it.
+- **The Nature/Primal contradiction is settled.** The card said "Nature School"
+  while `loadout.school` said `Primal`, which is where the printed spells
+  actually are. The new tab says Primal in all three places it names the school,
+  so the note asking for a ruling is gone.
+- **`sporatic-infusion` is now `sporadic-infusion`.** Safe: a saved character
+  stores *picked* card ids, and a talent's own cards are granted rather than
+  picked, so no character points at that id.
+- **Decay, not Necrotic.** `cardText.js` maps both to `--dmg-decay` and the
+  alias stays for the one spell that still prints Necrotic, but the Mycomancer's
+  two damaging cards now print what the sheet prints.
+
+### One word changed, and one thing flagged
+
+**"leared" was set as "learned"** in Fungal Invocation. That is the only
+departure from the cell, and it is a typo rather than a design.
+
+**The tagline and blurb were left alone, and they now contradict the cards.**
+Both are the `Overview` tab's — "turning the dead into power", "they turn fallen
+foes into a resource, hastening the decomposition of cadavers" — and that tab
+was not in this drop. The Ability tab withdrew the mechanic they describe.
+Rewriting them would mean inventing replacement prose for a tab that simply did
+not export, so they stand as written with a note in `talents.js`. **Send the
+`Overview` tab and they get corrected in the same pass.**
+
+### How the transcription was proved
+
+Every marker was mapped back to the prose it stands for — `[[4d6 + 4*stat]]` to
+"4d6 + 4 times your Instinct", `{damage:Decay}` to "Decay", `{instinct}` to
+"Instinct" — and the result compared to the designer's cell with whitespace and
+case flattened, plus name, AP, WP, tags and rank for each row. **35 of 36 checks
+matched.** The one that did not is "leared" above.
+
 ## The columns
 
 The sheets already have a shape and the importer reads that shape rather than
@@ -755,8 +817,9 @@ npm run art
 ```
 
 [scripts/pull-card-art.mjs](../scripts/pull-card-art.mjs) reads the Image column
-out of every CSV in this folder, matches each row to a card by name, downloads
-the picture, and writes two WebP files into `public/cards/`:
+out of every CSV in this folder and one level of subfolder below it, matches
+each row to a card by name, downloads the picture, and writes two WebP files
+into `public/cards/`:
 
 | File | Size | Drawn by |
 | ---- | ---- | -------- |
@@ -771,7 +834,50 @@ to 160 KB, and Cloudflare serves all of it from the edge instead of postimg.
 
 Re-runnable and idempotent: a picture already on disk is skipped, so adding one
 spell costs one download rather than thirty-four. Pass `--force` to re-fetch
-everything, which is what you want after replacing an image in the sheet.
+everything, which is what you want after replacing an image in the sheet. A
+picture that came from a **folder** needs no flag — see below.
+
+### Two sources, one importer
+
+Card art arrives two ways now, and the only difference is where the bytes start.
+
+| Source | Looks like | What happens |
+| ------ | ---------- | ------------ |
+| **A link** | a postimg page URL in the `Image` column | followed to its `og:image`, downloaded, encoded |
+| **A folder** | `data/<Set>/`, one picture per card, named for the card | encoded straight off disk; nothing downloads |
+
+The Mycomancer's seven pictures arrived the second way on 2026-08-20 — 2400x1792
+JPEGs, ~3 MB each, against an `Image` column left empty — so the importer grew a
+folder pass to match the one in `pull-item-art.mjs`. It claims only folders
+named for a **talent set**, leaving `data/Armor/` to the item importer and
+`data/templates/` alone entirely, because templates are the importer's contract
+rather than a drop.
+
+The folder pass runs **first**, and a card it placed is never asked for a link
+afterwards. That is what lets a sheet leave the `Image` column empty on purpose
+without the run reporting six problems it cannot do anything about.
+
+Two more things fall out of the folder being the original:
+
+- **Both cuts come from it.** A downloaded card's thumbnail is cut from its
+  720px copy, because the original is a download away. Here it is right there,
+  so 2400 → 200 happens in one step rather than losing detail twice.
+- **A redrawn picture replaces itself, with no flag.** The folder pass compares
+  mtimes, so a file in `data/` newer than what was made from it is re-cut.
+  `Mycomancer overivew.jpg` landed on 08-20 over a talent plate pulled from
+  postimg on 08-17; skipping on existence alone would have quietly kept the old
+  one. Downloads still skip on existence, because checking would cost the
+  download the check is meant to save.
+
+**One filename does not match its card.** `Sporatic Infusion.jpg` was drawn while
+the card was still spelled that way; the 08-20 sheet prints SPORADIC INFUSION.
+It lives in an `ALIASES` table at the top of the importer, and putting the
+filename in the sheet's own `Image` column retires the entry.
+
+**The set's own plate comes from the same folder.** A picture whose name begins
+with the set's name — `Mycomancer overivew.jpg` — is the 640x640 square behind
+`talent.art`, not a card. Cards are matched first, so a card that happened to
+share the set's name would still be dealt as a card.
 
 `public/_headers` gives `/cards/*` a day of freshness and a month of
 stale-while-revalidate. Not `immutable`, deliberately: the filename does not
@@ -851,13 +957,14 @@ retires all five**, because a file the sheet names is read from there first.
 
 ### A folder that is not a shelf
 
-`data/Mycomancer/` appeared on 2026-08-20 with `Fungal Invocation.jpg` and
-`Mycelium Network.jpg` in it. Those are **talent cards**, not items, so this
-importer does not touch them — it claims only folders named for an inventory
-shelf. Nothing has placed them yet: `pull-card-art.mjs` reads Image columns and
-knows nothing about folders, so those two are still waiting on either a postimg
-link in the Enchanter/Mycomancer sheet or a folder pass added to the card
-importer.
+`data/Mycomancer/` appeared on 2026-08-20 with seven pictures in it. Those are
+**talent cards**, not items, so this importer does not touch them — it claims
+only folders named for an inventory shelf.
+
+They are placed now, by the other importer. `pull-card-art.mjs` grew the folder
+pass this section used to say was missing: it claims folders named for a
+**talent set** the same way this one claims folders named for a shelf, and the
+two never reach for the same directory. See "the two sources" below.
 
 **Who sees them** is the same question and the same answer as card art: a paid
 capability, `showsArt` in `src/lib/tiers.js`, applied in

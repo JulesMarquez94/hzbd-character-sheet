@@ -17,14 +17,17 @@
  * the site.
  *
  * ------------------------------------------------------------------ the flow
- *   1. read the Image column out of the CSVs in data/
- *   2. a postimg *page* link serves HTML, so follow it to the og:image
- *   3. download, resize, encode
- *   4. rewrite src/lib/cardArt.js
+ *   1. place any picture that arrived as a folder — see "the two sources"
+ *   2. read the Image column out of the CSVs in data/, for everything left
+ *   3. a postimg *page* link serves HTML, so follow it to the og:image
+ *   4. download, resize, encode
+ *   5. rewrite src/lib/cardArt.js
  *
  * Re-runnable and idempotent: a picture already on disk is skipped unless
  * --force is passed, so adding one new spell costs one download rather than
- * thirty-four.
+ * thirty-four. A picture that came from a folder is also re-cut when the file
+ * in `data/` is newer than what was made from it, so redrawing one costs one
+ * encode and no flag.
  *
  * ------------------------------------------------------------------- the cost
  * Committing the WebP files is deliberate. They are the product's art, they are
@@ -63,6 +66,51 @@ const QUALITY = 78;
 
 const FORCE = process.argv.includes('--force');
 
+/* ---------------------------------------------------------- the two sources
+
+   Card art arrives two ways, and the only difference is where the bytes start.
+   The sheets carry postimg links in an Image column, which is what everything
+   below "postimg" is for. A *set* can also arrive as a folder: the Mycomancer's
+   seven pictures landed as `data/Mycomancer/` on 2026-08-20, 2400x1792 apiece,
+   against an Image column left empty. Then the folder is the original and
+   nothing is downloaded at all.
+
+   The folder pass runs first, and a card it placed is not asked for a link
+   afterwards — a picture in the drop is the picture, and the sheet has nothing
+   to add about a card whose art is already sitting in `data/`.
+
+   Only folders named for a talent set are claimed, the same way
+   pull-item-art.mjs claims only folders named for an inventory shelf.
+   `data/Armor/` is that script's and stays that script's, and a folder that is
+   neither is left alone rather than reported as art nobody can place. */
+
+const IMAGE_FILE = /\.(?:jpe?g|png|webp)$/i;
+
+/**
+ * Names are compared with punctuation and case flattened, because
+ * "Mycomancer overivew.jpg" and "Sporatic Infusion.jpg" both have to survive
+ * being read by a machine that is not allowed to correct the designer.
+ */
+const flatten = (value) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/** A filename with its extension dropped, flattened. */
+const bare = (file) => flatten(file.replace(IMAGE_FILE, ''));
+
+/**
+ * Pictures whose filename is not the name the sheet prints, keyed by the codex
+ * name and valued by the file on disk, so the sheet stays the authority on what
+ * a card is called.
+ *
+ * One so far. `Sporatic Infusion.jpg` was drawn while the card was still spelled
+ * that way; the 2026-08-20 Ability tab prints SPORADIC INFUSION and the picture
+ * did not get renamed with it. This table is a record of that mismatch, not a
+ * naming scheme — putting the filename in the sheet's own Image column retires
+ * the entry, because a file the sheet names is read from there first.
+ */
+const ALIASES = {
+  'Sporadic Infusion': 'Sporatic Infusion.jpg',
+};
+
 /* ----------------------------------------------------------------- the sheets */
 
 function parseCSV(text) {
@@ -85,16 +133,40 @@ function parseCSV(text) {
   return rows.filter((r) => r.some((v) => v.trim()));
 }
 
-/** Every sheet drop in data/, as objects keyed by their header row. */
+/**
+ * Every sheet drop in data/, as objects keyed by their header row.
+ *
+ * One level of subfolder deep as well as the top: a set that arrives as a
+ * folder brings its own tab in with it, and `data/Mycomancer/Talent Set -
+ * Mycomancer - Ability.csv` is as much a drop as the ones sitting loose.
+ *
+ * `data/templates/` is the exception, and the only one. Those CSVs are the
+ * importer's *contract* — what a sheet should look like on the way in, tracked
+ * in git for exactly that reason — not game data that arrived. Reading them
+ * would have `templates/armor.csv` asking the card codex for 27 pieces of
+ * armor it has never heard of.
+ */
+const NOT_A_DROP = new Set(['templates']);
+
 function sheets() {
   if (!existsSync(DATA)) return [];
-  return readdirSync(DATA)
-    .filter((f) => f.toLowerCase().endsWith('.csv'))
-    .flatMap((file) => {
-      const rows = parseCSV(readFileSync(path.join(DATA, file), 'utf8'));
-      const head = rows[0].map((h) => h.trim());
-      return rows.slice(1).map((r) => Object.fromEntries(head.map((h, i) => [h, (r[i] ?? '').trim()])));
-    });
+
+  const read = (file) => {
+    const rows = parseCSV(readFileSync(file, 'utf8'));
+    const head = rows[0].map((h) => h.trim());
+    return rows.slice(1).map((r) => Object.fromEntries(head.map((h, i) => [h, (r[i] ?? '').trim()])));
+  };
+
+  const csv = (dir) => readdirSync(dir).filter((f) => f.toLowerCase().endsWith('.csv'));
+
+  return readdirSync(DATA, { withFileTypes: true }).flatMap((entry) => {
+    const here = path.join(DATA, entry.name);
+    if (entry.isDirectory()) {
+      if (NOT_A_DROP.has(entry.name.toLowerCase())) return [];
+      return csv(here).flatMap((f) => read(path.join(here, f)));
+    }
+    return entry.name.toLowerCase().endsWith('.csv') ? read(here) : [];
+  });
 }
 
 /* ------------------------------------------------------------------ the codex */
@@ -168,12 +240,7 @@ async function pullTalentArt(setId, name, link) {
     return;
   }
   try {
-    const buf = await download(await directLink(link));
-    const out = await sharp(buf)
-      .resize({ width: TALENT_SIZE, height: TALENT_SIZE, fit: 'cover', position: 'centre' })
-      .jpeg({ quality: TALENT_QUALITY, mozjpeg: true })
-      .toBuffer();
-    writeFileSync(file, out);
+    const out = await writeTalentPlate(setId, await download(await directLink(link)));
     talentFetched += 1;
     console.log(
       `${setId.padEnd(20)} talent plate ${TALENT_SIZE}x${TALENT_SIZE} jpeg ${(out.length / 1024).toFixed(0)} KB`
@@ -185,6 +252,55 @@ async function pullTalentArt(setId, name, link) {
 
 let talentFetched = 0;
 let talentSkipped = 0;
+
+/* ------------------------------------------------------------ the folder pass */
+
+/**
+ * Every picture under a `data/` subfolder named for a talent set, as
+ * `{ set, file, name }`. A folder is claimed by the set it belongs to, so
+ * dropping `data/Enchanter/` in beside it needs no line here.
+ */
+function pictures(setIds) {
+  if (!existsSync(DATA)) return [];
+
+  return readdirSync(DATA, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && setIds.has(flatten(entry.name)))
+    .flatMap((dir) =>
+      readdirSync(path.join(DATA, dir.name))
+        .filter((file) => IMAGE_FILE.test(file))
+        .map((file) => ({
+          set: dir.name,
+          file: path.join(DATA, dir.name, file),
+          name: file.replace(IMAGE_FILE, ''),
+        }))
+    );
+}
+
+/**
+ * Whether a folder's picture has anything new to say to what is already
+ * encoded from it.
+ *
+ * A downloaded picture is skipped on existence alone, because checking would
+ * cost the download the check is meant to save. A folder is different: the
+ * original is right there, its mtime is free to read, and a picture *redrawn*
+ * under the same name is the normal way this drop arrives — `Mycomancer
+ * overivew.jpg` landed on 2026-08-20 over a plate pulled from postimg three
+ * days earlier. Skipping on existence would have quietly kept the old one.
+ */
+function stale(source, out) {
+  if (!existsSync(out)) return true;
+  return statSync(source).mtimeMs > statSync(out).mtimeMs;
+}
+
+/** One set's overview picture, from bytes already in hand: square, 640px. */
+async function writeTalentPlate(setId, buf) {
+  const out = await sharp(buf)
+    .resize({ width: TALENT_SIZE, height: TALENT_SIZE, fit: 'cover', position: 'centre' })
+    .jpeg({ quality: TALENT_QUALITY, mozjpeg: true })
+    .toBuffer();
+  writeFileSync(path.join(TALENT_OUT, `${setId}.jpg`), out);
+  return out;
+}
 
 /* ---------------------------------------------------------------------- main */
 
@@ -199,6 +315,98 @@ let fetched = 0;
 let skipped = 0;
 let sourceBytes = 0;
 let outBytes = 0;
+let encoded = 0;
+
+/* --------------------------------------------------------------- the folders
+
+   First, because a picture sitting in `data/` is the original and beats
+   anything a link could fetch, and because placing it here is what lets the
+   sheet pass below stay quiet about a card whose Image column is empty on
+   purpose. */
+
+const setIdByFolder = new Map([...sets].map(([name, id]) => [flatten(name), id]));
+const idBySheetFile = new Map(
+  sheets()
+    .filter((row) => row.Name && row.Image && !/^https?:\/\//i.test(row.Image))
+    .map((row) => [bare(row.Image), ids.get(row.Name.toLowerCase())])
+    .filter(([, id]) => id)
+);
+const idByFlatName = new Map([...ids].map(([name, id]) => [flatten(name), id]));
+const idByAliasFile = new Map(
+  Object.entries(ALIASES)
+    .map(([name, file]) => [bare(file), ids.get(name.toLowerCase())])
+    .filter(([, id]) => id)
+);
+
+for (const picture of pictures(setIdByFolder)) {
+  const flat = flatten(picture.name);
+  const id = idBySheetFile.get(flat) ?? idByFlatName.get(flat) ?? idByAliasFile.get(flat) ?? null;
+
+  /* Not a card in this folder, and named for the set that owns the folder:
+     this is the set's overview picture, the square plate behind `talent.art`.
+     Cards are resolved first, so a card that happened to share the set's name
+     would still be dealt as a card. */
+  if (!id) {
+    const setId = setIdByFolder.get(flatten(picture.set));
+    if (setId && flat.startsWith(flatten(picture.set))) {
+      const plate = path.join(TALENT_OUT, `${setId}.jpg`);
+      if (!stale(picture.file, plate) && !FORCE) { talentSkipped += 1; continue; }
+      try {
+        const source = readFileSync(picture.file);
+        const out = await writeTalentPlate(setId, source);
+        talentFetched += 1;
+        console.log(
+          `${setId.padEnd(20)} talent plate ${TALENT_SIZE}x${TALENT_SIZE} jpeg ${(out.length / 1024).toFixed(0)} KB`
+        );
+      } catch (err) {
+        problems.push(`${picture.set}/${picture.name}: ${err.message}`);
+      }
+      continue;
+    }
+    problems.push(`${picture.set}/${picture.name}: the codex has no card by that name`);
+    continue;
+  }
+
+  const full = path.join(OUT, `${id}.webp`);
+  const thumb = path.join(OUT, `${id}-thumb.webp`);
+
+  if (!stale(picture.file, full) && existsSync(thumb) && !FORCE) {
+    art.set(id, `/cards/${id}.webp`);
+    outBytes += statSync(full).size;
+    skipped += 1;
+    continue;
+  }
+
+  try {
+    const source = readFileSync(picture.file);
+    const meta = await sharp(source).metadata();
+
+    /* Both cuts come from the original. A downloaded card's thumbnail is cut
+       from its 720px copy because the original is a download away; here it
+       is right there, and 2400 -> 200 in one step keeps the detail
+       that 2400 -> 720 -> 200 throws away twice. Width only,
+       no crop: the plate is 360x270 and these arrive 4:3 already. */
+    const cut = (width) =>
+      sharp(source).resize({ width, withoutEnlargement: true }).webp({ quality: QUALITY }).toBuffer();
+
+    const [big, small] = await Promise.all([cut(WIDTH), cut(THUMB_WIDTH)]);
+    writeFileSync(full, big);
+    writeFileSync(thumb, small);
+
+    art.set(id, `/cards/${id}.webp`);
+    sourceBytes += source.length;
+    outBytes += big.length;
+    encoded += 1;
+    console.log(
+      `${id.padEnd(20)} ${meta.width}x${meta.height} ${(source.length / 1024 / 1024).toFixed(2)} MB ${meta.format}` +
+        `  ->  ${WIDTH}px webp ${(big.length / 1024).toFixed(0)} KB + ${THUMB_WIDTH}px ${(small.length / 1024).toFixed(1)} KB`
+    );
+  } catch (err) {
+    problems.push(`${picture.set}/${picture.name}: ${err.message}`);
+  }
+}
+
+/* ----------------------------------------------------------------- the links */
 
 for (const row of sheets()) {
   const name = row.Name;
@@ -222,6 +430,9 @@ for (const row of sheets()) {
   if (!id && !link) continue;
 
   if (!id) { problems.push(`${name}: the codex has no card by that name`); continue; }
+  /* Already placed from a folder, and its Image column is empty because the
+     picture never went to postimg in the first place. Nothing to report. */
+  if (!link && art.has(id)) continue;
   if (!link) { problems.push(`${name}: no link in the Image column`); continue; }
 
   const file = path.join(OUT, `${id}.webp`);
@@ -337,12 +548,15 @@ export function withArt(cards) {
 
 /* ------------------------------------------------------------------ the report */
 
-console.log(`\n${fetched} fetched, ${skipped} already on disk, ${art.size} in the lookup`);
+console.log(
+  `\n${fetched} fetched, ${encoded} encoded from a folder, ${skipped} already on disk,` +
+    ` ${art.size} in the lookup`
+);
 if (talentFetched || talentSkipped) {
   console.log(`${talentFetched} talent plate(s) fetched, ${talentSkipped} already on disk`);
 }
 console.log(`${thumbsMade} thumbnail(s) cut, ${(thumbBytes / 1024).toFixed(0)} KB across ${art.size}`);
-if (fetched > 0) {
+if (fetched > 0 || encoded > 0) {
   console.log(
     `downloaded ${(sourceBytes / 1024 / 1024).toFixed(1)} MB, wrote ${((outBytes + thumbBytes) / 1024 / 1024).toFixed(2)} MB` +
       ` (${(sourceBytes / (outBytes + thumbBytes)).toFixed(0)}x smaller)`
