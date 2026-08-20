@@ -16,6 +16,14 @@ import '../components/sheet/sheet.css';
 
 const TABS = ['Character', 'Abilities', 'Inventory', 'Lore', 'Advancement'];
 
+/* The two ways a distance can be written, and what each one writes it in. The
+   note is there because the switch is nowhere near the numbers it changes:
+   opening the menu should say what it is about to do to them. */
+const UNITS = [
+  { id: 'metric', label: 'Metric', note: 'Metres' },
+  { id: 'imperial', label: 'Imperial', note: 'Feet' },
+];
+
 /** localStorage can throw where site data is blocked; a preference is not
     worth a white screen. */
 function readStoredUnit() {
@@ -45,7 +53,9 @@ export default function CharacterSheet({ creating = false }) {
   const [unit, setUnit] = useState(readStoredUnit);
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved | error
   const [copied, setCopied] = useState(false);
+  const [unitMenuOpen, setUnitMenuOpen] = useState(false);
   const tabMenuRef = useRef(null);
+  const unitMenuRef = useRef(null);
 
   // Pending edits are batched so dragging a pip doesn't fire a write per frame.
   const pendingRef = useRef({});
@@ -141,6 +151,27 @@ export default function CharacterSheet({ creating = false }) {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [tabMenuOpen]);
+
+  /* And the same for the units menu. The site's one dropdown idiom, written a
+     fourth time rather than shared: see SiteMenu.jsx and Header.jsx, which is
+     where the other two live. */
+  useEffect(() => {
+    if (!unitMenuOpen) return undefined;
+
+    function onPointerDown(e) {
+      if (unitMenuRef.current && !unitMenuRef.current.contains(e.target)) setUnitMenuOpen(false);
+    }
+    function onKeyDown(e) {
+      if (e.key === 'Escape') setUnitMenuOpen(false);
+    }
+
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [unitMenuOpen]);
 
   const flush = useCallback(async () => {
     const patch = pendingRef.current;
@@ -405,10 +436,21 @@ export default function CharacterSheet({ creating = false }) {
             {isAdmin && character.user_id !== user?.id && (
               <span className="admin-badge">Admin Edit</span>
             )}
+            {/* The light and nothing else. "All changes saved" spelled out was
+                twenty characters of bar spent saying what a green dot says on
+                its own, and the bar has four other things to fit. The sentence
+                is still here — it is the tooltip and the label a screen reader
+                reads — and a failure never rests on the colour alone: the same
+                catch that turns this red writes the error across the top of the
+                canvas below. */}
             {canEdit && saveLabel && (
-              <span className={`save-indicator save-${saveState}`}>
+              <span
+                className={`save-indicator save-${saveState}`}
+                role="img"
+                aria-label={saveLabel}
+                title={saveLabel}
+              >
                 <span className="save-dot" />
-                {saveLabel}
               </span>
             )}
 
@@ -424,21 +466,45 @@ export default function CharacterSheet({ creating = false }) {
               {copied ? 'Link copied' : 'Share'}
             </button>
 
-            <div className="unit-toggle">
+            {/* Units, behind one button. Both words used to stand on the bar
+                side by side, which is a hundred and fifty pixels spent on a
+                choice made once and then never again — and the bar is the one
+                strip on the sheet with five things competing for it. Closed, it
+                says which one is on; open, it is the site's own dropdown, the
+                same one the account menu and the nav wear. */}
+            <div className="unit-menu-wrap" ref={unitMenuRef}>
               <button
                 type="button"
-                className={`unit-btn${unit === 'imperial' ? ' active' : ''}`}
-                onClick={() => setUnit('imperial')}
+                className={`unit-menu${unitMenuOpen ? ' active' : ''}`}
+                aria-haspopup="menu"
+                aria-expanded={unitMenuOpen}
+                title="Which units movement is written in"
+                onClick={() => setUnitMenuOpen((open) => !open)}
               >
-                Imperial
+                <span className="unit-menu-label">
+                  {unit === 'metric' ? 'Metric' : 'Imperial'}
+                </span>
+                <span className="chevron">▾</span>
               </button>
-              <button
-                type="button"
-                className={`unit-btn${unit === 'metric' ? ' active' : ''}`}
-                onClick={() => setUnit('metric')}
-              >
-                Metric
-              </button>
+
+              {unitMenuOpen && (
+                <div className="unit-drawer" role="menu">
+                  {UNITS.map(({ id, label, note }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`dropdown-link${unit === id ? ' active' : ''}`}
+                      onClick={() => {
+                        setUnit(id);
+                        setUnitMenuOpen(false);
+                      }}
+                    >
+                      {label}
+                      <span className="unit-drawer-note">{note}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* The site nav, which has no bar of its own here: a sheet gets this

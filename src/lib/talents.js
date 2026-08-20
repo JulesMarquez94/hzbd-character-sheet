@@ -678,8 +678,14 @@ const TALENT_SETS = [
       tag: 'Draconic Ally',
       /* "For this the draconic bond at level one it has 5 Physique, 4 Instinct,
          6 Mind. Every uneven level he gains 1 Mind, and every even level he
-         gains 1 Physique or 1 Instinct, alternating between the two." */
-      base: { physique: 5, instinct: 4, mind: 6 },
+         gains 1 Physique or 1 Instinct, alternating between the two."
+
+         The Mind is the one number here that is *not* the note's. Jules raised
+         the base by one on 2026-08-20, so the ally opens on 7 rather than 6 —
+         every roll it makes is a Mind roll and its Defense is its Grit, so one
+         point of Mind is the whole creature a step up. The growth below is
+         untouched: it is +1 at level one, not +1 a level. */
+      base: { physique: 5, instinct: 4, mind: 7 },
       growth: { odd: ['mind'], even: ['physique', 'instinct'] },
       /* "The draconic ally health is 5 per level and 5 per physique." Half of
          what a character gets from each, which is the only place the two stat

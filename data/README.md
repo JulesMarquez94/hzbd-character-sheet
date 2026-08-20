@@ -822,7 +822,7 @@ Every number in the spec is the notes', transcribed:
 
 | The note | The spec |
 | -------- | -------- |
-| "at level one it has 5 Physique, 4 Instinct, 6 Mind" | `base: { physique: 5, instinct: 4, mind: 6 }` |
+| "at level one it has 5 Physique, 4 Instinct, 6 Mind" | `base: { physique: 5, instinct: 4, mind: 7 }` — the Mind raised by one on Jules' ruling of 2026-08-20, and the one cell in this table the notes did not write |
 | "every uneven level he gains 1 Mind, and every even level he gains 1 Physique or 1 Instinct, alternating" | `growth: { odd: ['mind'], even: ['physique', 'instinct'] }` |
 | "health is 5 per level and 5 per physique" | `health: { perLevel: 5, perPhysique: 5 }` |
 | "a Defense equal to its Grit" | `defense: 'grit'` |

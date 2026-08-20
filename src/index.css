@@ -168,11 +168,22 @@ h1, h2, h3, h4, h5, h6 {
 /* =========================================
    LAYOUT
    ========================================= */
+/* Two rules, one axis each, and both of them longhand on purpose.
+   `.container` and `.page` are worn together on nearly every page — <main
+   className="container page"> — and both used to write the `padding`
+   shorthand. Same specificity, so the later one won outright: `.page` reset the
+   side gutter to nothing, and below the 1200px max-width that put the panels
+   and the header text hard against the document scrollbar, with the bar drawn
+   over the last pixels of the line. Under 640px it inverted, the media rule
+   below beating `.page` and taking the vertical padding instead.
+
+   Axis longhands cannot collide: the container owns left and right at every
+   width, the page owns top and bottom. */
 .container {
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding-inline: 2rem;
 }
 
 .container-wide {
@@ -181,7 +192,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .page {
     flex-grow: 1;
-    padding: 3rem 0 5rem;
+    padding-block: 3rem 5rem;
 }
 
 /* Section title with a trailing badge, used on the dashboard and sheet */
@@ -633,7 +644,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media (max-width: 640px) {
-    .container { padding: 0 1.25rem; }
+    .container { padding-inline: 1.25rem; }
     .heading-hero { font-size: 2.5rem; }
 }
 
