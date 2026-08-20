@@ -252,7 +252,7 @@ export function ambushOptions(cards) {
 /** The rider AMBUSH lays, as an effect row for the tracker. */
 export function ambushEffect(option) {
   return {
-    name: `Ambush — ${option.card.name}`,
+    name: `Ambush · ${option.card.name}`,
     note:
       `Made with Advantage, and Elevated ${times(option.wp)} on a hit. ` +
       'Lost the moment you swing.',

@@ -273,7 +273,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
       <div className="stat-category-label">Resources</div>
 
       <PoolRow
-        label={minion.down ? 'Health — Dead' : 'Health'}
+        label={minion.down ? 'Health · Dead' : 'Health'}
         current={minion.health}
         max={stats.health_max}
         color="var(--stat-health)"

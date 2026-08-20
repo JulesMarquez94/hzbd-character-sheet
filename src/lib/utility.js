@@ -77,7 +77,7 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     body:
       'Throw the vial at a point you can see within 9 meters (30 feet). It bursts into a bank of smoke 4.5 meters (15 feet) across that hangs for 3 turns.\n\n' +
-      'Attacks made into, out of, or through the smoke are made with Disadvantage.',
+      'Attacks made into, out of or through the smoke are made with Disadvantage.',
   },
 
   /* ----- usable ----- */
@@ -90,7 +90,7 @@ export const UTILITY_CARDS = withArt([
     wp: 30,
     body:
       'Infusing the disk with energy manifests a cart made of terracotta.\n\n' +
-      'This cart can carry up to 500 kg, moves at a speed of 6 km per hour, and lasts for 12 hours.\n\n' +
+      'This cart can carry up to 500 kg, moves at a speed of 6 km per hour and lasts for 12 hours.\n\n' +
       'It moves on its own with no need for a beast of burden but only functions on smooth surfaces such as roads.\n\n' +
       'After the effect ends, you must take a Long Rest before the disk can be used again.',
   },
@@ -142,7 +142,7 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     body:
       'You look the answer up instead of guessing at it.\n\n' +
-      'Once a day, you succeed automatically on a skill check to do with the natural world — a plant, a beast, a venom or disease, the weather, or the ground you are standing on.\n\n' +
+      'Once a day, you succeed automatically on a skill check to do with the natural world: a plant, a beast, a venom or disease, the weather or the ground you are standing on.\n\n' +
       'The tome is spent once it has answered, and has nothing more to say until you have taken a Long Rest.',
   },
   {
@@ -153,7 +153,7 @@ export const UTILITY_CARDS = withArt([
     ap: null,
     wp: null,
     body:
-      'Working the picks opens a mundane lock, given 1 minute, a free hand, and quiet enough to hear the pins.\n\n' +
+      'Working the picks opens a mundane lock, given 1 minute, a free hand and quiet enough to hear the pins.\n\n' +
       'A lock built against picking, or one held shut by a working, is beyond them.',
   },
 ]);
@@ -203,7 +203,7 @@ export const UTILITY_ITEMS = [
     charges: 3,
     burden: 0,
     abilities: ['bandage-roll'],
-    blurb: 'Boiled linen wound on a wooden spool — three good bindings.',
+    blurb: 'Boiled linen wound on a wooden spool: three good bindings.',
   },
   {
     id: 'smoke-vial',
@@ -263,7 +263,7 @@ export const UTILITY_ITEMS = [
     recharge: 'Long Rest',
     burden: 0,
     abilities: ['druidic-tome'],
-    blurb: 'A living book — bark boards, pressed leaves, and an index that rearranges itself.',
+    blurb: 'A living book: bark boards, pressed leaves and an index that rearranges itself.',
     lore:
       'Circle work, copied out of the standing groves and never twice the same way. Two tomes opened side by side will not agree on their page numbers and will agree on every answer.\n\n' +
       'It gives one a day and no more. Pressed for a second, the leaves close over the page and the book smells strongly of wet earth.',

@@ -726,7 +726,7 @@ export const SPELLS = withArt([
   {
     id: 'control-water',
     name: 'Control Water',
-    summary: 'An hour of moving water: currents, walking on it, or parting it around you.',
+    summary: 'An hour of moving water: currents, walking on it or parting it around you.',
     kind: 'spell',
     tags: ['Novice Spell', 'Elemental', 'Water'],
     ap: 2,
@@ -1051,7 +1051,7 @@ export const SPELLS = withArt([
   {
     id: 'slag-shot',
     name: 'Slag Shot',
-    summary: 'A pellet of magma: Fire damage, Burn, and Multicast fires again and again.',
+    summary: 'A pellet of magma: Fire damage, Burn and Multicast fires again and again.',
     kind: 'spell',
     tags: ['Novice Spell', 'Elemental', 'Magma'],
     ap: 3,
@@ -1107,7 +1107,7 @@ export const SPELLS = withArt([
     sub_name: 'Upkeep',
     sub_body:
       'At your Turn Start, you must pay 2 Willpower to keep the magma molten. If you do not pay the Upkeep, the spell effect ends.\n\n' +
-      'When the spell ends, the magma solidifies into stone, and all creatures currently in the area become rooted until their next Turn End.',
+      'When the spell ends, the magma solidifies into stone, and all creatures currently in the area become rooted until their next Turn End.', // text-style-ok: joins two clauses
   },
 
   /* ----------------------------------------------------- Elemental · Earth ----

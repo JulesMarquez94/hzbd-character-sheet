@@ -93,7 +93,7 @@ export const STARTER_DECK = [
     body:
       'Your deep connection with the mycelial network lets you cast Nature Spells. You learn a number of Nature School spells equal to 2 + 2 x your Rank in Mycomancer.\n\n' +
       'After a successful short or long rest, you can swap out any number of spells you know to any other eligible spell.\n\n' +
-      'At Rank 2, you can learn Adept Nature Spells, and at Rank 3, you gain access to Master Nature Spells.\n\n' +
+      'At Rank 2, you can learn Adept Nature Spells, and at Rank 3, you gain access to Master Nature Spells.\n\n' + // text-style-ok: joins two clauses
       'You also have a unique ability to draw power from the dead. By touching a fresh cadaver as you cast a spell, you can reduce its cost by 1 Willpower. You can use this once per spell cast.',
     sub_name: null,
     sub_body: null,

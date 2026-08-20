@@ -98,7 +98,7 @@ function Row({ row, character, onOpen }) {
       type="button"
       className={`recap-row ac-kind-${card.kind ?? 'passive'}`}
       onClick={onOpen}
-      title={`${card.name} — read the card`}
+      title={`${card.name} · read the card`}
     >
       <span className="recap-row-head">
         <span className="recap-row-name">{card.name}</span>

@@ -116,7 +116,7 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
       <p className="pick-lead">
         Your <b>background</b> is what you did before the adventure: the trade or the life you
         came out of. It teaches you a few <b>skills</b>, and it decides what you walk in carrying:
-        a weapon, a set of armor, and whatever coin and supplies that life left you.
+        a weapon, a set of armor and whatever coin and supplies that life left you.
       </p>
 
       {background ? (

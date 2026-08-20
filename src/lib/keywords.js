@@ -95,7 +95,7 @@ export const KEYWORDS = [
     terms: ['reaction'],
     color: 'var(--stat-rp)',
     detail:
-      'Something you do on somebody else’s turn, in answer to what they did. Costs the same as it would on your turn — you just pay it from a different pool.',
+      'Something you do on somebody else’s turn, in answer to what they did. Costs the same as it would on your turn. You just pay it from a different pool.',
   },
   {
     id: 'karma',
@@ -108,7 +108,7 @@ export const KEYWORDS = [
     terms: ['Supplies'],
     color: 'var(--stat-supply)',
     detail:
-      'The crate you travel on — rations, powder, reagents, rope. Spent on the road and on anything crafted during a rest.',
+      'The crate you travel on: rations, powder, reagents, rope. Spent on the road and on anything crafted during a rest.',
   },
   {
     id: 'coins',
@@ -158,14 +158,14 @@ export const KEYWORDS = [
     terms: ['Reflex'],
     color: 'var(--stat-rp)',
     detail:
-      'How fast you answer sudden danger — diving clear of a blast. Physique + Instinct.',
+      'How fast you answer sudden danger: diving clear of a blast. Physique + Instinct.',
   },
   {
     id: 'grit',
     terms: ['Grit'],
     color: 'var(--stat-wp)',
     detail:
-      'How well you withstand what gets inside you — poison, fear, a mental attack. Instinct + Mind.',
+      'How well you withstand what gets inside you: poison, fear, a mental attack. Instinct + Mind.',
   },
   {
     id: 'initiative',
@@ -289,7 +289,7 @@ export const KEYWORDS = [
     id: 'entity',
     terms: ['entity', 'entities'],
     color: 'var(--text-silver)',
-    detail: 'Anything that can be targeted — a person, a beast, a construct, a thing that is awake.',
+    detail: 'Anything that can be targeted: a person, a beast, a construct, a thing that is awake.',
   },
   {
     id: 'magic-burden',
@@ -400,7 +400,7 @@ export const KEYWORDS = [
     id: 'incapacitated',
     terms: ['incapacitated'],
     color: 'var(--stat-health)',
-    detail: 'An Incapacitated entity cannot move, take Actions, or spend Reaction Points.',
+    detail: 'An Incapacitated entity cannot move, take Actions or spend Reaction Points.',
   },
   {
     id: 'unconscious',
@@ -499,7 +499,7 @@ export const KEYWORDS = [
     terms: ['Brews', 'Brew'],
     color: 'var(--def-healing)',
     detail:
-      'Ingredients combined to unleash a magical effect: at least 1 Essence, exactly 1 Catalyst, and any number of Infusions. It costs the combined Action Point and Willpower cost of everything in it, and takes effect immediately.',
+      'Ingredients combined to unleash a magical effect: at least 1 Essence, exactly 1 Catalyst and any number of Infusions. It costs the combined Action Point and Willpower cost of everything in it, and takes effect immediately.',
   },
   {
     id: 'ingredient',
@@ -593,7 +593,7 @@ export const KEYWORDS = [
     terms: ['see'],
     color: 'var(--focus-cyan)',
     detail:
-      'Refers to an entity, object, or location to which you have a direct and clear line ' +
+      'Refers to an entity, object or location to which you have a direct and clear line ' +
       'of sight.',
   },
   {
@@ -651,7 +651,7 @@ export const KEYWORDS = [
     color: 'var(--stat-health)',
     detail:
       'When Sacrificing a resource or value (such as Health or Willpower), you ignore all ' +
-      'reduction, mitigation, or prevention effects to directly subtract the indicated ' +
+      'reduction, mitigation or prevention effects to directly subtract the indicated ' +
       'amount.',
   },
 ];

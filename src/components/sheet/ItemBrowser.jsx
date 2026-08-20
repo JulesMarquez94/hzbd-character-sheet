@@ -213,7 +213,7 @@ export default function ItemBrowser({
 
   return (
     <Modal
-      title={`${slot.label} — Codex`}
+      title={`${slot.label} · Codex`}
       onClose={onClose}
       /* On the head rather than at the foot, because it is a different question
          from the one the list answers: everything below is "which of these", and
@@ -296,7 +296,7 @@ export default function ItemBrowser({
                           <div className="browser-item-head">
                             <span className="browser-item-name">{item.name}</span>
                             {inPack > 0 && (
-                              <span className="pack-chip" title="Carried in your pack — equipping takes it from there">
+                              <span className="pack-chip" title="Carried in your pack · equipping takes it from there">
                                 In Pack{inPack > 1 ? ` ×${inPack}` : ''}
                               </span>
                             )}
@@ -328,7 +328,7 @@ export default function ItemBrowser({
                             type="button"
                             className="item-info-btn"
                             onClick={() => stack?.openItem(item)}
-                            title={`${item.name} — details and lore`}
+                            title={`${item.name} · details and lore`}
                             aria-label={`${item.name} details`}
                           >
                             i
@@ -351,7 +351,7 @@ export default function ItemBrowser({
                               onClick={() => onAdd(item)}
                               title={
                                 inPack > 0
-                                  ? `Get another ${item.name} — you would have ${inPack + 1}`
+                                  ? `Get another ${item.name} · you would have ${inPack + 1}`
                                   : `Get a ${item.name}, into your inventory`
                               }
                               aria-label={`Add another ${item.name} to your inventory`}
@@ -368,7 +368,7 @@ export default function ItemBrowser({
                                 type="button"
                                 className="btn btn-sm browser-blocked"
                                 disabled
-                                title={`${item.name} is already on you, in ${alreadyOn}. Take it off first — there is only one of it.`}
+                                title={`${item.name} is already on you, in ${alreadyOn}. Take it off first. There is only one of it.`}
                               >
                                 On you
                               </button>
@@ -377,7 +377,7 @@ export default function ItemBrowser({
                                 type="button"
                                 className="btn btn-sm browser-blocked"
                                 disabled
-                                title={`Would carry ${projected} Magic Burden — your capacity is ${burdenMax}.`}
+                                title={`Would carry ${projected} Magic Burden. Your capacity is ${burdenMax}.`}
                               >
                                 Over Burden
                               </button>

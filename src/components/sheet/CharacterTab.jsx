@@ -71,13 +71,13 @@ const DEFENSE_LINE = [
     key: 'reflex',
     label: 'Reflex',
     color: 'var(--stat-rp)',
-    info: 'How reactive you are to danger — dodging a spell that hurls a boulder at you, or any other sudden threat. Physique + Instinct.',
+    info: 'How reactive you are to danger: dodging a spell that hurls a boulder at you, or any other sudden threat. Physique + Instinct.',
   },
   {
     key: 'grit',
     label: 'Grit',
     color: 'var(--stat-wp)',
-    info: 'How well you withstand afflictions — resisting a poison, or shrugging off a mental attack. Instinct + Mind.',
+    info: 'How well you withstand afflictions: resisting a poison, or shrugging off a mental attack. Instinct + Mind.',
   },
 ];
 
@@ -372,7 +372,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         <div className="stat-category-label">Resources</div>
 
         <ResourceBar
-          label={hp.dead ? 'Health — Dead' : 'Health'}
+          label={hp.dead ? 'Health · Dead' : 'Health'}
           current={hp.hp}
           max={hp.cap}
           color="var(--stat-health)"

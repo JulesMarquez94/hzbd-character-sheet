@@ -124,7 +124,7 @@ const CASTING_ABILITY = {
   id: 'casting-ability',
   label: 'Casting attribute',
   prompt: 'Which attribute do you cast this with?',
-  placeholder: '— your casting attribute —',
+  placeholder: 'your casting attribute',
   options: [
     { id: 'wisdom', label: 'Wisdom' },
     { id: 'mind', label: 'Mind' },
@@ -137,7 +137,7 @@ const SCALE_COLOUR = {
   id: 'scale-colour',
   label: 'Scale colour',
   prompt: 'Which dragon does your blood come from?',
-  placeholder: '— your scale colour —',
+  placeholder: 'your scale colour',
   options: [
     { id: 'red', label: 'Fire', detail: 'Red scales', damage: 'Fire' },
     { id: 'white', label: 'Cold', detail: 'White scales', damage: 'Cold' },
@@ -170,7 +170,7 @@ export const LINEAGES = [
     art: null,
     tags: ['planar', 'flight', 'spellcasting'],
     blurb:
-      'At some point, your ancestor made a pact with celestial beings, forever altering themselves and their descendants. These changes can manifest in various ways. You could have a radiant aura that glows softly, eyes that shine like stars, or skin with a slight, otherworldly luminescence. Some might have hair that seems to shimmer like spun gold or silver, skin marked with faint, glowing runes.',
+      'At some point, your ancestor made a pact with celestial beings, forever altering themselves and their descendants. These changes can manifest in various ways. You could have a radiant aura that glows softly, eyes that shine like stars or skin with a slight, otherworldly luminescence. Some might have hair that seems to shimmer like spun gold or silver, skin marked with faint, glowing runes.',
     cards: [
       own('Celestial', {
         id: 'celestial-wings',
@@ -220,18 +220,18 @@ export const LINEAGES = [
   {
     id: 'featherborn',
     name: 'Featherborn',
-    tagline: 'Winged stock — light bones, keen eyes, quick reactions.',
+    tagline: 'Winged stock: light bones, keen eyes, quick reactions.',
     art: null,
     tags: ['beastkin', 'movement'],
     blurb:
-      'The evolution that guided your lineage has taken an extraordinary path, maintaining characteristics of winged beings not usually found in other races. Your appearance can range widely. Some may retain minor traits such as feathers, keen eyesight, and light bones, while others display more striking features like beaks.',
+      'The evolution that guided your lineage has taken an extraordinary path, maintaining characteristics of winged beings not usually found in other races. Your appearance can range widely. Some may retain minor traits such as feathers, keen eyesight and light bones, while others display more striking features like beaks.',
     cards: [LIGHT_BODY, SHARPSENSE, FERAL_INSTINCT],
   },
 
   {
     id: 'fey',
     name: 'Fey',
-    tagline: 'Born of enchanted glades — small, winged, and always aloft.',
+    tagline: 'Born of enchanted glades: small, winged and always aloft.',
     art: null,
     tags: ['fey', 'flight'],
     blurb:
@@ -250,22 +250,22 @@ export const LINEAGES = [
   {
     id: 'furborn',
     name: 'Furborn',
-    tagline: 'Fur-covered stock — hardy, sharp-nosed, and quick to answer.',
+    tagline: 'Fur-covered stock: hardy, sharp-nosed and quick to answer.',
     art: null,
     tags: ['beastkin', 'resilience'],
     blurb:
-      'The evolution that shaped your lineage has followed a distinctive course, preserving traits of fur-covered creatures not commonly seen in other races. Your appearance can vary significantly. Some may exhibit subtle features such as fur, rounded ears, and a heightened sense of smell, while others possess more pronounced characteristics like animalistic facial structures, claws, and enhanced physical attributes.',
+      'The evolution that shaped your lineage has followed a distinctive course, preserving traits of fur-covered creatures not commonly seen in other races. Your appearance can vary significantly. Some may exhibit subtle features such as fur, rounded ears and a heightened sense of smell, while others possess more pronounced characteristics like animalistic facial structures, claws and enhanced physical attributes.',
     cards: [RESILIENCE, SHARPSENSE, FERAL_INSTINCT],
   },
 
   {
     id: 'gillborn',
     name: 'Gillborn',
-    tagline: 'Aquatic stock — poisonous, cold-blooded, at home underwater.',
+    tagline: 'Aquatic stock: poisonous, cold-blooded, at home underwater.',
     art: null,
     tags: ['beastkin', 'aquatic'],
     blurb:
-      'The evolution that shaped your lineage has followed a remarkable course, preserving traits of aquatic creatures not commonly seen in other races. Your appearance can vary widely. Some may retain subtle features such as smooth, scaled skin, fins, and gills, while others exhibit more pronounced characteristics like a fish-shaped head, webbed limbs, and an aquatic-adapted body structure.',
+      'The evolution that shaped your lineage has followed a remarkable course, preserving traits of aquatic creatures not commonly seen in other races. Your appearance can vary widely. Some may retain subtle features such as smooth, scaled skin, fins and gills, while others exhibit more pronounced characteristics like a fish-shaped head, webbed limbs and an aquatic-adapted body structure.',
     cards: [POISONOUS, FERAL_INSTINCT, COLD_BLOODED, AMPHIBIAN],
   },
 
@@ -276,7 +276,7 @@ export const LINEAGES = [
     art: null,
     tags: ['planar', 'flight', 'spellcasting'],
     blurb:
-      'At some point, your ancestor made a deal with infernal entities, forever changing themselves and their descendants. These changes can manifest in various ways. You could have horns of varying shapes and sizes, unusual skin colors like deep red, ash gray, or even black. Others could have tails, pointed ears, or hair that seems to smolder like embers.',
+      'At some point, your ancestor made a deal with infernal entities, forever changing themselves and their descendants. These changes can manifest in various ways. You could have horns of varying shapes and sizes, unusual skin colors like deep red, ash gray or even black. Others could have tails, pointed ears or hair that seems to smolder like embers.',
     cards: [
       own('Infernal', {
         id: 'infernal-wings',
@@ -324,11 +324,11 @@ export const LINEAGES = [
   {
     id: 'muckborn',
     name: 'Muckborn',
-    tagline: 'Exoskeletal stock — climbs walls, and should not be bitten.',
+    tagline: 'Exoskeletal stock: climbs walls, and should not be bitten.',
     art: null,
     tags: ['beastkin'],
     blurb:
-      'The evolution that influenced your lineage has taken an unusual route, maintaining traits of exoskeleton-bearing beings not typically observed in other races. Your appearance can vary extensively. Some may exhibit minor features such as a segmented body, multiple limbs, and exoskeletal elements, while others display more prominent characteristics like antennae, chitinous shells, and an adaptable, flexible form.',
+      'The evolution that influenced your lineage has taken an unusual route, maintaining traits of exoskeleton-bearing beings not typically observed in other races. Your appearance can vary extensively. Some may exhibit minor features such as a segmented body, multiple limbs and exoskeletal elements, while others display more prominent characteristics like antennae, chitinous shells and an adaptable, flexible form.',
     cards: [
       own('Muckborn', {
         id: 'sticky',
@@ -344,11 +344,11 @@ export const LINEAGES = [
   {
     id: 'scaleborn',
     name: 'Scaleborn',
-    tagline: 'Reptilian stock — tough, venomous, and slow to anger.',
+    tagline: 'Reptilian stock: tough, venomous and slow to anger.',
     art: null,
     tags: ['beastkin', 'resilience'],
     blurb:
-      'The evolution that directed your lineage has carved a unique path, preserving features of scaled creatures not often seen in other races. Your appearance can vary greatly. Some may retain subtle traits such as scales, slit pupils, and a cold-blooded nature, while others possess more pronounced characteristics like reptilian head shapes, tails, and a robust, scaly physique.',
+      'The evolution that directed your lineage has carved a unique path, preserving features of scaled creatures not often seen in other races. Your appearance can vary greatly. Some may retain subtle traits such as scales, slit pupils and a cold-blooded nature, while others possess more pronounced characteristics like reptilian head shapes, tails and a robust, scaly physique.',
     cards: [RESILIENCE, POISONOUS, COLD_BLOODED],
   },
 
@@ -359,7 +359,7 @@ export const LINEAGES = [
     art: null,
     tags: ['elemental', 'spellcasting'],
     blurb:
-      'From living in proximity to a volcano or other natural source of heat, your ancestors have established a deep connection with the element of fire. This elemental bond has significantly altered your appearance. You could have ashen skin, red eyes, fiery hair, or even glowing ember-like freckles. Some might have hair that flickers like flames or eyes that smolder with an inner heat.',
+      'From living in proximity to a volcano or other natural source of heat, your ancestors have established a deep connection with the element of fire. This elemental bond has significantly altered your appearance. You could have ashen skin, red eyes, fiery hair or even glowing ember-like freckles. Some might have hair that flickers like flames or eyes that smolder with an inner heat.',
     cards: [
       own('Scorchbound', {
         id: 'furnace-heart',
@@ -382,11 +382,11 @@ export const LINEAGES = [
   {
     id: 'skybound',
     name: 'Skybound',
-    tagline: 'Open plains and high peaks — the wind never quite let go.',
+    tagline: 'Open plains and high peaks. The wind never quite let go.',
     art: null,
     tags: ['elemental', 'movement', 'spellcasting'],
     blurb:
-      'From living in open plains or atop high mountains, your ancestors have established a deep connection with the element of wind. This elemental bond has significantly altered your appearance. You could have light, almost translucent skin, hair that flows like the wind, piercing sky-blue eyes, or even skin that seems to be in constant motion. Some might have eyes that change color with the weather or hair that whispers like the breeze.',
+      'From living in open plains or atop high mountains, your ancestors have established a deep connection with the element of wind. This elemental bond has significantly altered your appearance. You could have light, almost translucent skin, hair that flows like the wind, piercing sky-blue eyes or even skin that seems to be in constant motion. Some might have eyes that change color with the weather or hair that whispers like the breeze.',
     cards: [
       own('Skybound', {
         id: 'windborn-stride',
@@ -416,11 +416,11 @@ export const LINEAGES = [
   {
     id: 'slickborn',
     name: 'Slickborn',
-    tagline: 'Amphibian stock — quick, slick, and hard to hold.',
+    tagline: 'Amphibian stock: quick, slick and hard to hold.',
     art: null,
     tags: ['beastkin', 'aquatic', 'movement'],
     blurb:
-      'The evolution that shaped your lineage has taken a unique path, preserving animalistic characteristics not typically found in other races. As descendants of amphibians, your appearance can vary widely. Some may retain subtle traits such as slick skin, large eyes, and gills, while others exhibit more pronounced features like a frog-shaped head and distinct morphologies.',
+      'The evolution that shaped your lineage has taken a unique path, preserving animalistic characteristics not typically found in other races. As descendants of amphibians, your appearance can vary widely. Some may retain subtle traits such as slick skin, large eyes and gills, while others exhibit more pronounced features like a frog-shaped head and distinct morphologies.',
     cards: [LIGHT_BODY, POISONOUS, COLD_BLOODED, AMPHIBIAN],
   },
 
@@ -446,11 +446,11 @@ export const LINEAGES = [
   {
     id: 'stonebound',
     name: 'Stonebound',
-    tagline: 'Deep forest and deeper mountain — the earth answers you.',
+    tagline: 'Deep forest and deeper mountain. The earth answers you.',
     art: null,
     tags: ['elemental', 'spellcasting'],
     blurb:
-      'From living in the depths of forests or within the mountains, your ancestors have established a deep connection with the element of earth. This elemental bond has significantly altered your appearance. You could have rugged, stone-like skin, mossy hair, eyes that shimmer like precious gems, or even hair resembling gemstones. Some might have bark-like skin patterns or eyes that sparkle like crystals.',
+      'From living in the depths of forests or within the mountains, your ancestors have established a deep connection with the element of earth. This elemental bond has significantly altered your appearance. You could have rugged, stone-like skin, mossy hair, eyes that shimmer like precious gems or even hair resembling gemstones. Some might have bark-like skin patterns or eyes that sparkle like crystals.',
     cards: [
       own('Stonebound', {
         id: 'stoneskin',
@@ -476,7 +476,7 @@ export const LINEAGES = [
     art: null,
     tags: ['elemental', 'spellcasting'],
     blurb:
-      'From living near oceans, rivers, or other natural sources of water, your ancestors have established a deep connection with the element of water. This elemental bond has significantly altered your appearance. You could have smooth, blue-tinged skin, flowing hair that moves like water, deep sea-green eyes, or even hair resembling seaweed. Some might have skin that shimmers or eyes that change color like the ocean.',
+      'From living near oceans, rivers or other natural sources of water, your ancestors have established a deep connection with the element of water. This elemental bond has significantly altered your appearance. You could have smooth, blue-tinged skin, flowing hair that moves like water, deep sea-green eyes or even hair resembling seaweed. Some might have skin that shimmers or eyes that change color like the ocean.',
     cards: [
       own('Tidebound', {
         id: 'rising-tide',
@@ -498,7 +498,7 @@ export const LINEAGES = [
   {
     id: 'undead',
     name: 'Undead',
-    tagline: 'Cursed with undeath — very hard to kill, and slow to mend.',
+    tagline: 'Cursed with undeath: very hard to kill, and slow to mend.',
     art: null,
     tags: ['cursed', 'resilience'],
     blurb:
@@ -509,7 +509,7 @@ export const LINEAGES = [
         name: 'Undying',
         summary: '8 health per point instead of 5, but reaching 0 kills you outright.',
         body:
-          'You gain 8 health per point in Fortitude and {physique} instead of 5.\n\nHowever, if your health reaches 0, you instantly die.\n\nLong rests restore only a quarter of your health, and short rests restore none.',
+          'You gain 8 health per point in Fortitude and {physique} instead of 5.\n\nHowever, if your health reaches 0, you instantly die.\n\nLong rests restore only a quarter of your health, and short rests restore none.', // text-style-ok: joins two clauses
       }),
       own('Undead', {
         id: 'corpse-feed',

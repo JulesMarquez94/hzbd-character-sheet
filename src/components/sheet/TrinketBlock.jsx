@@ -85,7 +85,7 @@ export default function TrinketBlock({
                     type="button"
                     className="item-info-btn slot-remove-btn"
                     onClick={() => removeTrinket(index)}
-                    title="Take it off — it goes to your inventory"
+                    title="Take it off. It goes to your inventory."
                     aria-label="Take it off"
                   >
                     ↓
@@ -108,7 +108,7 @@ export default function TrinketBlock({
               type="button"
               className="equip-slot-main"
               onClick={() => setBrowsing(index)}
-              title={readOnly ? item.name : `${item.name} — tap to swap or send to inventory`}
+              title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
             >
               <ItemIcon item={item} />
               <span className="equip-item-body">
@@ -137,7 +137,7 @@ export default function TrinketBlock({
               item={item}
               onInfo={() => stack?.openItem(item)}
               onRemove={readOnly ? null : () => removeTrinket(index)}
-              removeTitle={`Take off ${item.name} — it goes to your inventory`}
+              removeTitle={`Take off ${item.name}. It goes to your inventory.`}
             />
           </div>
         );
@@ -159,7 +159,7 @@ export default function TrinketBlock({
             <span className="equip-slot-label">
               {trinkets.length === 0 ? 'Nothing on' : 'One more'}
             </span>
-            <span className="equip-empty-hint">Empty — tap to put something on</span>
+            <span className="equip-empty-hint">Empty · tap to put something on</span>
           </span>
         </button>
       )}

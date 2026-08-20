@@ -234,7 +234,7 @@ export function BarChip({ move, readOnly, onUse }) {
       title={
         spent
           ? move.spentNote ?? `${move.name} is spent`
-          : `${move.name} — ${move.source}`
+          : `${move.name} · ${move.source}`
       }
     >
       <span className="bar-chip-name">{move.name}</span>

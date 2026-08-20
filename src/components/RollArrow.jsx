@@ -57,7 +57,7 @@ export default function RollArrow({ advantage = 0, disadvantage = 0, from = [], 
   const word = up ? 'advantage' : 'disadvantage';
   /* Whatever is lending it, named. A 3 with no explanation is a number the reader
      has to go and reconstruct off three different blocks. */
-  const said = from.length > 0 ? ` — from ${listAnd(from)}` : '';
+  const said = from.length > 0 ? ` · from ${listAnd(from)}` : '';
 
   return (
     <span

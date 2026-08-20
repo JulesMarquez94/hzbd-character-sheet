@@ -172,7 +172,7 @@ function handGroup(character) {
       const riders = attackModifiers(character, card, modifiers);
 
       return move(`hand:${card.id}`, card, {
-        source: `${primary.name} — in hand`,
+        source: `${primary.name} · in hand`,
         modifiers: riders,
         /* And named, so the prompt that is about to spend them says which. */
         note: ridingLine(riders),
@@ -214,7 +214,7 @@ function beltGroup(character, locks) {
 
       return move(`belt:${index}`, card, {
         name: card?.name ?? item.name,
-        source: `${item.name} — loop ${index + 1}`,
+        source: `${item.name} · loop ${index + 1}`,
         note: charges > 0 ? chargeNote(remaining, consumable, item) : null,
         extra: shut.ok && nextBelt ? { belt: nextBelt } : null,
         spent: spent || !shut.ok,
@@ -268,7 +268,7 @@ function knownGroups(character, locks) {
         .filter(({ card }) => !isStanding(card) && !isMinionCard(card))
         .map(({ card, modifiers }) =>
           move(`${source.id}:${card.id}`, card, {
-            source: `${card.name} — ${source.title}`,
+            source: `${card.name} · ${source.title}`,
             modifiers,
             ...martialUse(character, card, room),
             ...feralUse(character, card, set),
@@ -467,7 +467,7 @@ function imbuedGroup(character, locks) {
     .filter((row) => row.card)
     .map(({ effect, card }) =>
       move(`imbued:${effect.id}:${card.id}`, card, {
-        source: `${card.name} — bound in by ${effect.name}`,
+        source: `${card.name} · bound in by ${effect.name}`,
         note: effect.note || null,
         /* A casting bound into a thing you are holding is both halves of what a
            form forbids: somebody else's spell, out of an item. Refused on either
@@ -518,7 +518,7 @@ export function minionBar(character, minion) {
     .filter((card) => !isStanding(card))
     .map((card) =>
       move(`minion:${minion.id}:${card.id}`, card, {
-        source: `${card.name} — ${minion.title}`,
+        source: `${card.name} · ${minion.title}`,
         modifiers,
       })
     );
@@ -542,7 +542,7 @@ function basicGroup() {
     label: 'Basic Actions',
     note: 'Everyone, always',
     moves: BASIC_ACTIONS.map((card) =>
-      move(`basic:${card.id}`, card, { source: `${card.name} — a basic action` })
+      move(`basic:${card.id}`, card, { source: `${card.name} · a basic action` })
     ),
   };
 }

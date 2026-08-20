@@ -111,7 +111,7 @@ function KeywordChip({ keyword, text }) {
         if (tip) hide();
         else place();
       }}
-      aria-label={`${text} — ${keyword.detail}`}
+      aria-label={`${text}: ${keyword.detail}`}
     >
       {text}
       {tip &&
@@ -205,7 +205,7 @@ function renderInline(text, ctx, keyPrefix) {
         if (!choice) {
           return (
             <span key={key} className="ac-choice ac-choice-open">
-              {ctx.choicePrompt ?? '— not chosen —'}
+              {ctx.choicePrompt ?? 'not chosen'}
             </span>
           );
         }
@@ -243,7 +243,7 @@ function renderInline(text, ctx, keyPrefix) {
             type="button"
             className="ac-value ac-roll"
             onClick={() => onValue({ expression: attribute.key, resolved })}
-            title={`What you add to this roll — your ${attribute.label}`}
+            title={`What you add to this roll: your ${attribute.label}`}
           >
             {text}
           </button>

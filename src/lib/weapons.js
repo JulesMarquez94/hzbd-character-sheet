@@ -542,7 +542,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     body:
       'Before a Wand can be used, you must use the Imbue ability to activate it for 3 turns.\n\n' +
-      'When you Imbue the wand, choose an elemental damage type from Cold, Fire, or Lightning. Your wand deals damage of that chosen element.',
+      'When you Imbue the wand, choose an elemental damage type from Cold, Fire or Lightning. Your wand deals damage of that chosen element.',
   },
 
   /* ----- Staff ----- */
@@ -569,7 +569,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     body:
       'Before a Staff can be used, you must use the Imbue ability to activate it for 3 turns.\n\n' +
-      'When you Imbue the staff, choose an elemental damage type from Cold, Fire, or Lightning. Your staff deals damage of that chosen element.',
+      'When you Imbue the staff, choose an elemental damage type from Cold, Fire or Lightning. Your staff deals damage of that chosen element.',
   },
 
   /* ----- Claws & Teeth (natural) ----- */
@@ -643,7 +643,7 @@ export const WEAPONS = [
     name: 'One-Handed Weapon',
     slots: ['main_hand', 'off_hand'],
     tags: ['Common', 'Melee Weapon', 'One-Handed'],
-    blurb: 'A sword, axe or mace — one hand on the grip, the other free.',
+    blurb: 'A sword, axe or mace: one hand on the grip, the other free.',
     burden: 0,
     abilities: ['one-handed-strike', 'one-handed-swift-strike'],
   },
@@ -679,7 +679,7 @@ export const WEAPONS = [
     name: 'Short Bow',
     slots: ['main_hand', 'off_hand'],
     tags: ['Common', 'Ranged Weapon', 'Bow'],
-    blurb: 'A hunting bow — light draw, fast nock, close work.',
+    blurb: 'A hunting bow: light draw, fast nock, close work.',
     burden: 0,
     abilities: ['short-bow-shoot', 'short-bow-triple-shot'],
   },
@@ -751,7 +751,7 @@ export const WEAPONS = [
     name: 'Staff',
     slots: ['main_hand', 'off_hand'],
     tags: ['Common', 'Ranged Weapon', 'Focus'],
-    blurb: 'A caster’s stave — slower than a wand, and far louder.',
+    blurb: 'A caster’s stave: slower than a wand, and far louder.',
     burden: 0,
     abilities: ['staff-blast', 'staff-imbue'],
   },

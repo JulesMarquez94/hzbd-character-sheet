@@ -122,7 +122,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
                 onClick={() =>
                   setPaying({
                     name: card.name,
-                    source: `${card.name} — mixed in your Cauldron`,
+                    source: `${card.name} · mixed in your Cauldron`,
                     ap: cost.ap,
                     wp: cost.wp,
                     card,

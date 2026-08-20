@@ -33,7 +33,7 @@ const PILLARS = [
   {
     title: 'Cards, Not Lookups',
     body:
-      'Every spell, talent and weapon action lives on its own card — cost badges, banner and rules text — so the table never stops to search a rulebook.',
+      'Every spell, talent and weapon action lives on its own card: cost badges, banner and rules text, so the table never stops to search a rulebook.',
     accent: true,
   },
   {
@@ -52,7 +52,7 @@ export default function Landing() {
         <span className="hero-badge">A Victorian High-Fantasy TTRPG</span>
         <h1 className="heading-hero">Enter The Hazebound Worlds</h1>
         <p className="hero-lede">
-          Confront eldritch machines, command shifting mechanical aether currents, and forge your survival
+          Confront eldritch machines, command shifting mechanical aether currents and forge your survival
           in an empire choking on volatile arcane industrialism.
         </p>
 
@@ -79,17 +79,17 @@ export default function Landing() {
           <p>
             Hazebound abilities are built to be read at a glance. The banner tells you what the ability{' '}
             <em>is</em>, the badges tell you what it <em>costs</em>, and the body tells you exactly what
-            happens — nothing else.
+            happens. Nothing else.
           </p>
           <ul className="showcase-list">
             <li>
-              <span className="dot dot-ap" /> Gold orb — Action Point cost
+              <span className="dot dot-ap" /> Gold orb · Action Point cost
             </li>
             <li>
-              <span className="dot dot-wp" /> Violet orb — Willpower cost
+              <span className="dot dot-wp" /> Violet orb · Willpower cost
             </li>
             <li>
-              <span className="dot dot-banner" /> Grey chevron — school, tier and damage family
+              <span className="dot dot-banner" /> Grey chevron · school, tier and damage family
             </li>
           </ul>
           <p className="muted">

@@ -428,7 +428,7 @@ export default function CharacterSheet({ creating = false }) {
 
           <div className="sheet-tabbar-right">
             {!canEdit && (
-              <span className="view-badge live" title="Viewing live — changes appear without reloading">
+              <span className="view-badge live" title="Viewing live · changes appear without reloading">
                 <span className="live-dot" />
                 Live View
               </span>

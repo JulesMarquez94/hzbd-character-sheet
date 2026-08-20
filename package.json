@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "lint:text": "node scripts/lint-text.mjs",
     "preview": "vite preview",
     "art": "node scripts/pull-card-art.mjs && node scripts/pull-item-art.mjs",
     "art:cards": "node scripts/pull-card-art.mjs",

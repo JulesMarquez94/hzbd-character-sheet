@@ -105,7 +105,7 @@ export const MARTIAL_MOVES = withArt([
   {
     id: 'wing-clip',
     name: 'Wing Clip',
-    summary: 'Advantage, a dearer Move for the target, and a flying one comes down 18 meters.',
+    summary: 'Advantage, a dearer Move for the target and a flying one comes down 18 meters.',
     kind: 'martial-move',
     tags: ['Martial Move', 'Novice'],
     ap: 1,
@@ -119,7 +119,7 @@ export const MARTIAL_MOVES = withArt([
   {
     id: 'concuss',
     name: 'Concuss',
-    summary: 'Takes 2 Reaction Points, cancels what you interrupted, and swings inside the reaction.',
+    summary: 'Takes 2 Reaction Points, cancels what you interrupted and swings inside the reaction.',
     kind: 'martial-move',
     tags: ['Martial Move', 'Novice'],
     ap: null,
@@ -209,7 +209,7 @@ export const MARTIAL_MOVES = withArt([
   {
     id: 'feint',
     name: 'Feint',
-    summary: 'Advantage, no reaction allowed to it, and your Willpower back if it misses.',
+    summary: 'Advantage, no reaction allowed to it and your Willpower back if it misses.',
     kind: 'martial-move',
     tags: ['Martial Move', 'Adept'],
     ap: 1,

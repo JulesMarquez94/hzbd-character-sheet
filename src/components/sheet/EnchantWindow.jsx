@@ -136,7 +136,7 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
                 onClick={() =>
                   setPaying({
                     name: 'Ephemeral Enchantment',
-                    source: `${chosen.name} — laid for an hour`,
+                    source: `${chosen.name} · laid for an hour`,
                     ap: cost.ap,
                     wp: cost.wp,
                     card: chosen,
@@ -152,7 +152,7 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
         <p className="frame-foot" style={{ marginTop: 0 }}>
           At rank {state.rank} you know the {listAnd(state.tiers)}{' '}
           {state.tiers.length === 1 ? 'enchantment' : 'enchantments'}. An ephemeral one lasts an
-          hour, costs Willpower equal to its Magic Burden, and weighs nothing on whoever carries it.
+          hour, costs Willpower equal to its Magic Burden and weighs nothing on whoever carries it.
         </p>
 
         <div className="ench-window">

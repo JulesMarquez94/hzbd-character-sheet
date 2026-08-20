@@ -355,7 +355,7 @@ export function SlotTools({ item, onInfo, onRemove, removeTitle = 'Send to your 
         type="button"
         className="item-info-btn"
         onClick={onInfo}
-        title={`${item.name} — details and lore`}
+        title={`${item.name} · details and lore`}
         aria-label={`${item.name} details`}
       >
         i

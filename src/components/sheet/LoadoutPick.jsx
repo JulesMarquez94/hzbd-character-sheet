@@ -298,7 +298,7 @@ function browserLead({ rank, spec, opened, found }) {
     return `Rank ${rank} opens no new ${nouns}. This is the whole pool it can still take from.`;
   }
   if (found === 0) {
-    return `Rank ${rank} opens ${listOut(opened)} ${nouns}. This build’s codex has none written yet, so there is nothing to show — add them and they appear here on their own.`;
+    return `Rank ${rank} opens ${listOut(opened)} ${nouns}. This build’s codex has none written yet, so there is nothing to show. Add them and they appear here on their own.`;
   }
   if (rank === 1) {
     return `Every ${spec.noun} Rank ${rank} opens. Higher ranks reach further, and their own note says how much further.`;

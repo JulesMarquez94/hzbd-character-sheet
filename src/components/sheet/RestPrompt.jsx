@@ -369,7 +369,7 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
                       : onTake(row)
                   }
                   title={
-                    row.kind === 'labour' ? `${row.label} — read the card` : `Do this: ${row.label}`
+                    row.kind === 'labour' ? `${row.label} · read the card` : `Do this: ${row.label}`
                   }
                 >
                   <span className="rest-labour-name">{row.label}</span>

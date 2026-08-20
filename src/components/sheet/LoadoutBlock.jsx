@@ -78,7 +78,7 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
 
     setRequest({
       name: card.name,
-      source: `${primary.name} — in hand`,
+      source: `${primary.name} · in hand`,
       ap: card.ap,
       wp: card.wp,
       card,
@@ -118,7 +118,7 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
 
     setRequest({
       name: card?.name ?? item.name,
-      source: `${item.name} — loop ${index + 1}`,
+      source: `${item.name} · loop ${index + 1}`,
       ap: card?.ap,
       wp: card?.wp,
       card,
@@ -138,7 +138,7 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
             type="button"
             className="swap-btn"
             onClick={askSwap}
-            title={`${swapLine(primary, secondary)} — it costs ${SWAP_AP} Action Points`}
+            title={`${swapLine(primary, secondary)}. It costs ${SWAP_AP} Action Points`}
           >
             <span className="swap-glyph" aria-hidden="true">
               ⇄
@@ -181,7 +181,7 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
             <span className="equip-empty-body">
               <span className="equip-slot-label">Primary</span>
               <span className="equip-empty-hint">
-                {readOnly ? 'Empty hands' : 'Empty hands — arm yourself on the Inventory tab'}
+                {readOnly ? 'Empty hands' : 'Empty hands · arm yourself on the Inventory tab'}
               </span>
             </span>
           </div>
@@ -217,7 +217,7 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
               <span className="equip-empty-body">
                 <span className="equip-slot-label">Loop {index + 1}</span>
                 <span className="equip-empty-hint">
-                  {readOnly ? 'Empty' : 'Empty — clip something on from the Inventory tab'}
+                  {readOnly ? 'Empty' : 'Empty · clip something on from the Inventory tab'}
                 </span>
               </span>
             </div>
@@ -349,7 +349,7 @@ function InfoButton({ onClick, label }) {
       type="button"
       className="item-info-btn row-info-btn"
       onClick={onClick}
-      title={`${label} — read the card`}
+      title={`${label} · read the card`}
       aria-label={`${label} details`}
     >
       i
@@ -360,8 +360,8 @@ function InfoButton({ onClick, label }) {
 /** What the swap actually does, said plainly — one hand may well be empty. */
 function swapLine(primary, secondary) {
   if (primary && secondary) return `${secondary.name} comes up, ${primary.name} goes away`;
-  if (secondary) return `${secondary.name} comes up — your hands are empty now`;
-  return `${primary.name} goes away — you draw nothing in its place`;
+  if (secondary) return `${secondary.name} comes up, your hands are empty now`;
+  return `${primary.name} goes away, you draw nothing in its place`;
 }
 
 /** What the item loses on top of the points, said before it happens. */
@@ -370,14 +370,14 @@ function chargeNote(remaining, consumable, item) {
   if (left > 0) return `Spends a charge. ${left} of ${remaining} left after this.`;
   if (consumable) return 'This is the last of it. Using it finishes the item.';
   return item.recharge
-    ? `Its last charge — it comes back after a ${item.recharge}.`
+    ? `Its last charge. It comes back after a ${item.recharge}.`
     : 'Its last charge.';
 }
 
 /** Why a row cannot be used, when it cannot. */
 function spentTitle({ spent, consumable, item }) {
   if (!spent) return null;
-  if (consumable) return `${item.name} is used up — discard it from the Inventory tab`;
+  if (consumable) return `${item.name} is used up. Discard it from the Inventory tab.`;
   return item.recharge
     ? `${item.name} is spent until a ${item.recharge}`
     : `${item.name} is spent`;

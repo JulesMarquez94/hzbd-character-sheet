@@ -173,7 +173,7 @@ export default function PackBlock({
                       type="button"
                       className="item-info-btn"
                       onClick={() => stack?.openItem(row.item)}
-                      title={`${row.item.name} — details and lore`}
+                      title={`${row.item.name} · details and lore`}
                       aria-label={`${row.item.name} details`}
                     >
                       i
@@ -305,7 +305,7 @@ function DiscardButton({ name, onClick }) {
       type="button"
       className="item-info-btn slot-discard-btn"
       onClick={onClick}
-      title={`Throw ${name} away — for good`}
+      title={`Throw ${name} away · for good`}
       aria-label={`Discard ${name}`}
     >
       ×
@@ -322,7 +322,7 @@ function CustomItemForm({ entry, onSave, onClose }) {
 
   return (
     <Modal
-      title={entry.id ? 'Edit — Something You Carry' : 'Something You Carry'}
+      title={entry.id ? 'Edit: Something You Carry' : 'Something You Carry'}
       onClose={onClose}
       footer={
         <>
@@ -370,7 +370,7 @@ function CustomItemForm({ entry, onSave, onClose }) {
       </div>
 
       <p className="form-hint">
-        Nothing here has rules — it is yours to carry and the table's to make something of.
+        Nothing here has rules. It is yours to carry and the table's to make something of.
       </p>
     </Modal>
   );

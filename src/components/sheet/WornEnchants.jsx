@@ -65,7 +65,7 @@ export default function WornEnchants({
           <span className="ench-rest-title">On your own person</span>
           <span className="ench-rest-note">
             {state.worn.length} of {state.wornMax}
-            {full ? ' — full' : ', and no Supplies to change them'}
+            {full ? ' · full' : ', and no Supplies to change them'}
           </span>
         </div>
       )}

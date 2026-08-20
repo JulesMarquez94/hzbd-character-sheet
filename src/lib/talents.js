@@ -156,7 +156,7 @@ const TALENT_SETS = [
         id: 'shield-expertise',
         rank: 1,
         name: 'Shield Expertise',
-        summary: 'With a shield: advantage on Instinct contests, Defense +1, and Martial Moves to learn.',
+        summary: 'With a shield: advantage on Instinct contests, Defense +1 and Martial Moves to learn.',
         kind: 'talent',
         tags: ['Talent', 'Guardian', 'Passive'],
         ap: null,
@@ -165,7 +165,7 @@ const TALENT_SETS = [
         body:
           'While wielding a weapon that includes a shield, you gain an advantage on {instinct} contested rolls {roll:instinct} and your Defense is increased by 1.\n\n' +
           'You learn a number of Novice Martial Moves equal to 1 + your Rank in Guardian.\n\n' +
-          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.\n\n' +
+          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.\n\n' + // text-style-ok: joins two clauses
           'After successfully blocking damage with a shield, your next weapon attack costs 1 less Action Point and can be used immediately after the block, even if you have already used a reaction to an action.',
       },
       {
@@ -195,7 +195,7 @@ const TALENT_SETS = [
         stat: 'instinct',
         body:
           'You can now use {{Intercept}} on any entity you can see and could reach with a Move Action.\n\n' +
-          'When you do, you move to an empty space in melee range of that entity, and the cost of {{Intercept}} is increased by 1 Action Point.\n\n' +
+          'When you do, you move to an empty space in melee range of that entity, and the cost of {{Intercept}} is increased by 1 Action Point.\n\n' + // text-style-ok: joins two clauses
           'Additionally your Movement Speed is increased by 1.',
       },
       {
@@ -283,7 +283,7 @@ const TALENT_SETS = [
         id: 'fungal-invocation',
         rank: 1,
         name: 'Fungal Invocation',
-        summary: 'Cast Primal spells, more of them each rank, and change them on a long rest.',
+        summary: 'Cast Primal spells, more of them each rank and change them on a long rest.',
         kind: 'talent',
         tags: ['Talent', 'Mycomancer', 'Passive'],
         ap: null,
@@ -292,7 +292,7 @@ const TALENT_SETS = [
         body:
           'Your deep connection with the mycelial network lets you cast Primal Spells. You learn a number of Primal School spells equal to 2 + 2 x your Rank in Mycomancer.\n\n' +
           'Whenever you take a long rest, you can use your long rest action to change any number of learned spells.\n\n' +
-          'At Rank 2, you can learn Adept Primal Spells, and at Rank 3, you gain access to Master Primal Spells.',
+          'At Rank 2, you can learn Adept Primal Spells, and at Rank 3, you gain access to Master Primal Spells.', // text-style-ok: joins two clauses
       },
       {
         id: 'mycelium-network',
@@ -441,9 +441,9 @@ const TALENT_SETS = [
         body:
           'While your Cauldron is Summoned, you can combine Ingredients to unleash a magical effect.\n\n' +
           'You choose Ingredients from your known list in the following configuration:\n\n' +
-          'At least 1 Essence, exactly 1 Catalyst, and any number of Infusions.\n\n' +
+          'At least 1 Essence, exactly 1 Catalyst and any number of Infusions.\n\n' +
           'You must pay the combined Action Point and Willpower cost of all chosen Ingredients. The resulting Brew takes effect immediately.\n\n' +
-          'You gain access to Novice Ingredients at Rank 1, Adept Ingredients at Rank 2, and Master Ingredients at Rank 3.',
+          'You gain access to Novice Ingredients at Rank 1, Adept Ingredients at Rank 2 and Master Ingredients at Rank 3.',
       },
       {
         id: 'efficient-brewing',
@@ -538,7 +538,7 @@ const TALENT_SETS = [
     },
     blurb:
       'The Enchanter is a master of imbuement, working their own Willpower into steel, leather and stone until it stays there. Through patient labour taken at the fire rather than in the thick of a fight, they have perfected the art of making an ordinary thing extraordinary, bought once in supplies and carried from that night onward.\n\n' +
-      'They excel at arming everyone around them. From a blade that takes on Fire to a hood that answers the first clash of a fight with a Shield, what they make holds from one fight to the next, and the only price a companion pays is the Magic Burden of carrying it. And where there is no night to spare, they can push an enchantment into an item at a touch, spending their own Willpower for an hour of borrowed wonder that weighs on no one.\n\n' +
+      'They excel at arming everyone around them. From a blade that takes on Fire to a hood that answers the first clash of a fight with a Shield, what they make holds from one fight to the next, and the only price a companion pays is the Magic Burden of carrying it. And where there is no night to spare, they can push an enchantment into an item at a touch, spending their own Willpower for an hour of borrowed wonder that weighs on no one.\n\n' + // text-style-ok: joins two clauses
       'An Enchanter\u2019s presence is a source of quiet, compounding advantage, felt on everything the party carries long after the making. They are wielders of wonder themselves, and whatever they can work into a companion\u2019s gear they can bear upon their own person.',
     cards: [
       {
@@ -572,7 +572,7 @@ const TALENT_SETS = [
           'You have learned the art of imbuing an item with Willpower.\n\n' +
           'Whenever you take a Long Rest, you can use your Long Rest action to enchant.\n\n' +
           'Enchanting an item costs you an amount of supplies equal to 70 times the Magic Burden value of the enchantment.\n\n' +
-          'At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept enchantments, and at Rank 3 you learn Master enchantments.\n\n' +
+          'At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept enchantments, and at Rank 3 you learn Master enchantments.\n\n' + // text-style-ok: joins two clauses
           'An item can hold one enchantment at a time.',
       },
       {
@@ -635,7 +635,7 @@ const TALENT_SETS = [
         stat: 'mind',
         body:
           'Your work no longer crowds itself out. An item you have enchanted can hold a second enchantment beside the first.\n\n' +
-          'Laying it is a Long Rest action of its own, bought at the same price, and its Magic Burden is carried on top of the first one\u2019s.',
+          'Laying it is a Long Rest action of its own, bought at the same price, and its Magic Burden is carried on top of the first one\u2019s.', // text-style-ok: joins two clauses
       },
     ],
   },
@@ -731,7 +731,7 @@ const TALENT_SETS = [
     },
     blurb:
       'Those who take the Draconic Bond are never alone in a fight again. A draconic beast has knotted its life to theirs, and the two of them go on as one existence in two bodies: the ally spends its own Action Points and Reaction Points, draws on its bonded’s Willpower and breathes the element its scales were born in.\n\n' +
-      'They excel at being in two places at once. The ally is sent ahead to bolt, to breathe and to mark, while its bonded stands where they meant to stand, and a wound the ally takes can be pulled across and borne instead. Where the two of them cannot both be, the bond carries what one of them sees to the other, and a spell the drifter casts can be thrown from where the dragon stands.\n\n' +
+      'They excel at being in two places at once. The ally is sent ahead to bolt, to breathe and to mark, while its bonded stands where they meant to stand, and a wound the ally takes can be pulled across and borne instead. Where the two of them cannot both be, the bond carries what one of them sees to the other, and a spell the drifter casts can be thrown from where the dragon stands.\n\n' + // text-style-ok: joins two clauses
       'A Draconic Bond’s presence is a source of relentless pressure, felt from two directions at once. Grown to the size of a horse the ally is a mount as well as a weapon, and the roar it learns at the last is enough to leave a room full of enemies afraid of the pair of them.',
     cards: [
       {
@@ -788,7 +788,7 @@ const TALENT_SETS = [
         id: 'draconic-recall',
         rank: 1,
         name: 'Draconic Recall',
-        summary: 'Hide your ally in your shadow, where nothing can touch it, and call it back out.',
+        summary: 'Hide your ally in your shadow, where nothing can touch it, and call it back out.', // text-style-ok: closes an aside
         kind: 'talent',
         tags: ['Draconic Bond', 'Novice Talent', 'Ability'],
         ap: 3,
@@ -831,7 +831,7 @@ const TALENT_SETS = [
         id: 'empowered-bond',
         rank: 3,
         name: 'Empowered Bond',
-        summary: 'Your ally grows to the size of a horse, carries you, and Elevates its damage.',
+        summary: 'Your ally grows to the size of a horse, carries you and Elevates its damage.',
         kind: 'talent',
         tags: ['Draconic Bond', 'Master Talent', 'Passive'],
         ap: null,
@@ -941,7 +941,7 @@ const TALENT_SETS = [
       },
     },
     blurb:
-      'A Trickster wins the fight before it is a fair one. They work from cover and from behind, at a distance where nobody thinks to look, and the first anyone knows of them is the blade already in. Every advantage they take is one they made: a target that cannot see, a guard whose attention is elsewhere, a moment nobody was watching.\n\n' +
+      'A Trickster wins the fight before it is a fair one. They work from cover and from behind, at a distance where nobody thinks to look, and the first anyone knows of them is the blade already in. Every advantage they take is one they made: a target that cannot see, a guard whose attention is elsewhere, a moment nobody was watching.\n\n' + // text-style-ok: joins two clauses
       'They excel at the opening blow and at not being there for the answer. A blinded target cannot swing at what it cannot find, and a strike thrown at something that never saw it coming lands harder for it. When the answer does come they are simply not where it lands, and a stealth that failed them once can be tried again on the strength of a distraction nobody can prove they caused.\n\n' +
       'A Trickster’s presence is a source of quiet theft, felt only once it is over. Hands that pick a pocket in the middle of a fight come back with whatever was in it, and at the last they move quickly enough to spend a turn nobody else could have afforded.',
     cards: [
@@ -983,7 +983,7 @@ const TALENT_SETS = [
         opens: 'ambush',
         pays: 'window',
         body:
-          'When making a Weapon Attack against a target that cannot see you or is afflicted with the Stunned, Grappled, or Constrained status. (The cost of this ability is equal to the weapon number of base damage dice before enchant or boost)\n\n' +
+          'When making a Weapon Attack against a target that cannot see you or is afflicted with the Stunned, Grappled or Constrained status. (The cost of this ability is equal to the weapon number of base damage dice before enchant or boost)\n\n' +
           'The Weapon Attack is made with Advantage.\n\n' +
           'On a hit, the Weapon Attack is Elevated a number of times equal to the Willpower paid.',
       },
@@ -1031,7 +1031,7 @@ const TALENT_SETS = [
         id: 'steal',
         rank: 3,
         name: 'Steal',
-        summary: 'An Instinct attack on a humanoid, a d4, and one of four things out of its pockets.',
+        summary: 'An Instinct attack on a humanoid, a d4 and one of four things out of its pockets.',
         kind: 'talent',
         tags: ['Trickster', 'Master Talent', 'Ability'],
         ap: 2,
@@ -1043,10 +1043,10 @@ const TALENT_SETS = [
         opens: 'steal',
         body:
           'You make an Attack Roll with your {stat} Attribute {roll}. On a hit, you steal something from a humanoid. Roll a d4 and choose any one effect whose value is below the number you rolled:\n' +
-          '1: Healing Tonic – Restores [[2d6 + 2*stat]] in Health.\n' +
-          '2: Poison – Your next Weapon Attacks deal additional damage equal to your {stat} Attribute.\n' +
-          '3: Protective Charm – Provides a Shield equal to [[3*stat]].\n' +
-          '4: Strange Dust – Grants 3 Action Points for the current round and refunds the Steal Willpower cost.',
+          '1: Healing Tonic · Restores [[2d6 + 2*stat]] in Health.\n' +
+          '2: Poison · Your next Weapon Attacks deal additional damage equal to your {stat} Attribute.\n' +
+          '3: Protective Charm · Provides a Shield equal to [[3*stat]].\n' +
+          '4: Strange Dust · Grants 3 Action Points for the current round and refunds the Steal Willpower cost.',
       },
       {
         id: 'thrilled',
@@ -1154,7 +1154,7 @@ const TALENT_SETS = [
       onReaction: [null, false, false, true],
     },
     blurb:
-      'A Duelist fights with one hand and keeps the other free, and the free hand is the point. Everything they have is bought with the room a single blade leaves them: the footwork to be somewhere else when the answer comes, the balance to swing again after a swing that missed, and the trained manoeuvres nobody with two hands on a haft has the time for.\n\n' +
+      'A Duelist fights with one hand and keeps the other free, and the free hand is the point. Everything they have is bought with the room a single blade leaves them: the footwork to be somewhere else when the answer comes, the balance to swing again after a swing that missed and the trained manoeuvres nobody with two hands on a haft has the time for.\n\n' +
       'They excel at deciding what an exchange is about. A Martial Move is not a bigger attack, it is a chosen one: a leg opened up, a guard drawn away, a weapon on the floor. A Duelist knows more of them than anybody else does and changes them out every night, so the answer they have ready is the one this fight needs rather than the one they trained for.\n\n' +
       'A Duelist’s presence is a source of quiet pressure. Nothing they do looks like much on its own, and at the last two of those chosen strikes ride the same swing, which is where all of it stops looking like nothing.',
     cards: [
@@ -1180,7 +1180,7 @@ const TALENT_SETS = [
           'You have advantage when using One-handed weapons.\n\n' +
           'You learn a number of Novice Martial Moves equal to 2 + your Rank in Duelist.\n\n' +
           'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
-          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.',
+          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
       },
       {
         id: 'agile',
@@ -1398,7 +1398,7 @@ const TALENT_SETS = [
     },
     blurb:
       'A Feral Cursed carries something that is not theirs and does not ask. The curse takes half the blood left in them and hands back twice as much hide, and for as long as that hide holds they are a carnivore with a drifter’s training: teeth and claws in place of a weapon, advantage on everything they swing at and no hands left for a flask or a spell.\n\n' +
-      'They excel at the moment a fight turns. Losing Health or spending Willpower is what wakes the beast, so the worse an hour goes the likelier it is that something else finishes it, and holding it in gets harder every time they hold it in. The animal they chose is not decoration either: the manoeuvres they train are trained for that mouth, and they are changed out every night the way a duelist changes a guard.\n\n' +
+      'They excel at the moment a fight turns. Losing Health or spending Willpower is what wakes the beast, so the worse an hour goes the likelier it is that something else finishes it, and holding it in gets harder every time they hold it in. The animal they chose is not decoration either: the manoeuvres they train are trained for that mouth, and they are changed out every night the way a duelist changes a guard.\n\n' + // text-style-ok: joins two clauses
       'A Feral Cursed’s presence is a source of unease that arrives before the first blow does. Nothing about them is negotiable once the hide is on, and at the last they learn to keep their own mind inside it and to land two trained strikes on a single swing, which is the point at which the curse stops being a thing that happens to them.',
     cards: [
       {
@@ -1495,7 +1495,7 @@ const TALENT_SETS = [
           'When you become Feral Cursed, you choose a Carnivore Mammal. This beast represents how your ability manifests.\n\n' +
           'While your hands are empty, you can use the **Claws & Teeth** weapon. You learn a number of Novice Martial Moves equal to 2 + your Rank in Feral Curse, which you can use with **Claws & Teeth**.\n\n' +
           'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
-          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.',
+          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
       },
       {
         id: 'bestial-sense',
@@ -1542,7 +1542,7 @@ const TALENT_SETS = [
         rank: 2,
         name: 'Call the Beast',
         house: true,
-        summary: 'Give in on purpose: the form, with no roll, and the difficulty back to 8.',
+        summary: 'Give in on purpose: the form, with no roll and the difficulty back to 8.',
         kind: 'talent',
         tags: ['Feral Curse', 'Adept Talent', 'Ability'],
         ap: 1,

@@ -74,7 +74,7 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
             className={`rest-btn rest-btn-${kind}`}
             onClick={() => setResting(kind)}
             disabled={readOnly}
-            title={`${RESTS[kind].label} — ${RESTS[kind].blurb}`}
+            title={`${RESTS[kind].label} · ${RESTS[kind].blurb}`}
           >
             <span className="rest-btn-label">{RESTS[kind].label}</span>
             {/* What it costs *this* character: Oz'em Pick takes 2 off both. */}

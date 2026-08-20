@@ -130,7 +130,7 @@ function reroll({ id, name, tags, domain, note = '' }) {
     wp: 2,
     body:
       `When you fail a skill check ${domain}, you can spend 2 Willpower ` +
-      'to reroll it.\n\nOnce per skill check — a second failure stands.' +
+      'to reroll it.\n\nOnce per skill check: a second failure stands.' +
       (note ? `\n\n${note}` : ''),
   };
 }
@@ -205,7 +205,7 @@ const PATHFINDER = insight({
   id: 'pathfinder',
   name: 'Pathfinder',
   tags: ['Survival'],
-  domain: 'to navigate, to find a route, or to travel without becoming lost',
+  domain: 'to navigate, to find a route or to travel without becoming lost',
 });
 
 /* ----- criminal ----- */
@@ -214,21 +214,21 @@ const CUTPURSE = insight({
   id: 'cutpurse',
   name: 'Cutpurse',
   tags: ['Stealth'],
-  domain: 'to palm something, pick a pocket, or conceal an object on your person',
+  domain: 'to palm something, pick a pocket or conceal an object on your person',
 });
 
 const SHADOW_STEP = insight({
   id: 'shadow-step',
   name: 'Shadow Step',
   tags: ['Stealth'],
-  domain: 'to move unseen, hide, or go unheard',
+  domain: 'to move unseen, hide or go unheard',
 });
 
 const LOCKBREAKER = insight({
   id: 'lockbreaker',
   name: 'Lockbreaker',
   tags: ['Stealth', 'Craft'],
-  domain: 'to open a lock, disarm a trap, or find the seam in a mechanism',
+  domain: 'to open a lock, disarm a trap or find the seam in a mechanism',
 });
 
 const FENCE = {
@@ -251,14 +251,14 @@ const APPRAISER = insight({
   id: 'appraiser',
   name: 'Appraiser',
   tags: ['Craft', 'Coin'],
-  domain: 'to judge an object’s worth, materials, maker, or authenticity',
+  domain: 'to judge an object’s worth, materials, maker or authenticity',
 });
 
 const TINKER = insight({
   id: 'tinker',
   name: 'Tinker',
   tags: ['Craft'],
-  domain: 'to understand, repair, or improvise a mechanism or device',
+  domain: 'to understand, repair or improvise a mechanism or device',
 });
 
 const SMITH = {
@@ -280,7 +280,7 @@ const DRILLMASTER = insight({
   id: 'drillmaster',
   name: 'Drillmaster',
   tags: ['Warfare', 'Social'],
-  domain: 'to give an order, hold a formation, or intimidate through discipline',
+  domain: 'to give an order, hold a formation or intimidate through discipline',
 });
 
 const VETERANS_EYE = insight({
@@ -295,7 +295,7 @@ const SIEGEWRIGHT = insight({
   id: 'siegewright',
   name: 'Siegewright',
   tags: ['Warfare', 'Craft'],
-  domain: 'to fortify a position, breach one, or work a siege engine',
+  domain: 'to fortify a position, breach one or work a siege engine',
 });
 
 /* ----- noble ----- */
@@ -304,21 +304,21 @@ const COURTIER = insight({
   id: 'courtier',
   name: 'Courtier',
   tags: ['Social'],
-  domain: 'to observe etiquette, read a room, or move through a court unremarked',
+  domain: 'to observe etiquette, read a room or move through a court unremarked',
 });
 
 const HERALDRY = insight({
   id: 'heraldry',
   name: 'Heraldry',
   tags: ['Lore', 'Social'],
-  domain: 'to recognise a house, seal, banner or bloodline — or the forgery of one',
+  domain: 'to recognise a house, seal, banner or bloodline, or the forgery of one',
 });
 
 const COMMANDING_PRESENCE = reroll({
   id: 'commanding-presence',
   name: 'Commanding Presence',
   tags: ['Social'],
-  domain: 'made to command, overawe, or be obeyed without argument',
+  domain: 'made to command, overawe or be obeyed without argument',
 });
 
 const WELL_CONNECTED = insight({
@@ -332,9 +332,9 @@ const PATRON = reroll({
   id: 'patron',
   name: 'Patron',
   tags: ['Social', 'Coin'],
-  domain: 'made to gain access, secure lodging, or be believed',
+  domain: 'made to gain access, secure lodging or be believed',
   note:
-    'You are trading on your house’s name rather than your own — a table may rule it worth ' +
+    'You are trading on your house’s name rather than your own. A table may rule it worth ' +
     'less the further you travel from it.',
 });
 
@@ -344,7 +344,7 @@ const LOREKEEPER = insight({
   id: 'lorekeeper',
   name: 'Lorekeeper',
   tags: ['Lore'],
-  domain: 'to recall history, place a text, or name a ruin, dynasty or event',
+  domain: 'to recall history, place a text or name a ruin, dynasty or event',
 });
 
 const NATURALIST = insight({
@@ -386,7 +386,7 @@ const FORAGER = {
   tags: ['Background Skill', 'Labour', 'Supplies'],
   body:
     'Whenever you take a Long Rest outside a settlement, you can take this action to work ' +
-    'the land around the camp — snares, water, roots, deadfall — and gain 15 Supplies.\n\n' +
+    'the land around the camp (snares, water, roots, deadfall) and gain 15 Supplies.\n\n' +
     'Barren ground, a frozen waste or a dead marsh may give up nothing at all. That is ' +
     'the table’s call.',
 };
@@ -395,14 +395,14 @@ const BEAST_SENSE = insight({
   id: 'beast-sense',
   name: 'Beast Sense',
   tags: ['Survival'],
-  domain: 'to track, calm, or handle an animal',
+  domain: 'to track, calm or handle an animal',
 });
 
 const WEATHER_READ = insight({
   id: 'weather-read',
   name: 'Weather Read',
   tags: ['Survival'],
-  domain: 'to predict the weather, find shelter, or judge whether ground is safe to cross',
+  domain: 'to predict the weather, find shelter or judge whether ground is safe to cross',
 });
 
 const TRAPPER = insight({
@@ -418,7 +418,7 @@ const SEA_LEGS = insight({
   id: 'sea-legs',
   name: 'Sea Legs',
   tags: ['Survival'],
-  domain: 'to keep your balance, climb rigging, or resist being moved or knocked down',
+  domain: 'to keep your balance, climb rigging or resist being moved or knocked down',
 });
 
 const STORMWISE = insight({
@@ -455,7 +455,7 @@ const COMFORTER = reroll({
   id: 'comforter',
   name: 'Comforter',
   tags: ['Social'],
-  domain: 'made to calm, console, or steady someone who is afraid',
+  domain: 'made to calm, console or steady someone who is afraid',
 });
 
 const VIGIL = {
@@ -504,7 +504,7 @@ export const BACKGROUNDS = [
     tags: ['underworld', 'stealth', 'social'],
     blurb:
       'You made your living on the wrong side of a door. Maybe you ran with a crew, maybe you worked alone and slept badly for it, but either way you know which windows are never latched and which watchmen are already paid.\n\n' +
-      'The trade leaves marks. You count the exits before you sit down, you price everything you look at, and you have more friends than a respectable person should — none of whom will admit to knowing you.',
+      'The trade leaves marks. You count the exits before you sit down, you price everything you look at, and you have more friends than a respectable person should, none of whom will admit to knowing you.',
     picks: 3,
     skills: [CUTPURSE, SHADOW_STEP, LOCKBREAKER, FENCE, ARCANE_MARSHAL, NEGOTIATOR],
     kit: {
@@ -525,12 +525,12 @@ export const BACKGROUNDS = [
   {
     id: 'artisan',
     name: 'Artisan',
-    tagline: 'A trade, a guild mark, and hands that know the work.',
+    tagline: 'A trade, a guild mark and hands that know the work.',
     art: null,
     tags: ['trade', 'craft', 'coin', 'supplies'],
     blurb:
-      'You served your years and came out the other side with a craft — smith, alchemist, glazier, binder, it hardly matters which. What matters is that you can look at a made thing and see how it was made.\n\n' +
-      'Guild work pays steadily and teaches patience, and you left carrying both: a full pack, a good name in one town, and the quiet certainty that most problems are a materials problem.',
+      'You served your years and came out the other side with a craft: smith, alchemist, glazier, binder, it hardly matters which. What matters is that you can look at a made thing and see how it was made.\n\n' +
+      'Guild work pays steadily and teaches patience, and you left carrying both: a full pack, a good name in one town and the quiet certainty that most problems are a materials problem.',
     picks: 3,
     skills: [APOTHECARY, SMITH, APPRAISER, TINKER, QUARTERMASTER, NEGOTIATOR],
     kit: {
@@ -542,7 +542,7 @@ export const BACKGROUNDS = [
       pack: [
         {
           name: 'Artisan’s Tools',
-          note: 'The roll of your trade — files, pliers, a good glass, and the one tool you made yourself.',
+          note: 'The roll of your trade: files, pliers, a good glass and the one tool you made yourself.',
         },
         {
           name: 'Guild Ledger',
@@ -559,7 +559,7 @@ export const BACKGROUNDS = [
     art: null,
     tags: ['martial', 'warfare', 'supplies'],
     blurb:
-      'A regiment, a levy, a mercenary company — you carried a weapon for wages, and you were good enough at it to still be here. You know how a camp is run, how a siege is dug, and how long men will hold before they break.\n\n' +
+      'A regiment, a levy, a mercenary company. You carried a weapon for wages, and you were good enough at it to still be here. You know how a camp is run, how a siege is dug and how long men will hold before they break.\n\n' +
       'What the army really taught you is redundancy: never carry one of anything you would die without. You still march with a spare.',
     picks: 2,
     skills: [FIELD_MEDIC, QUARTERMASTER, PATHFINDER, DRILLMASTER, VETERANS_EYE, SIEGEWRIGHT],
@@ -587,7 +587,7 @@ export const BACKGROUNDS = [
     art: null,
     tags: ['court', 'social', 'coin'],
     blurb:
-      'You were born to a house with land, or money, or at minimum a very old grievance. You were taught to dance, to ride, to read a room, and never once to cook.\n\n' +
+      'You were born to a house with land, or money, or at minimum a very old grievance. You were taught to dance, to ride, to read a room and never once to cook.\n\n' +
       'Whether you left in disgrace or on an errand, the name travels with you. It buys credit in places coin cannot, and it costs you something every time someone recognises it.',
     picks: 2,
     skills: [COURTIER, HERALDRY, COMMANDING_PRESENCE, WELL_CONNECTED, PATRON, NEGOTIATOR],
@@ -619,7 +619,7 @@ export const BACKGROUNDS = [
     art: null,
     tags: ['scholarly', 'lore'],
     blurb:
-      'An academy, a private library, a master who took you on and then died — you came up through books, and it shows. You have read about far more of the world than you have walked through.\n\n' +
+      'An academy, a private library, a master who took you on and then died. You came up through books, and it shows. You have read about far more of the world than you have walked through.\n\n' +
       'You left with the only thing an education reliably produces: a great deal of knowledge, and no money whatsoever.',
     // The four-skill end of the range. It pays for the fourth pick with the
     // thinnest purse and the smallest kit in the codex.
@@ -634,7 +634,7 @@ export const BACKGROUNDS = [
       pack: [
         {
           name: 'Field Journal',
-          note: 'Half filled, cross-referenced, and indexed in a hand only you can read.',
+          note: 'Half filled, cross-referenced and indexed in a hand only you can read.',
         },
       ],
     },
@@ -647,7 +647,7 @@ export const BACKGROUNDS = [
     art: null,
     tags: ['wilds', 'survival', 'supplies'],
     blurb:
-      'You have been moving for as long as it matters. Outrider, trapper, pilgrim, exile — the name changes and the life does not. You have slept under more skies than roofs.\n\n' +
+      'You have been moving for as long as it matters. Outrider, trapper, pilgrim, exile. The name changes and the life does not. You have slept under more skies than roofs.\n\n' +
       'The wilds do not forgive carelessness, so you stopped being careless. You carry everything you need, and you know how to replace all of it.',
     picks: 3,
     skills: [PATHFINDER, FORAGER, BEAST_SENSE, WEATHER_READ, TRAPPER, APOTHECARY],
@@ -674,7 +674,7 @@ export const BACKGROUNDS = [
     art: null,
     tags: ['sea', 'survival', 'social'],
     blurb:
-      'Deckhand, navigator, smuggler, whaler — you worked a vessel, and you worked it long enough that solid ground still feels wrong under you some mornings.\n\n' +
+      'Deckhand, navigator, smuggler, whaler. You worked a vessel, and you worked it long enough that solid ground still feels wrong under you some mornings.\n\n' +
       'The sea teaches two things and teaches them hard: how to read weather that is about to kill you, and how to get along with people you cannot walk away from.',
     picks: 3,
     skills: [SEA_LEGS, STORMWISE, DOCKSIDE_WORD, PATHFINDER, QUARTERMASTER, NEGOTIATOR],
@@ -691,7 +691,7 @@ export const BACKGROUNDS = [
         },
         {
           name: 'Coil of Rope',
-          note: 'Thirty fathoms of good line, spliced by you, and worth rather more than it looks.',
+          note: 'Thirty fathoms of good line, spliced by you and worth rather more than it looks.',
         },
       ],
     },
@@ -704,7 +704,7 @@ export const BACKGROUNDS = [
     art: null,
     tags: ['sacred', 'social', 'supplies'],
     blurb:
-      'Temple, order, or a shrine on a hill with three people attending — you gave years to something larger, and it gave you a shape to live inside. You may still believe every word of it. You may not. The habits stayed either way.\n\n' +
+      'Temple, order or a shrine on a hill with three people attending. You gave years to something larger, and it gave you a shape to live inside. You may still believe every word of it. You may not. The habits stayed either way.\n\n' +
       'You sit with the dying, you feed whoever is at the door, and you have never once been turned away from a village you arrived at on foot.',
     picks: 3,
     skills: [FIELD_MEDIC, APOTHECARY, VIGIL, SCRIPTURE, ALMSGIVER, COMFORTER],

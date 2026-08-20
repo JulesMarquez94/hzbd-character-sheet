@@ -128,7 +128,7 @@ export default function StealWindow({ talent, card, character, patch, onClose })
       }
     >
       <div className="use-prompt">
-        <p className="use-source">{`${card.name} — ${talent.name}`}</p>
+        <p className="use-source">{`${card.name} · ${talent.name}`}</p>
 
         <span className="use-question">
           {roll === null

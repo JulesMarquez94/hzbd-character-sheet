@@ -11,7 +11,7 @@ import { ItemIcon, ItemTags } from './itemParts.jsx';
 export default function ReplacePrompt({ slotLabel, outgoing, incoming, onKeep, onDiscard, onCancel }) {
   return (
     <Modal
-      title={`Replace — ${slotLabel}`}
+      title={`Replace: ${slotLabel}`}
       onClose={onCancel}
       footer={
         <>
@@ -61,7 +61,7 @@ export default function ReplacePrompt({ slotLabel, outgoing, incoming, onKeep, o
         </div>
 
         <p className="replace-note">
-          Discarding is permanent — the piece leaves the character sheet entirely.
+          Discarding is permanent. The piece leaves the character sheet entirely.
         </p>
       </div>
     </Modal>

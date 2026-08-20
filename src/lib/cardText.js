@@ -166,8 +166,8 @@ export function resolveValue(expression, character, defaultStat = 'instinct', op
         text,
         detail:
           grew.length === 0
-            ? `${count} × d${faces} — rolled at the table`
-            : `${count} × d${faces} — ${grew.join(', ')}`,
+            ? `${count} × d${faces} · rolled at the table`
+            : `${count} × d${faces} · ${grew.join(', ')}`,
       });
       continue;
     }

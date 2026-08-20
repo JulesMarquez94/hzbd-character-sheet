@@ -187,7 +187,7 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
     setFlash(
       `−${formatNumber(soaked)} SP logged · ${
         spilled ? `−${formatNumber(spilled)} HP through the shield` : 'health already at the floor'
-      }${dead ? ' — dead.' : ''}`
+      }${dead ? ' · dead.' : ''}`
     );
   }
 
@@ -349,10 +349,10 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
         {kind === 'health' && (
           <p className="frame-foot">
             {balance <= -maxValue
-              ? 'Dead — a full bar of damage past zero.'
+              ? 'Dead: a full bar of damage past zero.'
               : balance < 0
                 ? `Bleeding out. ${formatNumber(balance - minValue)} HP left before death at ${formatNumber(minValue)}.`
-                : `Health is the only pool that can go negative — it bottoms out at ${formatNumber(minValue)} HP, which is death.`}
+                : `Health is the only pool that can go negative. It bottoms out at ${formatNumber(minValue)} HP, which is death.`}
           </p>
         )}
 

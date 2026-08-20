@@ -90,7 +90,7 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
 
   return (
     <Modal
-      title={`Use — ${request.name}`}
+      title={`Use: ${request.name}`}
       onClose={onCancel}
       footer={
         <>
@@ -137,7 +137,7 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
                 className="use-way"
                 onClick={() => attempt(way)}
                 disabled={converts && ap === 0}
-                aria-label={`${way.label} — ${costLine(ap, wp, way.resource)}`}
+                aria-label={`${way.label}: ${costLine(ap, wp, way.resource)}`}
               >
                 <span className="use-way-costs">
                   {ap > 0 && <CostOrb kind={way.orb} value={ap} size={30} />}
@@ -196,11 +196,11 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
         {denied && (
           <div className="use-denied" role="alert">
             <span className="use-denied-head">
-              Not done — {denied.way.label.toLowerCase()} is beyond you right now.
+              Not done: {denied.way.label.toLowerCase()} is beyond you right now.
             </span>
             {denied.short.map((entry) => (
               <span className="use-denied-line" key={entry.resource}>
-                <b>{entry.resource}</b> — {entry.need} needed, {entry.have} left
+                <b>{entry.resource}</b> · {entry.need} needed, {entry.have} left
               </span>
             ))}
             <span className="use-denied-foot">Nothing was spent.</span>

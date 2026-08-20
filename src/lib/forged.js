@@ -261,7 +261,7 @@ export function readCode(text) {
 
   const [, payload, check] = parts;
   if (checksum(payload) !== check) {
-    return { error: 'That code is damaged — a character is missing or changed. Copy it again.' };
+    return { error: 'That code is damaged. A character is missing or changed. Copy it again.' };
   }
 
   let parsed;

@@ -160,7 +160,7 @@ export default function Header() {
 function ConfigWarning() {
   return (
     <div className="config-warning">
-      Supabase is not configured — copy <code>.env.example</code> to <code>.env.local</code>, add your
+      Supabase is not configured. Copy <code>.env.example</code> to <code>.env.local</code>, add your
       project URL and anon key, then restart <code>npm run dev</code>.
     </div>
   );

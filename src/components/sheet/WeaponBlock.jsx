@@ -74,7 +74,7 @@ export default function WeaponBlock({
                 <span className="equip-empty-body">
                   <span className="equip-slot-label">{slot.label}</span>
                   <span className="equip-empty-hint">
-                    {readOnly ? 'Empty' : 'Empty — tap to arm yourself'}
+                    {readOnly ? 'Empty' : 'Empty · tap to arm yourself'}
                   </span>
                 </span>
               </button>
@@ -129,7 +129,7 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
           type="button"
           className="weapon-head-main"
           onClick={onBrowse}
-          title={readOnly ? item.name : `${item.name} — tap to swap or send to inventory`}
+          title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
         >
           <ItemIcon item={item} />
           <span className="weapon-head-body">
@@ -145,7 +145,7 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
           item={item}
           onInfo={() => stack?.openItem(item)}
           onRemove={readOnly ? null : onRemove}
-          removeTitle={`Put ${item.name} away — it goes to your inventory`}
+          removeTitle={`Put ${item.name} away. It goes to your inventory.`}
         />
       </div>
 

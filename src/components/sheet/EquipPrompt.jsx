@@ -156,7 +156,7 @@ export default function EquipPrompt({
                         type="button"
                         className="btn btn-sm browser-blocked"
                         disabled
-                        title={`It is already on you, in ${alreadyOn}. Take it off first — there is only one of it.`}
+                        title={`It is already on you, in ${alreadyOn}. Take it off first. There is only one of it.`}
                       >
                         On you
                       </button>

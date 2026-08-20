@@ -24,7 +24,7 @@ export default function ShareCode({ record, label = 'Its code' }) {
       await navigator.clipboard.writeText(code);
       setSaid('Copied.');
     } catch {
-      setSaid('Could not reach the clipboard — select it and copy by hand.');
+      setSaid('Could not reach the clipboard. Select it and copy by hand.');
     }
   }
 

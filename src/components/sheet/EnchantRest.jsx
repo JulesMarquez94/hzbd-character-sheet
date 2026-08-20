@@ -121,7 +121,7 @@ export default function EnchantAction({ character, talents, kind, onClose, onDra
                       <span className="rest-labour-name">{item.name}</span>
                       <span className="rest-labour-line">
                         {on.length > 0
-                          ? `${on.map((entry) => entry.name).join(' · ')} — ${on.length} of ${cap}`
+                          ? `${on.map((entry) => entry.name).join(' · ')}, ${on.length} of ${cap}`
                           : `Nothing on it. Room for ${cap === 1 ? 'one' : cap}.`}
                       </span>
                     </button>

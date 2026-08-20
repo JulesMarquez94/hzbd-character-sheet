@@ -79,7 +79,7 @@ export const BASIC_ACTIONS = withArt([
     stat: 'physique',
     summary: 'Leap your Movement Speed across, your own height up.',
     body:
-      'You jump a distance up to your Movement Speed, [[speed]] meters, and a height equal to your own height.',
+      'You jump a distance up to your Movement Speed, [[speed]] meters, and a height equal to your own height.', // text-style-ok: appositive, not a list item
   },
   {
     /* Off the V4 cheatsheet, not the sheet — see the note at the top. */

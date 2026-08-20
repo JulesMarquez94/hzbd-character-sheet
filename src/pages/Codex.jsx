@@ -29,7 +29,7 @@ const RESOURCES = [
   ['Action Points', 'var(--stat-ap)', 'Spent on your turn. Every ability lists an AP cost.'],
   ['Reaction Points', 'var(--stat-rp)', 'Spent outside your turn, on triggers and interrupts.'],
   ['Willpower', 'var(--stat-wp)', 'Fuel for spells. Some talents refund it.'],
-  ['Karma', 'var(--stat-karma)', 'Meta-currency. Reroll, empower, or bend fate.'],
+  ['Karma', 'var(--stat-karma)', 'Meta-currency. Reroll, empower or bend fate.'],
   ['Armor', 'var(--stat-armor)', 'Flat reduction applied after a hit lands.'],
   ['Speed', 'var(--stat-speed)', 'Distance moved per Action Point spent.'],
   ['Initiative', 'var(--stat-init)', 'Turn order at the start of a conflict.'],
@@ -153,7 +153,7 @@ export default function Codex() {
             <div>
               <strong>Grey chevron banner</strong>
               <p className="token-blurb">
-                What the card is, in the order its own family reads it — &ldquo;Novice Spell -
+                What the card is, in the order its own family reads it: &ldquo;Novice Spell -
                 Nature - Blood&rdquo; for a spell, &ldquo;Martial Move - Novice&rdquo; for a move.
               </p>
             </div>
@@ -172,7 +172,7 @@ export default function Codex() {
             <span className="anatomy-key" style={{ background: '#ffffff' }} />
             <div>
               <strong>Secondary heading</strong>
-              <p className="token-blurb">An optional rider such as Blood Tithe — a choice made while casting.</p>
+              <p className="token-blurb">An optional rider such as Blood Tithe, a choice made while casting.</p>
             </div>
           </div>
         </div>

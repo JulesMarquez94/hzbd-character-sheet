@@ -73,8 +73,8 @@ export default function AmbushWindow({ talent, card, character, patch, readOnly 
 
   function buy(option) {
     setPaying({
-      name: `${card.name} — ${option.card.name}`,
-      source: `${card.name} — ${talent.name}`,
+      name: `${card.name} · ${option.card.name}`,
+      source: `${card.name} · ${talent.name}`,
       ap: null,
       wp: option.wp,
       card,
@@ -101,7 +101,7 @@ export default function AmbushWindow({ talent, card, character, patch, readOnly 
         }
       >
         <div className="use-prompt">
-          <p className="use-source">{primary ? `${primary.name} — in hand` : 'Nothing in hand'}</p>
+          <p className="use-source">{primary ? `${primary.name} · in hand` : 'Nothing in hand'}</p>
 
           <span className="use-question">
             {options.length === 0

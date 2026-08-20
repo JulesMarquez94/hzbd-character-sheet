@@ -70,7 +70,7 @@ export default function BeltBlock({
               <span className="equip-empty-body">
                 <span className="equip-slot-label">Slot {index + 1}</span>
                 <span className="equip-empty-hint">
-                  {readOnly ? 'Empty' : 'Empty — tap to clip something on'}
+                  {readOnly ? 'Empty' : 'Empty · tap to clip something on'}
                 </span>
               </span>
             </button>
@@ -179,7 +179,7 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
         item={item}
         onInfo={() => stack?.openItem(item)}
         onRemove={readOnly ? null : onRemove}
-        removeTitle={`Unclip ${item.name} — it goes to your inventory`}
+        removeTitle={`Unclip ${item.name}. It goes to your inventory.`}
       >
         <button
           type="button"
@@ -199,7 +199,7 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
 function chargeNote({ charges, remaining, spent, consumable, item }) {
   if (!spent) return `${remaining} of ${charges} left`;
   if (consumable) return 'Used up';
-  return item.recharge ? `Spent — back after a ${item.recharge}` : 'Spent';
+  return item.recharge ? `Spent · back after a ${item.recharge}` : 'Spent';
 }
 
 /** A loop this character has not opened yet. */

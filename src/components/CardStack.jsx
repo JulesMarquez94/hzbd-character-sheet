@@ -300,13 +300,13 @@ function ItemCard({ item, character, onCard, onValue }) {
 function usageNote(item) {
   if (item.use === 'consumable') {
     return item.charges > 1
-      ? `A consumable — it holds ${item.charges} uses, and spending the last one destroys it.`
-      : 'A consumable — using it destroys it.';
+      ? `A consumable. It holds ${item.charges} uses, and spending the last one destroys it.`
+      : 'A consumable. Using it destroys it.';
   }
   if (item.recharge) {
     return `Not used up, but it must wait for a ${item.recharge} before it works again.`;
   }
-  return 'Not used up — it stays on your belt however often you reach for it.';
+  return 'Not used up. It stays on your belt however often you reach for it.';
 }
 
 /** The working behind a live value: which dice, which attribute, times what. */

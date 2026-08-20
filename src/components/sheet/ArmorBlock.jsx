@@ -85,7 +85,7 @@ export default function ArmorBlock({
         </span>
         <span className="meter-foot">
           {overBurden
-            ? `Overburdened by ${burdenUsed - burdenMax} — shed some worn magic.`
+            ? `Overburdened by ${burdenUsed - burdenMax}. Shed some worn magic.`
             : 'Capacity is Level + Mind + 10.'}
         </span>
       </div>
@@ -107,7 +107,7 @@ export default function ArmorBlock({
               </span>
               <span className="equip-empty-body">
                 <span className="equip-slot-label">{slot.label}</span>
-                <span className="equip-empty-hint">{readOnly ? 'Empty' : 'Empty — tap to browse'}</span>
+                <span className="equip-empty-hint">{readOnly ? 'Empty' : 'Empty · tap to browse'}</span>
               </span>
             </button>
           );
@@ -119,7 +119,7 @@ export default function ArmorBlock({
               type="button"
               className="equip-slot-main"
               onClick={() => setBrowseSlot(slot)}
-              title={readOnly ? item.name : `${item.name} — tap to swap or send to inventory`}
+              title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
             >
               <ItemIcon item={item} />
               <span className="equip-item-body">
@@ -141,7 +141,7 @@ export default function ArmorBlock({
               item={item}
               onInfo={() => stack?.openItem(item)}
               onRemove={readOnly ? null : () => unequip(slot.key)}
-              removeTitle={`Take off ${item.name} — it goes to your inventory`}
+              removeTitle={`Take off ${item.name}. It goes to your inventory.`}
             />
           </div>
         );
