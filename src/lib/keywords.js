@@ -56,9 +56,10 @@
  *   Critical Hit is a maximum result on an Attack Roll. It cannot be "a natural
  *                20": a Roll in this game is 2d6 plus an attribute.
  *
- * What is still provisional is what their tab does not cover: asleep, stunned,
- * marked, unconscious and dying. Amber Shard leans on stunned, so that one is
- * worth asking about.
+ * What is still provisional is what no sheet has covered yet: asleep, marked
+ * and unconscious. **Stunned left that list on 2026-08-20** — ICE BLOCK spells
+ * it out at its own foot, and its entry below is that sentence word for word,
+ * which also settles what Amber Shard had been leaning on.
  */
 
 /**
@@ -347,6 +348,15 @@ export const KEYWORDS = [
       'Rest or regain any amount of Health.',
   },
   {
+    /* The Elemental cards' own parenthesis, word for word — CLOAK OF FLAMES and
+       SLAG SHOT both spell it out at their foot, and a defined term is never
+       glossed in prose as well. Pulled 2026-08-20. */
+    id: 'burn',
+    terms: ['burn'],
+    color: 'var(--dmg-fire)',
+    detail: 'The entity becomes vulnerable to Fire damage until they take a Short Rest.',
+  },
+  {
     id: 'rooted',
     terms: ['rooted'],
     color: 'var(--dmg-decay)',
@@ -379,11 +389,12 @@ export const KEYWORDS = [
       'On a success they free themselves.',
   },
   {
+    /* No longer provisional: ICE BLOCK (pulled 2026-08-20) spells Stunned out at
+       its own foot, and this is that sentence word for word. */
     id: 'stunned',
     terms: ['stunned'],
     color: 'var(--dmg-lightning)',
-    provisional: true,
-    detail: 'Reeling. You take no actions until it passes.',
+    detail: 'The entity cannot take Actions or Reactions until the effect ends.',
   },
   {
     id: 'incapacitated',

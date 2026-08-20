@@ -1,0 +1,160 @@
+id,Name,Tags,AP,WP,Main Effect,Secondary Type,Secondary Effect,Image
+produce-flame,PRODUCE FLAME,"Novice Spell, Elemental, Fire",2,,"You conjure a small flickering flame in the palm of your hand, illuminating a 15-meter (50-foot) area around it.
+
+Dropping the flame extinguishes it.",OVERCAST,"You can spend 2 Action Points and 4 Willpower to hurl the flame at a target you can see within 15 meters (50 feet).
+
+Make a {stat} Ranged Attack {roll}. On a hit, you deal [[3d6 + 3*stat]] in {damage} damage.",NOVICE SPELL - ELEMENTAL - FIRE - PRODUCE FLAME.jpg
+cloak-of-flames,CLOAK OF FLAMES,"Novice Spell, Elemental, Fire",2,2,"You envelop yourself in a fiery cloak that lasts for 5 turns.
+
+Entities having their Turn Start within 1.5 meters (5 feet) of you take [[stat]] in {damage} damage.",OVERCAST,"You can spend 2 Action Points and 4 Willpower to make the cloak flare outward.
+
+All entities within 3 meters (10 feet) of you are inflicted with Burn.",NOVICE SPELL - ELEMENTAL - FIRE - CLOAK OF FLAMES.jpg
+kindle-weapon,KINDLE WEAPON,"Novice Spell, Elemental, Fire",2,2,"You imbue a weapon you can touch with flames.
+
+When the imbued weapon lands a hit, its damage is Empowered by 1 and the damage type becomes {damage:Fire}.",UPKEEP,"At your Turn Start, you must pay 1 Willpower to keep the weapon kindled.
+
+If you do not pay the Upkeep, the spell effect ends.",NOVICE SPELL - ELEMENTAL - FIRE - KINDLE WEAPONS.jpg
+fire-seed,FIRE SEED,"Adept Spell, Elemental, Fire",3,2,"You embed a seed of pure elemental fire in an entity you can see within 9 meters (30 feet). The target is unaware of the seed being placed if it does not see you cast the spell.
+
+This effect lasts until the target takes a Long Rest, and for as long as it lasts you know the seed’s relative direction.",OVERCAST,"If you have any active Fire Seed, you may pay 3 Action Points and 4 Willpower to detonate it.
+
+All seeds explode, dealing [[3d6 + 3*stat]] in {damage} damage to the target and any entities within 4.5 meters (15 feet) of it.",ADEPT SPELL - ELEMENTAL - FIRE - FIRE SEED.jpg
+molten-grasp,MOLTEN GRASP,"Adept Spell, Elemental, Fire",4,3,"You ignite your hands, gaining the ability to melt metal and stone with your touch for 5 turns.
+
+For the duration of the spell, you can melt up to 1.5 square meters (5 square feet) of metal on a surface up to 15 cm (6 inches) thick.",OVERCAST,"You can spend 2 Action Points and 3 Willpower to transfer the heat into a metallic object.
+
+For the remainder of the spell duration, entities in contact with the object at their Turn Start take [[2d6 + 2*stat]] in {damage} damage.",ADEPT SPELL - ELEMENTAL - FIRE - MOLTEN GRASP.jpg
+wall-of-flames,WALL OF FLAMES,"Adept Spell, Elemental, Fire",4,5,"You conjure a wall of fire at a location you can see within 15 meters (50 feet).
+
+The wall is 15 meters (50 feet) long and 2 meters (6 feet) thick, and it does not have to be a straight line. The wall blocks line of sight.
+
+Any entity passing through the wall or having their Turn Start within it takes [[4d6 + 4*stat]] in {damage} damage.",,,ADEPT SPELL - ELEMENTAL - FIRE - WALL OF FLAMES.jpg
+blazing-suns,BLAZING SUNS,"Master Spell, Elemental, Fire",2,2,"You conjure 4 small spheres of fire that hover around you, illuminating 15 meters (50 feet) for 3 hours.",OVERCAST,"Whenever you deal damage or heal, you can spend 1 Willpower to expend one of your spheres.
+
+Doing so increases the damage or healing by [[2*stat]] in {damage} damage when applicable.",MASTER  SPELL - ELEMENTAL - FIRE - BLAZING SUNS.jpg
+cauterize,CAUTERIZE,"Master Spell, Elemental, Fire",4,4,"You use swift and intense heat to cauterize the wound of an entity you can see within 9 meters (30 feet).
+
+The target takes [[2d6 + 2*stat]] in {damage} damage and then regains [[5d6 + 5*stat]] in Health. This removes any Bleed or Poison effect on the target.",MULTICAST,"When casting Cauterize, you may spend an additional 1 Action Point and 3 Willpower any number of times.
+
+For each time you do, target an additional eligible entity with Cauterize.",MASTER  SPELL - ELEMENTAL - FIRE - CAUTERIZE.jpg
+rain-of-fire,RAIN OF FIRE,"Master Spell, Elemental, Fire",4,6,"You call down a devastating rain of fire in a 12-meter (40-foot) radius centered on a point you can see within 30 meters (100 feet).
+
+Make a {stat} Roll {roll} against the Reflex of all entities in the area. On a success, you deal [[4d6 + 4*stat]] in {damage} damage, or half as much on a failure.
+
+Another wave falls down at each of your Turn Starts for as long as you pay the Upkeep.",UPKEEP,"At your Turn Start, you must pay 3 Willpower to keep the rain falling.
+
+If you do not pay the Upkeep, the spell effect ends.",MASTER  SPELL - ELEMENTAL - FIRE - RAIN OF FIRE.jpg
+control-water,CONTROL WATER,"Novice Spell, Elemental, Water",2,2,"You gain control over water for the next 1 hour. You can manipulate water within 3 meters (10 feet) in the following ways:
+
+Create Currents: You create currents within 3 meters (10 feet) that move objects and entities at a speed of your choice, up to 18 meters (60 feet) per turn.
+
+Water Tension: You manipulate the tension of the water, allowing targets of your choice within 3 meters (10 feet) to walk on water.
+
+Part Water: You can part a body of water, creating a sphere around you as large as 3 meters (10 feet), allowing you to walk underwater.",,,NOVICE SPELL - ELEMENTAL - WATER - CONTROL WATER.jpg
+create-water-spell,CREATE WATER,"Novice Spell, Elemental, Water",1,,"You condense the moisture in the air to create a small volume of water.
+
+You create up to 2 liters (0.5 gallons) of water in an open container or on a surface you can see within 9 meters (30 feet).",OVERCAST,"If there is at least 1 liter (0.25 gallons) of water within 9 meters (30 feet), you may spend 3 Action Points and 1 Willpower.
+
+You hurl the water as a high-pressure beam at an entity within 9 meters (30 feet).
+
+Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.",NOVICE SPELL - ELEMENTAL - WATER - CREATE WATER.jpg
+ice-armor,ICE ARMOR,"Novice Spell, Elemental, Water",4,2,"You coat your body in a layer of protective frost that lashes out when shattered.
+
+You gain [[2d6 + 2*stat]] in Shield.
+
+When an attack causes you to lose Shield, an ice spike immediately fires at the attacker if they are within 9 meters (30 feet) and you can see them. The target takes [[1d6 + stat]] in {damage} damage.",,,NOVICE SPELL - ELEMENTAL - WATER - ICE ARMOR.jpg
+drain-fluids,DRAIN FLUIDS,"Adept Spell, Elemental, Water",4,2,"You reach out with your magical influence to siphon the internal liquids from a target entity you can see within 9 meters (30 feet).
+
+Make a {stat} Roll {roll} against the target’s Grit.
+
+On a success, the target takes [[2d6 + 2*stat]] in {damage} damage, and then again at each of your Turn Starts.",UPKEEP,"At your Turn Start, you must pay 2 Willpower to keep siphoning. If you do not pay the Upkeep, the spell effect ends.
+
+The spell effect also ends if you cannot see the target at your Turn Start.",ADEPT SPELL - ELEMENTAL - WATER - DRAIN FLUIDS.jpg
+flash-freeze,FLASH FREEZE,"Adept Spell, Elemental, Water",3,3,"You release a sudden burst of freezing water to encase an entity you can see within 9 meters (30 feet) in a thin layer of ice.
+
+Make a {stat} Roll {roll} against the target’s Reflex. On a success, the target’s next Action is prevented.
+
+This effect ends once the target attempts to take an Action.",,,ADEPT SPELL - ELEMENTAL - WATER - FLASH FREEZE.jpg
+tidal-wave,TIDAL WAVE,"Adept Spell, Elemental, Water",4,5,"You create and send a tidal wave crashing onto your foes.
+
+The wave starts at a point you can see within 24 meters (80 feet) and moves 12 meters (40 feet) in a direction of your choice. It is 9 meters (30 feet) wide and 3 meters (10 feet) tall.
+
+Make a {stat} Roll {roll} against the Grit of all entities caught in its path. On a success, the entity is pushed 12 meters (40 feet).
+
+If they encounter an obstacle before they are moved the full distance, they take [[3d6 + 3*stat]] in {damage} damage.",,,ADEPT SPELL - ELEMENTAL - WATER - TIDAL WAVE.jpg
+glacial-accretion,GLACIAL ACCRETION,"Master Spell, Elemental, Water",2,4,"For the next 5 turns, you manifest a freezing aura that crystallizes your spent energy into jagged shards of ice.
+
+Every 2 Willpower you spend, you form an Ice Spike that orbits your body, up to a maximum equal to half your {mind}.",OVERCAST,"You may spend 3 Action Points to hurl all active Ice Spikes at a single target you can see within 18 meters (60 feet).
+
+Make a {mind} Ranged Attack {roll} against the target. On a hit, you deal [[1d6 + mind]] in {damage} damage for each Ice Spike consumed.",MASTER  SPELL - ELEMENTAL - WATER - GLACIAL ACCRETION.jpg
+ice-block,ICE BLOCK,"Master Spell, Elemental, Water",4,4,"You condense water and freeze it around a target entity you can see within 18 meters (60 feet).
+
+Make a {stat} Roll {roll} against the target’s Reflex. On a success, the entity is encased in ice, becoming stunned and immune to all non-{damage:Psychic} damage.",UPKEEP,"At your Turn Start, you must pay 4 Willpower to keep the ice frozen.
+
+If you do not pay the Upkeep, the spell effect ends.",MASTER  SPELL - ELEMENTAL - WATER - ICE BLOCK.jpg
+water-vortex,WATER VORTEX,"Master Spell, Elemental, Water",4,6,"You manifest a swirling vortex of water at a point you can see within 9 meters (30 feet) that lasts for 10 turns (1 minute).
+
+The vortex has a 15-meter (50-foot) radius and the area is considered Difficult Terrain.
+
+At each entity’s Turn Start within the area, make a {stat} Roll {roll} against its Grit. On a success, the entity is pulled 9 meters (30 feet) toward the center of the vortex.
+
+You make the roll with 1 Disadvantage against entities with a height of 3 meters (10 feet) or more, and 1 more for every 1.5 meters (5 feet) of height over it.",,,MASTER  SPELL - ELEMENTAL - WATER - WATER VORTEX.jpg
+air-control,AIR CONTROL,"Novice Spell, Elemental, Wind",3,3,"You control air density in a 15-meter (50-foot) area centered on yourself.
+
+When you cast it, you choose to make the air:
+
+Dense: Doubling the Action Point cost of the {{Move}} action for all entities within range and granting them the Slow Fall effect for 10 turns (1 minute).
+
+Light: Increases all entities’ Movement Speed by 3. Outside of combat, it increases how much you can travel by foot by 50%.",,,NOVICE SPELL - ELEMENTAL - AIR - AIR CONTROL.jpg
+fling,FLING,"Novice Spell, Elemental, Wind",1,1,"You use strong force to instantly displace yourself to a point you can see within 15 meters (50 feet).
+
+If you would collide with an obstacle before reaching your destination, you stop and take [[6d6]] in {damage} damage.",OVERCAST,"When casting Fling, you may spend an additional 1 Action Point and 1 Willpower any number of times.
+
+For each time you do, target an additional entity within touch to move the same distance in the same direction.",NOVICE SPELL - ELEMENTAL - AIR - FLING.jpg
+wind-blade,WIND BLADE,"Novice Spell, Elemental, Wind",2,1,"You launch a sharp wind blade at an entity you can see within 15 meters (50 feet).
+
+Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + stat]] in {damage} damage.",,,NOVICE SPELL - ELEMENTAL - AIR - WIND BLADE.jpg
+hurl,HURL,"Adept Spell, Elemental, Wind",3,3,"You create a strong gust of wind in an attempt to hurl an entity you can see within 9 meters (30 feet).
+
+Make a {stat} Roll {roll} against the target’s Grit. On a success, the entity is moved 9 meters (30 feet) in a direction of your choice.
+
+If the entity collides with another entity, both take [[2d6 + 2*stat]] in {damage} damage and the movement stops.",,,ADEPT SPELL - ELEMENTAL - WIND - HURL.jpg
+lightning-strike,LIGHTNING STRIKE,"Novice Spell, Elemental, Lightning",3,1,"You call down lightning to strike a point you can see within 9 meters (30 feet).
+
+If the space is occupied by an entity, make a {stat} Roll {roll} against its Reflex. On a success, you deal [[2d6 + 2*stat]] in {damage} damage, or half as much on a failure.
+
+If you used Lightning Strike in the last 12 hours, the last point you struck with lightning is also struck.",,,NOVICE SPELL - ELEMENTAL - LIGHTNING - LIGHTNING STRIKE.jpg
+voltaic-jolt,VOLTAIC JOLT,"Adept Spell, Elemental, Lightning",3,2,"You turn into pure energy and instantly teleport yourself to a point you can see within 6 meters (20 feet).
+
+All entities in a line between your start and end point take [[1d6 + stat]] in {damage} damage.",OVERCAST,"You can spend 1 Action Point and 2 Willpower to teleport any number of entities you can touch along with you.
+
+They move the same distance parallel to you.",ADEPT  SPELL - ELEMENTAL - LIGHTNING - LIGHTNING STRIKE.jpg
+galvanize,GALVANIZE,"Master Spell, Elemental, Lightning",4,5,"You touch an entity, infusing them with volatile electrical energy that reacts to impacts.
+
+A target entity you can touch becomes Galvanized.
+
+Whenever a Galvanized entity is hit, a spark erupts which deals an additional [[stat]] in {damage} damage to them.",MULTICAST,"When casting Galvanize, you may spend an additional 1 Action Point and 4 Willpower any number of times.
+
+For each time you do, target an additional eligible entity with Galvanize.",MASTER  SPELL - ELEMENTAL - LIGHTNING - GALVANIZE.jpg
+slag-shot,SLAG SHOT,"Novice Spell, Elemental, Magma",3,1,"You fire a small orb of magma at an entity you can see within 15 meters (50 feet).
+
+Make a {stat} Ranged Attack {roll}. On a hit, you deal [[1d6 + stat]] in {damage} damage and the target is afflicted with Burn.",MULTICAST,"When casting Slag Shot, you may spend an additional 1 Action Point and 1 Willpower any number of times.
+
+For each time you do, cast Slag Shot an additional time.",NOVICE SPELL - ELEMENTAL - MAGMA- SLAG SHOT.jpg
+magma-chains,MAGMA CHAINS,"Adept Spell, Elemental, Magma",5,5,"Chains made of magma erupt from the ground, binding an entity you can see within 6 meters (20 feet).
+
+The entity is bound by 3 Chains. It can spend 2 Action Points to attempt to break a Chain by making a {physique} roll against your {stat}. On a success, it breaks 1 Chain. On a critical success, it breaks 2 Chains.
+
+While 3 Chains remain, the target is stunned and can only attempt to break Chains. While 2 or fewer Chains remain, the target is rooted.
+
+At its Turn Start, the entity takes [[stat]] in {damage} damage.",,,ADEPT  SPELL - ELEMENTAL - MAGMA- MAGMA CHAINS.jpg
+magma-surge,MAGMA SURGE,"Master Spell, Elemental, Magma",4,6,"You call forth molten rock to flood at a point you can see within 18 meters (60 feet), creating a 9-meter (30-foot) radius pool of magma that is considered Difficult Terrain.
+
+Any entity entering the area or having their Turn Start within it takes [[3d6 + 3*stat]] in {damage} damage.",UPKEEP,"At your Turn Start, you must pay 2 Willpower to keep the magma molten. If you do not pay the Upkeep, the spell effect ends.
+
+When the spell ends, the magma solidifies into stone, and all creatures currently in the area become rooted until their next Turn End.",MASTER SPELL - ELEMENTAL - MAGMA- MAGMA SLIDE.jpg
+shape-earth,SHAPE EARTH,"Novice Spell, Elemental, Earth",3,3,"You reach out with your mind, causing earth, mud or stone to flow like thick liquid into a shape of your choosing.
+
+You reshape a 3-meter (10-foot) cube of earth or stone you can see within 9 meters (30 feet) into a new form (such as a wall, a pillar or a simple stone object).
+
+The object has a Defense equal to [[stat + level]] and Health equal to [[5*stat]].",,,NOVICE SPELL - ELEMENTAL - EARTH - SHAPE EARTH.jpg

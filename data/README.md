@@ -63,11 +63,17 @@ doing on its own.
 | Talent Set · Duelist · Developpement Notes | **2026-08-20, the move rider and the arrow** | `src/lib/moves.js`, `RollArrow.jsx` |
 | Talent Set · Duelist · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
 | Martial Move card plates, handed over in chat | **2026-08-20, 6 Novice transcribed + 8 house-written** | `src/lib/martial.js` (`MARTIAL_MOVES`) |
+| Spells · Elemental, from the `Elemental/` folder | **2026-08-20, 29 spells off card renders** | `src/lib/spells.js` (`SPELLS`) |
+| Elemental art, cut out of those renders | **2026-08-20, 29 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| The Nightmare set and the Ring of Shrouding, handed over in chat | **2026-08-20, 1 spell + 2 workings + 2 trinkets** | see [the named trinkets](#the-named-trinkets-2026-08-20) |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
 else: the codex also carries one Arcane spell, Containment Sphere, which no
-sheet covers yet. `draconic-bond-overview.csv`, `trickster-overview.csv`,
+sheet covers yet. `elemental-spells.csv` holds the 29 Elemental spells — a tab
+with no sheet behind it, generated straight out of `spells.js`, and its Image
+column names the render each row came from, which is what the art importer
+places the files by. `draconic-bond-overview.csv`, `trickster-overview.csv`,
 `duelist-overview.csv`, `martial-moves.csv` and `enchanter-ability.csv` are the
 tabs that were written here rather than exported, so they are tracked: a clone
 would otherwise lose the only copy.
@@ -623,6 +629,10 @@ codex holds nine Adept and sixteen Novice and none at Master. The window says so
 rather than showing an empty chip row and refusing to be pressed: *"No Master
 spells in the codex yet. Lay it and name one at the table."* It lays without a name
 and the table supplies one. A Master spells tab fixes it with no code change.
+
+**Fixed later the same day, with exactly no code change:** the Elemental pull
+brought eight Master spells (see [the Elemental school](#the-elemental-school-2026-08-20)),
+so the window now offers real chips and that message retires itself.
 
 #### One id had to change
 
@@ -1662,11 +1672,219 @@ it, so its rows are quiet now. What still warns is a row with no link on a tab
 where other rows have one, because that is a picture that went missing. Three
 Enchanter rows went quiet for the same reason, correctly.
 
-One problem is left on a clean run, and it is real: `FOUR-LEAF CLOVER: the codex
-has no card by that name`. That Ingredient was split into Lucky Clover and Unlucky
-Clover on 19 Aug 2026 and the sheet still carries the old row, which is exactly
-what the warning is for. `public/cards/four-leaf-clover.webp` is an orphan from
-before the split and can go whenever the row does.
+Two problems are left on a clean run, and both are real: `FOUR-LEAF CLOVER: the
+codex has no card by that name` — that Ingredient was split into Lucky Clover and
+Unlucky Clover on 19 Aug 2026 and the sheet still carries the old row, which is
+exactly what the warning is for (`public/cards/four-leaf-clover.webp` is an orphan
+from before the split and can go whenever the row does) — and `Elemental/Steam/Copy
+of ADEPT SPELL - ELEMENTAL - WIND - HURL: the codex has no card by that name`,
+which is the stray Steam file described under
+[the Elemental school](#the-elemental-school-2026-08-20).
+
+## The Elemental school, 2026-08-20
+
+Twenty-nine spells, and the first school to arrive as **pictures instead of a
+tab**: `data/Elemental/` holds a folder per family and a finished card render
+per spell — title, banner, cost orbs and rules text baked into a 1055x1496
+JPG — with two loose files at the top and no CSV anywhere. Everything below
+was transcribed off the cards themselves.
+
+Elemental is a main school now, level with Primal: same three-tag banner
+(tier · school · family), same tiers, same shelves. No talent set casts from
+it yet, so nothing reaches these through a loadout — but an Imbuement binds "a
+NOVICE spell" with no school named, so every one of them can reach an item
+from the day it exists.
+
+| Family | Novice | Adept | Master |
+| ------ | ------ | ----- | ------ |
+| Fire | Produce Flame, Cloak of Flames, Kindle Weapon | Fire Seed, Molten Grasp, Wall of Flames | Blazing Suns, Cauterize, Rain of Fire |
+| Water | Control Water, Create Water, Ice Armor | Drain Fluids, Flash Freeze, Tidal Wave | Glacial Accretion, Ice Block, Water Vortex |
+| Wind | Air Control, Fling, Wind Blade | Hurl | — |
+| Lightning | Lightning Strike | Voltaic Jolt | Galvanize |
+| Magma | Slag Shot | Magma Chains | Magma Surge |
+| Earth | Shape Earth | — | — |
+| Steam | — | — | — |
+
+**The eight Master rows are the first Master spells in the codex**, which is
+what MASTER IMBUEMENT had been apologising for — its "no Master spells yet"
+fallback retires itself with no code change, exactly as promised when it was
+written.
+
+### Every roll brought onto the two legal targets
+
+The cards predate the ruling that a spell rolls **Mind** — an Attack against
+Defense, or a Roll against **Grit** or **Reflex** — and eight of them still
+rolled at something else. All eight are converted, each flagged in
+`spells.js` where it sits:
+
+| Card | The card said | Now |
+| ---- | ------------- | --- |
+| Rain of Fire | Mind roll against **Instinct** | Mind Roll against **Reflex** — fire out of the sky is dodged |
+| Lightning Strike | Mind roll against **Instinct** | Mind Roll against **Reflex** |
+| Ice Block | Mind roll against **Instinct** | Mind Roll against **Reflex** |
+| Drain Fluids | Mind roll against **Physique** | Mind Roll against **Grit** — the save FORCE INEBRIATION already asks for |
+| Flash Freeze | Mind roll against **Physique** | Mind Roll against **Reflex** — a sudden burst is dodged before it sets |
+| Hurl | Mind roll against **Physique** | Mind Roll against **Grit** |
+| Tidal Wave | **the target rolled** — Physique against your Mind | you roll: Mind Roll against **Grit**, success pushes |
+| Water Vortex | **the target rolled**, with Advantage for height | you roll: Mind Roll against **Grit** at each entity's Turn Start, and the height clause turned over with it — what was their Advantage is **Disadvantage on your roll** |
+
+**One target-rolled contest was kept on purpose.** MAGMA CHAINS' breakout —
+"a Physique roll against your Mind", paid for in the target's own Action
+Points — is the exact shape of CONTAINMENT SPHERE's breakout and the grappled
+rule, so the designer's sentence stands.
+
+### Four cards whose names disagree with themselves
+
+| The codex says | Because |
+| -------------- | ------- |
+| CLOAK OF FLAMES | the render's title line says "PRODUCE FLAME" — a paste from the card before it. The filename and the body are a cloak |
+| KINDLE WEAPON | the card's own title; the file says KINDLE WEAPONS |
+| VOLTAIC JOLT | the card's own title; the file is named "ADEPT SPELL - ELEMENTAL - LIGHTNING - LIGHTNING STRIKE", which is a different card in the same family |
+| MAGMA SURGE | three names on one card: the file says MAGMA SLIDE, the title says MAGAM SURGE, the banner says MAGMA. The title won with its letters put back — say the word if MAGMA SLIDE is the name it should have kept |
+
+The CSV's Image column is what carries these mismatches, so no alias table
+grew: the sheet names the file, and the file lands on the right card.
+
+### The Wind family, and the empty Steam one
+
+The three Novice banners print **AIR**; the folder, the Adept card (HURL) and
+the codex say **WIND**. One word in three tags to turn back if AIR was the
+intent.
+
+`Steam/` holds exactly one file, `Copy of ADEPT SPELL - ELEMENTAL - WIND -
+HURL.jpg` — the same Hurl card re-exported, not a Steam spell. **No Steam
+spells exist yet.** The file was left where it sits and the art run names it
+on every pass; delete it, or replace it with real Steam cards, and the report
+goes quiet.
+
+### Readings on record, beyond the rolls
+
+- **"2 meters (10 feet)"** on WALL OF FLAMES (thick) reads **2 meters (6
+  feet)**: the metre leads every cell in this codex and 6 feet is the
+  conversion NATURALIZE already uses. NIGHTMARE WALL (tall) got the same
+  reading. Say the word and they become 3 meters (10 feet) instead.
+- **The Burn gloss went to the glossary.** CLOAK OF FLAMES and SLAG SHOT both
+  spell it out at their foot; `keywords.js` now carries **burn** with that
+  sentence word for word, and the parentheses came off both bodies.
+- **Stunned stopped being provisional.** ICE BLOCK defines it at its own foot
+  — "The entity cannot take Actions or Reactions until the effect ends" — and
+  that sentence replaced the codex's guess, which also settles what Amber
+  Shard leans on.
+- **The Upkeep halves print their number.** The cards all say "you must pay
+  the Upkeep amount in Willpower" under a heading like "UPKEEP 3"; the codex
+  inlines the number into the sentence, the way PARASITIC SPORE prints its
+  own toll. RAIN OF FIRE's "of the spell effect ends" typo went with it.
+- **"Mind Range Attack"** reads **Ranged** on PRODUCE FLAME and CREATE WATER,
+  the same missing letter WYRM BOLT had.
+- **MOLTEN GRASP's "1.5² meters (5² feet)"** reads "1.5 square meters (5
+  square feet)": a superscript is not prose.
+- Smaller ones, all in the entries' own comments: "inthe" → "in the", "an
+  another entity" → "another entity", "that last for" → "lasts for",
+  "Any entities that enters … takes" → "Any entity entering … takes",
+  "centered around yourself" → "centered on yourself" (VERDANT FIELD's
+  phrasing), "each Ice Spikes" → "each Ice Spike", missing "(50-foot)" and
+  "(1 minute)" conversions added where every sibling card carries them, and
+  Oxford commas dropped per house style.
+- **Slow Fall and Difficult Terrain are printed like defined terms and
+  defined nowhere.** AIR CONTROL grants "the Slow Fall effect"; WATER VORTEX
+  and MAGMA SURGE mark areas "Difficult Terrain". Both are left plain and
+  belong on the statuses tab this file already asks for.
+
+### One id had to change, again
+
+**CREATE WATER is `create-water-spell`.** The Tidebound lineage trait already
+holds `create-water` — its card is the one that says "You learn the Create
+Water spell", and until this pull there was no such spell for it to mean. Same
+collision RESILIENCE had, resolved the same way: the older record keeps the
+id, because an id is what a saved character points at. The printed names still
+collide, and now do so *by design* — the trait teaches the spell — so nothing
+needs renaming, but a table will see both.
+
+### GLACIAL ACCRETION, and the unique it rhymes with
+
+The Master Water spell is DEEP SEA ACCRETION's learnable twin: the same
+freezing aura, a fifth of the duration (5 turns against 5 hours), spikes at 2
+Willpower rather than 4, and the same half-Mind cap. Both entries carry
+`{mind}` on both halves for the same reason, documented on each. The trident
+stays what it was — the unique is rarer, not stronger, and now it is not even
+the only aura of its kind.
+
+### How the art lands, when the art is the whole card
+
+`pull-card-art.mjs` learned two things:
+
+1. **School folders.** It used to claim only talent-set folders and `OF/`;
+   `data/Elemental/` (and any future `Primal/`, `Arcane/`, `Nature/`) is
+   claimed by name and walked into its family subfolders.
+2. **The plate is cut out of the render.** A set folder's files are art; a
+   school folder's files are whole cards, so `cardPlate` crops past the white
+   border and stops above the banner — proportionally, so a re-render at
+   another size still cuts clean. The painted cost orbs in the art's top-right
+   corner survive the crop, since they sit inside the painting itself; a drop
+   of art-only files would retire them, and nothing needs renaming when it
+   comes.
+
+Which card a file belongs to is the **sheet's** business: `data/Spells -
+Elemental Spells.csv` names every file in its Image column, so the four
+mismatched filenames above needed no alias entries, and the link pass now
+skips a row whose Image is a filename rather than trying to download it.
+
+The template is generated, not hand-kept: `templates/elemental-spells.csv` is
+written straight out of `spells.js` (29 rows, ids, tags, costs, both halves,
+Image filenames), and the generation run also proves every body renders with
+no unspent token, every named file exists on disk, and no id in the whole
+registry is duplicated.
+
+## The named trinkets, 2026-08-20
+
+Three card renders handed over in chat, the way Patien and the trident were:
+a **special spell**, the **curse** that shadows it, and a **ring**. Asked for
+in as many words — "take the cloak of nightmare and the special spell and make
+them into a spell and an enchanted item in the trinket category", and "add the
+ring of shrouding with a special enchantment that costs no burden."
+
+| What | Where it landed |
+| ---- | --------------- |
+| NIGHTMARE WALL, a Unique spell | `src/lib/spells.js` |
+| NIGHTMARE'S CURSE, a Unique enchantment tagged `Curse` | `src/lib/enchantments.js` |
+| Cloak of Nightmare, an Epic trinket carrying both | `src/lib/trinkets.js` |
+| SHROUDING, a Unique enchantment at 0 burden | `src/lib/enchantments.js` |
+| Ring of Shrouding, a Rare trinket carrying it | `src/lib/trinkets.js` |
+
+**The trinket shelf carries worked pieces now.** The twelve plain trinkets are
+unchanged and still the point of the shelf; the two named ones prove the rule
+rather than break it — what they do lives entirely in `enchants`, the field
+the forge already writes, so the Magic Burden meter, the Abilities tab and the
+recap read them without a line of new code. Wearing the cloak grants NIGHTMARE
+WALL exactly the way holding the trident grants DEEP SEA ACCRETION.
+
+Readings on record:
+
+- **"SPECIAL SPELL" is a Unique Spell.** Special is not a tier this codex has;
+  a spell that exists on one item and nowhere else is what Unique already
+  means. Its banner keeps the card's own second word: `Unique Spell ·
+  Nightmare`, no school and no family, because the card names neither.
+- **The curse weighs nothing.** Burden tracks what a working is worth to its
+  wielder, and a curse takes rather than gives — charging capacity for the
+  affliction would price the cloak's drawback as a second power. So the cloak
+  weighs its Imbuement's 9 and not a point more. The curse itself is printed
+  rules the table plays: nothing on this sheet knows what sleeping is, or how
+  to make one spell's damage hurt its own caster more.
+- **SHROUDING's 0 burden is the designer's own number**, not a reading — "cost
+  no burden" was the ask. It makes the ring the one enchanted piece in the
+  codex that weighs nothing on its wearer. Both of its sentences are printed
+  rules too: nothing on this sheet knows what scrying is.
+- **Rarity is house-picked**, since neither card prints one: the cloak holds a
+  Unique spell like the trident (Epic), the ring holds one working (Rare).
+- **The cloak's name, blurb and lore are house-written** off the card art —
+  the render is the curse's card, not the cloak's. Renaming Cloak of Nightmare
+  means one id and nothing else, because nothing saved points at it yet.
+
+**No art is on disk for any of the three** — the renders came through chat
+rather than as files. Drop `Nightmare Wall.jpg`, `Nightmare's Curse.jpg`,
+`Cloak of Nightmare.jpg` and `Ring of Shrouding.jpg` into `data/OF/` and run
+`npm run art` (the first two are cards) and `npm run art:items` (the last two
+are item tiles); every name resolves already.
 
 ## The columns
 

@@ -332,7 +332,7 @@ const ONE_OFF = 'of';
 
 /**
  * Every picture under a `data/` subfolder this script owns, as
- * `{ set, file, name }`. A folder is claimed by the set it belongs to, so
+ * `{ set, file, name, card }`. A folder is claimed by the set it belongs to, so
  * dropping `data/Enchanter/` in beside it needs no line here.
  *
  * ------------------------------------------------------------------ the one-off
@@ -346,23 +346,67 @@ const ONE_OFF = 'of';
  * plate branch never fires for it: there is no set called OF for a plate to belong
  * to. A name that is both a card and an item, which "Druidic Tome" is, is placed by
  * both on purpose — the card plate and the belt tile are different crops.
+ *
+ * ------------------------------------------------------------------- the schools
+ * A spell *school* arrives as a folder too — `data/Elemental/` landed 2026-08-20,
+ * a family per subfolder and every file a whole card render rather than an art
+ * plate. A school folder is claimed by name, walked into its family folders, and
+ * its files are marked `card` so the plate is cut out of the render (see
+ * `cardPlate` below). Which card a file belongs to is the *sheet's* business: the
+ * drop's Image column names each file, so a misnamed render — VOLTAIC JOLT lives
+ * in a file called LIGHTNING STRIKE — is placed by the sheet rather than by an
+ * alias here, and a file no row names is reported, which is how the stray copy of
+ * HURL in `Steam/` announces itself on every run until somebody deletes it.
  */
+const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature']);
+
 function pictures(setIds) {
   if (!existsSync(DATA)) return [];
 
   const mine = (name) => setIds.has(flatten(name)) || flatten(name) === ONE_OFF;
+  const school = (name) => SCHOOL_FOLDERS.has(flatten(name));
+
+  const walk = (dir, set, card) =>
+    readdirSync(path.join(DATA, dir), { withFileTypes: true }).flatMap((entry) => {
+      if (entry.isDirectory()) {
+        // Only a school folder nests — a set folder's subfolder is not art.
+        return card ? walk(path.join(dir, entry.name), `${set}/${entry.name}`, card) : [];
+      }
+      if (!IMAGE_FILE.test(entry.name)) return [];
+      return [
+        {
+          set,
+          file: path.join(DATA, dir, entry.name),
+          name: entry.name.replace(IMAGE_FILE, ''),
+          card,
+        },
+      ];
+    });
 
   return readdirSync(DATA, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && mine(entry.name))
-    .flatMap((dir) =>
-      readdirSync(path.join(DATA, dir.name))
-        .filter((file) => IMAGE_FILE.test(file))
-        .map((file) => ({
-          set: dir.name,
-          file: path.join(DATA, dir.name, file),
-          name: file.replace(IMAGE_FILE, ''),
-        }))
-    );
+    .filter((entry) => entry.isDirectory() && (mine(entry.name) || school(entry.name)))
+    .flatMap((dir) => walk(dir.name, dir.name, school(dir.name)));
+}
+
+/**
+ * The art plate cut out of a whole card render.
+ *
+ * A school folder's files are the finished card — 1055x1496 portrait, a white
+ * border, the painting in the top half and the banner across its foot. The plate
+ * wants the painting alone, so this cuts past the border and stops above the
+ * banner. The box is proportional rather than in pixels, so a render at another
+ * size still cuts clean.
+ */
+async function cardPlate(buf) {
+  const meta = await sharp(buf).metadata();
+  return sharp(buf)
+    .extract({
+      left: Math.round(meta.width * 0.015),
+      top: Math.round(meta.height * 0.012),
+      width: Math.round(meta.width * 0.97),
+      height: Math.round(meta.height * 0.45),
+    })
+    .toBuffer();
 }
 
 /**
@@ -512,7 +556,10 @@ for (const picture of folder) {
   }
 
   try {
-    const source = readFileSync(picture.file);
+    // A whole card render gives up its painting first; an art plate is used whole.
+    const source = picture.card
+      ? await cardPlate(readFileSync(picture.file))
+      : readFileSync(picture.file);
     const meta = await sharp(source).metadata();
 
     /* Both cuts come from the original. A downloaded card's thumbnail is cut
@@ -567,6 +614,9 @@ for (const row of sheets()) {
     problems.push(`${name}: the codex has no card by that name (${row[TAB]?.name ?? 'a drop in data/'})`);
     continue;
   }
+  /* A filename in the Image column is the folder pass's business — it says
+     which file is whose, and there is nothing here to download. */
+  if (link && !/^https?:\/\//i.test(link)) continue;
   /* Already placed from a folder, and its Image column is empty because the
      picture never went to postimg in the first place. Nothing to report. */
   if (!link && art.has(id)) continue;

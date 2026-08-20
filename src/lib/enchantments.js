@@ -10,10 +10,12 @@
  * a card needs a sentence. A round trip checks the `effect` strings, the tags and
  * the burdens, never the bodies.
  *
- * **Two rows here are not off that sheet**, and both are marked where they sit:
- * PREPARED, which Jules handed over in as many words on 2026-08-20, and UNIQUE
- * IMBUEMENT, which is what a Unique spell needs in order to reach an item at all.
- * A round trip against the sheet skips them rather than failing on them.
+ * **Four rows here are not off that sheet**, and each is marked where it sits:
+ * PREPARED, which Jules handed over in as many words on 2026-08-20; UNIQUE
+ * IMBUEMENT, which is what a Unique spell needs in order to reach an item at all;
+ * and NIGHTMARE'S CURSE and SHROUDING, handed over the same day as card renders,
+ * each the working its own trinket comes wearing (see trinkets.js). A round trip
+ * against the sheet skips all four rather than failing on them.
  *
  * **The tiers are real now**, which is what the Enchanter's ranks 2 and 3 were
  * waiting on: ENCHANTING opens Novice at Rank 1, Adept at 2 and Master at 3, and
@@ -515,6 +517,66 @@ export const ENCHANTMENTS = withArt([
     body:
       'A single Unique Spell is bound into the item, and there is nowhere else that spell can be found.\n\n' +
       'Whoever wields it may cast that spell, paying its costs as normal, whether or not they can cast spells of their own.',
+  },
+
+  {
+    /* Handed over in chat on 2026-08-20 as a card render headed "CURSE", beside
+       the cloak it rides (see cloak-of-nightmare in trinkets.js) and the spell
+       it turns on its caster (nightmare-wall in spells.js). A curse is a kind
+       this shelf had no word for, so the tag says the card's own word and
+       `unique` keeps it off the Enchanter's shelf the way it keeps the
+       Imbuement above off it: no rank opens it, it comes on the item.
+
+       **Burden 0, on purpose.** Burden on this sheet tracks what a working is
+       *worth* to its wielder, and a curse takes rather than gives — charging
+       capacity for the affliction would price the cloak's drawback as if it
+       were a second power. The cloak weighs what its Imbuement weighs.
+
+       Every line is a printed rule the table plays: nothing on this sheet
+       knows what sleeping is, what checking under a cot is, or how to make one
+       spell's damage hurt its own caster more. The one edit is the house
+       comma: "bedroll, cot, or hammock" reads without the Oxford comma. */
+    id: 'nightmares-curse',
+    name: 'Nightmare’s Curse',
+    kind: 'passive',
+    tags: ['Unique Enchantment', 'Curse'],
+    tier: 'Unique',
+    unique: true,
+    burden: 0,
+    cost: 0,
+    supplies: 0,
+    effect:
+      'You are vulnerable to the damage dealt by your own Nightmare Wall spell, and you cannot fall asleep without checking under your bedroll for monsters.',
+    body:
+      'A creeping paranoia twists your senses, making your own magic hazardous and your rest uneasy.\n\n' +
+      'You are vulnerable to the damage dealt by your own {{Nightmare Wall}} spell.\n\n' +
+      'You cannot physically fall asleep unless you explicitly check under your bedroll, cot or hammock for monsters.\n\n' +
+      'If you forget to check, you wake up with a minor case of the jitters, causing you to suffer a -1 penalty to all your rolls.',
+  },
+
+  {
+    /* Handed over in chat on 2026-08-20 as a card render headed "ITEM -
+       EQUIPMENT", asked for in as many words: "the ring of shrouding with a
+       special enchantment that cost no burden". So burden 0 is the designer's
+       own number rather than a reading, and the ring it comes on
+       (ring-of-shrouding in trinkets.js) weighs nothing on whoever wears it.
+
+       Both sentences are printed rules the table plays: nothing on this sheet
+       knows what scrying is or when somebody is watching. */
+    id: 'shrouding',
+    name: 'Shrouding',
+    kind: 'passive',
+    tags: ['Unique Enchantment', 'Utility'],
+    tier: 'Unique',
+    unique: true,
+    burden: 0,
+    cost: 0,
+    supplies: 0,
+    effect:
+      'You cannot be targeted by any scrying effects or magical means of remote observation. The ring glows a faint red if an entity is currently spying on you or your immediate area through any means.',
+    body:
+      'The wielder cannot be targeted by any scrying effects or magical means of remote observation.\n\n' +
+      'The ring glows a faint red if an entity is currently spying on the wielder or their immediate area through any means.',
   },
 ]);
 
