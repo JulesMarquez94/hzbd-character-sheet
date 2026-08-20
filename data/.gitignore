@@ -3,5 +3,15 @@
 *.tsv
 *.xlsx
 
+# Picture drops are local only too, for the same reason and one of its own: the
+# folders are the *originals*, 2048x2048 and 2.4 MB apiece, and 27 of them is
+# 66 MB. What ships is what `npm run art:items` cuts from them into
+# public/items/ — 0.84 MB, committed on purpose. Keeping both would put the
+# whole 66 MB in the clone to serve none of it.
+*.jpg
+*.jpeg
+*.png
+*.webp
+
 # The templates and the schema notes are the importer's contract, so they stay tracked.
 !templates/*.csv

@@ -13,9 +13,10 @@
  * for the same reason: one card each, and charges the belt counts down.
  */
 
-import { WEAPONS, itemEnchantments } from './weapons.js';
-import { laidEntries } from './enchanting.js';
+import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
+import { damageEnchants, laidEntries, wornGrants } from './enchanting.js';
 import { UTILITY_ITEMS } from './utility.js';
+import { withArt } from './itemArt.js';
 
 export const ARMOR_SLOTS = [
   { key: 'head', label: 'Head' },
@@ -282,8 +283,8 @@ export const ARMOR_SETS = {
  *
  * Every set runs three tiers, one piece per slot each: Common, Rare and
  * Epic. The names are the sheet’s own, so the tier is read off the name
- * (Chainmail → Half Plate → Full Plate, Runed → Greater → Supreme)
- * rather than out of a field of its own.
+ * (Chainmail → Half Plate → Full Plate, Runed → Greater → Supreme,
+ * Leather → Studded Leather → Scale) rather than out of a field of its own.
  */
 const ARMOR_ITEMS = [
   /* ----- Runed set — cloth for casters, all about Shields ----- */
@@ -498,7 +499,11 @@ const ARMOR_ITEMS = [
     burden: 0,
   },
 
-  /* ----- Leather set — light armor, all about not being hit -----
+  /* ----- Light armor — all about not being hit -----
+   *
+   * Leather → Studded Leather → Scale. The Common tier buys Defense alone;
+   * the two above it keep that +1 and add Armor on top, so a Light wearer
+   * climbing tiers stops being purely evasive without ever becoming Heavy.
    *
    * `leather-vest` and `leather-pants` keep their old ids under the sheet's
    * new names. Same slot, same set, same rarity, same +1 Defense: it is the
@@ -534,10 +539,80 @@ const ARMOR_ITEMS = [
     armor: 0,
     burden: 0,
   },
+  {
+    id: 'studded-leather-helm',
+    name: 'Studded Leather Helm',
+    slots: ['head'],
+    tags: ['Rare', 'Head Gear', 'Light Armor'],
+    set: 'Light Armor',
+    defense: 1,
+    armor: 1,
+    burden: 0,
+  },
+  {
+    id: 'studded-leather-tunic',
+    name: 'Studded Leather Tunic',
+    slots: ['torso'],
+    tags: ['Rare', 'Torso Gear', 'Light Armor'],
+    set: 'Light Armor',
+    defense: 1,
+    armor: 1,
+    burden: 0,
+  },
+  {
+    id: 'studded-leather-breeches',
+    name: 'Studded Leather Breeches',
+    slots: ['legs'],
+    tags: ['Rare', 'Leg Gear', 'Light Armor'],
+    set: 'Light Armor',
+    defense: 1,
+    armor: 1,
+    burden: 0,
+  },
+  {
+    id: 'scale-helm',
+    name: 'Scale Helm',
+    slots: ['head'],
+    tags: ['Epic', 'Head Gear', 'Light Armor'],
+    set: 'Light Armor',
+    defense: 1,
+    armor: 2,
+    burden: 0,
+  },
+  /* The sheet's own name for the torso piece — the set is Scale, and the
+     chest of it is "Scale Armor" where the other two say what they cover. */
+  {
+    id: 'scale-armor',
+    name: 'Scale Armor',
+    slots: ['torso'],
+    tags: ['Epic', 'Torso Gear', 'Light Armor'],
+    set: 'Light Armor',
+    defense: 1,
+    armor: 2,
+    burden: 0,
+  },
+  {
+    id: 'scale-leggings',
+    name: 'Scale Leggings',
+    slots: ['legs'],
+    tags: ['Epic', 'Leg Gear', 'Light Armor'],
+    set: 'Light Armor',
+    defense: 1,
+    armor: 2,
+    burden: 0,
+  },
 ];
 
-/** The whole codex: what you wear, what you hold, and what is on your belt. */
-export const ITEMS = [...ARMOR_ITEMS, ...WEAPONS, ...UTILITY_ITEMS];
+/**
+ * The whole codex: what you wear, what you hold, and what is on your belt.
+ *
+ * Wrapped in `withArt` here rather than around `ARMOR_ITEMS` alone, so a
+ * weapon or a potion picks its picture up the day its folder lands in `data/`
+ * with no further change — `art_url` and `art_thumb` are simply null until
+ * then. Everything downstream reads items through `getItem`, so this is the
+ * one place the pictures have to be attached.
+ */
+export const ITEMS = withArt([...ARMOR_ITEMS, ...WEAPONS, ...UTILITY_ITEMS]);
 
 const ITEMS_BY_ID = new Map(ITEMS.map((item) => [item.id, item]));
 
@@ -623,6 +698,28 @@ export function startingWeapons() {
 }
 
 
+/**
+ * What a weapon does to its cards *in this character's hands*.
+ *
+ * Two things change a weapon: what has been worked into the weapon, and what has
+ * been worked into the person holding it. The first is the item's own `enchants`
+ * (plus whatever this character has laid on it, see `heldItem`). The second is
+ * WIELDER OF WONDER's doing — "Enchantments apply to your person" — and it only
+ * counts while the thing is actually **equipped**: a Fire Infusion on an
+ * Enchanter's hands does nothing to the spare dagger in their pack.
+ *
+ * So this is where "is it in their hands" is decided, because this is the file
+ * that knows what equipment is. weapons.js is handed the answer.
+ */
+export function wieldModifiers(character, item) {
+  if (!item) return { damage: [], empower: 0 };
+
+  const worn = normalizeEquipment(character?.equipment);
+  const held = Object.values(worn).includes(item.id);
+
+  return itemModifiers(item, held ? damageEnchants(character) : []);
+}
+
 /* ------------------------------------------------------------- magic burden */
 
 /** How much worn magic a character can carry: Level + Mind + 10. */
@@ -658,6 +755,15 @@ export function magicBurdenUsed(equipment, belt = [], character = null) {
   for (const entry of normalizeBelt(belt)) {
     total += itemBurden(resolve(entry?.id));
   }
+
+  /* And what is worked into the character rather than into a thing they carry.
+     WIELDER OF WONDER never says its enchantments are free of Magic Burden, where
+     EPHEMERAL ENCHANTMENT says exactly that of its own — so the body slots weigh
+     and the hour-long ones do not. Left out, the meter said 4 for a character
+     carrying 8, which is the one number on this sheet that is meant to be able to
+     be *wrong* and so the one that must be right. */
+  if (character) total += wornGrants(character.talents).burden;
+
   return total;
 }
 

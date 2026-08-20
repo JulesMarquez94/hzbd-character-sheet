@@ -492,8 +492,11 @@
   }
 
   /* The two panels that are not printed cards do have something in that
-     corner, so they make room for it. */
-  .card-window .item-card-head {
+     corner, so they make room for it. An item card with a picture does not:
+     the chip lands on the plate, exactly as it does on a printed card's art,
+     and the head below it is clear. Hence `:first-child` — it is the head only
+     when there is no plate above it. */
+  .card-window .item-card-head:first-child {
     padding-left: 3.2rem;
   }
 
@@ -517,6 +520,38 @@
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7);
 }
 
+/* The piece itself, where the codex has a picture of it. 4:3 and `cover`, the
+   same as a printed card's art: the paintings are square, so this trims about
+   an eighth off the top and bottom of a centred object that has margin at both
+   — which fills the frame rather than clipping the piece. Its own square is
+   what ships, so a different crop later is this one line and no re-encode.
+
+   Bottom-fading into the panel so the name below sits on the picture's ground
+   rather than against a hard edge. */
+.item-card-art {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  /* 270px on any normal screen, and less on a short one: the panel below this
+     has a set bonus, workings, the cards it teaches and its lore to fit, and
+     the picture is the part of an item card that can afford to give up room.
+     `cover` means giving it up crops rather than squashes. */
+  max-height: 34vh;
+  flex-shrink: 0;
+  background-color: var(--art-ground);
+  background-size: cover;
+  background-position: center;
+  border-radius: 4px 4px 0 0;
+}
+
+.item-card-art::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 30%;
+  background: linear-gradient(to bottom, transparent 0%, rgba(19, 34, 42, 0.7) 65%, var(--panel-teal) 100%);
+  pointer-events: none;
+}
+
 .item-card-head {
   display: flex;
   align-items: flex-start;
@@ -524,6 +559,13 @@
   padding: 0.9rem 1rem;
   border-bottom: 1px solid var(--hairline);
   flex-shrink: 0;
+}
+
+/* With a plate above it the head is a caption on the picture, so it loses the
+   rule that separated it from the body and closes up under the art. */
+.item-card-art + .item-card-head {
+  border-bottom: none;
+  padding-top: 0.6rem;
 }
 
 .item-card-title {

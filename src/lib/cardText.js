@@ -221,7 +221,7 @@ export function cardGist(card, { character = null, modifiers = null } = {}) {
   // A set that casts off another attribute overrides what the card is printed
   // with; see castModifier in loadouts.js.
   const stat = modifiers?.stat ?? card?.stat ?? 'instinct';
-  const damage = modifiers?.damage ? [modifiers.damage] : card?.damage ?? [];
+  const damage = modifiers?.damage?.length ? modifiers.damage : card?.damage ?? [];
   const empower = Number(modifiers?.empower) || 0;
   const elevate = Number(modifiers?.elevate) || 0;
   const choice = modifiers?.choice ?? null;

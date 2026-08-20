@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "art": "node scripts/pull-card-art.mjs"
+    "art": "node scripts/pull-card-art.mjs && node scripts/pull-item-art.mjs",
+    "art:cards": "node scripts/pull-card-art.mjs",
+    "art:items": "node scripts/pull-item-art.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

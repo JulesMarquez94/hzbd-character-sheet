@@ -6,8 +6,10 @@ import { CardStackContext } from '../context/card-stack.js';
 import { lockScroll } from '../lib/scrollLock.js';
 import { formatNumber } from '../lib/characterModel.js';
 import { ARMOR_SETS } from '../lib/items.js';
-import { getCard, itemEnchantments, itemModifiers } from '../lib/weapons.js';
+import { getCard, itemEnchantments } from '../lib/weapons.js';
+import { wieldModifiers } from '../lib/items.js';
 import { ItemIcon, ItemTags, ItemValues, StatText } from './sheet/itemParts.jsx';
+import useCodexArt from './useCodexArt.js';
 
 /**
  * The card stack — the sheet's answer to "what does this actually do?".
@@ -153,8 +155,20 @@ function cardFooter(card) {
  * here opens on top of it.
  */
 function ItemCard({ item, character, onCard, onValue }) {
+  /* The full picture, and the only plate that asks for it — everywhere else on
+     the sheet an item is drawn at 40px and gets the thumbnail. One card is
+     dealt at a time, so this is 26 KB on demand rather than 26 KB a row.
+
+     Codex art is a paid capability (see useCodexArt.js), and an item card is a
+     reference panel rather than a printed card, so with no picture to draw it
+     grows no plate at all — the head keeps its glyph tile and the panel is
+     exactly what it was before there were pictures. */
+  const artUrl = useCodexArt()(item.art_url);
   const enchantments = itemEnchantments(item);
-  const modifiers = itemModifiers(item);
+  /* Equipped, this prints what the wielder's own enchantments do to it too;
+     stowed, it prints only what is worked into the item. wieldModifiers decides
+     which, because only items.js knows what is equipped. */
+  const modifiers = wieldModifiers(character, item);
 
   // The weapon's own attacks are what an infusion changes; a spell bound into
   // it is cast as written, so it is dealt without the weapon's modifiers.
@@ -168,8 +182,15 @@ function ItemCard({ item, character, onCard, onValue }) {
 
   return (
     <article className="item-card">
+      {artUrl && (
+        <div className="item-card-art" style={{ backgroundImage: `url("${artUrl}")` }} />
+      )}
+
       <header className="item-card-head">
-        <ItemIcon item={item} />
+        {/* The plate is the tile, forty times bigger — printing both would be
+            the same picture twice, an inch apart. Without one, the glyph tile
+            stays exactly where it has always been. */}
+        {!artUrl && <ItemIcon item={item} />}
         <div className="item-card-title">
           <h3>{item.name}</h3>
           <ItemTags item={item} />

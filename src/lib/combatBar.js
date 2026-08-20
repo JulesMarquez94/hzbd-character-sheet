@@ -45,16 +45,18 @@
 
 import { BASIC_ACTIONS } from './actions.js';
 import { abilitySources, isPassive } from './abilitySources.js';
-import { runningEnchants } from './enchanting.js';
+import { enchanterState, runningEnchants } from './enchanting.js';
+import { getEnchantment } from './enchantments.js';
 import {
   EQUIPMENT_SLOTS,
   beltEntry,
   beltSlotCount,
   heldItem,
+  wieldModifiers,
   normalizeBelt,
   normalizeEquipment,
 } from './items.js';
-import { getCard, itemEnchantments, itemModifiers } from './weapons.js';
+import { getCard, itemEnchantments } from './weapons.js';
 
 /* ------------------------------------------------------------------- parts */
 
@@ -128,7 +130,9 @@ function handGroup(character) {
   const primary = heldItem(character, equipment.main_hand);
   if (!primary) return null;
 
-  const modifiers = itemModifiers(primary);
+  /* The weapon as this character swings it, so a hand chip prints the damage an
+     Enchanter's own enchantments impose as well as the blade's own. */
+  const modifiers = wieldModifiers(character, primary);
   const moves = (primary.abilities ?? [])
     .map(getCard)
     .filter(Boolean)
@@ -325,14 +329,48 @@ function workings(character) {
     );
   });
 
+  /* Called Enchantments, because that is what they are and what the card that
+     laid them calls them. "Workings" was this block's own word for the same
+     thing, and a player reading their sheet has no reason to learn a second one. */
   return rows.length > 0
-    ? { id: 'workings', label: 'Workings', note: 'Worked into what you wear', rows }
+    ? { id: 'enchantments', label: 'Enchantments', note: 'Worked into what you carry', rows }
     : null;
 }
 
 /**
+ * What an Enchanter is wearing on their own person.
+ *
+ * Its own group, under the card's own name, because it is a different *kind* of
+ * standing thing from the rest: an enchantment on a hood is on the hood and goes
+ * when the hood does, while these are on the Enchanter. WIELDER OF WONDER is the
+ * card that put them there and is the only true answer to "where did this come
+ * from", so it is the heading rather than the provenance on each row.
+ *
+ * The provenance a row would otherwise carry is what it *is* instead: how much
+ * Magic Burden it costs to keep, which is the number this block exists to stop
+ * anyone forgetting.
+ */
+function wielderOfWonder(character) {
+  const state = enchanterState(character);
+  if (!state || state.worn.length === 0) return null;
+
+  const rows = state.worn
+    .map(getEnchantment)
+    .filter(Boolean)
+    .map((enchantment) => standing(enchantment, null, `${enchantment.burden} Burden`));
+
+  return {
+    id: 'wielder-of-wonder',
+    label: 'Wielder of Wonder',
+    note: `${rows.length} of ${state.wornMax} on your person`,
+    rows,
+  };
+}
+
+/**
  * The recap, grouped by what a thing is: what is true of you, what you are
- * trained in, and what your gear is doing.
+ * trained in, what an Enchanter has laid on their own person, and what your gear
+ * is doing.
  *
  * A card lands in Traits or Skills by the same test the bar uses, so between
  * the two blocks every card a character holds is printed exactly once.
@@ -362,6 +400,9 @@ export function passiveRecap(character) {
     skills.length > 0
       ? { id: 'skills', label: 'Skills', note: 'What you are trained in', rows: skills }
       : null,
+    /* On your person before on your gear: what you are outlasts what you carry,
+       and an enchantment worn on the body is the one nobody remembers is there. */
+    wielderOfWonder(character),
     workings(character),
   ].filter(Boolean);
 }

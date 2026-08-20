@@ -49,7 +49,13 @@ import { normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { pickChanges } from './loadouts.js';
-import { changeCost, enchantChanges, enchanterState, layingCost } from './enchanting.js';
+import {
+  changeCost,
+  enchantChanges,
+  enchanterState,
+  layingCost,
+  restSupplyCut,
+} from './enchanting.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
 import { getItem } from './items.js';
 
@@ -74,6 +80,24 @@ export const RESTS = {
 
 export function getRest(kind) {
   return RESTS[kind] ?? null;
+}
+
+/**
+ * What a rest costs *this* character, which is not always what it costs.
+ *
+ * OZ'EM PICK: "the cost in supplies of short and long rest are reduced by 2." The
+ * only enchantment that moves a rest rather than a stat, and the only reason this
+ * is a function rather than the number on `RESTS`. Floored at nothing, because a
+ * rest that paid you would be a strange kind of rest.
+ *
+ * Everything that prices a rest goes through here: the plan, and the two
+ * affordability checks that offer a chip dead rather than letting it fail at the
+ * last button.
+ */
+export function restPrice(character, kind) {
+  const rest = getRest(kind);
+  if (!rest) return 0;
+  return Math.max(0, rest.supplies - restSupplyCut(character));
 }
 
 /* ------------------------------------------------------------- the labours */
@@ -211,10 +235,9 @@ export function restEnchanting(character, kind) {
  * offered dead rather than left to fail at the last button.
  */
 export function layingAffordable(character, kind, prepared, enchantment) {
-  const rest = getRest(kind);
   const held = Math.max(0, Math.floor(Number(character?.supplies) || 0));
   const already = changeCost(enchantChanges(character?.talents, prepared ?? character?.talents));
-  return held - (rest?.supplies ?? 0) - already - layingCost(enchantment) >= 0;
+  return held - restPrice(character, kind) - already - layingCost(enchantment) >= 0;
 }
 
 /**
@@ -267,14 +290,19 @@ export function restPlan(character, kind, labours = [], prepared = null) {
     return delta;
   };
 
-  move(-rest.supplies, rest.label);
+  const price = restPrice(character, kind);
+  const cut = rest.supplies - price;
+
+  move(-price, rest.label);
   lines.push({
     key: 'cost',
-    label: `${rest.supplies} Supplies`,
+    label: `${price} Supplies`,
     detail:
-      supplies >= 0
-        ? 'Out of the crate.'
-        : `The crate holds ${formatNumber(held)}. You cannot pay for this rest.`,
+      supplies < 0
+        ? `The crate holds ${formatNumber(held)}. You cannot pay for this rest.`
+        : cut > 0
+          ? `Out of the crate. ${rest.supplies} less ${cut}, which is what you have laid on yourself.`
+          : 'Out of the crate.',
     tone: supplies >= 0 ? 'cost' : 'warn',
   });
 
@@ -460,7 +488,6 @@ export function restPlan(character, kind, labours = [], prepared = null) {
  */
 export function labourAffordable(character, kind, option) {
   if (option.gain) return true;
-  const rest = getRest(kind);
   const held = Math.max(0, Math.floor(Number(character?.supplies) || 0));
-  return held - (rest?.supplies ?? 0) - option.amount >= 0;
+  return held - restPrice(character, kind) - option.amount >= 0;
 }

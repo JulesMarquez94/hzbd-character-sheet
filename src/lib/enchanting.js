@@ -336,6 +336,12 @@ function noGrants() {
   return {
     attributes: { physique: 0, instinct: 0, mind: 0 },
     healthMax: 0,
+    willpowerMax: 0,
+    speed: 0,
+    armor: 0,
+    /* What comes *off* the price of a rest. Oz'em Pick is the only thing on the
+       sheet that moves a rest rather than a stat. */
+    restSupplies: 0,
     /* Printed rather than computed. Barrier grants "2d6 in Shield", which is a
        roll the table makes; the sheet says so and does not invent a number. */
     shieldRolls: [],
@@ -360,6 +366,10 @@ export function grantsFrom(ids) {
       if (key in total.attributes) total.attributes[key] += Math.floor(Number(value) || 0);
     }
     total.healthMax += Math.floor(Number(entry.healthMax) || 0);
+    total.willpowerMax += Math.floor(Number(entry.willpowerMax) || 0);
+    total.speed += Number(entry.speed) || 0;
+    total.armor += Math.floor(Number(entry.armor) || 0);
+    total.restSupplies += Math.floor(Number(entry.restSupplies) || 0);
     if (entry.shieldAtCombat) total.shieldRolls.push({ id: entry.id, name: entry.name, roll: entry.shieldAtCombat });
   }
 
@@ -405,6 +415,10 @@ export function allGrants(character) {
       mind: worn.attributes.mind + ephemeral.attributes.mind,
     },
     healthMax: worn.healthMax + ephemeral.healthMax,
+    willpowerMax: worn.willpowerMax + ephemeral.willpowerMax,
+    speed: worn.speed + ephemeral.speed,
+    armor: worn.armor + ephemeral.armor,
+    restSupplies: worn.restSupplies + ephemeral.restSupplies,
     shieldRolls: [...worn.shieldRolls, ...ephemeral.shieldRolls],
     spells: ephemeral.spells,
     burden: worn.burden,
@@ -412,6 +426,42 @@ export function allGrants(character) {
     worn,
     ephemeral,
   };
+}
+
+/**
+ * The enchantments on this character's own person that change how a weapon hits.
+ *
+ * WIELDER OF WONDER puts an enchantment on the Enchanter rather than on a thing:
+ * "Enchantments apply to your person." A Fire Infusion is an enchantment, so an
+ * Enchanter wearing one is an Enchanter whose weapons deal Fire — the working is on
+ * the hands rather than the blade, and it moves from weapon to weapon with them.
+ *
+ * Both kinds count: what is worn is permanent and what is ephemeral lasts the hour.
+ * Only the ones that actually carry a weapon rider come back, so nothing here has
+ * to be filtered again downstream.
+ */
+export function damageEnchants(character) {
+  const state = enchanterState(character);
+  const worn = state ? state.worn.map(getEnchantment) : [];
+  const running = runningEnchants(character?.effects).map((row) => row.enchantment);
+
+  return [...worn, ...running].filter(
+    (entry) => entry && (entry.damageType || entry.empower)
+  );
+}
+
+/**
+ * What comes off the price of a rest, both kinds.
+ *
+ * OZ'EM PICK: "the cost in supplies of short and long rest are reduced by 2." The
+ * only enchantment on the sheet that moves a rest rather than a stat, and the
+ * reduction is read from both what is worn and what is running, because an hour of
+ * borrowed frugality is still frugality. Floored where it is spent, in rest.js,
+ * rather than here: this reports what the enchantments say, and a rest that would
+ * cost less than nothing costs nothing.
+ */
+export function restSupplyCut(character) {
+  return allGrants(character).restSupplies;
 }
 
 /* ------------------------------------------------------------------ the shelf

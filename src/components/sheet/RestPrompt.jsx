@@ -208,7 +208,6 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
             nowhere else. Priced into the plan above like everything else. */}
         {enchanter && (
           <EnchantRest
-            state={enchanter}
             character={character}
             talents={talents}
             kind={kind}

@@ -44,10 +44,11 @@ import { SPELLS } from '../../lib/spells.js';
  * everything the attribute buys moves with it on the Character tab. Nothing is
  * written into an attribute column, ever — see liveCharacter.
  *
- * Novice Imbuement is the one that asks a second question, because it carries a
- * spell rather than a number and the card does not say which. It is asked here,
- * in the window that granted it, and the chosen spell rides on the effect so the
- * quick bar can offer the casting.
+ * The three Imbuements are the ones that ask a second question, because they
+ * carry a spell rather than a number and the card does not say which. It is asked
+ * here, in the window that granted it, and the chosen spell rides on the effect so
+ * the quick bar can offer the casting. A tier the codex has no spells for asks
+ * nothing and says why.
  */
 export default function EnchantWindow({ character, patch, readOnly = false, onClose }) {
   const state = enchanterState(character);
@@ -64,12 +65,27 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
 
   const options = useMemo(() => enchantOptions(character), [character]);
 
+  /* The spells the chosen Imbuement could bind, or none for everything that binds
+     no spell. Above the early return, because a hook below one runs in a different
+     order on the render where this character is not an Enchanter. */
+  const pool = useMemo(
+    () => (chosen?.spell ? spellsAt(chosen.spellTier ?? 'Novice') : []),
+    [chosen]
+  );
+
   if (!state) return null;
 
   const cost = chosen ? ephemeralCost(chosen) : { ap: 0, wp: 0 };
-  /* Novice Imbuement carries a spell and has to be told which one. Everything
-     else is ready the moment it is chosen. */
-  const asksSpell = Boolean(chosen?.spell);
+
+  /* An Imbuement carries a spell and has to be told which one. Everything else is
+     ready the moment it is chosen.
+
+     **Unless the codex has no spells of that tier.** Master Imbuement can be laid
+     today and there is not one Master spell to bind, so the question cannot be
+     answered and must not be asked as a condition: the enchantment is real, the
+     shelf it binds from is empty, and the table names the spell. Asking anyway
+     would leave the only button in the window disabled forever. */
+  const asksSpell = Boolean(chosen?.spell) && pool.length > 0;
   const ready = Boolean(chosen) && (!asksSpell || Boolean(spell));
 
   /** The one write a confirmed enchantment makes: the points, and the effect. */
@@ -192,8 +208,13 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
 
                 {/* The follow-up the card leaves open, asked in the window that
                     granted it rather than on a control somewhere else. */}
-                {asksSpell && (
-                  <SpellPick chosen={spell} onPick={setSpell} tier={chosen.spellTier ?? 'Novice'} />
+                {chosen.spell && (
+                  <SpellPick
+                    chosen={spell}
+                    onPick={setSpell}
+                    pool={pool}
+                    tier={chosen.spellTier ?? 'Novice'}
+                  />
                 )}
 
                 <label className="ench-target">
@@ -275,26 +296,34 @@ function EnchantRow({ option, character, chosen, readOnly, onChoose, onOpen }) {
   );
 }
 
+/** Every spell of a tier the codex actually holds. Empty is a real answer. */
+function spellsAt(tier) {
+  return SPELLS.filter((spell) => (spell.tags ?? []).some((tag) => tag.startsWith(tier)));
+}
+
 /**
- * Which spell a Novice Imbuement carries.
+ * Which spell an Imbuement carries.
  *
  * "Enchant an item with a NOVICE spell" names the tier and leaves the spell open,
  * so the tier is what filters this and the choice is the player's. Chips rather
  * than a wall of briefs: the spell's own card is a tap away on the Abilities tab,
  * and what is being answered here is which name goes on the tracker row.
+ *
+ * An empty pool says so rather than showing nothing. **Master Imbuement is that
+ * case today**: the enchantment exists and no Master spell does, so the row is
+ * laid without a name and the table supplies one. Saying "no Master spells yet"
+ * is the difference between a window that is waiting on the codex and a window
+ * that looks broken.
  */
-function SpellPick({ chosen, onPick, tier }) {
-  const pool = useMemo(
-    () => SPELLS.filter((spell) => (spell.tags ?? []).some((tag) => tag.startsWith(tier))),
-    [tier]
-  );
-
+function SpellPick({ chosen, onPick, pool, tier }) {
   return (
     <div className="brew-decision">
       <span className="brew-decision-label">
         The spell it carries
         <span className="brew-decision-asks">
-          One {tier} spell, cast once until a Long Rest
+          {pool.length > 0
+            ? `One ${tier} spell, and it is cast at its own cost`
+            : `No ${tier} spells in the codex yet. Lay it and name one at the table.`}
         </span>
       </span>
 

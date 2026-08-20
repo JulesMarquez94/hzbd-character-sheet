@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
+import WornEnchants, { EnchantShelf } from './WornEnchants.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -12,8 +12,7 @@ import {
   normalizeEquipment,
   normalizePack,
 } from '../../lib/items.js';
-import { getEnchantment } from '../../lib/enchantments.js';
-import { enchantOptions, layOn, laidOn, layingCost, setWorn, stripFrom } from '../../lib/enchanting.js';
+import { laidOn, layOn, layingCost, stripFrom } from '../../lib/enchanting.js';
 import { layingAffordable } from '../../lib/rest.js';
 
 /**
@@ -32,10 +31,10 @@ import { layingAffordable } from '../../lib/rest.js';
  *
  * ------------------------------------------------------------------- two rows
  * So there are two things to do and they are drawn as the two they are. **On your
- * own person** is a row of slots, as many as the rank allows, filled or waiting —
- * the same grammar the Cauldron's rows use, and the same grammar an armour slot
- * uses: tap the slot, the shelf opens. **On what you carry** is a list of what has
- * already been worked, and one way in to work something else.
+ * own person** is WornEnchants, the same row the Advancement tab shows when the
+ * rank is bought — one component, because it is one rule read at two moments.
+ * **On what you carry** is a list of what has already been worked, and one way in
+ * to work something else.
  *
  * ------------------------------------------------------------- nothing is written
  * Every choice here writes into the window's own `talents` draft and nothing else.
@@ -43,9 +42,7 @@ import { layingAffordable } from '../../lib/rest.js';
  * does, and only "Yes, rest" commits any of it — so a rest backed out of is an
  * evening's work not done, with the Supplies still in the crate.
  */
-export default function EnchantRest({ state, character, talents, onDraft, kind, readOnly = false }) {
-  /* Which body slot is being filled, as an index, or null. */
-  const [slot, setSlot] = useState(null);
+export default function EnchantRest({ character, talents, onDraft, kind, readOnly = false }) {
   /* Which item is being worked on, or null. */
   const [onItem, setOnItem] = useState(null);
   /* Whether the item chooser is up. */
@@ -61,8 +58,6 @@ export default function EnchantRest({ state, character, talents, onDraft, kind, 
     [carried, talents]
   );
 
-  const room = Math.max(0, state.wornMax - state.worn.length);
-
   return (
     <>
       <span className="fx-label">
@@ -71,45 +66,13 @@ export default function EnchantRest({ state, character, talents, onDraft, kind, 
       </span>
 
       {/* ---------- ON YOUR OWN PERSON ---------- */}
-      <div className="ench-rest-head">
-        <span className="ench-rest-title">On your own person</span>
-        <span className="ench-rest-note">
-          {state.worn.length} of {state.wornMax}
-          {room > 0 ? ', and no Supplies to change them' : ' — full'}
-        </span>
-      </div>
-
-      <div className="brew-slots">
-        {state.worn.map((id, index) => (
-          <WornSlot
-            key={`${id}-${index}`}
-            id={id}
-            readOnly={readOnly}
-            onRead={(card) => stack?.openCard(card)}
-            onDrop={() => onDraft(setWorn(talents, state.worn.filter((_, at) => at !== index)))}
-          />
-        ))}
-
-        {Array.from({ length: room }, (_, index) => (
-          <button
-            key={`open-${index}`}
-            type="button"
-            className="brew-slot brew-slot-add"
-            disabled={readOnly}
-            onClick={() => setSlot(state.worn.length + index)}
-            title="Choose an enchantment for your own person"
-          >
-            <span className="brew-slot-plus" aria-hidden="true">
-              +
-            </span>
-            <span className="brew-slot-add-label">Enchantment</span>
-          </button>
-        ))}
-
-        {state.wornMax === 0 && (
-          <span className="pick-line">Rank 1 carries one. This character holds none yet.</span>
-        )}
-      </div>
+      <WornEnchants
+        character={character}
+        talents={talents}
+        onChange={onDraft}
+        readOnly={readOnly}
+        tone="rest"
+      />
 
       {/* ---------- ON WHAT YOU CARRY ---------- */}
       <div className="ench-rest-head">
@@ -125,9 +88,7 @@ export default function EnchantRest({ state, character, talents, onDraft, kind, 
             <button
               type="button"
               className="rest-labour-head"
-              onClick={() => {
-                setOnItem(item);
-              }}
+              onClick={() => setOnItem(item)}
               title={`Work on ${item.name}`}
             >
               <span className="rest-labour-name">{item.name}</span>
@@ -183,24 +144,6 @@ export default function EnchantRest({ state, character, talents, onDraft, kind, 
         </button>
       </div>
 
-      {/* ---------- the shelf, for the body ---------- */}
-      {slot !== null && (
-        <EnchantShelf
-          title="On your own person"
-          rule="Chosen at a rest and changed at a rest. No Supplies: the card names none."
-          character={character}
-          held={state.worn}
-          room={state.wornMax}
-          priced={false}
-          onClose={() => setSlot(null)}
-          onPick={(enchantment) => {
-            onDraft(setWorn(talents, [...state.worn, enchantment.id]));
-            setSlot(null);
-          }}
-          onRead={(card) => stack?.openCard(card)}
-        />
-      )}
-
       {/* ---------- the item chooser ---------- */}
       {choosing && (
         <ItemChoice
@@ -233,115 +176,6 @@ export default function EnchantRest({ state, character, talents, onDraft, kind, 
         />
       )}
     </>
-  );
-}
-
-/* ------------------------------------------------------------------ the parts */
-
-/** One enchantment on the Enchanter's own person, with a way to take it off. */
-function WornSlot({ id, readOnly, onRead, onDrop }) {
-  const enchantment = getEnchantment(id);
-  if (!enchantment) return null;
-
-  return (
-    <div className="brew-slot is-filled">
-      <button
-        type="button"
-        className="brew-slot-body"
-        onClick={() => onRead(enchantment)}
-        title={`Read the ${enchantment.name} card`}
-      >
-        <span className="brew-slot-name">{enchantment.name}</span>
-        <span className="brew-slot-meta">
-          {enchantment.burden} Burden · {enchantment.effect}
-        </span>
-      </button>
-
-      {!readOnly && (
-        <button
-          type="button"
-          className="brew-slot-drop"
-          onClick={onDrop}
-          title="Take it off"
-          aria-label={`Take ${enchantment.name} off your person`}
-        >
-          ×
-        </button>
-      )}
-    </div>
-  );
-}
-
-/**
- * The shelf, opened by a slot and filtered to what the rank knows.
- *
- * Same shape the Cauldron's shelf has, and for the same reason: what is being
- * asked is "what goes in *this* slot", and an enchantment that cannot go in one
- * says why on its own button rather than being left off the wall.
- */
-function EnchantShelf({ title, rule, character, held, room, priced, afford, onClose, onPick, onRead }) {
-  const options = useMemo(
-    () => enchantOptions(character, { held, room }),
-    [character, held, room]
-  );
-
-  const within = options.filter((option) => option.ok).length;
-
-  return (
-    <Modal
-      title={title}
-      onClose={onClose}
-      wide
-      accent={PICK_ACCENTS.talent}
-      footer={
-        <>
-          <span className="brew-step-note">{within} within reach</span>
-          <span className="spacer" />
-          <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
-            Close
-          </button>
-        </>
-      }
-    >
-      <p className="frame-foot" style={{ marginTop: 0 }}>
-        {rule}
-      </p>
-
-      <div className="card-brief-wall">
-        {options.map((option) => {
-          const { enchantment, ok, reason, held: on } = option;
-          /* A price you could not pay is offered dead rather than left to fail at
-             the last button, the same law the camp-work chips read by. */
-          const canPay = !priced || !ok || !afford || afford(enchantment);
-          const allowed = ok && canPay;
-
-          return (
-            <CardBrief
-              card={enchantment}
-              character={character}
-              held={on}
-              key={enchantment.id}
-              onOpen={() => onRead(enchantment)}
-            >
-              <span className="brew-reagent-held">
-                {enchantment.burden} Burden
-                {priced ? ` · ${layingCost(enchantment)} Supplies` : ''}
-              </span>
-
-              <button
-                type="button"
-                className={`btn btn-sm card-brief-btn ${allowed ? 'btn-take' : 'btn-minimal'}`}
-                disabled={!allowed}
-                title={ok ? (canPay ? undefined : 'Beyond the crate, once the rest is paid for.') : reason}
-                onClick={() => onPick(enchantment)}
-              >
-                {allowed ? 'Lay this one' : ok ? 'Beyond the crate' : reason}
-              </button>
-            </CardBrief>
-          );
-        })}
-      </div>
-    </Modal>
   );
 }
 

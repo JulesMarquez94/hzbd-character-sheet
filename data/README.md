@@ -13,8 +13,20 @@ data/Spells - Primal Spells.csv
 data/General Rules - Basic Abilities.csv
 ```
 
-Drops are gitignored (see `data/.gitignore`), so a CSV sitting here never
-reaches GitHub. Only `README.md` and `templates/` are tracked.
+Pictures arrive as a **folder** instead, named for the inventory shelf it fills
+— `data/Armor/` — because item art is delivered as files rather than links. See
+[the picture folders](#the-picture-folders-and-npm-run-artitems).
+
+Drops are gitignored (see `data/.gitignore`), so neither a CSV nor a picture
+sitting here reaches GitHub. Only `README.md` and `templates/` are tracked.
+
+**The picture rule was added on 2026-08-20 and 12 files had already gone in**
+under it — the originals are 2.4 MB each, so `data/Armor/` was about to put
+66 MB in every clone to serve none of it (what ships is the 0.84 MB that
+`npm run art:items` cuts into `public/items/`). Those 12 are untracked as of
+this change and still on disk. They are still in the *history*, which only a
+rewrite would clear; worth doing if the repo size ever matters, and not worth
+doing on its own.
 
 ## What has been pulled so far
 
@@ -27,30 +39,41 @@ reaches GitHub. Only `README.md` and `templates/` are tracked.
 | Talent Set · Cauldron Keeper · Ability | 2026-08-19, 4 cards + 19 Ingredients | `src/lib/talents.js`, `src/lib/ingredients.js` |
 | General Rules · Status & Terms | 2026-08-19, 26 terms | `src/lib/keywords.js` |
 | Cauldron Keeper art, both tabs | 2026-08-19, 22 cards + 1 plate | `public/cards/`, `public/talents/` |
-| Equipment · Armor | 2026-08-19, 21 pieces | `src/lib/items.js` (`ARMOR_ITEMS`) |
+| Equipment · Armor | **2026-08-20, 27 pieces** (21 on 08-19) | `src/lib/items.js` (`ARMOR_ITEMS`) |
+| Armor art, from the `Armor/` folder | **2026-08-20, 27 pictures** | `public/items/` + `src/lib/itemArt.js` |
 | Talent Set · Enchanter · Ability | 2026-08-19, 3 cards | `src/lib/talents.js` (`TALENTS`) |
 | Talent Set · Enchanter · Overview | 2026-08-19, written here | `src/lib/talents.js`, exported back to `data/` |
-| Equipment · Enchantments | 2026-08-19, 13 enchantments | `src/lib/enchantments.js` (`ENCHANTMENTS`) |
+| Equipment · Enchantments | **2026-08-20, 23 enchantments** (13 on 08-19) | `src/lib/enchantments.js` (`ENCHANTMENTS`) |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
 else: the codex also carries one Arcane spell, Containment Sphere, which no
 sheet covers yet. `cauldron-keeper-ingredients.csv` carries an extra **Sheet AP**
 column beside the live one, so the Catalyst balance pass below reads as a diff
-rather than a claim. Diff a fresh download against those to see exactly what
+rather than a claim, and `enchantments.csv` carries what each one costs to lay and
+what its sentence was turned into mechanically. Diff a fresh download against those to see exactly what
 changed before asking for a pull.
 
 ## The armor
 
-Twenty-one pieces replaced the nine that were there, pulled on 2026-08-19 from
-`Equipment, Enchantments and Items - Armor`. Three sets of three slots, and each
-set now runs three tiers where it used to run one:
+Twenty-seven pieces, pulled on 2026-08-20 from `Equipment, Enchantments and
+Items - Armor`, and every one of them now has a picture — see [the picture
+folders](#the-picture-folders-and-npm-run-artitems) below. Three sets of three
+slots, and with the 08-20 drop all three sets run all three tiers:
 
 | Set | Common | Rare | Epic |
 | --- | ------ | ---- | ---- |
 | Heavy | Chainmail, +3 Armor | Half Plate, +4 | Full Plate, +5 |
 | Magic | Runed, Shield = Mind | Greater Runed, 2x Mind | Supreme Runed, 3x Mind and a bigger cap |
-| Light | Leather, +1 Defense | — | — |
+| Light | Leather, +1 Defense | **Studded Leather, +1 Defense and +1 Armor** | **Scale, +1 Defense and +2 Armor** |
+
+**The six new ones finish the Light ladder**, which was the one set with nothing
+above Common. They are also the only pieces in the game that carry both stats at
+once: the Common tier buys Defense alone, and the two above it keep that +1 and
+add Armor on top, so a Light wearer climbing tiers stops being purely evasive
+without ever becoming Heavy. `Scale Armor` is the sheet's own name for the Epic
+torso piece — the set is Scale, and its chest is the one piece that does not say
+what it covers.
 
 **The Magic pieces stack.** Each of the three says "When you enter combat, you start
 with a Shield equal to your Mind" on its own, so a full Runed set starts a fight
@@ -61,8 +84,11 @@ take the best single piece, which meant two thirds of a full set did nothing.
 
 **Verified by round trip, not asserted.** Every row's `Tags` and `Main Effect`
 were rebuilt out of the codex fields and compared to the sheet cell,
-whitespace-normalised. All 21 names, tags, rarities and numbers match. Twelve
-cells differ, and all twelve are one of the two deliberate reads below.
+whitespace-normalised. **81 of 81 comparisons match** — name, tags, rarity and
+`Main Effect` on all 27 rows. Eighteen cells differ, and all eighteen are one of
+the two deliberate reads below: nine `Spelled Armor`, and nine of the double full
+stop, which is now every Light row rather than just the three Leather ones,
+because Studded Leather and Scale carry the same sentence.
 
 ### Two things the sheet says twice, differently
 
@@ -74,8 +100,8 @@ cells differ, and all twelve are one of the two deliberate reads below.
    in code as well: `characterModel.js` reads `fullSet === 'Magic Armor'` for the
    Grit rule. **Say the word and it goes back to Spelled Armor instead** — it is
    one string in `ARMOR_SETS` and one line in `characterModel.js`.
-2. **"your Defense is equal to your Reflex.."** on the Leather rows, kept as one
-   full stop.
+2. **"your Defense is equal to your Reflex.."** on all nine Light rows, kept as
+   one full stop.
 
 ### What did not change, and is still open
 
@@ -84,6 +110,14 @@ three pieces each add `+1 Defense` on top, so a full Leather set reads Reflex + 
 That is the sheet's own numbers, unchanged by this pull, and it is the same open
 question it was before: zero the pieces, skip flats when a set swaps the base, or
 reword the card.
+
+**The 08-20 drop widens it rather than settling it.** Studded Leather and Scale
+each carry the same `+1 Defense` as Leather, so every Light set still reads
+Reflex + 3 whichever tier it is — the new tiers buy Armor, not Defense, so the
+number the set bonus contradicts is the same +3 at all three tiers. Worth knowing
+if the ruling turns out to be "zero the pieces": there are nine pieces to zero
+now, not three, and doing it would leave Studded Leather and Scale as pure Armor
+pieces in the set whose bonus is about not being hit.
 
 ### Ids, and the two that were kept
 
@@ -101,8 +135,13 @@ so renaming it would quietly strip the armor off anyone wearing it. Same call as
 because those pieces changed mechanically as well as by name — a character still
 wearing one will find that slot empty.
 
-`templates/armor.csv` has all 21 with their ids in the first column, so pasting
-that one column back into the sheet makes the next pull mechanical.
+The six new pieces took their names plainly: `studded-leather-helm`,
+`scale-armor`, and so on.
+
+`templates/armor.csv` has all 27 with their ids in the first column **and their
+picture named in the `Image` column**, so pasting those two columns back into the
+sheet makes the next pull mechanical in both directions — no ids read off names,
+and no alias table for the five filenames that do not match.
 
 ## The Cauldron Keeper
 
@@ -315,12 +354,12 @@ a `loadout` and a `brewing` spec — and `enchantPreview` in `talents.js` turns 
 into the one line each rank needs. It is arithmetic on those two sentences and
 needs no codex, which is why it lives in the leaf.
 
-**The note counts nothing, deliberately.** The Brew note says "+13 Novice
-Ingredients" because the Ingredient shelf is long and rank-gated. The enchantment
-shelf cannot be counted yet: the Equipment · Enchantments tab has 13 rows and all
-13 are Novice, `weapons.js` holds only 4 of them, and those 4 carry no tier tag at
-all. A number there would be a number about the codex rather than about the rank.
-**Pull that tab with a tier on each row and the count can be added.**
+**The note counted nothing at first, and counts now.** For one pull the
+enchantment shelf could not be counted: every row on the Equipment · Enchantments
+tab was Novice, so a number at Rank 2 would have been a zero about the codex rather
+than a fact about the rank. The 2026-08-20 drop brought the Adept and Master shelves
+in and the note says what the Brew note says — `+13 Novice enchantments`, then
+`+6 Adept`, then `+4 Master`. See "The second Enchantments pull" below.
 
 ### One reading that changed code
 
@@ -462,8 +501,8 @@ writes nothing at all, work included.
 `items.js` merges what this character has laid into the codex item's own
 `enchants`, and everything downstream was already written against that field — the
 damage type and Empowering the weapon block prints, the cards an item teaches, the
-Magic Burden meter, the Workings recap. Nothing had to be taught what an Enchanter
-is.
+Magic Burden meter, and the recap's Enchantments group. Nothing had to be taught
+what an Enchanter is.
 
 ### What is still not built
 
@@ -476,6 +515,153 @@ at.
 
 Also still out: the **Trinket block** the notes ask for, and the two blocks the
 Inventory tab would shrink to in order to make room for it.
+
+### The second Enchantments pull, 20 Aug 2026
+
+Twenty-three rows where the first pull had thirteen, and **the tiers are real now**,
+which is what the Enchanter's ranks 2 and 3 had been waiting on. Every `Main
+Effect`, tag and `Magic Burden` matches the sheet cell for cell, 23 of 23.
+
+| Tier | Rows | Opens at |
+| ---- | ---- | -------- |
+| Novice | 13 | Enchanter Rank 1 |
+| Adept | 6 | Rank 2 |
+| Master | 4 | Rank 3 |
+
+`templates/enchantments.csv` holds all 23 with their ids, what each costs to lay,
+what it costs in coin, and what the sheet's words were turned into mechanically.
+
+**The rank note counts now.** It printed no numbers for one pull, on purpose,
+because every enchantment was Novice and a count at Rank 2 would have been a zero
+about the codex rather than a fact about the rank. The Enchanter's page now reads
+`+13 Novice enchantments` at Rank 1, `+6 Adept` and 19 to lay from at Rank 2, and
+`+4 Master` and 23 in all at Rank 3.
+
+#### Four new riders, and four things left printed
+
+The ten new rows brought four consequences the sheet had not needed before, and
+`deriveStats` reads all four:
+
+| Enchantment | Cell | What moves |
+| ----------- | ---- | ---------- |
+| Celerity | "2 Speed" | Movement Speed, +2 |
+| Arcane Battery | "Willpower is increase by 8." | maximum Willpower, +8 |
+| Resilience | "3 armor" | Armor, +3 |
+| Oz'em Pick | "the cost in supplies of short and long rest are reduced by 2" | the price of **both** rests |
+
+Oz'em Pick is the only thing on the sheet that moves a *rest* rather than a stat,
+so `restPrice(character, kind)` is now what everything asks — the plan, the two
+affordability checks, and the buttons on the block, which read 3 and 8 rather than
+5 and 10 for whoever wears it. Floored at nothing, because a rest that paid you
+would be a strange kind of rest.
+
+**Resilience's Armor is one number, not two.** It joins the worn pieces' total, so
+the meter reads it *and* Heavy Armor's "half of Armor" rider reads the same one. A
+full Heavy set with Resilience on top therefore gets +1 Defense out of it as well.
+That is an interaction the sheet has never had to price before, and it is one line
+in `deriveStats` if it should not compound.
+
+And four that stay printed rules the table plays, for the same reason Barrier's
+`2d6` does — nothing here knows what a ceiling is, or that a character went down:
+
+- **Defibrillation** and **Death Defiance** both fire when you go down, and both
+  are spent until a Long Rest. Nothing tracks "has triggered", and nothing on the
+  sheet notices the moment of going down.
+- **Crawler** (walls and ceilings) and **Soar** (flight at your Movement Speed).
+
+#### Two things worth knowing before the next session
+
+**1. NOVICE IMBUEMENT lost its limit.** The cell used to end "1 time until they
+take a Long Rest" and now stops at "cast this spell", and the two new Imbuements
+read the same way, so the removal is consistent across all three rather than a slip
+on one. **Transcribed as written: nothing limits the casting any more.** A burden-4
+enchantment granting a Novice spell without limit is a different thing from one
+granting a single casting, so this is flagged rather than quietly kept. Say the word
+and the clause goes back on all three.
+
+**2. There are no Master spells.** MASTER IMBUEMENT binds "a MASTER spell" and the
+codex holds nine Adept and sixteen Novice and none at Master. The window says so
+rather than showing an empty chip row and refusing to be pressed: *"No Master
+spells in the codex yet. Lay it and name one at the table."* It lays without a name
+and the table supplies one. A Master spells tab fixes it with no code change.
+
+#### One id had to change
+
+**RESILIENCE is `resilience-enchantment`, not `resilience`.** A lineage trait
+already held that id *and* that printed name ("6 health per point of Fortitude and
+Physique instead of 5"), and an id is what a saved character points at, so the older
+one keeps it. This was not cosmetic: lineage cards fold into the registry *after*
+enchantments, so both on one id silently lost the enchantment out of `getCard`, and
+a tracker row written for it would have opened the lineage trait instead.
+
+`weapons.js` now logs a duplicate-id error in development, because a collision does
+not throw, it loses a card.
+
+**The printed names still collide.** The sheet says RESILIENCE and renaming the
+designer's card is not the importer's call, so a table with both will see two cards
+called Resilience. Worth renaming one at the source.
+
+### Five corrections, 20 Aug 2026
+
+**1. Taking the Enchanter asks for the body enchantment.** WIELDER OF WONDER says
+"choose one **when becoming an enchanter**", and that moment was going unasked: the
+set arrived and the slot sat empty until somebody found the Long Rest window. The
+shelf now opens on top of the take, exactly the way a Mycomancer's spell pool does,
+and again at Rank 2 and Rank 3 because each of those widens the count by another.
+The slots stay on the block afterwards as a plainly visible way to change them.
+
+One component serves both moments — `WornEnchants.jsx` — because it is one rule read
+twice. The only difference is where the new value goes: `patch` on the Advancement
+tab, the rest's own draft in the rest window. It writes nothing itself.
+
+**2. A Wielder of Wonder group in the recap.** What is on the Enchanter's own person
+now has its own heading in the Always On block rather than being folded in with the
+gear, because it is a different kind of standing thing: an enchantment on a hood
+goes when the hood does, and these are on the Enchanter. The heading is the card
+that put them there, so each row spends its provenance saying what it costs in
+Magic Burden instead — the number this block exists to stop anyone forgetting.
+
+**3. Workings is called Enchantments.** That group was the block's own word for
+something the cards already have a word for, and a player reading their sheet has
+no reason to learn a second one. `Enchantments`, "worked into what you carry".
+
+**4. An enchantment on the body works the weapon in your hands.** "Enchantments
+apply to your person", so a Fire Infusion worn by an Enchanter is a working on the
+hands rather than the blade, and it travels from weapon to weapon with them. The
+damage type and the Empowering now reach whatever they are actually holding.
+
+**Only what is held.** A Fire Infusion on an Enchanter's hands does nothing to the
+spare dagger in their pack, so `wieldModifiers` in `items.js` is what decides —
+that file is the one that knows what equipment is, and weapons.js is handed the
+answer.
+
+**And it weighs once.** A worn enchantment costs Magic Burden as *worn*, never once
+per weapon held, so the meter reads 8 for a character wearing one and carrying a
+laid one, not 12 for the same character holding two weapons. The meter was also
+leaving the body slots out entirely and now counts them: WIELDER OF WONDER never
+says its enchantments are free of burden, where EPHEMERAL ENCHANTMENT says exactly
+that of its own.
+
+**5. Two damage types read as "Decay or Fire".** A blade with Decay worked into it,
+in the hands of someone wearing Fire, is a blade that deals **Decay or Fire**: both
+enchantments replaced its own type and neither of them lost. It used to be
+whichever came last, which quietly threw one away and turned the order of a list
+into a rule. `itemModifiers` hands back a list now, and the renderer already knew
+how to print one — each type in its own colour, joined with "or", no Oxford comma.
+A type named twice is named once, so two Fire Infusions are one Fire.
+
+The weapon block's banner reads `Enchanted · Decay or Fire`, and the dealt card
+reads *"you deal 4d6 + 6 as Decay or Fire damage"* — 4d6 because both Infusions
+Empower, and Empowered stacks.
+
+#### And one thing that was telling players the wrong rule
+
+The six Infusion cards said Empowered "steps up a category — a d6 becomes a d8".
+**That is Elevate.** The Status & Terms tab defines Empowered as one more die of the
+same kind, 2d6 becoming 3d6, and `empowerCount` in `cardText.js` has done exactly
+that since that pull — so six cards were describing the opposite of what the sheet
+then rolled. The bodies now say what the glossary says. The `Main Effect` cells are
+the designer's own and were not touched: "Empowered by 1" was always right.
 
 ### Two numbers answered, two readings still open
 
@@ -600,6 +786,83 @@ and **Containment Sphere**, which no sheet covers yet.
 rule is written once in `src/lib/tiers.js` and applied once in
 `src/components/useCodexArt.js`. The one exception is the sample card on the
 landing page, which is marked `promo` and shows to everybody.
+
+## The picture folders, and `npm run art:items`
+
+Item art does not arrive as links. It arrives as a folder, which is what
+`data/Armor/` is: 27 JPEGs, one per piece, named for the piece. So there is a
+second importer beside the card one, and the only real difference is that
+nothing downloads.
+
+Drop the folder here, named for the **inventory shelf** it fills — `Armor/`,
+and `Weapons/` or `Belt Gear/` the day either lands. Then:
+
+```bash
+npm run art:items     # the folders only
+npm run art           # both importers, cards then items
+```
+
+[scripts/pull-item-art.mjs](../scripts/pull-item-art.mjs) matches each file to a
+codex item by name and writes two WebP files into `public/items/`:
+
+| File | Size | Drawn by |
+| ---- | ---- | -------- |
+| `<id>.webp` | 720px square, ~29 KB | the item card, whose plate is 360 wide |
+| `<id>-thumb.webp` | 128px square, ~2 KB | the icon tile: 40px in every block, 52 in the equip prompt |
+
+Then it rewrites `src/lib/itemArt.js`, which is generated and should not be
+edited by hand. `items.js` wraps the **whole** codex in its `withArt`, not just
+the armor, so a weapon picks its picture up the day `data/Weapons/` lands with no
+further change.
+
+**64.7 MB became 0.84 MB**, which is 77x. The originals are 2048x2048 and 2.4 MB
+apiece; the biggest plate that draws one is 360 CSS pixels. The thumbnail is the
+half that matters most — a codex browser draws nine tiles at once and every block
+in the inventory draws one, so the tile is the commonest picture on the sheet and
+the item card is the rarest.
+
+Both sizes are cut from the original rather than the thumbnail from the 720
+copy: the original is right there on disk, and 2048 → 128 in one step keeps
+detail that 2048 → 720 → 128 throws away twice.
+
+Idempotent, and `--force` re-encodes everything — which is what you want after
+replacing a picture in the folder. `public/_headers` gives `/items/*` the same
+day of freshness and month of stale-while-revalidate as `/cards/*`, and for the
+same reason: the filename is the item's id and does not change when the picture
+does.
+
+### The five filenames that do not match
+
+Twenty-two of the 27 matched their row on name alone, ignoring case and spacing
+(`Studded leather Helm.jpg` is fine). Five did not, and each was **opened and
+looked at** rather than guessed from its filename:
+
+| Sheet name | File | Why |
+| ---------- | ---- | --- |
+| Greater Runed Leggings | `Greater Runed Legging.jpg` | singular file, plural piece |
+| Runed Robes | `Runed Robe.jpg` | same |
+| Runed Leggings | `Runed Pants.jpg` | the art calls them pants |
+| Half Plate Greaves | `Half Plate Pants.jpg` | same, and the Full Plate tier says Pants in both |
+| Leather Tunic | `Leather Leggings.jpg` | **not a spelling.** The file is a sleeveless leather *vest*, and the legs already have `Leather Breeches.jpg`. The torso piece is the one with no file under its own name, and this file is the garment that piece is — which is also why its id is `leather-vest`. |
+
+Those five live in an `ALIASES` table at the top of the importer, one comment
+each. **Pasting `templates/armor.csv`'s `Image` column back into the sheet
+retires all five**, because a file the sheet names is read from there first.
+
+### A folder that is not a shelf
+
+`data/Mycomancer/` appeared on 2026-08-20 with `Fungal Invocation.jpg` and
+`Mycelium Network.jpg` in it. Those are **talent cards**, not items, so this
+importer does not touch them — it claims only folders named for an inventory
+shelf. Nothing has placed them yet: `pull-card-art.mjs` reads Image columns and
+knows nothing about folders, so those two are still waiting on either a postimg
+link in the Enchanter/Mycomancer sheet or a folder pass added to the card
+importer.
+
+**Who sees them** is the same question and the same answer as card art: a paid
+capability, `showsArt` in `src/lib/tiers.js`, applied in
+`src/components/useCodexArt.js`. A `free` account keeps the rarity-tinted glyph
+tile it has always had, and the item card grows no plate at all.
 
 ## How card text is written
 

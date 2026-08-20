@@ -4,8 +4,8 @@ import { ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import { CardLine } from '../CardText.jsx';
 import { useCardStack } from '../../context/card-stack.js';
-import { WEAPON_SLOTS, heldItem, itemBurden, rarityColor } from '../../lib/items.js';
-import { getCard, itemEnchantments, itemModifiers } from '../../lib/weapons.js';
+import { WEAPON_SLOTS, heldItem, itemBurden, rarityColor, wieldModifiers } from '../../lib/items.js';
+import { getCard, itemEnchantments } from '../../lib/weapons.js';
 
 /**
  * The Inventory tab's weapon block: the two weapons a character has in hand.
@@ -97,10 +97,18 @@ export default function WeaponBlock({ character, equipment, pack, belt, equip, u
 }
 
 /** One held weapon: what it is, what it teaches, and what has been laid on it. */
+/** "Sharp", "Fire or Cold", "Fire, Cold or Force". No Oxford comma. */
+function listOr(words) {
+  if (words.length <= 1) return String(words[0] ?? '');
+  return `${words.slice(0, -1).join(', ')} or ${words[words.length - 1]}`;
+}
+
 function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove }) {
   const cards = (item.abilities ?? []).map(getCard).filter(Boolean);
   const enchantments = itemEnchantments(item);
-  const modifiers = itemModifiers(item);
+  /* What this weapon does in *this* character's hands: what is worked into it,
+     plus whatever an Enchanter is wearing. See wieldModifiers. */
+  const modifiers = wieldModifiers(character, item);
   const burden = itemBurden(item);
 
   return (
@@ -168,7 +176,7 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
         <div className="weapon-enchant">
           <span className="weapon-enchant-head">
             <span className="weapon-enchant-label">
-              Enchanted{modifiers.damage ? ` · ${modifiers.damage}` : ''}
+              Enchanted{modifiers.damage.length > 0 ? ` · ${listOr(modifiers.damage)}` : ''}
             </span>
             <span className="item-value" style={{ color: 'var(--haze-glow)' }}>
               <span className="item-value-num">{burden}</span>

@@ -163,7 +163,7 @@ export default function AbilityCard({
 
   // An infusion replaces the card's printed damage type outright; every
   // Empowering working stacks onto the dice.
-  const damage = modifiers?.damage ? [modifiers.damage] : ability.damage ?? [];
+  const damage = modifiers?.damage?.length ? modifiers.damage : ability.damage ?? [];
   const empower = Number(modifiers?.empower) || 0;
 
   // A card that asks the holder to decide something prints their answer; with

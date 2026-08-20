@@ -3222,6 +3222,13 @@ body.sheet-fixed #root {
   height: 55%;
 }
 
+/* The tile with the piece itself on it. The pictures are square, so the tile
+   crops nothing — `cover` is here for whatever picture one day is not. */
+.item-icon-art {
+  background-size: cover;
+  background-position: center;
+}
+
 /* Tags read as one line wherever there is room for one — the rails above them
    are why there usually is. They still wrap rather than spill. */
 .item-tags {

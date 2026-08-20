@@ -1,4 +1,5 @@
 import { ARMOR_SETS, RARITY_COLORS, itemBurden, itemCharges, rarityColor } from '../../lib/items.js';
+import useCodexArt from '../useCodexArt.js';
 
 /**
  * Shared visual language for items: the slot glyphs, the rarity-tinted icon
@@ -204,22 +205,37 @@ export function SlotGlyph({ slot, item, card }) {
   );
 }
 
-/** The item's icon tile: its slot glyph, tinted with its rarity's colour. */
+/**
+ * The item's icon tile: the piece itself where the codex has a picture of it,
+ * and its slot glyph where it does not. The rarity's colour rims both, because
+ * in a browser list or a filled slot this tile is the only place rarity shows.
+ *
+ * **The thumbnail, never the full picture.** This tile is 40px in every block
+ * on the sheet and 52 in the equip prompt, a browser list draws nine of them at
+ * once, and the 128px cut is 2 KB against the item card's 26. Same rule, and
+ * the same reason, as a card brief's plate.
+ */
 export function ItemIcon({ item, size = 40 }) {
   const color = rarityColor(item);
+  const plate = useCodexArt()(item?.art_thumb ?? item?.art_url ?? null);
+
   return (
     <span
-      className="item-icon"
+      className={`item-icon${plate ? ' item-icon-art' : ''}`}
       style={{
         width: size,
         height: size,
         color,
         borderColor: `color-mix(in srgb, ${color} 45%, transparent)`,
+        // Stays under the picture as well as behind the glyph: it is what a
+        // reader sees in the beat before the plate arrives, and a rarity-tinted
+        // square is a better wait than an empty one.
         backgroundColor: `color-mix(in srgb, ${color} 12%, var(--bg-black))`,
+        backgroundImage: plate ? `url("${plate}")` : undefined,
       }}
       aria-hidden="true"
     >
-      <SlotGlyph item={item} />
+      {!plate && <SlotGlyph item={item} />}
     </span>
   );
 }

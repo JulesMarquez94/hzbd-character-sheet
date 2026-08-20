@@ -201,6 +201,12 @@ export function normalizeSourceOrder(value, ids) {
  * off the talents column and `syncDerived` bakes them into the stored columns
  * exactly the way a worn breastplate is baked in.
  *
+ * Five riders land here: an attribute (which moves everything it buys), and flat
+ * points of maximum Health, maximum Willpower, Movement Speed and Armor. Anything
+ * an enchantment does that is *not* one of those is a printed rule the table
+ * plays — flight, walking on ceilings, coming back up on 1 Health — because
+ * nothing on this sheet knows what a ceiling is or that a character went down.
+ *
  * `extra` is the other kind: what is on them for the next hour and must never be
  * stored, because a stored bonus has no way of ever coming back off. Only
  * `liveCharacter` passes it, and only for what the sheet *shows*. See
@@ -217,12 +223,22 @@ export function deriveStats({ physique, instinct, mind, level, equipment, talent
   const m = (Number(mind) || 0) + add('mind');
   const lvl = Number(level) || 1;
 
-  const health_max =
-    Math.floor(10 * lvl + 10 * p) + worn.healthMax + Math.floor(Number(extra?.healthMax) || 0);
+  /* The flat riders, worn and running, summed once each. `extra` is only ever
+     the ephemeral half; the worn half is already in `worn`. */
+  const flat = (key) => (worn[key] ?? 0) + (Number(extra?.[key]) || 0);
+
+  const health_max = Math.floor(10 * lvl + 10 * p) + Math.floor(flat('healthMax'));
   const reflex = Math.floor(p + i);
   const grit = Math.floor(i + m);
 
   const gear = equipmentEffects(equipment);
+
+  /* Armor is worn pieces plus whatever has been laid on the wielder. Resilience
+     grants "3 armor" and Armor is a stat, so it is one number: the meter reads it,
+     and Heavy Armor's "half of Armor" rider reads the same one rather than a
+     smaller Armor of its own. Flagged in data/README.md as an interaction the
+     designer has not ruled on. */
+  const armorTotal = gear.armorTotal + Math.floor(flat('armor'));
 
   // Defense: the base attribute (or the set-bonus replacement), plus every
   // flat bonus worn, plus Heavy Armor's half-Armor rider.
@@ -230,20 +246,20 @@ export function deriveStats({ physique, instinct, mind, level, equipment, talent
   if (gear.fullSet === 'Light Armor') avoidBase = reflex;
   if (gear.fullSet === 'Magic Armor') avoidBase = grit;
   let avoid = avoidBase + gear.defenseFlat;
-  if (gear.fullSet === 'Heavy Armor') avoid += Math.floor(gear.armorTotal / 2);
+  if (gear.fullSet === 'Heavy Armor') avoid += Math.floor(armorTotal / 2);
 
   return {
     health_max,
     // A shield's base cap is never independently set — it's always half of
     // health_max; worn gear (the Supreme Runed set) can raise it by Mind.
     shield_cap: Math.floor(health_max / 2) + (gear.shieldCapMind ? m : 0),
-    willpower_max: Math.floor(2 * lvl + 2 * m + 10),
+    willpower_max: Math.floor(2 * lvl + 2 * m + 10 + flat('willpowerMax')),
     avoid: Math.floor(avoid),
-    defense: Math.floor(gear.armorTotal),
+    defense: Math.floor(armorTotal),
     initiative: Math.floor(i + lvl),
     // Speed is the one value that stays a precise decimal — everything else
     // here rounds down.
-    speed_m: 3 + i / 2,
+    speed_m: 3 + i / 2 + flat('speed'),
     ap_max: 6,
     reaction_max: 6,
     reflex,

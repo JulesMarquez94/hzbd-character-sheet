@@ -3,7 +3,7 @@ import EffectPrompt from './EffectPrompt.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
 import RestPrompt from './RestPrompt.jsx';
 import { isEnchanter } from '../../lib/enchanting.js';
-import { RESTS } from '../../lib/rest.js';
+import { RESTS, restPrice } from '../../lib/rest.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
   combatShieldGrant,
@@ -74,7 +74,8 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
             title={`${RESTS[kind].label} — ${RESTS[kind].blurb}`}
           >
             <span className="rest-btn-label">{RESTS[kind].label}</span>
-            <span className="rest-btn-cost">{RESTS[kind].supplies} Supplies</span>
+            {/* What it costs *this* character: Oz'em Pick takes 2 off both. */}
+            <span className="rest-btn-cost">{restPrice(character, kind)} Supplies</span>
           </button>
         ))}
       </div>

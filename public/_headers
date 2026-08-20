@@ -9,6 +9,14 @@
 /cards/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
 
+# Item art, written by scripts/pull-item-art.mjs, on the same terms and for the
+# same reason: the name is the item's id and does not change when the picture
+# does. These are the ones a reader meets in bulk — a browser list is nine
+# tiles at once — so the instant serve from cache matters more here than
+# anywhere else on the sheet.
+/items/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+
 # Vite fingerprints everything in /assets, so a changed file is a changed name
 # and the old one can be kept forever.
 /assets/*

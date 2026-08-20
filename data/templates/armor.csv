@@ -1,64 +1,82 @@
 id,Name,Tags,Main Effect,w,Lore,Image
-chainmail-chausses,Chainmail Chausses,"COMMON, Leg Gear, Heavy Armor"," +3 Armor
+chainmail-chausses,Chainmail Chausses,"COMMON, Leg Gear, Heavy Armor","+3 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
-chainmail-coif,Chainmail Coif,"COMMON, Head Gear, Heavy Armor"," +3 Armor
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Chainmail Chausses.jpg
+chainmail-coif,Chainmail Coif,"COMMON, Head Gear, Heavy Armor","+3 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
-chainmail-hauberk,Chainmail Hauberk,"COMMON, Torso Gear, Heavy Armor"," +3 Armor
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Chainmail Coif.jpg
+chainmail-hauberk,Chainmail Hauberk,"COMMON, Torso Gear, Heavy Armor","+3 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
-full-plate-cuirass,Full Plate Cuirass,"EPIC, Torso Gear, Heavy Armor"," +5 Armor
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Chainmail Hauberk.jpg
+full-plate-cuirass,Full Plate Cuirass,"EPIC, Torso Gear, Heavy Armor","+5 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
-full-plate-helm,Full Plate Helm,"EPIC, Head Gear, Heavy Armor"," +5 Armor
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Full Plate Cuirass.jpg
+full-plate-pants,Full Plate Pants,"EPIC, Leg Gear, Heavy Armor","+5 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
-full-plate-pants,Full Plate Pants,"EPIC, Leg Gear, Heavy Armor"," +5 Armor
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Full Plate Pants.jpg
+full-plate-helm,Full Plate Helm,"EPIC, Head Gear, Heavy Armor","+5 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Full Plate Helm.jpg
 greater-runed-hood,Greater Runed Hood,"RARE, Head Gear, Magic Armor","When you enter combat, you start with a Shield equal to 2 times your Mind.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Greater Runed Hood.jpg
 greater-runed-leggings,Greater Runed Leggings,"RARE, Leg Gear, Magic Armor","When you enter combat, you start with a Shield equal to 2 times your Mind.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Greater Runed Legging.jpg
 greater-runed-robes,Greater Runed Robes,"RARE, Torso Gear, Magic Armor","When you enter combat, you start with a Shield equal to 2 times your Mind.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
-half-plate-cuirass,Half Plate Cuirass,"RARE, Torso Gear, Heavy Armor"," +4 Armor
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Greater Runed Robes.jpg
+half-plate-cuirass,Half Plate Cuirass,"RARE, Torso Gear, Heavy Armor","+4 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
-half-plate-greaves,Half Plate Greaves,"RARE, Leg Gear, Heavy Armor"," +4 Armor
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Half Plate Cuirass.jpg
+half-plate-greaves,Half Plate Greaves,"RARE, Leg Gear, Heavy Armor","+4 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
-half-plate-helm,Half Plate Helm,"RARE, Head Gear, Heavy Armor"," +4 Armor
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Half Plate Pants.jpg
+half-plate-helm,Half Plate Helm,"RARE, Head Gear, Heavy Armor","+4 Armor
 
-Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,
-leather-pants,Leather Breeches,"COMMON, Leg Gear, Light Armor"," +1 Defense
+Set Bonus If all three armor slots are filled with Heavy Armor, your Defense is increased by half your Armor.",,,Half Plate Helm.jpg
+leather-pants,Leather Breeches,"COMMON, Leg Gear, Light Armor","+1 Defense
 
-Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,
-leather-helm,Leather Helm,"COMMON, Head Gear, Light Armor"," +1 Defense
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Leather Breeches.jpg
+leather-helm,Leather Helm,"COMMON, Head Gear, Light Armor","+1 Defense
 
-Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,
-leather-vest,Leather Tunic,"COMMON, Torso Gear, Light Armor"," +1 Defense
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Leather Helm.jpg
+leather-vest,Leather Tunic,"COMMON, Torso Gear, Light Armor","+1 Defense
 
-Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Leather Leggings.jpg
 runed-hood,Runed Hood,"COMMON, Head Gear, Magic Armor","When you enter combat, you start with a Shield equal to your Mind.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Runed Hood.jpg
 runed-leggings,Runed Leggings,"COMMON, Leg Gear, Magic Armor","When you enter combat, you start with a Shield equal to your Mind.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Runed Pants.jpg
 runed-robes,Runed Robes,"COMMON, Torso Gear, Magic Armor","When you enter combat, you start with a Shield equal to your Mind.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Runed Robe.jpg
 supreme-runed-hood,Supreme Runed Hood,"EPIC, Head Gear, Magic Armor","When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Supreme Runed Hood.jpg
 supreme-runed-leggings,Supreme Runed Leggings,"EPIC, Leg Gear, Magic Armor","When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Supreme Runed Leggings.jpg
 supreme-runed-robes,Supreme Runed Robes,"EPIC, Torso Gear, Magic Armor","When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.
 
-Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,
+Set Bonus If all three armor slots are filled with Magic Armor, your Defense is based off your Grit.",,,Supreme Runed Robes.jpg
+studded-leather-breeches,Studded Leather Breeches,"RARE, Leg Gear, Light Armor","+1 Defense, +1 Armor
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Studded leather Breeches.jpg
+studded-leather-helm,Studded Leather Helm,"RARE, Head Gear, Light Armor","+1 Defense, +1 Armor
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Studded leather Helm.jpg
+studded-leather-tunic,Studded Leather Tunic,"RARE, Torso Gear, Light Armor","+1 Defense, +1 Armor
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Studded leather Tunic.jpg
+scale-leggings,Scale Leggings,"EPIC, Leg Gear, Light Armor","+1 Defense, +2 Armor
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Scale Leggings.jpg
+scale-helm,Scale Helm,"EPIC, Head Gear, Light Armor","+1 Defense, +2 Armor
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Scale Helm.jpg
+scale-armor,Scale Armor,"EPIC, Torso Gear, Light Armor","+1 Defense, +2 Armor
+
+Set Bonus If all three armor slots are filled with Light Armor, your Defense is equal to your Reflex.",,,Scale Armor.jpg

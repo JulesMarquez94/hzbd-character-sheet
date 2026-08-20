@@ -781,6 +781,21 @@ export const CARDS = [
   ...BASIC_ACTIONS,
 ];
 
+/* A duplicate id does not throw, it *loses a card*: the Map keeps whichever came
+   last and every `getCard` for that id quietly returns the wrong one. It cost an
+   afternoon once (an enchantment and a lineage trait both called `resilience`), so
+   the next one says so out loud in development rather than being found by hand. */
+if (import.meta.env?.DEV) {
+  const seen = new Set();
+  const clashes = CARDS.filter((card) => !seen.add(card.id)).map((card) => card.id);
+  if (clashes.length > 0) {
+    console.error(
+      `[hazebound] Two cards share an id, so one of them is unreachable: ${[...new Set(clashes)].join(', ')}. ` +
+        'Ids are what saved characters point at, so the older card keeps its id.'
+    );
+  }
+}
+
 const CARD_BY_ID = new Map(CARDS.map((card) => [card.id, card]));
 const CARD_BY_NAME = new Map(CARDS.map((card) => [card.name.toLowerCase(), card]));
 
@@ -802,18 +817,38 @@ export function itemEnchantments(item) {
 }
 
 /**
- * What the item does to the cards it teaches. A weapon's own damage type is
- * whatever the last infusion turned it into, and every Empowering enchantment
- * stacks another die category on top.
+ * What the item does to the cards it teaches: the damage types it deals, and how
+ * far every damage die it rolls steps up.
+ *
+ * `extra` is what the *wielder* brings rather than the item — the enchantments on
+ * an Enchanter's own person, which travel from weapon to weapon with them. See
+ * `wieldModifiers` in items.js, which is what works out whether an item is in
+ * their hands at all.
+ *
+ * ---------------------------------------------------------- two types, not one
+ * **Every type is kept.** A blade with Decay worked into it, in the hands of
+ * someone wearing Lightning, is a blade that deals "Decay or Lightning": two
+ * enchantments both replaced its own type and neither of them lost. It used to be
+ * whichever came last, which quietly threw one away and made the order of a list
+ * into a rule. The renderer already prints a list of types as "Decay or
+ * Lightning", each in its own colour, so this hands back a list.
+ *
+ * A type named twice is named once. Two Fire Infusions are one Fire.
  */
-export function itemModifiers(item) {
-  let damage = null;
+export function itemModifiers(item, extra = []) {
+  const damage = [];
   let empower = 0;
 
-  for (const { enchantment } of itemEnchantments(item)) {
-    if (enchantment.damageType) damage = enchantment.damageType;
+  const fold = (enchantment) => {
+    if (!enchantment) return;
+    if (enchantment.damageType && !damage.includes(enchantment.damageType)) {
+      damage.push(enchantment.damageType);
+    }
     empower += Number(enchantment.empower) || 0;
-  }
+  };
+
+  for (const { enchantment } of itemEnchantments(item)) fold(enchantment);
+  for (const enchantment of extra) fold(enchantment);
 
   return { damage, empower };
 }

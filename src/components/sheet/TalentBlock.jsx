@@ -3,6 +3,7 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import PickBlock from './PickBlock.jsx';
 import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
+import WornEnchants from './WornEnchants.jsx';
 import { BrewRankNote } from './BrewWindow.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import TagFilter from './TagFilter.jsx';
@@ -10,6 +11,7 @@ import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { brewPreview } from '../../lib/brews.js';
+import { enchantmentsAt } from '../../lib/enchantments.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
 import {
   TALENT_RANKS,
@@ -17,6 +19,7 @@ import {
   chooseAt,
   clearAt,
   enchantPreview,
+  enchantingOf,
   optionsAt,
   rankInfo,
   talentTags,
@@ -129,10 +132,19 @@ export default function TalentPick({
 
                A set that brews chooses nothing at any rank: a Brew is composed
                at the moment it is used, so there is nothing to push here. */
-            const spec = loadoutOf(id);
             const held = list.find((entry) => entry.id === id);
             const from = held ? held.taken.length : 0;
-            if (spec && knownAt(spec, from + 1) > knownAt(spec, from)) setJustTook(id);
+            const rank = from + 1;
+
+            const spec = loadoutOf(id);
+            if (spec && knownAt(spec, rank) > knownAt(spec, from)) setJustTook(id);
+
+            /* And the same for a set that lays rather than picks. WIELDER OF
+               WONDER says "choose one **when becoming an enchanter**", which is
+               this exact moment, and every rank after this one widens the count by
+               another, so every rank asks again. */
+            const laying = enchantingOf(id);
+            if (laying && (laying.worn?.[rank] ?? 0) > (laying.worn?.[from] ?? 0)) setJustTook(id);
           }}
           onClose={() => setChoosing(false)}
         />
@@ -209,6 +221,21 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, onView, onU
               readOnly={readOnly}
               autoOpen={justTook === talent.id}
             />
+          )}
+
+          {/* And what it lays on its own person, for the one set that does. Same
+              slot rule and the same auto-open: the shelf arrives with the rank
+              rather than waiting to be found. */}
+          {rank === entry.rank && talent.enchanting && (
+            <div className="pick-part">
+              <WornEnchants
+                character={character}
+                talents={character.talents}
+                onChange={(next) => patch({ talents: next })}
+                readOnly={readOnly}
+                autoOpen={justTook === talent.id}
+              />
+            </div>
           )}
         </>
       ) : (
@@ -447,24 +474,30 @@ const WORN_ORDINAL = [null, 'one', 'a second', 'a third'];
  * and re-read. So this says it where the decision is made. Every word of it is
  * off those two cards.
  *
- * It counts nothing, unlike the Brew note. Every enchantment on the Equipment
- * sheet is a Novice one and the four the codex holds carry no tier at all, so a
- * number here would be a number about the codex rather than about the rank. See
- * data/README.md.
+ * **It counts now.** It did not, for one pull: every enchantment on the Equipment
+ * sheet was a Novice one, so a number at Rank 2 or Rank 3 would have been a zero
+ * about the codex rather than a fact about the rank. The 2026-08-20 drop brought
+ * the Adept and Master shelves in, so the count is what it always wanted to be —
+ * the same thing the Brew note says about Ingredients.
  */
 function EnchantRankNote({ talent, rank }) {
   const preview = enchantPreview(talent, rank);
   if (!preview || preview.tiers.length === 0) return null;
 
-  const { spec, opened, kept, worn, grew } = preview;
+  const { spec, opened, kept, tiers, worn, grew } = preview;
+
+  /* How many the rank *adds*, and how many it can reach in all. Read off the
+     codex, so a shelf the designer grows grows this line with it. */
+  const added = enchantmentsAt(opened).length;
+  const reach = enchantmentsAt(tiers).length;
 
   return (
     <div className="loadout-note">
       <span className="loadout-note-body">
         <b>
-          {opened.length > 0
-            ? `${listAnd(opened)} enchantments open`
-            : 'Nothing new opens at this rank'}
+          {added > 0
+            ? `+${added} ${listAnd(opened)} ${added === 1 ? 'enchantment' : 'enchantments'}`
+            : `${reach} within reach, and nothing new here`}
         </b>
         <span className="loadout-note-line">
           {/* The price is on ENCHANTING, which the first rank prints right above
@@ -472,7 +505,7 @@ function EnchantRankNote({ talent, rank }) {
               three times over, so the later ranks say what they add instead. */}
           {kept.length === 0
             ? `Laid on an item over a Long Rest, ${spec.supplyRate} supplies for every point of Magic Burden`
-            : `On top of the ${listAnd(kept)} ${kept.length === 1 ? 'shelf' : 'shelves'} you already lay from`}
+            : `${reach} to lay from in all, over the ${listAnd(kept)} ${kept.length === 1 ? 'shelf' : 'shelves'} you already had`}
           {grew ? `, and ${WORN_ORDINAL[worn] ?? worn} worn on your own person` : ''}.
         </span>
       </span>
