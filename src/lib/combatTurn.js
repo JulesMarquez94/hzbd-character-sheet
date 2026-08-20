@@ -179,9 +179,11 @@ export function startTurn(character) {
     ap: Math.max(0, Math.floor(Number(character?.ap_max) || 0)),
     effects: tick(normalizeEffects(character?.effects)),
     /* "During your turn, you also control your draconic ally." It is your turn
-       that it acts on, so its Action Points come back when yours do. Its
-       Reaction Points are left alone for the same reason yours are. */
-    ...(refillMinions(character) ?? {}),
+       that it acts on, so its Action Points come back when yours do and its own
+       tracker counts down on the same press — a creature has no Start Turn of
+       its own to count from. Its Reaction Points are left alone for the same
+       reason yours are. */
+    ...(refillMinions(character, { tick: tickEffects }) ?? {}),
   };
 }
 
@@ -204,6 +206,18 @@ function tick(effects) {
   return effects
     .filter((effect) => effect.turns !== 0)
     .map((effect) => (effect.turns === null ? effect : { ...effect, turns: effect.turns - 1 }));
+}
+
+/**
+ * The same turn, spent on somebody else's list.
+ *
+ * A creature a talent set put on the board keeps its own tracker on its own row
+ * (see minions.js), and it has no turn of its own to count from: it acts on its
+ * bonded's. So `startTurn` hands this down to `refillMinions`, and what a turn
+ * does to an effect is still written once, here, whoever the effect is on.
+ */
+export function tickEffects(list) {
+  return tick(normalizeEffects(list));
 }
 
 /**

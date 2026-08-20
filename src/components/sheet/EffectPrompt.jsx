@@ -35,8 +35,23 @@ import { cardGist } from '../../lib/cardText.js';
  * mechanical rider, so it cannot be typed in by hand: the name would land and the
  * +1 Instinct would not. The offer opens the shelf instead, which is the same
  * window the quick bar opens and the one that takes the payment.
+ *
+ * ------------------------------------------------------------- whose tracker
+ * `character` is always the character: it is what the offers are read from, and
+ * what a card's numbers are printed against. `holder` is whose tracker the row
+ * lands on, and it defaults to the same person. A creature a talent set put on
+ * the board has a tracker of its own on its own row (see minions.js), so its
+ * block passes `holder` — the creature's name, its current list, and where to
+ * put the new one. Nothing else about the window changes: a Frightened dragon is
+ * tracked with the same three answers as a frightened drifter.
  */
-export default function EffectPrompt({ character, onAdd, onClose, onEnchant = null }) {
+export default function EffectPrompt({
+  character,
+  onAdd,
+  onClose,
+  onEnchant = null,
+  holder = null,
+}) {
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [turns, setTurns] = useState(3);
@@ -96,24 +111,26 @@ export default function EffectPrompt({ character, onAdd, onClose, onEnchant = nu
     const trimmed = name.trim();
     if (!trimmed) return;
 
-    onAdd({
-      effects: addEffect(character.effects, {
-        name: trimmed,
-        card: picked?.card.id ?? null,
-        note: note.trim(),
-        turns: open ? null : turns,
-        // Only an open-ended effect can be ended by a rest; one counted in
-        // turns runs out on its own before a rest is ever taken.
-        until: open ? until || null : null,
-        from: picked?.from ?? '',
-      }),
+    const list = addEffect(holder ? holder.effects : character.effects, {
+      name: trimmed,
+      card: picked?.card.id ?? null,
+      note: note.trim(),
+      turns: open ? null : turns,
+      // Only an open-ended effect can be ended by a rest; one counted in
+      // turns runs out on its own before a rest is ever taken.
+      until: open ? until || null : null,
+      from: picked?.from ?? '',
     });
+
+    // The holder decides what the patch looks like; the window only builds the
+    // list, because a creature's rows live on its own row and not in a column.
+    onAdd(holder ? holder.write(list) : { effects: list });
     onClose();
   }
 
   return (
     <Modal
-      title="Track an effect"
+      title={holder ? `Track an effect on ${holder.name}` : 'Track an effect'}
       onClose={onClose}
       footer={
         <>

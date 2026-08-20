@@ -49,9 +49,22 @@
  * There is no third target number. A spell that is not swung at someone is
  * always contested against Reflex or Grit.
  *
+ * ---------------------------------------------------------------- the art
+ * The cards' pictures are not written on the cards. They live in cardArt.js,
+ * keyed by card id and generated from the sheets' own Image column, and every
+ * other family of cards in the codex wears them the same way: SPELLS and
+ * BASIC_ACTIONS both hand their array through `withArt` at the bottom of their
+ * own file. These did not, which is the whole reason nine Draconic Bond plates
+ * sat in public/cards with nothing drawing them — a set's `art` is the set's
+ * overview picture and was never its cards'.
+ *
+ * cardArt.js imports nothing, so taking it does not cost this file its leaf.
+ *
  * This file is a leaf: nothing here may import weapons.js or items.js, which
  * both end up importing it back.
  */
+
+import { withArt } from './cardArt.js';
 
 /* --------------------------------------------------------------- the ranks */
 
@@ -93,7 +106,7 @@ export const TALENT_TAGS = [
 
 /* ------------------------------------------------------------- the codex */
 
-export const TALENTS = [
+const TALENT_SETS = [
   {
     id: 'guardian',
     name: 'Guardian',
@@ -827,6 +840,20 @@ export const TALENTS = [
     ],
   },
 ];
+
+/**
+ * The sets as everything else sees them, with every card wearing its picture.
+ *
+ * The one line between the codex above and every reader of it. `withArt` puts
+ * `art_url` and `art_thumb` on each card from cardArt.js, keyed by card id, and
+ * a card with no picture keeps both fields as null rather than losing them —
+ * which is what the plates on the sheet already draw empty. See the note at the
+ * top of this file for why it happens here and not on each set by hand.
+ */
+export const TALENTS = TALENT_SETS.map((talent) => ({
+  ...talent,
+  cards: withArt(talent.cards),
+}));
 
 /* ------------------------------------------------------------------ lookups */
 

@@ -33,10 +33,11 @@
  * One `minions` jsonb column on the character, keyed by the set that granted
  * the creature:
  *
- *   { "draconic-bond": { name, scale, portrait_url, health, shield, ap, reaction } }
+ *   { "draconic-bond": { name, scale, portrait_url, health, shield, ap, reaction, effects } }
  *
- * Identity and pools together, because they are the same creature and they are
- * written from the same two blocks. Not on the talent entry beside `picks`:
+ * Identity, pools and whatever is running on it, because they are the same
+ * creature and they are written from the same two blocks. Not on the talent
+ * entry beside `picks`:
  * pools move several times a turn and the talents column is a record of what
  * levels bought, which should not be rewritten every time something takes a hit.
  *
@@ -180,6 +181,11 @@ export function minionDerived(spec, attributes, level) {
 
 const POOLS = ['health', 'shield', 'ap', 'reaction'];
 
+/* As long a list of running effects as one creature's row will carry. The same
+   ceiling combatTurn.js puts on a character's own tracker, repeated rather than
+   imported: this file is below that one and stays there. */
+const EFFECTS_MAX = 40;
+
 /**
  * A stored `minions` value is only ever a hint: it may be a JSON string, hold
  * sets this build has never heard of, or carry pools written by an older rule.
@@ -187,6 +193,13 @@ const POOLS = ['health', 'shield', 'ap', 'reaction'];
  *
  * A pool that is absent stays absent rather than becoming a zero — absent means
  * "full", and a creature named a moment ago has none of them written yet.
+ *
+ * The creature's `effects` are carried through as rows rather than repaired
+ * here. What an effect *is* belongs to combatTurn.js, which is above this file
+ * and must stay there, so every reader of this list runs it through that file's
+ * own `normalizeEffects` — the block that draws it, and the three writers that
+ * change it. All this does is refuse anything that is plainly not a list of
+ * rows, and keep the list to a length one row can hold.
  */
 export function normalizeMinions(value) {
   let source = value;
@@ -212,6 +225,10 @@ export function normalizeMinions(value) {
     for (const pool of POOLS) {
       const n = Number(raw[pool]);
       if (Number.isFinite(n)) row[pool] = Math.floor(n);
+    }
+    if (Array.isArray(raw.effects)) {
+      const rows = raw.effects.filter((entry) => entry && typeof entry === 'object');
+      if (rows.length > 0) row.effects = rows.slice(0, EFFECTS_MAX);
     }
     clean[id] = row;
   }
@@ -272,6 +289,11 @@ export function minionState(character) {
       shield,
       ap,
       reaction,
+      /* What is running on the creature. Its own list and not its bonded's: a
+         Frightened dragon is not a frightened drifter. Rows as stored — the
+         block runs them through normalizeEffects, for the reason given above
+         normalizeMinions. */
+      effects: row.effects ?? [],
       /* "If its health reaches 0 it instantly is shown as dead." The card that
          grants it, ONE AND THE SAME, is what says the rest: it retreats into
          your shadow rather than being gone for good. */
@@ -374,16 +396,32 @@ export function minionForBlock(list, id) {
 
 /* -------------------------------------------------------------- the writers */
 
-/** One creature's stored row replaced by `body`, as a patch for the character. */
+/**
+ * One creature's stored row with `body` written over it, as a patch.
+ *
+ * Three kinds of value, and the difference between the first two is the whole
+ * reason this is a loop rather than a spread:
+ *
+ *   undefined   not part of this write. The naming window sends one field at a
+ *               time and leaves the other two out of the object; a spread would
+ *               put `undefined` in the row and the clean-up below would read
+ *               that as a clear, so typing a name deleted the picture and the
+ *               scale colour with it.
+ *   null or ''  a clear, and meant as one. That is the picture field emptied by
+ *               hand, which has to actually empty.
+ *   anything    stored.
+ */
 export function writeMinion(character, id, body) {
   const stored = normalizeMinions(character?.minions);
-  const next = { ...stored, [id]: { ...(stored[id] ?? {}), ...body } };
+  const row = { ...(stored[id] ?? {}) };
 
-  // Nothing worth storing left in a row means an empty row, not a row of nulls.
-  for (const [key, value] of Object.entries(next[id])) {
-    if (value === null || value === undefined || value === '') delete next[id][key];
+  for (const [key, value] of Object.entries(body ?? {})) {
+    if (value === undefined) continue;
+    if (value === null || value === '') delete row[key];
+    else row[key] = value;
   }
-  return { minions: next };
+
+  return { minions: { ...stored, [id]: row } };
 }
 
 /** What the naming window writes: who it is, what colour, and its picture. */
@@ -393,6 +431,19 @@ export function setMinionIdentity(character, id, { name, scale, portrait_url }) 
     scale: scale ?? undefined,
     portrait_url: typeof portrait_url === 'string' ? portrait_url.trim() : undefined,
   });
+}
+
+/**
+ * The creature's own tracker replaced by `list`.
+ *
+ * The list itself is built by combatTurn.js's `addEffect`, `nudgeEffect` and
+ * `dropEffect` — the very functions the character's tracker is built with, so a
+ * row on a creature is the same kind of row as a row on its bonded and neither
+ * block has a private idea of what an effect is. All this does is put the
+ * answer on the creature's row instead of the character's `effects` column.
+ */
+export function setMinionEffects(character, id, list) {
+  return writeMinion(character, id, { effects: Array.isArray(list) && list.length > 0 ? list : null });
 }
 
 /** One pool moved, held inside what the creature can actually hold. */
@@ -433,6 +484,12 @@ export function minionSpend(character, minion, body) {
 
 /* ---------------------------------------------------- rests and the fight */
 
+/** Whether a tick actually moved anything: same rows, same counts left. */
+function sameCount(before, after) {
+  if (before.length !== after.length) return false;
+  return before.every((row, at) => row?.id === after[at]?.id && row?.turns === after[at]?.turns);
+}
+
 /**
  * Every creature's Action Points back to full and its Reaction Points emptied,
  * for the start of a fight.
@@ -440,8 +497,14 @@ export function minionSpend(character, minion, body) {
  * The same rule the character's own pools follow at the bell: reactions are
  * earned inside a round, so a fight begins with none of them. Returns null when
  * there is nothing on the board, so a sheet with no creature writes no column.
+ *
+ * `tick` is what a turn does to a list of running effects, handed in by
+ * combatTurn.js rather than written again here. A creature has no turn of its
+ * own — "during your turn, you also control your draconic ally" — so its
+ * tracker counts down on its bonded's Start Turn and nowhere else, and the one
+ * rule for what counting down means stays in the one file that owns it.
  */
-export function refillMinions(character, { reaction = false } = {}) {
+export function refillMinions(character, { reaction = false, tick = null } = {}) {
   const list = minionState(character);
   if (list.length === 0) return null;
 
@@ -453,12 +516,21 @@ export function refillMinions(character, { reaction = false } = {}) {
     // A creature that is down stays down. It comes back on a Long Rest and
     // nowhere else, which is ONE AND THE SAME's own rule.
     if (minion.down) continue;
-    if (minion.ap === minion.stats.ap_max && !(reaction && minion.reaction > 0)) continue;
+
+    /* Its tracker runs whether or not its points moved: an effect with a turn
+       left on it has to spend that turn even on a turn the creature does
+       nothing with. A list of nothing but open-ended rows comes back the same,
+       and a tick that changed nothing is not a reason to write the column. */
+    const rolled = tick && minion.effects.length > 0 ? tick(minion.effects) : null;
+    const ticked = rolled && !sameCount(minion.effects, rolled) ? rolled : null;
+    const pools = minion.ap !== minion.stats.ap_max || (reaction && minion.reaction > 0);
+    if (!pools && !ticked) continue;
 
     next[minion.id] = {
       ...(next[minion.id] ?? {}),
       ap: minion.stats.ap_max,
       ...(reaction ? { reaction: 0 } : {}),
+      ...(ticked ? { effects: ticked } : {}),
     };
     moved = true;
   }
@@ -476,8 +548,13 @@ export function refillMinions(character, { reaction = false } = {}) {
  * for a draconic ally is the long one: "if it would die, it instead retreats
  * into your shadow and is unable to reemerge until you take a Long Rest". A
  * short rest is offered nothing, because the card never printed one.
+ *
+ * `ends` is which durations this rest puts an end to, handed in by rest.js from
+ * the rest's own entry. A creature has no rest of its own — it rests when its
+ * bonded does — so what a rest ends on its tracker is decided there and applied
+ * here, in the one write that also touches its Health.
  */
-export function minionRest(character, kind) {
+export function minionRest(character, kind, ends = []) {
   const list = minionState(character);
   if (list.length === 0) return null;
 
@@ -487,6 +564,24 @@ export function minionRest(character, kind) {
   let moved = false;
 
   for (const minion of list) {
+    /* What the rest ends is asked of every creature, whatever rest brings this
+       one back: a short rest that restores nothing still ends what it ends. */
+    const ending = minion.effects.filter((effect) => effect?.until && ends.includes(effect.until));
+
+    if (ending.length > 0) {
+      const kept = minion.effects.filter((effect) => !ending.includes(effect));
+      next[minion.id] = { ...(next[minion.id] ?? {}), effects: kept };
+      if (kept.length === 0) delete next[minion.id].effects;
+      moved = true;
+
+      lines.push({
+        key: `minion-fx-${minion.id}`,
+        label: `${minion.title}: ${ending.length} ${ending.length === 1 ? 'effect ends' : 'effects end'}`,
+        detail: ending.map((effect) => effect.name).join(', '),
+        tone: 'end',
+      });
+    }
+
     if ((minion.spec.returns ?? 'long') !== kind) continue;
 
     const full = minion.stats.health_max;

@@ -809,10 +809,8 @@ body.sheet-fixed #root {
   gap: 0.55rem;
 }
 
-.combat-block .meter {
-  padding: 0.45rem 0.7rem;
-  gap: 5px;
-}
+/* The meter it draws is tightened where a creature's block does the same, so
+   the two never part company. See `.minion-block .meter`. */
 
 /* ---------- STAT CATEGORY LABELS ---------- */
 /* Small heading above a row of 3 tiles — "Attributes", "Combat Stats", etc. */
@@ -7992,13 +7990,29 @@ body.sheet-fixed #root {
 }
 
 .minion-block {
-  gap: 0.55rem;
+  gap: 0.5rem;
+}
+
+/* The creature's Health and Shield are the character's Health and Shield: same
+   box, same padding, same readout inside the track. Block 2 tightens the meter
+   it draws and this block was left on the default, which is why the two bars
+   were plainly not the same bar — 5px of padding and a gap apart. One rule for
+   both now, so neither can drift again. */
+.combat-block .meter,
+.minion-block .meter {
+  padding: 0.45rem 0.7rem;
+  gap: 5px;
 }
 
 /* ---------- who it is ----------
    A square plate rather than block 1's tall portrait. The name, the colour and
    the set all have to sit beside it, and the two stat rows below it are what
-   the block is actually for. */
+   the block is actually for.
+
+   It is the tallest thing in this row by a distance — a name, two chips and the
+   Edit button do not come close — so the plate sets the row's height on its own
+   and anything else added beside it is free. That is what pays for the "Dead"
+   chip, and it is why the plate can be this big at all. */
 .minion-id {
   display: flex;
   align-items: flex-start;
@@ -8007,8 +8021,8 @@ body.sheet-fixed #root {
 }
 
 .minion-plate {
-  width: 68px;
-  height: 68px;
+  width: 88px;
+  height: 88px;
   flex: none;
   border-radius: 4px;
   border: 1px solid rgba(255, 179, 0, 0.28);
@@ -8086,9 +8100,37 @@ body.sheet-fixed #root {
   color: var(--copper);
 }
 
+/* Health at nothing. The skull is already on the name; this is the word for it,
+   in the colour Health is drawn in, and it carries the card's own sentence
+   about coming back as its title. The second block prints that sentence out. */
+.minion-chip.is-down {
+  border-color: color-mix(in srgb, var(--stat-health) 55%, transparent);
+  background-color: color-mix(in srgb, var(--stat-health) 14%, rgba(9, 17, 21, 0.55));
+  color: var(--danger-rose);
+  cursor: help;
+}
+
+/* The way into the naming window, on the block's head. A line of text and not a
+   button-shaped button: the head is 18px tall and a bordered one would be 30,
+   which the block cannot spare. The same shape block 6 gives "End the fight". */
 .minion-edit {
   flex: none;
-  align-self: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--copper);
+  transition: color 0.15s ease;
+}
+
+.minion-edit:hover,
+.minion-edit:focus-visible {
+  color: var(--copper-bright);
 }
 
 /* ---------- the two pools it owns ----------
@@ -8150,6 +8192,7 @@ body.sheet-fixed #root {
 
 .minion-note {
   margin: 0;
+  flex-shrink: 0;
   font-size: 0.64rem;
   line-height: 1.45;
   color: var(--text-muted);
@@ -8158,6 +8201,63 @@ body.sheet-fixed #root {
 .minion-note b {
   color: var(--stat-wp);
   font-weight: 700;
+}
+
+/* ---------- THE SECOND BLOCK ----------
+   Two lists with no natural length — everything it can play, and everything
+   running on it — inside a block that is a hard 640px like every other. So the
+   block itself is told not to scroll, and the two lists split whatever height
+   the pools and the headings leave, each scrolling inside itself.
+
+   Which means the pools, the two headings and the add button never move, and
+   nothing on the block is hidden under a fold. The bar gets the larger share:
+   it is what a turn is spent from, and the tracker is usually two rows or
+   none. */
+.minion-actions {
+  overflow: hidden;
+}
+
+/* Each takes the height it actually wants, and gives ground in proportion to
+   its size only once the two of them together are more than there is. So a
+   creature with nothing running wastes nothing on an empty tracker, and a bar
+   with its basic actions opened does not push the tracker off the block. Each
+   keeps a floor of a couple of rows, because a list shrunk to one and a half is
+   a list nobody can read. */
+.minion-actions .minion-bar,
+.minion-actions .fx-list {
+  flex: 0 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 138, 75, 0.35) transparent;
+}
+
+.minion-actions .minion-bar {
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* And the bar gives ground first. It has a fold on every group, so a player who
+   wants the room back has a way to take it; the tracker has no such control,
+   and a row that runs out unnoticed is the thing the tracker exists to stop. */
+.minion-actions .fx-list {
+  flex-shrink: 0.35;
+  min-height: 76px;
+}
+
+.minion-actions .minion-bar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.minion-actions .minion-bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.minion-actions .minion-bar::-webkit-scrollbar-thumb {
+  background-color: rgba(200, 138, 75, 0.35);
+  border-radius: 3px;
 }
 
 /* ---------- the naming window ---------- */
@@ -8194,10 +8294,16 @@ body.sheet-fixed #root {
 }
 
 /* Six colours, each showing the damage it is made of. The swatch is the point:
-   the name of a colour is a word, and the colour is the thing being chosen. */
+   the name of a colour is a word, and the colour is the thing being chosen.
+
+   Three across and not four. Each of these buttons has three things on one
+   line — a swatch, a colour and a damage type — and at four across there were
+   only 62px for the last two of them. "White" and "Lightning" need ninety
+   between them, so the two words ran straight through each other and neither
+   could be read. Three across gives the pair a hundred and thirty. */
 .minion-scales {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 6px;
   margin-top: 0.4rem;
 }
@@ -8239,19 +8345,29 @@ body.sheet-fixed #root {
   box-shadow: 0 0 8px color-mix(in srgb, var(--scale-tone, var(--copper)) 55%, transparent);
 }
 
+/* The name gives up room before the damage type does, and clips rather than
+   spills: a word that runs out of its box does not stop being drawn, it just
+   gets drawn over whatever is next to it. Which is what happened here. */
 .minion-scale-name {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-bright);
 }
 
+/* And the damage type is never squeezed at all. It is the half of the line that
+   actually matters at the table. */
 .minion-scale-dmg {
+  flex: none;
   font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.6px;
   text-transform: uppercase;
+  white-space: nowrap;
   color: color-mix(in srgb, var(--scale-tone, var(--copper)) 72%, var(--text-silver));
 }
 

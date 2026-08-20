@@ -1,14 +1,18 @@
 import { useMemo, useState } from 'react';
+import EffectPrompt from './EffectPrompt.jsx';
 import UsePrompt from './UsePrompt.jsx';
 import { MinionWindow } from './MinionPick.jsx';
 import { BarChip } from './ActiveBlock.jsx';
+import { EffectRow } from './TurnBlock.jsx';
 import { AttrTile, GroupHead, PipRow, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
+import { useCardStack } from '../../context/card-stack.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import { damageStyle } from '../../lib/cardText.js';
 import { metersToFeet } from '../../lib/characterModel.js';
 import { minionBar, spendUse } from '../../lib/combatBar.js';
-import { minionActor, minionSpend, setMinionPool } from '../../lib/minions.js';
+import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
+import { minionActor, minionSpend, setMinionEffects, setMinionPool } from '../../lib/minions.js';
 
 /**
  * The two blocks a creature gets on the Character tab, and they only exist when
@@ -42,13 +46,36 @@ import { minionActor, minionSpend, setMinionPool } from '../../lib/minions.js';
  * prompt's own affordability check gets both halves right without knowing what a
  * minion is. `minionSpend` then splits the confirmed patch back apart: points to
  * the creature's row, Willpower to the character's, in one write.
+ *
+ * ------------------------------------------------------- what it does not get
+ * No turn manager and no rests. There is one clock at the table and it is the
+ * character's: "during your turn, you also control your draconic ally", so the
+ * creature has no turn of its own to start and nothing of its own to sleep off.
+ * Its Action Points come back on its bonded's Start Turn and its Health on their
+ * Long Rest, both from block 6's buttons (see refillMinions and minionRest).
+ *
+ * It does get a tracker, because being Frightened is a thing that happens to a
+ * dragon and not to its bonded, and it counts down on the same press.
+ *
+ * ------------------------------------------------------------- and no scroll
+ * Neither block scrolls. The first one is a fixed list of tiles and fits; the
+ * second holds two lists that have no natural length — everything it can play,
+ * and everything running on it — so each of those gets the height left over and
+ * scrolls inside itself. Which means the pools, the heads and the add button
+ * never move, and nothing on either block is hidden below a fold.
  */
 
-/* Armor is here and always zero. A creature wears no gear and there is nowhere
-   on the sheet to give it any, so the tile could have been left off — but the
-   three combat stats are the three combat stats, and a row of two where block 2
-   has three is the kind of small difference that makes two stat blocks hard to
-   read against each other. */
+/* The six tiles, in block 2's own order, under one heading instead of its two.
+   Block 2 can afford "Combat Stats" and "Defenses" as separate headings; this
+   block holds what the character spreads over blocks 1 and 2 and cannot, and a
+   heading costs it the same height as three more tiles would. The tiles
+   themselves are unmoved — same six, same places, same colours — because that
+   is the part a reader compares between the two blocks.
+
+   Armor is among them and always zero. A creature wears no gear and there is
+   nowhere on the sheet to give it any, so the tile could have been left off —
+   but a row of two where block 2 has three is the kind of small difference that
+   makes two stat blocks hard to read against each other. */
 const TOP_LINE = [
   {
     key: 'initiative',
@@ -112,9 +139,26 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
 
   return (
     <div className="cell-scroll minion-block">
+      {/* The way back into the naming window is up here, on the block's own
+          head, and not beside the plate. Beside the plate it was a 52px button
+          taking width off the row it shares with the name and the chips, which
+          pushed both of them into wrapping and made the row taller than the
+          picture in it. Up here it costs nothing: the head is one line either
+          way, and block 6 already puts its own small action on one. */}
       <div className="block-head">
         <span className="stat-category-label">{spec.label}</span>
+        <span className="spacer" />
         <span className="block-count">Lvl {String(minion.level).padStart(2, '0')}</span>
+        {!readOnly && (
+          <button
+            type="button"
+            className="minion-edit"
+            onClick={() => setEditing(true)}
+            title={minion.named ? `Change ${minion.name}` : `Name your ${spec.noun ?? 'ally'}`}
+          >
+            {minion.named ? 'Edit' : 'Name it'}
+          </button>
+        )}
       </div>
 
       <div className="minion-id">
@@ -148,18 +192,21 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
               <span className="minion-chip is-open">No colour chosen</span>
             )}
             <span className="minion-chip">{minion.talent.name}</span>
+
+            {/* "If its health reach 0 it instantly is shown as dead, it cannot
+                go in negative." What that means for a *bonded* creature is on
+                ONE AND THE SAME, and it is said here as a chip rather than a
+                paragraph: the plate beside it is the tallest thing in this row,
+                so a chip costs the block no height at all, and the sentence
+                itself is printed in full on the second block, where a row of
+                dead chips would otherwise need explaining. */}
+            {minion.down && (
+              <span className="minion-chip is-down" title={spec.down ?? undefined}>
+                Dead
+              </span>
+            )}
           </span>
         </span>
-
-        {!readOnly && (
-          <button
-            type="button"
-            className="btn btn-minimal btn-sm minion-edit"
-            onClick={() => setEditing(true)}
-          >
-            {minion.named ? 'Edit' : 'Name it'}
-          </button>
-        )}
       </div>
 
       {/* ---------- ATTRIBUTES ---------- */}
@@ -201,8 +248,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
         })}
       </div>
 
-      {/* ---------- DEFENSES ---------- */}
-      <div className="stat-category-label">Defenses</div>
+      {/* ---------- AND THE DEFENSES, UNDER THE SAME HEADING ---------- */}
       <div className="attr-row">
         {DEFENSE_LINE.map(({ key, label, color, info }) => (
           <StatBox
@@ -216,10 +262,14 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
       </div>
 
       {/* ---------- HEALTH AND SHIELD ----------
-          The two pools the creature owns. A character's bars open a ledger,
-          because every movement of theirs is worth a reason; a creature's is
-          taken and given back mid-fight several times a turn, so it gets the
-          steppers instead and no history. */}
+          The two pools the creature owns, in the character's own bars — same
+          box, same padding, same readout inside the track, because "all the
+          stats are derived the same" and a Health is a Health.
+
+          What is added under each is the four steps. A character's bar opens a
+          ledger, because every movement of theirs is worth a reason; a
+          creature's is taken and given back several times a turn and none of
+          those is worth an entry, so it gets buttons instead of a history. */}
       <div className="stat-category-label">Resources</div>
 
       <PoolRow
@@ -231,11 +281,6 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
         onChange={(value) => move('health', value)}
       />
 
-      {/* "If its health reach 0 it instantly is shown as dead, it cannot go in
-          negative." What that means for a *bonded* creature is on ONE AND THE
-          SAME, and it is the one thing a reader seeing the skull needs told. */}
-      {minion.down && spec.down && <p className="minion-down">{spec.down}</p>}
-
       <PoolRow
         label="Shield"
         current={minion.shield}
@@ -244,12 +289,6 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
         readOnly={readOnly}
         onChange={(value) => move('shield', value)}
       />
-
-      {/* Willpower is not a pool of its own: it spends its bonded's. Said here
-          rather than drawn as a fourth bar, which would be the same bar twice. */}
-      <p className="minion-note">
-        It spends your <b>Willpower</b>, and its own Action Points.
-      </p>
 
       {editing && (
         <MinionWindow
@@ -298,20 +337,39 @@ function PoolRow({ label, current, max, color, readOnly, onChange }) {
 
 /* =========================================================== THE SECOND BLOCK */
 
+/* The basic actions arrive folded. A creature plays the four cards its set
+   printed and the eleven moves every body on the board has, and the second set
+   is the one nobody ever has to look up — open on arrival it would be six rows
+   of chips between the pools and the tracker. One tap opens it for good. */
+const CLOSED_ON_ARRIVAL = ['basic'];
+
 /**
- * What it can do with its turn: its two point pools, and everything it plays.
+ * What it can do with its turn, and what is being done to it.
  *
  * The quick bar is the character's own, built by `minionBar` out of the cards
- * the set tagged as the creature's, so a chip here behaves exactly like a chip
- * on block 4 — one tap opens the use, the card is printed under the two ways,
- * and Cancel costs nothing.
+ * the set tagged as the creature's plus the basic actions everybody has, so a
+ * chip here behaves exactly like a chip on block 4 — one tap opens the use, the
+ * card is printed under the two ways, and Cancel costs nothing.
+ *
+ * The tracker below it is block 6's, minus the clock. A creature has no turn of
+ * its own to start and no rest of its own to take, so neither button is here;
+ * what it does have is its own list of what is running, on its own row, counted
+ * down by its bonded's Start Turn.
  */
 export function MinionActionsBlock({ character, minion, patch, readOnly = false }) {
   const [request, setRequest] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const stack = useCardStack();
 
   const groups = useMemo(() => minionBar(character, minion), [character, minion]);
   const total = groups.reduce((sum, group) => sum + group.moves.length, 0);
-  const { isFolded, toggle } = useFoldedGroups('minion', character?.id);
+  const { isFolded, toggle } = useFoldedGroups('minion', character?.id, CLOSED_ON_ARRIVAL);
+
+  /* Its own tracker, repaired by the file that owns what an effect is. The row
+     stores them as written; nothing below has a private idea of the shape. */
+  const effects = useMemo(() => normalizeEffects(minion.effects), [minion.effects]);
+  const running = effects.filter((effect) => effect.turns !== 0).length;
+  const ended = effects.length - running;
 
   /* The creature as a character, which is what both the prompt's affordability
      check and the spend arithmetic want. Its Action Points, its bonded's
@@ -331,8 +389,10 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
     if (body) patch(body);
   };
 
+  const writeEffects = (list) => setMinionEffects(character, minion.id, list);
+
   return (
-    <div className="cell-scroll active-block minion-block">
+    <div className="cell-scroll active-block minion-block minion-actions">
       <div className="block-head">
         <span className="stat-category-label">
           {minion.named ? minion.name : minion.spec.label} · Actions
@@ -378,59 +438,115 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
         />
       </div>
 
+      {/* Willpower is not a pool of its own: it spends its bonded's. Said here,
+          under the two pools that *are* its own, rather than drawn as a third
+          bar that would be the same bar twice. */}
+      <p className="minion-note">
+        It spends your <b>Willpower</b>, and its own Action Points.
+      </p>
+
       {/* Down, it is not on the board at all, so nothing it knows can be
           played. The line says why rather than leaving a row of dead chips. */}
       {minion.down && (
         <p className="minion-down">{minion.spec.down ?? 'It is down and cannot act.'}</p>
       )}
 
-      {groups.map((group) => {
-        const folded = isFolded(group.id);
+      {/* ---------- WHAT IT CAN PLAY ----------
+          Its own share of the block's leftover height, and it scrolls inside
+          itself rather than pushing the tracker off the bottom. */}
+      <div className="minion-bar">
+        {groups.map((group) => {
+          const folded = isFolded(group.id);
 
-        return (
-          <section className="bar-group" key={group.id}>
-            <GroupHead
-              label={group.label}
-              note={group.note}
-              count={group.moves.length}
-              folded={folded}
-              onToggle={() => toggle(group.id)}
+          return (
+            <section className="bar-group" key={group.id}>
+              <GroupHead
+                label={group.label}
+                note={group.note}
+                count={group.moves.length}
+                folded={folded}
+                onToggle={() => toggle(group.id)}
+              />
+
+              {!folded && (
+                <div className="bar-chips">
+                  {group.moves.map((move) => (
+                    <BarChip
+                      key={move.key}
+                      move={move}
+                      readOnly={readOnly || minion.down}
+                      onUse={() =>
+                        setRequest({
+                          name: move.card?.name ?? move.name,
+                          source: move.source,
+                          ap: move.ap,
+                          wp: move.wp,
+                          variable: move.variable,
+                          converts: move.converts,
+                          opens: move.opens,
+                          card: move.card,
+                          modifiers: move.modifiers,
+                          note: move.note,
+                          extra: move.extra,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      {/* ---------- WHAT IS RUNNING ON IT ----------
+          Its own tracker and not its bonded's: a Frightened dragon is not a
+          frightened drifter, and ONE AND THE SAME is the only line that crosses
+          between the two. No turn button and no rests above it — there is one
+          clock at this table and it is the character's. */}
+      <div className="block-head fx-head">
+        <span className="stat-category-label">Temporary Effects</span>
+        <span className="block-count">
+          {running} running{ended > 0 ? `, ${ended} just ended` : ''}
+        </span>
+      </div>
+
+      {!readOnly && (
+        <button type="button" className="fx-add" onClick={() => setAdding(true)}>
+          + Track something on it
+        </button>
+      )}
+
+      <div className="fx-list">
+        {effects.length === 0 ? (
+          <p className="pick-line fx-empty">
+            Nothing running on it. Counted down when you start your turn and ended by your
+            rests.
+          </p>
+        ) : (
+          effects.map((effect) => (
+            <EffectRow
+              key={effect.id}
+              effect={effect}
+              readOnly={readOnly}
+              onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
+              onNudge={(delta) => patch(writeEffects(nudgeEffect(effects, effect.id, delta)))}
+              onDrop={() => patch(writeEffects(dropEffect(effects, effect.id)))}
             />
+          ))
+        )}
+      </div>
 
-            {!folded && (
-              <div className="bar-chips">
-                {group.moves.map((move) => (
-                  <BarChip
-                    key={move.key}
-                    move={move}
-                    readOnly={readOnly || minion.down}
-                    onUse={() =>
-                      setRequest({
-                        name: move.card?.name ?? move.name,
-                        source: move.source,
-                        ap: move.ap,
-                        wp: move.wp,
-                        variable: move.variable,
-                        converts: move.converts,
-                        opens: move.opens,
-                        card: move.card,
-                        modifiers: move.modifiers,
-                        note: move.note,
-                        extra: move.extra,
-                      })
-                    }
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        );
-      })}
-
-      {total === 0 && (
-        <p className="minion-note">
-          Nothing to play yet. The cards it knows arrive with the set&rsquo;s ranks.
-        </p>
+      {adding && (
+        <EffectPrompt
+          character={character}
+          onAdd={(body) => patch(body)}
+          onClose={() => setAdding(false)}
+          /* Whose tracker this lands on. The offers are still read off the
+             character, because the cards are the pair's; where the row goes is
+             the creature's row. */
+          holder={{ name: minion.title, effects: minion.effects, write: writeEffects }}
+        />
       )}
 
       {request && (

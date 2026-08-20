@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 /**
  * Which groups a player has folded away, remembered per character.
@@ -13,6 +13,20 @@ import { useCallback, useState } from 'react';
  * Keyed by character, because "I know my own basic actions" is not the same
  * statement about somebody else's sheet, and by scope, so the two blocks never
  * collide over a group id they happen to share.
+ *
+ * ------------------------------------------------------------- the defaults
+ * `closed` names the groups that start folded. A creature's block is why: it
+ * holds the four cards its set printed *and* the eleven basic actions every
+ * body on the board has, and eleven chips nobody ever looks up would push the
+ * block into a scroll the moment it opened. So that one group arrives shut, and
+ * one tap opens it for good.
+ *
+ * Which means what is stored can no longer be "the folded ones" — a group that
+ * starts shut and was opened has to be remembered as *open*, or every reload
+ * would shut it again. So a slot holds a map of the groups whose state differs
+ * from its default, and a state that matches the default is dropped from it.
+ * Nothing accumulates: a sheet read and left alone leaves no key behind, and an
+ * older build's plain list of folded ids still reads correctly.
  */
 
 const KEY = 'hzbd-folded';
@@ -23,9 +37,22 @@ function readAll() {
     return stored && typeof stored === 'object' ? stored : {};
   } catch {
     // No storage, or something else wrote nonsense into the key. Neither is
-    // worth a broken block: everything simply starts open.
+    // worth a broken block: everything simply starts at its default.
     return {};
   }
+}
+
+/**
+ * One slot as a map of id to folded-or-not.
+ *
+ * An array is what every build before the defaults wrote: a plain list of the
+ * groups that were folded. Read as "each of these is folded", which is what it
+ * meant.
+ */
+function readSlot(all, slot) {
+  const stored = all[slot];
+  if (Array.isArray(stored)) return Object.fromEntries(stored.map((id) => [id, true]));
+  return stored && typeof stored === 'object' ? { ...stored } : {};
 }
 
 function writeAll(all) {
@@ -36,28 +63,38 @@ function writeAll(all) {
   }
 }
 
-export default function useFoldedGroups(scope, characterId) {
+export default function useFoldedGroups(scope, characterId, closed = []) {
   const slot = `${characterId ?? 'anon'}:${scope}`;
-  const [folded, setFolded] = useState(() => new Set(readAll()[slot] ?? []));
+  const [state, setState] = useState(() => readSlot(readAll(), slot));
+
+  /* Callers pass a fresh array every render, so the set is rebuilt off its
+     contents rather than its identity — otherwise both callbacks below would be
+     new on every render, and every chip drawn from them with it. A space is a
+     safe joint: a group id is a slug or a `minion:<id>` and never holds one. */
+  const names = closed.join(' ');
+  const shut = useMemo(() => new Set(names ? names.split(' ') : []), [names]);
+
+  const isFolded = useCallback((id) => state[id] ?? shut.has(id), [state, shut]);
 
   const toggle = useCallback(
     (id) => {
-      setFolded((current) => {
-        const next = new Set(current);
-        if (!next.delete(id)) next.add(id);
+      const byDefault = shut.has(id);
+
+      setState((current) => {
+        const next = { ...current, [id]: !(current[id] ?? byDefault) };
+        // Back to how it arrived is nothing to remember.
+        if (next[id] === byDefault) delete next[id];
 
         const all = readAll();
-        // An empty list is the default, so it is dropped rather than stored —
-        // otherwise every sheet ever opened leaves a key behind.
-        if (next.size > 0) all[slot] = [...next];
+        if (Object.keys(next).length > 0) all[slot] = next;
         else delete all[slot];
         writeAll(all);
 
         return next;
       });
     },
-    [slot]
+    [slot, shut]
   );
 
-  return { isFolded: useCallback((id) => folded.has(id), [folded]), toggle };
+  return { isFolded, toggle };
 }

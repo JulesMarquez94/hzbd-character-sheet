@@ -235,8 +235,12 @@ function turnNote(turn, character) {
  * without anybody touching it. An effect that came off a card opens that card;
  * one written in by hand shows the note it was written with, since a condition
  * the codex has never heard of still has to say what it does.
+ *
+ * Exported, because a creature has a tracker of its own on its own block and a
+ * row there has to be this row: same count, same nudges, same card behind it.
+ * See MinionBlock.jsx, which is where BarChip goes too.
  */
-function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
+export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
   const over = effect.turns === 0;
   const open = effect.turns === null;
 

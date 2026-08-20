@@ -276,6 +276,14 @@ function imbuedGroup(character) {
  * creature has one yet; if one arrives it reads on the character's Always On
  * block under the set's name, which is where every other passive of that set
  * already is.
+ *
+ * ------------------------------------------------------------ the basic ones
+ * And then the actions everybody in the world has, last, exactly as they come
+ * last on the character's bar. A creature on the board Moves, Hides, Grapples,
+ * Shoves and Interacts, and it pays for all of it out of its own six Action
+ * Points — so a bar that offered only the four cards its set printed was a bar
+ * that could not walk. `basicGroup` is the character's own, unchanged: same
+ * cards, same chips, same group that folds away once you know them by heart.
  */
 export function minionBar(character, minion) {
   const modifiers = minionModifiers(character, minion);
@@ -289,9 +297,16 @@ export function minionBar(character, minion) {
       })
     );
 
-  return moves.length > 0
-    ? [{ id: `minion:${minion.id}`, label: minion.spec.label, note: minion.title, moves }]
-    : [];
+  const own =
+    moves.length > 0
+      ? [{ id: `minion:${minion.id}`, label: minion.spec.label, note: minion.title, moves }]
+      : [];
+
+  /* Its own moves carry `modifiers`, which is what makes Wyrm Bolt print the
+     creature's Mind. A basic action has no numbers to bend, so it rides as it
+     is — and the use prompt is handed the creature either way, so the six
+     Action Points a Move costs come off the right sheet. */
+  return [...own, basicGroup()];
 }
 
 /** What everybody has. Last, because it is the half nobody has to look up. */

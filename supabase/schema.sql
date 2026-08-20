@@ -251,7 +251,9 @@ create table if not exists public.characters (
   ledger       jsonb not null default '[]'::jsonb,
   -- The creatures a talent set put on the board, keyed by the set that granted
   -- one: { "draconic-bond": { name, scale, portrait_url, health, shield, ap,
-  -- reaction } }. A pool that is absent reads as full. See src/lib/minions.js.
+  -- reaction, effects } }. A pool that is absent reads as full, and `effects`
+  -- is the creature's own tracker in the same shape as the character's own
+  -- `effects` column below. See src/lib/minions.js.
   minions      jsonb not null default '{}'::jsonb,
 
   -- Left-to-right order of the Character-tab blocks, e.g. [3,1,2,6,4,5]. The

@@ -525,8 +525,12 @@ export function restPlan(character, kind, labours = [], prepared = null) {
      until you take a Long Rest", so this is the only thing on the sheet that
      brings it back. Health full and Action Points full, the same two the rest
      gives its bonded, and the window prints a line per creature so nobody has
-     to notice it happened. */
-  const creatures = minionRest(character, kind);
+     to notice it happened.
+
+     A creature's own tracker is ended by the same rest that ends its bonded's,
+     so which durations this rest closes goes down with the call — the creature
+     has no rest of its own to take. */
+  const creatures = minionRest(character, kind, rest.ends);
   if (creatures) {
     Object.assign(patch, creatures.patch);
     lines.push(...creatures.lines);
