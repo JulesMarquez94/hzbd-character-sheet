@@ -249,8 +249,15 @@ create table if not exists public.characters (
   -- XP / coin / supply transaction history, newest first:
   -- [{ id, ts, kind: 'xp' | 'wealth' | 'supplies', delta, note, balance }]
   ledger       jsonb not null default '[]'::jsonb,
-  -- Left-to-right order of the six Character-tab blocks, e.g. [3,1,2,6,4,5].
-  -- The app repairs anything malformed on read, so no constraint here.
+  -- The creatures a talent set put on the board, keyed by the set that granted
+  -- one: { "draconic-bond": { name, scale, portrait_url, health, shield, ap,
+  -- reaction } }. A pool that is absent reads as full. See src/lib/minions.js.
+  minions      jsonb not null default '{}'::jsonb,
+
+  -- Left-to-right order of the Character-tab blocks, e.g. [3,1,2,6,4,5]. The
+  -- six numbered ones are every character's; a set that grants a creature adds
+  -- "minion:<set>" and "minion:<set>:bar" to the list, so it is no longer a
+  -- fixed length. The app repairs anything malformed on read.
   block_order  jsonb not null default '[1,2,3,4,5,6]'::jsonb,
 
   -- Left-to-right order of the Abilities tab's blocks, by source id
@@ -289,6 +296,9 @@ alter table public.characters add column if not exists journal     jsonb not nul
 -- are in it. Everything running on you right now sits beside it in `effects`.
 alter table public.characters add column if not exists turn_state  jsonb not null default '{}'::jsonb;
 alter table public.characters add column if not exists effects     jsonb not null default '[]'::jsonb;
+-- A talent set that hands you a body rather than a card: the Draconic Bond's
+-- draconic ally, and whatever follows it.
+alter table public.characters add column if not exists minions     jsonb not null default '{}'::jsonb;
 
 create index if not exists characters_user_id_idx on public.characters (user_id);
 

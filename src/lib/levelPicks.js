@@ -42,6 +42,7 @@ import {
 } from './backgrounds.js';
 import { getLineage } from './lineages.js';
 import { advancementState, normalizeTalents, pruneTalents } from './talents.js';
+import { minionOf, minionSettled } from './minions.js';
 import { MAX_LEVEL } from './characterModel.js';
 
 /** What a level hands out. The one place the even / odd rule is written down. */
@@ -115,7 +116,17 @@ export function levelQuestions(character, level, { talents, picks, background })
   const asked = [];
 
   if (grants.talent) {
-    asked.push(Boolean(talents.slots.find((slot) => slot.level === level)?.filled));
+    const slot = talents.slots.find((entry) => entry.level === level);
+    asked.push(Boolean(slot?.filled));
+
+    /* A set that puts a creature on the board asks a second question at the
+       level that bought its first rank: what it is called, and what colour. Only
+       Rank 1 asks — the bond is formed once, and the ranks after it deepen a
+       creature that already has a name. An unnamed one badges the tab exactly
+       the way an unanswered lineage card does. */
+    if (slot?.filled && slot.rank === 1 && minionOf(slot.talent)) {
+      asked.push(minionSettled(character, slot.talent.id));
+    }
   }
   if (grants.lineage) asked.push(lineageSettled(character));
   if (grants.background) asked.push(Boolean(background?.complete && background?.taken));

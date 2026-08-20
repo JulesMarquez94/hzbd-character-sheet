@@ -3,6 +3,7 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import PickBlock from './PickBlock.jsx';
 import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
+import MinionSection from './MinionPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { BrewRankNote } from './BrewWindow.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
@@ -13,6 +14,7 @@ import { useCardStack } from '../../context/card-stack.js';
 import { brewPreview } from '../../lib/brews.js';
 import { enchantmentsAt } from '../../lib/enchantments.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
+import { minionOf } from '../../lib/minions.js';
 import {
   TALENT_RANKS,
   cardsAtRank,
@@ -145,6 +147,12 @@ export default function TalentPick({
                another, so every rank asks again. */
             const laying = enchantingOf(id);
             if (laying && (laying.worn?.[rank] ?? 0) > (laying.worn?.[from] ?? 0)) setJustTook(id);
+
+            /* And the same for a set that hands over a *body*. The bond is
+               formed once, at Rank 1, so only that rank pushes the window: a
+               Rank 2 Draconic Bond is a deeper bond with an ally that already
+               has a name. */
+            if (rank === 1 && minionOf(id)) setJustTook(id);
           }}
           onClose={() => setChoosing(false)}
         />
@@ -216,6 +224,19 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, onView, onU
             <LoadoutSection
               talent={talent}
               talents={character.talents}
+              character={character}
+              patch={patch}
+              readOnly={readOnly}
+              autoOpen={justTook === talent.id}
+            />
+          )}
+
+          {/* And who it put on the board, for a set that grants a creature.
+              Shown on the slot that bought Rank 1, because that is the level the
+              bond was formed at and the only one that asks. */}
+          {rank === 1 && talent.minion && (
+            <MinionSection
+              talent={talent}
               character={character}
               patch={patch}
               readOnly={readOnly}
@@ -484,7 +505,7 @@ function EnchantRankNote({ talent, rank }) {
   const preview = enchantPreview(talent, rank);
   if (!preview || preview.tiers.length === 0) return null;
 
-  const { spec, opened, kept, tiers, worn, grew } = preview;
+  const { spec, opened, kept, tiers, worn, grew, perItem, widened } = preview;
 
   /* How many the rank *adds*, and how many it can reach in all. Read off the
      codex, so a shelf the designer grows grows this line with it. */
@@ -506,7 +527,11 @@ function EnchantRankNote({ talent, rank }) {
           {kept.length === 0
             ? `Laid on an item over a Long Rest, ${spec.supplyRate} supplies for every point of Magic Burden`
             : `${reach} to lay from in all, over the ${listAnd(kept)} ${kept.length === 1 ? 'shelf' : 'shelves'} you already had`}
-          {grew ? `, and ${WORN_ORDINAL[worn] ?? worn} worn on your own person` : ''}.
+          {grew ? `, and ${WORN_ORDINAL[worn] ?? worn} worn on your own person` : ''}
+          {/* And what LAYERED ENCHANTMENT buys, which is not countable off any
+              of the numbers above: how many workings one item may hold. Said
+              only on the rank that moves it. */}
+          {widened ? `. One item can now hold ${perItem === 2 ? 'two' : perItem} at once` : ''}.
         </span>
       </span>
     </div>

@@ -30,6 +30,7 @@ import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment } from './items.js';
 import { getLineage } from './lineages.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
+import { isMinionCard, minionModifiers, minionState } from './minions.js';
 import { cardsAtRank, getTalent, normalizeTalents, rankInfo } from './talents.js';
 import { getCard, itemEnchantments } from './weapons.js';
 
@@ -174,6 +175,13 @@ function learnedSource(character) {
  * on survives the split.
  */
 function talentSources(character) {
+  /* Worked out once for the whole list: a set that put a creature on the board
+     prints that creature's numbers on the creature's own cards, so those cards
+     are dealt with its rider rather than the reader's. Same block, same
+     provenance — a Wyrm Bolt is still something the Draconic Bond gave you —
+     only the numbers on it belong to the ally. */
+  const creatures = minionState(character);
+
   return normalizeTalents(character?.talents).flatMap((held) => {
     const talent = getTalent(held.id);
     if (!talent) {
@@ -187,6 +195,9 @@ function talentSources(character) {
       ];
     }
 
+    const creature = creatures.find((row) => row.id === talent.id) ?? null;
+    const riders = creature ? minionModifiers(character, creature) : null;
+
     const sections = [];
     for (let rank = 1; rank <= held.rank; rank += 1) {
       const cards = cardsAtRank(talent, rank);
@@ -196,7 +207,7 @@ function talentSources(character) {
         section(
           `rank-${rank}`,
           `Rank ${rank}${title ? ` · ${title}` : ''}`,
-          cards.map((card) => entry(card))
+          cards.map((card) => entry(card, riders && isMinionCard(card) ? riders : null))
         )
       );
     }

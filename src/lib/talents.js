@@ -478,6 +478,17 @@ export const TALENTS = [
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       worn: [null, 1, 2, 3],
       supplyRate: 70,
+      /* How many enchantments one *item* may hold. One, until LAYERED
+         ENCHANTMENT at Rank 3 makes it two. Indexed by rank like `worn` and
+         `tiers`, so the shelf, the rank note and the writer all read one
+         number, and the card below is the only thing that moves it.
+
+         House-written, on Jules's instruction (2026-08-20): "an enchanter
+         should not be able to add more than 1 enchant a time at novice ...
+         then add a Master talent that allow to have 2 enchant on the same
+         item". Flagged in data/README.md with the two card edits it came
+         with. */
+      perItem: [null, 1, 1, 2],
     },
     blurb:
       'The Enchanter is a master of imbuement, working their own Willpower into steel, leather and stone until it stays there. Through patient labour taken at the fire rather than in the thick of a fight, they have perfected the art of making an ordinary thing extraordinary, bought once in supplies and carried from that night onward.\n\n' +
@@ -500,11 +511,23 @@ export const TALENTS = [
         ap: null,
         wp: null,
         stat: 'mind',
+        /* Two house edits, on Jules's instruction (2026-08-20), and the only
+           two words on this card that are not the sheet's:
+
+           "actions" -> "action". A Long Rest buys exactly one, which is what
+           the Status & Terms tab already says ("allows you to perform 1 Long
+           Rest Action") and what the rest window now enforces. The plural was
+           the one place on the sheet still promising two.
+
+           The last line is new: "an item can hold one enchantment at a time".
+           Rank 3's LAYERED ENCHANTMENT is what raises it, and a rule with no
+           card saying it is a rule nobody can read. */
         body:
           'You have learned the art of imbuing an item with Willpower.\n\n' +
-          'Whenever you take a Long Rest, you can use your Long Rest actions to enchant.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to enchant.\n\n' +
           'Enchanting an item costs you an amount of supplies equal to 70 times the Magic Burden value of the enchantment.\n\n' +
-          'At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept enchantments, and at Rank 3 you learn Master enchantments.',
+          'At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept enchantments, and at Rank 3 you learn Master enchantments.\n\n' +
+          'An item can hold one enchantment at a time.',
       },
       {
         id: 'ephemeral-enchantment',
@@ -542,6 +565,264 @@ export const TALENTS = [
         stat: 'mind',
         body:
           'The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter.',
+      },
+      {
+        id: 'layered-enchantment',
+        rank: 3,
+        name: 'Layered Enchantment',
+        summary: 'An item can hold a second enchantment beside the first.',
+        kind: 'talent',
+        /* House-written on Jules's instruction (2026-08-20): "add a Master
+           talent that allow to have 2 enchant on the same item". Not on the
+           Ability tab, and exported back out to
+           data/Talent Set - Enchanter - Ability.csv so the workbook can hold
+           it. Named out of the set's own lexicon, the way every other card in
+           it is, and its two sentences say only what the existing cards
+           already imply about a second working: it is another night's labour,
+           and the wielder carries both burdens.
+
+           This is also what fills Rank 3, which until now added no card at
+           all. `enchanting.perItem` is the number it moves. */
+        tags: ['Enchanter', 'Master Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'Your work no longer crowds itself out. An item you have enchanted can hold a second enchantment beside the first.\n\n' +
+          'Laying it is a Long Rest action of its own, bought at the same price, and its Magic Burden is carried on top of the first one\u2019s.',
+      },
+    ],
+  },
+
+  {
+    id: 'draconic-bond',
+    name: 'Draconic Bond',
+    /* The Overview tab did not arrive with the 2026-08-20 drop: the Ability tab
+       and the Developpement Notes did, and the Overview was handed over to be
+       written here. So `tagline`, `tags` and `blurb` are house-written rather
+       than transcribed, and they are exported back out to
+       data/Talent Set - Draconic Bond - Overview.csv in the sheet's own column
+       order so the workbook can hold the same words. Every card below is the
+       Ability tab, byte for byte. */
+    tagline: 'A beast-bonded drifter who sends their dragon ahead and takes its wounds in its stead.',
+    art: '/talents/draconic-bond.jpg',
+    /* House-written with the rest of the Overview. Mind because every roll the
+       ally makes is a Mind roll and it has no other attribute it leans on;
+       Martial because the ally is a body on the field that attacks and, once
+       Empowered, is ridden; Support for the half of the set that is spent on
+       somebody else's roll (DRAGON'S FAVOR, DRACONIC MARK, taking a wound in
+       its stead); Control for FRIGHTFUL ROAR. */
+    tags: ['mind', 'martial', 'support', 'control'],
+    stat: 'mind',
+    /* A fifth shape of what a set can hand over, beside a fixed hand, a
+       `loadout` of picked cards, a `brewing` spec and an `enchanting` one: this
+       set hands over a *body*. Everything here is the Developpement Notes said
+       as data, and minions.js is what resolves it — see the header there for
+       why the split, and for the note's own sentences quoted in full.
+
+       The set names its creature's tag rather than the sheet guessing at one.
+       The Ability tab writes `Draconic Ally` on the four cards the creature
+       plays and `Draconic Bond` on the five its bonded plays, so the split
+       between the two quick bars is the designer's own column. */
+    minion: {
+      id: 'draconic-ally',
+      label: 'Draconic Ally',
+      noun: 'ally',
+      kin: 'draconic beast',
+      tag: 'Draconic Ally',
+      /* "For this the draconic bond at level one it has 5 Physique, 4 Instinct,
+         6 Mind. Every uneven level he gains 1 Mind, and every even level he
+         gains 1 Physique or 1 Instinct, alternating between the two." */
+      base: { physique: 5, instinct: 4, mind: 6 },
+      growth: { odd: ['mind'], even: ['physique', 'instinct'] },
+      /* "The draconic ally health is 5 per level and 5 per physique." Half of
+         what a character gets from each, which is the only place the two stat
+         blocks part company besides Defense. */
+      health: { perLevel: 5, perPhysique: 5 },
+      /* "The draconic ally has a Defense equal to its Grit." */
+      defense: 'grit',
+      /* "If its health reach 0 it instantly is shown as dead, it cannot go in
+         negative." So the bar bottoms out at nothing rather than running the
+         second bar a character gets. What "dead" means for a bonded ally is
+         ONE AND THE SAME's own business, and the block prints that line. */
+      floor: 0,
+      /* "If it would die, it instead retreats into your shadow and is unable to
+         reemerge until you take a Long Rest." The long rest and no other: a
+         short rest is offered nothing here because the card never printed one. */
+      returns: 'long',
+      down: 'Retreated into your shadow. It cannot reemerge until you take a Long Rest.',
+      /* EMPOWERED BOND, at Rank 3: "its damage is Elevated by 1". Indexed by
+         rank the way `loadout.known` is, so the rule is read off the card once
+         and never parsed back out of its prose. */
+      elevate: [null, 0, 0, 1],
+      /* "You choose it scale color, Between Red (fire), Blue (Cold), White
+         (lightning), Yellow (sacred), Purlple (psychic), Green (decay), for its
+         type of damage."
+
+         Not the same table as the Draconic *lineage*'s SCALE_COLOUR in
+         lineages.js, which reads white as Cold, blue as Lightning and black as
+         Decay. Both are the designer's, they disagree, and this one is the one
+         the Draconic Bond notes print — flagged in data/README.md rather than
+         quietly reconciled. */
+      scales: {
+        label: 'Scale colour',
+        prompt: 'What colour is it, and what is its breath made of?',
+        options: [
+          { id: 'red', label: 'Red', damage: 'Fire' },
+          { id: 'blue', label: 'Blue', damage: 'Cold' },
+          { id: 'white', label: 'White', damage: 'Lightning' },
+          { id: 'yellow', label: 'Yellow', damage: 'Sacred' },
+          { id: 'purple', label: 'Purple', damage: 'Psychic' },
+          { id: 'green', label: 'Green', damage: 'Decay' },
+        ],
+      },
+    },
+    blurb:
+      'Those who take the Draconic Bond are never alone in a fight again. A draconic beast has knotted its life to theirs, and the two of them go on as one existence in two bodies: the ally spends its own Action Points and Reaction Points, draws on its bonded’s Willpower and breathes the element its scales were born in.\n\n' +
+      'They excel at being in two places at once. The ally is sent ahead to bolt, to breathe and to mark, while its bonded stands where they meant to stand, and a wound the ally takes can be pulled across and borne instead. Where the two of them cannot both be, the bond carries what one of them sees to the other, and a spell the drifter casts can be thrown from where the dragon stands.\n\n' +
+      'A Draconic Bond’s presence is a source of relentless pressure, felt from two directions at once. Grown to the size of a horse the ally is a mount as well as a weapon, and the roar it learns at the last is enough to leave a room full of enemies afraid of the pair of them.',
+    cards: [
+      {
+        id: 'one-and-the-same',
+        rank: 1,
+        name: 'One and the Same',
+        summary: 'A draconic ally that spends its own points, and a life knotted to yours.',
+        kind: 'talent',
+        tags: ['Draconic Bond', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You have bonded with a draconic beast; your lives are now forever intertwined.\n\n' +
+          'During your turn, you also control your draconic ally. It uses its own Action Points and Reaction Points, but uses your Willpower for its abilities.\n\n' +
+          'Whenever your draconic ally takes damage, you can choose to take any amount of that damage yourself in its stead.\n\n' +
+          'If it would die, it instead retreats into your shadow and is unable to reemerge until you take a Long Rest.\n\n' +
+          'If you die, it dies along with you.',
+      },
+      {
+        id: 'wyrm-bolt',
+        rank: 1,
+        name: 'Wyrm Bolt',
+        summary: 'Your ally spits a bolt at 9 meters for 2d4 plus its own Mind.',
+        kind: 'talent',
+        tags: ['Draconic Ally', 'Novice Ability'],
+        ap: 4,
+        wp: null,
+        stat: 'mind',
+        /* "Mind Range Attack" on the sheet. Ranged Attack is the game's own
+           defined term, printed that way on every other card the designer has
+           written and on the Status & Terms tab, so the missing letter is read
+           as the typo it is rather than transcribed into a term that would not
+           light. Flagged in data/README.md. */
+        body:
+          'Your draconic ally shoots a magic projectile at an entity it can see within 9 meters (30 feet).\n\n' +
+          'It makes a {stat} Ranged Attack {roll}.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] damage in your draconic ally’s chosen damage type.',
+      },
+      {
+        id: 'dragons-favor',
+        rank: 1,
+        name: 'Dragon’s Favor',
+        summary: 'Turn a roll that fell one short into a success, for either of you.',
+        kind: 'talent',
+        tags: ['Draconic Ally', 'Novice Ability'],
+        ap: null,
+        wp: 1,
+        stat: 'mind',
+        body:
+          'Whenever you or your draconic ally make a roll and the result is 1 away from a success or Critical success, you can use this ability to add +1 to the roll and make it a success or Critical success.',
+      },
+      {
+        id: 'draconic-recall',
+        rank: 1,
+        name: 'Draconic Recall',
+        summary: 'Hide your ally in your shadow, where nothing can touch it, and call it back out.',
+        kind: 'talent',
+        tags: ['Draconic Bond', 'Novice Talent', 'Ability'],
+        ap: 3,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You can have your draconic ally hide in your shadow; while doing so, it is one with you and cannot be targeted or impacted.\n\n' +
+          'If it is hiding in your shadow, you can use this ability to have your draconic ally emerge in a free space next to you.',
+      },
+      {
+        id: 'draconic-mark',
+        rank: 2,
+        name: 'Draconic Mark',
+        summary: 'Whatever your ally hurts, your next attack on it is made with advantage.',
+        kind: 'talent',
+        tags: ['Draconic Bond', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'Whenever your draconic ally deals damage to an enemy, it bears a Draconic Mark until your next Turn End.\n\n' +
+          'The next time you make an Attack Roll against the target, you can do so with Advantage.',
+      },
+      {
+        id: 'dragon-breath',
+        rank: 2,
+        name: 'Dragon Breath',
+        summary: 'A 6 meter cone against Reflex for 2d4 plus twice its Mind.',
+        kind: 'talent',
+        tags: ['Draconic Ally', 'Adept Ability'],
+        ap: 4,
+        wp: 2,
+        stat: 'mind',
+        body:
+          'Your draconic ally breathes a torrent of magical energy in front of itself, affecting all entities in a 6 meter (20 feet) cone.\n\n' +
+          'It makes a {stat} roll {roll} against the entities’ Reflex.\n\n' +
+          'On a success, it deals [[2d4 + 2*stat]] damage in your draconic ally’s chosen damage type.',
+      },
+      {
+        id: 'empowered-bond',
+        rank: 3,
+        name: 'Empowered Bond',
+        summary: 'Your ally grows to the size of a horse, carries you, and Elevates its damage.',
+        kind: 'talent',
+        tags: ['Draconic Bond', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You empower your draconic ally, increasing its size to that of a large horse. It can be used as a mount which can carry up to 300 kg.\n\n' +
+          'Its damage is Elevated by 1.',
+      },
+      {
+        id: 'frightful-roar',
+        rank: 3,
+        name: 'Frightful Roar',
+        summary: 'A roar heard at 18 meters that leaves enemies Frightened of the pair of you.',
+        kind: 'talent',
+        tags: ['Draconic Ally', 'Master Ability'],
+        ap: 4,
+        wp: 4,
+        stat: 'mind',
+        /* The sheet spells Frightened out in a parenthesis at the foot of the
+           card. It is a defined term, so the definition went to keywords.js in
+           the designer's own words and the gloss came off the body — the same
+           trade every other term on a card has made. See the note in
+           keywords.js. */
+        body:
+          'While Empowered, you can have your draconic ally bellow a frightening roar intimidating all enemy entities within 18 meters (60 feet) that can hear it.\n\n' +
+          'It makes a {stat} roll {roll} against the entities’ Grit.\n\n' +
+          'On a success, they are Frightened of you and your draconic ally for the next 2 Turns.',
+      },
+      {
+        id: 'draconic-link',
+        rank: 3,
+        name: 'Draconic Link',
+        summary: 'See through your ally’s senses, and cast from where it stands.',
+        kind: 'talent',
+        tags: ['Draconic Bond', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'Your bond now allows you to see through the senses of your draconic ally by going into a trance; while doing so, you lose control of your own body.\n\n' +
+          'The bond also allows you to use your spells or abilities through your draconic ally, using it as the point of origin for the spell instead of yourself.\n\n' +
+          'This can be done regardless of if you are in a trance or not.',
       },
     ],
   },
@@ -612,6 +893,7 @@ export function enchantPreview(talent, rank) {
   const tiers = spec.tiers?.[rank] ?? [];
   const below = spec.tiers?.[rank - 1] ?? [];
   const worn = spec.worn?.[rank] ?? 0;
+  const perItem = spec.perItem?.[rank] ?? 1;
 
   return {
     spec,
@@ -623,6 +905,10 @@ export function enchantPreview(talent, rank) {
     worn,
     /* Rank 1 is the first one, so it grows over nothing rather than over zero. */
     grew: worn > (spec.worn?.[rank - 1] ?? 0),
+    /* How many one item may hold, and whether this rank is the one that moved
+       it. LAYERED ENCHANTMENT is the only thing that ever does. */
+    perItem,
+    widened: perItem > (spec.perItem?.[rank - 1] ?? 1),
   };
 }
 

@@ -7975,3 +7975,377 @@ body.sheet-fixed #root {
   color: var(--text-bright);
   font-weight: 700;
 }
+
+/* =========================================================
+   THE CREATURE'S TWO BLOCKS
+
+   A talent set that puts a body on the board gets two blocks
+   of its own on the Character tab, and they are only there
+   when there is a body. Both are the ordinary 360x640 cell
+   with the ordinary tiles inside them, because "all the stats
+   are derived the same" and a Grit has to look like a Grit.
+   What marks them out is the top edge: talent amber, the
+   colour of the choice that granted the creature.
+   ========================================================= */
+.sheet-cell.cell-minion {
+  border-top-color: var(--level-amber);
+}
+
+.minion-block {
+  gap: 0.55rem;
+}
+
+/* ---------- who it is ----------
+   A square plate rather than block 1's tall portrait. The name, the colour and
+   the set all have to sit beside it, and the two stat rows below it are what
+   the block is actually for. */
+.minion-id {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.minion-plate {
+  width: 68px;
+  height: 68px;
+  flex: none;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 179, 0, 0.28);
+  background-color: var(--bg-black);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.minion-plate img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* No picture is the same haze plate an unpainted card draws, so an empty one
+   never reads as a broken image. */
+.minion-plate-empty {
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(157, 91, 255, 0.22), transparent 60%),
+    radial-gradient(circle at 70% 75%, rgba(255, 179, 0, 0.14), transparent 55%),
+    var(--bg-black);
+}
+
+.minion-id-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.minion-name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.15;
+}
+
+.minion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.minion-chip {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(148, 167, 176, 0.28);
+  background-color: rgba(9, 17, 21, 0.55);
+  color: var(--text-muted);
+}
+
+/* The scale wears the damage it deals, which is the one fact about the colour
+   that matters at the table. */
+.minion-chip-scale {
+  border-color: color-mix(in srgb, var(--scale-tone, var(--copper)) 45%, transparent);
+  background-color: color-mix(in srgb, var(--scale-tone, var(--copper)) 10%, rgba(9, 17, 21, 0.55));
+  color: color-mix(in srgb, var(--scale-tone, var(--copper)) 72%, var(--text-silver));
+}
+
+.minion-chip.is-open {
+  border-color: rgba(200, 138, 75, 0.5);
+  color: var(--copper);
+}
+
+.minion-edit {
+  flex: none;
+  align-self: center;
+}
+
+/* ---------- the two pools it owns ----------
+   The bar is the character's own; the four steps under it are not. A creature's
+   Health moves several times a turn and none of those movements is worth a
+   ledger entry, so it gets buttons instead of a history. */
+.minion-pool {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* The bar is a readout here, not a way into anything. */
+.minion-pool .meter {
+  cursor: default;
+}
+
+.minion-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.minion-step {
+  padding: 3px 0;
+  border-radius: 3px;
+  border: 1px solid rgba(148, 167, 176, 0.22);
+  background-color: rgba(9, 17, 21, 0.5);
+  color: var(--danger-rose);
+  font-family: var(--font-headings);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.minion-step.is-up {
+  color: var(--def-healing);
+}
+
+.minion-step:hover,
+.minion-step:focus-visible {
+  border-color: currentColor;
+  background-color: rgba(9, 17, 21, 0.85);
+}
+
+/* What the sheet has to say out loud: it is down and what brings it back, and
+   whose Willpower it is spending. */
+.minion-down {
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border-left: 2px solid var(--stat-health);
+  border-radius: 3px;
+  background-color: color-mix(in srgb, var(--stat-health) 10%, transparent);
+  font-size: 0.64rem;
+  line-height: 1.45;
+  color: var(--text-silver);
+}
+
+.minion-note {
+  margin: 0;
+  font-size: 0.64rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.minion-note b {
+  color: var(--stat-wp);
+  font-weight: 700;
+}
+
+/* ---------- the naming window ---------- */
+.minion-editor {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.minion-portrait {
+  width: 132px;
+  height: 132px;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  background-color: var(--bg-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 0.75rem;
+}
+
+.minion-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.minion-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Six colours, each showing the damage it is made of. The swatch is the point:
+   the name of a colour is a word, and the colour is the thing being chosen. */
+.minion-scales {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 6px;
+  margin-top: 0.4rem;
+}
+
+.minion-scale {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  background-color: rgba(9, 17, 21, 0.5);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.minion-scale:hover:not(:disabled),
+.minion-scale:focus-visible {
+  border-color: color-mix(in srgb, var(--scale-tone, var(--copper)) 55%, transparent);
+}
+
+.minion-scale.active {
+  border-color: var(--scale-tone, var(--copper));
+  background-color: color-mix(in srgb, var(--scale-tone, var(--copper)) 12%, rgba(9, 17, 21, 0.5));
+}
+
+.minion-scale:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.minion-scale-swatch {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 50%;
+  background-color: var(--scale-tone, var(--copper));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--scale-tone, var(--copper)) 55%, transparent);
+}
+
+.minion-scale-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.minion-scale-dmg {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--scale-tone, var(--copper)) 72%, var(--text-silver));
+}
+
+/* =========================================================
+   THE LONG REST ACTION SLOT
+
+   A rest buys one action. It used to be offered as four
+   standing sections, each policing its own limit and none of
+   them policing that one, so it is a single slot now: empty
+   until you open it, and afterwards saying what the night is
+   being spent on and what that has actually done so far.
+   ========================================================= */
+.rest-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 5px;
+  border: 1px solid rgba(148, 167, 176, 0.22);
+  background-color: rgba(9, 17, 21, 0.5);
+  text-align: left;
+}
+
+/* Empty, it is one big target and a dashed edge, the same language the brew
+   and enchantment slots already use for "nothing here yet". */
+.rest-slot-empty {
+  border-style: dashed;
+  border-color: rgba(200, 138, 75, 0.4);
+  cursor: pointer;
+  flex-wrap: wrap;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.rest-slot-empty:hover,
+.rest-slot-empty:focus-visible {
+  border-color: var(--copper);
+  background-color: rgba(9, 17, 21, 0.8);
+}
+
+.rest-slot-empty .rest-slot-name {
+  color: var(--copper);
+}
+
+.rest-slot-plus {
+  font-family: var(--font-headings);
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--copper);
+}
+
+.rest-slot.is-filled {
+  border-color: rgba(200, 138, 75, 0.42);
+  background-color: rgba(200, 138, 75, 0.07);
+}
+
+.rest-slot-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rest-slot-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.rest-slot-from {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* What the action has actually done. Copper once it has done something, and the
+   open-question colour while the slot is filled but the work is not. */
+.rest-slot-did {
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--copper-bright);
+}
+
+.rest-slot-did.is-open {
+  color: var(--danger-rose);
+}
+
+.rest-slot-tools {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}

@@ -20,9 +20,9 @@ import { getKeyword, keywordPattern } from '../lib/keywords.js';
  *                       this weapon, and a button that shows the working
  *   {{Cold Infusion}}   a link to another card
  *
- * `context` is what the holder brings: `{ damage, empower }`. Text with none
- * of these markers renders as plain paragraphs, so cards typed into the
- * Abilities tab keep working untouched.
+ * `context` is what the holder brings: `{ damage, empower, elevate }`. Text
+ * with none of these markers renders as plain paragraphs, so cards typed into
+ * the Abilities tab keep working untouched.
  */
 
 const TOKEN = /(\*\*[^*]+\*\*|\[\[[^\]]+\]\]|\{\{[^}]+\}\}|\{[a-zA-Z]+(?::[A-Za-z]+)?\})/g;
@@ -148,7 +148,7 @@ function renderPlain(text, keyPrefix) {
 
 
 function renderInline(text, ctx, keyPrefix) {
-  const { character, stat, damage, empower, choice, onValue, onLink } = ctx;
+  const { character, stat, damage, empower, elevate, choice, onValue, onLink } = ctx;
 
   return text.split(TOKEN).map((chunk, index) => {
     const key = `${keyPrefix}-${index}`;
@@ -161,7 +161,7 @@ function renderInline(text, ctx, keyPrefix) {
     /* ---- live value: [[2d6 + 2*stat]] ---- */
     if (chunk.startsWith('[[') && chunk.endsWith(']]')) {
       const expression = chunk.slice(2, -2).trim();
-      const resolved = resolveValue(expression, character, stat, { empower });
+      const resolved = resolveValue(expression, character, stat, { empower, elevate });
 
       if (!onValue) {
         return (
@@ -277,6 +277,7 @@ export default function CardText({
   stat = 'instinct',
   damage = [],
   empower = 0,
+  elevate = 0,
   choice = null,
   choicePrompt = null,
   onValue,
@@ -284,7 +285,7 @@ export default function CardText({
 }) {
   if (!text) return null;
 
-  const ctx = { character, stat, damage, empower, choice, choicePrompt, onValue, onLink };
+  const ctx = { character, stat, damage, empower, elevate, choice, choicePrompt, onValue, onLink };
 
   return text.split(/\n\s*\n/).map((paragraph, index) => (
     <p key={index}>{renderInline(paragraph, ctx, `p${index}`)}</p>
@@ -292,7 +293,9 @@ export default function CardText({
 }
 
 /** The same renderer without the paragraph wrapper — for one-line item text. */
-export function CardLine({ text, character, stat = 'instinct', damage = [], empower = 0, choice = null, onValue, onLink }) {
+export function CardLine({ text, character, stat = 'instinct', damage = [], empower = 0, elevate = 0, choice = null, onValue, onLink }) {
   if (!text) return null;
-  return <>{renderInline(text, { character, stat, damage, empower, choice, onValue, onLink }, 'line')}</>;
+  return (
+    <>{renderInline(text, { character, stat, damage, empower, elevate, choice, onValue, onLink }, 'line')}</>
+  );
 }

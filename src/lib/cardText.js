@@ -221,17 +221,23 @@ export function cardGist(card, { character = null, modifiers = null } = {}) {
   // A set that casts off another attribute overrides what the card is printed
   // with; see castModifier in loadouts.js.
   const stat = modifiers?.stat ?? card?.stat ?? 'instinct';
+  /* And a card somebody *else* on your sheet plays resolves against them. A
+     draconic ally's Wyrm Bolt is "2d4 + Mind", and the Mind it means is the
+     ally's, not its bonded's — see minionModifiers in minions.js. Nothing but
+     a creature passes this, so every other card still reads off the character
+     it was handed. */
+  const who = modifiers?.actor ?? character;
   const damage = modifiers?.damage?.length ? modifiers.damage : card?.damage ?? [];
   const empower = Number(modifiers?.empower) || 0;
   const elevate = Number(modifiers?.elevate) || 0;
   const choice = modifiers?.choice ?? null;
-  const context = { character, stat, damage, choice };
+  const context = { character: who, stat, damage, choice };
 
   return String(card?.body ?? '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\{\{([^}]+)\}\}/g, '$1')
     .replace(/\[\[([^\]]+)\]\]/g, (_, expression) =>
-      resolveValue(expression, character, stat, { empower, elevate }).text
+      resolveValue(expression, who, stat, { empower, elevate }).text
     )
     .replace(/\{([a-zA-Z]+(?::[A-Za-z]+)?)\}/g, (whole, word) => gistToken(word, context) ?? whole)
     // Paragraphs become sentences in a row, and the stray spaces a spent token

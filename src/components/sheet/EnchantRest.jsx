@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
-import WornEnchants, { EnchantShelf } from './WornEnchants.jsx';
+import { EnchantShelf } from './WornEnchants.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -12,214 +12,171 @@ import {
   normalizeEquipment,
   normalizePack,
 } from '../../lib/items.js';
-import { laidOn, layOn, layingCost, stripFrom } from '../../lib/enchanting.js';
+import { enchanterState, itemRoom, laidOn, layOn, layingCost, stripFrom } from '../../lib/enchanting.js';
 import { layingAffordable } from '../../lib/rest.js';
 
 /**
- * The Enchanter's half of a Long Rest.
+ * ENCHANTING, as one long rest action.
  *
- * Both of their slow cards happen here and nowhere else, which is why this is a
- * section of the rest window rather than a control on the sheet:
+ *   "Whenever you take a Long Rest, you can use your Long Rest action to
+ *    enchant. Enchanting an item costs you an amount of supplies equal to 70
+ *    times the Magic Burden value of the enchantment. ... An item can hold one
+ *    enchantment at a time."
  *
- *   WIELDER OF WONDER  "Choose one when becoming an enchanter, you can change it
- *                      during a Long Rest. The amount of such enchantments you can
- *                      have is equal to your rank in enchanter."
- *   ENCHANTING         "Whenever you take a Long Rest, you can use your Long Rest
- *                      actions to enchant. Enchanting an item costs you an amount
- *                      of supplies equal to 70 times the Magic Burden value of the
- *                      enchantment."
+ * This used to be half of a standing section in the rest window, beside WIELDER
+ * OF WONDER, with no limit on how many items a night could take. It is now one
+ * of the things the rest's single action slot can be spent on, and it walks:
+ * **which thing → what to lay on it → back to the rest.**
  *
- * ------------------------------------------------------------------- two rows
- * So there are two things to do and they are drawn as the two they are. **On your
- * own person** is WornEnchants, the same row the Advancement tab shows when the
- * rank is bought — one component, because it is one rule read at two moments.
- * **On what you carry** is a list of what has already been worked, and one way in
- * to work something else.
+ * -------------------------------------------------------------- the cap
+ * One enchantment an item, until LAYERED ENCHANTMENT at Rank 3 makes it two.
+ * The number is `enchanting.perItem` on the set and is read here through
+ * `itemRoom`, so the shelf refuses a full item by the same rule `layOn` refuses
+ * it. A full item can still be *changed*, because stripping and laying are the
+ * same action: the strip is offered on the item's own row.
  *
- * ------------------------------------------------------------- nothing is written
- * Every choice here writes into the window's own `talents` draft and nothing else.
- * The rest window prices it, prints it as a line among everything else the rest
- * does, and only "Yes, rest" commits any of it — so a rest backed out of is an
- * evening's work not done, with the Supplies still in the crate.
+ * Nothing here writes. Every choice goes into the rest window's `talents` draft,
+ * is priced into its plan, and is only committed by "Yes, rest".
  */
-export default function EnchantRest({ character, talents, onDraft, kind, readOnly = false }) {
-  /* Which item is being worked on, or null. */
+export default function EnchantAction({ character, talents, kind, onClose, onDraft }) {
+  /* Which item is being worked on, or null while the list is up. */
   const [onItem, setOnItem] = useState(null);
-  /* Whether the item chooser is up. */
-  const [choosing, setChoosing] = useState(false);
-
   const stack = useCardStack();
+
+  const state = enchanterState({ ...character, talents });
 
   /* What the character is carrying that could take a working: everything worn,
      on the belt, or in the pack. A written note is not a thing you can enchant. */
   const carried = useMemo(() => carriedItems(character), [character]);
-  const worked = useMemo(
-    () => carried.filter((item) => laidOn({ talents }, item.id).length > 0),
-    [carried, talents]
+
+  const shelves = useMemo(
+    () =>
+      CATEGORY_ORDER.map((category) => ({
+        category,
+        rows: carried.filter((item) => itemCategory(item) === category),
+      })).filter((shelf) => shelf.rows.length > 0),
+    [carried]
   );
+
+  if (!state) return null;
+
+  const cap = state.perItem;
 
   return (
     <>
-      <span className="fx-label">
-        What you enchant
-        <span className="rest-labour-rule">Yours to change until you rest</span>
-      </span>
-
-      {/* ---------- ON YOUR OWN PERSON ---------- */}
-      <WornEnchants
-        character={character}
-        talents={talents}
-        onChange={onDraft}
-        readOnly={readOnly}
-        tone="rest"
-      />
-
-      {/* ---------- ON WHAT YOU CARRY ---------- */}
-      <div className="ench-rest-head">
-        <span className="ench-rest-title">On what you carry</span>
-        <span className="ench-rest-note">
-          {layingCost({ burden: 1 })} Supplies a point of Magic Burden
-        </span>
-      </div>
-
-      <div className="rest-labours">
-        {worked.map((item) => (
-          <div className="rest-labour is-prepare" key={item.id}>
-            <button
-              type="button"
-              className="rest-labour-head"
-              onClick={() => setOnItem(item)}
-              title={`Work on ${item.name}`}
-            >
-              <span className="rest-labour-name">{item.name}</span>
-              <span className="rest-labour-line">
-                {laidOn({ talents }, item.id)
-                  .map((entry) => entry.name)
-                  .join(' · ')}
-              </span>
-            </button>
-
-            <span className="rest-labour-opts">
-              {laidOn({ talents }, item.id).map((entry) => (
-                <button
-                  type="button"
-                  key={entry.id}
-                  className="rest-opt"
-                  disabled={readOnly}
-                  title={`Strip ${entry.name} off ${item.name}. The Supplies do not come back.`}
-                  onClick={() => onDraft(stripFrom(talents, item.id, entry.id))}
-                >
-                  Strip {entry.name}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="rest-opt is-gain"
-                disabled={readOnly}
-                onClick={() => setOnItem(item)}
-              >
-                Lay another
-              </button>
+      <Modal
+        title="Enchant what?"
+        onClose={onClose}
+        wide
+        accent={PICK_ACCENTS.talent}
+        footer={
+          <>
+            <span className="brew-step-note">
+              {layingCost({ burden: 1 })} Supplies a point of Magic Burden
             </span>
-          </div>
+            <span className="spacer" />
+            <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
+              ← Back to the rest
+            </button>
+          </>
+        }
+      >
+        <p className="frame-foot" style={{ marginTop: 0 }}>
+          Anything you are carrying: worn, in hand, on the belt or in the pack.{' '}
+          {cap === 1
+            ? 'An item holds one enchantment at a time, so a worked item has to be stripped before it takes another.'
+            : `An item holds up to ${cap} at your rank.`}
+        </p>
+
+        {carried.length === 0 && (
+          <p className="pick-line">Nothing you are carrying can take a working.</p>
+        )}
+
+        {shelves.map(({ category, rows }) => (
+          <section className="brew-step" key={category}>
+            <div className="brew-step-head">
+              <span className="brew-step-label">{category}</span>
+              <span className="brew-step-note">{rows.length}</span>
+            </div>
+
+            <div className="rest-labours">
+              {rows.map((item) => {
+                const on = laidOn({ talents }, item.id);
+                const room = itemRoom({ talents }, item.id);
+
+                return (
+                  <div className="rest-labour is-prepare" key={item.id}>
+                    <button
+                      type="button"
+                      className="rest-labour-head"
+                      disabled={room === 0}
+                      onClick={() => setOnItem(item)}
+                      title={
+                        room === 0
+                          ? `${item.name} is full at your rank. Strip something first.`
+                          : `Lay a working on ${item.name}`
+                      }
+                    >
+                      <span className="rest-labour-name">{item.name}</span>
+                      <span className="rest-labour-line">
+                        {on.length > 0
+                          ? `${on.map((entry) => entry.name).join(' · ')} — ${on.length} of ${cap}`
+                          : `Nothing on it. Room for ${cap === 1 ? 'one' : cap}.`}
+                      </span>
+                    </button>
+
+                    <span className="rest-labour-opts">
+                      {on.map((entry) => (
+                        <button
+                          type="button"
+                          key={entry.id}
+                          className="rest-opt"
+                          title={`Strip ${entry.name} off ${item.name}. The Supplies do not come back.`}
+                          onClick={() => onDraft(stripFrom(talents, item.id, entry.id))}
+                        >
+                          Strip {entry.name}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        className="rest-opt is-gain"
+                        disabled={room === 0}
+                        onClick={() => setOnItem(item)}
+                        title={room === 0 ? 'Full at your rank' : undefined}
+                      >
+                        {room === 0 ? 'Full' : 'Lay one'}
+                      </button>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         ))}
+      </Modal>
 
-        <button
-          type="button"
-          className="brew-slot brew-slot-add ench-rest-add"
-          disabled={readOnly || carried.length === 0}
-          onClick={() => setChoosing(true)}
-          title={
-            carried.length === 0
-              ? 'Nothing you are carrying can take a working.'
-              : 'Choose something to enchant'
-          }
-        >
-          <span className="brew-slot-plus" aria-hidden="true">
-            +
-          </span>
-          <span className="brew-slot-add-label">
-            {carried.length === 0 ? 'Nothing to enchant' : 'Enchant something'}
-          </span>
-        </button>
-      </div>
-
-      {/* ---------- the item chooser ---------- */}
-      {choosing && (
-        <ItemChoice
-          items={carried}
-          talents={talents}
-          onClose={() => setChoosing(false)}
-          onPick={(item) => {
-            setChoosing(false);
-            setOnItem(item);
-          }}
-        />
-      )}
-
-      {/* ---------- the shelf, for a thing ---------- */}
+      {/* The shelf for the thing that was picked. Laying one closes both and
+          lands back on the rest, which is where the price shows up. */}
       {onItem && (
         <EnchantShelf
           title={`On ${onItem.name}`}
           rule={`Permanent, and paid for out of the crate at ${layingCost({ burden: 1 })} Supplies a point of Magic Burden.`}
           character={character}
           held={laidOn({ talents }, onItem.id).map((entry) => entry.id)}
-          room={Infinity}
+          room={cap}
           priced
           afford={(enchantment) => layingAffordable(character, kind, talents, enchantment)}
           onClose={() => setOnItem(null)}
           onPick={(enchantment) => {
             onDraft(layOn(talents, onItem.id, enchantment.id));
             setOnItem(null);
+            onClose();
           }}
           onRead={(card) => stack?.openCard(card)}
         />
       )}
     </>
-  );
-}
-
-/** Which thing is being worked on. Everything carried, on its own shelf. */
-function ItemChoice({ items, talents, onClose, onPick }) {
-  const shelves = CATEGORY_ORDER.map((category) => ({
-    category,
-    rows: items.filter((item) => itemCategory(item) === category),
-  })).filter((shelf) => shelf.rows.length > 0);
-
-  return (
-    <Modal title="Enchant what?" onClose={onClose} wide accent={PICK_ACCENTS.talent}>
-      <p className="frame-foot" style={{ marginTop: 0 }}>
-        Anything you are carrying: worn, in hand, on the belt or in the pack.
-      </p>
-
-      {shelves.map(({ category, rows }) => (
-        <section className="brew-step" key={category}>
-          <div className="brew-step-head">
-            <span className="brew-step-label">{category}</span>
-            <span className="brew-step-note">{rows.length}</span>
-          </div>
-
-          <div className="brew-slots">
-            {rows.map((item) => {
-              const on = laidOn({ talents }, item.id);
-              return (
-                <button
-                  type="button"
-                  className="brew-slot brew-slot-add ench-item-pick"
-                  key={item.id}
-                  onClick={() => onPick(item)}
-                >
-                  <span className="brew-slot-add-label">{item.name}</span>
-                  {on.length > 0 && (
-                    <span className="brew-slot-meta">{on.map((e) => e.name).join(' · ')}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ))}
-    </Modal>
   );
 }
 

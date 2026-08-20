@@ -309,6 +309,19 @@ export const KEYWORDS = [
     detail: 'Singled out. Whoever marked it knows where it is and hits it more easily.',
   },
   {
+    id: 'frightened',
+    terms: ['Frightened', 'frightened'],
+    color: 'var(--danger-rose)',
+    /* Not on the Status & Terms tab. FRIGHTFUL ROAR defines it outright at the
+       foot of its own card, in a parenthesis, and that sentence is quoted here
+       word for word rather than paraphrased — the same trade the Cauldron
+       Keeper's four nouns made. The gloss then came off the card body, because
+       a term that carries its own explanation must never be spelled out in
+       prose as well. */
+    detail:
+      'Affected entities have Disadvantage on all Actions against the one frightening them.',
+  },
+  {
     id: 'poisoned',
     terms: ['poisoned'],
     color: 'var(--dmg-decay)',

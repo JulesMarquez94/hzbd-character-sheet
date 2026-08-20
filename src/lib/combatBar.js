@@ -47,6 +47,7 @@ import { BASIC_ACTIONS } from './actions.js';
 import { abilitySources, isPassive } from './abilitySources.js';
 import { enchanterState, runningEnchants } from './enchanting.js';
 import { getEnchantment } from './enchantments.js';
+import { isMinionCard, minionModifiers } from './minions.js';
 import {
   EQUIPMENT_SLOTS,
   beltEntry,
@@ -204,7 +205,11 @@ function knownGroups(character) {
     .filter((source) => !source.aside)
     .map((source) => {
       const moves = rowsOf(source)
-        .filter(({ card }) => !isStanding(card))
+        /* And a card somebody else on your sheet plays is not on your bar. A
+           draconic ally's Wyrm Bolt costs *its* Action Points, so offering it
+           here would pay for it out of the wrong pool. It is on the creature's
+           own bar instead — see minionBar below. */
+        .filter(({ card }) => !isStanding(card) && !isMinionCard(card))
         .map(({ card, modifiers }) =>
           move(`${source.id}:${card.id}`, card, {
             source: `${card.name} — ${source.title}`,
@@ -255,6 +260,39 @@ function imbuedGroup(character) {
     : null;
 }
 
+
+/**
+ * One creature's own quick bar: the cards the set tagged as its, printed with
+ * its numbers.
+ *
+ * The same `move` rows the character's bar is built from, so the block that
+ * draws it raises the same UsePrompt and pays through the same `spendUse`. What
+ * differs is only who is asked: the prompt is handed the creature as its
+ * character (see minionActor), so an Action Point check reads the creature's
+ * pool and a Willpower check reads its bonded's, which is exactly what ONE AND
+ * THE SAME says.
+ *
+ * Standing cards are left out the same way they are on the character's bar. No
+ * creature has one yet; if one arrives it reads on the character's Always On
+ * block under the set's name, which is where every other passive of that set
+ * already is.
+ */
+export function minionBar(character, minion) {
+  const modifiers = minionModifiers(character, minion);
+
+  const moves = (minion.cards ?? [])
+    .filter((card) => !isStanding(card))
+    .map((card) =>
+      move(`minion:${minion.id}:${card.id}`, card, {
+        source: `${card.name} — ${minion.title}`,
+        modifiers,
+      })
+    );
+
+  return moves.length > 0
+    ? [{ id: `minion:${minion.id}`, label: minion.spec.label, note: minion.title, moves }]
+    : [];
+}
 
 /** What everybody has. Last, because it is the half nobody has to look up. */
 function basicGroup() {

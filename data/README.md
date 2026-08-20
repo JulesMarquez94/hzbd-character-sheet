@@ -46,11 +46,18 @@ doing on its own.
 | Equipment · Enchantments | **2026-08-20, 23 enchantments** (13 on 08-19) | `src/lib/enchantments.js` (`ENCHANTMENTS`) |
 | Talent Set · Mycomancer · Ability | **2026-08-20, 6 cards** (a rewrite, see below) | `src/lib/talents.js` (`TALENTS`) |
 | Mycomancer art, from the `Mycomancer/` folder | **2026-08-20, 6 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| Talent Set · Draconic Bond · Ability | **2026-08-20, 9 cards** | `src/lib/talents.js` (`TALENTS`) |
+| Talent Set · Draconic Bond · Developpement Notes | **2026-08-20, the minion system** | `src/lib/minions.js`, `MinionBlock.jsx`, `MinionPick.jsx` |
+| Talent Set · Draconic Bond · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
+| Draconic Bond art, from the `Draconic Bond/` folder | **2026-08-20, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| Talent Set · Enchanter · Ability, amended | **2026-08-20, 4 cards** (3 on 08-19) | `src/lib/talents.js`, exported to `data/templates/` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
 else: the codex also carries one Arcane spell, Containment Sphere, which no
-sheet covers yet. `cauldron-keeper-ingredients.csv` carries an extra **Sheet AP**
+sheet covers yet. `draconic-bond-overview.csv` and `enchanter-ability.csv` are the two tabs that were written
+here rather than exported, so they are tracked: a clone would otherwise lose the only copy.
+`cauldron-keeper-ingredients.csv` carries an extra **Sheet AP**
 column beside the live one, so the Catalyst balance pass below reads as a diff
 rather than a claim, and `enchantments.csv` carries what each one costs to lay and
 what its sentence was turned into mechanically. Diff a fresh download against those to see exactly what
@@ -483,17 +490,19 @@ because the card says "whether or not they can cast spells of their own".
 
 ### The Long Rest window
 
-Both slow cards happen there and nowhere else, so `EnchantRest.jsx` is a section
-of it rather than a control on the sheet, with two rows:
+Both slow cards happen there and nowhere else. **Rewritten 2026-08-20** — they are
+two of the things the rest's single action slot can be spent on, rather than two
+standing sections of it. See "One action a rest" below for the window; what each
+one is still costs what it always cost:
 
-- **On your own person.** As many slots as the rank allows, filled or waiting. Tap
-  the slot, the shelf opens. **No Supplies**, because WIELDER OF WONDER names none
-  for changing what you wear and reads the way a Mycomancer's spell swap reads.
+- **On your own person.** As many slots as the rank allows, filled or waiting.
+  **No Supplies**, because WIELDER OF WONDER names none for changing what you wear
+  and reads the way a Mycomancer's spell swap reads.
 - **On what you carry.** Anything worn, in hand, on the belt or in the pack. Priced
   at **70 Supplies a point of Magic Burden**, out of the same crate and through the
   same ledger as the rest itself, and a price the crate cannot cover is offered
   dead rather than left to fail at the last button. Stripping one back off returns
-  nothing.
+  nothing. **One enchantment an item**, or two once LAYERED ENCHANTMENT is held.
 
 Every choice writes into the window's own `talents` draft, the same draft the spell
 swaps write into, and only "Yes, rest" commits any of it. A rest nobody can pay for
@@ -748,6 +757,240 @@ Every marker was mapped back to the prose it stands for — `[[4d6 + 4*stat]]` t
 "Instinct" — and the result compared to the designer's cell with whitespace and
 case flattened, plus name, AP, WP, tags and rank for each row. **35 of 36 checks
 matched.** The one that did not is "leared" above.
+
+## The Draconic Bond, 2026-08-20
+
+The first set that hands over a **body** instead of a card. Nine cards on the
+`Ability` tab, a `Developpement Notes` tab describing a whole new kind of block,
+and a folder of eleven pictures. No `Overview` tab: it was handed over to be
+written here, the way the Enchanter's was.
+
+### The split the sheet already made
+
+The Tags column does the work, and it is worth noticing because nothing else in
+the codex needed it: four cards are tagged **`Draconic Ally`** and five
+**`Draconic Bond`**. That is the designer saying which of the two bodies plays
+which card, and it is what the two quick bars are built on. A `Draconic Ally`
+card is played from the creature's block and paid out of the creature's Action
+Points; it is kept off the character's own quick bar so nothing is ever charged
+to the wrong pool.
+
+| Rank | The bonded plays | The ally plays |
+| ---- | ---------------- | -------------- |
+| 1 · Novice | One and the Same, Draconic Recall | Wyrm Bolt, Dragon's Favor |
+| 2 · Adept | Draconic Mark | Dragon Breath |
+| 3 · Master | Empowered Bond, Draconic Link | Frightful Roar |
+
+### The minion system
+
+`src/lib/minions.js` is new and is written generically, because the notes say so:
+"this a system that will be used late for other thing so make it ahead of time
+modular". What a creature *is* lives there; what *this* creature is made of is a
+`minion` spec on the set in `talents.js`, exactly the way `loadout`, `brewing`
+and `enchanting` already work. A second set with a different creature writes a
+different spec and changes no code.
+
+Every number in the spec is the notes', transcribed:
+
+| The note | The spec |
+| -------- | -------- |
+| "at level one it has 5 Physique, 4 Instinct, 6 Mind" | `base: { physique: 5, instinct: 4, mind: 6 }` |
+| "every uneven level he gains 1 Mind, and every even level he gains 1 Physique or 1 Instinct, alternating" | `growth: { odd: ['mind'], even: ['physique', 'instinct'] }` |
+| "health is 5 per level and 5 per physique" | `health: { perLevel: 5, perPhysique: 5 }` |
+| "a Defense equal to its Grit" | `defense: 'grit'` |
+| "it cannot go in negative" | `floor: 0` |
+| ONE AND THE SAME: "unable to reemerge until you take a Long Rest" | `returns: 'long'` |
+| EMPOWERED BOND: "its damage is Elevated by 1" | `elevate: [null, 0, 0, 1]` |
+| "Red (fire), Blue (Cold), White (lightning), Yellow (sacred), Purlple (psychic), Green (decay)" | `scales.options` |
+
+"All the stat are derived the same", so Reflex, Grit, Initiative, Speed, Action
+Points and Reaction Points are the character's own formulas from
+`deriveStats` run against the ally's attributes. At level 1 that is
+**30 Health, Defense 10, Reflex 9, Grit 10, Initiative 5, Speed 5m**; at level 12
+it is **100 Health and Defense 18**.
+
+### The two blocks
+
+"You get a new block add to your character page. This a two block wide ... the
+minion also has his own one block ... this block can also be move around both
+the 1 and 2 block."
+
+Read as **two blocks**, each the ordinary 360x640 cell, side by side in their
+factory order and each with its own row in the arranger. That satisfies both
+halves of the sentence: together they are two blocks wide, and each moves on its
+own. `block_order` is therefore no longer a fixed list of six numbers —
+`normalizeBlockOrder` now takes the extra ids (`minion:draconic-bond` and
+`minion:draconic-bond:bar`) and repairs the stored list the way the Abilities
+tab's `normalizeSourceOrder` does.
+
+Both blocks draw with the **character's own tiles** — `AttrTile`, `StatBox`,
+`ResourceBar`, `PipRow`, the quick bar's chip — because the stats are derived
+the same and a Grit has to look like a Grit.
+
+The pools sit in a new `minions` jsonb column, keyed by the set:
+`{ "draconic-bond": { name, scale, portrait_url, health, shield, ap, reaction } }`.
+**Re-run `supabase/schema.sql`** or the column is dropped from writes with a
+console warning.
+
+### Who pays for what
+
+"The minion always use his own action point and reaction point but uses the
+character willpower."
+
+`minionActor` dresses the creature up as a character — its attributes, its
+pools, and its bonded's Willpower — and hands that to the two components that
+already know how to read one. So `UsePrompt` refuses a Wyrm Bolt when the *ally*
+is out of Action Points and when *you* are out of Willpower, with no second copy
+of the prompt, and `AbilityCard` prints "2d4 + 6" off the ally's Mind rather than
+yours. The confirmed patch is then split by `minionSpend`: points to the
+creature's row, Willpower to the character's, in one write.
+
+That needed one new modifier: **`actor`**, beside `damage`, `empower`,
+`elevate`, `stat` and `choice`. `elevate` also had to be threaded through
+`CardText` and `AbilityCard`, which knew about `empower` and not its twin.
+
+### Naming it
+
+"A new window open, you name the draconic ally. You choose it scale color ...
+when naming it should also allow you to add an image to it like for character."
+
+It opens on top of the take, the way a Mycomancer's spell pool does, and it is a
+button afterwards in two places: on the set on the Advancement tab, and on the
+creature's own block. An unnamed ally is counted by `openChoices`, so it wears
+the same badge on the Advancement tab that an unanswered lineage card does.
+
+### Two edits to the sheet's own words, and why
+
+- **"Mind Range Attack" was set as "Mind Ranged Attack"** on WYRM BOLT. Ranged
+  Attack is the game's own defined term, printed that way on the Status & Terms
+  tab and on every other card, and the missing letter would have left it unlit.
+- **FRIGHTFUL ROAR's parenthesis moved to `keywords.js`.** The card spells
+  Frightened out at its foot; a defined term carries its own explanation and must
+  never be glossed in prose as well, so the designer's sentence went into the
+  glossary word for word and the parenthesis came off the body.
+
+Everything else round-tripped: every marker mapped back to the written form and
+compared to the cell with whitespace and apostrophes flattened, plus tags, AP and
+WP for each row. **9 of 9 matched.**
+
+### Three things for the designer
+
+1. **Two scale tables disagree.** The Draconic *lineage*'s CHROMATIC RESISTANCE
+   reads white as Cold, blue as Lightning and black as Decay; the Draconic Bond
+   notes read blue as Cold, white as Lightning and green as Decay. Both are
+   yours. The set uses the notes' table and the lineage keeps its own.
+2. **The tagline, tags and blurb are house-written**, and exported back to
+   `data/Talent Set - Draconic Bond - Overview.csv` in the sheet's own column
+   order so the workbook can hold the same words. Tags were guessed as
+   "Martial, Support, Control, Mind".
+3. **"Dead" against "retreats into your shadow".** The notes say the ally is
+   "instantly shown as dead" at 0 Health and cannot go negative; ONE AND THE SAME
+   says it retreats into your shadow until a Long Rest. The block does both: the
+   bar bottoms out at nothing and wears the skull, and the card's own sentence is
+   printed underneath so nobody reads the skull as gone for good. A Long Rest
+   brings it back, in the rest window's own list of lines.
+
+### The picture folder
+
+Eleven files for nine cards and one set plate, and three of them did not match
+by name. `pull-card-art.mjs` learned all three rather than anybody renaming a
+file:
+
+- `Empowred Bond.png` → an `ALIASES` entry for EMPOWERED BOND.
+- `Draonic Bon Overview.png` → a new `PLATE_ALIASES` table, keyed by talent id,
+  for a set plate whose filename is not the set's name.
+- `Dragon Favor.jpg` **and** `Dragon's Favor.png` both claim DRAGON'S FAVOR. The
+  importer now takes the **newest** file when two claim one card and names the
+  one it set aside in the run's report, because which of them wins was otherwise
+  down to alphabetical order. Deleting the older file retires both that rule's
+  involvement and the alias.
+
+## One action a rest, 2026-08-20
+
+Three asks from Jules, in one pass, and they are all the same rule seen from
+three sides.
+
+> "You can only do 1 action per long rest, so if I m enchanting a new weapon I
+> cannot do another one."
+>
+> "An enchanter should not be able to add more than 1 enchant a time at novice,
+> so update that info, then add a Master talent that allow to have 2 enchant on
+> the same item."
+>
+> "For the long rest redo the page to have a clear menu of thing you can do ...
+> take long rest > Choose Long Rest Action > Change Wielder of Wonder Enchant >
+> select new one > back to long rest overview (now you can see what you re doing
+> here) > accept."
+
+### The rest window is a slot now
+
+It used to be four standing sections stacked under the plan: the work of the
+camp, what you enchant, what you wear and what you prepare. Each policed its own
+limit and **none of them policed the one that mattered** — a single night could
+craft a potion, lay two enchantments, change what it wore and re-prepare a whole
+hand. The Status & Terms tab has always said otherwise: "allows you to perform 1
+Long Rest Action."
+
+So there is one slot:
+
+    Take a Long Rest
+      What it does        · every line the rest writes, as before
+      Supplies after      · the crate, as before
+      Your Long Rest action
+        [ + Choose your long rest action — 4 things you could do tonight ]
+
+Opening it swaps the window to a menu of everything available tonight, grouped
+by where it came from. Picking one closes the menu and raises that action's own
+step; finishing the step lands back on the overview with the slot filled and the
+plan rewritten. The slot then says what the action has *actually done* ("Fire
+Infusion laid on Longsword"), and distinguishes that from a slot merely filled
+("Nothing laid yet"), so a step closed halfway does not read as a night's work
+finished.
+
+Picking a second action gives the first one back, draft and all. So does Clear,
+and so does closing the window.
+
+### What the slot may hold
+
+`restActions` in `rest.js` is the only place that knows, the same way
+`abilitySources.js` is the only place that knows what a source is. One list, one
+shape, four kinds so far:
+
+| Kind | Where it comes from | Its step |
+| ---- | ------------------- | -------- |
+| `labour` | a background skill worked during a rest | the amount chips, in the menu |
+| `enchant` | ENCHANTING | which item, then the shelf |
+| `worn` | WIELDER OF WONDER | the body slots and their shelf |
+| `prepare` | a set with a `loadout` that swaps on this rest | the set's own pool |
+
+Every step is the very chooser its own part of the sheet already raises, writing
+into the window's draft instead of into the character. A short rest names none of
+the four, so it gets no slot at all and is the plain plan it always was.
+
+### One enchantment an item, two at Master
+
+`enchanting.perItem` is a new rank-indexed number on the set, `[null, 1, 1, 2]`,
+beside `tiers` and `worn`. It is read by the shelf, by the item list, by the rank
+note on the presentation page and by `layOn` itself, so a full item is refused by
+the same rule in all four places. A full item can still be *changed*: stripping
+and laying are one action, and the strip is offered on the item's own row.
+
+### Three house edits to the Enchanter, and why
+
+All three are Jules's instruction rather than a sheet, and the amended tab is
+exported to `data/templates/enchanter-ability.csv` so the workbook can be brought
+level. **The drop in `data/` is left exactly as it arrived.**
+
+1. **ENCHANTING: "your Long Rest actions" → "your Long Rest action".** The plural
+   was the last thing on the sheet promising two, and it contradicted both the
+   glossary and the window.
+2. **ENCHANTING gains a last line: "An item can hold one enchantment at a time."**
+   A limit with no card saying it is a limit nobody can read.
+3. **LAYERED ENCHANTMENT is new, at Rank 3.** Named out of the set's own lexicon
+   the way every other card in it is, and its two sentences say only what the
+   existing cards already imply about a second working: it is another night's
+   labour at the same price, and the wielder carries both burdens. It also fills
+   a rank that until now added no card at all.
 
 ## The columns
 

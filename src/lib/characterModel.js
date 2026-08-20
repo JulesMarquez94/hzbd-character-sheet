@@ -75,6 +75,12 @@ export const BLANK_CHARACTER = {
   background_kit: null,
 
   talents: [],
+  // The creatures a talent set has put on the board, keyed by the set that
+  // granted one: { "draconic-bond": { name, scale, portrait_url, health,
+  // shield, ap, reaction } }. Identity and pools together, because they are
+  // the same creature. A pool that is absent reads as full. minions.js owns
+  // the shape, and a sheet with no such set never writes the column.
+  minions: {},
   // Everything a level handed out that isn't a talent, keyed by the level that
   // granted it: the +2 / +1 spread at level 1, and an attribute point and a
   // learned skill at every odd level after. levelPicks.js owns the shape.
@@ -124,10 +130,20 @@ export const SHEET_BLOCK_IDS = [1, 2, 3, 4, 5, 6];
 /**
  * A stored order is only ever a hint: it may be missing, half-written by an
  * older build, or hold ids that no longer exist. Whatever comes in, this
- * returns all six ids exactly once — known ids keep the order they were given
- * and anything absent is appended in its factory position.
+ * returns every block this character actually has, exactly once — known ids
+ * keep the order they were given and anything absent is appended in its
+ * factory position.
+ *
+ * `extra` is the blocks that are not always there. The six numbered ones are
+ * every character's; a talent set that puts a creature on the board adds two
+ * more, named `minion:<set>` and `minion:<set>:bar` (see minionBlockIds in
+ * minions.js). Those arrive when the set is taken and leave when it is handed
+ * back, so they are matched the way normalizeSourceOrder matches an Abilities
+ * tab that grew a block: still present keeps its place, gone is dropped, and
+ * new is appended rather than pushed into the middle of an arrangement
+ * somebody has already made.
  */
-export function normalizeBlockOrder(value) {
+export function normalizeBlockOrder(value, extra = []) {
   let list = value;
   if (typeof list === 'string') {
     try {
@@ -137,12 +153,20 @@ export function normalizeBlockOrder(value) {
     }
   }
 
+  const grown = new Set(extra.map(String));
   const order = [];
+
   for (const raw of Array.isArray(list) ? list : []) {
     const id = Number(raw);
-    if (SHEET_BLOCK_IDS.includes(id) && !order.includes(id)) order.push(id);
+    if (SHEET_BLOCK_IDS.includes(id)) {
+      if (!order.includes(id)) order.push(id);
+      continue;
+    }
+    const named = String(raw);
+    if (grown.has(named) && !order.includes(named)) order.push(named);
   }
-  for (const id of SHEET_BLOCK_IDS) {
+
+  for (const id of [...SHEET_BLOCK_IDS, ...grown]) {
     if (!order.includes(id)) order.push(id);
   }
   return order;

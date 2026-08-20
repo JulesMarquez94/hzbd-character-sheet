@@ -48,7 +48,8 @@ import { appendLedger, clamp, formatNumber, newLedgerId } from './characterModel
 import { normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
 import { normalizeLevelPicks } from './levelPicks.js';
-import { pickChanges } from './loadouts.js';
+import { pickChanges, restSwaps } from './loadouts.js';
+import { minionRest } from './minions.js';
 import {
   changeCost,
   enchantChanges,
@@ -227,6 +228,113 @@ export function restEnchanting(character, kind) {
   if (kind !== 'long') return null;
   return enchanterState(character);
 }
+
+/* --------------------------------------------------------- the one action
+ *
+ * A rest buys **one** action, and the Status & Terms tab is where that comes
+ * from: "successfully completing a Long Rest fully restores your Health and
+ * Willpower, and allows you to perform 1 Long Rest Action." Jules put it plainly
+ * on 2026-08-20: "you can only do 1 action per long rest, so if I m enchanting a
+ * new weapon I cannot do another one".
+ *
+ * The window used to offer four different things at once, in four sections, each
+ * enforcing its own limit and none of them enforcing that one: a night could
+ * craft a potion, lay two enchantments, change what was worn *and* re-prepare a
+ * whole hand. So the sections are gone and there is a **slot**. This is what the
+ * slot may be filled with.
+ *
+ * One list, one shape, whatever the action actually is — the same trick
+ * abilitySources.js plays with a "source". A new kind of long rest action is a
+ * new branch here and a new step in the window, and nothing else has to learn
+ * what it is.
+ */
+
+/**
+ * Every action this character could spend this rest on.
+ *
+ * `talents` is the window's own draft rather than the row, so a shelf reopened
+ * after a choice shows the choice. `kind` decides what is offered at all: nothing
+ * below names a short rest, so a short rest gets an empty list and the window
+ * shows no slot.
+ */
+export function restActions(character, kind, talents = character?.talents) {
+  const held = { ...character, talents };
+  const rows = [];
+
+  /* ---- the work of the camp ----
+     Background skills that are done *during* a rest, with the numbers parsed off
+     the designer's own card text. One row per card; a card that offers two
+     amounts asks which in its own step. */
+  if (kind === 'long') {
+    for (const { card, options } of restLabours(character)) {
+      rows.push({
+        id: `labour:${card.id}`,
+        kind: 'labour',
+        label: card.name,
+        from: 'The work of the camp',
+        note: card.summary ?? null,
+        card,
+        options,
+      });
+    }
+  }
+
+  /* ---- the Enchanter's evening ----
+     Two of their three cards happen here, and they are two *actions* now rather
+     than two rows of one section: laying a working costs the crate and changing
+     what you wear costs nothing, and a night buys one of them. */
+  const enchanter = restEnchanting(held, kind);
+  if (enchanter) {
+    const cap =
+      enchanter.perItem === 1 ? 'one enchantment an item' : `up to ${enchanter.perItem} an item`;
+
+    rows.push({
+      id: 'enchant',
+      kind: 'enchant',
+      label: 'Enchant an item',
+      from: 'Enchanting',
+      note: `${enchanter.spec.supplyRate} Supplies a point of Magic Burden, and ${cap}.`,
+      state: enchanter,
+    });
+
+    if (enchanter.wornMax > 0) {
+      rows.push({
+        id: 'worn',
+        kind: 'worn',
+        label: 'Change what you wear',
+        from: 'Wielder of Wonder',
+        note: `${enchanter.worn.length} of ${enchanter.wornMax} on your own person, and no Supplies to change them.`,
+        state: enchanter,
+      });
+    }
+  }
+
+  /* ---- what a set re-prepares ----
+     The permission is the granting card's: a Mycomancer's FUNGAL INVOCATION says
+     the swap costs the long rest's action, which is exactly what this list is. */
+  for (const { talent, state } of restSwaps(talents, kind)) {
+    rows.push({
+      id: `prepare:${talent.id}`,
+      kind: 'prepare',
+      label: `Change your ${plural(state.spec.noun, state.known)}`,
+      from: `${talent.name} · ${state.spec.label}`,
+      note:
+        state.picks.length > 0
+          ? state.picks.map((pick) => pick.card?.name ?? pick.id).join(' · ')
+          : `Nothing prepared. This set knows ${state.known}.`,
+      talent,
+      state,
+    });
+  }
+
+  return rows;
+}
+
+/** "spell" / "spells". */
+function plural(noun, count) {
+  return count === 1 ? noun : `${noun}s`;
+}
+
 
 /**
  * Whether one more thing could be laid, given that the rest itself is paid for
@@ -408,6 +516,20 @@ export function restPlan(character, kind, labours = [], prepared = null) {
       detail: kind === 'long' ? 'All of it.' : 'Half your maximum back.',
       tone: 'gain',
     });
+  }
+
+  /* ---- whatever else is on the board with you ----
+     A creature a talent set put there is restored by whichever rest its spec
+     names, and for a draconic ally that is the long one: ONE AND THE SAME says
+     an ally that would die "retreats into your shadow and is unable to reemerge
+     until you take a Long Rest", so this is the only thing on the sheet that
+     brings it back. Health full and Action Points full, the same two the rest
+     gives its bonded, and the window prints a line per creature so nobody has
+     to notice it happened. */
+  const creatures = minionRest(character, kind);
+  if (creatures) {
+    Object.assign(patch, creatures.patch);
+    lines.push(...creatures.lines);
   }
 
   /* ---- willpower: a long rest only, which is what the glossary says ---- */

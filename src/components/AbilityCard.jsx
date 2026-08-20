@@ -127,9 +127,13 @@ function SparkIcon() {
  *                  every card has a box to fit. Only turn it off for a card
  *                  whose text is still being typed, where re-measuring on each
  *                  keystroke would fight the writer.
- * @param modifiers what the holder does to the card: `{ damage, empower, choice, stat }`.
+ * @param modifiers what the holder does to the card:
+ *                  `{ damage, empower, elevate, choice, stat, actor }`.
  *                  `choice` is the option this character picked where the card
  *                  asks for one — a scale colour, a casting attribute.
+ *                  `actor` is somebody else on the sheet playing it: a
+ *                  draconic ally's card prints the ally's numbers, not its
+ *                  bonded's. See minionModifiers in minions.js.
  */
 export default function AbilityCard({
   ability,
@@ -161,19 +165,39 @@ export default function AbilityCard({
   // printed for Mind and cast with Instinct.
   const stat = modifiers?.stat ?? ability.stat ?? 'instinct';
 
+  // And *whose* numbers it prints. A creature on your sheet plays its own
+  // cards off its own attributes, so the card is resolved against it rather
+  // than against the character holding the block.
+  const who = modifiers?.actor ?? character;
+
   // An infusion replaces the card's printed damage type outright; every
-  // Empowering working stacks onto the dice.
+  // Empowering working stacks onto the dice, and every Elevating one grows
+  // them a size.
   const damage = modifiers?.damage?.length ? modifiers.damage : ability.damage ?? [];
   const empower = Number(modifiers?.empower) || 0;
+  const elevate = Number(modifiers?.elevate) || 0;
 
   // A card that asks the holder to decide something prints their answer; with
   // nothing picked yet it prints what it is still waiting for.
   const choice = modifiers?.choice ?? null;
   const choicePrompt = ability.choice?.placeholder ?? null;
 
-  const textProps = { character, stat, damage, empower, choice, choicePrompt, onValue, onLink };
+  const textProps = {
+    character: who,
+    stat,
+    damage,
+    empower,
+    elevate,
+    choice,
+    choicePrompt,
+    onValue,
+    onLink,
+  };
   const bannerRef = useFitLine(typeLine);
-  const bodyRef = useFitText(fit, `${name}|${body}|${subBody}|${damage.join()}|${empower}|${choice?.id ?? ''}`);
+  const bodyRef = useFitText(
+    fit,
+    `${name}|${body}|${subBody}|${damage.join()}|${empower}|${elevate}|${choice?.id ?? ''}`
+  );
 
   const content = (
     <>

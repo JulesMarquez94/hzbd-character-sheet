@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import ActiveBlock from './ActiveBlock.jsx';
 import LedgerModal from './LedgerModal.jsx';
 import LoadoutBlock from './LoadoutBlock.jsx';
+import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
 import PassiveBlock from './PassiveBlock.jsx';
 import TurnBlock from './TurnBlock.jsx';
 import { AttrTile, CoinIcon, CrateIcon, KarmaPill, PipRow, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
@@ -18,6 +19,7 @@ import {
   shieldCapFor,
   xpProgress,
 } from '../../lib/characterModel.js';
+import { minionBlockIds, minionState } from '../../lib/minions.js';
 import { normalizeTalents } from '../../lib/talents.js';
 
 /* The three tiles read from the shared codex — label, colour and tooltip alike
@@ -84,6 +86,10 @@ const PLACEHOLDERS = [];
  * What each block is, in words. The arranger shows a list of rows rather than
  * the blocks themselves, so it needs a name for each one, and these are the
  * names the block comments above use.
+ *
+ * The six are every character's. A talent set that puts a creature on the board
+ * adds two more that are not in this table, because their names are the
+ * creature's own — see `describeBlock` below.
  */
 const BLOCK_NAMES = {
   1: { name: 'Identity & Attributes', note: 'Name, lineage, background, the three attributes' },
@@ -130,10 +136,43 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      everyone with nothing running, which is nearly everyone. */
   const shift = useMemo(() => liveShift(character), [character]);
 
-  const order = useMemo(() => normalizeBlockOrder(character.block_order), [
+  /* The creatures on the board, if any. Two blocks each, and both of them
+     movable like the six: "this block can also be moved around, both the 1 and
+     2 block, in character page". They arrive when the set is taken and leave
+     when it is handed back, so the stored arrangement is matched against what
+     actually exists rather than assumed to be six numbers. */
+  const minions = useMemo(() => minionState(character), [character]);
+  const grown = useMemo(() => minionBlockIds(character), [character]);
+
+  const order = useMemo(() => normalizeBlockOrder(character.block_order, grown), [
     character.block_order,
+    grown,
   ]);
   const saveOrder = useCallback((next) => patch({ block_order: next }), [patch]);
+
+  /* A row in the arranger. The six have fixed names; a creature's two are named
+     after the creature, so an arrangement holding them can still be read at a
+     glance. */
+  const describeBlock = useCallback(
+    (id) => {
+      if (BLOCK_NAMES[id]) return BLOCK_NAMES[id];
+
+      const match = /^minion:([^:]+)(?::(bar))?$/.exec(String(id));
+      const minion = match ? minions.find((row) => row.id === match[1]) : null;
+      if (!minion) return { name: String(id), note: null };
+
+      return match[2]
+        ? {
+            name: `${minion.title} · Actions`,
+            note: 'Its Action Points, its Reaction Points and its quick bar',
+          }
+        : {
+            name: minion.title,
+            note: `${minion.spec.label}: attributes, defenses, Health and Shield`,
+          };
+    },
+    [minions]
+  );
 
   /* Arranging happens in a modal rather than on the tab itself. Dragging a
      block where it sits could not work on a phone, where one block fills the
@@ -397,6 +436,34 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
        tab that spends nothing and gives points back. */
     6: <TurnBlock character={character} patch={patch} readOnly={readOnly} />,
 
+    /* ============ A CREATURE'S TWO ============
+       Only there when a set has put one on the board. Same 360x640, same place
+       in the order, and the stats block first because that is the order the
+       Developpement Notes describe them in. */
+    ...Object.fromEntries(
+      minions.flatMap((minion) => [
+        [
+          `minion:${minion.id}`,
+          <MinionStatsBlock
+            character={character}
+            minion={minion}
+            patch={patch}
+            readOnly={readOnly}
+            unit={unit}
+          />,
+        ],
+        [
+          `minion:${minion.id}:bar`,
+          <MinionActionsBlock
+            character={character}
+            minion={minion}
+            patch={patch}
+            readOnly={readOnly}
+          />,
+        ],
+      ])
+    ),
+
     ...Object.fromEntries(
       PLACEHOLDERS.map((n) => [
         n,
@@ -427,7 +494,9 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         {order.map((id) => (
           <section
             key={id}
-            className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}`}
+            className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}${
+              String(id).startsWith('minion:') ? ' cell-minion' : ''
+            }`}
           >
             {blocks[id]}
           </section>
@@ -436,7 +505,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         {arranging && (
           <BlockArrange
             order={order}
-            describe={(id) => BLOCK_NAMES[id]}
+            describe={describeBlock}
             onChange={saveOrder}
             onClose={() => setArranging(false)}
           />

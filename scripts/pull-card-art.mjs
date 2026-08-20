@@ -109,6 +109,24 @@ const bare = (file) => flatten(file.replace(IMAGE_FILE, ''));
  */
 const ALIASES = {
   'Sporadic Infusion': 'Sporatic Infusion.jpg',
+  /* 2026-08-20, from data/Draconic Bond/. The sheet prints EMPOWERED BOND. */
+  'Empowered Bond': 'Empowred Bond.png',
+  /* Two files claim this one: `Dragon's Favor.png` matches the printed name on
+     its own, and `Dragon Favor.jpg` is the redraw that landed nineteen minutes
+     later. Both resolve, and the newest wins — see "one card, two files" below.
+     Deleting the older file from the folder retires this entry. */
+  'Dragon’s Favor': 'Dragon Favor.jpg',
+};
+
+/**
+ * A *set's* overview plate whose filename is not the set's name, keyed by talent
+ * id. The same record ALIASES is, for the other plate this script writes.
+ *
+ * One so far. `Draonic Bon Overview.png` is Draconic Bond's, and the folder rule
+ * below claims a plate by the set's own name, which two dropped letters defeat.
+ */
+const PLATE_ALIASES = {
+  'draconic-bond': 'Draonic Bon Overview.png',
 };
 
 /* ----------------------------------------------------------------- the sheets */
@@ -338,9 +356,42 @@ const idByAliasFile = new Map(
     .filter(([, id]) => id)
 );
 
-for (const picture of pictures(setIdByFolder)) {
+/* ------------------------------------------------------- one card, two files
+
+   A folder is a working folder: a picture redrawn under a slightly different
+   name arrives *beside* the one it replaces rather than over it. Left alone,
+   which of the two ends up on the card is whichever `readdirSync` happened to
+   return last, which is alphabetical order and has nothing to do with intent.
+
+   So the newest file wins, and the one it beat is named in the run's report.
+   The fix is always to delete the older file; this only stops the wrong one
+   being published in the meantime. */
+
+const folder = pictures(setIdByFolder);
+
+const claims = new Map();
+for (const picture of folder) {
   const flat = flatten(picture.name);
   const id = idBySheetFile.get(flat) ?? idByFlatName.get(flat) ?? idByAliasFile.get(flat) ?? null;
+  if (!id) continue;
+
+  const held = claims.get(id);
+  if (!held) { claims.set(id, picture); continue; }
+
+  const [win, lose] =
+    statSync(picture.file).mtimeMs > statSync(held.file).mtimeMs
+      ? [picture, held]
+      : [held, picture];
+  claims.set(id, win);
+  console.log(`${id.padEnd(20)} two files claim it — using ${win.set}/${win.name}, not ${lose.name}`);
+}
+
+for (const picture of folder) {
+  const flat = flatten(picture.name);
+  const id = idBySheetFile.get(flat) ?? idByFlatName.get(flat) ?? idByAliasFile.get(flat) ?? null;
+
+  // Beaten by a newer file for the same card. Already reported above.
+  if (id && claims.get(id) !== picture) continue;
 
   /* Not a card in this folder, and named for the set that owns the folder:
      this is the set's overview picture, the square plate behind `talent.art`.
@@ -348,7 +399,8 @@ for (const picture of pictures(setIdByFolder)) {
      would still be dealt as a card. */
   if (!id) {
     const setId = setIdByFolder.get(flatten(picture.set));
-    if (setId && flat.startsWith(flatten(picture.set))) {
+    const named = setId && bare(PLATE_ALIASES[setId] ?? '') === flat;
+    if (setId && (named || flat.startsWith(flatten(picture.set)))) {
       const plate = path.join(TALENT_OUT, `${setId}.jpg`);
       if (!stale(picture.file, plate) && !FORCE) { talentSkipped += 1; continue; }
       try {

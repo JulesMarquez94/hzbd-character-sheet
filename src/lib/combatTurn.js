@@ -60,6 +60,7 @@
  */
 
 import { allSourceCards, abilitySources } from './abilitySources.js';
+import { refillMinions } from './minions.js';
 import { combatStartEffects, getItem, normalizeBelt, normalizeEquipment } from './items.js';
 import { shieldCapFor } from './characterModel.js';
 import { getCard } from './weapons.js';
@@ -160,6 +161,11 @@ export function startCombat(character) {
   const grant = combatShieldGrant(character);
   if (grant) patch.shield = grant.next;
 
+  /* Whatever else is on the board with you comes to the bell in the same state
+     you do: Action Points full, Reaction Points at nothing. A creature that is
+     down stays down — it comes back on a Long Rest and nowhere else. */
+  Object.assign(patch, refillMinions(character, { reaction: true }) ?? {});
+
   return patch;
 }
 
@@ -172,6 +178,10 @@ export function startTurn(character) {
     turn_state: { n: n + 1, live: true, inCombat: true },
     ap: Math.max(0, Math.floor(Number(character?.ap_max) || 0)),
     effects: tick(normalizeEffects(character?.effects)),
+    /* "During your turn, you also control your draconic ally." It is your turn
+       that it acts on, so its Action Points come back when yours do. Its
+       Reaction Points are left alone for the same reason yours are. */
+    ...(refillMinions(character) ?? {}),
   };
 }
 

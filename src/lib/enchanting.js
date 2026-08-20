@@ -82,9 +82,17 @@ export function enchanterState(character) {
     tiers: spec.tiers?.[rank] ?? [],
     /* WIELDER OF WONDER: "equal to your rank in enchanter". */
     wornMax: spec.worn?.[rank] ?? 0,
+    /* ENCHANTING: "an item can hold one enchantment at a time", until LAYERED
+       ENCHANTMENT at Rank 3 makes it two. */
+    perItem: spec.perItem?.[rank] ?? 1,
     worn: normalizeWorn(entry.worn),
     laid: normalizeLaid(entry.laid),
   };
+}
+
+/** How many enchantments one item may hold, for this character's rank. */
+export function perItemMax(character) {
+  return enchanterState(character)?.perItem ?? 1;
 }
 
 /** True for a character who can lay anything at all. */
@@ -153,16 +161,24 @@ export function setWorn(talents, ids) {
   );
 }
 
-/** The whole `talents` value with one more enchantment laid on one item. */
+/**
+ * The whole `talents` value with one more enchantment laid on one item.
+ *
+ * Refuses past the per-item cap as well as at the UI, because the shelf is not
+ * the only way in: a rest window reopened on an item that already holds its
+ * limit would otherwise write a third working nobody could read a rule for.
+ */
 export function layOn(talents, itemId, enchantId) {
   const key = String(itemId ?? '');
   if (!key || !getEnchantment(enchantId)) return serializeTalents(normalizeTalents(talents));
+
+  const cap = perItemMax({ talents });
 
   return serializeTalents(normalizeTalents(talents).map((row) => {
     if (row.id !== ENCHANTER_ID) return row;
     const laid = normalizeLaid(row.laid);
     const held = laid[key] ?? [];
-    if (held.includes(enchantId)) return row;
+    if (held.includes(enchantId) || held.length >= cap) return row;
     return { ...row, laid: { ...laid, [key]: [...held, enchantId] } };
   }));
 }
@@ -495,6 +511,13 @@ export function wornRoom(character) {
   const state = enchanterState(character);
   if (!state) return 0;
   return Math.max(0, state.wornMax - state.worn.length);
+}
+
+/** And what one item has left. Zero means it is full at this rank. */
+export function itemRoom(character, itemId) {
+  const state = enchanterState(character);
+  if (!state) return 0;
+  return Math.max(0, state.perItem - (state.laid[String(itemId ?? '')] ?? []).length);
 }
 
 /** Everything laid on one item, as codex records. */

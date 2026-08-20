@@ -116,7 +116,7 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
             {!folded && (
               <div className="bar-chips">
                 {group.moves.map((move) => (
-                  <Chip key={move.key} move={move} readOnly={readOnly} onUse={() => ask(move)} />
+                  <BarChip key={move.key} move={move} readOnly={readOnly} onUse={() => ask(move)} />
                 ))}
               </div>
             )}
@@ -167,8 +167,12 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
  * dots. Five dots at this size are five grey pixels; a 2 is a 2. It sits with
  * the name and not with the orbs, written "×2", because a bare number leading
  * a row of costs is read as one of them.
+ *
+ * Exported, because a creature's block has a quick bar of its own and a chip
+ * there has to be the same chip: same accent by kind, same orbs, same one tap
+ * that opens the use rather than committing it. See MinionBlock.jsx.
  */
-function Chip({ move, readOnly, onUse }) {
+export function BarChip({ move, readOnly, onUse }) {
   const { card, variable, spent, charges, used } = move;
   const remaining = charges > 0 ? charges - used : null;
 
