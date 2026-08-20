@@ -58,6 +58,7 @@ import {
   wornItems,
 } from './items.js';
 import { getCard, itemEnchantments } from './weapons.js';
+import { isWeaponAttack, spendTricks, withTrickRider } from './tricks.js';
 
 /* ------------------------------------------------------------------- parts */
 
@@ -140,7 +141,11 @@ function handGroup(character) {
     .map((card) =>
       move(`hand:${card.id}`, card, {
         source: `${primary.name} — in hand`,
-        modifiers,
+        /* Plus whatever is waiting on the next swing. An AMBUSH already paid for
+           has to show on the chip and on the card *before* the attack is made —
+           that is the whole of what the Trickster's notes asked for. See
+           tricks.js. */
+        modifiers: withTrickRider(character, card, modifiers),
       })
     );
 
@@ -478,6 +483,18 @@ export function spendUse(request, character, mode, amount) {
   const ap = Number(amount ?? request.ap) || 0;
   const wp = Number(request.wp) || 0;
   const body = { ...(request.extra ?? {}) };
+
+  /* A weapon attack is what a Trickster's riders were waiting for, and paying
+     for one is the moment the sheet can be sure the swing happened. "Lost on
+     use", from the Developpement Notes.
+
+     Guarded on the card rather than on the character, because a creature's block
+     pays through here too and hands its own row in as `character`. No minion
+     card is tagged Weapon Attack, so nothing there is touched. */
+  if (isWeaponAttack(request.card)) {
+    const kept = spendTricks(character?.effects);
+    if (kept) body.effects = kept;
+  }
 
   if (request.converts === 'reaction') {
     // Anticipate spends nothing. The points cross from one pool to the other,

@@ -839,6 +839,198 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    id: 'trickster',
+    name: 'Trickster',
+    /* Same shape the Draconic Bond arrived in: the Ability tab came on
+       2026-08-20 with the Developpement Notes beside it, and no Overview tab. So
+       `tagline`, `tags` and `blurb` are house-written and exported back out to
+       data/Talent Set - Trickster - Overview.csv in the sheet's own column order,
+       so the workbook can hold the same words. Every card below is the Ability
+       tab, byte for byte. */
+    tagline: 'A thief who strikes from where nobody is looking and is never standing where the blow lands.',
+    art: '/talents/trickster.jpg',
+    /* House-written with the rest of the Overview. Instinct because every roll
+       the set asks for is an Instinct roll and it leans on nothing else; Martial
+       because AMBUSH and STEAL are both spent on a weapon in hand; Defense for
+       DODGE, which is the only card in the codex that makes a landed attack miss;
+       Control for BLIND. Support is deliberately absent: SKULK is the one card
+       that reaches an ally, and one clause is not a role. */
+    tags: ['instinct', 'martial', 'defense', 'control'],
+    stat: 'instinct',
+    /* A sixth shape of what a set can hand over, beside a fixed hand, a
+       `loadout` of picked cards, a `brewing` spec, an `enchanting` one and a
+       `minion`: this set hands over things that wait on your *next* weapon
+       attack, and a table to steal from. Everything here is the Ability tab and
+       the Developpement Notes said as data, and tricks.js is what resolves it.
+
+       Numbers only. What a row does to the sheet is tricks.js's business, which
+       is the same split minions.js keeps. */
+    tricks: {
+      /* THRILLED, at Rank 3: "Your Action Points and Reaction Points maximum are
+         increased to 7." Indexed by rank the way the minion's `elevate` is, so
+         the rule is read off the card once and never parsed back out of its
+         prose. `deriveStats` reads this, which is what makes the two pools' caps
+         stop being the 6 they were hardcoded to.
+
+         Rank 1 and 2 carry 6 rather than null so the reading is always a number:
+         a Trickster who is not a Master has the ceiling everybody has. */
+      points: [null, 6, 6, 7],
+      steal: {
+        /* "Roll a d4 and choose any one effect whose value is below the number
+           you rolled."
+
+           Read as *at or below*, and that is a reading rather than the sheet's
+           word. Taken literally, "below" makes a roll of 1 steal nothing and
+           makes row 4 unreachable at every roll a d4 can show — and row 4 is the
+           "return" the Developpement Notes name as one of the options the window
+           has to offer. Deleting a row the designer wrote is the larger
+           invention, so the ladder runs 1 to 4 and every roll takes something.
+           Flip `reach` to 'below' and the window follows it. Flagged in
+           data/README.md for a ruling. */
+        die: 4,
+        reach: 'at-or-below',
+        /* The four rows, in the sheet's own order, carrying the numbers its
+           prose spells out in words. `flat` is the multiplier on Instinct:
+           "twice", "equal to", "thrice". */
+        rows: [
+          { value: 1, id: 'healing-tonic', name: 'Healing Tonic', does: 'heal', dice: '2d6', flat: 2 },
+          { value: 2, id: 'poison', name: 'Poison', does: 'poison', flat: 1 },
+          { value: 3, id: 'protective-charm', name: 'Protective Charm', does: 'shield', flat: 3 },
+          { value: 4, id: 'strange-dust', name: 'Strange Dust', does: 'dust', ap: 3, refund: true },
+        ],
+      },
+    },
+    blurb:
+      'A Trickster wins the fight before it is a fair one. They work from cover and from behind, at a distance where nobody thinks to look, and the first anyone knows of them is the blade already in. Every advantage they take is one they made: a target that cannot see, a guard whose attention is elsewhere, a moment nobody was watching.\n\n' +
+      'They excel at the opening blow and at not being there for the answer. A blinded target cannot swing at what it cannot find, and a strike thrown at something that never saw it coming lands harder for it. When the answer does come they are simply not where it lands, and a stealth that failed them once can be tried again on the strength of a distraction nobody can prove they caused.\n\n' +
+      'A Trickster’s presence is a source of quiet theft, felt only once it is over. Hands that pick a pocket in the middle of a fight come back with whatever was in it, and at the last they move quickly enough to spend a turn nobody else could have afforded.',
+    cards: [
+      {
+        id: 'blind',
+        rank: 1,
+        name: 'Blind',
+        summary: 'An Instinct roll against Grit leaves a target unable to see until its turn ends.',
+        kind: 'talent',
+        tags: ['Trickster', 'Novice Talent', 'Ability'],
+        ap: 1,
+        wp: 1,
+        stat: 'instinct',
+        /* The sheet spells Blinded out in a parenthesis at the foot of the card.
+           It is a defined term, so the definition went to keywords.js in the
+           designer's own words and the gloss came off the body — the same trade
+           FRIGHTFUL ROAR made, and the one every other term on a card has made.
+           See the note in keywords.js. */
+        body:
+          'You attempt to Blind a target you can see within 3 meters (10 feet).\n' +
+          'Make an {stat} roll {roll} against the target\'s Grit.\n' +
+          'On a success, the target is Blinded until its Turn End.',
+      },
+      {
+        id: 'ambush',
+        rank: 1,
+        name: 'Ambush',
+        summary: 'Ride a weapon attack on somebody who cannot see you: Advantage, and the damage Elevated.',
+        kind: 'talent',
+        tags: ['Trickster', 'Novice Talent', 'Ability'],
+        ap: null,
+        /* The sheet's own "x". What this costs is the attack's own base damage
+           dice, which is not known until the attack is chosen, so the window
+           works it out and pays for it there — the same trade BREW and EPHEMERAL
+           ENCHANTMENT make. See src/lib/tricks.js. */
+        wp: 'X',
+        stat: 'instinct',
+        /* Mechanics as data, never read out of the prose. */
+        opens: 'ambush',
+        pays: 'window',
+        body:
+          'When making a Weapon Attack against a target that cannot see you or is afflicted with the Stunned, Grappled, or Constrained status. (The cost of this ability is equal to the weapon number of base damage dice before enchant or boost)\n\n' +
+          'The Weapon Attack is made with Advantage.\n\n' +
+          'On a hit, the Weapon Attack is Elevated a number of times equal to the Willpower paid.',
+      },
+      {
+        id: 'skulk',
+        rank: 1,
+        name: 'Skulk',
+        summary: 'Hide in plain sight at 9 meters, and Hide or palm anything with Advantage.',
+        kind: 'talent',
+        tags: ['Trickster', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        body:
+          'You can use the {{Hide}} action even if entities can see you, as long as you are at least 9 meters (30 feet) away from them.\n' +
+          'Additionally, when you or an ally within 3 meters (10 feet) use the {{Hide}} action or make a Skill Check related to sleight of hand or stealth, they do so with Advantage.',
+      },
+      {
+        id: 'dodge',
+        rank: 2,
+        name: 'Dodge',
+        summary: 'Beat the roll that just hit you and the attack misses instead.',
+        kind: 'talent',
+        tags: ['Trickster', 'Adept Talent', 'Ability'],
+        ap: null,
+        wp: 2,
+        stat: 'instinct',
+        body:
+          'When an attack lands on you, you can use this ability to make an {stat} roll {roll} with a difficulty rating equal to the attack roll that hit you. On a success, the attack misses instead.',
+      },
+      {
+        id: 'distract',
+        rank: 2,
+        name: 'Distract',
+        summary: 'A failed Hiding or Stealth check gets one retry.',
+        kind: 'talent',
+        tags: ['Trickster', 'Adept Talent', 'Ability'],
+        ap: null,
+        wp: 1,
+        stat: 'instinct',
+        body:
+          'If you fail a Hiding or Stealth-related Skill Check, you can use Distract once to immediately retry the check.',
+      },
+      {
+        id: 'steal',
+        rank: 3,
+        name: 'Steal',
+        summary: 'An Instinct attack on a humanoid, a d4, and one of four things out of its pockets.',
+        kind: 'talent',
+        tags: ['Trickster', 'Master Talent', 'Ability'],
+        ap: 2,
+        wp: 1,
+        stat: 'instinct',
+        /* Mechanics as data. The four rows are on the set's `tricks.steal` spec
+           above, and the window is where the d4 is entered and the row applied,
+           which is what the Developpement Notes asked for. */
+        opens: 'steal',
+        body:
+          'You make an Attack Roll with your {stat} Attribute {roll}. On a hit, you steal something from a humanoid. Roll a d4 and choose any one effect whose value is below the number you rolled:\n' +
+          '1: Healing Tonic – Restores [[2d6 + 2*stat]] in Health.\n' +
+          '2: Poison – Your next Weapon Attacks deal additional damage equal to your {stat} Attribute.\n' +
+          '3: Protective Charm – Provides a Shield equal to [[3*stat]].\n' +
+          '4: Strange Dust – Grants 3 Action Points for the current round and refunds the Steal Willpower cost.',
+      },
+      {
+        id: 'thrilled',
+        rank: 3,
+        name: 'Thrilled',
+        summary: 'Both point pools hold 7 instead of 6.',
+        kind: 'talent',
+        tags: ['Trickster', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* The last clause is the sheet's, unfinished: "and you start with Action
+           Points each turn" names no number. Transcribed as it stands rather than
+           completed, and only the half that can be read is built — the two caps
+           go to 7, which `tricks.points` above carries into deriveStats. A turn
+           already refills Action Points to whatever the cap is, so the clause is
+           either that rule restated or a number that did not export. Flagged in
+           data/README.md. */
+        body:
+          'Your Action Points and Reaction Points maximum are increased to 7 and you start with Action Points each turn.',
+      },
+    ],
+  },
 ];
 
 /**

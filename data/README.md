@@ -50,6 +50,10 @@ doing on its own.
 | Talent Set · Draconic Bond · Developpement Notes | **2026-08-20, the minion system** | `src/lib/minions.js`, `MinionBlock.jsx`, `MinionPick.jsx` |
 | Talent Set · Draconic Bond · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
 | Draconic Bond art, from the `Draconic Bond/` folder | **2026-08-20, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| Talent Set · Trickster · Ability | **2026-08-20, 7 cards** | `src/lib/talents.js` (`TALENTS`) |
+| Talent Set · Trickster · Developpement Notes | **2026-08-20, the pending rider and the steal table** | `src/lib/tricks.js`, `AmbushWindow.jsx`, `StealWindow.jsx` |
+| Talent Set · Trickster · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
+| Trickster art, from the `Trickster/` folder | **2026-08-20, 7 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | Talent Set · Enchanter · Ability, amended | **2026-08-20, 4 cards** (3 on 08-19) | `src/lib/talents.js`, exported to `data/templates/` |
 | One-off things, handed over in chat | **2026-08-20, 5 of them** | see [the one-offs](#the-one-offs-2026-08-20) |
 | Trinkets, written here | **2026-08-20, 12 accessories** | `src/lib/trinkets.js` |
@@ -59,8 +63,9 @@ doing on its own.
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
 else: the codex also carries one Arcane spell, Containment Sphere, which no
-sheet covers yet. `draconic-bond-overview.csv` and `enchanter-ability.csv` are the two tabs that were written
-here rather than exported, so they are tracked: a clone would otherwise lose the only copy.
+sheet covers yet. `draconic-bond-overview.csv`, `trickster-overview.csv` and `enchanter-ability.csv` are the
+tabs that were written here rather than exported, so they are tracked: a clone
+would otherwise lose the only copy.
 `cauldron-keeper-ingredients.csv` carries an extra **Sheet AP**
 column beside the live one, so the Catalyst balance pass below reads as a diff
 rather than a claim, and `enchantments.csv` carries what each one costs to lay and
@@ -917,6 +922,221 @@ file:
   down to alphabetical order. Deleting the older file retires both that rule's
   involvement and the alias.
 
+## The Trickster, 2026-08-20
+
+Seven cards on the `Ability` tab, a `Developpement Notes` tab with two sentences
+in it, and a folder of eight pictures. No `Overview` tab: it was handed over to
+be written here, the way the Enchanter's and the Draconic Bond's were.
+
+| Rank | Cards |
+| ---- | ----- |
+| 1 · Novice | Blind, Ambush, Skulk |
+| 2 · Adept | Dodge, Distract |
+| 3 · Master | Steal, Thrilled |
+
+Instinct throughout. Every roll the set asks for is an Instinct roll and there is
+no second attribute anywhere on the tab, which is the cleanest a set has arrived
+yet.
+
+### How the transcription was proved
+
+The same round trip the Mycomancer and the armor got: every card's `Name`,
+`Tags`, `AP`, `WP` and `Main Effect` rebuilt out of the codex fields into the
+designer's own written form, and compared to the sheet cell, quote- and
+whitespace-normalised. **33 of 35 comparisons match across 7 rows.** All seven
+names, all seven tag lists and every AP and WP match exactly. Two `Main Effect`
+cells differ and both are decisions on record:
+
+1. **BLIND** — the Blinded gloss came off the card body. The sheet spells the
+   status out in a parenthesis at the foot of the card, and a defined term must
+   never be glossed in prose as well, so the sentence went to `keywords.js`
+   **word for word** and a new `blinded` term lights wherever it is printed. Same
+   trade FRIGHTFUL ROAR made three sets ago. The card's own title is deliberately
+   *not* a term: BLIND opens "You attempt to Blind a target", and lighting a
+   card's name inside its own first sentence is noise.
+2. **STEAL** — two of the four rows were tokenised. "twice your Instinct
+   Attribute" became `[[2d6 + 2*stat]]` and "thrice your Instinct Attribute"
+   became `[[3*stat]]`, so the card prints *2d6 + 8* and *12* for an Instinct-4
+   Trickster instead of asking them to multiply mid-fight. The other two rows are
+   the sheet's own prose untouched. Same trade as the Cauldron Keeper's
+   Ingredients.
+
+The tags are the sheet's column split on the comma, exactly the way the Cauldron
+Keeper's are: `['Trickster', 'Novice Talent', 'Ability']`. Nothing was
+re-labelled.
+
+### What the notes asked for, and where each one landed
+
+The `Developpement Notes` tab is two sentences and both of them are about the
+same missing idea — a thing that waits on your **next** weapon attack:
+
+> "On the trickster two things, first for the next time after he use ambush, the
+> weapon attack should reflet the increase in damage. Thi should be lost on use.
+> Then when he use steal, it should show the options after he press use. so he
+> can slect which one and apply it. which would include the damage increase
+> ,return ect."
+
+`src/lib/tricks.js` is new, and it is where both live.
+
+**The rider.** AMBUSH is not something you do to a target, it is something you do
+to your own next swing, and the swing has to *show* it before it is made. So a
+rider is stored on the **effects tracker** — an ordinary row carrying a `trick`
+object — and no new column was added for it. The tracker already is exactly this
+list: what is running on you right now, drawn on the Turn block, countable and
+clearable. It is also where the one other mechanical payload on this sheet lives
+(an Ephemeral Enchantment's `ench` key). A rider you cannot see is a rider you
+will forget you paid for.
+
+```
+{ trick: { id: 'ambush', elevate: 2 } }   the next Weapon Attack is Elevated twice
+{ trick: { id: 'poison', flat: 1 } }      and deals another 1 x Instinct
+```
+
+From then on the attack prints its raised damage **everywhere the sheet prints
+it** — the quick bar chip, block 3's row, the dealt card. A Longbow Aimed Shot
+under a 3-Elevate ambush reads `3d12 + 12` instead of `3d6 + 12`.
+
+`elevate` is a stored number because it is history: "equal to the Willpower paid"
+is about what was actually paid, and swapping weapons afterwards must not change
+the answer. `flat` is a *multiplier* on Instinct rather than a number, because
+Poison says "equal to your Instinct Attribute" and means the Instinct you have
+when you swing.
+
+**Lost on use** is `spendTricks`, called from `spendUse` in `combatBar.js` — the
+one place every use on the sheet is paid for, so a rider comes off whether the
+swing was tapped on the quick bar or on block 3. It comes off hit or miss:
+AMBUSH's Willpower buys the *attempt*, Advantage applies to the roll, and the
+roll has happened.
+
+**What counts as a swing** is read off the tags, never guessed. The glossary is
+narrow — a Weapon Attack is "either of the two attacks the weapon in your hands
+teaches you" — so both `Weapon Attack` and `Special Weapon Attack` carry a rider
+and the four things tagged `Weapon Move` do not. Shield Block is one of those, and
+a rider that raised a shield block would be lending damage to a defence.
+
+### AMBUSH prices itself, so it asks
+
+"The cost of this ability is equal to the weapon number of base damage dice
+before enchant or boost" — so the card's printed cost is the sheet's own `x`, and
+the number is not knowable until the attack is chosen. **The two attacks a weapon
+teaches do not always roll the same dice.** A Longbow shoots for 2d6 and takes
+aim for 3d6, so an ambush costs 2 one way and 3 the other and is Elevated to
+match.
+
+So AMBUSH is marked `pays: 'window'`, the same as EPHEMERAL ENCHANTMENT, and
+`AmbushWindow.jsx` lists the attacks in hand with the Willpower each would cost
+and prints the chosen one *as it would land* before a point is spent. "Before
+enchant or boost" is honoured by reading the card's own printed expression: an
+Empowering enchantment adds dice at print time and has no business raising the
+price of an ambush.
+
+A weapon whose card rolls no damage dice cannot be ambushed with and is left out
+of the list. That is the four `Reload` cards, which are tagged `Special Weapon
+Attack` and deal nothing.
+
+### STEAL opens the table
+
+`opens: 'steal'`, so the two Action Points and the Willpower are paid at the chip
+— they are the price of the attempt — and `StealWindow.jsx` comes up afterwards
+to decide what was lifted. It asks for the d4 first, because the die is the
+table's and never the sheet's, and it shows all four rows whether or not the roll
+reached them: knowing what you missed is half of what a d4 is for.
+
+Three rows are applied outright. Healing Tonic is not — its 2d6 is rolled at the
+table, so the window asks for it and adds the flat half to whatever is typed in,
+which is the same law `shieldRolls` keeps in `enchanting.js`. Health and Shield
+both move through the **ledger**, because every other change to either is logged.
+
+| Row | What the sheet writes |
+| --- | --------------------- |
+| 1 · Healing Tonic | Health + the rolled 2d6 + 2 × Instinct, capped at max, ledgered |
+| 2 · Poison | a rider on the tracker: the next weapon attack carries another 1 × Instinct |
+| 3 · Protective Charm | Shield + 3 × Instinct, capped by the shield cap, ledgered |
+| 4 · Strange Dust | Action Points + 3 capped at the pool's ceiling, and the Willpower back |
+
+Strange Dust is capped at `ap_max` rather than allowed to overfill, which is the
+law everywhere else on this sheet that puts points *in* — see
+`combatReactionGrant`. THRILLED is what makes it land in full, because a Master
+Trickster's ceiling is 7.
+
+### THRILLED moves a number that had never moved
+
+`ap_max` and `reaction_max` were a literal `6` in `deriveStats`, because until now
+nothing in the game touched either. THRILLED does: "your Action Points and
+Reaction Points maximum are increased to 7". Both now read
+`pointCeilings(character.talents)` from `tricks.js`, indexed by rank off the set's
+own `tricks.points`, and the same shape comes back whether or not the character
+has the set. They are derived columns, so `syncDerived` carries the change to
+every reader and clamps a full pool down again if the set is handed back.
+
+### One new modifier: `bonus`
+
+Poison adds flat damage, and the card renderer had `empower` and `elevate` but no
+way to say "and another 4". `resolveValue` in `cardText.js` takes a `bonus` now,
+threaded through `AbilityCard` and `CardText` beside the other two.
+
+It only lands on an expression that **rolls dice**, and that guard is load-bearing:
+`teeth-bite` is the one card in the codex with two live values — "[[2d6 + 2*stat]]
+as damage and gain Shield equal to [[stat]]" — and lending damage to a swing must
+never quietly raise the shield it also grants. Every weapon attack's damage rolls
+dice and nothing else on one of those cards does, so the die is the tell.
+
+### The Overview tab, written
+
+No `Overview` tab arrived, so `tagline`, `tags` and `blurb` are house-written and
+exported back out to `data/templates/trickster-overview.csv` in the sheet's own
+column order, tracked in git because it is the only copy. The set tags are
+`Martial, Defense, Control, Instinct`:
+
+- **Instinct** — every roll on the tab, and no second attribute anywhere.
+- **Martial** — AMBUSH and STEAL are both spent on a weapon in hand.
+- **Defense** — DODGE is the only card in the codex that makes a *landed* attack
+  miss.
+- **Control** — BLIND.
+- **Support** is deliberately absent. SKULK is the one clause that reaches an
+  ally, and one clause is not a role.
+
+### Three things for the designer
+
+1. **STEAL's "below" deletes row 4.** "Roll a d4 and choose any one effect whose
+   value is below the number you rolled." Read literally, a 1 steals nothing and
+   **Strange Dust can never be taken at all** — no d4 result is above 4. The notes
+   name "return" as one of the options the window has to offer, which is that row,
+   so it is read here as **at or below**: the ladder runs 1 to 4 and every roll
+   takes something. Deleting a row you wrote is the larger invention, but this is a
+   reading and not your word. `tricks.steal.reach` in `talents.js` is one string
+   and flipping it to `'below'` makes the window follow the literal rule.
+2. **THRILLED's last clause is unfinished.** "…are increased to 7 and you start
+   with Action Points each turn" names no number. It is transcribed as it stands
+   and only the half that can be read is built. A turn already refills Action
+   Points to whatever the cap is, so the clause is either that rule restated or a
+   number that did not export — and if it was meant to be *Reaction* Points, that
+   is a real rule the sheet is currently missing, because the two turn boundaries
+   deliberately leave the reaction pool alone.
+3. **Constrained is not a defined term.** AMBUSH triggers on "the Stunned,
+   Grappled, or Constrained status". `Stunned` and `Grappled` are both on the
+   Status & Terms tab; **Constrained is on no tab**, so it prints plain where the
+   other two light up. Nothing was invented for it. `Rooted` is the closest thing
+   the glossary has, and if they are the same status the card should say Rooted.
+
+Two smaller things, decided rather than asked:
+
+- **AMBUSH's Advantage is printed, not applied.** The card says the attack "is
+  made with Advantage", and Advantage is a d4 added to a roll the table makes. The
+  rider says so on the tracker and on the window; the sheet does not roll it.
+- **Poison's "next Weapon Attacks" is read as one swing.** The row is written
+  plural where the sentence is singular ("your *next* Weapon Attacks"), and a
+  rider with no end condition never comes off. Treated as the next attack, the
+  same as AMBUSH, so both are lost together on the same swing.
+
+### The picture folder
+
+Eight files for seven cards and one set plate, and every one of them matched by
+name — the first set folder that needed no alias at all. `Trickster overview
+image.jpg` was claimed as the plate by the folder rule that already existed (a
+file whose name starts with the set's own name), so `pull-card-art.mjs` was not
+touched for this set.
+
 ## One action a rest, 2026-08-20
 
 Three asks from Jules, in one pass, and they are all the same rule seen from
@@ -1507,6 +1727,17 @@ A `General Rules · Statuses` tab with a name and a sentence each replaces every
 one of them. Two other things that tab could settle: what Elevate actually does
 to a spell, and whether Verdant Field's "Plant spells" means the Flora family,
 which is how it is currently written.
+
+**And one term is on no tab at all.** `Constrained` is a status AMBUSH triggers on
+— "the Stunned, Grappled, or Constrained status" — and the Status & Terms tab
+covers the first two and has never heard of the third. Nothing was invented for
+it, so it prints plain where the other two light up. `Rooted` is the closest the
+glossary has; if they are the same status, the card should say Rooted. See
+[the Trickster](#the-trickster-2026-08-20).
+
+`Blinded` is the opposite case and needs nothing: BLIND defines it outright at the
+foot of its own card, so that sentence is in `keywords.js` word for word rather
+than provisionally.
 
 ## The item instance, 20 Aug 2026
 

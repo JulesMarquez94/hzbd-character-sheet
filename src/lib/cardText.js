@@ -124,6 +124,18 @@ const STAT_TERM = /^(?:(\d+)\s*[x*×]\s*)?([a-z]+)$/i;
 export function resolveValue(expression, character, defaultStat = 'instinct', options = {}) {
   const empower = Math.max(0, Number(options.empower) || 0);
   const elevate = Math.max(0, Number(options.elevate) || 0);
+  /* And a flat number added to the total — damage something else on the sheet is
+     lending this swing. A Trickster's stolen Poison is the only source so far
+     (see tricks.js), and it is already resolved to a number by the time it gets
+     here, because what it is worth is "your Instinct Attribute" and not the
+     attribute this card happens to be printed against.
+
+     It only lands on an expression that rolls dice. teeth-bite is the one card
+     in the codex with two live values, "[[2d6 + 2*stat]] as damage and gain
+     Shield equal to [[stat]]", and lending damage to a swing must never quietly
+     raise the shield it also grants. Every weapon attack's damage rolls dice and
+     nothing else on one of those cards does, so the die is the tell. */
+  const bonus = Math.max(0, Number(options.bonus) || 0);
 
   const terms = String(expression || '')
     .split('+')
@@ -189,6 +201,11 @@ export function resolveValue(expression, character, defaultStat = 'instinct', op
     }
   }
 
+  if (bonus > 0 && dice.length > 0) {
+    flat += bonus;
+    parts.push({ kind: 'flat', text: String(bonus), detail: `lent to this swing (${bonus})` });
+  }
+
   const pieces = [...dice];
   // A lone stat still has to print something, so the zero shows.
   if (flat !== 0 || dice.length === 0) pieces.push(String(flat));
@@ -230,6 +247,7 @@ export function cardGist(card, { character = null, modifiers = null } = {}) {
   const damage = modifiers?.damage?.length ? modifiers.damage : card?.damage ?? [];
   const empower = Number(modifiers?.empower) || 0;
   const elevate = Number(modifiers?.elevate) || 0;
+  const bonus = Number(modifiers?.bonus) || 0;
   const choice = modifiers?.choice ?? null;
   const context = { character: who, stat, damage, choice };
 
@@ -237,7 +255,7 @@ export function cardGist(card, { character = null, modifiers = null } = {}) {
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\{\{([^}]+)\}\}/g, '$1')
     .replace(/\[\[([^\]]+)\]\]/g, (_, expression) =>
-      resolveValue(expression, who, stat, { empower, elevate }).text
+      resolveValue(expression, who, stat, { empower, elevate, bonus }).text
     )
     .replace(/\{([a-zA-Z]+(?::[A-Za-z]+)?)\}/g, (whole, word) => gistToken(word, context) ?? whole)
     // Paragraphs become sentences in a row, and the stray spaces a spent token

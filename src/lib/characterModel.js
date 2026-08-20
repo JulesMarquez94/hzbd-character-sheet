@@ -6,6 +6,7 @@
 
 import { EMPTY_EQUIPMENT, characterGrants, equipmentEffects, gearEnchantIds } from './items.js';
 import { ephemeralGrants, wornIds } from './enchanting.js';
+import { pointCeilings } from './tricks.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -279,6 +280,7 @@ export function deriveStats(character, extra = null) {
   const grit = Math.floor(i + m);
 
   const gear = equipmentEffects(character);
+  const points = pointCeilings(character?.talents);
 
   /* Armor is worn pieces plus whatever has been laid on the wielder. Resilience
      grants "3 armor" and Armor is a stat, so it is one number: the meter reads it,
@@ -307,8 +309,12 @@ export function deriveStats(character, extra = null) {
     // Speed is the one value that stays a precise decimal — everything else
     // here rounds down.
     speed_m: 3 + i / 2 + flat('speed'),
-    ap_max: 6,
-    reaction_max: 6,
+    /* Six for everybody, and seven for a Master Trickster: THRILLED is the only
+       thing in the game that moves either ceiling, and both of these were a
+       literal 6 before it existed. tricks.js reads the rank off the set and hands
+       back the same shape whether or not the character has it. */
+    ap_max: points.ap,
+    reaction_max: points.reaction,
     reflex,
     grit,
   };

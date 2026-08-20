@@ -354,10 +354,30 @@ export function normalizeEffects(value) {
       // And the spell it bound in, for the one enchantment that carries a spell
       // rather than a number. A name and not an id: it is what the row prints.
       spell: raw.spell ? String(raw.spell).slice(0, EFFECT_NAME_MAX) : null,
+      // And the third mechanical rider a row may carry: a Trickster's AMBUSH or
+      // stolen Poison, waiting on their next weapon attack. Read and cleaned here
+      // rather than trusted, because it changes printed damage — see tricks.js.
+      trick: normalizeTrick(raw.trick),
     });
   }
 
   return effects.slice(0, EFFECT_LIMIT);
+}
+
+/**
+ * A rider, or null. Two numbers and an id, and nothing else survives: an effects
+ * list is stored jsonb and a row that could carry arbitrary shapes into the card
+ * renderer is a row that can print anything.
+ */
+function normalizeTrick(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const id = String(raw.id ?? '').slice(0, 40);
+  if (!id) return null;
+
+  const elevate = Math.max(0, Math.min(9, Math.floor(Number(raw.elevate) || 0)));
+  const flat = Math.max(0, Math.min(9, Math.floor(Number(raw.flat) || 0)));
+  return elevate === 0 && flat === 0 ? null : { id, elevate, flat };
 }
 
 function clampTurns(value) {
@@ -380,6 +400,8 @@ export function addEffect(effects, entry) {
       // See normalizeEffects: the two fields an Ephemeral Enchantment writes.
       ench: getEnchantment(entry?.ench) ? String(entry.ench) : null,
       spell: entry?.spell ? String(entry.spell).slice(0, EFFECT_NAME_MAX) : null,
+      // See normalizeEffects: the Trickster's pending rider.
+      trick: normalizeTrick(entry?.trick),
     },
     ...normalizeEffects(effects),
   ];

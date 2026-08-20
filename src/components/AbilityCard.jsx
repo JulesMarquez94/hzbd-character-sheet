@@ -128,7 +128,9 @@ function SparkIcon() {
  *                  whose text is still being typed, where re-measuring on each
  *                  keystroke would fight the writer.
  * @param modifiers what the holder does to the card:
- *                  `{ damage, empower, elevate, choice, stat, actor }`.
+ *                  `{ damage, empower, elevate, bonus, choice, stat, actor }`.
+ *                  `bonus` is flat damage something else is lending this swing
+ *                  — a Trickster's stolen Poison, and nothing else yet.
  *                  `choice` is the option this character picked where the card
  *                  asks for one — a scale colour, a casting attribute.
  *                  `actor` is somebody else on the sheet playing it: a
@@ -176,6 +178,7 @@ export default function AbilityCard({
   const damage = modifiers?.damage?.length ? modifiers.damage : ability.damage ?? [];
   const empower = Number(modifiers?.empower) || 0;
   const elevate = Number(modifiers?.elevate) || 0;
+  const bonus = Number(modifiers?.bonus) || 0;
 
   // A card that asks the holder to decide something prints their answer; with
   // nothing picked yet it prints what it is still waiting for.
@@ -188,6 +191,7 @@ export default function AbilityCard({
     damage,
     empower,
     elevate,
+    bonus,
     choice,
     choicePrompt,
     onValue,
@@ -196,7 +200,7 @@ export default function AbilityCard({
   const bannerRef = useFitLine(typeLine);
   const bodyRef = useFitText(
     fit,
-    `${name}|${body}|${subBody}|${damage.join()}|${empower}|${elevate}|${choice?.id ?? ''}`
+    `${name}|${body}|${subBody}|${damage.join()}|${empower}|${elevate}|${bonus}|${choice?.id ?? ''}`
   );
 
   const content = (

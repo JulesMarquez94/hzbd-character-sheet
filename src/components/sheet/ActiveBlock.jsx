@@ -5,8 +5,11 @@ import { GroupHead } from './parts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
+import AmbushWindow from './AmbushWindow.jsx';
+import StealWindow from './StealWindow.jsx';
 import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
 import { brewSetFor } from '../../lib/brews.js';
+import { trickSetFor } from '../../lib/tricks.js';
 
 /**
  * The Character tab's fourth block: the quick bar.
@@ -48,6 +51,12 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
   /* Whether the Ephemeral Enchantment shelf is up. Unlike brewing it opens
      *before* anything is paid: see `pays` in combatBar.js. */
   const [enchanting, setEnchanting] = useState(false);
+  /* The two Trickster windows, as `{ talent, card }` or null. AMBUSH opens
+     before the payment because the weapon decides the price; STEAL opens after
+     it, because the two Action Points bought the attempt and the window is only
+     deciding what came out of the pocket. See src/lib/tricks.js. */
+  const [ambushing, setAmbushing] = useState(null);
+  const [stealing, setStealing] = useState(null);
 
   const groups = useMemo(() => quickBar(character), [character]);
   const total = moveCount(groups);
@@ -60,6 +69,13 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
     if (move.pays === 'window' && move.opens === 'ephemeral') {
       setEnchanting(true);
       return;
+    }
+    if (move.pays === 'window' && move.opens === 'ambush') {
+      const talent = trickSetFor(character?.talents, move.card?.id);
+      if (talent) {
+        setAmbushing({ talent, card: move.card });
+        return;
+      }
     }
 
     setRequest({
@@ -87,6 +103,14 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
        worked out and where it is paid. The prompt this confirmed was BREW's own
        printed "x", which spends nothing. */
     if (request.opens === 'brew') setBrewing(brewSetFor(character.talents, request.card?.id));
+
+    /* And STEAL does: the attack is paid for, and what it lifted is chosen in the
+       window rather than left as four lines of card text for the table to apply
+       by hand. Straight out of the Developpement Notes. */
+    if (request.opens === 'steal') {
+      const talent = trickSetFor(character?.talents, request.card?.id);
+      if (talent) setStealing({ talent, card: request.card });
+    }
 
     setRequest(null);
   }
@@ -139,6 +163,27 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
           patch={patch}
           readOnly={readOnly}
           onClose={() => setEnchanting(false)}
+        />
+      )}
+
+      {ambushing && (
+        <AmbushWindow
+          talent={ambushing.talent}
+          card={ambushing.card}
+          character={character}
+          patch={patch}
+          readOnly={readOnly}
+          onClose={() => setAmbushing(null)}
+        />
+      )}
+
+      {stealing && (
+        <StealWindow
+          talent={stealing.talent}
+          card={stealing.card}
+          character={character}
+          patch={patch}
+          onClose={() => setStealing(null)}
         />
       )}
 

@@ -309,6 +309,23 @@ export const KEYWORDS = [
     detail: 'Singled out. Whoever marked it knows where it is and hits it more easily.',
   },
   {
+    id: 'blinded',
+    terms: ['Blinded', 'blinded'],
+    color: 'var(--dmg-psychic)',
+    /* Not on the Status & Terms tab. BLIND defines it outright at the foot of
+       its own card, in a parenthesis, and that sentence is quoted here word for
+       word rather than paraphrased — the same trade FRIGHTFUL ROAR made. The
+       gloss then came off the card body, because a term that carries its own
+       explanation must never be spelled out in prose as well.
+
+       The card's own name is deliberately not a term here. BLIND opens with "You
+       attempt to Blind a target", and lighting a card's title inside its own
+       first sentence is noise rather than a definition. */
+    detail:
+      'The entity cannot see, as such cannot use any ability or spell that rely on ' +
+      'being able to see.',
+  },
+  {
     id: 'frightened',
     terms: ['Frightened', 'frightened'],
     color: 'var(--danger-rose)',

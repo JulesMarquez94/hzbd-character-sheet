@@ -4935,9 +4935,11 @@ body.sheet-fixed #root {
   border-color: color-mix(in srgb, var(--pick-accent, var(--copper)) 45%, transparent);
 }
 
+/* Picked is the border going to full accent, and the ground going one step
+   deeper into the same slate rather than into the accent. */
 .kit-option.is-picked {
   border-color: var(--pick-accent, var(--copper));
-  background-color: color-mix(in srgb, var(--pick-accent, var(--copper)) 10%, transparent);
+  background-color: rgba(9, 17, 21, 0.5);
 }
 
 /* The choosing half of the option. A separate control from the three peeks so
@@ -5022,7 +5024,7 @@ body.sheet-fixed #root {
 
 .kit-chip.is-picked {
   border-color: var(--pick-accent, var(--copper));
-  background-color: color-mix(in srgb, var(--pick-accent, var(--copper)) 16%, transparent);
+  background-color: rgba(9, 17, 21, 0.68);
 }
 
 .kit-chip-take {
@@ -5121,9 +5123,12 @@ body.sheet-fixed #root {
   overflow: hidden;
 }
 
+/* Done is said by the frame and by the chip in the head, never by the fill. The
+   accent caps the panel and tints its border; the ground under it stays the same
+   slate every other panel on the sheet sits on. A tinted fill made a finished
+   level read as four differently coloured cards rather than as one tab. */
 .pick-block.is-done {
   border-color: color-mix(in srgb, var(--pick-accent, var(--copper)) 26%, rgba(148, 167, 176, 0.14));
-  background-color: color-mix(in srgb, var(--pick-accent, var(--copper)) 4%, rgba(9, 17, 21, 0.32));
 }
 
 .pick-block-head {
@@ -8804,4 +8809,164 @@ body.sheet-fixed #root {
 .modal-header-action {
   margin-left: auto;
   flex: none;
+}
+
+
+/* ==========================================================================
+   THE TRICKSTER  —  the Ambush and Steal windows (AmbushWindow.jsx,
+   StealWindow.jsx)
+   ==========================================================================
+   Both windows ask the same shape of question: here are some rows, one of them
+   is yours. So they share one family of classes rather than growing two.
+
+   Amber throughout, the same amber a talent card wears (.ac-kind-talent) and the
+   same the Advancement tab's talent panels wear: this is what a set handed you.
+
+   A row is a button and nothing else, so the accent lives on its frame and its
+   ground stays the sheet's slate — the same trade the choice panels make. */
+
+.trick-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.trick-option {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid rgba(148, 167, 176, 0.28);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.trick-option:hover:not(:disabled),
+.trick-option:focus-visible:not(:disabled) {
+  border-left-color: var(--level-amber);
+}
+
+.trick-option.is-picked {
+  border-color: var(--level-amber);
+  border-left-color: var(--level-amber);
+  background-color: rgba(9, 17, 21, 0.5);
+}
+
+/* A row the d4 did not reach. Still shown — the point of a die is knowing what
+   you missed — but plainly out of reach rather than merely dim. */
+.trick-option.is-out {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.trick-option-costs {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* The row's own number on STEAL's table, worn as the die face it answers to. */
+.trick-option-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--level-amber) 45%, transparent);
+  border-radius: 4px;
+  font-family: var(--font-headings);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--level-amber);
+}
+
+.trick-option-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.trick-option-name {
+  font-family: var(--font-headings);
+  font-size: 0.84rem;
+  letter-spacing: 0.4px;
+  color: var(--text-bright);
+}
+
+.trick-option-line {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* ---------- the die ----------
+   The table rolls it and the sheet records it, which is the law every other die
+   on this sheet keeps. Four faces, because a d4 has four. */
+.trick-die {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.trick-face {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(148, 167, 176, 0.22);
+  border-radius: 5px;
+  background-color: rgba(9, 17, 21, 0.5);
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-silver);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.trick-face:hover,
+.trick-face:focus-visible {
+  border-color: color-mix(in srgb, var(--level-amber) 55%, transparent);
+  color: var(--text-bright);
+}
+
+.trick-face.is-on {
+  border-color: var(--level-amber);
+  color: var(--level-amber);
+}
+
+/* ---------- the dice a row still needs ----------
+   Healing Tonic is the one row the sheet cannot finish on its own: the 2d6 is
+   rolled at the table, so it is asked for rather than invented. */
+.trick-roll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid var(--level-amber);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+/* ---------- buying an ambush ---------- */
+.trick-take {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+}
+
+.trick-take-note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
 }

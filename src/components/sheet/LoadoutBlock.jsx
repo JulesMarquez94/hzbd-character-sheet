@@ -15,6 +15,7 @@ import {
 } from '../../lib/items.js';
 import { getCard } from '../../lib/weapons.js';
 import { shortName, spendUse } from '../../lib/combatBar.js';
+import { withTrickRider } from '../../lib/tricks.js';
 
 /**
  * The Character tab's third block: what you have in your hands and on your
@@ -79,9 +80,11 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
       ap: card.ap,
       wp: card.wp,
       card,
-      // The attack is printed with this weapon's damage type and Empowering,
-      // exactly as it reads on the block behind the prompt.
-      modifiers,
+      /* The attack is printed with this weapon's damage type and Empowering,
+         exactly as it reads on the block behind the prompt — plus whatever a
+         Trickster has waiting on it, which is the point of paying for an AMBUSH
+         before the swing rather than after. */
+      modifiers: withTrickRider(character, card, modifiers),
     });
   }
 
@@ -167,7 +170,7 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
                 </button>
 
                 <InfoButton
-                  onClick={() => stack?.openCard(card, modifiers)}
+                  onClick={() => stack?.openCard(card, withTrickRider(character, card, modifiers))}
                   label={`${card.name} card`}
                 />
               </div>
