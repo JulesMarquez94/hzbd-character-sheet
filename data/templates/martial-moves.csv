@@ -1,0 +1,49 @@
+id,Name,Tags,AP,WP,Main Effect,Rides,Source,Image
+wound,WOUND,"Martial Move, Novice",1,1,Your next Weapon Attack that hits will inflict a Wound on the target.,,plate,
+wing-clip,WING CLIP,"Martial Move, Novice",1,1,"Your next Weapon Attack is made with advantage, and on a hit the entity’s {{Move}} action cost is increased by 1 Action Point.
+
+If this hits a flying entity, it falls down toward the ground up to 18 meters (60 feet) if possible.",advantage 1,plate,
+concuss,CONCUSS,"Martial Move, Novice",,2,"If your next Weapon Attack hits, it removes 2 Reaction Points from the target entity.
+
+If this attack hits an entity that you are taking a reaction to, that entity’s current action is cancelled.
+
+When you take Concuss as a reaction, you can make a Weapon Attack as part of the same reaction by paying the standard Action Point cost for the attack.",,plate,
+momentum,MOMENTUM,"Martial Move, Novice",,1,"You coordinate your steps with your strikes to remain mobile on the battlefield.
+
+The next time you take the Weapon Attack action, before or after the attack, you can move a distance equal to your Movement Speed as part of the same action.
+
+If you choose to move before the attack, the announced target must be in range at the end of the movement or the attack fails even if a different target is in range.",,plate,
+reckless,RECKLESS,"Martial Move, Novice",1,1,"Your next Weapon Attack is made with advantage, and on a hit its damage is Empowered by 1.
+
+The next Attack Roll made against you is made with advantage.","advantage 1, empower 1",plate,
+taunting,TAUNTING,"Martial Move, Novice",1,1,"You perform a tactical maneuver to draw your opponent’s focus away from your allies.
+
+Your next Weapon Attack is made with advantage.
+
+On a hit, the target has disadvantage on Attack Rolls and skill checks made against targets other than yourself.",advantage 1,plate,
+rend,REND,"Martial Move, Adept",1,2,"Your next Weapon Attack that hits will inflict 2 Wounds on the target.
+
+If the target was already carrying a Wound, the attack’s damage is Empowered by 1.",,house,
+disarm,DISARM,"Martial Move, Adept",2,2,"Your next Weapon Attack is made with advantage.
+
+On a hit, make a {stat} roll {roll} against the target’s Grit. On a success, whatever it was holding lands 3 meters (10 feet) away in a direction of your choice, and it must take the {{Interact}} action to pick the thing up again.",advantage 1,house,
+feint,FEINT,"Martial Move, Adept",1,2,"Your next Weapon Attack is made with advantage, and the target cannot spend Reaction Points to answer it.
+
+If the attack misses, the Willpower spent on this move comes back.",advantage 1,house,
+sweep,SWEEP,"Martial Move, Adept",2,1,"Your next Weapon Attack is made against every entity within your reach rather than against one of them.
+
+On a hit, the entity is knocked prone.",,house,
+riposte,RIPOSTE,"Martial Move, Master",,3,"When an attack made against you misses, you can use Riposte as a reaction.
+
+You make a Weapon Attack against the entity that missed, paying the standard Action Point cost for the attack.
+
+That attack is made with advantage and its damage is Elevated twice.","advantage 1, elevate 2",house,
+execute,EXECUTE,"Martial Move, Master",2,3,"Your next Weapon Attack is a Critical Hit if it hits an entity that is prone, grappled, stunned or carrying a Wound.
+
+Against anything else it is made with advantage and nothing more.",advantage 1,house,
+perfect-form,PERFECT FORM,"Martial Move, Master",1,4,"Your next Weapon Attack cannot miss, and its damage is Elevated once.
+
+You cannot use this move on an attack that is already carrying another Martial Move.",elevate 1,house,
+bleed,BLEED,"Martial Move, Master",2,3,"Your next Weapon Attack that hits will inflict a Wound on the target and on every entity within 3 meters (10 feet) of it.
+
+For as long as the target carries a Wound inflicted by this move, it cannot regain Health.",,house,

@@ -7,6 +7,7 @@
 import { EMPTY_EQUIPMENT, characterGrants, equipmentEffects, gearEnchantIds } from './items.js';
 import { ephemeralGrants, wornIds } from './enchanting.js';
 import { pointCeilings } from './tricks.js';
+import { martialDefense } from './moves.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -296,6 +297,12 @@ export function deriveStats(character, extra = null) {
   if (gear.fullSet === 'Magic Armor') avoidBase = grit;
   let avoid = avoidBase + gear.defenseFlat;
   if (gear.fullSet === 'Heavy Armor') avoid += Math.floor(armorTotal / 2);
+  /* And what the *weapon* in hand is worth. A Duelist's AGILE is the only card
+     that grants Defense for what you are holding rather than for what you are
+     wearing, and it is a condition the sheet can check, so it is checked here
+     rather than printed on the card as a warning: swap to a two-hander and
+     syncDerived takes the point straight back off. See moves.js. */
+  avoid += martialDefense(character);
 
   return {
     health_max,

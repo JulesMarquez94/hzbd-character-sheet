@@ -123,11 +123,29 @@ the top of a block and drag it to another slot, or focus that strip and use the 
 arrangement is saved on the character (`characters.block_order`), so it follows the sheet to any
 device and anyone viewing the sheet sees the same layout.
 
+### Martial Moves
+
+A **Martial Move** is a third kind of card, beside a spell and a talent card: a trained manoeuvre
+you buy *before* an attack, which then rides the next weapon attack you make.
+
+Two sets teach them — a Guardian's Shield Expertise and a Duelist's Dexterous — and each hands
+over a hand to choose out of the pool in `src/lib/martial.js`, the same way a Mycomancer chooses
+spells. How many you know grows with your rank, and Rank 2 opens the Adept moves while Rank 3
+opens Master.
+
+Paying for one lays it on the **Temporary Effects** tracker, where it sits until you swing. While
+it is there, every place the sheet prints that attack says what it is carrying — *"This attack
+will Wing Clip and Reckless"* — and the card prints the advantage as a green arrow with the number
+of d4 in it. Making the attack spends the move, hit or miss. One move rides a swing; a Master
+Duelist's Sharp allows two, and a chip with nowhere to ride says so rather than taking your
+Willpower.
+
 ### Ability cards
 
 `src/components/AbilityCard.jsx` reproduces the printed layout: art plate, gold-fist **AP** and
-violet-flame **Willpower** badges, a grey chevron type banner, a heavy condensed title, and
-black-on-white rules text with an optional secondary section (e.g. *Blood Tithe*).
+violet-flame **Willpower** badges, a green or red **advantage arrow** when the holder has any, a
+grey chevron type banner, a heavy condensed title, and black-on-white rules text with an optional
+secondary section (e.g. *Blood Tithe*).
 
 Card text is authored in a mini-markdown: wrap keywords in `**double asterisks**` to bold them,
 and leave a blank line between paragraphs.

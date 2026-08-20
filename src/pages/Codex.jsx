@@ -152,7 +152,20 @@ export default function Codex() {
             <span className="anatomy-key" style={{ background: '#8b8e93' }} />
             <div>
               <strong>Grey chevron banner</strong>
-              <p className="token-blurb">Tier, school and family — e.g. &ldquo;Novice Spell - Nature - Blood&rdquo;.</p>
+              <p className="token-blurb">
+                What the card is, in the order its own family reads it — &ldquo;Novice Spell -
+                Nature - Blood&rdquo; for a spell, &ldquo;Martial Move - Novice&rdquo; for a move.
+              </p>
+            </div>
+          </div>
+          <div className="anatomy-item">
+            <span className="anatomy-key" style={{ background: 'var(--def-healing)' }} />
+            <div>
+              <strong>Green arrow</strong>
+              <p className="token-blurb">
+                How many d4 of advantage the holder has on this roll. Red and pointing down for
+                disadvantage, and absent when the two cancel out.
+              </p>
             </div>
           </div>
           <div className="anatomy-item">

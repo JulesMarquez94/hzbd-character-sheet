@@ -1,0 +1,45 @@
+/* ---------- WHAT IS HAPPENING TO A ROLL ----------
+   One badge, sized by whoever draws it: 34-38px in a card's corner beside the
+   cost orbs, 20px on a tracker row. Its own file rather than a block in
+   AbilityCard.css, because it is drawn in both places and a card is not always on
+   the page when a tracker row is. See RollArrow.jsx. */
+
+.roll-arrow {
+  position: relative;
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  color: var(--ra-color);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ra-color) 55%, transparent));
+}
+
+/* The triangle fills the badge; the numeral sits on top of it. */
+.roll-arrow-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Turned over, so the same shape reads as the other direction. */
+.roll-arrow.is-down .roll-arrow-shape {
+  transform: rotate(180deg);
+}
+
+/* A triangle is narrow where it points, so the numeral sits in the wide half:
+   low under an arrow up, high under an arrow down. */
+.roll-arrow-n {
+  position: relative;
+  z-index: 1;
+  transform: translateY(18%);
+  font-family: var(--font-headings);
+  font-weight: 800;
+  line-height: 1;
+  /* Dark on the bright fill, the reverse of a cost orb — an orb is dark at the
+     centre and this is not, so the numeral flips rather than the disc. */
+  color: #0a1216;
+}
+
+.roll-arrow.is-down .roll-arrow-n {
+  transform: translateY(-18%);
+}

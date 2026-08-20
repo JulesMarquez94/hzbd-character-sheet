@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import EffectPrompt from './EffectPrompt.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
 import RestPrompt from './RestPrompt.jsx';
+import RollArrow from '../RollArrow.jsx';
 import { isEnchanter } from '../../lib/enchanting.js';
+import { effectAdvantage } from '../../lib/moves.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -248,6 +250,11 @@ function turnNote(turn, character) {
 export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
   const over = effect.turns === 0;
   const open = effect.turns === null;
+  /* What this row is doing to a roll, when it is doing anything: a Martial Move
+     waiting on the next swing wears the same arrow the card does, which is the
+     last clause of the note that asked for the arrow at all. An expired row is
+     doing nothing, so it loses the badge while it sits here saying "Ended". */
+  const arrow = over ? null : effectAdvantage(effect);
 
   return (
     <div className={`fx-row${over ? ' is-over' : ''}`}>
@@ -260,6 +267,8 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
           <span className="fx-name">{effect.name}</span>
           {effect.from && <span className="fx-from">{effect.from}</span>}
         </span>
+
+        {arrow && <RollArrow {...arrow} size={20} />}
 
         {!readOnly && (
           <span className="fx-tools">

@@ -59,13 +59,24 @@ doing on its own.
 | Trinkets, written here | **2026-08-20, 12 accessories** | `src/lib/trinkets.js` |
 | The item instance, and its share code | **2026-08-20, asked for in chat** | `src/lib/forged.js`, two new columns |
 | The same-source stacking law | **2026-08-20, ruled in chat** | `grantsFrom`, `itemModifiers`, `characterGrants` |
+| Talent Set · Duelist · Ability | **2026-08-20, 4 cards** | `src/lib/talents.js` (`TALENTS`) |
+| Talent Set · Duelist · Developpement Notes | **2026-08-20, the move rider and the arrow** | `src/lib/moves.js`, `RollArrow.jsx` |
+| Talent Set · Duelist · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
+| Martial Move card plates, handed over in chat | **2026-08-20, 6 Novice transcribed + 8 house-written** | `src/lib/martial.js` (`MARTIAL_MOVES`) |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
 else: the codex also carries one Arcane spell, Containment Sphere, which no
-sheet covers yet. `draconic-bond-overview.csv`, `trickster-overview.csv` and `enchanter-ability.csv` are the
+sheet covers yet. `draconic-bond-overview.csv`, `trickster-overview.csv`,
+`duelist-overview.csv`, `martial-moves.csv` and `enchanter-ability.csv` are the
 tabs that were written here rather than exported, so they are tracked: a clone
 would otherwise lose the only copy.
+
+`martial-moves.csv` is the one with no sheet behind it at all — six rows off the
+card plates and eight written here — so it carries two extra columns beside the
+sheet-shaped ones, the way `enchantments.csv` does: **`Rides`**, what the move does
+to the swing mechanically, and **`Source`**, `plate` for the six and `house` for the
+eight. If a tab ever arrives for these, that column is the diff.
 `cauldron-keeper-ingredients.csv` carries an extra **Sheet AP**
 column beside the live one, so the Catalyst balance pass below reads as a diff
 rather than a claim, and `enchantments.csv` carries what each one costs to lay and
@@ -1136,6 +1147,246 @@ name — the first set folder that needed no alias at all. `Trickster overview
 image.jpg` was claimed as the plate by the folder rule that already existed (a
 file whose name starts with the set's own name), so `pull-card-art.mjs` was not
 touched for this set.
+
+## The Duelist and the Martial Moves, 2026-08-20
+
+Four cards on the `Ability` tab, a `Developpement Notes` tab with two sentences,
+no `Overview` tab, and no picture folder. Plus six **card plates** handed over in
+chat for a thing the codex has been promising since the Guardian was written and
+has never had: a **Martial Move**.
+
+| Rank | Cards |
+| ---- | ----- |
+| 1 · Novice | Dexterous, Agile |
+| 2 · Adept | Follow Up |
+| 3 · Master | Sharp |
+
+Instinct throughout, house-assigned: the set names no attribute anywhere on the
+tab, and everything it buys is footwork and finesse.
+
+### A Martial Move is not a spell and is not a talent card
+
+It is a third shape, and `src/lib/martial.js` is its codex — its own leaf module
+for exactly the reason `spells.js` is one, so a pool can be reached without
+dragging the whole card registry into the landing page's bundle.
+
+A move is bought out of a pool, waits, and is spent by the next weapon attack you
+make. The banner is two tags in the order the plates print them:
+
+```
+MARTIAL MOVE - NOVICE
+```
+
+That is the *reverse* of a spell's banner (`NOVICE SPELL - PRIMAL - FLORA`) and it
+is deliberate, because it is what the plates say. `tierOf` in `loadouts.js` looks
+for the tier word in any tag rather than in the first one, so both orders resolve
+with no change. There is no school and no family: the tier is the only thing that
+gates a move, which is why the chooser walls the pool **by tier** rather than by a
+sub-school none of them has (`group: 'tier'` on the spec).
+
+| Tier | Moves |
+| ---- | ----- |
+| Novice | Wound, Wing Clip, Concuss, Momentum, Reckless, Taunting |
+| Adept | Rend, Disarm, Feint, Sweep |
+| Master | Riposte, Execute, Perfect Form, Bleed |
+
+**Six are transcribed and eight are house-written.** The six Novice moves are the
+plates, byte for byte, costs read off the orbs — a plate with one orb costs only
+that, so CONCUSS and MOMENTUM carry no Action Points. The eight above them were
+asked for in chat ("extrapolate to also have 4 adept and 4 master new ones"), are
+marked `house: true` in the file, and are the only cards in it that are not off a
+plate. That flag is the list of what to overwrite the day a sheet arrives for them.
+
+They invent **no new status**. Everything they lean on is already in the glossary —
+prone, grappled, stunned, Critical Hit, Empowered, Elevated, Reaction Points,
+Wound — because a status nobody has written down is a rule the table cannot look
+up. AMBUSH names a `Constrained` status that the Status & Terms tab does not
+define, and nothing here was built on it for the same reason.
+
+### Two sets teach them, and the card said so all along
+
+`SHIELD EXPERTISE` has read "You learn a number of Novice Martial Moves equal to
+1 + your Rank in Guardian" since the Guardian was written, with nothing behind it.
+It has a pool now, on the same `loadout` spec a Mycomancer's spells use:
+
+| Set | Rank 1 | Rank 2 | Rank 3 | Tiers |
+| --- | ------ | ------ | ------ | ----- |
+| Duelist (2 + rank) | 3 | 4 | 5 | Novice → +Adept → +Master |
+| Guardian (1 + rank) | 2 | 3 | 4 | Novice → +Adept → +Master |
+
+Both counts and both ladders are off those two cards and nothing was added. A
+character holding both sets has **two** allowances out of one pool, which is the
+literal reading: each card grants its own, and each was paid for.
+
+**The Guardian's has no `swap`.** DEXTEROUS prints the sentence that lets a rest
+re-choose the hand, word for word the one FUNGAL INVOCATION prints, so the Duelist
+appears in the long rest window's action list. SHIELD EXPERTISE prints no such
+sentence, so the Guardian is offered none — a rest is not the place to invent a
+rule a card never printed. The panel on the sheet still changes it at any time,
+and the block on the Abilities tab now says which of the two a set is rather than
+promising "swapped at any rest" to both. **Worth a ruling.**
+
+### The rider, and where the notes landed
+
+The `Developpement Notes` are two sentences and the second one is the whole
+system:
+
+> "When soemthing give oyu permnanet adventage like this it should dispaly on the
+> card adventage should be a an arrow up witn an umber in it( green arrow). In
+> case it happes later disvage its the same so ability that are itne tracker
+> would do th same as well."
+
+> "in genral justn ot for this, martial mvoe are activate before the attack so
+> they show in ttracker until the atakc is made. Remove on the tracker on the
+> attack alnd and when possible updating the attack text to say (not on the card)
+> that this attack will "mARTIAL MOE NAME a""
+
+`src/lib/moves.js` is new and is where all of it lives. It is the Trickster's
+rider system again, deliberately: same storage, same law, one field.
+
+```
+{ move: { id: 'wing-clip' } }
+```
+
+**Only the id.** An AMBUSH stores its Elevate because that number is *history* —
+what was actually paid for a particular weapon — while a move's numbers are
+printed on its card and never vary, so they are read back off the codex (`rides`
+in `martial.js`) and a correction to a card corrects every rider already laid.
+
+`rides` is three optional keys — `advantage`, `empower`, `elevate` — and the line
+for what goes in it is strict. RECKLESS is Empowered "on a hit" and every hit is
+one, so the sheet prints it. REND is Empowered only if the target already carried
+a Wound, and the sheet has no idea whether it did, so REND carries nothing and the
+table reads the sentence. Five moves carry no numbers at all and still ride: WOUND,
+CONCUSS, MOMENTUM, SWEEP and BLEED change what the attack *does*.
+
+Every place the sheet prints an attack now folds the riders in through one
+function, `attackModifiers`, so the four of them can never disagree about what
+the next swing does:
+
+| Where | What it shows |
+| ----- | ------------- |
+| Block 3's attack row | a second amber line: *This attack will Wing Clip and Reckless.* |
+| The use prompt | the same line as its note, above the card, and the arrow on the card |
+| The quick bar chip | the raised damage, and the arrow on the card it opens |
+| The Inventory tab's weapon block | the arrow and the raised damage on the card it deals |
+| The card body | **nothing** — "not on the card", from the note |
+
+That last split is the note's own and it is the right one: the card is the codex's
+and says what the attack always does; the row is the sheet's and says what *this*
+swing will do.
+
+`withTrickRider` in `tricks.js` was the old single-rider version of that fold and
+is gone, with a pointer left where it stood. A card cannot be printed off one kind
+of rider and not the other, so there is one fold and every call site uses it.
+
+**Lost on use** is `spendMoves`, called from the same `spendUse` the Trickster's
+riders come off in, so a Duelist who ambushed and then laid a Wound loses both to
+one swing. It fires when the attack is **paid for**, not when it lands. The note
+says "remove on the attack land"; nothing here asks about the outcome, so nothing
+here can be wrong about it, and it is the same reading `spendTricks` already
+takes — what a move buys is the attempt. **Worth a ruling** if the other thing was
+meant.
+
+### The arrow
+
+`src/components/RollArrow.jsx` is the badge the first note asked for: a green
+triangle up with the number of d4s in it, a red one down, in the two colours the
+words *advantage* and *disadvantage* already wear in card text. It draws in both
+places the note names — under the cost orbs on a card, and on a tracker row that
+is granting any.
+
+It is a **number** because Advantage stacks (each instance is another d4), and it
+**nets** because Advantage and Disadvantage cancel one for one. Two against one is
+one arrow up; one against one draws nothing at all, which is the rule applied
+rather than handed to the reader. Its tooltip names every source, so a 3 is
+*"3 d4s of advantage on this roll — from Duelist, Wing Clip and Reckless"* rather
+than a number to go and reconstruct.
+
+Nothing in the codex grants Disadvantage on your own swing yet. The downward half
+is built anyway, because the note asked for it and a renderer that understands one
+direction is one that has to be found and changed the first time something needs
+the other.
+
+### AGILE moves a stat, so it moves it in `deriveStats`
+
+"While you have a one-handed weapon in hand your Defense is increased by 1" is the
+first card in the game to grant a stat for what you are **holding** rather than
+what you are wearing, and it is a condition the sheet can check — the `One-Handed`
+tag on the item. So `martialDefense` reads the main hand and `deriveStats` adds it,
+which means swapping to a two-hander takes the point straight back off on the next
+render.
+
+The sheet's parenthesis — *"(note: if you use the swap function to go to another
+non one-handed weapon you loose this bonus)"* — is therefore built rather than
+printed. It was guidance to whoever built the sheet, it named a button on the
+Inventory tab, and it said nothing the first sentence does not already say.
+
+DEXTEROUS's advantage rides the same test and shows as the arrow. FOLLOW UP does
+not: the sheet does not know an attack missed and never will, so its reroll is a
+printed rule the table plays, and no number for it was put in the spec — a number
+nothing reads is a promise the data cannot keep.
+
+### How the transcription was proved
+
+The same round trip every set since the Mycomancer has had: each card's `Name`,
+`Tags`, `AP` and `Main Effect` rebuilt out of the codex fields and compared to the
+sheet cell, quote- and whitespace-normalised. **12 of 16 comparisons match across
+4 rows.** All four names, all four tag lists and every AP and WP match exactly.
+All four `Main Effect` cells differ, and every difference is one of the reads
+below.
+
+| Card | Read |
+| ---- | ---- |
+| DEXTEROUS | "adventage" → advantage · "Martial moves" → Martial Moves · a missing space after "weapons." · "your rank in duelist.." → "your Rank in Duelist." |
+| AGILE | "your defense" → "your Defense" · the implementer's parenthesis dropped and built instead |
+| FOLLOW UP | "Whileyou" → "While you" · "your fist attack" → "your first attack" · "with a one-handed each turn" → "with a one-handed weapon each turn" · "that miss can be re rolled once" → "that misses can be rerolled once" |
+| SHARP | "Two Martial moves" → "two Martial Moves" · "weapon attack" → "Weapon Attack", twice · "beofer" → before · "reaciton" → reaction · the implementer's Note dropped and built instead |
+
+Every one of the spelling changes exists so a **defined term lights**, which is the
+same trade WYRM BOLT's "Range Attack" made. The two dropped parentheses are both
+notes to the builder rather than rules text, and both are built: AGILE's in
+`deriveStats`, SHARP's across `moves.js` and the three places an attack is printed.
+
+Three reads on the way into the move codex, for the same reason: MOMENTUM's
+"Movemend Speed" reads Movement Speed, WING CLIP's "the entity Move Action cost"
+reads "the entity's `{{Move}}` action cost" so the link resolves, and WOUND's
+parenthesis went to `keywords.js` **word for word** as a new `wound` term. That
+last is the trade BLIND and FRIGHTFUL ROAR both made: a defined term must never be
+glossed in prose as well. Unlike those two, this card's own *name* is the term, and
+that is allowed — Gore Armor and Vampiric Touch were reworded because their titles
+collided with an unrelated stat and an unrelated range, which is a different fault
+from a card named after the thing it does.
+
+### Four things for the designer
+
+1. **`Shield & One-Handed` is tagged `Shielded`, not `One-Handed`.** So on a
+   literal reading a Duelist with a shield in the off hand gets no advantage from
+   DEXTEROUS and no point from AGILE. That may well be right — the Guardian is the
+   set built around a shield — but it is a reading, not a transcription. One string
+   in the Duelist's `martial.weapon` if it should be both.
+2. **Riders come off when the attack is paid for, not when it lands.** See above.
+   One line in `spendUse` if the other thing was meant, though the sheet would then
+   need to be told whether the swing hit, which it currently never is.
+3. **The Guardian's moves cannot be re-chosen at a rest**, because SHIELD EXPERTISE
+   does not print the sentence DEXTEROUS does. Add `swap: ['long']` to its loadout
+   if it should.
+4. **SHIELD EXPERTISE also grants "+1 Defense while wielding a weapon that includes
+   a shield"**, and that has never been built. It is now exactly the same code path
+   AGILE uses — a `martial` spec with `weapon: 'Shielded'` and `defense` — and it
+   was deliberately *not* added, because it would change the Defense of every
+   Guardian already on a sheet and nobody asked for that. Say the word and it is
+   four lines.
+
+### No pictures yet
+
+No `data/Duelist/` folder arrived, so the set's plate and all fourteen move plates
+are absent and every one of them draws the empty art window an unpainted card has
+always drawn. The set's `art` is `null` rather than a path that is not there: the
+tiles draw the picture as a CSS background and would show nothing either way, but
+the summary and the presentation page use an `img` and would show a broken one.
+Drop the overview picture into `data/Duelist/`, run `npm run art:cards`, and point
+`art` at `/talents/duelist.jpg`.
 
 ## One action a rest, 2026-08-20
 

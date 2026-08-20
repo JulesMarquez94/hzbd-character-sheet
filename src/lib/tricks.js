@@ -180,33 +180,14 @@ export function trickRider(effects, card) {
   return elevate > 0 || flat > 0 ? { elevate, flat } : null;
 }
 
-/**
- * A weapon card's modifiers with whatever is waiting on it folded in.
- *
- * `base` is what the item itself gives (`wieldModifiers` in items.js — the
- * enchantments on the blade and on the hand holding it). This adds the rider on
- * top, and returns `base` untouched when there is nothing waiting, so a
- * character with no Trickster on their sheet pays nothing for this file
- * existing.
- */
-export function withTrickRider(character, card, base) {
-  const rider = trickRider(character?.effects, card);
-  if (!rider) return base;
-
-  /* Poison's multiplier becomes a number here, against the Instinct this
-     character has right now — "equal to your Instinct Attribute" means the
-     attribute they are swinging with, not the one they had when they picked the
-     pocket. It cannot stay a multiplier past this point: the card it is about to
-     be printed on may be a Physique card, and the extra damage is Instinct's
-     either way. */
-  return {
-    ...(base ?? {}),
-    damage: base?.damage ?? [],
-    empower: Number(base?.empower) || 0,
-    elevate: (Number(base?.elevate) || 0) + rider.elevate,
-    bonus: (Number(base?.bonus) || 0) + rider.flat * instinctOf(character),
-  };
-}
+/* `withTrickRider` used to live here: a weapon card's modifiers with this file's
+   rider folded in. A second kind of rider arrived with the Duelist — a Martial
+   Move waiting on the same swing — and a card cannot be printed off one of them
+   and not the other, so the fold moved to `attackModifiers` in moves.js and every
+   call site went with it. `trickRider` above is what that function reads. Poison's
+   multiplier becomes a number there rather than here, and for the same reason it
+   always did: "equal to your Instinct Attribute" means the Instinct they have when
+   they swing, and the card it is about to be printed on may be a Physique card. */
 
 /**
  * The effects list with every rider taken off it.

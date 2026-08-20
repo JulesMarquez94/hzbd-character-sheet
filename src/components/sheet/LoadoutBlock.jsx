@@ -15,7 +15,7 @@ import {
 } from '../../lib/items.js';
 import { getCard } from '../../lib/weapons.js';
 import { shortName, spendUse } from '../../lib/combatBar.js';
-import { withTrickRider } from '../../lib/tricks.js';
+import { attackModifiers, ridingLine } from '../../lib/moves.js';
 
 /**
  * The Character tab's third block: what you have in your hands and on your
@@ -74,6 +74,8 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
   }
 
   function askWeaponCard(card) {
+    const riders = attackModifiers(character, card, modifiers);
+
     setRequest({
       name: card.name,
       source: `${primary.name} — in hand`,
@@ -81,10 +83,13 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
       wp: card.wp,
       card,
       /* The attack is printed with this weapon's damage type and Empowering,
-         exactly as it reads on the block behind the prompt — plus whatever a
-         Trickster has waiting on it, which is the point of paying for an AMBUSH
-         before the swing rather than after. */
-      modifiers: withTrickRider(character, card, modifiers),
+         exactly as it reads on the block behind the prompt — plus whatever is
+         waiting on it, which is the point of paying for an AMBUSH or a Martial
+         Move before the swing rather than after. */
+      modifiers: riders,
+      /* And named, since the prompt is the last thing between the player and the
+         swing that spends them. */
+      note: ridingLine(riders),
     });
   }
 
@@ -157,23 +162,15 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
             </div>
 
             {cards.map((card) => (
-              <div className="use-row" key={card.id}>
-                <button
-                  type="button"
-                  className="use-row-main"
-                  onClick={() => askWeaponCard(card)}
-                  disabled={readOnly}
-                  title={readOnly ? card.name : `Use ${card.name}`}
-                >
-                  <span className="use-row-name">{shortName(card)}</span>
-                  <CostOrbs ap={card.ap} wp={card.wp} size={19} className="use-row-costs" />
-                </button>
-
-                <InfoButton
-                  onClick={() => stack?.openCard(card, withTrickRider(character, card, modifiers))}
-                  label={`${card.name} card`}
-                />
-              </div>
+              <AttackRow
+                key={card.id}
+                card={card}
+                character={character}
+                modifiers={modifiers}
+                stack={stack}
+                readOnly={readOnly}
+                onUse={() => askWeaponCard(card)}
+              />
             ))}
           </>
         ) : (
@@ -246,6 +243,40 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
           onConfirm={confirmUse}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * One of the weapon's attacks, on one line, plus a second line when something is
+ * riding it.
+ *
+ * That second line is the Duelist's Developpement Notes, honoured where they
+ * asked for it: "when possible updating the attack text to say (not on the card)
+ * that this attack will MARTIAL MOVE NAME". Not on the card — the card is the
+ * codex's and says what the attack always does. This row is the sheet's and says
+ * what *this* swing will do, which is the only place the distinction can live.
+ */
+function AttackRow({ card, character, modifiers, stack, readOnly, onUse }) {
+  const riders = attackModifiers(character, card, modifiers);
+  const riding = ridingLine(riders);
+
+  return (
+    <div className={`use-row${riding ? ' use-row-riding' : ''}`}>
+      <button
+        type="button"
+        className="use-row-main"
+        onClick={onUse}
+        disabled={readOnly}
+        title={readOnly ? card.name : `Use ${card.name}`}
+      >
+        <span className="use-row-name">{shortName(card)}</span>
+        <CostOrbs ap={card.ap} wp={card.wp} size={19} className="use-row-costs" />
+      </button>
+
+      <InfoButton onClick={() => stack?.openCard(card, riders)} label={`${card.name} card`} />
+
+      {riding && <span className="use-row-rider">{riding}</span>}
     </div>
   );
 }

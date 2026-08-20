@@ -4114,6 +4114,29 @@ body.sheet-fixed #root {
   flex-shrink: 0;
 }
 
+/* ---------- WHAT IS RIDING THIS SWING ----------
+   A Martial Move is paid for before the attack and spent by making it, so the
+   attack has to say what it is carrying while that is still a choice. Amber,
+   because a talent is what put it there and amber is what a talent wears
+   everywhere else on the sheet. It wraps onto its own line rather than competing
+   with the name and the orbs for a row 360 pixels wide. */
+.use-row-riding {
+  flex-wrap: wrap;
+}
+
+.use-row-riding .use-row-main {
+  border-color: rgba(255, 179, 0, 0.55);
+  background-color: rgba(255, 179, 0, 0.1);
+}
+
+.use-row-rider {
+  flex-basis: 100%;
+  padding: 0 0.2rem 0.1rem;
+  font-size: 0.63rem;
+  line-height: 1.3;
+  color: var(--level-amber);
+}
+
 /* ---------- A LOOP ON THE BELT ----------
    Neutral, with the item's rarity along its edge — colour comes from rarity
    here the same as everywhere else. */

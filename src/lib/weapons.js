@@ -42,6 +42,7 @@
 
 import { withArt } from './cardArt.js';
 import { SPELLS } from './spells.js';
+import { MARTIAL_MOVES } from './martial.js';
 import { ENCHANTMENTS, getEnchantment } from './enchantments.js';
 import { INGREDIENTS } from './ingredients.js';
 import { UTILITY_CARDS } from './utility.js';
@@ -82,6 +83,14 @@ export { ENCHANTMENTS };
    re-exported because this file has always been where the codex's spells are
    imported from. */
 export { SPELLS };
+
+/* ------------------------------------------------------------ martial moves */
+
+/* And the Martial Moves, for the same reason and on the same terms. A move is
+   what a Guardian's SHIELD EXPERTISE and a Duelist's DEXTEROUS hand over a
+   *choice* of, so the pool has to be reachable by loadouts.js and by moves.js
+   without this registry behind it. See martial.js. */
+export { MARTIAL_MOVES };
 
 /* ------------------------------------------------------------ basic actions */
 
@@ -863,6 +872,10 @@ export const WEAPONS = [
 export const CARDS = [
   ...WEAPON_ABILITIES,
   ...SPELLS,
+  /* Not talent cards, for the same reason Ingredients are not: a rank does not
+     hand a move over, it opens a tier of them and raises how many you know. See
+     martial.js. */
+  ...MARTIAL_MOVES,
   ...ENCHANTMENTS,
   ...UTILITY_CARDS,
   ...TALENT_CARDS,

@@ -9,6 +9,20 @@ import { addEffect } from '../../lib/combatTurn.js';
 import { heldItem, normalizeEquipment, wieldModifiers } from '../../lib/items.js';
 import { getCard } from '../../lib/weapons.js';
 import { ambushEffect, ambushOptions } from '../../lib/tricks.js';
+import { attackModifiers } from '../../lib/moves.js';
+
+/**
+ * The attack as the ambush would make it: everything already riding this swing,
+ * plus the Elevate this payment is about to buy.
+ *
+ * `attackModifiers` rather than the blade alone, so a Duelist reading the preview
+ * sees the arrow their own one-handed weapon is worth, and a Martial Move already
+ * waiting is not quietly dropped from the card they are deciding off.
+ */
+function ambushPreview(character, option, worn) {
+  const riders = attackModifiers(character, option.card, worn) ?? worn ?? {};
+  return { ...riders, elevate: (Number(riders.elevate) || 0) + option.wp };
+}
 
 /**
  * AMBUSH: which swing is this, and what does it cost.
@@ -128,7 +142,7 @@ export default function AmbushWindow({ talent, card, character, patch, readOnly 
               <AbilityCard
                 ability={picked.card}
                 character={character}
-                modifiers={{ ...worn, elevate: (Number(worn?.elevate) || 0) + picked.wp }}
+                modifiers={ambushPreview(character, picked, worn)}
               />
             </div>
           )}

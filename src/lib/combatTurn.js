@@ -79,6 +79,7 @@ import {
 import { shieldCapFor } from './characterModel.js';
 import { getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
+import { getMartialMove } from './martial.js';
 
 /** A long fight should not be able to bloat one row past reading. */
 export const EFFECT_LIMIT = 40;
@@ -358,6 +359,9 @@ export function normalizeEffects(value) {
       // stolen Poison, waiting on their next weapon attack. Read and cleaned here
       // rather than trusted, because it changes printed damage — see tricks.js.
       trick: normalizeTrick(raw.trick),
+      // And the fourth: a Martial Move, waiting on the same swing. Same law and
+      // the same reason — see moves.js.
+      move: normalizeMove(raw.move),
     });
   }
 
@@ -380,6 +384,22 @@ function normalizeTrick(raw) {
   return elevate === 0 && flat === 0 ? null : { id, elevate, flat };
 }
 
+/**
+ * A Martial Move rider, or null. One field, and it has to name a move this
+ * build's codex still knows — the same guard `card` and `ench` get above.
+ *
+ * No numbers, on purpose. What a move does to the swing is printed on its card
+ * and never varies (`rides` in martial.js), so it is read back off the card
+ * rather than copied into the row: a correction to the codex then corrects every
+ * rider already laid. An AMBUSH stores its Elevate because that number is
+ * history — what was actually paid for a particular weapon — and this is not.
+ */
+function normalizeMove(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = String(raw.id ?? '').slice(0, 40);
+  return getMartialMove(id) ? { id } : null;
+}
+
 function clampTurns(value) {
   return Math.max(0, Math.min(TURNS_MAX, Math.floor(Number(value) || 0)));
 }
@@ -400,8 +420,10 @@ export function addEffect(effects, entry) {
       // See normalizeEffects: the two fields an Ephemeral Enchantment writes.
       ench: getEnchantment(entry?.ench) ? String(entry.ench) : null,
       spell: entry?.spell ? String(entry.spell).slice(0, EFFECT_NAME_MAX) : null,
-      // See normalizeEffects: the Trickster's pending rider.
+      // See normalizeEffects: the Trickster's pending rider, and the Martial
+      // Move waiting on the same swing.
       trick: normalizeTrick(entry?.trick),
+      move: normalizeMove(entry?.move),
     },
     ...normalizeEffects(effects),
   ];

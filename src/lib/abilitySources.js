@@ -76,6 +76,21 @@ function listOut(words) {
 }
 
 /**
+ * When a pool may be re-chosen, said the way the granting card says it.
+ *
+ * `swap` is the permission, transcribed off that card (see loadouts.js). A set
+ * that names no rest is offered none in the rest window, so the block must not
+ * promise one — the panel on the sheet is what changes it then, and it can do it
+ * whenever.
+ */
+function swapLine(spec) {
+  const rests = Array.isArray(spec?.swap) ? spec.swap : [];
+  if (rests.length === 0) return 'changed on the sheet at any time';
+  const words = rests.map((kind) => `a ${kind} rest`);
+  return `changed on ${listOut(words)}`;
+}
+
+/**
  * A source named on the row that this build's codex has never heard of. It is
  * still a source: a table is free to invent its own lineage or its own set, and
  * quietly dropping the block would read as "you have nothing".
@@ -235,7 +250,13 @@ function talentSources(character) {
         id: `loadout:${talent.id}`,
         kind: 'loadout',
         title: loadout.spec.label,
-        note: `${talent.name} · ${loadout.picks.length} of ${loadout.known} chosen, swapped at any rest`,
+        /* What it takes to change the hand, off the spec rather than asserted. It
+           read "swapped at any rest" for every pool, which was already loose — a
+           Mycomancer swaps on a long rest and not a short one — and became plainly
+           wrong the moment a set arrived whose card grants no swap at all. */
+        note: `${talent.name} · ${loadout.picks.length} of ${loadout.known} chosen, ${swapLine(
+          loadout.spec
+        )}`,
         art: talent.art ?? null,
         sections: [
           {
@@ -460,6 +481,11 @@ const KIND_ORDER = [
   { id: 'talent', label: 'Talent', plural: 'Talents' },
   { id: 'skill', label: 'Skill', plural: 'Skills' },
   { id: 'spell', label: 'Spell', plural: 'Spells' },
+  /* Its own count rather than being folded in with talents: a move is chosen out
+     of a pool and swapped at a rest, which is what a spell is and what a talent
+     never is. Without the entry it fell through to the fallback below and the
+     overview read "Martial-moves". */
+  { id: 'martial-move', label: 'Martial Move', plural: 'Martial Moves' },
   { id: 'brew', label: 'Brew', plural: 'Brews' },
   { id: 'ability', label: 'Ability', plural: 'Abilities' },
 ];

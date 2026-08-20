@@ -47,8 +47,13 @@
   --ac-accent-soft: rgba(157, 91, 255, 0.22);
 }
 
-/* What a character has learned rather than what they carry. */
-.ac-kind-talent {
+/* What a character has learned rather than what they carry. A Martial Move takes
+   the same amber rather than a colour of its own: it is a trained manoeuvre bought
+   with a talent, which is the same *kind* of thing, and the colour law here is
+   about what a colour means and not about which class. It is also the amber the
+   word "Martial Move" already wears in card text — see keywords.js. */
+.ac-kind-talent,
+.ac-kind-martial-move {
   --ac-accent: var(--level-amber);
   --ac-accent-soft: rgba(255, 179, 0, 0.2);
 }
@@ -144,11 +149,21 @@
 /* ---------- COST ORBS ----------
    One filled orb per resource with the number in it: gold for Action Points,
    violet for Willpower. Used on the card and beside abilities on the sheet. */
-.ac-costs {
+/* The card's top-right corner: what it costs, and then what is happening to the
+   roll it asks for. One column so the arrow lands under the orbs however many
+   there are, rather than at a pixel offset that guesses at two. */
+.ac-badges {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: flex-end;
+}
+
+.ac-costs {
   display: flex;
   flex-direction: column;
   gap: 7px;

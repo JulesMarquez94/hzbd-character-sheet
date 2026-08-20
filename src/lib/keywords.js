@@ -405,6 +405,25 @@ export const KEYWORDS = [
     detail:
       'Below 0 Health and going. Stabilize stops it, and a second full bar of damage ends it.',
   },
+  {
+    id: 'wound',
+    terms: ['Wounds', 'Wound'],
+    color: 'var(--dmg-decay)',
+    /* Not on the Status & Terms tab. The WOUND plate defines it outright at the
+       foot of its own card, in a parenthesis, and that sentence is quoted here
+       word for word rather than paraphrased — the same trade BLIND and FRIGHTFUL
+       ROAR made. The gloss then came off the card body, because a term that
+       carries its own explanation must never be spelled out in prose as well.
+
+       Unlike those two, the card's own name *is* the term, and that is fine:
+       "will inflict a Wound on the target" is the word being used for what it
+       means. Gore Armor and Vampiric Touch were reworded because their titles
+       collided with an unrelated stat and an unrelated range, which is a
+       different fault from a card named after the thing it does. */
+    detail:
+      'Stackable effect that cause the entity to take 1d6 decay damage at every one of its ' +
+      'turn starts until they receive healing or they take a rest.',
+  },
 
   /* ------------------------------------------------------------- distances
    * The two ranges the cards name instead of a number. Everything else prints

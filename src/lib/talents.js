@@ -37,6 +37,15 @@
  * effect immediately" and is gone. The only thing brewing persists is whether the
  * Cauldron is out.
  *
+ * And a set may change the *rules* rather than hand anything over, which is what
+ * every remaining spec key is: `enchanting` (what may be laid and worn),
+ * `minion` (a body on the board, minions.js), `tricks` (the Trickster's riders
+ * and its steal table, tricks.js) and `martial` (what the Martial Move system
+ * lets this set do, and what it hangs on the weapon in hand — moves.js). All of
+ * them are numbers here and behaviour elsewhere, for the same reason: this file
+ * is a leaf, and a spec that needed the codex to describe itself would cost it
+ * that.
+ *
  * ------------------------------------------------------------ what to roll
  * A card that asks for a roll against another entity has exactly two shapes,
  * and every new card has to pick one:
@@ -114,6 +123,30 @@ const TALENT_SETS = [
     art: '/talents/guardian.jpg',
     tags: ['instinct', 'martial', 'defense', 'support'],
     stat: 'instinct',
+    /* SHIELD EXPERTISE has promised Martial Moves since the set was written, and
+       until the move codex existed there was nothing for it to promise. Now there
+       is (martial.js), so the promise is a spec: "a number of Novice Martial Moves
+       equal to 1 + your Rank in Guardian", and "at Rank 2, you can learn Adept
+       Martial Moves, and at Rank 3, you gain access to Master Martial Moves" —
+       both read off that card and nothing added.
+
+       No `swap`. The Mycomancer's FUNGAL INVOCATION and the Duelist's DEXTEROUS
+       both print the sentence that lets a rest re-choose the hand; this card does
+       not, and a rest is not the place to invent a rule a card never printed. The
+       panel on the sheet still changes it at any time. Flagged in data/README.md.
+
+       No `cast` either: nothing on this set names an attribute for its moves, so
+       they print the codex's own default. */
+    loadout: {
+      id: 'guardian-martial-moves',
+      label: 'Martial Moves',
+      noun: 'martial move',
+      kind: 'martial-move',
+      group: 'tier',
+      known: [null, 2, 3, 4],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      note: 'A move waits on the tracker once you pay for it, and rides the next weapon attack you make.',
+    },
     blurb:
       'The Guardian is a master of defense, a steadfast bulwark on the battlefield. Through rigorous training, they have perfected the art of using their shield not just to deflect blows but to turn an enemy’s strength against them.\n\n' +
       'They excel at absorbing devastating attacks, using their perfect form and timing to create crucial openings for themselves and their allies to strike back.\n\n' +
@@ -1028,6 +1061,177 @@ const TALENT_SETS = [
            data/README.md. */
         body:
           'Your Action Points and Reaction Points maximum are increased to 7 and you start with Action Points each turn.',
+      },
+    ],
+  },
+
+  {
+    id: 'duelist',
+    name: 'Duelist',
+    /* Same shape the Draconic Bond and the Trickster arrived in: the Ability tab
+       came on 2026-08-20 with the Developpement Notes beside it, and no Overview
+       tab. So `tagline`, `tags` and `blurb` are house-written and exported back
+       out to data/Talent Set - Duelist - Overview.csv in the sheet's own column
+       order, so the workbook can hold the same words. Every card below is the
+       Ability tab. */
+    tagline: 'A blade in one hand and nothing in the other, moving faster than the answer.',
+    /* No plate yet. Null rather than a path that is not there: the tiles draw the
+       picture as a CSS background and would show nothing either way, but the
+       summary and the presentation page use an `img` and would show a broken one.
+       Drop the overview picture into `data/Duelist/` and run `npm run art:cards`;
+       it lands at public/talents/duelist.jpg, and this becomes that path. The
+       fourteen Martial Moves have no plates either, and their cards already draw
+       the empty art window every unpainted card in the codex draws. */
+    art: null,
+    /* House-written with the rest of the Overview. Instinct because everything
+       the set buys is footwork and finesse and it leans on nothing else; Martial
+       because all four cards are about a weapon in one hand; Defense for AGILE,
+       which is the only card here that changes a number nobody is swinging.
+       Control and Support are deliberately absent: the moves this set hands out
+       do plenty of both, but they belong to the move codex rather than to the
+       set, and a set is tagged for what it *is*. */
+    tags: ['instinct', 'martial', 'defense'],
+    stat: 'instinct',
+    /* The pool DEXTEROUS hands over. "You learn a number of Novice Martial Moves
+       equal to 2 + your Rank in Duelist" is [null, 3, 4, 5], and "at Rank 2, you
+       can learn Adept Martial Moves, and at Rank 3, you gain access to Master
+       Martial Moves" is the tier ladder. `swap: ['long']` is the card's own next
+       sentence, word for word the one FUNGAL INVOCATION prints, so the long rest
+       window offers the change as one of the actions the night buys.
+
+       `group: 'tier'` because a move has no school and no family to wall it by:
+       the tier is the only thing that sorts the pool, so the chooser cuts it
+       Novice, Adept, Master instead of leaving fourteen cards under one heading
+       called Unfiled. See SubSchoolWall in LoadoutPick.jsx. */
+    loadout: {
+      id: 'duelist-martial-moves',
+      label: 'Martial Moves',
+      noun: 'martial move',
+      kind: 'martial-move',
+      group: 'tier',
+      known: [null, 3, 4, 5],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      swap: ['long'],
+      note: 'Your long rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
+    },
+    /* A seventh shape of what a set can hand over, beside a fixed hand, a
+       `loadout`, a `brewing` spec, an `enchanting` one, a `minion` and the
+       Trickster's `tricks`: this set changes what the *move system* lets you do,
+       and it hangs three of its four cards on the weapon in your hand.
+
+       Numbers only. What each one does to the sheet is moves.js's business, which
+       is the same split minions.js and tricks.js keep. Indexed by rank the way
+       `tricks.points` is, so a reading is always a number rather than sometimes
+       being absent: a Rank 1 Duelist has the allowance everybody has. */
+    martial: {
+      /* The tag the weapon has to carry, off the designer's own weapon list.
+         'Shield & One-Handed' carries `Shielded` there rather than `One-Handed`,
+         so on a literal reading a Duelist holding a shield gets none of this.
+         Flagged in data/README.md for a ruling. */
+      weapon: 'One-Handed',
+      /* DEXTEROUS: "You have advantage when using One-handed weapons." A count
+         rather than a flag because Advantage stacks (each instance is another
+         d4), which is what lets the arrow on the card print a number. */
+      advantage: [null, 1, 1, 1],
+      /* AGILE: "While you have a one-handed weapon in hand your Defense is
+         increased by 1." */
+      defense: [null, 1, 1, 1],
+      /* FOLLOW UP is deliberately not here. It hangs on the same weapon, but the
+         sheet does not know an attack missed and never will, so its reroll is a
+         printed rule the table plays. A number nothing reads would be a promise
+         this file cannot keep. */
+      /* SHARP, at Rank 3: "You can now use two Martial Moves on the same Weapon
+         Attack, or use one Martial Move just before a Weapon Attack reaction."
+         One is what everybody who knows a move gets; this is the only thing in
+         the game that moves it. */
+      perAttack: [null, 1, 1, 2],
+      onReaction: [null, false, false, true],
+    },
+    blurb:
+      'A Duelist fights with one hand and keeps the other free, and the free hand is the point. Everything they have is bought with the room a single blade leaves them: the footwork to be somewhere else when the answer comes, the balance to swing again after a swing that missed, and the trained manoeuvres nobody with two hands on a haft has the time for.\n\n' +
+      'They excel at deciding what an exchange is about. A Martial Move is not a bigger attack, it is a chosen one: a leg opened up, a guard drawn away, a weapon on the floor. A Duelist knows more of them than anybody else does and changes them out every night, so the answer they have ready is the one this fight needs rather than the one they trained for.\n\n' +
+      'A Duelist’s presence is a source of quiet pressure. Nothing they do looks like much on its own, and at the last two of those chosen strikes ride the same swing, which is where all of it stops looking like nothing.',
+    cards: [
+      {
+        id: 'dexterous',
+        rank: 1,
+        name: 'Dexterous',
+        summary: 'Advantage with one-handed weapons, and the Martial Moves to use them with.',
+        kind: 'talent',
+        tags: ['Duelist', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* Mechanics as data: the pool is the `loadout` above and the advantage is
+           `martial.advantage`, neither of them read out of this prose.
+
+           Four spellings corrected on the way in, each so a defined term lights
+           rather than sitting in the sentence as plain text: "adventage" reads
+           advantage, "Martial moves" reads Martial Moves, "long rest" keeps the
+           lowercase FUNGAL INVOCATION prints it in, and "rank in duelist.." ends
+           on one full stop. */
+        body:
+          'You have advantage when using One-handed weapons.\n\n' +
+          'You learn a number of Novice Martial Moves equal to 2 + your Rank in Duelist.\n\n' +
+          'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
+          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.',
+      },
+      {
+        id: 'agile',
+        rank: 1,
+        name: 'Agile',
+        summary: 'A one-handed weapon in your hand is worth 1 Defense.',
+        kind: 'talent',
+        tags: ['Duelist', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* The sheet's parenthesis — "(note: if you use the swap function to go to
+           another non one-handed weapon you loose this bonus)" — is guidance to
+           whoever builds the sheet rather than rules text, and it names the swap
+           button on the Inventory tab. It says nothing the first sentence does not
+           already say, so it came off the card and went into the code that honours
+           it: `duelistDefense` in moves.js reads the weapon in the main hand, so
+           swapping to a two-hander takes the point back on the spot. */
+        body: 'While you have a one-handed weapon in hand your Defense is increased by 1.',
+      },
+      {
+        id: 'follow-up',
+        rank: 2,
+        name: 'Follow Up',
+        summary: 'Your first miss each turn with a one-handed weapon gets one more try.',
+        kind: 'talent',
+        tags: ['Duelist', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* "your fist attack" reads first, and "that miss can be re rolled once"
+           reads "that misses can be rerolled once" so that reroll lights. */
+        body:
+          'While you have a one-handed weapon in hand, your first attack with a one-handed weapon each turn that misses can be rerolled once.',
+      },
+      {
+        id: 'sharp',
+        rank: 3,
+        name: 'Sharp',
+        summary: 'Two Martial Moves on one swing, or one laid just before a reaction attack.',
+        kind: 'talent',
+        tags: ['Duelist', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* Mechanics as data: `martial.perAttack` and `martial.onReaction` above.
+
+           The sheet's long parenthesis is the whole move system rather than
+           anything about this card — "in general just not for this, martial move
+           are activate before the attack so they show in tracker until the attack
+           is made. Remove on the tracker on the attack land and when possible
+           updating the attack text to say (not on the card) that this attack will
+           MARTIAL MOVE NAME". It is built, in moves.js and on the three places the
+           sheet prints an attack, and it is not printed here: it describes how the
+           sheet works, not what this card does. */
+        body:
+          'You can now use two Martial Moves on the same Weapon Attack, or use one Martial Move just before a Weapon Attack reaction.',
       },
     ],
   },

@@ -6,7 +6,7 @@ import { CardLine } from '../CardText.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { WEAPON_SLOTS, heldItem, itemBurden, rarityColor, wieldModifiers } from '../../lib/items.js';
 import { getCard, itemEnchantments } from '../../lib/weapons.js';
-import { withTrickRider } from '../../lib/tricks.js';
+import { attackModifiers } from '../../lib/moves.js';
 
 /**
  * The Inventory tab's weapon block: the two weapons a character has in hand.
@@ -160,9 +160,11 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
             type="button"
             className="ability-box"
             key={card.id}
-            /* Per card, not per weapon: a Trickster's pending AMBUSH rides the
-               two attacks and not the shield block beside them. See tricks.js. */
-            onClick={() => stack?.openCard(card, withTrickRider(character, card, modifiers))}
+            /* Per card, not per weapon: a Trickster's pending AMBUSH and a
+               Duelist's Martial Move both ride the two attacks and not the shield
+               block beside them, and so does the advantage a one-handed weapon is
+               worth. See attackModifiers in moves.js. */
+            onClick={() => stack?.openCard(card, attackModifiers(character, card, modifiers))}
             title={`Open the ${card.name} card`}
           >
             <span className="ability-box-glyph">

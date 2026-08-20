@@ -227,7 +227,15 @@ export function BarChip({ move, readOnly, onUse }) {
       className={`bar-chip ac-kind-${card?.kind ?? 'ability'}${spent ? ' is-spent' : ''}`}
       onClick={onUse}
       disabled={readOnly || spent}
-      title={spent ? `${move.name} is spent` : `${move.name} — ${move.source}`}
+      /* A chip can be refused for more than one reason now, and they do not read
+         the same: a flask is spent, while a Martial Move has nowhere to ride
+         because one is already waiting. So the row says which, in its own words,
+         and falls back to the flask's wording for everything that has none. */
+      title={
+        spent
+          ? move.spentNote ?? `${move.name} is spent`
+          : `${move.name} — ${move.source}`
+      }
     >
       <span className="bar-chip-name">{move.name}</span>
 
@@ -238,7 +246,7 @@ export function BarChip({ move, readOnly, onUse }) {
       )}
 
       {spent ? (
-        <span className="bar-chip-spent">Spent</span>
+        <span className="bar-chip-spent">{move.spentLabel ?? 'Spent'}</span>
       ) : (
         <span className="bar-chip-costs">
           {variable ? (

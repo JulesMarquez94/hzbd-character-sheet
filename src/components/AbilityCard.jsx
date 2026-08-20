@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import CardText from './CardText.jsx';
 import CostOrbs from './CostOrbs.jsx';
+import RollArrow from './RollArrow.jsx';
 import { cardBanner } from '../lib/cardText.js';
 import useCodexArt from './useCodexArt.js';
 import './AbilityCard.css';
@@ -128,7 +129,8 @@ function SparkIcon() {
  *                  whose text is still being typed, where re-measuring on each
  *                  keystroke would fight the writer.
  * @param modifiers what the holder does to the card:
- *                  `{ damage, empower, elevate, bonus, choice, stat, actor }`.
+ *                  `{ damage, empower, elevate, bonus, choice, stat, actor,
+ *                  advantage, disadvantage }`.
  *                  `bonus` is flat damage something else is lending this swing
  *                  — a Trickster's stolen Poison, and nothing else yet.
  *                  `choice` is the option this character picked where the card
@@ -136,6 +138,10 @@ function SparkIcon() {
  *                  `actor` is somebody else on the sheet playing it: a
  *                  draconic ally's card prints the ally's numbers, not its
  *                  bonded's. See minionModifiers in minions.js.
+ *                  `advantage` and `disadvantage` are counts of d4 on the
+ *                  roll this card asks for — a Duelist's one-handed weapon, a
+ *                  Martial Move riding the swing — drawn as one arrow in the
+ *                  corner. See RollArrow.jsx and attackModifiers in moves.js.
  */
 export default function AbilityCard({
   ability,
@@ -160,7 +166,9 @@ export default function AbilityCard({
   const apCost = ability.ap_cost ?? ability.ap;
   const wpCost = ability.wp_cost ?? ability.wp;
 
-  const hasSpark = kind === 'spell' || kind === 'skill';
+  /* The plates that carry the little four-point spark: a spell, a skill, and a
+     Martial Move, which wears one on all six of the printed Novice cards. */
+  const hasSpark = kind === 'spell' || kind === 'skill' || kind === 'martial-move';
 
   // What the card rolls with. Printed on the card, unless whoever handed it
   // over casts off a different attribute — a Mycomancer's prepared spells are
@@ -179,6 +187,14 @@ export default function AbilityCard({
   const empower = Number(modifiers?.empower) || 0;
   const elevate = Number(modifiers?.elevate) || 0;
   const bonus = Number(modifiers?.bonus) || 0;
+
+  /* And what is happening to the roll this card asks for, drawn as one arrow
+     under the cost orbs. Nothing on a codex card carries these: they are the
+     holder's, which is exactly why they are printed here rather than written into
+     a body — the same card in another pair of hands has no arrow at all. */
+  const advantage = Number(modifiers?.advantage) || 0;
+  const disadvantage = Number(modifiers?.disadvantage) || 0;
+  const advantageFrom = modifiers?.advantageFrom ?? [];
 
   // A card that asks the holder to decide something prints their answer; with
   // nothing picked yet it prints what it is still waiting for.
@@ -209,7 +225,15 @@ export default function AbilityCard({
         className={`ac-art${artUrl ? '' : ' ac-art-empty'}`}
         style={artUrl ? { backgroundImage: `url("${artUrl}")` } : undefined}
       >
-        <CostOrbs ap={apCost} wp={wpCost} size={38} className="ac-costs" />
+        <div className="ac-badges">
+          <CostOrbs ap={apCost} wp={wpCost} size={38} className="ac-costs" />
+          <RollArrow
+            advantage={advantage}
+            disadvantage={disadvantage}
+            from={advantageFrom}
+            size={34}
+          />
+        </div>
 
         {hasSpark && <SparkIcon />}
 

@@ -1,0 +1,11 @@
+Name,Tags,AP,WP,Main Effect,Image
+DEXTEROUS,"Duelist, Novice Talent, Passive",,,"You have advantage when using One-handed weapons.
+
+You learn a number of Novice Martial Moves equal to 2 + your Rank in Duelist.
+
+Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.
+
+At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.",
+AGILE,"Duelist, Novice Talent, Passive",,,While you have a one-handed weapon in hand your Defense is increased by 1.,
+FOLLOW UP,"Duelist, Adept Talent, Passive",,,"While you have a one-handed weapon in hand, your first attack with a one-handed weapon each turn that misses can be rerolled once.",
+SHARP,"Duelist, Master Talent, Passive",,,"You can now use two Martial Moves on the same Weapon Attack, or use one Martial Move just before a Weapon Attack reaction.",

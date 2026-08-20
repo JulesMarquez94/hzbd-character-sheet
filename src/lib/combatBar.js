@@ -58,7 +58,17 @@ import {
   wornItems,
 } from './items.js';
 import { getCard, itemEnchantments } from './weapons.js';
-import { isWeaponAttack, spendTricks, withTrickRider } from './tricks.js';
+import { isWeaponAttack, spendTricks } from './tricks.js';
+import { addEffect } from './combatTurn.js';
+import {
+  attackModifiers,
+  canLayMove,
+  isMartialMove,
+  moveEffect,
+  moveSetFor,
+  ridingLine,
+  spendMoves,
+} from './moves.js';
 
 /* ------------------------------------------------------------------- parts */
 
@@ -138,16 +148,21 @@ function handGroup(character) {
   const moves = (primary.abilities ?? [])
     .map(getCard)
     .filter(Boolean)
-    .map((card) =>
-      move(`hand:${card.id}`, card, {
+    .map((card) => {
+      /* Whatever is waiting on the next swing: an AMBUSH already paid for, a
+         Martial Move riding, and the advantage a Duelist has for holding this kind
+         of weapon at all. All of it has to show on the chip and on the card
+         *before* the attack is made — which is the whole of what both sets'
+         Developpement Notes asked for. See attackModifiers in moves.js. */
+      const riders = attackModifiers(character, card, modifiers);
+
+      return move(`hand:${card.id}`, card, {
         source: `${primary.name} — in hand`,
-        /* Plus whatever is waiting on the next swing. An AMBUSH already paid for
-           has to show on the chip and on the card *before* the attack is made —
-           that is the whole of what the Trickster's notes asked for. See
-           tricks.js. */
-        modifiers: withTrickRider(character, card, modifiers),
-      })
-    );
+        modifiers: riders,
+        /* And named, so the prompt that is about to spend them says which. */
+        note: ridingLine(riders),
+      });
+    });
 
   return moves.length > 0
     ? { id: 'hand', label: 'In Hand', note: primary.name, moves }
@@ -202,6 +217,12 @@ function chargeNote(remaining, consumable, item) {
 
 /** One group per source that holds something playable, in the codex's order. */
 function knownGroups(character) {
+  /* Whether there is room for another Martial Move on the next swing. Asked once
+     for the whole bar rather than once per chip: the answer is about the
+     character, not the card, and working it out means reading every set that
+     teaches moves. */
+  const room = canLayMove(character);
+
   return abilitySources(character)
     /* A source can hold cards that are neither played nor standing. A Cauldron
        Keeper's Ingredients are the case: you never use one, you put it in a Brew,
@@ -219,6 +240,7 @@ function knownGroups(character) {
           move(`${source.id}:${card.id}`, card, {
             source: `${card.name} — ${source.title}`,
             modifiers,
+            ...martialUse(character, card, room),
           })
         );
 
@@ -227,6 +249,40 @@ function knownGroups(character) {
         : null;
     })
     .filter(Boolean);
+}
+
+/**
+ * The extra a Martial Move carries, or nothing at all for every other card.
+ *
+ * A move is not resolved when it is used: paying for it lays a rider on the
+ * tracker and the next weapon attack carries it. So the whole of what using one
+ * does is an `extra` on the row, and it is written here rather than in the block
+ * for the same reason a flask's spent charge is — the block spends points and
+ * applies what it was handed.
+ *
+ * The allowance rides in rather than being asked for per card. One move rides a
+ * swing, or two for a Master Duelist, and a chip offered when there is no room is
+ * a chip that takes your Willpower and lays nothing. It is shown refused instead,
+ * wearing the reason, which is what the belt already does for a flask with no
+ * charges left.
+ */
+function martialUse(character, card, room) {
+  if (!isMartialMove(card)) return {};
+
+  return {
+    note: 'It waits on the tracker until you swing, and is spent the moment you do.',
+    extra: room.ok
+      ? {
+          effects: addEffect(
+            character?.effects,
+            moveEffect(card, moveSetFor(character?.talents, card.id))
+          ),
+        }
+      : null,
+    spent: !room.ok,
+    spentLabel: 'No room',
+    spentNote: room.reason,
+  };
 }
 
 /**
@@ -484,16 +540,31 @@ export function spendUse(request, character, mode, amount) {
   const wp = Number(request.wp) || 0;
   const body = { ...(request.extra ?? {}) };
 
-  /* A weapon attack is what a Trickster's riders were waiting for, and paying
-     for one is the moment the sheet can be sure the swing happened. "Lost on
-     use", from the Developpement Notes.
+  /* A weapon attack is what both kinds of rider were waiting for, and paying for
+     one is the moment the sheet can be sure the swing happened. "Lost on use",
+     from the Trickster's Developpement Notes, and "remove on the tracker on the
+     attack" from the Duelist's.
+
+     Both are cleared off the same list in turn, so a Duelist who ambushed and
+     then laid a Wound loses both to one swing rather than whichever ran last.
+     Started from whatever the request already put there, on the off chance a card
+     ever carries an effects patch of its own.
 
      Guarded on the card rather than on the character, because a creature's block
      pays through here too and hands its own row in as `character`. No minion
      card is tagged Weapon Attack, so nothing there is touched. */
   if (isWeaponAttack(request.card)) {
-    const kept = spendTricks(character?.effects);
-    if (kept) body.effects = kept;
+    let effects = body.effects ?? character?.effects;
+    let cleared = false;
+
+    for (const spend of [spendTricks, spendMoves]) {
+      const kept = spend(effects);
+      if (kept) {
+        effects = kept;
+        cleared = true;
+      }
+    }
+    if (cleared) body.effects = effects;
   }
 
   if (request.converts === 'reaction') {
