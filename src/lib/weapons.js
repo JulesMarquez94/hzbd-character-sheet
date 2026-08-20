@@ -41,6 +41,7 @@
  */
 
 import { SPELLS } from './spells.js';
+import { ENCHANTMENTS, getEnchantment } from './enchantments.js';
 import { INGREDIENTS } from './ingredients.js';
 import { UTILITY_CARDS } from './utility.js';
 import { TALENT_CARDS } from './talents.js';
@@ -51,74 +52,26 @@ import { BASIC_ACTIONS } from './actions.js';
 /* ------------------------------------------------------------- enchantments */
 
 /**
- * An enchantment is a passive card, a price tag, and — where it changes how
- * the weapon hits — a rider the ability cards read:
+ * An enchantment is a passive card, a price tag, and — where it changes what the
+ * wielder is or how their weapon hits — a rider that something reads:
  *
  *   burden      Magic Burden it adds to whatever carries it
  *   cost        price in coin
  *   damageType  replaces the weapon's own damage type
  *   empower     steps every damage die up a category (d6 -> d8), capped at d12
  *   spell       true when the item names the spell it carries
+ *   attributes  what it adds to the wielder's own three
+ *   healthMax   flat maximum Health it adds to them
  *
  * An item lists what has been laid on it in `enchants: [{ id, spell? }]`.
+ *
+ * **The codex itself moved to enchantments.js**, a leaf, when the Enchanter
+ * arrived: the whole shelf of thirteen is needed by a set that lays them, and
+ * needed without pulling this registry in behind it. Re-exported from here
+ * because this is where the codex's enchantments have always been imported from,
+ * and folded into CARDS below exactly as before.
  */
-export const ENCHANTMENTS = [
-  {
-    id: 'cold-infusion',
-    name: 'Cold Infusion',
-    kind: 'passive',
-    tags: ['Enchantment', 'Infusion'],
-    burden: 4,
-    cost: 3000,
-    damageType: 'Cold',
-    empower: 1,
-    effect: 'Weapon damage type becomes Cold and its damage is Empowered by 1.',
-    body:
-      'The weapon this enchantment is laid upon deals {damage:Cold} damage in place of its own damage type.\n\n' +
-      'Its damage is Empowered by 1: every damage die it rolls steps up a category — a d6 becomes a d8 — and no die may pass a d12.',
-  },
-  {
-    id: 'decay-infusion',
-    name: 'Decay Infusion',
-    kind: 'passive',
-    tags: ['Enchantment', 'Infusion'],
-    burden: 4,
-    cost: 3000,
-    damageType: 'Decay',
-    empower: 1,
-    effect: 'Weapon damage type becomes Decay and its damage is Empowered by 1.',
-    body:
-      'The weapon this enchantment is laid upon deals {damage:Decay} damage in place of its own damage type.\n\n' +
-      'Its damage is Empowered by 1: every damage die it rolls steps up a category — a d6 becomes a d8 — and no die may pass a d12.',
-  },
-  {
-    id: 'luminescence',
-    name: 'Luminescence',
-    kind: 'passive',
-    tags: ['Enchantment', 'Utility'],
-    burden: 2,
-    cost: 1500,
-    effect: 'Can be turned on or off to illuminate a 15 meters (50 feet) area.',
-    body:
-      'The item can be turned on or off at will.\n\n' +
-      'While lit, it illuminates an area of 15 meters (50 feet) around it.',
-  },
-  {
-    id: 'novice-imbuement',
-    name: 'Novice Imbuement',
-    kind: 'passive',
-    tags: ['Enchantment', 'Imbuement'],
-    burden: 3,
-    cost: 2250,
-    spell: true,
-    effect:
-      'Enchant an item with a NOVICE spell, allowing the wielder to cast this spell 1 time until they take a Long Rest.',
-    body:
-      'A single Novice Spell is bound into the item.\n\n' +
-      'Whoever wields it may cast that spell once, paying its costs as normal, whether or not they can cast spells of their own.\n\n' +
-      'The casting returns after a Long Rest.',
-  },
-];
+export { ENCHANTMENTS };
 
 /* -------------------------------------------------------------------- spells */
 
@@ -830,7 +783,6 @@ export const CARDS = [
 
 const CARD_BY_ID = new Map(CARDS.map((card) => [card.id, card]));
 const CARD_BY_NAME = new Map(CARDS.map((card) => [card.name.toLowerCase(), card]));
-const ENCHANT_BY_ID = new Map(ENCHANTMENTS.map((entry) => [entry.id, entry]));
 
 /** A card by id or by printed name — `{{Cold Infusion}}` links resolve here. */
 export function getCard(key) {
@@ -838,9 +790,9 @@ export function getCard(key) {
   return CARD_BY_ID.get(key) ?? CARD_BY_NAME.get(String(key).toLowerCase()) ?? null;
 }
 
-export function getEnchantment(id) {
-  return id ? ENCHANT_BY_ID.get(id) ?? null : null;
-}
+/* enchantments.js owns the lookup now, and resolves a printed name as well as an
+   id, the same way getCard does. Re-exported so no call site had to move. */
+export { getEnchantment };
 
 /** What has been laid on an item: the enchantment record plus its own entry. */
 export function itemEnchantments(item) {

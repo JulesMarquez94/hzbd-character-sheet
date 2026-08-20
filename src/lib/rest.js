@@ -49,6 +49,9 @@ import { normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { pickChanges } from './loadouts.js';
+import { changeCost, enchantChanges, enchanterState, layingCost } from './enchanting.js';
+import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
+import { getItem } from './items.js';
 
 /** What each rest costs and what it gives back. */
 export const RESTS = {
@@ -177,6 +180,43 @@ function listOut(words) {
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
+/** What an enchantment is called, for a line that names one. */
+function enchantName(id) {
+  return getEnchantment(id)?.name ?? String(id);
+}
+
+/**
+ * What the thing being enchanted is called. An id the codex no longer knows still
+ * gets a line rather than a blank, because the Supplies were spent either way.
+ */
+function itemName(id) {
+  return getItem(id)?.name ?? String(id);
+}
+
+/**
+ * Everything an Enchanter can do while the fire burns down: how many enchantments
+ * their own person may carry, what is on it, and what they have laid on what.
+ *
+ * Null for everyone who is not one, which is what the window checks.
+ */
+export function restEnchanting(character, kind) {
+  if (kind !== 'long') return null;
+  return enchanterState(character);
+}
+
+/**
+ * Whether one more thing could be laid, given that the rest itself is paid for
+ * first and that everything already chosen in this window is paid for too. The
+ * same law `labourAffordable` reads by: the choice you could never pay for is
+ * offered dead rather than left to fail at the last button.
+ */
+export function layingAffordable(character, kind, prepared, enchantment) {
+  const rest = getRest(kind);
+  const held = Math.max(0, Math.floor(Number(character?.supplies) || 0));
+  const already = changeCost(enchantChanges(character?.talents, prepared ?? character?.talents));
+  return held - (rest?.supplies ?? 0) - already - layingCost(enchantment) >= 0;
+}
+
 /**
  * What a rest is about to do, said in lines, and the one patch that does it.
  *
@@ -255,6 +295,62 @@ export function restPlan(character, kind, labours = [], prepared = null) {
     });
   }
 
+  /* ---- what was laid while the fire burned down ----
+     ENCHANTING is a Long Rest action ("whenever you take a Long Rest, you can use
+     your Long Rest actions to enchant") and WIELDER OF WONDER is a Long Rest
+     choice ("you can change it during a Long Rest"), so both belong here rather
+     than on a control somewhere else on the sheet. Both write into the same
+     `prepared` draft the spell swaps write into, which is why this reads it as a
+     diff: one talents value, one patch, one ledger, and backing out of the rest
+     backs out of the work. */
+  if (prepared) {
+    const changes = enchantChanges(character?.talents, prepared);
+
+    for (const row of changes.laidAdded) {
+      const enchantment = getEnchantment(row.id);
+      const price = layingCost(enchantment);
+      const before = supplies;
+      move(-price, `${enchantment.name} laid on ${itemName(row.itemId)}`);
+
+      lines.push({
+        key: `laid-${row.itemId}-${row.id}`,
+        label: `${enchantment.name}: ${price} Supplies`,
+        detail:
+          supplies >= 0
+            ? `Worked into ${itemName(row.itemId)}, at ${SUPPLIES_PER_BURDEN} a point of Magic Burden.`
+            : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
+        tone: supplies >= 0 ? 'cost' : 'warn',
+      });
+    }
+
+    /* Taking one back off returns nothing: the supplies went into the work. */
+    for (const row of changes.laidDropped) {
+      lines.push({
+        key: `stripped-${row.itemId}-${row.id}`,
+        label: `${getEnchantment(row.id)?.name ?? row.id} stripped`,
+        detail: `Off ${itemName(row.itemId)}. The Supplies it cost do not come back.`,
+        tone: 'end',
+      });
+    }
+
+    if (changes.wornAdded.length > 0 || changes.wornDropped.length > 0) {
+      const said = [];
+      if (changes.wornDropped.length > 0) {
+        said.push(`${listOut(changes.wornDropped.map(enchantName))} taken off`);
+      }
+      if (changes.wornAdded.length > 0) {
+        said.push(`${listOut(changes.wornAdded.map(enchantName))} put on`);
+      }
+
+      lines.push({
+        key: 'worn',
+        label: `On your own person: ${changes.wornAdded.length + changes.wornDropped.length} changed`,
+        detail: `${said.join(', ')}. No Supplies: the card names none for changing what you wear.`,
+        tone: 'gain',
+      });
+    }
+  }
+
   const affordable = short === 0;
 
   // A refused rest writes nothing at all. The lines above still describe what
@@ -305,9 +401,15 @@ export function restPlan(character, kind, labours = [], prepared = null) {
   if (prepared) {
     const changes = pickChanges(character?.talents, prepared);
 
-    if (changes.length > 0) {
+    /* One draft, two kinds of change written into it. The column is written when
+       *either* moved: a rest where the only work was laying an enchantment still
+       has to save the enchantment. The lines for that half were printed further
+       up, with the Supplies they cost. */
+    if (changes.length > 0 || enchantChanges(character?.talents, prepared).any) {
       patch.talents = prepared;
+    }
 
+    if (changes.length > 0) {
       for (const change of changes) {
         const said = [];
         if (change.dropped.length > 0) said.push(`${listOut(change.dropped)} put down`);

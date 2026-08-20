@@ -7768,3 +7768,203 @@ body.sheet-fixed #root {
   outline: none;
   border-color: var(--def-healing);
 }
+
+/* =========================================================
+   THE ENCHANTER  —  laying an enchantment (EnchantWindow.jsx, EnchantRest.jsx)
+
+   Two windows and one section, all of them the same grammar the Cauldron uses:
+   slots on the left, what it is about to do on the right, and a shelf behind the
+   `+`. The colours are the Cauldron's too — this is the same kind of screen and
+   the same green for what you carry and spend — so nothing new is introduced
+   beyond the few boxes those two files needed.
+   ========================================================= */
+
+.ench-window {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.6fr);
+  gap: 1rem;
+  align-items: start;
+  margin-top: 0.9rem;
+}
+
+/* Same 900px break as the Cauldron: a 90px brief is worse than a scroll. */
+@media (max-width: 900px) {
+  .ench-window {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ench-shelf {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* ---------- what you touched ----------
+   A note and never a mechanic, which is what the line under it says. */
+.ench-target {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ench-target input {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.5);
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  color: var(--text-silver);
+}
+
+.ench-target input:focus-visible {
+  border-color: color-mix(in srgb, var(--def-healing) 55%, transparent);
+  outline: none;
+}
+
+.ench-target-note {
+  font-size: 0.64rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* ---------- the price, with its working shown ----------
+   The same argument the Cauldron's cost readout makes: a bare total gives the
+   player nothing to check, and this cost is two different numbers off two
+   different cards. */
+.ench-working {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid color-mix(in srgb, var(--def-healing) 60%, transparent);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.5);
+}
+
+.ench-working-line {
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.ench-working-line b {
+  color: var(--text-bright);
+  font-weight: 700;
+}
+
+/* ---------- the rest window's own section ----------
+   Two rows under one heading, each with its own small head, because "on your own
+   person" and "on what you carry" are two different prices and one of them is
+   free. */
+.ench-rest-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.ench-rest-title {
+  font-family: var(--font-headings);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-bright);
+}
+
+.ench-rest-note {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* The way in sits with the rows rather than beside them, so a character who has
+   enchanted nothing yet still sees one thing to press. */
+.ench-rest-add {
+  align-self: stretch;
+  min-height: 2.6rem;
+}
+
+/* One thing on the "enchant what?" shelf. Taller than a `+` slot because it
+   carries a second line saying what is already worked into it. */
+.ench-item-pick {
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+  border-style: solid;
+}
+
+.ench-item-pick .brew-slot-add-label {
+  color: var(--text-bright);
+  letter-spacing: 0.4px;
+}
+
+/* ---------- the tracker's third way in ----------
+   An Enchanter reaching for the tracker is usually reaching for the shelf. Green
+   rather than the tracker's copper, because it is the enchanting window's own
+   colour and pressing it leaves this prompt. */
+.fx-offer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--def-healing);
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--def-healing) 7%, rgba(9, 17, 21, 0.5));
+}
+
+.fx-offer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.fx-offer-body b {
+  font-family: var(--font-headings);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text-bright);
+}
+
+.fx-offer-line {
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* An attribute tile showing a number the row does not carry, accounted for.
+   Green, because what bent it is an enchantment. */
+.attr-shift {
+  margin: 0.4rem 0 0;
+  padding: 0.35rem 0.5rem;
+  border-left: 2px solid var(--def-healing);
+  border-radius: 3px;
+  background-color: color-mix(in srgb, var(--def-healing) 7%, transparent);
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.attr-shift b {
+  color: var(--text-bright);
+  font-weight: 700;
+}

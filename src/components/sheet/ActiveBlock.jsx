@@ -4,6 +4,7 @@ import useFoldedGroups from './useFoldedGroups.js';
 import { GroupHead } from './parts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
+import EnchantWindow from './EnchantWindow.jsx';
 import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
 import { brewSetFor } from '../../lib/brews.js';
 
@@ -44,12 +45,23 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
   const [request, setRequest] = useState(null);
   /* The talent set whose brewing window a paid-for use has opened, or null. */
   const [brewing, setBrewing] = useState(null);
+  /* Whether the Ephemeral Enchantment shelf is up. Unlike brewing it opens
+     *before* anything is paid: see `pays` in combatBar.js. */
+  const [enchanting, setEnchanting] = useState(false);
 
   const groups = useMemo(() => quickBar(character), [character]);
   const total = moveCount(groups);
   const { isFolded, toggle } = useFoldedGroups('bar', character?.id);
 
   function ask(move) {
+    /* A move whose window does the paying skips the prompt entirely and opens the
+       window, which prints the same card the prompt would have and asks the same
+       action-or-reaction question once the cost is actually known. */
+    if (move.pays === 'window' && move.opens === 'ephemeral') {
+      setEnchanting(true);
+      return;
+    }
+
     setRequest({
       name: move.card?.name ?? move.name,
       source: move.source,
@@ -118,6 +130,15 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
           character={character}
           onCancel={() => setRequest(null)}
           onConfirm={confirmUse}
+        />
+      )}
+
+      {enchanting && (
+        <EnchantWindow
+          character={character}
+          patch={patch}
+          readOnly={readOnly}
+          onClose={() => setEnchanting(false)}
         />
       )}
 

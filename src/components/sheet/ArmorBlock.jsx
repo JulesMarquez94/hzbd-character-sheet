@@ -6,7 +6,7 @@ import {
   ARMOR_SETS,
   ARMOR_SLOTS,
   armorSetName,
-  getItem,
+  heldItem,
   magicBurdenMax,
   magicBurdenUsed,
   rarityColor,
@@ -26,7 +26,7 @@ export default function ArmorBlock({ character, equipment, pack, belt, equip, un
   const stack = useCardStack();
 
   const burdenMax = magicBurdenMax(character);
-  const burdenUsed = magicBurdenUsed(equipment, belt);
+  const burdenUsed = magicBurdenUsed(equipment, belt, character);
   const overBurden = burdenUsed > burdenMax;
   const burdenColor = overBurden ? 'var(--danger-red)' : 'var(--haze-glow)';
 
@@ -82,7 +82,7 @@ export default function ArmorBlock({ character, equipment, pack, belt, equip, un
       </div>
 
       {ARMOR_SLOTS.map((slot) => {
-        const item = getItem(equipment[slot.key]);
+        const item = heldItem(character, equipment[slot.key]);
 
         if (!item) {
           return (

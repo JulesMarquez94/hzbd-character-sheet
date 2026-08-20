@@ -4,7 +4,7 @@ import { ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import { CardLine } from '../CardText.jsx';
 import { useCardStack } from '../../context/card-stack.js';
-import { WEAPON_SLOTS, getItem, itemBurden, rarityColor } from '../../lib/items.js';
+import { WEAPON_SLOTS, heldItem, itemBurden, rarityColor } from '../../lib/items.js';
 import { getCard, itemEnchantments, itemModifiers } from '../../lib/weapons.js';
 
 /**
@@ -35,7 +35,9 @@ export default function WeaponBlock({ character, equipment, pack, belt, equip, u
       </div>
 
       {WEAPON_SLOTS.map((slot) => {
-        const item = getItem(equipment[slot.key]);
+        /* What this character carries, not what the codex prints: an Enchanter's
+           own work on their own blade is on their sheet. See heldItem. */
+        const item = heldItem(character, equipment[slot.key]);
 
         return (
           <section className="weapon-panel" key={slot.key}>

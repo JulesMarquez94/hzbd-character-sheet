@@ -63,6 +63,7 @@ import { allSourceCards, abilitySources } from './abilitySources.js';
 import { combatStartEffects, getItem, normalizeBelt, normalizeEquipment } from './items.js';
 import { shieldCapFor } from './characterModel.js';
 import { getCard } from './weapons.js';
+import { getEnchantment } from './enchantments.js';
 
 /** A long fight should not be able to bloat one row past reading. */
 export const EFFECT_LIMIT = 40;
@@ -270,6 +271,16 @@ export function normalizeEffects(value) {
       // everything a short one does, so 'short' is the looser of the two.
       until: raw.until === 'short' || raw.until === 'long' ? raw.until : null,
       from: String(raw.from ?? '').slice(0, EFFECT_NAME_MAX),
+      // The enchantment this row *is*, when an Ephemeral Enchantment wrote it.
+      // Nothing else on the tracker carries a mechanical consequence: every other
+      // row is a note the table reads, while this one raises an attribute and
+      // everything that attribute buys, so the id has to survive a reload. Kept
+      // only while the codex still knows it — the same guard `card` gets, because
+      // a rider nobody can look up is one nobody can take off either.
+      ench: getEnchantment(raw.ench) ? String(raw.ench) : null,
+      // And the spell it bound in, for the one enchantment that carries a spell
+      // rather than a number. A name and not an id: it is what the row prints.
+      spell: raw.spell ? String(raw.spell).slice(0, EFFECT_NAME_MAX) : null,
     });
   }
 
@@ -293,6 +304,9 @@ export function addEffect(effects, entry) {
       turns: entry?.turns === null || entry?.turns === undefined ? null : clampTurns(entry.turns),
       until: entry?.until === 'short' || entry?.until === 'long' ? entry.until : null,
       from: String(entry?.from ?? '').slice(0, EFFECT_NAME_MAX),
+      // See normalizeEffects: the two fields an Ephemeral Enchantment writes.
+      ench: getEnchantment(entry?.ench) ? String(entry.ench) : null,
+      spell: entry?.spell ? String(entry.spell).slice(0, EFFECT_NAME_MAX) : null,
     },
     ...normalizeEffects(effects),
   ];

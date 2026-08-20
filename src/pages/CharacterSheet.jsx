@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import { getCharacter, updateCharacter } from '../lib/api.js';
-import { levelForXp, syncDerived } from '../lib/characterModel.js';
+import { levelForXp, liveCharacter, syncDerived } from '../lib/characterModel.js';
 import { openChoices, pruneToLevel } from '../lib/levelPicks.js';
 import { subscribeToTable } from '../lib/realtime.js';
 import SiteMenu from '../components/SiteMenu.jsx';
@@ -243,6 +243,16 @@ export default function CharacterSheet({ creating = false }) {
     [canEdit, character]
   );
 
+  /* The character as the sheet should be *read*, which is not always the row as
+     it is stored: an Enchanter's enchantments raise an attribute, and everything
+     that attribute buys, without any of it being written down. See liveCharacter.
+
+     Handed to the three tabs that print numbers and cards. **Not** to Advancement,
+     which is where the attribute columns are decided and which must go on seeing
+     what the ledger actually bought. Writing is unaffected either way: `patch`
+     closes over the stored row, never this one. */
+  const shown = useMemo(() => liveCharacter(character), [character]);
+
   if (loading) return <div className="loading-veil">Unrolling the sheet…</div>;
 
   if (error && !character) {
@@ -443,13 +453,13 @@ export default function CharacterSheet({ creating = false }) {
         {error && <div className="form-error">{error}</div>}
 
         {tab === 'Character' && (
-          <CharacterTab character={character} patch={patch} readOnly={!canEdit} unit={unit} />
+          <CharacterTab character={shown} patch={patch} readOnly={!canEdit} unit={unit} />
         )}
         {tab === 'Abilities' && (
-          <AbilitiesTab character={character} patch={patch} readOnly={!canEdit} />
+          <AbilitiesTab character={shown} patch={patch} readOnly={!canEdit} />
         )}
         {tab === 'Inventory' && (
-          <InventoryTab character={character} patch={patch} readOnly={!canEdit} />
+          <InventoryTab character={shown} patch={patch} readOnly={!canEdit} />
         )}
         {tab === 'Lore' && <LoreTab character={character} patch={patch} readOnly={!canEdit} />}
         {tab === 'Advancement' && (

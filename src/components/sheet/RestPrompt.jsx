@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
+import EnchantRest from './EnchantRest.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { formatNumber } from '../../lib/characterModel.js';
-import { getRest, labourAffordable, restLabours, restPlan } from '../../lib/rest.js';
+import { getRest, labourAffordable, restEnchanting, restLabours, restPlan } from '../../lib/rest.js';
 import { restSwaps, toggleLoadoutPick } from '../../lib/loadouts.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
@@ -27,6 +28,12 @@ import { setTalentPicks } from '../../lib/talents.js';
  * or long rest" — so the pool is opened from here, before the rest is taken,
  * which is when a player actually decides what tomorrow looks like. The new hand
  * rides in the rest's own patch: cancel the rest and you cancel the swap.
+ *
+ * An Enchanter's evening is the third thing, and a long rest only. ENCHANTING is
+ * a Long Rest action and WIELDER OF WONDER is a Long Rest choice, so both are
+ * here — one section, two rows — and both write into the same `prepared` draft as
+ * the spell swaps, priced into the same crate and the same ledger. See
+ * EnchantRest.jsx.
  */
 export default function RestPrompt({ kind, character, onRest, onClose }) {
   const rest = getRest(kind);
@@ -53,6 +60,14 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
 
   // Every set that may re-choose its hand on a rest of this kind.
   const swaps = useMemo(() => restSwaps(talents, kind), [talents, kind]);
+
+  /* What this character's Enchanter can do tonight, read off the *draft* rather
+     than the row, so a slot filled a moment ago shows as filled. Null for
+     everyone who is not one, and on a short rest, which neither card mentions. */
+  const enchanter = useMemo(
+    () => restEnchanting({ ...character, talents }, kind),
+    [character, talents, kind]
+  );
   const swapRow = swaps.find((row) => row.talent.id === swapping) ?? null;
 
   const picked = useMemo(() => {
@@ -186,6 +201,20 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
               ))}
             </div>
           </>
+        )}
+
+        {/* ---------- WHAT YOU ENCHANT ---------- *
+            An Enchanter's own two cards, both of which happen at a long rest and
+            nowhere else. Priced into the plan above like everything else. */}
+        {enchanter && (
+          <EnchantRest
+            state={enchanter}
+            character={character}
+            talents={talents}
+            kind={kind}
+            readOnly={false}
+            onDraft={setPrepared}
+          />
         )}
 
         {/* ---------- THE WORK OF THE CAMP ---------- */}

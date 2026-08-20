@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import EffectPrompt from './EffectPrompt.jsx';
+import EnchantWindow from './EnchantWindow.jsx';
 import RestPrompt from './RestPrompt.jsx';
+import { isEnchanter } from '../../lib/enchanting.js';
 import { RESTS } from '../../lib/rest.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -43,6 +45,9 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
   const [adding, setAdding] = useState(false);
   // Which rest is being considered ('short' | 'long'), or null.
   const [resting, setResting] = useState(null);
+  /* Whether the Ephemeral Enchantment shelf is up, raised from the tracker's own
+     add prompt. The same window the quick bar raises. */
+  const [enchanting, setEnchanting] = useState(false);
   const stack = useCardStack();
 
   const turn = turnState(character);
@@ -145,6 +150,24 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
           character={character}
           onAdd={(entry) => patch(entry)}
           onClose={() => setAdding(false)}
+          /* Offered only to a character who can actually lay one. */
+          onEnchant={
+            isEnchanter(character) && !readOnly
+              ? () => {
+                  setAdding(false);
+                  setEnchanting(true);
+                }
+              : null
+          }
+        />
+      )}
+
+      {enchanting && (
+        <EnchantWindow
+          character={character}
+          patch={patch}
+          readOnly={readOnly}
+          onClose={() => setEnchanting(false)}
         />
       )}
 

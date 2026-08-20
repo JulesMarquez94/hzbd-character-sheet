@@ -29,8 +29,14 @@ import { cardGist } from '../../lib/cardText.js';
  * "Until it ends" is its own answer rather than a very large number. Being
  * grappled does not run out, it is broken, and a tracker that made you write
  * 99 turns for it would be lying about what is happening.
+ *
+ * There is a third way in for one character, and `onEnchant` is it. An Ephemeral
+ * Enchantment is a temporary effect and the only one on this sheet that carries a
+ * mechanical rider, so it cannot be typed in by hand: the name would land and the
+ * +1 Instinct would not. The offer opens the shelf instead, which is the same
+ * window the quick bar opens and the one that takes the payment.
  */
-export default function EffectPrompt({ character, onAdd, onClose }) {
+export default function EffectPrompt({ character, onAdd, onClose, onEnchant = null }) {
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [turns, setTurns] = useState(3);
@@ -127,6 +133,28 @@ export default function EffectPrompt({ character, onAdd, onClose }) {
       }
     >
       <div className="fx-prompt">
+      {/* ---------- OR LAY ONE ----------
+          An Enchanter reaching for the tracker is usually reaching for this: an
+          Ephemeral Enchantment *is* a temporary effect, and the one on this sheet
+          that carries a real rider rather than a note. Typing "Primal Sense" in by
+          hand would get the row and none of the +1 Instinct, so the offer is made
+          here rather than left to be found on the quick bar. Same window either
+          way, and it is the window that takes the payment. */}
+      {onEnchant && (
+        <div className="fx-offer">
+          <span className="fx-offer-body">
+            <b>Lay an Ephemeral Enchantment instead</b>
+            <span className="fx-offer-line">
+              Choose one you know and it lands here on its own, carrying what it
+              actually does. Costs Action Points and Willpower.
+            </span>
+          </span>
+          <button type="button" className="btn btn-take btn-sm" onClick={onEnchant}>
+            Open the shelf
+          </button>
+        </div>
+      )}
+
         {/* ---------- OFF A CARD ----------
             Only what actually lasts. A sword swing resolves and is over, and a
             trait that gives +1 Instinct is permanent, so neither is a thing

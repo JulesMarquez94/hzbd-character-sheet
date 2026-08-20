@@ -14,6 +14,7 @@
  */
 
 import { WEAPONS, itemEnchantments } from './weapons.js';
+import { laidEntries } from './enchanting.js';
 import { UTILITY_ITEMS } from './utility.js';
 
 export const ARMOR_SLOTS = [
@@ -544,6 +545,34 @@ export function getItem(id) {
   return id ? ITEMS_BY_ID.get(id) ?? null : null;
 }
 
+/**
+ * An item as *this character* actually carries it: the codex piece, plus every
+ * enchantment they have laid on it themselves.
+ *
+ * The codex owns what a longsword is. An Enchanter's work on their own longsword
+ * is theirs, so it is stored on their sheet (see `laid` in enchanting.js) and
+ * merged in here. Everything downstream is already written against
+ * `item.enchants` — the damage type and Empowering the weapon block prints, the
+ * spell an item teaches, the Magic Burden meter — so merging at the one place
+ * items are resolved is the whole change. Nothing had to be taught what an
+ * Enchanter is.
+ *
+ * Hands back the codex item itself when nothing has been laid, so the common case
+ * allocates nothing and every identity check downstream still holds.
+ *
+ * **Keyed by item id.** Two longswords are one longsword to this sheet, which is
+ * the limit an item *instance* would lift. See normalizeLaid.
+ */
+export function heldItem(character, id) {
+  const item = getItem(id);
+  if (!item || !character) return item;
+
+  const laid = laidEntries(character, id);
+  if (laid.length === 0) return item;
+
+  return { ...item, enchants: [...(item.enchants ?? []), ...laid] };
+}
+
 export function itemsForSlot(slotKey) {
   return ITEMS.filter((item) => item.slots.includes(slotKey));
 }
@@ -618,14 +647,16 @@ export function itemBurden(item) {
  * The summed burden of the whole loadout — worn, held, and clipped to the
  * belt. Worked magic weighs the same wherever it is carried.
  */
-export function magicBurdenUsed(equipment, belt = []) {
+export function magicBurdenUsed(equipment, belt = [], character = null) {
   const worn = normalizeEquipment(equipment);
+  const resolve = (id) => (character ? heldItem(character, id) : getItem(id));
+
   let total = 0;
   for (const slot of Object.keys(worn)) {
-    total += itemBurden(getItem(worn[slot]));
+    total += itemBurden(resolve(worn[slot]));
   }
   for (const entry of normalizeBelt(belt)) {
-    total += itemBurden(getItem(entry?.id));
+    total += itemBurden(resolve(entry?.id));
   }
   return total;
 }
@@ -719,7 +750,7 @@ export function inventoryOverview(character) {
     { id: 'pack', label: 'In Pack', filled: pack.length, of: null },
   ];
 
-  const used = magicBurdenUsed(equipment, belt);
+  const used = magicBurdenUsed(equipment, belt, character);
   const max = magicBurdenMax(character ?? {});
 
   return {

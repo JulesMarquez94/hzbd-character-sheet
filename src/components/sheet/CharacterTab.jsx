@@ -12,6 +12,7 @@ import {
   formatNumber,
   healthState,
   initialsOf,
+  liveShift,
   metersToFeet,
   normalizeBlockOrder,
   shieldCapFor,
@@ -122,6 +123,12 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   // Health is the one pool that runs past zero, and a second full bar of
   // damage past it is fatal.
   const hp = healthState(character.health, character.health_max);
+
+  /* What is on this character for the hour and not on their row. This tab is
+     handed the *bent* character (see liveCharacter), so the tiles below already
+     show the raised number; this is the sentence that accounts for it. Empty for
+     everyone with nothing running, which is nearly everyone. */
+  const shift = useMemo(() => liveShift(character), [character]);
 
   const order = useMemo(() => normalizeBlockOrder(character.block_order), [
     character.block_order,
@@ -248,6 +255,16 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             <AttrTile key={key} label={label} color={color} info={info} value={character[key]} />
           ))}
         </div>
+
+        {/* An Ephemeral Enchantment raises an attribute for an hour and is not
+            written on the row, so these three tiles are showing a number the
+            Advancement tab does not agree with. Said out loud, because a stat
+            nobody can account for is worse than a stat that is merely bent. */}
+        {shift.length > 0 && (
+          <p className="attr-shift">
+            <b>Running:</b> {shift.join(', ')}. On you for the hour, and not on your sheet.
+          </p>
+        )}
       </div>
     ),
 

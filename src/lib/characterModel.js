@@ -5,6 +5,7 @@
  */
 
 import { EMPTY_EQUIPMENT, equipmentEffects } from './items.js';
+import { allGrants, ephemeralGrants, wornGrants } from './enchanting.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -193,16 +194,31 @@ export function normalizeSourceOrder(value, ids) {
  *   Reflex      = physique + instinct
  *   Grit        = instinct + mind
  *
- * Temporary effects still bend these at the table, but these are the numbers
- * on the sheet — `syncDerived` keeps the stored columns on them.
+ * ------------------------------------------------------- what is laid on them
+ * An Enchanter's work counts here, because it is gear: WIELDER OF WONDER puts
+ * enchantments on their own person and "1 Instinct" has to *be* 1 Instinct, with
+ * everything Instinct buys moving with it. Those are permanent, so they are read
+ * off the talents column and `syncDerived` bakes them into the stored columns
+ * exactly the way a worn breastplate is baked in.
+ *
+ * `extra` is the other kind: what is on them for the next hour and must never be
+ * stored, because a stored bonus has no way of ever coming back off. Only
+ * `liveCharacter` passes it, and only for what the sheet *shows*. See
+ * enchanting.js.
  */
-export function deriveStats({ physique, instinct, mind, level, equipment }) {
-  const p = Number(physique) || 0;
-  const i = Number(instinct) || 0;
-  const m = Number(mind) || 0;
+export function deriveStats({ physique, instinct, mind, level, equipment, talents }, extra = null) {
+  const worn = wornGrants(talents);
+
+  const add = (key) =>
+    (worn.attributes[key] ?? 0) + Math.floor(Number(extra?.attributes?.[key]) || 0);
+
+  const p = (Number(physique) || 0) + add('physique');
+  const i = (Number(instinct) || 0) + add('instinct');
+  const m = (Number(mind) || 0) + add('mind');
   const lvl = Number(level) || 1;
 
-  const health_max = Math.floor(10 * lvl + 10 * p);
+  const health_max =
+    Math.floor(10 * lvl + 10 * p) + worn.healthMax + Math.floor(Number(extra?.healthMax) || 0);
   const reflex = Math.floor(p + i);
   const grit = Math.floor(i + m);
 
@@ -245,6 +261,77 @@ export function shieldCapFor(character) {
   const gear = equipmentEffects(character?.equipment);
   const bonus = gear.shieldCapMind ? Math.floor(Number(character?.mind) || 0) : 0;
   return shieldCap(character?.health_max) + bonus;
+}
+
+/**
+ * The character as the sheet should *show* them, which is not always the
+ * character as it stores them.
+ *
+ * An Ephemeral Enchantment lasts an hour. It raises an attribute, and everything
+ * that attribute buys, and every number printed on every card that rolls it. What
+ * it must never do is move a stored column: `syncDerived` recomputes those from
+ * the row itself on every render, so a bonus written into `instinct` would become
+ * indistinguishable from a level-up and there would be nothing left to take back
+ * off when the hour is out.
+ *
+ * So this is the one bend, applied where the sheet is read and never where it is
+ * written. `patch` in CharacterSheet.jsx closes over the stored row, not this one,
+ * which is what keeps a write made from a bent screen honest.
+ *
+ * Hands back the character itself when nothing is running, so a sheet with no
+ * enchantments on it does no work and re-renders no more than it used to.
+ */
+export function liveCharacter(character) {
+  if (!character) return character;
+
+  const grants = allGrants(character);
+  if (!grants.any) return character;
+
+  /* The attribute *columns* are the level ledger's, and nothing here may write
+     them: levelPicks.js rebuilds all three out of its own record, so a bonus
+     stored in one would be read back as a level-up and never come off again.
+     What is laid on a person is therefore shown rather than stored, which is the
+     same relationship Defense has with a breastplate.
+
+     Both kinds of laying bend what is *shown* — a worn "1 Instinct" is 1
+     Instinct, and a tile that said 6 beside a Defense computed from 7 would be
+     two numbers contradicting each other on one screen. */
+  const bent = { ...character };
+  for (const key of ['physique', 'instinct', 'mind']) {
+    const plus = grants.attributes[key] ?? 0;
+    if (plus) bent[key] = (Number(character[key]) || 0) + plus;
+  }
+
+  /* Derived off the *stored* columns, with only the ephemeral part passed in:
+     deriveStats reads the worn part out of the talents column itself, so handing
+     it the bent attributes as well would count every worn enchantment twice. */
+  const level = levelForXp(character.xp);
+  return { ...bent, ...deriveStats({ ...character, level }, grants.ephemeral) };
+}
+
+/**
+ * What is on this character that is not on their row, said in words.
+ *
+ * Only the ephemeral half: a worn enchantment is permanent and the stored
+ * columns already carry it, so the only thing worth flagging as *running* is the
+ * hour-long kind. Empty when nothing is.
+ */
+export function liveShift(character) {
+  const grants = ephemeralGrants(character?.effects);
+  if (!grants.any) return [];
+
+  const said = [];
+  for (const [key, plus] of Object.entries(grants.attributes)) {
+    if (plus) said.push(`${plus > 0 ? '+' : ''}${plus} ${attributeWord(key)}`);
+  }
+  if (grants.healthMax) {
+    said.push(`${grants.healthMax > 0 ? '+' : ''}${grants.healthMax} max Health`);
+  }
+  return said;
+}
+
+function attributeWord(key) {
+  return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
 /* ------------------------------------------------------------------- health */

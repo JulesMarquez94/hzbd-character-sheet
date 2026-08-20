@@ -26,7 +26,7 @@
 import { getBackground, getBackgroundSkill, normalizeBackgroundSkills } from './backgrounds.js';
 import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
-import { EQUIPMENT_SLOTS, getItem, normalizeEquipment } from './items.js';
+import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment } from './items.js';
 import { getLineage } from './lineages.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
@@ -297,7 +297,7 @@ function gearSource(character) {
   const equipment = normalizeEquipment(character?.equipment);
 
   const sections = EQUIPMENT_SLOTS.map(({ key, label }) => {
-    const item = getItem(equipment[key]);
+    const item = heldItem(character, equipment[key]);
     if (!item) return null;
 
     /* Which spell is carried is the *item's* to say, not the enchantment's:

@@ -45,11 +45,12 @@
 
 import { BASIC_ACTIONS } from './actions.js';
 import { abilitySources, isPassive } from './abilitySources.js';
+import { runningEnchants } from './enchanting.js';
 import {
   EQUIPMENT_SLOTS,
   beltEntry,
   beltSlotCount,
-  getItem,
+  heldItem,
   normalizeBelt,
   normalizeEquipment,
 } from './items.js';
@@ -109,6 +110,13 @@ function move(key, card, { name, source, modifiers = null, note = null, extra = 
        because what a Brew costs is not known until it is mixed. It rides as data on
        the card, never read out of its prose. */
     opens: card?.opens ?? null,
+    /* And whether the window is where it gets paid for. EPHEMERAL ENCHANTMENT
+       prints 3 Action Points and `x` Willpower: charging the printed half at the
+       chip and the rest in the window would ask the action-or-reaction question
+       twice and take the Action Points off anyone who then closed the shelf. So a
+       card marked this way opens its window first and pays for everything once,
+       inside it. */
+    pays: card?.pays ?? null,
     spent: false,
     ...rest,
   };
@@ -117,7 +125,7 @@ function move(key, card, { name, source, modifiers = null, note = null, extra = 
 /** What the weapon in your hands does, printed for that weapon. */
 function handGroup(character) {
   const equipment = normalizeEquipment(character?.equipment);
-  const primary = getItem(equipment.main_hand);
+  const primary = heldItem(character, equipment.main_hand);
   if (!primary) return null;
 
   const modifiers = itemModifiers(primary);
@@ -207,6 +215,43 @@ function knownGroups(character) {
     .filter(Boolean);
 }
 
+/**
+ * What an enchantment has bound into something you are holding.
+ *
+ * NOVICE IMBUEMENT is the one enchantment that carries a spell instead of a
+ * number: "a single Novice Spell is bound into the item ... whoever wields it may
+ * cast that spell once, paying its costs as normal, whether or not they can cast
+ * spells of their own." The last clause is why this is its own group rather than
+ * a spell folded into a set's hand — a character with no casting of their own can
+ * still cast this one, and it does not belong under a source that taught them
+ * nothing.
+ *
+ * It reads the ephemeral tracker, because that is where an Ephemeral Enchantment
+ * puts what it laid, and the spell rides on the effect that laid it. Its cost is
+ * the spell's own, printed unchanged: "paying its costs as normal".
+ */
+function imbuedGroup(character) {
+  const moves = runningEnchants(character?.effects)
+    .map(({ effect }) => ({ effect, card: getCard(effect.spell) }))
+    .filter((row) => row.card)
+    .map(({ effect, card }) =>
+      move(`imbued:${effect.id}:${card.id}`, card, {
+        source: `${card.name} — bound in by ${effect.name}`,
+        note: effect.note || null,
+      })
+    );
+
+  return moves.length > 0
+    ? {
+        id: 'imbued',
+        label: 'Bound In',
+        note: 'One casting each, from an enchantment',
+        moves,
+      }
+    : null;
+}
+
+
 /** What everybody has. Last, because it is the half nobody has to look up. */
 function basicGroup() {
   return {
@@ -226,8 +271,16 @@ function basicGroup() {
  */
 export function quickBar(character) {
   if (!character) return [];
-  return [handGroup(character), beltGroup(character), ...knownGroups(character), basicGroup()]
-    .filter(Boolean);
+  return [
+    handGroup(character),
+    beltGroup(character),
+    /* Before what you know: a bound casting is an hour old and is the thing most
+       easily forgotten, which is the whole argument for where anything sits on
+       this bar. */
+    imbuedGroup(character),
+    ...knownGroups(character),
+    basicGroup(),
+  ].filter(Boolean);
 }
 
 /** How many moves a bar holds, for the count in the block's head. */
@@ -265,7 +318,7 @@ function workings(character) {
   const equipment = normalizeEquipment(character?.equipment);
 
   const rows = EQUIPMENT_SLOTS.flatMap(({ key }) => {
-    const item = getItem(equipment[key]);
+    const item = heldItem(character, equipment[key]);
     if (!item) return [];
     return itemEnchantments(item).map(({ enchantment }) =>
       standing(enchantment, null, item.name)

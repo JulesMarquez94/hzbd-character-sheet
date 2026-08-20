@@ -530,9 +530,15 @@ export const TALENTS = [
         tags: ['Enchanter', 'Novice Talent', 'Ability'],
         ap: 3,
         /* The sheet's own "x": what it costs is the enchantment's Magic Burden,
-           which is not known until one is chosen. Same shape as BREW's cost. */
+           which is not known until one is chosen. Same shape as BREW's cost, and
+           for the same reason the whole cost is worked out and paid in the window
+           rather than at the chip. */
         wp: 'X',
         stat: 'mind',
+        /* Mechanics as data, never read out of the prose. "You choose an
+           enchantment you know" is a shelf, and this is what raises it. */
+        opens: 'ephemeral',
+        pays: 'window',
         body:
           'You temporarily enchant an item you can touch for the next 1 hour.\n\n' +
           'When doing so, you choose an enchantment you know, applying its effect to the wielder of the item.\n\n' +
@@ -671,6 +677,24 @@ export function nextAdvancementLevel(level) {
  * `custom`, because deleting someone's talent to tidy a column would be worse
  * than showing it plain.
  */
+/** A list of ids, each once, with the blanks and the non-strings dropped. */
+function idList(value) {
+  return [...new Set((Array.isArray(value) ? value : []).filter((id) => typeof id === 'string' && id))];
+}
+
+/** A map of key to id list, with the empty keys dropped. */
+function idMap(value) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const out = {};
+
+  for (const [key, list] of Object.entries(source)) {
+    if (!key) continue;
+    const ids = idList(Array.isArray(list) ? list : [list]);
+    if (ids.length > 0) out[key] = ids;
+  }
+  return out;
+}
+
 export function normalizeTalents(value) {
   let list = value;
   if (typeof list === 'string') {
@@ -706,6 +730,13 @@ export function normalizeTalents(value) {
       picks: [...new Set((Array.isArray(entry.picks) ? entry.picks : []).filter(
         (pick) => typeof pick === 'string' && pick
       ))],
+      /* What an Enchanter has laid, in the two places their cards put it: WIELDER
+         OF WONDER's enchantments on their own person, and ENCHANTING's on the
+         things they carry. Repaired for *shape* only, exactly as `picks` is —
+         whether an id is real and whether the rank allows it is enchanting.js's
+         business, the same division loadouts.js has with picks. */
+      worn: idList(entry.worn),
+      laid: idMap(entry.laid),
       custom: !talent,
     });
   }
@@ -842,12 +873,14 @@ export function optionsAt(list, level, { all = false } = {}) {
 
 /** What actually goes in the `talents` column. Derived fields are dropped. */
 export function serializeTalents(list) {
-  return list.map(({ id, name, rank, taken, picks }) => ({
+  return list.map(({ id, name, rank, taken, picks, worn, laid }) => ({
     id,
     name,
     rank,
     taken,
     ...(picks?.length ? { picks } : {}),
+    ...(worn?.length ? { worn } : {}),
+    ...(laid && Object.keys(laid).length ? { laid } : {}),
   }));
 }
 

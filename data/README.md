@@ -30,6 +30,7 @@ reaches GitHub. Only `README.md` and `templates/` are tracked.
 | Equipment · Armor | 2026-08-19, 21 pieces | `src/lib/items.js` (`ARMOR_ITEMS`) |
 | Talent Set · Enchanter · Ability | 2026-08-19, 3 cards | `src/lib/talents.js` (`TALENTS`) |
 | Talent Set · Enchanter · Overview | 2026-08-19, written here | `src/lib/talents.js`, exported back to `data/` |
+| Equipment · Enchantments | 2026-08-19, 13 enchantments | `src/lib/enchantments.js` (`ENCHANTMENTS`) |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -270,7 +271,7 @@ the Overview is written.
 | --- | --------- |
 | `Ability` | 3 set cards in `talents.js`, all Rank 1 |
 | `Overview` | written here, and exported back out to `data/Talent Set - Enchanter - Overview.csv` |
-| `Developpement Notes` | **not built.** See "What the notes still ask for" below |
+| `Developpement Notes` | built, bar one thing. See "The build" below |
 
 **The three cards are the Ability tab, cell for cell.** A round trip maps every
 marker back to the written form and compares it to the cell: 16 of 16 fields match,
@@ -334,37 +335,171 @@ have learned the art", "the enchanter body is able to withstand"); the tag says 
 the work they allow gets done. A card tagged `Long Rest` that does carry a cost is
 still a move.
 
-### What the notes still ask for, and is not built
+### What the notes asked for, and where each one landed
 
-The Developpement Notes are a system, not a card, and none of it is in yet. Taking
-the Enchanter today gives three cards whose words the table plays. Listed here so
-the next build has the list:
+The Developpement Notes are a system rather than a card. The list, with what is in:
 
-1. **Making an enchanted item.** A "get an enchanted item" button in each equipment
-   codex: pick any item, apply an enchantment, and it becomes an enchanted sword in
-   your inventory, nameable, and able to carry more than one. `items.js` already
-   models `enchants: [{ id, spell? }]` on an item, so the data shape exists.
-2. **A Trinket block.** Slots for items that exist to carry enchantments — rings,
-   necklaces — any number of them. The Inventory block shrinks from three blocks to
-   two to make room.
-3. **Sharing an item by code.** An item's info panel offers a share link, and both
-   the inventory and the codex get an "add by code" button.
-4. **Ephemeral Enchantment on the tracker.** Using it from the quick action adds a
-   temporary effect automatically, searchable by the other player if it was cast on
-   them, **and it has to move the character sheet**: an ephemeral +1 Instinct
-   changes Instinct.
+| The ask | State |
+| ------- | ----- |
+| Making an enchanted item: pick an item, apply an enchantment, carry more than one | **in**, at a Long Rest. Any number per item |
+| Naming one | **out.** Needs an item instance |
+| Sharing one by code, and adding one by code | **out.** Same reason |
+| A Trinket block, and the Inventory tab shrinking to two blocks for it | **out** |
+| Ephemeral Enchantment writing to the tracker from the quick action | **in**, and from the tracker's own prompt |
+| An ephemeral +1 Instinct moving the character sheet | **in**, along with everything Instinct buys |
+| Another player searching for an effect laid on them | **out.** Nothing writes to another character's row |
 
-### Two numbers to settle first
+The three that are out are all one missing thing, and it is named under "What is
+still not built" below.
 
-1. **70 supplies per Magic Burden, against 750 coin per Magic Burden.** ENCHANTING
-   prices the work at "70 times the Magic Burden value". `ENCHANTMENTS` in
-   `weapons.js` prices the same enchantments at 750 x burden in coin (a burden-4
-   Infusion costs 3000). Crafting being cheaper than buying is normal, but 70 is
-   under a tenth of retail, and 700 would land at 93% of it. **Is 70 the number, or
-   is it 700?**
-2. **NOVICE IMBUEMENT's burden.** The Enchantments tab says 4. `weapons.js` says 3.
-   The tab is newer, so the tab is probably right, but that pull has not happened
-   and nothing was changed on a guess.
+### The build, 19 Aug 2026
+
+The Developpement Notes stopped being a list. Four of the five things they ask for
+are in, and the fifth is named at the end of this section.
+
+**The Enchantments tab was pulled.** All thirteen, into `src/lib/enchantments.js`,
+a new leaf. `weapons.js` held four of them and still re-exports `ENCHANTMENTS` and
+still folds them into `CARDS`, so nothing downstream moved. Every `Main Effect` and
+every `Magic Burden` matches the sheet cell for cell, 13 of 13, checked by round
+trip rather than claimed.
+
+Two things the codex carries that the sheet does not, both deliberate:
+
+- **A grouping tag in second position** (`Body`, `Infusion`, `Utility`,
+  `Imbuement`). Not new: `Infusion`, `Utility` and `Imbuement` were already there
+  on the four that existed. `Body` is the word for the five that raise an
+  attribute or a pool, and it is what the shelf groups by. Position 0 is now the
+  sheet's own `Novice Enchantment`, which is also where the tier comes from.
+- **A rider per row.** "1 Instinct" has to *be* 1 Instinct, and no amount of
+  reading the sentence will make that happen, so every mechanical consequence is a
+  field: `attributes`, `healthMax`, `shieldAtCombat`, `damageType`, `empower`,
+  `spell`, `light`. Mechanics as data, never parsed out of prose, which is the same
+  law BREW's `opens` follows.
+
+**NOVICE IMBUEMENT weighs 4 now, not 3.** The tab says 4 and it is the tab's own
+column, so the tab won. It costs 280 Supplies to lay rather than 210, and
+`grave-lantern-blade`, the one codex item that comes pre-laid with it, weighs a
+point more on its bearer than it did.
+
+### Where the numbers go, and what is never stored
+
+The Enchanter's whole record lives on **its own talent entry**, beside the `picks`
+a Mycomancer keeps there, so no column was added and handing the set back takes
+its work with it:
+
+| Card | Stored as | Permanence |
+| ---- | --------- | ---------- |
+| WIELDER OF WONDER | `worn: ['primal-sense']` | permanent, as many as your rank |
+| ENCHANTING | `laid: { longbow: ['fire-infusion'] }` | permanent, 70 Supplies a point of burden |
+| EPHEMERAL ENCHANTMENT | an `effects` row carrying `ench` | one hour |
+
+**The split between those is the whole design.** `worn` and `laid` are gear:
+`deriveStats` reads them and `syncDerived` bakes them into the stored columns
+exactly the way a worn breastplate is baked in, and they cost Magic Burden.
+Ephemeral is an hour long and **bends what the sheet shows and never what the
+sheet stores**, because a bonus written into `instinct` is one nothing can ever
+take back off: `levelPicks.js` rebuilds all three attributes from its own record,
+so it would be read back as a level-up. Its own card says it costs no burden.
+
+`liveCharacter` in `characterModel.js` is that one bend, and `CharacterSheet.jsx`
+hands it to the Character, Abilities and Inventory tabs. **Not** to Advancement,
+which is where the attribute columns are decided and has to go on seeing what the
+ledger actually bought. Writing is unaffected either way, because `patch` closes
+over the stored row rather than the bent one. The Character tab prints one line
+saying what is bent and by how much, because a stat nobody can account for is
+worse than a stat that is merely bent.
+
+An ephemeral +1 Instinct therefore moves Instinct, Defense, Initiative, Movement
+Speed, Reflex, Grit and every number printed on every card that rolls Instinct,
+and moves none of them back onto the row.
+
+### Three ways into the same window
+
+`EnchantWindow.jsx` is the shelf, and it is the same shelf however it is reached:
+
+1. **The quick bar.** EPHEMERAL ENCHANTMENT prints 3 Action Points and `x`
+   Willpower, so the whole cost is worked out and paid *in the window*, once. It
+   carries `opens: 'ephemeral'` and `pays: 'window'`, and a move marked that way
+   skips the chip's prompt rather than charging the printed half up front and
+   asking the action-or-reaction question twice. Closing the shelf costs nothing.
+2. **The effect tracker's own add prompt**, which offers "Lay an Ephemeral
+   Enchantment instead" to a character who can. Typing "Primal Sense" in by hand
+   would get the row and none of the +1 Instinct, so the offer is made where the
+   mistake would otherwise be made.
+3. **The Long Rest window**, for the two slow cards. See below.
+
+The shelf is grouped by what an enchantment is *for* rather than printed as a wall
+of thirteen, and each one is the same card brief every other pool on the sheet
+prints. NOVICE IMBUEMENT is the one that asks a second question, because it
+carries a spell and the card does not say which; it is asked in the window that
+granted it, and the chosen spell rides on the effect.
+
+**A bound spell reaches the quick bar.** An ephemeral Novice Imbuement puts its
+spell in a group of its own, `Bound In`, at its own printed cost — "paying its
+costs as normal" — and before what you know, because an hour-old casting is the
+thing most easily forgotten. It is its own group rather than folded under a set,
+because the card says "whether or not they can cast spells of their own".
+
+### The Long Rest window
+
+Both slow cards happen there and nowhere else, so `EnchantRest.jsx` is a section
+of it rather than a control on the sheet, with two rows:
+
+- **On your own person.** As many slots as the rank allows, filled or waiting. Tap
+  the slot, the shelf opens. **No Supplies**, because WIELDER OF WONDER names none
+  for changing what you wear and reads the way a Mycomancer's spell swap reads.
+- **On what you carry.** Anything worn, in hand, on the belt or in the pack. Priced
+  at **70 Supplies a point of Magic Burden**, out of the same crate and through the
+  same ledger as the rest itself, and a price the crate cannot cover is offered
+  dead rather than left to fail at the last button. Stripping one back off returns
+  nothing.
+
+Every choice writes into the window's own `talents` draft, the same draft the spell
+swaps write into, and only "Yes, rest" commits any of it. A rest nobody can pay for
+writes nothing at all, work included.
+
+**A laid enchantment is real, not just recorded.** `heldItem(character, id)` in
+`items.js` merges what this character has laid into the codex item's own
+`enchants`, and everything downstream was already written against that field — the
+damage type and Empowering the weapon block prints, the cards an item teaches, the
+Magic Burden meter, the Workings recap. Nothing had to be taught what an Enchanter
+is.
+
+### What is still not built
+
+**An item instance.** `laid` is keyed by item *id*, so two longswords are one
+longsword and an enchantment laid on one is laid on both. Lifting that is what the
+last of the Developpement Notes' asks need: **naming** an enchanted piece, and
+**sharing one by code** with another player. Both were left out rather than faked,
+because a share code for a thing with no identity of its own has nothing to point
+at.
+
+Also still out: the **Trinket block** the notes ask for, and the two blocks the
+Inventory tab would shrink to in order to make room for it.
+
+### Two numbers answered, two readings still open
+
+1. **70 Supplies a point of Magic Burden. Answered 19 Aug 2026: 70.** Not 700. It
+   sits beside the 750 *coin* a point the codex charges for the same enchantment,
+   which is a different economy — making a Fire Infusion costs 280 Supplies where
+   buying one costs 3000 coin.
+2. **NOVICE IMBUEMENT's burden. The tab won: 4, not 3.** It is the tab's own column
+   and the tab is newer. Costs 280 Supplies to lay rather than 210, and
+   `grave-lantern-blade` weighs a point more than it did.
+
+And two that are a reading rather than a ruling, both flagged in code:
+
+3. **Changing what you wear is free.** WIELDER OF WONDER names no cost for changing
+   the enchantments on your own person, where ENCHANTING names one for enchanting
+   an item, so each card's own words were allowed to govern and the body slots
+   re-choose for nothing — the way a Mycomancer's spells do. `changeCost` in
+   `enchanting.js` is the one function to change if the body should cost Supplies
+   too.
+4. **BARRIER grants a roll, not a number.** "Gain 2d6 in Shield at combat start" is
+   carried as `shieldAtCombat: '2d6'` and printed on the card, and nothing rolls
+   it: the sheet prints dice and the table rolls them, which is how every other
+   printed die on it works. It is the one rider that moves no number by itself. Say
+   the word and combat start can roll it.
 
 ## The columns
 
