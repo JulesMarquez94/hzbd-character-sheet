@@ -264,7 +264,7 @@ function LogDraft({ onSave, onCancel }) {
           title={empty ? 'Give it a title or a note first' : undefined}
           onClick={() => onSave({ session, title, body })}
         >
-          Keep this log
+          Save this log
         </button>
         <button type="button" className="btn btn-minimal btn-sm" onClick={onCancel}>
           Cancel

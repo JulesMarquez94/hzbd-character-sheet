@@ -1198,4 +1198,53 @@ export const SPELLS = withArt([
     sub_name: null,
     sub_body: null,
   },
+
+  /* --------------------------------------------------- the two stand-ins ----
+   * Light and Shadow are schools the lineage tab names and this sheet has not
+   * got. A Celestial's INNATE LIGHT and an Infernal's INNATE SHADOW each promise
+   * a Novice spell of one of them, and until the schools are written there is
+   * nothing for the promise to point at: those two are the only lineage cards
+   * whose question the codex cannot answer. See flag 4 in lineages.js.
+   *
+   * So each school gets one card that stands in and says on its face that it is
+   * standing in. They carry `placeholder`, which is what keeps them out of the
+   * enchanting and forging shelves: a stand-in exists to fill the one slot that
+   * would otherwise be empty, not to be laid on somebody's sword.
+   *
+   * The day the schools arrive, delete both. The Innate cards read their options
+   * off the Novice shelf of the school they name, so they pick up the real
+   * spells with nothing else to change.
+   */
+  {
+    id: 'unwritten-light',
+    name: 'Unwritten Light',
+    summary: 'A stand-in. No Light spell has been written yet.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Light'],
+    ap: null,
+    wp: null,
+    stat: 'mind',
+    placeholder: true,
+    body:
+      'Your blood knows a Novice Light Spell, and the Light school is not in this codex yet.\n\n' +
+      'This card holds the slot until it is. Agree with your table on what the spell does, or leave it empty and take it up when the school arrives.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'unwritten-shadow',
+    name: 'Unwritten Shadow',
+    summary: 'A stand-in. No Shadow spell has been written yet.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Shadow'],
+    ap: null,
+    wp: null,
+    stat: 'mind',
+    placeholder: true,
+    body:
+      'Your blood knows a Novice Shadow Spell, and the Shadow school is not in this codex yet.\n\n' +
+      'This card holds the slot until it is. Agree with your table on what the spell does, or leave it empty and take it up when the school arrives.',
+    sub_name: null,
+    sub_body: null,
+  },
 ]);

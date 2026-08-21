@@ -39,7 +39,7 @@ function pickedOn(card, choices) {
 /**
  * The cards of a lineage that leave something to the player. Often none.
  *
- * The cards it *holds*, which for a Wildkin is the two they kept: one who kept a
+ * The cards it *holds*, which for a Wildkin is the two they took: one who took a
  * trait with a question of its own would be asked it like anybody else. None of
  * the eight asks anything today, and the day one does this already covers it.
  */
@@ -69,7 +69,7 @@ function hasAsks(lineage, choices) {
  */
 function settleLabel(pool, unanswered) {
   if (unanswered === 0) return pool ? 'Change your traits' : 'Change what it asked you';
-  if (pool) return `Choose ${unanswered} trait${unanswered === 1 ? '' : 's'}`;
+  if (pool) return `Take ${unanswered} trait${unanswered === 1 ? '' : 's'}`;
   return `Answer ${unanswered} question${unanswered === 1 ? '' : 's'}`;
 }
 
@@ -82,10 +82,10 @@ function settleLabel(pool, unanswered) {
  */
 function cardsNote(questions, yours, pool = null) {
   /* A pool is not asked a question, it is asked for cards, and how many is the
-     only thing worth saying over a wall you are about to keep two of. */
+     only thing worth saying over a wall you are about to take two of. */
   if (pool) {
-    const keep = `${pool.picks} of these to keep`;
-    return yours ? `Yours, ${keep}` : `A preview, ${keep}`;
+    const take = `take ${pool.picks} of these`;
+    return yours ? `Yours, ${take}` : `A preview, ${take}`;
   }
 
   const asks =
@@ -116,10 +116,10 @@ export default function LineagePick({ value, character, patch, step = null, read
   const answer = (cardId, optionId) =>
     patch({ choices: { ...choices, [cardId]: optionId } });
 
-  /* Keeping or dropping one of a pool's cards. The whole list goes back under
+  /* Taking or dropping one of a pool's cards. The whole list goes back under
      the pool's own key, so the bag holds one entry per pool rather than one per
      trait, and dropping the lineage drops the lot with it. */
-  const keep = (target, cardId) =>
+  const take = (target, cardId) =>
     patch({
       choices: { ...choices, [target.pool.id]: togglePoolPick(target, choices, cardId) },
     });
@@ -162,7 +162,7 @@ export default function LineagePick({ value, character, patch, step = null, read
               over an empty row reads as a lineage that gives you nothing. */}
           {held.length === 0 && pool ? (
             <p className="pick-line">
-              Nothing yet. Keep {pool.picks} traits and they print here.
+              Nothing yet. Take {pool.picks} traits and they print here.
             </p>
           ) : (
             <div className="talent-rung-cards">
@@ -255,7 +255,7 @@ export default function LineagePick({ value, character, patch, step = null, read
             setMode(hasAsks(getLineage(name), choices) ? 'settle' : null);
           }}
           onAnswer={answer}
-          onKeep={keep}
+          onTakeTrait={take}
           onClose={() => setMode(null)}
         />
       )}
@@ -283,7 +283,7 @@ function LineageChooser({
   settling = false,
   onTake,
   onAnswer,
-  onKeep,
+  onTakeTrait,
   onClose,
 }) {
   const [open, setOpen] = useState(settling ? (current?.id ?? null) : null);
@@ -295,11 +295,17 @@ function LineageChooser({
   const shown = open ? getLineage(open) : null;
   const pool = shown?.pool ?? null;
   const asks = settling ? asksOf(shown, choices) : [];
+  /* Two shapes of question, and they cannot share a row. A word fits in a chip
+     under the card that asks for it; a spell is a card, and choosing between
+     three of them means reading three of them. So a card that teaches one gets
+     a shelf of its own, laid out the way the Wildkin pool is. */
+  const learns = asks.filter((card) => card.choice.learns);
+  const plain = asks.filter((card) => !card.choice.learns);
   /* Two kinds of open thing on one page, counted into one number. A card's
-     question is answered; a pool's card is kept, and two of them are what a
+     question is answered; a pool's card is taken, and two of them are what a
      Wildkin who has just taken the blood is short of. */
-  const kept = pool ? poolPicks(shown, choices).length : 0;
-  const answered = asks.filter((card) => pickedOn(card, choices)).length + (settling ? kept : 0);
+  const taken = pool ? poolPicks(shown, choices).length : 0;
+  const answered = asks.filter((card) => pickedOn(card, choices)).length + (settling ? taken : 0);
   const wanted = asks.length + (settling && pool ? pool.picks : 0);
   // How many questions the lineage being read leaves open to a player, for the
   // note over its cards. None is the commonest answer.
@@ -319,7 +325,7 @@ function LineageChooser({
         settling && shown ? (
           <>
             <span className={`pick-count${answered < wanted ? ' is-open' : ''}`}>
-              {answered} of {wanted} {pool && asks.length === 0 ? 'kept' : 'answered'}
+              {answered} of {wanted} {pool && asks.length === 0 ? 'taken' : 'answered'}
             </span>
             <span className="spacer" />
             <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
@@ -352,7 +358,7 @@ function LineageChooser({
             <b>{shown.name}</b> is yours.{' '}
             {pool ? (
               <>
-                This one is built rather than dealt: keep <b>{pool.picks}</b> of the traits below
+                This one is built rather than dealt: take <b>{pool.picks}</b> of the traits below
                 and those are the cards your blood carries. You can change them later, from the
                 block or from here.
               </>
@@ -374,7 +380,7 @@ function LineageChooser({
                   {shown.name} · {pool.label}
                 </span>
                 <span className="talent-page-rank-note">
-                  {kept} of {pool.picks} kept
+                  {taken} of {pool.picks} taken
                 </span>
               </div>
               <p className="talent-page-aside">{pool.prompt}</p>
@@ -382,21 +388,46 @@ function LineageChooser({
                 lineage={shown}
                 character={character}
                 readOnly={readOnly}
-                onKeep={(cardId) => onKeep(shown, cardId)}
+                onTake={(cardId) => onTakeTrait(shown, cardId)}
               />
             </section>
           )}
 
-          {asks.length > 0 && (
+          {learns.map((card) => {
+            const picked = pickedOn(card, choices);
+            return (
+              <section className="talent-page-rank" key={card.id}>
+                <div className="talent-page-rank-head">
+                  <span className="talent-page-rank-label">
+                    {shown.name} · {card.choice.label}
+                  </span>
+                  <span className="talent-page-rank-note">
+                    {picked ? `${picked.label}, yours` : 'Nothing learned yet'}
+                  </span>
+                </div>
+                <p className="talent-page-aside">{card.choice.prompt}</p>
+                <LearnPicker
+                  card={card}
+                  picked={picked}
+                  character={character}
+                  art={shown.art}
+                  readOnly={readOnly}
+                  onPick={(optionId) => onAnswer(card.id, optionId)}
+                />
+              </section>
+            );
+          })}
+
+          {plain.length > 0 && (
             <section className="talent-page-rank">
               <div className="talent-page-rank-head">
                 <span className="talent-page-rank-label">{shown.name} · What it leaves to you</span>
                 <span className="talent-page-rank-note">
-                  {asks.filter((card) => pickedOn(card, choices)).length} of {asks.length} answered
+                  {plain.filter((card) => pickedOn(card, choices)).length} of {plain.length} answered
                 </span>
               </div>
               <div className="card-brief-wall">
-                {asks.map((card) => {
+                {plain.map((card) => {
                   const picked = pickedOn(card, choices);
                   return (
                     <CardBrief
@@ -530,21 +561,21 @@ function LineageChooser({
 }
 
 /**
- * Which cards a Wildkin kept, asked as a wall with a keep on each.
+ * Which traits a Wildkin took, asked as a wall with a take on each.
  *
  * Every other pick on this page changes what a card *says*. This one changes
  * which cards there are, so it cannot be a row of chips under one of them: the
  * eight have to be readable side by side, because choosing between them is the
  * whole of the decision.
  *
- * Keeping a third drops the one kept longest rather than refusing the click. A
+ * Taking a third drops the one held longest rather than refusing the click. A
  * pool of eight you have to clear before you can change your mind is a worse
  * answer than one that quietly rolls.
  */
-function PoolPicker({ lineage, character, readOnly, onKeep }) {
+function PoolPicker({ lineage, character, readOnly, onTake }) {
   const stack = useCardStack();
   const choices = character?.choices ?? {};
-  const kept = new Set(poolPicks(lineage, choices).map((card) => card.id));
+  const taken = new Set(poolPicks(lineage, choices).map((card) => card.id));
 
   return (
     <div className="card-brief-wall">
@@ -556,16 +587,16 @@ function PoolPicker({ lineage, character, readOnly, onKeep }) {
           art={lineage.art}
           onOpen={() => stack?.openCard(card)}
         >
-          <div className={`card-choice${kept.has(card.id) ? ' is-answered' : ''}`}>
+          <div className={`card-choice${taken.has(card.id) ? ' is-answered' : ''}`}>
             <div className="filter-group">
               <button
                 type="button"
-                className={`filter-chip${kept.has(card.id) ? ' active' : ''}`}
-                onClick={() => !readOnly && onKeep(card.id)}
+                className={`filter-chip${taken.has(card.id) ? ' active' : ''}`}
+                onClick={() => !readOnly && onTake(card.id)}
                 disabled={readOnly}
-                title={kept.has(card.id) ? `Drop ${card.name}` : `Keep ${card.name}`}
+                title={taken.has(card.id) ? `Drop ${card.name}` : `Take ${card.name}`}
               >
-                {kept.has(card.id) ? 'Kept' : 'Keep'}
+                {taken.has(card.id) ? 'Taken' : 'Take'}
               </button>
             </div>
           </div>
@@ -576,9 +607,59 @@ function PoolPicker({ lineage, character, readOnly, onKeep }) {
 }
 
 /**
+ * The spell an Innate card teaches, chosen off the school's Novice shelf.
+ *
+ * A word can be picked out of a chip row. A spell cannot: what a Scorchbound is
+ * really deciding between is three cards, and three cards have to be readable
+ * side by side before one of them is theirs. So this is the wall the Wildkin
+ * pool uses, and for the same reason.
+ *
+ * One spell, so the taken one is shown held and its button goes quiet. Changing
+ * your mind is tapping another, not giving this one back: the blood teaches a
+ * spell either way, and an empty slot is not one of the answers.
+ */
+function LearnPicker({ card, picked, character, art, readOnly, onPick }) {
+  const stack = useCardStack();
+
+  return (
+    <div className="card-brief-wall">
+      {card.choice.options.map((option) => {
+        const held = picked?.id === option.id;
+        return (
+          <CardBrief
+            key={option.id}
+            card={option.card}
+            character={character}
+            art={art}
+            held={held}
+            onOpen={() => stack?.openCard(option.card)}
+          >
+            {!readOnly && (
+              <button
+                type="button"
+                className={`btn btn-sm card-brief-btn ${held ? 'btn-minimal' : 'btn-take'}`}
+                disabled={held}
+                title={held ? undefined : `Learn ${option.card.name}`}
+                onClick={() => onPick(option.id)}
+              >
+                {held ? 'Learned' : 'Learn this spell'}
+              </button>
+            )}
+          </CardBrief>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
  * The question a card leaves to the player, asked where the card is held rather
  * than buried in its text. Answering rewrites the card: Draconic Scales stops
  * listing six colours and starts naming one damage type.
+ *
+ * A spell question is asked here too, wherever there is no room for the shelf
+ * LearnPicker lays out: the chips carry the spell names, and what each one does
+ * is on the chip's own tooltip and one tap away on the card.
  */
 export function ChoicePicker({ card, picked, readOnly, onPick }) {
   const { prompt, options } = card.choice;
@@ -594,7 +675,7 @@ export function ChoicePicker({ card, picked, readOnly, onPick }) {
             className={`filter-chip${picked?.id === option.id ? " active" : ""}`}
             onClick={() => !readOnly && onPick(option.id)}
             disabled={readOnly}
-            title={option.detail ?? option.label}
+            title={option.detail ?? option.card?.summary ?? option.label}
           >
             {option.detail ?? option.label}
           </button>

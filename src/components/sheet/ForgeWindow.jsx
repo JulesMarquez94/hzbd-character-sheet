@@ -438,8 +438,13 @@ export default function ForgeWindow({ character, onForge, onClose }) {
 function SpellPick({ enchantId, ench, onPick }) {
   const enchantment = getEnchantment(enchantId);
   const tier = enchantment?.spellTier ?? 'Novice';
+  /* The stand-ins are out, the same way they are out of the enchanting shelf:
+     UNWRITTEN LIGHT holds a lineage's slot open, it is not a spell to bind. */
   const pool = useMemo(
-    () => SPELLS.filter((spell) => (spell.tags ?? []).some((tag) => tag.startsWith(tier))),
+    () =>
+      SPELLS.filter(
+        (spell) => !spell.placeholder && (spell.tags ?? []).some((tag) => tag.startsWith(tier))
+      ),
     [tier]
   );
   const chosen = ench.find((entry) => entry.id === enchantId)?.spell ?? null;

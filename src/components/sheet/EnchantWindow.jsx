@@ -296,9 +296,17 @@ function EnchantRow({ option, character, chosen, readOnly, onChoose, onOpen }) {
   );
 }
 
-/** Every spell of a tier the codex actually holds. Empty is a real answer. */
+/**
+ * Every spell of a tier the codex actually holds. Empty is a real answer.
+ *
+ * Bar the stand-ins. UNWRITTEN LIGHT and UNWRITTEN SHADOW hold a lineage's slot
+ * open until the school is written (see spells.js); laying one on somebody's
+ * sword would be binding an Imbuement to a spell that does not exist yet.
+ */
 function spellsAt(tier) {
-  return SPELLS.filter((spell) => (spell.tags ?? []).some((tag) => tag.startsWith(tier)));
+  return SPELLS.filter(
+    (spell) => !spell.placeholder && (spell.tags ?? []).some((tag) => tag.startsWith(tier))
+  );
 }
 
 /**

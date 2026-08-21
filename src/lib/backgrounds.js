@@ -7,7 +7,7 @@
  * at once:
  *
  *   the skills  — what that life taught you. Each background offers a pool and
- *                 lets you keep a few of them, and every one is a card, printed
+ *                 lets you learn a few of them, and every one is a card, printed
  *                 and dealt exactly like a talent's or a weapon's, because
  *                 "spend 1 Willpower for advantage" is something you look up
  *                 mid-session and a paragraph about your youth is not.
@@ -473,7 +473,7 @@ const VIGIL = {
 /* --------------------------------------------------------------- the codex
  *
  * Fields:
- *   picks     — how many skills this background lets you keep, 2 to 4
+ *   picks     — how many skills this background lets you learn, 2 to 4
  *   skills    — the pool it offers them from
  *   kit       — what you walk in carrying:
  *                 weapons   how many Common weapons you choose (Soldier: 2)

@@ -3082,6 +3082,13 @@ rather than rules text, so it is dropped and built: the lineage tab names a scho
 for each of six ancestries and each gets its own card. All six were checked
 against the one row.
 
+Its "a Novice X Spell" is the one promise on the tab a card cannot keep by
+itself, so the card asks which spell. The school's Novice shelf is the answer,
+offered in the window that hands the lineage over, and the spell chosen there
+joins the hand as a card of its own: a Scorchbound holds Living Furnace, Innate
+Fire and the Fire spell they took. The sentence still round-trips to the cell,
+because unanswered the `{choice}` prints the four words it replaced.
+
 ### Four things for the designer
 
 1. **LIVING FURNACE does not say what you regain.** "You regain 10 + 5 for each
@@ -3100,7 +3107,11 @@ against the one row.
 4. **Innate Light and Innate Shadow name schools that do not exist.** Fire, Wind,
    Water and Earth are all Elemental families with Novice spells already written.
    Light and Shadow are neither a school nor a family anywhere in `spells.js`, so
-   those two cards promise a spell nobody can look up.
+   those two cards promised a spell nobody could look up, which left a Celestial
+   and an Infernal unable to finish level 1. Each school now holds one stand-in,
+   UNWRITTEN LIGHT and UNWRITTEN SHADOW, printed with a body that says it is
+   standing in. The Innate cards read their options off the school's Novice
+   shelf, so writing the real spells is all it takes to retire the stand-ins.
 
 Two tags contradict their own costs and were read against the cost: SPROUT WINGS
 is tagged `Basic Action` on a tab of lineage cards while carrying 2 AP and 2 WP,

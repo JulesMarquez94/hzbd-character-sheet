@@ -83,7 +83,10 @@
  *   Built       DRAGON BREATH's "your draconic scale colour" is the colour
  *               DRACONIC SCALES asks you for, so it is a `{{Draconic Scales}}`
  *               link rather than prose: the reader taps through to the card
- *               that holds the answer instead of going to look for it.
+ *               that holds the answer instead of going to look for it. INNATE
+ *               X's "a Novice X Spell" is a `{choice}` for the same reason,
+ *               and its placeholder is those four words: unanswered the card
+ *               still prints the cell, answered it prints the spell.
  *
  * ------------------------------------------------------- how this was proved
  * Every card's body was resolved back through its markers and compared to the
@@ -113,8 +116,12 @@
  *   4. **Innate Light and Innate Shadow name schools the codex has not got.**
  *      Fire, Wind, Water and Earth are all Elemental families with Novice
  *      spells already written. Light and Shadow are neither a school nor a
- *      family anywhere in spells.js, so those two cards promise a spell that
- *      cannot yet be looked up.
+ *      family anywhere in spells.js, so those two cards promised a spell that
+ *      could not be looked up, and a Celestial could never finish their level 1.
+ *      Both schools now hold one stand-in spell apiece, UNWRITTEN LIGHT and
+ *      UNWRITTEN SHADOW, which say on their own face that they are standing in.
+ *      See the note over them at the foot of spells.js. The shelves are read off
+ *      the codex, so writing the real spells is all it takes to replace them.
  *
  * Two more, smaller. SPROUT WINGS is tagged `Basic Action` on a tab of lineage
  * cards, and is treated as the Ability its 2 AP and 2 WP make it. LIVING
@@ -151,9 +158,14 @@
  * link resolves and any of them can be dealt onto the pile.
  *
  * This file is a leaf: nothing it imports may reach weapons.js or items.js.
+ * spells.js is one, which is why the Innate cards can read their own shelf here
+ * rather than describing it and having somebody else resolve it. The registry in
+ * weapons.js folds in both, so an Innate card's options are the same objects
+ * every `{{link}}` and every `getCard` already hands back.
  */
 
 import { withArt } from './cardArt.js';
+import { SPELLS } from './spells.js';
 
 /** The families a lineage belongs to, and what it is good at. */
 export const LINEAGE_TAGS = [
@@ -215,10 +227,45 @@ const SPROUT_WINGS = {
  * the row rather than written six times: the body is the cell's, and the only
  * thing that moves is the word the cell called X.
  *
+ * **Which spell is a question, and the card asks it.** "You permanently learn a
+ * Novice Fire Spell" is a promise, and a promise is not a spell: until it is
+ * answered a Scorchbound holds a card about a spell and no spell. So the
+ * school's Novice shelf is the card's `choice`, asked in the window that hands
+ * the lineage over, and the spell it names joins the hand as a card of its own.
+ * The shelf is read off spells.js rather than listed here, so a spell written
+ * tomorrow is on offer tomorrow.
+ *
  * Light and Shadow are flag 4 above.
  */
 
+/**
+ * The Novice shelf of one school word, in the codex's own order.
+ *
+ * One word, matched against the whole banner rather than against a position on
+ * it, because the six schools a lineage names do not all sit in the same place:
+ * Fire, Wind, Water and Earth are families under Elemental and read third,
+ * while Light and Shadow are schools of their own and read second.
+ */
+function noviceSpells(school) {
+  return SPELLS.filter((spell) => {
+    const tags = spell.tags ?? [];
+    return tags.some((tag) => tag.startsWith('Novice')) && tags.includes(school);
+  });
+}
+
 function innate(school) {
+  const shelf = noviceSpells(school);
+
+  /* A school with an empty shelf promises a spell that cannot be chosen, and the
+     lineage that hands the card out can never be finished. Said out loud rather
+     than left for a player to find, the way weapons.js says a clashing id. */
+  if (import.meta.env?.DEV && shelf.length === 0) {
+    console.error(
+      `[hazebound] Innate ${school} offers no Novice spell, so the lineage holding it can never be settled. ` +
+        'Write one, or stand a placeholder in for it the way Light and Shadow have.'
+    );
+  }
+
   return {
     id: `innate-${school.toLowerCase()}`,
     name: `Innate ${school}`,
@@ -227,8 +274,24 @@ function innate(school) {
     ap: null,
     wp: null,
     summary: `You learn a Novice ${school} Spell, cast with your highest Attribute.`,
+    /* Which spell is the card's own question, and the school's Novice shelf is
+       the answer to it. `learns` is what says the answer is a card rather than a
+       word: the spell chosen here is one the character then holds, and
+       lineageCards below is where it joins the hand. */
+    choice: {
+      id: `innate-${school.toLowerCase()}-spell`,
+      label: `Novice ${school} Spell`,
+      prompt: `Which Novice ${school} Spell does your blood know?`,
+      placeholder: `a Novice ${school} Spell`,
+      learns: true,
+      options: shelf.map((spell) => ({ id: spell.id, label: spell.name, card: spell })),
+    },
+    /* `{choice}` rather than the cell's own words, and the placeholder above is
+       those words: unanswered, the card still reads "You permanently learn a
+       Novice Fire Spell", and answered it names the spell. The same trade
+       DRACONIC SCALES makes with its colour. */
     body:
-      `You permanently learn a Novice ${school} Spell.\n\n` +
+      `You permanently learn {choice}.\n\n` +
       'This spell uses your highest Attribute.',
   };
 }
@@ -735,15 +798,37 @@ export function poolPicks(lineage, choices) {
 }
 
 /**
+ * The spell an answered card hands over, or null while the question is open.
+ *
+ * Only the Innate cards hand one over, and only once they have been answered.
+ * A card whose choice is a word rather than a card answers nothing here.
+ */
+export function learnedFrom(card, choices) {
+  if (!card?.choice?.learns) return null;
+  const answer = choices?.[card.id];
+  return card.choice.options.find((option) => option.id === answer)?.card ?? null;
+}
+
+/**
  * The cards this character actually holds from their ancestry.
  *
  * The same as `lineage.cards` for twelve of the thirteen. A Wildkin's hand is
- * the two they kept out of the pool, so every surface that prints "what your
+ * the two they took out of the pool, so every surface that prints "what your
  * blood carries" goes through here rather than reading `cards` directly.
+ *
+ * And a card that teaches a spell hands the spell over as a card of its own,
+ * right behind the one that taught it. "You permanently learn a Novice Fire
+ * Spell" is a promise until the spell itself is on the sheet: this is where a
+ * Scorchbound's Cloak of Flames becomes something they can read, deal and cast
+ * rather than a sentence about a spell they chose once.
  */
 export function lineageCards(lineage, choices) {
   if (!lineage) return [];
-  return lineage.pool ? poolPicks(lineage, choices) : lineage.cards;
+  const held = lineage.pool ? poolPicks(lineage, choices) : lineage.cards;
+  return held.flatMap((card) => {
+    const learned = learnedFrom(card, choices);
+    return learned ? [card, learned] : [card];
+  });
 }
 
 /** How many of a pool's picks are still outstanding. Zero when there is no pool. */

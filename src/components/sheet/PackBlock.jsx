@@ -389,7 +389,7 @@ function CustomItemForm({ entry, onSave, onClose }) {
 
       <div className="form-group">
         <label className="form-label" htmlFor="custom-item-note">
-          What it says, or why you kept it
+          What it says, or why you are carrying it
         </label>
         <textarea
           id="custom-item-note"

@@ -39,7 +39,7 @@ import { appendLedger, formatNumber, newLedgerId } from '../../lib/characterMode
  *
  * Choosing the background is only the first of three steps, so the block is
  * built as three, each one plainly unfinished until it is done: pick the trade,
- * keep your skills, take your kit. Taking a trade walks you straight through
+ * learn your skills, take your kit. Taking a trade walks you straight through
  * the other two rather than dropping you back on the sheet to find them: the
  * skill pool opens the moment the trade is yours, and the outfitter opens when
  * the skills are settled. Both are still buttons on the block afterwards, so
@@ -290,8 +290,8 @@ function SkillSection({ state, character, patch, readOnly, onOpen, onCard }) {
         </div>
       ) : (
         <p className="pick-line">
-          Nothing kept yet. {background.name} offers {background.skills.length} skills and lets you
-          keep {picks}.
+          Nothing learned yet. {background.name} offers {background.skills.length} skills and lets
+          you learn {picks}.
         </p>
       )}
 
@@ -629,7 +629,7 @@ function buildReturnPatch({ character, kit }) {
     );
   }
 
-  const kept = issued - returned;
+  const gone = issued - returned;
   return {
     patch: { equipment, belt, pack, wealth, supplies, ledger, background_kit: null },
     summary:
@@ -637,8 +637,8 @@ function buildReturnPatch({ character, kit }) {
       `${formatNumber(wealthBefore - wealth)} ¢ and ${formatNumber(
         suppliesBefore - supplies
       )} Supplies taken back.` +
-      (kept > 0
-        ? ` ${kept} had already moved on and ${kept === 1 ? 'was' : 'were'} left alone.`
+      (gone > 0
+        ? ` ${gone} had already moved on and ${gone === 1 ? 'was' : 'were'} left alone.`
         : ''),
   };
 }
@@ -889,7 +889,7 @@ function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
           <section className="talent-page-rank">
             <div className="talent-page-rank-head">
               <span className="talent-page-rank-label">
-                {shown.name} · Skills, keep {skillPicks(shown)} of {shown.skills.length}
+                {shown.name} · Skills, learn {skillPicks(shown)} of {shown.skills.length}
               </span>
               {/* Which page this is, rather than when the cards arrived. A
                   trade nobody has taken yet is being read, not held: the pool
@@ -1008,7 +1008,7 @@ function SkillChooser({ state, character, readOnly, walking = false, onTake, onD
 
   return (
     <Modal
-      title={`${background.name}: Keep ${picks} Skills`}
+      title={`${background.name}: Learn ${picks} Skills`}
       onClose={onClose}
       size="page"
       accent={PICK_ACCENTS.background}
@@ -1028,7 +1028,7 @@ function SkillChooser({ state, character, readOnly, walking = false, onTake, onD
     >
       <p className="frame-foot" style={{ marginTop: 0 }}>
         {remaining
-          ? `Keep ${remaining} more. You can give any of them back and pick again, since none of this is spent until you leave level 1 behind.`
+          ? `Learn ${remaining} more. You can give any of them back and pick again, since none of this is spent until you leave level 1 behind.`
           : 'All chosen. Give one back to swap it for another.'}
       </p>
 
@@ -1053,7 +1053,7 @@ function SkillChooser({ state, character, readOnly, walking = false, onTake, onD
                   title={full ? 'No picks left, give one back first' : undefined}
                   onClick={() => (held ? onDrop(skill.id) : onTake(skill.id))}
                 >
-                  {held ? 'Chosen, give it back' : full ? 'No picks left' : 'Keep this skill'}
+                  {held ? 'Learned, give it back' : full ? 'No picks left' : 'Learn this skill'}
                 </button>
               )}
             </CardBrief>
