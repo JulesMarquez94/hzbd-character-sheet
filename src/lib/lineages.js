@@ -127,6 +127,19 @@
  * is not one of the three a `[[…]]` marker can resolve, so both print their
  * formula as prose rather than a live number a Mind character would read wrong.
  *
+ * ------------------------------------------------------ one id had to change
+ * **DRAGON BREATH is `dragon-breath-lineage`, not `dragon-breath`.** The Draconic
+ * Bond's Adept ability already held that id, and it is the same effect written for
+ * the ally rather than for you: 2d4 and its Mind, in front of *itself*. This one is
+ * 2d6 and your highest Attribute, so they are two cards and not one, and the older
+ * keeps the id because an id is what a saved character points at. Same trade
+ * RESILIENCE and CREATE WATER made, and see the note in weapons.js for why a
+ * collision has to be caught rather than left: it does not throw, it loses a card.
+ *
+ * The printed *name* still collides, by design, the way CREATE WATER’s does. No
+ * `{{Dragon Breath}}` link exists today, and one written now would resolve to the
+ * ally's card, because that is the one the registry sees first.
+ *
  * What a lineage card *says* and what the sheet *computes* are still two
  * different things, exactly as they were under V4: only the three attribute
  * grants below are declared, and Defense, Willpower, Health per level and
@@ -137,8 +150,10 @@
  * weapons.js. These are folded into the global registry by weapons.js, so every
  * link resolves and any of them can be dealt onto the pile.
  *
- * This file is a leaf: nothing here may import weapons.js or items.js.
+ * This file is a leaf: nothing it imports may reach weapons.js or items.js.
  */
+
+import { withArt } from './cardArt.js';
 
 /** The families a lineage belongs to, and what it is good at. */
 export const LINEAGE_TAGS = [
@@ -343,12 +358,16 @@ const SCALE_COLOUR = {
 
 /* ------------------------------------------------------------- the lineages */
 
-export const LINEAGES = [
+/**
+ * The codex as authored. Nothing outside this file reads it: LINEAGES below is
+ * the same thirteen with every card wearing its picture.
+ */
+const LINEAGE_CODEX = [
   {
     id: 'celestial',
     name: 'Celestial',
     tagline: 'An ancestor’s pact with celestial beings, still shining through.',
-    art: null,
+    art: '/lineages/celestial.jpg',
     tags: ['planar', 'flight', 'spellcasting'],
     blurb:
       'At some point, your ancestor made a pact with celestial beings, forever altering themselves and their descendants. These changes can manifest in various ways. You could have a radiant aura that glows softly, eyes that shine like stars, or skin with a slight, otherworldly luminescence. Some might have hair that seems to shimmer like spun gold or silver, skin marked with faint, glowing runes.', // text-style-ok: the designer's blurb, transcribed
@@ -359,7 +378,7 @@ export const LINEAGES = [
     id: 'infernal',
     name: 'Infernal',
     tagline: 'An ancestor’s bargain with infernal entities, still being paid.',
-    art: null,
+    art: '/lineages/infernal.jpg',
     tags: ['planar', 'flight', 'spellcasting'],
     blurb:
       'At some point, your ancestor made a deal with infernal entities, forever changing themselves and their descendants. These changes can manifest in various ways. You could have horns of varying shapes and sizes, unusual skin colors like deep red, ash gray, or even black. Others could have tails, pointed ears, or hair that seems to smolder like embers.', // text-style-ok: the designer's blurb, transcribed
@@ -370,7 +389,7 @@ export const LINEAGES = [
     id: 'fey',
     name: 'Fey',
     tagline: 'Born of enchanted glades: small, winged and always aloft.',
-    art: null,
+    art: '/lineages/fey.jpg',
     tags: ['fey', 'flight'],
     blurb:
       'From living in the heart of enchanted forests and ancient glades, your ancestors have established a deep connection with the realm of the fey. This mystical bond has significantly altered your appearance. You have a smaller stature, delicate wings reminiscent of butterflies or dragonflies. Some might have hair adorned with tiny flowers or leaves, or skin that glows faintly in the dark.',
@@ -390,7 +409,7 @@ export const LINEAGES = [
     id: 'scorchbound',
     name: 'Scorchbound',
     tagline: 'Raised beside the fire, and carrying some of it.',
-    art: null,
+    art: '/lineages/scorchbound.jpg',
     tags: ['elemental', 'spellcasting'],
     blurb:
       'From living in proximity to a volcano or other natural source of heat, your ancestors have established a deep connection with the element of fire. This elemental bond has significantly altered your appearance. You could have ashen skin, red eyes, fiery hair, or even glowing ember-like freckles. Some might have hair that flickers like flames or eyes that smolder with an inner heat.', // text-style-ok: the designer's blurb, transcribed
@@ -414,7 +433,7 @@ export const LINEAGES = [
     id: 'skybound',
     name: 'Skybound',
     tagline: 'Open plains and high peaks. The wind never quite let go.',
-    art: null,
+    art: '/lineages/skybound.jpg',
     tags: ['elemental', 'movement', 'spellcasting'],
     blurb:
       'From living in open plains or atop high mountains, your ancestors have established a deep connection with the element of wind. This elemental bond has significantly altered your appearance. You could have light, almost translucent skin, hair that flows like the wind, piercing sky-blue eyes, or even skin that seems to be in constant motion. Some might have eyes that change color with the weather or hair that whispers like the breeze.', // text-style-ok: the designer's blurb, transcribed
@@ -433,7 +452,7 @@ export const LINEAGES = [
     id: 'tidebound',
     name: 'Tidebound',
     tagline: 'Raised by water, and never entirely out of it.',
-    art: null,
+    art: '/lineages/tidebound.jpg',
     tags: ['elemental', 'spellcasting'],
     blurb:
       'From living near oceans, rivers, or other natural sources of water, your ancestors have established a deep connection with the element of water. This elemental bond has significantly altered your appearance. You could have smooth, blue-tinged skin, flowing hair that moves like water, deep sea-green eyes, or even hair resembling seaweed. Some might have skin that shimmers or eyes that change color like the ocean.', // text-style-ok: the designer's blurb, transcribed
@@ -452,7 +471,7 @@ export const LINEAGES = [
     id: 'stonebound',
     name: 'Stonebound',
     tagline: 'Deep forest and deeper mountain. The earth answers you.',
-    art: null,
+    art: '/lineages/stonebound.jpg',
     tags: ['elemental', 'resilience', 'spellcasting'],
     blurb:
       'From living in the depths of forests or within the mountains, your ancestors have established a deep connection with the element of earth. This elemental bond has significantly altered your appearance. You could have rugged, stone-like skin, mossy hair, eyes that shimmer like precious gems, or even hair resembling gemstones. Some might have bark-like skin patterns or eyes that sparkle like crystals.', // text-style-ok: the designer's blurb, transcribed
@@ -471,7 +490,7 @@ export const LINEAGES = [
     id: 'draconic',
     name: 'Draconic',
     tagline: 'Dragon blood in the veins, and scales to prove it.',
-    art: null,
+    art: '/lineages/draconic.jpg',
     tags: ['planar', 'resilience'],
     blurb:
       'Your ancestors got draconic blood mixed in their veins through rituals or other means, forever altering themselves and their descendants. These changes can manifest in various ways. Your body is covered in scales that match the color of the dragon the blood came from, as well as having potential other draconic features ranging from reptilian eyes to dragon-shaped facial features.',
@@ -486,7 +505,10 @@ export const LINEAGES = [
           'Your scales say which: red is {damage:Fire}, white {damage:Cold}, blue {damage:Lightning}, black {damage:Decay}, purple {damage:Psychic} and yellow {damage:Sacred}.',
       }),
       own('Draconic', {
-        id: 'dragon-breath',
+        /* Not `dragon-breath`: the Draconic Bond's Adept ability already holds
+           that id, and this card is the same effect rewritten for the player
+           rather than the ally. See "one id had to change" in the header. */
+        id: 'dragon-breath-lineage',
         name: 'Dragon Breath',
         kind: 'ability',
         ap: 4,
@@ -509,7 +531,7 @@ export const LINEAGES = [
        and every odd level's point. */
     attributes: { physique: 1 },
     tagline: 'Bred by harsh country into something harder than most.',
-    art: null,
+    art: '/lineages/stalwart.jpg',
     tags: ['folk', 'attribute'],
     blurb:
       'Descended from ancestors who thrived in harsh environments, the Stalwart lineage embodies physical resilience. Their bodies, tested by the elements, result in individuals more physically imposing than typical for their race.',
@@ -528,7 +550,7 @@ export const LINEAGES = [
     name: 'Wildheart',
     attributes: { instinct: 1 },
     tagline: 'A simple life close to nature, and the instincts it leaves.',
-    art: null,
+    art: '/lineages/wildheart.jpg',
     tags: ['folk', 'attribute'],
     blurb:
       'Your ancestors lived a simple life close to nature, allowing you to retain a deep connection to the primal part of yourself. This lineage grants you good instincts and sharp reflexes, honed by generations of living in harmony with the wild.',
@@ -547,7 +569,7 @@ export const LINEAGES = [
     name: 'Luminary',
     attributes: { mind: 1 },
     tagline: 'A line that prized learning, and bred quicker minds for it.',
-    art: null,
+    art: '/lineages/luminary.jpg',
     tags: ['folk', 'attribute'],
     blurb:
       'Hailing from a lineage that prioritizes education, the Luminary lineage boasts individuals with quicker minds than most. These ancestors valued knowledge and intellectual growth, passing down a legacy of sharp wit and keen intellect.',
@@ -565,7 +587,7 @@ export const LINEAGES = [
     id: 'undead',
     name: 'Undead',
     tagline: 'Cursed with undeath: very hard to kill, and slow to mend.',
-    art: null,
+    art: '/lineages/undead.jpg',
     tags: ['cursed', 'resilience'],
     blurb:
       'Regardless of your lineage’s origins, it has been cursed with undeath, bestowing upon you remarkable resilience but at the expense of a slow metabolism. This curse has left its mark on your appearance, which can range from pale skin and a malnourished look to a skeletal visage. The curse of undeath has made you unnaturally hard to kill but has also altered your physical appearance.',
@@ -596,7 +618,7 @@ export const LINEAGES = [
     id: 'wildkin',
     name: 'Wildkin',
     tagline: 'A primal bond with the beasts, and two traits of your choosing.',
-    art: null,
+    art: '/lineages/wildkin.jpg',
     tags: ['beastkin'],
     blurb:
       'At some point, your ancestors forged a primal bond with the beasts of the wild, forever altering themselves and their descendants. These changes can manifest in various ways. You could have prominent traits like animal ears, a sleek tail, sharp claws, or patches of soft fur, feathers, or fine scales. Some might have striking feline, avian, or reptilian eyes, elongated fangs, or hair that resembles a wild mane or feathered crest.', // text-style-ok: the designer's blurb, transcribed
@@ -608,6 +630,51 @@ export const LINEAGES = [
   },
 ];
 
+/* ------------------------------------------------------------- wearing the art
+
+   The one step between the codex above and every reader of it, and the reason
+   `npm run art:cards` can finally place a lineage picture at all.
+
+   It has to happen *once*, on objects everybody shares. A lineage hands the same
+   card out twice — on `lineage.cards` and again, flattened, in the registry — and
+   until 2026-08-21 this file wrapped neither: `withArt` spreads, so dressing the
+   flattened copy would have given the picture to `getCard` and left the sheet's
+   own card bare. That is what pull-card-art.mjs meant by "better reported than
+   half-placed", and why every lineage file was skipped.
+
+   So the dressing is done first, on one deduplicated list, and both the registry
+   and the thirteen ancestries are rebuilt to point at *those* objects. A card two
+   ancestries share is still one object, which is what keeps their wording from
+   drifting, and a pool's eight are dressed with the rest: a Wildkin's kept two
+   are cards like any other and their briefs draw the same plate. */
+
+const DRESSED = new Map(
+  withArt([
+    ...new Map(
+      LINEAGE_CODEX.flatMap((lineage) => [
+        ...lineage.cards,
+        ...(lineage.pool?.options ?? []),
+      ]).map((card) => [card.id, card])
+    ).values(),
+  ]).map((card) => [card.id, card])
+);
+
+/** The dressed card for one authored card. Throws rather than losing a picture. */
+function dressed(card) {
+  const worn = DRESSED.get(card.id);
+  if (!worn) throw new Error('lineages.js: ' + card.id + ' was never dressed');
+  return worn;
+}
+
+/** The thirteen ancestries as everything else sees them. */
+export const LINEAGES = LINEAGE_CODEX.map((lineage) => ({
+  ...lineage,
+  cards: lineage.cards.map(dressed),
+  ...(lineage.pool
+    ? { pool: { ...lineage.pool, options: lineage.pool.options.map(dressed) } }
+    : null),
+}));
+
 /* ------------------------------------------------------------------ lookups */
 
 /**
@@ -618,13 +685,7 @@ export const LINEAGES = [
  * anybody picked them, or a Wildkin's two would be the only cards on the sheet
  * that no link could resolve and no pile could deal.
  */
-export const LINEAGE_CARDS = [
-  ...new Map(
-    LINEAGES.flatMap((lineage) => [...lineage.cards, ...(lineage.pool?.options ?? [])]).map(
-      (card) => [card.id, card]
-    )
-  ).values(),
-];
+export const LINEAGE_CARDS = [...DRESSED.values()];
 
 const BY_ID = new Map(LINEAGES.map((lineage) => [lineage.id, lineage]));
 const BY_NAME = new Map(LINEAGES.map((lineage) => [lineage.name.toLowerCase(), lineage]));

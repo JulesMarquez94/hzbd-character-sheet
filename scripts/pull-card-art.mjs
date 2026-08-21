@@ -50,6 +50,11 @@ const OUT = path.join(ROOT, 'public', 'cards');
 const TALENT_OUT = path.join(ROOT, 'public', 'talents');
 const TALENT_SIZE = 640;
 const TALENT_QUALITY = 82;
+/* An ancestry plate is the same thing for a lineage: 640 square behind
+   `lineage.art`, drawn on the chooser wall and at the head of its page. Its own
+   folder rather than talents/, because a lineage is not a set and an id could
+   collide with one. */
+const LINEAGE_OUT = path.join(ROOT, 'public', 'lineages');
 
 /* The plate on a dealt card is 360x270 CSS pixels and `background-size: cover`.
    720 is that at 2x, which is as much as any screen can show of it. Quality 78
@@ -231,12 +236,21 @@ async function cardIds() {
   const { INGREDIENTS } = await load('src/lib/ingredients.js');
   const { TALENT_CARDS } = await load('src/lib/talents.js');
 
-  /* Not the whole of `CARDS`. A lineage trait and a background skill are cards in
-     the registry, but their modules hand the same object out twice — once flattened
-     into LINEAGE_CARDS and once on the lineage itself — so attaching art to the
-     flattened copy alone would give a picture to the codex and not to the sheet.
-     Until those two are wrapped the way talents.js wraps its sets, a file named for
-     one is better reported than half-placed. */
+  /* Not the whole of `CARDS`, and the two that are missing are missing for two
+     different reasons now.
+
+     A background skill is the old one: backgrounds.js hands the same object out
+     twice, once flattened into BACKGROUND_CARDS and once on the background, and
+     `withArt` spreads, so dressing the flattened copy would give the picture to the
+     codex and not to the sheet. Until it is wrapped the way talents.js wraps its
+     sets, a file named for one is better reported than half-placed.
+
+     A lineage card is wrapped as of 2026-08-21 and is placed — just not from here.
+     It resolves against `lineageNames` instead, because two cards are printed DRAGON
+     BREATH: the Draconic Bond's, which the ally breathes, and the Draconic
+     lineage’s, which you do. Both have a picture, and both files are called
+     `Dragon Breath`. One flat name map cannot hold both, so each folder answers to
+     its own. */
   return new Map(
     [
       ...SPELLS,
@@ -263,6 +277,27 @@ async function itemNames() {
     path.join(ROOT, 'src/lib/items.js').replace(/\\/g, '/').replace(/^/, 'file:///')
   );
   return new Set(ITEMS.map((item) => flatten(item.name)));
+}
+
+/**
+ * The lineage folder resolves against lineages and nothing else, and that is the
+ * point of two maps of its own.
+ *
+ * DRAGON BREATH is printed twice in the codex: the Draconic Bond’s Adept ability,
+ * which the ally breathes, and the Draconic lineage’s, which you do. They are two
+ * cards with one name, so a name looked up against the *whole* codex would place
+ * `data/Lineage/Lineage Cards/Dragon Breath.jpg` on whichever of the two the map
+ * happened to keep. Scoped to the folder, there is no question: a file in there is
+ * a lineage card, and a file in `data/Draconic Bond/` is the set’s.
+ */
+async function lineageNames() {
+  const { LINEAGES, LINEAGE_CARDS } = await import(
+    path.join(ROOT, 'src/lib/lineages.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return {
+    plates: new Map(LINEAGES.map((l) => [flatten(l.name), l.id])),
+    cards: new Map(LINEAGE_CARDS.map((c) => [flatten(c.name), c.id])),
+  };
 }
 
 /** Printed set name -> talent id, for the Overview row of a Talent Set sheet. */
@@ -360,17 +395,32 @@ const ONE_OFF = 'of';
  */
 const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature']);
 
+/**
+ * The ancestries, which arrive as one folder with a folder inside it.
+ *
+ * `data/Lineage/` landed 2026-08-21 with the two new tabs: thirteen ancestry
+ * plates at the top and twenty-two card plates in `Lineage Cards` under them.
+ * Both are 2400x1792 art plates rather than whole card renders, so neither is
+ * cut — a school folder's files are the only ones this script crops.
+ *
+ * It nests the way a school folder does, and is the only other folder that does.
+ */
+const LINEAGE_FOLDER = 'lineage';
+const LINEAGE_CARD_FOLDER = flatten('Lineage/Lineage Cards');
+
 function pictures(setIds) {
   if (!existsSync(DATA)) return [];
 
   const mine = (name) => setIds.has(flatten(name)) || flatten(name) === ONE_OFF;
   const school = (name) => SCHOOL_FOLDERS.has(flatten(name));
+  const lineage = (name) => flatten(name) === LINEAGE_FOLDER;
 
-  const walk = (dir, set, card) =>
+  const walk = (dir, set, card, nest) =>
     readdirSync(path.join(DATA, dir), { withFileTypes: true }).flatMap((entry) => {
       if (entry.isDirectory()) {
-        // Only a school folder nests — a set folder's subfolder is not art.
-        return card ? walk(path.join(dir, entry.name), `${set}/${entry.name}`, card) : [];
+        /* Only a school folder and the lineage folder nest — a set folder's
+           subfolder is not art. */
+        return nest ? walk(path.join(dir, entry.name), `${set}/${entry.name}`, card, nest) : [];
       }
       if (!IMAGE_FILE.test(entry.name)) return [];
       return [
@@ -384,9 +434,55 @@ function pictures(setIds) {
     });
 
   return readdirSync(DATA, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && (mine(entry.name) || school(entry.name)))
-    .flatMap((dir) => walk(dir.name, dir.name, school(dir.name)));
+    .filter(
+      (entry) =>
+        entry.isDirectory() && (mine(entry.name) || school(entry.name) || lineage(entry.name))
+    )
+    .flatMap((dir) =>
+      walk(dir.name, dir.name, school(dir.name), school(dir.name) || lineage(dir.name))
+    );
 }
+
+/** A file at the top of `data/Lineage/`: one of the thirteen ancestry plates. */
+const isLineagePlate = (picture) => flatten(picture.set) === LINEAGE_FOLDER;
+
+/** A file in `data/Lineage/Lineage Cards/`: art for one of the lineage cards. */
+const isLineageCard = (picture) => flatten(picture.set) === LINEAGE_CARD_FOLDER;
+
+/**
+ * Lineage card files whose name is not the name the codex prints, flattened on
+ * both sides. The same record ALIASES is, for the folder with its own map.
+ *
+ * All four are reads the codex already made and wrote down: the tab prints
+ * CANIBALISM, VENEMOUS, UNDEATH RESILLIENCE and DRACONIC SCALE, the pictures were
+ * drawn from the tab, and lineages.js corrected the spelling. Renaming a file
+ * retires its entry here.
+ */
+const LINEAGE_ALIASES = {
+  canibalism: 'cannibalism',
+  venemous: 'venomous',
+  'undeath resillience': 'undeath resilience',
+  'draconic scale': 'draconic scales',
+};
+
+/**
+ * One picture, six cards.
+ *
+ * INNATE X is a modular row: the lineage tab names a school for each of six
+ * ancestries and the codex builds six cards from the one row. The designer drew
+ * one picture for it, so it is encoded once per id rather than reported as five
+ * files that were never going to exist.
+ */
+const LINEAGE_MODULAR = {
+  'innate x': [
+    'innate-light',
+    'innate-shadow',
+    'innate-fire',
+    'innate-wind',
+    'innate-water',
+    'innate-earth',
+  ],
+};
 
 /**
  * The art plate cut out of a whole card render.
@@ -425,23 +521,37 @@ function stale(source, out) {
   return statSync(source).mtimeMs > statSync(out).mtimeMs;
 }
 
-/** One set's overview picture, from bytes already in hand: square, 640px. */
-async function writeTalentPlate(setId, buf) {
+/**
+ * A square 640px plate, from bytes already in hand.
+ *
+ * A set's overview picture and an ancestry's are the same thing drawn in the same
+ * two places, a tile on a chooser wall and the head of a page, so they are cut the
+ * same way into folders of their own.
+ */
+async function writeSquarePlate(dir, id, buf) {
   const out = await sharp(buf)
     .resize({ width: TALENT_SIZE, height: TALENT_SIZE, fit: 'cover', position: 'centre' })
     .jpeg({ quality: TALENT_QUALITY, mozjpeg: true })
     .toBuffer();
-  writeFileSync(path.join(TALENT_OUT, `${setId}.jpg`), out);
+  writeFileSync(path.join(dir, `${id}.jpg`), out);
   return out;
 }
+
+/** One set's overview picture. */
+const writeTalentPlate = (setId, buf) => writeSquarePlate(TALENT_OUT, setId, buf);
 
 /* ---------------------------------------------------------------------- main */
 
 const ids = await cardIds();
 const sets = await talentIds();
 const items = await itemNames();
+const lineages = await lineageNames();
 mkdirSync(OUT, { recursive: true });
 mkdirSync(TALENT_OUT, { recursive: true });
+mkdirSync(LINEAGE_OUT, { recursive: true });
+
+let plateFetched = 0;
+let plateSkipped = 0;
 
 const art = new Map();
 const problems = [];
@@ -483,12 +593,28 @@ const idByAliasFile = new Map(
    The fix is always to delete the older file; this only stops the wrong one
    being published in the meantime. */
 
-const folder = pictures(setIdByFolder);
+/* A lineage card file resolves against lineage cards and nothing else, and one of
+   them serves six. Both are settled here so every loop below stays
+   one-picture-one-card: `lineageId` is the answer, already found. */
+const folder = pictures(setIdByFolder).flatMap((picture) => {
+  if (!isLineageCard(picture)) return [picture];
+  const flat = flatten(picture.name);
+  const found =
+    LINEAGE_MODULAR[flat] ??
+    [lineages.cards.get(LINEAGE_ALIASES[flat] ?? flat)].filter(Boolean);
+  // Nothing matched: left whole so the report below names the file.
+  return found.length === 0 ? [picture] : found.map((id) => ({ ...picture, lineageId: id }));
+});
 
 const claims = new Map();
 for (const picture of folder) {
   const flat = flatten(picture.name);
-  const id = idBySheetFile.get(flat) ?? idByFlatName.get(flat) ?? idByAliasFile.get(flat) ?? null;
+  const id =
+    picture.lineageId ??
+    idBySheetFile.get(flat) ??
+    idByFlatName.get(flat) ??
+    idByAliasFile.get(flat) ??
+    null;
   if (!id) continue;
 
   const held = claims.get(id);
@@ -504,7 +630,12 @@ for (const picture of folder) {
 
 for (const picture of folder) {
   const flat = flatten(picture.name);
-  const id = idBySheetFile.get(flat) ?? idByFlatName.get(flat) ?? idByAliasFile.get(flat) ?? null;
+  const id =
+    picture.lineageId ??
+    idBySheetFile.get(flat) ??
+    idByFlatName.get(flat) ??
+    idByAliasFile.get(flat) ??
+    null;
 
   // Beaten by a newer file for the same card. Already reported above.
   if (id && claims.get(id) !== picture) continue;
@@ -514,6 +645,41 @@ for (const picture of folder) {
      Cards are resolved first, so a card that happened to share the set's name
      would still be dealt as a card. */
   if (!id) {
+    /* An ancestry plate: a file at the top of data/Lineage/, named for one of the
+       thirteen. Its cards live one folder down and were resolved before the loop. */
+    if (isLineagePlate(picture)) {
+      const lineageId = lineages.plates.get(flat);
+      if (!lineageId) {
+        problems.push(`${picture.set}/${picture.name}: the codex has no lineage by that name`);
+        continue;
+      }
+      const plate = path.join(LINEAGE_OUT, `${lineageId}.jpg`);
+      if (!stale(picture.file, plate) && !FORCE) {
+        plateSkipped += 1;
+        continue;
+      }
+      try {
+        const out = await writeSquarePlate(LINEAGE_OUT, lineageId, readFileSync(picture.file));
+        plateFetched += 1;
+        console.log(
+          `${lineageId.padEnd(20)} lineage plate ${TALENT_SIZE}x${TALENT_SIZE} jpeg ${(out.length / 1024).toFixed(0)} KB`
+        );
+      } catch (err) {
+        problems.push(`${picture.set}/${picture.name}: ${err.message}`);
+      }
+      continue;
+    }
+
+    /* A file in Lineage Cards/ that no lineage card answers to. Its own message,
+       because that folder resolves against lineage cards alone: "no card by that
+       name" would send a reader looking through the whole codex. */
+    if (isLineageCard(picture)) {
+      problems.push(
+        `${picture.set}/${picture.name}: the codex has no lineage card by that name`
+      );
+      continue;
+    }
+
     /* In the shared folder, an item's picture is not this script's to place and not
        this script's to complain about. A name that is neither a card nor an item
        still is: that is a misspelling, and both scripts will say so, which is the
@@ -754,6 +920,9 @@ console.log(
 );
 if (talentFetched || talentSkipped) {
   console.log(`${talentFetched} talent plate(s) fetched, ${talentSkipped} already on disk`);
+}
+if (plateFetched || plateSkipped) {
+  console.log(`${plateFetched} lineage plate(s) cut, ${plateSkipped} already on disk`);
 }
 console.log(`${thumbsMade} thumbnail(s) cut, ${(thumbBytes / 1024).toFixed(0)} KB across ${art.size}`);
 if (fetched > 0 || encoded > 0) {

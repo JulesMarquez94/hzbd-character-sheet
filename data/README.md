@@ -3131,11 +3131,51 @@ Draconic Bond](#three-things-for-the-designer) stands as it was. It is
 DRACONIC SCALES that holds the lineage's half of it now, not CHROMATIC
 RESISTANCE.
 
-### The art is still not placed
+### One id had to change, a third time
 
-Twenty-two card pictures and thirteen ancestry pictures are in `data/Lineage/`,
-and `npm run art:cards` still cannot place any of them. The reason is unchanged
-and is recorded in `pull-card-art.mjs`: `lineages.js` hands the same card object
-out twice, once into `LINEAGE_CARDS` and once on the lineage, so art attached to
-the flattened copy reaches the codex and not the sheet. Wrapping the module the
-way `talents.js` wraps its sets is what unblocks it, and it is a separate change.
+**DRAGON BREATH is `dragon-breath-lineage`.** The Draconic Bond already prints a
+DRAGON BREATH, and the lineage card is the same effect rewritten: the ally breathes
+2d4 and its Mind in front of *itself*, you breathe 2d6 and your highest Attribute.
+Two cards, one name. The older keeps the id, the same way RESILIENCE and CREATE
+WATER were settled, and lineage cards fold in *after* talent cards so the clash
+would have taken the ally’s card out of `getCard` silently.
+
+That "in front of itself" is also where the lineage row came from: it is the ally’s
+sentence with the ally taken out and nothing put back. The person read in
+`lineages.js` is that, corrected.
+
+### The art is placed
+
+All thirty-five pictures are cut and committed: **27 card plates** into
+`public/cards/` and **13 ancestry plates** into `public/lineages/`, the second lot
+square 640px JPEG beside the talent sets’. Twenty-two files became twenty-seven
+cards, because INNATE X is one drawing for six of them.
+
+**67 files, 2.08 MB**, cut from 77.4 MB of originals that stay in `data/` and stay
+out of the clone. That is the same trade the rest of `public/cards/` made, and the
+reason for it is in `pull-card-art.mjs`: a build cannot reach out for a picture, so
+what ships has to be in the repo.
+
+Two things had to change for it to work at all.
+
+**`lineages.js` now wears its art.** The blocker recorded in `pull-card-art.mjs` was
+real: the module handed the same card out twice, on `lineage.cards` and again
+flattened into the registry, and `withArt` spreads, so dressing the flattened copy
+would have given the picture to `getCard` and left the sheet’s own card bare. The
+fix is to dress *first*, once, on one deduplicated list, and rebuild both the
+registry and the thirteen ancestries from those objects. A card two ancestries
+share is still one object, and a pool’s eight are dressed with the rest.
+
+**The lineage folder resolves against lineages alone.** `data/Lineage/` is the only
+folder besides a spell school that nests, and it needs its own name maps rather
+than the codex-wide one, because `Dragon Breath.png` exists in both
+`data/Draconic Bond/` and `data/Lineage/Lineage Cards/` and one flat map cannot
+hold both. Scoped per folder there is no question which is which.
+
+Four filenames are aliased, and all four are reads the codex already made:
+`Canibalism`, `Venemous`, `Undeath Resillience` and `Draconic Scale`. Renaming a
+file retires its alias. `Wild Swiftness,.jpg` needs none, because flattening drops
+the comma on its own.
+
+**`backgrounds.js` is now the only module still unwrapped**, and a background skill
+is still the one card a picture cannot be placed on. It is the same one-line fix.
