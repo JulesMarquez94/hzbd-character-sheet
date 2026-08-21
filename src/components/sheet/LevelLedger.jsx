@@ -7,6 +7,7 @@ import TalentPick from './TalentBlock.jsx';
 import { advancementState } from '../../lib/talents.js';
 import { backgroundState } from '../../lib/backgrounds.js';
 import {
+  ATTRIBUTE_POINTS,
   getSkill,
   levelGrants,
   levelPicksState,
@@ -257,7 +258,13 @@ function summarise({ grants, slot, character, picks, entry }) {
     );
   }
   if (grants.attribute) {
-    said.push(entry.attribute ? `+1 ${label(entry.attribute)}` : 'no attribute point yet');
+    const raised = entry.raised ?? [];
+    said.push(
+      raised.length === 0
+        ? 'no attribute points yet'
+        : raised.map((key) => `+1 ${label(key)}`).join(', ') +
+            (raised.length < ATTRIBUTE_POINTS ? ', one still open' : '')
+    );
   }
   if (grants.skill) {
     said.push(entry.skill ? getSkill(entry.skill)?.name ?? entry.skill : 'no skill yet');

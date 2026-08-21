@@ -55,6 +55,9 @@ const TALENT_QUALITY = 82;
    folder rather than talents/, because a lineage is not a set and an id could
    collide with one. */
 const LINEAGE_OUT = path.join(ROOT, 'public', 'lineages');
+/* And the same again for a background: 640 square behind `background.art`, drawn
+   on the trade wall and at the head of its page. */
+const BACKGROUND_OUT = path.join(ROOT, 'public', 'backgrounds');
 
 /* The plate on a dealt card is 360x270 CSS pixels and `background-size: cover`.
    720 is that at 2x, which is as much as any screen can show of it. Quality 78
@@ -300,6 +303,22 @@ async function lineageNames() {
   };
 }
 
+/**
+ * The background family's two maps, for the same reason the lineage folder has
+ * its own: a name is looked up against backgrounds and skills alone, and never
+ * against the whole codex. `Cunning` is a skill and there is a Trickster ability
+ * a name like that could land on tomorrow; scoped here there is no question.
+ */
+async function backgroundNames() {
+  const { BACKGROUNDS, SKILLS } = await import(
+    path.join(ROOT, 'src/lib/backgrounds.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return {
+    plates: new Map(BACKGROUNDS.map((b) => [flatten(b.name), b.id])),
+    cards: new Map(SKILLS.map((s) => [flatten(s.name), s.id])),
+  };
+}
+
 /** Printed set name -> talent id, for the Overview row of a Talent Set sheet. */
 async function talentIds() {
   const { TALENTS } = await import(
@@ -408,6 +427,37 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature']);
 const LINEAGE_FOLDER = 'lineage';
 const LINEAGE_CARD_FOLDER = flatten('Lineage/Lineage Cards');
 
+/**
+ * The backgrounds and their skills, which arrive the way the ancestries do.
+ *
+ * `data/Background/` landed 2026-08-21: ten background plates at the top and the
+ * Skills tab's own pictures in `Skills/` under them. `data/Skills/` arrived in
+ * the same drop holding a copy of that subfolder, so both are claimed and both
+ * resolve against the same two maps — a name is either a background or a skill
+ * and never both, so where the file happens to sit decides nothing. That is what
+ * lets the two stray background plates sitting in the skills folder land
+ * correctly instead of being reported.
+ *
+ * The pictures are 2400x1792 art plates rather than whole card renders, like the
+ * lineage drop, so nothing here is cut.
+ */
+const BACKGROUND_FOLDER = 'background';
+const SKILL_FOLDER = 'skills';
+
+/** A folder in the background family: `data/Background/`, or `data/Skills/`. */
+const isBackgroundFamily = (name) =>
+  flatten(name) === BACKGROUND_FOLDER || flatten(name) === SKILL_FOLDER;
+
+/**
+ * A duplicate Windows made rather than a picture somebody drew.
+ *
+ * `Heavy Armor Mastery - Copy.jpg` sits beside `Heavy Armor Mastery.jpg` in the
+ * skills drop. Explorer names a copy that way, so a name ending in "copy" is
+ * skipped in silence: reported, it would be two lines of noise on every run
+ * saying only that Windows exists.
+ */
+const isCopy = (name) => /\bcopy$/.test(flatten(name));
+
 function pictures(setIds) {
   if (!existsSync(DATA)) return [];
 
@@ -418,16 +468,18 @@ function pictures(setIds) {
   const walk = (dir, set, card, nest) =>
     readdirSync(path.join(DATA, dir), { withFileTypes: true }).flatMap((entry) => {
       if (entry.isDirectory()) {
-        /* Only a school folder and the lineage folder nest — a set folder's
-           subfolder is not art. */
+        /* A school folder, the lineage folder and the background folder nest —
+           a set folder's subfolder is not art. */
         return nest ? walk(path.join(dir, entry.name), `${set}/${entry.name}`, card, nest) : [];
       }
       if (!IMAGE_FILE.test(entry.name)) return [];
+      const name = entry.name.replace(IMAGE_FILE, '');
+      if (isCopy(name)) return [];
       return [
         {
           set,
           file: path.join(DATA, dir, entry.name),
-          name: entry.name.replace(IMAGE_FILE, ''),
+          name,
           card,
         },
       ];
@@ -436,10 +488,19 @@ function pictures(setIds) {
   return readdirSync(DATA, { withFileTypes: true })
     .filter(
       (entry) =>
-        entry.isDirectory() && (mine(entry.name) || school(entry.name) || lineage(entry.name))
+        entry.isDirectory() &&
+        (mine(entry.name) ||
+          school(entry.name) ||
+          lineage(entry.name) ||
+          isBackgroundFamily(entry.name))
     )
     .flatMap((dir) =>
-      walk(dir.name, dir.name, school(dir.name), school(dir.name) || lineage(dir.name))
+      walk(
+        dir.name,
+        dir.name,
+        school(dir.name),
+        school(dir.name) || lineage(dir.name) || isBackgroundFamily(dir.name)
+      )
     );
 }
 
@@ -448,6 +509,14 @@ const isLineagePlate = (picture) => flatten(picture.set) === LINEAGE_FOLDER;
 
 /** A file in `data/Lineage/Lineage Cards/`: art for one of the lineage cards. */
 const isLineageCard = (picture) => flatten(picture.set) === LINEAGE_CARD_FOLDER;
+
+/**
+ * A file anywhere in the background family, at either depth. Which of the two
+ * maps answers for it is decided by its *name* rather than by its folder — see
+ * the note over `BACKGROUND_FOLDER`.
+ */
+const inBackgroundFamily = (picture) =>
+  flatten(picture.set).split(' ').some((word) => word === BACKGROUND_FOLDER || word === SKILL_FOLDER);
 
 /**
  * Lineage card files whose name is not the name the codex prints, flattened on
@@ -463,6 +532,31 @@ const LINEAGE_ALIASES = {
   venemous: 'venomous',
   'undeath resillience': 'undeath resilience',
   'draconic scale': 'draconic scales',
+};
+
+/**
+ * Skill files whose name is not the name the codex prints, flattened on both
+ * sides. The same record LINEAGE_ALIASES is, for the background family's map.
+ *
+ * Five, and every one is a read the codex already made and wrote down. The tab
+ * prints Haggler, Helpful, Inquisitor and three Innate Spell rows; the pictures
+ * were drawn from working names. `Cultist` is Occultist's: it is the only file in
+ * the drop with no row of its own and the only row in the tab with no file, and
+ * the two are one word apart. Renaming a file retires its entry here.
+ */
+const SKILL_ALIASES = {
+  haggle: 'haggler',
+  helper: 'helpful',
+  inquistor: 'inquisitor',
+  cultist: 'occultist',
+  'inate spell novice': 'innate spell novice',
+  'inate spell adept': 'innate spell adept',
+  'inate spell master': 'innate spell master',
+};
+
+/** The same, for a background plate. One so far: `Mercanery.jpg` is Mercenary's. */
+const BACKGROUND_ALIASES = {
+  mercanery: 'mercenary',
 };
 
 /**
@@ -546,9 +640,11 @@ const ids = await cardIds();
 const sets = await talentIds();
 const items = await itemNames();
 const lineages = await lineageNames();
+const backgrounds = await backgroundNames();
 mkdirSync(OUT, { recursive: true });
 mkdirSync(TALENT_OUT, { recursive: true });
 mkdirSync(LINEAGE_OUT, { recursive: true });
+mkdirSync(BACKGROUND_OUT, { recursive: true });
 
 let plateFetched = 0;
 let plateSkipped = 0;
@@ -595,26 +691,61 @@ const idByAliasFile = new Map(
 
 /* A lineage card file resolves against lineage cards and nothing else, and one of
    them serves six. Both are settled here so every loop below stays
-   one-picture-one-card: `lineageId` is the answer, already found. */
+   one-picture-one-card: `lineageId` is the answer, already found. A background
+   family file is settled here too, against its own two maps: `skillId` when the
+   name is a skill's, `plateId` when it is a background's. */
 const folder = pictures(setIdByFolder).flatMap((picture) => {
-  if (!isLineageCard(picture)) return [picture];
   const flat = flatten(picture.name);
+
+  if (inBackgroundFamily(picture)) {
+    const skillId = backgrounds.cards.get(SKILL_ALIASES[flat] ?? flat);
+    if (skillId) return [{ ...picture, skillId }];
+    const plateId = backgrounds.plates.get(BACKGROUND_ALIASES[flat] ?? flat);
+    // Nothing matched: left whole so the report below names the file.
+    return [plateId ? { ...picture, plateId, into: BACKGROUND_OUT, kind: 'background' } : picture];
+  }
+
+  if (!isLineageCard(picture)) return [picture];
   const found =
     LINEAGE_MODULAR[flat] ??
     [lineages.cards.get(LINEAGE_ALIASES[flat] ?? flat)].filter(Boolean);
-  // Nothing matched: left whole so the report below names the file.
   return found.length === 0 ? [picture] : found.map((id) => ({ ...picture, lineageId: id }));
 });
 
-const claims = new Map();
-for (const picture of folder) {
+/**
+ * Which card a file is for, or null. Family answers first, since those resolve
+ * against their own maps and must never be looked up codex-wide.
+ */
+function cardIdFor(picture) {
   const flat = flatten(picture.name);
-  const id =
+  return (
     picture.lineageId ??
+    picture.skillId ??
     idBySheetFile.get(flat) ??
     idByFlatName.get(flat) ??
     idByAliasFile.get(flat) ??
-    null;
+    null
+  );
+}
+
+/**
+ * The same picture in two places rather than two pictures.
+ *
+ * `data/Skills/` and `data/Background/Skills/` are a folder and a copy of it, and
+ * both are claimed. A copy is the same bytes at the same moment, so a duplicate
+ * that matches on both size and mtime is one file the drop happens to hold twice
+ * and is settled in silence. Anything that differs is a redraw, and a redraw is
+ * exactly what the report below is for.
+ */
+function sameFile(a, b) {
+  const one = statSync(a.file);
+  const two = statSync(b.file);
+  return one.size === two.size && one.mtimeMs === two.mtimeMs;
+}
+
+const claims = new Map();
+for (const picture of folder) {
+  const id = cardIdFor(picture);
   if (!id) continue;
 
   const held = claims.get(id);
@@ -625,17 +756,13 @@ for (const picture of folder) {
       ? [picture, held]
       : [held, picture];
   claims.set(id, win);
+  if (sameFile(win, lose)) continue;
   console.log(`${id.padEnd(20)} two files claim it — using ${win.set}/${win.name}, not ${lose.name}`);
 }
 
 for (const picture of folder) {
   const flat = flatten(picture.name);
-  const id =
-    picture.lineageId ??
-    idBySheetFile.get(flat) ??
-    idByFlatName.get(flat) ??
-    idByAliasFile.get(flat) ??
-    null;
+  const id = cardIdFor(picture);
 
   // Beaten by a newer file for the same card. Already reported above.
   if (id && claims.get(id) !== picture) continue;
@@ -677,6 +804,38 @@ for (const picture of folder) {
       problems.push(
         `${picture.set}/${picture.name}: the codex has no lineage card by that name`
       );
+      continue;
+    }
+
+    /* A background plate: a file in the background family named for one of the
+       ten. Its skills resolved before the loop, so anything reaching here with a
+       `plateId` is a plate, and anything without is a name neither map answers
+       to. */
+    if (inBackgroundFamily(picture)) {
+      if (!picture.plateId) {
+        problems.push(
+          `${picture.set}/${picture.name}: the codex has no skill and no background by that name`
+        );
+        continue;
+      }
+      const plate = path.join(BACKGROUND_OUT, `${picture.plateId}.jpg`);
+      if (!stale(picture.file, plate) && !FORCE) {
+        plateSkipped += 1;
+        continue;
+      }
+      try {
+        const out = await writeSquarePlate(
+          BACKGROUND_OUT,
+          picture.plateId,
+          readFileSync(picture.file)
+        );
+        plateFetched += 1;
+        console.log(
+          `${picture.plateId.padEnd(20)} background plate ${TALENT_SIZE}x${TALENT_SIZE} jpeg ${(out.length / 1024).toFixed(0)} KB`
+        );
+      } catch (err) {
+        problems.push(`${picture.set}/${picture.name}: ${err.message}`);
+      }
       continue;
     }
 

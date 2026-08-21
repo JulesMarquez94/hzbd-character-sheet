@@ -66,6 +66,11 @@ doing on its own.
 | Spells · Elemental, from the `Elemental/` folder | **2026-08-20, 29 spells off card renders** | `src/lib/spells.js` (`SPELLS`) |
 | Elemental art, cut out of those renders | **2026-08-20, 29 plates** | `public/cards/` + `src/lib/cardArt.js` |
 | The Nightmare set and the Ring of Shrouding, handed over in chat | **2026-08-20, 1 spell + 2 workings + 2 trinkets** | see [the named trinkets](#the-named-trinkets-2026-08-20) |
+| General Rules · Skills | **2026-08-21, 32 skills** | `src/lib/backgrounds.js` (`SKILLS`) |
+| Skill art, from `Skills/` and `Background/Skills/` | **2026-08-21, 30 of the 32** | `public/cards/` + `src/lib/cardArt.js` |
+| Background art, from `Background/` | **2026-08-21, 10 plates** | `public/backgrounds/` |
+| The ten backgrounds and the purse formula | **2026-08-21, named in chat** | `src/lib/backgrounds.js` (`BACKGROUNDS`) |
+| Two attribute points at every odd level | **2026-08-21, ruled in chat** | `src/lib/levelPicks.js` (`raised`) |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -3190,3 +3195,179 @@ the comma on its own.
 
 **`backgrounds.js` is now the only module still unwrapped**, and a background skill
 is still the one card a picture cannot be placed on. It is the same one-line fix.
+
+*Done on 2026-08-21, when the Skills tab arrived with its own pictures. See [the
+skills](#the-skills-are-the-designers-now-2026-08-21).*
+
+## The skills are the designer's now, 2026-08-21
+
+`data/General Rules - Skills.csv` landed with **32 rows**, and it replaces the
+eighteen skills `backgrounds.js` had been carrying since 2026-08-19. Those
+eighteen were a first pass written before the tab existed, off the three skills
+Jules had handed over by hand. They are gone, ids and all: nothing in the codex
+points at `negotiator`, `field-medic`, `quartermaster` or the fifteen others.
+
+**A saved character keeps the shape and loses the skills.** The
+`background_skills` column holds ids, and `normalizeBackgroundSkills` drops any
+id the pool no longer offers, so an existing sheet reads as a background with
+none of its picks made. That is the honest answer: the skills it named do not
+exist, and the block asks for them again rather than inventing a mapping.
+
+### What the round trip proves
+
+Every body was compared to its Main Effect cell with case and punctuation
+flattened. **All 32 rows are accounted for**, and the reads are listed in full in
+the header of `backgrounds.js`: spelling (nineteen of them), grammar (nine),
+capitalised defined terms, one distance written the codex's way, and nine Oxford
+commas dropped per `docs/text-style.md`.
+
+Six things the tab leaves open, all recorded over the codex rather than guessed
+at here:
+
+1. **Arcane Marshal and Cartographer carry the same cell**, word for word. It is
+   plainly Cartographer's text. Both are printed as written.
+2. **Unseen Spellwork asks for "a Cunning skill check"**, and Cunning is a skill
+   on the same tab rather than one of the three attributes.
+3. **Three armor masteries change a stat the sheet does not yet add.** All three
+   are level 5, so nothing is missing from a level-1 sheet.
+4. **Tailor asks for two items that do not exist**, a Disguise Kit and Bandages
+   as a consumable. `bandage-roll` in `utility.js` is close to the second.
+5. **Spell Eater's row ends in a stray cell** holding the Wildkin pool off the
+   lineage tab. Dropped.
+6. **Empath and Seafarer have no picture**, and there is one unnamed file in the
+   drop (`Gemini_Generated_Image_w78nd7w78nd7w78n.jpg`) that may be either.
+   Renaming it after the skill it was drawn for places it.
+
+### Three rows ask a question
+
+Innate Spell Novice, Adept and Master each promise a spell of that rank "from any
+school" and name none. That is INNATE X's own shape off the lineage tab, so it is
+built the same way: the rank's whole shelf is the card's `choice`, read off
+`spells.js`, `learns: true` says the answer is a card rather than a word, and the
+spell named joins the hand behind the skill that taught it.
+
+Thirty Novice, eighteen Adept and eight Master, so all three can be answered. The
+question is asked **in the window that hands the skill over**, in both places a
+skill can come from: the background block's pool, and the level chooser. Taking
+one that asks nothing closes the chooser; taking one that asks keeps it open,
+because the shelf underneath is the rest of the same decision.
+
+An unanswered one badges the Advancement tab exactly as an unanswered lineage
+card does, through `levelQuestions`.
+
+### Five skills a background cannot teach
+
+The Requirement column gates three armor masteries and Innate Spell Adept at
+level 5, and Innate Spell Master at level 10. A background is the life you led
+before level 1, so it may not offer one, and `skillOptionsAt` measures the
+**slot's** level rather than where the character stands: the level-3 slot refuses
+Innate Spell Adept with "Needs level 5", and the level-11 slot is the first that
+can take Master. A pool holding a gated skill says so at load in dev.
+
+### Mastermind and Spell Eater grow
+
+Both say "You can use this feature once, regaining it after a long rest. The
+number of uses increases to 2 at level 6." So `uses` in `uses.js` may now be a
+function of level as well as a number, and `cardLimit`, `normalizeUses`,
+`cardUse` and `usesRest` ask how many a card holds *of a character*. Every caller
+already had one in hand, so nothing had to be threaded anywhere. A plain number
+never looks at the level.
+
+### `Long Rest` is the tab's word for a labour
+
+The Tags column says `Long Rest` where this repo said `Labour`. `restLabours`
+reads both, so Apothecary, Scavenger and Tailor are offered in the rest window
+without either name having to win.
+
+### And the module wears its art
+
+`backgrounds.js` was [the last module still unwrapped](#the-art-is-placed). It is
+dressed now, the same way `lineages.js` is: once, at module scope, on one list,
+with `BACKGROUNDS` rebuilt to point at those objects. So a skill offered by four
+backgrounds is still one object with one picture, and `getCard` hands back the
+dressed card.
+
+`data/Background/` nests like `data/Lineage/` does, and `data/Skills/` is claimed
+beside it. Both resolve against the same two maps, backgrounds and skills, and
+never against the codex at large: a name is one or the other and never both, so
+which folder a file sits in decides nothing. That is what lets the two stray
+background plates in the skills folder land correctly instead of being reported.
+
+Two small rules came with it. A file whose name ends in `copy` is Windows making
+a duplicate and is skipped in silence, which is what `Heavy Armor Mastery -
+Copy.jpg` is. And when two files claim one card, the "two files claim it" line is
+held back if they match on both size and mtime, because `data/Skills/` and
+`data/Background/Skills/` are a folder and a copy of it, which is one picture in
+two places rather than a redraw.
+
+Six filenames are aliased, and every one is a read the codex already made:
+`Haggle`, `Helper`, `Inquistor`, `Cultist` (Occultist's, the only file with no row
+and the only row with no file), the three `Inate Spell` rows, and `Mercanery.jpg`
+for the Mercenary plate. Renaming a file retires its alias.
+
+## The ten backgrounds, 2026-08-21
+
+Jules named them and set the arithmetic: **Criminal, Erudit, Military, Outlander,
+Craftsman, Entertainer, Merchant, Aristocrat, Investigator and Mercenary**. The
+eight drafted on 2026-08-19 are gone.
+
+### One formula is the whole balance
+
+```
+Coins = (4 - skills) * 2000        Supplies = 70, for everybody
+```
+
+A background teaches **one, two or three** skills, so it shows up with 6000,
+4000 or 2000 Coins. A poor life taught you more and left you less, and that is
+the only axis the ten are arranged along. `startingCoins` is the one place it is
+written down and every purse is filled in from it, so a coin count can never
+drift from the picks beside it.
+
+| Background | Skills | Coins | Weapons | Pockets | Pool |
+| ---------- | -----: | ----: | ------: | ------: | ---: |
+| Criminal | 3 | 2000 | 1 | 2 belt, 1 pack | 6 |
+| Erudit | 3 | 2000 | 1 | 1 belt, 2 pack | 7 |
+| Outlander | 3 | 2000 | 1 | 2 belt, 1 pack | 6 |
+| Entertainer | 3 | 2000 | 1 | 1 belt, 2 pack | 6 |
+| Military | 2 | 4000 | 2 | 1 belt, 1 pack | 6 |
+| Mercenary | 2 | 4000 | 2 | 2 belt, 1 pack | 6 |
+| Craftsman | 2 | 4000 | 1 | 1 belt, 2 pack | 6 |
+| Investigator | 2 | 4000 | 1 | 1 belt, 2 pack | 7 |
+| Merchant | 1 | 6000 | 1 | 1 belt, 2 pack | 6 |
+| Aristocrat | 1 | 6000 | 1 | 1 belt, 2 pack | 6 |
+
+Everyone still gets one full set of Common armor. Coins and Supplies being
+settled by the formula leaves the pool, the weapon count and the pockets as the
+only things telling the ten apart, which is where the character of each one now
+lives: the Military and the Mercenary are the two that arm both hands, the
+Merchant walks in with a Terra Cotta Disk because a merchant owns a cart, and the
+Criminal and the Investigator both carry Thief's Picks for opposite reasons.
+
+**The purse moved by roughly ten times.** The old drafts ran 100 to 600 Coins.
+Nothing else on the sheet was rebalanced against that: what armor and weapons
+cost is `items.js`'s, and it has not been touched.
+
+Every pool offers six or seven and lets you keep one to three, so two characters
+out of the same trade need not look alike, and **all 27 skills learnable at level
+1 are offered by somebody**. The five gated ones are offered by nobody, on
+purpose.
+
+## An odd level raises two attributes, 2026-08-21
+
+Level 1's +2 / +1 spread is untouched. Every **odd level after it** now hands out
+two points, +1 apiece, on two different attributes, where it used to hand out one.
+
+The record changes with it. `attribute: "mind"` becomes `raised: ["mind",
+"physique"]`, a list rather than a pair of named slots, because both points are
+the same size and their order means nothing.
+
+**A sheet written by the older build reads as one taken and one open.** The
+single point is read back as a list of one, which is what it now is: half a pick,
+badged unfinished until the second is placed. Nothing is dropped and no second
+point is invented. `check-stat-math.mjs` keeps level 9 of its ladder written the
+old way on purpose, so the round trip proves both readings add up.
+
+The chooser needed nothing new. Level 1 already ran two slots that may never land
+on the same attribute, and tapping the one the other slot holds trades places
+rather than refusing, so an odd level is now that same dialog with both slots
+worth +1.

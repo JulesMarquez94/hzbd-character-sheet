@@ -23,7 +23,12 @@
  * only place that knows what counts as a source.
  */
 
-import { getBackground, getBackgroundSkill, normalizeBackgroundSkills } from './backgrounds.js';
+import {
+  getBackground,
+  getBackgroundSkill,
+  normalizeBackgroundSkills,
+  skillCards,
+} from './backgrounds.js';
 import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
 import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from './items.js';
@@ -52,7 +57,14 @@ export function answerOn(card, choices) {
   return card.choice.options.find((option) => option.id === choices?.[card.id]) ?? null;
 }
 
-/** Lineage cards carry choices; nothing else in the codex does yet. */
+/**
+ * Lineage cards and skills carry choices; nothing else in the codex does yet.
+ *
+ * The rider is what makes the answer *print*: a card whose choice is open reads
+ * "a Novice spell from any school", and the same card with an answer names the
+ * spell. Every card is passed through, answered or not, so the list keeps its
+ * order and a spell learned behind a skill is dealt with its own text intact.
+ */
 function withAnswers(cards, choices) {
   return cards.map((card) => {
     const picked = answerOn(card, choices);
@@ -137,10 +149,14 @@ function backgroundSource(character) {
     return written('background', 'background', name, 'Background, written in by hand');
   }
 
-  const skills = normalizeBackgroundSkills(background, character?.background_skills)
+  /* The skills, and behind any that taught a spell, the spell. "You can choose a
+     Novice spell from any school" puts two cards on this tab and not one: the
+     skill that made the promise, and the spell that answered it. `skillCards` is
+     where that expansion lives, so this tab and the Advancement block read the
+     same hand. */
+  const held = normalizeBackgroundSkills(background, character?.background_skills)
     .map(getBackgroundSkill)
-    .filter(Boolean)
-    .map((card) => entry(card));
+    .filter(Boolean);
 
   return {
     id: 'background',
@@ -148,7 +164,13 @@ function backgroundSource(character) {
     title: background.name,
     note: 'Background',
     art: background.art ?? null,
-    sections: [section('skills', 'Skills of the trade', skills)],
+    sections: [
+      section(
+        'skills',
+        'Skills of the trade',
+        withAnswers(skillCards(held, character?.choices), character?.choices)
+      ),
+    ],
   };
 }
 
@@ -159,6 +181,7 @@ function backgroundSource(character) {
  */
 function learnedSource(character) {
   const picks = normalizeLevelPicks(character?.level_picks);
+  const choices = character?.choices ?? {};
 
   const learned = Object.entries(picks)
     .map(([level, pick]) => ({ level: Number(level), card: getBackgroundSkill(pick.skill) }))
@@ -175,8 +198,14 @@ function learnedSource(character) {
       learned.length === 1 ? 'level' : 'levels'
     } ${listOut(learned.map((row) => row.level))}`,
     art: null,
+    /* A skill learned here can teach a spell too, and the spell belongs under
+       the level that bought it rather than in a block of its own. */
     sections: learned.map((row) =>
-      section(`level-${row.level}`, `Level ${row.level}`, [entry(row.card)])
+      section(
+        `level-${row.level}`,
+        `Level ${row.level}`,
+        withAnswers(skillCards([row.card], choices), choices)
+      )
     ),
   };
 }

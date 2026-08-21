@@ -617,8 +617,13 @@ function PoolPicker({ lineage, character, readOnly, onTake }) {
  * One spell, so the taken one is shown held and its button goes quiet. Changing
  * your mind is tapping another, not giving this one back: the blood teaches a
  * spell either way, and an empty slot is not one of the answers.
+ *
+ * Exported because a *skill* asks the same question. Innate Spell Novice, Adept
+ * and Master each offer a whole rank rather than one school's shelf, and a rank
+ * is thirty cards: all the more reason for the wall rather than a chip row. See
+ * BackgroundPick and SkillPick, which raise this one.
  */
-function LearnPicker({ card, picked, character, art, readOnly, onPick }) {
+export function LearnPicker({ card, picked, character, art, readOnly, onPick }) {
   const stack = useCardStack();
 
   return (

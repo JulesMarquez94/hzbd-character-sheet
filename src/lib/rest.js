@@ -180,10 +180,14 @@ export function labourOptions(card) {
 /**
  * Everything this character can do during a long rest.
  *
- * A skill qualifies by saying so: it is tagged Labour, or its text names
- * taking a long rest as the moment it happens. Both, because the codex tags
- * most of them and describes all of them, and a skill that only describes it
- * is still a thing you can do.
+ * A skill qualifies by saying so: it is tagged Long Rest, or its text names
+ * taking a long rest as the moment it happens. Both, because the tab tags most
+ * of them and describes all of them, and a skill that only describes it is
+ * still a thing you can do.
+ *
+ * `Long Rest` is the designer's own word for it, off the Tags column of the
+ * Skills tab, and `Labour` is what this file called the same thing before that
+ * tab existed. Both are read, so a card tagged either way is offered.
  */
 export function restLabours(character) {
   const background = getBackground(character?.background);
@@ -205,8 +209,11 @@ export function restLabours(character) {
     if (!card) continue;
 
     const text = `${card.body ?? ''}\n${card.sub_body ?? ''}`.replace(/\*+/g, '');
+    const tags = card.tags ?? [];
     const isLabour =
-      (card.tags ?? []).includes('Labour') || /take a long rest|taking a long rest/i.test(text);
+      tags.includes('Long Rest') ||
+      tags.includes('Labour') ||
+      /take a long rest|taking a long rest/i.test(text);
     if (!isLabour) continue;
 
     rows.push({ card, options: labourOptions(card) });

@@ -207,7 +207,9 @@ function attributeMath(character, stored, level, sources) {
         if (entry.major === key) terms.push(term(2, `Level ${at}`));
         if (entry.minor === key) terms.push(term(1, `Level ${at}`));
       }
-      if (entry.attribute === key) terms.push(term(1, `Level ${at}`));
+      // An odd level raises two, so a level can credit this attribute once and
+      // the next one too. Each point is its own term, as the spread's two are.
+      if ((entry.raised ?? []).includes(key)) terms.push(term(1, `Level ${at}`));
     }
 
     if (lineage[key]) terms.push(term(lineage[key], stored.lineage));

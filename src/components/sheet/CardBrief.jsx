@@ -93,8 +93,8 @@ export default function CardBrief({
             {(tags.length > 0 || damage.length > 0 || card.sub_name || card.choice) && (
               <span className="card-brief-chips">
 
-                {/* The first tag is what the card is — Talent, Novice Spell,
-                    Background Skill — so it takes the accent and leads. */}
+                {/* The first tag is what the card is: Talent, Novice Spell,
+                    Skill. So it takes the accent and leads. */}
                 {tags.map((tag, index) => (
                   <span
                     className={`card-brief-chip${index === 0 ? ' is-kind' : ''}`}

@@ -46,6 +46,26 @@ import { rechargeRest } from './items.js';
 import { getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
 
+/* ------------------------------------------------------- a count that grows
+ * Two cards on the Skills tab say the same thing: "You can use this feature
+ * once, regaining it after a long rest. The number of uses increases to 2 at
+ * level 6." Mastermind and Spell Eater, and there is no third shape hiding in
+ * that sentence: it is the same rider counted to a number that depends on who
+ * is holding the card.
+ *
+ * So `uses` may be a function of level as well as a number, and everything that
+ * asks how many a card holds asks it *of a character*. Every caller of the four
+ * functions below already had one in hand, so nothing had to be threaded
+ * anywhere: a card whose `uses` is a plain number never looks at the level, and
+ * a level that cannot be read falls back to 1, which is what an unlevelled sheet
+ * is.
+ */
+
+/** The level a card's count is read against. */
+function levelOf(character) {
+  return Math.max(1, Math.floor(Number(character?.level) || 1));
+}
+
 /**
  * How many times a card may be used before it is spent, and what fills it, or
  * null for everything with no limit at all.
@@ -54,14 +74,20 @@ import { getEnchantment } from './enchantments.js';
  * out, which is a thing a card is allowed to say. `fills` is null there, and the
  * rest below leaves it alone.
  */
-export function cardLimit(card) {
-  const max = Math.max(0, Math.floor(Number(card?.uses) || 0));
+export function cardLimit(card, character = null) {
+  const written = typeof card?.uses === 'function' ? card.uses(levelOf(character)) : card?.uses;
+  const max = Math.max(0, Math.floor(Number(written) || 0));
   if (max === 0) return null;
 
   return { max, recharge: card?.recharge ?? null, fills: rechargeRest(card) };
 }
 
-/** Whether a card is one of the ones this file has anything to say about. */
+/**
+ * Whether a card is one of the ones this file has anything to say about.
+ *
+ * Asked without a character, because *whether* a card is limited never depends
+ * on who holds it: a rider that grows at level 6 is a rider at level 1 too.
+ */
 export function isLimited(card) {
   return cardLimit(card) !== null;
 }
@@ -75,7 +101,7 @@ export function isLimited(card) {
  * a card the codex no longer has, and a count of uses against nothing is a row
  * that can never be spent and can never come back.
  */
-export function normalizeUses(value) {
+export function normalizeUses(value, character = null) {
   let source = value;
   if (typeof source === 'string') {
     try {
@@ -88,7 +114,7 @@ export function normalizeUses(value) {
 
   const clean = {};
   for (const [id, count] of Object.entries(source)) {
-    const limit = cardLimit(resolveCard(id));
+    const limit = cardLimit(resolveCard(id), character);
     if (!limit) continue;
 
     const used = Math.min(limit.max, Math.max(0, Math.floor(Number(count) || 0)));
@@ -124,10 +150,10 @@ function resolveCard(id) {
  * counts down and `spent` is the whole of what greys a chip out.
  */
 export function cardUse(character, card) {
-  const limit = cardLimit(card);
+  const limit = cardLimit(card, character);
   if (!limit) return null;
 
-  const stored = normalizeUses(character?.card_uses);
+  const stored = normalizeUses(character?.card_uses, character);
   const used = Math.min(limit.max, Math.max(0, Math.floor(Number(stored[card.id]) || 0)));
 
   return {
@@ -151,7 +177,9 @@ export function spendCardUse(character, card) {
   const state = cardUse(character, card);
   if (!state || state.spent) return null;
 
-  return { card_uses: { ...normalizeUses(character?.card_uses), [card.id]: state.used + 1 } };
+  return {
+    card_uses: { ...normalizeUses(character?.card_uses, character), [card.id]: state.used + 1 },
+  };
 }
 
 /**
@@ -177,7 +205,7 @@ export function cycleCardUse(character, card) {
   const state = cardUse(character, card);
   if (!state) return null;
 
-  const stored = normalizeUses(character?.card_uses);
+  const stored = normalizeUses(character?.card_uses, character);
   const next = state.spent ? 0 : state.used + 1;
 
   if (next === 0) delete stored[card.id];
@@ -219,13 +247,13 @@ export function spentNote(card, state) {
  * and never printed.
  */
 export function usesRest(character, ends = []) {
-  const stored = normalizeUses(character?.card_uses);
+  const stored = normalizeUses(character?.card_uses, character);
   const next = { ...stored };
   const lines = [];
 
   for (const [id, used] of Object.entries(stored)) {
     const card = resolveCard(id);
-    const limit = cardLimit(card);
+    const limit = cardLimit(card, character);
     if (!limit?.fills || !ends.includes(limit.fills)) continue;
 
     delete next[id];

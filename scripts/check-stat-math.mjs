@@ -41,14 +41,21 @@ import { mathLine, minionMath, statMath } from '../src/lib/statMath.js';
 
 const LIST = process.argv.includes('--list');
 
-/** The level-1 spread and a point at every odd level after, on all three. */
+/**
+ * The level-1 spread, and the two points every odd level after hands out.
+ *
+ * Level 9 is deliberately written the *older* way, as a single `attribute`. That
+ * shape is what every saved sheet holds and it reads back as one point taken and
+ * one still open, so the ladder proves both readings add up rather than only the
+ * new one. See "two, not one" in levelPicks.js.
+ */
 const LADDER = {
   1: { major: 'instinct', minor: 'physique' },
-  3: { attribute: 'instinct' },
-  5: { attribute: 'mind' },
-  7: { attribute: 'physique' },
+  3: { raised: ['instinct', 'mind'] },
+  5: { raised: ['mind', 'physique'] },
+  7: { raised: ['physique', 'instinct'] },
   9: { attribute: 'instinct' },
-  11: { attribute: 'mind' },
+  11: { raised: ['mind', 'instinct'] },
 };
 
 const SHEETS = [

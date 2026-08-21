@@ -9,10 +9,11 @@ import {
   attributeLabel,
 } from '../../lib/attributes.js';
 import {
+  ATTRIBUTE_POINTS,
   clearLevelPick,
   reapplyTotals,
   setBoosts,
-  setLevelAttribute,
+  setLevelAttributes,
 } from '../../lib/levelPicks.js';
 import { deriveStats, formatSpeed } from '../../lib/characterModel.js';
 
@@ -21,10 +22,11 @@ import { deriveStats, formatSpeed } from '../../lib/characterModel.js';
  *
  * Level 1 hands out two boosts at once, a +2 and a +1 on two different
  * attributes, so a finished spread reads 6 / 5 / 4. Every odd level after that
- * hands out a single point. Both are the same choice at different sizes, so
- * both open the same chooser: three tiles, and a plain account of what the
- * numbers you are about to move actually buy — which for attributes is the
- * whole story, since none of them do anything except make other numbers bigger.
+ * hands out two points, a +1 apiece, and they land on two different attributes
+ * too. So both are the same choice at two sizes, and both open the same chooser:
+ * three tiles per slot, and a plain account of what the numbers you are about to
+ * move actually buy — which for attributes is the whole story, since none of
+ * them do anything except make other numbers bigger.
  *
  * Neither panel writes to `physique` / `instinct` / `mind` itself. Both hand
  * their choice to the level ledger, which rebuilds all three columns from the
@@ -150,7 +152,18 @@ export default function AttributeSpreadPick({
 
 /* ------------------------------------------------------------- odd levels */
 
-/** The single point every odd level after the first hands out. */
+/**
+ * The two points every odd level after the first hands out.
+ *
+ * One apiece, on two *different* attributes, so a level can never pour both into
+ * the same number. That is the level-1 spread's own law at a smaller size, which
+ * is why the same chooser serves both: two slots, and tapping the one the other
+ * slot holds trades places rather than refusing.
+ *
+ * A sheet written by the older build has one point recorded where two now
+ * belong. It reads as one taken and one open rather than being cleared or
+ * quietly doubled, so the block asks for the second and the ledger says so.
+ */
 export function AttributePointPick({
   character,
   state,
@@ -162,14 +175,15 @@ export function AttributePointPick({
 }) {
   const [choosing, setChoosing] = useState(false);
 
-  const chosen = state.at(level).attribute ?? null;
-  const attribute = ATTRIBUTES.find((a) => a.key === chosen) ?? null;
+  const raised = state.at(level).raised ?? [];
+  const done = raised.length >= ATTRIBUTE_POINTS;
+  const taken = raised.map((key) => ATTRIBUTES.find((a) => a.key === key)).filter(Boolean);
 
   return (
-    <PickBlock kind="attribute" step={step} title="Attribute Point" done={Boolean(chosen)}>
+    <PickBlock kind="attribute" step={step} title="Attribute Points" done={done}>
       <p className="pick-lead">
-        Level {level} hardens something about you. Put <b>+1</b> on any one of the three. It can be
-        one your level-1 boosts already raised, or the one they left alone.
+        Level {level} hardens two things about you. Put <b>+1</b> on one attribute and <b>+1</b> on
+        another, so no level ever pours both into the same number.
       </p>
 
       <div className="attr-spread">
@@ -177,30 +191,36 @@ export function AttributePointPick({
           <SpreadTile
             key={entry.key}
             attribute={entry}
-            value={entry.key === chosen ? 1 : 0}
-            bonus={entry.key === chosen ? 1 : 0}
+            value={raised.includes(entry.key) ? 1 : 0}
+            bonus={raised.includes(entry.key) ? 1 : 0}
             asDelta
           />
         ))}
       </div>
 
-      {!chosen && <p className="pick-line">Nothing taken yet. This level&rsquo;s point is unspent.</p>}
+      {!done && (
+        <p className="pick-line">
+          {raised.length === 0
+            ? `Nothing taken yet. Both of this level's points are unspent.`
+            : `${taken.map((entry) => entry.label).join(' and ')} raised. One point still unspent.`}
+        </p>
+      )}
 
       <div className="pick-tools">
         {!readOnly && (
           <button type="button" className="btn btn-pick btn-sm" onClick={() => setChoosing(true)}>
-            {chosen ? `Change your point` : 'Choose an Attribute'}
+            {done ? 'Change your points' : raised.length ? 'Place the other' : 'Choose two Attributes'}
           </button>
         )}
-        {!readOnly && chosen && (
+        {!readOnly && raised.length > 0 && (
           <>
             <span className="spacer" />
             <button
               type="button"
               className="btn btn-minimal btn-sm talent-drop"
-              onClick={() => patch(clearLevelPick(character, level, 'attribute'))}
+              onClick={() => patch(clearLevelPick(character, level, 'raised'))}
             >
-              Give it back
+              Give them back
             </button>
           </>
         )}
@@ -208,15 +228,22 @@ export function AttributePointPick({
 
       {choosing && (
         <AttributeChooser
-          title={`Level ${level}: Take an Attribute Point`}
-          lead={`One point, on any of the three. It stacks with everything you have raised before. ${attribute ? `right now this level's point sits on ${attribute.label}.` : 'this level has not spent it yet.'}`}
-          slots={[{ slot: 'attribute', bonus: 1, label: 'The +1', note: 'any one of the three' }]}
-          start={{ attribute: chosen }}
+          title={`Level ${level}: Raise Two Attributes`}
+          lead={`A point on each of two different attributes. They stack with everything you have raised before. ${
+            done
+              ? `Right now this level sits on ${taken.map((entry) => entry.label).join(' and ')}.`
+              : 'This level has not spent both yet.'
+          }`}
+          slots={[
+            { slot: 'first', bonus: 1, label: 'The first +1', note: 'any of the three' },
+            { slot: 'second', bonus: 1, label: 'The second +1', note: 'a different one' },
+          ]}
+          start={{ first: raised[0] ?? null, second: raised[1] ?? null }}
           character={character}
           unit={unit}
-          preview={(pick) => setLevelAttribute(character, level, pick.attribute)}
+          preview={(pick) => setLevelAttributes(character, level, [pick.first, pick.second])}
           onTake={(pick) => {
-            patch(setLevelAttribute(character, level, pick.attribute));
+            patch(setLevelAttributes(character, level, [pick.first, pick.second]));
             setChoosing(false);
           }}
           onClose={() => setChoosing(false)}

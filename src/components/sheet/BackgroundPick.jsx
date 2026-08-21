@@ -5,6 +5,7 @@ import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import PickBlock from './PickBlock.jsx';
+import { LearnPicker } from './LineagePick.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -12,6 +13,7 @@ import {
   backgroundState,
   backgroundTags,
   dropSkill,
+  skillAnswer,
   skillPicks,
   takeSkill,
   usedBackgroundTags,
@@ -54,6 +56,13 @@ import { appendLedger, formatNumber, newLedgerId } from '../../lib/characterMode
  * Supplies through their ledgers. All of it lands in a single patch, and where
  * every piece went is written down so that handing it back undoes exactly that
  * and nothing else.
+ *
+ * ----------------------------------------------------------- the skill's ask
+ * A skill can leave a question behind it. Innate Spell Novice promises a spell
+ * from any school and names none, so the pool that taught it is where that gets
+ * answered: learn the skill and its own shelf opens underneath, in the same
+ * window, and the spell you name joins your hand behind it. Same shape the
+ * lineage chooser uses, and the same picker.
  */
 export default function BackgroundPick({ character, patch, step = null, readOnly = false }) {
   /* Which window is open: the wall of trades, the skill pool, the outfitter, or
@@ -115,8 +124,9 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
     >
       <p className="pick-lead">
         Your <b>background</b> is what you did before the adventure: the trade or the life you
-        came out of. It teaches you a few <b>skills</b>, and it decides what you walk in carrying:
-        a weapon, a set of armor and whatever coin and supplies that life left you.
+        came out of. It teaches you one, two or three <b>skills</b>, and it decides what you walk
+        in carrying. The two trade against each other, so a life that taught you more left you
+        less to spend.
       </p>
 
       {background ? (
@@ -147,7 +157,7 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
               setWalking(false);
               setOpen('skills');
             }}
-            onCard={(skill) => stack?.openCard(skill)}
+            onCard={(card, modifiers = null) => stack?.openCard(card, modifiers)}
           />
 
           <KitSection
@@ -234,6 +244,11 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
           walking={walking && !taken}
           onTake={(id) => patch({ background_skills: takeSkill(background, state.skillIds, id) })}
           onDrop={(id) => patch({ background_skills: dropSkill(background, state.skillIds, id) })}
+          /* A skill's own follow-up, written where every other card's choice is
+             written: one bag, keyed by the card that asked. */
+          onAnswer={(cardId, optionId) =>
+            patch({ choices: { ...(character?.choices ?? {}), [cardId]: optionId } })
+          }
           onClose={closeSkills}
         />
       )}
@@ -256,49 +271,83 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
  * What the trade taught you. The count is the whole point of the section, so
  * it sits in the heading rather than being inferred from how many rows are
  * showing — "1 of 3" reads as unfinished in a way three rows never will.
+ *
+ * A skill that taught a spell shows the spell under it, because that is what is
+ * actually on the sheet, and one that has not been asked yet says so in the
+ * place the spell would be. Neither is a card you can give back on its own: the
+ * spell leaves when the skill does.
  */
 function SkillSection({ state, character, patch, readOnly, onOpen, onCard }) {
-  const { background, skills, skillIds, picks, remaining } = state;
+  const { background, skills, skillIds, picks, remaining, unanswered } = state;
+  const choices = character?.choices ?? {};
 
   return (
     <div className="pick-part">
       <span className="talent-summary-label">
         Skills
-        <span className={`pick-count${remaining ? ' is-open' : ''}`}>
+        <span className={`pick-count${remaining || unanswered ? ' is-open' : ''}`}>
           {skillIds.length} of {picks} chosen
         </span>
       </span>
 
       {skills.length > 0 ? (
         <div className="talent-rung-cards">
-          {skills.map((skill) => (
-            <div className="card-choice-row" key={skill.id}>
-              <CardBrief card={skill} character={character} onOpen={() => onCard(skill)} />
-              {!readOnly && (
-                <button
-                  type="button"
-                  className="btn btn-minimal btn-sm talent-drop pick-drop"
-                  onClick={() =>
-                    patch({ background_skills: dropSkill(background, skillIds, skill.id) })
-                  }
-                >
-                  Give {skill.name} back
-                </button>
-              )}
-            </div>
-          ))}
+          {skills.map((skill) => {
+            const picked = skillAnswer(skill, choices);
+            const modifiers = picked ? { choice: picked } : null;
+
+            return (
+              <div className="card-choice-row" key={skill.id}>
+                <CardBrief
+                  card={skill}
+                  character={character}
+                  modifiers={modifiers}
+                  onOpen={() => onCard(skill, modifiers)}
+                />
+
+                {picked?.card && (
+                  <CardBrief
+                    card={picked.card}
+                    character={character}
+                    onOpen={() => onCard(picked.card)}
+                  />
+                )}
+                {skill.choice && !picked && (
+                  <p className="pick-line">
+                    {skill.name} has not named {skill.choice.placeholder} yet.
+                  </p>
+                )}
+
+                {!readOnly && (
+                  <button
+                    type="button"
+                    className="btn btn-minimal btn-sm talent-drop pick-drop"
+                    onClick={() =>
+                      patch({ background_skills: dropSkill(background, skillIds, skill.id) })
+                    }
+                  >
+                    Give {skill.name} back
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <p className="pick-line">
           Nothing learned yet. {background.name} offers {background.skills.length} skills and lets
-          you learn {picks}.
+          you learn {picks === 1 ? 'one of them' : picks}.
         </p>
       )}
 
       {!readOnly && (
         <div className="pick-tools pick-tools-tight">
           <button type="button" className="btn btn-sub btn-sm" onClick={onOpen}>
-            {remaining ? `Choose ${remaining} more` : 'Change your skills'}
+            {remaining
+              ? `Choose ${remaining} more`
+              : unanswered
+                ? 'Answer what they left open'
+                : 'Change your skills'}
           </button>
         </div>
       )}
@@ -953,7 +1002,8 @@ function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
                   <span className="talent-tile-line">{background.tagline}</span>
                   <TagRow background={background} />
                   <span className="talent-tile-buy">
-                    {skillPicks(background)} skills · {formatNumber(background.kit.coins)} ¢ ·{' '}
+                    {skillPicks(background)} {skillPicks(background) === 1 ? 'skill' : 'skills'} ·{' '}
+                    {formatNumber(background.kit.coins)} ¢ ·{' '}
                     {formatNumber(background.kit.supplies)} Supplies
                     {background.kit.weapons > 1 ? ' · 2 weapons' : ''}
                   </span>
@@ -974,7 +1024,7 @@ function KitPreview({ background }) {
   return (
     <section className="kit-strip">
       <span className="kit-strip-cell">
-        <b>{skillPicks(background)}</b> skills
+        <b>{skillPicks(background)}</b> {skillPicks(background) === 1 ? 'skill' : 'skills'}
       </span>
       <span className="kit-strip-cell">
         <b>{kit.weapons}</b> weapon{kit.weapons === 1 ? '' : 's'}
@@ -1001,20 +1051,35 @@ function KitPreview({ background }) {
  * The pool, printed as cards, with the take button under each. A skill is a
  * paragraph of rules text — it has to be readable in full before it is chosen,
  * which is why these are cards at their real footprint and not a list of names.
+ *
+ * And under the pool, one section per question a learned skill left open. They
+ * appear when the skill is taken and leave when it is given back, so the window
+ * that hands a skill over is the window its follow-up is answered in and nobody
+ * has to be sent looking for a shelf on another page.
  */
-function SkillChooser({ state, character, readOnly, walking = false, onTake, onDrop, onClose }) {
+function SkillChooser({
+  state,
+  character,
+  readOnly,
+  walking = false,
+  onTake,
+  onDrop,
+  onAnswer,
+  onClose,
+}) {
   const stack = useCardStack();
-  const { background, skillIds, picks, remaining } = state;
+  const { background, skillIds, picks, remaining, asks, unanswered } = state;
+  const choices = character?.choices ?? {};
 
   return (
     <Modal
-      title={`${background.name}: Learn ${picks} Skills`}
+      title={`${background.name}: Learn ${picks === 1 ? 'a Skill' : `${picks} Skills`}`}
       onClose={onClose}
       size="page"
       accent={PICK_ACCENTS.background}
       footer={
         <>
-          <span className={`pick-count${remaining ? ' is-open' : ''}`}>
+          <span className={`pick-count${remaining || unanswered ? ' is-open' : ''}`}>
             {skillIds.length} of {picks} chosen
           </span>
           <span className="spacer" />
@@ -1029,13 +1094,17 @@ function SkillChooser({ state, character, readOnly, walking = false, onTake, onD
       <p className="frame-foot" style={{ marginTop: 0 }}>
         {remaining
           ? `Learn ${remaining} more. You can give any of them back and pick again, since none of this is spent until you leave level 1 behind.`
-          : 'All chosen. Give one back to swap it for another.'}
+          : unanswered
+            ? 'All chosen. One of them is still waiting on an answer, below.'
+            : 'All chosen. Give one back to swap it for another.'}
       </p>
 
       <div className="card-brief-wall">
         {background.skills.map((skill) => {
           const held = skillIds.includes(skill.id);
           const full = !held && remaining === 0;
+          const picked = held ? skillAnswer(skill, choices) : null;
+          const modifiers = picked ? { choice: picked } : null;
 
           return (
             <CardBrief
@@ -1043,7 +1112,8 @@ function SkillChooser({ state, character, readOnly, walking = false, onTake, onD
               card={skill}
               character={character}
               held={held}
-              onOpen={() => stack?.openCard(skill)}
+              modifiers={modifiers}
+              onOpen={() => stack?.openCard(skill, modifiers)}
             >
               {!readOnly && (
                 <button
@@ -1060,6 +1130,33 @@ function SkillChooser({ state, character, readOnly, walking = false, onTake, onD
           );
         })}
       </div>
+
+      {asks.map((skill) => {
+        const picked = skillAnswer(skill, choices);
+        return (
+          <section className="talent-page-rank" key={`ask-${skill.id}`}>
+            <div className="talent-page-rank-head">
+              <span className="talent-page-rank-label">
+                {skill.name} · {skill.choice.label}
+              </span>
+              <span className="talent-page-rank-note">
+                {picked ? `${picked.label}, yours` : 'Nothing learned yet'}
+              </span>
+            </div>
+            <p className="talent-page-aside">{skill.choice.prompt}</p>
+            {/* The skill's own picture stands behind a spell that has none, the
+                way a lineage's plate does on its shelf. */}
+            <LearnPicker
+              card={skill}
+              picked={picked}
+              character={character}
+              art={skill.art_url ?? null}
+              readOnly={readOnly}
+              onPick={(optionId) => onAnswer(skill.id, optionId)}
+            />
+          </section>
+        );
+      })}
     </Modal>
   );
 }

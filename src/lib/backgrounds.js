@@ -1,5 +1,6 @@
 /**
- * Backgrounds — what a character did before the adventure started.
+ * Backgrounds and skills — what a character did before the adventure started,
+ * and what that life taught them.
  *
  * A background is the one choice on the sheet that looks backwards. Lineage is
  * the blood you were born with and a Talent Set is what you are becoming; a
@@ -7,40 +8,166 @@
  * at once:
  *
  *   the skills  — what that life taught you. Each background offers a pool and
- *                 lets you learn a few of them, and every one is a card, printed
- *                 and dealt exactly like a talent's or a weapon's, because
- *                 "spend 1 Willpower for advantage" is something you look up
- *                 mid-session and a paragraph about your youth is not.
+ *                 lets you learn one, two or three of them, and every one is a
+ *                 card, printed and dealt exactly like a talent's or a weapon's,
+ *                 because "spend 1 Willpower for advantage" is something you
+ *                 look up mid-session and a paragraph about your youth is not.
  *   the kit     — a weapon, a full set of common armor, and the odds and ends
  *                 the trade leaves in your pockets. Taken once, at level 1.
  *   the purse   — the Coins and Supplies you show up with.
  *
- * The three trade against each other, and that trade is the whole design: a
- * Noble buys two skills and six hundred coins, a Scholar buys four skills and
- * almost nothing else, a Soldier gives up a skill to walk in carrying a second
- * weapon. Nothing here is meant to be strictly better than anything else.
- *
  * ------------------------------------------------------------------- source
- * Unlike lineages.js, this file was NOT transcribed from a designer's sheet —
- * there wasn't one. It is a first pass: the shapes come from the three skills
- * the designer wrote out by hand (Apothecary, Negotiator and Arcane Marshal,
- * all reproduced below as written), and everything around them is drafted to
- * match and balanced against the rest of the table. Every number in it —
- * `picks`, `coins`, `supplies`, and each skill's Willpower and Supply cost —
- * is the designer's to overrule. Change them here and the whole tab follows.
+ * **The skills are the designer's, transcribed.** They arrived as
+ * `data/General Rules - Skills.csv` on 2026-08-21: thirty-two rows with a Name,
+ * a Tags cell, an AP and a WP column, a Main Effect and a Requirement. Every one
+ * of them is below, in the sheet's own words, with its Tags cell as the card's
+ * tags and its Requirement cell as `minLevel`. The reads are listed under "how
+ * this was proved". Nothing here was invented: the eighteen skills this file
+ * used to carry were a first pass written before the tab existed, and they are
+ * gone.
+ *
+ * **The backgrounds are not.** There is no background tab yet. Jules named the
+ * ten below on 2026-08-21 and set the arithmetic; which skills each one offers,
+ * and what it leaves in your pockets, is drafted here to match and is his to
+ * overrule.
+ *
+ * ---------------------------------------------------------------- the purse
+ * One formula, and it is the whole balance of the codex:
+ *
+ *     Coins = (4 - skills) * 2000        Supplies = 70, for everybody
+ *
+ * So a background that teaches one skill shows up with 6000 Coins and one that
+ * teaches three shows up with 2000. A poor life taught you more and left you
+ * less, which is the trade the ten below are arranged along. `startingCoins` is
+ * the one place it is written down, and the purse on every background is filled
+ * in from it rather than typed beside it, so the two can never drift.
+ *
+ * ------------------------------------------------------------ the level gate
+ * Five skills carry a Requirement, and a background cannot offer one: the life
+ * you led before level 1 could not have taught you something you are not yet
+ * able to learn. Heavy, Light and Spelled Armor Mastery and Innate Spell Adept
+ * all read level 5, Innate Spell Master reads level 10, and all five are
+ * learnable at the odd level that reaches them (see `skillOptionsAt` in
+ * levelPicks.js). A pool holding one is a data error and says so at load.
  *
  * --------------------------------------------------------------- card text
  * Card bodies use the same markers as every other card — see the header of
  * weapons.js. These are folded into the global registry by weapons.js, so every
  * link resolves and any of them can be dealt onto the pile.
  *
+ * Three skills ask a question the card cannot answer for you: Innate Spell
+ * Novice, Adept and Master each let you choose a spell of that rank from any
+ * school, and the spell you name is one you then *hold*. That is the same shape
+ * the lineage cards' INNATE X uses, down to the `learns` flag, and it is asked
+ * in the window that hands the skill over. See `innateSpell` below.
+ *
  * This file is a leaf: nothing here may import weapons.js or items.js. The kit
  * names item ids as plain strings and the block resolves them.
+ *
+ * ------------------------------------------------------- how this was proved
+ * Every body below was compared to its Main Effect cell with case and
+ * punctuation flattened. **All 32 rows are accounted for**, and every difference
+ * is one of these reads:
+ *
+ *   Spelling    "lrean premantenylu" reads learn permanently, "attrbiute" and
+ *               "Attriubte" Attribute, "convice" convince, "intimiated"
+ *               intimidate, "attemp" attempt, "hte" the, "ear" hear, "doen"
+ *               done, "swaping" swapping, "youmake" you make, "yo utake" you
+ *               take, "outdors" outdoors, "Higest" highest, "though" thought,
+ *               "reduce" reduced, "increase or decrease" increased or
+ *               decreased, "WIllpower" Willpower and "Inate" Innate.
+ *   Grammar     "The cost your long and short rest are reduce" reads The cost
+ *               of your Long and Short Rests is reduced, "the dice elevated by
+ *               1" the dice are elevated by 1, "an ally make" an ally makes,
+ *               "a Instinct saving throw" an Instinct saving throw, "to to
+ *               gaining insight" to gain insight, "a skill check that have to
+ *               do with" that has to do with, "the target Grit" the target's
+ *               Grit, "without a doing a skill check" without doing a skill
+ *               check, and "It use" It uses.
+ *   Terms       health reads Health, supplies Supplies, willpower Willpower,
+ *               armor Armor, movement speed Movement Speed, long rest Long Rest
+ *               and short rest Short Rest. Every one of these exists so a
+ *               defined term lights, which is the trade the lineage cards made.
+ *   Units       "1.5m (5feet)" reads 1.5 meters (5 feet), which is how every
+ *               other distance in the codex is written.
+ *   Commas      Nine rows close a list of three with an Oxford comma, and two
+ *               carry a stray space before a comma or a full stop. Both are
+ *               house style, see docs/text-style.md.
+ *   Modular     Innate Spell Novice, Adept and Master each promise "a spell
+ *               from any school", which is a question rather than a spell, so
+ *               it is a `{choice}` and its placeholder is those words. Same
+ *               trade INNATE X makes in lineages.js.
+ *   Built       Mastermind and Spell Eater both say "You can use this feature
+ *               once, regaining it after a long rest. The number of uses
+ *               increases to 2 at level 6." The sentence stays theirs and the
+ *               rider is what the sheet counts, so `uses` is read off the level
+ *               on those two. See uses.js.
+ *   Dropped     Tailor's cell ends in two bracketed notes to the builder,
+ *               asking for a Disguise Kit and for Bandages as consumable items.
+ *               A note is not rules text, so it is not on the card. See flag 4.
+ *
+ * ------------------------------------------------------------- and the flags
+ * Six things the tab leaves open. None is guessed at here.
+ *
+ *   1. **Arcane Marshal and Cartographer are the same card twice.** Both cells
+ *      read "a skill check to read or draw a map, or to retrace a route you
+ *      have walked once before, or find a location", word for word. Cartographer
+ *      is a mapmaker and that is plainly its text; an Arcane Marshal is not, and
+ *      the name says arcane law. Both are printed as written rather than one
+ *      being rewritten to suit its name, so the duplication stays visible where
+ *      it can be fixed. Arcane Marshal is offered by the Investigator and the
+ *      Erudit, where its *name* belongs.
+ *   2. **Unseen Spellwork asks for "a Cunning skill check", and Cunning is not
+ *      an attribute.** The three are Physique, Instinct and Mind, and Cunning is
+ *      the name of another skill on the same tab. Printed as written.
+ *   3. **"You gain +2 to Armor" is a number the sheet does not yet add.** Heavy
+ *      Armor Mastery, Light Armor Mastery and Spelled Armor Mastery each change
+ *      a derived stat while a full set is worn, and none of the three is wired
+ *      into `deriveStats`. All three are level 5, so nothing is missing from a
+ *      level-1 sheet, and all three print what they promise.
+ *   4. **Tailor asks for two items that do not exist.** Its cell asks for a
+ *      Disguise Kit ("advantage on skill checks to deceive for the day") and for
+ *      Bandages as a one-use consumable. `bandage-roll` in utility.js is already
+ *      close to the second. Neither is written here: an item is items.js's to
+ *      hold, and the card names both in the designer's own words meanwhile.
+ *   5. **Spell Eater's row carries a stray last cell.** It ends with "Amphibian,
+ *      Scalley, Venemous, cold blooded, sharp sense, Hearthy, Wild Swiftness",
+ *      which is the Wildkin pool off the lineage tab and has nothing to do with
+ *      the skill. Dropped.
+ *   6. **Two skills have no picture.** Empath and Seafarer are the only rows the
+ *      2026-08-21 art drop does not cover, and there is one unnamed file in it
+ *      (`Gemini_Generated_Image_w78nd7w78nd7w78n.jpg`) that may be either.
+ *      Naming that file after the skill it was drawn for places it; guessing
+ *      which of the two would put the wrong face on a card.
  */
 
+import { withArt } from './cardArt.js';
+import { SPELLS } from './spells.js';
+
 /** How many skills a background may hand out. Nothing outside this range. */
-export const MIN_SKILL_PICKS = 2;
-export const MAX_SKILL_PICKS = 4;
+export const MIN_SKILL_PICKS = 1;
+export const MAX_SKILL_PICKS = 3;
+
+/**
+ * What a background of that many skills walks in carrying.
+ *
+ * Jules's, 2026-08-21: "The starting money is calculated by 4 - the number of
+ * skill the background give * 2000. So for example if noble has 1 Skill it get
+ * 6000 coins. everyone stat iwht 70 supplies."
+ *
+ * One function rather than ten numbers, so the trade cannot drift: change the
+ * picks and the purse follows it.
+ */
+export function startingCoins(picks) {
+  const skills = Math.min(
+    MAX_SKILL_PICKS,
+    Math.max(MIN_SKILL_PICKS, Math.floor(Number(picks) || 0))
+  );
+  return (4 - skills) * 2000;
+}
+
+/** The crate everybody starts with, whatever they did before. */
+export const STARTING_SUPPLIES = 70;
 
 /* ---------------------------------------------------------------- the tags *
  * Two kinds, so a wall of backgrounds can be narrowed twice over: the world
@@ -54,8 +181,8 @@ export const BACKGROUND_TAGS = [
   { id: 'court', label: 'Court', kind: 'sphere' },
   { id: 'wilds', label: 'Wilds', kind: 'sphere' },
   { id: 'scholarly', label: 'Scholarly', kind: 'sphere' },
-  { id: 'sacred', label: 'Sacred', kind: 'sphere' },
-  { id: 'sea', label: 'Sea', kind: 'sphere' },
+  { id: 'stage', label: 'Stage', kind: 'sphere' },
+  { id: 'law', label: 'Law', kind: 'sphere' },
 
   { id: 'coin', label: 'Coin', kind: 'boon' },
   { id: 'supplies', label: 'Supplies', kind: 'boon' },
@@ -65,453 +192,527 @@ export const BACKGROUND_TAGS = [
   { id: 'survival', label: 'Survival', kind: 'boon' },
   { id: 'craft', label: 'Craft', kind: 'boon' },
   { id: 'warfare', label: 'Warfare', kind: 'boon' },
+  { id: 'insight', label: 'Insight', kind: 'boon' },
 ];
 
 /* ------------------------------------------------------------- the skills *
- * Three shapes, and almost every skill in the game is one of them:
+ * Thirty-two rows, in the order the tab prints them.
  *
- *   insight  — spend 1 Willpower for advantage on a named family of checks.
- *              The common case, and the cheapest.
- *   reroll   — spend 2 Willpower to take a failed check again. Costs more
- *              because it is bought after you already know you failed.
- *   labour   — an action taken during a Long Rest, paid for in Supplies. These
- *              are the reason the crate on the Character tab has a ledger.
+ * Fields on top of the shared card fields (see weapons.js):
+ *   minLevel  — the Requirement cell, as a number. Absent means level 1.
+ *   uses      — how many times before a rest, where the row says so. A number,
+ *               or a function of level for the two rows that grow at level 6.
+ *   recharge  — what fills those uses again, in the row's own words.
+ *   choice    — the question the row leaves to the player. See `innateSpell`.
  *
- * Skills are defined once, at module scope, and referenced by the pools that
- * offer them — several trades teach the same thing, and the wording must never
- * drift between them.
+ * AP and WP are blank in every row of the tab, so every card here costs
+ * neither. A skill that spends Willpower spends it *conditionally*, inside its
+ * own sentence, which is not the same thing as a card with a price.
  */
 
 const SKILL = { kind: 'skill', ap: null, wp: null };
 
 /**
- * The one line a preview prints for a skill: its own domain, with the card's
- * emphasis dropped and the house's comma rules applied.
+ * The commonest row on the tab, thirteen times over: one domain, 1 Willpower,
+ * advantage.
  *
- * Derived rather than written out twenty-eight times, because the domain is
- * already the exact phrase for what the skill is good for. A skill that does
- * something of its own writes its summary by hand instead.
+ * Written once because the sentence is identical in all thirteen cells and the
+ * only thing that moves is the domain. A skill that says anything else is
+ * written out in full below.
  */
-function skillSummary(lead, domain) {
-  const plain = domain
-    .replace(/\*\*/g, '')
-    // No Oxford comma in a line the sheet writes for itself. Only a real
-    // list carries one, so a lone comma joining two clauses is left alone.
-    .replace(/,\s+(or|and)\s+/g, (match, word, at, whole) =>
-      whole.slice(0, at).includes(',') ? ` ${word} ` : match
-    );
-  return `${lead} ${plain}.`;
-}
-
-/** Spend 1 Willpower, roll that check with advantage. */
-function insight({ id, name, tags, domain, note = '' }) {
+function insight({ id, name, tags = [], domain, summary }) {
   return {
     ...SKILL,
     id,
     name,
-    tags: ['Background Skill', ...tags],
-    summary: skillSummary('Advantage on checks', domain),
-    wp: 1,
+    tags: ['Skill', 'Passive', ...tags],
+    summary,
     body:
       `Whenever you make a skill check ${domain}, you can spend 1 Willpower ` +
-      'to give yourself advantage.' +
-      (note ? `\n\n${note}` : ''),
+      'to make it with advantage.',
   };
 }
 
-/** Spend 2 Willpower, take that failed check again. Once per check. */
-function reroll({ id, name, tags, domain, note = '' }) {
-  return {
-    ...SKILL,
-    id,
-    name,
-    tags: ['Background Skill', ...tags],
-    summary: skillSummary('Reroll a failed check', domain),
-    wp: 2,
-    body:
-      `When you fail a skill check ${domain}, you can spend 2 Willpower ` +
-      'to reroll it.\n\nOnce per skill check: a second failure stands.' +
-      (note ? `\n\n${note}` : ''),
-  };
-}
+/* ----- the thirteen domains ----- */
 
-/* ----- shared: taught by more than one trade ----- */
-
-/** The designer's own wording, kept as written. */
-const APOTHECARY = {
-  ...SKILL,
-  id: 'apothecary',
-  name: 'Apothecary',
-  summary: 'Craft a Health Potion or a Poison from Supplies on a long rest.',
-  tags: ['Background Skill', 'Labour', 'Craft'],
-  body:
-    'Whenever you take a Long Rest, you can take this action to craft either a ' +
-    'Health Potion by expending 20 Supplies, or a Poison by expending 40.',
-};
-
-const NEGOTIATOR = {
-  ...SKILL,
-  id: 'negotiator',
-  name: 'Negotiator',
-  summary: 'Reroll a failed check to barter or persuade.',
-  tags: ['Background Skill', 'Social'],
-  wp: 2,
-  body:
-    'When you fail a skill check in an attempt to barter or persuade, you can ' +
-    'spend 2 Willpower once to reroll it.',
-};
-
-const ARCANE_MARSHAL = {
-  ...SKILL,
+/* Flag 1: this cell is Cartographer's, word for word. Left as printed. */
+const ARCANE_MARSHAL = insight({
   id: 'arcane-marshal',
   name: 'Arcane Marshal',
-  summary: 'Advantage on investigating arcane crime, and on reading people.',
-  tags: ['Background Skill', 'Investigation', 'Lore'],
-  wp: 1,
-  body:
-    'Whenever you make a skill check related to investigating arcane crime, or to ' +
-    'gathering insight on people, you can spend 1 Willpower to give yourself ' +
-    'advantage.',
-};
-
-const QUARTERMASTER = {
-  ...SKILL,
-  id: 'quartermaster',
-  name: 'Quartermaster',
-  summary: 'Half again as many Supplies for your coin, and more found on a long rest.',
-  tags: ['Background Skill', 'Labour', 'Supplies'],
-  body:
-    'Whenever you buy Supplies, you receive half as many again as you paid for.\n\n' +
-    'Whenever you take a Long Rest, you can take this action to go through the party’s ' +
-    'packs and recover 10 Supplies that were about to be wasted.',
-};
-
-const FIELD_MEDIC = {
-  ...SKILL,
-  id: 'field-medic',
-  name: 'Field Medic',
-  summary: 'Stabilise a dying entity within reach, for Willpower and Supplies.',
-  tags: ['Background Skill', 'Support', 'Supplies'],
-  wp: 1,
-  body:
-    'When an entity within your reach drops to 0 Health or below, you can spend ' +
-    '1 Willpower and expend 10 Supplies to stabilise them: they stop bleeding out ' +
-    'at their current Health.\n\n' +
-    'Whenever you take a Long Rest, you can take this action to expend 15 Supplies ' +
-    'and lift one lingering injury or affliction from an ally.',
-};
-
-const PATHFINDER = insight({
-  id: 'pathfinder',
-  name: 'Pathfinder',
-  tags: ['Survival'],
-  domain: 'to navigate, to find a route or to travel without becoming lost',
-});
-
-/* ----- criminal ----- */
-
-const CUTPURSE = insight({
-  id: 'cutpurse',
-  name: 'Cutpurse',
-  tags: ['Stealth'],
-  domain: 'to palm something, pick a pocket or conceal an object on your person',
-});
-
-const SHADOW_STEP = insight({
-  id: 'shadow-step',
-  name: 'Shadow Step',
-  tags: ['Stealth'],
-  domain: 'to move unseen, hide or go unheard',
-});
-
-const LOCKBREAKER = insight({
-  id: 'lockbreaker',
-  name: 'Lockbreaker',
-  tags: ['Stealth', 'Craft'],
-  domain: 'to open a lock, disarm a trap or find the seam in a mechanism',
-});
-
-const FENCE = {
-  ...SKILL,
-  id: 'fence',
-  name: 'Fence',
-  summary: 'Sell stolen or unmarked goods at their full value.',
-  tags: ['Background Skill', 'Social', 'Coin'],
-  wp: 1,
-  body:
-    'You always know who buys what, and what it is really worth.\n\n' +
-    'You sell stolen or unmarked goods at their full value, and can spend ' +
-    '1 Willpower to give yourself advantage on a skill check to appraise ' +
-    'something or to find a buyer for it.',
-};
-
-/* ----- artisan ----- */
-
-const APPRAISER = insight({
-  id: 'appraiser',
-  name: 'Appraiser',
-  tags: ['Craft', 'Coin'],
-  domain: 'to judge an object’s worth, materials, maker or authenticity',
-});
-
-const TINKER = insight({
-  id: 'tinker',
-  name: 'Tinker',
-  tags: ['Craft'],
-  domain: 'to understand, repair or improvise a mechanism or device',
-});
-
-const SMITH = {
-  ...SKILL,
-  id: 'smith',
-  name: 'Smith',
-  summary: 'Repair a damaged piece of gear at a forge on a long rest, for Supplies.',
-  tags: ['Background Skill', 'Labour', 'Craft'],
-  body:
-    'Whenever you take a Long Rest, you can take this action to work at a forge or bench, ' +
-    'expending 30 Supplies to repair a damaged piece of gear back to working order, ' +
-    'or 60 Supplies to reforge a Common weapon or armor piece into any other of the ' +
-    'same rarity.',
-};
-
-/* ----- soldier ----- */
-
-const DRILLMASTER = insight({
-  id: 'drillmaster',
-  name: 'Drillmaster',
-  tags: ['Warfare', 'Social'],
-  domain: 'to give an order, hold a formation or intimidate through discipline',
-});
-
-const VETERANS_EYE = insight({
-  id: 'veterans-eye',
-  name: 'Veteran’s Eye',
-  tags: ['Warfare'],
-  domain:
-    'to read a battlefield, judge an enemy’s strength or readiness, or spot an ambush',
-});
-
-const SIEGEWRIGHT = insight({
-  id: 'siegewright',
-  name: 'Siegewright',
-  tags: ['Warfare', 'Craft'],
-  domain: 'to fortify a position, breach one or work a siege engine',
-});
-
-/* ----- noble ----- */
-
-const COURTIER = insight({
-  id: 'courtier',
-  name: 'Courtier',
-  tags: ['Social'],
-  domain: 'to observe etiquette, read a room or move through a court unremarked',
-});
-
-const HERALDRY = insight({
-  id: 'heraldry',
-  name: 'Heraldry',
-  tags: ['Lore', 'Social'],
-  domain: 'to recognise a house, seal, banner or bloodline, or the forgery of one',
-});
-
-const COMMANDING_PRESENCE = reroll({
-  id: 'commanding-presence',
-  name: 'Commanding Presence',
-  tags: ['Social'],
-  domain: 'made to command, overawe or be obeyed without argument',
-});
-
-const WELL_CONNECTED = insight({
-  id: 'well-connected',
-  name: 'Well Connected',
-  tags: ['Social'],
-  domain: 'to find the right person in a settlement, or to get an introduction to them',
-});
-
-const PATRON = reroll({
-  id: 'patron',
-  name: 'Patron',
-  tags: ['Social', 'Coin'],
-  domain: 'made to gain access, secure lodging or be believed',
-  note:
-    'You are trading on your house’s name rather than your own. A table may rule it worth ' +
-    'less the further you travel from it.',
-});
-
-/* ----- scholar ----- */
-
-const LOREKEEPER = insight({
-  id: 'lorekeeper',
-  name: 'Lorekeeper',
   tags: ['Lore'],
-  domain: 'to recall history, place a text or name a ruin, dynasty or event',
-});
-
-const NATURALIST = insight({
-  id: 'naturalist',
-  name: 'Naturalist',
-  tags: ['Lore', 'Survival'],
-  domain: 'to identify a creature, plant, venom or disease, or predict how it behaves',
+  summary: 'Advantage on reading a map, retracing a route or finding a location.',
+  domain:
+    'to read or draw a map, or to retrace a route you have walked once before, or find a location',
 });
 
 const CARTOGRAPHER = insight({
   id: 'cartographer',
   name: 'Cartographer',
   tags: ['Lore', 'Survival'],
-  domain: 'to read or draw a map, or to retrace a route you have walked once before',
-});
-
-const LINGUIST = insight({
-  id: 'linguist',
-  name: 'Linguist',
-  tags: ['Lore'],
+  summary: 'Advantage on reading a map, retracing a route or finding a location.',
   domain:
-    'to decipher a script, cipher or dead tongue, or to make yourself understood without one',
+    'to read or draw a map, or to retrace a route you have walked once before, or find a location',
 });
 
-const THEORIST = reroll({
-  id: 'theorist',
-  name: 'Theorist',
+const EMPATH = insight({
+  id: 'empath',
+  name: 'Empath',
+  tags: ['Insight', 'Social'],
+  summary: 'Advantage on reading what another entity feels or intends.',
+  domain: 'to gain insight on the behavior, emotion or thought of another entity',
+});
+
+const CHARISMATIC = insight({
+  id: 'charismatic',
+  name: 'Charismatic',
+  tags: ['Social'],
+  summary: 'Advantage on convincing, lying to or intimidating people.',
+  domain: 'to convince, lie or intimidate people',
+});
+
+const CUNNING = insight({
+  id: 'cunning',
+  name: 'Cunning',
+  tags: ['Stealth'],
+  summary: 'Advantage on stealth, stealing or tricking.',
+  domain: 'to stealth, steal or trick',
+});
+
+const SURVIVALIST = insight({
+  id: 'survivalist',
+  name: 'Survivalist',
+  tags: ['Survival'],
+  summary: 'Advantage on foraging, tracking beasts or crossing wild ground.',
+  domain: 'to forage, track beasts or navigate natural environmental hazards',
+});
+
+const SCHOLAR = insight({
+  id: 'scholar',
+  name: 'Scholar',
   tags: ['Lore'],
-  domain: 'made to identify a spell, enchantment or ritual, or to work out what it will do',
+  summary: 'Advantage on lore, magical artifacts or arcane runes.',
+  domain: 'to recall historical lore, identify magical artifacts or analyze arcane runes',
 });
 
-/* ----- wanderer ----- */
+const OCCULTIST = insight({
+  id: 'occultist',
+  name: 'Occultist',
+  tags: ['Lore'],
+  summary: 'Advantage on dark rituals, eldritch runes and what walks behind them.',
+  domain:
+    'to identify dark rituals, decipher eldritch runes or recall lore regarding fiends and aberrations',
+});
 
-const FORAGER = {
+const PHYSICIAN = insight({
+  id: 'physician',
+  name: 'Physician',
+  tags: ['Insight', 'Support'],
+  summary: 'Advantage on diagnosing an ailment, an injury or a cause of death.',
+  domain: 'to diagnose ailments, examine physical trauma or determine a cause of death',
+});
+
+const SEAFARER = insight({
+  id: 'seafarer',
+  name: 'Seafarer',
+  tags: ['Survival'],
+  summary: 'Advantage on handling a vessel, a tide or a rigging line.',
+  domain: 'to pilot a vessel, predict ocean tides or tie complex nautical rigging',
+});
+
+const INQUISITOR = insight({
+  id: 'inquisitor',
+  name: 'Inquisitor',
+  tags: ['Insight', 'Social'],
+  summary: 'Advantage on interrogation, reading nerves or prising out a secret.',
+  domain:
+    'to interrogate captives, spot physical nervous tells or extract hidden secrets under pressure',
+});
+
+const TROUBADOUR = insight({
+  id: 'troubadour',
+  name: 'Troubadour',
+  tags: ['Social'],
+  summary: 'Advantage on playing, reciting or holding an audience.',
+  domain:
+    'to play musical instruments, recite oral legends or captivate an audience with a performance',
+});
+
+/* Streetwise is the thirteenth and the only one whose sentence does not start
+   "to": its cell reads "a skill check that have to do with", so it is written
+   out rather than forced through the builder above. */
+const STREETWISE = {
   ...SKILL,
-  id: 'forager',
-  name: 'Forager',
-  summary: 'Work the land on a long rest outside a settlement, and come back with Supplies.',
-  tags: ['Background Skill', 'Labour', 'Supplies'],
+  id: 'streetwise',
+  name: 'Streetwise',
+  tags: ['Skill', 'Passive', 'Stealth', 'Social'],
+  summary: 'Advantage on the criminal world, tracking people down or intimidating.',
   body:
-    'Whenever you take a Long Rest outside a settlement, you can take this action to work ' +
-    'the land around the camp (snares, water, roots, deadfall) and gain 15 Supplies.\n\n' +
-    'Barren ground, a frozen waste or a dead marsh may give up nothing at all. That is ' +
-    'the table’s call.',
+    'Whenever you make a skill check that has to do with the criminal world, tracking down ' +
+    'people or intimidating, you can spend 1 Willpower to make it with advantage.',
 };
 
-const BEAST_SENSE = insight({
-  id: 'beast-sense',
-  name: 'Beast Sense',
-  tags: ['Survival'],
-  domain: 'to track, calm or handle an animal',
-});
+/* ----- the labours: what a Long Rest buys ----- */
 
-const WEATHER_READ = insight({
-  id: 'weather-read',
-  name: 'Weather Read',
-  tags: ['Survival'],
-  domain: 'to predict the weather, find shelter or judge whether ground is safe to cross',
-});
-
-const TRAPPER = insight({
-  id: 'trapper',
-  name: 'Trapper',
-  tags: ['Survival', 'Stealth'],
-  domain: 'to set a snare, or to spot one set for you',
-});
-
-/* ----- sailor ----- */
-
-const SEA_LEGS = insight({
-  id: 'sea-legs',
-  name: 'Sea Legs',
-  tags: ['Survival'],
-  domain: 'to keep your balance, climb rigging or resist being moved or knocked down',
-});
-
-const STORMWISE = insight({
-  id: 'stormwise',
-  name: 'Stormwise',
-  tags: ['Survival'],
-  domain: 'to handle a vessel, read a sky or a current, or ride out foul weather',
-});
-
-const DOCKSIDE_WORD = insight({
-  id: 'dockside-word',
-  name: 'Dockside Word',
-  tags: ['Social'],
-  domain: 'to gather rumour, cargo manifests or gossip in any port',
-});
-
-/* ----- devout ----- */
-
-const SCRIPTURE = insight({
-  id: 'scripture',
-  name: 'Scripture',
-  tags: ['Lore'],
-  domain: 'to recall doctrine, place a relic or sacred site, or recognise the profane',
-});
-
-const ALMSGIVER = insight({
-  id: 'almsgiver',
-  name: 'Almsgiver',
-  tags: ['Social'],
-  domain: 'to be given shelter, food or safe passage by common folk',
-});
-
-const COMFORTER = reroll({
-  id: 'comforter',
-  name: 'Comforter',
-  tags: ['Social'],
-  domain: 'made to calm, console or steady someone who is afraid',
-});
-
-const VIGIL = {
+const APOTHECARY = {
   ...SKILL,
-  id: 'vigil',
-  name: 'Vigil',
-  summary: 'Keep vigil over the camp on a long rest, for Supplies, and every ally feels it.',
-  tags: ['Background Skill', 'Labour', 'Support'],
+  id: 'apothecary',
+  name: 'Apothecary',
+  tags: ['Skill', 'Long Rest', 'Craft'],
+  summary: 'Craft a Health Potion or a Poison out of Supplies on a Long Rest.',
   body:
-    'Whenever you take a Long Rest, you can take this action to keep vigil over the camp, ' +
-    'expending 20 Supplies in oil, salt and incense.\n\n' +
-    'Every ally who rests under it ends the rest with a Shield equal to your {mind}.',
+    'Whenever you take a Long Rest, you can take this action to craft either a Health Potion ' +
+    'by expending 20 Supplies, or a Poison by expending 40 Supplies.',
 };
+
+const SCAVENGER = {
+  ...SKILL,
+  id: 'scavenger',
+  name: 'Scavenger',
+  tags: ['Skill', 'Long Rest', 'Survival'],
+  summary: 'Scavenge the ground around a camp for Supplies on a Long Rest.',
+  body:
+    'Whenever you take a Long Rest in the outdoors, you can take the scavenge action: you make ' +
+    'a highest Attribute roll and gain that much Supplies.',
+};
+
+const TAILOR = {
+  ...SKILL,
+  id: 'tailor',
+  name: 'Tailor',
+  tags: ['Skill', 'Passive', 'Long Rest', 'Craft'],
+  summary: 'Sew a disguise or bandages on a Long Rest, and read anyone by their clothes.',
+  body:
+    'Whenever you take a Long Rest, you can spend 10 Supplies to create a disguise or Bandages.\n\n' +
+    'Additionally, you can gain information about a clothed entity if you can spend at least ' +
+    '1 minute looking at its garments without doing a skill check. This can include social ' +
+    'status and standing, authenticity and provenance.',
+};
+
+/* ----- the rest of the tab ----- */
+
+const FRUGAL = {
+  ...SKILL,
+  id: 'frugal',
+  name: 'Frugal',
+  tags: ['Skill', 'Passive', 'Supplies'],
+  summary: 'Every rest costs 2 Supplies less.',
+  body: 'The cost of your Long and Short Rests is reduced by 2 Supplies.',
+};
+
+const HAGGLER = {
+  ...SKILL,
+  id: 'haggler',
+  name: 'Haggler',
+  tags: ['Skill', 'Passive', 'Coin', 'Social'],
+  summary: 'Talk a price 20% up or down for 2 Willpower.',
+  body:
+    'When buying or selling something, after you hear the price you can attempt to haggle.\n\n' +
+    'You spend 2 Willpower and make a highest Attribute roll against the target’s Grit. ' +
+    'On a success the price is increased or decreased by 20%.',
+};
+
+const HEALER = {
+  ...SKILL,
+  id: 'healer',
+  name: 'Healer',
+  tags: ['Skill', 'Passive', 'Support'],
+  summary: 'Your healing dice are elevated, and elevated twice over the unconscious.',
+  body:
+    'When rolling dice to restore Health to yourself or an ally, the dice are elevated by 1, ' +
+    'or by 2 if the target is unconscious.',
+};
+
+const HEAVY_ARMOR_MASTERY = {
+  ...SKILL,
+  id: 'heavy-armor-mastery',
+  name: 'Heavy Armor Mastery',
+  tags: ['Skill', 'Passive', 'Warfare'],
+  minLevel: 5,
+  summary: 'Armor +2 in a full set of heavy armor.',
+  body: 'When wearing a full set of heavy armor, you gain +2 to Armor.',
+};
+
+const LIGHT_ARMOR_MASTERY = {
+  ...SKILL,
+  id: 'light-armor-mastery',
+  name: 'Light Armor Mastery',
+  tags: ['Skill', 'Passive', 'Warfare'],
+  minLevel: 5,
+  summary: 'Movement Speed +1.5 meters in a full set of light armor.',
+  body:
+    'When wearing a full set of light armor, your Movement Speed is increased by 1.5 meters ' +
+    '(5 feet).',
+};
+
+const SPELLED_ARMOR_MASTERY = {
+  ...SKILL,
+  id: 'spelled-armor-mastery',
+  name: 'Spelled Armor Mastery',
+  tags: ['Skill', 'Passive', 'Warfare'],
+  minLevel: 5,
+  summary: 'Willpower +4 in a full set of Spelled Armor.',
+  body: 'When wearing a full set of Spelled Armor, your Willpower is increased by 4.',
+};
+
+/* Both of the next two grow at level 6, so `uses` is read off the level rather
+   than written down once. The sentence stays the designer's and the rider is
+   what the sheet counts. See uses.js. */
+const growsAtSix = (level) => (Math.floor(Number(level) || 1) >= 6 ? 2 : 1);
+
+const MASTERMIND = {
+  ...SKILL,
+  id: 'mastermind',
+  name: 'Mastermind',
+  tags: ['Skill', 'Passive', 'Insight'],
+  uses: growsAtSix,
+  recharge: 'Long Rest',
+  summary: 'Take a skill check as if every die rolled its highest, once a Long Rest.',
+  body:
+    'Instead of rolling, you can choose to treat a skill check as if all dice rolled their ' +
+    'highest value.\n\n' +
+    'You can use this feature once, regaining it after a Long Rest. The number of uses ' +
+    'increases to 2 at level 6.',
+};
+
+const VIGILANT = {
+  ...SKILL,
+  id: 'vigilant',
+  name: 'Vigilant',
+  tags: ['Skill', 'Passive', 'Warfare'],
+  summary: 'Punish anything that moves near you, and it may not get to move at all.',
+  body:
+    'Weapon attacks made as a reaction to a move action are made with advantage.\n\n' +
+    'On a hit, the target must succeed on an Instinct saving throw against your weapon attack ' +
+    'roll or lose the move action.',
+};
+
+const UNSEEN_SPELLWORK = {
+  ...SKILL,
+  id: 'unseen-spellwork',
+  name: 'Unseen Spellwork',
+  tags: ['Skill', 'Passive', 'Stealth'],
+  summary: 'Cast without the target ever knowing it was you.',
+  body:
+    'When casting a spell, you can make a Cunning skill check against the target’s Grit. ' +
+    'If you succeed, the target remains unaware that you cast the spell, regardless of its ' +
+    'source requirements.\n\n' +
+    'This check is made with advantage if you are not engaged in combat.',
+};
+
+const HELPFUL = {
+  ...SKILL,
+  id: 'helpful',
+  name: 'Helpful',
+  tags: ['Skill', 'Passive', 'Support', 'Social'],
+  summary: 'Hand an ally advantage on their own check for 1 Willpower.',
+  body: 'Whenever an ally makes a skill check, you can spend 1 Willpower to give them advantage.',
+};
+
+const SPELL_EATER = {
+  ...SKILL,
+  id: 'spell-eater',
+  name: 'Spell Eater',
+  tags: ['Skill', 'Passive', 'Warfare'],
+  uses: growsAtSix,
+  recharge: 'Long Rest',
+  summary: 'Swallow a spell that hit you and heal on it, once a Long Rest.',
+  body:
+    'Whenever you take non-physical damage, you can attempt to consume the damage.\n\n' +
+    'Make a highest Attribute roll, reducing the damage taken by the result and healing an ' +
+    'equal amount.\n\n' +
+    'You can use this feature once, regaining it after a Long Rest. The number of uses ' +
+    'increases to 2 at level 6.',
+};
+
+const SKILLED = {
+  ...SKILL,
+  id: 'skilled',
+  name: 'Skilled',
+  tags: ['Skill', 'Passive', 'Insight'],
+  summary: 'Roll any skill check on 2d8 instead of 2d6 for 2 Willpower.',
+  body: 'Whenever you make a skill check, you can spend 2 Willpower to use 2d8 instead of 2d6.',
+};
+
+const QUICK_DRAW = {
+  ...SKILL,
+  id: 'quick-draw',
+  name: 'Quick Draw',
+  tags: ['Skill', 'Passive', 'Warfare'],
+  summary: 'Swapping weapon costs 1 less, and the swing after it has advantage.',
+  body:
+    'The cost of swapping weapon is reduced by 1. The next attack after you swap is done with ' +
+    'advantage.',
+};
+
+/* --------------------------------------------------------- INNATE SPELL built
+ * Three rows, one shape. Each lets you choose a spell of its own rank from any
+ * school and keep it for good, and which spell is a *question*: until it is
+ * answered the character holds a card about a spell and no spell.
+ *
+ * So the rank's whole shelf is the card's `choice`, read off spells.js rather
+ * than listed here, and `learns` is what says the answer is a card rather than a
+ * word — the spell named joins the hand behind the skill that taught it (see
+ * `skillCards` below). This is INNATE X's own shape in lineages.js, and the two
+ * are deliberately identical: a player who has answered one has answered both.
+ */
+
+/** Every spell of one rank, across every school, in the codex's own order. */
+function spellsOfRank(rank) {
+  return SPELLS.filter((spell) => (spell.tags ?? []).includes(`${rank} Spell`));
+}
+
+function innateSpell({ rank, minLevel }) {
+  const shelf = spellsOfRank(rank);
+
+  /* A rank with an empty shelf promises a spell that cannot be chosen, and the
+     skill can never be settled. Said out loud rather than left for a player to
+     find, the way lineages.js says it of a school. */
+  if (import.meta.env?.DEV && shelf.length === 0) {
+    console.error(
+      `[hazebound] Innate Spell ${rank} offers no ${rank} spell, so the skill can never be ` +
+        'settled. Write one, or stand a placeholder in for it the way Light and Shadow have.'
+    );
+  }
+
+  return {
+    ...SKILL,
+    id: `innate-spell-${rank.toLowerCase()}`,
+    name: `Innate Spell ${rank}`,
+    tags: ['Skill', 'Passive', 'Spellcasting'],
+    ...(minLevel ? { minLevel } : null),
+    summary: `You learn one ${rank} spell from any school, cast with your highest Attribute.`,
+    choice: {
+      id: `innate-spell-${rank.toLowerCase()}-pick`,
+      label: `${rank} Spell`,
+      prompt: `Which ${rank} spell did you teach yourself?`,
+      placeholder: `a ${rank} spell from any school`,
+      learns: true,
+      options: shelf.map((spell) => ({ id: spell.id, label: spell.name, card: spell })),
+    },
+    /* `{choice}` rather than the cell's own words, and the placeholder above is
+       those words: unanswered the card still reads "a Novice spell from any
+       school", and answered it names the spell. */
+    body:
+      'When learning this skill you can choose {choice} to learn permanently.\n\n' +
+      'It uses your highest Attribute.',
+  };
+}
+
+const INNATE_SPELL_NOVICE = innateSpell({ rank: 'Novice' });
+const INNATE_SPELL_ADEPT = innateSpell({ rank: 'Adept', minLevel: 5 });
+const INNATE_SPELL_MASTER = innateSpell({ rank: 'Master', minLevel: 10 });
+
+/**
+ * The tab, in the order it prints. Every skill in the game is here, whether or
+ * not a background offers it: five are level-gated and are learned on the road
+ * instead.
+ */
+const SKILL_CODEX = [
+  APOTHECARY,
+  ARCANE_MARSHAL,
+  CARTOGRAPHER,
+  FRUGAL,
+  EMPATH,
+  HAGGLER,
+  HEALER,
+  HEAVY_ARMOR_MASTERY,
+  LIGHT_ARMOR_MASTERY,
+  SPELLED_ARMOR_MASTERY,
+  MASTERMIND,
+  VIGILANT,
+  UNSEEN_SPELLWORK,
+  HELPFUL,
+  SPELL_EATER,
+  CHARISMATIC,
+  SKILLED,
+  STREETWISE,
+  TAILOR,
+  CUNNING,
+  SCAVENGER,
+  QUICK_DRAW,
+  INNATE_SPELL_NOVICE,
+  INNATE_SPELL_ADEPT,
+  INNATE_SPELL_MASTER,
+  SURVIVALIST,
+  SCHOLAR,
+  OCCULTIST,
+  PHYSICIAN,
+  SEAFARER,
+  INQUISITOR,
+  TROUBADOUR,
+];
+
+/* ------------------------------------------------------------- wearing the art
+ * Dressed once, at module scope, on the one list every reader shares. A skill is
+ * offered by several backgrounds and folded into the registry besides, and
+ * `withArt` spreads: dressing anything downstream of here would give the picture
+ * to one copy and leave the others bare. Same trade lineages.js makes, and the
+ * reason `npm run art:cards` can place a skill picture at all.
+ */
+export const SKILLS = withArt(SKILL_CODEX);
+
+const SKILL_BY_ID = new Map(SKILLS.map((skill) => [skill.id, skill]));
+
+/** The dressed card, by the constant above it. Throws rather than losing art. */
+function dressed(card) {
+  const worn = SKILL_BY_ID.get(card.id);
+  if (!worn) throw new Error(`backgrounds.js: ${card.id} was never dressed`);
+  return worn;
+}
+
+/** What level a skill can first be learned at. 1 unless its row says otherwise. */
+export function skillLevel(skill) {
+  return Math.max(1, Math.floor(Number(skill?.minLevel) || 1));
+}
 
 /* --------------------------------------------------------------- the codex
  *
  * Fields:
- *   picks     — how many skills this background lets you learn, 2 to 4
+ *   picks     — how many skills this background lets you learn, 1 to 3
  *   skills    — the pool it offers them from
  *   kit       — what you walk in carrying:
- *                 weapons   how many Common weapons you choose (Soldier: 2)
- *                 armor     always true — one full Common three-piece set
- *                 coins     starting Coins
- *                 supplies  starting Supplies
+ *                 weapons   how many Common weapons you choose
+ *                 armor     always true, one full Common three-piece set
  *                 belt      codex item ids clipped to open belt loops
  *                 pack      written entries the item codex has no item for
+ *               Coins and Supplies are not written here. They are filled in
+ *               below from `startingCoins` and `STARTING_SUPPLIES`.
  *
- * The trade, laid out so it can be checked at a glance:
+ * The trade, laid out so it can be checked at a glance. Coins follow from the
+ * skills and Supplies never move, so the only things left to tell the ten apart
+ * are the pool, the weapon count and what is in your pockets:
  *
- *   SCHOLAR    4 skills · 100¢ · 20 su · 1 weapon  · 1 pack
- *   CRIMINAL   3 skills · 120¢ · 40 su · 1 weapon  · 2 belt, 1 pack
- *   WANDERER   3 skills · 100¢ · 70 su · 1 weapon  · 2 belt, 1 pack
- *   ARTISAN    3 skills · 200¢ · 60 su · 1 weapon  · 1 belt, 2 pack
- *   SAILOR     3 skills · 180¢ · 45 su · 1 weapon  · 1 belt, 2 pack
- *   DEVOUT     3 skills · 150¢ · 55 su · 1 weapon  · 1 belt, 2 pack
- *   SOLDIER    2 skills · 250¢ · 50 su · 2 weapons · 1 belt, 1 pack
- *   NOBLE      2 skills · 600¢ · 20 su · 1 weapon  · 2 pack
+ *   CRIMINAL      3 skills · 2000 ¢ · 1 weapon  · 2 belt, 1 pack
+ *   ERUDIT        3 skills · 2000 ¢ · 1 weapon  · 1 belt, 2 pack
+ *   OUTLANDER     3 skills · 2000 ¢ · 1 weapon  · 2 belt, 1 pack
+ *   ENTERTAINER   3 skills · 2000 ¢ · 1 weapon  · 1 belt, 2 pack
+ *   MILITARY      2 skills · 4000 ¢ · 2 weapons · 1 belt, 1 pack
+ *   MERCENARY     2 skills · 4000 ¢ · 2 weapons · 2 belt, 1 pack
+ *   CRAFTSMAN     2 skills · 4000 ¢ · 1 weapon  · 1 belt, 2 pack
+ *   INVESTIGATOR  2 skills · 4000 ¢ · 1 weapon  · 1 belt, 2 pack
+ *   MERCHANT      1 skill  · 6000 ¢ · 1 weapon  · 1 belt, 2 pack
+ *   ARISTOCRAT    1 skill  · 6000 ¢ · 1 weapon  · 1 belt, 2 pack
+ *
+ * Every pool offers six or seven and lets you keep one, two or three, so no two
+ * characters out of the same trade have to look alike, and every one of the
+ * twenty-seven skills learnable at level 1 is offered by somebody.
  */
 
-export const BACKGROUNDS = [
+const BACKGROUND_CODEX = [
   {
     id: 'criminal',
     name: 'Criminal',
     tagline: 'You learned the city from underneath it.',
-    art: null,
+    art: '/backgrounds/criminal.jpg',
     tags: ['underworld', 'stealth', 'social'],
     blurb:
       'You made your living on the wrong side of a door. Maybe you ran with a crew, maybe you worked alone and slept badly for it, but either way you know which windows are never latched and which watchmen are already paid.\n\n' +
       'The trade leaves marks. You count the exits before you sit down, you price everything you look at, and you have more friends than a respectable person should, none of whom will admit to knowing you.',
     picks: 3,
-    skills: [CUTPURSE, SHADOW_STEP, LOCKBREAKER, FENCE, ARCANE_MARSHAL, NEGOTIATOR],
+    skills: [CUNNING, STREETWISE, QUICK_DRAW, UNSEEN_SPELLWORK, HAGGLER, VIGILANT],
     kit: {
       weapons: 1,
       armor: true,
-      coins: 120,
-      supplies: 40,
       belt: ['thiefs-picks', 'smoke-vial'],
       pack: [
         {
@@ -523,21 +724,106 @@ export const BACKGROUNDS = [
   },
 
   {
-    id: 'artisan',
-    name: 'Artisan',
-    tagline: 'A trade, a guild mark and hands that know the work.',
-    art: null,
-    tags: ['trade', 'craft', 'coin', 'supplies'],
+    id: 'erudit',
+    name: 'Erudit',
+    tagline: 'Three things you know, and nothing at all in your pockets.',
+    art: '/backgrounds/erudit.jpg',
+    tags: ['scholarly', 'lore'],
     blurb:
-      'You served your years and came out the other side with a craft: smith, alchemist, glazier, binder, it hardly matters which. What matters is that you can look at a made thing and see how it was made.\n\n' +
-      'Guild work pays steadily and teaches patience, and you left carrying both: a full pack, a good name in one town and the quiet certainty that most problems are a materials problem.',
+      'An academy, a private library, a master who took you on and then died. You came up through books, and it shows: you have read about far more of the world than you have walked through.\n\n' +
+      'You left with the only thing an education reliably produces. A great deal of knowledge, and no money whatsoever.',
     picks: 3,
-    skills: [APOTHECARY, SMITH, APPRAISER, TINKER, QUARTERMASTER, NEGOTIATOR],
+    skills: [
+      SCHOLAR,
+      OCCULTIST,
+      CARTOGRAPHER,
+      ARCANE_MARSHAL,
+      SKILLED,
+      INNATE_SPELL_NOVICE,
+      PHYSICIAN,
+    ],
     kit: {
       weapons: 1,
       armor: true,
-      coins: 200,
-      supplies: 60,
+      belt: ['storm-lantern'],
+      pack: [
+        {
+          name: 'Field Journal',
+          note: 'Half filled, cross-referenced and indexed in a hand only you can read.',
+        },
+        {
+          name: 'Letter of Standing',
+          note: 'Your master’s hand, vouching for you. The seal is genuine and the master is dead.',
+        },
+      ],
+    },
+  },
+
+  {
+    id: 'military',
+    name: 'Military',
+    tagline: 'You were paid to stand in a line and not run.',
+    art: '/backgrounds/military.jpg',
+    tags: ['martial', 'warfare', 'coin'],
+    blurb:
+      'A regiment, a levy, a city garrison. You carried a weapon on somebody else’s order and you were good enough at it to still be here. You know how a camp is run, how a siege is dug and how long men will hold before they break.\n\n' +
+      'What the army really taught you is redundancy: never carry one of anything you would die without. You still march with a spare.',
+    picks: 2,
+    skills: [VIGILANT, QUICK_DRAW, HEALER, FRUGAL, CARTOGRAPHER, MASTERMIND],
+    kit: {
+      // One of the two backgrounds that arms both hands. Nothing is traded for
+      // it: the purse follows the skills, and the skills are what the life
+      // taught, so a second weapon is the life itself showing.
+      weapons: 2,
+      armor: true,
+      belt: ['bandage-roll'],
+      pack: [
+        {
+          name: 'Campaign Kit',
+          note: 'Mess tin, whetstone, oilcloth and a folded shelter half. Everything a march needs and nothing it does not.',
+        },
+      ],
+    },
+  },
+
+  {
+    id: 'outlander',
+    name: 'Outlander',
+    tagline: 'No town claims you, and the road has never run out.',
+    art: '/backgrounds/outlander.jpg',
+    tags: ['wilds', 'survival', 'supplies'],
+    blurb:
+      'You have been moving for as long as it matters. Outrider, trapper, pilgrim, exile. The name changes and the life does not. You have slept under more skies than roofs.\n\n' +
+      'The wilds do not forgive carelessness, so you stopped being careless. You carry everything you need, and you know how to replace all of it.',
+    picks: 3,
+    skills: [SURVIVALIST, SCAVENGER, CARTOGRAPHER, APOTHECARY, FRUGAL, HEALER],
+    kit: {
+      weapons: 1,
+      armor: true,
+      belt: ['storm-lantern', 'grappling-hook'],
+      pack: [
+        {
+          name: 'Bedroll and Snares',
+          note: 'Oiled canvas, a bundle of wire and a bag of iron pegs. It has never once been dry.',
+        },
+      ],
+    },
+  },
+
+  {
+    id: 'craftsman',
+    name: 'Craftsman',
+    tagline: 'A trade, a guild mark and hands that know the work.',
+    art: '/backgrounds/craftsman.jpg',
+    tags: ['trade', 'craft', 'supplies'],
+    blurb:
+      'You served your years and came out the other side with a craft: smith, alchemist, glazier, binder, it hardly matters which. What matters is that you can look at a made thing and see how it was made.\n\n' +
+      'Guild work pays steadily and teaches patience, and you left carrying both: a full pack, a good name in one town and the quiet certainty that most problems are a materials problem.',
+    picks: 2,
+    skills: [TAILOR, APOTHECARY, FRUGAL, HAGGLER, SKILLED, QUICK_DRAW],
+    kit: {
+      weapons: 1,
+      armor: true,
       belt: ['storm-lantern'],
       pack: [
         {
@@ -553,52 +839,76 @@ export const BACKGROUNDS = [
   },
 
   {
-    id: 'soldier',
-    name: 'Soldier',
-    tagline: 'You were paid to stand in a line and not run.',
-    art: null,
-    tags: ['martial', 'warfare', 'supplies'],
+    id: 'entertainer',
+    name: 'Entertainer',
+    tagline: 'A full room, an empty purse and somewhere else to be tomorrow.',
+    art: '/backgrounds/entertainer.jpg',
+    tags: ['stage', 'social'],
     blurb:
-      'A regiment, a levy, a mercenary company. You carried a weapon for wages, and you were good enough at it to still be here. You know how a camp is run, how a siege is dug and how long men will hold before they break.\n\n' +
-      'What the army really taught you is redundancy: never carry one of anything you would die without. You still march with a spare.',
-    picks: 2,
-    skills: [FIELD_MEDIC, QUARTERMASTER, PATHFINDER, DRILLMASTER, VETERANS_EYE, SIEGEWRIGHT],
+      'Taprooms, fairgrounds, a patron’s hall for one glorious season. You sang, played, tumbled, told it funnier than it happened. You have held a room of drunk strangers and you have been run out of two towns.\n\n' +
+      'The work teaches you to read a crowd in the first ten seconds and to leave before the mood turns. Both have kept you alive more than once.',
+    picks: 3,
+    skills: [TROUBADOUR, CHARISMATIC, EMPATH, CUNNING, HELPFUL, SKILLED],
     kit: {
-      // The one background that arms both hands. It pays for the second weapon
-      // with a skill — two picks, where almost everything else gets three.
-      weapons: 2,
+      weapons: 1,
       armor: true,
-      coins: 250,
-      supplies: 50,
-      belt: ['bandage-roll'],
+      belt: ['smoke-vial'],
       pack: [
         {
-          name: 'Campaign Kit',
-          note: 'Mess tin, whetstone, oilcloth and a folded shelter half. Everything a march needs and nothing it does not.',
+          name: 'Your Instrument',
+          note: 'Repaired twice, tuned by ear and worth far more to you than to anyone buying.',
+        },
+        {
+          name: 'Costume Trunk',
+          note: 'Three characters’ worth of clothes, a wig and a jar of stage paint.',
         },
       ],
     },
   },
 
   {
-    id: 'noble',
-    name: 'Noble',
-    tagline: 'A name that opens doors, and the debts that come with it.',
-    art: null,
-    tags: ['court', 'social', 'coin'],
+    id: 'merchant',
+    name: 'Merchant',
+    tagline: 'You know what everything costs, and what it is worth.',
+    art: '/backgrounds/merchant.jpg',
+    tags: ['trade', 'coin', 'social'],
     blurb:
-      'You were born to a house with land, or money, or at minimum a very old grievance. You were taught to dance, to ride, to read a room and never once to cook.\n\n' +
-      'Whether you left in disgrace or on an errand, the name travels with you. It buys credit in places coin cannot, and it costs you something every time someone recognises it.',
-    picks: 2,
-    skills: [COURTIER, HERALDRY, COMMANDING_PRESENCE, WELL_CONNECTED, PATRON, NEGOTIATOR],
+      'A stall, a caravan, a family firm with a name over the door. You bought low somewhere and sold high somewhere else, and you did it often enough to be carrying a float rather than a debt.\n\n' +
+      'Trade is the study of what people want and what they will admit to wanting. You have never once needed a weapon to get a door opened.',
+    picks: 1,
+    skills: [HAGGLER, FRUGAL, CHARISMATIC, EMPATH, SEAFARER, SCHOLAR],
     kit: {
       weapons: 1,
       armor: true,
-      // Two picks, and the deepest purse on the table by a wide margin — a
-      // noble solves problems by paying someone else to have solved them.
-      coins: 600,
-      supplies: 20,
-      belt: [],
+      belt: ['terra-cotta-disk'],
+      pack: [
+        {
+          name: 'Ledger of Debts',
+          note: 'Who owes you, who you owe and the three names in the back you have not decided about.',
+        },
+        {
+          name: 'Merchant’s Seal',
+          note: 'Your mark, pressed into the wax of every crate you ever shipped.',
+        },
+      ],
+    },
+  },
+
+  {
+    id: 'aristocrat',
+    name: 'Aristocrat',
+    tagline: 'A name that opens doors, and the debts that come with it.',
+    art: '/backgrounds/aristocrat.jpg',
+    tags: ['court', 'coin', 'social'],
+    blurb:
+      'You were born to a house with land, or money, or at minimum a very old grievance. You were taught to dance, to ride, to read a room and never once to cook.\n\n' +
+      'Whether you left in disgrace or on an errand, the name travels with you. It buys credit in places coin cannot, and it costs you something every time somebody recognises it.',
+    picks: 1,
+    skills: [CHARISMATIC, EMPATH, MASTERMIND, SCHOLAR, TROUBADOUR, INNATE_SPELL_NOVICE],
+    kit: {
+      weapons: 1,
+      armor: true,
+      belt: ['aether-draught'],
       pack: [
         {
           name: 'Signet Ring',
@@ -613,138 +923,110 @@ export const BACKGROUNDS = [
   },
 
   {
-    id: 'scholar',
-    name: 'Scholar',
-    tagline: 'Four things you know, and nothing at all in your pockets.',
-    art: null,
-    tags: ['scholarly', 'lore'],
+    id: 'investigator',
+    name: 'Investigator',
+    tagline: 'Somebody was lying, and you were the one who had to find out.',
+    art: '/backgrounds/investigator.jpg',
+    tags: ['law', 'insight', 'lore'],
     blurb:
-      'An academy, a private library, a master who took you on and then died. You came up through books, and it shows. You have read about far more of the world than you have walked through.\n\n' +
-      'You left with the only thing an education reliably produces: a great deal of knowledge, and no money whatsoever.',
-    // The four-skill end of the range. It pays for the fourth pick with the
-    // thinnest purse and the smallest kit in the codex.
-    picks: 4,
-    skills: [ARCANE_MARSHAL, LOREKEEPER, NATURALIST, CARTOGRAPHER, LINGUIST, THEORIST, APOTHECARY],
+      'A watch house, a magistrate’s office, a private practice above a chandler’s shop. You took statements, walked over the same ground four times and noticed the thing everybody else had stepped past.\n\n' +
+      'The work is mostly patience and a little cruelty. You have learned when a silence is guilt and when it is only fear, and you can no longer stop doing it to people you like.',
+    picks: 2,
+    skills: [INQUISITOR, ARCANE_MARSHAL, EMPATH, PHYSICIAN, CUNNING, VIGILANT, OCCULTIST],
     kit: {
       weapons: 1,
       armor: true,
-      coins: 100,
-      supplies: 20,
-      belt: [],
+      belt: ['thiefs-picks'],
       pack: [
         {
-          name: 'Field Journal',
-          note: 'Half filled, cross-referenced and indexed in a hand only you can read.',
+          name: 'Case File',
+          note: 'The one that never closed. You have read it so often you no longer see the words.',
+        },
+        {
+          name: 'Writ of Inquiry',
+          note: 'It compels nobody and impresses most people, which is very nearly the same thing.',
         },
       ],
     },
   },
 
   {
-    id: 'wanderer',
-    name: 'Wanderer',
-    tagline: 'No town claims you, and the road has never run out.',
-    art: null,
-    tags: ['wilds', 'survival', 'supplies'],
+    id: 'mercenary',
+    name: 'Mercenary',
+    tagline: 'You have never once fought for free.',
+    art: '/backgrounds/mercenary.jpg',
+    tags: ['martial', 'warfare', 'survival'],
     blurb:
-      'You have been moving for as long as it matters. Outrider, trapper, pilgrim, exile. The name changes and the life does not. You have slept under more skies than roofs.\n\n' +
-      'The wilds do not forgive carelessness, so you stopped being careless. You carry everything you need, and you know how to replace all of it.',
-    picks: 3,
-    skills: [PATHFINDER, FORAGER, BEAST_SENSE, WEATHER_READ, TRAPPER, APOTHECARY],
+      'A free company, a caravan guard, whichever side was hiring that season. You have fought under four banners and believed in none of them, and the contract has always mattered more than the cause.\n\n' +
+      'It is honest work, in its way. You are paid, you do the thing, you are paid again. What you have instead of loyalty is a reputation, and you guard it like coin.',
+    picks: 2,
+    skills: [VIGILANT, QUICK_DRAW, SCAVENGER, STREETWISE, HEALER, SPELL_EATER],
     kit: {
-      weapons: 1,
+      weapons: 2,
       armor: true,
-      coins: 100,
-      // The fullest crate on the table, and Forager in the pool to keep it full.
-      supplies: 70,
-      belt: ['storm-lantern', 'grappling-hook'],
+      belt: ['healing-potion', 'bandage-roll'],
       pack: [
         {
-          name: 'Bedroll & Snares',
-          note: 'Oiled canvas, a bundle of wire and a bag of iron pegs. It has never once been dry.',
-        },
-      ],
-    },
-  },
-
-  {
-    id: 'sailor',
-    name: 'Sailor',
-    tagline: 'You have been further than most people believe there is to go.',
-    art: null,
-    tags: ['sea', 'survival', 'social'],
-    blurb:
-      'Deckhand, navigator, smuggler, whaler. You worked a vessel, and you worked it long enough that solid ground still feels wrong under you some mornings.\n\n' +
-      'The sea teaches two things and teaches them hard: how to read weather that is about to kill you, and how to get along with people you cannot walk away from.',
-    picks: 3,
-    skills: [SEA_LEGS, STORMWISE, DOCKSIDE_WORD, PATHFINDER, QUARTERMASTER, NEGOTIATOR],
-    kit: {
-      weapons: 1,
-      armor: true,
-      coins: 180,
-      supplies: 45,
-      belt: ['grappling-hook'],
-      pack: [
-        {
-          name: 'Sea Charts',
-          note: 'A rolled bundle of coastlines, soundings and margin notes. Three of them are wrong and you know which.',
-        },
-        {
-          name: 'Coil of Rope',
-          note: 'Thirty fathoms of good line, spliced by you and worth rather more than it looks.',
-        },
-      ],
-    },
-  },
-
-  {
-    id: 'devout',
-    name: 'Devout',
-    tagline: 'You kept a vow long enough that it kept you.',
-    art: null,
-    tags: ['sacred', 'social', 'supplies'],
-    blurb:
-      'Temple, order or a shrine on a hill with three people attending. You gave years to something larger, and it gave you a shape to live inside. You may still believe every word of it. You may not. The habits stayed either way.\n\n' +
-      'You sit with the dying, you feed whoever is at the door, and you have never once been turned away from a village you arrived at on foot.',
-    picks: 3,
-    skills: [FIELD_MEDIC, APOTHECARY, VIGIL, SCRIPTURE, ALMSGIVER, COMFORTER],
-    kit: {
-      weapons: 1,
-      armor: true,
-      coins: 150,
-      supplies: 55,
-      belt: ['healing-potion'],
-      pack: [
-        {
-          name: 'Sacred Token',
-          note: 'Worn smooth at one edge from being held. Whatever it depicts is no longer quite legible.',
-        },
-        {
-          name: 'Book of Rites',
-          note: 'The full order of service, birth to burial, annotated by four hands before yours.',
+          name: 'Company Contract',
+          note: 'Terms, rates and the clause about what your body is worth to whoever ships it home.',
         },
       ],
     },
   },
 ];
+
+/**
+ * The ten as everything else sees them: pointing at the dressed cards, and with
+ * the purse filled in from the formula rather than written down beside it.
+ */
+export const BACKGROUNDS = BACKGROUND_CODEX.map((background) => ({
+  ...background,
+  skills: background.skills.map(dressed),
+  kit: {
+    ...background.kit,
+    coins: startingCoins(background.picks),
+    supplies: STARTING_SUPPLIES,
+  },
+}));
+
+/* A pool holding a level-gated skill would offer at level 1 something nobody can
+   learn until level 5, and the block would hand it over. Said out loud rather
+   than quietly filtered: a pool is data, and this is a data error. */
+if (import.meta.env?.DEV) {
+  for (const background of BACKGROUNDS) {
+    const early = background.skills.filter((skill) => skillLevel(skill) > 1);
+    if (early.length > 0) {
+      console.error(
+        `[hazebound] ${background.name} offers ${early
+          .map((skill) => `${skill.name} (level ${skillLevel(skill)})`)
+          .join(', ')}, which cannot be learned at level 1. Take it out of the pool.`
+      );
+    }
+    if (background.skills.length < background.picks) {
+      console.error(
+        `[hazebound] ${background.name} lets you learn ${background.picks} skills out of a pool ` +
+          `of ${background.skills.length}, so it can never be finished.`
+      );
+    }
+  }
+}
 
 /* ------------------------------------------------------------------ lookups */
 
 /**
- * Every skill card in the codex, each exactly once — the shared ones sit in
- * several pools and must not be registered twice. weapons.js folds this into
- * the global card registry, so a background skill can be dealt onto the pile
- * and linked to like any other card.
+ * Every skill card, each exactly once — the shared ones sit in several pools and
+ * must not be registered twice. weapons.js folds this into the global card
+ * registry, so a skill can be dealt onto the pile and linked to like any other
+ * card.
+ *
+ * Every skill in the codex is here, including the five no background offers: a
+ * level-gated skill is still a card, and a card outside the registry is one no
+ * link can resolve and no pile can deal.
  */
-export const BACKGROUND_CARDS = [
-  ...new Map(
-    BACKGROUNDS.flatMap((background) => background.skills).map((skill) => [skill.id, skill])
-  ).values(),
-];
+export const BACKGROUND_CARDS = SKILLS;
 
 const BACKGROUND_BY_ID = new Map(BACKGROUNDS.map((b) => [b.id, b]));
 const BACKGROUND_BY_NAME = new Map(BACKGROUNDS.map((b) => [b.name.toLowerCase(), b]));
-const SKILL_BY_ID = new Map(BACKGROUND_CARDS.map((skill) => [skill.id, skill]));
 
 /** By id or by name — the character row stores the plain name, as lineage does. */
 export function getBackground(key) {
@@ -773,6 +1055,44 @@ export function usedBackgroundTags() {
 export function skillPicks(background) {
   const picks = Math.floor(Number(background?.picks) || MIN_SKILL_PICKS);
   return Math.min(MAX_SKILL_PICKS, Math.max(MIN_SKILL_PICKS, picks));
+}
+
+/* ------------------------------------------------------- the skills' own asks
+ * Three skills leave a question behind them, and the answer is a card. Read the
+ * same way a lineage's is: out of the `choices` bag, keyed by the card that
+ * asked. See lineages.js, whose INNATE X these mirror.
+ */
+
+/** What this character answered on a card that asks, or null while it is open. */
+export function skillAnswer(skill, choices) {
+  if (!skill?.choice) return null;
+  return skill.choice.options.find((option) => option.id === choices?.[skill.id]) ?? null;
+}
+
+/** The card an answered skill hands over, or null while the question is open. */
+export function learnedFromSkill(skill, choices) {
+  if (!skill?.choice?.learns) return null;
+  return skillAnswer(skill, choices)?.card ?? null;
+}
+
+/** Whether every question a list of skills asks has been answered. */
+export function skillsSettled(skills, choices) {
+  return skills.every((skill) => !skill?.choice || skillAnswer(skill, choices));
+}
+
+/**
+ * The cards a set of skills actually puts on the sheet.
+ *
+ * The skills themselves, and behind each one that taught a spell, the spell.
+ * "You can choose a Novice spell from any school" is a promise until the spell
+ * itself is on the sheet: this is where it becomes something the character can
+ * read, deal and cast rather than a sentence about a choice they made once.
+ */
+export function skillCards(skills, choices) {
+  return skills.flatMap((skill) => {
+    const learned = learnedFromSkill(skill, choices);
+    return learned ? [skill, learned] : [skill];
+  });
 }
 
 /* --------------------------------------------------------- reading the row */
@@ -860,6 +1180,11 @@ export function normalizeKit(value) {
  * `written` is what the row actually says. A name the codex does not know is
  * kept and shown as written rather than cleared — a table is free to invent
  * its own background, exactly as it may invent its own lineage.
+ *
+ * `complete` counts the follow-up questions too. A character who learned Innate
+ * Spell Novice and never said which spell is holding a card with a blank in the
+ * middle of its sentence, and the block badges that the way an unanswered
+ * lineage card does.
  */
 export function backgroundState(character) {
   const written = String(character?.background ?? '').trim();
@@ -868,15 +1193,23 @@ export function backgroundState(character) {
   const skillIds = normalizeBackgroundSkills(background, character?.background_skills);
   const picks = background ? skillPicks(background) : 0;
   const kit = normalizeKit(character?.background_kit);
+  const choices = character?.choices ?? {};
+  const skills = skillIds.map(getBackgroundSkill).filter(Boolean);
+  const asks = skills.filter((skill) => skill.choice);
+  const open = asks.filter((skill) => !skillAnswer(skill, choices));
 
   return {
     written,
     background,
     skillIds,
-    skills: skillIds.map(getBackgroundSkill).filter(Boolean),
+    skills,
     picks,
     remaining: Math.max(0, picks - skillIds.length),
-    complete: Boolean(background) && skillIds.length >= picks,
+    // What the skills put on the sheet: themselves, and any spell they taught.
+    cards: skillCards(skills, choices),
+    asks,
+    unanswered: open.length,
+    complete: Boolean(background) && skillIds.length >= picks && open.length === 0,
     kit,
     taken: Boolean(kit),
   };
