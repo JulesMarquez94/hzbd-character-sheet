@@ -5245,6 +5245,10 @@ body.sheet-fixed #root {
    ========================================================= */
 .pick-block {
   margin-top: 1rem;
+  /* Where the panel comes to rest when a dialog opened from it closes, so it
+     lands under the top edge of the tab rather than flush against it. Modal.jsx
+     does the scrolling; this is the gap it leaves. */
+  scroll-margin-top: 0.75rem;
   border: 1px solid rgba(148, 167, 176, 0.14);
   /* The accent caps the panel the way it caps a card and a block — it is how a
      Hazebound panel starts. */

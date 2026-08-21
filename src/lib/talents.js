@@ -1860,8 +1860,8 @@ function repairSlots(entries) {
 
 /**
  * The tab's whole picture: one slot per advancement level the character has
- * reached, what was chosen in each, which slot is next to fill and which filled
- * slot can be handed back.
+ * reached, what was chosen in each, which slot is next to fill and which slots
+ * are holding a choice that can be handed back.
  *
  * `beyond` holds choices recorded above the current level — what a character
  * looks like after losing experience. Those ranks are left exactly where they
@@ -1893,8 +1893,10 @@ export function advancementState(talents, level) {
     slots,
     // Slots fill in order: only the earliest empty one can be chosen in.
     openLevel: openIndex === -1 ? null : slots[openIndex].level,
-    // …and only the last filled one can be handed back.
-    undoLevel: filled.length ? filled[filled.length - 1].level : null,
+    /* …but any filled one can be handed back, and doing so hands back the ones
+       after it too. What used to stand here was `undoLevel`, the last filled
+       level and the only one undo was offered on. See clearFrom(). */
+    filledLevels: filled.map((slot) => slot.level),
     nextLevel: nextAdvancementLevel(level),
     beyond: beyond.sort((a, b) => a - b),
   };
@@ -1998,41 +2000,61 @@ export function chooseAt(talents, level, talentId) {
   return serializeTalents([...list, { id: talent.id, name: talent.name, rank: 1, taken: [slot] }]);
 }
 
-/** Give the choice made at `level` back. A set left with no ranks is dropped. */
-export function clearAt(talents, level) {
-  const slot = Math.floor(Number(level));
-
-  return serializeTalents(
-    normalizeTalents(talents)
-      .map((entry) =>
-        entry.taken.includes(slot)
-          ? { ...entry, taken: entry.taken.filter((l) => l !== slot), rank: entry.taken.length - 1 }
-          : entry
-      )
-      .filter((entry) => entry.taken.length > 0)
-  );
-}
-
 /**
- * Every rank bought above `level`, given back.
+ * Every rank bought at slot `limit` or later, given back. A set left holding no
+ * ranks at all is dropped, and goes with the cards it had chosen.
  *
- * A character who loses experience loses what that experience bought. Ranks
- * come off the top, so a Guardian 3 dropping to level 6 is a Guardian 2 with
- * Rank 3 gone rather than a Guardian 3 with a hole in the middle, and a set
- * left holding no ranks at all leaves the sheet with the spells it chose.
+ * Ranks always come off the top, never out of the middle. A Guardian 3 losing
+ * one rank is a Guardian 2 rather than a Guardian 3 with a hole in it, which is
+ * the only shape `taken` can hold: the rank a slot bought is its position in
+ * that list.
  */
-export function pruneTalents(talents, level) {
-  const top = Math.floor(Number(level) || 1);
-
+function dropFrom(talents, limit) {
   return serializeTalents(
     normalizeTalents(talents)
       .map((entry) => {
-        const taken = entry.taken.filter((slot) => slot <= top);
+        const taken = entry.taken.filter((slot) => slot < limit);
         return taken.length === entry.taken.length
           ? entry
           : { ...entry, taken, rank: taken.length };
       })
       .filter((entry) => entry.taken.length > 0)
   );
+}
+
+/**
+ * Give the choice made at `level` back, and every talent choice made after it.
+ *
+ * Talent slots fill in order, because a Rank 2 has to know which level bought
+ * Rank 1, so a slot handed back in the middle would leave a hole the tab cannot
+ * draw. It used to answer that by only ever offering undo on the *last* filled
+ * slot: to change your mind about level 2 you had to hand back level 6, then
+ * level 4, then level 2, in that order, and nothing on the level-2 panel said so.
+ *
+ * Now the panel you are looking at is the one that answers, and the choices
+ * standing on top of it come off with it. It is the same three clicks made into
+ * one, and it is the button's job to say how many go.
+ *
+ * Only talents cascade. The attribute point and the skill each level hands out
+ * stand on their own, and are given back one at a time wherever they were taken.
+ */
+export function clearFrom(talents, level) {
+  const from = Math.floor(Number(level));
+
+  // A slot that is not real gives nothing back, the same way chooseAt() spends
+  // nothing on one. Without this a NaN would take the whole column with it.
+  if (!ADVANCEMENT_LEVELS.includes(from)) return serializeTalents(normalizeTalents(talents));
+  return dropFrom(talents, from);
+}
+
+/**
+ * Every rank bought above `level`, given back.
+ *
+ * A character who loses experience loses what that experience bought, at the
+ * moment the experience moves. `level` is kept, so a Guardian 3 dropping to
+ * level 6 is a Guardian 2 with Rank 3 gone.
+ */
+export function pruneTalents(talents, level) {
+  return dropFrom(talents, Math.floor(Number(level) || 1) + 1);
 }
 

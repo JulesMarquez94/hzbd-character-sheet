@@ -9,7 +9,7 @@ import { lockScroll } from '../lib/scrollLock.js';
 const openDialogs = [];
 
 /**
- * Generic dialog shell — Escape closes, backdrop click closes, body scroll locks.
+ * Generic dialog shell — Escape closes, backdrop click closes, page scroll locks.
  *
  * `wide` is the roomy editor width; `size` names a wider one still ("page", for
  * a dialog that lays cards out at their real footprint).
@@ -43,6 +43,8 @@ export default function Modal({
     closeRef.current = onClose;
   }, [onClose]);
 
+  const backdrop = useRef(null);
+
   useEffect(() => {
     const entry = {};
     openDialogs.push(entry);
@@ -60,11 +62,45 @@ export default function Modal({
     };
   }, []);
 
-  /* Held for as long as the dialog is mounted, and nothing else. */
-  useEffect(() => lockScroll(), []);
+  /* Held for as long as the dialog is mounted, and nothing else. Named from the
+     backdrop, because on the character sheet the box that scrolls is the tab
+     the dialog was opened from and not the body — see scrollLock.js. */
+  useEffect(() => lockScroll(backdrop.current), []);
+
+  /**
+   * Come out of a chooser where the choice was made.
+   *
+   * A dialog opened from a choice panel is a detour, and the page behind it is
+   * long: twelve level blocks, each with up to four panels. Closing the dialog
+   * used to leave you wherever the page happened to be, which after taking a
+   * talent is not where you were — the panel has just grown a set, its cards
+   * and whatever the set asks for next. So the panel that opened the dialog is
+   * put back at the top of its scroller on the way out: choose a talent, and you
+   * land looking at Talent Set.
+   *
+   * The panel is found once, on the way in, rather than off a node that is being
+   * unmounted. A dialog opened from anywhere other than a choice panel finds
+   * nothing and scrolls nothing, which is every dialog on the other tabs.
+   */
+  useEffect(() => {
+    const panel = backdrop.current?.closest('.pick-block');
+    if (!panel) return undefined;
+
+    return () => {
+      /* After the commit that closed the dialog, so the panel is its new height
+         and the scroller has released its hold. */
+      requestAnimationFrame(() => {
+        if (panel.isConnected) panel.scrollIntoView({ block: 'start' });
+      });
+    };
+  }, []);
 
   return (
-    <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      className="modal-backdrop"
+      ref={backdrop}
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div
         className={`modal-window${size ? ` modal-window-${size}` : wide ? ' modal-window-wide' : ''}`}
         style={accent ? { '--pick-accent': accent } : undefined}

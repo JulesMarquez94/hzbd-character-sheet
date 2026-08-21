@@ -21,7 +21,7 @@ import {
   TALENT_RANKS,
   cardsAtRank,
   chooseAt,
-  clearAt,
+  clearFrom,
   enchantPreview,
   enchantingOf,
   optionsAt,
@@ -40,9 +40,12 @@ import {
  * which is what makes "Rank 2 needs level 4" honest: the level-2 panel can only
  * ever offer a new set, however far the character has since travelled.
  *
- * Talent slots are also the one choice on this page that fills in order and
- * undoes from the end, because a Rank 2 has to know which level bought Rank 1.
- * Everything else a level hands out stands on its own.
+ * Talent slots are also the one choice on this page that fills in order,
+ * because a Rank 2 has to know which level bought Rank 1. They used to undo
+ * from the end for the same reason, which meant changing your mind about level 2
+ * was three separate undos in a particular order. Now any filled slot answers
+ * for itself and takes the choices standing on it with it, which `undoAlso`
+ * names so the button can say how many that is.
  */
 export default function TalentPick({
   slot,
@@ -50,7 +53,7 @@ export default function TalentPick({
   character,
   patch,
   isOpen,
-  canUndo,
+  undoAlso = [],
   openAt,
   step = null,
   readOnly = false,
@@ -87,8 +90,11 @@ export default function TalentPick({
           patch={patch}
           readOnly={readOnly}
           justTook={justTook}
+          undoAlso={undoAlso}
           onView={() => setViewing(slot.talent)}
-          onUndo={canUndo ? () => patch({ talents: clearAt(character.talents, slot.level) }) : null}
+          onUndo={
+            readOnly ? null : () => patch({ talents: clearFrom(character.talents, slot.level) })
+          }
         />
       ) : (
         <div className="level-block-empty">
@@ -180,7 +186,7 @@ export default function TalentPick({
 }
 
 /** What a filled block shows: the set, the rank this level bought, its cards. */
-function TalentSummary({ slot, character, patch, readOnly, justTook, onView, onUndo }) {
+function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, onView, onUndo }) {
   const { talent, entry, rank } = slot;
   const info = rankInfo(rank);
   const cards = talent ? cardsAtRank(talent, rank) : [];
@@ -293,8 +299,19 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, onView, onU
         )}
         <span className="spacer" />
         {onUndo && (
-          <button type="button" className="btn btn-minimal btn-sm talent-drop" onClick={onUndo}>
-            Undo this choice
+          <button
+            type="button"
+            className="btn btn-minimal btn-sm talent-drop"
+            onClick={onUndo}
+            title={
+              undoAlso.length > 0
+                ? `Level${undoAlso.length === 1 ? '' : 's'} ${listAnd(undoAlso)} ${undoAlso.length === 1 ? 'goes' : 'go'} with it. Talent choices stand in order, one rank on the rank below it, so nothing above this one can keep its place once this one is gone.`
+                : undefined
+            }
+          >
+            {undoAlso.length > 0
+              ? `Undo this and ${undoAlso.length} later ${undoAlso.length === 1 ? 'choice' : 'choices'}`
+              : 'Undo this choice'}
           </button>
         )}
       </div>

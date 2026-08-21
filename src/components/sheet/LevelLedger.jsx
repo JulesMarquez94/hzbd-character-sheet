@@ -39,7 +39,12 @@ export default function LevelLedger({ character, level, patch, readOnly = false,
 
   /* Nothing can be recorded above the current level any more: losing a level
      gives back what that level bought, at the moment the experience moves. See
-     pruneToLevel() in levelPicks.js, and the repair on open in CharacterSheet. */
+     pruneToLevel() in levelPicks.js, and the repair on open in CharacterSheet.
+
+     Talent slots come off the top the same way, whoever asks: undoing the set
+     at level 2 hands back level 4 and level 6 with it, so `undoAlso` tells each
+     talent panel which other levels its own undo would take. See clearFrom() in
+     talents.js. */
 
   return (
     <>
@@ -95,8 +100,21 @@ function LevelBlock({ level, character, talents, picks, patch, readOnly, unit })
 
   /* A level nobody has anything left to do at folds itself away. Twelve open
      blocks is a scroll; twelve headings is a ledger you can read. Opened by
-     hand it stays open, so this is a starting position and not a rule. */
+     hand it stays open, so this is a starting position and not a rule: a block
+     does *not* fold itself the moment you answer its last question, which would
+     shut the panel under your own cursor.
+
+     It does unfold itself when it stops being finished, though, because that
+     can happen from another block entirely. Handing back the talent set at
+     level 2 hands back level 4 and level 6 too, and a folded block there would
+     have gone on reading like a level with nothing left to do. */
   const [shut, setShut] = useState(complete);
+  const [wasComplete, setWasComplete] = useState(complete);
+
+  if (wasComplete !== complete) {
+    setWasComplete(complete);
+    if (!complete) setShut(false);
+  }
 
   const numbered = asked.length > 1;
   let step = 0;
@@ -139,7 +157,7 @@ function LevelBlock({ level, character, talents, picks, patch, readOnly, unit })
               character={character}
               patch={patch}
               isOpen={isOpen}
-              canUndo={!readOnly && talents.undoLevel === level}
+              undoAlso={talents.filledLevels.filter((filled) => filled > level)}
               openAt={talents.openLevel}
               step={nextStep()}
               readOnly={readOnly}
