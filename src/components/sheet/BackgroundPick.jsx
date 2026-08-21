@@ -891,11 +891,14 @@ function BackgroundChooser({ current, character, readOnly, onTake, onClose }) {
               <span className="talent-page-rank-label">
                 {shown.name} · Skills, keep {skillPicks(shown)} of {shown.skills.length}
               </span>
-              {/* What happens next, rather than when it happened. It used to
-                  read "Chosen once, at level 1" over a pool this page cannot
-                  pick from, which read as a choice nobody could find. */}
+              {/* Which page this is, rather than when the cards arrived. A
+                  trade nobody has taken yet is being read, not held: the pool
+                  below is what it would teach, and the picking happens on the
+                  page the take button opens. */}
               <span className="talent-page-rank-note">
-                {current?.id === shown.id ? 'Yours to change any time' : 'You pick them as you take it'}
+                {current?.id === shown.id
+                  ? 'Yours to change any time'
+                  : 'A preview, picked as you take it'}
               </span>
             </div>
             <div className="card-brief-wall">

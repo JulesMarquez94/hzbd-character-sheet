@@ -37,6 +37,23 @@ function openAsks(lineage, choices) {
   return asksOf(lineage).filter((card) => !pickedOn(card, choices)).length;
 }
 
+/**
+ * The note over a lineage's cards while it is being read. This page hands
+ * nothing over: the button below it takes the lineage, and the page after that
+ * is the one that asks the questions. So the note says which of the two the
+ * reader is looking at, a lineage on offer or the blood already in the
+ * character, and how many questions ride along either way.
+ */
+function cardsNote(questions, yours) {
+  const asks =
+    questions === 0
+      ? 'nothing to answer'
+      : questions === 1
+        ? 'one question on its cards'
+        : `${questions} questions on its cards`;
+  return yours ? `Yours, ${asks}` : `A preview, ${asks}`;
+}
+
 export default function LineagePick({ value, character, patch, step = null, readOnly = false }) {
   /* One window in one of two states: reading the wall of ancestries, or
      settling what the one you took leaves to you. null is closed. */
@@ -326,15 +343,13 @@ function LineageChooser({
           <section className="talent-page-rank">
             <div className="talent-page-rank-head">
               <span className="talent-page-rank-label">{shown.name} · What it gives you</span>
-              {/* What this section is, rather than when it happened. It used to
-                  read "Chosen once, at level 1" over four cards this page has
-                  no way of choosing, which read as a choice nobody could find. */}
+              {/* Which page this is, rather than when the cards arrived. It
+                  used to read "Yours as printed, nothing to choose" over a
+                  lineage nobody had taken yet, one page before the one that
+                  asks the questions, so it claimed both the blood and the
+                  absence of a choice a page too early. */}
               <span className="talent-page-rank-note">
-                {questions === 0
-                  ? 'Yours as printed, nothing to choose'
-                  : questions === 1
-                    ? 'One of these asks you a question'
-                    : `${questions} of these ask you a question`}
+                {cardsNote(questions, current?.id === shown.id)}
               </span>
             </div>
             <div className="card-brief-wall">
