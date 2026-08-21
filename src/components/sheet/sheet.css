@@ -1493,14 +1493,14 @@ body.sheet-fixed #root {
   text-align: center;
 }
 
-/* The ceiling, said quietly beside the held count: same treatment as
-   `.pool-count` so Karma reads like the pools above it. */
+/* The ceiling belongs to the value, it is not an aside beside it. Size, weight,
+   colour and glow all come from `.karma-value`, so "0/1" reads as one number. */
 .karma-cap {
-  font-weight: 500;
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  text-shadow: none;
-  opacity: 0.75;
+  font-weight: inherit;
+  font-size: inherit;
+  color: inherit;
+  text-shadow: inherit;
+  opacity: 1;
 }
 
 /* =========================================================
