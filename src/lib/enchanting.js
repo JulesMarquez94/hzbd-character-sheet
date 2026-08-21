@@ -429,6 +429,47 @@ export function grantsFrom(ids) {
   return total;
 }
 
+/**
+ * The same list, deduplicated by the same law, handed back as the enchantments
+ * themselves rather than as a sum.
+ *
+ * `grantsFrom` above answers "how much", which is what the stat columns need. A
+ * tile that shows a number has a second question to answer — *which working lent
+ * it* — and a total cannot say. So this is the sum's own reading of the list,
+ * sharing its `dedupe` rather than repeating it: two rings carrying Primal Sense
+ * are one row here for the same reason they are one point there, and a math line
+ * built off this can never credit a source the stat did not actually take.
+ *
+ * Every id that resolves comes back, riders or none. Whoever is naming sources
+ * knows which rider it is looking for, and an enchantment carrying nothing it
+ * cares about is one it simply does not print.
+ */
+export function grantRows(ids) {
+  return dedupe(ids).map((id) => getEnchantment(id)).filter(Boolean);
+}
+
+/**
+ * Every enchantment standing on this character, from all three places one can
+ * sit, as rows. The naming counterpart of `allGrants`.
+ *
+ * Worn on their own person, worked into what they carry and running on them for
+ * the hour, in that order, with the hour-long half last because it is the half
+ * that will be gone. The `dedupe` inside `grantRows` is what makes the same-source
+ * law bite across the three: an hour of borrowed Primal Sense on somebody already
+ * wearing one is not a second row any more than it is a second point.
+ *
+ * `gear` is handed in for the reason `allGrants` needs it handed in: this file is
+ * a leaf and has no idea what a codex item is. Call `characterGrantSources` in
+ * items.js, which is the composed reading.
+ */
+export function grantSources(character, gear = []) {
+  return grantRows([
+    ...wornIds(character?.talents),
+    ...gear,
+    ...runningEnchants(character?.effects).map((row) => row.enchantment.id),
+  ]);
+}
+
 /** The enchantments on the Enchanter's own person, by id. */
 export function wornIds(talents) {
   const entry = normalizeTalents(talents).find((row) => row.id === ENCHANTER_ID);

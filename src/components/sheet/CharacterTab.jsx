@@ -12,7 +12,7 @@ import {
   CoinIcon,
   CrateIcon,
   KarmaPill,
-  PipRow,
+  PointPool,
   ResourceBar,
   SkullIcon,
   StatBox,
@@ -33,6 +33,7 @@ import {
 } from '../../lib/characterModel.js';
 import { feralBlockIds, feralState } from '../../lib/feral.js';
 import { minionBlockIds, minionState } from '../../lib/minions.js';
+import { statMath } from '../../lib/statMath.js';
 import { normalizeTalents } from '../../lib/talents.js';
 
 /* The three tiles read from the shared codex — label, colour and tooltip alike
@@ -160,6 +161,13 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      everyone with nothing running, which is nearly everyone. */
   const shift = useMemo(() => liveShift(character), [character]);
 
+  /* And where every number on the tab came from, so a hovered tile can print its
+     own arithmetic with each source named. Worked out once for the whole tab
+     rather than inside each tile: the enchantments standing on this character,
+     what is worn and the level ledger are one read each here and a dozen reads
+     each if every tile asks for itself. See statMath.js. */
+  const math = useMemo(() => statMath(character), [character]);
+
   /* The creatures on the board, if any. Two blocks each, and both of them
      movable like the six: "this block can also be moved around, both the 1 and
      2 block, in character page". They arrive when the set is taken and leave
@@ -256,7 +264,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         </div>
 
         {/* ---------- MAGIC BURDEN ---------- */}
-        <BurdenMeter character={character} info={BURDEN_INFO} />
+        <BurdenMeter character={character} info={BURDEN_INFO} math={math.burden_used} />
 
         {/* ---------- XP ---------- */}
         <button
@@ -333,7 +341,14 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         <div className="stat-category-label">Attributes</div>
         <div className="attr-row">
           {ATTRIBUTE_TILES.map(({ key, label, color, info }) => (
-            <AttrTile key={key} label={label} color={color} info={info} value={character[key]} />
+            <AttrTile
+              key={key}
+              label={label}
+              color={color}
+              info={info}
+              math={math[key]}
+              value={character[key]}
+            />
           ))}
         </div>
 
@@ -368,7 +383,15 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             const suffix = isSpeed ? (isImperial ? 'ft' : 'm') : '';
 
             return (
-              <StatBox key={key} label={label} color={color} info={info} value={value} suffix={suffix} />
+              <StatBox
+                key={key}
+                label={label}
+                color={color}
+                info={info}
+                math={math[key]}
+                value={value}
+                suffix={suffix}
+              />
             );
           })}
         </div>
@@ -382,6 +405,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
               label={label}
               color={color}
               info={info}
+              math={math[key]}
               value={Math.floor(Number(character[key]) || 0)}
             />
           ))}
@@ -390,6 +414,10 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         {/* ---------- RESOURCES ---------- */}
         <div className="stat-category-label">Resources</div>
 
+        {/* Each bar's hover carries its *ceiling's* arithmetic. What is in a bar
+            right now is whatever the last hit left there and is nobody's sum; the
+            number it is read against is bought by a level, an attribute and
+            whatever is worked into what you wear. */}
         <ResourceBar
           label={hp.dead ? 'Health · Dead' : 'Health'}
           current={hp.hp}
@@ -398,6 +426,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           poison={hp.poison}
           onClick={() => setLedgerKind('health')}
           title={readOnly ? 'View the health log' : 'Open the health ledger'}
+          math={math.health_max}
         />
 
         <ResourceBar
@@ -407,6 +436,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           color="var(--stat-shield)"
           onClick={() => setLedgerKind('shield')}
           title={readOnly ? 'View the shield log' : 'Open the shield ledger'}
+          math={math.shield_cap}
         />
 
         <ResourceBar
@@ -416,48 +446,34 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           color="var(--stat-wp)"
           onClick={() => setLedgerKind('willpower')}
           title={readOnly ? 'View the willpower log' : 'Open the willpower ledger'}
+          math={math.willpower_max}
         />
 
-        <div className="pool-row">
-          <div className="pool-head">
-            <span className="pool-label">
-              Action Points
-              <span className="pool-count">
-                {character.ap}/{character.ap_max}
-              </span>
-            </span>
-          </div>
-          <PipRow
-            current={character.ap}
-            max={character.ap_max}
-            variant="ap"
-            readOnly={readOnly}
-            onChange={(v) => patch({ ap: v })}
-          />
-        </div>
+        <PointPool
+          label="Action Points"
+          current={character.ap}
+          max={character.ap_max}
+          variant="ap"
+          readOnly={readOnly}
+          math={math.ap_max}
+          onChange={(v) => patch({ ap: v })}
+        />
 
-        <div className="pool-row">
-          <div className="pool-head">
-            <span className="pool-label">
-              Reaction Points
-              <span className="pool-count">
-                {character.reaction}/{character.reaction_max}
-              </span>
-            </span>
-          </div>
-          <PipRow
-            current={character.reaction}
-            max={character.reaction_max}
-            variant="reaction"
-            readOnly={readOnly}
-            onChange={(v) => patch({ reaction: v })}
-          />
-        </div>
+        <PointPool
+          label="Reaction Points"
+          current={character.reaction}
+          max={character.reaction_max}
+          variant="reaction"
+          readOnly={readOnly}
+          math={math.reaction_max}
+          onChange={(v) => patch({ reaction: v })}
+        />
 
         <KarmaPill
           karma={character.karma}
           max={karmaCap(character)}
           readOnly={readOnly}
+          math={math.karma}
           onChange={(v) => patch({ karma: v })}
         />
       </div>

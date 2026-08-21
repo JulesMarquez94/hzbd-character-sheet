@@ -471,6 +471,23 @@ export function feralArmor(character, stat) {
 }
 
 /**
+ * The same Armor, kept per form so a reader can be told which hide lent it.
+ *
+ * `feralArmor` above is the sum `deriveStats` bakes into the column. This is the
+ * same walk stopped one step earlier, in the shape `weaponRiders` hands its own
+ * credits back in: `{ talent, armor }` for each form actually granting any, and
+ * empty for a character in none. A form whose rank grants no share is left out
+ * rather than credited with a zero.
+ */
+export function feralArmorFrom(character, stat) {
+  const value = Math.max(0, Math.floor(Number(stat) || 0));
+
+  return running(character)
+    .map((form) => ({ talent: form.talent, armor: Math.floor(value * form.armorShare) }))
+    .filter((row) => row.armor > 0);
+}
+
+/**
  * The share of maximum Health a Feral Cursed's Shield pool ceilings at, or 0 for
  * everybody whose sets say nothing about it.
  *

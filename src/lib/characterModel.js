@@ -348,7 +348,7 @@ export function deriveStats(character, extra = null) {
 }
 
 /** The share of maximum Health a Shield pool ceilings at for everybody. */
-const SHIELD_SHARE = 0.5;
+export const SHIELD_SHARE = 0.5;
 
 /**
  * A share of `healthMax`, rounded down — the bare cap on a character's shield.

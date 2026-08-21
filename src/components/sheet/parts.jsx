@@ -1,9 +1,15 @@
 import { useHoverTip } from './useHoverTip.jsx';
 import { magicBurdenMax, magicBurdenUsed } from '../../lib/items.js';
 
-/** Block 1's larger, read-only Physique/Instinct/Mind tile. */
-export function AttrTile({ label, value, color, info }) {
-  const { ref, tipProps, tip } = useHoverTip(info);
+/**
+ * Block 1's larger, read-only Physique/Instinct/Mind tile.
+ *
+ * `math` is the sum behind the number, printed under `info` on hover: the 4
+ * everybody starts at, the levels that raised it and whatever is worked into
+ * what you wear. See statMath.js.
+ */
+export function AttrTile({ label, value, color, info, math = null }) {
+  const { ref, tipProps, tip } = useHoverTip(info, math);
 
   return (
     <div className="attr-tile" style={{ borderTopColor: color }} ref={ref} {...tipProps}>
@@ -20,9 +26,15 @@ export function AttrTile({ label, value, color, info }) {
  * One of the three attribute / stat tiles. Hovering or focusing the tile
  * itself (not a separate icon) reveals `info`, when given. Read-only by
  * design: everything shown in one is derived, never typed in.
+ *
+ * Which is exactly why it also takes `math`. Every number in one of these is
+ * bought by something — an attribute, a level, a worn piece, a working, a shape
+ * you are in — and a tile that shows the total without the sources leaves the
+ * reader to reconstruct it out of four other tabs. So the hover carries both:
+ * what the stat is for, and where this character's came from.
  */
-export function StatBox({ label, value, color, suffix = '', info }) {
-  const { ref, tipProps, tip } = useHoverTip(info);
+export function StatBox({ label, value, color, suffix = '', info, math = null }) {
+  const { ref, tipProps, tip } = useHoverTip(info, math);
 
   return (
     <div className="stat-box" style={{ borderTopColor: color }} ref={ref} {...tipProps}>
@@ -32,6 +44,41 @@ export function StatBox({ label, value, color, suffix = '', info }) {
         {suffix}
       </span>
       {tip}
+    </div>
+  );
+}
+
+/**
+ * A point pool: its name, its `current/max`, and the dots that spend it.
+ *
+ * Lifted out of the two blocks that drew the identical four lines by hand — block
+ * 2's own two pools and a creature's — the moment either had something to say on
+ * hover. The label is what carries the tip rather than the whole row, because the
+ * row *is* the dots and a bubble that opens over the thing you are about to click
+ * is a bubble in the way.
+ */
+export function PointPool({ label, current, max, variant, onChange, readOnly = false, math = null }) {
+  const { ref, tipProps, tip } = useHoverTip(null, math);
+  const hoverable = tipProps.tabIndex !== undefined;
+
+  return (
+    <div className="pool-row">
+      <div className="pool-head">
+        <span className={`pool-label${hoverable ? ' has-tip' : ''}`} ref={ref} {...tipProps}>
+          {label}
+          <span className="pool-count">
+            {current}/{max}
+          </span>
+          {tip}
+        </span>
+      </div>
+      <PipRow
+        current={current}
+        max={max}
+        variant={variant}
+        readOnly={readOnly}
+        onChange={onChange}
+      />
     </div>
   );
 }
@@ -79,14 +126,28 @@ export function StepButtons({ onStep, variant, readOnly = false }) {
  * as the resource it belongs to. Pass `poison` (a 0–100 percentage) for Health,
  * the one pool that runs past zero: it refills the emptied bar in poison green,
  * and a full green bar means dead.
+ *
+ * `math` is the *ceiling's* breakdown, not the pool's: what is currently in a bar
+ * is whatever the last hit left there, and only the number it is read against is
+ * a sum with sources. Given one, the bar trades its native `title` for the sheet's
+ * own bubble and prints both there, because two tooltips racing on one hover is
+ * worse than either.
  */
-export function ResourceBar({ label, current, max, color, onClick, title, poison = 0 }) {
+export function ResourceBar({ label, current, max, color, onClick, title, poison = 0, math = null }) {
   const cap = Math.max(0, Number(max) || 0);
   const value = Number(current) || 0;
   const pct = cap > 0 ? Math.min(100, Math.max(0, (value / cap) * 100)) : 0;
+  const { ref, tipProps, tip } = useHoverTip(math ? title : null, math);
 
   return (
-    <button type="button" className="meter" onClick={onClick} title={title}>
+    <button
+      type="button"
+      className="meter"
+      onClick={onClick}
+      title={math ? undefined : title}
+      ref={ref}
+      {...tipProps}
+    >
       <span className="meter-label">{label}</span>
       <span
         className="mana-track"
@@ -103,6 +164,7 @@ export function ResourceBar({ label, current, max, color, onClick, title, poison
           {value} / {cap}
         </span>
       </span>
+      {tip}
     </button>
   );
 }
@@ -118,13 +180,18 @@ export function ResourceBar({ label, current, max, color, onClick, title, poison
  * takes the tip instead. An overburdened character is told so in words either
  * way, because that is the one number on this sheet meant to be able to be
  * wrong, and so the one that must be said out loud.
+ *
+ * `math` is the piece-by-piece sum of what is being carried, which is the one
+ * breakdown on the sheet that answers a question the reader is actually asking
+ * when they look: not "why is my capacity 24" but "what is eating it". So the
+ * *used* half is the line here, and the capacity stays in the words above it.
  */
-export function BurdenMeter({ character, info, foot = null }) {
+export function BurdenMeter({ character, info, foot = null, math = null }) {
   const max = magicBurdenMax(character);
   const used = magicBurdenUsed(character);
   const over = used > max;
   const color = over ? 'var(--danger-red)' : 'var(--haze-glow)';
-  const { ref, tipProps, tip } = useHoverTip(info);
+  const { ref, tipProps, tip } = useHoverTip(info, math);
 
   return (
     <div className="burden-panel" ref={ref} {...tipProps}>
@@ -237,8 +304,8 @@ const KARMA_INFO =
  * syncDerived has already pulled it back into range, and on a shared one a held
  * 5 of 3 is the row being honest about itself.
  */
-export function KarmaPill({ karma, max, onChange, readOnly = false }) {
-  const { ref, tipProps, tip } = useHoverTip(KARMA_INFO);
+export function KarmaPill({ karma, max, onChange, readOnly = false, math = null }) {
+  const { ref, tipProps, tip } = useHoverTip(KARMA_INFO, math);
   const cap = Math.max(0, Math.floor(Number(max) || 0));
   const held = Math.floor(Number(karma) || 0);
 

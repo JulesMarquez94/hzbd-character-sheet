@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FeralWindow } from './FeralPick.jsx';
 import { ResourceBar } from './parts.jsx';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import { shieldCapFor } from '../../lib/characterModel.js';
 import { enterFormBody, leaveFormBody } from '../../lib/combatBar.js';
 import { canEnterForm, enterForm, setFeralDifficulty, settleForm } from '../../lib/feral.js';
+import { statMath } from '../../lib/statMath.js';
 
 /**
  * The Feral Form block: the one a talent set adds when it can turn you into
@@ -56,6 +57,9 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
 
   const { spec } = form;
   const cap = shieldCapFor(character);
+  /* Where that cap came from, for the bar's hover. Worked out once: the map is
+     the whole tab's and this block reads one entry out of it. */
+  const capMath = useMemo(() => statMath(character).shield_cap, [character]);
   const can = canEnterForm(character, form);
   /* What transforming would cost, worked out before it is pressed rather than
      reported after: "you lose half your current Health" is not a sum anybody
@@ -121,12 +125,17 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
       {(form.inForm || form.over) && (
         <>
           <div className="stat-category-label">The hide</div>
+          {/* The ceiling's own arithmetic on hover, because this is the block
+              where it matters most: BESTIAL SENSE is what makes the pool the
+              whole of maximum Health rather than half, and this is the bar that
+              whole is holding the form up. */}
           <ResourceBar
             label="Shield"
             current={form.shield}
             max={cap}
             color="var(--stat-shield)"
             title="The form ends when this is gone"
+            math={capMath}
           />
           <p className="feral-line">
             {form.inForm

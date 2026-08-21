@@ -4,7 +4,7 @@ import UsePrompt from './UsePrompt.jsx';
 import { MinionWindow } from './MinionPick.jsx';
 import { BarChip } from './ActiveBlock.jsx';
 import { EffectRow } from './TurnBlock.jsx';
-import { AttrTile, GroupHead, PipRow, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
+import { AttrTile, GroupHead, PointPool, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
@@ -13,6 +13,7 @@ import { metersToFeet } from '../../lib/characterModel.js';
 import { minionBar, spendUse } from '../../lib/combatBar.js';
 import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
 import { minionActor, minionSpend, setMinionEffects, setMinionPool } from '../../lib/minions.js';
+import { minionMath } from '../../lib/statMath.js';
 
 /**
  * The two blocks a creature gets on the Character tab, and they only exist when
@@ -132,6 +133,11 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
   const { spec, stats } = minion;
   const tone = minion.scale ? damageStyle(minion.scale.damage) : null;
 
+  /* The same hover arithmetic block 2's tiles carry, off the same file. A
+     creature's numbers are derived like a character's, so the reader who has
+     learned to check a Grit by hovering it should not find this block silent. */
+  const math = useMemo(() => minionMath(minion), [minion]);
+
   const move = (pool, value) => {
     const body = setMinionPool(character, minion, pool, value);
     if (body) patch(body);
@@ -241,6 +247,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
               label={label}
               color={color}
               info={info}
+              math={math[key]}
               value={value}
               suffix={isSpeed ? (isImperial ? 'ft' : 'm') : ''}
             />
@@ -256,6 +263,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
             label={label}
             color={color}
             info={info}
+            math={math[key]}
             value={Math.floor(Number(stats[key]) || 0)}
           />
         ))}
@@ -278,6 +286,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
         max={stats.health_max}
         color="var(--stat-health)"
         readOnly={readOnly}
+        math={math.health_max}
         onChange={(value) => move('health', value)}
       />
 
@@ -287,6 +296,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
         max={stats.shield_cap}
         color="var(--stat-shield)"
         readOnly={readOnly}
+        math={math.shield_cap}
         onChange={(value) => move('shield', value)}
       />
 
@@ -311,10 +321,22 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
  * and none of them are. Four buttons rather than two, because dropping 22 Health
  * one tap at a time is not a thing anybody does twice.
  */
-function PoolRow({ label, current, max, color, readOnly, onChange }) {
+function PoolRow({ label, current, max, color, readOnly, onChange, math = null }) {
   return (
     <div className="minion-pool">
-      <ResourceBar label={label} current={current} max={max} color={color} title={label} />
+      {/* The bar's own label is the only thing this ever had to say, so it went
+          in `title` as the native tooltip. Once there is a breakdown to print,
+          repeating the label above it would be the bubble saying "Health" over a
+          sum that is plainly a Health, so the words are dropped and the line
+          stands alone. */}
+      <ResourceBar
+        label={label}
+        current={current}
+        max={max}
+        color={color}
+        title={math ? null : label}
+        math={math}
+      />
 
       {!readOnly && (
         <div className="minion-steps">
@@ -376,6 +398,7 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
      Willpower. */
   const actor = minionActor(character, minion);
   const { stats } = minion;
+  const math = useMemo(() => minionMath(minion), [minion]);
 
   function confirmUse(mode, amount, options) {
     const body = spendUse(request, actor, mode, amount, options);
@@ -402,41 +425,25 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
         </span>
       </div>
 
-      <div className="pool-row">
-        <div className="pool-head">
-          <span className="pool-label">
-            Action Points
-            <span className="pool-count">
-              {minion.ap}/{stats.ap_max}
-            </span>
-          </span>
-        </div>
-        <PipRow
-          current={minion.ap}
-          max={stats.ap_max}
-          variant="ap"
-          readOnly={readOnly}
-          onChange={(value) => pool('ap', value)}
-        />
-      </div>
+      <PointPool
+        label="Action Points"
+        current={minion.ap}
+        max={stats.ap_max}
+        variant="ap"
+        readOnly={readOnly}
+        math={math.ap_max}
+        onChange={(value) => pool('ap', value)}
+      />
 
-      <div className="pool-row">
-        <div className="pool-head">
-          <span className="pool-label">
-            Reaction Points
-            <span className="pool-count">
-              {minion.reaction}/{stats.reaction_max}
-            </span>
-          </span>
-        </div>
-        <PipRow
-          current={minion.reaction}
-          max={stats.reaction_max}
-          variant="reaction"
-          readOnly={readOnly}
-          onChange={(value) => pool('reaction', value)}
-        />
-      </div>
+      <PointPool
+        label="Reaction Points"
+        current={minion.reaction}
+        max={stats.reaction_max}
+        variant="reaction"
+        readOnly={readOnly}
+        math={math.reaction_max}
+        onChange={(value) => pool('reaction', value)}
+      />
 
       {/* Willpower is not a pool of its own: it spends its bonded's. Said here,
           under the two pools that *are* its own, rather than drawn as a third

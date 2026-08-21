@@ -970,6 +970,35 @@ body.sheet-fixed #root {
   transform: translate(-50%, 0);
 }
 
+/* The math line: the same bubble's second half, where the number above it is
+   taken apart and every source named. Ruled off from the words rather than
+   merely spaced, because it is a different kind of sentence — the prose says
+   what a stat is for and never changes, this says what this character's is made
+   of and changes every time something is equipped.
+
+   Tabular figures and a copper tint so it reads as arithmetic at a glance, and a
+   wider ceiling than the prose gets: a Defense built out of five sources is a
+   long line, and wrapping it every third term would cost more legibility than
+   the extra 70px does. `text-wrap: pretty` keeps a lone `= 11` off its own
+   line. */
+.info-tip-math {
+  display: block;
+  margin-top: 0.45rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(200, 138, 75, 0.25);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--copper-bright);
+  text-wrap: pretty;
+}
+
+/* Room for a five-source Defense, and never wider than the screen it is on:
+   `useHoverTip` slides a bubble back inside the edge, but it cannot slide one in
+   that is wider than the viewport. */
+.info-tip-bubble:has(.info-tip-math) {
+  max-width: min(280px, calc(100vw - 24px));
+}
+
 @keyframes tip-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1338,6 +1367,22 @@ body.sheet-fixed #root {
   color: var(--text-bright);
   text-transform: uppercase;
   letter-spacing: 0.8px;
+}
+
+/* A pool whose ceiling has a breakdown behind it says so. Every tile on this tab
+   announces its hover by lighting a border it already has; a label has no border
+   to light, so it takes the dotted underline that has meant "there is more here"
+   since long before this sheet. */
+.pool-label.has-tip {
+  text-decoration: underline dotted rgba(200, 138, 75, 0.5);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+.pool-label.has-tip:hover,
+.pool-label.has-tip:focus-visible {
+  text-decoration-color: var(--copper-bright);
+  outline: none;
 }
 
 .pool-count {

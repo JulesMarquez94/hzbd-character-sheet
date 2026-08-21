@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
 import { ItemIcon, ItemTags, ItemValues, SlotGlyph, SlotTools, StatText } from './itemParts.jsx';
 import { BurdenMeter } from './parts.jsx';
@@ -10,6 +10,7 @@ import {
   heldItem,
   rarityColor,
 } from '../../lib/items.js';
+import { statMath } from '../../lib/statMath.js';
 
 /**
  * The Inventory tab's armor block: what the character wears, one slot each
@@ -38,6 +39,8 @@ export default function ArmorBlock({
   const fullSet = armorSetName(character);
   const setInfo = fullSet ? ARMOR_SETS[fullSet] : null;
   const worn = ARMOR_SLOTS.filter((slot) => equipment[slot.key]).length;
+  /* What is filling the meter, named per piece, for its hover. */
+  const burdenMath = useMemo(() => statMath(character).burden_used, [character]);
 
   function equipItem(slotKey, item) {
     equip(slotKey, item);
@@ -59,7 +62,15 @@ export default function ArmorBlock({
       </div>
 
       {/* ---------- MAGIC BURDEN ---------- */}
-      <BurdenMeter character={character} foot="Capacity is Level + Mind + 10." />
+      {/* The piece-by-piece breakdown on hover, which matters more on this tab
+          than anywhere: this is where a loadout is chosen, and "what is eating my
+          capacity" is the question somebody standing over the armor slots is
+          asking. See statMath.js. */}
+      <BurdenMeter
+        character={character}
+        foot="Capacity is Level + Mind + 10."
+        math={burdenMath}
+      />
 
       {ARMOR_SLOTS.map((slot) => {
         const item = heldItem(character, equipment[slot.key]);

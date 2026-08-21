@@ -22,7 +22,7 @@
  */
 
 import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
-import { allGrants, damageEnchants, laidEntries } from './enchanting.js';
+import { allGrants, damageEnchants, grantSources, laidEntries } from './enchanting.js';
 import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
 import { TRINKET_ITEMS } from './trinkets.js';
 import { UTILITY_ITEMS } from './utility.js';
@@ -977,6 +977,20 @@ export function gearEnchantIds(character) {
  */
 export function characterGrants(character) {
   return allGrants(character, gearEnchantIds(character));
+}
+
+/**
+ * The same three places, named rather than summed: every enchantment standing on
+ * this character, as rows, with the same-source law already applied.
+ *
+ * `characterGrants` above is what the stat columns read. This is what a *tile*
+ * reads, so a hovered number can say which working lent it a point instead of
+ * leaving the reader to go and reconstruct the sum. Composed here for the same
+ * reason that one is: this is the only file that can see both the codex and the
+ * enchanting rules.
+ */
+export function characterGrantSources(character) {
+  return grantSources(character, gearEnchantIds(character));
 }
 
 export function itemsForSlot(slotKey) {
