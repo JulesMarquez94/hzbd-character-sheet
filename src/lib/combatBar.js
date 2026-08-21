@@ -37,7 +37,7 @@
  * ------------------------------------------------------------- the recap
  * Grouped by what a thing *is* rather than by where it came from, because the
  * blocks on the Abilities tab already answer the second one. Provenance is not
- * lost: it rides on each row as a note, so "Sharpsense · Draconic" still says
+ * lost: it rides on each row as a note, so "Sharp Sense · Wildkin" still says
  * where it came from in the width a chip has.
  *
  * This file reads the character and the codex. It writes nothing.
@@ -58,7 +58,13 @@ import {
   normalizeEquipment,
 } from './items.js';
 import { getCard, itemEnchantments } from './weapons.js';
-import { isWeaponAttack, spendTricks } from './tricks.js';
+import {
+  ambushEffect,
+  ambushLine,
+  ambushOption,
+  isWeaponAttack,
+  spendTricks,
+} from './tricks.js';
 import {
   canEnterForm,
   enterForm,
@@ -271,6 +277,7 @@ function knownGroups(character, locks) {
             source: `${card.name} · ${source.title}`,
             modifiers,
             ...martialUse(character, card, room),
+            ...ambushUse(character, card),
             ...feralUse(character, card, set),
             ...formRefusal(card, locks, { set }),
           })
@@ -314,6 +321,50 @@ function martialUse(character, card, room) {
     spent: !room.ok,
     spentLabel: 'No room',
     spentNote: room.reason,
+  };
+}
+
+/**
+ * What AMBUSH costs and what it lays, or nothing at all for every other card.
+ *
+ * Like a Martial Move, nothing is resolved when it is used: the Willpower lays a
+ * rider on the tracker and the next weapon attack carries it. Unlike one, the
+ * price is not printed on the card — "the cost of this ability is equal to the
+ * weapon number of base damage dice before enchant or boost" — so it is worked
+ * out here off the weapon in hand and handed to the chip as an ordinary number.
+ *
+ * That number is knowable at all because of the ruling that narrowed the card:
+ * "Ambush only apply on Weapon Attack, not special attack", so there is one attack
+ * it can ride and its dice are the price. AmbushWindow.jsx used to list the two
+ * attacks, price each one and take the payment itself, and it is gone: with
+ * nothing to choose there is nothing to confirm, and this is the whole of what
+ * replaced it.
+ *
+ * Refused, wearing the reason, when there is nothing in hand to ride. Same shape a
+ * Martial Move with no room and an empty flask both wear.
+ */
+function ambushUse(character, card) {
+  if (card?.opens !== 'ambush') return {};
+
+  const equipment = normalizeEquipment(character?.equipment);
+  const primary = heldItem(character, equipment.main_hand);
+  const option = ambushOption((primary?.abilities ?? []).map(getCard).filter(Boolean));
+
+  if (!option) {
+    return {
+      extra: null,
+      spent: true,
+      spentLabel: 'No blade',
+      spentNote: primary
+        ? `${primary.name} rolls no damage dice, so an ambush has no price to pay.`
+        : 'An ambush is a weapon attack, and you have nothing in your hands.',
+    };
+  }
+
+  return {
+    wp: option.wp,
+    note: ambushLine(option),
+    extra: { effects: addEffect(character?.effects, ambushEffect(option)) },
   };
 }
 
@@ -739,6 +790,12 @@ export function spendUse(request, character, mode, amount, { free = false } = {}
      Started from whatever the request already put there, on the off chance a card
      ever carries an effects patch of its own.
 
+     Only `spendTricks` is told *which* attack it was, and that is the one
+     asymmetry between the two rider systems: an ambush is bought against the plain
+     attack alone, while a Martial Move "just apply to both and the first one of the
+     two action used remove the effect". So a Triple Strike takes the Wound off and
+     leaves the ambush waiting for the swing it was paid for.
+
      Guarded on the card rather than on the character, because a creature's block
      pays through here too and hands its own row in as `character`. No minion
      card is tagged Weapon Attack, so nothing there is touched. */
@@ -746,13 +803,18 @@ export function spendUse(request, character, mode, amount, { free = false } = {}
     let effects = body.effects ?? character?.effects;
     let cleared = false;
 
-    for (const spend of [spendTricks, spendMoves]) {
-      const kept = spend(effects);
-      if (kept) {
-        effects = kept;
-        cleared = true;
-      }
+    const withoutTricks = spendTricks(effects, request.card);
+    if (withoutTricks) {
+      effects = withoutTricks;
+      cleared = true;
     }
+
+    const withoutMoves = spendMoves(effects);
+    if (withoutMoves) {
+      effects = withoutMoves;
+      cleared = true;
+    }
+
     if (cleared) body.effects = effects;
   }
 

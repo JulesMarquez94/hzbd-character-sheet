@@ -51,7 +51,7 @@ doing on its own.
 | Talent Set · Draconic Bond · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
 | Draconic Bond art, from the `Draconic Bond/` folder | **2026-08-20, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | Talent Set · Trickster · Ability | **2026-08-20, 7 cards** | `src/lib/talents.js` (`TALENTS`) |
-| Talent Set · Trickster · Developpement Notes | **2026-08-20, the pending rider and the steal table** | `src/lib/tricks.js`, `AmbushWindow.jsx`, `StealWindow.jsx` |
+| Talent Set · Trickster · Developpement Notes | **2026-08-20, the pending rider and the steal table** | `src/lib/tricks.js`, `combatBar.js`, `StealWindow.jsx` |
 | Talent Set · Trickster · Overview | **2026-08-20, written here** | `src/lib/talents.js`, exported back to `data/` |
 | Trickster art, from the `Trickster/` folder | **2026-08-20, 7 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | Talent Set · Enchanter · Ability, amended | **2026-08-20, 4 cards** (3 on 08-19) | `src/lib/talents.js`, exported to `data/templates/` |
@@ -1045,31 +1045,41 @@ swing was tapped on the quick bar or on block 3. It comes off hit or miss:
 AMBUSH's Willpower buys the *attempt*, Advantage applies to the roll, and the
 roll has happened.
 
-**What counts as a swing** is read off the tags, never guessed. The glossary is
-narrow — a Weapon Attack is "either of the two attacks the weapon in your hands
-teaches you" — so both `Weapon Attack` and `Special Weapon Attack` carry a rider
-and the four things tagged `Weapon Move` do not. Shield Block is one of those, and
-a rider that raised a shield block would be lending damage to a defence.
+**What counts as a swing** is read off the tags, never guessed, and it is not the
+same answer for every rider. The glossary is broad — a Weapon Attack is "either of
+the two attacks the weapon in your hands teaches you" — and the four things tagged
+`Weapon Move` are neither of them. Shield Block is one of those, and a rider that
+raised a shield block would be lending damage to a defence.
 
-### AMBUSH prices itself, so it asks
+**AMBUSH is narrower than the glossary**, which is a ruling rather than a reading:
+it rides the plain `Weapon Attack` a weapon teaches, and a `Special Weapon Attack`
+neither prints it nor spends it. A stolen Poison keeps the broad reading and rides
+either. `trickRides` in `tricks.js` is the one place those two part company. See
+[where a rider lands](#where-a-rider-lands-2026-08-21).
+
+### AMBUSH prices itself off the weapon
 
 "The cost of this ability is equal to the weapon number of base damage dice
 before enchant or boost" — so the card's printed cost is the sheet's own `x`, and
-the number is not knowable until the attack is chosen. **The two attacks a weapon
-teaches do not always roll the same dice.** A Longbow shoots for 2d6 and takes
-aim for 3d6, so an ambush costs 2 one way and 3 the other and is Elevated to
-match.
+the number belongs to the weapon rather than to the card. Daggers strike for 1d6,
+a Longbow shoots for 2d6 and a Staff blasts for 3d6, so the same card costs 1, 2
+or 3 depending on what is in your hands, and Elevates to match.
 
-So AMBUSH is marked `pays: 'window'`, the same as EPHEMERAL ENCHANTMENT, and
-`AmbushWindow.jsx` lists the attacks in hand with the Willpower each would cost
-and prints the chosen one *as it would land* before a point is spent. "Before
-enchant or boost" is honoured by reading the card's own printed expression: an
-Empowering enchantment adds dice at print time and has no business raising the
-price of an ambush.
+`ambushUse` in `combatBar.js` reads it off the weapon in the main hand and hands
+the chip an ordinary number, so an ambush is paid for at the chip like everything
+else on the bar. "Before enchant or boost" is honoured by reading the card's own
+printed expression: an Empowering enchantment adds dice at print time and has no
+business raising the price of an ambush.
 
-A weapon whose card rolls no damage dice cannot be ambushed with and is left out
-of the list. That is the four `Reload` cards, which are tagged `Special Weapon
-Attack` and deal nothing.
+A weapon whose plain attack rolls no damage dice cannot be ambushed with, and the
+chip says so rather than taking the Willpower: **No blade**, wearing the reason,
+which is the shape a Martial Move with no room and an empty flask both wear.
+
+**This is where the window went.** `AmbushWindow.jsx` used to list both attacks
+with a price on each, print the chosen one *as it would land* and take the payment
+itself, because until an attack was chosen the price was not knowable. Only one
+attack can be ambushed now, so there is nothing to choose and nothing to confirm.
+See [where a rider lands](#where-a-rider-lands-2026-08-21).
 
 ### STEAL opens the table
 
@@ -1164,7 +1174,9 @@ Two smaller things, decided rather than asked:
 - **Poison's "next Weapon Attacks" is read as one swing.** The row is written
   plural where the sentence is singular ("your *next* Weapon Attacks"), and a
   rider with no end condition never comes off. Treated as the next attack, the
-  same as AMBUSH, so both are lost together on the same swing.
+  same as AMBUSH. Not narrowed with it, though: the ruling below is about AMBUSH
+  and says nothing about a stolen poison, so a poison is still spent by either of
+  the two attacks.
 
 ### The picture folder
 
@@ -1308,7 +1320,10 @@ of rider and not the other, so there is one fold and every call site uses it.
 
 **Lost on use** is `spendMoves`, called from the same `spendUse` the Trickster's
 riders come off in, so a Duelist who ambushed and then laid a Wound loses both to
-one swing. It fires when the attack is **paid for**, not when it lands. The note
+one swing — as long as the swing was the plain attack, which is the one thing the
+two rider systems no longer agree about. See
+[where a rider lands](#where-a-rider-lands-2026-08-21). It fires when the attack
+is **paid for**, not when it lands. The note
 says "remove on the attack land"; nothing here asks about the outcome, so nothing
 here can be wrong about it, and it is the same reading `spendTricks` already
 takes — what a move buys is the attempt. **Worth a ruling** if the other thing was
@@ -2920,3 +2935,207 @@ Two things that did **not** move, both because burden is what a *thing* weighs:
    an effect does not stack with itself, and it never governed burden: two rings
    grant one point of Instinct and weigh 8. `grantsFrom` deduplicates and
    `itemBurden` does not, which is exactly the split that was always there.
+
+## Where a rider lands, 2026-08-21
+
+> "Ambush onyl a apply on "Weapon Attack", not speical attack. there is no need
+> for a confirmation button. In the case o martial move when you get rank free. It
+> just just apply ot boht and hte first one of the tow action used remove the
+> effect"
+
+Three rulings on the two rider systems, and the second two fall out of the first.
+
+### An ambush rides one attack
+
+A weapon teaches two cards and the glossary calls both of them a Weapon Attack.
+AMBUSH does not.
+
+| the card | prints the ambush | spends it |
+| --- | --- | --- |
+| `Daggers - Strike` · `Weapon Attack` | yes | yes |
+| `Daggers - Triple Strike` · `Special Weapon Attack` | no | **no** |
+| `Shield Block` · `Weapon Move` | no | no |
+
+That middle row is the half that matters. A Trickster who pays for an ambush and
+then makes a Triple Strike has made an attack and **still has the ambush**: a rider
+that was not on a swing cannot be taken off by one. So `spendTricks` is now told
+which card was paid for, and `trickRides` is the single place that decides. Both
+halves of a rider's life read that one function, so what a card prints and what a
+swing spends can never disagree.
+
+`isPlainAttack` is the narrow test and `isWeaponAttack` is the broad one, both in
+`tricks.js`, both off the tags and neither out of the prose.
+
+### So there is nothing left to confirm
+
+`AmbushWindow.jsx` is gone, and the ruling above is what removed the reason for
+it. The price of an ambush is the attack's own base damage dice, and with two
+attacks to choose between the sheet could not know the number until the player
+picked one. With one attack it is knowable the moment a weapon is in hand.
+
+So an ambush is paid for at the chip like every other card. `ambushUse` in
+`combatBar.js` reads the main hand, puts the Willpower in the orb, says what the
+payment will do — *Rides Daggers - Strike: Advantage on the roll, and the damage
+Elevated once* — and lays the rider as the use's own `extra`, so one write spends
+the Willpower and writes the tracker row together. The action-or-reaction question
+is asked once, by the same `UsePrompt` everything else on the sheet is paid
+through, and Cancel still costs nothing.
+
+The card keeps `opens: 'ambush'` as the marker `ambushUse` reads, the way CALL THE
+BEAST carries `opens: 'feral'`, and has dropped `pays: 'window'`. The attack as it
+would land is one tap away on the In Hand chip, before the ambush and after it.
+
+### A Martial Move rides both
+
+"it just apply to both and the first one of the two action used remove the
+effect". A move rides both of the attacks a weapon teaches, prints on both, and
+comes off on whichever of the two is made first. That was already what the sheet
+did; what is new is that it is written down where it can be read — on the tracker
+row itself (*Rides your next weapon attack, special or not*) and in `spendMoves`,
+which deliberately takes no card where `spendTricks` takes one.
+
+| the rider | rides | spent by |
+| --- | --- | --- |
+| AMBUSH | the plain attack | the plain attack |
+| a stolen Poison | either attack | either attack |
+| a Martial Move | either attack | either attack, and the first one takes it |
+
+**One clause is read rather than known.** "when you get rank free" is taken as the
+Rank 3 case, where SHARP and BESTIAL FRENZY put two moves on one swing: both ride,
+and the first attack takes both, with nothing split across the two attacks and
+nothing held back for the second. That is the only place two moves can be waiting
+at once, so it is the only place the sentence has anything to add. Either way the
+behaviour asked for is the same one, so nothing hangs on the reading.
+
+## The lineages, remade 2026-08-21
+
+Two new tabs, `General Rules - Lineage` and `General Rules - Lineage Cards`, plus
+`data/Lineage/` and `data/Lineage/Lineage Cards/` with a picture for every row of
+both. They replace the V4 "Hazebound - Character Sheet V4 - LINEAGE" sheet the
+old codex was transcribed from, and `lineages.js` was rewritten against them.
+
+### Eighteen ancestries became thirteen
+
+**The six beastkin lines are gone.** Featherborn, Furborn, Gillborn, Muckborn,
+Scaleborn and Slickborn have no row on the new tab. One ancestry replaces all
+six: **Wildkin**, which offers the pool those six used to divide between them and
+asks the player to keep two of it. 18 − 6 + 1 = 13, which is exactly what the
+picture folder holds.
+
+Twenty-two card rows against V4's twenty-seven, and almost none of the names
+survived: DRACONIC HIDE is now DRACONIC SCALES, STONESKIN is MINERAL SKIN,
+POISONOUS is VENOMOUS, HARDENED FRAME is STRONG, UNDYING is UNDEATH RESILIENCE,
+FEED is CANNIBALISM. **No V4 id survives**, so a character saved on the old codex
+keeps its lineage *name* and loses nothing else: the name is what the `lineage`
+column stores, and `getLineage` missing it prints "written in by hand" rather
+than clearing it. A character on one of the six removed lines reads that way now,
+and picking again is the fix.
+
+The numbers moved with the names. Health per level is written against 10 rather
+than V4's 5, which is what `deriveStats` already computes; Movement Speed is in
+meters rather than points; and the V4 casting-attribute question is gone, because
+every spell a lineage grants is now cast with "your highest Attribute". Wisdom
+and Fortitude are off the sheet as options with it.
+
+### Wildkin asks for cards, not for a value
+
+Every other ancestry hands its cards over as printed, and the only question any
+of them asks is *what a card says*: which damage type your scales resist. Wildkin
+asks **which cards you have**, and that is a new shape.
+
+| | |
+| --- | --- |
+| the pool | Amphibian, Scaley, Venomous, Cold Blooded, Sharp Sense, Hearthy, Wild Swiftness, Sticky |
+| keep | 2 |
+| stored in | `choices['wildkin-traits']`, a list of card ids |
+
+**No new column.** The `choices` bag is already "what this lineage left to you",
+every other reader of it looks up `choices[card.id]`, and a pool's id is not a
+card's, so a list under one more key needs no migration. Dropping the lineage
+drops the picks with it.
+
+All eight are in the registry whether or not anybody kept them, or a Wildkin's
+two would be the only cards on the sheet no `{{link}}` could resolve and no pile
+could deal. What a character *holds* comes from `lineageCards`, which is
+`lineage.cards` for twelve of the thirteen and the kept two for Wildkin, and
+every surface that prints "what your blood carries" goes through it.
+
+Keeping a third drops the one kept longest rather than refusing the click: a pool
+of eight you have to clear before you can change your mind is worse than one that
+rolls.
+
+### How the transcription was proved
+
+Every card body was resolved back through its markers and compared to the
+designer's cell with case and punctuation flattened, alongside its AP, its WP and
+all thirteen blurbs. **64 of 82 comparisons match.** All thirteen blurbs and
+every AP and WP match exactly. The eighteen that differ are all reads, and the
+full list of them is in the header of `lineages.js`: single-word spelling
+("eahc", "aiblity", "cielings", "fice sense"), singulars that wanted plurals
+("short rest no longer restore"), house units ("1.5 meter" to 1.5 meters), and
+DRAGON BREATH's person, which is written off a monster's stat block and says "in
+front of itself" about a player.
+
+INNATE X is one modular row and six cards. Its cell carries "(mdoular card were X
+is replace with the type of school in the anme)", which is a note to the builder
+rather than rules text, so it is dropped and built: the lineage tab names a school
+for each of six ancestries and each gets its own card. All six were checked
+against the one row.
+
+### Four things for the designer
+
+1. **LIVING FURNACE does not say what you regain.** "You regain 10 + 5 for each
+   Willpower spent" names no pool. Health is the only one the numbers fit, and
+   that is still not what the cell says, so the card prints the sentence as
+   written. Its Willpower column reads `x`, which no card shape holds, so the
+   ceiling is printed in the body instead.
+2. **SPROUT WINGS is one card given to two ancestries and names one of them.**
+   Celestial and Infernal both take it and it reads "Celestial wings". V4 had
+   two cards here, CELESTIAL WINGS and INFERNAL WINGS; the new tab has one row
+   and one picture. Left as printed.
+3. **Three cards still say "Fortitude".** FEY BLOOD, UNDEATH RESILIENCE and
+   HEARTHY all read "per level in Fortitude and Physique", and V5 has no
+   Fortitude. `deriveStats` computes Health as 10 per character level plus 10 per
+   Physique, so the app already reads the first half as level.
+4. **Innate Light and Innate Shadow name schools that do not exist.** Fire, Wind,
+   Water and Earth are all Elemental families with Novice spells already written.
+   Light and Shadow are neither a school nor a family anywhere in `spells.js`, so
+   those two cards promise a spell nobody can look up.
+
+Two tags contradict their own costs and were read against the cost: SPROUT WINGS
+is tagged `Basic Action` on a tab of lineage cards while carrying 2 AP and 2 WP,
+and LIVING FURNACE is tagged `Passive` while carrying a cost. Both are treated as
+the Abilities they are priced as.
+
+### What is printed and not yet wired
+
+Only the three attribute grants are declared and added: STRONG raises Physique,
+INSTINCTUAL Instinct, INTELLIGENT Mind, the same three V4 had. **MINERAL SKIN and
+SCALEY's "+1 Defense", INNER TIDE's "+4 Willpower", WIND GRACE and WILD
+SWIFTNESS's "+1.5 meters", and the four cards that change Health per level are
+printed on the card and not read by the sheet.** That is exactly where V4 left
+them, so nothing regressed, but the list is longer now and INNER TIDE's +4 is the
+largest number on it.
+
+### Two ids came free
+
+**`resilience` and `create-water` are no longer held by a lineage trait.** Both
+V4 traits are gone, so the collisions recorded above under [the
+Enchanter](#one-id-had-to-change) and [the Elemental
+school](#one-id-had-to-change-again) no longer exist. The renames stay as they
+are: `resilience-enchantment` and `create-water-spell` are what saved characters
+point at now, and an id is not worth churning twice.
+
+The Draconic scale table is unchanged, so the disagreement recorded under [the
+Draconic Bond](#three-things-for-the-designer) stands as it was. It is
+DRACONIC SCALES that holds the lineage's half of it now, not CHROMATIC
+RESISTANCE.
+
+### The art is still not placed
+
+Twenty-two card pictures and thirteen ancestry pictures are in `data/Lineage/`,
+and `npm run art:cards` still cannot place any of them. The reason is unchanged
+and is recorded in `pull-card-art.mjs`: `lineages.js` hands the same card object
+out twice, once into `LINEAGE_CARDS` and once on the lineage, so art attached to
+the flattened copy reaches the codex and not the sheet. Wrapping the module the
+way `talents.js` wraps its sets is what unblocks it, and it is a separate change.

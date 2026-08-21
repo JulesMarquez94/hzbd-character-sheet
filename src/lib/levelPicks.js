@@ -40,7 +40,7 @@ import {
   getBackgroundSkill,
   normalizeBackgroundSkills,
 } from './backgrounds.js';
-import { getLineage } from './lineages.js';
+import { getLineage, lineageCards, openPicks } from './lineages.js';
 import { advancementState, normalizeTalents, pruneTalents } from './talents.js';
 import { minionOf, minionSettled } from './minions.js';
 import { feralOf, feralSettled } from './feral.js';
@@ -86,11 +86,15 @@ export function nextLevelPromise(level) {
  * Whether the lineage is settled: chosen, and every question its cards leave to
  * the player answered.
  *
- * A lineage is one choice with up to one follow-up. Half of them ask nothing at
- * all; the other half ask which damage type your scales resist, or which
- * attribute you cast the blood's spell with, and an unanswered one leaves a card
- * on the sheet with a blank in the middle of its sentence. An ancestry written in
- * by hand asks nothing this codex knows about, so a name is all it needs.
+ * A lineage is one choice with up to one follow-up. Most of them ask nothing at
+ * all; Draconic asks which damage type your scales resist, and an unanswered one
+ * leaves a card on the sheet with a blank in the middle of its sentence. An
+ * ancestry written in by hand asks nothing this codex knows about, so a name is
+ * all it needs.
+ *
+ * A Wildkin is the one whose question is which cards it has rather than what one
+ * of them says, so the pool is counted first: two traits short of a hand is not
+ * settled, and the cards it does hold are the ones it kept.
  */
 export function lineageSettled(character) {
   const written = String(character?.lineage ?? '').trim();
@@ -98,7 +102,8 @@ export function lineageSettled(character) {
   if (!lineage) return Boolean(written);
 
   const choices = character?.choices ?? {};
-  return lineage.cards.every(
+  if (openPicks(lineage, choices) > 0) return false;
+  return lineageCards(lineage, choices).every(
     (card) =>
       !card.choice || card.choice.options.some((option) => option.id === choices[card.id])
   );

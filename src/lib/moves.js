@@ -40,6 +40,16 @@
  * attempt. Advantage applies to the roll and the roll has happened. Flagged in
  * data/README.md in case the designer means the other thing.
  *
+ * *Which* weapon attack is not asked either, and that is Jules's own ruling on
+ * 2026-08-21: "in the case of martial move it just apply to both and the first one
+ * of the two action used remove the effect". So a move rides both of the two
+ * attacks a weapon teaches, prints on both, and comes off on whichever of them is
+ * made first. Two moves waiting on a Master Duelist's swing are that same rule
+ * twice: both ride, and the first attack takes both. A Trickster's AMBUSH is the
+ * narrow one and reads the plain attack alone, which is the whole reason
+ * `spendMoves` takes no card and `spendTricks` does. See `trickRides` in
+ * tricks.js.
+ *
  * ---------------------------------------------------------------- the allowance
  * One move to a swing for everybody who knows one, and a Master Duelist's SHARP
  * is the only thing in the game that moves it: "you can now use two Martial Moves
@@ -237,10 +247,10 @@ export function pendingCount(effects) {
  * Empowered adds a die each time and Elevate grows the die each time, capped at a
  * d12 where the number is actually printed. So all three simply add up.
  *
- * Only on a weapon attack. A move rides "your next Weapon Attack" and nothing
- * else, and the glossary is narrow about what one is — either of the two attacks
- * the weapon in your hands teaches you, which is what `isWeaponAttack` reads off
- * the tags.
+ * Only on a weapon attack, and on either of the two a weapon teaches: "it just
+ * apply to both". `isWeaponAttack` is the broad test and a move reads it, where an
+ * ambush reads the narrow one. A reload and a Shield Block are tagged Weapon
+ * *Move* and carry nothing at all.
  */
 export function moveRider(effects, card) {
   if (!isWeaponAttack(card)) return null;
@@ -287,7 +297,14 @@ export function effectAdvantage(effect) {
   return trick ? { advantage: trick.advantage, disadvantage: 0, from: [trick.name] } : null;
 }
 
-/** The effects list with every Martial Move rider taken off it, or null if none was. */
+/**
+ * The effects list with every Martial Move rider taken off it, or null if none
+ * was.
+ *
+ * No card, unlike `spendTricks`. A move rides both of the two attacks a weapon
+ * teaches, so whichever one was paid for is the one that spent it, and the caller
+ * has already established that a weapon attack is what was paid for.
+ */
 export function spendMoves(effects) {
   const list = rows(effects);
   const kept = list.filter((row) => !(row && typeof row === 'object' && row.move));
@@ -298,14 +315,15 @@ export function spendMoves(effects) {
  * The rider a move lays, as an effect row for the tracker.
  *
  * Open-ended on purpose: a move waits until you swing, not for a number of turns.
- * The note is what the tracker prints under the name, and it says the one thing a
- * player needs from a row they are about to forget — that it is spent by swinging
- * whether or not the swing lands.
+ * The note is what the tracker prints under the name, and it says the two things a
+ * player needs from a row they are about to forget: that either of the weapon's
+ * two attacks is the swing that takes it, and that it goes whether or not the
+ * swing lands.
  */
 export function moveEffect(card, talent = null) {
   return {
     name: card.name,
-    note: 'Rides your next weapon attack. Spent the moment you swing.',
+    note: 'Rides your next weapon attack, special or not. Spent the moment you swing.',
     turns: null,
     until: null,
     from: talent?.name ? `${talent.name} · Martial Move` : 'Martial Move',

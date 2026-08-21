@@ -5,7 +5,6 @@ import { GroupHead } from './parts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
-import AmbushWindow from './AmbushWindow.jsx';
 import StealWindow from './StealWindow.jsx';
 import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
 import { brewSetFor } from '../../lib/brews.js';
@@ -51,11 +50,11 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
   /* Whether the Ephemeral Enchantment shelf is up. Unlike brewing it opens
      *before* anything is paid: see `pays` in combatBar.js. */
   const [enchanting, setEnchanting] = useState(false);
-  /* The two Trickster windows, as `{ talent, card }` or null. AMBUSH opens
-     before the payment because the weapon decides the price; STEAL opens after
-     it, because the two Action Points bought the attempt and the window is only
-     deciding what came out of the pocket. See src/lib/tricks.js. */
-  const [ambushing, setAmbushing] = useState(null);
+  /* The Trickster's window, as `{ talent, card }` or null. STEAL opens after the
+     payment, because the two Action Points bought the attempt and the window is
+     only deciding what came out of the pocket. AMBUSH had one of these too, until
+     it turned out to have nothing to ask: it rides the one plain attack a weapon
+     teaches, so the chip knows the price and pays it. See src/lib/tricks.js. */
   const [stealing, setStealing] = useState(null);
 
   const groups = useMemo(() => quickBar(character), [character]);
@@ -69,13 +68,6 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
     if (move.pays === 'window' && move.opens === 'ephemeral') {
       setEnchanting(true);
       return;
-    }
-    if (move.pays === 'window' && move.opens === 'ambush') {
-      const talent = trickSetFor(character?.talents, move.card?.id);
-      if (talent) {
-        setAmbushing({ talent, card: move.card });
-        return;
-      }
     }
 
     setRequest({
@@ -163,17 +155,6 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
           patch={patch}
           readOnly={readOnly}
           onClose={() => setEnchanting(false)}
-        />
-      )}
-
-      {ambushing && (
-        <AmbushWindow
-          talent={ambushing.talent}
-          card={ambushing.card}
-          character={character}
-          patch={patch}
-          readOnly={readOnly}
-          onClose={() => setAmbushing(null)}
         />
       )}
 

@@ -986,15 +986,18 @@ const TALENT_SETS = [
         kind: 'talent',
         tags: ['Trickster', 'Novice Talent', 'Ability'],
         ap: null,
-        /* The sheet's own "x". What this costs is the attack's own base damage
-           dice, which is not known until the attack is chosen, so the window
-           works it out and pays for it there — the same trade BREW and EPHEMERAL
-           ENCHANTMENT make. See src/lib/tricks.js. */
+        /* The sheet's own "x". What this costs is the base damage dice of the
+           attack it rides, so the number belongs to the weapon rather than to this
+           card: `ambushUse` in combatBar.js reads it off whatever is in hand and
+           the chip prints it. There is only one attack it can ride, which is what
+           lets it be paid for at the chip like every other card rather than inside
+           a window of its own. See src/lib/tricks.js. */
         wp: 'X',
         stat: 'instinct',
-        /* Mechanics as data, never read out of the prose. */
+        /* Mechanics as data, never read out of the prose. `opens` names what
+           paying for this *does* rather than a window it raises, the same as CALL
+           THE BEAST's own. */
         opens: 'ambush',
-        pays: 'window',
         body:
           'When making a Weapon Attack against a target that cannot see you or is afflicted with the Stunned, Grappled or Constrained status. (The cost of this ability is equal to the weapon number of base damage dice before enchant or boost)\n\n' +
           'The Weapon Attack is made with Advantage.\n\n' +

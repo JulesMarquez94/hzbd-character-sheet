@@ -20,7 +20,7 @@ import { cardGist } from '../../lib/cardText.js';
  * Grouped by what a thing is rather than by who gave it, because the Abilities
  * tab already files everything by provenance and answering the same question
  * twice wastes the only 360 pixels this block has. Provenance is not lost: it
- * rides at the end of each row, so "Sharpsense · Draconic" still says where it
+ * rides at the end of each row, so "Sharp Sense · Wildkin" still says where it
  * came from.
  *
  * Every row carries one line of what it actually gives you, which is the whole

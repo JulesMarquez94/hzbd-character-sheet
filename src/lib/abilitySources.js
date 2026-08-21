@@ -27,7 +27,7 @@ import { getBackground, getBackgroundSkill, normalizeBackgroundSkills } from './
 import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
 import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from './items.js';
-import { getLineage } from './lineages.js';
+import { getLineage, lineageCards } from './lineages.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
 import { isMinionCard, minionModifiers, minionState } from './minions.js';
@@ -116,7 +116,13 @@ function lineageSource(character) {
     note: 'Lineage',
     art: lineage.art ?? null,
     sections: [
-      section('traits', 'What your blood carries', withAnswers(lineage.cards, character?.choices)),
+      /* What this character *holds*, which for a Wildkin is the two traits they
+         kept rather than the eight the pool offered. */
+      section(
+        'traits',
+        'What your blood carries',
+        withAnswers(lineageCards(lineage, character?.choices), character?.choices)
+      ),
     ],
   };
 }

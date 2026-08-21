@@ -7,7 +7,16 @@ import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import PickBlock from './PickBlock.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
-import { LINEAGES, getLineage, lineageTags, usedLineageTags } from '../../lib/lineages.js';
+import {
+  LINEAGES,
+  getLineage,
+  lineageCards,
+  lineageTags,
+  openPicks,
+  poolPicks,
+  togglePoolPick,
+  usedLineageTags,
+} from '../../lib/lineages.js';
 import { setLineage } from '../../lib/levelPicks.js';
 
 /**
@@ -27,14 +36,41 @@ function pickedOn(card, choices) {
   return card.choice.options.find((option) => option.id === choices?.[card.id]) ?? null;
 }
 
-/** The cards of a lineage that leave something to the player. Often none. */
-function asksOf(lineage) {
-  return (lineage?.cards ?? []).filter((card) => card.choice);
+/**
+ * The cards of a lineage that leave something to the player. Often none.
+ *
+ * The cards it *holds*, which for a Wildkin is the two they kept: one who kept a
+ * trait with a question of its own would be asked it like anybody else. None of
+ * the eight asks anything today, and the day one does this already covers it.
+ */
+function asksOf(lineage, choices) {
+  return lineageCards(lineage, choices).filter((card) => card.choice);
 }
 
-/** How many of those are still unanswered. */
+/**
+ * How much of a lineage is still open: the questions on the cards it holds, plus
+ * the cards a pool is still short of.
+ */
 function openAsks(lineage, choices) {
-  return asksOf(lineage).filter((card) => !pickedOn(card, choices)).length;
+  return (
+    asksOf(lineage, choices).filter((card) => !pickedOn(card, choices)).length +
+    openPicks(lineage, choices)
+  );
+}
+
+/** Whether taking this lineage walks you into a page that asks you something. */
+function hasAsks(lineage, choices) {
+  return Boolean(lineage?.pool) || asksOf(lineage, choices).length > 0;
+}
+
+/**
+ * The button that reopens the settle window, named for what is still open. A
+ * pool is short of traits rather than short of answers.
+ */
+function settleLabel(pool, unanswered) {
+  if (unanswered === 0) return pool ? 'Change your traits' : 'Change what it asked you';
+  if (pool) return `Choose ${unanswered} trait${unanswered === 1 ? '' : 's'}`;
+  return `Answer ${unanswered} question${unanswered === 1 ? '' : 's'}`;
 }
 
 /**
@@ -44,7 +80,14 @@ function openAsks(lineage, choices) {
  * reader is looking at, a lineage on offer or the blood already in the
  * character, and how many questions ride along either way.
  */
-function cardsNote(questions, yours) {
+function cardsNote(questions, yours, pool = null) {
+  /* A pool is not asked a question, it is asked for cards, and how many is the
+     only thing worth saying over a wall you are about to keep two of. */
+  if (pool) {
+    const keep = `${pool.picks} of these to keep`;
+    return yours ? `Yours, ${keep}` : `A preview, ${keep}`;
+  }
+
   const asks =
     questions === 0
       ? 'nothing to answer'
@@ -64,12 +107,22 @@ export default function LineagePick({ value, character, patch, step = null, read
   const written = String(value ?? '').trim();
   const lineage = getLineage(written);
   const choices = character?.choices ?? {};
-  const asks = asksOf(lineage);
+  const pool = lineage?.pool ?? null;
+  const held = lineageCards(lineage, choices);
+  const asks = asksOf(lineage, choices);
   const unanswered = openAsks(lineage, choices);
 
   // One card's answer at a time; the rest of the bag is left alone.
   const answer = (cardId, optionId) =>
     patch({ choices: { ...choices, [cardId]: optionId } });
+
+  /* Keeping or dropping one of a pool's cards. The whole list goes back under
+     the pool's own key, so the bag holds one entry per pool rather than one per
+     trait, and dropping the lineage drops the lot with it. */
+  const keep = (target, cardId) =>
+    patch({
+      choices: { ...choices, [target.pool.id]: togglePoolPick(target, choices, cardId) },
+    });
 
   return (
     <PickBlock
@@ -105,30 +158,38 @@ export default function LineagePick({ value, character, patch, step = null, read
           </div>
 
           <span className="talent-summary-label">What your blood carries</span>
-          <div className="talent-rung-cards">
-            {lineage.cards.map((card) => {
-              const picked = pickedOn(card, choices);
-              return (
-                <div className="card-choice-row" key={card.id}>
-                  <CardBrief
-                    card={card}
-                    character={character}
-                    modifiers={picked ? { choice: picked } : null}
-                    art={lineage.art}
-                    onOpen={() => stack?.openCard(card, picked ? { choice: picked } : null)}
-                  />
-                  {card.choice && (
-                    <ChoicePicker
+          {/* A pool lineage carries nothing until it is picked, and a bare label
+              over an empty row reads as a lineage that gives you nothing. */}
+          {held.length === 0 && pool ? (
+            <p className="pick-line">
+              Nothing yet. Keep {pool.picks} traits and they print here.
+            </p>
+          ) : (
+            <div className="talent-rung-cards">
+              {held.map((card) => {
+                const picked = pickedOn(card, choices);
+                return (
+                  <div className="card-choice-row" key={card.id}>
+                    <CardBrief
                       card={card}
-                      picked={picked}
-                      readOnly={readOnly}
-                      onPick={(optionId) => answer(card.id, optionId)}
+                      character={character}
+                      modifiers={picked ? { choice: picked } : null}
+                      art={lineage.art}
+                      onOpen={() => stack?.openCard(card, picked ? { choice: picked } : null)}
                     />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                    {card.choice && (
+                      <ChoicePicker
+                        card={card}
+                        picked={picked}
+                        readOnly={readOnly}
+                        onPick={(optionId) => answer(card.id, optionId)}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </>
       ) : written ? (
         <div className="pick-face">
@@ -153,11 +214,9 @@ export default function LineagePick({ value, character, patch, step = null, read
         {/* The same window the take walks you into, reopened. The chips above
             still change an answer where it sits; this is for the player who
             scrolled past them. */}
-        {!readOnly && asks.length > 0 && (
+        {!readOnly && (asks.length > 0 || pool) && (
           <button type="button" className="btn btn-sub btn-sm" onClick={() => setMode('settle')}>
-            {unanswered > 0
-              ? `Answer ${unanswered} question${unanswered === 1 ? '' : 's'}`
-              : 'Change what it asked you'}
+            {settleLabel(pool, unanswered)}
           </button>
         )}
         {readOnly && lineage && (
@@ -193,9 +252,10 @@ export default function LineagePick({ value, character, patch, step = null, read
             /* A lineage whose cards ask something asks it here, in the window
                that just handed it over, rather than sending you back out to
                find a row of chips under a card on the sheet. */
-            setMode(asksOf(getLineage(name)).length > 0 ? 'settle' : null);
+            setMode(hasAsks(getLineage(name), choices) ? 'settle' : null);
           }}
           onAnswer={answer}
+          onKeep={keep}
           onClose={() => setMode(null)}
         />
       )}
@@ -223,6 +283,7 @@ function LineageChooser({
   settling = false,
   onTake,
   onAnswer,
+  onKeep,
   onClose,
 }) {
   const [open, setOpen] = useState(settling ? (current?.id ?? null) : null);
@@ -232,11 +293,17 @@ function LineageChooser({
 
   const choices = character?.choices ?? {};
   const shown = open ? getLineage(open) : null;
-  const asks = settling ? asksOf(shown) : [];
-  const answered = asks.filter((card) => pickedOn(card, choices)).length;
+  const pool = shown?.pool ?? null;
+  const asks = settling ? asksOf(shown, choices) : [];
+  /* Two kinds of open thing on one page, counted into one number. A card's
+     question is answered; a pool's card is kept, and two of them are what a
+     Wildkin who has just taken the blood is short of. */
+  const kept = pool ? poolPicks(shown, choices).length : 0;
+  const answered = asks.filter((card) => pickedOn(card, choices)).length + (settling ? kept : 0);
+  const wanted = asks.length + (settling && pool ? pool.picks : 0);
   // How many questions the lineage being read leaves open to a player, for the
   // note over its cards. None is the commonest answer.
-  const questions = asksOf(shown).length;
+  const questions = asksOf(shown, choices).length;
   const visible = LINEAGES.filter(
     (lineage) =>
       filter.matches(lineage.tags) && filter.text(lineage.name, lineage.tagline, lineage.blurb)
@@ -251,8 +318,8 @@ function LineageChooser({
       footer={
         settling && shown ? (
           <>
-            <span className={`pick-count${answered < asks.length ? ' is-open' : ''}`}>
-              {answered} of {asks.length} answered
+            <span className={`pick-count${answered < wanted ? ' is-open' : ''}`}>
+              {answered} of {wanted} {pool && asks.length === 0 ? 'kept' : 'answered'}
             </span>
             <span className="spacer" />
             <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
@@ -283,43 +350,75 @@ function LineageChooser({
         <div className="talent-page">
           <p className="frame-foot" style={{ marginTop: 0 }}>
             <b>{shown.name}</b> is yours.{' '}
-            {asks.length === 1
-              ? 'One of its cards leaves something to you'
-              : `${asks.length} of its cards leave something to you`}
-            , and that is all there is left to say. Tap an answer and the card rewrites itself
-            around it. You can change any of them later, from the block or from here.
+            {pool ? (
+              <>
+                This one is built rather than dealt: keep <b>{pool.picks}</b> of the traits below
+                and those are the cards your blood carries. You can change them later, from the
+                block or from here.
+              </>
+            ) : (
+              <>
+                {asks.length === 1
+                  ? 'One of its cards leaves something to you'
+                  : `${asks.length} of its cards leave something to you`}
+                , and that is all there is left to say. Tap an answer and the card rewrites itself
+                around it. You can change any of them later, from the block or from here.
+              </>
+            )}
           </p>
 
-          <section className="talent-page-rank">
-            <div className="talent-page-rank-head">
-              <span className="talent-page-rank-label">{shown.name} · What it leaves to you</span>
-              <span className="talent-page-rank-note">
-                {answered} of {asks.length} answered
-              </span>
-            </div>
-            <div className="card-brief-wall">
-              {asks.map((card) => {
-                const picked = pickedOn(card, choices);
-                return (
-                  <CardBrief
-                    key={card.id}
-                    card={card}
-                    character={character}
-                    modifiers={picked ? { choice: picked } : null}
-                    art={shown.art}
-                    onOpen={() => stack?.openCard(card, picked ? { choice: picked } : null)}
-                  >
-                    <ChoicePicker
+          {pool && (
+            <section className="talent-page-rank">
+              <div className="talent-page-rank-head">
+                <span className="talent-page-rank-label">
+                  {shown.name} · {pool.label}
+                </span>
+                <span className="talent-page-rank-note">
+                  {kept} of {pool.picks} kept
+                </span>
+              </div>
+              <p className="talent-page-aside">{pool.prompt}</p>
+              <PoolPicker
+                lineage={shown}
+                character={character}
+                readOnly={readOnly}
+                onKeep={(cardId) => onKeep(shown, cardId)}
+              />
+            </section>
+          )}
+
+          {asks.length > 0 && (
+            <section className="talent-page-rank">
+              <div className="talent-page-rank-head">
+                <span className="talent-page-rank-label">{shown.name} · What it leaves to you</span>
+                <span className="talent-page-rank-note">
+                  {asks.filter((card) => pickedOn(card, choices)).length} of {asks.length} answered
+                </span>
+              </div>
+              <div className="card-brief-wall">
+                {asks.map((card) => {
+                  const picked = pickedOn(card, choices);
+                  return (
+                    <CardBrief
+                      key={card.id}
                       card={card}
-                      picked={picked}
-                      readOnly={readOnly}
-                      onPick={(optionId) => onAnswer(card.id, optionId)}
-                    />
-                  </CardBrief>
-                );
-              })}
-            </div>
-          </section>
+                      character={character}
+                      modifiers={picked ? { choice: picked } : null}
+                      art={shown.art}
+                      onOpen={() => stack?.openCard(card, picked ? { choice: picked } : null)}
+                    >
+                      <ChoicePicker
+                        card={card}
+                        picked={picked}
+                        readOnly={readOnly}
+                        onPick={(optionId) => onAnswer(card.id, optionId)}
+                      />
+                    </CardBrief>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       ) : shown ? (
         <div className="talent-page">
@@ -350,18 +449,20 @@ function LineageChooser({
 
           <section className="talent-page-rank">
             <div className="talent-page-rank-head">
-              <span className="talent-page-rank-label">{shown.name} · What it gives you</span>
+              <span className="talent-page-rank-label">
+                {shown.name} · {pool ? 'What it offers you' : 'What it gives you'}
+              </span>
               {/* Which page this is, rather than when the cards arrived. It
                   used to read "Yours as printed, nothing to choose" over a
                   lineage nobody had taken yet, one page before the one that
                   asks the questions, so it claimed both the blood and the
                   absence of a choice a page too early. */}
               <span className="talent-page-rank-note">
-                {cardsNote(questions, current?.id === shown.id)}
+                {cardsNote(questions, current?.id === shown.id, pool)}
               </span>
             </div>
             <div className="card-brief-wall">
-              {shown.cards.map((card) => (
+              {(pool ? pool.options : shown.cards).map((card) => (
                 <CardBrief
                   key={card.id}
                   card={card}
@@ -429,9 +530,55 @@ function LineageChooser({
 }
 
 /**
+ * Which cards a Wildkin kept, asked as a wall with a keep on each.
+ *
+ * Every other pick on this page changes what a card *says*. This one changes
+ * which cards there are, so it cannot be a row of chips under one of them: the
+ * eight have to be readable side by side, because choosing between them is the
+ * whole of the decision.
+ *
+ * Keeping a third drops the one kept longest rather than refusing the click. A
+ * pool of eight you have to clear before you can change your mind is a worse
+ * answer than one that quietly rolls.
+ */
+function PoolPicker({ lineage, character, readOnly, onKeep }) {
+  const stack = useCardStack();
+  const choices = character?.choices ?? {};
+  const kept = new Set(poolPicks(lineage, choices).map((card) => card.id));
+
+  return (
+    <div className="card-brief-wall">
+      {lineage.pool.options.map((card) => (
+        <CardBrief
+          key={card.id}
+          card={card}
+          character={character}
+          art={lineage.art}
+          onOpen={() => stack?.openCard(card)}
+        >
+          <div className={`card-choice${kept.has(card.id) ? ' is-answered' : ''}`}>
+            <div className="filter-group">
+              <button
+                type="button"
+                className={`filter-chip${kept.has(card.id) ? ' active' : ''}`}
+                onClick={() => !readOnly && onKeep(card.id)}
+                disabled={readOnly}
+                title={kept.has(card.id) ? `Drop ${card.name}` : `Keep ${card.name}`}
+              >
+                {kept.has(card.id) ? 'Kept' : 'Keep'}
+              </button>
+            </div>
+          </div>
+        </CardBrief>
+      ))}
+    </div>
+  );
+}
+
+/**
  * The question a card leaves to the player, asked where the card is held rather
- * than buried in its text. Answering rewrites the card: Chromatic Resistance
- * stops listing six colours and starts naming one damage type.
+ * than buried in its text. Answering rewrites the card: Draconic Scales stops
+ * listing six colours and starts naming one damage type.
  */
 export function ChoicePicker({ card, picked, readOnly, onPick }) {
   const { prompt, options } = card.choice;

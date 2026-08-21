@@ -9356,11 +9356,11 @@ body.sheet-fixed #root {
 
 
 /* ==========================================================================
-   THE TRICKSTER  —  the Ambush and Steal windows (AmbushWindow.jsx,
-   StealWindow.jsx)
+   THE TRICKSTER  —  the Steal window (StealWindow.jsx)
    ==========================================================================
-   Both windows ask the same shape of question: here are some rows, one of them
-   is yours. So they share one family of classes rather than growing two.
+   The question it asks is "here are some rows, one of them is yours". The Ambush
+   window asked the same one and is gone: an ambush has one attack to ride and
+   nothing left to choose. The class family kept its name.
 
    Amber throughout, the same amber a talent card wears (.ac-kind-talent) and the
    same the Advancement tab's talent panels wear: this is what a set handed you.
@@ -9407,12 +9407,6 @@ body.sheet-fixed #root {
 .trick-option.is-out {
   cursor: not-allowed;
   opacity: 0.42;
-}
-
-.trick-option-costs {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
 }
 
 /* The row's own number on STEAL's table, worn as the die face it answers to. */
@@ -9498,18 +9492,4 @@ body.sheet-fixed #root {
   border-left: 2px solid var(--level-amber);
   border-radius: 4px;
   background-color: var(--inset-bg);
-}
-
-/* ---------- buying an ambush ---------- */
-.trick-take {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-  margin-top: 0.8rem;
-}
-
-.trick-take-note {
-  font-size: 0.7rem;
-  color: var(--text-muted);
 }
