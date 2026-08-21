@@ -22,7 +22,7 @@
  */
 
 import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
-import { allGrants, damageEnchants, laidEntries, wornGrants } from './enchanting.js';
+import { allGrants, damageEnchants, laidEntries } from './enchanting.js';
 import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
 import { TRINKET_ITEMS } from './trinkets.js';
 import { UTILITY_ITEMS } from './utility.js';
@@ -1078,10 +1078,10 @@ export function itemBurden(item) {
  * **It takes the character now**, not a loose equipment map. Two call sites used
  * to hand it `(equipment, belt)` with no character at all — the codex browser and
  * the equip prompt, which are the two places that *refuse* an item for being over
- * capacity. Without the character they could not see an Enchanter's own body
- * slots, could not see a working laid on a blade and could not see a forged piece
- * at all, so both read low and let a player equip past their capacity. One
- * argument, and the number is the same everywhere it is printed.
+ * capacity. Without the character they could not see a working laid on a blade
+ * and could not see a forged piece at all, so both read low and let a player
+ * equip past their capacity. One argument, and the number is the same everywhere
+ * it is printed.
  */
 export function magicBurdenUsed(character) {
   const worn = normalizeEquipment(character?.equipment);
@@ -1098,13 +1098,16 @@ export function magicBurdenUsed(character) {
     total += itemBurden(resolve(entry?.id));
   }
 
-  /* And what is worked into the character rather than into a thing they carry.
-     WIELDER OF WONDER never says its enchantments are free of Magic Burden, where
-     EPHEMERAL ENCHANTMENT says exactly that of its own — so the body slots weigh
-     and the hour-long ones do not. Left out, the meter said 4 for a character
-     carrying 8, which is the one number on this sheet that is meant to be able to
-     be *wrong* and so the one that must be right. */
-  if (character) total += wornGrants(character.talents).burden;
+  /* And nothing at all for what is worked into the character rather than into a
+     thing they carry. **WIELDER OF WONDER's body slots weigh nothing**, on Jules's
+     ruling (2026-08-21): the card gives the enchanter body the power to withstand
+     its own enchantments, so what it holds is not carried the way a worked ring is
+     carried. The card says so in as many words now, and the set has two cards that
+     cost no Burden rather than one — EPHEMERAL ENCHANTMENT was already the other.
+
+     They were counted here until that ruling, which is why this is a note rather
+     than a silence: only what is *carried* weighs now, which is every loop above
+     and nothing else. */
 
   return total;
 }

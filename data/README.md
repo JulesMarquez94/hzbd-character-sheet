@@ -469,13 +469,14 @@ its work with it:
 
 | Card | Stored as | Permanence |
 | ---- | --------- | ---------- |
-| WIELDER OF WONDER | `worn: ['primal-sense']` | permanent, as many as your rank |
+| WIELDER OF WONDER | `worn: ['primal-sense']` | permanent, as many as your rank, no burden |
 | ENCHANTING | `laid: { longbow: ['fire-infusion'] }` | permanent, 70 Supplies a point of burden |
 | EPHEMERAL ENCHANTMENT | an `effects` row carrying `ench` | one hour |
 
 **The split between those is the whole design.** `worn` and `laid` are gear:
 `deriveStats` reads them and `syncDerived` bakes them into the stored columns
-exactly the way a worn breastplate is baked in, and they cost Magic Burden.
+exactly the way a worn breastplate is baked in. Only `laid` costs Magic Burden,
+and the *thing* carries it: a body slot is free, by its own card.
 Ephemeral is an hour long and **bends what the sheet shows and never what the
 sheet stores**, because a bonus written into `instinct` is one nothing can ever
 take back off: `levelPicks.js` rebuilds all three attributes from its own record,
@@ -529,7 +530,8 @@ one is still costs what it always cost:
 
 - **On your own person.** As many slots as the rank allows, filled or waiting.
   **No Supplies**, because WIELDER OF WONDER names none for changing what you wear
-  and reads the way a Mycomancer's spell swap reads.
+  and reads the way a Mycomancer's spell swap reads, and **no Magic Burden** either
+  (2026-08-21, see below).
 - **On what you carry.** Anything worn, in hand, on the belt or in the pack. Priced
   at **70 Supplies a point of Magic Burden**, out of the same crate and through the
   same ledger as the rest itself, and a price the crate cannot cover is offered
@@ -684,12 +686,12 @@ spare dagger in their pack, so `wieldModifiers` in `items.js` is what decides â€
 that file is the one that knows what equipment is, and weapons.js is handed the
 answer.
 
-**And it weighs once.** A worn enchantment costs Magic Burden as *worn*, never once
-per weapon held, so the meter reads 8 for a character wearing one and carrying a
-laid one, not 12 for the same character holding two weapons. The meter was also
-leaving the body slots out entirely and now counts them: WIELDER OF WONDER never
-says its enchantments are free of burden, where EPHEMERAL ENCHANTMENT says exactly
-that of its own.
+**And it weighs nothing.** A worn enchantment never weighed once per weapon held,
+so the meter never read 12 for a character holding two blades. What it did do was
+count the body slots at all, on the reading that WIELDER OF WONDER never said its
+enchantments were free of burden where EPHEMERAL ENCHANTMENT said exactly that of
+its own. **Overturned 2026-08-21: a body slot costs no Magic Burden.** See
+[the ruling](#a-body-slot-costs-no-magic-burden-2026-08-21).
 
 **5. Two damage types read as "Decay or Fire".** A blade with Decay worked into it,
 in the hands of someone wearing Fire, is a blade that deals **Decay or Fire**: both
@@ -2842,3 +2844,65 @@ Three consequences worth knowing:
 3. **The Supreme Runed set still adds Mind on top**, because that is a worn bonus
    and this is the base share. A Feral Cursed in the full set caps at maximum
    Health plus Mind.
+
+## A body slot costs no Magic Burden, 2026-08-21
+
+> "The enchanter "Wielder of Wonder" enchantment on his body should not cost Magic
+> Burden. Fix it please and make sure the card text match if needed."
+
+A ruling on the reading recorded above, and it goes the other way. WIELDER OF
+WONDER names no price at all, and the sheet had been filling that silence the
+ordinary way: an enchantment weighs, so a worn one weighs. It does not. The card's
+own first sentence is the reason, and it was there the whole time: the enchanter
+body **withstands** the power of enchantments onto itself. What the body holds is
+withstood rather than carried.
+
+That makes two of the set's three cards free of burden rather than one. Only
+ENCHANTING, the card that lays on a *thing*, costs anything, and the thing is what
+carries it.
+
+### What the card now says
+
+| | |
+| --- | --- |
+| Transcribed | "The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter." |
+| Added | "These do not count toward your Magic Burden." |
+
+Worded out of EPHEMERAL ENCHANTMENT's own line for the same rule, so the set says
+its one free thing one way rather than two. Exported back out to
+`data/templates/enchanter-ability.csv` beside LAYERED ENCHANTMENT's two sentences,
+so the workbook can hold the same words.
+
+### What it does to the meter
+
+A Rank 2 Enchanter wearing Primal Sense and Vitality, carrying a Fire Infusion
+blade:
+
+| | before | now |
+| --- | --- | --- |
+| Primal Sense, worn | 4 | **0** |
+| Vitality, worn | 4 | **0** |
+| Fire Infusion, on the blade | 4 | 4 |
+| The meter | 12 / 22 | **4 / 22** |
+
+Nothing else about a worn enchantment moved. It still grants what it grants, it is
+still permanent, `syncDerived` still bakes it into the stored columns, and it still
+reaches the weapon in their hands.
+
+### Where it lives
+
+| | |
+| --- | --- |
+| `magicBurdenUsed` in `items.js` | the one line that added the body slots, now gone. Only what is *carried* weighs: worn, held, on a trinket or clipped to the belt |
+| `enchanting.js` | no total in the file carries a burden any more. `noGrants`, `grantsFrom` and `allGrants` all lost the field, and `wornGrants` went with it: the meter was its only caller |
+| `combatBar.js` | the recap's Wielder of Wonder rows spent their provenance on the burden each one cost. There is nothing left there to say, so they print their name and what they do |
+| `WornEnchants.jsx` | a filled slot led with its burden and does not now. The shelf prints a price only where there is one, and its rule line says "No Supplies and no Magic Burden" once instead |
+
+Two things that did **not** move, both because burden is what a *thing* weighs:
+
+1. **A working laid on an item still weighs**, at its full value, on the item.
+   `itemBurden` was always the counter for that and is untouched.
+2. **The same working on two rings still costs twice.** The same-source law says
+   an effect does not stack with itself, and it never governed burden: two rings
+   grant one point of Instinct and weigh 8. `grantsFrom` deduplicates and
+   `itemBurden` does not, which is exactly the split that was always there.

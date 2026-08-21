@@ -101,7 +101,7 @@ export default function WornEnchants({
       {tone === 'summary' && (
         <p className="pick-line">
           {full
-            ? 'Changed at a Long Rest, for nothing: the card names no price for what you wear.'
+            ? 'Changed at a Long Rest, for nothing: no Supplies and no Magic Burden for what you wear.'
             : `Choose ${room === 1 ? 'one' : room}. Changed at a Long Rest afterwards, for nothing.`}
         </p>
       )}
@@ -109,7 +109,7 @@ export default function WornEnchants({
       {choosing && !readOnly && (
         <EnchantShelf
           title="On your own person"
-          rule="Chosen when you become an enchanter and changed at a Long Rest. No Supplies: the card names none for what you wear."
+          rule="Chosen when you become an enchanter and changed at a Long Rest. No Supplies and no Magic Burden: the card names neither for what you wear."
           character={character}
           held={state.worn}
           room={state.wornMax}
@@ -139,9 +139,9 @@ function WornSlot({ id, readOnly, onRead, onDrop }) {
         title={`Read the ${enchantment.name} card`}
       >
         <span className="brew-slot-name">{enchantment.name}</span>
-        <span className="brew-slot-meta">
-          {enchantment.burden} Burden · {enchantment.effect}
-        </span>
+        {/* What it does and nothing about what it costs. A slot used to lead with
+            its Magic Burden and a body slot costs none: see the card. */}
+        <span className="brew-slot-meta">{enchantment.effect}</span>
       </button>
 
       {!readOnly && (
@@ -225,10 +225,15 @@ export function EnchantShelf({
               key={enchantment.id}
               onOpen={() => onRead(enchantment)}
             >
-              <span className="brew-reagent-held">
-                {enchantment.burden} Burden
-                {priced ? ` · ${layingCost(enchantment)} Supplies` : ''}
-              </span>
+              {/* A price, only where there is one to pay. Laying on a thing is
+                  bought by the point of Magic Burden, so both numbers belong on
+                  that shelf. A body slot costs neither, and the rule line above
+                  says so once rather than every card saying it again. */}
+              {priced && (
+                <span className="brew-reagent-held">
+                  {enchantment.burden} Burden · {layingCost(enchantment)} Supplies
+                </span>
+              )}
 
               <button
                 type="button"

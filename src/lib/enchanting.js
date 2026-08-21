@@ -14,7 +14,8 @@
  *   WIELDER OF WONDER      "Enchantments apply to your person. Choose one when
  *                          becoming an enchanter, you can change it during a Long
  *                          Rest. The amount of such enchantments you can have is
- *                          equal to your rank in enchanter."
+ *                          equal to your rank in enchanter. These do not count
+ *                          toward your Magic Burden."
  *                          -> `worn: ['primal-sense']` on the talent entry.
  *
  *   ENCHANTING             "Whenever you take a Long Rest, you can use your Long
@@ -39,11 +40,17 @@
  *
  *   worn and laid   are permanent. They are gear: `deriveStats` reads them, so
  *                   `syncDerived` bakes them into the stored columns exactly the
- *                   way a worn breastplate is baked in. They cost Magic Burden.
+ *                   way a worn breastplate is baked in. Only `laid` costs Magic
+ *                   Burden, and the *thing* carries it: a body slot is free, by
+ *                   its own card.
  *   ephemeral       is an hour long. It bends what the sheet *shows* and never
  *                   what the sheet *stores*, because a stored bonus is one that
  *                   has no way of ever coming back off. Its own card says it
  *                   costs no Magic Burden.
+ *
+ * So **nothing this file can see weighs on the Magic Burden meter.** What is laid
+ * on a thing is counted by `itemBurden` where the thing is, and the other two are
+ * free by their own cards. That is why no total here carries a burden any more.
  *
  * ------------------------------------------------------------------- the leaf
  * This file imports the enchantment codex and the talent codex and nothing else.
@@ -373,7 +380,6 @@ function noGrants() {
        roll, and PREPARED is the only thing that grants one. */
     reactionAtCombat: 0,
     spells: [],
-    burden: 0,
     any: false,
   };
 }
@@ -392,9 +398,12 @@ function noGrants() {
  *
  * So the list is deduplicated on the way in, and every caller hands its ids in
  * *with* their duplicates so this is the only place that has to know the rule.
- * Where the same working is on two rings the player is still charged Magic Burden
- * for both, because burden is what a thing weighs rather than what it does — see
- * `itemBurden`, which never comes through here.
+ *
+ * **What a working weighs is not summed here and never was the same sum.** Where
+ * the same enchantment is on two rings the player is charged Magic Burden for
+ * both, because burden is what a thing weighs rather than what it does. That is
+ * `itemBurden`'s to count, on the item, and nothing laid on a person weighs at
+ * all — see the note at the top of this file.
  */
 export function grantsFrom(ids) {
   const total = noGrants();
@@ -404,7 +413,6 @@ export function grantsFrom(ids) {
     if (!entry) continue;
 
     total.any = true;
-    total.burden += enchantBurden(entry);
 
     for (const [key, value] of Object.entries(entry.attributes ?? {})) {
       if (key in total.attributes) total.attributes[key] += Math.floor(Number(value) || 0);
@@ -427,27 +435,14 @@ export function wornIds(talents) {
   return entry ? normalizeWorn(entry.worn) : [];
 }
 
-/**
- * What WIELDER OF WONDER has put on this character's own person, and nothing
- * else.
- *
- * **Not the whole permanent half any more** — that is `allGrants(...).worn`, which
- * folds in what is worked into their gear. This is the body slots alone, and the
- * one thing that still needs them alone is the Magic Burden meter: an item's own
- * burden is already counted by `itemBurden`, so a sum that included gear here
- * would charge every enchanted ring twice.
- *
- * Takes the talents column rather than the whole character, because
- * characterModel.js may not hand this file a character it is halfway through
- * computing.
- */
-export function wornGrants(talents) {
-  return grantsFrom(wornIds(talents));
-}
+/* The body slots used to have a reading of their own here, `wornGrants`, and it
+   existed for one caller: the Magic Burden meter, which had to see them apart
+   from the gear so an enchanted ring was not charged twice. They weigh nothing
+   now (see the top of this file), the meter asks nothing of this file, and the
+   body slots are only ever read folded in with the gear by `allGrants`. */
 
 /**
- * What is on them for the next hour. Ephemeral enchantments carry no Magic
- * Burden by their own card, so the burden this reports is zeroed.
+ * What is on them for the next hour.
  *
  * `already` is what is *permanently* on them, so the same-source law can bite
  * across the two halves as well as inside each: an hour of borrowed Primal Sense
@@ -458,7 +453,6 @@ export function ephemeralGrants(effects, already = []) {
   const running = runningEnchants(effects).filter((row) => !standing.has(row.enchantment.id));
   const total = grantsFrom(running.map((row) => row.enchantment.id));
 
-  total.burden = 0;
   total.spells = running.map((row) => row.effect.spell).filter(Boolean);
   return total;
 }
@@ -497,11 +491,9 @@ export function allGrants(character, gear = []) {
     reactionAtCombat: worn.reactionAtCombat + ephemeral.reactionAtCombat,
     shieldRolls: [...worn.shieldRolls, ...ephemeral.shieldRolls],
     spells: ephemeral.spells,
-    /* What is worked into a *person*. An item's own burden is counted by
-       `itemBurden` where the item is, so folding the gear ids in here as well
-       would charge every enchanted ring twice — the meter reads `wornGrants`
-       for exactly that reason. See magicBurdenUsed. */
-    burden: grantsFrom(wornIds(character?.talents)).burden,
+    /* No burden. Nothing in here weighs: what is laid on a thing is counted by
+       `itemBurden` where the thing is, and the body slots and the hour-long half
+       are free by their own cards. See magicBurdenUsed. */
     any: worn.any || ephemeral.any,
     worn,
     ephemeral,

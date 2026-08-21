@@ -589,7 +589,10 @@ export function moveCount(groups) {
  */
 function standing(card, modifiers, from) {
   return {
-    key: `${from}:${card.id}`,
+    /* Keyed by where it came from as well as what it is, because one card can
+       stand in a recap twice from two places. A group whose rows carry no
+       provenance keys on the card alone rather than on the word "null". */
+    key: from ? `${from}:${card.id}` : card.id,
     card,
     modifiers,
     name: card.name,
@@ -632,9 +635,12 @@ function workings(character) {
  * card that put them there and is the only true answer to "where did this come
  * from", so it is the heading rather than the provenance on each row.
  *
- * The provenance a row would otherwise carry is what it *is* instead: how much
- * Magic Burden it costs to keep, which is the number this block exists to stop
- * anyone forgetting.
+ * **And the rows carry no provenance at all.** They spent it on the Magic Burden
+ * each one cost to keep, until Jules ruled (2026-08-21) that a body slot costs
+ * none. There is nothing left there to forget, the heading has already said where
+ * these came from, and a row repeating "no Burden" under every one of them would
+ * be the same sentence three times. `from` is optional and the row prints its
+ * name and what it does.
  */
 function wielderOfWonder(character) {
   const state = enchanterState(character);
@@ -643,7 +649,7 @@ function wielderOfWonder(character) {
   const rows = state.worn
     .map(getEnchantment)
     .filter(Boolean)
-    .map((enchantment) => standing(enchantment, null, `${enchantment.burden} Burden`));
+    .map((enchantment) => standing(enchantment, null, null));
 
   return {
     id: 'wielder-of-wonder',

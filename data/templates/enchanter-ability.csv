@@ -15,7 +15,9 @@ When doing so, you choose an enchantment you know, applying its effect to the wi
 Ephemeral Enchantment costs an amount of Willpower equal to the enchantment’s Magic Burden.
 
 This does not count toward the wielder’s Magic Burden and makes the item Attuned to the person wielding it at the moment of enchantment.",
-WIELDER OF WONDER,"Enchanter, Novice Talent, Long Rest",,,"The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter.",
+WIELDER OF WONDER,"Enchanter, Novice Talent, Long Rest",,,"The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter.
+
+These do not count toward your Magic Burden.",
 LAYERED ENCHANTMENT,"Enchanter, Master Talent, Long Rest",,,"Your work no longer crowds itself out. An item you have enchanted can hold a second enchantment beside the first.
 
 Laying it is a Long Rest action of its own, bought at the same price, and its Magic Burden is carried on top of the first one’s.",

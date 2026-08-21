@@ -315,8 +315,8 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         >
           <p className="frame-foot" style={{ marginTop: 0 }}>
             Wielder of Wonder: what an Enchanter carries on themselves rather than on a thing.
-            Changed at a Long Rest and never priced, because the card names no price for it. Take
-            one off to make room for another.
+            Changed at a Long Rest and never priced, and it weighs nothing on your Magic Burden.
+            Take one off to make room for another.
           </p>
           <WornEnchants character={character} talents={talents} onChange={setPrepared} tone="rest" />
         </Modal>

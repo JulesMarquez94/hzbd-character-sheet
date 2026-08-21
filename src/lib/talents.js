@@ -603,14 +603,27 @@ const TALENT_SETS = [
         id: 'wielder-of-wonder',
         rank: 1,
         name: 'Wielder of Wonder',
-        summary: 'Enchantments apply to your own person, one for every rank you hold.',
+        summary: 'Enchantments apply to your own person, one for every rank you hold, and they weigh nothing.',
         kind: 'talent',
         tags: ['Enchanter', 'Novice Talent', 'Long Rest'],
         ap: null,
         wp: null,
         stat: 'mind',
+        /* One house edit, on Jules's instruction (2026-08-21): the last line is
+           new, and it is the ruling rather than a reading. The sheet's own
+           sentence says the enchanter body "is able to withstand the power of
+           enchantments onto itself" and then names no price at all, which the
+           sheet had been reading as a silence to be filled the ordinary way, so
+           the body slots were weighing on the Magic Burden meter. They do not.
+           What is written into the body is withstood rather than carried.
+
+           Worded out of EPHEMERAL ENCHANTMENT's own line for the same rule
+           ("This does not count toward the wielder's Magic Burden"), so the set
+           says its one free thing one way. `magicBurdenUsed` in items.js is
+           where it is now true. */
         body:
-          'The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter.',
+          'The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter.\n\n' +
+          'These do not count toward your Magic Burden.',
       },
       {
         id: 'layered-enchantment',
