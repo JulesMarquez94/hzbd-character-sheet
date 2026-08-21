@@ -51,11 +51,11 @@ import { isMinionCard, minionModifiers } from './minions.js';
 import {
   beltEntry,
   beltSlotCount,
+  carriedItems,
   heldItem,
   wieldModifiers,
   normalizeBelt,
   normalizeEquipment,
-  wornItems,
 } from './items.js';
 import { getCard, itemEnchantments } from './weapons.js';
 import { isWeaponAttack, spendTricks } from './tricks.js';
@@ -607,9 +607,11 @@ function standing(card, modifiers, from) {
  * for: true of you right now, and the first thing forgotten.
  */
 function workings(character) {
-  /* `wornItems` rather than the equipment map alone, so a ring counts. A trinket
-     is where a working usually ends up — it is worn for nothing else. */
-  const rows = wornItems(character).flatMap((item) =>
+  /* `carriedItems` rather than the equipment map alone, so a ring counts. A
+     trinket is where a working usually ends up — it is worn for nothing else —
+     and a loop on the belt counts now too, so a working laid on a flask has to
+     be listed here or it would be true of the character and written nowhere. */
+  const rows = carriedItems(character).flatMap((item) =>
     itemEnchantments(item).map(({ enchantment }) => standing(enchantment, null, item.name))
   );
 

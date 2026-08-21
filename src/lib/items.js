@@ -827,11 +827,11 @@ function forgedFor(character, id) {
  * trinket. The one answer to "what is actually on you", so nothing has to walk
  * the slots and then remember the trinkets as an afterthought.
  *
- * **Not the belt, and not the pack.** A loop is reached for rather than carried
- * into the fight, and what is in the pack is not on you at all. That is the line
- * `combatReactionEffects` already drew for Patien, and it is the same line here.
- * The belt is still counted for Magic Burden, because worked magic weighs the
- * same wherever it is carried — weight and effect are different questions.
+ * **Not the belt, and not the pack.** This is what an item's *own* numbers hang
+ * off — a breastplate's Defense, a Runed Hood's Shield at the bell — and those
+ * are true of a thing you are wearing rather than a thing you own. What is
+ * worked into a loop is a different question and has a different answer now:
+ * see `carriedItems`.
  *
  * `heldItem`, so a forged piece and an Enchanter's own laid work both count.
  */
@@ -847,7 +847,36 @@ export function wornItems(character) {
 }
 
 /**
- * Every enchantment worked into something on this character's person, by id.
+ * Everything on this character, loops included: worn, in hand, on a trinket, and
+ * clipped to the belt.
+ *
+ * **This is what an enchantment counts from** (2026-08-21, Jules: "items that go
+ * on the belt should be able to be enchanted"). The belt used to be left out of
+ * the sum, which made a working laid on a flask the one enchantment on the sheet
+ * that cost 70 Supplies a point and 4 Magic Burden to carry and then did nothing
+ * at all. The meter had already settled the principle — worked magic weighs the
+ * same wherever it is carried — and effect follows weight: a Vitality worked into
+ * the potion on your hip is 20 Health whether the potion is in your hand or on
+ * your belt.
+ *
+ * **Still not the pack.** What is in the pack is not on you, which is the line
+ * that moved rather than the line that went.
+ *
+ * Every loop, not only the open ones, the same as `magicBurdenUsed`: a save whose
+ * `belt_slots` came down still has an item stored in the loop it lost, and it
+ * would be the one place a working weighed without working.
+ */
+export function carriedItems(character) {
+  return [
+    ...wornItems(character),
+    ...normalizeBelt(character?.belt)
+      .map((entry) => heldItem(character, entry?.id))
+      .filter(Boolean),
+  ];
+}
+
+/**
+ * Every enchantment worked into something on this character, by id.
  *
  * This is the half of the stacking sum that `enchanting.js` cannot reach: it is a
  * leaf and does not know what a codex item is, let alone what is equipped. So the
@@ -858,7 +887,7 @@ export function wornItems(character) {
  * before they can be counted as one.
  */
 export function gearEnchantIds(character) {
-  return wornItems(character).flatMap((item) =>
+  return carriedItems(character).flatMap((item) =>
     itemEnchantments(item).map(({ enchantment }) => enchantment.id)
   );
 }
@@ -1102,12 +1131,14 @@ export function combatStartEffects(character) {
  * twice, so `combatReactionGrant` in combatTurn.js takes the number from one and
  * the names from here.
  *
- * `wornItems`, so a forged piece counts, an Enchanter's own laid work counts, and
- * a trinket counts. What is in the pack is not on you, and a loop on the belt is
- * reached for rather than carried into the fight.
+ * `carriedItems`, so a forged piece counts, an Enchanter's own laid work counts, a
+ * trinket counts, and so does a loop on the belt — the same list the number comes
+ * from, because a bell that hands over 3 Reaction Points and can name nothing
+ * that gave them is worse than either half alone. What is in the pack is not on
+ * you.
  */
 export function combatReactionEffects(character) {
-  return wornItems(character)
+  return carriedItems(character)
     .map((item) => ({
       item,
       reaction: itemEnchantments(item).reduce(

@@ -2356,12 +2356,11 @@ what is worked into anything worn, held or on a trinket, with the law applied on
 across all three. `deriveStats` reads it, and `syncDerived` bakes the permanent
 half into the stored columns exactly as a worn breastplate is baked in.
 
-**What counts as "on you"** is worn, in hand, and on a trinket — `wornItems`. Not
+**What counts as "on you"** was worn, in hand, and on a trinket — `wornItems`. Not
 the belt and not the pack: a loop is reached for rather than carried into a fight,
 and what is in the pack is not on you. That is the line `combatReactionEffects`
-already drew for Patien, kept. Burden still counts the belt, because weight and
-effect are different questions. **Say the word if the belt should grant as well** —
-it is one line in `wornItems`.
+already drew for Patien. Burden still counted the belt, because weight and effect
+are different questions. **Answered 2026-08-21 — the belt grants too.** See below.
 
 ### What moved, and one number that had been wrong
 
@@ -2709,3 +2708,58 @@ plates are absent and every one of them draws the empty art window an unpainted
 card has always drawn. The set's `art` is `null` rather than a path that is not
 there, for the reason the Duelist's is. Drop the overview picture in, run
 `npm run art:cards`, and point `art` at `/talents/feral-curse.jpg`.
+
+## The belt grants, 2026-08-21
+
+> "Items that go on the belt should be able to be enchanted."
+
+They already could. The Long Rest's ENCHANTING window has always offered every
+loop, the forge has always taken a flask as a base, and the Magic Burden meter has
+always charged for the working. What a loop could not do was **anything with it**:
+`gearEnchantIds` read `wornItems`, which is the body and the hands, so a Vitality
+laid on the potion on your hip cost 280 Supplies and 4 Magic Burden and handed over
+nothing at all. The same working on a ring is 20 Health. That is the gap the
+sentence closes, and the meter had already settled the principle it closes it by:
+worked magic weighs the same wherever it is carried, so it works wherever it is
+carried too.
+
+### The line that moved
+
+`carriedItems` in `items.js` is the new reading — worn, in hand, on a trinket, and
+**on the belt**. Three things read it:
+
+| | reads | so that |
+|---|---|---|
+| `gearEnchantIds` | `carriedItems` | a working on a loop reaches `deriveStats` |
+| `combatReactionEffects` | `carriedItems` | the bell can name the flask that gave the Reaction Points, not only count them |
+| `workings` in `combatBar.js` | `carriedItems` | the standing-effects block lists it, so it is written somewhere |
+
+`wornItems` stays exactly what it was and keeps its other three callers, because
+an item's **own** numbers are a different question: a breastplate's Defense and a
+Runed Hood's Shield at the bell are true of a thing you are wearing, not a thing
+hanging off your hip. Only what is *worked into* a thing travels to the belt.
+
+**Still not the pack.** That is the line that stayed. A spare dagger can be
+enchanted tonight at the fire and does nothing until it is drawn, the same as a
+breastplate nobody has put on — so the rest window's list is deliberately one item
+wider than the sum: `enchantableItems` in `EnchantRest.jsx` includes the pack,
+`carriedItems` does not.
+
+### The stacking law is untouched, and this is where it shows
+
+| what | grants |
+|---|---|
+| Vitality on the loop | +20 Health |
+| Vitality on the loop, and Vitality on a ring | **+20.** One working, two things |
+| ...and it weighs | **8.** Burden is what a thing weighs, not what it does |
+
+The second row is `grantsFrom` deduplicating on the way in, as it always has —
+nothing about it had to know a belt exists. See *The same-source law* above.
+
+### One line on the loop
+
+A worked loop now prints what is in it, under the tags: the enchantment's **name**
+and nothing more (`.belt-working`). The trinket block prints the effect text too,
+because a trinket has no numbers of its own and that line is its whole worth — a
+loop already carries a name, its tags, its cost orbs and its charge dots, so the
+effect stays on the ⓘ card. Same trade an enchanted weapon makes with its blurb.

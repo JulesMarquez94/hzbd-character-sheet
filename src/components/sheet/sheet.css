@@ -3725,6 +3725,23 @@ body.sheet-fixed #root {
   overflow-wrap: anywhere;
 }
 
+/* What is worked into the item on this loop. A loop grants what it carries, so
+   this is the line that says why a potion weighs four Magic Burden. Names only,
+   in the trinket block's own colour — five loops share one block, and the effect
+   text is on the ⓘ card. */
+.belt-working {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 0.64rem;
+  line-height: 1.35;
+}
+
+.belt-working b {
+  color: var(--haze-glow);
+  font-weight: 700;
+}
+
 .belt-empty .equip-slot-label,
 .belt-locked .equip-slot-label {
   letter-spacing: 0.8px;

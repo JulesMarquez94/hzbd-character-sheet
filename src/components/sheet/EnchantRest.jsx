@@ -48,7 +48,7 @@ export default function EnchantAction({ character, talents, kind, onClose, onDra
 
   /* What the character is carrying that could take a working: everything worn,
      on the belt, or in the pack. A written note is not a thing you can enchant. */
-  const carried = useMemo(() => carriedItems(character), [character]);
+  const carried = useMemo(() => enchantableItems(character), [character]);
 
   const shelves = useMemo(
     () =>
@@ -192,12 +192,18 @@ export default function EnchantAction({ character, talents, kind, onClose, onDra
  * stone worth keeping" with nothing mechanical about them, and an enchantment laid
  * on one would have nothing to attach to.
  *
+ * **Wider than `carriedItems` in items.js on purpose**, and the pack is the whole
+ * difference: this is what may be *worked on* at the fire, that is what a working
+ * *counts from*. A spare dagger in the pack can be enchanted tonight and does
+ * nothing until it is drawn, the same as a breastplate nobody is wearing. The
+ * belt is in both now — a loop grants what it carries.
+ *
  * `heldItem`, so a piece the player made is offered by its own name. It is also
  * the one place the *instance* matters: `laid` is keyed by id, and a forged id is
  * an instance, so a working laid on one silver ring lands on that ring rather
  * than on every silver ring the character owns.
  */
-function carriedItems(character) {
+function enchantableItems(character) {
   const equipment = normalizeEquipment(character?.equipment);
   const ids = [
     ...Object.values(equipment),

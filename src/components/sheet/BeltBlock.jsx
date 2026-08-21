@@ -4,7 +4,7 @@ import { ChargeDots, ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemPart
 import CostOrbs from '../CostOrbs.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { BELT_MAX, BELT_SLOT_KEY, beltEntry, rarityColor } from '../../lib/items.js';
-import { getCard } from '../../lib/weapons.js';
+import { getCard, itemEnchantments } from '../../lib/weapons.js';
 
 /**
  * The Inventory tab's third block: the utility belt.
@@ -128,6 +128,11 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
   const { item, charges, used, spent, consumable } = state;
   const card = getCard(item.abilities?.[0]);
   const finished = spent && consumable;
+  /* What has been worked into it. A loop grants what it carries now, so a working
+     laid on a flask has to be readable on the loop it hangs from. The names only:
+     five loops share this block, and the effect is one tap away on the ⓘ card —
+     the same trade an enchanted weapon makes with its blurb. */
+  const workings = itemEnchantments(item);
 
   // Picks cost nothing and never run out, so they get no second line at all.
   const hasCost = Boolean(card && (card.ap != null || card.wp != null));
@@ -151,6 +156,13 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
             <span className="equip-slot-label">Slot {index + 1}</span>
           </span>
           <ItemTags item={item} />
+          {workings.length > 0 && (
+            <span className="belt-working">
+              {workings.map(({ id, enchantment }) => (
+                <b key={id}>{enchantment.name}</b>
+              ))}
+            </span>
+          )}
         </span>
       </button>
 
