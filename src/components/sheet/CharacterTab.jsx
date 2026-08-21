@@ -6,7 +6,17 @@ import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
 import PassiveBlock from './PassiveBlock.jsx';
 import TurnBlock from './TurnBlock.jsx';
-import { AttrTile, CoinIcon, CrateIcon, KarmaPill, PipRow, ResourceBar, SkullIcon, StatBox } from './parts.jsx';
+import {
+  AttrTile,
+  BurdenMeter,
+  CoinIcon,
+  CrateIcon,
+  KarmaPill,
+  PipRow,
+  ResourceBar,
+  SkullIcon,
+  StatBox,
+} from './parts.jsx';
 import BlockArrange from './BlockArrange.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
 import { ATTRIBUTES } from '../../lib/attributes.js';
@@ -81,6 +91,15 @@ const DEFENSE_LINE = [
     info: 'How well you withstand afflictions: resisting a poison, or shrugging off a mental attack. Instinct + Mind.',
   },
 ];
+
+/*
+ * Magic Burden is a readout here and nothing else: what fills it is equipped on
+ * the Inventory tab and what caps it is set on Advancement. So the explanation
+ * goes on hover the way every tile on this tab explains itself, which is also
+ * what keeps the panel down to a head and a bar. Block 1 has no room for a foot.
+ */
+const BURDEN_INFO =
+  'How much worked magic you can carry before it starts to weigh. Worn, held, on a trinket or clipped to your belt, it weighs the same wherever you carry it. Capacity is Level + Mind + 10.';
 
 /** Every block is designed now; the list stays for whatever comes next. */
 const PLACEHOLDERS = [];
@@ -235,6 +254,9 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           )}
         </div>
 
+        {/* ---------- MAGIC BURDEN ---------- */}
+        <BurdenMeter character={character} info={BURDEN_INFO} />
+
         {/* ---------- XP ---------- */}
         <button
           type="button"
@@ -252,11 +274,6 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           </span>
           <span className="bar-track">
             <span className="bar-fill bar-fill-xp" style={{ width: `${xp.percent}%` }} />
-          </span>
-          <span className="meter-foot">
-            {xp.isMax
-              ? 'Level cap reached'
-              : `${formatNumber(xp.toNext)} XP to level ${xp.level + 1}`}
           </span>
         </button>
 

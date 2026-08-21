@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
 import { ItemIcon, ItemTags, ItemValues, SlotGlyph, SlotTools, StatText } from './itemParts.jsx';
+import { BurdenMeter } from './parts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import {
   ARMOR_SETS,
   ARMOR_SLOTS,
   armorSetName,
   heldItem,
-  magicBurdenMax,
-  magicBurdenUsed,
   rarityColor,
 } from '../../lib/items.js';
 
@@ -19,7 +18,9 @@ import {
  * cap on the Character tab move in the same beat.
  *
  * The Magic Burden meter here counts the whole loadout, weapons included —
- * an enchanted blade weighs on it exactly like an enchanted helm.
+ * an enchanted blade weighs on it exactly like an enchanted helm. It is the
+ * same component block 1 of the Character tab prints, and it keeps the capacity
+ * line under the bar because this tab has the room for it.
  */
 export default function ArmorBlock({
   character,
@@ -33,11 +34,6 @@ export default function ArmorBlock({
 }) {
   const [browseSlot, setBrowseSlot] = useState(null);
   const stack = useCardStack();
-
-  const burdenMax = magicBurdenMax(character);
-  const burdenUsed = magicBurdenUsed(character);
-  const overBurden = burdenUsed > burdenMax;
-  const burdenColor = overBurden ? 'var(--danger-red)' : 'var(--haze-glow)';
 
   const fullSet = armorSetName(character);
   const setInfo = fullSet ? ARMOR_SETS[fullSet] : null;
@@ -63,32 +59,7 @@ export default function ArmorBlock({
       </div>
 
       {/* ---------- MAGIC BURDEN ---------- */}
-      <div className="burden-panel">
-        <div className="meter-head">
-          <span className="meter-label">Magic Burden</span>
-          <span className="meter-value" style={{ color: burdenColor }}>
-            {burdenUsed} / {burdenMax}
-          </span>
-        </div>
-        <span
-          className="bar-track"
-          style={{ backgroundColor: `color-mix(in srgb, ${burdenColor} 18%, var(--bg-black))` }}
-        >
-          <span
-            className="bar-fill"
-            style={{
-              width: `${burdenMax > 0 ? Math.min(100, (burdenUsed / burdenMax) * 100) : 0}%`,
-              background: burdenColor,
-              boxShadow: `0 0 8px ${burdenColor}`,
-            }}
-          />
-        </span>
-        <span className="meter-foot">
-          {overBurden
-            ? `Overburdened by ${burdenUsed - burdenMax}. Shed some worn magic.`
-            : 'Capacity is Level + Mind + 10.'}
-        </span>
-      </div>
+      <BurdenMeter character={character} foot="Capacity is Level + Mind + 10." />
 
       {ARMOR_SLOTS.map((slot) => {
         const item = heldItem(character, equipment[slot.key]);

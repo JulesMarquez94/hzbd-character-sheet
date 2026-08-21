@@ -1,4 +1,5 @@
 import { useHoverTip } from './useHoverTip.jsx';
+import { magicBurdenMax, magicBurdenUsed } from '../../lib/items.js';
 
 /** Block 1's larger, read-only Physique/Instinct/Mind tile. */
 export function AttrTile({ label, value, color, info }) {
@@ -103,6 +104,56 @@ export function ResourceBar({ label, current, max, color, onClick, title, poison
         </span>
       </span>
     </button>
+  );
+}
+
+/**
+ * The Magic Burden meter, printed in two places: block 1 of the Character tab,
+ * under the portrait, and above the armor slots on the Inventory tab, where the
+ * gear that fills it is chosen. One component, so the two can never disagree
+ * about what a loadout weighs.
+ *
+ * Nothing about it is typed in. `info` is the hover explanation and `foot` is
+ * the capacity line under the bar; block 1 has no vertical room for a foot and
+ * takes the tip instead. An overburdened character is told so in words either
+ * way, because that is the one number on this sheet meant to be able to be
+ * wrong, and so the one that must be said out loud.
+ */
+export function BurdenMeter({ character, info, foot = null }) {
+  const max = magicBurdenMax(character);
+  const used = magicBurdenUsed(character);
+  const over = used > max;
+  const color = over ? 'var(--danger-red)' : 'var(--haze-glow)';
+  const { ref, tipProps, tip } = useHoverTip(info);
+
+  return (
+    <div className="burden-panel" ref={ref} {...tipProps}>
+      <div className="meter-head">
+        <span className="meter-label">Magic Burden</span>
+        <span className="meter-value" style={{ color }}>
+          {used} / {max}
+        </span>
+      </div>
+      <span
+        className="bar-track"
+        style={{ backgroundColor: `color-mix(in srgb, ${color} 18%, var(--bg-black))` }}
+      >
+        <span
+          className="bar-fill"
+          style={{
+            width: `${max > 0 ? Math.min(100, (used / max) * 100) : 0}%`,
+            background: color,
+            boxShadow: `0 0 8px ${color}`,
+          }}
+        />
+      </span>
+      {(over || foot) && (
+        <span className="meter-foot">
+          {over ? `Overburdened by ${used - max}. Shed some worn magic.` : foot}
+        </span>
+      )}
+      {tip}
+    </div>
   );
 }
 
