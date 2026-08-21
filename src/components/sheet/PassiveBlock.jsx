@@ -4,6 +4,7 @@ import { GroupHead } from './parts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { passiveRecap, recapCount } from '../../lib/combatBar.js';
 import { cardGist } from '../../lib/cardText.js';
+import { cardUse, cycleCardUse } from '../../lib/uses.js';
 
 /**
  * The Character tab's fifth block: the recap.
@@ -27,8 +28,21 @@ import { cardGist } from '../../lib/cardText.js';
  * reason to look at this block at all. That line is the card's authored
  * `summary` where there is one and `cardGist` where there is not, exactly as a
  * brief resolves it. A tap deals the real card onto the stack.
+ *
+ * ------------------------------------------------------- the one thing that runs out
+ * Almost nothing here is ever spent, and then there are two enchantments that
+ * are. Defibrillation and Death Defiance both fire once when you go down and both
+ * need a long rest before they fire again. The firing is the table's to notice:
+ * nothing on this sheet knows that a character went down. But whether it has
+ * fired *since your last long rest* is a fact about the character, and a fact
+ * about the character has to be written on it, or the rest has nothing to hand
+ * back.
+ *
+ * So a row whose card carries a `uses` rider grows a mark on its right, and that
+ * is the only thing on this block that writes anything. Everything else is still
+ * a read. See uses.js.
  */
-export default function PassiveBlock({ character, readOnly = false }) {
+export default function PassiveBlock({ character, patch, readOnly = false }) {
   const stack = useCardStack();
 
   const groups = useMemo(() => passiveRecap(character), [character]);
@@ -69,6 +83,8 @@ export default function PassiveBlock({ character, readOnly = false }) {
                     key={row.key}
                     row={row}
                     character={character}
+                    patch={patch}
+                    readOnly={readOnly}
                     onOpen={() => stack?.openCard(row.card, row.modifiers)}
                   />
                 ))}
@@ -87,16 +103,19 @@ export default function PassiveBlock({ character, readOnly = false }) {
  * and what it does said once.
  *
  * The whole row is the button, unlike block 4's chips, because there is only
- * one thing to do with a passive and that is read it.
+ * one thing to do with a passive and that is read it. Unless it runs out, in
+ * which case there are two, and the read keeps the row while the mark takes a
+ * corner of it.
  */
-function Row({ row, character, onOpen }) {
+function Row({ row, character, patch, readOnly, onOpen }) {
   const { card, modifiers } = row;
   const line = card.summary ?? cardGist(card, { character, modifiers });
+  const use = cardUse(character, card);
 
-  return (
+  const read = (
     <button
       type="button"
-      className={`recap-row ac-kind-${card.kind ?? 'passive'}`}
+      className={`recap-row ac-kind-${card.kind ?? 'passive'}${use?.spent ? ' is-spent' : ''}`}
       onClick={onOpen}
       title={`${card.name} · read the card`}
     >
@@ -105,6 +124,50 @@ function Row({ row, character, onOpen }) {
         {row.from && <span className="recap-row-from">{row.from}</span>}
       </span>
       {line && <span className="recap-row-line">{line}</span>}
+    </button>
+  );
+
+  if (!use) return read;
+
+  return (
+    <div className="recap-limited">
+      {read}
+      <UseMark card={card} use={use} character={character} patch={patch} readOnly={readOnly} />
+    </div>
+  );
+}
+
+/**
+ * How much of a standing card is left, and the tap that spends it.
+ *
+ * A separate button from the row rather than a corner of it, because a button
+ * inside a button is not a thing, and because these two do different jobs: the
+ * row reads the card and this writes on the character. It carries what is left as
+ * a number for a card that allows more than one, and the word Spent for one with
+ * nothing left, which is the same pair the quick bar's chips already print.
+ */
+function UseMark({ card, use, character, patch, readOnly }) {
+  function mark() {
+    const body = cycleCardUse(character, card);
+    if (body) patch(body);
+  }
+
+  return (
+    <button
+      type="button"
+      className={`recap-mark${use.spent ? ' is-spent' : ''}`}
+      onClick={mark}
+      disabled={readOnly || !patch}
+      title={
+        use.spent
+          ? use.recharge
+            ? `${card.name} has fired. A ${use.recharge} brings it back, and a tap gives it back now.`
+            : `${card.name} has fired, and nothing brings it back.`
+          : `${use.remaining} of ${use.max} left. Tap when it fires.`
+      }
+      aria-label={`${card.name}: ${use.spent ? 'spent' : `${use.remaining} of ${use.max} left`}`}
+    >
+      {use.spent ? 'Spent' : `${use.remaining} left`}
     </button>
   );
 }

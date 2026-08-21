@@ -75,6 +75,7 @@ import {
   sourceSet,
 } from './feral.js';
 import { addEffect } from './combatTurn.js';
+import { cardUse, spendCardUse, spentNote, usageNote } from './uses.js';
 import {
   LEDGER_NOTE_MAX,
   appendLedger,
@@ -272,16 +273,25 @@ function knownGroups(character, locks) {
            here would pay for it out of the wrong pool. It is on the creature's
            own bar instead — see minionBar below. */
         .filter(({ card }) => !isStanding(card) && !isMinionCard(card))
-        .map(({ card, modifiers }) =>
-          move(`${source.id}:${card.id}`, card, {
-            source: `${card.name} · ${source.title}`,
-            modifiers,
+        .map(({ card, modifiers }) => {
+          /* Composed rather than spread straight into the row, because the last
+             of these has to *read* the ones before it: a card that lays a rider
+             and counts its own uses has to write both in one call, and one that
+             is already refused keeps the refusal it earned. */
+          const riders = {
             ...martialUse(character, card, room),
             ...ambushUse(character, card),
             ...feralUse(character, card, set),
             ...formRefusal(card, locks, { set }),
-          })
-        );
+          };
+
+          return move(`${source.id}:${card.id}`, card, {
+            source: `${card.name} · ${source.title}`,
+            modifiers,
+            ...riders,
+            ...limitedUse(character, card, riders),
+          });
+        });
 
       return moves.length > 0
         ? { id: source.id, label: source.title, note: source.note, moves }
@@ -427,6 +437,57 @@ function feralUse(character, card, set) {
 function leadIn(character, form) {
   const result = enterForm(character, form, { cap: shieldCapFor(character) });
   return `${result.spend} Health for ${result.granted} Shield.`;
+}
+
+/**
+ * What a card that may only be used so many times before a rest carries, or
+ * nothing at all for everything with no limit.
+ *
+ * The belt has drawn this since it existed: `charges` and `used` on the row are
+ * what puts the small "×2" beside a chip's name and what greys it out when there
+ * is nothing left. So a lineage ability whose card says "you must take a long
+ * rest before you can use this ability again" needs no new chip and no new
+ * drawing. It needs the same two numbers, off the card's own `uses` rider
+ * instead of off a flask. See uses.js.
+ *
+ * `riders` is everything the rules above already decided, because two of their
+ * answers have to be respected rather than overwritten:
+ *
+ *   spent    a card refused for another reason keeps that reason. Having no room
+ *            on the tracker or being unable to hold the card at all is the truer
+ *            refusal, and a chip that said "Spent" over either would be lying
+ *            about which rule stopped it.
+ *   extra    a rider is *merged*, never replaced. A move that lays an effect and
+ *            spends a use writes both in one patch, or the use would come off a
+ *            card that never landed.
+ *
+ * Spread last for exactly that reason.
+ */
+function limitedUse(character, card, riders = {}) {
+  const state = cardUse(character, card);
+  if (!state) return {};
+
+  // What is left, drawn on every chip whatever else is true of it.
+  const counted = { charges: state.max, used: state.used };
+
+  // Already refused, and by a rule that outranks this one. Say nothing more.
+  if (riders.spent) return counted;
+
+  if (state.spent) {
+    return {
+      ...counted,
+      extra: null,
+      spent: true,
+      spentLabel: 'Spent',
+      spentNote: spentNote(card, state),
+    };
+  }
+
+  return {
+    ...counted,
+    note: [riders.note, usageNote(state)].filter(Boolean).join(' '),
+    extra: { ...(riders.extra ?? {}), ...spendCardUse(character, card) },
+  };
 }
 
 /* ---------------------------------------------------- entering and leaving */

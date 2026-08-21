@@ -197,6 +197,11 @@ const SPROUT_WINGS = {
   tags: ['Lineage Trait', 'Ability'],
   ap: 2,
   wp: 2,
+  /* "You must take a long rest before you can use this ability again." One use,
+     and the long rest is what fills it. The sentence stays the designer's and
+     the rider is what the sheet counts. See uses.js. */
+  uses: 1,
+  recharge: 'Long Rest',
   summary: 'Wings for an hour: fly at your Movement Speed, once a long rest.',
   body:
     'You can manifest Celestial wings for 1 hour.\n\n' +
@@ -419,6 +424,10 @@ const LINEAGE_CODEX = [
         name: 'Living Furnace',
         kind: 'ability',
         ap: 2,
+        /* "Once this ability is used you need to take a long rest before you can
+           do it again." One use, filled by the long rest. See uses.js. */
+        uses: 1,
+        recharge: 'Long Rest',
         summary: 'Spend up to your level in Willpower to regain 10, plus 5 for each point.',
         body:
           'You let fire rage in your core. Spend up to your level in Willpower.\n\n' +
@@ -606,6 +615,10 @@ const LINEAGE_CODEX = [
         kind: 'ability',
         ap: 6,
         wp: 6,
+        /* "Once used you need to take a long rest before you can use it again."
+           One use, filled by the long rest. See uses.js. */
+        uses: 1,
+        recharge: 'Long Rest',
         summary: 'Feast on a fresh corpse for half your maximum Health, once a long rest.',
         body:
           'You can feast on a fresh organic dead body to regain half your maximum Health.\n\n' +

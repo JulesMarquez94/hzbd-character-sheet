@@ -489,9 +489,12 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
     4: <ActiveBlock character={character} patch={patch} readOnly={readOnly} />,
 
     /* ============ BLOCK 5 — ALWAYS ON ============
-       The other half: traits, skills and the workings on your gear. Nothing
-       here is ever played, so nothing here is ever spent — a tap reads it. */
-    5: <PassiveBlock character={character} readOnly={readOnly} />,
+       The other half: traits, skills and the workings on your gear. A tap reads
+       a row, and almost nothing here is ever spent. The exception is a working
+       that fires once and needs a rest before it fires again, which is why this
+       block takes `patch` at all: the firing is the table's to notice, and the
+       mark it leaves is the character's. */
+    5: <PassiveBlock character={character} patch={patch} readOnly={readOnly} />,
 
     /* ============ BLOCK 6 — TURN & EFFECTS ============
        The only block about the moment rather than the character: whose turn it

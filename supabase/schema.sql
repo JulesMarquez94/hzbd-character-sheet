@@ -241,6 +241,10 @@ create table if not exists public.characters (
   -- Choices a card leaves to the player, keyed by the card that asks:
   -- { "chromatic-resistance": "red", "dark-bargain": "mind" }.
   choices      jsonb not null default '{}'::jsonb,
+  -- How much of a limited card has been spent, keyed by the card:
+  -- { "sprout-wings": 1 }. A card that says you must rest before using it again
+  -- carries `uses` and `recharge` in the codex, and a rest empties this.
+  card_uses    jsonb not null default '{}'::jsonb,
   lore         jsonb not null default '{}'::jsonb,  -- { appearance, personality, backstory, allies, notes }
   -- Session logs, newest first. A title and a note, plus the session it belongs
   -- to when the table counts them:
@@ -319,6 +323,11 @@ alter table public.characters add column if not exists trinkets    jsonb not nul
 -- the item instance: two silver rings with different workings, a named piece, and
 -- one handed to another player as a code.
 alter table public.characters add column if not exists forged      jsonb not null default '{}'::jsonb;
+-- What a card that limits itself has spent, keyed by the card id. "Once per long
+-- rest" is a codex rider of `uses: 1, recharge: 'Long Rest'`, the same pair a
+-- flask on the belt carries, and this counts what has gone. The rest that the
+-- card names is what empties it again.
+alter table public.characters add column if not exists card_uses   jsonb not null default '{}'::jsonb;
 
 create index if not exists characters_user_id_idx on public.characters (user_id);
 

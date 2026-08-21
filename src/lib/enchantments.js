@@ -332,10 +332,14 @@ export const ENCHANTMENTS = withArt([
     burden: 6,
     cost: 4500,
     supplies: 420,
-    /* No rider, and not for want of trying: nothing on this sheet knows that a
-       character *went down*, and nothing tracks "has triggered since your last
-       long rest". Both halves are the table's to play, which is how every other
-       printed conditional on this sheet works. */
+    /* Half a rider now. Nothing on this sheet knows that a character *went
+       down*, so the trigger is still the table's to notice, the way every other
+       printed conditional on this sheet is. But "has triggered since your last
+       long rest" is a fact about the character rather than about the moment, and
+       that half is tracked: one use, filled by a long rest, marked on the Always
+       On row by the hand that noticed it fire. See uses.js. */
+    uses: 1,
+    recharge: 'Long Rest',
     effect:
       'When you go down, you stabilize to 0 health points instead of going into negative. Once this effect has triggered you need to take a long rest before you can use it again.',
     body:
@@ -415,7 +419,10 @@ export const ENCHANTMENTS = withArt([
     burden: 8,
     cost: 6000,
     supplies: 560,
-    /* Printed, for the same two reasons as Defibrillation. */
+    /* Printed and tracked the same way Defibrillation is: the trigger is the
+       table's, the one use and the long rest that fills it are the sheet's. */
+    uses: 1,
+    recharge: 'Long Rest',
     effect:
       'When you go down, you spring back up to 1 Health instead. Once the effect has triggered you need to take a long rest before you can use it again.',
     body:

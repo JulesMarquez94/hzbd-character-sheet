@@ -25,6 +25,11 @@
  * dot tapped back on by hand. Which rests fill what is the same law as which
  * rests end what, read off the same `ends` list. See `beltRest` in items.js.
  *
+ * A *card* that limits itself the same way is filled the same way, off the same
+ * list, in the same patch: a Celestial's SPROUT WINGS says "you must take a long
+ * rest before you can use this ability again", and this button is the only thing
+ * on the sheet that can honour the sentence. See `usesRest` in uses.js.
+ *
  * -------------------------------------------------------------- the preparing
  * A rest is also when a caster decides what they are carrying tomorrow. A set
  * that chooses its own cards says on the card itself which rests may re-choose
@@ -67,6 +72,7 @@ import {
 } from './enchanting.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
 import { beltRest, characterGrants, heldItem } from './items.js';
+import { usesRest } from './uses.js';
 
 /** What each rest costs and what it gives back. */
 export const RESTS = {
@@ -591,6 +597,19 @@ export function restPlan(character, kind, labours = [], prepared = null) {
   if (belt) {
     Object.assign(patch, belt.patch);
     lines.push(...belt.lines);
+  }
+
+  /* ---- and what you can do again ----
+     The same law one row down. A card that says you must rest before using it
+     again has spent a use, and the rest it names is what gives it back: SPROUT
+     WINGS, LIVING FURNACE, CANNIBALISM, and the two enchantments that fire once
+     when you go down. Read against the same `ends` list as everything above, so a
+     long rest fills a short-rest card and a short rest leaves a long-rest one
+     spent. See uses.js. */
+  const again = usesRest(character, rest.ends);
+  if (again) {
+    Object.assign(patch, again.patch);
+    lines.push(...again.lines);
   }
 
   /* ---- what was re-prepared while the fire burned down ---- */

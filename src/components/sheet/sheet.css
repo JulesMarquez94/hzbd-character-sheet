@@ -6632,6 +6632,65 @@ body.sheet-fixed #root {
   overflow: hidden;
 }
 
+/* A standing thing that runs out. The read keeps the whole row and the mark
+   takes a corner of it, because a button inside a button is not a thing. The row
+   itself is still a flex column, so the wrapper is what turns the pair sideways
+   and gives the read every pixel the mark does not need. */
+.recap-limited {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  min-width: 0;
+}
+
+.recap-limited .recap-row {
+  flex: 1 1 auto;
+}
+
+/* Green, like the belt's charge count and the pack chip: what you carry and
+   spend wears one colour across the whole sheet. */
+.recap-mark {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 0.34rem;
+  background-color: color-mix(in srgb, var(--def-healing) 14%, var(--inset-bg));
+  border: 1px solid color-mix(in srgb, var(--def-healing) 35%, transparent);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--def-healing);
+}
+
+.recap-mark:hover:not(:disabled),
+.recap-mark:focus-visible:not(:disabled) {
+  background-color: color-mix(in srgb, var(--def-healing) 26%, var(--inset-bg));
+  border-color: var(--def-healing);
+}
+
+/* Spent reads the way a spent chip reads in block 4: muted, and plainly off. */
+.recap-mark.is-spent {
+  background-color: var(--inset-bg);
+  border-color: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  color: var(--text-muted);
+}
+
+.recap-mark:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* And the row it belongs to dims with it, so the pair reads as one thing that is
+   not available rather than as a live row wearing a dead badge. */
+.recap-row.is-spent {
+  opacity: 0.55;
+}
+
 .recap-empty,
 .recap-foot {
   font-size: 0.66rem;

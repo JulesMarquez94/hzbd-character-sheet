@@ -107,6 +107,13 @@ export const BLANK_CHARACTER = {
   // granted it: the +2 / +1 spread at level 1, and an attribute point and a
   // learned skill at every odd level after. levelPicks.js owns the shape.
   level_picks: {},
+  // How much of a limited card has been spent, keyed by the card: { "sprout-wings": 1 }.
+  // A card that says you must rest before using it again carries `uses` and
+  // `recharge` the way a flask on the belt carries `charges` and `recharge`, and
+  // this is where the count of spent ones lives. Filled again by the rest the card
+  // names. uses.js owns the shape, and a sheet holding nothing limited never
+  // writes the column.
+  card_uses: {},
   // Choices a card leaves to the player, keyed by the card that asks for one:
   // { "chromatic-resistance": "red", "dark-bargain": "mind" }. A card that
   // names no choice never appears here.
