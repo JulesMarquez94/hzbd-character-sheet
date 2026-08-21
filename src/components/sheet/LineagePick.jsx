@@ -81,7 +81,8 @@ export default function LineagePick({ value, character, patch, step = null, read
     >
       <p className="pick-lead">
         Your <b>lineage</b> is your ancestry: the blood your character comes from, and what it left
-        in them. You choose it once, now, and it never changes.
+        in them. It is not your <b>race</b>, and what you look like is yours to write. You choose it
+        once, now, and it never changes.
       </p>
 
       {lineage ? (
@@ -336,6 +337,13 @@ function LineageChooser({
               <h3 className="talent-page-name">{shown.name}</h3>
               <p className="talent-page-tagline">{shown.tagline}</p>
               <p className="talent-page-blurb">{shown.blurb}</p>
+              {/* The lore above describes a body, and a reader can easily take it
+                  for the body they have to play. It is what the blood shows
+                  through, on whatever they choose to be. */}
+              <p className="talent-page-aside">
+                That is what the blood shows through, not what you are. Your race and the rest of
+                your look stay yours to write.
+              </p>
               <TagRow lineage={shown} />
             </div>
           </header>
@@ -369,8 +377,11 @@ function LineageChooser({
       ) : (
         <>
           <p className="frame-foot" style={{ marginTop: 0 }}>
-            Your ancestry, chosen once and never again. Open one to read its lore and everything it
-            gives you.
+            Your ancestry, chosen once and never again. A lineage is the blood you come from, not
+            your race: it marks the body that carries it, and the rest of what you look like is
+            yours. A Celestial gets a halo. Whether it hangs over an elven woman with golden eyes or
+            a white-furred wolf person with golden claws and teeth is your call. Open one to read its
+            lore and everything it gives you.
           </p>
 
           <TagFilter
