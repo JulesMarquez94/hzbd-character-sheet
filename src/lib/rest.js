@@ -17,6 +17,14 @@
  * A long rest ends what a short rest ends, and never the other way round: an
  * effect written "until your next Long Rest" survives a nap.
  *
+ * ------------------------------------------------------------ what fills again
+ * A rest also hands back whatever was waiting on one. A belt item that limits
+ * itself names the rest that fills it — the Druidic Tome "has nothing more to say
+ * until you have taken a Long Rest" — and that use comes back in the same patch
+ * as the pools, because a card that says a rest fills it should not then need a
+ * dot tapped back on by hand. Which rests fill what is the same law as which
+ * rests end what, read off the same `ends` list. See `beltRest` in items.js.
+ *
  * -------------------------------------------------------------- the preparing
  * A rest is also when a caster decides what they are carrying tomorrow. A set
  * that chooses its own cards says on the card itself which rests may re-choose
@@ -58,7 +66,7 @@ import {
   layingCost,
 } from './enchanting.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
-import { characterGrants, heldItem } from './items.js';
+import { beltRest, characterGrants, heldItem } from './items.js';
 
 /** What each rest costs and what it gives back. */
 export const RESTS = {
@@ -567,6 +575,22 @@ export function restPlan(character, kind, labours = [], prepared = null) {
         tone: 'gain',
       });
     }
+  }
+
+  /* ---- and what is back on your belt ----
+     An item that limits itself names what fills it again: the Druidic Tome "has
+     nothing more to say until you have taken a Long Rest", the Terra Cotta Disk
+     "stays cold until its bearer has slept". Both of those are this button, so
+     the use comes back with the pools above rather than being tapped back on by
+     hand afterwards.
+
+     `rest.ends` is the same list the effects below are closed against, so a long
+     rest fills a short-rest item and a short rest leaves a long-rest one cold.
+     See `beltRest` in items.js. */
+  const belt = beltRest(character, rest.ends);
+  if (belt) {
+    Object.assign(patch, belt.patch);
+    lines.push(...belt.lines);
   }
 
   /* ---- what was re-prepared while the fire burned down ---- */

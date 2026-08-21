@@ -1616,6 +1616,17 @@ check is not a turn. What counts as "related to nature" is the table's, which is
 how every other domain on the sheet works, and the card names the same ground the
 Naturalist background skill names so the two do not drift.
 
+And the rest is what fills it. `recharge` began as a label and nothing else: the
+card said the tome was spent until a Long Rest, and the dot stayed dark until
+somebody remembered to tap it back on. Taking the rest now hands back every belt
+use whose refill that rest is, and prints a line for each beside the pools. A
+long rest fills a short-rest item because it does everything a short rest does,
+and a short rest leaves a long-rest item cold: the same list that decides which
+effects a rest ends. `beltRest` in `src/lib/items.js` is the whole of it, and
+`rechargeRest` beside it is what reads the printed prose back to one of the two
+boundaries. Anything it cannot read back to, such as a refill on the turn of a
+season, is nobody's business but the table's and is left alone.
+
 ### `data/OF/` — the folder both importers walk
 
 A one-off arrives as one thing rather than as a shelf or a set, so it has no

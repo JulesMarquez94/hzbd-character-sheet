@@ -330,6 +330,72 @@ export function isUsedUp(character, entry) {
   return Boolean(state?.spent && state.consumable);
 }
 
+/* --------------------------------------------------------- what fills again
+ *
+ * A usable item names what brings its charges back in prose, because that is
+ * what the card prints: the Druidic Tome "has nothing more to say until you have
+ * taken a Long Rest", and the codex entry says `recharge: 'Long Rest'`.
+ *
+ * The sheet has two boundaries and no clock, so that prose is read back to one
+ * of them. Anything it cannot be read back to is filled at the table rather than
+ * here, and returns null: a rest must never quietly refill a thing whose refill
+ * it is not.
+ */
+export function rechargeRest(item) {
+  const said = String(item?.recharge ?? '');
+  if (/long/i.test(said)) return 'long';
+  if (/short/i.test(said)) return 'short';
+  return null;
+}
+
+/**
+ * What a rest gives the belt back.
+ *
+ * The one place on the sheet where a spent use is written down is a belt loop's
+ * `used` count, so the one place a use comes back is here. Nobody should have to
+ * remember to tap the dot back on: the tome that has answered is spent until a
+ * Long Rest, and a Long Rest is already a button.
+ *
+ * `ends` is the same list the rest closes its effects against, which gets the
+ * law right in both directions for free — a long rest fills a short-rest item
+ * because it does everything a short rest does, and a short rest leaves a
+ * long-rest item cold.
+ *
+ * A consumable is never filled, whatever it says: its charges are the thing
+ * itself, and spending the last one destroys it.
+ *
+ * Null when a rest owes the belt nothing, so a belt with nothing spent out of it
+ * is never written and never printed.
+ */
+export function beltRest(character, ends = []) {
+  const belt = normalizeBelt(character?.belt);
+  const next = [...belt];
+  const lines = [];
+
+  belt.forEach((entry, index) => {
+    if (!entry?.used) return;
+
+    const state = beltEntry(character, entry);
+    if (!state || state.consumable) return;
+
+    const fills = rechargeRest(state.item);
+    if (!fills || !ends.includes(fills)) return;
+
+    next[index] = { ...entry, used: 0 };
+    lines.push({
+      key: `belt-${index}-${entry.id}`,
+      label:
+        state.charges === 1
+          ? `${state.item.name} comes back`
+          : `${state.item.name}: ${state.used} of ${state.charges} back`,
+      detail: `It was spent. A ${state.item.recharge} is what fills it.`,
+      tone: 'gain',
+    });
+  });
+
+  return lines.length > 0 ? { patch: { belt: next }, lines } : null;
+}
+
 /* ------------------------------------------------------------------ rarity */
 
 /**
