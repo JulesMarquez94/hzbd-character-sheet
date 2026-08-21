@@ -28,6 +28,10 @@
  *                 a transformation."
  *   BEAST WITHIN "you choose a Carnivore Mammal. This beast represents how your
  *                 ability manifests."
+ *   BESTIAL SENSE  "Your maximum Shield is now equal to your Health instead of
+ *                 half." The one sentence in the set that is an amendment rather
+ *                 than a transcription: asked for in chat on 2026-08-21, and the
+ *                 answer to FERAL FORM's own arithmetic. See feralShieldShare.
  *   FERAL HIDE   "your Armor is increased by half your Instinct."
  *   CALL THE BEAST  the form entered without the roll.
  *   BEAST AND DRIFTER  the form stops locking your own abilities and spells away.
@@ -67,10 +71,12 @@
  * hands back a value or a patch body for somebody else to save.
  *
  * It deliberately does **not** import characterModel.js, which imports this one
- * for `feralArmor`. So the Shield ceiling is handed in rather than worked out
- * here, and the ledger rows a transformation deserves are written by the two
- * call sites that already hold `appendLedger`. Same arrangement `stealPatch` has
- * in tricks.js, and for the same reason.
+ * for `feralArmor` and `feralShieldShare`. So the Shield ceiling is handed *in*
+ * rather than worked out here — this file only says what share of maximum Health
+ * the pool is built from, and characterModel.js is the one place that turns a
+ * share into the number — and the ledger rows a transformation deserves are
+ * written by the two call sites that already hold `appendLedger`. Same
+ * arrangement `stealPatch` has in tricks.js, and for the same reason.
  */
 
 import { getTalent, normalizeTalents } from './talents.js';
@@ -204,6 +210,10 @@ export function feralState(character) {
       /* What this rank of the set may do, so no caller has to index a spec. */
       willing: Boolean(spec.willing?.[rank]),
       armorShare: Number(spec.armor?.[rank]) || 0,
+      /* BESTIAL SENSE's share of maximum Health, and the one reading on this row
+         that is true whether or not the form is running: it is a Novice passive
+         and not something the hide does. `feralShieldShare` is what reads it. */
+      shieldShare: Number(spec.shieldShare?.[rank]) || 0,
       opened: spec.opens?.[rank] ?? null,
       title: row.name || spec.label,
       /* The one line the block prints under the title: what it is, in the
@@ -304,9 +314,14 @@ export function canEnterForm(character, form) {
  * not import characterModel.js (see the header), and `syncDerived` clamps the
  * column to that ceiling on the very next render anyway, so a patch that ignored
  * it would be silently clipped instead of honestly reported. `clipped` is what
- * the ceiling ate, and it is the number the two call sites print — at full Health
- * it is always exactly half the gain, which is the open question flagged in
- * data/README.md.
+ * the ceiling ate, and it is the number the two call sites print.
+ *
+ * It used to eat exactly half of every full-Health transformation, because the
+ * pool ceilinged at half maximum Health and twice half of it is the whole thing.
+ * BESTIAL SENSE is the answer to that and it is `feral.shieldShare`, so a Feral
+ * Cursed at full Health now pays half and receives all of it with nothing
+ * clipped. The ceiling still bites for one who transforms with Shield already on
+ * them, which is the honest case: it says how much was thrown away.
  *
  * Also resets the Feral Rage difficulty, because that is FERAL RAGE's own next
  * sentence: "It resets to 8 on a transformation." Every way into the form goes
@@ -451,6 +466,37 @@ export function feralArmor(character, stat) {
 
   return running(character).reduce(
     (total, form) => total + Math.floor(value * form.armorShare),
+    0
+  );
+}
+
+/**
+ * The share of maximum Health a Feral Cursed's Shield pool ceilings at, or 0 for
+ * everybody whose sets say nothing about it.
+ *
+ * BESTIAL SENSE: "Your maximum Shield is now equal to your Health instead of
+ * half." A share rather than a number for the same reason FERAL HIDE's Armor is
+ * one, and 0 rather than null when nothing grants it, so a caller always gets a
+ * number: characterModel.js takes the larger of this and the half everybody has,
+ * which is what makes "instead of half" the *replacement* the card says it is
+ * rather than a bonus stacked on top of one.
+ *
+ * `feralState` and not `running`, which is the whole point of it living here
+ * beside `feralArmor` instead of inside it. The hide is a thing the form does and
+ * comes straight back off when the Shield runs out; this is a Novice passive on a
+ * card that never mentions the form, so the ceiling is up before the first
+ * transformation and stays up after the last one. Which is what makes the form's
+ * own "gain twice as much Shield" pay twice: a pool ceilinged at half maximum
+ * Health could never hold twice half of it.
+ *
+ * The highest share and not the sum, by the same law every other rider on this
+ * sheet obeys: two cards raising one ceiling raise it once. Which is moot until
+ * a second transforming set exists, and it is the reading `moveAllowance` in
+ * moves.js already took for the same shape of rule.
+ */
+export function feralShieldShare(character) {
+  return feralState(character).reduce(
+    (best, form) => Math.max(best, form.shieldShare),
     0
   );
 }

@@ -130,7 +130,7 @@ export const KEYWORDS = [
     terms: ['Shield'],
     color: 'var(--stat-shield)',
     detail:
-      'Damage soaked before it reaches Health. Caps at half your maximum Health, and whatever it cannot absorb carries straight through.',
+      'Damage soaked before it reaches Health, and whatever it cannot absorb carries straight through. Caps at half your maximum Health, or all of it for a Feral Cursed.',
   },
   {
     id: 'bleeding-out',

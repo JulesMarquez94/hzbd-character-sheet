@@ -142,7 +142,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   // XP is the lifetime total; the table decides what level that buys.
   const xp = xpProgress(character.xp);
 
-  // Shield's cap isn't its own field — half of health_max, plus worn gear.
+  // Shield's cap isn't its own field: a share of health_max plus worn gear, and
+  // the share is the whole of it for a Feral Cursed. See shieldCapFor.
   const shieldMax = shieldCapFor(character);
 
   // Every lib treats the talents column as "only ever a hint" (it can arrive

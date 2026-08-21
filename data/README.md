@@ -2684,16 +2684,13 @@ sentences are about.
 
 ### Five things for the designer
 
-1. **"Gain twice as much Shield" runs straight into the Shield cap.** Shield caps
-   at half your maximum Health, and half your *current* Health doubled is exactly
-   that cap when you are at full Health. So a full-Health transformation pays 60
-   and receives 60 rather than 120: break even, plus the advantage and the die.
-   The cap is enforced because `syncDerived` clamps the column on the next render
-   regardless, so ignoring it would have been silently clipped instead of honestly
-   reported — the block and the chip both say *"45 Health for 60 Shield"* and name
-   what the ceiling took. If the curse is meant to ignore the cap, that is one key
-   on the `feral` spec and one line in `deriveStats`. **This is the biggest open
-   question in the set.**
+1. ~~**"Gain twice as much Shield" runs straight into the Shield cap.**~~
+   **Answered on 2026-08-21. See "The ceiling comes off" below.** Shield capped at
+   half your maximum Health, and half your *current* Health doubled is exactly
+   that cap when you are at full Health, so a full-Health transformation paid 60
+   and received 60 rather than 120: break even, plus the advantage and the die.
+   BESTIAL SENSE now raises the ceiling to the whole of maximum Health, so the
+   doubling pays.
 2. **A weapon slot that "permanently beomce tooth and claw" is not built**, and it
    contradicts BEAST WITHIN's own previous clause: a slot that always holds the
    weapon is a pair of hands that is never empty. What *is* built is the tag, so
@@ -2774,3 +2771,74 @@ and nothing more (`.belt-working`). The trinket block prints the effect text too
 because a trinket has no numbers of its own and that line is its whole worth — a
 loop already carries a name, its tags, its cost orbs and its charge dots, so the
 effect stays on the ⓘ card. Same trade an enchanted weapon makes with its blurb.
+
+## The ceiling comes off, 2026-08-21
+
+> "Bestial sense passive should also have an effect that read 'Your maximum shiled
+> is now equal to your healht isnteado half'. Update it and make it work so the
+> feral curse shied is correct."
+
+This answers the biggest open question the set shipped with, and it answers it on
+the card the designer named rather than as a hidden exception for one talent set.
+
+### What the question was
+
+FERAL FORM buys Shield with blood: "you lose half your current Health and gain
+twice as much Shield." Twice half of what you are holding is all of what you are
+holding, and the Shield pool ceilinged at **half** maximum Health. So a Feral
+Cursed at full Health paid 50 and received 50 rather than 100: break even, and the
+one transformation the set is built around was the one that paid worst.
+
+### What the card now says
+
+| | |
+| --- | --- |
+| Transcribed | "You have advantage on Skill Checks related to using your 5 senses." |
+| Added | "Your maximum Shield is now equal to your Health instead of half of it." |
+
+The second sentence is **not on the tab**. It is the only addition in the set and
+the first one in the codex: every other card is a transcription, and the eight
+Rank 2 and Rank 3 cards that are not transcriptions are whole cards wearing
+`house: true`. A card that is half transcribed and half amended is neither, so it
+carries no flag and is recorded here instead.
+
+### What it does to the arithmetic
+
+At 100 maximum Health, at full Health, entering the form:
+
+| | before | now |
+| --- | --- | --- |
+| Health paid | 50 | 50 |
+| Shield owed | 100 | 100 |
+| Ceiling | 50 | **100** |
+| Shield received | 50 | **100** |
+| What the ceiling ate | 50 | **nothing** |
+
+The ceiling still bites for a Feral Cursed who transforms with Shield already on
+them, and the block and the chip still say what it took. That case is honest
+arithmetic rather than a rule fighting itself: you cannot be handed a hundred into
+a pool holding eighty.
+
+### Where it lives
+
+One key and one line, which is what the open question said it would be.
+
+| | |
+| --- | --- |
+| `feral.shieldShare` in `talents.js` | `[null, 1, 1, 1]`. The share of maximum Health the pool ceilings at, indexed by rank the way `armor` and `willing` are |
+| `feralShieldShare` in `feral.js` | the highest share any set grants, or 0. Reads `feralState` and **not** `running`: this is a Novice passive, not something the hide does |
+| `shieldShareFor` in `characterModel.js` | `Math.max(0.5, ...)`, so "instead of half" replaces the half rather than stacking on it, and a set that says nothing costs nothing |
+
+Three consequences worth knowing:
+
+1. **The ceiling is up before the first transformation and stays up after the
+   last.** The card never mentions the form, so neither does the code. A Feral
+   Cursed out of their hide still holds a Shield pool the size of their Health,
+   and anything else that grants Shield can fill it.
+2. **Every reader moved at once**, because they all already went through
+   `shieldCapFor`: the Character tab's bar, the Shield ledger's ceiling, the
+   Feral Form block's clock, the Trickster's STEAL and the bell's Runed Hood.
+   `syncDerived` keeps the `shield_max` column on the new number too.
+3. **The Supreme Runed set still adds Mind on top**, because that is a worn bonus
+   and this is the base share. A Feral Cursed in the full set caps at maximum
+   Health plus Mind.

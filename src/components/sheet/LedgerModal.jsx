@@ -57,7 +57,8 @@ const KINDS = {
   },
   shield: {
     field: 'shield',
-    // Shield's cap isn't its own field — half of health_max, plus worn gear.
+    // Shield's cap isn't its own field: a share of health_max plus worn gear, and
+    // the share is the whole of it for a Feral Cursed. See shieldCapFor.
     getMax: (c) => shieldCapFor(c),
     title: 'Shield Ledger',
     noun: 'shield',

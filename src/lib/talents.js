@@ -1377,6 +1377,29 @@ const TALENT_SETS = [
          A share of the attribute rather than a flat number, floored where it is
          worked out. Indexed by rank the way the Duelist's `martial.defense` is. */
       armor: [null, 0, 0.5, 0.5],
+      /* BESTIAL SENSE, at Rank 1: "Your maximum Shield is now equal to your
+         Health instead of half."
+
+         The share of maximum Health the Shield pool ceilings at, where everybody
+         else's is a half. A share and not a flat number for the same reason
+         `armor` is one, and indexed by rank because that is how every other
+         rider here is read, even though the card that grants it is a Novice one
+         and so no rank of the set is without it.
+
+         It belongs on the *form* spec rather than beside the card, because the
+         pool it raises is the form's own clock: "you remain in your Feral Form
+         until all Shield is gone." Raising the ceiling is the one thing that
+         makes "gain twice as much Shield" pay twice, and it is what closes the
+         biggest open question the set had. See feralShieldShare in feral.js and
+         `shield_cap` in characterModel.js.
+
+         Unlike the four Rank 1 cards around it, this sentence is not on the tab.
+         It was asked for in chat on 2026-08-21: "Bestial sense passive should
+         also have an effect that read Your maximum shield is now equal to your
+         health instead of half." So the card is transcribed and then amended,
+         which is why it carries no `house` flag but is flagged in
+         data/README.md. */
+      shieldShare: [null, 1, 1, 1],
       /* CALL THE BEAST, at Rank 2: the form entered on purpose rather than rolled
          for. Which ranks may, and nothing about the price — that is printed on
          the card and charged by the prompt, like every other cost on the sheet. */
@@ -1501,7 +1524,7 @@ const TALENT_SETS = [
         id: 'bestial-sense',
         rank: 1,
         name: 'Bestial Sense',
-        summary: 'Advantage on any Skill Check that runs through your five senses.',
+        summary: 'Advantage on any Skill Check that runs through your five senses, and a Shield pool the size of your Health.',
         kind: 'talent',
         tags: ['Feral Curse', 'Novice Talent', 'Passive'],
         ap: null,
@@ -1512,8 +1535,20 @@ const TALENT_SETS = [
            in the set and carries no risk, because the id `bestial-sense` is new
            and nothing has ever pointed at the other spelling. And "You Advantage
            on Skill Checks" reads "You have advantage on Skill Checks": the verb is
-           missing, and both terms light once it is there. */
-        body: 'You have advantage on Skill Checks related to using your 5 senses.',
+           missing, and both terms light once it is there.
+
+           And one *addition*, which is the only one in the set: the second
+           sentence is not on the tab and was asked for in chat on 2026-08-21.
+           Mechanics as data, like everything else here: it is `feral.shieldShare`
+           above and none of it is read out of this prose. What it answers is the
+           question this set shipped with — FERAL FORM buys "twice as much Shield"
+           and the ceiling on the pool used to eat exactly half of that at full
+           Health — so the two cards are read together and the Novice one is where
+           the ceiling moves. Flagged in data/README.md as an amendment rather
+           than a transcription. */
+        body:
+          'You have advantage on Skill Checks related to using your 5 senses.\n\n' +
+          'Your maximum Shield is now equal to your Health instead of half of it.',
       },
       {
         id: 'feral-hide',

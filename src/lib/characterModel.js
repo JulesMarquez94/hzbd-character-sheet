@@ -8,7 +8,7 @@ import { EMPTY_EQUIPMENT, characterGrants, equipmentEffects, gearEnchantIds } fr
 import { ephemeralGrants, wornIds } from './enchanting.js';
 import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
-import { feralArmor } from './feral.js';
+import { feralArmor, feralShieldShare } from './feral.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -43,9 +43,9 @@ export const BLANK_CHARACTER = {
   health: 50,
   health_max: 50,
   shield: 0,
-  // Not read by the app — shield's cap is always computed as half of
-  // health_max. syncDerived keeps the column on that number so a raw row
-  // reads sensibly.
+  // Not read by the app — shield's cap is always computed from health_max, at
+  // half of it for everybody and the whole of it for a Feral Cursed. syncDerived
+  // keeps the column on that number so a raw row reads sensibly.
   shield_max: 25,
   ap: 6,
   ap_max: 6,
@@ -323,9 +323,12 @@ export function deriveStats(character, extra = null) {
 
   return {
     health_max,
-    // A shield's base cap is never independently set — it's always half of
-    // health_max; worn gear (the Supreme Runed set) can raise it by Mind.
-    shield_cap: Math.floor(health_max / 2) + (gear.shieldCapMind ? m : 0),
+    /* A shield's base cap is never independently set — it is always a share of
+       health_max; worn gear (the Supreme Runed set) can raise it by Mind. The
+       share is a half for everybody and the whole of it for a Feral Cursed, whose
+       BESTIAL SENSE says so, which is the one thing that lets FERAL FORM's "twice
+       as much Shield" actually pay twice. See shieldShareFor below. */
+    shield_cap: shieldCap(health_max, shieldShareFor(character)) + (gear.shieldCapMind ? m : 0),
     willpower_max: Math.floor(2 * lvl + 2 * m + 10 + flat('willpowerMax')),
     avoid: Math.floor(avoid),
     defense: Math.floor(armorTotal),
@@ -344,16 +347,38 @@ export function deriveStats(character, extra = null) {
   };
 }
 
-/** Half of `healthMax`, rounded down — the bare cap on a character's shield. */
-export function shieldCap(healthMax) {
-  return Math.floor((Number(healthMax) || 0) / 2);
+/** The share of maximum Health a Shield pool ceilings at for everybody. */
+const SHIELD_SHARE = 0.5;
+
+/**
+ * A share of `healthMax`, rounded down — the bare cap on a character's shield.
+ *
+ * Half of it unless a caller says otherwise, which is what it has always been.
+ * The argument exists because BESTIAL SENSE moves the share rather than adding a
+ * bonus: "your maximum Shield is now equal to your Health instead of half".
+ */
+export function shieldCap(healthMax, share = SHIELD_SHARE) {
+  return Math.floor((Number(healthMax) || 0) * (Number(share) || SHIELD_SHARE));
+}
+
+/**
+ * The share this character's Shield ceilings at: the half everybody has, or the
+ * larger one a talent set grants them.
+ *
+ * `Math.max` and not a replacement, so a set that ever asked for *less* than half
+ * could not quietly shrink a pool the rest of the sheet has always sized one way,
+ * and so a set saying nothing costs nothing. feral.js hands back 0 for everybody
+ * who holds no such set.
+ */
+function shieldShareFor(character) {
+  return Math.max(SHIELD_SHARE, feralShieldShare(character));
 }
 
 /** The shield cap with worn gear applied — what the sheet should display. */
 export function shieldCapFor(character) {
   const gear = equipmentEffects(character);
   const bonus = gear.shieldCapMind ? Math.floor(Number(character?.mind) || 0) : 0;
-  return shieldCap(character?.health_max) + bonus;
+  return shieldCap(character?.health_max, shieldShareFor(character)) + bonus;
 }
 
 /**
