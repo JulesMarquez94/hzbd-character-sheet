@@ -90,7 +90,10 @@
   min-width: 0;
 }
 
+/* Lifted out of the flat layer so it paints over the link stretched across the
+   card, and so keeps the glow of its own hover. */
 .char-name a {
+  position: relative;
   color: var(--focus-cyan);
   text-decoration: none;
   transition: text-shadow 0.2s ease;
@@ -272,19 +275,17 @@
 }
 
 /* ---------- the whole card is the way in ----------
-   A link stretched over the card, under everything that has its own job: the
-   delete button, and the two links that were already there. Nothing inside the
-   card needs to know about it. */
+   A link stretched over the card, under the three things that have a job of
+   their own: the delete button, the portrait and the name. Each of those is
+   positioned by its own rule and sits later in the card than this link, so each
+   paints over it. The content column is a wrapper rather than a target, so it
+   is left flat and a click on the tags, the frames, the blurb or the campaign
+   reaches the link underneath. */
 .char-card-open {
   position: absolute;
   inset: 0;
   z-index: 0;
   border-radius: 4px;
-}
-
-.char-card > *:not(.char-card-open) {
-  position: relative;
-  z-index: 1;
 }
 
 .char-card:focus-within {
