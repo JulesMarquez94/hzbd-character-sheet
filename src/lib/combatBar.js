@@ -829,16 +829,30 @@ export function recapCount(groups) {
  * printed cost for an ordinary card, and wherever the dial was left for the
  * ones that have none.
  *
+ * `price` is what the prompt settled on once the card's second half has had its
+ * say: an Overcast or a Multicast that costs more than the card prints, and a
+ * Blood Tithe that costs Health the card never printed at all. It arrives as
+ * whole numbers rather than as a card and a count, because the number the player
+ * was shown beside the way they tapped must be the number that leaves the sheet
+ * and nothing here should be able to work out a different one. See
+ * src/lib/overcast.js, which reads those prices off the card, and UsePrompt.jsx,
+ * which is where they are chosen. A request with no second half sends no price
+ * and is charged its printed cost exactly as it always was.
+ *
+ * Health goes through the ledger, because every other movement of Health on this
+ * sheet is logged and a tithe is one a player chose to pay.
+ *
  * `free` is the one way past that refusal: the prompt's own "Use it anyway",
  * for a table that rules a use through regardless. The use happens exactly as it
  * would have: the charge off the flask, the effect it lays, the window it opens.
- * Not one point leaves a pool. That is the whole difference, and it lives here
- * rather than in the prompt so a waved-through use is the same write wherever it
- * was tapped.
+ * Not one point leaves a pool, and no Health either. That is the whole
+ * difference, and it lives here rather than in the prompt so a waved-through use
+ * is the same write wherever it was tapped.
  */
-export function spendUse(request, character, mode, amount, { free = false } = {}) {
-  const ap = Number(amount ?? request.ap) || 0;
-  const wp = Number(request.wp) || 0;
+export function spendUse(request, character, mode, amount, { free = false, price = null } = {}) {
+  const ap = Number(price?.ap ?? amount ?? request.ap) || 0;
+  const wp = Number(price?.wp ?? request.wp) || 0;
+  const health = Math.max(0, Number(price?.health) || 0);
   const body = { ...(request.extra ?? {}) };
 
   /* A weapon attack is what both kinds of rider were waiting for, and paying for
@@ -894,6 +908,23 @@ export function spendUse(request, character, mode, amount, { free = false } = {}
       else body.ap = character.ap - ap;
     }
     if (wp > 0) body.willpower = character.willpower - wp;
+  }
+
+  /* And the tithe, if one was taken. Written through the ledger rather than
+     straight onto the column, so "why am I on 12 Health" has an answer with the
+     spell's name in it. Floored at nothing for the same reason the pools are:
+     the prompt has already refused a tithe bigger than the body can pay. */
+  if (health > 0) {
+    const left = Math.max(0, (Number(character?.health) || 0) - health);
+    body.health = left;
+    body.ledger = ledgerRows(character, [
+      {
+        kind: 'health',
+        delta: -health,
+        balance: left,
+        note: price?.note ?? `${request.name}: the tithe`,
+      },
+    ]);
   }
 
   return body;

@@ -8,11 +8,17 @@
 /* The same colours the pools wear on the Character tab, lit the same way.
    Reaction Points are never printed on a card — a card costs Action Points,
    and only the moment you spend it decides whether you paid out of the other
-   pool — so the orange orb is raised by the sheet, not by the codex. */
+   pool — so the orange orb is raised by the sheet, not by the codex.
+
+   Health is the same kind of orb for the same kind of reason. No card prints a
+   Health cost either: a Blood Tithe is an offer in the card's second half, and
+   only the moment you take it turns "Health equal to your Physique" into the
+   number the prompt is about to charge. See UsePrompt.jsx. */
 const RESOURCES = {
   ap: { label: 'Action Points', color: 'var(--stat-ap)' },
   rp: { label: 'Reaction Points', color: 'var(--stat-rp)' },
   wp: { label: 'Willpower', color: 'var(--stat-wp)' },
+  hp: { label: 'Health', color: 'var(--stat-health)' },
 };
 
 function has(value) {

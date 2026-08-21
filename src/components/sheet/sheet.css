@@ -4395,11 +4395,23 @@ body.sheet-fixed #root {
 
 /* ---------- ACTION OR REACTION ----------
    The one question a use asks, and the notice it gives back when the pools
-   cannot cover it. */
+   cannot cover it.
+
+   Two columns: everything you decide on the left, the card those decisions are
+   about on the right. The card is a hard 360 wherever it is printed, so its
+   column is exactly that and the choices take whatever is left. */
 .use-prompt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--block-w);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.use-choices {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .use-source {
@@ -4470,6 +4482,106 @@ body.sheet-fixed #root {
 .use-way-pool {
   font-size: 0.68rem;
   color: var(--text-muted);
+}
+
+/* ---------- THE CARD'S SECOND HALF ----------
+   Overcast, Multicast and Blood Tithe: something the card offers that costs
+   more than the card prints. One tap takes it, one tap gives it back, and a
+   half that may be taken repeatedly grows a dial once it is on.
+
+   It wears the colour its own name wears in card text, handed in as
+   --half-accent off the glossary, so the control and the words on the card
+   beside it are visibly the same thing. Violet for an Overcast or a Multicast,
+   blood red for a tithe. The fallback is the violet three of the four wear. */
+.use-half {
+  --half-accent: var(--haze-glow);
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Shaped like a way, because it is read in the same glance as one, with the
+   accent carried down its leading edge. */
+.use-half-take {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background-color: rgba(9, 17, 21, 0.5);
+  border: 1px solid color-mix(in srgb, var(--half-accent) 32%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--half-accent) 55%, transparent);
+  border-radius: 4px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--text-silver);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.use-half-take:hover,
+.use-half-take:focus-visible {
+  border-color: var(--half-accent);
+}
+
+/* Taken: lit in its own colour, the way every chosen thing on this sheet is. */
+.use-half-take.is-on {
+  background-color: color-mix(in srgb, var(--half-accent) 18%, rgba(9, 17, 21, 0.5));
+  border-color: var(--half-accent);
+}
+
+.use-half-costs {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.use-half-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.use-half-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--half-accent);
+}
+
+/* Whether it is charged on top of the printed cost or in place of it. The one
+   thing about a second half that is not on the card. */
+.use-half-note {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+/* The dial for a half that may be taken any number of times, tucked under the
+   control that opened it and counting in that half's colour: it is counting
+   Multicasts, not Action Points. */
+.use-half .use-dial {
+  padding: 0.5rem 0.6rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--half-accent) 22%, transparent);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.35);
+}
+
+.use-half .use-dial-n {
+  color: var(--half-accent);
+}
+
+.use-half .use-dial-step {
+  border-color: color-mix(in srgb, var(--half-accent) 40%, transparent);
+  color: var(--half-accent);
+}
+
+.use-half .use-dial-step:hover:not(:disabled),
+.use-half .use-dial-step:focus-visible:not(:disabled) {
+  border-color: var(--half-accent);
+  color: var(--text-bright);
 }
 
 /* The notice a refused way gives back. It is printed between the ways and the
@@ -4547,18 +4659,43 @@ body.sheet-fixed #root {
   color: var(--def-healing);
 }
 
-/* The card under the two ways: what you are about to spend the points on,
+/* Upkeep: the one second half nobody chooses, so it is a line rather than a
+   control. Violet like the word itself. */
+.use-toll {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.use-toll b {
+  color: var(--haze-glow);
+}
+
+/* The card beside the choices: what you are about to spend the points on,
    printed for this character, at the size every other card is printed. */
 .use-card {
   display: flex;
   justify-content: center;
-  margin-top: 0.35rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid rgba(148, 167, 176, 0.12);
   /* The last resort, and only below 360: a card is one size, so on a screen
      narrower than one there is nowhere left for it to go. Everything down to
-     360 is handled by the rule below instead. */
+     360 is handled by the rules below instead. */
   overflow-x: auto;
+}
+
+/* ---------- THE USE PROMPT ON ONE COLUMN ----------
+   Under 760 there is no room for two columns of anything: the card is a fixed
+   360 and what is left cannot hold a cost, a pool and a refusal. So the card
+   drops back under the choices and takes back the divider it wears there. */
+@media (max-width: 760px) {
+  .use-prompt {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .use-card {
+    margin-top: 0.35rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(148, 167, 176, 0.12);
+  }
 }
 
 /* ---------- THE USE PROMPT ON A PHONE ----------

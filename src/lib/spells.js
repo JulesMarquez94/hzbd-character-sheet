@@ -1023,6 +1023,13 @@ export const SPELLS = withArt([
       'You turn into pure energy and instantly teleport yourself to a point you can see within 6 meters (20 feet).\n\n' +
       'All entities in a line between your start and end point take [[1d6 + stat]] in {damage} damage.',
     sub_name: 'Overcast',
+    /* The one second half in the codex whose opening clause does not say when it
+       happens and cannot mean "later". Voltaic Jolt is instantaneous — you are
+       energy and then you are somewhere else — so entities carried "along with
+       you" are carried during that one cast and nowhere else. Every other
+       "You can spend..." half sits on a spell that is still standing when it is
+       paid for. See sub_when in overcast.js. */
+    sub_when: 'cast',
     sub_body:
       'You can spend 1 Action Point and 2 Willpower to teleport any number of entities you can touch along with you.\n\n' +
       'They move the same distance parallel to you.',

@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "lint:text": "node scripts/lint-text.mjs",
     "lint:math": "node scripts/check-stat-math.mjs",
+    "lint:halves": "node scripts/lint-halves.mjs",
     "preview": "vite preview",
     "art": "node scripts/pull-card-art.mjs && node scripts/pull-item-art.mjs",
     "art:cards": "node scripts/pull-card-art.mjs",
