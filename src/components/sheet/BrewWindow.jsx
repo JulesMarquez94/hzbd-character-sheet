@@ -89,8 +89,8 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
   const open = picking ? shelves.find((group) => group.id === picking) : null;
 
   /** The one write a confirmed Brew makes: the points, and nothing else. */
-  function confirm(mode, amount) {
-    const body = spendUse(paying, character, mode, amount);
+  function confirm(mode, amount, options) {
+    const body = spendUse(paying, character, mode, amount, options);
     if (Object.keys(body).length > 0) patch(body);
     setPaying(null);
     setDraft(blankBrew());

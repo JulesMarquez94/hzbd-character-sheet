@@ -89,8 +89,8 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
   const ready = Boolean(chosen) && (!asksSpell || Boolean(spell));
 
   /** The one write a confirmed enchantment makes: the points, and the effect. */
-  function confirm(mode, amount) {
-    const body = spendUse(paying, character, mode, amount);
+  function confirm(mode, amount, options) {
+    const body = spendUse(paying, character, mode, amount, options);
 
     body.effects = addEffect(
       character?.effects,

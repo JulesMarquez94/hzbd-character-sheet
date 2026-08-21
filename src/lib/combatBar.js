@@ -708,8 +708,15 @@ export function recapCount(groups) {
  * here can drive one below zero. `amount` is what the prompt settled on — the
  * printed cost for an ordinary card, and wherever the dial was left for the
  * ones that have none.
+ *
+ * `free` is the one way past that refusal: the prompt's own "Use it anyway",
+ * for a table that rules a use through regardless. The use happens exactly as it
+ * would have: the charge off the flask, the effect it lays, the window it opens.
+ * Not one point leaves a pool. That is the whole difference, and it lives here
+ * rather than in the prompt so a waved-through use is the same write wherever it
+ * was tapped.
  */
-export function spendUse(request, character, mode, amount) {
+export function spendUse(request, character, mode, amount, { free = false } = {}) {
   const ap = Number(amount ?? request.ap) || 0;
   const wp = Number(request.wp) || 0;
   const body = { ...(request.extra ?? {}) };
@@ -740,6 +747,10 @@ export function spendUse(request, character, mode, amount) {
     }
     if (cleared) body.effects = effects;
   }
+
+  /* Waved through. Everything the use *does* is already in the body; the points
+     are what an override withholds, so this is where it stops. */
+  if (free) return body;
 
   if (request.converts === 'reaction') {
     // Anticipate spends nothing. The points cross from one pool to the other,

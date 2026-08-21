@@ -4353,6 +4353,75 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
+/* The notice a refused way gives back. It is printed between the ways and the
+   card, so these rules sit between theirs. */
+.use-denied {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid rgba(229, 57, 53, 0.45);
+  background-color: rgba(229, 57, 53, 0.1);
+  border-radius: 4px;
+  padding: 0.6rem 0.7rem;
+}
+
+.use-denied-head {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--danger-red);
+}
+
+.use-denied-line {
+  font-size: 0.76rem;
+  color: var(--text-silver);
+}
+
+.use-denied-foot {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* The way past it. Red like the notice that carries it, because it is the same
+   ruling read the other way round, and it says its own consequence: this button
+   is the one thing on the sheet that moves a use through without paying for it. */
+.use-denied-anyway {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  margin-top: 0.4rem;
+  background-color: rgba(229, 57, 53, 0.14);
+  border: 1px solid rgba(229, 57, 53, 0.55);
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--text-silver);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.use-denied-anyway:hover {
+  background-color: rgba(229, 57, 53, 0.24);
+  border-color: var(--danger-red);
+}
+
+.use-denied-anyway-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--danger-red);
+}
+
+.use-denied-anyway-note {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
 .use-note {
   font-size: 0.72rem;
   line-height: 1.45;
@@ -4403,34 +4472,6 @@ body.sheet-fixed #root {
   .modal-backdrop:has(.use-card) .use-card {
     margin-inline: -0.9rem;
   }
-}
-
-.use-denied {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  border: 1px solid rgba(229, 57, 53, 0.45);
-  background-color: rgba(229, 57, 53, 0.1);
-  border-radius: 4px;
-  padding: 0.6rem 0.7rem;
-}
-
-.use-denied-head {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--danger-red);
-}
-
-.use-denied-line {
-  font-size: 0.76rem;
-  color: var(--text-silver);
-}
-
-.use-denied-foot {
-  font-size: 0.7rem;
-  color: var(--text-muted);
 }
 
 /* ---------- REPLACING WHAT IS ALREADY IN A SLOT ---------- */

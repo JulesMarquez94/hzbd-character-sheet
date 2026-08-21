@@ -64,8 +64,8 @@ export default function AmbushWindow({ talent, card, character, patch, readOnly 
   const worn = wieldModifiers(character, primary);
 
   /** The one write: the Willpower, and the rider it bought. */
-  function confirm(mode, amount) {
-    const body = spendUse(paying, character, mode, amount);
+  function confirm(mode, amount, options) {
+    const body = spendUse(paying, character, mode, amount, options);
     if (Object.keys(body).length > 0) patch(body);
     setPaying(null);
     onClose();

@@ -67,8 +67,8 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
    * itself lives in combatBar.js, shared with the quick bar — so the same
    * card costs the same wherever it was tapped.
    */
-  function confirmUse(mode, amount) {
-    const body = spendUse(request, character, mode, amount);
+  function confirmUse(mode, amount, options) {
+    const body = spendUse(request, character, mode, amount, options);
     if (Object.keys(body).length > 0) patch(body);
     setRequest(null);
   }

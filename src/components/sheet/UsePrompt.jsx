@@ -18,7 +18,16 @@ import { VARIABLE_CAP } from '../../lib/actions.js';
  * are only ever emptied by the sheet's own maths, never dragged below zero to
  * make a use fit.
  *
- * Under the two ways sits the card itself, printed for this character — the
+ * The notice lands directly under the two ways rather than at the foot of the
+ * dialog. This prompt is a whole card tall, and a refusal printed below that
+ * card is a refusal nobody reads — it belongs beside the tap that earned it.
+ *
+ * It carries the way out with it. "Use it anyway" is the table's override, for
+ * the ruling that a use stands whatever the sheet thinks of it: the use goes
+ * through exactly as a paid one does, and not one point leaves a pool. Still
+ * nothing dragged below zero — a cost forgiven rather than a cost paid.
+ *
+ * Under all of it sits the card itself, printed for this character — the
  * rolls it asks for, the numbers it deals. Nobody should have to spend points
  * on something and only afterwards go looking for what it did.
  *
@@ -81,6 +90,14 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
       return;
     }
     onConfirm(way.mode, ap);
+  }
+
+  /* The table's override. Whatever came up short is left alone rather than
+     driven below zero, and everything else about the use happens as it would
+     have: the charge, the effect, the window it opens. See `free` in
+     combatBar.js, which is where a use has always been turned into a write. */
+  function waveThrough() {
+    if (denied) onConfirm(denied.way.mode, ap, { free: true });
   }
 
   function dial(next) {
@@ -179,20 +196,8 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
           })}
         </div>
 
-        {/* What the item itself loses, on top of the points. */}
-        {request.note && <p className="use-note">{request.note}</p>}
-
-        {/* What you are about to do, as the card reads for you. */}
-        {request.card && (
-          <div className="use-card">
-            <AbilityCard
-              ability={request.card}
-              character={character}
-              modifiers={request.modifiers}
-            />
-          </div>
-        )}
-
+        {/* Straight under the two ways, above the card: this is the answer to
+            the tap, and the tap was up here. */}
         {denied && (
           <div className="use-denied" role="alert">
             <span className="use-denied-head">
@@ -204,6 +209,32 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
               </span>
             ))}
             <span className="use-denied-foot">Nothing was spent.</span>
+
+            <button
+              type="button"
+              className="use-denied-anyway"
+              onClick={waveThrough}
+              aria-label="Use it anyway: it goes through and nothing is spent"
+            >
+              <span className="use-denied-anyway-label">Use it anyway</span>
+              <span className="use-denied-anyway-note">
+                Goes through as written. No points leave your sheet.
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* What the item itself loses, on top of the points. */}
+        {request.note && <p className="use-note">{request.note}</p>}
+
+        {/* What you are about to do, as the card reads for you. */}
+        {request.card && (
+          <div className="use-card">
+            <AbilityCard
+              ability={request.card}
+              character={character}
+              modifiers={request.modifiers}
+            />
           </div>
         )}
       </div>

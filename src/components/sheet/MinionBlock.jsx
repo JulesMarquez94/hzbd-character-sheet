@@ -377,8 +377,8 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
   const actor = minionActor(character, minion);
   const { stats } = minion;
 
-  function confirmUse(mode, amount) {
-    const body = spendUse(request, actor, mode, amount);
+  function confirmUse(mode, amount, options) {
+    const body = spendUse(request, actor, mode, amount, options);
     const write = minionSpend(character, minion, body);
     if (Object.keys(write).length > 0) patch(write);
     setRequest(null);

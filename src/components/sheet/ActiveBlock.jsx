@@ -94,8 +94,8 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
   }
 
   /** The spend itself lives in combatBar.js, shared with block 3. */
-  function confirmUse(mode, amount) {
-    const body = spendUse(request, character, mode, amount);
+  function confirmUse(mode, amount, options) {
+    const body = spendUse(request, character, mode, amount, options);
     if (Object.keys(body).length > 0) patch(body);
 
     /* A card may say that using it opens something. BREW does: what a Brew
