@@ -2916,6 +2916,22 @@ body.sheet-fixed #root {
   border-color: var(--haze-glow);
 }
 
+/* ---------- setting a pool outright ----------
+   The same box for every pool that is only a number, in that pool's own colour:
+   --set-accent is handed in by the ledger, the way --pick-accent is. */
+.ledger-btn-set {
+  background-color: color-mix(in srgb, var(--set-accent, var(--copper)) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--set-accent, var(--copper)) 45%, transparent);
+  color: var(--set-accent, var(--copper));
+  padding: 0.7rem 1.1rem;
+  white-space: nowrap;
+}
+
+.ledger-btn-set:hover {
+  background-color: color-mix(in srgb, var(--set-accent, var(--copper)) 22%, transparent);
+  border-color: var(--set-accent, var(--copper));
+}
+
 .ledger-level-note {
   margin: 0.45rem 0 0;
   font-size: 0.7rem;
