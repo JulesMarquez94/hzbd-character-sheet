@@ -26,15 +26,18 @@
  * Ephemeral Enchantment and its `ench` key — see enchanting.js). A rider you
  * cannot see is a rider you will forget you paid for.
  *
- *   { trick: { id: 'ambush', elevate: 2 } }   the next Weapon Attack is
- *                                            Elevated twice
+ *   { trick: { id: 'ambush', elevate: 2, advantage: 1 } }
+ *                                            the next Weapon Attack is made
+ *                                            with Advantage and Elevated twice
  *   { trick: { id: 'poison', flat: 1 } }      and deals another 1 x Instinct
  *
  * `elevate` is a number because it is history: "a number of times equal to the
  * Willpower paid" is about what was actually paid, and a Trickster who swaps
  * weapons afterwards does not get a different answer. `flat` is a *multiplier*
  * on Instinct rather than a number, because Poison says "equal to your Instinct
- * Attribute" and means the Instinct you have when you swing.
+ * Attribute" and means the Instinct you have when you swing. `advantage` is a
+ * number of d4s, stored rather than derived for the same reason the Elevate is:
+ * the row is the receipt for what the Willpower bought.
  *
  * "Lost on use" is `spendTricks`, and the sheet spends them at the one moment it
  * can be sure a weapon attack happened: when one is paid for.
@@ -158,7 +161,7 @@ export function pendingTricks(effects) {
 
 /**
  * The rider a card is carrying, summed, as the modifier shape the card
- * renderers already understand: `{ elevate, flat }`.
+ * renderers already understand: `{ elevate, flat, advantage, advantaged }`.
  *
  * `flat` comes back as a multiplier on Instinct rather than a number of damage,
  * because that is what Poison is, and the card is the thing that knows which
@@ -166,18 +169,81 @@ export function pendingTricks(effects) {
  *
  * Elevate stacks — the glossary says so outright — so two riders on one swing
  * add up, capped at a d12 by `elevateDie` where the number is actually printed.
+ *
+ * Advantage does not, and that is the one place these two part company: "unless
+ * they say otherwise effects don't stack from the same source", so two ambushes
+ * bought for one swing are two payments of Elevate and one arrow. Deduped by the
+ * card the arrow came off, here, because this is the one place the sum happens.
+ * `advantaged` is what lent it, named, which is what the arrow credits.
  */
 export function trickRider(effects, card) {
   if (!isWeaponAttack(card)) return null;
 
   let elevate = 0;
   let flat = 0;
+  const arrows = new Map();
+
   for (const row of pendingTricks(effects)) {
     elevate += Math.max(0, Number(row.trick.elevate) || 0);
     flat += Math.max(0, Number(row.trick.flat) || 0);
+
+    const arrow = trickArrow(row);
+    if (arrow) arrows.set(arrow.id, arrow);
   }
 
-  return elevate > 0 || flat > 0 ? { elevate, flat } : null;
+  const lent = [...arrows.values()];
+  const advantage = lent.reduce((sum, arrow) => sum + arrow.advantage, 0);
+
+  return elevate > 0 || flat > 0 || advantage > 0
+    ? { elevate, flat, advantage, advantaged: lent.map((arrow) => arrow.name) }
+    : null;
+}
+
+/**
+ * How many d4s of Advantage a rider payload carries.
+ *
+ * The one function that knows an AMBUSH is "made with Advantage", and it is a
+ * number rather than a flag because the arrow on the card adds it to everything
+ * else bending the same roll.
+ *
+ * A payload laid before the number was written onto it still carries it: AMBUSH
+ * has always been made with Advantage, and the alternative is a Trickster
+ * mid-session losing the arrow they have already paid the Willpower for. That
+ * reading is here rather than at the two call sites so a rider normalized on the
+ * way out of storage and one read straight off the tracker cannot disagree.
+ */
+export function trickAdvantage(trick) {
+  const paid = trick?.advantage ?? (trick?.id === 'ambush' ? 1 : 0);
+  return Math.max(0, Math.floor(Number(paid) || 0));
+}
+
+/**
+ * The Advantage one tracker row is lending and the card lending it, as
+ * `{ id, name, advantage }`, or null.
+ *
+ * Two arrows are drawn off this: the one on the attack the rider is waiting on
+ * (`trickRider` above) and the one on the row itself (`effectAdvantage` in
+ * moves.js). They are the same claim, so they read the same function.
+ */
+export function trickArrow(row) {
+  const trick = row?.trick;
+  if (!trick) return null;
+
+  const advantage = trickAdvantage(trick);
+  return advantage > 0 ? { id: trick.id, name: trickName(trick.id), advantage } : null;
+}
+
+/**
+ * The card a rider was bought off, named — what the arrow credits.
+ *
+ * Off the codex rather than off the row, because the row's own name carries the
+ * attack it was bought for ("Ambush · Daggers - Triple Strike") and an arrow is
+ * crediting the ability, not the swing. Falls back to the set for a rider with no
+ * card of its own: a stolen Poison has none, and lends no Advantage either.
+ */
+function trickName(id) {
+  const set = getTalent(TRICKSTER);
+  return (set?.cards ?? []).find((card) => card.id === id)?.name ?? set?.name ?? 'Trickster';
 }
 
 /* `withTrickRider` used to live here: a weapon card's modifiers with this file's
@@ -249,7 +315,15 @@ export function ambushOptions(cards) {
     .filter((option) => option.wp > 0);
 }
 
-/** The rider AMBUSH lays, as an effect row for the tracker. */
+/**
+ * The rider AMBUSH lays, as an effect row for the tracker.
+ *
+ * Both halves of the card, because both of them are what the Willpower bought:
+ * "The Weapon Attack is made with Advantage" and "On a hit, the Weapon Attack is
+ * Elevated a number of times equal to the Willpower paid". The Advantage rides as
+ * a number rather than as a flag so the arrow on the attack can simply add it to
+ * everything else bending the same roll.
+ */
 export function ambushEffect(option) {
   return {
     name: `Ambush · ${option.card.name}`,
@@ -259,7 +333,7 @@ export function ambushEffect(option) {
     turns: null,
     until: null,
     from: 'Trickster',
-    trick: { id: 'ambush', elevate: option.wp },
+    trick: { id: 'ambush', elevate: option.wp, advantage: 1 },
   };
 }
 

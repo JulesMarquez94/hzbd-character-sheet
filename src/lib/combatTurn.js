@@ -80,6 +80,7 @@ import { shieldCapFor } from './characterModel.js';
 import { getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
 import { getMartialMove } from './martial.js';
+import { trickAdvantage } from './tricks.js';
 
 /** A long fight should not be able to bloat one row past reading. */
 export const EFFECT_LIMIT = 40;
@@ -369,9 +370,15 @@ export function normalizeEffects(value) {
 }
 
 /**
- * A rider, or null. Two numbers and an id, and nothing else survives: an effects
- * list is stored jsonb and a row that could carry arbitrary shapes into the card
- * renderer is a row that can print anything.
+ * A rider, or null. Three numbers and an id, and nothing else survives: an
+ * effects list is stored jsonb and a row that could carry arbitrary shapes into
+ * the card renderer is a row that can print anything.
+ *
+ * `advantage` is the third, and it is why an AMBUSH bends the roll it was bought
+ * for: a field this function does not name is a field that does not survive a
+ * reload, so the arrow has to be listed here to exist at all. Read through
+ * `trickAdvantage` rather than off the row, so a rider laid before the number was
+ * stored keeps the Advantage it paid for — see tricks.js, where that rule lives.
  */
 function normalizeTrick(raw) {
   if (!raw || typeof raw !== 'object') return null;
@@ -381,7 +388,10 @@ function normalizeTrick(raw) {
 
   const elevate = Math.max(0, Math.min(9, Math.floor(Number(raw.elevate) || 0)));
   const flat = Math.max(0, Math.min(9, Math.floor(Number(raw.flat) || 0)));
-  return elevate === 0 && flat === 0 ? null : { id, elevate, flat };
+  const advantage = Math.min(9, trickAdvantage(raw));
+  return elevate === 0 && flat === 0 && advantage === 0
+    ? null
+    : { id, elevate, flat, advantage };
 }
 
 /**

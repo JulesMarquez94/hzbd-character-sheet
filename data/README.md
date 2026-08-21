@@ -1011,8 +1011,11 @@ clearable. It is also where the one other mechanical payload on this sheet lives
 will forget you paid for.
 
 ```
-{ trick: { id: 'ambush', elevate: 2 } }   the next Weapon Attack is Elevated twice
-{ trick: { id: 'poison', flat: 1 } }      and deals another 1 x Instinct
+{ trick: { id: 'ambush', elevate: 2, advantage: 1 } }   the next Weapon Attack
+                                                       is made with Advantage
+                                                       and Elevated twice
+{ trick: { id: 'poison', flat: 1 } }                    and deals another
+                                                       1 x Instinct
 ```
 
 From then on the attack prints its raised damage **everywhere the sheet prints
@@ -1024,6 +1027,17 @@ is about what was actually paid, and swapping weapons afterwards must not change
 the answer. `flat` is a *multiplier* on Instinct rather than a number, because
 Poison says "equal to your Instinct Attribute" and means the Instinct you have
 when you swing.
+
+`advantage` is the card's **first** line, and it is stored beside the Elevate for
+the same reason: the row is the receipt for what the Willpower bought. It reaches
+the roll through `attackModifiers` in `moves.js` — the one function every printed
+attack goes through — so the green arrow is on the chip, on block 3's row, on the
+dealt card and on the tracker row itself, exactly where a Duelist's DEXTEROUS
+arrow already is. Two ambushes bought for one swing are two payments of Elevate
+and **one** arrow: "unless they say otherwise effects don't stack from the same
+source", deduped in `trickRider` where the sum happens. A Duelist's one-handed
+arrow and an ambush are two different sources and do stack, and the badge names
+both.
 
 **Lost on use** is `spendTricks`, called from `spendUse` in `combatBar.js` — the
 one place every use on the sheet is paid for, so a rider comes off whether the

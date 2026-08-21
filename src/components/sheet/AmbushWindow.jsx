@@ -13,15 +13,22 @@ import { attackModifiers } from '../../lib/moves.js';
 
 /**
  * The attack as the ambush would make it: everything already riding this swing,
- * plus the Elevate this payment is about to buy.
+ * plus the Advantage and the Elevate this payment is about to buy.
  *
  * `attackModifiers` rather than the blade alone, so a Duelist reading the preview
  * sees the arrow their own one-handed weapon is worth, and a Martial Move already
  * waiting is not quietly dropped from the card they are deciding off.
+ *
+ * And read off the character the payment will leave behind — the rider already on
+ * the tracker — rather than folded in by hand here. The two halves the Willpower
+ * buys are then summed by the one function that sums them everywhere else, so the
+ * card in this window and the card on the chip afterwards cannot disagree: the
+ * Elevate adds up, and the Advantage of a second ambush on the same swing does
+ * not, because it is the same source twice.
  */
 function ambushPreview(character, option, worn) {
-  const riders = attackModifiers(character, option.card, worn) ?? worn ?? {};
-  return { ...riders, elevate: (Number(riders.elevate) || 0) + option.wp };
+  const ambushed = { ...character, effects: addEffect(character?.effects, ambushEffect(option)) };
+  return attackModifiers(ambushed, option.card, worn) ?? worn ?? {};
 }
 
 /**
@@ -135,8 +142,9 @@ export default function AmbushWindow({ talent, card, character, patch, readOnly 
             </div>
           )}
 
-          {/* The attack as it would land, Elevated — read it before paying for
-              it. The same card the chip will print once the rider is on. */}
+          {/* The attack as it would land, with its arrow and its Elevate — read
+              it before paying for it. The same card the chip will print once the
+              rider is on. */}
           {picked && (
             <div className="use-card">
               <AbilityCard

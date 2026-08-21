@@ -64,7 +64,7 @@ import { getTalent, normalizeTalents } from './talents.js';
 import { getMartialMove, isMartialMove } from './martial.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
 import { heldItem, normalizeEquipment } from './items.js';
-import { isWeaponAttack, trickRider } from './tricks.js';
+import { isWeaponAttack, trickArrow, trickRider } from './tricks.js';
 import { feralRiders } from './feral.js';
 
 /** What anybody who knows a move may have waiting on one swing. */
@@ -272,11 +272,19 @@ export function moveRider(effects, card) {
  * of the note that asked for the arrow. A row that is only *naming* something
  * (WOUND, MOMENTUM) gets none: there is no number, and an arrow with nothing in
  * it is a decoration.
+ *
+ * Two kinds of row carry one: a Martial Move, whose d4s are printed on its own
+ * card, and a Trickster's rider, which carries what it was paid for. An AMBUSH
+ * waiting on the tracker is the clearest case there is — the Willpower is already
+ * spent and the arrow is the only thing on the block saying what it bought.
  */
 export function effectAdvantage(effect) {
   const card = effect?.move ? getMartialMove(effect.move.id) : null;
   const advantage = Math.max(0, Math.floor(Number(card?.rides?.advantage) || 0));
-  return advantage > 0 ? { advantage, disadvantage: 0, from: [card.name] } : null;
+  if (advantage > 0) return { advantage, disadvantage: 0, from: [card.name] };
+
+  const trick = trickArrow(effect);
+  return trick ? { advantage: trick.advantage, disadvantage: 0, from: [trick.name] } : null;
 }
 
 /** The effects list with every Martial Move rider taken off it, or null if none was. */
@@ -451,11 +459,19 @@ export function attackModifiers(character, card, base) {
        here because the Developpement Notes asked for the arrow to work both ways,
        and a renderer that only understands one direction is one that has to be
        found and changed the first time something does. */
-    advantage: (Number(base?.advantage) || 0) + passive + (Number(moves?.advantage) || 0),
+    advantage:
+      (Number(base?.advantage) || 0) +
+      passive +
+      (Number(moves?.advantage) || 0) +
+      /* And what a Trickster bought. AMBUSH is paid for before the swing and its
+         first line is "The Weapon Attack is made with Advantage", so the arrow has
+         to be on the card the player is deciding off — the same reason the Elevate
+         it also bought is folded in above. */
+      (Number(trick?.advantage) || 0),
     disadvantage: Number(base?.disadvantage) || 0,
     /* And where it came from, so the badge can say. An arrow with a 3 in it and no
        explanation is a number the reader has to go and reconstruct. */
-    advantageFrom: advantageSources(worn, moves, hide),
+    advantageFrom: advantageSources(worn, moves, hide, trick),
     /* What the sheet prints beside the attack, and deliberately not on the card:
        "when possible updating the attack text to say (not on the card) that this
        attack will MARTIAL MOVE NAME". */
@@ -471,19 +487,21 @@ function instinctOf(character) {
 /**
  * Everything lending advantage to this swing, named: the sets that grant it for
  * the weapon in hand, then the form the swinger is in, then the moves riding it,
- * in that order. Only the ones actually granting any, so a set that hangs a
- * Defense bonus on the same weapon, or a form that only grants a die of Empowered
- * on some other weapon, is not credited with an arrow it had nothing to do with.
+ * then the trick bought for it, in that order — what you are, then what you paid
+ * for. Only the ones actually granting any, so a set that hangs a Defense bonus on
+ * the same weapon, or a form that only grants a die of Empowered on some other
+ * weapon, is not credited with an arrow it had nothing to do with.
  */
-function advantageSources(worn, moves, hide) {
+function advantageSources(worn, moves, hide, trick) {
   const held = (worn?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
   const shape = (hide?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
 
   /* `moveRider` hands the moves back in the order they were paid for. A move with
      no advantage of its own is riding the swing but not bending the roll, so it is
      left off — it is named on the attack row instead, which is where what a move
-     *does* belongs. */
-  return [...held, ...shape, ...(moves?.advantaged ?? [])];
+     *does* belongs. `trickRider` keeps the same distinction for the same reason: a
+     stolen Poison rides the swing and lends it no arrow. */
+  return [...held, ...shape, ...(moves?.advantaged ?? []), ...(trick?.advantaged ?? [])];
 }
 
 /**
