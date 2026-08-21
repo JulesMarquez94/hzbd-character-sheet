@@ -230,12 +230,16 @@ export function KarmaPill({ karma, max, onChange, readOnly = false }) {
  * heading with a 12px button beside it is a 12px button on a phone. The count
  * on the right is what makes a folded group still worth reading — "Standard
  * Actions · 11" says what is in there without opening it.
+ *
+ * `className` is for the one caller whose groups are not a plain column: the
+ * inventory's shelves flow into as many columns as the block is wide, so their
+ * heading has to be told to span them.
  */
-export function GroupHead({ label, note, count, folded, onToggle }) {
+export function GroupHead({ label, note, count, folded, onToggle, className }) {
   return (
     <button
       type="button"
-      className={`bar-group-head${folded ? ' is-folded' : ''}`}
+      className={`bar-group-head${className ? ` ${className}` : ''}${folded ? ' is-folded' : ''}`}
       onClick={onToggle}
       aria-expanded={!folded}
       title={folded ? `Open ${label}` : `Fold ${label} away`}

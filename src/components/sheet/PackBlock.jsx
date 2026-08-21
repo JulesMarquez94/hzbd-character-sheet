@@ -3,6 +3,8 @@ import EquipPrompt from './EquipPrompt.jsx';
 import ItemBrowser from './ItemBrowser.jsx';
 import TagFilter from './TagFilter.jsx';
 import Modal from '../Modal.jsx';
+import useFoldedGroups from './useFoldedGroups.js';
+import { GroupHead } from './parts.jsx';
 import { ItemIcon, ItemTags, ItemValues, SlotGlyph } from './itemParts.jsx';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
@@ -21,6 +23,17 @@ import {
  * It reads like the codex does — icon, name, tags, numbers — but shelved: a
  * heading per kind of thing, and alphabetical inside each. Duplicates stack
  * into one row with a count.
+ *
+ * A shelf folds. This is the third block on the sheet that scrolls, and folding
+ * is what keeps that scroll short here for the same reason it does on the
+ * Character tab: forty things across six kinds is a list you scroll past to
+ * reach the one kind you came for. The heading is the control and it keeps its
+ * count, so a folded Armor still says how many pieces are behind it. What is
+ * folded is remembered per character, in localStorage. See useFoldedGroups.js.
+ *
+ * A filter opens every shelf while it is on. "Where is my rope?" is already the
+ * question a fold answers the wrong way round: a match hidden behind a closed
+ * heading is a search that found nothing.
  *
  * Above the shelves is the filter row the Abilities tab and the codex wear:
  * type to narrow by what a thing says, take a tag it offers to narrow by what
@@ -67,13 +80,11 @@ export default function PackBlock({
      for each one taken. Rarity is its own group, so Common and Rare widen
      while Common and Head Gear narrow. */
   const filter = useTagFilter(packTags(character, pack), { searchable: true });
+  const { isFolded, toggle } = useFoldedGroups('pack', character?.id);
 
   const shelves = shelvePack(character, pack, filter);
   const carried = pack.length;
-  const shown = shelves.reduce(
-    (total, shelf) => total + shelf.rows.reduce((sum, row) => sum + row.indices.length, 0),
-    0
-  );
+  const shown = shelves.reduce((total, shelf) => total + shelf.count, 0);
 
   return (
     <div className="cell-scroll pack-block">
@@ -114,89 +125,99 @@ export default function PackBlock({
           </p>
         )}
 
-        {shelves.map(({ category, rows }) => (
-          <section className="pack-shelf" key={category}>
-            <span className="pack-shelf-label">{category}</span>
+        {shelves.map(({ category, id, count, rows }) => {
+          const folded = !filter.active && isFolded(id);
 
-            {rows.map((row) =>
-              row.custom ? (
-                <div className="pack-row pack-row-custom" key={row.key}>
-                  <span className="equip-glyph">
-                    <SlotGlyph slot="note" />
-                  </span>
+          return (
+            <section className="pack-shelf" key={category}>
+              <GroupHead
+                className="pack-shelf-head"
+                label={category}
+                count={count}
+                folded={folded}
+                onToggle={() => toggle(id)}
+              />
 
-                  <button
-                    type="button"
-                    className="pack-row-body pack-row-edit"
-                    disabled={readOnly}
-                    onClick={() => setEditing({ ...row.entry })}
-                    title={readOnly ? row.entry.name : `Edit ${row.entry.name}`}
-                  >
-                    <span className="pack-row-head">
-                      <span className="pack-row-name">{row.entry.name}</span>
+              {!folded && rows.map((row) =>
+                row.custom ? (
+                  <div className="pack-row pack-row-custom" key={row.key}>
+                    <span className="equip-glyph">
+                      <SlotGlyph slot="note" />
                     </span>
-                    {row.entry.note && <span className="pack-note">{row.entry.note}</span>}
-                  </button>
 
-                  {!readOnly && (
-                    <DiscardButton
-                      name={row.entry.name}
-                      onClick={() => setDiscarding({ index: row.indices[0], name: row.entry.name })}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="pack-row" key={row.key}>
-                  <ItemIcon item={row.item} />
-
-                  <button
-                    type="button"
-                    className="pack-row-body pack-row-equip"
-                    disabled={readOnly}
-                    onClick={() =>
-                      setEquipping({ item: row.item, carried: row.indices.length })
-                    }
-                    title={readOnly ? row.item.name : `Where does ${row.item.name} go?`}
-                  >
-                    <span className="pack-row-head">
-                      <span className="pack-row-name">{row.item.name}</span>
-                      {row.indices.length > 1 && (
-                        <span className="pack-count-chip">×{row.indices.length}</span>
-                      )}
-                    </span>
-                    <ItemTags item={row.item} />
-                    <ItemValues item={row.item} />
-                  </button>
-
-                  <span className="slot-tools pack-row-tools">
                     <button
                       type="button"
-                      className="item-info-btn"
-                      onClick={() => stack?.openItem(row.item)}
-                      title={`${row.item.name} · details and lore`}
-                      aria-label={`${row.item.name} details`}
+                      className="pack-row-body pack-row-edit"
+                      disabled={readOnly}
+                      onClick={() => setEditing({ ...row.entry })}
+                      title={readOnly ? row.entry.name : `Edit ${row.entry.name}`}
                     >
-                      i
+                      <span className="pack-row-head">
+                        <span className="pack-row-name">{row.entry.name}</span>
+                      </span>
+                      {row.entry.note && <span className="pack-note">{row.entry.note}</span>}
                     </button>
 
                     {!readOnly && (
                       <DiscardButton
-                        name={row.item.name}
-                        // The last one added is the one thrown away.
-                        onClick={() =>
-                          setDiscarding({
-                            index: row.indices[row.indices.length - 1],
-                            name: row.item.name,
-                          })
-                        }
+                        name={row.entry.name}
+                        onClick={() => setDiscarding({ index: row.indices[0], name: row.entry.name })}
                       />
                     )}
-                  </span>
-                </div>
-              )
-            )}
-          </section>
-        ))}
+                  </div>
+                ) : (
+                  <div className="pack-row" key={row.key}>
+                    <ItemIcon item={row.item} />
+
+                    <button
+                      type="button"
+                      className="pack-row-body pack-row-equip"
+                      disabled={readOnly}
+                      onClick={() =>
+                        setEquipping({ item: row.item, carried: row.indices.length })
+                      }
+                      title={readOnly ? row.item.name : `Where does ${row.item.name} go?`}
+                    >
+                      <span className="pack-row-head">
+                        <span className="pack-row-name">{row.item.name}</span>
+                        {row.indices.length > 1 && (
+                          <span className="pack-count-chip">×{row.indices.length}</span>
+                        )}
+                      </span>
+                      <ItemTags item={row.item} />
+                      <ItemValues item={row.item} />
+                    </button>
+
+                    <span className="slot-tools pack-row-tools">
+                      <button
+                        type="button"
+                        className="item-info-btn"
+                        onClick={() => stack?.openItem(row.item)}
+                        title={`${row.item.name} · details and lore`}
+                        aria-label={`${row.item.name} details`}
+                      >
+                        i
+                      </button>
+
+                      {!readOnly && (
+                        <DiscardButton
+                          name={row.item.name}
+                          // The last one added is the one thrown away.
+                          onClick={() =>
+                            setDiscarding({
+                              index: row.indices[row.indices.length - 1],
+                              name: row.item.name,
+                            })
+                          }
+                        />
+                      )}
+                    </span>
+                  </div>
+                )
+              )}
+            </section>
+          );
+        })}
       </div>
 
       {browsing && (
@@ -381,6 +402,10 @@ function CustomItemForm({ entry, onSave, onClose }) {
  * identical items stacked into a single row. Every row keeps the pack indices
  * it came from, so discarding takes exactly one of them.
  *
+ * A shelf carries an id to fold by and a count of what is on it. The count is
+ * things rather than rows: five potions on one row is five things you carry,
+ * and it is the same number the filter row above the shelves totals.
+ *
  * The filter narrows twice over, the way it does on the Abilities tab: a chip
  * asks what a thing *is* and the box asks what it says. A written-in thing
  * carries no tags, so a chip sets it aside and only the box can find it.
@@ -410,7 +435,29 @@ function shelvePack(character, pack, filter) {
     const shelf = [...rows.values()]
       .filter((row) => row.category === category)
       .sort((a, b) => a.item.name.localeCompare(b.item.name));
-    if (shelf.length > 0) shelves.push({ category, rows: shelf });
+    if (shelf.length === 0) continue;
+
+    shelves.push({
+      category,
+      id: shelfId(category),
+      count: shelf.reduce((sum, row) => sum + row.indices.length, 0),
+      rows: shelf,
+    });
   }
   return shelves;
+}
+
+/**
+ * A category as the key a fold is remembered under: its name, slugged.
+ *
+ * Slugged rather than taken as it stands because a stored id is joined on spaces
+ * when defaults are read back, and two of these names carry one. `Notes &
+ * Oddments` is `notes-oddments`, and stays that whatever the printed name is
+ * later reworded to.
+ */
+function shelfId(category) {
+  return category
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }

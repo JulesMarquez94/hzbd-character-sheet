@@ -3934,16 +3934,39 @@ body.sheet-fixed #root {
   gap: 5px;
 }
 
-.pack-shelf-label {
+/* The shelf heading is a fold, drawn as the group headings in blocks 4 and 5
+   are: the kind of thing on the left, how many you carry on the right, and the
+   whole line is the target. Two things it needs that they do not.
+
+   It spans the shelf's columns, because the rows under it flow into as many as
+   the block is wide and a heading in column one would leave two beside it.
+
+   And it keeps the copper hairline the shelves have always been ruled off with
+   rather than taking the neutral one a group head wears: on this block the rule
+   is what makes a shelf read as a shelf. (Doubled up with .bar-group-head,
+   which is declared further down this file: a single class would lose both the
+   rule and the padding to it on source order alone.) */
+.bar-group-head.pack-shelf-head {
   grid-column: 1 / -1;
-  font-family: var(--font-headings);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--copper);
-  border-bottom: 1px solid rgba(200, 138, 75, 0.2);
+  border-bottom-color: rgba(200, 138, 75, 0.2);
   padding-bottom: 3px;
+}
+
+.pack-shelf-head .bar-group-label {
+  font-size: 0.58rem;
+  letter-spacing: 1.2px;
+}
+
+/* How many things are on that shelf, and the number this block is read for.
+   Heavier and brighter than the same count elsewhere on the sheet, which
+   totals cards in a group: here it is how much of a kind you own, which is the
+   question you opened the Inventory to ask. Tabular figures so the column holds
+   still as a count crosses 9. */
+.pack-shelf-head .bar-group-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  font-variant-numeric: tabular-nums;
 }
 
 .pack-row {
@@ -3982,10 +4005,19 @@ body.sheet-fixed #root {
   overflow-wrap: anywhere;
 }
 
+/* How many of that one thing you have. Pushed to the end of the name line
+   rather than trailing the name itself: trailing it, every count sat a
+   different distance in and you had to read the names to find them. At the end
+   they line up down the column of rows instead, stopping where the rail the
+   corner buttons keep clear begins. */
 .pack-count-chip {
+  margin-left: auto;
+  flex-shrink: 0;
   font-family: var(--font-headings);
-  font-size: 0.68rem;
-  color: var(--copper);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--copper-bright);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Every row is a button. A written thing opens what it says, a piece of gear
