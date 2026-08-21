@@ -45,6 +45,12 @@ import {
  * stone, a letter someone gave you — is written straight in: a name, a line
  * about what it is, and no rules at all.
  *
+ * Three of a thing is that same browser and the +1 on its row, clicked three
+ * times. That button takes a copy and leaves the codex standing, so the row's
+ * own count ticks up where it is and the next click is the same click. "Add" is
+ * the other half of the pair, for when one is all you came for: it takes one and
+ * shuts the window.
+ *
  * A row is a button. Tapping one asks where that piece goes: every slot on
  * the character it fits, what each of them is holding now, and the swap itself
  * if you pick an occupied one. See EquipPrompt.jsx.
@@ -226,6 +232,7 @@ export default function PackBlock({
           items={ITEMS}
           current={null}
           equipLabel="Add"
+          equipTitle="Adds it and closes the codex. The +1 beside it adds one and leaves it open."
           checkBurden={false}
           character={character}
           equipment={equipment}
@@ -234,9 +241,13 @@ export default function PackBlock({
             addToPack(item);
             setBrowsing(false);
           }}
-          /* The +1 on every row does the same thing "Add" does here, so it stays
-             out of this one browser: two buttons a row apart doing one job is
-             worse than one. */
+          /* The +1 belongs in this browser too. It was kept out while it looked
+             like a second "Add" sitting a row apart from the first, but the two
+             do different jobs: "Add" takes one and shuts the codex, which is
+             right when you came for a thing and now have it, and the +1 takes one
+             and leaves the codex open, which is the only way to walk out with
+             three torches without searching for torches three times. */
+          onAdd={addToPack}
           onForge={onForge}
           onClose={() => setBrowsing(false)}
           readOnly={readOnly}

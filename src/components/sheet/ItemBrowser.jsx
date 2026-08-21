@@ -109,6 +109,14 @@ function TagFilter({ tags, active, onToggle }) {
  * which is exactly why this had to be its own button: "Equip" answers "wear the
  * one I have", and there was no way at all to say "get me another".
  *
+ * It has to survive being clicked twice, which is why the shelf a row stands on
+ * is settled when the window opens and left alone after. Read live off the pack,
+ * the count moved the row out from under the pointer: a first +1 lifted the rope
+ * off the codex shelf and into the inventory shelf above it, every row below slid
+ * up by one, and the second click landed on whatever had taken the rope's place.
+ * Three clicks bought three different things. Settled at open, the row holds
+ * still and only its chip counts up.
+ *
  * ---------------------------------------------------------------- the forge
  * `onForge` puts the way into the forge on the browser's own head, between the
  * title and the close — the codex is where you go looking for a thing, so it is
@@ -122,6 +130,7 @@ export default function ItemBrowser({
   items,
   current: currentOverride,
   equipLabel = 'Equip',
+  equipTitle = '',
   equippedLabel = 'Worn',
   checkBurden = true,
   onEquip,
@@ -169,6 +178,16 @@ export default function ItemBrowser({
 
   const packCount = (id) => pack.filter((packId) => packId === id).length;
 
+  /* Which shelf a row stands on, decided once when the window opens. The pack
+     moving underneath it is not allowed to move the row, which is what makes the
+     +1 usable more than once — see the note on the header.
+
+     The chip on the row and the +1's own hint stay live, because the count is
+     what you are doing right now, while the shelf is the answer to the question
+     you walked in with. */
+  const [carriedAtOpen] = useState(() => new Set(pack));
+  const wasCarried = (item) => !item.forged && carriedAtOpen.has(item.id);
+
   /* Three lists, one above the other, and all three narrowed by the same search
      so a tag or a name moves the lot together and none of them can quietly hide
      a match.
@@ -178,9 +197,9 @@ export default function ItemBrowser({
      last night, and a forged piece may equally be *worn* — in which case it is
      not in the pack either. What it always is, is theirs. */
   const made = filtered.filter((item) => item.forged);
-  const carried = filtered.filter((item) => !item.forged && packCount(item.id) > 0);
-  const elsewhere = filtered.filter((item) => !item.forged && packCount(item.id) === 0);
-  const carriesAny = compatible.some((item) => !item.forged && packCount(item.id) > 0);
+  const carried = filtered.filter((item) => wasCarried(item));
+  const elsewhere = filtered.filter((item) => !item.forged && !wasCarried(item));
+  const carriesAny = compatible.some((item) => wasCarried(item));
   const madeAny = compatible.some((item) => item.forged);
   const searching = Boolean(query.trim()) || activeTags.length > 0;
 
@@ -191,17 +210,20 @@ export default function ItemBrowser({
       items: made,
       empty: 'Nothing you made matches that.',
     },
-    {
+    /* Only when there is something on it, the way the made shelf already works.
+       Empty, it used to carry the line "Nothing in your inventory goes here",
+       which the first +1 turns into a flat contradiction: the new rope stays on
+       the codex shelf with its chip reading In Pack ×1, and an empty shelf above
+       it says you have none. Gone, it says the same thing and cannot be wrong. */
+    carriesAny && {
       id: 'carried',
       label: 'In your inventory',
       items: carried,
-      empty: carriesAny
-        ? 'Nothing you are carrying matches that.'
-        : 'Nothing in your inventory goes here.',
+      empty: 'Nothing you are carrying matches that.',
     },
     {
       id: 'codex',
-      label: 'Everything else in the codex',
+      label: carriesAny || madeAny ? 'Everything else in the codex' : 'The codex',
       items: elsewhere,
       empty: searching ? 'Nothing else matches that.' : 'The codex holds nothing else for this slot.',
     },
@@ -385,6 +407,7 @@ export default function ItemBrowser({
                               <button
                                 type="button"
                                 className="btn btn-copper btn-sm"
+                                title={equipTitle || undefined}
                                 onClick={() => onEquip(slot.key, item)}
                               >
                                 {equipLabel}
