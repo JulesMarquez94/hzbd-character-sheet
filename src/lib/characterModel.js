@@ -357,6 +357,18 @@ export function shieldCapFor(character) {
 }
 
 /**
+ * How much Karma a character may hold: one per level, and no more.
+ *
+ * Deliberately not a derived *column*. There is no `karma_max` on the row and
+ * nothing to keep in sync, because level already is the number: a column would
+ * be a second copy of it able to fall out of step. Read it where the pill is
+ * drawn and where the cap is enforced, the way `shieldCapFor` is read.
+ */
+export function karmaCap(character) {
+  return Math.max(0, Math.floor(Number(character?.level) || 0));
+}
+
+/**
  * The character as the sheet should *show* them, which is not always the
  * character as it stores them.
  *
@@ -527,6 +539,12 @@ export function syncDerived(character) {
 
   const reaction = clamp(character.reaction, 0, derived.reaction_max);
   if (reaction !== (Number(character.reaction) || 0)) next.reaction = reaction;
+
+  /* Karma's ceiling is the level itself, so it is capped off the level computed
+     here rather than the stored column: a sheet that has just gained a level
+     should be able to hold the extra point on the same render. */
+  const karma = clamp(character.karma, 0, karmaCap({ level }));
+  if (karma !== (Number(character.karma) || 0)) next.karma = karma;
 
   return Object.keys(next).length > 0 ? next : null;
 }

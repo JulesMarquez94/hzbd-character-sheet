@@ -174,11 +174,22 @@ export function CrateIcon() {
 }
 
 
-const KARMA_INFO = 'Spend 1 Karma after seeing a die result to add 1d4 to it.';
+const KARMA_INFO =
+  'Spend 1 Karma after seeing a die result to add 1d4 to it. You may hold one per level.';
 
-/** Karma counter — plain +/- since it climbs with no fixed ceiling. */
-export function KarmaPill({ karma, onChange, readOnly = false }) {
+/**
+ * Karma counter. The ceiling is the character's own level, so the pill reads
+ * current of max the way the pools above it do, and `+` goes dead at the cap
+ * instead of counting past it. `max` is `karmaCap` off characterModel.
+ *
+ * The stored number is what is shown, never a clamped one: on an editable sheet
+ * syncDerived has already pulled it back into range, and on a shared one a held
+ * 5 of 3 is the row being honest about itself.
+ */
+export function KarmaPill({ karma, max, onChange, readOnly = false }) {
   const { ref, tipProps, tip } = useHoverTip(KARMA_INFO);
+  const cap = Math.max(0, Math.floor(Number(max) || 0));
+  const held = Math.floor(Number(karma) || 0);
 
   return (
     <div className="karma-pill" ref={ref} {...tipProps}>
@@ -187,18 +198,21 @@ export function KarmaPill({ karma, onChange, readOnly = false }) {
         <button
           type="button"
           className="karma-btn"
-          disabled={readOnly}
-          onClick={() => onChange(Math.max(0, karma - 1))}
+          disabled={readOnly || held <= 0}
+          onClick={() => onChange(Math.max(0, held - 1))}
           aria-label="Decrease Karma"
         >
           −
         </button>
-        <span className="karma-value">{karma}</span>
+        <span className="karma-value" aria-label={`${held} of ${cap} Karma`}>
+          {held}
+          <span className="karma-cap">/{cap}</span>
+        </span>
         <button
           type="button"
           className="karma-btn"
-          disabled={readOnly}
-          onClick={() => onChange(karma + 1)}
+          disabled={readOnly || held >= cap}
+          onClick={() => onChange(Math.min(cap, held + 1))}
           aria-label="Increase Karma"
         >
           +

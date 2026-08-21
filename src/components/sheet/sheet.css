@@ -1489,8 +1489,18 @@ body.sheet-fixed #root {
   font-weight: 800;
   color: var(--stat-karma);
   text-shadow: 0 0 6px rgba(61, 90, 254, 0.3);
-  min-width: 16px;
+  min-width: 34px;
   text-align: center;
+}
+
+/* The ceiling, said quietly beside the held count: same treatment as
+   `.pool-count` so Karma reads like the pools above it. */
+.karma-cap {
+  font-weight: 500;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-shadow: none;
+  opacity: 0.75;
 }
 
 /* =========================================================

@@ -14,6 +14,7 @@ import {
   formatNumber,
   healthState,
   initialsOf,
+  karmaCap,
   liveShift,
   metersToFeet,
   normalizeBlockOrder,
@@ -435,7 +436,12 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           />
         </div>
 
-        <KarmaPill karma={character.karma} readOnly={readOnly} onChange={(v) => patch({ karma: v })} />
+        <KarmaPill
+          karma={character.karma}
+          max={karmaCap(character)}
+          readOnly={readOnly}
+          onChange={(v) => patch({ karma: v })}
+        />
       </div>
     ),
 
