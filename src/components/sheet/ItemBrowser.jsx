@@ -12,12 +12,13 @@ import {
   magicBurdenMax,
   magicBurdenUsed,
   placementOf,
+  rarityColor,
 } from '../../lib/items.js';
 import { formatWeight } from '../../lib/characterModel.js';
 import { getCard } from '../../lib/weapons.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { useUnit } from '../../context/units.js';
-import { ItemIcon, ItemTags, ItemValues, StatText } from './itemParts.jsx';
+import { ItemFoot, ItemIcon, ItemStats, ItemTags, ROW_ICON, StatText } from './itemParts.jsx';
 
 /**
  * Tag filtering that survives a long tag list: type to find a tag and click
@@ -390,58 +391,67 @@ export default function ItemBrowser({
                       .filter((name) => name && name !== item.name);
 
                     return (
-                      <div key={item.id} className={`browser-item${equipped ? ' equipped' : ''}`}>
-                        <ItemIcon item={item} />
+                      <div
+                        key={item.id}
+                        className={`item-row${equipped ? ' equipped' : ''}`}
+                        style={{ borderLeftColor: rarityColor(item) }}
+                      >
+                        <div className="item-row-body">
+                          <span className="item-row-top">
+                            <ItemIcon item={item} size={ROW_ICON} />
+                            <span className="item-row-ident">
+                              <span className="item-row-line">
+                                <span className="item-row-name">{item.name}</span>
+                                {inPack > 0 && (
+                                  <span className="pack-chip" title="Carried in your pack · equipping takes it from there">
+                                    In Pack{inPack > 1 ? ` ×${inPack}` : ''}
+                                  </span>
+                                )}
+                                {/* The warning, and only ever a warning. The button
+                                    beside it works either way. */}
+                                {load.worse && (
+                                  <span
+                                    className={`load-chip load-chip-${load.state}`}
+                                    title={`You would be carrying ${formatWeight(
+                                      load.used,
+                                      unit
+                                    )} of ${formatWeight(load.max, unit)}. ${
+                                      load.state === 'stuck'
+                                        ? 'That is 30% over, so you would not be able to move.'
+                                        : 'Over your capacity your Speed is halved.'
+                                    }`}
+                                  >
+                                    {load.state === 'stuck' ? 'Cannot move' : 'Overloaded'}
+                                  </span>
+                                )}
+                              </span>
+                              <ItemTags item={item} />
+                            </span>
+                          </span>
 
-                        <div className="browser-item-body">
-                          <div className="browser-item-head">
-                            <span className="browser-item-name">{item.name}</span>
-                            {inPack > 0 && (
-                              <span className="pack-chip" title="Carried in your pack · equipping takes it from there">
-                                In Pack{inPack > 1 ? ` ×${inPack}` : ''}
-                              </span>
-                            )}
-                            {/* The warning, and only ever a warning. The button
-                                beside it works either way. */}
-                            {load.worse && (
-                              <span
-                                className={`load-chip load-chip-${load.state}`}
-                                title={`You would be carrying ${formatWeight(
-                                  load.used,
-                                  unit
-                                )} of ${formatWeight(load.max, unit)}. ${
-                                  load.state === 'stuck'
-                                    ? 'That is 30% over, so you would not be able to move.'
-                                    : 'Over your capacity your Speed is halved.'
-                                }`}
-                              >
-                                {load.state === 'stuck' ? 'Cannot move' : 'Overloaded'}
-                              </span>
-                            )}
-                          </div>
-                          <ItemTags item={item} />
-                          <ItemValues item={item} />
-                          {item.blurb && <p className="browser-item-effect">{item.blurb}</p>}
+                          <ItemStats item={item} />
+
+                          {item.blurb && <p className="item-row-text">{item.blurb}</p>}
                           {item.effect && (
-                            <p className="browser-item-effect">
+                            <p className="item-row-text">
                               <StatText text={item.effect} />
                             </p>
                           )}
                           {/* A weapon is worth what it teaches — name both cards up front. */}
                           {teaches.length > 0 && (
-                            <p className="browser-item-teaches">
+                            <p className="item-row-text browser-teaches">
                               <span className="setbonus-label">Teaches</span> {teaches.join(' · ')}
                             </p>
                           )}
                           {item.set && ARMOR_SETS[item.set] && (
-                            <p className="browser-item-setbonus">
+                            <p className="item-row-text browser-setbonus">
                               <span className="setbonus-label">Set Bonus</span>{' '}
                               <StatText text={ARMOR_SETS[item.set].bonus} />
                             </p>
                           )}
                         </div>
 
-                        <div className="browser-item-action">
+                        <ItemFoot item={item}>
                           <button
                             type="button"
                             className="item-info-btn"
@@ -509,7 +519,7 @@ export default function ItemBrowser({
                                 {equipLabel}
                               </button>
                             ))}
-                        </div>
+                        </ItemFoot>
                       </div>
                     );
                   })

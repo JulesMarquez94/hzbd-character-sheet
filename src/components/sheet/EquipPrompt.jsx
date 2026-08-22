@@ -1,6 +1,6 @@
 import Modal from '../Modal.jsx';
 import ShareCode from './ShareCode.jsx';
-import { ItemIcon, ItemTags, ItemValues, SlotGlyph, StatText } from './itemParts.jsx';
+import { ItemCarry, ItemIcon, ItemStats, ItemTags, SlotGlyph, StatText } from './itemParts.jsx';
 import {
   ARMOR_SLOTS,
   BAG_SLOT_KEY,
@@ -97,7 +97,8 @@ export default function EquipPrompt({
               {carried > 1 && <span className="pack-count-chip">×{carried}</span>}
             </span>
             <ItemTags item={item} />
-            <ItemValues item={item} />
+            <ItemStats item={item} />
+            <ItemCarry item={item} />
           </div>
         </div>
 

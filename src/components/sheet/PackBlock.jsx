@@ -5,7 +5,7 @@ import TagFilter from './TagFilter.jsx';
 import Modal from '../Modal.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
 import { GroupHead } from './parts.jsx';
-import { ItemIcon, ItemTags, ItemValues, SlotGlyph } from './itemParts.jsx';
+import { ItemFoot, ItemIcon, ItemStats, ItemTags, ROW_ICON, SlotGlyph } from './itemParts.jsx';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -15,6 +15,7 @@ import {
   isCustomEntry,
   itemCategory,
   packTags,
+  rarityColor,
 } from '../../lib/items.js';
 
 /**
@@ -146,55 +147,73 @@ export default function PackBlock({
 
               {!folded && rows.map((row) =>
                 row.custom ? (
-                  <div className="pack-row pack-row-custom" key={row.key}>
-                    <span className="equip-glyph">
-                      <SlotGlyph slot="note" />
-                    </span>
-
+                  <div className="item-row pack-written" key={row.key}>
                     <button
                       type="button"
-                      className="pack-row-body pack-row-edit"
+                      className="item-row-tap"
                       disabled={readOnly}
                       onClick={() => setEditing({ ...row.entry })}
                       title={readOnly ? row.entry.name : `Edit ${row.entry.name}`}
                     >
-                      <span className="pack-row-head">
-                        <span className="pack-row-name">{row.entry.name}</span>
+                      <span className="item-row-top">
+                        <span className="equip-glyph">
+                          <SlotGlyph slot="note" />
+                        </span>
+                        <span className="item-row-ident">
+                          <span className="item-row-line">
+                            <span className="item-row-name">{row.entry.name}</span>
+                            <span className="equip-slot-label">Written</span>
+                          </span>
+                        </span>
                       </span>
-                      {row.entry.note && <span className="pack-note">{row.entry.note}</span>}
+
+                      {row.entry.note && <span className="item-row-text">{row.entry.note}</span>}
                     </button>
 
+                    {/* A written thing has no weight and no price, so its foot is
+                        the button and nothing else. It keeps the foot anyway: the
+                        discard sits where every other row's does. */}
                     {!readOnly && (
-                      <DiscardButton
-                        name={row.entry.name}
-                        onClick={() => setDiscarding({ index: row.indices[0], name: row.entry.name })}
-                      />
+                      <ItemFoot item={null}>
+                        <DiscardButton
+                          name={row.entry.name}
+                          onClick={() => setDiscarding({ index: row.indices[0], name: row.entry.name })}
+                        />
+                      </ItemFoot>
                     )}
                   </div>
                 ) : (
-                  <div className="pack-row" key={row.key}>
-                    <ItemIcon item={row.item} />
-
+                  <div
+                    className="item-row"
+                    key={row.key}
+                    style={{ borderLeftColor: rarityColor(row.item) }}
+                  >
                     <button
                       type="button"
-                      className="pack-row-body pack-row-equip"
+                      className="item-row-tap"
                       disabled={readOnly}
                       onClick={() =>
                         setEquipping({ item: row.item, carried: row.indices.length })
                       }
                       title={readOnly ? row.item.name : `Where does ${row.item.name} go?`}
                     >
-                      <span className="pack-row-head">
-                        <span className="pack-row-name">{row.item.name}</span>
-                        {row.indices.length > 1 && (
-                          <span className="pack-count-chip">×{row.indices.length}</span>
-                        )}
+                      <span className="item-row-top">
+                        <ItemIcon item={row.item} size={ROW_ICON} />
+                        <span className="item-row-ident">
+                          <span className="item-row-line">
+                            <span className="item-row-name">{row.item.name}</span>
+                            {row.indices.length > 1 && (
+                              <span className="pack-count-chip">×{row.indices.length}</span>
+                            )}
+                          </span>
+                          <ItemTags item={row.item} />
+                        </span>
                       </span>
-                      <ItemTags item={row.item} />
-                      <ItemValues item={row.item} />
+
+                      <ItemStats item={row.item} />
                     </button>
 
-                    <span className="slot-tools pack-row-tools">
+                    <ItemFoot item={row.item}>
                       <button
                         type="button"
                         className="item-info-btn"
@@ -217,7 +236,7 @@ export default function PackBlock({
                           }
                         />
                       )}
-                    </span>
+                    </ItemFoot>
                   </div>
                 )
               )}

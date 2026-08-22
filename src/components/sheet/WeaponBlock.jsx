@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
-import { ItemCarry, ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemParts.jsx';
+import { ItemFoot, ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import { CardLine } from '../CardText.jsx';
 import { useCardStack } from '../../context/card-stack.js';
-import { WEAPON_SLOTS, heldItem, itemBurden, rarityColor, wieldModifiers } from '../../lib/items.js';
+import { WEAPON_SLOTS, heldItem, rarityColor, wieldModifiers } from '../../lib/items.js';
 import { getCard, itemEnchantments } from '../../lib/weapons.js';
 import { attackModifiers } from '../../lib/moves.js';
 
@@ -120,34 +120,46 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
   /* What this weapon does in *this* character's hands: what is worked into it,
      plus whatever an Enchanter is wearing. See wieldModifiers. */
   const modifiers = wieldModifiers(character, item);
-  const burden = itemBurden(item);
 
   return (
     <>
-      <div className="weapon-head" style={{ borderLeftColor: rarityColor(item) }}>
+      <div className="item-row weapon-row" style={{ borderLeftColor: rarityColor(item) }}>
         <button
           type="button"
-          className="weapon-head-main"
+          className="item-row-tap"
           onClick={onBrowse}
           title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
         >
-          <ItemIcon item={item} />
-          <span className="weapon-head-body">
-            <span className="weapon-head-line">
-              <span className="weapon-name">{item.name}</span>
-              <span className="equip-slot-label">{slot.label}</span>
+          <span className="item-row-top">
+            {/* The smaller tile, and the only item row on the tab that keeps it.
+                A weapon row is two lines and no more (a weapon's numbers are the
+                cards under it, not chips on it), so the bigger tile would be 10
+                pixels of nothing beside the tags -- and this is the block with
+                the least to spare: two panels, four ability boxes and up to six
+                workings in one 640 that must not scroll. Measured: with the row
+                tile at 48, two Grave-Lantern Blades overlap their panels. */}
+            <ItemIcon item={item} />
+            <span className="item-row-ident">
+              <span className="item-row-line">
+                <span className="item-row-name">{item.name}</span>
+                <span className="equip-slot-label">{slot.label}</span>
+              </span>
+              <ItemTags item={item} />
             </span>
-            <ItemTags item={item} />
-            <ItemCarry item={item} />
           </span>
         </button>
 
-        <SlotTools
-          item={item}
-          onInfo={() => stack?.openItem(item)}
-          onRemove={readOnly ? null : onRemove}
-          removeTitle={`Put ${item.name} away. It goes to your inventory.`}
-        />
+        {/* Weight, price and Burden, the same three a helm states. The Burden
+            used to be printed again down in the workings strip below, which was
+            the only place on the sheet that said it twice. */}
+        <ItemFoot item={item}>
+          <SlotTools
+            item={item}
+            onInfo={() => stack?.openItem(item)}
+            onRemove={readOnly ? null : onRemove}
+            removeTitle={`Put ${item.name} away. It goes to your inventory.`}
+          />
+        </ItemFoot>
       </div>
 
       {/* A block is a fixed 360x640 and never scrolls: an enchanted weapon
@@ -193,10 +205,6 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
           <span className="weapon-enchant-head">
             <span className="weapon-enchant-label">
               Enchanted{modifiers.damage.length > 0 ? ` · ${listOr(modifiers.damage)}` : ''}
-            </span>
-            <span className="item-value" style={{ color: 'var(--haze-glow)' }}>
-              <span className="item-value-num">{burden}</span>
-              Burden
             </span>
           </span>
 

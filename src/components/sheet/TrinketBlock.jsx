@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
-import { ItemIcon, ItemTags, ItemValues, SlotGlyph, SlotTools, StatText } from './itemParts.jsx';
-import { useCardStack } from '../../context/card-stack.js';
 import {
-  TRINKET_SLOT_KEY,
-  heldItem,
-  itemBurden,
-  itemsForSlot,
-  rarityColor,
-} from '../../lib/items.js';
+  ItemFoot,
+  ItemIcon,
+  ItemStats,
+  ItemTags,
+  ROW_ICON,
+  SlotGlyph,
+  SlotTools,
+  StatText,
+} from './itemParts.jsx';
+import { useCardStack } from '../../context/card-stack.js';
+import { TRINKET_SLOT_KEY, heldItem, itemsForSlot, rarityColor } from '../../lib/items.js';
 import { itemEnchantments } from '../../lib/weapons.js';
 
 /**
@@ -28,10 +31,10 @@ import { itemEnchantments } from '../../lib/weapons.js';
  *
  * ------------------------------------------------------------- what they are for
  * Nothing in the trinket codex has a number on it. A silver ring is worth wearing
- * because of what has been worked into it, which is why the Magic Burden each one
- * costs is printed on its own row: this block is where a character's capacity
- * actually goes, and the meter over in the armor block is a long way from the
- * decision.
+ * because of what has been worked into it, which is why the working is named on
+ * the row and the Magic Burden it costs is on the row's foot: this block is where
+ * a character's capacity actually goes, and the meter over in the armor block is a
+ * long way from the decision.
  */
 export default function TrinketBlock({
   character,
@@ -69,7 +72,7 @@ export default function TrinketBlock({
            a row that vanished would be a thing nobody could take off. */
         if (!item) {
           return (
-            <div className="equip-slot trinket-slot trinket-unknown" key={`gone-${index}`}>
+            <div className="equip-slot trinket-unknown" key={`gone-${index}`}>
               <span className="equip-glyph">
                 <SlotGlyph slot="note" />
               </span>
@@ -80,7 +83,7 @@ export default function TrinketBlock({
                 </span>
               </span>
               {!readOnly && (
-                <span className="slot-tools">
+                <span className="item-acts">
                   <button
                     type="button"
                     className="item-info-btn slot-remove-btn"
@@ -96,49 +99,55 @@ export default function TrinketBlock({
           );
         }
 
-        const burden = itemBurden(item);
-
         return (
           <div
-            className="equip-slot trinket-slot"
+            className="item-row trinket-row"
             key={`${item.id}-${index}`}
             style={{ borderLeftColor: rarityColor(item) }}
           >
             <button
               type="button"
-              className="equip-slot-main"
+              className="item-row-tap"
               onClick={() => setBrowsing(index)}
               title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
             >
-              <ItemIcon item={item} />
-              <span className="equip-item-body">
-                <span className="equip-item-head">
-                  <span className="equip-item-name">{item.name}</span>
-                  {burden > 0 && <span className="trinket-burden">{burden} Burden</span>}
+              <span className="item-row-top">
+                <ItemIcon item={item} size={ROW_ICON} />
+                <span className="item-row-ident">
+                  <span className="item-row-line">
+                    <span className="item-row-name">{item.name}</span>
+                  </span>
+                  <ItemTags item={item} />
                 </span>
-                <ItemTags item={item} />
-                <ItemValues item={item} />
-                {item.effect && (
-                  <span className="equip-item-effect">
-                    <StatText text={item.effect} />
-                  </span>
-                )}
-                {/* What is actually in it. A trinket's whole worth is this line,
-                    so it is printed on the row rather than left on the card. */}
-                {itemEnchantments(item).map(({ id, enchantment }) => (
-                  <span className="trinket-working" key={id}>
-                    <b>{enchantment.name}</b> <StatText text={enchantment.effect} />
-                  </span>
-                ))}
               </span>
+
+              <ItemStats item={item} />
+
+              {item.effect && (
+                <span className="item-row-text">
+                  <StatText text={item.effect} />
+                </span>
+              )}
+
+              {/* What is actually in it. A trinket's whole worth is this line,
+                  so it is printed on the row rather than left on the card. The
+                  Burden it costs is on the foot below with the weight and the
+                  price, where every item on the sheet now states it. */}
+              {itemEnchantments(item).map(({ id, enchantment }) => (
+                <span className="item-row-text trinket-working" key={id}>
+                  <b>{enchantment.name}</b> <StatText text={enchantment.effect} />
+                </span>
+              ))}
             </button>
 
-            <SlotTools
-              item={item}
-              onInfo={() => stack?.openItem(item)}
-              onRemove={readOnly ? null : () => removeTrinket(index)}
-              removeTitle={`Take off ${item.name}. It goes to your inventory.`}
-            />
+            <ItemFoot item={item}>
+              <SlotTools
+                item={item}
+                onInfo={() => stack?.openItem(item)}
+                onRemove={readOnly ? null : () => removeTrinket(index)}
+                removeTitle={`Take off ${item.name}. It goes to your inventory.`}
+              />
+            </ItemFoot>
           </div>
         );
       })}

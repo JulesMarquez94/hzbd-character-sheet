@@ -1,6 +1,15 @@
 import { useMemo, useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
-import { ItemIcon, ItemTags, ItemValues, SlotGlyph, SlotTools, StatText } from './itemParts.jsx';
+import {
+  ItemFoot,
+  ItemIcon,
+  ItemStats,
+  ItemTags,
+  ROW_ICON,
+  SlotGlyph,
+  SlotTools,
+  StatText,
+} from './itemParts.jsx';
 import { BurdenMeter } from './parts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -96,35 +105,41 @@ export default function ArmorBlock({
         }
 
         return (
-          <div key={slot.key} className="equip-slot" style={{ borderLeftColor: rarityColor(item) }}>
+          <div key={slot.key} className="item-row" style={{ borderLeftColor: rarityColor(item) }}>
             <button
               type="button"
-              className="equip-slot-main"
+              className="item-row-tap"
               onClick={() => setBrowseSlot(slot)}
               title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
             >
-              <ItemIcon item={item} />
-              <span className="equip-item-body">
-                <span className="equip-item-head">
-                  <span className="equip-item-name">{item.name}</span>
-                  <span className="equip-slot-label">{slot.label}</span>
-                </span>
-                <ItemTags item={item} />
-                <ItemValues item={item} />
-                {item.effect && (
-                  <span className="equip-item-effect">
-                    <StatText text={item.effect} />
+              <span className="item-row-top">
+                <ItemIcon item={item} size={ROW_ICON} />
+                <span className="item-row-ident">
+                  <span className="item-row-line">
+                    <span className="item-row-name">{item.name}</span>
+                    <span className="equip-slot-label">{slot.label}</span>
                   </span>
-                )}
+                  <ItemTags item={item} />
+                </span>
               </span>
+
+              <ItemStats item={item} />
+
+              {item.effect && (
+                <span className="item-row-text">
+                  <StatText text={item.effect} />
+                </span>
+              )}
             </button>
 
-            <SlotTools
-              item={item}
-              onInfo={() => stack?.openItem(item)}
-              onRemove={readOnly ? null : () => unequip(slot.key)}
-              removeTitle={`Take off ${item.name}. It goes to your inventory.`}
-            />
+            <ItemFoot item={item}>
+              <SlotTools
+                item={item}
+                onInfo={() => stack?.openItem(item)}
+                onRemove={readOnly ? null : () => unequip(slot.key)}
+                removeTitle={`Take off ${item.name}. It goes to your inventory.`}
+              />
+            </ItemFoot>
           </div>
         );
       })}

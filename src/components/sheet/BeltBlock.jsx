@@ -142,7 +142,7 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
       className={`belt-slot${finished ? ' belt-slot-spent' : ''}`}
       style={{ borderLeftColor: rarityColor(item) }}
     >
-      {/* What it is. Only this line steps around the corner buttons. */}
+      {/* What it is. */}
       <button
         type="button"
         className="belt-main"
@@ -156,11 +156,6 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
             <span className="equip-slot-label">Loop {index + 1}</span>
           </span>
           <ItemTags item={item} />
-          {/* No weight and no price here, alone among the blocks. Five loops
-              open and full fills this block to the pixel, and the line those two
-              chips cost is 4px more than there is: measured, not guessed. It is
-              the same trade the workings above make by printing names without
-              their effects. Both numbers are on the ⓘ card and in the codex. */}
           {workings.length > 0 && (
             <span className="belt-working">
               {workings.map(({ id, enchantment }) => (
@@ -171,43 +166,50 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
         </span>
       </button>
 
-      {/* What it costs, and what is left of it — the two numbers you check
-          when you reach for it, on one line under the name. */}
-      {(hasCost || charges > 0) && (
-        <div className="belt-foot">
-          {hasCost && <CostOrbs ap={card.ap} wp={card.wp} size={22} className="belt-costs" />}
+      {/* What it costs, what is left of it, and what you can do with it: this
+          loop's own foot, which is the line every item row on the tab now ends
+          on. Always drawn, because the buttons are on it: a pick that costs
+          nothing and never runs out still has to be openable and unclippable.
 
-          {charges > 0 && (
-            <span className="belt-charges">
-              <ChargeDots charges={charges} used={used} onUse={onUse} readOnly={readOnly} />
-              <span className="belt-charge-note">{chargeNote(state)}</span>
+          Alone among the blocks it prints no weight and no price. Five loops
+          open and full fills this block to the pixel, and those two chips cost 4
+          more than there is: measured, not guessed. Both numbers are on the ⓘ
+          card and in the codex. */}
+      <div className="belt-foot">
+        {hasCost && <CostOrbs ap={card.ap} wp={card.wp} size={22} className="belt-costs" />}
 
-              {finished && !readOnly && (
-                <button type="button" className="belt-discard" onClick={onDiscard}>
-                  Discard
-                </button>
-              )}
-            </span>
-          )}
-        </div>
-      )}
+        {charges > 0 && (
+          <span className="belt-charges">
+            <ChargeDots charges={charges} used={used} onUse={onUse} readOnly={readOnly} />
+            <span className="belt-charge-note">{chargeNote(state)}</span>
 
-      <SlotTools
-        item={item}
-        onInfo={() => stack?.openItem(item)}
-        onRemove={readOnly ? null : onRemove}
-        removeTitle={`Unclip ${item.name}. It goes to your inventory.`}
-      >
-        <button
-          type="button"
-          className="item-info-btn"
-          onClick={onBrowse}
-          title={readOnly ? 'Browse the codex' : `Swap ${item.name} for something else`}
-          aria-label={`Swap ${item.name}`}
-        >
-          ⇄
-        </button>
-      </SlotTools>
+            {finished && !readOnly && (
+              <button type="button" className="belt-discard" onClick={onDiscard}>
+                Discard
+              </button>
+            )}
+          </span>
+        )}
+
+        <span className="item-acts">
+          <SlotTools
+            item={item}
+            onInfo={() => stack?.openItem(item)}
+            onRemove={readOnly ? null : onRemove}
+            removeTitle={`Unclip ${item.name}. It goes to your inventory.`}
+          >
+            <button
+              type="button"
+              className="item-info-btn"
+              onClick={onBrowse}
+              title={readOnly ? 'Browse the codex' : `Swap ${item.name} for something else`}
+              aria-label={`Swap ${item.name}`}
+            >
+              ⇄
+            </button>
+          </SlotTools>
+        </span>
+      </div>
     </div>
   );
 }

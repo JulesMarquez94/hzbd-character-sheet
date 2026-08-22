@@ -9,7 +9,7 @@ import { ARMOR_SETS } from '../lib/items.js';
 import { forgedRecord } from '../lib/forged.js';
 import { getCard, itemEnchantments } from '../lib/weapons.js';
 import { wieldModifiers } from '../lib/items.js';
-import { ItemIcon, ItemTags, ItemValues, StatText } from './sheet/itemParts.jsx';
+import { ItemCarry, ItemIcon, ItemStats, ItemTags, StatText } from './sheet/itemParts.jsx';
 import ShareCode from './sheet/ShareCode.jsx';
 import useCodexArt from './useCodexArt.js';
 
@@ -206,7 +206,8 @@ function ItemCard({ item, character, onCard, onValue }) {
       <div className="item-card-scroll">
         {item.blurb && <p className="item-card-blurb">{item.blurb}</p>}
 
-        <ItemValues item={item} />
+        <ItemStats item={item} />
+        <ItemCarry item={item} />
 
         {item.effect && (
           <p className="item-card-effect">

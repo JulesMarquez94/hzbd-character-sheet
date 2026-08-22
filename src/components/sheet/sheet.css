@@ -2473,10 +2473,16 @@ body.sheet-fixed #root {
 }
 
 /* A slot inside a block is one of a stack and stands its own height. This one is
-   alone beside a meter, so it fills the row rather than floating in it. */
+   alone beside a meter, so it fills the row rather than floating in it: the empty
+   slot centres its one line, and the filled row spreads its three zones. */
 .bag-slot {
   height: 100%;
   align-items: center;
+}
+
+.bag-row {
+  height: 100%;
+  justify-content: center;
 }
 
 .carry-panel {
@@ -3243,6 +3249,14 @@ body.sheet-fixed #root {
 /* =========================================================
    EQUIPMENT BLOCK & ITEM CODEX
    ========================================================= */
+/* Three rows, a meter and sometimes a set banner in 640 that must not scroll.
+   Tighter between them than a block's default, the way the weapon and trinket
+   blocks already are: the rows themselves each carry a foot now, and this is
+   where the room for it comes from. */
+.armor-block {
+  gap: 0.5rem;
+}
+
 /* ---------- MAGIC BURDEN METER ---------- */
 .burden-panel {
   display: flex;
@@ -3265,19 +3279,191 @@ body.sheet-fixed #root {
   border-radius: 4px;
 }
 
-/* ---------- EQUIPMENT SLOTS ----------
-   A filled slot is a row of two controls: the item itself (tap to swap) and
-   the ⓘ that opens the item's own card. */
-.equip-slot {
+/* ---------- ICON / TAG / CHIP SIZES ----------
+   Every icon in the game is the same square tile, whatever it sits next to: one
+   border, one glyph scale, and two sizes. `--icon-row` is the tile on an item
+   row, where it holds the left edge of the name and the tags at once;
+   `--icon-tile` is the older, smaller one, kept for the places that only have a
+   single line to give it (a belt loop, the loadout block, an ability box). */
+:root {
+  --icon-tile: 40px;
+  --icon-row: 48px;
+  --tool-btn: 24px;
+}
+
+/* ---------- THE ITEM ROW ----------
+   The shape every item on the sheet wears (Jules, 2026-08-22): a helm in a slot,
+   a ring in a list, a weapon in a hand, the bag above the grid, a line in the
+   codex, a thing in the inventory. Three zones, top to bottom.
+
+     [tile]  Name                            TYPE
+             tag  tag  tag
+     +2 Armor
+     What it does, in a sentence.
+     ---------------------------------------------
+     4 kg   3,000 c   2 Burden           [i] [down]
+
+   The tile holds the left edge of the first zone alone. Everything under it runs
+   the row's full width, which is what buys a block 360 pixels wide a line of
+   rules text worth reading, and the buttons sit at the end of the last zone
+   rather than floating in the top corner.
+
+   What that corner cost, and why it is gone: every row above it had to hold a
+   rail of empty pixels clear of two buttons that had nothing to do with the name
+   (`--tool-rail-2`, and 88 pixels of it on a belt loop), a long name broke onto
+   two lines to keep out of their way, and the numbers a reader compares down a
+   column of rows sat wherever that row's text left them. On its own line the
+   foot lines up between rows, and price and controls are the same distance in on
+   every one. */
+.item-row {
   position: relative;
   display: flex;
-  align-items: stretch;
-  gap: 6px;
+  flex-direction: column;
+  gap: 5px;
   width: 100%;
   flex-shrink: 0;
   background-color: rgba(9, 17, 21, 0.45);
   border: 1px solid rgba(148, 167, 176, 0.12);
-  /* Filled slots overwrite this edge with their set's colour. */
+  /* The rarity edge, set inline per row. Every item row carries it now, the
+     codex list and the inventory included: rarity is an item's colour
+     everywhere else, and this is the cheapest place to read it. */
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  /* Measured, not guessed: three of these, a meter and a set banner have to fit
+     640 pixels without scrolling, and the foot is a line none of them used to
+     carry. Every number here is what is left after that fit. */
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--text-silver);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.item-row:hover {
+  background-color: rgba(9, 17, 21, 0.7);
+}
+
+/* Zones one and two, which are one control: tapping a row asks the question that
+   row is for (where does this go, what do I swap it for). The foot is outside it,
+   because a button cannot hold a button. `.item-row-body` is the same shape for
+   the codex, where the row is a list entry and the buttons are the controls. */
+.item-row-tap,
+.item-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-family: var(--font-body);
+  color: inherit;
+}
+
+.item-row-tap {
+  cursor: pointer;
+}
+
+.item-row-tap:disabled {
+  cursor: default;
+}
+
+/* A row worth tapping says so on the way past. */
+.item-row-tap:not(:disabled):hover .item-row-name {
+  color: var(--copper);
+}
+
+/* Zone one: the tile, and the two lines whose left edge it holds. Set against
+   each other's middle rather than to the top, because the pair of them is one
+   thing: a row with no tags would otherwise hang its name off the top of the
+   picture. Never a floor under the ident, either -- a floor of --icon-row would
+   hold a 40px tile's row 8 pixels taller than the tile, which is exactly the 8
+   the weapon block does not have. */
+.item-row-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.item-row-ident {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* The name, and on the right of it what kind of thing it is: the slot it goes
+   in, the loop number, how many of it you have. */
+.item-row-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+/* The name takes the free space, so whatever shares its line -- the slot label,
+   a count, "In Pack", an Overloaded warning -- is flush right and in one group
+   however many of them there are. `space-between` alone would strand a middle
+   one halfway across the row. */
+.item-row-name {
+  margin-right: auto;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-silver);
+  overflow-wrap: anywhere;
+  transition: color 0.15s ease;
+}
+
+/* Zone two: what it does, in a sentence, at the full width of the row. Which is
+   what the width is for: the same sentence beside a tile, in the old indented
+   column, ran a line and a half longer. */
+.item-row-text {
+  display: block;
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* Zone three: what it costs on the left, what you can do with it on the right.
+   The hairline is there because those two are a different kind of thing from the
+   text above them, and because it is what makes the foot read as a foot. */
+.item-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tool-btn);
+  padding-top: 4px;
+  border-top: 1px solid rgba(148, 167, 176, 0.1);
+}
+
+.item-acts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ---------- EMPTY PLACES ----------
+   A place with nothing in it is one line, not three: the glyph, what the place
+   is called, and how to fill it. Locked loops and an id this build cannot
+   resolve wear the same shape. */
+.equip-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  flex-shrink: 0;
+  background-color: rgba(9, 17, 21, 0.45);
+  border: 1px solid rgba(148, 167, 176, 0.12);
   border-left: 3px solid transparent;
   border-radius: 4px;
   padding: 0.6rem 0.65rem;
@@ -3293,37 +3479,24 @@ body.sheet-fixed #root {
   border-color: rgba(200, 138, 75, 0.45);
 }
 
-/* Icons sit at the top-left of their row, never floated in the middle of it.
-   Only the *first* line steps around the corner buttons — the tags and
-   numbers under it run the full width, which is what keeps a row of tags on
-   one line. */
-.equip-slot-main,
-.weapon-head-main {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--font-body);
-  color: inherit;
+.equip-slot-empty {
+  border: 1px dashed rgba(148, 167, 176, 0.3);
+  background-color: rgba(9, 17, 21, 0.25);
 }
 
-/* The little controls in a slot's corner — details, swap, take off. They are
-   real buttons at a size you can actually hit, with an edge so they read as
-   buttons rather than as marks on the panel. */
+.equip-slot-empty:hover {
+  border-color: var(--copper);
+  background-color: rgba(200, 138, 75, 0.06);
+}
+
+/* The little round controls: the item's page, the codex, the one that takes it
+   off, the one that throws it away. In the flow of the foot they sit on, never
+   in a corner. */
 .item-info-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: var(--tool-btn);
   height: var(--tool-btn);
   border-radius: 4px;
@@ -3344,20 +3517,11 @@ body.sheet-fixed #root {
   color: var(--bg-black);
 }
 
-.equip-slot-empty {
-  border: 1px dashed rgba(148, 167, 176, 0.3);
-  background-color: rgba(9, 17, 21, 0.25);
-}
-
-.equip-slot-empty:hover {
-  border-color: var(--copper);
-  background-color: rgba(200, 138, 75, 0.06);
-}
-
-/* The muted glyph an empty slot shows in place of an item icon. */
+/* The muted glyph an empty place shows where an item would have its picture. The
+   row size, so a filled slot and the empty one under it line up. */
 .equip-glyph {
-  width: var(--icon-tile);
-  height: var(--icon-tile);
+  width: var(--icon-row);
+  height: var(--icon-row);
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -3372,6 +3536,17 @@ body.sheet-fixed #root {
   height: 22px;
 }
 
+/* The two blocks measured to the pixel keep the smaller tile, so an empty place
+   in them lines up with the filled ones (which ask ItemIcon for it): the belt,
+   where five open loops fill the block, and the weapons, where two panels carry
+   four ability boxes and up to six workings between them. */
+.belt-empty .equip-glyph,
+.belt-locked .equip-glyph,
+.weapon-empty .equip-glyph {
+  width: var(--icon-tile);
+  height: var(--icon-tile);
+}
+
 .equip-empty-body {
   display: flex;
   flex-direction: column;
@@ -3379,6 +3554,8 @@ body.sheet-fixed #root {
   min-width: 0;
 }
 
+/* What kind of thing this is, or what place it goes in: the small uppercase
+   label at the end of a name line, and the name of an empty place. */
 .equip-slot-label {
   font-size: 0.6rem;
   font-weight: 700;
@@ -3393,49 +3570,7 @@ body.sheet-fixed #root {
   color: rgba(120, 139, 149, 0.8);
 }
 
-.equip-item-body {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  flex: 1;
-  min-width: 0;
-}
-
-.equip-item-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-  /* The line the ⓘ and ↓ sit on. */
-  padding-right: var(--tool-rail-2);
-  min-height: var(--tool-btn);
-}
-
-.equip-item-name {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-silver);
-  overflow-wrap: anywhere;
-}
-
-.equip-item-effect {
-  font-size: 0.71rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-/* ---------- ITEM ICON / TAGS / VALUES ----------
-   Every icon in the game is the same square tile, whatever it sits next to:
-   one size, one border, one glyph scale. Corner buttons are one size too, and
-   the rails they make (two of them, or three) are what a row's first line
-   keeps clear of. */
-:root {
-  --icon-tile: 40px;
-  --tool-btn: 24px;
-  --tool-rail-2: 60px;
-  --tool-rail-3: 88px;
-}
-
+/* ---------- ITEM ICON / TAGS / VALUES ---------- */
 .item-icon {
   flex-shrink: 0;
   display: inline-flex;
@@ -3457,22 +3592,24 @@ body.sheet-fixed #root {
   background-position: center;
 }
 
-/* Tags read as one line wherever there is room for one — the rails above them
-   are why there usually is. They still wrap rather than spill. */
+/* Tags read as one line wherever there is room for one, and the row's whole
+   width is now there for them. They still wrap rather than spill. */
 .item-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 
-/* Bigger type than before, tighter around it — the type is what makes a tag
-   readable, the padding is only what makes three of them not fit. */
+/* Smaller than they were (Jules, 2026-08-22: tags do not have to be that big).
+   A tag is what *kind* of thing this is, which is the least of the three things
+   a row says, and at the old size it was competing with the name for the eye.
+   Small, tight and quiet: they read as a group rather than one at a time. */
 .item-tag {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.2px;
-  padding: 0.16rem 0.36rem;
+  letter-spacing: 0.3px;
+  padding: 0.12rem 0.3rem;
   border-radius: 3px;
   background-color: rgba(234, 242, 248, 0.05);
   border: 1px solid rgba(234, 242, 248, 0.15);
@@ -3499,17 +3636,16 @@ body.sheet-fixed #root {
 .item-value-num {
   font-family: var(--font-headings);
   font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
 }
 
-/* The pair the two tight blocks print instead of the full row: what it weighs
-   and what it is worth, set a shade smaller than a tag so it reads as a footnote
-   to the tags above rather than as another row of them. Both blocks are a fixed
-   640 that must not scroll, so the line it costs is the whole budget. */
+/* The three prices on the foot: kilograms, coins, Magic Burden. Set wider apart
+   than the stat chips above them, because these are three separate numbers where
+   those are one line of what a thing gives you. */
 .item-carry {
-  gap: 8px;
-  font-size: 0.58rem;
-  letter-spacing: 0.4px;
-  line-height: 1.1;
+  gap: 4px 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Stat names inside rules text, lit in the stat's own colour. */
@@ -3549,7 +3685,7 @@ body.sheet-fixed #root {
    two cards it teaches, and whatever has been laid on it.
    ========================================================= */
 .weapon-block {
-  gap: 0.55rem;
+  gap: 0.45rem;
 }
 
 .weapon-panel {
@@ -3557,59 +3693,14 @@ body.sheet-fixed #root {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  /* Measured: two Grave-Lantern Blades is four ability boxes and six workings,
+     and at 0.4rem between the parts the second panel starts inside the first. */
+  gap: 0.3rem;
 }
 
-.weapon-head {
-  position: relative;
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  width: 100%;
-  flex-shrink: 0;
-  background-color: rgba(9, 17, 21, 0.45);
-  border: 1px solid rgba(148, 167, 176, 0.12);
-  /* Overwritten with the weapon's rarity colour. */
-  border-left: 3px solid transparent;
-  border-radius: 4px;
-  padding: 0.45rem 0.55rem;
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--font-body);
-  color: var(--text-silver);
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.weapon-head:hover {
-  background-color: rgba(9, 17, 21, 0.75);
-  border-color: rgba(200, 138, 75, 0.45);
-}
-
-.weapon-head-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  min-width: 0;
-}
-
-.weapon-head-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-  /* The line the ⓘ and ↓ sit on. */
-  padding-right: var(--tool-rail-2);
-  min-height: var(--tool-btn);
-}
-
-.weapon-name {
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: var(--text-silver);
-  overflow-wrap: anywhere;
-}
-
+/* The head of a weapon panel is the shared `.item-row`, so a greatsword reads
+   like a helm. What a weapon adds is under it: the two cards it teaches, and
+   whatever has been laid on it. */
 
 .weapon-blurb {
   font-size: 0.68rem;
@@ -3849,14 +3940,14 @@ body.sheet-fixed #root {
   min-width: 0;
 }
 
-/* The name and its loop number — the one line that keeps clear of the three
-   corner buttons. Everything under it runs the full width of the row. */
+/* The name and its loop number. It has the row's full width now: the three
+   buttons that used to sit in the corner above it are down on the foot with the
+   cost and the charges, which is where every item row on the tab keeps them. */
 .belt-line {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 8px;
-  padding-right: var(--tool-rail-3);
   min-height: var(--tool-btn);
 }
 
@@ -3905,14 +3996,21 @@ body.sheet-fixed #root {
 }
 
 /* ---------- COST AND CHARGES ----------
-   The cost sits on the left, under the name it belongs to; what is left of
-   the item sits at the right, away from the corner buttons. */
+   This block's own version of the item row's foot: what it costs, then what is
+   left of it, then the buttons, which is the same left-to-right as every other
+   row on the tab. No weight and no price, alone among the blocks, because five
+   loops open and full fills the block to the pixel.
+
+   It used to be indented under the name and pushed the charges to the far right,
+   to stay clear of three buttons in the corner above. The buttons are on it now,
+   so it starts at the row's own edge like every other foot and the charges sit
+   where their cost does: measured, a spent potion is cost, dots, "Used up", its
+   Discard and three buttons in 271 of the 306 pixels there are. */
 .belt-foot {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 22px;
-  padding-left: calc(var(--icon-tile) + 10px);
+  min-height: var(--tool-btn);
 }
 
 .belt-costs {
@@ -3925,7 +4023,7 @@ body.sheet-fixed #root {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
+  min-width: 0;
 }
 
 .belt-charge-note {
@@ -3987,23 +4085,6 @@ body.sheet-fixed #root {
 
 .charge-dot-static {
   cursor: default;
-}
-
-/* ---------- THE CORNER BUTTONS ----------
-   Every filled slot on the tab carries the same little rail: the item's own
-   page, the codex for that place, and the one that takes it off. They are all
-   the ⓘ button, tucked into the corner the way item controls always are. */
-.slot-tools {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  z-index: 2;
-  display: flex;
-  gap: 4px;
-}
-
-.slot-tools .item-info-btn {
-  position: static;
 }
 
 /* Taking something off never destroys it — it goes to your inventory. Only
@@ -4112,89 +4193,29 @@ body.sheet-fixed #root {
   font-variant-numeric: tabular-nums;
 }
 
-.pack-row {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background-color: rgba(9, 17, 21, 0.45);
-  border: 1px solid rgba(148, 167, 176, 0.1);
-  border-radius: 4px;
-  padding: 0.55rem 0.6rem;
+/* A row in here is the shared `.item-row`, the same as a slot in any block. The
+   one that is not is a thing you wrote in yourself: no rarity, no numbers, and
+   its note where the rules text goes. */
+.pack-written {
+  border-left-color: rgba(148, 167, 176, 0.2);
 }
 
-.pack-row-body {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  flex: 1;
-  min-width: 0;
+.pack-written .item-row-text {
+  white-space: pre-wrap;
 }
 
-/* Only the name line steps around the corner buttons. */
-.pack-row-head {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding-right: var(--tool-rail-2);
-  min-height: var(--tool-btn);
-}
-
-.pack-row-name {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--text-silver);
-  overflow-wrap: anywhere;
-}
-
-/* How many of that one thing you have. Pushed to the end of the name line
-   rather than trailing the name itself: trailing it, every count sat a
-   different distance in and you had to read the names to find them. At the end
-   they line up down the column of rows instead, stopping where the rail the
-   corner buttons keep clear begins. */
+/* How many of that one thing you have. At the end of the name line rather than
+   trailing the name itself: trailing it, every count sat a different distance in
+   and you had to read the names to find them. At the end of the line they line up
+   down the column of rows instead. The name's own auto margin is what puts it
+   there now, so this one is only kept from being squeezed. */
 .pack-count-chip {
-  margin-left: auto;
   flex-shrink: 0;
   font-family: var(--font-headings);
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--copper-bright);
   font-variant-numeric: tabular-nums;
-}
-
-/* Every row is a button. A written thing opens what it says, a piece of gear
-   opens the question of where on you it goes. */
-.pack-row-edit,
-.pack-row-equip {
-  background: none;
-  border: none;
-  text-align: left;
-  font-family: var(--font-body);
-  color: inherit;
-  cursor: pointer;
-}
-
-.pack-row-edit:disabled,
-.pack-row-equip:disabled {
-  cursor: default;
-}
-
-/* A row worth tapping says so on the way past. */
-.pack-row-equip:not(:disabled):hover .pack-row-name {
-  color: var(--copper);
-}
-
-.pack-note {
-  font-size: 0.7rem;
-  line-height: 1.5;
-  color: var(--text-muted);
-  white-space: pre-wrap;
-}
-
-.pack-row-tools {
-  top: 5px;
-  right: 5px;
 }
 
 .slot-discard-btn:hover {
@@ -4389,9 +4410,10 @@ body.sheet-fixed #root {
   align-items: center;
 }
 
-/* The corner button, inline: a row this short has no corner to spare. */
+/* The ⓘ on a loadout row, which is one line and has no second one to put it on.
+   Only the shrink is its own now: the button stopped being a corner fixture when
+   the item rows brought theirs down onto a foot. */
 .row-info-btn {
-  position: static;
   flex-shrink: 0;
 }
 
@@ -4977,61 +4999,18 @@ body.sheet-fixed #root {
   padding: 0.15rem 0 0.35rem;
 }
 
-.browser-item {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background-color: rgba(9, 17, 21, 0.45);
-  border: 1px solid rgba(148, 167, 176, 0.1);
-  border-radius: 4px;
-  padding: 0.65rem 0.7rem;
-}
+/* A row in the codex is the shared `.item-row`: the same tile, the same tags,
+   the same numbers, and its foot carrying the price beside the ⓘ, the +1 and the
+   button that takes the thing. Which is the point of it. What you are reading in
+   here is what you will be reading on the sheet once it is yours, so there is
+   nothing to learn twice.
 
-.browser-item.equipped {
+   It is the one row nobody taps as a whole, so it wears `.item-row-body` rather
+   than `.item-row-tap`: three separate controls on the foot, and no fourth one
+   wrapped around them. */
+.item-row.equipped {
   border-color: rgba(200, 138, 75, 0.45);
   background-color: rgba(200, 138, 75, 0.05);
-}
-
-.browser-item-body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  min-width: 0;
-}
-
-/* The name line used to step around the ⓘ in the corner above it, with 30px of
-   right padding held back for it. Nothing sits in that corner any more — both
-   glyphs went down into the action rail, see below — so the name gets its 30px
-   back and the tags beside it have room to stay on one line. The min-height is
-   kept: it is what makes every row the same height whether or not it carries a
-   second line. */
-.browser-item-head {
-  min-height: var(--tool-btn);
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.browser-item-name {
-  font-size: 0.88rem;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.browser-item-effect {
-  font-size: 0.72rem;
-  color: var(--text-silver);
-  opacity: 0.85;
-  line-height: 1.45;
-}
-
-.browser-item-setbonus {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  line-height: 1.45;
 }
 
 .setbonus-label {
@@ -5042,42 +5021,18 @@ body.sheet-fixed #root {
   color: var(--copper);
 }
 
+.browser-setbonus {
+  font-size: 0.68rem;
+}
+
 /* The two cards a weapon lends whoever holds it. */
-.browser-item-teaches {
+.browser-teaches {
   font-size: 0.68rem;
   color: var(--copper);
-  line-height: 1.45;
 }
 
-.browser-item-teaches .setbonus-label {
+.browser-teaches .setbonus-label {
   color: var(--text-muted);
-}
-
-/* One rail, right-hand side: the ⓘ, the +1 and the button that takes the thing.
- *
- * The ⓘ used to fly out of this column into the row's own corner, because
- * `.item-info-btn` is written for the corner of a *slot* — `position: absolute;
- * top: 4px; right: 4px` — and nothing here put it back. That worked while it
- * was the only glyph. Then the +1 arrived wearing the same class, went absolute
- * to the very same four pixels, and landed squarely on top of it: two buttons
- * at one address, the second painted over the first, both of them sitting off
- * in a corner rather than on the row's own line.
- *
- * So they come back into the flow, the way `.slot-tools` and `.row-info-btn`
- * already put them back everywhere else the ⓘ is used inline. Three controls,
- * one gap, centred on the row.
- */
-.browser-item-action {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  align-self: center;
-  gap: 5px;
-  padding-left: 0.5rem;
-}
-
-.browser-item-action .item-info-btn {
-  position: static;
 }
 
 /* ---------- TAG FILTERING ----------
@@ -5254,9 +5209,9 @@ body.sheet-fixed #root {
   .ledger-inputs { grid-template-columns: minmax(0, 1fr); }
   .xp-row { grid-template-columns: minmax(0, 1fr) 84px 72px; font-size: 0.7rem; }
 
-  /* Codex rows: the equip button drops under the text instead of crushing it. */
-  .browser-item { flex-wrap: wrap; }
-  .browser-item-action { width: 100%; justify-content: flex-end; }
+  /* A codex row's buttons already sit on their own line at every width, so the
+     rule that used to wrap them under the text on a phone is gone with the
+     column they were a column of. */
 }
 
 /* ---------- PUBLIC / ADMIN VIEWING BADGES ---------- */
@@ -9382,23 +9337,13 @@ body.sheet-fixed #root {
   gap: 0.5rem;
 }
 
-/* A list rather than a set of slots, so a row has no slot label to sit under.
-   That room goes to the burden instead, which is the number this block exists
-   to make visible. */
-.trinket-slot .equip-item-head {
-  align-items: baseline;
-}
+/* A list rather than a set of slots, so a row has no slot label at the end of
+   its name line: what kind of thing a trinket is, its tags already say.
 
-/* What the ring costs its wearer, in the colour Magic Burden is drawn in
-   everywhere else on the sheet. */
-.trinket-burden {
-  flex: none;
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--haze-glow);
-}
+   The Burden it costs used to be printed up there, because this block exists to
+   make that number visible. It is on the foot now with the weight and the price,
+   where every item on the sheet stated it as of the rework: one place for what a
+   thing costs you, and this block is no longer the exception that proved it. */
 
 /* How many of them are actually doing something, in the block's own count, so
    the head answers that without a row being opened. */
@@ -9408,12 +9353,10 @@ body.sheet-fixed #root {
 
 /* And the working itself, printed on the row. A trinket's whole worth is this
    line: the codex piece under it has no numbers at all, so a row without this
-   would say nothing about why the ring is on. */
+   would say nothing about why the ring is on. It is a line of the row's own text
+   block, set a shade smaller so a ring with two workings still fits. */
 .trinket-working {
-  display: block;
-  font-size: 0.64rem;
-  line-height: 1.45;
-  color: var(--text-muted);
+  font-size: 0.68rem;
 }
 
 .trinket-working b {

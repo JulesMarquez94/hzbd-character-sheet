@@ -730,6 +730,22 @@ export function kgToPounds(kg) {
 }
 
 /**
+ * A weight split into its number and its unit, for a chip that sets the two in
+ * different type: the number in the display face every other number on a row
+ * wears, the unit in the body face beside it.
+ *
+ * The rounding lives here rather than in both, so `4 kg` on an item row and
+ * `4 kg` in a tooltip can never disagree about the decimal.
+ */
+export function weightParts(kg, unit) {
+  const imperial = unit === 'imperial';
+  return {
+    value: imperial ? kgToPounds(kg) : Math.round((Number(kg) || 0) * 100) / 100,
+    unit: imperial ? 'lb' : 'kg',
+  };
+}
+
+/**
  * A weight as the sheet writes it, in whichever unit the reader chose.
  *
  * Trailing zeroes go, so a bag of exactly 5 kg is `5 kg` and not `5.0 kg`. The
@@ -737,8 +753,8 @@ export function kgToPounds(kg) {
  * and `5.5kg` does not.
  */
 export function formatWeight(kg, unit) {
-  const value = unit === 'imperial' ? kgToPounds(kg) : Math.round((Number(kg) || 0) * 100) / 100;
-  return `${value} ${unit === 'imperial' ? 'lb' : 'kg'}`;
+  const parts = weightParts(kg, unit);
+  return `${parts.value} ${parts.unit}`;
 }
 
 export function formatNumber(n) {

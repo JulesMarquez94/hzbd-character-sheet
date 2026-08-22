@@ -3,7 +3,7 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import ShareCode from './ShareCode.jsx';
 import TagFilter from './TagFilter.jsx';
-import { ItemIcon, ItemTags, ItemValues } from './itemParts.jsx';
+import { ItemCarry, ItemIcon, ItemStats, ItemTags } from './itemParts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
@@ -233,7 +233,8 @@ export default function ForgeWindow({ character, onForge, onClose }) {
                 <div className="forge-base-body">
                   <span className="forge-base-name">{base.name}</span>
                   <ItemTags item={base} />
-                  <ItemValues item={base} />
+                  <ItemStats item={base} />
+                  <ItemCarry item={base} />
                 </div>
                 <button
                   type="button"

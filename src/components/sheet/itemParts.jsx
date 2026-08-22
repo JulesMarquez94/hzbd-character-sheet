@@ -7,14 +7,31 @@ import {
   itemWeight,
   rarityColor,
 } from '../../lib/items.js';
-import { formatNumber, formatWeight } from '../../lib/characterModel.js';
+import { formatNumber, formatWeight, weightParts } from '../../lib/characterModel.js';
 import { useUnit } from '../../context/units.js';
 import useCodexArt from '../useCodexArt.js';
 
 /**
  * Shared visual language for items: the slot glyphs, the rarity-tinted icon
- * tile, tag chips, the Defense/Armor/Burden value chips, and rules text with
- * every stat name lit in that stat's own colour.
+ * tile, tag chips, the value chips, the foot the buttons sit on, and rules text
+ * with every stat name lit in that stat's own colour.
+ *
+ * ------------------------------------------------------------------- the row
+ * Every item on the sheet wears the same three zones, top to bottom (Jules,
+ * 2026-08-22), whether it is a helm in a slot, a ring in a list, a bag above the
+ * grid or a line in the codex:
+ *
+ *     [tile]  Name                            TYPE
+ *             tag  tag  tag
+ *     +2 Armor
+ *     What it does, in a sentence.
+ *     4 kg   3,000 c   2 Burden           [i] [down]
+ *
+ * The tile holds the left edge of the top zone by itself. Everything under it
+ * runs the row's full width, which is what gives a block 360 pixels wide a line
+ * of rules text worth reading, and the buttons sit at the end rather than in the
+ * corner. The shape is `ItemStats` + `ItemFoot` here and `.item-row` in
+ * sheet.css; a block writes the zones and never a layout of its own.
  */
 
 /* ------------------------------------------------------------ stat colours */
@@ -253,13 +270,23 @@ export function SlotGlyph({ slot, item, card }) {
 }
 
 /**
+ * The tile on an item row: a little bigger than the 40 every other icon on the
+ * sheet wears (Jules asked for it, 2026-08-22), because on a row it is the only
+ * thing holding the left edge of two lines at once, the name and the tags under
+ * it. The two blocks measured to the pixel keep the smaller one, and say why:
+ * see WeaponBlock.jsx and the belt's own rows.
+ */
+export const ROW_ICON = 48;
+
+/**
  * The item's icon tile: the piece itself where the codex has a picture of it,
  * and its slot glyph where it does not. The rarity's colour rims both, because
  * in a browser list or a filled slot this tile is the only place rarity shows.
  *
- * **The thumbnail, never the full picture.** This tile is 40px in every block
- * on the sheet and 52 in the equip prompt, a browser list draws nine of them at
- * once, and the 128px cut is 2 KB against the item card's 26. Same rule, and
+ * **The thumbnail, never the full picture.** This tile is `ROW_ICON` on an item
+ * row, 40 in the tighter places that only have one line for it (a belt loop, the
+ * loadout block), and 52 in the equip prompt. A browser list draws nine of them
+ * at once, and the 128px cut is 2 KB against the item card's 26. Same rule, and
  * the same reason, as a card brief's plate.
  *
  * A picture the *player* pointed at is theirs and shows at every account tier,
@@ -325,34 +352,25 @@ export function ItemTags({ item }) {
 }
 
 /**
- * The numbers a piece of gear carries, each in its stat's colour. Only
- * non-zero values render — these chips are the single place a plain stat
- * bonus is stated, so the rules text never repeats them.
+ * What a piece of gear *does*, in numbers, each in its stat's own colour. Only
+ * non-zero values render — these chips are the single place a plain stat bonus
+ * is stated, so the rules text never repeats them.
  *
- * ------------------------------------------------------- what it weighs and costs
- * Two of them are true of every item rather than of a kind of item, so they come
- * last and read the other way round: `2.5 kg` and `4,000 ¢` are a number with its
- * unit, where `+2 Armor` is a number with the stat it moves. They keep the chip
- * shape anyway, because a row that grew a second kind of chip would be a row with
- * two lines of numbers on it.
+ * What it *costs* is not here. Weight, coin and Magic Burden are true of every
+ * item rather than of a kind of item, and they live together at the foot of the
+ * row: see ItemCarry.
  *
  * A bag says what it *holds* in the same breath, since that is the only reason
  * anybody is reading its numbers at all.
- *
- * Weight is in whichever unit the reader chose. See units.js for why that comes
- * out of a context here and off a prop everywhere else.
  */
-export function ItemValues({ item }) {
+export function ItemStats({ item }) {
   const charges = itemCharges(item);
   const unit = useUnit();
-  const weight = itemWeight(item);
-  const cost = itemCost(item);
   const capacity = Math.max(0, Number(item?.capacity) || 0);
 
   const values = [
     { label: 'Defense', value: item.defense, color: 'var(--focus-cyan)', signed: true },
     { label: 'Armor', value: item.armor, color: 'var(--stat-armor)', signed: true },
-    { label: 'Burden', value: itemBurden(item), color: 'var(--haze-glow)', signed: false },
     {
       label: charges === 1 ? 'Use' : 'Uses',
       value: charges,
@@ -366,18 +384,6 @@ export function ItemValues({ item }) {
          nobody says and "holds 35 kg" is the question being asked. */
       text: `holds ${formatWeight(capacity, unit)}`,
       color: 'var(--stat-supply)',
-    },
-    weight > 0 && {
-      key: 'weight',
-      value: weight,
-      text: formatWeight(weight, unit),
-      color: 'var(--text-muted)',
-    },
-    cost > 0 && {
-      key: 'cost',
-      value: cost,
-      text: `${formatNumber(cost)} ¢`,
-      color: 'var(--stat-coin)',
     },
   ].filter((entry) => entry && (Number(entry.value) || 0) !== 0);
 
@@ -402,54 +408,100 @@ export function ItemValues({ item }) {
 }
 
 /**
- * Just the two chips every item in the codex carries, for a block with no room
- * for the rest of them.
+ * What carrying it costs: kilograms, coins and Magic Burden, in that order, on
+ * the left of the row's foot.
  *
- * The weapon panel spends its space on the two cards a weapon teaches and on its
- * workings, so it does not print `ItemValues` and should not start. But weight
- * and coin are true of *everything*, and a sheet where the helmet says 4 kg and
- * the greatsword says nothing is a sheet with a hole in it. Two weapons with five
- * workings between them still leaves the block room for this, measured.
+ * **The three of them belong together** (Jules, 2026-08-22). Burden used to sit
+ * up among the stats, which put the three prices one thing charges you in two
+ * different places and read as though Burden were a bonus. They are also the
+ * other way round from a stat chip: `2.5 kg` is a number with its unit, where
+ * `+2 Armor` is a number with the stat it moves.
  *
- * The belt is the one block that gets neither. Five loops open and full fills it
- * to the pixel, and this line is 4px more than it has. See BeltBlock.jsx.
+ * Each wears the colour of the meter it fills, not a colour of its own: the
+ * carry meter's wood for weight, coin gold for the price, and for Burden the
+ * lilac that is purple's type twin — the ground purple the bar is drawn in goes
+ * muddy at this size, which is what --haze-lilac exists for.
+ *
+ * Weight is in whichever unit the reader chose. See units.js for why that comes
+ * out of a context here and off a prop everywhere else.
  */
 export function ItemCarry({ item }) {
   const unit = useUnit();
   const weight = itemWeight(item);
   const cost = itemCost(item);
+  const burden = itemBurden(item);
+  const load = weightParts(weight, unit);
 
-  if (weight <= 0 && cost <= 0) return null;
+  if (weight <= 0 && cost <= 0 && burden <= 0) return null;
 
   return (
     <span className="item-values item-carry">
       {weight > 0 && (
-        <span className="item-value" style={{ color: 'var(--text-muted)' }}>
-          {formatWeight(weight, unit)}
+        <span className="item-value" style={{ color: 'var(--stat-supply)' }}>
+          <span className="item-value-num">{load.value}</span>
+          {load.unit}
         </span>
       )}
       {cost > 0 && (
         <span className="item-value" style={{ color: 'var(--stat-coin)' }}>
-          {formatNumber(cost)} ¢
+          <span className="item-value-num">{formatNumber(cost)}</span>¢
+        </span>
+      )}
+      {burden > 0 && (
+        <span className="item-value" style={{ color: 'var(--haze-lilac)' }}>
+          <span className="item-value-num">{burden}</span>
+          Burden
         </span>
       )}
     </span>
   );
 }
 
+/* ---------------------------------------------------------------- the foot */
+
+/**
+ * The foot of an item row: what it costs you on the left, what you can do with
+ * it on the right.
+ *
+ * **Why the buttons came down here** (Jules, 2026-08-22). They used to float in
+ * the row's top corner, which meant every row's first line had to hold a rail of
+ * empty pixels clear of them — sixty pixels on most rows, eighty-eight on a belt
+ * loop — and a name that ran long broke onto two lines to make room for two
+ * buttons it had nothing to do with. On a line of their own they cost nothing
+ * from the name, they line up down a column of rows, and the row reads in the
+ * order somebody actually reads it in: what it is, what it does, what it costs
+ * and what you can do about it.
+ *
+ * The foot is outside the row's own tap target, which is what it always was: a
+ * button cannot hold a button.
+ */
+export function ItemFoot({ item, children }) {
+  return (
+    <div className="item-foot">
+      <ItemCarry item={item} />
+      {children ? <span className="item-acts">{children}</span> : null}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------- slot corner */
 
 /**
- * The rail of little round buttons in a filled slot's corner, the same on
- * every block: the item's own page, whatever that block adds of its own (the
- * belt puts its codex here), and the one that takes the item off.
+ * The little round buttons every filled slot carries: the item's own page,
+ * whatever that block adds of its own (the belt puts its codex here), and the
+ * one that takes the item off.
+ *
+ * A fragment rather than a rail, because two blocks put these in two places: an
+ * item row hands them to `ItemFoot`, and a belt loop hangs them off the end of
+ * its own charge line. What buttons a slot has is one answer; where they sit is
+ * the block's.
  *
  * Taking something off is never destruction — it goes to the inventory, which
  * is the only place a thing can actually be thrown away.
  */
 export function SlotTools({ item, onInfo, onRemove, removeTitle = 'Send to your inventory', children }) {
   return (
-    <span className="slot-tools">
+    <>
       <button
         type="button"
         className="item-info-btn"
@@ -473,7 +525,7 @@ export function SlotTools({ item, onInfo, onRemove, removeTitle = 'Send to your 
           ↓
         </button>
       )}
-    </span>
+    </>
   );
 }
 

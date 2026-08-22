@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import AbilityCard from '../AbilityCard.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
+import { useCardStack } from '../../context/card-stack.js';
 import { VARIABLE_CAP } from '../../lib/actions.js';
 import { getKeyword } from '../../lib/keywords.js';
 import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.js';
@@ -110,6 +111,13 @@ const CONVERT = { ...WAYS[0], mode: 'convert', label: 'Hold Back' };
 const NOTHING = { ap: 0, wp: 0, health: 0 };
 
 export default function UsePrompt({ request, character, onCancel, onConfirm }) {
+  /* The pile the printed card deals onto. This prompt is a dialog, and the pile
+     sits above every dialog (see the z scale in index.css), so a number tapped
+     here opens its working over the prompt and closes back onto it. Optional
+     because the hook answers null outside a provider, and a card with no pile to
+     deal onto prints its numbers flat rather than as dead buttons. */
+  const cards = useCardStack();
+
   // The way that was asked for and could not be paid, until another is tried.
   const [denied, setDenied] = useState(null);
 
@@ -345,13 +353,22 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
           )}
         </div>
 
-        {/* What you are about to do, as the card reads for you. */}
+        {/* What you are about to do, as the card reads for you, and readable the
+            way any dealt card is: every live value on it opens its own working,
+            and every {{link}} deals the card it names. The card printed here used
+            to be the one card on the sheet that could not do either, which made
+            "2d8 + 8" a number you had to take on faith at the exact moment you
+            were being asked to pay for it. */}
         {request.card && (
           <div className="use-card">
             <AbilityCard
               ability={request.card}
               character={character}
               modifiers={request.modifiers}
+              onValue={cards?.openValue}
+              /* A linked card is cast as written, so it is dealt without this
+                 one's modifiers — the same as a link on any other card. */
+              onLink={cards ? (name) => cards.openCard(name) : null}
             />
           </div>
         )}

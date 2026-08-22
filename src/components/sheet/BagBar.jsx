@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
-import { ItemIcon, ItemTags, ItemValues, SlotGlyph, SlotTools } from './itemParts.jsx';
+import {
+  ItemFoot,
+  ItemIcon,
+  ItemStats,
+  ItemTags,
+  ROW_ICON,
+  SlotGlyph,
+  SlotTools,
+} from './itemParts.jsx';
 import { CarryMeter } from './parts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { BAG_SLOTS, heldItem, rarityColor } from '../../lib/items.js';
@@ -17,9 +25,10 @@ import { statMath } from '../../lib/statMath.js';
  * sits, and the arrangement never touches it: there is nowhere else for it to go.
  *
  * Two halves, side by side. On the left the slot, which reads exactly like a slot
- * in any block on the tab (the same icon tile, the same tags and value chips, the
- * same corner rail with ⓘ and the ↓ that sends it to the inventory). On the right
- * the meter, which is the answer the slot changes.
+ * in any block on the tab: the same icon tile, the same tags and value chips, and
+ * the same foot carrying what it weighs and costs beside the ⓘ and the ↓ that
+ * sends it to the inventory. On the right the meter, which is the answer the slot
+ * changes.
  *
  * The removal law holds here like everywhere else: taking the bag off sends it to
  * the inventory, and the inventory is the only place anything is destroyed. What
@@ -49,30 +58,35 @@ export default function BagBar({
   return (
     <div className="bag-bar">
       {item ? (
-        <div className="equip-slot bag-slot" style={{ borderLeftColor: rarityColor(item) }}>
+        <div className="item-row bag-row" style={{ borderLeftColor: rarityColor(item) }}>
           <button
             type="button"
-            className="equip-slot-main"
+            className="item-row-tap"
             onClick={() => setBrowsing(true)}
             title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
           >
-            <ItemIcon item={item} />
-            <span className="equip-item-body">
-              <span className="equip-item-head">
-                <span className="equip-item-name">{item.name}</span>
-                <span className="equip-slot-label">{slot.label}</span>
+            <span className="item-row-top">
+              <ItemIcon item={item} size={ROW_ICON} />
+              <span className="item-row-ident">
+                <span className="item-row-line">
+                  <span className="item-row-name">{item.name}</span>
+                  <span className="equip-slot-label">{slot.label}</span>
+                </span>
+                <ItemTags item={item} />
               </span>
-              <ItemTags item={item} />
-              <ItemValues item={item} />
             </span>
+
+            <ItemStats item={item} />
           </button>
 
-          <SlotTools
-            item={item}
-            onInfo={() => stack?.openItem(item)}
-            onRemove={readOnly ? null : () => unequip(slot.key)}
-            removeTitle={`Take off ${item.name}. It goes to your inventory, and your capacity drops.`}
-          />
+          <ItemFoot item={item}>
+            <SlotTools
+              item={item}
+              onInfo={() => stack?.openItem(item)}
+              onRemove={readOnly ? null : () => unequip(slot.key)}
+              removeTitle={`Take off ${item.name}. It goes to your inventory, and your capacity drops.`}
+            />
+          </ItemFoot>
         </div>
       ) : (
         <button

@@ -1258,12 +1258,13 @@ export function itemCost(item) {
 /**
  * Kilograms of carrying a Physique buys.
  *
- * Ten, which is the number Physique already buys everything else in: the
- * attribute tooltip says "10 Health a point", and this is 10 kilos a point
- * beside it. A fresh character stands at 4, so 40 kg is what anybody can shift
- * before they have bought a strap.
+ * Five, Jules's number, down from the ten this started at. Ten echoed the
+ * attribute tooltip's own "10 Health a point" and it put the ceiling out of
+ * reach: a fresh character stands at 4, and 40 kg is a full suit of plate with a
+ * greatsword and change. At five a starting character carries 20, so a bag is a
+ * real purchase and the weight on every item row is a number somebody adds up.
  */
-export const CARRY_PER_PHYSIQUE = 10;
+export const CARRY_PER_PHYSIQUE = 5;
 
 /** The bag on this character, or null when they are carrying it all by hand. */
 export function bagItem(character) {
@@ -1286,7 +1287,7 @@ export function bagCapacity(character) {
  * handed the character `liveCharacter` has already bent.
  *
  * Getting this wrong would be the quiet kind of wrong: a ring worth a point of
- * Physique would show 10 kg more capacity on the meter and not be in the
+ * Physique would show a whole Physique of capacity on the meter and not be in the
  * ceiling that decides whether Speed is halved.
  */
 export function carryCapacity(character, physique = character?.physique) {

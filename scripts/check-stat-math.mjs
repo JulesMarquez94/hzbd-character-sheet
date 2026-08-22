@@ -171,10 +171,10 @@ const SHEETS = [
   },
   {
     /* The one thing on the sheet that takes a stat away. This ladder stands at a
-       Physique of 7, so the ceiling is 75 kg with a satchel on and the plate,
-       the greatsword and the spares come to 84: over, and not yet the 97.5 that
-       stops them. The sheet below is the same load with eight cuirasses in the
-       pack, which is well past it. */
+       Physique of 7, so at 5 kg a point the ceiling is 40 kg with the satchel on,
+       and the plate, the greatsword and one spare hauberk come to 46.9: over, and
+       not yet the 52 that stops them. The sheet below is the same load with eight
+       cuirasses in the pack, which is well past it. */
     name: 'a load past the carry ceiling, which halves Speed',
     row: {
       xp: 7500,
@@ -187,18 +187,17 @@ const SHEETS = [
         off_hand: null,
         bag: 'canvas-satchel',
       },
-      pack: [
-        'chainmail-hauberk',
-        'full-plate-cuirass',
-        'full-plate-cuirass',
-        'healing-potion',
-        'healing-potion',
-      ],
+      pack: ['chainmail-hauberk'],
     },
     expect: (math, fail) => {
       const hit = math.speed_m.terms.find((t) => t.label === 'overloaded');
       if (!hit) fail('over the ceiling and the Speed line does not say so');
       if (hit && hit.value >= 0) fail(`overloaded is worth ${hit.value}, want a penalty`);
+      /* Halved, not stopped. Without this the fixture below is the only one of
+         the two doing any work: a load heavy enough to stop them dead also
+         carries a negative `overloaded` term, so the assertion above passes on
+         both and the line between them goes untested. */
+      if (math.speed_m.total <= 0) fail('halved to a standstill, want a Speed left to move on');
     },
   },
   {
@@ -221,12 +220,13 @@ const SHEETS = [
     },
   },
   {
-    /* A working worth a point of Physique is worth ten kilos of capacity, and
+    /* A working worth a point of Physique is worth five kilos of capacity, and
        the *ceiling Speed is judged against* has to know it. The attribute column
        is the level ledger's and carries no enchantment, so `deriveStats` has to
        weigh the load against its own bent Physique rather than against the
-       number it was handed. This load sits between the two, so a sheet that read
-       the column would halve a Speed that should not be halved. */
+       number it was handed. This load sits between the two: 37.5 kg, over the 35
+       a stored Physique of 7 allows and inside the 40 the worn one does. A sheet
+       that read the column would halve a Speed that should not be halved. */
     name: 'a load under the bent Physique and over the stored one',
     row: {
       xp: 7500,
@@ -239,14 +239,14 @@ const SHEETS = [
         off_hand: null,
         bag: null,
       },
-      pack: ['chainmail-hauberk', 'chainmail-hauberk', 'chainmail-hauberk', 'scale-armor'],
+      pack: ['healing-potion', 'healing-potion', 'healing-potion', 'healing-potion'],
       talents: [{ id: 'enchanter', rank: 3, taken: [1, 2, 4], worn: ['bodily-vigor'] }],
     },
     expect: (math, fail) => {
       const hit = math.speed_m.terms.find((t) => t.label === 'overloaded');
       if (hit) fail(`Speed penalised by ${hit.value} on a load that is inside capacity`);
-      if (math.carry_max.total !== 80) fail(`capacity is ${math.carry_max.total}, want 80`);
-      if (math.carry_used.total !== 77.5) fail(`load is ${math.carry_used.total}, want 77.5`);
+      if (math.carry_max.total !== 40) fail(`capacity is ${math.carry_max.total}, want 40`);
+      if (math.carry_used.total !== 37.5) fail(`load is ${math.carry_used.total}, want 37.5`);
     },
   },
 ];
