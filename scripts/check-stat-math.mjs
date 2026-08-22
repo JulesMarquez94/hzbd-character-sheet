@@ -1,13 +1,18 @@
 /**
- * Stat-math round trip. Proves the one promise src/lib/statMath.js makes:
- * **every math line adds up to the number the sheet is showing above it.**
+ * Stat-math round trip. Proves the two promises src/lib/statMath.js makes.
  *
- * That promise is the whole risk of the file. It mirrors `deriveStats`,
- * `shieldCapFor`, `attributeTotals`, `magicBurdenMax` and `minionDerived` term
- * for term, so the day one of those formulas changes and this does not, the
- * tooltips start quietly lying about where a number came from. A wrong
- * explanation is worse than no explanation, so the mirror is checked rather
- * than trusted.
+ * **Every math line adds up to the number the sheet is showing above it.** That
+ * promise is the whole risk of the file. It mirrors `deriveStats`, `shieldCapFor`,
+ * `attributeTotals`, `magicBurdenMax` and `minionDerived` term for term, so the
+ * day one of those formulas changes and this does not, the tooltips start quietly
+ * lying about where a number came from. A wrong explanation is worse than no
+ * explanation, so the mirror is checked rather than trusted.
+ *
+ * **And no line names a piece or a level.** What the loadout lends is named after
+ * the place it sits in and the level ledger is one term, because a reader wants
+ * the sum and not its parts: see "a term is as coarse as the answer" in
+ * statMath.js. A new source added the obvious way, one term per thing, passes the
+ * first check and breaks the second, which is exactly when somebody should be told.
  *
  *   node scripts/check-stat-math.mjs        report and exit 1 on any drift
  *   node scripts/check-stat-math.mjs --list print every line, then exit 0
@@ -36,6 +41,7 @@ import {
   syncDerived,
 } from '../src/lib/characterModel.js';
 import {
+  ITEMS,
   carriedWeight,
   carryCapacity,
   magicBurdenMax,
@@ -46,6 +52,24 @@ import { minionState } from '../src/lib/minions.js';
 import { mathLine, minionMath, statMath } from '../src/lib/statMath.js';
 
 const LIST = process.argv.includes('--list');
+
+/** Every name in the codex, so a term that is a piece rather than a place shows. */
+const PIECE_NAMES = new Set(ITEMS.map((item) => item.name));
+
+/**
+ * The lines whose terms come from walking the loadout, and which therefore have
+ * to name the place a thing sits in rather than the thing.
+ *
+ * `shield_cap` and `carry_max` are walks of nothing and are deliberately out of
+ * it. Each names one identified piece with a power of its own, the Supreme Runed
+ * hood at the bell and the bag that raises the ceiling, and there is exactly one
+ * of either on a character. `5kg Bag` would be a worse answer than the bag's own
+ * name, and `7 Trinkets` on a Shield ceiling would be a wrong one.
+ */
+const WALKS = new Set(['defense', 'avoid', 'burden_used', 'carry_used']);
+
+/** What the ledger used to print, one per level. It is `Advancement` now. */
+const PER_LEVEL = /^Level [0-9]+$/;
 
 /**
  * The level-1 spread, and the two points every odd level after hands out.
@@ -117,6 +141,9 @@ const SHEETS = [
     },
   },
   {
+    /* Three pieces of plate in three slots, which is the case the coarseness rule
+       was written for: what a reader wants from an Armor of 15 is the word
+       "Armor", not the helm and the cuirass and the greaves added up by hand. */
     name: 'a full Heavy Armor set and a Duelist holding a one-hander',
     row: {
       xp: 44000,
@@ -129,6 +156,17 @@ const SHEETS = [
         off_hand: null,
       },
       talents: [{ id: 'duelist', rank: 3, taken: [1, 2, 4] }],
+    },
+    expect: (math, fail) => {
+      const armor = math.defense.terms;
+      if (armor.length !== 1) fail(`Armor is ${armor.length} terms, want 1`);
+      if (armor[0]?.label !== 'Armor') fail(`Armor term is "${armor[0]?.label}", want "Armor"`);
+      if (armor[0]?.value !== 15) fail(`Armor term is worth ${armor[0]?.value}, want 15`);
+
+      /* And the same three pieces on the weight meter, with the sword beside
+         them: two places, in the order the equipment map stores them. */
+      const load = math.carry_used.terms.map((t) => `${t.value}kg ${t.label}`).join(' + ');
+      if (load !== '32kg Armor + 1.5kg Weapons') fail(`the load reads "${load}"`);
     },
   },
   {
@@ -168,6 +206,12 @@ const SHEETS = [
       const named = math.instinct.terms.filter((t) => t.label === 'Primal Sense');
       if (named.length !== 1) fail(`Primal Sense named ${named.length} times, want 1`);
       if (named[0]?.value !== 1) fail(`Primal Sense worth ${named[0]?.value}, want 1`);
+
+      /* This ladder spends six points on Instinct across five levels, and they
+         are one term. A named source stays named beside it, which is the line the
+         coarseness rule draws: a working is one thing you can go and take off. */
+      const line = mathLine(math.instinct);
+      if (line !== '4 base + 6 Advancement + 1 Primal Sense = 11') fail(`Instinct reads "${line}"`);
     },
   },
   {
@@ -357,6 +401,16 @@ for (const sheet of SHEETS) {
        `unaccounted` term here means a source exists that statMath cannot see. */
     const ghost = sum.terms.find((t) => t.label === 'unaccounted');
     if (ghost) fail(`${key}: ${ghost.value} unaccounted for (${line})`);
+
+    /* And the second promise. A term named after a helm is a loadout walk that
+       forgot to group, and a term named after a level is the attribute ledger
+       printing itself out again. Both add up and both are still wrong. */
+    for (const { label } of sum.terms) {
+      if (WALKS.has(key) && PIECE_NAMES.has(label)) {
+        fail(`${key}: names the piece "${label}" (${line})`);
+      }
+      if (PER_LEVEL.test(label)) fail(`${key}: names "${label}" (${line})`);
+    }
   }
 
   for (const minion of minionState(shown)) {

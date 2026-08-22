@@ -49,9 +49,11 @@ export default function BagBar({
   const stack = useCardStack();
   const [slot] = BAG_SLOTS;
 
-  /* What is filling the meter, named per item, for its hover. The same read the
-     armor block makes for Magic Burden, and it matters more here: forty things
-     weigh, where six of them are worked. */
+  /* What is filling the meter, named per place, for its hover. The same read the
+     armor block makes for Magic Burden, and the grouping matters more here: forty
+     things weigh, where six of them are worked. Each of the forty already prints
+     its own weight on its own row, so the meter answers the question the rows
+     cannot, which is which place the kilos are in. */
   const carryMath = useMemo(() => statMath(character).carry_used, [character]);
   const item = heldItem(character, equipment[slot.key]);
 

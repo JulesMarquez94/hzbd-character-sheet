@@ -48,7 +48,7 @@ export default function ArmorBlock({
   const fullSet = armorSetName(character);
   const setInfo = fullSet ? ARMOR_SETS[fullSet] : null;
   const worn = ARMOR_SLOTS.filter((slot) => equipment[slot.key]).length;
-  /* What is filling the meter, named per piece, for its hover. */
+  /* What is filling the meter, named per place, for its hover. */
   const burdenMath = useMemo(() => statMath(character).burden_used, [character]);
 
   function equipItem(slotKey, item) {
@@ -71,10 +71,11 @@ export default function ArmorBlock({
       </div>
 
       {/* ---------- MAGIC BURDEN ---------- */}
-      {/* The piece-by-piece breakdown on hover, which matters more on this tab
-          than anywhere: this is where a loadout is chosen, and "what is eating my
-          capacity" is the question somebody standing over the armor slots is
-          asking. See statMath.js. */}
+      {/* The breakdown on hover, which matters more on this tab than anywhere:
+          this is where a loadout is chosen, and "what is eating my capacity" is
+          the question somebody standing over the armor slots is asking. It answers
+          with the places rather than the pieces, because the piece is already on
+          the row underneath. See statMath.js. */}
       <BurdenMeter
         character={character}
         foot="Capacity is Level + Mind + 10."

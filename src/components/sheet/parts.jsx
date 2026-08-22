@@ -7,8 +7,10 @@ import { useUnit } from '../../context/units.js';
  * Block 1's larger, read-only Physique/Instinct/Mind tile.
  *
  * `math` is the sum behind the number, printed under `info` on hover: the 4
- * everybody starts at, the levels that raised it and whatever is worked into
- * what you wear. See statMath.js.
+ * everybody starts at, what advancement spent on it and whatever is worked into
+ * what you wear. The levels are one `Advancement` term and not one term each,
+ * because which level bought which point is the Advancement tab's question. See
+ * statMath.js.
  */
 export function AttrTile({ label, value, color, info, math = null }) {
   const { ref, tipProps, tip } = useHoverTip(info, math);
@@ -183,10 +185,13 @@ export function ResourceBar({ label, current, max, color, onClick, title, poison
  * way, because that is the one number on this sheet meant to be able to be
  * wrong, and so the one that must be said out loud.
  *
- * `math` is the piece-by-piece sum of what is being carried, which is the one
+ * `math` is where the worked magic on this character is sitting, which is the one
  * breakdown on the sheet that answers a question the reader is actually asking
  * when they look: not "why is my capacity 24" but "what is eating it". So the
  * *used* half is the line here, and the capacity stays in the words above it.
+ *
+ * A place per term and not a piece per term, so a ring and a blade and three
+ * loops come to `4 Trinkets + 2 Weapons + 3 Belt`. See statMath.js.
  */
 export function BurdenMeter({ character, info, foot = null, math = null }) {
   const max = magicBurdenMax(character);
@@ -241,7 +246,10 @@ export function BurdenMeter({ character, info, foot = null, math = null }) {
  * fill running past the mark is the whole readout, and how close it is to the end
  * of the track is how close the character is to standing still.
  *
- * `math` is the sum behind the number, per item, for the hover — see statMath.js.
+ * `math` is the sum behind the number for the hover, one term per place rather
+ * than per thing: forty things weigh and each already prints its own weight on
+ * its own row, so what the meter is asked is which of the six places is eating
+ * the capacity. See statMath.js.
  */
 export function CarryMeter({ character, foot = null, math = null }) {
   const unit = useUnit();

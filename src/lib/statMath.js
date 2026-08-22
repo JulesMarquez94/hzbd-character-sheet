@@ -11,7 +11,7 @@
  * So every tile carries its arithmetic on hover: one extra line under the words
  * that already say what the stat is for, reading
  *
- *     5 Instinct + 2 Chainmail Cuirass + 3 Resilience + 1 Duelist = 11
+ *     5 Instinct + 2 Armor + 3 Resilience + 1 Duelist = 11
  *
  * ------------------------------------------------------------------ the rules
  * **This file computes nothing the sheet does not already compute.** Every sum
@@ -35,15 +35,35 @@
  * `grantsFrom`'s own `dedupe`, so a math line can never credit Primal Sense twice
  * for a point it only granted once. See the note in enchanting.js.
  *
- * Gear is the other way round and deliberately so: two rings of Armor are two
- * pieces of Armor, so identical pieces are folded into one term with a count
- * (`Silver Ring x2`) rather than deduplicated.
+ * **A term is as coarse as the answer.** What the loadout lends is named by the
+ * *place* it is lent from and never piece by piece: `32kg Armor`, not the helm,
+ * the cuirass and the greaves one after another. Three pieces is a line a reader
+ * has to add up to learn the one thing they opened it for, which is that the armor
+ * is what is heavy, and a pack of forty things is not a line at all. The same rule
+ * collapses the level ledger, where six levels each bought a point of the same
+ * attribute and `6 Advancement` is the whole of what a reader can act on.
+ *
+ * Named sources are the exception and stay named. A working, a talent and a card
+ * on the tracker are each one thing you can go and take off, so each keeps its own
+ * name. Where two of those really do collide, which is the same card on the
+ * tracker twice because two different people cast it, they fold into one term with
+ * a count (`Barkskin x2`) rather than printing the same word twice.
+ *
+ * And so is a piece that was never one of a list. Two lines name a single item:
+ * the Supreme Runed hood that raises the Shield ceiling, and the bag that raises
+ * the carry one. There is exactly one of either on a character, so a place would
+ * be a worse answer than the name and `7 Trinkets` on a Shield ceiling would be a
+ * wrong one. `WALKS` in scripts/check-stat-math.mjs is where that line is drawn,
+ * and everything not in it is checked for naming a piece.
  */
 
 import { ATTRIBUTE_BASE, ATTRIBUTE_KEYS } from './attributes.js';
 import { SHIELD_SHARE, karmaCap, levelForXp, shieldCapFor } from './characterModel.js';
 import {
+  ARMOR_SLOTS,
+  BAG_SLOT_KEY,
   CARRY_PER_PHYSIQUE,
+  WEAPON_SLOTS,
   armorSetName,
   bagItem,
   carryCapacity,
@@ -94,9 +114,11 @@ const POINTS_BASE = 6;
  * A term is `{ value, label }`: what it is worth, and what lent it. A sum is
  * `{ terms, total, suffix }`.
  *
- * The label is the source's own name and never a formula. `Chainmail Cuirass`,
- * `Primal Sense`, `Duelist`, `Level 3`. Where a stat is bought by an attribute
- * rather than by a thing, the attribute is the source and is named as one.
+ * The label is what the reader would go to, and never a formula. `Primal Sense`,
+ * `Duelist`, `Wildheart` for a named source; `Armor`, `Trinkets`, `Pack` for a
+ * place the loadout lends from; `Advancement` for the level ledger. Where a stat is
+ * bought by an attribute rather than by a thing, the attribute is the source and is
+ * named as one.
  */
 function term(value, label) {
   return { value, label };
@@ -110,9 +132,12 @@ function kept(terms) {
 /**
  * Identical labels merged, with a count when more than one was folded in.
  *
- * Only gear ever collides: two Silver Rings are two pieces and both count, so
- * they are summed into one term rather than printed as two rows saying the same
- * word. Everything else arrives already unique.
+ * Gear no longer collides here: a place is summed into one term before it arrives,
+ * so `32kg Armor x3` can never be printed. What still collides is a named source
+ * genuinely on the sheet twice, which is one card on the tracker cast by two
+ * different people. `Barkskin x2` is two rows, both real, and the same-source law
+ * does not touch them because the sources are not the same. Everything else
+ * arrives already unique.
  */
 function fold(terms) {
   const order = [];
@@ -202,10 +227,15 @@ export function mathLine(math) {
  * spent on it, what your blood carries and whatever is worked into what you wear.
  *
  * The first three are `attributeTotals`' own sum, walked in the same order it
- * walks and labelled by the level that bought each point, so the line reads as
- * the level ledger with the levels named. The fourth is the bend `liveCharacter`
- * applies without storing: the tile is showing it, so the line has to account
- * for it.
+ * walks. The fourth is the bend `liveCharacter` applies without storing: the tile
+ * is showing it, so the line has to account for it.
+ *
+ * The ledger is **one term**. It used to be one per level, and a level 11 spread
+ * across the same attribute read `4 base + 2 Level 1 + 1 Level 3 + 1 Level 7 +
+ * 1 Level 9 + 1 Level 11`: six terms to say the one thing a reader came for, which
+ * is that six of these points were bought and are already spent. Which level
+ * bought which point is the Advancement tab's own question and the ledger there
+ * answers it level by level, so the term is named after the tab.
  *
  * `stored` is the character with that bend taken back off. `levelPicksState` reads
  * the three columns to recover a level-1 spread that was never recorded, and the
@@ -219,15 +249,17 @@ function attributeMath(character, stored, level, sources) {
   for (const key of ATTRIBUTE_KEYS) {
     const terms = [term(ATTRIBUTE_BASE, 'base')];
 
+    let advanced = 0;
     for (const [at, entry] of levelsOf(state.picks)) {
       if (levelGrants(at).boosts && entry.major && entry.minor) {
-        if (entry.major === key) terms.push(term(2, `Level ${at}`));
-        if (entry.minor === key) terms.push(term(1, `Level ${at}`));
+        if (entry.major === key) advanced += 2;
+        if (entry.minor === key) advanced += 1;
       }
       // An odd level raises two, so a level can credit this attribute once and
-      // the next one too. Each point is its own term, as the spread's two are.
-      if ((entry.raised ?? []).includes(key)) terms.push(term(1, `Level ${at}`));
+      // the next one too. Every point the ledger spent here lands in the one term.
+      if ((entry.raised ?? []).includes(key)) advanced += 1;
     }
+    terms.push(term(advanced, 'Advancement'));
 
     if (lineage[key]) terms.push(term(lineage[key], stored.lineage));
 
@@ -252,11 +284,66 @@ function levelsOf(picks) {
     .sort((a, b) => a[0] - b[0]);
 }
 
-/* -------------------------------------------------------------- what gear is */
+/* ------------------------------------------------------- where a thing sits */
 
-/** One term per worn piece carrying the field, named after the piece. */
-function gearTerms(items, field) {
-  return items.map((item) => term(Math.floor(Number(item[field]) || 0), item.name));
+/**
+ * The places a carried thing can be, each with what is in it: what is worn, what
+ * is in hand, the bag, the trinkets, the loops and the pack.
+ *
+ * A place is what the loadout's terms are named after rather than the things in
+ * it. See "a term is as coarse as the answer" at the top of this file: the reader
+ * wants the sum, and the place is also the block they would go to to change it.
+ *
+ * The order is `magicBurdenUsed`'s and `carriedWeight`'s own, which is the stored
+ * equipment map, then the trinkets, then the loops, then the pack. This is still a
+ * mirror and the mirror is checked.
+ *
+ * The belt and the pack are asked for rather than assumed, because the three walks
+ * this serves stop in different places: an item's own numbers reach what is worn,
+ * worked magic reaches the loops as well, and weight reaches everything.
+ */
+function placesOf(character, { belt = false, pack = false } = {}) {
+  const worn = normalizeEquipment(character?.equipment);
+  const held = (ids) => ids.map((id) => heldItem(character, id)).filter(Boolean);
+
+  const places = [
+    ['Armor', held(ARMOR_SLOTS.map(({ key }) => worn[key]))],
+    ['Weapons', held(WEAPON_SLOTS.map(({ key }) => worn[key]))],
+    ['Bag', held([worn[BAG_SLOT_KEY]])],
+    ['Trinkets', held(normalizeTrinkets(character?.trinkets))],
+  ];
+
+  if (belt) {
+    places.push(['Belt', held(normalizeBelt(character?.belt).map((entry) => entry?.id))]);
+  }
+  if (pack) {
+    places.push([
+      'Pack',
+      held(normalizePack(character?.pack).filter((entry) => !isCustomEntry(entry))),
+    ]);
+  }
+  return places;
+}
+
+/**
+ * One term per place, worth whatever everything in it comes to.
+ *
+ * Summed here rather than left to `fold`, so a place is one term by construction
+ * and never carries a count: `32kg Armor x3` would read as though the armor were
+ * worth 32 three times over. An empty place comes to nothing and `kept` drops it.
+ */
+function placeTerms(places, value) {
+  return places.map(([label, items]) =>
+    term(
+      items.reduce((total, item) => total + (Number(value(item)) || 0), 0),
+      label
+    )
+  );
+}
+
+/** One term per place, worth the whole-number `field` of everything in it. */
+function gearTerms(places, field) {
+  return placeTerms(places, (item) => Math.floor(Number(item[field]) || 0));
 }
 
 /** One term per enchantment carrying the rider, named after the working. */
@@ -312,6 +399,7 @@ export function statMath(character) {
   const sources = characterGrantSources(character);
   const grants = characterGrants(character);
   const items = wornItems(character);
+  const places = placesOf(character);
 
   /* The row as it is stored, for the one reader that must not see the bend. */
   const stored = { ...character };
@@ -352,7 +440,7 @@ export function statMath(character) {
   /* ---- Armor, and the Defense it is sometimes half of ---- */
   math.defense = settle(
     [
-      ...gearTerms(items, 'armor'),
+      ...gearTerms(places, 'armor'),
       ...grantTerms(sources, 'armor'),
       ...riderTerms(character.effects, 'armor'),
       ...feralArmorFrom(character, i).map((row) => term(row.armor, row.talent.name)),
@@ -360,7 +448,7 @@ export function statMath(character) {
     Math.floor(Number(character.defense) || 0)
   );
 
-  math.avoid = avoidMath(character, items, { physique: p, instinct: i, mind: m });
+  math.avoid = avoidMath(character, places, { physique: p, instinct: i, mind: m });
 
   /* ---- The three an attribute buys outright ---- */
   math.initiative = settle(
@@ -504,7 +592,7 @@ function shieldMath(character, items, mind) {
  * Armor is the one set that adds instead of replacing, and its rider reads the
  * same Armor stat the tile beside it shows.
  */
-function avoidMath(character, items, { physique, instinct, mind }) {
+function avoidMath(character, places, { physique, instinct, mind }) {
   const set = armorSetName(character);
   const reflex = physique + instinct;
   const grit = instinct + mind;
@@ -513,7 +601,7 @@ function avoidMath(character, items, { physique, instinct, mind }) {
   if (set === 'Light Armor') base = term(reflex, 'Reflex (Light Armor)');
   if (set === 'Magic Armor') base = term(grit, 'Grit (Magic Armor)');
 
-  const terms = [base, ...gearTerms(items, 'defense')];
+  const terms = [base, ...gearTerms(places, 'defense')];
 
   if (set === 'Heavy Armor') {
     const armor = Math.floor(Number(character.defense) || 0);
@@ -535,13 +623,13 @@ function avoidMath(character, items, { physique, instinct, mind }) {
 }
 
 /**
- * What each carried thing weighs, named after the thing.
+ * What each place on the character carries in worked magic.
  *
  * `magicBurdenUsed`'s own walk, in its own order: what is worn and held, then the
  * trinkets, then every belt loop. Two rings carrying the same working are two
- * terms folded into one with a count, because burden is what a thing weighs
- * rather than what it does and both of them weigh. See the stacking note in
- * enchanting.js.
+ * points on the meter and both land in the Trinkets term, because burden is what a
+ * thing weighs rather than what it does and both of them weigh. See the stacking
+ * note in enchanting.js.
  *
  * Not `carriedItems`, which is a question that only looks the same: that one is
  * what an enchantment *reaches* and this is what the meter *weighs*, and the two
@@ -549,18 +637,11 @@ function avoidMath(character, items, { physique, instinct, mind }) {
  * what keeps a drift visible instead of silent.
  */
 function burdenTerms(character) {
-  const resolve = (id) => heldItem(character, id);
-
-  return [
-    ...wornItems(character),
-    ...normalizeBelt(character?.belt)
-      .map((entry) => resolve(entry?.id))
-      .filter(Boolean),
-  ].map((item) => term(itemBurden(item), item.name));
+  return placeTerms(placesOf(character, { belt: true }), itemBurden);
 }
 
 /**
- * One term per thing carried, named after the thing.
+ * What each place on the character weighs.
  *
  * The mirror of `carriedWeight` in items.js, and it has to walk the same four
  * places in the same order: the equipment map, the trinkets, the belt and the
@@ -568,25 +649,14 @@ function burdenTerms(character) {
  * line above: worked magic stops at the belt and weight does not care where a
  * thing is sitting.
  *
- * Duplicates are left to `fold`, which sums them under one label and counts them,
- * so three potions read `Healing Potion x3` rather than as three rows of the same
- * word. That is the gear rule and not the enchantment rule: three potions really
- * are three potions of weight.
+ * It is also the line that most needed a place rather than a thing. Forty things
+ * weigh where six of them are worked, so this used to be the longest breakdown on
+ * the sheet by far, and every one of the forty already prints its own weight on
+ * its own row. What the meter is asked is which of the six places is eating the
+ * capacity, and six terms is the whole answer.
  */
 function weightTerms(character) {
-  const worn = normalizeEquipment(character?.equipment);
-  const resolve = (id) => heldItem(character, id);
-
-  return [
-    ...Object.keys(worn).map((slot) => resolve(worn[slot])),
-    ...normalizeTrinkets(character?.trinkets).map(resolve),
-    ...normalizeBelt(character?.belt).map((entry) => resolve(entry?.id)),
-    ...normalizePack(character?.pack)
-      .filter((entry) => !isCustomEntry(entry))
-      .map(resolve),
-  ]
-    .filter(Boolean)
-    .map((item) => term(round(itemWeight(item)), item.name));
+  return placeTerms(placesOf(character, { belt: true, pack: true }), itemWeight);
 }
 
 /* ---------------------------------------------------------------- a creature */
