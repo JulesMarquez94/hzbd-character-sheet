@@ -122,7 +122,7 @@ export function lineageSettled(character) {
   const choices = character?.choices ?? {};
   if (openPicks(lineage, choices) > 0) return false;
   return lineageCards(lineage, choices).every(
-    (card) =>
+    ({ card }) =>
       !card.choice || card.choice.options.some((option) => option.id === choices[card.id])
   );
 }
@@ -622,8 +622,8 @@ export function usedSkillTags() {
 
 /**
  * What one level's skill actually puts on the sheet: the skill, and the spell it
- * taught if it taught one. The same reading `backgroundState.cards` is, for the
- * other half of the ledger.
+ * taught if it taught one, each as a `{ card, modifiers }` row. The same reading
+ * `backgroundState.cards` is, for the other half of the ledger.
  */
 export function learnedCardsAt(character, level) {
   const skill = getBackgroundSkill(normalizeLevelPicks(character?.level_picks)[level]?.skill);

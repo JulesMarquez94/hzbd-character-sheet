@@ -5,6 +5,7 @@ import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { castModifier } from '../../lib/cardText.js';
 import PickBlock from './PickBlock.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import {
@@ -166,16 +167,16 @@ export default function LineagePick({ value, character, patch, step = null, read
             </p>
           ) : (
             <div className="talent-rung-cards">
-              {held.map((card) => {
+              {held.map(({ card, modifiers }) => {
                 const picked = pickedOn(card, choices);
                 return (
                   <div className="card-choice-row" key={card.id}>
                     <CardBrief
                       card={card}
                       character={character}
-                      modifiers={picked ? { choice: picked } : null}
+                      modifiers={modifiers}
                       art={lineage.art}
-                      onOpen={() => stack?.openCard(card, picked ? { choice: picked } : null)}
+                      onOpen={() => stack?.openCard(card, modifiers)}
                     />
                     {card.choice && (
                       <ChoicePicker
@@ -328,8 +329,21 @@ function LineageChooser({
               {answered} of {wanted} {pool && asks.length === 0 ? 'taken' : 'answered'}
             </span>
             <span className="spacer" />
-            <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
-              Done
+            {/* Shut until the blood has been settled, the same way the skill
+                windows are: a lineage with a spell it has not named is a card
+                promising something the sheet cannot print yet. */}
+            <button
+              type="button"
+              className="btn btn-take btn-sm"
+              disabled={answered < wanted}
+              title={
+                answered < wanted
+                  ? `${wanted - answered} still open on ${shown.name}`
+                  : undefined
+              }
+              onClick={onClose}
+            >
+              {answered < wanted ? `${wanted - answered} still open` : 'Done'}
             </button>
           </>
         ) : shown ? (
@@ -393,30 +407,18 @@ function LineageChooser({
             </section>
           )}
 
-          {learns.map((card) => {
-            const picked = pickedOn(card, choices);
-            return (
-              <section className="talent-page-rank" key={card.id}>
-                <div className="talent-page-rank-head">
-                  <span className="talent-page-rank-label">
-                    {shown.name} · {card.choice.label}
-                  </span>
-                  <span className="talent-page-rank-note">
-                    {picked ? `${picked.label}, yours` : 'Nothing learned yet'}
-                  </span>
-                </div>
-                <p className="talent-page-aside">{card.choice.prompt}</p>
-                <LearnPicker
-                  card={card}
-                  picked={picked}
-                  character={character}
-                  art={shown.art}
-                  readOnly={readOnly}
-                  onPick={(optionId) => onAnswer(card.id, optionId)}
-                />
-              </section>
-            );
-          })}
+          {learns.map((card) => (
+            <LearnSection
+              key={card.id}
+              card={card}
+              source={shown.name}
+              picked={pickedOn(card, choices)}
+              character={character}
+              art={shown.art}
+              readOnly={readOnly}
+              onPick={(optionId) => onAnswer(card.id, optionId)}
+            />
+          ))}
 
           {plain.length > 0 && (
             <section className="talent-page-rank">
@@ -607,6 +609,41 @@ function PoolPicker({ lineage, character, readOnly, onTake }) {
 }
 
 /**
+ * One question whose answer is a *card*, laid out as its own section: what asked
+ * it, what it wants, and the shelf to answer it off.
+ *
+ * Three windows raise this and it was written out three times before. The copies
+ * had already begun to drift, which is the whole argument: a spell shelf should
+ * not look like a different thing depending on which window you reached it
+ * through.
+ */
+export function LearnSection({ card, source = null, picked, character, art, readOnly, onPick }) {
+  return (
+    <section className="talent-page-rank">
+      <div className="talent-page-rank-head">
+        <span className="talent-page-rank-label">
+          {source ?? card.name} · {card.choice.label}
+        </span>
+        <span className="talent-page-rank-note">
+          {picked ? `${picked.label}, yours` : 'Nothing learned yet'}
+        </span>
+      </div>
+      <p className="talent-page-aside">{card.choice.prompt}</p>
+      {/* The asking card's own picture stands behind a spell that has none, the
+          way a lineage's plate does on its shelf. */}
+      <LearnPicker
+        card={card}
+        picked={picked}
+        character={character}
+        art={art}
+        readOnly={readOnly}
+        onPick={onPick}
+      />
+    </section>
+  );
+}
+
+/**
  * The spell an Innate card teaches, chosen off the school's Novice shelf.
  *
  * A word can be picked out of a chip row. A spell cannot: what a Scorchbound is
@@ -625,6 +662,11 @@ function PoolPicker({ lineage, character, readOnly, onTake }) {
  */
 export function LearnPicker({ card, picked, character, art, readOnly, onPick }) {
   const stack = useCardStack();
+  /* What the card being chosen will be cast with, which for every shelf in the
+     game so far is "your highest Attribute". A spell read off this wall has to
+     be the spell you get, so the rider the granting card imposes is on the
+     options as well as on the answer. */
+  const modifiers = castModifier(card.choice);
 
   return (
     <div className="card-brief-wall">
@@ -637,7 +679,8 @@ export function LearnPicker({ card, picked, character, art, readOnly, onPick }) 
             character={character}
             art={art}
             held={held}
-            onOpen={() => stack?.openCard(option.card)}
+            modifiers={modifiers}
+            onOpen={() => stack?.openCard(option.card, modifiers)}
           >
             {!readOnly && (
               <button

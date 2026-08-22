@@ -53,7 +53,7 @@
  * `{stat}`, and `stat: 'instinct'` below is only the default a holder with no
  * other claim rolls with — a set that teaches these off another attribute
  * carries `cast` on its loadout and the same card prints that attribute instead
- * (see castModifier in loadouts.js). Neither set that teaches them names one, so
+ * (see castModifier in cardText.js). Neither set that teaches them names one, so
  * neither carries `cast` yet.
  *
  * -------------------------------------------------------------- what is whose

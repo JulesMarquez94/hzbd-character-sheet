@@ -2220,6 +2220,37 @@ So: `{stat}` unless the attribute is genuinely fixed. The Blood Tithe riders are
 the exception in the current codex, and they are written `{physique}` on
 purpose, because what a tithe costs is paid by the body whatever you cast with.
 
+### And "your highest Attribute"
+
+Ten cards do not name an attribute at all, they name a rule. Six lineage traits
+and three skills hand over a spell "cast with your highest Attribute", and DRAGON
+BREATH rolls off it itself.
+
+That rule is written `highest` and it goes exactly where an attribute key would:
+
+| Where | Written | What it means |
+| ----- | ------- | ------------- |
+| on a card | `stat: HIGHEST` | this card rolls off its holder's best attribute |
+| on a choice that teaches a card | `cast: HIGHEST` | the card it hands over does |
+| on a loadout | `cast: 'instinct'` | the older, ordinary form: a named attribute |
+
+It is not a fourth attribute and nothing on a sheet holds a value for it.
+`castStat` in `src/lib/cardText.js` settles it against whoever is holding the
+card, at the moment the card is printed, so the sheet's own `{stat}` and
+`[[2d6 + 2*stat]]` do the rest: DRAGON BREATH reads *Physique roll (+8)* and
+`2d6 + 16` for a Physique 8, and *Mind (+9)* and `2d6 + 18` for a Mind 9. A
+spell an Innate card hands over prints the same way instead of the Mind the codex
+printed it for.
+
+**A tie goes to the printed order**, Physique then Instinct then Mind. Two
+attributes at 6 roll the same 6 whichever is named, so the tie decides a word and
+not a number, and 6/6/4 spreads are common. Say the word if the player should get
+to choose which one is named.
+
+The cards that grant a spell keep saying "your highest Attribute" in prose rather
+than naming today's winner, because what they state is the rule and the rule
+outlives the spread: the *spell* is where the live numbers belong.
+
 ## Still wanted: a statuses tab
 
 The glossary now holds every term the new cards use, so `touch`, `rooted`,
@@ -3041,6 +3072,11 @@ than V4's 5, which is what `deriveStats` already computes; Movement Speed is in
 meters rather than points; and the V4 casting-attribute question is gone, because
 every spell a lineage grants is now cast with "your highest Attribute". Wisdom
 and Fortitude are off the sheet as options with it.
+
+"Your highest Attribute" is wired, as of 2026-08-22: an Innate trait hands its
+spell over with `cast: HIGHEST` on it and DRAGON BREATH carries `stat: HIGHEST`,
+so both print the attribute their holder actually stands highest in rather than
+the words. See "And your highest Attribute" above.
 
 ### Wildkin asks for cards, not for a value
 

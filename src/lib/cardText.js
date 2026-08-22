@@ -7,7 +7,7 @@
  * on the value can show where every part of it came from.
  */
 
-import { ATTRIBUTES as ATTRIBUTE_INFO } from './attributes.js';
+import { ATTRIBUTES as ATTRIBUTE_INFO, HIGHEST, highestAttribute } from './attributes.js';
 
 /* The three attributes plus the `level` pseudo-attribute, keyed for token
    lookup. Labels and colours come from attributes.js so a rename or recolour
@@ -37,12 +37,58 @@ const ALIASES = {
  * Which attribute a token names. `stat` is the card's own attribute — the one
  * the weapon attacks with — so one body can be shared by weapons that key off
  * different attributes.
+ *
+ * It is handed a *key*, never HIGHEST: this function has no character to measure
+ * one against, and the fallback it would take is Instinct, which is a wrong
+ * answer rather than a missing one. Everything that renders resolves the stat
+ * first (see castStat), so a HIGHEST arriving here is a call site that forgot,
+ * and it says so rather than quietly printing somebody else's attribute.
  */
 export function attributeOf(word, defaultStat = 'instinct') {
+  if (import.meta.env?.DEV && defaultStat === HIGHEST) {
+    console.error(
+      '[hazebound] attributeOf was handed the highest-Attribute rule instead of an attribute, ' +
+        'so this card is about to print Instinct. Resolve it with castStat first.'
+    );
+  }
   const key = String(word || '').toLowerCase();
   if (key === 'stat' || key === '') return ATTRIBUTES[defaultStat] ?? ATTRIBUTES.instinct;
   const resolved = ALIASES[key] ?? key;
   return ATTRIBUTES[resolved] ?? null;
+}
+
+/* ---------------------------------------------------- what a card rolls with
+ * Three answers, in the order they win. The card's own `stat` is the bottom of
+ * the pile, whatever the codex printed it with; a source that casts off another
+ * attribute overrides it with a rider; and a source that casts off "your
+ * highest Attribute" overrides it with a *rule* rather than a key.
+ */
+
+/**
+ * The rider a source imposes on the cards it hands out: `{ cast: 'instinct' }`
+ * becomes `{ stat: 'instinct' }`, and the card prints that attribute's numbers
+ * instead of the ones it was written with.
+ *
+ * A Mycomancer's loadout carries one (see loadouts.js), and so does the choice
+ * on every card that teaches a spell "cast with your highest Attribute" — INNATE
+ * X in lineages.js and INNATE SPELL X in backgrounds.js, where the cast is
+ * HIGHEST.
+ */
+export function castModifier(spec) {
+  return spec?.cast ? { stat: spec.cast } : null;
+}
+
+/**
+ * A stat resolved against whoever is about to roll it.
+ *
+ * Every stat but one is already a key and comes straight back out. HIGHEST is
+ * the exception: it is an instruction, and this is the one place it becomes an
+ * attribute. Called wherever a stat first meets its character — `resolveValue`
+ * for every number, `CardText` and `cardGist` for every printed name — so
+ * nothing downstream of those ever sees the word.
+ */
+export function castStat(stat, character) {
+  return stat === HIGHEST ? highestAttribute(character) : stat;
 }
 
 /* ------------------------------------------------------------ damage types */
@@ -121,7 +167,11 @@ const STAT_TERM = /^(?:(\d+)\s*[x*×]\s*)?([a-z]+)$/i;
  * Dice are left as dice; they are rolled at the table, not by the sheet.
  * Everything else is summed into the single flat number that follows them.
  */
-export function resolveValue(expression, character, defaultStat = 'instinct', options = {}) {
+export function resolveValue(expression, character, printedStat = 'instinct', options = {}) {
+  /* "Your highest Attribute" is worked out here rather than by every caller:
+     this is the one function that turns a stat into a number, so a card cast off
+     the highest can never print one attribute's name over another's value. */
+  const defaultStat = castStat(printedStat, character);
   const empower = Math.max(0, Number(options.empower) || 0);
   const elevate = Math.max(0, Number(options.elevate) || 0);
   /* And a flat number added to the total — damage something else on the sheet is
@@ -236,8 +286,8 @@ export function cardBanner(card) {
  */
 export function cardGist(card, { character = null, modifiers = null } = {}) {
   // A set that casts off another attribute overrides what the card is printed
-  // with; see castModifier in loadouts.js.
-  const stat = modifiers?.stat ?? card?.stat ?? 'instinct';
+  // with; see castModifier above.
+  const printedStat = modifiers?.stat ?? card?.stat ?? 'instinct';
   /* And a card somebody *else* on your sheet plays resolves against them. A
      draconic ally's Wyrm Bolt is "2d4 + Mind", and the Mind it means is the
      ally's, not its bonded's — see minionModifiers in minions.js. Nothing but
@@ -249,6 +299,9 @@ export function cardGist(card, { character = null, modifiers = null } = {}) {
   const elevate = Number(modifiers?.elevate) || 0;
   const bonus = Number(modifiers?.bonus) || 0;
   const choice = modifiers?.choice ?? null;
+  /* And "your highest" is whoever's card this is: an ally's Wyrm Bolt reads the
+     ally's best attribute, the same way its numbers are the ally's. */
+  const stat = castStat(printedStat, who);
   const context = { character: who, stat, damage, choice };
 
   return String(card?.body ?? '')

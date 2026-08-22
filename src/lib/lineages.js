@@ -131,8 +131,13 @@
  * HEART printed its own price.
  *
  * DRAGON BREATH and the six INNATE cards roll "your highest Attribute", which
- * is not one of the three a `[[…]]` marker can resolve, so both print their
- * formula as prose rather than a live number a Mind character would read wrong.
+ * is not one of the three. It is a rule, and `HIGHEST` is that rule written as a
+ * stat: the card carries it in place of a key and `castStat` in cardText.js
+ * settles it against whoever is holding the card, so DRAGON BREATH prints a live
+ * `[[2d6 + 2*stat]]` off the attribute this character really stands highest in,
+ * and the spell an INNATE card hands over prints that same attribute instead of
+ * the Mind the codex printed it for. Both used to print their formula as prose,
+ * because there was nothing here that could resolve the word.
  *
  * ------------------------------------------------------ one id had to change
  * **DRAGON BREATH is `dragon-breath-lineage`, not `dragon-breath`.** The Draconic
@@ -164,7 +169,9 @@
  * every `{{link}}` and every `getCard` already hands back.
  */
 
+import { HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
+import { castModifier } from './cardText.js';
 import { SPELLS } from './spells.js';
 
 /** The families a lineage belongs to, and what it is good at. */
@@ -284,6 +291,12 @@ function innate(school) {
       prompt: `Which Novice ${school} Spell does your blood know?`,
       placeholder: `a Novice ${school} Spell`,
       learns: true,
+      /* And what it is cast with, which is the other half of what this card
+         promises. Every spell in the codex is printed for Mind; the one this
+         card hands over rolls off whichever attribute its holder stands highest
+         in, so it goes over with that rider on it and prints the numbers they
+         will really roll. See castModifier in cardText.js. */
+      cast: HIGHEST,
       options: shelf.map((spell) => ({ id: spell.id, label: spell.name, card: spell })),
     },
     /* `{choice}` rather than the cell's own words, and the placeholder above is
@@ -586,10 +599,15 @@ const LINEAGE_CODEX = [
         ap: 4,
         wp: 2,
         summary: 'A 6-meter cone: 2d6 + twice your highest Attribute, in your scale colour.',
+        /* "Highest Attribute" twice over in the designer's cell, so this card is
+           written off {stat} like every other and its stat is the rule rather
+           than a key: it prints the attribute its holder actually stands highest
+           in, and the damage that attribute buys. See castStat in cardText.js. */
+        stat: HIGHEST,
         body:
           'You breathe a torrent of magical energy in front of you, affecting all in a 6-meter (20-foot) cone.\n\n' +
-          'You make a highest Attribute roll against the entity’s Reflex.\n\n' +
-          'On a success, it deals 2d6 + 2 x your highest Attribute damage in your {{Draconic Scales}} colour.',
+          'You make a {stat} roll {roll} against the entity’s Reflex.\n\n' +
+          'On a success, it deals [[2d6 + 2*stat]] damage in your {{Draconic Scales}} colour.',
       }),
     ],
   },
@@ -797,6 +815,12 @@ export function poolPicks(lineage, choices) {
   return pool.options.filter((card) => kept.has(card.id)).slice(0, pool.picks);
 }
 
+/** What this character answered on a card that asks, or null while it is open. */
+export function answerOn(card, choices) {
+  if (!card?.choice) return null;
+  return card.choice.options.find((option) => option.id === choices?.[card.id]) ?? null;
+}
+
 /**
  * The spell an answered card hands over, or null while the question is open.
  *
@@ -805,12 +829,12 @@ export function poolPicks(lineage, choices) {
  */
 export function learnedFrom(card, choices) {
   if (!card?.choice?.learns) return null;
-  const answer = choices?.[card.id];
-  return card.choice.options.find((option) => option.id === answer)?.card ?? null;
+  return answerOn(card, choices)?.card ?? null;
 }
 
 /**
- * The cards this character actually holds from their ancestry.
+ * The cards this character actually holds from their ancestry, each with what
+ * their blood does to it.
  *
  * The same as `lineage.cards` for twelve of the thirteen. A Wildkin's hand is
  * the two they took out of the pool, so every surface that prints "what your
@@ -821,13 +845,22 @@ export function learnedFrom(card, choices) {
  * Spell" is a promise until the spell itself is on the sheet: this is where a
  * Scorchbound's Cloak of Flames becomes something they can read, deal and cast
  * rather than a sentence about a spell they chose once.
+ *
+ * A `{ card, modifiers }` row rather than a bare card, the same shape the
+ * Abilities tab prints, and the rider is the whole reason for it. A trait whose
+ * question has been answered prints the answer; a spell handed over by INNATE X
+ * is cast with the highest Attribute rather than the Mind the codex printed it
+ * for. Both are things the *source* does to a card, so both are settled here
+ * once rather than by each surface that shows them.
  */
 export function lineageCards(lineage, choices) {
   if (!lineage) return [];
   const held = lineage.pool ? poolPicks(lineage, choices) : lineage.cards;
   return held.flatMap((card) => {
+    const answer = answerOn(card, choices);
+    const mine = { card, modifiers: answer ? { choice: answer } : null };
     const learned = learnedFrom(card, choices);
-    return learned ? [card, learned] : [card];
+    return learned ? [mine, { card: learned, modifiers: castModifier(card.choice) }] : [mine];
   });
 }
 

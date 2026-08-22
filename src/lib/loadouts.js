@@ -27,6 +27,7 @@
  * and what actually changed when they did.
  */
 
+import { castModifier } from './cardText.js';
 import { CARDS } from './weapons.js';
 import { getTalent, normalizeTalents, setTalentPicks } from './talents.js';
 
@@ -59,14 +60,15 @@ function subSchoolOf(card) {
   return tags[2] ?? null;
 }
 
-/**
- * What a set does to the cards it hands out. A spell prepared by a set that
- * casts off a different attribute prints that attribute's numbers, so the value
- * on the card is the one this caster actually rolls.
- */
-export function castModifier(spec) {
-  return spec?.cast ? { stat: spec.cast } : null;
-}
+/* What a set does to the cards it hands out. A spell prepared by a set that
+   casts off a different attribute prints that attribute's numbers, so the value
+   on the card is the one this caster actually rolls.
+
+   The rider itself is cardText.js's now, because a loadout is no longer the only
+   thing that imposes one: every card that teaches a spell "cast with your
+   highest Attribute" hands the same shape over. Re-exported so the reading of a
+   loadout stays in one file. */
+export { castModifier };
 
 /** Everything in the codex the spec could ever draw from, tier or no tier. */
 export function loadoutPool(spec) {

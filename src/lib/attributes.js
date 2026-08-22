@@ -69,3 +69,36 @@ export function baseValues() {
   for (const key of ATTRIBUTE_KEYS) values[key] = ATTRIBUTE_BASE;
   return values;
 }
+
+/* ------------------------------------------------------------ the highest
+ * Some cards do not name an attribute, they name a rule: "this spell uses your
+ * highest Attribute". Six lineage traits, three skills and a Dragon Breath say
+ * it, and every spell those Innate cards hand over inherits it.
+ *
+ * `HIGHEST` is the word they carry instead of a key. It is not a fourth
+ * attribute and nothing on a sheet ever holds a value for it: it is an
+ * instruction, resolved against whoever is holding the card at the moment the
+ * card is printed. See castStat in cardText.js, which is where that happens.
+ */
+export const HIGHEST = 'highest';
+
+/**
+ * Which of the three this character stands highest in, as a key.
+ *
+ * Read off the same numbers a card resolves its values against, so the
+ * attribute named on the card and the number beside it can never disagree: on
+ * the sheet those are the bent totals (see liveCharacter in characterModel.js),
+ * with every worn and running bonus already in them.
+ *
+ * **A tie goes to the printed order**, Physique then Instinct then Mind. Two
+ * attributes at 6 roll the same 6 whichever is named, so the tie decides a word
+ * and not a number, and a 6/6/4 spread is common enough that leaving it to
+ * chance would mean a card that changes its mind between renders.
+ */
+export function highestAttribute(values) {
+  let best = ATTRIBUTE_KEYS[0];
+  for (const key of ATTRIBUTE_KEYS) {
+    if ((Number(values?.[key]) || 0) > (Number(values?.[best]) || 0)) best = key;
+  }
+  return best;
+}

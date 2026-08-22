@@ -30,8 +30,11 @@ import { withArt } from './cardArt.js';
  * Nothing here names an attribute it does not have to. Every spell is written
  * off `{stat}` and its numbers off `*stat`, and `stat: 'mind'` below is only
  * the default a caster with no other claim rolls with. A Mycomancer's loadout
- * carries `cast: 'instinct'` (see castModifier in loadouts.js), so the same
+ * carries `cast: 'instinct'` (see castModifier in cardText.js), so the same
  * card printed in their hand reads Instinct and prints Instinct's numbers.
+ * `cast: 'highest'` is the other one a source can impose: not an attribute but
+ * the rule that the holder's best one is used, which is what every spell an
+ * Innate card hands over is cast with. See castStat in cardText.js.
  * Write `{mind}` on a spell only if it must be Mind for every caster alive.
  *
  * ---------------------------------------------------------------- the unique

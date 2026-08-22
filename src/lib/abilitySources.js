@@ -57,20 +57,12 @@ export function answerOn(card, choices) {
   return card.choice.options.find((option) => option.id === choices?.[card.id]) ?? null;
 }
 
-/**
- * Lineage cards and skills carry choices; nothing else in the codex does yet.
- *
- * The rider is what makes the answer *print*: a card whose choice is open reads
- * "a Novice spell from any school", and the same card with an answer names the
- * spell. Every card is passed through, answered or not, so the list keeps its
- * order and a spell learned behind a skill is dealt with its own text intact.
- */
-function withAnswers(cards, choices) {
-  return cards.map((card) => {
-    const picked = answerOn(card, choices);
-    return entry(card, picked ? { choice: picked } : null);
-  });
-}
+/* Lineage cards and skills carry choices; nothing else in the codex does yet.
+   Both lists arrive as `{ card, modifiers }` rows with the source's riders
+   already on them, which is why there is no pass over them here: the rider that
+   makes an answer print, and the one that casts a learned spell off the highest
+   Attribute, are both the granting source's doing rather than this file's. See
+   lineageCards in lineages.js and skillCards in backgrounds.js. */
 
 function section(id, label, cards, note = null) {
   return { id, label, note, cards };
@@ -130,11 +122,7 @@ function lineageSource(character) {
     sections: [
       /* What this character *holds*, which for a Wildkin is the two traits they
          kept rather than the eight the pool offered. */
-      section(
-        'traits',
-        'What your blood carries',
-        withAnswers(lineageCards(lineage, character?.choices), character?.choices)
-      ),
+      section('traits', 'What your blood carries', lineageCards(lineage, character?.choices)),
     ],
   };
 }
@@ -165,11 +153,7 @@ function backgroundSource(character) {
     note: 'Background',
     art: background.art ?? null,
     sections: [
-      section(
-        'skills',
-        'Skills of the trade',
-        withAnswers(skillCards(held, character?.choices), character?.choices)
-      ),
+      section('skills', 'Skills of the trade', skillCards(held, character?.choices)),
     ],
   };
 }
@@ -201,11 +185,7 @@ function learnedSource(character) {
     /* A skill learned here can teach a spell too, and the spell belongs under
        the level that bought it rather than in a block of its own. */
     sections: learned.map((row) =>
-      section(
-        `level-${row.level}`,
-        `Level ${row.level}`,
-        withAnswers(skillCards([row.card], choices), choices)
-      )
+      section(`level-${row.level}`, `Level ${row.level}`, skillCards([row.card], choices))
     ),
   };
 }

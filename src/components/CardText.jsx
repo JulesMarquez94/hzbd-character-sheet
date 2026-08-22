@@ -1,6 +1,6 @@
 import { Fragment, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { attributeOf, damageStyle, resolveValue } from '../lib/cardText.js';
+import { attributeOf, castStat, damageStyle, resolveValue } from '../lib/cardText.js';
 import { getKeyword, keywordPattern } from '../lib/keywords.js';
 
 /**
@@ -286,7 +286,11 @@ export default function CardText({
 }) {
   if (!text) return null;
 
-  const ctx = { character, stat, damage, empower, elevate, bonus, choice, choicePrompt, onValue, onLink };
+  /* "Your highest Attribute" is a rule and not an attribute, so it is settled
+     against the character before a single token is rendered: the name printed by
+     {stat} and the number printed by [[…]] are then the same attribute by
+     construction. See castStat in cardText.js. */
+  const ctx = { character, stat: castStat(stat, character), damage, empower, elevate, bonus, choice, choicePrompt, onValue, onLink };
 
   return text.split(/\n\s*\n/).map((paragraph, index) => (
     <p key={index}>{renderInline(paragraph, ctx, `p${index}`)}</p>
@@ -297,6 +301,12 @@ export default function CardText({
 export function CardLine({ text, character, stat = 'instinct', damage = [], empower = 0, elevate = 0, bonus = 0, choice = null, onValue, onLink }) {
   if (!text) return null;
   return (
-    <>{renderInline(text, { character, stat, damage, empower, elevate, bonus, choice, onValue, onLink }, 'line')}</>
+    <>
+      {renderInline(
+        text,
+        { character, stat: castStat(stat, character), damage, empower, elevate, bonus, choice, onValue, onLink },
+        'line'
+      )}
+    </>
   );
 }

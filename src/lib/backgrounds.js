@@ -141,7 +141,9 @@
  *      which of the two would put the wrong face on a card.
  */
 
+import { HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
+import { castModifier } from './cardText.js';
 import { SPELLS } from './spells.js';
 
 /** How many skills a background may hand out. Nothing outside this range. */
@@ -369,10 +371,11 @@ const SCAVENGER = {
   id: 'scavenger',
   name: 'Scavenger',
   tags: ['Skill', 'Long Rest', 'Survival'],
+  stat: HIGHEST,
   summary: 'Scavenge the ground around a camp for Supplies on a Long Rest.',
   body:
     'Whenever you take a Long Rest in the outdoors, you can take the scavenge action: you make ' +
-    'a highest Attribute roll and gain that much Supplies.',
+    'a {stat} roll {roll} and gain that much Supplies.',
 };
 
 const TAILOR = {
@@ -404,10 +407,11 @@ const HAGGLER = {
   id: 'haggler',
   name: 'Haggler',
   tags: ['Skill', 'Passive', 'Coin', 'Social'],
+  stat: HIGHEST,
   summary: 'Talk a price 20% up or down for 2 Willpower.',
   body:
     'When buying or selling something, after you hear the price you can attempt to haggle.\n\n' +
-    'You spend 2 Willpower and make a highest Attribute roll against the target’s Grit. ' +
+    'You spend 2 Willpower and make a {stat} roll {roll} against the target’s Grit. ' +
     'On a success the price is increased or decreased by 20%.',
 };
 
@@ -515,10 +519,11 @@ const SPELL_EATER = {
   tags: ['Skill', 'Passive', 'Warfare'],
   uses: growsAtSix,
   recharge: 'Long Rest',
+  stat: HIGHEST,
   summary: 'Swallow a spell that hit you and heal on it, once a Long Rest.',
   body:
     'Whenever you take non-physical damage, you can attempt to consume the damage.\n\n' +
-    'Make a highest Attribute roll, reducing the damage taken by the result and healing an ' +
+    'Make a {stat} roll {roll}, reducing the damage taken by the result and healing an ' +
     'equal amount.\n\n' +
     'You can use this feature once, regaining it after a Long Rest. The number of uses ' +
     'increases to 2 at level 6.',
@@ -587,6 +592,11 @@ function innateSpell({ rank, minLevel }) {
       prompt: `Which ${rank} spell did you teach yourself?`,
       placeholder: `a ${rank} spell from any school`,
       learns: true,
+      /* And what it is cast with. The spell is printed for Mind in the codex and
+         this skill hands it over rolling off the highest Attribute instead, so
+         the rider rides with it: same card, this character's numbers. INNATE X
+         in lineages.js carries the identical line. */
+      cast: HIGHEST,
       options: shelf.map((spell) => ({ id: spell.id, label: spell.name, card: spell })),
     },
     /* `{choice}` rather than the cell's own words, and the placeholder above is
@@ -1081,17 +1091,26 @@ export function skillsSettled(skills, choices) {
 }
 
 /**
- * The cards a set of skills actually puts on the sheet.
+ * The cards a set of skills actually puts on the sheet, each with what the skill
+ * that taught it does to it.
  *
  * The skills themselves, and behind each one that taught a spell, the spell.
  * "You can choose a Novice spell from any school" is a promise until the spell
  * itself is on the sheet: this is where it becomes something the character can
  * read, deal and cast rather than a sentence about a choice they made once.
+ *
+ * A `{ card, modifiers }` row rather than a bare card, the same shape the
+ * Abilities tab prints and the same one `lineageCards` hands back. An answered
+ * skill prints its answer, and a spell taught by INNATE SPELL X is cast with the
+ * highest Attribute rather than the Mind it was printed for. Both belong to the
+ * source rather than to the card, so both are settled here.
  */
 export function skillCards(skills, choices) {
   return skills.flatMap((skill) => {
+    const answer = skillAnswer(skill, choices);
+    const mine = { card: skill, modifiers: answer ? { choice: answer } : null };
     const learned = learnedFromSkill(skill, choices);
-    return learned ? [skill, learned] : [skill];
+    return learned ? [mine, { card: learned, modifiers: castModifier(skill.choice) }] : [mine];
   });
 }
 
@@ -1205,7 +1224,8 @@ export function backgroundState(character) {
     skills,
     picks,
     remaining: Math.max(0, picks - skillIds.length),
-    // What the skills put on the sheet: themselves, and any spell they taught.
+    /* What the skills put on the sheet: themselves, and any spell they taught,
+       each as a { card, modifiers } row. */
     cards: skillCards(skills, choices),
     asks,
     unanswered: open.length,

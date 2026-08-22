@@ -5,7 +5,8 @@ import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import PickBlock from './PickBlock.jsx';
-import { LearnPicker } from './LineagePick.jsx';
+import { LearnSection } from './LineagePick.jsx';
+import { castModifier } from '../../lib/cardText.js';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -71,6 +72,10 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
      the skill pool from the block on its own closes back to the block. */
   const [open, setOpen] = useState(null);
   const [walking, setWalking] = useState(false);
+  /* Which skill's own question the pool opens on, if it opens on one. A skill
+     that promises a spell and has not named one is reached in one tap from the
+     block rather than by scrolling a wall of skills you have already read. */
+  const [askOn, setAskOn] = useState(null);
   const codexArt = useCodexArt();
 
   const state = backgroundState(character);
@@ -89,6 +94,7 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
        here — a held kit pins the background, see the pin above — so the walk
        is always skills first, then the outfitter. */
     setWalking(true);
+    setAskOn(null);
     setOpen(skillPicks(next) > 0 ? 'skills' : 'kit');
   }
 
@@ -153,8 +159,9 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
             character={character}
             patch={patch}
             readOnly={readOnly}
-            onOpen={() => {
+            onOpen={(skillId = null) => {
               setWalking(false);
+              setAskOn(skillId ?? null);
               setOpen('skills');
             }}
             onCard={(card, modifiers = null) => stack?.openCard(card, modifiers)}
@@ -238,6 +245,11 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
 
       {open === 'skills' && background && (
         <SkillChooser
+          /* Keyed on where it opens, so the block's "answer what they left open"
+             lands on the question rather than on the view the window was last
+             left in. */
+          key={askOn ?? 'wall'}
+          startOn={askOn}
           state={state}
           character={character}
           readOnly={readOnly}
@@ -278,8 +290,10 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
  * spell leaves when the skill does.
  */
 function SkillSection({ state, character, patch, readOnly, onOpen, onCard }) {
-  const { background, skills, skillIds, picks, remaining, unanswered } = state;
+  const { background, skills, skillIds, picks, remaining, asks, unanswered } = state;
   const choices = character?.choices ?? {};
+  // The first skill still owing an answer, which is where the button below goes.
+  const owing = asks.find((skill) => !skillAnswer(skill, choices)) ?? null;
 
   return (
     <div className="pick-part">
@@ -295,6 +309,8 @@ function SkillSection({ state, character, patch, readOnly, onOpen, onCard }) {
           {skills.map((skill) => {
             const picked = skillAnswer(skill, choices);
             const modifiers = picked ? { choice: picked } : null;
+            // What the spell behind it is cast with. See SkillPick, same skill.
+            const taught = castModifier(skill.choice);
 
             return (
               <div className="card-choice-row" key={skill.id}>
@@ -309,7 +325,8 @@ function SkillSection({ state, character, patch, readOnly, onOpen, onCard }) {
                   <CardBrief
                     card={picked.card}
                     character={character}
-                    onOpen={() => onCard(picked.card)}
+                    modifiers={taught}
+                    onOpen={() => onCard(picked.card, taught)}
                   />
                 )}
                 {skill.choice && !picked && (
@@ -342,7 +359,7 @@ function SkillSection({ state, character, patch, readOnly, onOpen, onCard }) {
 
       {!readOnly && (
         <div className="pick-tools pick-tools-tight">
-          <button type="button" className="btn btn-sub btn-sm" onClick={onOpen}>
+          <button type="button" className="btn btn-sub btn-sm" onClick={() => onOpen(owing?.id)}>
             {remaining
               ? `Choose ${remaining} more`
               : unanswered
@@ -1052,16 +1069,18 @@ function KitPreview({ background }) {
  * paragraph of rules text — it has to be readable in full before it is chosen,
  * which is why these are cards at their real footprint and not a list of names.
  *
- * And under the pool, one section per question a learned skill left open. They
- * appear when the skill is taken and leave when it is given back, so the window
- * that hands a skill over is the window its follow-up is answered in and nobody
- * has to be sent looking for a shelf on another page.
+ * Two views. Taking a skill that leaves a question open hands the *window* to
+ * that question: Innate Spell Novice promises a spell and names none, so naming
+ * one is the rest of the same decision and the pool steps aside for it. It used
+ * to wait in a section under the wall, where a player who had stopped reading at
+ * the skill they wanted never saw it, and Done stays shut until it is answered.
  */
 function SkillChooser({
   state,
   character,
   readOnly,
   walking = false,
+  startOn = null,
   onTake,
   onDrop,
   onAnswer,
@@ -1071,9 +1090,33 @@ function SkillChooser({
   const { background, skillIds, picks, remaining, asks, unanswered } = state;
   const choices = character?.choices ?? {};
 
+  /* Which question has the window, or null for the pool. Read back out of `asks`
+     rather than trusted: a skill given back takes its question with it, and the
+     view falls to the pool rather than to a card nobody holds. */
+  const [asking, setAsking] = useState(startOn);
+  const open = asks.find((skill) => skill.id === asking) ?? null;
+  const picked = open ? skillAnswer(open, choices) : null;
+
+  /* A skill you hold that has not named its spell is not a finished pick, so the
+     window will not call itself done. Named on the button, since a disabled Done
+     with no reason on it is the window refusing without saying why. */
+  const owing = asks.find((skill) => !skillAnswer(skill, choices)) ?? null;
+  const shut = owing ? `${owing.name} has not named ${owing.choice.placeholder} yet` : null;
+
+  /* Taking one is two things when the skill asks something: the skill is yours,
+     and the window becomes the question it left. */
+  const take = (id) => {
+    onTake(id);
+    if (background.skills.find((skill) => skill.id === id)?.choice) setAsking(id);
+  };
+
   return (
     <Modal
-      title={`${background.name}: Learn ${picks === 1 ? 'a Skill' : `${picks} Skills`}`}
+      title={
+        open
+          ? `${open.name}: What It Asks You`
+          : `${background.name}: Learn ${picks === 1 ? 'a Skill' : `${picks} Skills`}`
+      }
       onClose={onClose}
       size="page"
       accent={PICK_ACCENTS.background}
@@ -1083,80 +1126,104 @@ function SkillChooser({
             {skillIds.length} of {picks} chosen
           </span>
           <span className="spacer" />
+          {open && (
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              onClick={() => setAsking(null)}
+            >
+              ← All {background.name} skills
+            </button>
+          )}
           {/* During the walk this button is the way on to the kit, and says so.
-              Opened on its own it only closes. */}
-          <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
-            {walking ? 'Next: your kit' : 'Done'}
+              Opened on its own it only closes. Either way it waits on a spell
+              that has not been named. */}
+          <button
+            type="button"
+            className="btn btn-take btn-sm"
+            disabled={Boolean(shut)}
+            title={shut ?? undefined}
+            onClick={onClose}
+          >
+            {shut ? 'One spell to name' : walking ? 'Next: your kit' : 'Done'}
           </button>
         </>
       }
     >
-      <p className="frame-foot" style={{ marginTop: 0 }}>
-        {remaining
-          ? `Learn ${remaining} more. You can give any of them back and pick again, since none of this is spent until you leave level 1 behind.`
-          : unanswered
-            ? 'All chosen. One of them is still waiting on an answer, below.'
-            : 'All chosen. Give one back to swap it for another.'}
-      </p>
+      {open ? (
+        <>
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            <b>{open.name}</b> is yours, and it is not finished. {open.choice.prompt} Tap one and
+            the skill rewrites itself around it. You can change it later, from the block or from
+            here.
+          </p>
 
-      <div className="card-brief-wall">
-        {background.skills.map((skill) => {
-          const held = skillIds.includes(skill.id);
-          const full = !held && remaining === 0;
-          const picked = held ? skillAnswer(skill, choices) : null;
-          const modifiers = picked ? { choice: picked } : null;
+          <LearnSection
+            card={open}
+            picked={picked}
+            character={character}
+            art={open.art_url ?? null}
+            readOnly={readOnly}
+            onPick={(optionId) => onAnswer(open.id, optionId)}
+          />
+        </>
+      ) : (
+        <>
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            {remaining
+              ? `Learn ${remaining} more. You can give any of them back and pick again, since none of this is spent until you leave level 1 behind.`
+              : unanswered
+                ? 'All chosen. One of them is still waiting on an answer.'
+                : 'All chosen. Give one back to swap it for another.'}
+          </p>
 
-          return (
-            <CardBrief
-              key={skill.id}
-              card={skill}
-              character={character}
-              held={held}
-              modifiers={modifiers}
-              onOpen={() => stack?.openCard(skill, modifiers)}
-            >
-              {!readOnly && (
-                <button
-                  type="button"
-                  className={`btn btn-sm card-brief-btn ${held ? 'btn-minimal talent-drop' : 'btn-take'}`}
-                  disabled={full}
-                  title={full ? 'No picks left, give one back first' : undefined}
-                  onClick={() => (held ? onDrop(skill.id) : onTake(skill.id))}
+          <div className="card-brief-wall">
+            {background.skills.map((skill) => {
+              const held = skillIds.includes(skill.id);
+              const full = !held && remaining === 0;
+              const picked = held ? skillAnswer(skill, choices) : null;
+              const modifiers = picked ? { choice: picked } : null;
+
+              return (
+                <CardBrief
+                  key={skill.id}
+                  card={skill}
+                  character={character}
+                  held={held}
+                  modifiers={modifiers}
+                  onOpen={() => stack?.openCard(skill, modifiers)}
                 >
-                  {held ? 'Learned, give it back' : full ? 'No picks left' : 'Learn this skill'}
-                </button>
-              )}
-            </CardBrief>
-          );
-        })}
-      </div>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className={`btn btn-sm card-brief-btn ${held ? 'btn-minimal talent-drop' : 'btn-take'}`}
+                      disabled={full}
+                      title={full ? 'No picks left, give one back first' : undefined}
+                      onClick={() => (held ? onDrop(skill.id) : take(skill.id))}
+                    >
+                      {held ? 'Learned, give it back' : full ? 'No picks left' : 'Learn this skill'}
+                    </button>
+                  )}
+                </CardBrief>
+              );
+            })}
+          </div>
 
-      {asks.map((skill) => {
-        const picked = skillAnswer(skill, choices);
-        return (
-          <section className="talent-page-rank" key={`ask-${skill.id}`}>
-            <div className="talent-page-rank-head">
-              <span className="talent-page-rank-label">
-                {skill.name} · {skill.choice.label}
-              </span>
-              <span className="talent-page-rank-note">
-                {picked ? `${picked.label}, yours` : 'Nothing learned yet'}
-              </span>
+          {/* And the way back into a question from the pool. The shelf itself is the
+              view above, which is where taking the skill landed you. */}
+          {owing && (
+            <div className="pick-tools pick-tools-tight">
+              <button
+                type="button"
+                className="btn btn-sub btn-sm"
+                onClick={() => setAsking(owing.id)}
+              >
+                {owing.name} has not named {owing.choice.placeholder} yet. Answer it
+              </button>
             </div>
-            <p className="talent-page-aside">{skill.choice.prompt}</p>
-            {/* The skill's own picture stands behind a spell that has none, the
-                way a lineage's plate does on its shelf. */}
-            <LearnPicker
-              card={skill}
-              picked={picked}
-              character={character}
-              art={skill.art_url ?? null}
-              readOnly={readOnly}
-              onPick={(optionId) => onAnswer(skill.id, optionId)}
-            />
-          </section>
-        );
-      })}
+          )}
+        </>
+      )}
     </Modal>
   );
 }
