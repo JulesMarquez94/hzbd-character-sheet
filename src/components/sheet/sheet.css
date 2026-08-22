@@ -7333,6 +7333,20 @@ body.sheet-fixed #root {
   color: var(--focus-cyan);
 }
 
+/* What this row is doing to the sheet, above what the card says. Copper and a
+   shade brighter than the note under it, because the tiles have already moved:
+   this line is the receipt for a number that changed on another block. */
+.fx-does {
+  display: block;
+  font-size: 0.6rem;
+  line-height: 1.35;
+  color: var(--copper-bright);
+}
+
+.fx-row.is-over .fx-does {
+  color: var(--text-muted);
+}
+
 /* =========================================
    TRACKING SOMETHING: THE DIALOG
    ========================================= */
@@ -7464,6 +7478,30 @@ body.sheet-fixed #root {
   letter-spacing: 0.3px;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--ac-accent) 60%, var(--text-muted));
+}
+
+/* A card off the codex shelf that nobody at this table owns. Said quietly, on
+   the provenance line where it belongs: the offer is legitimate, it is only
+   somebody else's. */
+.fx-pick-away {
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+/* What tracking this will do to the numbers, on the offer itself. Copper,
+   because that is what the sheet uses for the thing you are about to spend or
+   change, and a row that moves a Speed tile should not read like flavour. */
+.fx-pick-rider {
+  font-size: 0.6rem;
+  line-height: 1.4;
+  color: var(--copper-bright);
+}
+
+/* Which shelf is being searched. The `fx-until` row's own shape, since it is
+   the same question in the same window: a short row of two, one of them lit. */
+.fx-scope b {
+  font-weight: 600;
+  color: var(--text-silver);
 }
 
 .fx-picked-note {

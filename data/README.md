@@ -3407,3 +3407,109 @@ The chooser needed nothing new. Level 1 already ran two slots that may never lan
 on the same attribute, and tapping the one the other slot holds trades places
 rather than refusing, so an odd level is now that same dialog with both slots
 worth +1.
+
+## Every card read for what it does, 2026-08-22
+
+A pass over all 279 cards in the codex, asking two questions of each: **does its
+own text say it lasts**, and **if it lasts, does it move a number this sheet
+holds**. The first question is what the tracker's picker filters on and it was
+getting nine cards wrong. The second had never been asked of anything but an
+Ephemeral Enchantment.
+
+### Nine cards were being read wrong
+
+`effectDuration` in combatTurn.js reads a duration off the printed text, because
+no card carries a duration field. It matched patterns in a fixed order and the
+first hit won, which is fine until a card states two durations. Now it collects
+every match with its position and answers with the best, under two rules:
+
+- **The main text first.** The optional half is read only where the main text
+  said nothing, because that half is nearly always a way of spending more rather
+  than a second clock. SENSE LIFE runs for 10 turns and its Overcast marks
+  something until a Long Rest, and it is a 10-turn spell.
+- **Precise before vague, then earliest.** A clause naming a rest or a count of
+  turns beats one that only says the thing lasts. Between two equally precise
+  answers, the first stated is the card's own and the later belongs to a rider.
+
+| Card | Was read as | Now | Why |
+| --- | --- | --- | --- |
+| THORN RAMPART | 1 turn | 10 turns | the wall stands "for 10 turns (1 minute)" in its first line, and the rooting four lines down is "until the end of its turn" |
+| BLIND | until it ends | 1 turn | "Blinded until its Turn End", which is the codex's own way of writing one turn |
+| AMBER SHARD | until it ends | 1 turn | "Stunned until their next Turn End" |
+| DRACONIC MARK | until it ends | 1 turn | "until your next Turn End" |
+| BARKSKIN | does not last | until it ends | "This effect is lost when all Shield is depleted" is a duration with no duration word in it |
+| THIEF'S PICKS | 1 minute | does not last | "given 1 minute, a free hand" is how long picking a lock takes |
+| TAILOR | 1 minute | does not last | "spend at least 1 minute looking at its garments" |
+| LIGHTNING STRIKE | 12 hours | does not last | "if you used Lightning Strike in the last 12 hours" is a memory, not a thing running on anybody |
+| UNWRITTEN LIGHT / SHADOW | until it ends | does not last | "this card holds the slot until it is" is the placeholder talking about itself |
+
+So a clock now needs something to be running **for** it, and a bare "until"
+needs a lasting verb in front of it. The three that were dropped are still
+reachable through the picker's own escape hatch.
+
+### Six cards now move the sheet
+
+`src/lib/riders.js` is the new table. A card in it is a card whose printed text
+names a number this sheet already holds, and tracking it moves that number for as
+long as the row is up:
+
+| Card | What it prints | What the sheet does |
+| --- | --- | --- |
+| GIANT GROWTH | "doubling its Movement Speed and granting it Empowered" | Speed x2, damage Empowered by 1 |
+| BARKSKIN | "+1 Defense" | Defense +1 |
+| KINDLE WEAPON | "Empowered by 1 and the damage type becomes Fire" | the swing deals Fire, Empowered by 1 |
+| WISP OF MIST | "Movement Speed increased by 50%" | Speed x1.5 |
+| FOUR-LEAF CLOVER, lucky | "Advantage on their next Skill Check or Attack Roll" | an arrow up on the attack |
+| FOUR-LEAF CLOVER, unlucky | "Disadvantage on their next ..." | an arrow down, the first in the codex |
+
+**A rider is keyed on the card and never on the caster.** That is the whole point
+of it: when somebody else casts GIANT GROWTH on you, nothing is spent on your
+sheet and no source of yours has ever heard of the spell. So the picker can now
+search the **whole codex** rather than only what you hold, and a card taken off
+that shelf lands with its rider like any other.
+
+Nothing is stored. It bends through `liveCharacter` exactly the way an Ephemeral
+Enchantment does, and for the same reason: a doubled Speed written into a column
+would still be doubled next week. `check-riders.mjs` walks every rider from a
+stored row to the number on the tile and back off again, and `check-stat-math.mjs`
+gained two sheets so the tooltip under a doubled Speed still adds up to it.
+
+### Cards that plainly last and are still notes
+
+Left out on purpose, each because the sheet cannot apply the rule without
+inventing something the card does not say:
+
+- **AIR CONTROL** has two modes chosen at cast, and Light "increases all
+  entities' Movement Speed by 3". The tracker has nowhere to record which mode
+  was chosen, so neither mode is wired.
+- **WILD STRIDER** says the Movement Speed "cannot be reduced by any effect".
+  The only thing on this sheet that reduces one is being overloaded, and whether
+  the spell beats a full pack is the table's call.
+- **VERDANT FIELD** elevates Flora spells for anyone standing in it.
+- **PACK BOND** is conditional on who is adjacent to whom, clause by clause.
+- **DRACONIC SCALE** grants resistance to a chosen damage type. The sheet holds
+  no resistances anywhere yet, on a card or otherwise.
+- **SHARPEN SENSE** and **SKILLSEED NUT** bend skill checks, which the sheet does
+  not roll.
+
+### Four things for the designer
+
+All four are the source sheets' own words, transcribed faithfully. None is a
+transcription bug and none was changed.
+
+1. **Arcane Marshal and Cartographer carry the same effect, word for word**, in
+   General Rules · Skills: both are "read or draw a map, or retrace a route you
+   have walked once before, or find a location". Arcane Marshal presumably wanted
+   something arcane.
+2. **THRILLED's second clause looks unfinished.** "Your Action Points and Reaction
+   Points maximum are increased to 7 and you start with Action Points each turn."
+   A number is missing after "with", and the sheet applies the ceiling only.
+3. **ICE ARMOR names no duration.** It grants Shield and fires a spike whenever
+   Shield is lost, which reads like it runs while the Shield holds, the way
+   BARKSKIN says outright. The card does not say so, so nothing was assumed.
+4. **AIR CONTROL's Light mode names no duration** where Dense says "for 10 turns
+   (1 minute)". Same question, and the reason the spell carries no rider.
+
+The three Ingredients in the rider table also name no duration, because an
+Ingredient is part of a Brew rather than a spell of its own and no Brew has a
+clock. They are offered at "while it lasts" and the dial is right there.

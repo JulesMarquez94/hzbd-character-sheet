@@ -77,9 +77,10 @@ import {
   normalizeEquipment,
 } from './items.js';
 import { shieldCapFor } from './characterModel.js';
-import { getCard } from './weapons.js';
+import { CARDS, getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
 import { getMartialMove } from './martial.js';
+import { riderOf } from './riders.js';
 import { trickAdvantage } from './tricks.js';
 
 /** A long fight should not be able to bloat one row past reading. */
@@ -477,6 +478,28 @@ export function nudgeEffect(effects, id, delta) {
  *   { turns: 10, label: '10 turns' }        counted, and countable
  *   { turns: null, label: 'Until a rest' }  lasts, but not in turns
  *   null                                    does not last
+ *
+ * ------------------------------------------------------------- the main text first
+ * A card's duration is what its **main text** says. The optional half is read
+ * only when the main text is silent about it, because that half is nearly always
+ * a way of spending more rather than a second clock: SENSE LIFE runs for 10
+ * turns and its Overcast marks something "until your next Long Rest", and the
+ * spell is a 10-turn spell.
+ *
+ * ------------------------------------------------------------- the earliest wins
+ * Inside one text, the *first* duration stated is the card's own and anything
+ * later belongs to a rider. THORN RAMPART is the card that proved it: the wall
+ * stands "for 10 turns (1 minute)" in its opening line and roots what walks into
+ * it "until the end of its turn" four lines down, and this used to read the
+ * rooting and offer the wall as a one-turn effect. So every pattern is matched
+ * for position and the earliest match answers.
+ *
+ * -------------------------------------------------------- and it has to be a duration
+ * A number of hours is only a duration when something is said to last that long.
+ * "given 1 minute, a free hand and quiet enough to hear the pins" is how long
+ * picking a lock takes, and "if you used Lightning Strike in the last 12 hours"
+ * is a memory, and both of those were offered as trackable effects. So the clock
+ * and the bare "until" both want a lasting word in front of them.
  */
 export function effectDuration(card) {
   if (!card) return null;
@@ -486,88 +509,171 @@ export function effectDuration(card) {
      They come off before anything is matched, or every pattern below has to
      carry them — which is exactly how Wild Strider came out as a vague "until
      it ends" when the card plainly says which rest ends it. */
-  const text = `${card.body ?? ''}\n${card.sub_body ?? ''}`.replace(/\*+/g, '');
+  const strip = (value) => String(value ?? '').replace(/\*+/g, '');
 
-  // Checked before the plain turn count, since "until the start of your next
-  // turn" holds the word "turn" but means exactly one of them.
-  const turnEnd = /until the (?:start|end) of (your|their|its) (?:next )?turn/i.exec(text);
+  return (
+    readDuration(strip(card.body)) ??
+    readDuration(strip(card.sub_body), { upkeep: card.sub_name === 'Upkeep' })
+  );
+}
+
+/** A lasting word, so a number of hours is a duration and not a measurement. */
+const LASTS = '(?:for|lasts?|last|lasting|remains?|stays?|persists?|hovers?|hangs?|burns?)';
+
+/**
+ * Every duration one block of text states, with where and how precisely, so the
+ * best of them can answer.
+ *
+ * `upkeep` says this text is an Upkeep half, which is how a toll announces itself
+ * when its prose never uses the word. Every Upkeep in the codex today does say
+ * it, so this is the belt to that braces.
+ *
+ * Two orderings, and the precise one comes first. A clause that names a rest or a
+ * count of turns is better information than one that only says the thing lasts,
+ * even where the vague one is written first: FIRE SEED "lasts until the target
+ * takes a Long Rest", and reading that as "until it ends" would throw away the
+ * one word a player needs at the campfire. Between two equally precise answers,
+ * position decides, and that is what the note above `effectDuration` is about.
+ */
+function readDuration(text, { upkeep = false } = {}) {
+  if (!text.trim()) return upkeep ? { turns: null, label: 'Upkeep, each turn', until: null } : null;
+
+  const found = [];
+  /* `rank` 0 is a clause that says how long. 1 is a clause that only says the
+     thing lasts at all. */
+  const at = (match, value, rank = 0) => {
+    if (match) found.push({ index: match.index, rank, value });
+  };
+
+  /* "until the end of its turn", and the codex's own shorter way of writing the
+     same thing: "until its Turn End", "until their next Turn End". BLIND, AMBER
+     SHARD and DRACONIC MARK are all written the second way and were all read as
+     a vague "until it ends" before it was here. */
+  const turnEnd = /until\s+(?:the\s+(?:start|end)\s+of\s+)?(your|their|its)\s+(?:next\s+)?(?:turn|Turn\s+(?:End|Start))/i.exec(
+    text
+  );
   if (turnEnd) {
     const whose = turnEnd[1].toLowerCase() === 'your' ? 'your' : 'their';
-    return { turns: 1, label: `Until ${whose} next turn`, until: null };
+    at(turnEnd, { turns: 1, label: `Until ${whose} next turn`, until: null });
   }
 
   const turns = /(\d+)\s*turns?\b/i.exec(text);
   if (turns) {
     const n = clampTurns(turns[1]);
-    return { turns: n, label: `${n} ${n === 1 ? 'turn' : 'turns'}`, until: null };
+    at(turns, { turns: n, label: `${n} ${n === 1 ? 'turn' : 'turns'}`, until: null });
   }
 
   // A toll paid every turn to keep the thing going: running by definition.
-  if (card.sub_name === 'Upkeep' || /\bupkeep\b/i.test(text)) {
-    return { turns: null, label: 'Upkeep, each turn', until: null };
-  }
+  const toll = /\bupkeep\b/i.exec(text);
+  if (toll) at(toll, { turns: null, label: 'Upkeep, each turn', until: null });
 
   /* Which rest ends it, and it matters which: a long rest ends everything a
-     short one does and more. Read before the clock, because "until your next
-     Long Rest" is a rest and not a number of hours. Wide enough for "until
-     they have taken a Long Rest" too, which the codex also writes. */
-  // "until a short or long rest" ends on either, so it is the looser of the
-  // two. Read before the single-word form, which would otherwise catch the
-  // "long" at the end of it and claim a nap does not break it.
-  if (/until\s+(?:\w+\s+){0,3}(?:short\s+or\s+long|long\s+or\s+short)\s+rest/i.test(text)) {
-    return { turns: null, label: 'Until any rest', until: 'short' };
-  }
+     short one does and more. "until a short or long rest" ends on either, so it
+     is the looser of the two, and it is read first because the single-word form
+     would otherwise catch the "long" at the end of it and claim a nap does not
+     break it. Wide enough for "until they have taken a Long Rest" too, which the
+     codex also writes. */
+  const either = /until\s+(?:\w+\s+){0,3}(?:short\s+or\s+long|long\s+or\s+short)\s+rest/i.exec(text);
+  if (either) at(either, { turns: null, label: 'Until any rest', until: 'short' });
 
   const rest = /until\s+(?:\w+\s+){0,5}(long|short)\s+rest/i.exec(text);
-  if (rest) {
+  if (rest && !either) {
     const which = rest[1].toLowerCase();
-    return { turns: null, label: `Until a ${which} rest`, until: which };
+    at(rest, { turns: null, label: `Until a ${which} rest`, until: which });
   }
 
-  const clock = /\b(\d+)\s*(minute|hour|day)s?\b/i.exec(text);
+  /* A stretch of clock time, and only where something is said to run *for* it.
+     Every real one in the codex is written that way ("lasts for 12 hours",
+     "burns for 6 hours", "For the next 5 hours"), and the two that were not are
+     the two that were wrong: "given 1 minute, a free hand" is how long picking a
+     lock takes, and "if you used Lightning Strike in the last 12 hours" is a
+     memory rather than a thing running on anybody. */
+  const clock = /\bfor\s+(?:up\s+to\s+|the\s+next\s+)*(\d+)\s*(minute|hour|day)s?\b/i.exec(text);
   if (clock) {
     const n = Number(clock[1]);
-    return {
+    at(clock, {
       turns: null,
       label: `${n} ${clock[2].toLowerCase()}${n === 1 ? '' : 's'}`,
       until: null,
-    };
+    });
   }
 
-  if (/\buntil\b/i.test(text)) return { turns: null, label: 'Until it ends', until: null };
+  /* An open-ended end: something lasts, remains or is lost until a thing happens.
+     A few words are allowed in between, because the codex writes "You remain in
+     your Feral Form until all Shield is gone" and "They remain unconscious until
+     healed" as readily as the bare "lasts until".
 
-  if (/while\s+[^\n]{1,40}\s+is active|lasts?\s+for|remains?\s+active/i.test(text)) {
-    return { turns: null, label: 'While it lasts', until: null };
-  }
+     BARKSKIN is the "when" half of it, and the one that made the clause worth
+     having: "This effect is lost when all Shield is depleted" is a duration with
+     no duration word in it at all. The lasting verb is what keeps the placeholder
+     cards out, whose only "until" is "this card holds the slot until it is". */
+  const ends = new RegExp(
+    `(?:${LASTS}|is\\s+lost|ends?)\\b[^.\\n]{0,40}?\\s(?:until|when)\\b`,
+    'i'
+  ).exec(text);
+  if (ends) at(ends, { turns: null, label: 'Until it ends', until: null }, 1);
 
-  return null;
+  const active = /while\s+[^\n]{1,40}\s+is active|remains?\s+active/i.exec(text);
+  if (active) at(active, { turns: null, label: 'While it lasts', until: null }, 1);
+
+  /* And the one thing no prose has to say. An Upkeep half is a toll paid each
+     turn, so a spell with one is running by definition. Ranked with the vague,
+     because a card that also prints a clock has printed better information. */
+  if (upkeep) at({ index: text.length }, { turns: null, label: 'Upkeep, each turn', until: null }, 1);
+
+  if (found.length === 0) return null;
+  return found.sort((a, b) => a.rank - b.rank || a.index - b.index)[0].value;
 }
 
 /**
- * Everything this character could be tracking, for the picker: what their
- * sources gave them, what is in their hands, and what is on their belt.
+ * Everything that could be tracked, for the picker: what this character's
+ * sources gave them, what is in their hands, what is on their belt and, when
+ * asked for, every card in the codex.
  *
  * Narrowed to what actually lasts, by `effectDuration` above. Pass
  * `{ all: true }` for the escape hatch the picker offers when the filter has
  * hidden the one thing somebody wanted, because a filter this build guessed at
  * must never be the reason a player cannot track something.
  *
+ * -------------------------------------------------------- somebody else's card
+ * `{ codex: true }` is the other escape hatch, and it answers a different
+ * question. **What is running on you is very often not yours.** The druid across
+ * the table casts GIANT GROWTH on you: nothing was spent on your sheet, no
+ * source of yours has ever heard of the spell, and your Movement Speed has just
+ * doubled for ten turns. Before this the only way to record that was to type the
+ * name in by hand, which got you the row and none of the doubling.
+ *
+ * So the whole codex is reachable, and a card reached that way lands with its
+ * rider like any other: the picker knows which card it is, and riders.js knows
+ * what the card does. Whose it was never enters into it.
+ *
+ * `mine` says which side of that line a row came from, so the picker can offer a
+ * player their own spells first. A card that is both is yours, because the first
+ * `add` wins and the character's own sources are read first.
+ *
  * Deduplicated, so a card two sources both hand over is offered once.
  */
-export function trackableCards(character, { all = false } = {}) {
+export function trackableCards(character, { all = false, codex = false } = {}) {
   const rows = [];
   const seen = new Set();
 
-  const add = (card, from) => {
+  const add = (card, from, mine = true) => {
     if (!card || seen.has(card.id)) return;
     seen.add(card.id);
 
-    const duration = effectDuration(card);
+    /* A card whose text says how long it runs, or one this sheet already knows
+       how to apply. The second is the case the filter cannot read: WISP OF MIST
+       raises a Movement Speed by half and never says for how long, and a card the
+       sheet will actually bend a tile for is a card worth offering whatever its
+       prose left out. The duration then goes on the dial as open, because the
+       card printed none and this is not the place to invent one. See riders.js. */
+    const duration = effectDuration(card) ?? riderDuration(card);
     if (!duration && !all) return;
 
     rows.push({
       card,
       from,
+      mine,
       turns: duration?.turns ?? null,
       label: duration?.label ?? null,
       until: duration?.until ?? null,
@@ -589,7 +695,36 @@ export function trackableCards(character, { all = false } = {}) {
     for (const id of item?.abilities ?? []) add(getCard(id), item.name);
   }
 
-  // What lasts longest reads first: a 10-turn spell is a likelier thing to be
-  // tracking than something that expires at the end of the turn.
-  return rows.sort((a, b) => (b.turns ?? 99) - (a.turns ?? 99));
+  /* And the rest of the world. A card nobody at this table owns still has a
+     provenance worth printing, and its own tags are it: "Novice Spell · Primal ·
+     Life" is what a player will recognise the thing by. */
+  if (codex) {
+    for (const card of CARDS) add(card, codexFrom(card), false);
+  }
+
+  /* Yours first, then what lasts longest: a 10-turn spell is a likelier thing to
+     be tracking than something that expires at the end of the turn, and your own
+     spell is a likelier thing than a stranger's however long either runs. */
+  return rows.sort(
+    (a, b) => Number(b.mine) - Number(a.mine) || (b.turns ?? 99) - (a.turns ?? 99)
+  );
+}
+
+/**
+ * The duration a card carrying a rider gets when its own text printed none.
+ *
+ * "While it lasts" and not a count, because the card said nothing and the sheet
+ * must not put words in its mouth. Three Cauldron Keeper Ingredients are the case:
+ * an Ingredient is part of a Brew rather than a spell of its own, and the
+ * designer's sheet gives the Brew no clock. The dial in the picker is right there
+ * and the table decides, which is what every duration here has always been.
+ */
+function riderDuration(card) {
+  return riderOf(card?.id) ? { turns: null, label: 'While it lasts', until: null } : null;
+}
+
+/** Where a card nobody here owns comes from: what is printed on its own banner. */
+function codexFrom(card) {
+  const tags = (card?.tags ?? []).filter(Boolean);
+  return tags.length > 0 ? tags.join(' · ') : 'In the codex';
 }

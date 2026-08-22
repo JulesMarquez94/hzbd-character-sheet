@@ -144,6 +144,31 @@ of d4 in it. Making the attack spends the move, hit or miss. One move rides a sw
 Duelist's Sharp and a Master Feral Cursed's Bestial Frenzy each allow two, and a chip with nowhere
 to ride says so rather than taking your Willpower.
 
+### The Temporary Effects tracker
+
+The bottom of the Character tab holds what is **running on you**: a name, how many of your turns it
+has left, and something to read. A row counted in turns ticks down when you start one, and a
+condition goes on as "until it ends" because being grappled does not run out, it is broken.
+
+**A row can move your numbers.** A card whose printed text names something the sheet already holds
+bends it for as long as the row is up, and takes it back off when the row comes off. Giant Growth
+doubles your Movement Speed and Empowers your damage, Barkskin raises your Defense by 1, Kindle
+Weapon makes the blade deal Fire. The tile changes, the tooltip under it credits the card by name,
+and the row itself says what it is doing. Nothing is written to your sheet: it is the same bend an
+Ephemeral Enchantment makes, applied where the sheet is read. See `src/lib/riders.js` for the
+table and what each entry was read from.
+
+**What is running on you is often not yours.** So the picker searches two shelves: what your own
+sources, hands and belt hand you, and the whole codex. When the druid across the table casts Giant
+Growth on you, nothing is spent on your sheet and no source of yours has heard of the spell, so you
+search the codex, take the card and your Speed doubles. A card taken off either shelf lands the
+same way and carries the same rider, because a rider is keyed on the card and never on who paid for
+it. Search your own cards for something you do not have and the footer says how many the codex
+holds and offers to look there.
+
+The turn count is filled in from whatever the card's own text says, which is a suggestion and never
+a rule: the dial is right there and the table decides.
+
 ### The Feral Form
 
 A **Feral Curse** does not hand you a card or a creature, it hands you a second shape of your own.
@@ -191,4 +216,13 @@ npm run dev      # dev server
 npm run build    # production build to dist/
 npm run preview  # serve the production build
 npm run lint     # eslint
+```
+
+Four checkers prove things eslint cannot:
+
+```bash
+npm run lint:text    # no em dashes and no Oxford commas in anything a player reads
+npm run lint:math    # every stat tooltip adds up to the number above it
+npm run lint:halves  # every card's optional half is priced off its own prose
+npm run lint:riders  # every tracker rider reaches the sheet and comes back off
 ```

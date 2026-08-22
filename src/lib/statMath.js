@@ -66,6 +66,7 @@ import {
 import { feralArmorFrom, feralShieldShare, feralState } from './feral.js';
 import { levelGrants, levelPicksState, lineageBonuses } from './levelPicks.js';
 import { weaponRiders } from './moves.js';
+import { runningRiders } from './riders.js';
 import { pointCeilings, tricksterOf } from './tricks.js';
 
 /* Speed is the one stat whose formula is written in metres and printed in either
@@ -235,6 +236,10 @@ function attributeMath(character, stored, level, sources) {
       if (plus) terms.push(term(plus, row.name));
     }
 
+    // And the other bend `liveCharacter` applies without storing: a card on the
+    // tracker. Nothing in the codex raises an attribute this way yet.
+    terms.push(...riderAttrTerms(character.effects, key));
+
     math[key] = settle(terms, Math.floor(Number(character[key]) || 0));
   }
   return math;
@@ -260,6 +265,30 @@ function grantTerms(sources, field, floor = true) {
     const value = Number(row[field]) || 0;
     return term(floor ? Math.floor(value) : value, row.name);
   });
+}
+
+/**
+ * One term per tracker row carrying the rider, named after the row.
+ *
+ * Named after the row and not the card, because the row is what the reader can
+ * go and take off. Every flat field a rider can carry is mirrored here whether or
+ * not a card uses it today: the table in riders.js is meant to grow, and a rider
+ * added there without a line here would show up on a tile as `unaccounted`.
+ *
+ * The Movement Speed factor is the one field this cannot do, because a factor is
+ * not a term. It is folded in where the Speed is summed. See `statMath`.
+ */
+function riderTerms(effects, field) {
+  return runningRiders(effects).from.map(({ name, rider }) =>
+    term(Math.floor(Number(rider[field]) || 0), name)
+  );
+}
+
+/** The same, for one of the three attributes a rider could raise. */
+function riderAttrTerms(effects, key) {
+  return runningRiders(effects).from.map(({ name, rider }) =>
+    term(Math.floor(Number(rider.attributes?.[key]) || 0), name)
+  );
 }
 
 /* ---------------------------------------------------------------- the sheet */
@@ -298,7 +327,12 @@ export function statMath(character) {
 
   /* ---- Health, Willpower and the ceiling Shield is read against ---- */
   math.health_max = settle(
-    [term(10 * level, 'your level'), term(10 * p, 'Physique'), ...grantTerms(sources, 'healthMax')],
+    [
+      term(10 * level, 'your level'),
+      term(10 * p, 'Physique'),
+      ...grantTerms(sources, 'healthMax'),
+      ...riderTerms(character.effects, 'healthMax'),
+    ],
     Math.floor(Number(character.health_max) || 0)
   );
 
@@ -308,6 +342,7 @@ export function statMath(character) {
       term(2 * level, 'your level'),
       term(2 * m, 'Mind'),
       ...grantTerms(sources, 'willpowerMax'),
+      ...riderTerms(character.effects, 'willpowerMax'),
     ],
     Math.floor(Number(character.willpower_max) || 0)
   );
@@ -319,6 +354,7 @@ export function statMath(character) {
     [
       ...gearTerms(items, 'armor'),
       ...grantTerms(sources, 'armor'),
+      ...riderTerms(character.effects, 'armor'),
       ...feralArmorFrom(character, i).map((row) => term(row.armor, row.talent.name)),
     ],
     Math.floor(Number(character.defense) || 0)
@@ -346,12 +382,32 @@ export function statMath(character) {
      speed the tile is not showing. Named for what did it, like every other term:
      what a reader wants from a Speed of 2.5 is the word "overloaded". */
   const carry = carryState(character);
+  const running = runningRiders(character.effects);
   const speedTerms = [
     term(3, 'base'),
     term(i / 2, 'half your Instinct'),
     ...grantTerms(sources, 'speed', false),
   ];
-  const speedRaw = speedTerms.reduce((total, row) => total + row.value, 0);
+  let speedRaw = speedTerms.reduce((total, row) => total + row.value, 0);
+
+  /* And what a card on the tracker multiplies it by. A factor is not a term, so
+     what goes on the line is the distance it *added*, named after the card that
+     added it: "3 base + 2 half your Instinct + 5 Giant Growth = 10". Which is the
+     same shape "overloaded" below already uses for the one thing that takes
+     distance away, and it comes first for the same reason `deriveStats` applies
+     it first.
+
+     Cumulatively, so two of them add up. A doubling and a half again is threefold
+     and the two terms have to say +5 and +5 off a base of 5, not +5 and +2.5 off
+     the same 5, or the line would fall short of the tile by the difference. */
+  for (const { name, rider } of running.from) {
+    const factor = Number(rider.speedFactor) || 1;
+    if (factor === 1) continue;
+    const grown = speedRaw * factor;
+    speedTerms.push(term(grown - speedRaw, name));
+    speedRaw = grown;
+  }
+
   if (carry.state !== 'clear') {
     speedTerms.push(term(round(encumberedSpeed(speedRaw, carry) - speedRaw), 'overloaded'));
   }
@@ -466,6 +522,13 @@ function avoidMath(character, items, { physique, instinct, mind }) {
 
   for (const row of weaponRiders(character).from) {
     if (row.defense > 0) terms.push(term(row.defense, row.talent.name));
+  }
+
+  /* And whatever is on the tracker. BARKSKIN's point is a point like the ones
+     above it, named after the row so a reader knows where to take it off. */
+  for (const { name, rider } of runningRiders(character.effects).from) {
+    const point = Math.floor(Number(rider.defense) || 0);
+    if (point) terms.push(term(point, name));
   }
 
   return settle(terms, Math.floor(Number(character.avoid) || 0));

@@ -7,6 +7,19 @@ import { addEffect, trackableCards, TURNS_MAX } from '../../lib/combatTurn.js';
 const PICK_LIMIT = 8;
 import { cardHaystack } from '../../lib/abilitySources.js';
 import { cardGist } from '../../lib/cardText.js';
+import { riderLine } from '../../lib/riders.js';
+
+/** The rows whose card answers the search, or all of them when nothing is typed. */
+function hunt(list, needle) {
+  if (!needle) return list;
+  return list.filter((row) => cardHaystack(row.card).toLowerCase().includes(needle));
+}
+
+/** What shelf is being searched, in the fewest words that stay true. */
+function shelfLabel(scope, all) {
+  if (scope === 'codex') return all ? 'Every card in the game' : 'Everything in the codex that lasts';
+  return all ? 'Everything you have' : 'What you have that lasts';
+}
 
 /**
  * Putting something on the tracker.
@@ -14,27 +27,40 @@ import { cardGist } from '../../lib/cardText.js';
  * Two ways in, and the same three answers either way: what it is called, how
  * long it lasts, and what it does.
  *
- *   off a card   Pick from what this character actually has. The name, the
- *                provenance and the card all come with it, so the row on the
- *                block opens the real card afterwards, and the turn count is
- *                filled in from whatever the card's own text says ("for 10
- *                turns"). That number is a suggestion and nothing more: the
- *                table decides, and the dial is right there.
+ *   off a card   Pick from what this character actually has, or from the whole
+ *                codex. The name, the provenance and the card all come with it,
+ *                so the row on the block opens the real card afterwards, and the
+ *                turn count is filled in from whatever the card's own text says
+ *                ("for 10 turns"). That number is a suggestion and nothing more:
+ *                the table decides, and the dial is right there.
  *
  *   by hand      A condition, a blessing, a debt, whatever the Game Master
  *                just invented. It carries its own note instead of a card,
  *                because something the codex has never heard of still has to
  *                say what it does.
  *
+ * ------------------------------------------------------------ somebody else's
+ * **The two shelves are the point.** What is running on you is very often not
+ * yours: the druid across the table casts GIANT GROWTH, nothing is spent on your
+ * sheet, and your Movement Speed has doubled for ten turns. So the search sits
+ * over a switch, and "The whole codex" is every card in the game.
+ *
+ * A card picked from either shelf lands the same way and carries the same rider,
+ * because a rider is keyed on the card and never on who paid for it. Which is
+ * also why the offer says what it will do to your numbers before you take it: a
+ * row that moves a tile is a different decision from a row that is a reminder.
+ * See riders.js.
+ *
  * "Until it ends" is its own answer rather than a very large number. Being
  * grappled does not run out, it is broken, and a tracker that made you write
  * 99 turns for it would be lying about what is happening.
  *
  * There is a third way in for one character, and `onEnchant` is it. An Ephemeral
- * Enchantment is a temporary effect and the only one on this sheet that carries a
- * mechanical rider, so it cannot be typed in by hand: the name would land and the
- * +1 Instinct would not. The offer opens the shelf instead, which is the same
- * window the quick bar opens and the one that takes the payment.
+ * Enchantment is a temporary effect whose rider is *chosen* rather than printed,
+ * so it can be neither typed in by hand nor picked off a shelf: either way the
+ * name would land and the +1 Instinct would not. The offer opens the enchantment
+ * shelf instead, which is the same window the quick bar opens and the one that
+ * takes the payment.
  *
  * ------------------------------------------------------------- whose tracker
  * `character` is always the character: it is what the offers are read from, and
@@ -62,23 +88,44 @@ export default function EffectPrompt({
   const [search, setSearch] = useState('');
 
   const [all, setAll] = useState(false);
+  /* Whose cards are on offer: 'mine' is what this character actually holds, and
+     'codex' is every card in the game. The second one exists because what is
+     running on you is very often not yours. See trackableCards. */
+  const [scope, setScope] = useState('mine');
 
-  const rows = useMemo(() => trackableCards(character, { all }), [character, all]);
-  const everything = useMemo(() => trackableCards(character, { all: true }), [character]);
+  /* Both shelves, whole, once per character. The `lasts` halves are filters of
+     them rather than two more walks: a row that does not last has no label, which
+     is the same test `trackableCards` filtered on. */
+  const mine = useMemo(() => trackableCards(character, { all: true }), [character]);
+  const codex = useMemo(
+    () => trackableCards(character, { all: true, codex: true }),
+    [character]
+  );
+
+  const shelf = scope === 'codex' ? codex : mine;
+  const rows = useMemo(() => (all ? shelf : shelf.filter((row) => row.label)), [shelf, all]);
+
+  const needle = search.trim().toLowerCase();
 
   const matches = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    const found = needle
-      ? rows.filter((row) => cardHaystack(row.card).toLowerCase().includes(needle))
-      : rows;
+    const found = hunt(rows, needle);
     return { shown: found.slice(0, PICK_LIMIT), total: found.length };
-  }, [rows, search]);
+  }, [rows, needle]);
+
+  /* What the *other* shelf is holding, so a search that comes up empty on your
+     own cards can say where the thing actually is rather than sending you to the
+     by-hand field. This is the whole point of the codex being reachable: you go
+     looking for the spell somebody else just cast on you. */
+  const elsewhere = useMemo(() => {
+    if (scope === 'codex') return 0;
+    const held = new Set(rows.map((row) => row.card.id));
+    return hunt(codex.filter((row) => row.label && !held.has(row.card.id)), needle).length;
+  }, [codex, rows, needle, scope]);
 
   // How much the "does this last?" filter is holding back. Said out loud,
   // because a filter this build guessed at must never silently be the reason
   // somebody cannot find their own spell.
-  const lastingCount = useMemo(() => trackableCards(character).length, [character]);
-  const filteredOut = everything.length - lastingCount;
+  const filteredOut = shelf.length - shelf.filter((row) => row.label).length;
 
   /**
    * Picking a card answers the duration as well as the name.
@@ -152,11 +199,11 @@ export default function EffectPrompt({
       <div className="fx-prompt">
       {/* ---------- OR LAY ONE ----------
           An Enchanter reaching for the tracker is usually reaching for this: an
-          Ephemeral Enchantment *is* a temporary effect, and the one on this sheet
-          that carries a real rider rather than a note. Typing "Primal Sense" in by
-          hand would get the row and none of the +1 Instinct, so the offer is made
-          here rather than left to be found on the quick bar. Same window either
-          way, and it is the window that takes the payment. */}
+          Ephemeral Enchantment *is* a temporary effect, and the one whose rider is
+          chosen at the moment it is laid rather than printed on a card. Typing
+          "Primal Sense" in by hand would get the row and none of the +1 Instinct,
+          so the offer is made here rather than left to be found on the quick bar.
+          Same window either way, and it is the window that takes the payment. */}
       {onEnchant && (
         <div className="fx-offer">
           <span className="fx-offer-body">
@@ -176,11 +223,13 @@ export default function EffectPrompt({
             Only what actually lasts. A sword swing resolves and is over, and a
             trait that gives +1 Instinct is permanent, so neither is a thing
             that can be "running". Offering every card you own would bury the
-            handful that tick. */}
+            handful that tick.
+
+            And two shelves to look on, because what is running on you is very
+            often not yours: somebody else's Giant Growth doubles your Movement
+            Speed for ten turns, and no source of yours has ever heard of it. */}
         <label className="fx-field">
-          <span className="fx-label">
-            {all ? 'Everything you have' : 'What you have that lasts'}
-          </span>
+          <span className="fx-label">{shelfLabel(scope, all)}</span>
           <input
             type="text"
             className="fx-input"
@@ -190,41 +239,101 @@ export default function EffectPrompt({
           />
         </label>
 
+        <span className="fx-until fx-scope">
+          {[
+            { id: 'mine', label: 'Yours', count: mine.filter((row) => row.label).length },
+            {
+              id: 'codex',
+              label: 'The whole codex',
+              count: codex.filter((row) => row.label).length,
+            },
+          ].map((option) => (
+            <button
+              type="button"
+              key={option.id}
+              className={`fx-until-opt${scope === option.id ? ' is-on' : ''}`}
+              onClick={() => setScope(option.id)}
+              title={
+                option.id === 'mine'
+                  ? 'What your own sources, your hands and your belt hand you'
+                  : 'Every card in the game. For something somebody else laid on you.'
+              }
+            >
+              {option.label} <b>{option.count}</b>
+            </button>
+          ))}
+        </span>
+
         <div className="fx-picks">
           {matches.shown.length === 0 ? (
             <p className="pick-line">
               {rows.length === 0
-                ? 'Nothing you hold lasts long enough to track. Write it in below instead.'
-                : 'Nothing of yours matches that. Write it in below instead.'}
+                ? 'Nothing on this shelf lasts long enough to track. Write it in below instead.'
+                : 'Nothing here matches that. Write it in below instead.'}
             </p>
           ) : (
-            matches.shown.map((row) => (
-              <button
-                type="button"
-                key={row.card.id}
-                className={`fx-pick ac-kind-${row.card.kind ?? 'ability'}${
-                  picked?.card.id === row.card.id ? ' is-picked' : ''
-                }`}
-                onClick={() => choose(row)}
-              >
-                <span className="fx-pick-head">
-                  <span className="fx-pick-name">{row.card.name}</span>
-                  {row.label && <span className="fx-pick-turns">{row.label}</span>}
-                  <CostOrbs ap={row.card.ap} wp={row.card.wp} size={16} className="fx-pick-costs" />
-                </span>
-                <span className="fx-pick-line">
-                  {row.card.summary ?? cardGist(row.card, { character })}
-                </span>
-                <span className="fx-pick-from">{row.from}</span>
-              </button>
-            ))
+            matches.shown.map((row) => {
+              /* What tracking it will actually do to this sheet, when it does
+                 anything. Said on the offer and not only after the fact, because
+                 a row that moves a number is a different decision from a row that
+                 is a reminder. See riders.js.
+
+                 Only on the character's own tracker. A rider is read off the
+                 effects column, and a creature's rows live on its own row, so a
+                 promise made here about a Movement Speed would be a promise
+                 nothing keeps. */
+              const does = holder ? null : riderLine(row.card.id);
+
+              return (
+                <button
+                  type="button"
+                  key={row.card.id}
+                  className={`fx-pick ac-kind-${row.card.kind ?? 'ability'}${
+                    picked?.card.id === row.card.id ? ' is-picked' : ''
+                  }`}
+                  onClick={() => choose(row)}
+                >
+                  <span className="fx-pick-head">
+                    <span className="fx-pick-name">{row.card.name}</span>
+                    {row.label && <span className="fx-pick-turns">{row.label}</span>}
+                    <CostOrbs
+                      ap={row.card.ap}
+                      wp={row.card.wp}
+                      size={16}
+                      className="fx-pick-costs"
+                    />
+                  </span>
+                  <span className="fx-pick-line">
+                    {row.card.summary ?? cardGist(row.card, { character })}
+                  </span>
+                  {does && <span className="fx-pick-rider">Moves your sheet: {does}</span>}
+                  <span className="fx-pick-from">
+                    {row.from}
+                    {!row.mine && <span className="fx-pick-away"> not yours</span>}
+                  </span>
+                </button>
+              );
+            })
           )}
         </div>
 
-        {(matches.total > matches.shown.length || filteredOut > 0) && (
+        {(matches.total > matches.shown.length || elsewhere > 0 || filteredOut > 0) && (
           <p className="fx-picks-foot">
             {matches.total > matches.shown.length &&
               `${matches.total - matches.shown.length} more match. Keep typing to narrow it. `}
+            {/* The one that matters when somebody is hunting for a spell that was
+                cast *at* them. It reads before the "does this last" hatch, because
+                looking on the wrong shelf is the likelier mistake. */}
+            {elsewhere > 0 && (
+              <>
+                {matches.total > 0
+                  ? `${elsewhere} more in the codex.`
+                  : `${elsewhere} in the codex, none of them yours.`}{' '}
+                <button type="button" className="fx-unpick" onClick={() => setScope('codex')}>
+                  Look there too
+                </button>{' '}
+              </>
+            )}
             {filteredOut > 0 &&
               (all ? (
                 <button type="button" className="fx-unpick" onClick={() => setAll(false)}>
@@ -232,7 +341,8 @@ export default function EffectPrompt({
                 </button>
               ) : (
                 <>
-                  {filteredOut} of your cards do not last, so they are set aside.{' '}
+                  {filteredOut} {scope === 'codex' ? 'cards' : 'of your cards'} do not last, so they
+                  are set aside.{' '}
                   <button type="button" className="fx-unpick" onClick={() => setAll(true)}>
                     Show them anyway
                   </button>
@@ -260,7 +370,17 @@ export default function EffectPrompt({
 
         {picked ? (
           <p className="fx-picked-note">
-            Reads the <b>{picked.card.name}</b> card on the block.{' '}
+            Reads the <b>{picked.card.name}</b> card on the block.
+            {/* And what it will do to the numbers, promised before it is tracked.
+                A row that raises a Defense or doubles a Speed has to say so here:
+                the tiles will move, and a player who did not expect that has no
+                way to find out which row did it. */}
+            {!holder && riderLine(picked.card.id) && (
+              <>
+                {' '}
+                Your sheet moves with it: {riderLine(picked.card.id)}, until the row comes off.
+              </>
+            )}{' '}
             <button type="button" className="fx-unpick" onClick={clear}>
               Write it in by hand instead
             </button>

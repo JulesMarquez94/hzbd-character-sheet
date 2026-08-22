@@ -76,6 +76,7 @@ import { loadoutOf, loadoutState } from './loadouts.js';
 import { heldItem, normalizeEquipment } from './items.js';
 import { isWeaponAttack, trickArrow, trickRider } from './tricks.js';
 import { feralRiders } from './feral.js';
+import { bendsSwing, effectRiders, riderOf } from './riders.js';
 
 /** What anybody who knows a move may have waiting on one swing. */
 export const MOVE_ALLOWANCE = 1;
@@ -283,10 +284,14 @@ export function moveRider(effects, card) {
  * (WOUND, MOMENTUM) gets none: there is no number, and an arrow with nothing in
  * it is a decoration.
  *
- * Two kinds of row carry one: a Martial Move, whose d4s are printed on its own
- * card, and a Trickster's rider, which carries what it was paid for. An AMBUSH
- * waiting on the tracker is the clearest case there is — the Willpower is already
- * spent and the arrow is the only thing on the block saying what it bought.
+ * Three kinds of row carry one: a Martial Move, whose d4s are printed on its own
+ * card, a Trickster's rider, which carries what it was paid for, and a card whose
+ * own text bends a roll. An AMBUSH waiting on the tracker is the clearest case
+ * there is — the Willpower is already spent and the arrow is the only thing on the
+ * block saying what it bought.
+ *
+ * A Lucky Brew is the other direction of the same thing, and an Unlucky one is the
+ * first row on this block to draw the arrow downward.
  */
 export function effectAdvantage(effect) {
   const card = effect?.move ? getMartialMove(effect.move.id) : null;
@@ -294,7 +299,16 @@ export function effectAdvantage(effect) {
   if (advantage > 0) return { advantage, disadvantage: 0, from: [card.name] };
 
   const trick = trickArrow(effect);
-  return trick ? { advantage: trick.advantage, disadvantage: 0, from: [trick.name] } : null;
+  if (trick) return { advantage: trick.advantage, disadvantage: 0, from: [trick.name] };
+
+  /* The card's own, off the table in riders.js. Named after the row, which is what
+     the player typed or picked and the only name they can look up. */
+  const rider = riderOf(effect?.card);
+  const up = Math.max(0, Math.floor(Number(rider?.advantage) || 0));
+  const down = Math.max(0, Math.floor(Number(rider?.disadvantage) || 0));
+  if (up + down === 0) return null;
+
+  return { advantage: up, disadvantage: down, from: [effect?.name || ''] };
 }
 
 /**
@@ -450,18 +464,41 @@ export function attackModifiers(character, card, base) {
      `weaponRiders` because it hangs on the *shape you are in* and not on the tag
      of the thing in your hand — see feralRiders in feral.js. */
   const hide = swings ? feralRiders(character) : null;
-  const passive = (Number(worn?.advantage) || 0) + (Number(hide?.advantage) || 0);
+  /* And whatever is on the tracker. GIANT GROWTH grants Empowered and KINDLE
+     WEAPON changes what the blade is made of, and neither of them cares whose
+     card it was: a row on the block bends the swing under it. Read on every
+     attack rather than only a weapon one, because a spell attack is an attack and
+     "granting it Empowered" names no weapon. See riders.js. */
+  const running = effectRiders(character?.effects);
+  const laid = running && bendsSwing(running) ? running : null;
+  const passive =
+    (Number(worn?.advantage) || 0) + (Number(hide?.advantage) || 0) + (Number(laid?.advantage) || 0);
 
-  if (!trick && !moves && passive === 0 && !hide) return base;
+  if (!trick && !moves && !laid && passive === 0 && !hide) return base;
 
   const empower =
-    (Number(base?.empower) || 0) + (Number(moves?.empower) || 0) + (Number(hide?.empower) || 0);
+    (Number(base?.empower) || 0) +
+    (Number(moves?.empower) || 0) +
+    (Number(hide?.empower) || 0) +
+    (Number(laid?.empower) || 0);
   const elevate =
-    (Number(base?.elevate) || 0) + (Number(trick?.elevate) || 0) + (Number(moves?.elevate) || 0);
+    (Number(base?.elevate) || 0) +
+    (Number(trick?.elevate) || 0) +
+    (Number(moves?.elevate) || 0) +
+    (Number(laid?.elevate) || 0);
+
+  /* A type a running card lays on the swing joins the ones already on it, the
+     same way two infusions both stand: the renderer prints a list as "Decay or
+     Fire" and neither of them is thrown away. Deduplicated, so a Fire Infusion
+     under a KINDLE WEAPON is one Fire. */
+  const damage = [...(base?.damage ?? [])];
+  for (const type of laid?.damage ?? []) {
+    if (!damage.includes(type)) damage.push(type);
+  }
 
   return {
     ...(base ?? {}),
-    damage: base?.damage ?? [],
+    damage,
     empower,
     elevate,
     /* A Trickster's stolen Poison lends flat damage to the swing. `flat` on that
@@ -472,11 +509,10 @@ export function attackModifiers(character, card, base) {
        because a card cannot be printed off one of them and not the other. */
     bonus: (Number(base?.bonus) || 0) + (Number(trick?.flat) || 0) * instinctOf(character),
     /* The two the arrow on the card prints. Advantage stacks and cancels
-       Disadvantage one for one, so both are counted and the badge nets them. No
-       card in the codex grants Disadvantage on your own swing yet; the field is
-       here because the Developpement Notes asked for the arrow to work both ways,
-       and a renderer that only understands one direction is one that has to be
-       found and changed the first time something does. */
+       Disadvantage one for one, so both are counted and the badge nets them.
+       An Unlucky Brew is the first card in the codex to hand the swinger
+       Disadvantage, and the renderer understood both directions before it
+       existed because the Developpement Notes asked it to. */
     advantage:
       (Number(base?.advantage) || 0) +
       passive +
@@ -486,10 +522,10 @@ export function attackModifiers(character, card, base) {
          to be on the card the player is deciding off — the same reason the Elevate
          it also bought is folded in above. */
       (Number(trick?.advantage) || 0),
-    disadvantage: Number(base?.disadvantage) || 0,
+    disadvantage: (Number(base?.disadvantage) || 0) + (Number(laid?.disadvantage) || 0),
     /* And where it came from, so the badge can say. An arrow with a 3 in it and no
        explanation is a number the reader has to go and reconstruct. */
-    advantageFrom: advantageSources(worn, moves, hide, trick),
+    advantageFrom: advantageSources(worn, moves, hide, trick, laid),
     /* What the sheet prints beside the attack, and deliberately not on the card:
        "when possible updating the attack text to say (not on the card) that this
        attack will MARTIAL MOVE NAME". */
@@ -510,16 +546,32 @@ function instinctOf(character) {
  * the same weapon, or a form that only grants a die of Empowered on some other
  * weapon, is not credited with an arrow it had nothing to do with.
  */
-function advantageSources(worn, moves, hide, trick) {
+function advantageSources(worn, moves, hide, trick, laid) {
   const held = (worn?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
   const shape = (hide?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
+  /* And the tracker, named after the row rather than the card id: a Lucky Brew is
+     tracked under whatever the row says, and that is the name the player will go
+     looking for when they want to know where the arrow came from.
+
+     Both directions, because the badge nets them and an arrow pointing *down* has
+     the same question behind it. A row lending neither is left off, the same as a
+     move that is only riding the swing. */
+  const tracked = (laid?.from ?? [])
+    .filter(({ rider }) => Number(rider.advantage) > 0 || Number(rider.disadvantage) > 0)
+    .map(({ name }) => name);
 
   /* `moveRider` hands the moves back in the order they were paid for. A move with
      no advantage of its own is riding the swing but not bending the roll, so it is
      left off — it is named on the attack row instead, which is where what a move
      *does* belongs. `trickRider` keeps the same distinction for the same reason: a
      stolen Poison rides the swing and lends it no arrow. */
-  return [...held, ...shape, ...(moves?.advantaged ?? []), ...(trick?.advantaged ?? [])];
+  return [
+    ...held,
+    ...shape,
+    ...tracked,
+    ...(moves?.advantaged ?? []),
+    ...(trick?.advantaged ?? []),
+  ];
 }
 
 /**

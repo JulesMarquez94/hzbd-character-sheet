@@ -14,8 +14,9 @@
  *
  * Each fixture below is a *kind* of source, not a character anybody would play:
  * gear, a full-set replacement, a lineage rider, five enchantments at once, a
- * raised point ceiling, a form's hide and a creature. Adding a new source of any
- * stat means adding a sheet here that carries it.
+ * raised point ceiling, a form's hide, a creature and a card running on the
+ * tracker. Adding a new source of any stat means adding a sheet here that carries
+ * it.
  *
  * Two notes on the fixtures, both learned the hard way:
  *
@@ -247,6 +248,52 @@ const SHEETS = [
       if (hit) fail(`Speed penalised by ${hit.value} on a load that is inside capacity`);
       if (math.carry_max.total !== 40) fail(`capacity is ${math.carry_max.total}, want 40`);
       if (math.carry_used.total !== 37.5) fail(`load is ${math.carry_used.total}, want 37.5`);
+    },
+  },
+  {
+    /* A card on the tracker, which is the third thing that bends a tile without
+       storing it. Somebody else's Giant Growth: nothing was spent on this sheet
+       and no source of theirs has heard of the spell. This ladder walks 8, so
+       the doubling is worth 8 more and the line has to name it. */
+    name: 'somebody else Giant Growth on you, which doubles the Speed',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      effects: [{ id: 'e1', name: 'Giant Growth', card: 'giant-growth', turns: 10 }],
+    },
+    expect: (math, fail) => {
+      if (math.speed_m.total !== 16) fail(`Speed is ${math.speed_m.total}, want 16`);
+      const hit = math.speed_m.terms.find((t) => t.label === 'Giant Growth');
+      if (!hit) fail('the Speed doubled and the line does not say what doubled it');
+      if (hit && hit.value !== 8) fail(`Giant Growth worth ${hit.value}, want 8`);
+    },
+  },
+  {
+    /* Two factors, which multiply rather than add: a doubling and a half again is
+       threefold. Both terms are off the Speed as it stood when each was applied,
+       which is the only way they can add up to the tile. And Barkskin's point of
+       Defense, on the same sheet, because a rider that moved two different tiles
+       at once is the case a single-tile fixture cannot catch. */
+    name: 'a doubling, a half again and a point of Defense, all off the tracker',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      effects: [
+        { id: 'e1', name: 'Giant Growth', card: 'giant-growth', turns: 10 },
+        { id: 'e2', name: 'Hasted Brew', card: 'wisp-of-mist', turns: null },
+        { id: 'e3', name: 'Barkskin', card: 'barkskin', turns: null },
+      ],
+    },
+    expect: (math, fail) => {
+      if (math.speed_m.total !== 24) fail(`Speed is ${math.speed_m.total}, want 24`);
+      const grown = math.speed_m.terms.find((t) => t.label === 'Giant Growth');
+      const hasted = math.speed_m.terms.find((t) => t.label === 'Hasted Brew');
+      if (grown?.value !== 8) fail(`Giant Growth worth ${grown?.value}, want 8`);
+      if (hasted?.value !== 8) fail(`Hasted Brew worth ${hasted?.value}, want 8`);
+
+      const bark = math.avoid.terms.find((t) => t.label === 'Barkskin');
+      if (!bark) fail('Barkskin raised the Defense and the line does not name it');
+      if (bark && bark.value !== 1) fail(`Barkskin worth ${bark.value}, want 1`);
     },
   },
 ];

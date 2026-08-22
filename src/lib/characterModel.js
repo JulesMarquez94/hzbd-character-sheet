@@ -16,6 +16,7 @@ import { ephemeralGrants, wornIds } from './enchanting.js';
 import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
 import { feralArmor, feralShieldShare } from './feral.js';
+import { effectRiders, riderShift } from './riders.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -280,16 +281,24 @@ export function normalizeSourceOrder(value, ids) {
  * `liveCharacter` passes it, and only for what the sheet *shows*. See
  * enchanting.js.
  *
+ * `running` is the third kind, and the newest: what is on the *tracker*. A card
+ * whose printed text names a number this sheet holds moves that number for as
+ * long as its row is on the block, whoever cast it. Same contract as `extra` and
+ * for the same reason: only `liveCharacter` passes it, and nothing stored ever
+ * carries it. See riders.js.
+ *
  * It takes the whole character now rather than five named fields, because "what is
  * worked into what you are wearing" needs the equipment map, the trinkets and the
  * forge registry together. Every call site already spread a character in.
  */
-export function deriveStats(character, extra = null) {
+export function deriveStats(character, extra = null, running = null) {
   const { physique, instinct, mind, level } = character;
   const worn = characterGrants(character).worn;
 
   const add = (key) =>
-    (worn.attributes[key] ?? 0) + Math.floor(Number(extra?.attributes?.[key]) || 0);
+    (worn.attributes[key] ?? 0) +
+    Math.floor(Number(extra?.attributes?.[key]) || 0) +
+    Math.floor(Number(running?.attributes?.[key]) || 0);
 
   const p = (Number(physique) || 0) + add('physique');
   const i = (Number(instinct) || 0) + add('instinct');
@@ -297,8 +306,10 @@ export function deriveStats(character, extra = null) {
   const lvl = Number(level) || 1;
 
   /* The flat riders, worn and running, summed once each. `extra` is only ever
-     the ephemeral half; the worn half is already in `worn`. */
-  const flat = (key) => (worn[key] ?? 0) + (Number(extra?.[key]) || 0);
+     the ephemeral half; the worn half is already in `worn`. And `running` is
+     whatever is on the tracker, which is a third source and adds like one. */
+  const flat = (key) =>
+    (worn[key] ?? 0) + (Number(extra?.[key]) || 0) + (Number(running?.[key]) || 0);
 
   const health_max = Math.floor(10 * lvl + 10 * p) + Math.floor(flat('healthMax'));
   const reflex = Math.floor(p + i);
@@ -342,6 +353,15 @@ export function deriveStats(character, extra = null) {
      rather than printed on the card as a warning: swap to a two-hander and
      syncDerived takes the point straight back off. See moves.js. */
   avoid += martialDefense(character);
+  /* And what is running on the tracker. BARKSKIN's "+1 Defense" is a point like
+     any other, and it comes off on the render its row is dropped. */
+  avoid += Math.floor(Number(running?.defense) || 0);
+
+  /* The factor on the Movement Speed, applied to everything the Speed is already
+     made of: GIANT GROWTH doubles the Speed you have, gear and all, rather than
+     doubling the three metres everybody starts from. Then the load is applied,
+     because being twice as big and twice as burdened is still burdened. */
+  const stride = Number(running?.speedFactor) || 1;
 
   return {
     health_max,
@@ -362,7 +382,7 @@ export function deriveStats(character, extra = null) {
     // halved, and 30% over it is nothing at all. Applied here rather than left
     // as a note somebody has to remember, the same way a breastplate's Armor is
     // applied here. See encumberedSpeed in items.js.
-    speed_m: encumberedSpeed(3 + i / 2 + flat('speed'), carry),
+    speed_m: encumberedSpeed((3 + i / 2 + flat('speed')) * stride, carry),
     /* Six for everybody, and seven for a Master Trickster: THRILLED is the only
        thing in the game that moves either ceiling, and both of these were a
        literal 6 before it existed. tricks.js reads the rank off the set and hands
@@ -435,14 +455,21 @@ export function karmaCap(character) {
  * written. `patch` in CharacterSheet.jsx closes over the stored row, not this one,
  * which is what keeps a write made from a bent screen honest.
  *
+ * A card on the tracker is the second thing that bends without storing, and it
+ * bends for exactly the same reason: GIANT GROWTH doubles a Movement Speed for
+ * ten turns, and a doubled column would still be doubled next week. So it comes
+ * through here too, whether the character cast it or somebody else did.
+ *
  * Hands back the character itself when nothing is running, so a sheet with no
- * enchantments on it does no work and re-renders no more than it used to.
+ * enchantments and an empty tracker does no work and re-renders no more than it
+ * used to.
  */
 export function liveCharacter(character) {
   if (!character) return character;
 
   const grants = characterGrants(character);
-  if (!grants.any) return character;
+  const running = effectRiders(character?.effects);
+  if (!grants.any && !running) return character;
 
   /* The attribute *columns* are the level ledger's, and nothing here may write
      them: levelPicks.js rebuilds all three out of its own record, so a bonus
@@ -455,33 +482,39 @@ export function liveCharacter(character) {
      two numbers contradicting each other on one screen. */
   const bent = { ...character };
   for (const key of ['physique', 'instinct', 'mind']) {
-    const plus = grants.attributes[key] ?? 0;
+    const plus = (grants.attributes[key] ?? 0) + (running?.attributes[key] ?? 0);
     if (plus) bent[key] = (Number(character[key]) || 0) + plus;
   }
 
   /* Derived off the *stored* columns, with only the ephemeral part passed in:
      deriveStats reads the worn part out of the talents column itself, so handing
-     it the bent attributes as well would count every worn enchantment twice. */
+     it the bent attributes as well would count every worn enchantment twice. The
+     tracker's riders are read off the effects column, which deriveStats can also
+     see, and are handed in for the same reason: one read, one place. */
   const level = levelForXp(character.xp);
-  return { ...bent, ...deriveStats({ ...character, level }, grants.ephemeral) };
+  return { ...bent, ...deriveStats({ ...character, level }, grants.ephemeral, running) };
 }
 
 /**
  * What is on this character that is not on their row, said in words.
  *
- * Only the ephemeral half: a worn enchantment is permanent and the stored
- * columns already carry it, so the only thing worth flagging as *running* is the
- * hour-long kind. Empty when nothing is.
+ * Only the temporary: a worn enchantment is permanent and the stored columns
+ * already carry it, so what is worth flagging as *running* is the hour-long kind
+ * and whatever is on the tracker. Empty when nothing is, which is nearly
+ * everyone.
  *
  * The permanent ids go in so the same-source law can bite here too: an hour of
  * borrowed Primal Sense on somebody already wearing one moves nothing, and a row
  * saying "+1 Instinct" beside a tile that did not move would be the sheet
  * contradicting itself.
+ *
+ * A tracker row is named after its card rather than reduced to a number, because
+ * that is the only name a reader can go and look up: "+1 Defense" says nothing
+ * about where to take it off, and "Barkskin" says everything.
  */
 export function liveShift(character) {
   const standing = [...wornIds(character?.talents), ...gearEnchantIds(character)];
   const grants = ephemeralGrants(character?.effects, standing);
-  if (!grants.any) return [];
 
   const said = [];
   for (const [key, plus] of Object.entries(grants.attributes)) {
@@ -490,6 +523,14 @@ export function liveShift(character) {
   if (grants.healthMax) {
     said.push(`${grants.healthMax > 0 ? '+' : ''}${grants.healthMax} max Health`);
   }
+
+  /* And the cards. Only the ones actually moving a tile: a row lending a die to
+     the next swing is running, and it is not what any of these tiles is showing.
+     See riders.js. */
+  for (const { name, rider } of riderShift(character?.effects)) {
+    said.push(`${name} (${rider.line})`);
+  }
+
   return said;
 }
 

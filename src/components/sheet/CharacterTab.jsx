@@ -354,11 +354,13 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
 
         {/* An Ephemeral Enchantment raises an attribute for an hour and is not
             written on the row, so these three tiles are showing a number the
-            Advancement tab does not agree with. Said out loud, because a stat
-            nobody can account for is worse than a stat that is merely bent. */}
+            Advancement tab does not agree with. A card on the tracker does the
+            same, for as long as its row is up. Said out loud either way, because
+            a stat nobody can account for is worse than a stat that is merely
+            bent. */}
         {shift.length > 0 && (
           <p className="attr-shift">
-            <b>Running:</b> {shift.join(', ')}. On you for the hour, and not on your sheet.
+            <b>Running:</b> {shift.join(', ')}. Temporary, and not on your sheet.
           </p>
         )}
       </div>

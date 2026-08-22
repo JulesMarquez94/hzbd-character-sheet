@@ -539,6 +539,9 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
               onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
               onNudge={(delta) => patch(writeEffects(nudgeEffect(effects, effect.id, delta)))}
               onDrop={() => patch(writeEffects(dropEffect(effects, effect.id)))}
+              /* A creature's stats are its own and no rider reaches them, so a
+                 row here does not claim to have moved one. See riders.js. */
+              bends={false}
             />
           ))
         )}

@@ -5,6 +5,7 @@ import RestPrompt from './RestPrompt.jsx';
 import RollArrow from '../RollArrow.jsx';
 import { isEnchanter } from '../../lib/enchanting.js';
 import { effectAdvantage } from '../../lib/moves.js';
+import { riderLine } from '../../lib/riders.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -247,7 +248,7 @@ function turnNote(turn, character) {
  * row there has to be this row: same count, same nudges, same card behind it.
  * See MinionBlock.jsx, which is where BarChip goes too.
  */
-export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
+export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, bends = true }) {
   const over = effect.turns === 0;
   const open = effect.turns === null;
   /* What this row is doing to a roll, when it is doing anything: a Martial Move
@@ -255,6 +256,16 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
      last clause of the note that asked for the arrow at all. An expired row is
      doing nothing, so it loses the badge while it sits here saying "Ended". */
   const arrow = over ? null : effectAdvantage(effect);
+  /* And what it is doing to the *sheet*, for the rows that do anything to it.
+     GIANT GROWTH has already doubled the Speed tile by the time this row is
+     drawn, and the row is the only place that can say which one did it. Off the
+     same table the doubling came from, so the words and the arithmetic cannot
+     drift apart. Dropped along with the arrow once the row has ended.
+
+     `bends` is false on a creature's tracker: a rider is read off the character's
+     own effects column, so a line here promising a doubled Speed would be
+     describing something that did not happen. See MinionBlock.jsx. */
+  const does = over || !bends ? null : riderLine(effect.card);
 
   return (
     <div className={`fx-row${over ? ' is-over' : ''}`}>
@@ -303,6 +314,8 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop }) {
           </span>
         )}
       </div>
+
+      {does && <span className="fx-does">{does}</span>}
 
       {onOpen ? (
         <button type="button" className="fx-read" onClick={onOpen}>
