@@ -324,7 +324,7 @@ export default function EffectPrompt({
               {[
                 { id: '', label: 'Something in play' },
                 { id: 'short', label: 'Any rest' },
-                { id: 'long', label: 'A long rest' },
+                { id: 'long', label: 'A Long Rest' },
               ].map((option) => (
                 <button
                   type="button"

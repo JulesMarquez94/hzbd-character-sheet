@@ -216,7 +216,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       return match[2]
         ? {
             name: `${minion.title} · Actions`,
-            note: 'Its Action Points, its Reaction Points and its quick bar',
+            note: 'Its Action Points, its Reaction Points and its Quick Bar',
           }
         : {
             name: minion.title,
@@ -271,7 +271,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           type="button"
           className="meter meter-xp"
           onClick={() => setLedgerKind('xp')}
-          title={readOnly ? 'View the experience log' : 'Open the experience ledger'}
+          title={readOnly ? 'View the Experience log' : 'Open the Experience ledger'}
         >
           <span className="meter-head">
             <span className="meter-label">Experience</span>
@@ -295,7 +295,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             type="button"
             className="meter meter-tight"
             onClick={() => setLedgerKind('wealth')}
-            title={readOnly ? 'View the wealth log' : 'Open the wealth ledger'}
+            title={readOnly ? 'View the Wealth log' : 'Open the Wealth ledger'}
           >
             <span className="meter-label">
               <CoinIcon />
@@ -310,7 +310,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             type="button"
             className="meter meter-tight"
             onClick={() => setLedgerKind('supplies')}
-            title={readOnly ? 'View the supply log' : 'Open the supply ledger'}
+            title={readOnly ? 'View the Supply log' : 'Open the Supply ledger'}
           >
             <span className="meter-label">
               <CrateIcon />
@@ -425,7 +425,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           color="var(--stat-health)"
           poison={hp.poison}
           onClick={() => setLedgerKind('health')}
-          title={readOnly ? 'View the health log' : 'Open the health ledger'}
+          title={readOnly ? 'View the Health log' : 'Open the Health ledger'}
           math={math.health_max}
         />
 
@@ -435,7 +435,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           max={shieldMax}
           color="var(--stat-shield)"
           onClick={() => setLedgerKind('shield')}
-          title={readOnly ? 'View the shield log' : 'Open the shield ledger'}
+          title={readOnly ? 'View the Shield log' : 'Open the Shield ledger'}
           math={math.shield_cap}
         />
 
@@ -445,7 +445,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           max={character.willpower_max}
           color="var(--stat-wp)"
           onClick={() => setLedgerKind('willpower')}
-          title={readOnly ? 'View the willpower log' : 'Open the willpower ledger'}
+          title={readOnly ? 'View the Willpower log' : 'Open the Willpower ledger'}
           math={math.willpower_max}
         />
 

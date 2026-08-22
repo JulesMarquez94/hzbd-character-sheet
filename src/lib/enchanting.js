@@ -587,11 +587,16 @@ export function restSupplyCut(character, gear = []) {
  */
 
 /*
- * A `unique` enchantment is dropped rather than refused. Every other row a rank
- * cannot reach comes back marked "Adept needs a higher rank", which is true and
- * useful; a Unique Imbuement is not waiting on a rank and never will be, so
- * offering it dead would be a promise the shelf cannot keep. It comes on the
- * item and nowhere else.
+ * A `unique` enchantment is dropped rather than refused. A Unique Imbuement is
+ * not waiting on a rank and never will be, so offering it dead would be a
+ * promise the shelf cannot keep. It comes on the item and nowhere else.
+ *
+ * Every other row a rank cannot reach comes back marked `gated`, and the shelf
+ * drops those too: "Adept needs a higher rank" is true, but it is not an answer
+ * anybody can act on tonight, and thirty of them is a wall you scroll past. How
+ * many were held back is said in one line instead. What the shelf does keep is
+ * everything refused for a reason the enchanter can change: one already on you,
+ * or a slot that is full.
  */
 export function enchantOptions(character, { held = [], room = Infinity } = {}) {
   const state = enchanterState(character);
@@ -603,7 +608,7 @@ export function enchantOptions(character, { held = [], room = Infinity } = {}) {
     const row = { enchantment: entry, held: taken.has(entry.id) };
 
     if (!state.tiers.includes(entry.tier)) {
-      return { ...row, ok: false, reason: `${entry.tier} needs a higher rank` };
+      return { ...row, ok: false, gated: true, reason: `${entry.tier} needs a higher rank` };
     }
     if (row.held) return { ...row, ok: false, reason: 'On you already' };
     if (taken.size >= room) {

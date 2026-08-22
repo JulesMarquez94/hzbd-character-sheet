@@ -25,7 +25,8 @@ import {
  * level 5 is whatever you went and learned, so this chooser opens the *whole*
  * codex. What it will not offer is a skill you already hold, from your
  * background or from an earlier level, or one whose own row asks for a level
- * this one has not reached, and it says which when it refuses.
+ * this one has not reached, and it leaves those off the wall rather than
+ * printing them dead. How many went, and why, is a line under the lead.
  *
  * Skills are cards like everything else on this sheet, so they are chosen the
  * way cards are chosen: printed at their real size, read in full, then taken.
@@ -161,6 +162,11 @@ export default function SkillPick({
  * thirty-odd of them is far too many to read straight through, and the tags on
  * the cards are already the right question: social, survival, lore, craft.
  *
+ * Narrowed first by what the level can actually learn. A card marked "Needs
+ * level 10" is not an offer, and a wall of them is a wall you scroll past, so
+ * they come off and the count goes under the lead. A reader gets the whole
+ * codex back, since reading a sheet is not choosing on it.
+ *
  * Two views, and the second is the point of the flow. Innate Spell Novice
  * promises a spell and names none, so taking it turns this window into the shelf
  * that names one: the question *replaces* the wall rather than waiting at the
@@ -181,7 +187,15 @@ function SkillChooser({
   const stack = useCardStack();
   const filter = useTagFilter(usedSkillTags(), { searchable: true });
   const options = skillOptionsAt(character, level);
-  const visible = options.filter(
+
+  /* What this level can learn, and the one it already did. Everything else is
+     counted rather than printed: a skill a later level opens is not a choice
+     here, and neither is one already written down somewhere else on the sheet. */
+  const offered = readOnly ? options : options.filter((option) => option.ok);
+  const later = options.filter((option) => option.gate === 'level').length;
+  const already = options.filter((option) => option.gate === 'held').length;
+
+  const visible = offered.filter(
     (option) => filter.matches(option.skill.tags) && filter.text(option.skill.name, option.skill.body)
   );
 
@@ -246,13 +260,26 @@ function SkillChooser({
           <p className="frame-foot" style={{ marginTop: 0 }}>
             {readOnly
               ? 'Every skill in the codex, read as it is printed.'
-              : 'Every skill in the codex, not only the ones your background offered. One of them is yours at this level, and the ones you already hold say so.'}
+              : 'Every skill this level can learn, not only the ones your background offered. One of them is yours.'}
           </p>
+
+          {/* Where the rest of the codex went. Both counts answer the same
+              question a bare wall leaves open, and they answer it differently:
+              one is a level away, the other is already on this sheet. Nothing
+              to answer for a reader: that wall is the whole codex already. */}
+          {!readOnly && (later > 0 || already > 0) && (
+            <p className="pick-line">
+              {later > 0 &&
+                `${later} more ${later === 1 ? 'skill is' : 'skills are'} held back for higher levels. `}
+              {already > 0 &&
+                `${already} ${already === 1 ? 'skill is' : 'skills are'} already yours, from your background or another level.`}
+            </p>
+          )}
 
           <TagFilter filter={filter} count={visible.length} noun="skill" placeholder="Search skills" />
 
           <div className="card-brief-wall">
-            {visible.map(({ skill, ok, held, reason }) => {
+            {visible.map(({ skill, held }) => {
               const answer = held ? skillAnswer(skill, character?.choices) : null;
               const modifiers = answer ? { choice: answer } : null;
 
@@ -269,11 +296,9 @@ function SkillChooser({
                     <button
                       type="button"
                       className={`btn btn-sm card-brief-btn ${held ? 'btn-minimal talent-drop' : 'btn-take'}`}
-                      disabled={!ok}
-                      title={ok ? undefined : reason}
                       onClick={() => (held ? onClose() : onTake(skill.id))}
                     >
-                      {held ? 'Learned at this level' : ok ? 'Learn this skill' : reason}
+                      {held ? 'Learned at this level' : 'Learn this skill'}
                     </button>
                   )}
                 </CardBrief>

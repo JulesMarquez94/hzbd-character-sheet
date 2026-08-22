@@ -32,7 +32,7 @@ function TagFilter({ tags, active, onToggle }) {
       <input
         className="form-input"
         type="search"
-        placeholder="Filter by tag…"
+        placeholder="Filter by tag"
         value={tagQuery}
         onChange={(e) => setTagQuery(e.target.value)}
         aria-label="Search tags"
@@ -268,7 +268,7 @@ export default function ItemBrowser({
         <input
           className="form-input"
           type="search"
-          placeholder="Search by name…"
+          placeholder="Search by name"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search items by name"

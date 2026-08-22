@@ -328,7 +328,7 @@ export function useEquipSlots(character, patch) {
 }
 
 function targetLabel(target) {
-  if (target.kind === 'belt') return `Belt Slot ${target.index + 1}`;
+  if (target.kind === 'belt') return `Belt Loop ${target.index + 1}`;
   return EQUIPMENT_SLOTS.find((slot) => slot.key === target.key)?.label ?? 'Slot';
 }
 

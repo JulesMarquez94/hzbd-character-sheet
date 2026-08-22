@@ -557,8 +557,8 @@ export function allSkills() {
 }
 
 /**
- * The whole pool measured against one level: what may be learned there, and —
- * when it may not — the one line the card should say instead.
+ * The whole pool measured against one level: what may be learned there, and,
+ * when it may not, why not.
  *
  * Three reasons a skill is closed, and the level is the newest of them. Five
  * skills on the tab carry a Requirement, and the level that reaches one is the
@@ -566,6 +566,12 @@ export function allSkills() {
  * Spell Master reads level 10, so the level-3 slot is offered neither. The
  * *slot's* level is what is measured, not where the character stands today,
  * because a skill is learned at the level that taught it.
+ *
+ * None of the three is a refusal you can argue with in the window, so `gate`
+ * says which one it was and the wall leaves those rows off rather than printing
+ * them dead. `level` is the one a later level opens, `held` is the one already
+ * yours from somewhere else, and the chooser counts each kind in a line of its
+ * own. `reason` is still written, for anything that wants to name one.
  */
 export function skillOptionsAt(character, level) {
   const picks = normalizeLevelPicks(character?.level_picks);
@@ -584,18 +590,31 @@ export function skillOptionsAt(character, level) {
   return allSkills().map((skill) => {
     if (skill.id === mine) return { skill, ok: true, held: true };
     if (fromBackground.has(skill.id)) {
-      return { skill, ok: false, held: false, reason: 'Your background already taught you this' };
+      return {
+        skill,
+        ok: false,
+        held: false,
+        gate: 'held',
+        reason: 'Your background already taught you this',
+      };
     }
     if (elsewhere.has(skill.id)) {
       return {
         skill,
         ok: false,
         held: false,
+        gate: 'held',
         reason: `Already learned at level ${elsewhere.get(skill.id)}`,
       };
     }
     if (skillLevel(skill) > at) {
-      return { skill, ok: false, held: false, reason: `Needs level ${skillLevel(skill)}` };
+      return {
+        skill,
+        ok: false,
+        held: false,
+        gate: 'level',
+        reason: `Needs level ${skillLevel(skill)}`,
+      };
     }
     return { skill, ok: true, held: false };
   });

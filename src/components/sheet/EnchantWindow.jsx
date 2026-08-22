@@ -25,9 +25,12 @@ import { SPELLS } from '../../lib/spells.js';
  *
  * ------------------------------------------------------------------- the shelf
  * "You choose an enchantment you know", so the shelf is what the rank knows and
- * nothing else, grouped by what an enchantment is *for* — a body, a weapon, a
- * carried spell — because that is the question being asked. Thirteen briefs in a
- * flat wall is thirteen things to read; four groups of a few is a glance.
+ * nothing else. Not what it will know at Rank 3: an enchantment above the rank
+ * is left off rather than printed dead, and how many went is one clause on the
+ * lead. What is left is grouped by what an enchantment is *for* — a body, a
+ * weapon, a carried spell — because that is the question being asked. Thirteen
+ * briefs in a flat wall is thirteen things to read; four groups of a few is a
+ * glance.
  *
  * Each one is the same card brief every other pool on the sheet prints, so an
  * enchantment reads like the card it is and its own words are one tap away.
@@ -64,6 +67,8 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
   const [paying, setPaying] = useState(null);
 
   const options = useMemo(() => enchantOptions(character), [character]);
+  const offered = options.filter((option) => !option.gated);
+  const later = options.length - offered.length;
 
   /* The spells the chosen Imbuement could bind, or none for everything that binds
      no spell. Above the early return, because a hook below one runs in a different
@@ -153,12 +158,17 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
           At rank {state.rank} you know the {listAnd(state.tiers)}{' '}
           {state.tiers.length === 1 ? 'enchantment' : 'enchantments'}. An ephemeral one lasts an
           hour, costs Willpower equal to its Magic Burden and weighs nothing on whoever carries it.
+          {later > 0 &&
+            ` ${later} more ${later === 1 ? 'enchantment is' : 'enchantments are'} held back for higher ranks.`}
         </p>
 
         <div className="ench-window">
           <div className="ench-shelf">
             {ENCHANT_KINDS.map((kind) => {
-              const rows = options.filter((option) => enchantKind(option.enchantment) === kind.id);
+              /* What the rank reaches, and nothing above it. A kind this rank
+                 cannot reach at all drops its whole section rather than standing
+                 there empty, and how many went is said once under the lead. */
+              const rows = offered.filter((option) => enchantKind(option.enchantment) === kind.id);
               if (rows.length === 0) return null;
 
               return (

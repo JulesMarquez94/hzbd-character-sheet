@@ -116,7 +116,10 @@ export function heldPicks(talents, talentId) {
  *
  * A card can be refused for two reasons, and they read differently at the
  * table: the wrong school is never going to be yours, while the wrong tier is
- * only a rank away.
+ * only a rank away. `gate` says which, because a wall that leaves both off has
+ * only one of them to promise: a Mycomancer's thirty-four Elemental spells are
+ * not waiting on a rank and counting them as though they were is a sentence the
+ * set can never make good on.
  */
 export function loadoutOptions({ talent, rank, picks }) {
   const spec = loadoutOf(talent);
@@ -135,10 +138,10 @@ export function loadoutOptions({ talent, rank, picks }) {
       const row = { card, tier, school, sub, known, modifiers };
 
       if (spec.school && school && school !== spec.school) {
-        return { ...row, ok: false, reason: `${school} school, not ${spec.school}` };
+        return { ...row, ok: false, gate: 'school', reason: `${school} school, not ${spec.school}` };
       }
       if (tier && legalTiers.length > 0 && !legalTiers.includes(tier)) {
-        return { ...row, ok: false, reason: `${tier} needs a higher rank` };
+        return { ...row, ok: false, gate: 'tier', reason: `${tier} needs a higher rank` };
       }
       return { ...row, ok: true };
     })

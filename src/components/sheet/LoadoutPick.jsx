@@ -140,7 +140,10 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
     (option) => filter.matches(option.card.tags) && filter.text(option.card.name, option.card.body)
   );
 
-  const later = options.length - offered.length;
+  /* Only what a rank still owes you. Everything else the pool refused is
+     another school's and no rank opens it, so counting it here would promise a
+     Mycomancer thirty-four Elemental spells that are never coming. */
+  const later = options.filter((option) => option.gate === 'tier').length;
 
   return (
     <Modal
@@ -208,15 +211,13 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
               className={`btn btn-sm card-brief-btn ${
                 option.known ? 'btn-minimal talent-drop' : 'btn-take'
               }`}
-              disabled={!option.ok && !option.known}
+              /* The wall is cut to what the rank can take, so the only refusal
+                 that reaches it is a stored pick the rank has since lost. That
+                 one still says why on hover, the way the block says it above. */
               title={option.ok ? undefined : option.reason}
               onClick={() => onToggle(option.card.id)}
             >
-              {option.known
-                ? 'Known, give it back'
-                : option.ok
-                  ? `Learn this ${spec.noun}`
-                  : option.reason}
+              {option.known ? 'Known, give it back' : `Learn this ${spec.noun}`}
             </button>
           )
         }

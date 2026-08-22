@@ -27,7 +27,7 @@ const KINDS = {
   wealth: {
     field: 'wealth',
     title: 'Wealth Ledger',
-    noun: 'coins',
+    noun: 'Coins',
     unit: '¢',
     color: 'var(--stat-coin)',
     placeholder: 'Sold the brass astrolabe',
@@ -38,7 +38,7 @@ const KINDS = {
   supplies: {
     field: 'supplies',
     title: 'Supply Ledger',
-    noun: 'supplies',
+    noun: 'Supplies',
     unit: 'Supplies',
     color: 'var(--stat-supply)',
     placeholder: 'Restocked at the waystation',
@@ -50,7 +50,7 @@ const KINDS = {
     // zero is the floor, and reaching it kills the character.
     getMin: (c) => -(Number(c.health_max) || 0),
     title: 'Health Ledger',
-    noun: 'health',
+    noun: 'Health',
     unit: 'HP',
     color: 'var(--stat-health)',
     placeholder: 'Took a hit from the boiler golem',
@@ -61,7 +61,7 @@ const KINDS = {
     // the share is the whole of it for a Feral Cursed. See shieldCapFor.
     getMax: (c) => shieldCapFor(c),
     title: 'Shield Ledger',
-    noun: 'shield',
+    noun: 'Shield',
     unit: 'SP',
     color: 'var(--stat-shield)',
     placeholder: 'Shield spell absorbed the blast',
@@ -73,7 +73,7 @@ const KINDS = {
     // transaction with a warning instead of quietly clamping to zero.
     blockOverdraw: true,
     title: 'Willpower Ledger',
-    noun: 'willpower',
+    noun: 'Willpower',
     unit: 'WP',
     color: 'var(--stat-wp)',
     placeholder: 'Cast Blood Spear',
@@ -152,7 +152,7 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
     const healthDelta = healthAfter - healthBefore;
 
     if (soaked === 0 && healthDelta === 0) {
-      setError('Shield is empty and health is already at the floor.');
+      setError('Shield is empty and Health is already at the floor.');
       setFlash('');
       return;
     }
@@ -179,7 +179,7 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
           ts,
           kind: 'health',
           delta: healthDelta,
-          note: reason ? `${reason} · past shield`.slice(0, LEDGER_NOTE_MAX) : 'Damage past shield',
+          note: reason ? `${reason} · past Shield`.slice(0, LEDGER_NOTE_MAX) : 'Damage past Shield',
           balance: healthAfter,
         }
       );
@@ -195,7 +195,7 @@ export default function LedgerModal({ kind, character, patch, onClose, readOnly 
     const dead = healthFloor < 0 && healthAfter <= healthFloor;
     setFlash(
       `−${formatNumber(soaked)} SP logged · ${
-        spilled ? `−${formatNumber(spilled)} HP through the shield` : 'health already at the floor'
+        spilled ? `−${formatNumber(spilled)} HP through the Shield` : 'Health already at the floor'
       }${dead ? ' · dead.' : ''}`
     );
   }

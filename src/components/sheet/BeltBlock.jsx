@@ -68,7 +68,7 @@ export default function BeltBlock({
                 <SlotGlyph slot="belt" />
               </span>
               <span className="equip-empty-body">
-                <span className="equip-slot-label">Slot {index + 1}</span>
+                <span className="equip-slot-label">Loop {index + 1}</span>
                 <span className="equip-empty-hint">
                   {readOnly ? 'Empty' : 'Empty · tap to clip something on'}
                 </span>
@@ -94,7 +94,7 @@ export default function BeltBlock({
 
       {browseIndex !== null && (
         <ItemBrowser
-          slot={{ key: BELT_SLOT_KEY, label: `Belt Slot ${browseIndex + 1}` }}
+          slot={{ key: BELT_SLOT_KEY, label: `Belt Loop ${browseIndex + 1}` }}
           current={beltEntry(character, belt[browseIndex])?.item ?? null}
           equipLabel="Clip On"
           equippedLabel="On Belt"
@@ -153,7 +153,7 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
         <span className="belt-body">
           <span className="belt-line">
             <span className="belt-name">{item.name}</span>
-            <span className="equip-slot-label">Slot {index + 1}</span>
+            <span className="equip-slot-label">Loop {index + 1}</span>
           </span>
           <ItemTags item={item} />
           {workings.length > 0 && (
@@ -222,7 +222,7 @@ function LockedLoop({ index }) {
         <SlotGlyph slot="lock" />
       </span>
       <span className="equip-empty-body">
-        <span className="equip-slot-label">Slot {index + 1}</span>
+        <span className="equip-slot-label">Loop {index + 1}</span>
         <span className="equip-empty-hint">Locked</span>
       </span>
     </div>

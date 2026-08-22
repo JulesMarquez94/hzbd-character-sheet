@@ -260,7 +260,7 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
               second button here that charges nothing. */}
           {form.willing && !form.over && (
             <p className="feral-line feral-line-quiet">
-              Or play Call the Beast off your quick bar to force it with no roll.
+              Or play Call the Beast off your Quick Bar to force it with no roll.
             </p>
           )}
         </>

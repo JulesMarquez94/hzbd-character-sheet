@@ -249,7 +249,7 @@ function targetsFor(piece, { character, equipment, belt, beltSlots, trinkets, on
 
       targets.push({
         id: `belt-${index}`,
-        label: `Belt Slot ${index + 1}`,
+        label: `Belt Loop ${index + 1}`,
         glyph: 'belt',
         verb: refresh ? 'Clip a fresh one' : 'Clip it here',
         hereLabel: 'On belt',

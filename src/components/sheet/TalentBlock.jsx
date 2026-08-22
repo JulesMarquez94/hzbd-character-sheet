@@ -562,7 +562,7 @@ function EnchantRankNote({ talent, rank }) {
               this. Saying it again at Rank 2 and Rank 3 would be the same sentence
               three times over, so the later ranks say what they add instead. */}
           {kept.length === 0
-            ? `Laid on an item over a Long Rest, ${spec.supplyRate} supplies for every point of Magic Burden`
+            ? `Laid on an item over a Long Rest, ${spec.supplyRate} Supplies for every point of Magic Burden`
             : `${reach} to lay from in all, over the ${listAnd(kept)} ${kept.length === 1 ? 'shelf' : 'shelves'} you already had`}
           {grew ? `, and ${WORN_ORDINAL[worn] ?? worn} worn on your own person` : ''}
           {/* And what LAYERED ENCHANTMENT buys, which is not countable off any

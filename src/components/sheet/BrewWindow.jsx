@@ -345,12 +345,20 @@ function SlotRow({ group, draft, limits, readOnly, onAdd, onDrop, onRead }) {
  *
  * It used to stand open under the configuration, all eighteen Ingredients of it,
  * which is the longest thing in the window and the part a player reads least
- * often. Behind the `+` it answers the question actually being asked — what goes
- * in *this* slot — and the Ingredients that cannot go in it say why on their own
- * button rather than being listed at all.
+ * often. Behind the `+` it answers the question actually being asked: what goes
+ * in *this* slot.
+ *
+ * And only what a rank can reach. An Ingredient two ranks off is not an offer
+ * this Cauldron can make, so it comes off the shelf and is counted in a line
+ * instead, the way every other pool on the sheet counts what it held back. What
+ * stays is everything refused for a reason the brewer can undo tonight: a dose
+ * already in, or an Essence slot that is full. Those say why on their own
+ * button, because giving one back makes them an offer again.
  */
 function Shelf({ group, character, onClose, onAdd, onRead }) {
-  const within = group.options.filter((option) => option.ok).length;
+  const offered = group.options.filter((option) => !option.gated);
+  const later = group.options.length - offered.length;
+  const within = offered.filter((option) => option.ok).length;
 
   return (
     <Modal
@@ -372,8 +380,17 @@ function Shelf({ group, character, onClose, onAdd, onRead }) {
         {group.rule}.
       </p>
 
+      {/* Where the rest of the shelf went. A rank opens tiers, so this number
+          falls as the Cauldron Keeper ranks up and is gone at Master. */}
+      {later > 0 && (
+        <p className="pick-line">
+          {later} more {later === 1 ? group.label : group.plural}{' '}
+          {later === 1 ? 'is' : 'are'} held back for higher ranks.
+        </p>
+      )}
+
       <div className="card-brief-wall">
-        {group.options.map((option) => (
+        {offered.map((option) => (
           <IngredientRow
             key={option.ingredient.id}
             option={option}

@@ -878,7 +878,7 @@ export function placementOf(character, id) {
   if (normalizeTrinkets(character?.trinkets).includes(id)) return 'a trinket';
 
   const loop = normalizeBelt(character?.belt).findIndex((entry) => entry?.id === id);
-  return loop >= 0 ? `belt slot ${loop + 1}` : null;
+  return loop >= 0 ? `belt loop ${loop + 1}` : null;
 }
 
 /** A forged id as the item it describes, or null for everything else. */

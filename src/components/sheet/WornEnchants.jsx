@@ -163,8 +163,10 @@ function WornSlot({ id, readOnly, onRead, onDrop }) {
  * The shelf, opened by a slot and filtered to what the rank knows.
  *
  * Same shape the Cauldron's shelf has, and for the same reason: what is being
- * asked is "what goes in *this* slot", and an enchantment that cannot go in one
- * says why on its own button rather than being left off the wall.
+ * asked is "what goes in *this* slot". An enchantment a rank cannot reach is
+ * not an answer to that, so it comes off the wall and is counted in one line
+ * instead. One refused for anything the enchanter can change tonight stays, and
+ * says why on its own button.
  *
  * `priced` is for the half of the Long Rest window that lays on a thing, where
  * every choice costs the crate 70 Supplies a point of burden. A body slot is free,
@@ -187,7 +189,12 @@ export function EnchantShelf({
     [character, held, room]
   );
 
-  const within = options.filter((option) => option.ok).length;
+  /* What the rank reaches, and nothing above it. A row marked "Adept needs a
+     higher rank" is not a choice this shelf can offer, so it is counted below
+     the rule rather than printed dead. */
+  const offered = options.filter((option) => !option.gated);
+  const later = options.length - offered.length;
+  const within = offered.filter((option) => option.ok).length;
 
   return (
     <Modal
@@ -209,8 +216,15 @@ export function EnchantShelf({
         {rule}
       </p>
 
+      {later > 0 && (
+        <p className="pick-line">
+          {later} more {later === 1 ? 'enchantment is' : 'enchantments are'} held back for higher
+          ranks.
+        </p>
+      )}
+
       <div className="card-brief-wall">
-        {options.map((option) => {
+        {offered.map((option) => {
           const { enchantment, ok, reason, held: on } = option;
           /* A price you could not pay is offered dead rather than left to fail at
              the last button, the same law the camp-work chips read by. */
