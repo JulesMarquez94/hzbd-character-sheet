@@ -4925,6 +4925,24 @@ body.sheet-fixed #root {
   font-weight: 700;
 }
 
+/* Two ways of narrowing the same shelf, side by side because there is room for
+   them: the box that asks what a thing is called, and the box that asks what
+   kind of thing it is. */
+.browser-find {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+}
+
+/* The same 900px break the Cauldron and the Enchanter take. Under it the two
+   stack, which is what they always did. */
+@media (max-width: 900px) {
+  .browser-find {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .browser-list {
   display: flex;
   flex-direction: column;
@@ -4944,14 +4962,27 @@ body.sheet-fixed #root {
 /* The list comes in two parts — what your pack holds, then the rest of the
    codex — and each part says which it is. The heading stays put while its own
    list scrolls under it, so "am I still in my own kit?" is never a question
-   you have to scroll back up to answer. */
+   you have to scroll back up to answer.
+
+   The rows under a heading flow into as many columns as the window is wide, the
+   same way the pack's own shelves do (see `.pack-shelf`): three across the
+   three-block dialog, two as it comes in, one on a phone. 340px rather than the
+   block's own 360 only so the middle band gets two columns instead of falling
+   straight from three to one — a row still reads at about the width it will be
+   once it is on the sheet, which is the whole point of it being the same row.
+
+   Nothing about the list changes with the count: the same rows in the same
+   order, laid out in more of them. */
 .browser-group {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  align-content: start;
   gap: 8px;
 }
 
+/* A heading is about every column under it, so it takes all of them. */
 .browser-group-head {
+  grid-column: 1 / -1;
   position: sticky;
   top: -1px;
   display: flex;
@@ -4962,6 +4993,13 @@ body.sheet-fixed #root {
   border-bottom: 1px solid rgba(148, 167, 176, 0.14);
   padding: 0.3rem 0 0.35rem;
   z-index: 1;
+}
+
+/* Rows in one grid row share a height, so the foot goes to the floor rather
+   than trailing the text: price and controls line up across the columns the
+   way they already line up down them. */
+.browser-group .item-foot {
+  margin-top: auto;
 }
 
 .browser-group-label {
@@ -4993,7 +5031,10 @@ body.sheet-fixed #root {
   white-space: nowrap;
 }
 
+/* A sentence, not a row: it takes the whole shelf rather than the first column
+   of it. */
 .browser-group-empty {
+  grid-column: 1 / -1;
   color: var(--text-muted);
   font-size: 0.76rem;
   padding: 0.15rem 0 0.35rem;
@@ -7349,11 +7390,33 @@ body.sheet-fixed #root {
 
 /* =========================================
    TRACKING SOMETHING: THE DIALOG
-   ========================================= */
+   =========================================
+   Two halves, the same grammar the Cauldron and the Enchanter use: the shelf you
+   look on, then what gets written down. On a three-block window they sit side by
+   side, because the shelf is a list of up to a hundred and forty cards and the
+   half beside it is four boxes that read no better a metre wide. Under 900px
+   they stack, in the order they are written, which is the one-column dialog this
+   always was on a phone. */
 .fx-prompt {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.fx-shelf,
+.fx-hand {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Same 900px break as the Cauldron and the Enchanter. */
+@media (max-width: 900px) {
+  .fx-prompt {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .fx-field {
@@ -7393,14 +7456,34 @@ body.sheet-fixed #root {
   line-height: 1.45;
 }
 
+/* The offers flow into as many columns as the shelf is wide: two across the
+   shelf half of a three-block window, one once the halves have stacked. The
+   taller cap goes with the extra column — the list is half as long in two of
+   them, and 210px of a window this size is a letterbox. */
 .fx-picks {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  align-content: start;
   gap: 4px;
-  max-height: 210px;
+  max-height: 40vh;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(200, 138, 75, 0.35) transparent;
+}
+
+/* And back to the 210px it always was once the halves have stacked: on a phone
+   the shelf is above the boxes, and a taller shelf is a longer scroll before
+   you reach them. */
+@media (max-width: 900px) {
+  .fx-picks {
+    max-height: 210px;
+  }
+}
+
+/* "Nothing here matches that" is a sentence about the shelf, not one offer on
+   it, so it takes the whole width whatever the count. */
+.fx-picks > .pick-line {
+  grid-column: 1 / -1;
 }
 
 .fx-pick {

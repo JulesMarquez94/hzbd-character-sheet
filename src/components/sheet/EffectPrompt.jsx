@@ -179,6 +179,11 @@ export default function EffectPrompt({
     <Modal
       title={holder ? `Track an effect on ${holder.name}` : 'Track an effect'}
       onClose={onClose}
+      /* The three-block measure, because the whole codex is on the shelf below
+         and a hundred and forty cards read three abreast. The shelf and the
+         written-in half sit side by side in it, and stack back up as the window
+         comes in, so a phone is the window it always was. */
+      size="page"
       footer={
         <>
           <span className="spacer" />
@@ -197,266 +202,277 @@ export default function EffectPrompt({
       }
     >
       <div className="fx-prompt">
-      {/* ---------- OR LAY ONE ----------
-          An Enchanter reaching for the tracker is usually reaching for this: an
-          Ephemeral Enchantment *is* a temporary effect, and the one whose rider is
-          chosen at the moment it is laid rather than printed on a card. Typing
-          "Primal Sense" in by hand would get the row and none of the +1 Instinct,
-          so the offer is made here rather than left to be found on the quick bar.
-          Same window either way, and it is the window that takes the payment. */}
-      {onEnchant && (
-        <div className="fx-offer">
-          <span className="fx-offer-body">
-            <b>Lay an Ephemeral Enchantment instead</b>
-            <span className="fx-offer-line">
-              Choose one you know and it lands here on its own, carrying what it
-              actually does. Costs Action Points and Willpower.
-            </span>
-          </span>
-          <button type="button" className="btn btn-take btn-sm" onClick={onEnchant}>
-            Open the shelf
-          </button>
-        </div>
-      )}
-
-        {/* ---------- OFF A CARD ----------
-            Only what actually lasts. A sword swing resolves and is over, and a
-            trait that gives +1 Instinct is permanent, so neither is a thing
-            that can be "running". Offering every card you own would bury the
-            handful that tick.
-
-            And two shelves to look on, because what is running on you is very
-            often not yours: somebody else's Giant Growth doubles your Movement
-            Speed for ten turns, and no source of yours has ever heard of it. */}
-        <label className="fx-field">
-          <span className="fx-label">{shelfLabel(scope, all)}</span>
-          <input
-            type="text"
-            className="fx-input"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name, or by what it says"
-          />
-        </label>
-
-        <span className="fx-until fx-scope">
-          {[
-            { id: 'mine', label: 'Yours', count: mine.filter((row) => row.label).length },
-            {
-              id: 'codex',
-              label: 'The whole codex',
-              count: codex.filter((row) => row.label).length,
-            },
-          ].map((option) => (
-            <button
-              type="button"
-              key={option.id}
-              className={`fx-until-opt${scope === option.id ? ' is-on' : ''}`}
-              onClick={() => setScope(option.id)}
-              title={
-                option.id === 'mine'
-                  ? 'What your own sources, your hands and your belt hand you'
-                  : 'Every card in the game. For something somebody else laid on you.'
-              }
-            >
-              {option.label} <b>{option.count}</b>
-            </button>
-          ))}
-        </span>
-
-        <div className="fx-picks">
-          {matches.shown.length === 0 ? (
-            <p className="pick-line">
-              {rows.length === 0
-                ? 'Nothing on this shelf lasts long enough to track. Write it in below instead.'
-                : 'Nothing here matches that. Write it in below instead.'}
-            </p>
-          ) : (
-            matches.shown.map((row) => {
-              /* What tracking it will actually do to this sheet, when it does
-                 anything. Said on the offer and not only after the fact, because
-                 a row that moves a number is a different decision from a row that
-                 is a reminder. See riders.js.
-
-                 Only on the character's own tracker. A rider is read off the
-                 effects column, and a creature's rows live on its own row, so a
-                 promise made here about a Movement Speed would be a promise
-                 nothing keeps. */
-              const does = holder ? null : riderLine(row.card.id);
-
-              return (
-                <button
-                  type="button"
-                  key={row.card.id}
-                  className={`fx-pick ac-kind-${row.card.kind ?? 'ability'}${
-                    picked?.card.id === row.card.id ? ' is-picked' : ''
-                  }`}
-                  onClick={() => choose(row)}
-                >
-                  <span className="fx-pick-head">
-                    <span className="fx-pick-name">{row.card.name}</span>
-                    {row.label && <span className="fx-pick-turns">{row.label}</span>}
-                    <CostOrbs
-                      ap={row.card.ap}
-                      wp={row.card.wp}
-                      size={16}
-                      className="fx-pick-costs"
-                    />
-                  </span>
-                  <span className="fx-pick-line">
-                    {row.card.summary ?? cardGist(row.card, { character })}
-                  </span>
-                  {does && <span className="fx-pick-rider">Moves your sheet: {does}</span>}
-                  <span className="fx-pick-from">
-                    {row.from}
-                    {!row.mine && <span className="fx-pick-away"> not yours</span>}
-                  </span>
-                </button>
-              );
-            })
+        {/* ---------- THE SHELF ----------
+            Everything that finds the card: the offer, the box, which shelf is
+            being searched and what is on it. It is the half with a list in it,
+            so on a desktop it is the half that gets the room. */}
+        <div className="fx-shelf">
+          {/* ---------- OR LAY ONE ----------
+              An Enchanter reaching for the tracker is usually reaching for this: an
+              Ephemeral Enchantment *is* a temporary effect, and the one whose rider is
+              chosen at the moment it is laid rather than printed on a card. Typing
+              "Primal Sense" in by hand would get the row and none of the +1 Instinct,
+              so the offer is made here rather than left to be found on the quick bar.
+              Same window either way, and it is the window that takes the payment. */}
+          {onEnchant && (
+            <div className="fx-offer">
+              <span className="fx-offer-body">
+                <b>Lay an Ephemeral Enchantment instead</b>
+                <span className="fx-offer-line">
+                  Choose one you know and it lands here on its own, carrying what it
+                  actually does. Costs Action Points and Willpower.
+                </span>
+              </span>
+              <button type="button" className="btn btn-take btn-sm" onClick={onEnchant}>
+                Open the shelf
+              </button>
+            </div>
           )}
-        </div>
 
-        {(matches.total > matches.shown.length || elsewhere > 0 || filteredOut > 0) && (
-          <p className="fx-picks-foot">
-            {matches.total > matches.shown.length &&
-              `${matches.total - matches.shown.length} more match. Keep typing to narrow it. `}
-            {/* The one that matters when somebody is hunting for a spell that was
-                cast *at* them. It reads before the "does this last" hatch, because
-                looking on the wrong shelf is the likelier mistake. */}
-            {elsewhere > 0 && (
-              <>
-                {matches.total > 0
-                  ? `${elsewhere} more in the codex.`
-                  : `${elsewhere} in the codex, none of them yours.`}{' '}
-                <button type="button" className="fx-unpick" onClick={() => setScope('codex')}>
-                  Look there too
-                </button>{' '}
-              </>
-            )}
-            {filteredOut > 0 &&
-              (all ? (
-                <button type="button" className="fx-unpick" onClick={() => setAll(false)}>
-                  Show only what lasts
-                </button>
-              ) : (
-                <>
-                  {filteredOut} {scope === 'codex' ? 'cards' : 'of your cards'} do not last, so they
-                  are set aside.{' '}
-                  <button type="button" className="fx-unpick" onClick={() => setAll(true)}>
-                    Show them anyway
-                  </button>
-                </>
-              ))}
-          </p>
-        )}
+          {/* ---------- OFF A CARD ----------
+              Only what actually lasts. A sword swing resolves and is over, and a
+              trait that gives +1 Instinct is permanent, so neither is a thing
+              that can be "running". Offering every card you own would bury the
+              handful that tick.
 
-        {/* ---------- OR BY HAND ---------- */}
-        <label className="fx-field">
-          <span className="fx-label">What it is called</span>
-          <input
-            type="text"
-            className="fx-input"
-            value={name}
-            onChange={(event) => {
-              setName(event.target.value);
-              // Typing over a picked card means it is no longer that card, and
-              // the row should not open a card that does not match its name.
-              if (picked) setPicked(null);
-            }}
-            placeholder="Grappled, Renew, Blessed by the Warden"
-          />
-        </label>
-
-        {picked ? (
-          <p className="fx-picked-note">
-            Reads the <b>{picked.card.name}</b> card on the block.
-            {/* And what it will do to the numbers, promised before it is tracked.
-                A row that raises a Defense or doubles a Speed has to say so here:
-                the tiles will move, and a player who did not expect that has no
-                way to find out which row did it. */}
-            {!holder && riderLine(picked.card.id) && (
-              <>
-                {' '}
-                Your sheet moves with it: {riderLine(picked.card.id)}, until the row comes off.
-              </>
-            )}{' '}
-            <button type="button" className="fx-unpick" onClick={clear}>
-              Write it in by hand instead
-            </button>
-          </p>
-        ) : (
+              And two shelves to look on, because what is running on you is very
+              often not yours: somebody else's Giant Growth doubles your Movement
+              Speed for ten turns, and no source of yours has ever heard of it. */}
           <label className="fx-field">
-            <span className="fx-label">What it does</span>
-            <textarea
-              className="fx-input fx-textarea"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              rows={2}
-              placeholder="One line you will thank yourself for in three rounds"
+            <span className="fx-label">{shelfLabel(scope, all)}</span>
+            <input
+              type="text"
+              className="fx-input"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by name, or by what it says"
             />
           </label>
-        )}
 
-        {/* ---------- HOW LONG ---------- */}
-        <div className="fx-field">
-          <span className="fx-label">How long it lasts</span>
+          <span className="fx-until fx-scope">
+            {[
+              { id: 'mine', label: 'Yours', count: mine.filter((row) => row.label).length },
+              {
+                id: 'codex',
+                label: 'The whole codex',
+                count: codex.filter((row) => row.label).length,
+              },
+            ].map((option) => (
+              <button
+                type="button"
+                key={option.id}
+                className={`fx-until-opt${scope === option.id ? ' is-on' : ''}`}
+                onClick={() => setScope(option.id)}
+                title={
+                  option.id === 'mine'
+                    ? 'What your own sources, your hands and your belt hand you'
+                    : 'Every card in the game. For something somebody else laid on you.'
+                }
+              >
+                {option.label} <b>{option.count}</b>
+              </button>
+            ))}
+          </span>
 
-          <div className="fx-turn-row">
-            <button
-              type="button"
-              className="use-dial-step"
-              onClick={() => setTurns((v) => Math.max(1, v - 1))}
-              disabled={open || turns <= 1}
-              aria-label="One turn fewer"
-            >
-              &minus;
-            </button>
+          <div className="fx-picks">
+            {matches.shown.length === 0 ? (
+              <p className="pick-line">
+                {rows.length === 0
+                  ? 'Nothing on this shelf lasts long enough to track. Write it in below instead.'
+                  : 'Nothing here matches that. Write it in below instead.'}
+              </p>
+            ) : (
+              matches.shown.map((row) => {
+                /* What tracking it will actually do to this sheet, when it does
+                   anything. Said on the offer and not only after the fact, because
+                   a row that moves a number is a different decision from a row that
+                   is a reminder. See riders.js.
 
-            <span className="use-dial-value">
-              <span className="use-dial-n">{open ? '∞' : turns}</span>
-              <span className="use-dial-label">{open ? 'Until it ends' : 'Of your turns'}</span>
-            </span>
+                   Only on the character's own tracker. A rider is read off the
+                   effects column, and a creature's rows live on its own row, so a
+                   promise made here about a Movement Speed would be a promise
+                   nothing keeps. */
+                const does = holder ? null : riderLine(row.card.id);
 
-            <button
-              type="button"
-              className="use-dial-step"
-              onClick={() => setTurns((v) => Math.min(TURNS_MAX, v + 1))}
-              disabled={open || turns >= TURNS_MAX}
-              aria-label="One turn more"
-            >
-              +
-            </button>
+                return (
+                  <button
+                    type="button"
+                    key={row.card.id}
+                    className={`fx-pick ac-kind-${row.card.kind ?? 'ability'}${
+                      picked?.card.id === row.card.id ? ' is-picked' : ''
+                    }`}
+                    onClick={() => choose(row)}
+                  >
+                    <span className="fx-pick-head">
+                      <span className="fx-pick-name">{row.card.name}</span>
+                      {row.label && <span className="fx-pick-turns">{row.label}</span>}
+                      <CostOrbs
+                        ap={row.card.ap}
+                        wp={row.card.wp}
+                        size={16}
+                        className="fx-pick-costs"
+                      />
+                    </span>
+                    <span className="fx-pick-line">
+                      {row.card.summary ?? cardGist(row.card, { character })}
+                    </span>
+                    {does && <span className="fx-pick-rider">Moves your sheet: {does}</span>}
+                    <span className="fx-pick-from">
+                      {row.from}
+                      {!row.mine && <span className="fx-pick-away"> not yours</span>}
+                    </span>
+                  </button>
+                );
+              })
+            )}
           </div>
 
-          <label className="fx-check">
-            <input type="checkbox" checked={open} onChange={() => setOpen((v) => !v)} />
-            <span>
-              Until something ends it. Conditions go here: being grappled does not run out, it is
-              broken.
-            </span>
+          {(matches.total > matches.shown.length || elsewhere > 0 || filteredOut > 0) && (
+            <p className="fx-picks-foot">
+              {matches.total > matches.shown.length &&
+                `${matches.total - matches.shown.length} more match. Keep typing to narrow it. `}
+              {/* The one that matters when somebody is hunting for a spell that was
+                  cast *at* them. It reads before the "does this last" hatch, because
+                  looking on the wrong shelf is the likelier mistake. */}
+              {elsewhere > 0 && (
+                <>
+                  {matches.total > 0
+                    ? `${elsewhere} more in the codex.`
+                    : `${elsewhere} in the codex, none of them yours.`}{' '}
+                  <button type="button" className="fx-unpick" onClick={() => setScope('codex')}>
+                    Look there too
+                  </button>{' '}
+                </>
+              )}
+              {filteredOut > 0 &&
+                (all ? (
+                  <button type="button" className="fx-unpick" onClick={() => setAll(false)}>
+                    Show only what lasts
+                  </button>
+                ) : (
+                  <>
+                    {filteredOut} {scope === 'codex' ? 'cards' : 'of your cards'} do not last, so they
+                    are set aside.{' '}
+                    <button type="button" className="fx-unpick" onClick={() => setAll(true)}>
+                      Show them anyway
+                    </button>
+                  </>
+                ))}
+            </p>
+          )}
+        </div>
+
+        {/* ---------- OR BY HAND ----------
+            The name, what it does and how long for. Boxes and a dial, none of
+            which reads better a metre wide, so they keep a column of their own
+            beside the shelf and fall under it as the window comes in. */}
+        <div className="fx-hand">
+          <label className="fx-field">
+            <span className="fx-label">What it is called</span>
+            <input
+              type="text"
+              className="fx-input"
+              value={name}
+              onChange={(event) => {
+                setName(event.target.value);
+                // Typing over a picked card means it is no longer that card, and
+                // the row should not open a card that does not match its name.
+                if (picked) setPicked(null);
+              }}
+              placeholder="Grappled, Renew, Blessed by the Warden"
+            />
           </label>
 
-          {/* What ends it, when nothing counts it down. A rest can clear it
-              for you, which is the whole reason a rest asks. */}
-          {open && (
-            <span className="fx-until">
-              {[
-                { id: '', label: 'Something in play' },
-                { id: 'short', label: 'Any rest' },
-                { id: 'long', label: 'A Long Rest' },
-              ].map((option) => (
-                <button
-                  type="button"
-                  key={option.id || 'play'}
-                  className={`fx-until-opt${until === option.id ? ' is-on' : ''}`}
-                  onClick={() => setUntil(option.id)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </span>
+          {picked ? (
+            <p className="fx-picked-note">
+              Reads the <b>{picked.card.name}</b> card on the block.
+              {/* And what it will do to the numbers, promised before it is tracked.
+                  A row that raises a Defense or doubles a Speed has to say so here:
+                  the tiles will move, and a player who did not expect that has no
+                  way to find out which row did it. */}
+              {!holder && riderLine(picked.card.id) && (
+                <>
+                  {' '}
+                  Your sheet moves with it: {riderLine(picked.card.id)}, until the row comes off.
+                </>
+              )}{' '}
+              <button type="button" className="fx-unpick" onClick={clear}>
+                Write it in by hand instead
+              </button>
+            </p>
+          ) : (
+            <label className="fx-field">
+              <span className="fx-label">What it does</span>
+              <textarea
+                className="fx-input fx-textarea"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                rows={2}
+                placeholder="One line you will thank yourself for in three rounds"
+              />
+            </label>
           )}
+
+          {/* ---------- HOW LONG ---------- */}
+          <div className="fx-field">
+            <span className="fx-label">How long it lasts</span>
+
+            <div className="fx-turn-row">
+              <button
+                type="button"
+                className="use-dial-step"
+                onClick={() => setTurns((v) => Math.max(1, v - 1))}
+                disabled={open || turns <= 1}
+                aria-label="One turn fewer"
+              >
+                &minus;
+              </button>
+
+              <span className="use-dial-value">
+                <span className="use-dial-n">{open ? '∞' : turns}</span>
+                <span className="use-dial-label">{open ? 'Until it ends' : 'Of your turns'}</span>
+              </span>
+
+              <button
+                type="button"
+                className="use-dial-step"
+                onClick={() => setTurns((v) => Math.min(TURNS_MAX, v + 1))}
+                disabled={open || turns >= TURNS_MAX}
+                aria-label="One turn more"
+              >
+                +
+              </button>
+            </div>
+
+            <label className="fx-check">
+              <input type="checkbox" checked={open} onChange={() => setOpen((v) => !v)} />
+              <span>
+                Until something ends it. Conditions go here: being grappled does not run out, it is
+                broken.
+              </span>
+            </label>
+
+            {/* What ends it, when nothing counts it down. A rest can clear it
+                for you, which is the whole reason a rest asks. */}
+            {open && (
+              <span className="fx-until">
+                {[
+                  { id: '', label: 'Something in play' },
+                  { id: 'short', label: 'Any rest' },
+                  { id: 'long', label: 'A Long Rest' },
+                ].map((option) => (
+                  <button
+                    type="button"
+                    key={option.id || 'play'}
+                    className={`fx-until-opt${until === option.id ? ' is-on' : ''}`}
+                    onClick={() => setUntil(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </Modal>

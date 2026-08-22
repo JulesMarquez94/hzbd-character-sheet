@@ -291,6 +291,11 @@ export default function ItemBrowser({
     <Modal
       title={`${slot.label} · Codex`}
       onClose={onClose}
+      /* The three-block measure. This is a shelf and not a question: two hundred
+         entries read three abreast instead of one, and the row you are reading is
+         the width it will be once it is on your sheet. It comes back down to one
+         column on its own as the window shrinks, so a phone is unchanged. */
+      size="page"
       /* On the head rather than at the foot, because it is a different question
          from the one the list answers: everything below is "which of these", and
          this is "none of these". The Modal puts it between the title and the
@@ -333,16 +338,21 @@ export default function ItemBrowser({
           </p>
         )}
 
-        <input
-          className="form-input"
-          type="search"
-          placeholder="Search by name"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search items by name"
-        />
+        {/* The two ways of narrowing one shelf, so they share a row wherever
+            there is a row to share. Stacked they were two boxes down the middle
+            of a three-block window with nothing beside either of them. */}
+        <div className="browser-find">
+          <input
+            className="form-input"
+            type="search"
+            placeholder="Search by name"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search items by name"
+          />
 
-        <TagFilter tags={allTags} active={activeTags} onToggle={toggleTag} />
+          <TagFilter tags={allTags} active={activeTags} onToggle={toggleTag} />
+        </div>
 
         <div className="browser-list">
           {compatible.length === 0 ? (

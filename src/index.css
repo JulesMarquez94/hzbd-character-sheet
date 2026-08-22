@@ -527,7 +527,15 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 900px;
 }
 
-/* Wide enough for three cards at their real 360px footprint, side by side. */
+/* THE THREE-BLOCK MEASURE — as wide as the sheet's own grid, so a dialog opened
+   over the sheet ends about where the blocks behind it do.
+
+   Two kinds of dialog want it. One lays cards out at their real 360px footprint,
+   three side by side, which is what it was added for. The other is a *shelf* — a
+   browsing menu whose list is one column on a phone and three block-wide columns
+   here, instead of a 360px ribbon down the middle of a metre of nothing. The
+   width is only half of that: the list inside has to flow into it, which is what
+   `.browser-group` and `.fx-prompt` in sheet.css do. */
 .modal-window-page {
     max-width: 1180px;
 }

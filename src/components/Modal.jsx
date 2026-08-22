@@ -11,8 +11,16 @@ const openDialogs = [];
 /**
  * Generic dialog shell — Escape closes, backdrop click closes, page scroll locks.
  *
- * `wide` is the roomy editor width; `size` names a wider one still ("page", for
- * a dialog that lays cards out at their real footprint).
+ * `wide` is the roomy editor width; `size` names a wider one still ("page", the
+ * three-block measure: the width the sheet's own grid takes).
+ *
+ * "page" is for the two dialogs that have something to put in it. One lays cards
+ * out at their real footprint, three side by side. The other is a shelf — a
+ * menu you browse rather than answer — whose list flows into three block-wide
+ * columns on a desktop and back down to one on a phone. A dialog that asks a
+ * question (a confirm, a form, a prompt with three buttons) takes neither: a
+ * two-field form spread over 1100px is worse than the same form at 560, so those
+ * stay at the default width at every size.
  *
  * `accent` is the colour of whatever opened the dialog. A chooser is opened from
  * a choice that already has a colour — amber for talents, violet for lineage,
