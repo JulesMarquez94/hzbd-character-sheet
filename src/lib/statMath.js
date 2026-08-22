@@ -43,14 +43,24 @@
 import { ATTRIBUTE_BASE, ATTRIBUTE_KEYS } from './attributes.js';
 import { SHIELD_SHARE, karmaCap, levelForXp, shieldCapFor } from './characterModel.js';
 import {
+  CARRY_PER_PHYSIQUE,
   armorSetName,
+  bagItem,
+  carryCapacity,
+  carryState,
   characterGrantSources,
   characterGrants,
+  encumberedSpeed,
   heldItem,
+  isCustomEntry,
   itemBurden,
+  itemWeight,
   magicBurdenMax,
   magicBurdenUsed,
   normalizeBelt,
+  normalizeEquipment,
+  normalizePack,
+  normalizeTrinkets,
   wornItems,
 } from './items.js';
 import { feralArmorFrom, feralShieldShare, feralState } from './feral.js';
@@ -64,6 +74,12 @@ import { pointCeilings, tricksterOf } from './tricks.js';
    stays metric and says so with its suffix, and the tile above it keeps whatever
    unit the reader chose. */
 const METRES = 'm';
+
+/* And weight, for the same reason plus one of its own: a capacity is a running
+   total that one potion can tip over a line, so a breakdown that converted would
+   have to round, and a rounded line could disagree with the meter above it about
+   which side of the line the total is on. Kilos, and the suffix says so. */
+const KILOS = 'kg';
 
 /** How close two decimals have to be before the gap is not worth a term. */
 const EPSILON = 0.001;
@@ -324,11 +340,23 @@ export function statMath(character) {
     Math.floor(Number(character.grit) || 0)
   );
 
-  math.speed_m = settle(
-    [term(3, 'base'), term(i / 2, 'half your Instinct'), ...grantTerms(sources, 'speed', false)],
-    round(Number(character.speed_m) || 0),
-    METRES
-  );
+  /* Speed, and the one thing on the sheet that takes a stat away rather than
+     adding to one. `deriveStats` halves it over capacity and empties it at 30%
+     over, so the line has to carry that as its own term or it would add up to a
+     speed the tile is not showing. Named for what did it, like every other term:
+     what a reader wants from a Speed of 2.5 is the word "overloaded". */
+  const carry = carryState(character);
+  const speedTerms = [
+    term(3, 'base'),
+    term(i / 2, 'half your Instinct'),
+    ...grantTerms(sources, 'speed', false),
+  ];
+  const speedRaw = speedTerms.reduce((total, row) => total + row.value, 0);
+  if (carry.state !== 'clear') {
+    speedTerms.push(term(round(encumberedSpeed(speedRaw, carry) - speedRaw), 'overloaded'));
+  }
+
+  math.speed_m = settle(speedTerms, round(Number(character.speed_m) || 0), METRES);
 
   /* ---- The pools that are a count of presses rather than a stat ---- */
   const points = pointCeilings(character.talents);
@@ -360,6 +388,21 @@ export function statMath(character) {
     magicBurdenMax(character)
   );
   math.burden_used = settle(burdenTerms(character), magicBurdenUsed(character));
+
+  /* ---- And what it all weighs, against what they can shift ---- */
+  const bag = bagItem(character);
+  math.carry_max = settle(
+    [
+      term(
+        Math.max(0, Math.floor(Number(character.physique) || 0)) * CARRY_PER_PHYSIQUE,
+        'Physique'
+      ),
+      ...(bag ? [term(Math.max(0, Number(bag.capacity) || 0), bag.name)] : []),
+    ],
+    carryCapacity(character),
+    KILOS
+  );
+  math.carry_used = settle(weightTerms(character), carry.used, KILOS);
 
   return math;
 }
@@ -451,6 +494,36 @@ function burdenTerms(character) {
       .map((entry) => resolve(entry?.id))
       .filter(Boolean),
   ].map((item) => term(itemBurden(item), item.name));
+}
+
+/**
+ * One term per thing carried, named after the thing.
+ *
+ * The mirror of `carriedWeight` in items.js, and it has to walk the same four
+ * places in the same order: the equipment map, the trinkets, the belt and the
+ * pack. **The pack is in it**, which is the one way this differs from the burden
+ * line above: worked magic stops at the belt and weight does not care where a
+ * thing is sitting.
+ *
+ * Duplicates are left to `fold`, which sums them under one label and counts them,
+ * so three potions read `Healing Potion x3` rather than as three rows of the same
+ * word. That is the gear rule and not the enchantment rule: three potions really
+ * are three potions of weight.
+ */
+function weightTerms(character) {
+  const worn = normalizeEquipment(character?.equipment);
+  const resolve = (id) => heldItem(character, id);
+
+  return [
+    ...Object.keys(worn).map((slot) => resolve(worn[slot])),
+    ...normalizeTrinkets(character?.trinkets).map(resolve),
+    ...normalizeBelt(character?.belt).map((entry) => resolve(entry?.id)),
+    ...normalizePack(character?.pack)
+      .filter((entry) => !isCustomEntry(entry))
+      .map(resolve),
+  ]
+    .filter(Boolean)
+    .map((item) => term(round(itemWeight(item)), item.name));
 }
 
 /* ---------------------------------------------------------------- a creature */

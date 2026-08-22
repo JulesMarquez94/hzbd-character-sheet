@@ -156,6 +156,11 @@ function BeltFace({ index, state, stack, readOnly, onBrowse, onUse, onDiscard, o
             <span className="equip-slot-label">Loop {index + 1}</span>
           </span>
           <ItemTags item={item} />
+          {/* No weight and no price here, alone among the blocks. Five loops
+              open and full fills this block to the pixel, and the line those two
+              chips cost is 4px more than there is: measured, not guessed. It is
+              the same trade the workings above make by printing names without
+              their effects. Both numbers are on the ⓘ card and in the codex. */}
           {workings.length > 0 && (
             <span className="belt-working">
               {workings.map(({ id, enchantment }) => (

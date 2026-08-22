@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import ArmorBlock from './ArmorBlock.jsx';
+import BagBar from './BagBar.jsx';
 import BeltBlock from './BeltBlock.jsx';
 import ForgeWindow from './ForgeWindow.jsx';
 import PackBlock from './PackBlock.jsx';
@@ -8,8 +9,9 @@ import WeaponBlock from './WeaponBlock.jsx';
 import BlockArrange from './BlockArrange.jsx';
 import { useEquipSlots } from './useEquipSlots.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
-import { normalizeSourceOrder } from '../../lib/characterModel.js';
+import { formatWeight, normalizeSourceOrder } from '../../lib/characterModel.js';
 import { inventoryOverview } from '../../lib/items.js';
+import { useUnit } from '../../context/units.js';
 
 /**
  * The Inventory tab is built like the Character tab, with one exception.
@@ -23,6 +25,12 @@ import { inventoryOverview } from '../../lib/items.js';
  * and Abilities tabs' are, and the arrangement is stored on the character so it
  * follows the sheet rather than the browser it was set in. The inventory is not
  * in that order: it is a row wide, so it has only one place it can go.
+ *
+ * ------------------------------------------------------------------- the bag
+ * And above all of it, one slot that is not a block at all. A bag is the only
+ * thing on this tab that answers a question about the *whole* tab: what
+ * everything else is allowed to weigh. So it sits across the top with the meter
+ * it moves, above the grid and outside the arrangement. See BagBar.jsx.
  *
  * Equipping lives here rather than in any one block, so one rule covers the
  * whole tab: filling an occupied slot always asks where the old piece goes,
@@ -179,6 +187,12 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
           onArrange={!readOnly && patch ? () => setArranging(true) : null}
         />
 
+        {/* ==== THE BAG, ACROSS THE TOP ====
+            Above the grid rather than in it, and never in the arrangement: it
+            is the one slot on the tab that is about the whole tab, so there is
+            nowhere else it could sit. See BagBar.jsx. */}
+        <BagBar {...slotProps} />
+
         {arranging && (
           <BlockArrange
             title="Arrange your inventory blocks"
@@ -223,13 +237,18 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
  * much is on this character, and where it is sitting.
  *
  * Two of the five places have a ceiling and say so; the trinkets and the pack,
- * which have none, report a bare count. Burden is the one number here that can
- * be *wrong*, so it sits at the end, the way the Abilities tab's always-on count
- * does — sharing that end with the arrange button rather than leaving it a row
- * of its own underneath.
+ * which have none, report a bare count. Burden and the load are the two numbers
+ * here that can be *wrong*, so they sit at the end, the way the Abilities tab's
+ * always-on count does — sharing that end with the arrange button rather than
+ * leaving it a row of its own underneath.
+ *
+ * The two of them together, because they are the two ceilings and a reader
+ * checking one is checking both. The bar under this line is the load's readout,
+ * exactly as the armor block's meter is Burden's; these are the alarms.
  */
 function Overview({ overview, onArrange }) {
-  const { burden } = overview;
+  const { burden, carry } = overview;
+  const unit = useUnit();
 
   return (
     <div className="inventory-overview">
@@ -253,6 +272,19 @@ function Overview({ overview, onArrange }) {
       </span>
 
       <span className="overview-end">
+        <span
+          className={`inv-burden${carry.state !== 'clear' ? ' is-over' : ''}`}
+          title={
+            carry.state === 'stuck'
+              ? `${formatWeight(carry.by, unit)} over your capacity, which is past 30%. You cannot move at all.`
+              : carry.state === 'over'
+                ? `${formatWeight(carry.by, unit)} over your capacity. Your Speed is halved.`
+                : 'Everything you own, against what your Physique and your bag can shift.'
+          }
+        >
+          {formatWeight(carry.used, unit)} / {formatWeight(carry.max, unit)}
+        </span>
+
         <span
           className={`inv-burden${burden.over > 0 ? ' is-over' : ''}`}
           title={

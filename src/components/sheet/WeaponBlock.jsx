@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ItemBrowser from './ItemBrowser.jsx';
-import { ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemParts.jsx';
+import { ItemCarry, ItemIcon, ItemTags, SlotGlyph, SlotTools } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import { CardLine } from '../CardText.jsx';
 import { useCardStack } from '../../context/card-stack.js';
@@ -138,6 +138,7 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
               <span className="equip-slot-label">{slot.label}</span>
             </span>
             <ItemTags item={item} />
+            <ItemCarry item={item} />
           </span>
         </button>
 

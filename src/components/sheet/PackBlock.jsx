@@ -234,6 +234,9 @@ export default function PackBlock({
           equipLabel="Add"
           equipTitle="Adds it and closes the codex. The +1 beside it adds one and leaves it open."
           checkBurden={false}
+          /* Both buttons in here make a new one, so both add weight — where a
+             slot's browser mostly just moves a thing you already carry. */
+          conjures
           character={character}
           equipment={equipment}
           pack={pack}

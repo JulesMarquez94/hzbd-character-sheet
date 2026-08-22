@@ -609,6 +609,12 @@ export const WEAPON_ABILITIES = withArt([
  *   blurb       — the one-line description printed under its name
  *   enchants    — [{ id, spell? }] when the weapon carries enchantments
  *   enchantText — the sentence shown for that enchantment, with {{card links}}
+ *
+ * **Every weapon costs 4000 coins**, on Jules's rule of 2026-08-22, and the five
+ * enchanted ones say 4000 here like the rest: what is worked into a piece is
+ * priced off its Magic Burden by `itemCost` in items.js, so a Deep Sea Trident is
+ * 17,000 without a second number to keep in step. `weight` is the only field that
+ * tells one weapon from another here, and it is kilograms.
  */
 export const WEAPONS = [
   {
@@ -618,6 +624,8 @@ export const WEAPONS = [
     tags: ['Common', 'Melee Weapon', 'Two-Handed'],
     blurb: 'A hardwood stave the length of a man, swung in wide arcs.',
     burden: 0,
+    weight: 1.8,
+    cost: 4000,
     abilities: ['bo-staff-slam', 'bo-staff-swipe'],
   },
   {
@@ -627,6 +635,8 @@ export const WEAPONS = [
     tags: ['Common', 'Melee Weapon', 'Two-Handed'],
     blurb: 'A three-pronged fishing spear, held like a stave and used like one.',
     burden: 0,
+    weight: 2.5,
+    cost: 4000,
     abilities: ['trident-impale', 'trident-swipe'],
   },
   {
@@ -636,6 +646,8 @@ export const WEAPONS = [
     tags: ['Common', 'Melee Weapon', 'Paired'],
     blurb: 'A matched pair of short blades, quick in and quicker out.',
     burden: 0,
+    weight: 1.2,
+    cost: 4000,
     abilities: ['daggers-strike', 'daggers-triple-strike'],
   },
   {
@@ -645,6 +657,8 @@ export const WEAPONS = [
     tags: ['Common', 'Melee Weapon', 'One-Handed'],
     blurb: 'A sword, axe or mace: one hand on the grip, the other free.',
     burden: 0,
+    weight: 1.5,
+    cost: 4000,
     abilities: ['one-handed-strike', 'one-handed-swift-strike'],
   },
   {
@@ -654,6 +668,8 @@ export const WEAPONS = [
     tags: ['Common', 'Melee Weapon', 'Two-Handed'],
     blurb: 'A greatsword or maul that needs your whole body behind it.',
     burden: 0,
+    weight: 3.5,
+    cost: 4000,
     abilities: ['two-handed-strike', 'two-handed-cleave'],
   },
   {
@@ -663,6 +679,8 @@ export const WEAPONS = [
     tags: ['Common', 'Melee Weapon', 'Shielded'],
     blurb: 'A blade in one hand, a wall of banded wood in the other.',
     burden: 0,
+    weight: 6,
+    cost: 4000,
     abilities: ['shield-attack', 'shield-block'],
   },
   {
@@ -672,6 +690,8 @@ export const WEAPONS = [
     tags: ['Common', 'Melee Weapon', 'Reach'],
     blurb: 'Braided leather that bites at fifteen feet and drags them closer.',
     burden: 0,
+    weight: 1.2,
+    cost: 4000,
     abilities: ['whip-lash', 'whip-pull'],
   },
   {
@@ -681,6 +701,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Bow'],
     blurb: 'A hunting bow: light draw, fast nock, close work.',
     burden: 0,
+    weight: 1,
+    cost: 4000,
     abilities: ['short-bow-shoot', 'short-bow-triple-shot'],
   },
   {
@@ -690,6 +712,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Bow'],
     blurb: 'A tall yew bow that reaches across the whole field.',
     burden: 0,
+    weight: 1.5,
+    cost: 4000,
     abilities: ['longbow-shoot', 'longbow-aimed-shot'],
   },
   {
@@ -699,6 +723,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Bow'],
     blurb: 'A siege bow drawn on raw strength, firing bolts like spears.',
     burden: 0,
+    weight: 3.5,
+    cost: 4000,
     abilities: ['greatbow-shoot', 'greatbow-piercing-shot'],
   },
   {
@@ -708,6 +734,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Firearm'],
     blurb: 'Powder and shot in one hand. Three balls, then reload.',
     burden: 0,
+    weight: 1.5,
+    cost: 4000,
     abilities: ['flintlock-pistol-shoot', 'flintlock-pistol-reload'],
   },
   {
@@ -717,6 +745,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Firearm'],
     blurb: 'A pistol in each hand, two targets at once, six seconds of noise.',
     burden: 0,
+    weight: 3,
+    cost: 4000,
     abilities: ['dual-pistols-shoot', 'dual-pistols-reload'],
   },
   {
@@ -726,6 +756,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Firearm'],
     blurb: 'A long barrel and a slow reload for a shot that carries.',
     burden: 0,
+    weight: 4.5,
+    cost: 4000,
     abilities: ['flintlock-rifle-shoot', 'flintlock-rifle-reload'],
   },
   {
@@ -735,6 +767,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Firearm'],
     blurb: 'A hand-braced cannon. One shot, and everything after it is ringing.',
     burden: 0,
+    weight: 12,
+    cost: 4000,
     abilities: ['portable-canon-shoot', 'portable-canon-reload'],
   },
   {
@@ -744,6 +778,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Focus'],
     blurb: 'A focus of carved rowan, imbued with an element before it will fire.',
     burden: 0,
+    weight: 0.3,
+    cost: 4000,
     abilities: ['wand-shoot', 'wand-imbue'],
   },
   {
@@ -753,6 +789,8 @@ export const WEAPONS = [
     tags: ['Common', 'Ranged Weapon', 'Focus'],
     blurb: 'A caster’s stave: slower than a wand, and far louder.',
     burden: 0,
+    weight: 1.6,
+    cost: 4000,
     abilities: ['staff-blast', 'staff-imbue'],
   },
   {
@@ -764,6 +802,8 @@ export const WEAPONS = [
     natural: true,
     blurb: 'What you were born with, when nothing else is left in your hands.',
     burden: 0,
+    weight: 0,
+    cost: 0,
     abilities: ['claws-shred', 'teeth-bite'],
   },
 
@@ -775,6 +815,8 @@ export const WEAPONS = [
     tags: ['Uncommon', 'Melee Weapon', 'One-Handed'],
     blurb: 'A one-handed sword whose edge never stops shedding frost.',
     burden: 0,
+    weight: 1.5,
+    cost: 4000,
     abilities: ['one-handed-strike', 'one-handed-swift-strike'],
     enchants: [{ id: 'cold-infusion' }],
     enchantText: 'This blade is enchanted with {{Cold Infusion}}.',
@@ -789,6 +831,8 @@ export const WEAPONS = [
     tags: ['Uncommon', 'Ranged Weapon', 'Firearm'],
     blurb: 'A pistol with green vines chased along the barrel.',
     burden: 0,
+    weight: 1.5,
+    cost: 4000,
     abilities: ['flintlock-pistol-shoot', 'flintlock-pistol-reload'],
     enchants: [{ id: 'novice-imbuement', spell: 'bramble-whip' }],
     enchantText: 'This pistol carries a {{Novice Imbuement}}, letting its wielder cast {{Bramble Whip}}.',
@@ -808,6 +852,8 @@ export const WEAPONS = [
     tags: ['Rare', 'Melee Weapon', 'One-Handed'],
     blurb: 'A plain one-handed sword that never seems to be caught off guard.',
     burden: 0,
+    weight: 1.5,
+    cost: 4000,
     abilities: ['one-handed-strike', 'one-handed-swift-strike'],
     enchants: [{ id: 'prepared' }],
     enchantText: 'This blade is enchanted with {{Prepared}}.',
@@ -835,6 +881,8 @@ export const WEAPONS = [
     tags: ['Epic', 'Melee Weapon', 'Two-Handed'],
     blurb: 'A barnacled trident that sheds frost and keeps ice in orbit around whoever holds it.',
     burden: 0,
+    weight: 4,
+    cost: 4000,
     abilities: ['trident-impale', 'trident-swipe'],
     enchants: [{ id: 'unique-imbuement', spell: 'deep-sea-accretion' }, { id: 'cold-infusion' }],
     enchantText:
@@ -850,6 +898,8 @@ export const WEAPONS = [
     tags: ['Rare', 'Melee Weapon', 'One-Handed'],
     blurb: 'A pitted sword that burns green along the fuller and rots what it cuts.',
     burden: 0,
+    weight: 1.6,
+    cost: 4000,
     abilities: ['one-handed-strike', 'one-handed-swift-strike'],
     enchants: [{ id: 'decay-infusion' }, { id: 'luminescence' }, { id: 'novice-imbuement', spell: 'pack-bond' }],
     enchantText:

@@ -166,6 +166,14 @@ export const UTILITY_CARDS = withArt([
  *   charges   — uses it holds; absent means it never runs out
  *   recharge  — what fills its charges again (usable items only)
  *   abilities — the one card it teaches while it is on the belt
+ *
+ * `weight` and `cost` are the shared ones and this shelf is where the coin scale
+ * is anchored: Jules's own "a healing potion is like 100 coins", and "100 coins
+ * is 10 dollars". Everything mundane in the codex is priced against that.
+ *
+ * A loop's weight and price are the one pair the belt block does not print. Five
+ * loops open and full fills that block to the pixel. Both numbers are on the ⓘ
+ * card and in the codex browser. See BeltBlock.jsx.
  */
 export const UTILITY_ITEMS = [
   /* ----- consumables — spent, then gone ----- */
@@ -177,6 +185,8 @@ export const UTILITY_ITEMS = [
     use: 'consumable',
     charges: 1,
     burden: 0,
+    weight: 0.5,
+    cost: 100,
     abilities: ['healing-potion'],
     blurb: 'A stoppered flask of red glass, warm through the palm.',
     lore:
@@ -191,6 +201,8 @@ export const UTILITY_ITEMS = [
     use: 'consumable',
     charges: 1,
     burden: 0,
+    weight: 0.4,
+    cost: 250,
     abilities: ['aether-draught'],
     blurb: 'Clear liquid that will not sit still in the bottle.',
   },
@@ -202,6 +214,8 @@ export const UTILITY_ITEMS = [
     use: 'consumable',
     charges: 3,
     burden: 0,
+    weight: 0.3,
+    cost: 60,
     abilities: ['bandage-roll'],
     blurb: 'Boiled linen wound on a wooden spool: three good bindings.',
   },
@@ -213,6 +227,8 @@ export const UTILITY_ITEMS = [
     use: 'consumable',
     charges: 2,
     burden: 0,
+    weight: 0.3,
+    cost: 200,
     abilities: ['smoke-vial'],
     blurb: 'Two thin glass bulbs in a padded sleeve. Do not sit down hard.',
   },
@@ -227,6 +243,8 @@ export const UTILITY_ITEMS = [
     charges: 1,
     recharge: 'Long Rest',
     burden: 0,
+    weight: 0.4,
+    cost: 2500,
     abilities: ['terra-cotta-disk'],
     blurb: 'A fired clay medallion, hatched with the plan of a cart.',
     lore:
@@ -240,6 +258,8 @@ export const UTILITY_ITEMS = [
     tags: ['Common', 'Usable', 'Tool'],
     use: 'usable',
     burden: 0,
+    weight: 2.5,
+    cost: 120,
     abilities: ['grappling-hook'],
     blurb: 'Three folding flukes and thirty feet of waxed line.',
   },
@@ -250,6 +270,8 @@ export const UTILITY_ITEMS = [
     tags: ['Common', 'Usable', 'Tool'],
     use: 'usable',
     burden: 0,
+    weight: 1.5,
+    cost: 150,
     abilities: ['storm-lantern'],
     blurb: 'A shuttered lamp that keeps its flame in any wind.',
   },
@@ -262,6 +284,8 @@ export const UTILITY_ITEMS = [
     charges: 1,
     recharge: 'Long Rest',
     burden: 0,
+    weight: 2,
+    cost: 2000,
     abilities: ['druidic-tome'],
     blurb: 'A living book: bark boards, pressed leaves and an index that rearranges itself.',
     lore:
@@ -275,6 +299,8 @@ export const UTILITY_ITEMS = [
     tags: ['Uncommon', 'Usable', 'Tool'],
     use: 'usable',
     burden: 0,
+    weight: 0.2,
+    cost: 300,
     abilities: ['thiefs-picks'],
     blurb: 'A leather fold of hooks and tension bars, worn bright at the tips.',
   },

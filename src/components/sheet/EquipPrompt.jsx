@@ -3,6 +3,7 @@ import ShareCode from './ShareCode.jsx';
 import { ItemIcon, ItemTags, ItemValues, SlotGlyph, StatText } from './itemParts.jsx';
 import {
   ARMOR_SLOTS,
+  BAG_SLOT_KEY,
   BELT_SLOT_KEY,
   EQUIPMENT_SLOTS,
   TRINKET_SLOT_KEY,
@@ -210,13 +211,16 @@ function targetsFor(piece, { character, equipment, belt, beltSlots, trinkets, on
   for (const slot of EQUIPMENT_SLOTS) {
     if (!slots.includes(slot.key)) continue;
     const armor = ARMOR_SLOTS.some((entry) => entry.key === slot.key);
+    // A bag is neither worn as armor nor held in a hand, and "Hold it here" for
+    // the thing on your back was the one label the two-way test got wrong.
+    const bag = slot.key === BAG_SLOT_KEY;
 
     targets.push({
       id: `slot-${slot.key}`,
       label: slot.label,
       glyph: slot.key,
-      verb: armor ? 'Wear it here' : 'Hold it here',
-      hereLabel: armor ? 'Worn' : 'In hand',
+      verb: bag ? 'Sling it on' : armor ? 'Wear it here' : 'Hold it here',
+      hereLabel: bag ? 'On your back' : armor ? 'Worn' : 'In hand',
       holding: heldItem(character, equipment[slot.key]),
       commit: () => onEquip(slot.key, piece),
     });

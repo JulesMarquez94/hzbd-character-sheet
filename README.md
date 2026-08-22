@@ -103,12 +103,15 @@ Five tabs, all auto-saving (edits batch for ~0.7s, then write; the top bar shows
 - **Abilities**: your deck of cards. Create, edit, duplicate and delete, with a live preview
   beside the form. Search and filter by card type. An empty deck offers a sample deck
   transcribed from the printed cards.
-- **Inventory**: five blocks. Armor down the body, the two weapons in hand, the trinkets you
-  wear, the five belt loops and the inventory itself across the whole row. Every slot opens the
-  codex; every row of the inventory asks where the thing goes. A Magic Burden meter counts all
-  the worked magic on you against Level + Mind + 10. **Make an Enchanted Item** on the codex
-  browser's head builds a piece out of one base and any number of workings, names it, gives it a
-  picture and hands it over as a pasteable code.
+- **Inventory**: a bag across the top, then five blocks. Armor down the body, the two weapons in
+  hand, the trinkets you wear, the five belt loops and the inventory itself across the whole row.
+  Every slot opens the codex; every row of the inventory asks where the thing goes. Two meters
+  count what you are carrying. Magic Burden counts the worked magic on you against Level + Mind +
+  10 and refuses anything past it. Weight counts everything you own, pack included, against ten
+  kilos a point of Physique plus whatever your bag adds, and refuses nothing: past your capacity
+  your Movement Speed is halved, and 30% past it you cannot move at all. **Make an Enchanted
+  Item** on the codex browser's head builds a piece out of one base and any number of workings,
+  names it, gives it a picture and hands it over as a pasteable code.
 - **Lore**: portrait, concept line, appearance, personality, backstory, allies.
 - **Advancement**: what your character *chose*, level by level. One block per level, level 1
   first and a new one below it each time you level: level 1 asks for a talent set, a lineage, a
@@ -116,7 +119,8 @@ Five tabs, all auto-saving (edits batch for ~0.7s, then write; the top bar shows
   even level buys a talent rank, and every odd level after the first gives an attribute point and
   a skill learned from the whole codex.
 
-A global **Metric / Imperial** switch converts movement, and the choice is remembered locally.
+A global **Metric / Imperial** switch converts movement and weight, and the choice is remembered
+locally.
 
 The Character tab is six fixed blocks, and their order is yours to set: grab the dotted strip at
 the top of a block and drag it to another slot, or focus that strip and use the arrow keys. The

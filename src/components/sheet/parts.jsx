@@ -1,5 +1,7 @@
 import { useHoverTip } from './useHoverTip.jsx';
-import { magicBurdenMax, magicBurdenUsed } from '../../lib/items.js';
+import { carryState, magicBurdenMax, magicBurdenUsed } from '../../lib/items.js';
+import { formatWeight } from '../../lib/characterModel.js';
+import { useUnit } from '../../context/units.js';
 
 /**
  * Block 1's larger, read-only Physique/Instinct/Mind tile.
@@ -222,6 +224,92 @@ export function BurdenMeter({ character, info, foot = null, math = null }) {
       {tip}
     </div>
   );
+}
+
+/**
+ * What everything weighs, against what this character can shift.
+ *
+ * The Magic Burden meter's twin, and deliberately drawn the same way, because
+ * they are the same shape of question asked about two different things: one
+ * counts worked magic on your person, and this counts kilograms wherever they
+ * are sitting, the pack included.
+ *
+ * It differs in one way and the bar shows it. Burden has a ceiling you must not
+ * cross; this has a ceiling you may, at a price, and then a second line past it
+ * where the price becomes not moving at all. So the track is drawn out to that
+ * second line rather than to the capacity, and the capacity is a mark on it: the
+ * fill running past the mark is the whole readout, and how close it is to the end
+ * of the track is how close the character is to standing still.
+ *
+ * `math` is the sum behind the number, per item, for the hover — see statMath.js.
+ */
+export function CarryMeter({ character, foot = null, math = null }) {
+  const unit = useUnit();
+  const carry = carryState(character);
+  const { ref, tipProps, tip } = useHoverTip(carryInfo(carry, unit), math);
+
+  const color =
+    carry.state === 'stuck'
+      ? 'var(--danger-red)'
+      : carry.state === 'over'
+        ? 'var(--stat-coin)'
+        : 'var(--stat-supply)';
+
+  /* The track runs to the stopping line, so the mark at the capacity sits where
+     it actually falls: at 1 / 1.3 of the way along, which is a little over three
+     quarters. A full track means they are not going anywhere. */
+  const end = carry.stopAt > 0 ? carry.stopAt : Math.max(1, carry.used);
+  const pct = (value) => `${Math.max(0, Math.min(100, (value / end) * 100))}%`;
+
+  return (
+    <div className="burden-panel carry-panel" ref={ref} {...tipProps}>
+      <div className="meter-head">
+        <span className="meter-label">Carried</span>
+        <span className="meter-value" style={{ color }}>
+          {formatWeight(carry.used, unit)} / {formatWeight(carry.max, unit)}
+        </span>
+      </div>
+
+      <span
+        className="bar-track"
+        style={{ backgroundColor: `color-mix(in srgb, ${color} 18%, var(--bg-black))` }}
+      >
+        <span
+          className="bar-fill"
+          style={{ width: pct(carry.used), background: color, boxShadow: `0 0 8px ${color}` }}
+        />
+        {carry.max > 0 && (
+          <span
+            className="bar-mark"
+            style={{ left: pct(carry.max) }}
+            title={`Your capacity: ${formatWeight(carry.max, unit)}. Past it your Speed is halved.`}
+          />
+        )}
+      </span>
+
+      {(carry.state !== 'clear' || foot) && (
+        <span className={`meter-foot${carry.state !== 'clear' ? ' is-over' : ''}`}>
+          {carry.state === 'clear' ? foot : carryInfo(carry, unit)}
+        </span>
+      )}
+      {tip}
+    </div>
+  );
+}
+
+/** The one sentence the load is in: what it is doing to them, and by how much. */
+function carryInfo(carry, unit) {
+  if (carry.state === 'stuck') {
+    return `${formatWeight(carry.by, unit)} over, which is past 30%. You cannot move at all.`;
+  }
+  if (carry.state === 'over') {
+    const room = Math.round((carry.stopAt - carry.used) * 100) / 100;
+    return `${formatWeight(carry.by, unit)} over. Your Speed is halved, and ${formatWeight(
+      room,
+      unit
+    )} more stops you moving.`;
+  }
+  return 'Everything you own: worn, held, clipped on and packed. What you can shift is bought by your Physique, plus whatever your bag adds.';
 }
 
 /** Marks a character whose health has hit −health_max. */

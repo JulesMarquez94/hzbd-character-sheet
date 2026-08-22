@@ -1,4 +1,14 @@
-import { ARMOR_SETS, RARITY_COLORS, itemBurden, itemCharges, rarityColor } from '../../lib/items.js';
+import {
+  ARMOR_SETS,
+  RARITY_COLORS,
+  itemBurden,
+  itemCharges,
+  itemCost,
+  itemWeight,
+  rarityColor,
+} from '../../lib/items.js';
+import { formatNumber, formatWeight } from '../../lib/characterModel.js';
+import { useUnit } from '../../context/units.js';
 import useCodexArt from '../useCodexArt.js';
 
 /**
@@ -168,6 +178,15 @@ const GLYPH_PATHS = {
       <path d="M8.5 3.5a3.5 3.5 0 0 0 7 0" />
     </>
   ),
+  /* The bag: a pack with two straps over the shoulders and a flap on top. Not
+     the belt's pouch, which is the same silhouette a size down. */
+  bag: (
+    <>
+      <path d="M5.5 8.5h13l1 11.5a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5Z" />
+      <path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5" />
+      <path d="M5.8 13.5h12.4" />
+    </>
+  ),
   /* Whatever the codex has never heard of: a page with something written on it. */
   note: (
     <>
@@ -186,6 +205,7 @@ const GLYPH_PATHS = {
  */
 function glyphForItem(item) {
   const tags = item?.tags ?? [];
+  if (tags.includes('Bag')) return 'bag';
   if (tags.includes('Potion')) return 'flask';
   if (tags.includes('Bow')) return 'bow';
   if (tags.includes('Firearm')) return 'firearm';
@@ -308,9 +328,26 @@ export function ItemTags({ item }) {
  * The numbers a piece of gear carries, each in its stat's colour. Only
  * non-zero values render — these chips are the single place a plain stat
  * bonus is stated, so the rules text never repeats them.
+ *
+ * ------------------------------------------------------- what it weighs and costs
+ * Two of them are true of every item rather than of a kind of item, so they come
+ * last and read the other way round: `2.5 kg` and `4,000 ¢` are a number with its
+ * unit, where `+2 Armor` is a number with the stat it moves. They keep the chip
+ * shape anyway, because a row that grew a second kind of chip would be a row with
+ * two lines of numbers on it.
+ *
+ * A bag says what it *holds* in the same breath, since that is the only reason
+ * anybody is reading its numbers at all.
+ *
+ * Weight is in whichever unit the reader chose. See units.js for why that comes
+ * out of a context here and off a prop everywhere else.
  */
 export function ItemValues({ item }) {
   const charges = itemCharges(item);
+  const unit = useUnit();
+  const weight = itemWeight(item);
+  const cost = itemCost(item);
+  const capacity = Math.max(0, Number(item?.capacity) || 0);
 
   const values = [
     { label: 'Defense', value: item.defense, color: 'var(--focus-cyan)', signed: true },
@@ -322,18 +359,80 @@ export function ItemValues({ item }) {
       color: 'var(--def-healing)',
       signed: false,
     },
-  ].filter((entry) => (Number(entry.value) || 0) !== 0);
+    capacity > 0 && {
+      key: 'holds',
+      value: capacity,
+      /* The one chip that is a whole phrase, because "35 Capacity" is a word
+         nobody says and "holds 35 kg" is the question being asked. */
+      text: `holds ${formatWeight(capacity, unit)}`,
+      color: 'var(--stat-supply)',
+    },
+    weight > 0 && {
+      key: 'weight',
+      value: weight,
+      text: formatWeight(weight, unit),
+      color: 'var(--text-muted)',
+    },
+    cost > 0 && {
+      key: 'cost',
+      value: cost,
+      text: `${formatNumber(cost)} ¢`,
+      color: 'var(--stat-coin)',
+    },
+  ].filter((entry) => entry && (Number(entry.value) || 0) !== 0);
 
   if (values.length === 0) return null;
 
   return (
     <span className="item-values">
-      {values.map(({ label, value, color, signed }) => (
-        <span key={label} className="item-value" style={{ color }}>
-          <span className="item-value-num">{signed && value > 0 ? `+${value}` : value}</span>
-          {label}
+      {values.map(({ key, label, text, value, color, signed }) => (
+        <span key={key ?? label} className="item-value" style={{ color }}>
+          {text ? (
+            text
+          ) : (
+            <>
+              <span className="item-value-num">{signed && value > 0 ? `+${value}` : value}</span>
+              {label}
+            </>
+          )}
         </span>
       ))}
+    </span>
+  );
+}
+
+/**
+ * Just the two chips every item in the codex carries, for a block with no room
+ * for the rest of them.
+ *
+ * The weapon panel spends its space on the two cards a weapon teaches and on its
+ * workings, so it does not print `ItemValues` and should not start. But weight
+ * and coin are true of *everything*, and a sheet where the helmet says 4 kg and
+ * the greatsword says nothing is a sheet with a hole in it. Two weapons with five
+ * workings between them still leaves the block room for this, measured.
+ *
+ * The belt is the one block that gets neither. Five loops open and full fills it
+ * to the pixel, and this line is 4px more than it has. See BeltBlock.jsx.
+ */
+export function ItemCarry({ item }) {
+  const unit = useUnit();
+  const weight = itemWeight(item);
+  const cost = itemCost(item);
+
+  if (weight <= 0 && cost <= 0) return null;
+
+  return (
+    <span className="item-values item-carry">
+      {weight > 0 && (
+        <span className="item-value" style={{ color: 'var(--text-muted)' }}>
+          {formatWeight(weight, unit)}
+        </span>
+      )}
+      {cost > 0 && (
+        <span className="item-value" style={{ color: 'var(--stat-coin)' }}>
+          {formatNumber(cost)} ¢
+        </span>
+      )}
     </span>
   );
 }

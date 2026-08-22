@@ -34,7 +34,12 @@ import {
   shieldCapFor,
   syncDerived,
 } from '../src/lib/characterModel.js';
-import { magicBurdenMax, magicBurdenUsed } from '../src/lib/items.js';
+import {
+  carriedWeight,
+  carryCapacity,
+  magicBurdenMax,
+  magicBurdenUsed,
+} from '../src/lib/items.js';
 import { reapplyTotals } from '../src/lib/levelPicks.js';
 import { minionState } from '../src/lib/minions.js';
 import { mathLine, minionMath, statMath } from '../src/lib/statMath.js';
@@ -164,6 +169,86 @@ const SHEETS = [
       if (named[0]?.value !== 1) fail(`Primal Sense worth ${named[0]?.value}, want 1`);
     },
   },
+  {
+    /* The one thing on the sheet that takes a stat away. This ladder stands at a
+       Physique of 7, so the ceiling is 75 kg with a satchel on and the plate,
+       the greatsword and the spares come to 84: over, and not yet the 97.5 that
+       stops them. The sheet below is the same load with eight cuirasses in the
+       pack, which is well past it. */
+    name: 'a load past the carry ceiling, which halves Speed',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      equipment: {
+        head: 'full-plate-helm',
+        torso: 'full-plate-cuirass',
+        legs: 'full-plate-pants',
+        main_hand: 'two-handed',
+        off_hand: null,
+        bag: 'canvas-satchel',
+      },
+      pack: [
+        'chainmail-hauberk',
+        'full-plate-cuirass',
+        'full-plate-cuirass',
+        'healing-potion',
+        'healing-potion',
+      ],
+    },
+    expect: (math, fail) => {
+      const hit = math.speed_m.terms.find((t) => t.label === 'overloaded');
+      if (!hit) fail('over the ceiling and the Speed line does not say so');
+      if (hit && hit.value >= 0) fail(`overloaded is worth ${hit.value}, want a penalty`);
+    },
+  },
+  {
+    name: 'a load 30% past it, which stops them moving at all',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      equipment: {
+        head: 'full-plate-helm',
+        torso: 'full-plate-cuirass',
+        legs: 'full-plate-pants',
+        main_hand: 'two-handed',
+        off_hand: null,
+        bag: 'canvas-satchel',
+      },
+      pack: Array.from({ length: 8 }, () => 'full-plate-cuirass'),
+    },
+    expect: (math, fail) => {
+      if (math.speed_m.total !== 0) fail(`Speed is ${math.speed_m.total}, want 0`);
+    },
+  },
+  {
+    /* A working worth a point of Physique is worth ten kilos of capacity, and
+       the *ceiling Speed is judged against* has to know it. The attribute column
+       is the level ledger's and carries no enchantment, so `deriveStats` has to
+       weigh the load against its own bent Physique rather than against the
+       number it was handed. This load sits between the two, so a sheet that read
+       the column would halve a Speed that should not be halved. */
+    name: 'a load under the bent Physique and over the stored one',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      equipment: {
+        head: 'full-plate-helm',
+        torso: 'full-plate-cuirass',
+        legs: 'full-plate-pants',
+        main_hand: 'two-handed',
+        off_hand: null,
+        bag: null,
+      },
+      pack: ['chainmail-hauberk', 'chainmail-hauberk', 'chainmail-hauberk', 'scale-armor'],
+      talents: [{ id: 'enchanter', rank: 3, taken: [1, 2, 4], worn: ['bodily-vigor'] }],
+    },
+    expect: (math, fail) => {
+      const hit = math.speed_m.terms.find((t) => t.label === 'overloaded');
+      if (hit) fail(`Speed penalised by ${hit.value} on a load that is inside capacity`);
+      if (math.carry_max.total !== 80) fail(`capacity is ${math.carry_max.total}, want 80`);
+      if (math.carry_used.total !== 77.5) fail(`load is ${math.carry_used.total}, want 77.5`);
+    },
+  },
 ];
 
 /** A row the sheet has brought into line with its own ledger, then bent. */
@@ -195,6 +280,8 @@ function faceOf(shown) {
     karma: karmaCap(shown),
     burden_max: magicBurdenMax(shown),
     burden_used: magicBurdenUsed(shown),
+    carry_max: carryCapacity(shown),
+    carry_used: carriedWeight(shown),
   };
 }
 

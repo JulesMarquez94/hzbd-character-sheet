@@ -24,6 +24,7 @@
 import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
 import { allGrants, damageEnchants, grantSources, laidEntries } from './enchanting.js';
 import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
+import { BAG_ITEMS } from './bags.js';
 import { TRINKET_ITEMS } from './trinkets.js';
 import { UTILITY_ITEMS } from './utility.js';
 import { withArt } from './itemArt.js';
@@ -44,7 +45,19 @@ export const WEAPON_SLOTS = [
   { key: 'off_hand', label: 'Secondary' },
 ];
 
-export const EQUIPMENT_SLOTS = [...ARMOR_SLOTS, ...WEAPON_SLOTS];
+/**
+ * The bag, and the reason it *is* in the equipment map where the belt and the
+ * trinkets are not: there is one of it, and it is one place. That is the whole
+ * of what the map is for.
+ *
+ * It is the only slot on the sheet that changes nothing about a fight. What it
+ * changes is the ceiling every other item is weighed against, which is why it
+ * sits above the blocks on the Inventory tab rather than inside one of them.
+ */
+export const BAG_SLOT_KEY = 'bag';
+export const BAG_SLOTS = [{ key: BAG_SLOT_KEY, label: 'Bag' }];
+
+export const EQUIPMENT_SLOTS = [...ARMOR_SLOTS, ...WEAPON_SLOTS, ...BAG_SLOTS];
 
 /**
  * The utility belt is not part of the equipment map — a loop remembers how
@@ -74,6 +87,7 @@ export const EMPTY_EQUIPMENT = {
   legs: null,
   main_hand: null,
   off_hand: null,
+  bag: null,
 };
 
 /**
@@ -164,6 +178,7 @@ export function itemCategory(item) {
   const slots = item?.slots ?? [];
   if (slots.includes(BELT_SLOT_KEY)) return 'Belt Gear';
   if (slots.includes(TRINKET_SLOT_KEY)) return 'Trinkets';
+  if (slots.includes(BAG_SLOT_KEY)) return 'Bags';
   if (WEAPON_SLOTS.some((slot) => slots.includes(slot.key))) return 'Weapons';
   if (ARMOR_SLOTS.some((slot) => slots.includes(slot.key))) return 'Armor';
   return 'Other';
@@ -175,6 +190,7 @@ export const CATEGORY_ORDER = [
   'Weapons',
   'Trinkets',
   'Belt Gear',
+  'Bags',
   'Other',
   'Notes & Oddments',
 ];
@@ -453,6 +469,10 @@ export const ARMOR_SETS = {
  *   defense  — flat bonus to Defense (how hard you are to hit)
  *   armor    — flat bonus to Armor (flat damage reduction)
  *   burden   — Magic Burden carried while equipped (capacity = Level + Mind + 10)
+ *   weight   — kilograms, counted wherever the thing is: worn, in hand, on a
+ *              loop or in the pack. See `carriedWeight`
+ *   cost     — what it is worth in coin, before anything worked into it. See
+ *              `itemCost`
  *   effect   — rules text for anything beyond the numbers; plain stat bonuses
  *              live only in their field (the value chip already says "+2 Armor",
  *              so the card doesn't repeat it in words)
@@ -474,6 +494,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 0.5,
+    cost: 3000,
     effect: 'When you enter combat, you start with a Shield equal to your Mind.',
     // The rider the sheet reads, so Start Combat can actually hand the Shield
     // over rather than leaving the player to notice the line and do it by
@@ -490,6 +512,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 2,
+    cost: 3000,
     effect: 'When you enter combat, you start with a Shield equal to your Mind.',
     onCombatStart: { shield: 'mind' },
   },
@@ -502,6 +526,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 1,
+    cost: 3000,
     effect: 'When you enter combat, you start with a Shield equal to your Mind.',
     onCombatStart: { shield: 'mind' },
   },
@@ -514,6 +540,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 0.5,
+    cost: 7000,
     effect: 'When you enter combat, you start with a Shield equal to 2 times your Mind.',
     onCombatStart: { shield: 'mind', times: 2 },
   },
@@ -526,6 +554,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 2,
+    cost: 7000,
     effect: 'When you enter combat, you start with a Shield equal to 2 times your Mind.',
     onCombatStart: { shield: 'mind', times: 2 },
   },
@@ -538,6 +568,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 1,
+    cost: 7000,
     effect: 'When you enter combat, you start with a Shield equal to 2 times your Mind.',
     onCombatStart: { shield: 'mind', times: 2 },
   },
@@ -550,6 +582,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 0.5,
+    cost: 12000,
     effect:
       'When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.',
     onCombatStart: { shield: 'mind', times: 3 },
@@ -564,6 +598,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 2,
+    cost: 12000,
     effect:
       'When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.',
     onCombatStart: { shield: 'mind', times: 3 },
@@ -578,6 +614,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 0,
     burden: 0,
+    weight: 1,
+    cost: 12000,
     effect:
       'When you enter combat, you start with a Shield equal to 3 times your Mind. Increases maximum Shield.',
     onCombatStart: { shield: 'mind', times: 3 },
@@ -594,6 +632,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 3,
     burden: 0,
+    weight: 2.5,
+    cost: 3000,
   },
   {
     id: 'chainmail-hauberk',
@@ -604,6 +644,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 3,
     burden: 0,
+    weight: 11,
+    cost: 3000,
   },
   {
     id: 'chainmail-chausses',
@@ -614,6 +656,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 3,
     burden: 0,
+    weight: 6,
+    cost: 3000,
   },
   {
     id: 'half-plate-helm',
@@ -624,6 +668,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 4,
     burden: 0,
+    weight: 3,
+    cost: 7000,
   },
   {
     id: 'half-plate-cuirass',
@@ -634,6 +680,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 4,
     burden: 0,
+    weight: 14,
+    cost: 7000,
   },
   {
     id: 'half-plate-greaves',
@@ -644,6 +692,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 4,
     burden: 0,
+    weight: 8,
+    cost: 7000,
   },
   {
     id: 'full-plate-helm',
@@ -654,6 +704,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 5,
     burden: 0,
+    weight: 4,
+    cost: 12000,
   },
   {
     id: 'full-plate-cuirass',
@@ -664,6 +716,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 5,
     burden: 0,
+    weight: 18,
+    cost: 12000,
   },
   {
     id: 'full-plate-pants',
@@ -674,6 +728,8 @@ const ARMOR_ITEMS = [
     defense: 0,
     armor: 5,
     burden: 0,
+    weight: 10,
+    cost: 12000,
   },
 
   /* ----- Light armor — all about not being hit -----
@@ -695,6 +751,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 0,
     burden: 0,
+    weight: 1,
+    cost: 3000,
   },
   {
     id: 'leather-vest',
@@ -705,6 +763,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 0,
     burden: 0,
+    weight: 4,
+    cost: 3000,
   },
   {
     id: 'leather-pants',
@@ -715,6 +775,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 0,
     burden: 0,
+    weight: 2.5,
+    cost: 3000,
   },
   {
     id: 'studded-leather-helm',
@@ -725,6 +787,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 1,
     burden: 0,
+    weight: 1.5,
+    cost: 7000,
   },
   {
     id: 'studded-leather-tunic',
@@ -735,6 +799,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 1,
     burden: 0,
+    weight: 6,
+    cost: 7000,
   },
   {
     id: 'studded-leather-breeches',
@@ -745,6 +811,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 1,
     burden: 0,
+    weight: 3.5,
+    cost: 7000,
   },
   {
     id: 'scale-helm',
@@ -755,6 +823,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 2,
     burden: 0,
+    weight: 2,
+    cost: 12000,
   },
   /* The sheet's own name for the torso piece — the set is Scale, and the
      chest of it is "Scale Armor" where the other two say what they cover. */
@@ -767,6 +837,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 2,
     burden: 0,
+    weight: 9,
+    cost: 12000,
   },
   {
     id: 'scale-leggings',
@@ -777,6 +849,8 @@ const ARMOR_ITEMS = [
     defense: 1,
     armor: 2,
     burden: 0,
+    weight: 5,
+    cost: 12000,
   },
 ];
 
@@ -789,7 +863,13 @@ const ARMOR_ITEMS = [
  * then. Everything downstream reads items through `getItem`, so this is the
  * one place the pictures have to be attached.
  */
-export const ITEMS = withArt([...ARMOR_ITEMS, ...WEAPONS, ...TRINKET_ITEMS, ...UTILITY_ITEMS]);
+export const ITEMS = withArt([
+  ...ARMOR_ITEMS,
+  ...WEAPONS,
+  ...TRINKET_ITEMS,
+  ...UTILITY_ITEMS,
+  ...BAG_ITEMS,
+]);
 
 const ITEMS_BY_ID = new Map(ITEMS.map((item) => [item.id, item]));
 
@@ -889,9 +969,10 @@ function forgedFor(character, id) {
 }
 
 /**
- * Every item on this character's person: what is worn, what is in hand, and every
- * trinket. The one answer to "what is actually on you", so nothing has to walk
- * the slots and then remember the trinkets as an afterthought.
+ * Every item on this character's person: what is worn, what is in hand, the bag
+ * on their back, and every trinket. The one answer to "what is actually on you",
+ * so nothing has to walk the slots and then remember the trinkets as an
+ * afterthought.
  *
  * **Not the belt, and not the pack.** This is what an item's *own* numbers hang
  * off — a breastplate's Defense, a Runed Hood's Shield at the bell — and those
@@ -1126,6 +1207,180 @@ export function magicBurdenUsed(character) {
   return total;
 }
 
+/* ------------------------------------------------------------ what it weighs
+ *
+ * The second meter on the tab, and the opposite kind of number to Magic Burden.
+ * Burden asks what worked magic is on your person; this asks what everything you
+ * own weighs, the pack very much included, and it is the only ceiling on this
+ * sheet a character is *allowed* to go past.
+ *
+ * Kilograms, because the sheet's own distances are metres and the unit switch
+ * converts on the way to the screen rather than in the data. See `formatWeight`
+ * in characterModel.js, which is where a kilo becomes a pound.
+ */
+
+/** What one thing weighs. A working adds coin to a piece, never kilos. */
+export function itemWeight(item) {
+  return Math.max(0, Number(item?.weight) || 0);
+}
+
+/**
+ * What a working adds to the piece it is in, per point of Magic Burden.
+ *
+ * Jules's, 2026-08-22: "An enchantment add to the value 1000 coins per burden
+ * associated." It is deliberately not the enchantment's own `cost` field, which
+ * is 750 a point and answers a different question: what the working costs to buy
+ * and lay. This is what having it already in something is worth.
+ *
+ * A working that weighs nothing adds nothing, which is the honest reading of a
+ * rule written per point. The two pieces in the codex that carry one price
+ * themselves instead. See the Ring of Shrouding in trinkets.js.
+ */
+export const ENCHANT_COIN_PER_BURDEN = 1000;
+
+/**
+ * What a piece is worth in coin: its own price, plus every working in it.
+ *
+ * The premium is computed rather than written down, so a piece the player forges
+ * is priced by the same rule as one the codex shipped and a reworked enchantment
+ * reprices every blade carrying it.
+ */
+export function itemCost(item) {
+  if (!item) return 0;
+
+  const worked = itemEnchantments(item).reduce(
+    (total, { enchantment }) => total + Math.max(0, Number(enchantment.burden) || 0),
+    0
+  );
+  return Math.max(0, Math.floor(Number(item.cost) || 0)) + worked * ENCHANT_COIN_PER_BURDEN;
+}
+
+/**
+ * Kilograms of carrying a Physique buys.
+ *
+ * Ten, which is the number Physique already buys everything else in: the
+ * attribute tooltip says "10 Health a point", and this is 10 kilos a point
+ * beside it. A fresh character stands at 4, so 40 kg is what anybody can shift
+ * before they have bought a strap.
+ */
+export const CARRY_PER_PHYSIQUE = 10;
+
+/** The bag on this character, or null when they are carrying it all by hand. */
+export function bagItem(character) {
+  return heldItem(character, normalizeEquipment(character?.equipment)[BAG_SLOT_KEY]);
+}
+
+/** What the bag adds to the ceiling, and nothing at all when there is none. */
+export function bagCapacity(character) {
+  return Math.max(0, Number(bagItem(character)?.capacity) || 0);
+}
+
+/**
+ * What this character may carry: their Physique, and whatever they sling it in.
+ *
+ * `physique` is an override for the one caller that must not read the column:
+ * `deriveStats` works in the *bent* attribute, with every worn enchantment
+ * already in it, while the column it was handed is the level ledger's and knows
+ * nothing about a Bodily Vigor on somebody's person. Left off, the column is
+ * read, which is right everywhere else on the sheet because everything else is
+ * handed the character `liveCharacter` has already bent.
+ *
+ * Getting this wrong would be the quiet kind of wrong: a ring worth a point of
+ * Physique would show 10 kg more capacity on the meter and not be in the
+ * ceiling that decides whether Speed is halved.
+ */
+export function carryCapacity(character, physique = character?.physique) {
+  const strength = Math.max(0, Math.floor(Number(physique) || 0));
+  return strength * CARRY_PER_PHYSIQUE + bagCapacity(character);
+}
+
+/**
+ * Everything on this character and everything they own, in kilograms.
+ *
+ * **The pack is in it, and that is the whole point.** Magic Burden asks what is
+ * on your person, so it stops at the belt. Weight does not care where a thing is:
+ * a spare breastplate in the pack is a breastplate you are carrying, and the bag
+ * on your back weighs against the room it gives you.
+ *
+ * A written-in thing weighs nothing. A folded note has no rules and no weight,
+ * and inventing one for it would mean asking the player for a number every time
+ * they wrote something down.
+ */
+export function carriedWeight(character) {
+  const worn = normalizeEquipment(character?.equipment);
+  const resolve = (id) => heldItem(character, id);
+
+  let total = 0;
+  for (const slot of Object.keys(worn)) total += itemWeight(resolve(worn[slot]));
+  for (const id of normalizeTrinkets(character?.trinkets)) total += itemWeight(resolve(id));
+  for (const entry of normalizeBelt(character?.belt)) total += itemWeight(resolve(entry?.id));
+  for (const entry of normalizePack(character?.pack)) {
+    if (!isCustomEntry(entry)) total += itemWeight(resolve(entry));
+  }
+
+  /* Two decimals. Half a gram of floating-point drift across forty items is
+     what turns "40 of 40" into an overload nobody can find the cause of. */
+  return Math.round(total * 100) / 100;
+}
+
+/**
+ * How far past the ceiling a character stops being able to move at all.
+ *
+ * Jules's, 2026-08-22: "If you are over weight your speed is halved. If you go
+ * 30% above you cannot move." So there are three states and not two, and the
+ * middle one is a penalty rather than a refusal: nothing anywhere stops a player
+ * picking a thing up. Being overloaded is a condition they are in, not a door
+ * that is shut.
+ */
+export const OVERLOAD_STOP = 1.3;
+
+/**
+ * What this character is carrying, against what they can, and which of the three
+ * states that puts them in.
+ *
+ * `state` is `clear`, `over` or `stuck`. `stopAt` is the weight the third one
+ * begins at, so a meter can draw the line rather than leaving the player to work
+ * out what 30% of their own capacity is.
+ *
+ * `physique` passes straight through to `carryCapacity`. See the note there.
+ */
+export function carryState(character, physique = character?.physique) {
+  const max = carryCapacity(character, physique);
+  const used = carriedWeight(character);
+  const stopAt = Math.round(max * OVERLOAD_STOP * 100) / 100;
+
+  const stuck = max > 0 && used >= stopAt;
+  const over = used > max;
+
+  return {
+    used,
+    max,
+    stopAt,
+    over,
+    stuck,
+    state: stuck ? 'stuck' : over ? 'over' : 'clear',
+    /* Kilos past the ceiling, for the line that says how much to put down. */
+    by: Math.round(Math.max(0, used - max) * 100) / 100,
+  };
+}
+
+/**
+ * Movement Speed with the load on it: halved when over, gone when 30% over.
+ *
+ * Floored to the nearest half rather than left as a quarter, because Speed is the
+ * one number on this sheet that keeps its halves and has never printed anything
+ * finer. A Speed of 5.5 halves to 2.5 and not to 2.75, which is what
+ * `Math.floor(metres) / 2` says in one step.
+ *
+ * Takes the state rather than the character so `deriveStats` reads the load once
+ * and hands it to both this and the tile that explains it.
+ */
+export function encumberedSpeed(speed, carry) {
+  const metres = Math.max(0, Number(speed) || 0);
+  if (!carry || carry.state === 'clear') return metres;
+  return carry.state === 'stuck' ? 0 : Math.floor(metres) / 2;
+}
+
 /* -------------------------------------------------------- equipment effects */
 
 /**
@@ -1271,6 +1526,9 @@ export function inventoryOverview(character) {
     /** Everything on the character, equipped and carried alike. */
     total: tallies.reduce((sum, tally) => sum + tally.filled, 0),
     burden: { used, max, over: Math.max(0, used - max) },
+    /* The other number here that can be wrong, and the only one the pack can
+       make wrong on its own. Burden stops at the belt; this counts the pack. */
+    carry: carryState(character),
   };
 }
 

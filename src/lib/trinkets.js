@@ -43,6 +43,13 @@
  *   slots    — `trinket`, and only ever that
  *   burden   — nothing. A trinket carries whatever is worked into it and no
  *              weight of its own; a *worked* one weighs what its enchants weigh
+ *   weight   — kilograms, and zero for every piece of jewellery on the shelf.
+ *              A ring weighs about five grams: nobody carrying a breastplate
+ *              would notice it, so the sheet does not count it either. What is
+ *              worn as cloth or leather does weigh
+ *   cost     — coin. Rarity is a power tier here rather than a price tag, so
+ *              this is the one field on the shelf that tells a gold ring from a
+ *              copper one
  *   blurb    — what it looks like. There is no `effect`, because there is none
  *   enchants — only on the named ones: the workings the piece arrives wearing,
  *              in the exact shape the forge and `heldItem` already read
@@ -55,6 +62,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Ring'],
     burden: 0,
+    weight: 0,
+    cost: 20,
     blurb: 'A plain band, gone green where it sits against the skin.',
   },
   {
@@ -63,6 +72,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Ring'],
     burden: 0,
+    weight: 0,
+    cost: 150,
     blurb: 'Bright enough to signal with, and thin enough to lose.',
   },
   {
@@ -71,6 +82,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Ring'],
     burden: 0,
+    weight: 0,
+    cost: 800,
     blurb: 'Heavy for its size. Soft enough to bite a mark into.',
   },
   {
@@ -79,6 +92,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Ring'],
     burden: 0,
+    weight: 0,
+    cost: 400,
     blurb: 'A flat face cut with somebody else’s crest, worn smooth.',
   },
 
@@ -89,6 +104,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Necklace'],
     burden: 0,
+    weight: 0,
+    cost: 200,
     blurb: 'A drop of silver on a chain fine enough to snap by hand.',
   },
   {
@@ -97,6 +114,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Necklace'],
     burden: 0,
+    weight: 0.1,
+    cost: 1200,
     blurb: 'It opens. Whether there is anything inside is the wearer’s business.',
   },
   {
@@ -105,6 +124,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Necklace'],
     burden: 0,
+    weight: 0,
+    cost: 30,
     blurb: 'Three knuckle bones on a leather thong, drilled and strung.',
   },
 
@@ -115,6 +136,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Cloak'],
     burden: 0,
+    weight: 1.2,
+    cost: 150,
     blurb: 'Undyed wool, waxed at the shoulders, mended twice.',
   },
   {
@@ -123,6 +146,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Belt'],
     burden: 0,
+    weight: 0.4,
+    cost: 120,
     blurb: 'Stamped leather and a brass buckle. Not the one your loops hang from.',
   },
   {
@@ -131,6 +156,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Bracelet'],
     burden: 0,
+    weight: 0,
+    cost: 30,
     blurb: 'Twisted wire, closed by hand, adjusted by hand ever since.',
   },
   {
@@ -139,6 +166,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Circlet'],
     burden: 0,
+    weight: 0.2,
+    cost: 80,
     blurb: 'An unadorned hoop of black iron. It sits above the brow.',
   },
   {
@@ -147,6 +176,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Common', 'Trinket', 'Brooch'],
     burden: 0,
+    weight: 0,
+    cost: 60,
     blurb: 'A pin and a whorl. It holds a cloak shut and nothing else.',
   },
 
@@ -171,6 +202,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Epic', 'Trinket', 'Cloak'],
     burden: 0,
+    weight: 1.4,
+    cost: 150,
     blurb: 'A deep violet cloak that swallows lamplight, stitched through with slow green fire.',
     enchants: [{ id: 'unique-imbuement', spell: 'nightmare-wall' }, { id: 'nightmares-curse' }],
     enchantText:
@@ -188,6 +221,8 @@ export const TRINKET_ITEMS = [
     slots: ['trinket'],
     tags: ['Rare', 'Trinket', 'Ring'],
     burden: 0,
+    weight: 0,
+    cost: 5000,
     blurb: 'Crafted from a dark, light-absorbing material that veils the wearer from magical detection.',
     enchants: [{ id: 'shrouding' }],
     enchantText: 'One working sits in the dark of the stone: {{Shrouding}}, and it weighs nothing on whoever wears it.',

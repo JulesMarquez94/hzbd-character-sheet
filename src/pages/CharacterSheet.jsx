@@ -5,6 +5,7 @@ import { getCharacter, updateCharacter } from '../lib/api.js';
 import { levelForXp, liveCharacter, syncDerived } from '../lib/characterModel.js';
 import { openChoices, pruneToLevel } from '../lib/levelPicks.js';
 import { subscribeToTable } from '../lib/realtime.js';
+import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
@@ -315,6 +316,7 @@ export default function CharacterSheet({ creating = false }) {
      sheet, not a set of choosers that would refuse to write anything. */
   if (creating && canEdit) {
     return (
+      <UnitContext.Provider value={unit}>
       <div className="sheet">
         <main className="sheet-canvas">
           {error && <div className="form-error">{error}</div>}
@@ -333,10 +335,12 @@ export default function CharacterSheet({ creating = false }) {
           />
         </main>
       </div>
+      </UnitContext.Provider>
     );
   }
 
   return (
+    <UnitContext.Provider value={unit}>
     <div className="sheet">
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">
@@ -533,5 +537,6 @@ export default function CharacterSheet({ creating = false }) {
         )}
       </main>
     </div>
+    </UnitContext.Provider>
   );
 }

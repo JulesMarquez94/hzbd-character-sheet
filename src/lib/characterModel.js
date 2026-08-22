@@ -4,7 +4,14 @@
  * creation form all agree on what a character is.
  */
 
-import { EMPTY_EQUIPMENT, characterGrants, equipmentEffects, gearEnchantIds } from './items.js';
+import {
+  EMPTY_EQUIPMENT,
+  carryState,
+  characterGrants,
+  encumberedSpeed,
+  equipmentEffects,
+  gearEnchantIds,
+} from './items.js';
 import { ephemeralGrants, wornIds } from './enchanting.js';
 import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
@@ -299,6 +306,14 @@ export function deriveStats(character, extra = null) {
 
   const gear = equipmentEffects(character);
   const points = pointCeilings(character?.talents);
+  /* What everything they own weighs, against what they can shift. Read once
+     here: it is the only thing on the sheet that can take a stat away rather
+     than add to one, and Speed is what it takes.
+
+     `p` and not the column, because the column is the level ledger's and a
+     Bodily Vigor worked into a ring is worth ten kilos of capacity that only the
+     bent number knows about. See carryCapacity in items.js. */
+  const carry = carryState(character, p);
 
   /* Armor is worn pieces plus whatever has been laid on the wielder. Resilience
      grants "3 armor" and Armor is a stat, so it is one number: the meter reads it,
@@ -342,7 +357,12 @@ export function deriveStats(character, extra = null) {
     initiative: Math.floor(i + lvl),
     // Speed is the one value that stays a precise decimal — everything else
     // here rounds down.
-    speed_m: 3 + i / 2 + flat('speed'),
+    //
+    // And the one value a load can take *off*: over your carry capacity it is
+    // halved, and 30% over it is nothing at all. Applied here rather than left
+    // as a note somebody has to remember, the same way a breastplate's Armor is
+    // applied here. See encumberedSpeed in items.js.
+    speed_m: encumberedSpeed(3 + i / 2 + flat('speed'), carry),
     /* Six for everybody, and seven for a Master Trickster: THRILLED is the only
        thing in the game that moves either ceiling, and both of these were a
        literal 6 before it existed. tricks.js reads the rank off the set and hands
@@ -694,6 +714,31 @@ export function metersToFeet(meters) {
 
 export function formatSpeed(meters, unit) {
   return unit === 'imperial' ? `${metersToFeet(meters)}ft` : `${Number(meters) || 0}m`;
+}
+
+/**
+ * 11 -> 24.3 (pounds). Not snapped the way feet are.
+ *
+ * A distance rounds to 5ft steps because a battle map is drawn in them, and
+ * nothing is measured off a grid here: a capacity is a running total that a
+ * single potion can tip over, so the two sides of the switch have to agree about
+ * which side of the line it lands on. One decimal, which is finer than any weight
+ * in the codex and coarse enough to read.
+ */
+export function kgToPounds(kg) {
+  return Math.round((Number(kg) || 0) * 2.20462 * 10) / 10;
+}
+
+/**
+ * A weight as the sheet writes it, in whichever unit the reader chose.
+ *
+ * Trailing zeroes go, so a bag of exactly 5 kg is `5 kg` and not `5.0 kg`. The
+ * space is deliberate and the one difference from `formatSpeed`: `5.5m` reads,
+ * and `5.5kg` does not.
+ */
+export function formatWeight(kg, unit) {
+  const value = unit === 'imperial' ? kgToPounds(kg) : Math.round((Number(kg) || 0) * 100) / 100;
+  return `${value} ${unit === 'imperial' ? 'lb' : 'kg'}`;
 }
 
 export function formatNumber(n) {

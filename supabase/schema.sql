@@ -198,8 +198,14 @@ create table if not exists public.characters (
 
   -- flexible bags
   -- Worn / wielded gear: one item id (or null) per slot, e.g.
-  -- { "head": "iron-helm", "torso": null, "legs": null, "main_hand": null, "off_hand": null }.
-  -- Ids point into the item codex in src/lib/items.js.
+  -- { "head": "iron-helm", "torso": null, "legs": null, "main_hand": null,
+  --   "off_hand": null, "bag": "leather-rucksack" }.
+  -- Ids point into the item codex in src/lib/items.js. `bag` is in here rather
+  -- than in a column of its own for the reason the map exists: there is one of
+  -- it and it is one place. What it holds is not stored anywhere, because a bag
+  -- holds nothing -- it raises the weight the whole sheet may come to. See
+  -- carryCapacity in src/lib/items.js. A row saved before the slot existed has
+  -- no key and reads as no bag.
   equipment    jsonb not null default '{}'::jsonb,
   -- Item ids carried in the pack — where unequipped gear goes.
   pack         jsonb not null default '[]'::jsonb,

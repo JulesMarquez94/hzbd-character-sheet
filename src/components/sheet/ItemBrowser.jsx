@@ -2,16 +2,21 @@ import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import {
   ARMOR_SETS,
+  OVERLOAD_STOP,
+  carryState,
   forgedForSlot,
   heldItem,
   itemBurden,
+  itemWeight,
   itemsForSlot,
   magicBurdenMax,
   magicBurdenUsed,
   placementOf,
 } from '../../lib/items.js';
+import { formatWeight } from '../../lib/characterModel.js';
 import { getCard } from '../../lib/weapons.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { useUnit } from '../../context/units.js';
 import { ItemIcon, ItemTags, ItemValues, StatText } from './itemParts.jsx';
 
 /**
@@ -133,6 +138,10 @@ export default function ItemBrowser({
   equipTitle = '',
   equippedLabel = 'Worn',
   checkBurden = true,
+  /* True where the main button makes a new one rather than taking the one you
+     already carry: the inventory's own browser, where "Add" is the whole point.
+     It only ever decides what the weight warning says. */
+  conjures = false,
   onEquip,
   onUnequip,
   onAdd = null,
@@ -143,6 +152,7 @@ export default function ItemBrowser({
   const [query, setQuery] = useState('');
   const [activeTags, setActiveTags] = useState([]);
   const stack = useCardStack();
+  const unit = useUnit();
 
   /* The codex for this slot, and whatever this character has *made* for it. A
      forged piece is on the sheet rather than in the codex, so without the second
@@ -175,6 +185,21 @@ export default function ItemBrowser({
   const burdenMax = magicBurdenMax(character);
   const burdenUsed = magicBurdenUsed(character);
   const burdenFreed = itemBurden(current);
+
+  /* And the same question for weight, which is answered the opposite way.
+     Burden refuses: a piece that would put the wearer past capacity cannot be
+     equipped at all. Weight only warns. Being overloaded is a *condition*, and
+     its price is already written into Speed, so nothing here stops a player
+     picking a thing up: it says what it will cost and lets them decide.
+
+     Two things make the projection less obvious than the burden one above it.
+     Equipping a piece you already carry moves no weight at all (it was in the
+     pack and now it is on you) and swapping puts the old piece in the pack, so
+     it is *conjuring* a new one out of the codex that costs anything. And a bag
+     changes the ceiling rather than the total, so its capacity has to be traded
+     against the one coming off. */
+  const carry = carryState(character);
+  const capacityFreed = Number(current?.capacity) || 0;
 
   const packCount = (id) => pack.filter((packId) => packId === id).length;
 
@@ -233,6 +258,34 @@ export default function ItemBrowser({
     setActiveTags((tags) => (tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]));
   }
 
+  /**
+   * Where the load would stand with this piece taken, and whether that is worse
+   * than where it stands now.
+   *
+   * `gained` is false when the piece is one already in the pack and the button
+   * would only move it, which is most of what this window does. `worse` is what
+   * decides whether the row says anything at all: a rucksack taken while already
+   * overloaded improves matters, and a window that warned about it would be
+   * warning about the fix.
+   */
+  function loadAfter(item, gained) {
+    const used = carry.used + (gained ? itemWeight(item) : 0);
+    const max = Math.max(0, carry.max - capacityFreed + (Number(item.capacity) || 0));
+    const stopAt = Math.round(max * OVERLOAD_STOP * 100) / 100;
+
+    const state = max > 0 && used >= stopAt ? 'stuck' : used > max ? 'over' : 'clear';
+    const rank = { clear: 0, over: 1, stuck: 2 };
+
+    return {
+      used,
+      max,
+      state,
+      /* Worse than now, either by crossing a line or by piling more on past one
+         already crossed. */
+      worse: rank[state] > rank[carry.state] || (state !== 'clear' && used > carry.used),
+    };
+  }
+
   return (
     <Modal
       title={`${slot.label} · Codex`}
@@ -263,6 +316,20 @@ export default function ItemBrowser({
               </button>
             )}
           </div>
+        )}
+
+        {/* Where they already stand, said once, so a row's own chip only has to
+            say that it makes things worse. Never a refusal: it is a line of
+            weather, not a locked door. */}
+        {carry.state !== 'clear' && (
+          <p className={`browser-load browser-load-${carry.state}`}>
+            <b>
+              {formatWeight(carry.used, unit)} of {formatWeight(carry.max, unit)}
+            </b>{' '}
+            {carry.state === 'stuck'
+              ? 'is more than 30% over your capacity, so you cannot move at all. You may still take more.'
+              : 'is over your capacity, so your Speed is halved. You may still take more.'}
+          </p>
         )}
 
         <input
@@ -299,10 +366,22 @@ export default function ItemBrowser({
                        so instead of offering to put it on twice. */
                     const alreadyOn = equipped || !item.forged ? null : placementOf(character, item.id);
                     const projected = burdenUsed - burdenFreed + itemBurden(item);
-                    // Burden is what you carry *on* you — a thing in your pack is
-                    // just weight, so the inventory never blocks on it.
-                    const blocked = checkBurden && projected > burdenMax;
+                    /* Burden is what you carry *on* you — a thing in your pack is
+                       just weight, so the inventory never blocks on it.
+
+                       Over capacity **and worse than now**. A sheet that is
+                       already past its capacity (an older save, a Mind that came
+                       down) could otherwise equip nothing at all, including the
+                       things that would carry no Burden: every bag in the codex
+                       was refused with "Would carry 23 Magic Burden", which was
+                       true of the sheet and nothing to do with the bag. Anything
+                       that adds to the load is refused exactly as before. */
+                    const blocked =
+                      checkBurden && projected > burdenMax && projected > burdenUsed;
                     const inPack = packCount(item.id);
+                    /* What taking this one would do to the load. Nothing blocks
+                       on it; the row wears the answer and the button still works. */
+                    const load = loadAfter(item, conjures || inPack === 0);
 
                     // A belt item's one card is the item itself, so its name is only
                     // worth printing when it differs — a weapon's two always do.
@@ -320,6 +399,23 @@ export default function ItemBrowser({
                             {inPack > 0 && (
                               <span className="pack-chip" title="Carried in your pack · equipping takes it from there">
                                 In Pack{inPack > 1 ? ` ×${inPack}` : ''}
+                              </span>
+                            )}
+                            {/* The warning, and only ever a warning. The button
+                                beside it works either way. */}
+                            {load.worse && (
+                              <span
+                                className={`load-chip load-chip-${load.state}`}
+                                title={`You would be carrying ${formatWeight(
+                                  load.used,
+                                  unit
+                                )} of ${formatWeight(load.max, unit)}. ${
+                                  load.state === 'stuck'
+                                    ? 'That is 30% over, so you would not be able to move.'
+                                    : 'Over your capacity your Speed is halved.'
+                                }`}
+                              >
+                                {load.state === 'stuck' ? 'Cannot move' : 'Overloaded'}
                               </span>
                             )}
                           </div>
