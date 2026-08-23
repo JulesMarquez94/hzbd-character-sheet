@@ -137,17 +137,21 @@ dialog from their own button, each with a count of its own.
 A **Martial Move** is a third kind of card, beside a spell and a talent card: a trained manoeuvre
 you buy *before* an attack, which then rides the next weapon attack you make.
 
-Three sets teach them: a Guardian's Shield Expertise, a Duelist's Dexterous and a Feral Cursed's
-Beast Within, and each hands over a hand to choose out of the pool in `src/lib/martial.js`, the
-same way a Mycomancer chooses spells. How many you know grows with your rank, and Rank 2 opens the
-Adept moves while Rank 3 opens Master.
+Four sets teach them: a Guardian's Shield Expertise, a Duelist's Dexterous, a Colossus's Martial
+Training and a Feral Cursed's Beast Within, and each hands over a hand to choose out of the pool in
+`src/lib/martial.js`, the same way a Mycomancer chooses spells. How many you know grows with your
+rank, and Rank 2 opens the Adept moves while Rank 3 opens Master.
+
+What the weapon in your hand is worth is read off the same set. A Duelist has advantage and a point
+of Defense with a one-handed weapon; a Colossus has advantage with a Colossal Weapon, a die size on
+every two-handed swing from Rank 2, and another die *per move riding it* from Rank 3.
 
 Paying for one lays it on the **Temporary Effects** tracker, where it sits until you swing. While
 it is there, every place the sheet prints that attack says what it is carrying: *"This attack
 will Wing Clip and Reckless"*, and the card prints the advantage as a green arrow with the number
 of d4 in it. Making the attack spends the move, hit or miss. One move rides a swing; a Master
-Duelist's Sharp and a Master Feral Cursed's Bestial Frenzy each allow two, and a chip with nowhere
-to ride says so rather than taking your Willpower.
+Duelist's Sharp, a Master Colossus's Perfect Technique and a Master Feral Cursed's Bestial Frenzy
+each allow two, and a chip with nowhere to ride says so rather than taking your Willpower.
 
 ### The Temporary Effects tracker
 

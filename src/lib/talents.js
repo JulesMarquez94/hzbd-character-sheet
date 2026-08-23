@@ -1204,13 +1204,19 @@ const TALENT_SETS = [
          so on a literal reading a Duelist holding a shield gets none of this.
          Flagged in data/README.md for a ruling. */
       weapon: 'One-Handed',
-      /* DEXTEROUS: "You have advantage when using One-handed weapons." A count
-         rather than a flag because Advantage stacks (each instance is another
-         d4), which is what lets the arrow on the card print a number. */
-      advantage: [null, 1, 1, 1],
-      /* AGILE: "While you have a one-handed weapon in hand your Defense is
-         increased by 1." */
-      defense: [null, 1, 1, 1],
+      /* One entry per card that hangs on the weapon in hand. Neither names a tag,
+         so both take the set's own, which is what they always read. The list is
+         the Colossus's doing: it holds cards on two different tags at once and
+         needed somewhere to say which. See `grants` in moves.js. */
+      grants: [
+        /* DEXTEROUS: "You have advantage when using One-handed weapons." A count
+           rather than a flag because Advantage stacks (each instance is another
+           d4), which is what lets the arrow on the card print a number. */
+        { advantage: [null, 1, 1, 1] },
+        /* AGILE: "While you have a one-handed weapon in hand your Defense is
+           increased by 1." */
+        { defense: [null, 1, 1, 1] },
+      ],
       /* FOLLOW UP is deliberately not here. It hangs on the same weapon, but the
          sheet does not know an attack missed and never will, so its reroll is a
          printed rule the table plays. A number nothing reads would be a promise
@@ -1946,6 +1952,258 @@ const TALENT_SETS = [
           'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
           'Your next attack costs no Action Points. However, if the attack fails to deal damage, the target may take a free action of its choice.\n\n' +
           'This ability can only be used once per round.',
+      },
+    ],
+  },
+
+  {
+    id: 'colossus',
+    name: 'Colossus',
+    /* The ninth set, and it arrived the same day the Berserker did, in the same
+       three tabs: `Talent Set - Colossus.xlsx`, 2026-08-23. The Overview below is
+       its Summary and Overview columns and every card is its Ability tab.
+
+       It is the Duelist's opposite number and its own overview says so, so it is
+       built out of the same two specs: a `loadout` that hands over Martial Moves
+       and a `martial` block that says what the move system lets this set do.
+       Everything new is in the second one, and it is one thing: a set whose cards
+       hang on **two different weapon tags at once**. See `grants` in moves.js.
+
+       Its Ability tab carries the Berserker's two extra columns, `id` and
+       `Source`, and this is the first set whose `Source` is not one word. Five
+       cards say `sheet`. COLOSSAL FORCE and COLOSSAL GRIP say `house`, and both
+       are marked below.
+
+       The same tab's `Developpement Notes` asked for a whole weapon category to
+       go with it, and it was built: four Colossal Weapons in weapons.js, which is
+       what GIANT SLAYER and COLOSSAL GRIP are about. Without them two of these
+       seven cards would name a kind of weapon nothing in the codex is. */
+    tagline: 'A weapon too big for one hand, and the training to make one swing count for everything.',
+    art: '/talents/colossus.jpg',
+    /* Martial and Physique are the sheet's own Tags column, and Physique earns it
+       twice over: it is what somebody choosing this set is choosing it for, and it
+       is what every Colossal Weapon is swung on. No Defense and no Control, and
+       deliberately so: nothing on this track buys a number that is not on an
+       attack. */
+    tags: ['physique', 'martial'],
+    stat: 'physique',
+    /* MARTIAL TRAINING, and the same pool DEXTEROUS hands over on the same terms.
+       "You learn a number of Novice Martial Moves equal to 2 + your Rank in
+       Colossus" is [null, 3, 4, 5], the tier ladder is the card's own last line,
+       and `swap: ['long']` is the sentence between them, word for word the one
+       FUNGAL INVOCATION prints.
+
+       `group: 'tier'` for the reason the Duelist's carries it: a move has no
+       school and no family, so the tier is the only thing that sorts the pool. */
+    loadout: {
+      id: 'colossus-martial-moves',
+      label: 'Martial Moves',
+      noun: 'martial move',
+      kind: 'martial-move',
+      group: 'tier',
+      known: [null, 3, 4, 5],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      swap: ['long'],
+      note: 'Your long rest action can change any number of them, and this is the set that swings them with both hands on the haft.',
+    },
+    /* What this set does to the move system, and what it hangs on the weapon in
+       hand. Numbers here, behaviour in moves.js, indexed by rank the way the
+       Duelist's is. */
+    martial: {
+      /* MARTIAL TRAINING's own clause, "you can use them with Two-Handed
+         Weapons", and the tag every grant below falls back to when it names none.
+
+         Read as a **permission** rather than a restriction, which is the reading
+         the overview takes: a Martial Move is "the trained manoeuvres nobody with
+         two hands on a haft has the time for", and this is the set that buys the
+         time. Nothing enforces it either way, because `canLayMove` has never asked
+         what is in your hand: a move is laid before the swing and the weapon can
+         still be swapped. Flagged in data/README.md. */
+      weapon: 'Two-Handed',
+      grants: [
+        /* GIANT SLAYER, at Rank 1: "When you attack with a Colossal Weapon, the
+           attack is made with advantage." The one grant in the codex that names a
+           tag its own set's `weapon` is not, and the whole reason `grants` is a
+           list rather than a block. A count and not a flag, because Advantage
+           stacks and the arrow on the card prints the number. */
+        { weapon: 'Colossal', advantage: [null, 1, 1, 1] },
+        /* COLOSSAL FORCE, at Rank 2: "Your Two-Handed Weapon Attacks are Elevated
+           by 1." The first thing in the codex to Elevate a swing for the weapon in
+           hand rather than for something that was paid for. */
+        { elevate: [null, 0, 1, 1] },
+        /* PERFECT TECHNIQUE's second sentence, at Rank 3: "Each Martial Move on
+           the attack Empowers its damage by 1." On the same tag as its first
+           sentence, which is what makes it a Two-Handed Weapon Attack, and per
+           move rather than per attack. */
+        { perMove: [null, 0, 0, 1] },
+      ],
+      /* PERFECT TECHNIQUE's first sentence: "You can now use two Martial Moves on
+         the same Two-Handed Weapon Attack." Not gated on the weapon, the same way
+         SHARP is not, because a move is laid before the swing and refusing the
+         second one would be refusing it against a weapon that may not be the one
+         it ends up riding. */
+      perAttack: [null, 1, 1, 2],
+      /* PRACTICED MOVES, at Rank 2: "When you make a Weapon Attack as a reaction,
+         you can use a Martial Move with it." Two ranks earlier than the Duelist's
+         SHARP buys the same thing, which is the trade for buying nothing else. */
+      onReaction: [null, false, true, true],
+    },
+    blurb:
+      'A Colossus fights with both hands on the haft and asks one question of every exchange: how much can be put behind a single swing. Where a Duelist buys options with a free hand, a Colossus buys weight. The weapon is too big to be quick and too heavy to be subtle, and neither of those is a problem once the thing it lands on has stopped being one.\n\n' + // text-style-ok: joins two clauses
+      'What separates a Colossus from anybody else swinging something large is the training. Martial Moves are the trained motions that ride a swing: a wound opened, a guard broken, a weapon knocked out of a hand. A Colossus learns more of them than most and rebuilds the list every night, and at the top of the track two of them ride the same blow while each one adds a die to it.\n\n' + // text-style-ok: joins two clauses
+      'The set rewards patience and punishes hesitation. Almost everything a Colossus has goes into one attack a turn, and a Master holding a Two-Handed Weapon in each hand spends the whole turn on it. Get that one right and there is not much left standing to answer it.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'martial-training',
+        rank: 1,
+        name: 'Martial Training',
+        summary: 'Martial Moves by the handful, rebuilt every night and swung with both hands.',
+        kind: 'talent',
+        tags: ['Colossus', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: the pool is the `loadout` above and the weapon clause
+           is `martial.weapon`, neither of them read out of this prose.
+
+           Transcribed with nothing changed. It is DEXTEROUS's three sentences with
+           the set's own name in the first and one clause added to it, and that
+           clause is the difference between the two sets. */
+        body:
+          'You learn a number of Novice Martial Moves equal to 2 + your Rank in Colossus, and you can use them with Two-Handed Weapons.\n\n' + // text-style-ok: joins two clauses
+          'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
+          'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'giant-slayer',
+        rank: 1,
+        name: 'Giant Slayer',
+        summary: 'Every swing of a Colossal Weapon is made with advantage.',
+        kind: 'talent',
+        tags: ['Colossus', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: the first entry in `martial.grants` above, keyed on
+           the Colossal tag, so the arrow comes off the moment the weapon is
+           stowed. One spelling corrected on the way in: "Colosal" reads Colossal,
+           which is what the weapons carrying the tag are called. */
+        body: 'When you attack with a Colossal Weapon, the attack is made with advantage.',
+      },
+      {
+        id: 'colossal-force',
+        rank: 2,
+        name: 'Colossal Force',
+        summary: 'Both hands on the haft is worth a die size on every swing.',
+        kind: 'talent',
+        tags: ['Colossus', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* `house` on the Ability tab's Source column, and the transcription changed
+           nothing: it arrived as one written sentence. Mechanics as data, the
+           second entry in `martial.grants`.
+
+           Elevated and not Empowered, which the sheet already got right: the same
+           dice one size up, capped at a d12. A Colossal Two-Handed Weapon carries
+           both tags, so a Rank 2 Colossus holding one has this and GIANT SLAYER
+           at once. */
+        body: 'Your Two-Handed Weapon Attacks are Elevated by 1.',
+      },
+      {
+        id: 'practiced-moves',
+        rank: 2,
+        name: 'Practiced Moves',
+        summary: 'A Martial Move rides a reaction attack, two ranks before a Duelist gets it.',
+        kind: 'talent',
+        tags: ['Colossus', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Half of this is data and half is not, and the half that is not is the
+           first of three Action Point discounts on this set. `martial.onReaction`
+           carries the permission, which is the same field SHARP raises at Rank 3.
+
+           "That Martial Move costs no Action Points" is not wired, and the reason
+           is the moment it would have to be charged: a move is laid *before* the
+           swing, so the sheet does not yet know whether the attack it rides will
+           be a reaction. Nothing can honestly discount it at the only moment it is
+           paid for. See data/README.md, where all three discounts stand together
+           as rules the table keeps. */
+        body:
+          'When you make a Weapon Attack as a reaction, you can use a Martial Move with it, and that Martial Move costs no Action Points.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'perfect-technique',
+        rank: 3,
+        name: 'Perfect Technique',
+        summary: 'Two Martial Moves on one swing, and every one of them adds a die.',
+        kind: 'talent',
+        tags: ['Colossus', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Both sentences are data and they are two different fields, because they
+           are two different questions: `martial.perAttack` is how many may wait,
+           and the `perMove` grant is what each one that waited is worth. The
+           second is per move, so a Colossus who laid one gets one die and a
+           Colossus who laid two gets two.
+
+           SHARP's other half is not here. A Duelist may "use one Martial Move just
+           before a Weapon Attack reaction" at Rank 3; a Colossus bought that at
+           Rank 2 with PRACTICED MOVES and this card only raises the count. */
+        body:
+          'You can now use two Martial Moves on the same Two-Handed Weapon Attack.\n\n' +
+          'Each Martial Move on the attack Empowers its damage by 1.',
+      },
+      {
+        id: 'martial-swiftness',
+        rank: 3,
+        name: 'Martial Swiftness',
+        summary: 'Your Martial Moves cost no Action Points at all.',
+        kind: 'talent',
+        tags: ['Colossus', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* The second of the three discounts, and the cleanest of them: it is not
+           conditional on anything. It is still a printed rule, because the sheet
+           has nowhere to print a discounted cost. The chip on the quick bar can be
+           told to charge 0, but the use prompt deals the card beside the button
+           and the card prints what the codex says it costs, so the two would
+           disagree at the moment somebody is deciding whether to pay. A card
+           printing 1 beside a button charging 0 is worse than a rule the table
+           reads once. See data/README.md. */
+        body: 'Your Martial Moves no longer cost Action Points.',
+      },
+      {
+        id: 'colossal-grip',
+        rank: 3,
+        name: 'Colossal Grip',
+        summary: 'A Colossal Weapon in each hand, and every Colossal swing is a point cheaper.',
+        kind: 'talent',
+        tags: ['Colossus', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* `house` on the Source column, and the card the transcription had to work
+           hardest on. It arrived as "You can now equped Pair Two-handed  colosall
+           weapon, and your Colosall weapon attack cost 1 lest Aciton Points":
+           equped reads equip, Pair reads Paired, colosall reads Colossal twice,
+           lest reads less, Aciton reads Action, and the sentence gained the full
+           stop it was missing. Nothing about what it does was touched.
+
+           Both halves are printed rules. The first is a gate on an *item* and the
+           sheet has never had one: nothing stops anybody equipping Paired Colossal
+           Weapons, the same way nothing stops a wizard putting on full plate. The
+           second is the third Action Point discount, and it is refused for the
+           reason MARTIAL SWIFTNESS's is.
+
+           What is real is the weapons themselves. Paired Colossal Weapons are in
+           weapons.js and weigh 16 kg, which is most of what a Physique 4 character
+           can carry and the reason this is a Master card. */
+        body:
+          'You can now equip Paired Colossal Weapons, and your Colossal Weapon Attacks cost 1 less Action Point.', // text-style-ok: joins two clauses
       },
     ],
   },

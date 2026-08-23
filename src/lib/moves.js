@@ -51,19 +51,26 @@
  * tricks.js.
  *
  * ---------------------------------------------------------------- the allowance
- * One move to a swing for everybody who knows one, and a Master Duelist's SHARP
- * is the only thing in the game that moves it: "you can now use two Martial Moves
- * on the same Weapon Attack, or use one Martial Move just before a Weapon Attack
- * reaction." Read off the set's `martial` spec, the way `pointCeilings` reads
- * THRILLED, so the rule is parsed out of a card exactly once.
+ * One move to a swing for everybody who knows one, and two sets move it: a Master
+ * Duelist's SHARP ("you can now use two Martial Moves on the same Weapon Attack,
+ * or use one Martial Move just before a Weapon Attack reaction") and a Colossus,
+ * who buys the reaction half at Rank 2 with PRACTICED MOVES and the count at Rank
+ * 3 with PERFECT TECHNIQUE. Read off each set's `martial` spec, the way
+ * `pointCeilings` reads THRILLED, so the rule is parsed out of a card exactly once.
  *
  * ---------------------------------------------------------- the weapon in hand
- * And the three Duelist cards that hang on it. DEXTEROUS grants advantage with
- * one-handed weapons and AGILE grants a point of Defense while one is in hand,
- * and both are conditions the sheet can actually check — the tag on the item.
- * FOLLOW UP is not: the sheet does not know an attack missed, so its reroll is a
- * printed rule the table plays and this file only counts it for the presentation
- * page.
+ * And the cards that hang on it, which are now two sets' worth. DEXTEROUS grants
+ * a Duelist advantage with one-handed weapons and AGILE grants a point of Defense
+ * while one is in hand; GIANT SLAYER grants a Colossus advantage with a Colossal
+ * Weapon, COLOSSAL FORCE Elevates a Two-Handed swing and PERFECT TECHNIQUE adds a
+ * die for every move riding one. All of them are conditions the sheet can actually
+ * check — the tag on the item — and all of them are declared as `grants` on the
+ * set rather than known here by name.
+ *
+ * FOLLOW UP is the counter-example: the sheet does not know an attack missed, so
+ * its reroll is a printed rule the table plays and this file only counts it for the
+ * presentation page. Three Colossus cards sit on that same line, all of them
+ * Action Point discounts with nowhere to be printed. See data/README.md.
  *
  * -------------------------------------------------------------------- this file
  * It reads the character, the codex and the loadouts. It writes nothing: every
@@ -398,29 +405,60 @@ function tagged(item, tag) {
  * that ever hangs something on a weapon tag needs no code here. `from` is the sets
  * that actually contributed, which is what lets the arrow on the card say why it
  * is there.
+ *
+ * ------------------------------------------------------------------- `grants`
+ * A list rather than one block of numbers, because the Colossus is the first set
+ * whose cards hang on **two different tags at once**: GIANT SLAYER grants
+ * advantage with a Colossal Weapon and COLOSSAL FORCE Elevates a Two-Handed one,
+ * and a Colossal Two-Handed Weapon is both. So each entry names the tag it wants,
+ * falling back to the set's own `weapon` when it does not, which is what keeps the
+ * Duelist's two entries reading as they always did.
+ *
+ * Every entry is rank-indexed the way `tricks.points` is, and carries any of four
+ * things:
+ *
+ *   advantage  extra d4s on the attack roll, because Advantage stacks
+ *   defense    a flat point of Defense while the thing is in hand
+ *   elevate    the same dice one size up, capped at a d12 where it is printed
+ *   perMove    another die *per Martial Move riding the swing*, which is
+ *              PERFECT TECHNIQUE and nothing else so far
  */
 export function weaponRiders(character, talents = character?.talents) {
   const item = inHand(character);
 
   let advantage = 0;
   let defense = 0;
+  let elevate = 0;
+  let perMove = 0;
   const from = [];
 
   for (const { talent, rank, spec } of martialSets(talents)) {
-    if (!spec?.weapon || !tagged(item, spec.weapon)) continue;
+    for (const grant of spec?.grants ?? []) {
+      const tag = grant.weapon ?? spec?.weapon;
+      if (!tag || !tagged(item, tag)) continue;
 
-    const gains = {
-      advantage: Math.max(0, Math.floor(Number(spec.advantage?.[rank]) || 0)),
-      defense: Math.max(0, Math.floor(Number(spec.defense?.[rank]) || 0)),
-    };
-    if (gains.advantage + gains.defense === 0) continue;
+      const gains = {
+        advantage: whole(grant.advantage?.[rank]),
+        defense: whole(grant.defense?.[rank]),
+        elevate: whole(grant.elevate?.[rank]),
+        perMove: whole(grant.perMove?.[rank]),
+      };
+      if (gains.advantage + gains.defense + gains.elevate + gains.perMove === 0) continue;
 
-    advantage += gains.advantage;
-    defense += gains.defense;
-    from.push({ talent, ...gains });
+      advantage += gains.advantage;
+      defense += gains.defense;
+      elevate += gains.elevate;
+      perMove += gains.perMove;
+      from.push({ talent, ...gains });
+    }
   }
 
-  return { advantage, defense, from, item };
+  return { advantage, defense, elevate, perMove, from, item };
+}
+
+/** A rank's reading of a grant, floored at zero. A rank a set has not reached is null. */
+function whole(value) {
+  return Math.max(0, Math.floor(Number(value) || 0));
 }
 
 /**
@@ -473,18 +511,30 @@ export function attackModifiers(character, card, base) {
   const laid = running && bendsSwing(running) ? running : null;
   const passive =
     (Number(worn?.advantage) || 0) + (Number(hide?.advantage) || 0) + (Number(laid?.advantage) || 0);
+  /* And what holding this weapon is worth that is not an arrow. A Rank 2 Colossus
+     with a plain Two-Handed Weapon and nothing waiting on it has COLOSSAL FORCE's
+     Elevate and no advantage at all, so a guard that counted only arrows would
+     hand the untouched card back and drop the die size on the way out. */
+  const held = (Number(worn?.elevate) || 0) + (Number(worn?.perMove) || 0);
 
-  if (!trick && !moves && !laid && passive === 0 && !hide) return base;
+  if (!trick && !moves && !laid && !hide && passive === 0 && held === 0) return base;
 
   const empower =
     (Number(base?.empower) || 0) +
     (Number(moves?.empower) || 0) +
+    /* PERFECT TECHNIQUE: "Each Martial Move on the attack Empowers its damage by
+       1." A die per move riding rather than a die for having any, so a Master
+       Colossus who laid two gets two and one who laid none gets nothing. */
+    (Number(worn?.perMove) || 0) * (moves?.names?.length ?? 0) +
     (Number(hide?.empower) || 0) +
     (Number(laid?.empower) || 0);
   const elevate =
     (Number(base?.elevate) || 0) +
     (Number(trick?.elevate) || 0) +
     (Number(moves?.elevate) || 0) +
+    /* COLOSSAL FORCE, and the first thing in the codex to Elevate a swing for the
+       weapon in hand rather than for something that was paid for. */
+    (Number(worn?.elevate) || 0) +
     (Number(laid?.elevate) || 0);
 
   /* A type a running card lays on the swing joins the ones already on it, the

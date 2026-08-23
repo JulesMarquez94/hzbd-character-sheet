@@ -75,6 +75,9 @@ doing on its own.
 | Talent Set · Berserker · Developpement Notes | **2026-08-23, 20 rows of adaptation** | [the Berserker](#the-berserker-2026-08-23) |
 | Berserker art, from the `Berserker/` folder | **2026-08-23, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | The talent wall, shelved by attribute | **2026-08-23, asked for in chat** | `src/lib/talents.js` (`TALENT_CATEGORIES`) |
+| Talent Set · Colossus · Overview and Ability | **2026-08-23, 1 set + 7 cards** | `src/lib/talents.js` (`TALENTS`) |
+| Talent Set · Colossus · Developpement Notes | **2026-08-23, a whole weapon category** | `src/lib/weapons.js`, 4 weapons + 8 cards |
+| Colossus art, from the `Colossus/` folder | **2026-08-23, 7 cards + 1 plate** | `public/cards/`, `public/talents/` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -85,7 +88,9 @@ column names the render each row came from, which is what the art importer
 places the files by. `draconic-bond-overview.csv`, `trickster-overview.csv`,
 `duelist-overview.csv`, `martial-moves.csv`, `enchanter-ability.csv` and the two
 `berserker-*.csv` are the tabs that were written here rather than exported, so
-they are tracked: a clone would otherwise lose the only copy.
+they are tracked: a clone would otherwise lose the only copy. The two
+`colossus-*.csv` are the workbook's own tabs with the `Image` column filled in,
+tracked for the same reason the Berserker's pair are and read the same way.
 
 The Berserker's pair are the whole workbook rather than a missing tab: it was
 transcribed here out of a PDF, so `berserker-ability.csv` and
@@ -3764,3 +3769,196 @@ it is not one. That is deliberate and it is what makes the filter behave: chips
 inside a kind widen the result and chips across kinds narrow it, so a kind of its
 own would make "Mind or Level" match nothing. It is the same pseudo-attribute
 `cardText.js` already prints for a `{level}` token.
+
+## The Colossus, 2026-08-23
+
+The ninth talent set, and it arrived the same day the Berserker did and in the
+same three tabs: `Talent Set - Colossus.xlsx`, with `Overview`, `Ability` and
+`Developpement Notes` all filled in. Nothing had to be written here to complete
+it, which makes it the first set since the Cauldron Keeper to land whole.
+
+**Seven cards over three ranks**, and it is the Duelist's opposite number in so
+many words: "Where a Duelist buys options with a free hand, a Colossus buys
+weight." So it is built out of the same two specs, a `loadout` that hands over
+Martial Moves and a `martial` block that says what the move system lets the set
+do, and everything new in it is in the second one.
+
+| Rank | Cards |
+| ---- | ----- |
+| 1 · Novice | MARTIAL TRAINING, GIANT SLAYER |
+| 2 · Adept | COLOSSAL FORCE, PRACTICED MOVES |
+| 3 · Master | PERFECT TECHNIQUE, MARTIAL SWIFTNESS, COLOSSAL GRIP |
+
+**Two of the seven are house-written and the tab says so.** The `Source` column
+arrived with the Berserker and said `sheet` on all nine of its rows; this is the
+first set where it does not. COLOSSAL FORCE and COLOSSAL GRIP say `house` and
+both are marked in `talents.js` where they sit, the same way `martial.js` marks
+its eight house-written moves. If a sheet ever arrives for them, that column is
+the list of what to overwrite.
+
+### What the workbook needed on the way in
+
+Very little, and that is worth saying: the Ability tab is seven clean sentences
+and six of them were transcribed with nothing touched at all.
+
+- **Spellings, on two cards.** GIANT SLAYER's "Colosal Weapon" reads Colossal,
+  which is what the weapons carrying the tag are called. COLOSSAL GRIP arrived
+  as "You can now equped Pair Two-handed  colosall weapon, and your Colosall
+  weapon attack cost 1 lest Aciton Points" and reads "You can now equip Paired
+  Colossal Weapons, and your Colossal Weapon Attacks cost 1 less Action Point."
+  Six corrections and a missing full stop, and nothing about what the card does
+  was touched.
+- **"Paired Two-Handed Colossal Weapon" is "Paired Colossal Weapons"**, which is
+  the name of the item in `weapons.js`, so the card and the thing it lets you
+  pick up say the same words. The item still carries the `Two-Handed` tag, so
+  nothing the sentence claimed was dropped.
+- **Elevated and Empowered were both already right**, which no other sheet has
+  managed first time. COLOSSAL FORCE Elevates (the same dice one size up) and
+  PERFECT TECHNIQUE Empowers (another die). Getting those two the wrong way round
+  changes every number a card prints, and this tab did not.
+- **Nothing needed a marker.** No card here prints a die pool, an attribute or a
+  level, so the seven bodies carry no `[[math]]`, no `{attribute}` and no
+  `{{link}}` at all. The Berserker needed three markers on nine cards; this needs
+  none on seven.
+
+### The weapon category the notes tab asked for
+
+The `Developpement Notes` tab is one row and it is a build order, so it was
+built. Its own words:
+
+> Make a new category of weapon that is called colosal weapon that uses physique,
+> they cost 5 actoin point to use normal. There is a bow, two-hand, Polearm. The
+> bow as peircing shot that can hit multiple enemy in a line as long as it keep
+> beating the reflex of poel as special attack, two-hand special attack is cleave
+> and polearm is a hit that also push. Polearm as more range. Then also make athe
+> colosal paired two-hand which as a 6 Action point attack were you attack with
+> both weapon at the same time. The special move is wirwind were you hit everyone
+> around you.
+
+It was not optional. GIANT SLAYER and COLOSSAL GRIP both name a Colossal Weapon,
+so without the category two of the seven cards would point at a kind of weapon
+nothing in the codex is. **Four weapons and eight cards**, in `weapons.js`:
+
+| Weapon | Weight | Attack | Special Attack |
+| ------ | ------ | ------ | -------------- |
+| Colossal Two-Handed Weapon | 8 kg | Strike, 5 AP, 3 m | Cleave, 5 AP + 1 WP, everything in a 4.5 m arc |
+| Colossal Polearm | 7 kg | Thrust, 5 AP, 4.5 m | Drive, 5 AP + 1 WP, and a 3 m push |
+| Colossal Bow | 6 kg | Shoot, 5 AP, 30 m | Piercing Shot, 5 AP + 1 WP, down a line |
+| Paired Colossal Weapons | 16 kg | Double Strike, 6 AP, two rolls | Whirlwind, 6 AP + 1 WP, everything within 3 m |
+
+The category, the attribute, the four weapons, both Action Point costs and all
+four special attacks are the tab's. **The dice, the reaches, the push distance
+and the weights are house-written**, and this is the list to overwrite when a
+sheet arrives for them:
+
+- **Every Colossal attack deals `3d6 + 2*stat`**, off the scale the rest of
+  `weapons.js` keeps: 2 Action Points buys `1d6 + stat`, 3 buys `2d6 + stat` and
+  4 buys `2d6 + 2*stat`, so 5 buys one more die. Nothing steps the multiplier.
+- **`stat: 'physique'` on all eight.** That one is the tab's: "uses physique".
+- **The polearm's reach is the whole of what it buys.** 4.5 m on the plain attack
+  where the other two melee weapons reach 3, and the same dice, so choosing it
+  over the two-hander is a step of distance traded against an arc.
+- **The Piercing Shot is one roll, not two.** The first entity is a Weapon Attack
+  against Defense, and that same number is then held against each Reflex behind
+  it, stopping at the first one it does not beat. "As long as it keep beating the
+  reflex" is literal that way, and a shot that runs out of force stops where it
+  stopped instead of being rerolled into a second chance.
+- **`Colossal` is a second tag, not a category of its own.** Three of the four are
+  still held in two hands, so they carry `Two-Handed` as well and everything a set
+  hangs on that tag reaches them. That is the reading the whole set is built on:
+  its own MARTIAL TRAINING lets moves be used "with Two-Handed Weapons" and
+  COLOSSAL GRIP calls the paired one a Two-Handed Colossal Weapon in the same
+  breath. The bow is not a melee weapon and the Greatbow beside it carries no
+  `Two-Handed` either, so it stays `Bow`. **What that costs the bow is real and
+  worth checking**: a Colossal Bow gets GIANT SLAYER's advantage and neither
+  COLOSSAL FORCE's Elevate nor PERFECT TECHNIQUE's dice.
+- **The weights are the cost the Action Points do not charge.** A starting Physique
+  of 4 carries 20 kg, so a Colossal weapon is a quarter of everything you can lift
+  and the paired pair is most of it. The carry ceiling is one a character is
+  allowed to cross, which is what makes this a price rather than a wall.
+
+### What reaches the sheet, and what does not
+
+Five of the seven cards move a number the sheet works out. Two do not, and both
+are Action Point discounts.
+
+`weaponRiders` in `moves.js` grew a **`grants` list** for this set, because it is
+the first whose cards hang on two different weapon tags at once. Each entry names
+the tag it wants and falls back to the set's own `weapon` when it does not, which
+is what keeps the Duelist's two entries reading exactly as they always did. Four
+things an entry can carry: `advantage`, `defense`, `elevate` and `perMove`.
+
+| Card | Reaches the sheet as |
+| ---- | -------------------- |
+| MARTIAL TRAINING | the `loadout`: 3, 4 and 5 moves by rank, tiers by rank, changed on a long rest |
+| GIANT SLAYER | `advantage` on the `Colossal` tag |
+| COLOSSAL FORCE | `elevate` on the `Two-Handed` tag |
+| PRACTICED MOVES | `martial.onReaction` at Rank 2, and nothing else (see below) |
+| PERFECT TECHNIQUE | `martial.perAttack` 2, and `perMove` on the `Two-Handed` tag |
+| MARTIAL SWIFTNESS | nothing (see below) |
+| COLOSSAL GRIP | nothing, but the weapons it names are real |
+
+`perMove` is the only genuinely new shape: a die **per Martial Move riding the
+swing** rather than a die for having laid any, so a Master Colossus who laid two
+gets two and one who laid none gets nothing.
+
+### Open questions
+
+Four, and none of them is a guess. Every one stands as the sheet wrote it.
+
+1. **Three Action Point discounts, none of them wired.** MARTIAL SWIFTNESS ("your
+   Martial Moves no longer cost Action Points"), PRACTICED MOVES ("that Martial
+   Move costs no Action Points") and COLOSSAL GRIP ("cost 1 less Action Point").
+   The chip on the quick bar can be told to charge less, but the use prompt deals
+   the card beside the button and the card prints what the codex says it costs, so
+   the two would disagree at the exact moment somebody is deciding whether to pay.
+   **A card printing 1 beside a button charging 0 is worse than a rule the table
+   reads once.** This is the same call the Berserker's RECKLESS VIOLENCE got, and
+   it is now three cards on one set rather than one on another, which is the
+   argument for building somewhere to print a discounted cost.
+   PRACTICED MOVES has a second reason on top: a move is laid *before* the swing,
+   so the sheet does not yet know whether the attack it rides will be a reaction.
+2. **"You can use them with Two-Handed Weapons" is read as a permission.** The
+   overview calls Martial Moves "the trained manoeuvres nobody with two hands on a
+   haft has the time for", so this is the set that buys the time rather than a set
+   that is restricted to it. Read the other way it would be the only weapon gate on
+   a move in the codex. Nothing enforces it either way, because `canLayMove` has
+   never asked what is in your hand: a move is laid before the swing and the weapon
+   can still be swapped after.
+3. **PERFECT TECHNIQUE's second move is not gated on the weapon.** The card says
+   "two Martial Moves on the same Two-Handed Weapon Attack", and `perAttack` is
+   read when a move is *laid*, which is before the swing exists. Refusing it would
+   mean refusing it against a weapon that may not be the one it ends up riding, so
+   the count is ungated the same way the Duelist's SHARP is. The die each move adds
+   *is* gated, because that is read on the attack itself.
+4. **COLOSSAL GRIP's first half is a gate on an item, and the sheet has none.**
+   Nothing stops anybody equipping Paired Colossal Weapons, the same way nothing
+   stops a wizard putting on full plate. What makes it a Master card in practice is
+   the 16 kg.
+
+### How the transcription was proved
+
+The same round trip the Berserker got. Every card's `id`, `Name`, `Tags`, `AP`,
+`WP`, `Main Effect` and `Source` rebuilt out of the codex fields into the sheet's
+own written form and compared to the cell, quote- and whitespace-normalised, plus
+the Overview tab's four fields. The two corrections above were declared to the
+script and applied to the *sheet* side before comparing, so an undeclared
+difference is a finding rather than a diff nobody sees.
+**46 of 46 comparisons match.**
+
+### The picture folder
+
+Eight files in `data/Colossus/`, four at 2400x1792 and four at 1200x896, cut the
+same way the Berserker's were, so the Image column was empty on every row and
+`npm run art:cards` placed them from the folder. Seven card plates into
+`public/cards/` and `Colossal Overview.jpg` into `public/talents/colossus.jpg`.
+
+**Three needed an alias in `pull-card-art.mjs`.** `Matrtial Training.jpg` and
+`Paracticed Move.jpg` are plain misspellings, one letter too many apiece and a
+plural too few on the second. The third is the overview plate: the folder rule
+claims a set's plate by the set's own name, and `Colossal Overview.jpg` is the
+adjective rather than the name, which two letters is enough to defeat. It is in
+`PLATE_ALIASES` beside the Draconic Bond's.
+
+Pasting the `id` and `Image` columns out of `templates/colossus-ability.csv` back
+into the sheet retires all three.

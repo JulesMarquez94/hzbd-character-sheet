@@ -572,6 +572,162 @@ export const WEAPON_ABILITIES = withArt([
       'When you Imbue the staff, choose an elemental damage type from Cold, Fire or Lightning. Your staff deals damage of that chosen element.',
   },
 
+  /* ----- Colossal (house-written) -----
+   * A weapon category rather than a weapon, asked for on the Colossus set's
+   * `Developpement Notes` tab and built with it, because two of that set's seven
+   * cards name it and would otherwise point at nothing: GIANT SLAYER grants
+   * advantage "when you attack with a Colossal Weapon" and COLOSSAL GRIP takes an
+   * Action Point off the same.
+   *
+   * What the tab settled and what was left here, in its own words: "Make a new
+   * category of weapon that is called colosal weapon that uses physique, they cost
+   * 5 actoin point to use normal. There is a bow, two-hand, Polearm. The bow as
+   * peircing shot that can hit multiple enemy in a line as long as it keep beating
+   * the reflex of poel as special attack, two-hand special attack is cleave and
+   * polearm is a hit that also push. Polearm as more range. Then also make athe
+   * colosal paired two-hand which as a 6 Action point attack were you attack with
+   * both weapon at the same time. The special move is wirwind were you hit
+   * everyone around you."
+   *
+   * So the category, the attribute, the four weapons, both costs and all four
+   * special attacks are the designer's. **The dice, the reaches and the push are
+   * house-written**, off the scale the rest of this file already keeps: 2 Action
+   * Points buys 1d6 + stat, 3 buys 2d6 + stat and 4 buys 2d6 + 2*stat, so 5 buys
+   * one more die. Every number invented here is listed in data/README.md, which is
+   * what to overwrite when a sheet arrives for them.
+   *
+   * `stat: 'physique'` on all eight, which is the one line of the tab that is not
+   * a shape: a Colossal weapon is swung on the body holding it and on nothing else.
+   */
+  {
+    id: 'colossal-two-handed-strike',
+    name: 'Colossal Two-Handed - Strike',
+    kind: 'ability',
+    tags: ['Melee', 'Weapon Attack'],
+    ap: 5,
+    wp: null,
+    stat: 'physique',
+    damage: ['Sharp', 'Blunt'],
+    body:
+      'Make a {stat} Melee Attack {roll} against an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
+  },
+  {
+    id: 'colossal-two-handed-cleave',
+    name: 'Colossal Two-Handed - Cleave',
+    kind: 'ability',
+    tags: ['Melee', 'Special Weapon Attack'],
+    ap: 5,
+    wp: 1,
+    stat: 'physique',
+    damage: ['Sharp', 'Blunt'],
+    /* The two-hander's own Cleave, one die heavier and the same arc: the tab says
+       "two-hand special attack is cleave" and the codex already knows what that
+       word means. */
+    body:
+      'Make a {stat} Melee Attack {roll} against all entities within 4.5 Meter (15 Feet) in front of you.\n\n' +
+      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
+  },
+  {
+    id: 'colossal-polearm-thrust',
+    name: 'Colossal Polearm - Thrust',
+    kind: 'ability',
+    tags: ['Melee', 'Weapon Attack'],
+    ap: 5,
+    wp: null,
+    stat: 'physique',
+    damage: ['Sharp'],
+    /* "Polearm as more range", and the reach is the whole of what it buys: 4.5
+       Meter on the plain attack where every other Colossal melee weapon reaches 3.
+       Same dice, so the choice between this and the two-hander is a step of
+       distance against an arc. */
+    body:
+      'Make a {stat} Melee Attack {roll} against an entity within 4.5 Meter (15 Feet) of you.\n\n' +
+      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
+  },
+  {
+    id: 'colossal-polearm-drive',
+    name: 'Colossal Polearm - Drive',
+    kind: 'ability',
+    tags: ['Melee', 'Special Weapon Attack'],
+    ap: 5,
+    wp: 1,
+    stat: 'physique',
+    damage: ['Sharp'],
+    /* "Polearm is a hit that also push". The distance is house-written and the
+       shove is the plain one the glossary already describes, so nothing new is
+       invented for a target to be in. */
+    body:
+      'Make a {stat} Melee Attack {roll} against an entity within 4.5 Meter (15 Feet) of you.\n\n' +
+      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage and push the target 3 Meter (10 Feet) directly away from you.',
+  },
+  {
+    id: 'colossal-bow-shoot',
+    name: 'Colossal Bow - Shoot',
+    kind: 'ability',
+    tags: ['Ranged', 'Weapon Attack'],
+    ap: 5,
+    wp: null,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against an entity within 30 Meter (100 Feet) of you.\n\n' +
+      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
+  },
+  {
+    id: 'colossal-bow-piercing-shot',
+    name: 'Colossal Bow - Piercing Shot',
+    kind: 'ability',
+    tags: ['Ranged', 'Special Weapon Attack'],
+    ap: 5,
+    wp: 1,
+    stat: 'physique',
+    damage: ['Sharp'],
+    /* "The bow as peircing shot that can hit multiple enemy in a line as long as it
+       keep beating the reflex of poel", which is {{Greatbow - Piercing Shot}} with
+       a condition on how far down the line it carries. One roll and not two: the
+       first entity is a Weapon Attack against Defense, and the same number is then
+       held against each Reflex behind it, so a shot that runs out of force stops
+       where it stopped rather than being rerolled into a second chance. */
+    body:
+      'Make a {stat} Ranged Attack {roll} against the nearest entity in a line within 30 Meter (100 Feet) of you.\n\n' +
+      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage, and the shot carries on behind it.\n\n' +
+      'Hold that same roll against the **Reflex** of each entity further down the line in turn. It deals the same damage to every one it beats and stops at the first one it does not.',
+  },
+  {
+    id: 'paired-colossal-strike',
+    name: 'Paired Colossal - Double Strike',
+    kind: 'ability',
+    tags: ['Melee', 'Weapon Attack'],
+    ap: 6,
+    wp: null,
+    stat: 'physique',
+    damage: ['Sharp', 'Blunt'],
+    /* Six Action Points is the whole ceiling, and the tab put it there on purpose:
+       "a 6 Action point attack were you attack with both weapon at the same time".
+       One target and two rolls, the shape {{Daggers - Triple Strike}} already
+       prints, because both weapons are landing in the same place. */
+    body:
+      'Make two {stat} Melee Attack {roll} against an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'For each hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
+  },
+  {
+    id: 'paired-colossal-whirlwind',
+    name: 'Paired Colossal - Whirlwind',
+    kind: 'ability',
+    tags: ['Melee', 'Special Weapon Attack'],
+    ap: 6,
+    wp: 1,
+    stat: 'physique',
+    damage: ['Sharp', 'Blunt'],
+    /* "The special move is wirwind were you hit everyone around you", so it is the
+       Bo Staff's Swipe at Colossal weight: everything within reach rather than an
+       arc in front of you. */
+    body:
+      'Make a {stat} Melee Attack {roll} against all entities within 3 Meter (10 Feet) of you.\n\n' +
+      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
+  },
+
   /* ----- Claws & Teeth (natural) ----- */
   {
     id: 'claws-shred',
@@ -793,6 +949,71 @@ export const WEAPONS = [
     cost: 4000,
     abilities: ['staff-blast', 'staff-imbue'],
   },
+  /* ----- Colossal -----
+   * The four weapons the Colossus set's notes tab asked for. See the block of the
+   * same name in WEAPON_ABILITIES above for what that tab settled and what was
+   * house-written.
+   *
+   * `Colossal` is the tag GIANT SLAYER and COLOSSAL GRIP read, and it is a second
+   * tag rather than a category of its own: three of the four are still held in two
+   * hands, so they carry `Two-Handed` as well and everything a set hangs on that
+   * tag reaches them. That is the reading the Colossus is built on, since its own
+   * MARTIAL TRAINING lets Martial Moves be used "with Two-Handed Weapons" and
+   * COLOSSAL GRIP calls the paired one "Paired Two-Handed Colossal Weapons" in the
+   * same breath. The bow is not a melee weapon and the Greatbow beside it carries
+   * no `Two-Handed` either, so it stays `Bow`.
+   *
+   * **The weights are house-written**, and they are the cost the Action Points do
+   * not charge: a starting Physique of 4 carries 20 kg, so a Colossal weapon is a
+   * quarter of everything you can lift and the paired pair is most of it. That is
+   * the trade the set is about, and the carry ceiling is one a character is
+   * allowed to cross.
+   */
+  {
+    id: 'colossal-two-handed',
+    name: 'Colossal Two-Handed Weapon',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Melee Weapon', 'Colossal', 'Two-Handed'],
+    blurb: 'A greatsword built at siege scale, swung once and meant once.',
+    burden: 0,
+    weight: 8,
+    cost: 4000,
+    abilities: ['colossal-two-handed-strike', 'colossal-two-handed-cleave'],
+  },
+  {
+    id: 'colossal-polearm',
+    name: 'Colossal Polearm',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Melee Weapon', 'Colossal', 'Two-Handed'],
+    blurb: 'A wall-breaker on a haft, and it reaches the rank behind the one it hit.',
+    burden: 0,
+    weight: 7,
+    cost: 4000,
+    abilities: ['colossal-polearm-thrust', 'colossal-polearm-drive'],
+  },
+  {
+    id: 'colossal-bow',
+    name: 'Colossal Bow',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Ranged Weapon', 'Colossal', 'Bow'],
+    blurb: 'A bow braced against the ground and drawn on the whole body.',
+    burden: 0,
+    weight: 6,
+    cost: 4000,
+    abilities: ['colossal-bow-shoot', 'colossal-bow-piercing-shot'],
+  },
+  {
+    id: 'paired-colossal',
+    name: 'Paired Colossal Weapons',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Melee Weapon', 'Colossal', 'Two-Handed', 'Paired'],
+    blurb: 'Two of them, one in each hand, and nothing left over for a shield.',
+    burden: 0,
+    weight: 16,
+    cost: 4000,
+    abilities: ['paired-colossal-strike', 'paired-colossal-whirlwind'],
+  },
+
   {
     id: 'claws-and-teeth',
     name: 'Claws & Teeth',

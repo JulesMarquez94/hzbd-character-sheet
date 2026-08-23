@@ -142,6 +142,14 @@ const ALIASES = {
   'Master of Pain': 'Master of Rage.jpg',
   Unstoppable: 'Instappable.jpg',
   'Avatar of Carnage': 'Avatarr of Carnage.jpg',
+
+  /* Two from data/Colossus/, 2026-08-23, and both are plain misspellings:
+     `Matrtial Training.jpg` has a letter too many, and `Paracticed Move.jpg` has
+     one too many and a plural too few. The set's other five files match the names
+     the Ability tab prints, punctuation and case aside, which is all `flatten`
+     asks of them. */
+  'Martial Training': 'Matrtial Training.jpg',
+  'Practiced Moves': 'Paracticed Move.jpg',
 };
 
 /**
@@ -153,6 +161,11 @@ const ALIASES = {
  */
 const PLATE_ALIASES = {
   'draconic-bond': 'Draonic Bon Overview.png',
+  /* And `Colossal Overview.jpg` in data/Colossus/, which is the set's plate under
+     the adjective rather than under the set's name. Two letters apart is enough:
+     the folder rule claims a plate by the set's own name, and "colossal" does not
+     start with "colossus". */
+  colossus: 'Colossal Overview.jpg',
 };
 
 /* ----------------------------------------------------------------- the sheets */
