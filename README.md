@@ -122,10 +122,15 @@ Five tabs, all auto-saving (edits batch for ~0.7s, then write; the top bar shows
 A global **Metric / Imperial** switch converts movement and weight, and the choice is remembered
 locally.
 
-The Character tab is six fixed blocks, and their order is yours to set: grab the dotted strip at
-the top of a block and drag it to another slot, or focus that strip and use the arrow keys. The
-arrangement is saved on the character (`characters.block_order`), so it follows the sheet to any
-device and anyone viewing the sheet sees the same layout.
+The Character tab is six fixed blocks, and both their order and the grid they sit on are yours to
+set. **Arrange blocks** opens a small drawing of the tab: choose a canvas of 1 to 9 columns, then
+drag a block onto another to trade their places, or tap one and tap where it should go. The arrow
+keys move whichever block has focus. That count is a ceiling rather than a promise, since a block
+is a hard 360x640 everywhere: the tab takes as many columns as the window is wide enough for, so
+nine is nine on a wall and one on a phone. Both halves are saved on the character
+(`characters.block_order` and `characters.block_columns`), so they follow the sheet to any device
+and anyone viewing the sheet sees the same layout. The Abilities and Inventory tabs open the same
+dialog from their own button, each with a count of its own.
 
 ### Martial Moves
 

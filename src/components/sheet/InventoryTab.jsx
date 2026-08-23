@@ -9,7 +9,11 @@ import WeaponBlock from './WeaponBlock.jsx';
 import BlockArrange from './BlockArrange.jsx';
 import { useEquipSlots } from './useEquipSlots.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
-import { formatWeight, normalizeSourceOrder } from '../../lib/characterModel.js';
+import {
+  formatWeight,
+  normalizeGridColumns,
+  normalizeSourceOrder,
+} from '../../lib/characterModel.js';
 import { inventoryOverview } from '../../lib/items.js';
 import { useUnit } from '../../context/units.js';
 
@@ -100,6 +104,12 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
     [character?.inventory_order]
   );
   const saveOrder = useCallback((next) => patch?.({ inventory_order: next }), [patch]);
+
+  /* And how wide the grid the four of them are laid out on is, this tab's own.
+     The inventory is not on that grid: it is a row wide wherever the row ends.
+     See normalizeGridColumns. */
+  const columns = normalizeGridColumns(character?.inventory_columns);
+  const saveColumns = useCallback((next) => patch?.({ inventory_columns: next }), [patch]);
 
   /* Arranged from a list in a modal rather than by dragging the blocks where
      they sit — see the note at the top of BlockArrange.jsx. */
@@ -197,6 +207,8 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
           <BlockArrange
             title="Arrange your inventory blocks"
             order={order}
+            columns={columns}
+            onColumns={saveColumns}
             describe={(id) => ({ name: labelOf(id), note: null })}
             onChange={saveOrder}
             onClose={() => setArranging(false)}

@@ -11,7 +11,7 @@ import {
   filterSources,
   heldCardTags,
 } from '../../lib/abilitySources.js';
-import { normalizeSourceOrder } from '../../lib/characterModel.js';
+import { normalizeGridColumns, normalizeSourceOrder } from '../../lib/characterModel.js';
 
 /**
  * The Abilities tab: everything this character can do, filed under whoever
@@ -68,6 +68,11 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
   );
   const saveOrder = useCallback((next) => patch?.({ ability_order: next }), [patch]);
 
+  /* And how wide the grid they are laid out on is, this tab's own. See
+     normalizeGridColumns. */
+  const columns = normalizeGridColumns(character?.ability_columns);
+  const saveColumns = useCallback((next) => patch?.({ ability_columns: next }), [patch]);
+
   /* Arranged from a list in a modal rather than by dragging the blocks where
      they sit — see the note at the top of BlockArrange.jsx. The list holds every
      source, including any the filter is hiding, so narrowing the page no longer
@@ -110,6 +115,8 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
           <BlockArrange
             title="Arrange your ability blocks"
             order={order}
+            columns={columns}
+            onColumns={saveColumns}
             describe={(id) => {
               const source = sources.find((entry) => entry.id === id);
               return source ? { name: source.title, note: source.note } : null;

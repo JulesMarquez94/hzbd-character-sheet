@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import { getCharacter, updateCharacter } from '../lib/api.js';
-import { levelForXp, liveCharacter, syncDerived } from '../lib/characterModel.js';
+import {
+  levelForXp,
+  liveCharacter,
+  normalizeGridColumns,
+  syncDerived,
+} from '../lib/characterModel.js';
 import { openChoices, pruneToLevel } from '../lib/levelPicks.js';
 import { subscribeToTable } from '../lib/realtime.js';
 import { UnitContext } from '../context/units.js';
@@ -16,6 +21,15 @@ import CreationWizard from '../components/sheet/CreationWizard.jsx';
 import '../components/sheet/sheet.css';
 
 const TABS = ['Character', 'Abilities', 'Inventory', 'Lore', 'Advancement'];
+
+/* Which column holds the canvas width of each tab that has a grid. Lore and
+   Advancement are not grids, so they are not in the table and fall back to the
+   three columns everything on the site was drawn for. */
+const GRID_COLUMNS = {
+  Character: 'block_columns',
+  Abilities: 'ability_columns',
+  Inventory: 'inventory_columns',
+};
 
 /* The two ways a distance can be written, and what each one writes it in. The
    note is there because the switch is nowhere near the numbers it changes:
@@ -339,9 +353,22 @@ export default function CharacterSheet({ creating = false }) {
     );
   }
 
+  /* How many columns the tab on screen lays its blocks out in. It is set up
+     here rather than inside the tab because more than the grid is measured
+     against it: the canvas the grid sits in, the bar of tabs above that, and
+     every overview line that has to begin and end on a block edge. A tab with
+     no grid leaves it at three, which is what all of those were before any of
+     it was a choice. See normalizeGridColumns, and `--sheet-fit` in sheet.css
+     for the clamp that keeps a nine-column canvas off a phone.
+
+     The attribute is the same number again, for the one rule that cannot be
+     written as arithmetic: a row-wide block has nothing to span when the canvas
+     is a single column. */
+  const canvasColumns = normalizeGridColumns(character[GRID_COLUMNS[tab]]);
+
   return (
     <UnitContext.Provider value={unit}>
-    <div className="sheet">
+    <div className="sheet" style={{ '--sheet-cols': canvasColumns }} data-columns={canvasColumns}>
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">
           <nav className="sheet-tabs">

@@ -3513,3 +3513,65 @@ transcription bug and none was changed.
 The three Ingredients in the rider table also name no duration, because an
 Ingredient is part of a Brew rather than a spell of its own and no Brew has a
 clock. They are offered at "while it lasts" and the dial is right there.
+
+## The canvas, 2026-08-23
+
+"I want to change feature to work with a grid. How it work: I open a
+visualization of the block with their name at a small scale. The you can
+dertermine your canvas Nomber of column default is 3 up to 9. Then you can move
+with drag and drop the blocks to place ethe how you want. This menu need to work
+as a 1 block view."
+
+The arranger was a list of rows, which is what replaced dragging a block where
+it sits. A list can say "sixth" and it cannot say "bottom left", so it is now
+the grid itself, drawn small: one tile per block at the block's own 360x640
+shape, with the name of the block on it. See `BlockArrange.jsx`, which is shared
+by the Character, Abilities and Inventory tabs.
+
+### Three readings that changed what got built
+
+- **One count per tab, not one per sheet.** Six character blocks and three
+  ability blocks rarely want the same canvas, so `block_columns`,
+  `ability_columns` and `inventory_columns` sit beside the three orders that
+  were already there. Every one defaults to 3.
+- **No holes.** Blocks flow in reading order, so a stored order is still the
+  flat array it always was and nothing that reads one has to learn about gaps.
+  Dropping a block on another **trades** the two rather than inserting, because
+  "put the Loadout top right" should move two blocks and not shuffle everything
+  between them. Every arrangement is still reachable, since any order is some
+  sequence of swaps. Dropping past the last block sends it to the end.
+- **The dialog takes the page measure**, the same 1180 the codex browser and the
+  effect tracker take, because a nine-column canvas has nowhere to go at 560.
+  The body inside it is held to the width of the canvas rather than the width of
+  the dialog, so three columns read as a page rather than as a small picture
+  stranded in a wide one.
+
+The three counts are new columns. **Re-run `supabase/schema.sql`** or they are
+dropped from every write with a console warning, and the arranger will forget
+the canvas on the next load.
+
+### The count is a ceiling, not a promise
+
+A block is a hard 360x640 on every device, so nine of them are 3384px of grid.
+The chosen count is therefore the most the tab may take and `--sheet-fit` in
+sheet.css is how many the window has room for, one more every 376px. The smaller
+of the two is what gets drawn, which is the old three-two-one behaviour written
+as arithmetic: a canvas set to nine is nine on a wall and one on a phone, and
+nothing has to be rearranged to move between them.
+
+`--sheet-measure` moved up from `.sheet-canvas` to `.sheet` for the same reason.
+The canvas grows past 1290px once there are more than three columns, and so does
+the bar of tabs above it, which cannot read a variable declared below itself.
+
+### A finger never drags
+
+Dragging is a mouse gesture here. A touch drag has to take the gesture away from
+the browser with `touch-action: none`, and the canvas is the thing you scroll
+when the arrangement is taller than the dialog, which one column of six blocks
+on a phone is. So a tap picks a block up and a second tap puts it down on the
+block it trades with. That is the same path the keyboard takes with Enter, and
+the arrow keys move the focused block a slot at a time. "This menu need to work
+as a 1 block view" is what all of it is for: the whole dialog fits a 375px phone
+with the canvas at 46vh and nothing scrolling, and a tile keeps a floor of 100px
+so a name is always readable, or 56px on a phone, where the name comes off the
+tile and the number stays.

@@ -272,15 +272,22 @@ create table if not exists public.characters (
   -- fixed length. The app repairs anything malformed on read.
   block_order  jsonb not null default '[1,2,3,4,5,6]'::jsonb,
 
+  -- And how many columns that tab lays them out in, 1 to 9. A ceiling rather
+  -- than a promise: the grid takes this many or as many as the window is wide
+  -- enough for, whichever is fewer.
+  block_columns int not null default 3,
+
   -- Left-to-right order of the Abilities tab's blocks, by source id
   -- ("lineage", "talent:mycomancer", "gear"). No fixed length: a source
   -- appears when it is taken and goes when it is handed back.
   ability_order jsonb not null default '[]'::jsonb,
+  ability_columns int not null default 3,
 
   -- Left-to-right order of the Inventory tab's three fixed blocks, by block id
   -- ("armor", "weapons", "belt"). The inventory itself is not in the list: it
   -- is a row wide and always sits under the other three.
   inventory_order jsonb not null default '[]'::jsonb,
+  inventory_columns int not null default 3,
 
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -294,6 +301,9 @@ alter table public.characters add column if not exists grit       int   not null
 alter table public.characters add column if not exists block_order jsonb not null default '[1,2,3,4,5,6]'::jsonb;
 alter table public.characters add column if not exists ability_order jsonb not null default '[]'::jsonb;
 alter table public.characters add column if not exists inventory_order jsonb not null default '[]'::jsonb;
+alter table public.characters add column if not exists block_columns int not null default 3;
+alter table public.characters add column if not exists ability_columns int not null default 3;
+alter table public.characters add column if not exists inventory_columns int not null default 3;
 alter table public.characters add column if not exists equipment  jsonb not null default '{}'::jsonb;
 alter table public.characters add column if not exists pack       jsonb not null default '[]'::jsonb;
 alter table public.characters add column if not exists belt       jsonb not null default '[]'::jsonb;

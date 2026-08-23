@@ -28,6 +28,7 @@ import {
   liveShift,
   metersToFeet,
   normalizeBlockOrder,
+  normalizeGridColumns,
   shieldCapFor,
   xpProgress,
 } from '../../lib/characterModel.js';
@@ -190,6 +191,13 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
     grown,
   ]);
   const saveOrder = useCallback((next) => patch({ block_order: next }), [patch]);
+
+  /* And how wide the grid they are laid out on is. Stored per tab rather than
+     per sheet: six blocks and three ability blocks rarely want the same canvas.
+     See normalizeGridColumns, and `--sheet-fit` in sheet.css for the clamp that
+     keeps a nine-column choice from reaching a phone. */
+  const columns = normalizeGridColumns(character.block_columns);
+  const saveColumns = useCallback((next) => patch({ block_columns: next }), [patch]);
 
   /* A row in the arranger. The six have fixed names; a creature's two are named
      after the creature, so an arrangement holding them can still be read at a
@@ -585,6 +593,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             order={order}
             describe={describeBlock}
             onChange={saveOrder}
+            columns={columns}
+            onColumns={saveColumns}
             onClose={() => setArranging(false)}
           />
         )}

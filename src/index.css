@@ -530,12 +530,17 @@ h1, h2, h3, h4, h5, h6 {
 /* THE THREE-BLOCK MEASURE — as wide as the sheet's own grid, so a dialog opened
    over the sheet ends about where the blocks behind it do.
 
-   Two kinds of dialog want it. One lays cards out at their real 360px footprint,
-   three side by side, which is what it was added for. The other is a *shelf* — a
-   browsing menu whose list is one column on a phone and three block-wide columns
-   here, instead of a 360px ribbon down the middle of a metre of nothing. The
-   width is only half of that: the list inside has to flow into it, which is what
-   `.browser-group` and `.fx-prompt` in sheet.css do. */
+   Three kinds of dialog want it. One lays cards out at their real 360px
+   footprint, three side by side, which is what it was added for. The second is a
+   *shelf* — a browsing menu whose list is one column on a phone and three
+   block-wide columns here, instead of a 360px ribbon down the middle of a metre
+   of nothing. The width is only half of that: the list inside has to flow into
+   it, which is what `.browser-group` and `.fx-prompt` in sheet.css do.
+
+   The third is a *canvas*. The block arranger draws the tab's own grid at a
+   small scale and lets you move the blocks around on it, and a grid the player
+   has set to nine columns has nowhere to go at 560. See `.mini-canvas` in
+   sheet.css, which sizes its tiles to whatever this leaves. */
 .modal-window-page {
     max-width: 1180px;
 }

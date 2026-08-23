@@ -148,15 +148,21 @@ export const BLANK_CHARACTER = {
   ledger: [],
   // Left-to-right order of the six blocks on the Character tab.
   block_order: [1, 2, 3, 4, 5, 6],
+  // And how many columns they are laid out in. Every tab with a grid carries
+  // its own: three is the shape the site was drawn for, one is a phone and nine
+  // is a wall. See normalizeGridColumns.
+  block_columns: 3,
   // Left-to-right order of the Abilities tab's blocks, by source id
   // ("lineage", "talent:mycomancer", "gear"). Unlike block_order this has no
   // fixed length: a source arrives when it is taken and leaves when it is
   // handed back. Empty means nobody has arranged them yet.
   ability_order: [],
+  ability_columns: 3,
   // Left-to-right order of the Inventory tab's four fixed blocks, by block id
   // ("armor", "weapons", "trinkets", "belt"). Must be listed here: the save path
   // only writes columns named in this object (see pickCharacterFields in api.js).
   inventory_order: [],
+  inventory_columns: 3,
 };
 
 /* -------------------------------------------------------------- block order */
@@ -241,6 +247,37 @@ export function normalizeSourceOrder(value, ids) {
     if (!order.includes(id)) order.push(id);
   }
   return order;
+}
+
+/* ------------------------------------------------------------ grid columns */
+
+/**
+ * How many columns a tab's grid may take. Three is the shape everything on the
+ * site was drawn for — a block is a hard 360x640 and three of them are the
+ * measure every row above the grid is aligned to — and it stays the default.
+ * One is the phone layout chosen deliberately, and nine is the widest wall the
+ * arranger will draw.
+ */
+export const GRID_COLUMN_MIN = 1;
+export const GRID_COLUMN_MAX = 9;
+export const GRID_COLUMN_DEFAULT = 3;
+
+/**
+ * A stored count is only ever a hint, the way a stored order is: missing on a
+ * character made before the column existed, a string out of an older build, or
+ * a number nobody can lay out. Anything unreadable or below the minimum reads
+ * as "not set" and comes back as the default rather than as one column, since a
+ * zero in the database should not silently rebuild somebody's sheet as a strip.
+ *
+ * What comes back is a *ceiling*, not a promise. The grid takes this many
+ * columns or as many as the window has room for, whichever is fewer, so a
+ * canvas set to nine is nine on a wall and one on a phone. That clamp is
+ * `--sheet-fit` in sheet.css, where the width is known.
+ */
+export function normalizeGridColumns(value) {
+  const count = Math.round(Number(value));
+  if (!Number.isFinite(count) || count < GRID_COLUMN_MIN) return GRID_COLUMN_DEFAULT;
+  return Math.min(count, GRID_COLUMN_MAX);
 }
 
 /**

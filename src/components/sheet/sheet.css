@@ -16,6 +16,31 @@ body.sheet-fixed #root {
 }
 
 .sheet {
+  /* ---------- THE CANVAS ----------
+     How many block-wide columns the tab on screen lays its blocks out in, and
+     how wide that makes everything measured against them.
+
+     `--sheet-cols` is the count chosen for this tab, written inline by
+     CharacterSheet.jsx out of the tab's own column. `--sheet-fit` is how many
+     the window has room for, set in RESPONSIVE at the foot of this file. The
+     smaller of the two is the one drawn, so the choice is a ceiling rather than
+     a promise: nine columns are nine on a wall and one on a phone.
+
+     THE MEASURE is what those columns come to — the blocks across, plus the
+     gaps between them. Every row above the grid is sized against it, so the
+     counts, the arrange button and the filter all begin and end on a block
+     edge. They used to be canvas-wide while the grid was centred inside the
+     canvas, which ran the overview and the filter 52px past the blocks on
+     either side, and left the arrange button right-aligned to a different edge
+     than the count directly above it.
+
+     It lives up here rather than on the canvas because the bar of tabs above
+     the canvas is measured against it too. */
+  --sheet-cols: 3;
+  --sheet-fit: 1;
+  --sheet-cap: min(var(--sheet-cols), var(--sheet-fit));
+  --sheet-measure: calc(var(--sheet-cap) * (var(--block-w) + 16px) - 16px);
+
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -30,7 +55,10 @@ body.sheet-fixed #root {
 }
 
 .sheet-tabbar-inner {
-  max-width: 1290px;
+  /* 1290 while the canvas below is three columns, and as wide as the canvas
+     once it is more than that. A bar narrower than the page it heads reads as a
+     different page. */
+  max-width: max(1290px, calc(var(--sheet-measure) + 4rem));
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -327,19 +355,10 @@ body.sheet-fixed #root {
 
 /* ---------- CANVAS ---------- */
 .sheet-canvas {
-  /* THE MEASURE — the width the grid below actually takes at this breakpoint:
-     the blocks across it, plus the gaps between them. Every row above the grid
-     is sized against this, so the counts, the arrange button and the filter all
-     begin and end on a block edge.
-
-     They used to be canvas-wide while the grid was centred inside the canvas,
-     which ran the overview and the filter 52px past the blocks on either side,
-     and left the arrange button — already grid-aligned — right-aligned to a
-     different edge than the count directly above it. Restated wherever the
-     column count changes, down in RESPONSIVE. */
-  --sheet-measure: calc(var(--block-w) * 3 + 32px);
-
-  max-width: 1290px;
+  /* 1290 up to the three columns everything was drawn for, and the measure plus
+     its own padding past that, so a canvas set wider than three has somewhere to
+     put them. See the measure itself on .sheet above. */
+  max-width: max(1290px, calc(var(--sheet-measure) + 3rem));
   width: 100%;
   margin: 0 auto;
   padding: 1.25rem 1.5rem 1.5rem;
@@ -376,10 +395,15 @@ body.sheet-fixed #root {
 
 .sheet-grid-6 {
   display: grid;
-  grid-template-columns: repeat(3, var(--block-w));
+  /* As many block-wide tracks as the measure holds, and the measure is the
+     count this tab was set to or the count the window has room for, whichever
+     is smaller. `auto-fill` rather than `repeat(var(--sheet-cap), ...)` because
+     a repeat count has to be a literal integer, and the cap is arithmetic. */
+  grid-template-columns: repeat(auto-fill, var(--block-w));
   justify-content: center;
   gap: 16px;
   flex: none;
+  width: min(100%, var(--sheet-measure));
   margin: 0 auto;
 }
 
@@ -413,6 +437,15 @@ body.sheet-fixed #root {
 .sheet-cell-wide {
   width: auto;
   grid-column: span 2;
+}
+
+/* Unless the canvas is a single column, where there is no second track to span
+   and the browser would invent one, handing back a 736px block on a 360px grid.
+   The same reset as the phone rule at the foot of this file, for the player who
+   asked for one column on a desktop. */
+.sheet[data-columns='1'] .sheet-cell-wide {
+  grid-column: auto;
+  width: var(--block-w);
 }
 
 .cell-scroll {
@@ -450,7 +483,7 @@ body.sheet-fixed #root {
 }
 
 /* ---------- ARRANGING THE BLOCKS ----------
-   One button above the grid, which opens a list of every block in this tab.
+   One button above the grid, which opens a small drawing of this tab.
    The blocks themselves carry nothing: they used to have a drag grip along
    their top edge, and that grip had to claim the touch gesture with
    `touch-action: none` to stop the browser reading a drag as a scroll. On a
@@ -491,155 +524,229 @@ body.sheet-fixed #root {
   font-size: 0.64rem;
 }
 
-/* The list inside the modal. Six short rows, all of them on screen at once on
-   any device, which is the whole point of moving the job in here. */
-.arrange-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+/* ---------- THE CANVAS IN THE DIALOG ----------
+   A small drawing of the tab: one tile per block, laid out in the grid the tab
+   is set to, with the name of the block on it. It replaced a list of rows,
+   which could say "sixth" but never "bottom left".
 
-.arrange-row {
+   The dialog takes the three-block measure, like the other two shelves on the
+   site, and everything in it is drawn to whatever that leaves. Nine columns
+   need the room and three do not, but a dialog that changed width every time a
+   number was tapped would be worse than either. */
+
+/* How many columns the canvas has, above the canvas. Nine targets rather than a
+   stepper: the range is half of what is being said, and every count is one tap
+   away rather than eight. */
+.mini-cols {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  padding: 0.55rem 0.7rem;
+  flex-wrap: wrap;
+  margin: 1rem 0 0.75rem;
+}
+
+.mini-cols-label {
+  font-family: var(--font-headings);
+  font-size: 0.66rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(148, 167, 176, 0.75);
+}
+
+.mini-cols-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mini-col {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-headings);
+  font-size: 0.78rem;
+  color: var(--text-silver);
+  background-color: rgba(9, 17, 21, 0.55);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.mini-col:hover {
+  background-color: rgba(157, 91, 255, 0.16);
+  color: var(--haze-glow);
+}
+
+.mini-col.is-on {
+  background-color: rgba(157, 91, 255, 0.22);
+  border-color: var(--haze-glow);
+  color: var(--haze-glow);
+}
+
+.mini-col:focus-visible {
+  outline: 1px solid var(--haze-glow);
+  outline-offset: 1px;
+}
+
+/* The canvas. A tile is as wide as the dialog leaves it, up to a ceiling that is
+   whichever comes first: 180px, where it stops being small, or the width that
+   fits every row of it in the height this is allowed to take.
+
+   Under that ceiling is a floor of 100px, which is where a name stops fitting on
+   a tile. The floor wins: eight blocks stacked three across cannot be both
+   readable and entirely on screen at 720px of laptop, and a canvas of tiles too
+   small to read is not a picture of anything. So the canvas scrolls instead, and
+   nothing is lost when it does, because tap and then tap is a way in that a
+   scroll cannot interrupt.
+
+   A dialog narrow enough to be a phone drops the floor to 56px, where the name
+   comes off the tile: nine columns at 100px each would be three screens of
+   sideways scrolling, and the shape of the arrangement is the one thing that
+   should survive on a small screen. */
+.mini-arrange {
+  --mini-gap: 8px;
+  --mini-h: 46vh;
+  --tile-floor: 100px;
+  --tile-cap: min(
+    180px,
+    calc(
+      (var(--mini-h) - 8px - (var(--mini-rows) - 1) * var(--mini-gap)) / var(--mini-rows) * 0.5625
+    )
+  );
+  --mini-w: calc(
+    var(--mini-cols) * max(var(--tile-floor), var(--tile-cap)) + (var(--mini-cols) - 1) *
+      var(--mini-gap)
+  );
+
+  /* The dialog is the page measure whatever is in it, so the body is held to
+     the canvas rather than to the dialog: three columns come to 316px, and a
+     316px picture alone in the middle of 1163 reads as a mistake, where a
+     520px column of hint, chooser and canvas reads as a page. 520 is the width
+     the hint above wants; past that the column grows with the count. */
+  width: min(100%, max(520px, var(--mini-w)));
+  margin: 0 auto;
+}
+
+.mini-canvas {
+  display: grid;
+  grid-template-columns: repeat(var(--mini-cols), minmax(var(--tile-floor), 1fr));
+  gap: var(--mini-gap);
+  width: min(100%, var(--mini-w));
+  margin: 0 auto;
+  max-height: var(--mini-h);
+  overflow: auto;
+  padding: 2px;
+}
+
+@media (max-width: 700px) {
+  .mini-arrange {
+    --tile-floor: 56px;
+  }
+}
+
+.mini-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+/* A block at about a third of its size. It keeps the block's shape, 360x640,
+   and the block's own violet top edge, because a tile standing in for a block
+   is the whole idea. */
+.mini-tile {
+  container-type: inline-size;
+  aspect-ratio: 360 / 640;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  text-align: center;
   background-color: rgba(19, 34, 42, 0.7);
   border: 1px solid var(--hairline);
-  border-left: 3px solid var(--haze-purple);
+  border-top: 3px solid var(--haze-purple);
   border-radius: 5px;
   cursor: grab;
-  /* The row is the drag target, so the gesture is the drag's rather than the
-     browser's. The modal is six rows tall and does not need to scroll, so
-     nothing is lost by taking it. */
-  touch-action: none;
+  /* No `touch-action: none` here, unlike the rows this replaced: a finger never
+     drags a tile, so the browser keeps the scroll gesture and the canvas above
+     can scroll on a phone. See the note at the top of BlockArrange.jsx. */
   user-select: none;
   transition: background-color 0.12s ease, border-color 0.12s ease;
 }
 
-.arrange-row:hover {
+.mini-tile:hover {
   background-color: rgba(157, 91, 255, 0.1);
 }
 
-.arrange-row.is-held {
+.mini-tile:focus-visible {
+  outline: 1px solid var(--haze-glow);
+  outline-offset: 2px;
+}
+
+.mini-tile.is-held {
   background-color: rgba(157, 91, 255, 0.18);
   border-color: var(--haze-glow);
   cursor: grabbing;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
 }
 
-.arrange-list.is-dragging {
-  cursor: grabbing;
+/* Picked up by a tap, and waiting for somewhere to go. Louder than held on
+   purpose: a drag is over in a moment, and this can sit through a scroll and a
+   change of mind. */
+.mini-tile.is-armed {
+  background-color: rgba(157, 91, 255, 0.22);
+  border-color: var(--haze-glow);
+  box-shadow: 0 0 0 1px var(--haze-glow) inset;
 }
 
-.arrange-grip {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  color: rgba(148, 167, 176, 0.55);
-}
-
-.arrange-row.is-held .arrange-grip {
+/* Where the block sits, which is the thing being changed. */
+.mini-slot {
+  font-family: var(--font-headings);
+  font-size: clamp(0.55rem, 16cqw, 0.85rem);
+  line-height: 1;
   color: var(--haze-glow);
 }
 
-.grip-dots {
-  width: 14px;
-  height: 18px;
-  color: inherit;
-  background-image: radial-gradient(currentColor 0.9px, transparent 1.1px);
-  background-size: 5px 5px;
-}
-
-/* Where this block currently sits, which is the thing being changed. */
-.arrange-slot {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.mini-name {
   font-family: var(--font-headings);
-  font-size: 0.72rem;
-  color: var(--haze-glow);
-  background-color: rgba(157, 91, 255, 0.14);
-  border-radius: 3px;
-}
-
-.arrange-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.arrange-name {
-  font-family: var(--font-headings);
-  font-size: 0.8rem;
-  letter-spacing: 0.4px;
+  font-size: clamp(0.56rem, 10cqw, 0.72rem);
+  letter-spacing: 0.3px;
+  line-height: 1.25;
   color: var(--text-silver);
-}
-
-.arrange-note {
-  font-size: 0.7rem;
-  color: rgba(148, 167, 176, 0.7);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
 }
 
-/* The other way to move a row. Dragging precisely is the hard thing on a small
-   screen with a large finger, and this is a tap — it is also the only way in
-   from a keyboard. */
-.arrange-steps {
-  display: flex;
-  gap: 3px;
-  flex-shrink: 0;
-}
-
-.arrange-step {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  color: var(--text-silver);
-  background-color: rgba(9, 17, 21, 0.55);
-  border: 1px solid var(--hairline);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
-}
-
-.arrange-step:hover:not(:disabled) {
-  background-color: rgba(157, 91, 255, 0.2);
-  color: var(--haze-glow);
-}
-
-.arrange-step:focus-visible {
-  outline: 1px solid var(--haze-glow);
-  outline-offset: 1px;
-}
-
-.arrange-step:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-@media (max-width: 820px) {
-  /* Room for a thumb, and the note is the first thing to go. */
-  .arrange-step {
-    width: 38px;
-    height: 38px;
-  }
-  .arrange-note {
+/* Nine columns on a phone leave a tile too narrow to write a name on. The
+   number stays, because it is short and it is what moves, and the name is where
+   every other name on a tight row is: in the tooltip. */
+@container (max-width: 74px) {
+  .mini-name {
     display: none;
   }
+}
+
+/* The rest of the last row, so the canvas has the shape of the tab even when
+   the blocks do not fill it. Scenery, except as somewhere to drop. */
+.mini-empty {
+  aspect-ratio: 360 / 640;
+  border: 1px dashed rgba(148, 167, 176, 0.2);
+  border-radius: 5px;
+}
+
+/* What the canvas is doing, under it. It keeps its height while it has nothing
+   to say, so picking a block up never moves the canvas. */
+.mini-foot {
+  margin: 0.8rem 0 0;
+  min-height: 1.2em;
+  font-size: 0.7rem;
+  text-align: center;
+  color: rgba(148, 167, 176, 0.7);
 }
 
 /* ---------- BLOCK 1: IDENTITY ---------- */
@@ -5195,27 +5302,36 @@ body.sheet-fixed #root {
 /*
  * Only the number of columns changes with the viewport — never the blocks
  * themselves, which stay 360x640 all the way down.
+ *
+ * `--sheet-fit` is how many the window has room for. A block and a gap are
+ * 376px, and beside them the canvas keeps 48px of padding and a scrollbar
+ * gutter, so each step up is the last one plus a block. It is the floor under
+ * the count the tab was set to (see .sheet at the top of this file): the
+ * smaller of the two is what gets drawn, which is how a canvas set to nine
+ * columns comes down to one on a phone without anyone rewriting it.
+ *
+ * One is the value on .sheet itself, so a viewport narrower than every query
+ * below still has a number to work with.
  */
+@media (min-width: 821px)  { .sheet { --sheet-fit: 2; } }
+@media (min-width: 1181px) { .sheet { --sheet-fit: 3; } }
+@media (min-width: 1557px) { .sheet { --sheet-fit: 4; } }
+@media (min-width: 1933px) { .sheet { --sheet-fit: 5; } }
+@media (min-width: 2309px) { .sheet { --sheet-fit: 6; } }
+@media (min-width: 2685px) { .sheet { --sheet-fit: 7; } }
+@media (min-width: 3061px) { .sheet { --sheet-fit: 8; } }
+@media (min-width: 3437px) { .sheet { --sheet-fit: 9; } }
+
 @media (max-width: 1180px) {
   .sheet-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .sheet-grid-6 {
-    grid-template-columns: repeat(2, var(--block-w));
-  }
-  .sheet-canvas {
-    --sheet-measure: calc(var(--block-w) * 2 + 16px);
   }
 }
 
 @media (max-width: 820px) {
   /* One block across: it fills a phone screen exactly, and you scroll. */
   .sheet-grid-6 {
-    grid-template-columns: var(--block-w);
     gap: 12px;
-  }
-  .sheet-canvas {
-    --sheet-measure: var(--block-w);
   }
 
   /* And the inventory gives up its second track here rather than growing one.
