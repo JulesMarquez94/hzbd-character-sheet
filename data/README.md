@@ -71,6 +71,10 @@ doing on its own.
 | Background art, from `Background/` | **2026-08-21, 10 plates** | `public/backgrounds/` |
 | The ten backgrounds and the purse formula | **2026-08-21, named in chat** | `src/lib/backgrounds.js` (`BACKGROUNDS`) |
 | Two attribute points at every odd level | **2026-08-21, ruled in chat** | `src/lib/levelPicks.js` (`raised`) |
+| Talent Set · Berserker · Overview and Ability | **2026-08-23, 1 set + 9 cards** | `src/lib/talents.js` (`TALENTS`) |
+| Talent Set · Berserker · Developpement Notes | **2026-08-23, 20 rows of adaptation** | [the Berserker](#the-berserker-2026-08-23) |
+| Berserker art, from the `Berserker/` folder | **2026-08-23, 9 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| The talent wall, shelved by attribute | **2026-08-23, asked for in chat** | `src/lib/talents.js` (`TALENT_CATEGORIES`) |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -79,9 +83,16 @@ sheet covers yet. `elemental-spells.csv` holds the 29 Elemental spells — a tab
 with no sheet behind it, generated straight out of `spells.js`, and its Image
 column names the render each row came from, which is what the art importer
 places the files by. `draconic-bond-overview.csv`, `trickster-overview.csv`,
-`duelist-overview.csv`, `martial-moves.csv` and `enchanter-ability.csv` are the
-tabs that were written here rather than exported, so they are tracked: a clone
-would otherwise lose the only copy.
+`duelist-overview.csv`, `martial-moves.csv`, `enchanter-ability.csv` and the two
+`berserker-*.csv` are the tabs that were written here rather than exported, so
+they are tracked: a clone would otherwise lose the only copy.
+
+The Berserker's pair are the whole workbook rather than a missing tab: it was
+transcribed here out of a PDF, so `berserker-ability.csv` and
+`berserker-overview.csv` are the copy of record, `Image` names the file in
+`data/Berserker/` each row was drawn from, and the `id` column is what the next
+pull should read ids off instead of the names. See
+[the Berserker](#the-berserker-2026-08-23).
 
 `martial-moves.csv` is the one with no sheet behind it at all — six rows off the
 card plates and eight written here — so it carries two extra columns beside the
@@ -3575,3 +3586,181 @@ as a 1 block view" is what all of it is for: the whole dialog fits a 375px phone
 with the canvas at 46vh and nothing scrolling, and a tile keeps a floor of 100px
 so a name is always readable, or 56px on a phone, where the name comes off the
 tile and the number stays.
+
+## The Berserker, 2026-08-23
+
+The eighth talent set, and the first that arrived as a **character sheet** rather
+than as a workbook: `Hazebound - Character Sheet V4 - BERSERKER.pdf`, three pages
+with the cards printed as pictures. It was transcribed into
+`Talent Set - Berserker.xlsx` first, in the three tabs every other set arrives
+in, and that workbook is what was pulled. Both halves of it are tracked in
+`templates/` because the workbook was written here and a clone would otherwise
+hold no copy of it.
+
+**Nine cards over three ranks**, and the signature needed no adapting at all: the
+rage is a 10 turn clock and every Rampage Skill pays for itself in turns off that
+clock. That makes it the counterpart to the Feral Curse. Same idea, a different
+clock, and this one is spent on purpose rather than run down.
+
+| Rank | Cards |
+| ---- | ----- |
+| 1 · Novice | GOING BERSERK, BERSERKER'S RAGE, RAGING BLOW |
+| 2 · Adept | MASTER OF PAIN, IGNORE PAIN |
+| 3 · Master | UNSTOPPABLE, RAGE THROUGH, AVATAR OF CARNAGE, RECKLESS VIOLENCE |
+
+### What the V4 sheet needed on the way in
+
+The workbook's `Developpement Notes` tab is twenty rows of this, one per read,
+and it is the tab that does not survive a clone. What it says, in short:
+
+- **Rank scaffolding, gone.** Every rank in the track opened by naming itself and
+  the card it hands over: "At Rank 2, you learn the Rampage skill Ignore Pain."
+  No card in the codex announces its own rank. The rank is the Tags column and
+  holding the rank is what hands the card over, so the line only restated that
+  IGNORE PAIN is tagged `Adept Talent`. What survives of each old rank entry is
+  the clause after "Additionally". Every "At Rank N" still in the codex is about
+  which tier of a *pool* you may learn from, which is a different sentence.
+- **Four ranks became three.** The old Rank 4 held UNSTOPPABLE and AVATAR OF
+  CARNAGE. A set is a three rank track and the cap is not a soft one, so both are
+  Master cards and neither name was lost.
+- **RAGE THROUGH had no rank at all.** The sheet's Rank 3 line names Ignore Pain,
+  which Rank 2 had already granted, so the sheet never says where this card sits.
+  Rank 3 is the slot with the broken line, so that is where it went. That leaves
+  the track at 3 Novice, 2 Adept and 4 Master. **Moving it down to Adept would
+  even that to 3, 3 and 3, and is the other defensible reading.**
+- **"Damage dice increase by one category" is Elevated by 1.** Elevate is the
+  glossary's word for precisely this: the same number of dice, one size larger and
+  nothing past a d12. Empowered is the other word and means an extra die. The
+  wrong one changes every number the card prints.
+- **"Critical strike" is a Critical Hit**, which is the term in Status & Terms.
+  The clause that earns it, exceeding Defense by 4 or more, is untouched.
+- **Saving throws, both ways round.** Nothing makes a saving throw any more: a
+  card either swings at Defense or is contested against Reflex or Grit, and either
+  way the roll is the attacker's. So "enemies make saving throws against your
+  Special Attacks with disadvantage" became advantage on the roll *you* make
+  (MASTER OF PAIN), and "you automatically succeed on your next saving throw"
+  became "the next roll contested against your Reflex or Grit automatically
+  fails" (RAGE THROUGH).
+- **"Melee Weapon Special Attack" is a Special Weapon Attack**, the tag every
+  weapon's second card carries. It is already melee or ranged by the weapon
+  holding it.
+- **"Spend Health" is Sacrifice Health.** Sacrifice is the glossary term for a
+  cost that ignores reduction, mitigation and prevention. Plain spending would be
+  stopped by Shield and by damage reduction, this set's own IGNORE PAIN included,
+  which would let a Berserker buy Action Points for free.
+- **Target and Duration had their own band on the sheet** and there is no column
+  for either. Every card here is Self, and the only duration that is not
+  Instantaneous is the rage, so its 10 turns is written into the sentence
+  `effectDuration` reads a duration from.
+- **A fourth tag, `Rampage`.** The sheet's type line said "Berserker Skill -
+  Rampage". The Rampage cards are a family inside the set, gated behind the rage
+  and paid for out of its clock, and nothing else in the codex carries a fourth
+  tag. **The one new thing on the tab and the one worth arguing with.**
+- **Three cards print no fist and are `0 AP`, not blank.** A blank AP on that tab
+  is what a passive has, so a card that genuinely costs no Action Points has to
+  say the nothing out loud.
+
+### Four open questions
+
+Every one of these is kept exactly as the sheet wrote it. None is a guess and
+none is wired to anything.
+
+1. **"Once per round"** on RECKLESS VIOLENCE, and **"once per combat"** on AVATAR
+   OF CARNAGE. A use limit is a count plus the boundary that refills it, and the
+   only boundaries `uses.js` can refill on are the short rest and the long one. A
+   round is neither and neither is a fight. Both lines stand as rules the table
+   enforces until there is somewhere to write them down.
+2. **"Additional Physique equal to your Berserker Rank."** Every rider in
+   `riders.js` bends a stat by a flat number. This one scales off the rank of the
+   set holding it, which would be the first of its kind, so no rider is declared
+   and the tile does not move.
+3. **The compulsion.** "You must attack the nearest target, even if it is an
+   ally" stays prose: the sheet does not know where anybody is standing, so it
+   cannot tell you the nearest target is your friend. This is the cost that makes
+   the set interesting and it belongs at the table.
+4. **Six Action Points for `5 x level` Health.** The ceiling *is* 6, so this hands
+   back a whole turn once a fight, and a weapon attack costs 4 of them. At level
+   10 the price is 50 Health. The workbook was written with "twice your level" and
+   the tab that arrived says 5 x level, which is the sheet's to set. Worth a look
+   before it ships, because the ratio only improves as levels climb.
+
+A fifth thing turned up in the pull rather than on the notes tab, and it follows
+from the sheet's own tag. **AVATAR OF CARNAGE is tagged `Passive` and prints no
+cost**, so it lands in the quick bar's "Traits · Always on" recap and never as a
+playable move, which means the Health it sacrifices and the 6 Action Points it
+hands back are spent by hand. Every other card on the set that *does* something
+is tagged `Ability`, including the three that cost 0 AP. If it is meant to be
+pressed, it is an `Ability` with 0 AP like RAGING BLOW.
+
+### How the transcription was proved
+
+The same round trip the Trickster and the Mycomancer got: every card's `id`,
+`Name`, `Tags`, `AP`, `WP` and `Main Effect` rebuilt out of the codex fields into
+the sheet's own written form and compared to the cell, quote- and
+whitespace-normalised, plus the Overview tab's four fields and every `{{card
+link}}` resolved against the codex. **63 of 63 comparisons match.**
+
+Three markers were inserted and nothing else was touched: `4d6 + 4 x your
+Physique` is `[[4d6 + 4*stat]]`, `5 x level` is `[[5*level]]`, and the `Physique`
+the rage hands over is `{physique}` so it lights the way an attribute's name does
+everywhere else. Four cards say "your Berserker's Rage" and MASTER OF PAIN says
+"Raging Blow", so those are `{{links}}` to the cards they name.
+
+`[[4d6 + 4*stat]]` and not `{physique}` inside the brackets, because that is the
+holder's own attribute: the literal form is reserved for a *target's*, and this
+set has no source that could override the cast anyway.
+
+### The picture folder
+
+Ten files in `data/Berserker/`, 2400x1792 art plates apiece, cut out of the PDF
+rather than drawn from a link, so the Image column was empty on every row and
+`npm run art:cards` placed them from the folder. Nine card plates into
+`public/cards/` and `Berserker Overview.jpg` into `public/talents/berserker.jpg`.
+
+**Five needed an alias in `pull-card-art.mjs`.** Four are spellings the sheet does
+not use, `Going Bersek.jpg`, `Instappable.jpg`, `Avatarr of Carnage.jpg` and
+`Berserker Rage.jpg` for BERSERKER'S RAGE. That last one had to be in the table
+rather than left to be noticed: the folder pass claims any leftover file whose
+name starts with the *set's* name as the set's overview plate, so without the
+alias the rage's picture would quietly have overwritten the Berserker's plate.
+
+The fifth is not a misspelling. **`Master of Rage.jpg` is another name for MASTER
+OF PAIN**, which is what the Ability tab prints and what the V4 sheet's own rank
+list calls it, so the codex follows the sheet and the file is placed by alias. The
+picture is the newer artifact, though, so if the card was renamed while it was
+being drawn, this is the line to change. The `id` column said `master-of-rage` and
+the codex uses `master-of-pain`, since an id nobody has saved yet is free to fix
+and this was the last moment it would be.
+
+Pasting the `id` and `Image` columns out of `templates/berserker-ability.csv` back
+into the sheet retires all five entries and the id question with them.
+
+### The shelves, and two sets re-shelved
+
+Asked for in the same message: the chooser wall is cut into **Physique, Instinct,
+Mind and Other**, because with nine sets on it the first question anybody has is
+"my 6 is in Physique, so what does a 6 in Physique buy me". The cut lives in
+`TALENT_CATEGORIES` in `talents.js` and is a set's `stat` and nothing else;
+`TalentWall` in `TalentBlock.jsx` draws it, and it drops back to one plain wall
+when a filter narrows it to a single shelf, the same way `PoolWall` does with a
+pool of cards. The three attribute shelves read their heading note off
+`attributes.js`, so what an attribute buys is written in one place.
+
+Two rulings came with it, both Jules's:
+
+- **Guardian is Physique**, and every card on it still rolls Instinct. A Guardian
+  is built on the body that holds the shield up, so Physique is what somebody
+  choosing the set is choosing it for. The Instinct contest SHIELD EXPERTISE gives
+  advantage on is untouched: a set's `stat` is its shelf, a card's `stat` is its
+  roll, and these are the only two that disagree.
+- **Draconic Bond is Level**, which is what the fourth shelf is for. Its Mind was
+  read off the rolls the ally makes, but what the set actually buys is a second
+  stat block, and every number in it grows on level: 5 Health a level, a point of
+  Mind every odd one and a point of Physique or Instinct every even one. A bonded
+  who never raises Mind again still gets all of it.
+
+`Level` is a fourth entry in `TALENT_TAGS` wearing `kind: 'attribute'` even though
+it is not one. That is deliberate and it is what makes the filter behave: chips
+inside a kind widen the result and chips across kinds narrow it, so a kind of its
+own would make "Mind or Level" match nothing. It is the same pseudo-attribute
+`cardText.js` already prints for a `{level}` token.

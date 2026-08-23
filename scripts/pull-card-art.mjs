@@ -124,6 +124,24 @@ const ALIASES = {
      later. Both resolve, and the newest wins — see "one card, two files" below.
      Deleting the older file from the folder retires this entry. */
   'Dragon’s Favor': 'Dragon Favor.jpg',
+
+  /* Five from data/Berserker/, 2026-08-23. Four are spellings the sheet does not
+     use — GOING BERSERK, UNSTOPPABLE and AVATAR OF CARNAGE are each a letter or
+     two out, and `Berserker Rage.jpg` is missing the apostrophe the card prints.
+     That last one is the entry that has to be here rather than left to be
+     noticed: without it the file matches no card, and the plate branch below
+     claims any leftover file whose name starts with the set's, so BERSERKER'S
+     RAGE would quietly overwrite the Berserker's overview plate.
+
+     `Master of Rage.jpg` is the fifth and is a different thing: not a misspelling
+     but another name for the card. The sheet prints MASTER OF PAIN on the Ability
+     tab and in the V4 sheet's own rank list, so the sheet is what the codex
+     follows. Worth asking about, since the picture is the newer artifact. */
+  'Going Berserk': 'Going Bersek.jpg',
+  'Berserker’s Rage': 'Berserker Rage.jpg',
+  'Master of Pain': 'Master of Rage.jpg',
+  Unstoppable: 'Instappable.jpg',
+  'Avatar of Carnage': 'Avatarr of Carnage.jpg',
 };
 
 /**

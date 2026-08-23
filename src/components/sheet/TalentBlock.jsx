@@ -26,6 +26,7 @@ import {
   enchantingOf,
   optionsAt,
   rankInfo,
+  talentShelves,
   talentTags,
   usedTalentTags,
 } from '../../lib/talents.js';
@@ -376,17 +377,13 @@ function TalentChooser({ level, list, character, onTake, onClose, startAt = null
         <>
           <p className="frame-foot" style={{ marginTop: 0 }}>
             {readOnly
-              ? 'Every set in the codex. Open one to read its ranks in full.'
-              : 'Open a set to read it in full before you spend this level on it.'}
+              ? 'Every set in the codex, on the shelf of the attribute it is built on. Open one to read its ranks in full.'
+              : 'Shelved by the attribute each set is built on, so the shelf holding your best number is the one to read first. Open a set to read it in full before you spend this level on it.'}
           </p>
 
           <TagFilter filter={filter} count={visible.length} noun="set" placeholder="Search sets" />
 
-          <div className="talent-wall">
-            {visible.map((option) => (
-              <TalentTile key={option.talent.id} option={option} onOpen={() => setOpen(option.talent)} />
-            ))}
-          </div>
+          <TalentWall options={visible} onOpen={setOpen} />
         </>
       )}
     </Modal>
@@ -395,6 +392,46 @@ function TalentChooser({ level, list, character, onTake, onClose, startAt = null
 
 function takeLabel(option) {
   return option.held === 0 ? 'Take at Rank 1 · Novice' : `Rank up to ${option.rank} · ${rankInfo(option.rank).title}`;
+}
+
+/**
+ * The wall, cut into shelves by the attribute each set is built on.
+ *
+ * Eight sets was already a wall you scrolled rather than read, and the question
+ * a reader actually arrives with is "my 6 is in Physique, so what does that
+ * buy": see the shelves in talents.js, which own the cut and the line under each
+ * heading. Nine of them is where it stopped being optional.
+ *
+ * Cut the way PoolWall cuts a pool of cards, down to its one exception: a single
+ * shelf is left as a plain wall, because a heading over everything says nothing.
+ * So a filter narrowed to one attribute reads as one wall again, and so would a
+ * codex that only ever held Instinct sets.
+ */
+function TalentWall({ options, onOpen }) {
+  const shelves = talentShelves(options);
+
+  const wall = (list) => (
+    <div className="talent-wall">
+      {list.map((option) => (
+        <TalentTile key={option.talent.id} option={option} onOpen={() => onOpen(option.talent)} />
+      ))}
+    </div>
+  );
+
+  if (shelves.length <= 1) return wall(options);
+
+  return shelves.map(({ category, options: sets }) => (
+    <section className="talent-shelf" key={category.id}>
+      <div className="talent-page-rank-head">
+        <span className="talent-page-rank-label">{category.label}</span>
+        <span className="talent-page-rank-note">
+          {sets.length} {sets.length === 1 ? 'set' : 'sets'}
+        </span>
+      </div>
+      <p className="talent-shelf-note">{category.note}</p>
+      {wall(sets)}
+    </section>
+  ));
 }
 
 /** One rectangle on the overview wall: art, name, a line, and what it buys. */

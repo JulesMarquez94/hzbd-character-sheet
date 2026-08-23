@@ -2170,7 +2170,37 @@ body.sheet-fixed #root {
 
 /* =========================================================
    THE TALENT WALL — every set at a glance
+
+   Cut into shelves by the attribute a set is built on. The
+   heading is the one .talent-page-rank-head already draws,
+   because a shelf of sets and a rank of cards are the same
+   band across the same dialog. What it needs of its own is
+   the line under that band: the note is a sentence and the
+   rank note is nowrap uppercase, which on a phone would run
+   off the side of the dialog. See TalentWall in
+   TalentBlock.jsx.
    ========================================================= */
+.talent-shelf {
+  margin-top: 1.1rem;
+}
+
+.talent-shelf + .talent-shelf {
+  margin-top: 1.6rem;
+}
+
+/* The note belongs to the heading above it rather than to the tiles below, so
+   the band's own gap closes and the wall's 0.8rem is what separates them. */
+.talent-shelf .talent-page-rank-head {
+  margin-bottom: 0;
+}
+
+.talent-shelf-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.73rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
 .talent-wall {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));

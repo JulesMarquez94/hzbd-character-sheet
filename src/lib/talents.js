@@ -73,6 +73,7 @@
  * both end up importing it back.
  */
 
+import { ATTRIBUTES } from './attributes.js';
 import { withArt } from './cardArt.js';
 
 /* --------------------------------------------------------------- the ranks */
@@ -105,6 +106,15 @@ export const TALENT_TAGS = [
   { id: 'physique', label: 'Physique', kind: 'attribute' },
   { id: 'instinct', label: 'Instinct', kind: 'attribute' },
   { id: 'mind', label: 'Mind', kind: 'attribute' },
+  /* Not an attribute, and it wears the same `kind` anyway. A set can lean on
+     something no attribute answers for: the Draconic Bond's whole spec is a
+     second stat block that grows with its bonded's *level* and with nothing
+     else. It is the same pseudo-attribute cardText.js prints for a `{level}`
+     token, and the kind is `attribute` because that is what makes the filter
+     behave — chips inside a kind widen ("Mind or Level"), chips across kinds
+     narrow, and a kind of its own would make those two chips together match
+     nothing at all. */
+  { id: 'level', label: 'Level', kind: 'attribute' },
 
   { id: 'martial', label: 'Martial', kind: 'role' },
   { id: 'spellcasting', label: 'Spellcasting', kind: 'role' },
@@ -112,6 +122,32 @@ export const TALENT_TAGS = [
   { id: 'support', label: 'Support', kind: 'role' },
   { id: 'control', label: 'Control', kind: 'role' },
 ];
+
+/* ------------------------------------------------------------- the shelves *
+ * The chooser wall is cut by the attribute a set is built on, because that is
+ * the first question anybody asks of it: my 6 is in Physique, so what does a 6
+ * in Physique buy me. Three shelves are the three attributes, in the order the
+ * whole sheet prints them, and the fourth is every set that leans on neither.
+ *
+ * The three read their label and their line off attributes.js, so a recolour or
+ * a reword of what an attribute buys is made once and shows up here. `Other` has
+ * no attribute to read, and its line says what lands there: the Draconic Bond,
+ * whose ally is a stat block that grows on level alone.
+ *
+ * A set's shelf is its `stat` and nothing else, which is why that field is worth
+ * having beside the tag that says the same thing — see the note on Guardian for
+ * the one set whose shelf is not the attribute its cards roll.
+ */
+export const TALENT_CATEGORIES = [
+  ...ATTRIBUTES.map(({ key, label, buys }) => ({ id: key, label, note: buys })),
+  {
+    id: 'other',
+    label: 'Other',
+    note: 'Scaled on your level, or on nothing you raise.',
+  },
+];
+
+const OTHER_CATEGORY = TALENT_CATEGORIES[TALENT_CATEGORIES.length - 1];
 
 /* ------------------------------------------------------------- the codex */
 
@@ -121,8 +157,18 @@ const TALENT_SETS = [
     name: 'Guardian',
     tagline: 'A bulwark who turns an enemy’s strength into an opening.',
     art: '/talents/guardian.jpg',
-    tags: ['instinct', 'martial', 'defense', 'support'],
-    stat: 'instinct',
+    /* Physique, and every card below still rolls Instinct. Ruled by Jules on
+       2026-08-23: a Guardian is built on the body that holds the shield up, so
+       Physique is the attribute somebody choosing this set is choosing it *for*,
+       and the Physique shelf is where they will look for it.
+
+       The Instinct on the cards is a different question and is untouched. The
+       contest SHIELD EXPERTISE gives advantage on is an Instinct contest because
+       that is what the sheet prints, and a card's own `stat` is what it rolls —
+       so the set's `stat` is the shelf and never the roll. These are the only two
+       that disagree, which is exactly why both fields exist. */
+    tags: ['physique', 'martial', 'defense', 'support'],
+    stat: 'physique',
     /* SHIELD EXPERTISE has promised Martial Moves since the set was written, and
        until the move codex existed there was nothing for it to promise. Now there
        is (martial.js), so the promise is a spec: "a number of Novice Martial Moves
@@ -665,14 +711,21 @@ const TALENT_SETS = [
        Ability tab, byte for byte. */
     tagline: 'A beast-bonded drifter who sends their dragon ahead and takes its wounds in its stead.',
     art: '/talents/draconic-bond.jpg',
-    /* House-written with the rest of the Overview. Mind because every roll the
-       ally makes is a Mind roll and it has no other attribute it leans on;
+    /* House-written with the rest of the Overview, and re-shelved on 2026-08-23.
+       It read Mind, because every roll the ally makes is a Mind roll. Jules
+       ruled Level instead: what a Draconic Bond actually buys is the second stat
+       block below, and every number in it grows on level — 5 Health a level, a
+       point of Mind every odd one and a point of Physique or Instinct every even
+       one. A bonded who never raises Mind again still gets all of that. So the
+       set leans on the level and lands on the Other shelf, and Mind is left to
+       the cards, which roll it.
+
        Martial because the ally is a body on the field that attacks and, once
        Empowered, is ridden; Support for the half of the set that is spent on
        somebody else's roll (DRAGON'S FAVOR, DRACONIC MARK, taking a wound in
        its stead); Control for FRIGHTFUL ROAR. */
-    tags: ['mind', 'martial', 'support', 'control'],
-    stat: 'mind',
+    tags: ['level', 'martial', 'support', 'control'],
+    stat: 'level',
     /* A fifth shape of what a set can hand over, beside a fixed hand, a
        `loadout` of picked cards, a `brewing` spec and an `enchanting` one: this
        set hands over a *body*. Everything here is the Developpement Notes said
@@ -1663,6 +1716,239 @@ const TALENT_SETS = [
       },
     ],
   },
+
+  {
+    id: 'berserker',
+    name: 'Berserker',
+    /* The eighth set, and the first to arrive as a *character sheet* rather than
+       a workbook: `Hazebound - Character Sheet V4 - BERSERKER.pdf`, 2026-08-23,
+       with its cards printed as pictures. It was transcribed into
+       `Talent Set - Berserker.xlsx` first, in the three tabs every other set
+       arrives in, and this is that workbook: the Overview below is its Summary
+       and Overview columns, and every card is its Ability tab.
+
+       What the V4 sheet needed on the way in is written out on that workbook's
+       `Developpement Notes` tab, twenty rows of it, and copied into
+       data/README.md because the tab itself is gitignored. Four of those rows are
+       open questions and each is noted on the card it belongs to. The two
+       adaptations worth knowing here: the track was four ranks and is three, and
+       every "at Rank N you learn X" line is gone, because the rank is the Tags
+       column and holding it is what hands the card over.
+
+       Its Ability tab carries two columns no other set's does, both written here
+       rather than by the sheet: `id`, so the ids arrived with the drop instead of
+       being read off the names, and `Source`, which says `sheet` on all nine rows.
+       Nothing in this set is house-written. */
+    tagline: 'Willpower poured into muscle, and every trick you pull cuts the rage shorter.',
+    art: '/talents/berserker.jpg',
+    /* Martial, Defense and Physique are the sheet's own Tags column. Physique is
+       what the rage *raises* rather than what the set rolls: nothing here is
+       contested against anybody, and the two numbers the cards move are the
+       Physique BERSERKER'S RAGE hands over and the Physique IGNORE PAIN
+       multiplies. Defense for the half of the set spent on not being stopped:
+       taking 4d6 + 4 x Physique off a hit, refusing a contest against your Reflex
+       or Grit, and walking through difficult terrain. */
+    tags: ['physique', 'martial', 'defense'],
+    stat: 'physique',
+    blurb:
+      'A Berserker channels raw willpower into their own body. Entering the rage bulks the muscle, surges the strength and turns every swing into something devastating, and a seasoned one can push it far enough to shrug off wounds and refuse a hold on their mind. The price is judgment: the bloodlust paying for all of it does not care who is standing nearest.\n\n' + // text-style-ok: joins two clauses
+      'The rage runs on a clock of 10 turns, and that clock is the set’s whole currency. Rampage Skills are the powerful moves the state opens up, and not one of them is bought with Willpower alone. Each takes turns off the rage feeding it, so a Berserker who spends everything at once is a Berserker whose rage is already over.\n\n' + // text-style-ok: joins two clauses
+      'That makes every rank a question about pace rather than power. Going berserk is cheap and it lasts a while. Getting anything out of it means deciding which turns you are willing to burn and which ones you need to still be standing in.',
+    cards: [
+      {
+        id: 'going-berserk',
+        rank: 1,
+        name: 'Going Berserk',
+        summary: 'Willpower into muscle, and the state that opens the Rampage Skills.',
+        kind: 'talent',
+        tags: ['Berserker', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        body:
+          'You can channel your willpower into your body, enhancing your strength while entering an altered state of mind driven by a vicious bloodlust for violence.\n\n' +
+          'While in this state, you gain access to Rampage Skills: powerful moves that shorten the duration of your rage.',
+      },
+      {
+        id: 'berserkers-rage',
+        rank: 1,
+        name: 'Berserker’s Rage',
+        summary: 'Ten turns of extra Physique and bigger dice, and you swing at whoever is nearest.',
+        kind: 'talent',
+        tags: ['Berserker', 'Novice Talent', 'Ability'],
+        ap: 1,
+        wp: 4,
+        stat: 'physique',
+        /* The clock, and it needed no adapting. "for 10 turns" is written into the
+           first sentence, which is where `effectDuration` reads a duration from,
+           so the rage lands on the tracker as a row of 10 and comes off a turn at
+           a time. Every Rampage card below takes turns off that row by hand.
+
+           Two open questions, both left as the sheet wrote them. The Physique is
+           the first thing in the codex that would bend a stat by the rank of the
+           set holding it, and every rider in riders.js is a flat number, so none
+           is declared here and the line is a rule the table applies. And the
+           compulsion stays prose because the sheet does not know where anybody is
+           standing: it cannot tell you the nearest target is your friend. */
+        body:
+          'You enter a Berserker’s Rage for 10 turns.\n\n' +
+          'While in this state, you gain additional {physique} equal to your Berserker Rank. Your Damage Dice are Elevated by 1.\n\n' +
+          'While raging, you are compelled to make at least one melee attack per turn, prioritizing it over any other action. If no enemies are within reach, you must attack the nearest target, even if it is an ally.\n\n' +
+          'If no valid targets are within reach, you must use your Action Points to move toward the nearest target.',
+      },
+      {
+        id: 'raging-blow',
+        rank: 1,
+        name: 'Raging Blow',
+        summary: 'One turn off the rage buys advantage and a Critical Hit at Defense by 4.',
+        kind: 'talent',
+        tags: ['Berserker', 'Novice Talent', 'Ability', 'Rampage'],
+        ap: 0,
+        wp: 1,
+        stat: 'physique',
+        /* `ap: 0` rather than null, and the sheet prints the 0 for the same
+           reason: a blank AP on that tab is what a passive has, so a card that
+           genuinely costs no Action Points has to say the nothing out loud.
+
+           "Critical Hit" is the glossary's term. The sheet said critical strike,
+           which the glossary has never had. The clause that earns it, exceeding
+           Defense by 4 or more, is untouched. */
+        body:
+          'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 1.\n\n' +
+          'Your next melee Weapon Attack is made with advantage, and it becomes a Critical Hit if the Attack Roll exceeds the target’s Defense by 4 or more.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'master-of-pain',
+        rank: 2,
+        name: 'Master of Pain',
+        summary: 'Raging Blow on a Special Attack, and advantage on Reflex and Grit.',
+        kind: 'talent',
+        tags: ['Berserker', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Two reads on the way in, both on the notes tab. "Melee Weapon Special
+           Attack" is the codex's Special Weapon Attack, the tag every weapon's
+           second card carries, and it is already melee or ranged by the weapon
+           holding it. And the sheet's "enemies make saving throws against it with
+           disadvantage" is the same rule from the other side: nothing makes a
+           saving throw any more, a card is either swung at Defense or contested
+           against Reflex or Grit, and either way the roll is the attacker's, so
+           the enemy's disadvantage is your advantage.
+
+           The picture in data/Berserker/ is called `Master of Rage.jpg`, which is
+           neither this card's name nor anything else's. The sheet prints MASTER OF
+           PAIN, on this tab and in the V4 sheet's own rank list, so that is the
+           name and the file is placed by an alias in pull-card-art.mjs. */
+        body:
+          '{{Raging Blow}} can now be used with a Special Weapon Attack.\n\n' +
+          'Rolls you make against a target’s Reflex or Grit as part of a Special Weapon Attack are made with advantage.',
+      },
+      {
+        id: 'ignore-pain',
+        rank: 2,
+        name: 'Ignore Pain',
+        summary: 'Two turns off the rage takes 4d6 + 4 x Physique off a hit.',
+        kind: 'talent',
+        tags: ['Berserker', 'Adept Talent', 'Ability', 'Rampage'],
+        ap: 1,
+        wp: 2,
+        stat: 'physique',
+        /* "4d6 + Four time your Physique Attribute" on the sheet, and the same
+           number written the way every other card in the codex writes one. `stat`
+           and not a literal `{physique}`: this is the holder's own attribute, and
+           the literal form is reserved for a target's. */
+        body:
+          'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
+          'As a reaction to taking damage, you can reduce that damage by [[4d6 + 4*stat]].',
+      },
+      {
+        id: 'unstoppable',
+        rank: 3,
+        name: 'Unstoppable',
+        summary: 'While raging, difficult terrain costs you nothing.',
+        kind: 'talent',
+        tags: ['Berserker', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* A Rank 4 card on the V4 sheet, and the cap is three. Master is where a
+           fourth rank's cards land, and both of the old rank's are kept as cards
+           of their own so nothing the sheet named is lost. */
+        body: 'While raging, you can move through difficult terrain without penalty.',
+      },
+      {
+        id: 'rage-through',
+        rank: 3,
+        name: 'Rage Through',
+        summary: 'Two turns off the rage: the next roll against your Reflex or Grit fails.',
+        kind: 'talent',
+        tags: ['Berserker', 'Master Talent', 'Ability', 'Rampage'],
+        ap: 0,
+        wp: 2,
+        stat: 'physique',
+        /* The one card the V4 track never actually handed out: its Rank 3 line
+           names Ignore Pain, which Rank 2 had already granted, so the sheet never
+           says where this sits. Rank 3 is the slot with the broken line, so this
+           is where it goes, which leaves the track 3 Novice, 2 Adept and 4 Master.
+           Adept would even that to 3, 3 and 3 and is the other defensible reading.
+           Open on the notes tab.
+
+           "You automatically succeed on your next saving throw" read from the
+           defending side, the same swap MASTER OF PAIN makes on the attacking one.
+           Reflex and Grit are what anything aimed at your body or your will is
+           contested against, and this is the clause the overview calls refusing a
+           hold on your mind. */
+        body:
+          'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
+          'The next roll contested against your Reflex or Grit automatically fails.',
+      },
+      {
+        id: 'avatar-of-carnage',
+        rank: 3,
+        name: 'Avatar of Carnage',
+        summary: 'Once a fight, Health buys a whole turn back: 6 Action Points.',
+        kind: 'talent',
+        tags: ['Berserker', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Sacrifice and not spend: Sacrifice is the glossary's word for a cost
+           that ignores reduction, mitigation and prevention. Plain spending would
+           be stopped by Shield and by damage reduction, this set's own IGNORE PAIN
+           included, which would let a Berserker buy the Action Points for nothing.
+
+           No `uses` rider, and that is the fourth open question. "Once per combat"
+           is a count plus the boundary that refills it, and the only boundaries
+           the sheet can refill on are the short rest and the long one — see
+           uses.js, which will not quietly refill a thing whose refill it is not.
+           So the limit is a rule the table keeps.
+
+           The price was twice your level when the workbook was written and is 5 x
+           level on the tab that arrived, which is the sheet's to set: 6 Action
+           Points is the whole ceiling, and a weapon attack costs 4 of them. */
+        body: 'Once per combat, you can Sacrifice Health equal to [[5*level]] to regain 6 Action Points.',
+      },
+      {
+        id: 'reckless-violence',
+        rank: 3,
+        name: 'Reckless Violence',
+        summary: 'Two turns off the rage for a free attack, and a free action for them if it deals nothing.',
+        kind: 'talent',
+        tags: ['Berserker', 'Master Talent', 'Ability', 'Rampage'],
+        ap: 0,
+        wp: 1,
+        stat: 'physique',
+        /* "Once per round" is the third open question and stands as written, for
+           the reason AVATAR OF CARNAGE's does: a round is neither of the two rests
+           a use limit can be refilled on. */
+        body:
+          'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
+          'Your next attack costs no Action Points. However, if the attack fails to deal damage, the target may take a free action of its choice.\n\n' +
+          'This ability can only be used once per round.',
+      },
+    ],
+  },
 ];
 
 /**
@@ -1704,6 +1990,27 @@ export function talentTags(talent) {
 export function usedTalentTags() {
   const ids = new Set(TALENTS.flatMap((talent) => talent.tags ?? []));
   return TALENT_TAGS.filter((tag) => ids.has(tag.id));
+}
+
+/** Which shelf a set sits on: the attribute it is built on, or Other. */
+export function talentCategory(talent) {
+  const set = typeof talent === 'string' ? getTalent(talent) : talent;
+  return TALENT_CATEGORIES.find((category) => category.id === set?.stat) ?? OTHER_CATEGORY;
+}
+
+/**
+ * A wall of sets cut into shelves, in the categories' own order.
+ *
+ * Handed whatever the caller was about to draw rather than the codex, so a
+ * filtered wall is shelved by what survived the filter: an empty shelf is left
+ * off entirely instead of printing a heading over nothing. Takes options the way
+ * `optionsAt` hands them over, and anything else carrying a `talent`.
+ */
+export function talentShelves(options) {
+  return TALENT_CATEGORIES.map((category) => ({
+    category,
+    options: options.filter((option) => talentCategory(option.talent) === category),
+  })).filter((shelf) => shelf.options.length > 0);
 }
 
 /** The cards a rank *adds* — not everything the track has given so far. */
