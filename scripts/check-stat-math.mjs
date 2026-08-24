@@ -144,7 +144,7 @@ const SHEETS = [
     /* Three pieces of plate in three slots, which is the case the coarseness rule
        was written for: what a reader wants from an Armor of 15 is the word
        "Armor", not the helm and the cuirass and the greaves added up by hand. */
-    name: 'a full Heavy Armor set and a Duelist holding a one-hander',
+    name: 'a full Heavy Armor set and a Duelist holding a Melee Light',
     row: {
       xp: 44000,
       level_picks: LADDER,
@@ -152,7 +152,7 @@ const SHEETS = [
         head: 'full-plate-helm',
         torso: 'full-plate-cuirass',
         legs: 'full-plate-pants',
-        main_hand: 'one-handed',
+        main_hand: 'melee-light',
         off_hand: null,
       },
       talents: [{ id: 'duelist', rank: 3, taken: [1, 2, 4] }],
@@ -167,6 +167,43 @@ const SHEETS = [
          them: two places, in the order the equipment map stores them. */
       const load = math.carry_used.terms.map((t) => `${t.value}kg ${t.label}`).join(' + ');
       if (load !== '32kg Armor + 1.5kg Weapons') fail(`the load reads "${load}"`);
+    },
+  },
+  {
+    /* A shield in each slot, which is the case the *stowed* rule was written for.
+       A shielded weapon is worth 3 Armor and 1 Defense while it is in your hand
+       (2026-08-24), and a second one on your back is worth neither: only the
+       primary counts, so this reads 3 and 1 rather than 6 and 2.
+
+       Both hands still weigh, because weight is what a thing costs to carry and
+       carrying is what you are doing with the stowed one. That split is the whole
+       finding here: three lines walk the same loadout and one of them stops at the
+       main hand. See `heldItems` in items.js and `placesOf` in statMath.js. */
+    name: 'a shield in hand and a second one stowed',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      equipment: {
+        head: null,
+        torso: null,
+        legs: null,
+        main_hand: 'melee-light-shield',
+        off_hand: 'melee-heavy-shield',
+      },
+    },
+    expect: (math, fail) => {
+      if (math.defense.total !== 3) fail(`Armor is ${math.defense.total}, want 3`);
+      const armor = math.defense.terms;
+      if (armor.length !== 1 || armor[0]?.label !== 'Weapons') {
+        fail(`Armor reads "${armor.map((t) => `${t.value} ${t.label}`).join(' + ')}"`);
+      }
+
+      const point = math.avoid.terms.find((t) => t.label === 'Weapons');
+      if (point?.value !== 1) fail(`Defense gets ${point?.value ?? 0} from the hand, want 1`);
+
+      /* And both of them on the weight meter, 6 kg and 8. */
+      const load = math.carry_used.terms.map((t) => `${t.value}kg ${t.label}`).join(' + ');
+      if (load !== '14kg Weapons') fail(`the load reads "${load}"`);
     },
   },
   {
@@ -228,7 +265,7 @@ const SHEETS = [
         head: 'full-plate-helm',
         torso: 'full-plate-cuirass',
         legs: 'full-plate-pants',
-        main_hand: 'two-handed',
+        main_hand: 'melee-heavy',
         off_hand: null,
         bag: 'canvas-satchel',
       },
@@ -254,7 +291,7 @@ const SHEETS = [
         head: 'full-plate-helm',
         torso: 'full-plate-cuirass',
         legs: 'full-plate-pants',
-        main_hand: 'two-handed',
+        main_hand: 'melee-heavy',
         off_hand: null,
         bag: 'canvas-satchel',
       },
@@ -280,7 +317,7 @@ const SHEETS = [
         head: 'full-plate-helm',
         torso: 'full-plate-cuirass',
         legs: 'full-plate-pants',
-        main_hand: 'two-handed',
+        main_hand: 'melee-heavy',
         off_hand: null,
         bag: null,
       },

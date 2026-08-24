@@ -46,6 +46,13 @@ export const WEAPON_SLOTS = [
 ];
 
 /**
+ * The stowed one. Named because two places have to leave it out of a sum: a
+ * shielded weapon is only worth its Armor while it is the weapon in your hand.
+ * See `heldItems` below and `placesOf` in statMath.js.
+ */
+export const OFF_HAND_SLOT_KEY = 'off_hand';
+
+/**
  * The bag, and the reason it *is* in the equipment map where the belt and the
  * trinkets are not: there is one of it, and it is one place. That is the whole
  * of what the map is for.
@@ -983,12 +990,36 @@ function forgedFor(character, id) {
  * `heldItem`, so a forged piece and an Enchanter's own laid work both count.
  */
 export function wornItems(character) {
-  const worn = normalizeEquipment(character?.equipment);
+  return borneItems(character, { stowed: true });
+}
 
-  return [
-    ...EQUIPMENT_SLOTS.map(({ key }) => worn[key]),
-    ...normalizeTrinkets(character?.trinkets),
-  ]
+/**
+ * The same walk with the secondary weapon left out: everything on this character
+ * that is actually *in play*.
+ *
+ * The three shielded weapons are the reason this exists. A shield is worth 3
+ * Armor and 1 Defense (2026-08-24, Jules: "The shield give 3 Armor and 1 Defense,
+ * that is their special is a passive"), and those numbers live on the item the
+ * way a breastplate's do. But a weapon in the secondary slot is stowed, not held,
+ * which is the whole point of Swap Weapons costing Action Points: a shield on
+ * your back stops nothing, and two shielded weapons carried at once would
+ * otherwise have been worth 6 Armor.
+ *
+ * Only the two stats a piece has to be in your hand to be worth read this. Weight
+ * and Magic Burden are what a thing costs to carry and both hands carry.
+ */
+export function heldItems(character) {
+  return borneItems(character, { stowed: false });
+}
+
+/** The shared walk. `stowed` keeps the secondary weapon in it. */
+function borneItems(character, { stowed }) {
+  const worn = normalizeEquipment(character?.equipment);
+  const keys = EQUIPMENT_SLOTS.map(({ key }) => key).filter(
+    (key) => stowed || key !== OFF_HAND_SLOT_KEY
+  );
+
+  return [...keys.map((key) => worn[key]), ...normalizeTrinkets(character?.trinkets)]
     .map((id) => heldItem(character, id))
     .filter(Boolean);
 }
@@ -1410,12 +1441,16 @@ export function armorSetName(character) {
  */
 export function equipmentEffects(character) {
   const items = wornItems(character);
+  /* And the same walk without the stowed weapon, for the two numbers a piece has
+     to be in your hand to be worth. See `heldItems` above: this is what keeps a
+     shield on your back from being 3 Armor. */
+  const held = heldItems(character);
 
   return {
     /** Flat additions to Defense from individual pieces. */
-    defenseFlat: items.reduce((sum, item) => sum + (Number(item.defense) || 0), 0),
+    defenseFlat: held.reduce((sum, item) => sum + (Number(item.defense) || 0), 0),
     /** Armor is gear-only, so this IS the character's Armor stat. */
-    armorTotal: items.reduce((sum, item) => sum + (Number(item.armor) || 0), 0),
+    armorTotal: held.reduce((sum, item) => sum + (Number(item.armor) || 0), 0),
     /** True while something worn raises the Shield cap by Mind. */
     shieldCapMind: items.some((item) => item.shieldCapBonus === 'mind'),
     burden: items.reduce((sum, item) => sum + itemBurden(item), 0),

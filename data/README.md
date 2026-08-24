@@ -79,6 +79,7 @@ doing on its own.
 | Talent Set · Colossus · Developpement Notes | **2026-08-23, a whole weapon category** | `src/lib/weapons.js`, 4 weapons + 8 cards |
 | Colossus art, from the `Colossus/` folder | **2026-08-23, 7 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | The ten missing weapon types, off `Source Temp/` | **2026-08-24, 10 weapons + 20 cards** | `src/lib/weapons.js`, `itemParts.jsx` |
+| The weapon table, handed over in chat | **2026-08-24, the whole wall rebuilt: 39 weapons + 78 cards** | `src/lib/weapons.js`, `items.js`, `statMath.js`, `moves.js`, `talents.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -4086,3 +4087,307 @@ Physique 8, Instinct 10, Mind 6 character at level 5: **20 of 20 resolve, no
 `NaN`, and no leftover marker outside `{stat}`, `{roll}` and `{damage}`.** Ids are
 unique across all 323 cards and every `abilities` reference resolves through
 `getCard`.
+
+## The weapon table, and the wall rebuilt on it, 2026-08-24
+
+Handed over in chat as a screenshot of `Table3`: ten families across the columns
+and five costs down the rows, thirty-one cells. Jules: "Ok, I want to redo the
+weapon. In the table given you all existing type of weapon."
+
+So this is not a pull that added weapons, it is the one that **replaced the
+wall**. Everything on it before came off, and what is here now is the table plus
+the twelve variations the magic families ask for.
+
+The wall goes from 36 weapons to 39 cells (45 items, counting Claws & Teeth and
+the five named enchanted ones), and 78 weapon cards.
+
+### The cost column is the whole balance
+
+The one thing the table settles that nothing settled before: **a weapon's cost is
+its Action Point cost, and the cost is the only thing that sets the damage.**
+
+| Cost | Damage |
+| ---- | ------ |
+| 2 | `1d6 + stat` |
+| 3 | `2d6 + stat` |
+| 4 | `2d6 + 2*stat` |
+| 5 | `3d6 + 2*stat` |
+| 6 | `3d6 + 3*stat` |
+
+Word for word: "Using base cost / 2 Cost weapon do 1d6 + Stat / 3 Cost weapon do
+2d6 + Stat / 4 Cost weapon do 2d6 + 2xStat / 5 Cost Weapon do 3d6 + 2xStat / 6
+Cost weapon do 3d6 + 3xstat".
+
+Three families read the ladder sideways, and all three rules are Jules's:
+
+- **`X + Shield`** deals what the bare weapon deals and costs one point more.
+  "They base attack is the same as the normal +1. So finesse + Shield base attack
+  do that same as finesse in damage but cost 1 more."
+- **`Paired X`** deals the rung below with its dice as d4, rolled twice, at one
+  point more, and every roll it makes is at disadvantage. "Their attack use twice
+  d4 instead of d6 and they do one attack roll to hit damage twice. So Finesse
+  paired if it lands is 2x 1d4 + Stat."
+- **Crossbows and the Ballista** deal their own rung for one point less and have
+  to reload. "The cost of the weapon attack is by default 1 less, but it requires
+  to reload to shoot again."
+
+`scripts/check-weapons.mjs` is the round trip on all of it. The table is written
+out there once, cell by cell, and every card is measured against it: cost, dice,
+attribute, what the second card costs, and whether a melee weapon that is not a
+reach weapon reaches 1 Meter. `npm run lint:weapons`, and `--list` prints the
+whole grid back.
+
+### The attribute of every cell is the designer's
+
+The colours on the screenshot could not be read reliably, so the map was asked for
+in words and given in three lists on 2026-08-24. It is transcribed in `TABLE` in
+`check-weapons.mjs` and it is the authority:
+
+**Instinct (15).** Finesse Weapon, Short Bow, Flintlock Pistol, Fist Weapon, Bow,
+Flintlock Rifle, Whip, Light Crossbow, Paired Finesse, Enchanted Instrument,
+Finesse + Shield, Portable Canon, Polearm, Crossbow, Heavy Crossbow.
+
+**Physique (12).** Melee Light, Melee Heavy, Long Bow, Paired Light Weapon, Melee
+Light + Shield, Melee Great, Great Bow, Great Polearm, Paired Heavy Weapon, Melee
+Heavy + Shield, Ballista, Paired Great Weapon.
+
+**Mind (4).** Wand, Tome of Incantations, Staff, Censer.
+
+Four of those are worth noticing because a guess would have got them wrong:
+**Melee Light is Physique** while Finesse is Instinct, which is the difference
+between those two columns. **Polearm is Instinct and Great Polearm is Physique**,
+the one family that changes attribute up its own column. **Heavy Crossbow is
+Instinct and the Ballista is Physique**, the same thing in the crossbow column.
+And the **Enchanted Instrument is Instinct**, so it is the one Focus on the wall
+that is not a Mind weapon.
+
+### Twelve weapons left the codex
+
+Jules, asked directly: drop all twelve. They have no cell on the table.
+
+Bo Staff, Trident, Daggers, One-Handed Weapon, Two-Handed Weapon, Shield &
+One-Handed, Dual Pistols, Spear, Great Shield, Javelins, Throwing Hatchets and
+the Sling. Eight of those were built the day before this, off `Source Temp/`, and
+they lasted a day.
+
+**The Thrown class is gone with them**, and it is the only weapon class on the old
+wall with no descendant here at all. The `Thrown` tag went with it, and so did the
+glyph branch in `itemParts.jsx` that served it.
+
+Two things did not go:
+
+- **Claws & Teeth** stays. It is not a weapon anybody buys, it is what a Feral
+  Cursed has instead of one (`FERAL_WEAPON` in `feral.js`). Its reach came down to
+  1 Meter with everything else.
+- **The five named enchanted weapons** stay and were repointed. Cold-Infused
+  Sword, Patien and Grave-Lantern Blade teach Melee Light's two cards where they
+  taught One-Handed's; the Imbued Flintlock Pistol is unchanged; and the **Deep
+  Sea Trident is a Polearm** now, which is the closest thing on the wall to a
+  three-pronged fishing spear held at the far end. Its reach came down from 4.5
+  Meter to 3 with the family.
+
+### Great is Colossal, confirmed
+
+Melee Great, Great Bow, Great Polearm and Paired Great Weapon cost 5, 5, 5 and 6
+Action Points on Physique. That is exactly what the four Colossal weapons built
+for the Colossus set the day before cost, so they were put to Jules as the same
+tier renamed, and they are: "Yes, Great is Colossal."
+
+All four carry `Colossal` as a second tag, so GIANT SLAYER and COLOSSAL GRIP still
+see them and neither card had to move. `check-weapons.mjs` asserts both halves:
+every Great weapon carries `Colossal`, and nothing else does.
+
+### The two sets moved onto families
+
+Jules, mid-build: "Update duelist to be : Finesse & Light Melee and Colossus to be
+Heavy & Great Melee by the way."
+
+That is the change the old wall could not have taken. `One-Handed` and `Two-Handed`
+were doing two jobs at once, describing how a weapon is held *and* standing in for
+what kind of weapon it is, and a set hung on the second meaning. Now the family is
+its own tag and the hands are just the hands.
+
+| | was | is |
+| --- | --- | --- |
+| Duelist | `'One-Handed'` | `['Finesse', 'Light Melee']` |
+| Colossus | `'Two-Handed'` | `['Heavy Melee', 'Great Melee']` |
+| GIANT SLAYER | `'Colossal'` | unchanged |
+| Feral Curse | `'Natural'` | unchanged |
+
+**A `martial` spec may name more than one tag now**, and any one of them is a
+match. That is one line in `tagged` in `moves.js`; `weaponRiders` never had to
+know. Seven card bodies were reworded to say what they now do, on Jules's
+instruction rather than as a transcription: DEXTEROUS, AGILE and FOLLOW UP on the
+Duelist, MARTIAL TRAINING, COLOSSAL FORCE, PERFECT TECHNIQUE and COLOSSAL GRIP on
+the Colossus.
+
+**Every weapon carries exactly one of `One-Handed` and `Two-Handed`** now, which is
+Jules's own rule read literally: "Some of this as marker as one-hand, like finesse
+melee light, pistol, whip, wand, ect, the other are two-hands." The named five are
+One-Handed; the Light Crossbow and the three Censers were read into the "ect"
+because both are held in one hand; everything else is Two-Handed, the shielded and
+paired ones included. Nothing hangs on those two tags any more, so a wrong reading
+here costs nothing but the word on the card.
+
+### A shield is worth something only while you are holding it
+
+"The shield give 3 Armor and 1 Defense, that is their special is a passive."
+
+So the three shielded weapons carry `armor: 3` and `defense: 1` on the item, the
+way a breastplate does, and their second card is SHIELD - GUARD, one passive
+shared by all three because the numbers are the same three times over.
+
+The catch is that the sheet has **two weapon slots and only one of them is a
+hand**. `wornItems` walks both, so a shield stowed in the secondary slot would
+have been worth 3 Armor from your back, and two shielded weapons carried at once
+would have been worth 6. That is the whole point of Swap Weapons costing Action
+Points, so it was closed rather than left:
+
+- `heldItems` in `items.js` is `wornItems` without the secondary weapon, and
+  `equipmentEffects` reads it for `defenseFlat` and `armorTotal` alone.
+- `placesOf` in `statMath.js` takes a `stowed` flag and the Armor and Defense
+  lines pass `false`, so the tooltip says the same thing the tile does.
+- Weight and Magic Burden still walk both hands, because weight is what a thing
+  costs to carry and you are carrying it either way.
+
+There is a fixture for it in `check-stat-math.mjs`, "a shield in hand and a second
+one stowed": Armor 3, Defense +1, and 14 kg of weapons.
+
+`shield-guard` is also **the one card in the codex that names no attribute**. Three
+weapons share it and they do not agree on one (Finesse + Shield is Instinct, the
+other two Physique), and nothing on it rolls. `check-weapons.mjs` allows that only
+for a card tagged `Passive`.
+
+### What was house-written, and where
+
+Everything below is invented off the designer's own scale and is what to overwrite
+when a sheet arrives for it.
+
+**Every ranged distance.** Jules: "For all the range weapon I let you review the
+range of them to be logical." Melee is 1 Meter unless the weapon is a reach weapon,
+which is their rule; the Whip keeps 4.5 Meter and both Polearms have 3, which is
+their number too. The rest:
+
+| | | | |
+| --- | --- | --- | --- |
+| Short Bow 18m | Bow 25m | Long Bow 45m | Great Bow 60m |
+| Flintlock Pistol 15m | Flintlock Rifle 30m | Portable Canon 25m | |
+| Light Crossbow 25m | Crossbow 30m | Heavy Crossbow 45m | Ballista 60m |
+| Wands 18m | Tomes 12m | Staves 18m | Censers 3m |
+| Enchanted Instrument 15m | | | |
+
+The Censer's 3 Meter is the shortest range on the wall and shorter than most melee
+weapons swing, which is the reading of "They have real short range".
+
+**The Reload Bolt costs 1 Action Point**, on all four crossbows. That is the point
+the discount came off, so a shot plus its reload costs exactly what the cost table
+asks and a crossbow is never cheaper than a bow over two turns. What it buys is
+*when*: the shot is cheap now and the winding is paid on a turn with a point spare.
+
+**What an unpriced special costs.** Jules priced four outright: FLURRY at 5 Action
+Points and 2 Willpower, AIMED SHOT at the plain attack's cost plus 1 and 1
+Willpower, the Polearm's DRIVE at the plain attack's own cost and 1 Willpower, and
+the Instrument's DISCORD the same. Everything else was read off those: a special
+that multiplies what one swing puts out costs a point more than the plain attack,
+one that spends itself on an area or a rider costs the same, and both cost 1
+Willpower. A Reload rolls nothing and costs none.
+
+**The Staff's area is 3 Meter**, off "small area". It is half the Tome's ring and
+the smallest area anything in the codex throws.
+
+**Seven special moves are named here.** Jules named FLURRY, AIMED SHOT, VOLLEY and
+WHIRLWIND. The rest are house names for moves they described but did not name:
+DRIVE (the Polearm's push), CHORUS (the Tome's ring), BURST (the Staff's area),
+FUMIGATE (the Censer's smoke), DISCORD (the Instrument's rider), BOLT, RECITE,
+WAFT and BLAST for the plain attacks of the four magic families.
+
+**Every weight**, on the same scale as the wall this replaced.
+
+**SWIFT STRIKE and CLEAVE were carried over rather than invented.** Jules named a
+second card for every family except the three Melee ones, so Melee Light keeps the
+One-Handed Weapon's Swift Strike and Melee Heavy and Melee Great keep the
+two-hander's Cleave. Cleave's arc came down to 1 Meter with the reach.
+
+**"Balista" is spelled Ballista**, the way "Colosal" was read as Colossal on the
+way in. "Portable Canon" was left as it is, because it is already that in the
+codex and its id is `portable-canon`.
+
+### Six things for the designer
+
+**0. `Great Melee` is column 2's cell and not the whole Great tier.** "Heavy &
+Great Melee" was read literally, onto the two cells actually called Melee Heavy
+and Melee Great (and their Paired versions). So a Colossus holding a **Great
+Polearm** or a **Great Bow** gets GIANT SLAYER's advantage, because both carry
+`Colossal`, but not COLOSSAL FORCE's Elevate or PERFECT TECHNIQUE's per-move die.
+For the Great Bow that is unchanged from the old wall; for the Great Polearm it is
+a narrowing, because the old Colossal Polearm carried `Two-Handed` and got the
+Elevate. Say the word and `Great Melee` goes on all four Great weapons.
+
+Where the two sets currently land, at rank 3:
+
+| in hand | Duelist | Colossus |
+| --- | --- | --- |
+| Finesse Weapon, Melee Light, Paired Finesse | advantage + 1 Defense | nothing |
+| Melee Heavy, Paired Heavy | nothing | Elevate + per-move die |
+| Melee Great, Paired Great | nothing | advantage + Elevate + per-move die |
+| Great Bow, Great Polearm | nothing | advantage only |
+| Finesse + Shield, Melee Light + Shield | nothing | nothing |
+
+**1. The Guardian set names an ability that no longer exists.** This is the real
+one. INTERCEPT says "you can use your Shield & One-handed Block ability without
+paying its action point cost", and SHIELD EXPERTISE's last sentence pays out
+"after successfully blocking damage with a shield". The shield's second card is a
+passive now, so there is no Block to use and nothing to trigger off. Both cards
+were left exactly as written, with the problem flagged in `talents.js`, because
+what a Guardian gets instead is a ruling and not a transcription. Two obvious
+shapes: give the shielded weapons a third card, or rewrite those two clauses
+around the passive.
+
+**2. The three Melee weapons still have no special of the designer's.** Swift
+Strike and Cleave are the old wall's. Worth a look, because they are the only
+second cards on the wall nobody chose.
+
+**3. Melee Heavy and Melee Great reach 1 Meter.** That follows the rule as
+written ("For all melee weapon by default attack range is 1m", and only the Whip
+and the Polearms were named as exceptions), but a greatsword reaching no further
+than a dagger is worth confirming. The old wall gave a two-hander 3 Meter.
+
+**4. Paired weapons may be strictly worse than the weapon under them.** Paired
+Finesse costs 3 for `2x (1d4 + Instinct)` at disadvantage; Melee Light costs 3 for
+`2d6 + Physique` with no penalty. Two hits beat one against Armor and the average
+is close, but the disadvantage is on every roll the weapon ever makes, both cards,
+forever. That is the designer's rule as written and it may be exactly the intent.
+
+**5. The Wand's VOLLEY may be the best special on the wall.** Three projectiles at
+3 Action Points and 1 Willpower, split however you like, where FLURRY pays 5 and 2
+for three hits on one target. The prices come from two different rules of Jules's
+own, so neither is invented, but they meet here.
+
+### How it was proved
+
+`lint:text`, `lint:math`, `lint:halves`, `lint:riders`, `lint:weapons`, `eslint`
+and `vite build` all clean.
+
+`check-weapons.mjs` is the new one and it is the transcription proof: **39 of 39
+cells match the table** on cost, damage, attribute and the price of the second
+card, with the shield, paired and crossbow rules applied. It also checks that
+every weapon carries one hand tag and one category, that melee without `Reach`
+reaches 1 Meter, that the four Great weapons and only those carry `Colossal`, that
+every tag a set hangs on is on at least one weapon, and that no weapon card is
+taught by nothing.
+
+`check-stat-math.mjs` went from 11 fixtures to 12 with the stowed-shield sheet.
+Its two old fixtures that held `one-handed` and `two-handed` now hold `melee-light`
+and `melee-heavy`, which weigh the same, so the load lines did not move.
+
+Then every one of the 78 bodies was run through `resolveValue` against a Physique
+8, Instinct 10, Mind 6 character at level 5: **all 71 live values resolve, no
+`NaN`, and no leftover marker outside `{stat}`, `{roll}` and `{damage}`.** Ids are
+unique across the whole of `CARDS`, which is 339 cards now, and every `abilities`
+reference resolves through `getCard`.
+
+### No pictures
+
+Nothing on this wall has art, which is the state the wall it replaced was in. The
+old weapon ids that had none still have none, and the ones that are gone took
+nothing with them: `cardArt.js` never carried a weapon card.

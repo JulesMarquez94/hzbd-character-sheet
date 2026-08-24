@@ -81,6 +81,7 @@ import {
   normalizeEquipment,
   normalizePack,
   normalizeTrinkets,
+  OFF_HAND_SLOT_KEY,
   wornItems,
 } from './items.js';
 import { feralArmorFrom, feralShieldShare, feralState } from './feral.js';
@@ -301,14 +302,22 @@ function levelsOf(picks) {
  * The belt and the pack are asked for rather than assumed, because the three walks
  * this serves stop in different places: an item's own numbers reach what is worn,
  * worked magic reaches the loops as well, and weight reaches everything.
+ *
+ * And `stowed` is the fourth stopping place: the Armor and Defense lines leave the
+ * secondary weapon out, because a shielded weapon is only worth its 3 Armor while
+ * it is the weapon in your hand. Weight and Magic Burden keep it, because both
+ * hands carry. The mirror of `heldItems` in items.js, and the mirror is checked.
  */
-function placesOf(character, { belt = false, pack = false } = {}) {
+function placesOf(character, { belt = false, pack = false, stowed = true } = {}) {
   const worn = normalizeEquipment(character?.equipment);
   const held = (ids) => ids.map((id) => heldItem(character, id)).filter(Boolean);
+  const hands = WEAPON_SLOTS.map(({ key }) => key).filter(
+    (key) => stowed || key !== OFF_HAND_SLOT_KEY
+  );
 
   const places = [
     ['Armor', held(ARMOR_SLOTS.map(({ key }) => worn[key]))],
-    ['Weapons', held(WEAPON_SLOTS.map(({ key }) => worn[key]))],
+    ['Weapons', held(hands.map((key) => worn[key]))],
     ['Bag', held([worn[BAG_SLOT_KEY]])],
     ['Trinkets', held(normalizeTrinkets(character?.trinkets))],
   ];
@@ -399,7 +408,12 @@ export function statMath(character) {
   const sources = characterGrantSources(character);
   const grants = characterGrants(character);
   const items = wornItems(character);
-  const places = placesOf(character);
+  /* The places, with the stowed weapon left out. The only two lines that read
+     this are Armor and Defense, and a shielded weapon is worth its 3 Armor while
+     it is in your hand and nothing on your back. The burden and weight lines walk
+     their own places below and both hands are in those. See `equipmentEffects` in
+     items.js, which this mirrors. */
+  const places = placesOf(character, { stowed: false });
 
   /* The row as it is stored, for the one reader that must not see the bend. */
   const stored = { ...character };

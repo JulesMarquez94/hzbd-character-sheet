@@ -27,7 +27,7 @@ import { getCard } from '../src/lib/weapons.js';
 const LIST = process.argv.includes('--list');
 
 /** A weapon attack to print the riders against. Any of the two a sword teaches. */
-const SWING = 'one-handed-strike';
+const SWING = 'melee-light-strike';
 
 /** A level-1 sheet with nothing on it but the row under test. */
 function sheet(effects = []) {

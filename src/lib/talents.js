@@ -224,6 +224,17 @@ const TALENT_SETS = [
         ap: 1,
         wp: 1,
         stat: 'instinct',
+        /* **This card names an ability the codex no longer has.** The weapon wall
+           was rebuilt on 2026-08-24 and the shield's second card went from a Block
+           to a passive: "The shield give 3 Armor and 1 Defense, that is their
+           special is a passive." So there is nothing left called Shield &
+           One-handed Block for this to hand over free, and the same goes for
+           SHIELD EXPERTISE's last sentence, which pays out "after successfully
+           blocking damage with a shield".
+
+           Left exactly as the designer wrote it rather than reworded, because what
+           a Guardian gets instead is a ruling and not a transcription. Flagged in
+           data/README.md. */
         body:
           'You prepare to intercept the next hit.\n\n' +
           'The next time an adjacent entity makes a successful roll to hit or is the victim of one, you can choose to take the hit instead.\n\n' +
@@ -1199,22 +1210,27 @@ const TALENT_SETS = [
        `tricks.points` is, so a reading is always a number rather than sometimes
        being absent: a Rank 1 Duelist has the allowance everybody has. */
     martial: {
-      /* The tag the weapon has to carry, off the designer's own weapon list.
-         'Shield & One-Handed' carries `Shielded` there rather than `One-Handed`,
-         so on a literal reading a Duelist holding a shield gets none of this.
-         Flagged in data/README.md for a ruling. */
-      weapon: 'One-Handed',
+      /* The two tags the weapon has to carry one of, off the designer's own word
+         of 2026-08-24: "Duelist to be Finesse & Light Melee". It was `One-Handed`
+         until the weapon wall was rebuilt around families, and a family is what
+         this was always reaching for.
+
+         The three shielded weapons carry `Shielded` rather than their family's
+         tag, so on a literal reading a Duelist holding a shield still gets none of
+         this. Flagged in data/README.md for a ruling. */
+      weapon: ['Finesse', 'Light Melee'],
       /* One entry per card that hangs on the weapon in hand. Neither names a tag,
          so both take the set's own, which is what they always read. The list is
          the Colossus's doing: it holds cards on two different tags at once and
          needed somewhere to say which. See `grants` in moves.js. */
       grants: [
-        /* DEXTEROUS: "You have advantage when using One-handed weapons." A count
-           rather than a flag because Advantage stacks (each instance is another
-           d4), which is what lets the arrow on the card print a number. */
+        /* DEXTEROUS: "You have advantage when using One-handed weapons", read onto
+           the Finesse and Light Melee families on 2026-08-24. A count rather than a
+           flag because Advantage stacks (each instance is another d4), which is
+           what lets the arrow on the card print a number. */
         { advantage: [null, 1, 1, 1] },
-        /* AGILE: "While you have a one-handed weapon in hand your Defense is
-           increased by 1." */
+        /* AGILE: "While you have a Finesse or Light Melee weapon in hand your
+           Defense is increased by 1." */
         { defense: [null, 1, 1, 1] },
       ],
       /* FOLLOW UP is deliberately not here. It hangs on the same weapon, but the
@@ -1237,7 +1253,7 @@ const TALENT_SETS = [
         id: 'dexterous',
         rank: 1,
         name: 'Dexterous',
-        summary: 'Advantage with one-handed weapons, and the Martial Moves to use them with.',
+        summary: 'Advantage with Finesse and Light Melee weapons, and the Martial Moves to use them with.',
         kind: 'talent',
         tags: ['Duelist', 'Novice Talent', 'Passive'],
         ap: null,
@@ -1252,7 +1268,7 @@ const TALENT_SETS = [
            lowercase FUNGAL INVOCATION prints it in, and "rank in duelist.." ends
            on one full stop. */
         body:
-          'You have advantage when using One-handed weapons.\n\n' +
+          'You have advantage when using Finesse and Light Melee weapons.\n\n' +
           'You learn a number of Novice Martial Moves equal to 2 + your Rank in Duelist.\n\n' +
           'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
@@ -1261,7 +1277,7 @@ const TALENT_SETS = [
         id: 'agile',
         rank: 1,
         name: 'Agile',
-        summary: 'A one-handed weapon in your hand is worth 1 Defense.',
+        summary: 'A Finesse or Light Melee weapon in your hand is worth 1 Defense.',
         kind: 'talent',
         tags: ['Duelist', 'Novice Talent', 'Passive'],
         ap: null,
@@ -1274,13 +1290,13 @@ const TALENT_SETS = [
            already say, so it came off the card and went into the code that honours
            it: `duelistDefense` in moves.js reads the weapon in the main hand, so
            swapping to a two-hander takes the point back on the spot. */
-        body: 'While you have a one-handed weapon in hand your Defense is increased by 1.',
+        body: 'While you have a Finesse or Light Melee weapon in hand your Defense is increased by 1.',
       },
       {
         id: 'follow-up',
         rank: 2,
         name: 'Follow Up',
-        summary: 'Your first miss each turn with a one-handed weapon gets one more try.',
+        summary: 'Your first miss each turn with a Finesse or Light Melee weapon gets one more try.',
         kind: 'talent',
         tags: ['Duelist', 'Adept Talent', 'Passive'],
         ap: null,
@@ -1289,7 +1305,7 @@ const TALENT_SETS = [
         /* "your fist attack" reads first, and "that miss can be re rolled once"
            reads "that misses can be rerolled once" so that reroll lights. */
         body:
-          'While you have a one-handed weapon in hand, your first attack with a one-handed weapon each turn that misses can be rerolled once.',
+          'While you have a Finesse or Light Melee weapon in hand, your first attack with one each turn that misses can be rerolled once.',
       },
       {
         id: 'sharp',
@@ -1977,7 +1993,14 @@ const TALENT_SETS = [
        The same tab's `Developpement Notes` asked for a whole weapon category to
        go with it, and it was built: four Colossal Weapons in weapons.js, which is
        what GIANT SLAYER and COLOSSAL GRIP are about. Without them two of these
-       seven cards would name a kind of weapon nothing in the codex is. */
+       seven cards would name a kind of weapon nothing in the codex is.
+
+       Those four are the **Great** tier now. The weapon wall was rebuilt off the
+       designer's own cost table on 2026-08-24 and they confirmed the two are the
+       same thing: Melee Great, Great Bow, Great Polearm and Paired Great Weapon
+       cost 5, 5, 5 and 6 Action Points on Physique, which is what the Colossal
+       four cost, and all four carry `Colossal` as a second tag so nothing here
+       had to move. */
     tagline: 'A weapon too big for one hand, and the training to make one swing count for everything.',
     art: '/talents/colossus.jpg',
     /* Martial and Physique are the sheet's own Tags column, and Physique earns it
@@ -2010,8 +2033,15 @@ const TALENT_SETS = [
        hand. Numbers here, behaviour in moves.js, indexed by rank the way the
        Duelist's is. */
     martial: {
-      /* MARTIAL TRAINING's own clause, "you can use them with Two-Handed
-         Weapons", and the tag every grant below falls back to when it names none.
+      /* MARTIAL TRAINING's own clause, and the tag every grant below falls back to
+         when it names none. It was `Two-Handed` until the weapon wall was rebuilt
+         around families, and the designer moved it on 2026-08-24: "Colossus to be
+         Heavy & Great Melee".
+
+         GIANT SLAYER below still names `Colossal`, which is not one of these two.
+         It does not have to be: the four Great weapons carry `Colossal` as a
+         second tag, and a Great Bow is a Colossal Weapon without being a Melee
+         one, which is exactly the reach that card has always had.
 
          Read as a **permission** rather than a restriction, which is the reading
          the overview takes: a Martial Move is "the trained manoeuvres nobody with
@@ -2019,7 +2049,7 @@ const TALENT_SETS = [
          time. Nothing enforces it either way, because `canLayMove` has never asked
          what is in your hand: a move is laid before the swing and the weapon can
          still be swapped. Flagged in data/README.md. */
-      weapon: 'Two-Handed',
+      weapon: ['Heavy Melee', 'Great Melee'],
       grants: [
         /* GIANT SLAYER, at Rank 1: "When you attack with a Colossal Weapon, the
            attack is made with advantage." The one grant in the codex that names a
@@ -2027,18 +2057,18 @@ const TALENT_SETS = [
            list rather than a block. A count and not a flag, because Advantage
            stacks and the arrow on the card prints the number. */
         { weapon: 'Colossal', advantage: [null, 1, 1, 1] },
-        /* COLOSSAL FORCE, at Rank 2: "Your Two-Handed Weapon Attacks are Elevated
-           by 1." The first thing in the codex to Elevate a swing for the weapon in
-           hand rather than for something that was paid for. */
+        /* COLOSSAL FORCE, at Rank 2: "Your Heavy and Great Melee Weapon Attacks
+           are Elevated by 1." The first thing in the codex to Elevate a swing for
+           the weapon in hand rather than for something that was paid for. */
         { elevate: [null, 0, 1, 1] },
         /* PERFECT TECHNIQUE's second sentence, at Rank 3: "Each Martial Move on
            the attack Empowers its damage by 1." On the same tag as its first
-           sentence, which is what makes it a Two-Handed Weapon Attack, and per
+           sentence, which is what makes it a Heavy or Great Melee Weapon Attack, and per
            move rather than per attack. */
         { perMove: [null, 0, 0, 1] },
       ],
       /* PERFECT TECHNIQUE's first sentence: "You can now use two Martial Moves on
-         the same Two-Handed Weapon Attack." Not gated on the weapon, the same way
+         the same Heavy or Great Melee Weapon Attack." Not gated on the weapon, the same way
          SHARP is not, because a move is laid before the swing and refusing the
          second one would be refusing it against a weapon that may not be the one
          it ends up riding. */
@@ -2051,7 +2081,7 @@ const TALENT_SETS = [
     blurb:
       'A Colossus fights with both hands on the haft and asks one question of every exchange: how much can be put behind a single swing. Where a Duelist buys options with a free hand, a Colossus buys weight. The weapon is too big to be quick and too heavy to be subtle, and neither of those is a problem once the thing it lands on has stopped being one.\n\n' + // text-style-ok: joins two clauses
       'What separates a Colossus from anybody else swinging something large is the training. Martial Moves are the trained motions that ride a swing: a wound opened, a guard broken, a weapon knocked out of a hand. A Colossus learns more of them than most and rebuilds the list every night, and at the top of the track two of them ride the same blow while each one adds a die to it.\n\n' + // text-style-ok: joins two clauses
-      'The set rewards patience and punishes hesitation. Almost everything a Colossus has goes into one attack a turn, and a Master holding a Two-Handed Weapon in each hand spends the whole turn on it. Get that one right and there is not much left standing to answer it.', // text-style-ok: joins two clauses
+      'The set rewards patience and punishes hesitation. Almost everything a Colossus has goes into one attack a turn, and a Master holding a Great Weapon in each hand spends the whole turn on it. Get that one right and there is not much left standing to answer it.', // text-style-ok: joins two clauses
     cards: [
       {
         id: 'martial-training',
@@ -2070,7 +2100,7 @@ const TALENT_SETS = [
            the set's own name in the first and one clause added to it, and that
            clause is the difference between the two sets. */
         body:
-          'You learn a number of Novice Martial Moves equal to 2 + your Rank in Colossus, and you can use them with Two-Handed Weapons.\n\n' + // text-style-ok: joins two clauses
+          'You learn a number of Novice Martial Moves equal to 2 + your Rank in Colossus, and you can use them with Heavy and Great Melee Weapons.\n\n' + // text-style-ok: joins two clauses
           'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
       },
@@ -2105,10 +2135,10 @@ const TALENT_SETS = [
            second entry in `martial.grants`.
 
            Elevated and not Empowered, which the sheet already got right: the same
-           dice one size up, capped at a d12. A Colossal Two-Handed Weapon carries
+           dice one size up, capped at a d12. A Melee Great weapon carries
            both tags, so a Rank 2 Colossus holding one has this and GIANT SLAYER
            at once. */
-        body: 'Your Two-Handed Weapon Attacks are Elevated by 1.',
+        body: 'Your Heavy and Great Melee Weapon Attacks are Elevated by 1.',
       },
       {
         id: 'practiced-moves',
@@ -2153,7 +2183,7 @@ const TALENT_SETS = [
            before a Weapon Attack reaction" at Rank 3; a Colossus bought that at
            Rank 2 with PRACTICED MOVES and this card only raises the count. */
         body:
-          'You can now use two Martial Moves on the same Two-Handed Weapon Attack.\n\n' +
+          'You can now use two Martial Moves on the same Heavy or Great Melee Weapon Attack.\n\n' +
           'Each Martial Move on the attack Empowers its damage by 1.',
       },
       {
@@ -2180,7 +2210,7 @@ const TALENT_SETS = [
         id: 'colossal-grip',
         rank: 3,
         name: 'Colossal Grip',
-        summary: 'A Colossal Weapon in each hand, and every Colossal swing is a point cheaper.',
+        summary: 'A Great Weapon in each hand, and every Colossal swing is a point cheaper.',
         kind: 'talent',
         tags: ['Colossus', 'Master Talent', 'Passive'],
         ap: null,
@@ -2194,16 +2224,16 @@ const TALENT_SETS = [
            stop it was missing. Nothing about what it does was touched.
 
            Both halves are printed rules. The first is a gate on an *item* and the
-           sheet has never had one: nothing stops anybody equipping Paired Colossal
+           sheet has never had one: nothing stops anybody equipping Paired Great
            Weapons, the same way nothing stops a wizard putting on full plate. The
            second is the third Action Point discount, and it is refused for the
            reason MARTIAL SWIFTNESS's is.
 
-           What is real is the weapons themselves. Paired Colossal Weapons are in
+           What is real is the weapons themselves. Paired Great Weapons are in
            weapons.js and weigh 16 kg, which is most of what a Physique 4 character
            can carry and the reason this is a Master card. */
         body:
-          'You can now equip Paired Colossal Weapons, and your Colossal Weapon Attacks cost 1 less Action Point.', // text-style-ok: joins two clauses
+          'You can now equip Paired Great Weapons, and your Colossal Weapon Attacks cost 1 less Action Point.', // text-style-ok: joins two clauses
       },
     ],
   },

@@ -60,12 +60,13 @@
  *
  * ---------------------------------------------------------- the weapon in hand
  * And the cards that hang on it, which are now two sets' worth. DEXTEROUS grants
- * a Duelist advantage with one-handed weapons and AGILE grants a point of Defense
- * while one is in hand; GIANT SLAYER grants a Colossus advantage with a Colossal
- * Weapon, COLOSSAL FORCE Elevates a Two-Handed swing and PERFECT TECHNIQUE adds a
- * die for every move riding one. All of them are conditions the sheet can actually
- * check — the tag on the item — and all of them are declared as `grants` on the
- * set rather than known here by name.
+ * a Duelist advantage with Finesse and Light Melee weapons and AGILE grants a
+ * point of Defense while one is in hand; GIANT SLAYER grants a Colossus advantage
+ * with a Colossal Weapon, COLOSSAL FORCE Elevates a Heavy or Great Melee swing and
+ * PERFECT TECHNIQUE adds a die for every move riding one. All of them are
+ * conditions the sheet can actually check — the tag on the item — and all of them
+ * are declared as `grants` on the set rather than known here by name. A set may
+ * name more than one tag and both of these do; see `tagged` below.
  *
  * FOLLOW UP is the counter-example: the sheet does not know an attack missed, so
  * its reroll is a printed rule the table plays and this file only counts it for the
@@ -391,10 +392,19 @@ function inHand(character) {
   return heldItem(character, equipment.main_hand);
 }
 
-/** Whether the thing in hand carries the tag a set's `martial` spec asks for. */
+/**
+ * Whether the thing in hand carries the tag a set's `martial` spec asks for.
+ *
+ * A spec may name **more than one**, and two of them do: the Duelist reads
+ * `['Finesse', 'Light Melee']` and the Colossus `['Heavy Melee', 'Great Melee']`
+ * (2026-08-24, Jules: "Duelist to be Finesse & Light Melee and Colossus to be
+ * Heavy & Great Melee"). Any one of them is a match, because they are the same
+ * kind of weapon named twice rather than two conditions to meet at once.
+ */
 function tagged(item, tag) {
   if (!item || !tag) return false;
-  return (item.tags ?? []).some((held) => String(held).toLowerCase() === String(tag).toLowerCase());
+  const wanted = (Array.isArray(tag) ? tag : [tag]).map((one) => String(one).toLowerCase());
+  return (item.tags ?? []).some((held) => wanted.includes(String(held).toLowerCase()));
 }
 
 /**
@@ -465,9 +475,14 @@ function whole(value) {
  * The flat Defense the weapon in hand is worth. AGILE, and nothing else yet.
  *
  * `deriveStats` reads this, which is what makes the point come *off* again the
- * moment a Duelist swaps to a two-hander — the parenthesis the AGILE card was
+ * moment a Duelist swaps to a Melee Heavy — the parenthesis the AGILE card was
  * carrying, honoured in the one place a Defense is worked out rather than printed
  * on the card as a warning.
+ *
+ * It is no longer the only weapon-in-hand Defense on the sheet: the three shielded
+ * weapons carry a flat point of their own on the item. That one is gear and lands
+ * through `equipmentEffects` in items.js, which reads the main hand alone for the
+ * same reason this does.
  *
  * Takes the whole character because the answer depends on the equipment map and
  * on the talents column together.
