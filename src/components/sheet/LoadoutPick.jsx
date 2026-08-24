@@ -6,7 +6,14 @@ import { PICK_ACCENTS } from './pickAccents.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { levelForXp } from '../../lib/characterModel.js';
-import { loadoutState, newAtRank, rankPreview, toggleLoadoutPick } from '../../lib/loadouts.js';
+import {
+  displacedBy,
+  loadoutState,
+  newAtRank,
+  poolAction,
+  rankPreview,
+  toggleLoadoutPick,
+} from '../../lib/loadouts.js';
 import { MOVE_TIERS } from '../../lib/martial.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
@@ -46,11 +53,22 @@ export default function LoadoutSection({
 
   /* The level, because half of a library's ceiling is made of it: a spellbook
      worked out without one would under-report itself by up to ten spells. Free
-     for every other set, which reads it and ignores it. */
-  const state = loadoutState(talents, talent, { level: levelForXp(character?.xp) });
+     for every other set, which reads it and ignores it.
+
+     `capped: 'capacity'` because this is the sheet's own panel, and the sheet is
+     where a loadout is edited: it may fill a library to its ceiling, the same way it
+     can rearrange a Mycomancer's hand on a day that is not a rest. Capped at the
+     allowance instead, a rank that widened the book by ten opened no room at all
+     here, and every tap in the chooser silently pushed out the oldest spell rather
+     than adding one. The rule that a spellbook grows one night at a time still lives
+     where it is played, which is the rest window. See loadoutState. */
+  const state = loadoutState(talents, talent, {
+    level: levelForXp(character?.xp),
+    capped: 'capacity',
+  });
   if (!state) return null;
 
-  const { spec, picks, known, remaining, over, complete, library, capacity } = state;
+  const { spec, picks, known, owed, over, complete, library, capacity } = state;
 
   return (
     <div className="pick-part">
@@ -93,10 +111,10 @@ export default function LoadoutSection({
       ) : (
         <p className="pick-line">
           {library
-            ? `Nothing written down yet. Your ${spec.label.toLowerCase()} begins with ${known} ${plural(
+            ? `Nothing written down yet. Your ${spec.label.toLowerCase()} begins with ${owed} ${plural(
                 spec.noun,
-                known
-              )} of your choosing.`
+                owed
+              )} of your choosing, and holds ${capacity} in all.`
             : `Nothing chosen yet. This set knows ${known} ${plural(
                 spec.noun,
                 known
@@ -112,18 +130,8 @@ export default function LoadoutSection({
 
       {!readOnly && (
         <div className="pick-tools pick-tools-tight">
-          {/* A library that owes nothing is not "changed", it is read: the only
-              thing that legitimately adds to it is the research action at a rest,
-              and the button that opens it should not promise otherwise. */}
           <button type="button" className="btn btn-sub btn-sm" onClick={() => setChoosing(true)}>
-            {remaining
-              ? `${library ? 'Write in' : 'Choose'} ${remaining} more ${plural(
-                  spec.noun,
-                  remaining
-                )}`
-              : library
-                ? `Open your ${spec.label.toLowerCase()}`
-                : `Change your ${plural(spec.noun, 2)}`}
+            {poolAction(state)}
           </button>
         </div>
       )}
@@ -154,7 +162,17 @@ export default function LoadoutSection({
  * rather than a pool you choose from.
  */
 export function LoadoutChooser({ talent, character, state, readOnly, onToggle, onClear, onClose }) {
-  const { spec, options, known, rank, remaining, tiers, library, capacity } = state;
+  const { spec, options, known, rank, remaining, owed, tiers, library, capacity, full } = state;
+
+  /* Which window this is, read off the state rather than passed in. Only a rest
+     caps a library below its ceiling, so a library whose allowance is short of its
+     capacity is one being offered a night's research. See loadoutState. */
+  const nightly = library && known < capacity;
+
+  /* And whose place the next tap takes, when there is no room left for one more.
+     "Replace the oldest" is a sensible rule and an invisible one: the wall says
+     whose place it is, so a tap is never a card quietly disappearing. */
+  const pushed = displacedBy(state);
 
   /* Only what this rank can actually take, plus anything already known. A wall
      of cards that says "not yet" thirty times is a wall you scroll past. What
@@ -204,8 +222,15 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
           <>
             At rank {rank} your {spec.label.toLowerCase()} holds <b>{capacity}</b>{' '}
             {plural(spec.noun, capacity)}
-            {tiers.length > 0 ? `, up to ${listOut(tiers)}` : ''}, and you can write in{' '}
-            <b>{known}</b> right now. {spec.note}
+            {tiers.length > 0 ? `, up to ${listOut(tiers)}` : ''}.{' '}
+            {full
+              ? `It is full, so a ${spec.noun} written in now replaces one already there.`
+              : owed > 0
+                ? `${owed} of them arrive with the set, and this is where you write them in.`
+                : nightly
+                  ? `Tonight you can write in ${remaining} more.`
+                  : `There is room for ${remaining} more.`}{' '}
+            {spec.note}
           </>
         ) : (
           <>
@@ -255,11 +280,24 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
               }`}
               /* The wall is cut to what the rank can take, so the only refusal
                  that reaches it is a stored pick the rank has since lost. That
-                 one still says why on hover, the way the block says it above. */
-              title={option.ok ? undefined : option.reason}
+                 one still says why on hover, the way the block says it above.
+
+                 And when there is no room left, what taking this one costs, which
+                 is the sentence "replace the oldest" never had. */
+              title={
+                !option.ok
+                  ? option.reason
+                  : !option.known && pushed
+                    ? `No room for another. Taking this one puts ${nameOfPick(pushed)} out, which is the oldest thing in your ${spec.label.toLowerCase()}.`
+                    : undefined
+              }
               onClick={() => onToggle(option.card.id)}
             >
-              {option.known ? 'Known, give it back' : `Learn this ${spec.noun}`}
+              {option.known
+                ? 'Known, give it back'
+                : pushed
+                  ? `Learn it · ${nameOfPick(pushed)} goes`
+                  : `Learn this ${spec.noun}`}
             </button>
           )
         }
@@ -530,3 +568,7 @@ function listOut(words) {
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
+/** A pick's printed name, or its stored id when this build's codex has no such card. */
+function nameOfPick(pick) {
+  return pick?.card?.name ?? pick?.id ?? '';
+}

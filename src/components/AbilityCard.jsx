@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from 'react';
 import CardText from './CardText.jsx';
 import CostOrbs from './CostOrbs.jsx';
 import RollArrow from './RollArrow.jsx';
-import { cardBanner, cardTitle } from '../lib/cardText.js';
+import { cardBanner, cardCost, cardTitle } from '../lib/cardText.js';
 import useCodexArt from './useCodexArt.js';
 import './AbilityCard.css';
 
@@ -142,6 +142,10 @@ function SparkIcon() {
  *                  roll this card asks for — a Duelist's one-handed weapon, a
  *                  Martial Move riding the swing — drawn as one arrow in the
  *                  corner. See RollArrow.jsx and attackModifiers in moves.js.
+ *                  `apCut`, `apFloor` and `apCutFrom` are a holder taking
+ *                  Action Points *off* the printed cost — an Arcanist's PERFECT
+ *                  CASTING — drawn as the old number struck through beside the
+ *                  orb. See cardCost in cardText.js.
  */
 export default function AbilityCard({
   ability,
@@ -167,8 +171,13 @@ export default function AbilityCard({
      and names its weapon in the banner instead; every other card heads with its
      whole name, which is what this hands back. See cardText.js. */
   const title = cardTitle(ability);
-  const apCost = ability.ap_cost ?? ability.ap;
-  const wpCost = ability.wp_cost ?? ability.wp;
+  /* What it costs in *these* hands. The codex never changes a printed cost, but a
+     holder can: an Arcanist at Rank 3 casts everything in their spellbook for one
+     Action Point less, and the orb has to say so, because this same card is what
+     the pay button is printed beside. See cardCost in cardText.js. */
+  const cost = cardCost(ability, modifiers);
+  const apCost = cost.ap;
+  const wpCost = cost.wp;
 
   /* The plates that carry the little four-point spark: a spell, a skill, and a
      Martial Move, which wears one on all six of the printed Novice cards. */
@@ -230,7 +239,14 @@ export default function AbilityCard({
         style={artUrl ? { backgroundImage: `url("${artUrl}")` } : undefined}
       >
         <div className="ac-badges">
-          <CostOrbs ap={apCost} wp={wpCost} size={38} className="ac-costs" />
+          <CostOrbs
+            ap={apCost}
+            wp={wpCost}
+            size={38}
+            className="ac-costs"
+            apWas={cost.cut > 0 ? cost.printed : null}
+            cutFrom={cost.from}
+          />
           <RollArrow
             advantage={advantage}
             disadvantage={disadvantage}

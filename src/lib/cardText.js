@@ -286,6 +286,55 @@ export function resolveValue(expression, character, printedStat = 'instinct', op
  * field is data, and scripts/check-weapons.mjs holds it in step with the name.
  */
 
+/* ------------------------------------------------------------- what it costs
+ * A card prints its own Action Points and the codex never changes them. What a
+ * *holder* costs it is another matter, and this is where the two meet.
+ */
+
+/**
+ * What a card costs in the hands that are holding it: the printed cost, less
+ * whatever the holder's own riders take off it.
+ *
+ * The Arcanist's PERFECT CASTING is the first: "Spells from your spellbook cost 1
+ * less Action Point to cast, to a minimum of 1." The cut is the holder's, so it
+ * cannot be written into fifty spells, and it cannot be resolved on the spec
+ * either, because every spell in the book prints a different number for it to come
+ * off. See `loadoutModifiers` in loadouts.js, which lays `apCut`, `apFloor` and
+ * `apCutFrom` on the cards a pool hands out.
+ *
+ * Everything a reader needs comes back, not just the number:
+ *
+ *   ap        what is actually paid, and what every orb and every pool draws on
+ *   printed   what the card was written with, so a cut can be shown as one
+ *   cut       how much came off, and 0 for every card nobody is discounting
+ *   from      what is lending the cut, named, the way `advantageFrom` is
+ *
+ * Both card shapes, the same way the card face reads them: a row typed into the
+ * Abilities tab states `ap_cost`, a codex card states `ap`.
+ *
+ * A cost that is not a number is handed straight back. A passive prints no cost at
+ * all, and an Interact costs whatever the table says it costs: there is nothing
+ * there for a discount to come off, and `0 - 1` floored at 1 would invent a price
+ * for a card that has none.
+ */
+export function cardCost(card, modifiers = null) {
+  const printed = card?.ap_cost ?? card?.ap;
+  const wp = card?.wp_cost ?? card?.wp;
+  const flat = { ap: printed, wp, printed, cut: 0, from: [] };
+
+  const cut = Math.max(0, Math.floor(Number(modifiers?.apCut) || 0));
+  if (cut === 0 || !Number.isFinite(Number(printed))) return flat;
+
+  /* The floor is the card's own word and not a house rule: "to a minimum of 1".
+     A card that printed 0 or 1 keeps what it printed, since a floor is a floor
+     and not a raise. */
+  const floor = Math.max(0, Math.floor(Number(modifiers?.apFloor) || 0));
+  const ap = Math.max(Math.min(Number(printed), floor), Number(printed) - cut);
+  if (ap === Number(printed)) return flat;
+
+  return { ap, wp, printed: Number(printed), cut: Number(printed) - ap, from: modifiers?.apCutFrom ?? [] };
+}
+
 /** What a card prints as its heading: its name, less the weapon it belongs to. */
 export function cardTitle(card) {
   const name = card?.name ?? '';

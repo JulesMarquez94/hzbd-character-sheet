@@ -75,6 +75,11 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
       name: move.name,
       source: move.source,
       ap: move.ap,
+      /* And what the card printed before something the caster carries cut it, so
+         the prompt can show the cost being revised rather than a number that
+         dropped for no stated reason. See cardCost in cardText.js. */
+      apWas: move.apWas ?? null,
+      apCutFrom: move.apCutFrom ?? [],
       wp: move.wp,
       variable: move.variable,
       converts: move.converts,
@@ -221,7 +226,15 @@ export function BarChip({ move, readOnly, onUse }) {
       title={
         spent
           ? move.spentNote ?? `${move.name} is spent`
-          : `${move.name} · ${move.source}`
+          : [
+              `${move.name} · ${move.source}`,
+              /* A chip is 16 pixels of orb and has no room to strike a number
+                 through, so the one place it has left says what came off. The
+                 prompt behind the tap prints it properly. */
+              move.apWas ? `${move.apWas} Action Points cut to ${move.ap}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')
       }
     >
       <span className="bar-chip-name">{move.name}</span>

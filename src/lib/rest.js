@@ -344,7 +344,16 @@ export function restActions(character, kind, talents = character?.talents) {
      difference the chooser actually enforces is the allowance riding on `state`
      (see `restSwaps` in loadouts.js), so the step downstream needs no branch of
      its own. */
-  for (const { talent, state, mode } of restSwaps(talents, kind, levelForXp(character?.xp))) {
+  /* The character's own column is handed in beside the draft, because a library's
+     allowance is measured off what the night *started* with. Without it the rest
+     window granted one more spell for every spell it had already granted. See
+     restSwaps in loadouts.js. */
+  for (const { talent, state, mode } of restSwaps(
+    talents,
+    kind,
+    levelForXp(character?.xp),
+    character?.talents
+  )) {
     rows.push({
       id: `prepare:${talent.id}`,
       kind: 'prepare',

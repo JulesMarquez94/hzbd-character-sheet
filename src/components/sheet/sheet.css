@@ -4728,6 +4728,19 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
+/* Why the orbs below disagree with the card beside them. Action Point gold,
+   because the pool it is talking about is the gold one. */
+.use-cut {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.use-cut b {
+  color: var(--stat-ap);
+  font-weight: 700;
+}
+
 .use-ways {
   display: flex;
   flex-direction: column;

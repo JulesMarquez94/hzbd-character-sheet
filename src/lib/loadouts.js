@@ -193,20 +193,40 @@ export function allowanceAt(spec, rank, level = 1, held = 0, grant = 0) {
  * arrow, and neither card had to be rewritten to say so.
  */
 export function loadoutModifiers(spec, rank) {
-  const cast = castModifier(spec);
-  if (!spec?.boost) return cast;
+  const riders = { ...(castModifier(spec) ?? {}) };
 
-  const empower = Math.max(0, Math.floor(Number(spec.boost.empower?.[rank]) || 0));
-  const advantage = Math.max(0, Math.floor(Number(spec.boost.advantage?.[rank]) || 0));
-  if (empower === 0 && advantage === 0) return cast;
-
-  return {
-    ...(cast ?? {}),
-    ...(empower > 0 ? { empower } : {}),
+  const empower = Math.max(0, Math.floor(Number(spec?.boost?.empower?.[rank]) || 0));
+  const advantage = Math.max(0, Math.floor(Number(spec?.boost?.advantage?.[rank]) || 0));
+  if (empower > 0) riders.empower = empower;
+  if (advantage > 0) {
+    riders.advantage = advantage;
     /* Named, because the arrow in the card's corner says what lent it and a
        reader with two sources of advantage needs to know which came off. */
-    ...(advantage > 0 ? { advantage, advantageFrom: [spec.boost.from ?? spec.label] } : {}),
-  };
+    riders.advantageFrom = [spec.boost.from ?? spec.label];
+  }
+
+  /* And what a rank takes *off* a card, which is the same shape running the other
+     way. PERFECT CASTING is the first of them: "Spells from your spellbook cost 1
+     less Action Point to cast, to a minimum of 1" is a Rank 3 card, so it is an
+     array indexed by rank sitting beside the boost.
+
+     The cut and its floor ride rather than the finished cost, because there is no
+     one finished cost to ride: every spell in the book prints its own Action
+     Points, and a rider carrying "2" would be wrong on all but one of them. The
+     two meet in cardCost in cardText.js, which is the only place a printed cost
+     and a rider that cuts it are ever read together.
+
+     This is the first cut in the codex to be wired rather than left in prose. The
+     four before it stay printed, because they are on sets that hand out no pool
+     and so have no rider to ride: see data/README.md. */
+  const cut = Math.max(0, Math.floor(Number(spec?.discount?.ap?.[rank]) || 0));
+  if (cut > 0) {
+    riders.apCut = cut;
+    riders.apFloor = Math.max(0, Math.floor(Number(spec.discount.floor) || 0));
+    riders.apCutFrom = [spec.discount.from ?? spec.label];
+  }
+
+  return Object.keys(riders).length > 0 ? riders : null;
 }
 
 /** Which tiers that rank may learn from. */
@@ -310,8 +330,36 @@ export function loadoutOptions({ talent, rank, picks }) {
  * `grant` is what the window in front of the player is handing over on top of
  * what they already hold, and it is only ever 1: a long rest's research action.
  * See `allowanceAt`.
+ *
+ * `base` is **how many the window opened with**, and it defaults to how many are
+ * held right now, which is right for every chooser that is not a draft.
+ *
+ * A rest window is a draft, and there it matters: a library's allowance is measured
+ * off what is written in the book, so measuring it off the draft raised the
+ * allowance by one every time the draft gained a card. "Research a single spell"
+ * became research as many as you cared to tap. Measured off the record the night
+ * started from, one night grants exactly one.
+ *
+ * `capped` is **which of a library's two numbers this chooser answers to**, and it
+ * is the difference between the sheet and a rest.
+ *
+ *   allowance   a rest. One night's work, so the book grows by exactly what the
+ *               window granted and the tap after that replaces.
+ *   capacity    the sheet's own panel, which may fill the book to its ceiling.
+ *
+ * A hand has one number twice, so this changes nothing for every other set. For a
+ * library it is the whole of the rank-up bug it was written for: pinned to the
+ * allowance, a panel could never write into the room a rank had just bought, and
+ * every tap in it silently pushed out the oldest spell instead. The panel is the
+ * sheet's editing surface, the same way it can rearrange a Mycomancer's hand on a
+ * day that is not a rest: the rules live in the rest window, and it still grants
+ * one. Flagged in data/README.md.
  */
-export function loadoutState(talents, talent, { level = 1, grant = 0 } = {}) {
+export function loadoutState(
+  talents,
+  talent,
+  { level = 1, grant = 0, capped = 'allowance', base = null } = {}
+) {
   const spec = loadoutOf(talent);
   if (!spec) return null;
 
@@ -336,7 +384,22 @@ export function loadoutState(talents, talent, { level = 1, grant = 0 } = {}) {
      against; `capacity` is the ceiling a library is working towards, and it is
      the only number ARCANE RESEARCH actually prints. */
   const capacity = capacityAt(spec, rank, level);
-  const known = allowanceAt(spec, rank, level, picks.length, grant);
+  const known =
+    capped === 'capacity'
+      ? capacity
+      : allowanceAt(spec, rank, level, base ?? picks.length, grant);
+
+  /* And the third, which is the only one a pool can actually *owe* you.
+
+     A hand owes its whole count: a Rank 2 Mycomancer with two spells is two short
+     of the four it knows, and the block should say so. A library owes the cards
+     that arrive with the set and nothing after them. The room a rank opens is
+     room, not a debt, so a spellbook holding its five with thirty places left is
+     finished rather than four fifths unfinished, and the button on it reads "open
+     your spellbook" instead of "write in 30 more spells". */
+  const owed = isLibrary(spec)
+    ? Math.max(0, Math.min(capacity, Math.max(0, Math.floor(Number(spec.start) || 0))) - picks.length)
+    : Math.max(0, known - picks.length);
 
   return {
     spec,
@@ -350,8 +413,9 @@ export function loadoutState(talents, talent, { level = 1, grant = 0 } = {}) {
     full: isLibrary(spec) && picks.length >= capacity,
     chosen: picks.length,
     remaining: Math.max(0, known - picks.length),
+    owed,
     over: Math.max(0, picks.length - known),
-    complete: picks.length >= known && picks.every((pick) => pick.ok),
+    complete: owed === 0 && picks.every((pick) => pick.ok),
     options,
     tiers: tiersAt(spec, rank),
   };
@@ -374,6 +438,49 @@ export function toggleLoadoutPick(talents, talentId, cardId, known) {
     return setTalentPicks(talents, talentId, [...picks.slice(1), cardId]);
   }
   return setTalentPicks(talents, talentId, [...picks, cardId]);
+}
+
+/**
+ * What the button on a pool says, in one place, because two blocks raise the same
+ * chooser: the set's own block on the Advancement tab, and the set's block on the
+ * Abilities tab.
+ *
+ * Three things it can be, and the difference is between what a pool *owes* you and
+ * what it has *room* for.
+ *
+ *   owed        a hand short of its count, or a library short of the cards that
+ *               arrive with the set. This is a debt, and the button names it.
+ *   a library   otherwise it is opened, never "changed": what is in it stays in it,
+ *               and writing one more in is a night's work rather than a decision
+ *               taken here. The count beside the button is what says how full it is.
+ *   a hand      otherwise it is changed, which is the only thing left to do with it.
+ */
+export function poolAction(state) {
+  const { spec, owed, library } = state;
+
+  if (owed > 0) {
+    return `${library ? 'Write in' : 'Choose'} ${owed} more ${plural(spec.noun, owed)}`;
+  }
+  return library
+    ? `Open your ${spec.label.toLowerCase()}`
+    : `Change your ${plural(spec.noun, 2)}`;
+}
+
+/**
+ * The card a tap is about to push out, or null when there is room for one more.
+ *
+ * "Replace the oldest" is a sensible rule and an invisible one: a full hand tapped
+ * once loses a card the player never named, and on a library it read as the tap
+ * having done nothing at all, since the count could not move. So the wall's own
+ * button says whose place it is taking, which is the same rule with a sentence on
+ * it.
+ *
+ * Read off `picks[0]` because that is the end `toggleLoadoutPick` cuts from, and
+ * the two would be worth nothing if they disagreed.
+ */
+export function displacedBy(state) {
+  if (!state || state.remaining > 0) return null;
+  return state.picks[0] ?? null;
 }
 
 /* ------------------------------------------------------------------ rests */
@@ -414,7 +521,7 @@ export function researchesAtRest(spec, kind) {
  * there is nothing to swap, and an empty pool in the rest window is a row that
  * only asks to be tapped and then apologises.
  */
-export function restSwaps(talents, kind, level = 1) {
+export function restSwaps(talents, kind, level = 1, opened = talents) {
   const rows = [];
 
   for (const entry of normalizeTalents(talents)) {
@@ -431,7 +538,17 @@ export function restSwaps(talents, kind, level = 1) {
        has something to do tonight. Refusing the row there would be refusing the
        replacement the card promises. */
     if (researchesAtRest(spec, kind)) {
-      const state = loadoutState(talents, talent, { level, grant: 1 });
+      /* Measured off `opened` and not off the draft. Both are the same record for
+         every caller that is not a rest window, and in a rest window they are the
+         difference between one night's spell and as many as somebody taps: the
+         allowance is what is written in the book plus tonight's grant, and reading
+         "what is written" off the draft counts tonight's spell as one more night
+         already spent. See loadoutState. */
+      const state = loadoutState(talents, talent, {
+        level,
+        grant: 1,
+        base: heldPicks(opened, entry.id).length,
+      });
       if (state && state.capacity > 0) rows.push({ talent, state, mode: 'research' });
       continue;
     }
@@ -541,4 +658,8 @@ export function rankPreview(talent, rank, level = 1) {
        grant at Rank 1. Every later rank raises the ceiling and gives no card. */
     granted: isLibrary(spec) && rank === 1 ? Math.max(0, Math.floor(Number(spec.start) || 0)) : 0,
   };
+}
+
+function plural(noun, count) {
+  return count === 1 ? noun : `${noun}s`;
 }

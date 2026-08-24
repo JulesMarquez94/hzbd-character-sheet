@@ -270,7 +270,13 @@ function talentSources(character) {
     // The cards this set left to the player. loadoutState knows how many the
     // rank knows and which of the stored picks are still legal at it.
     const loadout = loadoutOf(talent)
-      ? loadoutState(character?.talents, talent, { level: levelForXp(character?.xp) })
+      ? loadoutState(character?.talents, talent, {
+          level: levelForXp(character?.xp),
+          /* The Abilities tab is the sheet's other editing surface for a pool, so it
+             reads the same numbers the Advancement tab's panel does: a library capped
+             at what it can hold rather than at what tonight allows. See loadoutState. */
+          capped: 'capacity',
+        })
       : null;
     if (loadout) {
       open.push({
@@ -293,7 +299,9 @@ function talentSources(character) {
               loadout.picks
                 .filter((pick) => pick.card)
                 .map((pick) => entry(pick.card, pick.modifiers)),
-              `${loadout.picks.length} of ${loadout.known} chosen`
+              `${loadout.picks.length} of ${loadout.library ? loadout.capacity : loadout.known} ${
+                loadout.library ? 'written down' : 'chosen'
+              }`
             ),
             // Everything the block needs to raise the chooser and colour the count.
             loadout: { talent, state: loadout },

@@ -2354,6 +2354,22 @@ const TALENT_SETS = [
         empower: [null, 0, 1, 1],
         advantage: [null, 0, 1, 1],
       },
+      /* PERFECT CASTING, at Rank 3, and the same shape running the other way:
+         "Spells from your spellbook cost 1 less Action Point to cast, to a minimum
+         of 1." Indexed by rank like the boost, and carrying its own floor because
+         the card prints one.
+
+         The cut rides the prepared card rather than the finished number, because
+         every spell in the book prints a different cost for it to come off. It is
+         resolved in cardCost in cardText.js, which is the only place a printed cost
+         and a rider that cuts it are read together, and drawn as the old number
+         struck through beside the orb wherever that cost appears: the card, the
+         brief, the quick-bar chip and the button that charges it. */
+      discount: {
+        from: 'Perfect Casting',
+        ap: [null, 0, 0, 1],
+        floor: 1,
+      },
       note: 'A spell goes in and stays in. Your long rest action researches one more, and the book only replaces a spell once it is full.',
     },
     /* SPELLBOOK's last sentence, which is the one number on this track that is not
@@ -2466,15 +2482,26 @@ const TALENT_SETS = [
            superseded sheet's IMPROVED FORMULAS carried for the same sentence.
            Flagged in data/README.md.
 
-           And the discount stays **printed rather than wired**, which is the
-           standing ruling on every card that cuts another card's Action Point
-           cost. `UsePrompt` deals the codex card beside the pay button and the
-           card prints its own AP, so a button charging 3 next to a card printing 4
-           reads as a bug at the exact moment somebody is deciding whether to pay.
-           This is the fifth card on that line, after the Berserker's RECKLESS
-           VIOLENCE and the Colossus's MARTIAL SWIFTNESS, PRACTICED MOVES and
-           COLOSSAL GRIP. Five is the argument for building somewhere to print a
-           discounted cost. Flagged in data/README.md.
+           And the discount is **wired**, which reverses the standing ruling that
+           every card cutting another card's Action Point cost stays prose. That
+           ruling was never about the arithmetic: it was that `UsePrompt` deals the
+           codex card beside the pay button, so a button charging 3 next to a card
+           printing 4 reads as a bug at the exact moment somebody is deciding
+           whether to pay. Being the fifth card on that line, after the Berserker's
+           RECKLESS VIOLENCE and the Colossus's MARTIAL SWIFTNESS, PRACTICED MOVES
+           and COLOSSAL GRIP, is what bought the place to print a discounted cost:
+           the orb shows what is paid and strikes through what was printed, on the
+           card and on the button alike, so the two can no longer disagree.
+
+           Asked for outright, 2026-08-24: "The cost of spell shoud visible be
+           reduced when yo utry to cast arcanist spell at master, same fro all
+           acarnist effect."
+
+           The other four stay in prose, and it is not the same call twice. They sit
+           on sets that hand out no pool, so there is nothing of theirs riding the
+           cards they discount: RECKLESS VIOLENCE cuts a Berserker's own attacks,
+           which arrive off a weapon and not out of a spec. The rider they need is a
+           different one. Flagged in data/README.md.
 
            "cannot bring the spell below 1" is written as the floor it is, in the
            words the designer used for the same rule on the superseded sheet: "to a

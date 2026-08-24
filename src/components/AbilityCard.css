@@ -189,6 +189,57 @@
     0 -1px 1px rgba(0, 0, 0, 0.6);
 }
 
+/* ---------- A COST SOMETHING CUT ----------
+   The printed number struck through, then the orb with what is actually paid.
+   An Arcanist at Rank 3 casts everything in their spellbook for one Action Point
+   less, and the card beside the pay button has to agree with the button: a card
+   printing 3 next to a button charging 2 reads as a bug at the exact moment
+   somebody is deciding whether to pay.
+
+   The old number wears the resource's own colour, dimmed, so the pair reads as one
+   cost being revised rather than as two costs. */
+.cost-orb-cut {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cost-orb-was {
+  position: relative;
+  font-family: var(--font-headings);
+  font-weight: 800;
+  line-height: 1;
+  /* The resource's own colour, dulled towards the page rather than towards
+     nothing: a numeral at 62% alpha over the card's art is a smudge, and this is a
+     number the reader is meant to actually read. */
+  color: color-mix(in srgb, var(--orb-cut) 72%, var(--text-muted));
+  /* The same outline the orb's own numeral wears, so it keeps its edge over art. */
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.9),
+    0 1px 1px rgba(0, 0, 0, 0.85);
+}
+
+/* Struck on the diagonal, and drawn rather than decorated.
+   `line-through` runs a rule across the middle of the glyph, which is exactly
+   where a 3, a 5 and an 8 keep their own crossbar: at the 12px this is drawn at on
+   a brief, a struck 3 stops reading as a 3 at all. A diagonal never lands on a
+   digit's own stroke, and it is the mark everything else uses for a price that has
+   been revised.
+
+   Everything in ems, so the slash keeps its weight and its angle against the digit
+   at every size an orb is drawn at. */
+.cost-orb-was::after {
+  content: '';
+  position: absolute;
+  left: -0.14em;
+  right: -0.14em;
+  top: calc(50% - 0.045em);
+  height: 0.09em;
+  background: currentColor;
+  border-radius: 0.05em;
+  transform: rotate(-26deg);
+}
+
 /* ---------- SPARKLE MARK ---------- */
 .ac-spark {
   position: absolute;

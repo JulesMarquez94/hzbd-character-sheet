@@ -6,7 +6,7 @@ import { LoadoutChooser } from './LoadoutPick.jsx';
 import { BrewTools } from './BrewWindow.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { answerOn, sourceCount } from '../../lib/abilitySources.js';
-import { toggleLoadoutPick } from '../../lib/loadouts.js';
+import { poolAction, toggleLoadoutPick } from '../../lib/loadouts.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
 /**
@@ -163,7 +163,7 @@ function Section({ part, source, character, patch, readOnly, onOpen }) {
 function LoadoutTools({ loadout, character, patch, readOnly }) {
   const [choosing, setChoosing] = useState(false);
   const { talent, state } = loadout;
-  const { spec, known, remaining, over, picks } = state;
+  const { spec, known, over, picks } = state;
 
   const illegal = picks.filter((pick) => pick.card && !pick.ok).length;
 
@@ -184,9 +184,10 @@ function LoadoutTools({ loadout, character, patch, readOnly }) {
       {!readOnly && (
         <div className="pick-tools pick-tools-tight">
           <button type="button" className="btn btn-sub btn-sm" onClick={() => setChoosing(true)}>
-            {remaining
-              ? `Choose ${remaining} more ${plural(spec.noun, remaining)}`
-              : `Change your ${plural(spec.noun, 2)}`}
+            {/* The Advancement tab's own wording, shared rather than restated: the
+                two blocks raise the same chooser and a library is "opened" on both
+                of them. See poolAction in loadouts.js. */}
+            {poolAction(state)}
           </button>
         </div>
       )}

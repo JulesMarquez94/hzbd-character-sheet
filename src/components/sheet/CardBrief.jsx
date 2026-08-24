@@ -1,6 +1,6 @@
 import CostOrbs from '../CostOrbs.jsx';
 import useCodexArt from '../useCodexArt.js';
-import { cardBanner, cardGist, cardTitle, damageStyle } from '../../lib/cardText.js';
+import { cardBanner, cardCost, cardGist, cardTitle, damageStyle } from '../../lib/cardText.js';
 
 /**
  * A card said in a line rather than printed in full.
@@ -70,6 +70,11 @@ export default function CardBrief({
      art has no thumbnail, so it falls through to itself. */
   const plate = codexArt(card.art_thumb ?? card.art_url ?? art);
   const line = card.summary ?? cardGist(card, { character, modifiers });
+  /* What it costs in the hands holding it, which is not always what it printed:
+     an Arcanist at Rank 3 casts everything in their spellbook for one Action Point
+     less. The brief shows the cut the same way the card does, since the brief is
+     what a wall of two dozen spells is actually read off. */
+  const cost = cardCost(card, modifiers);
 
   return (
     <div className={`card-brief ac-kind-${card.kind ?? 'ability'}${held ? ' is-held' : ''}`}>
@@ -88,7 +93,14 @@ export default function CardBrief({
           <span className="card-brief-title">
             <span className="card-brief-name-row">
               <span className="card-brief-name">{cardTitle(card)}</span>
-              <CostOrbs ap={card.ap} wp={card.wp} size={20} className="card-brief-costs" />
+              <CostOrbs
+                ap={cost.ap}
+                wp={cost.wp}
+                size={20}
+                className="card-brief-costs"
+                apWas={cost.cut > 0 ? cost.printed : null}
+                cutFrom={cost.from}
+              />
             </span>
             {banner && <span className="card-brief-banner">{banner}</span>}
 

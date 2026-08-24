@@ -4866,13 +4866,9 @@ is still exactly the 24 it was.
 
 ### Two things left printed rather than wired
 
-- **PERFECT CASTING's discount.** The fifth card on this line, after the
-  Berserker's RECKLESS VIOLENCE and the Colossus's MARTIAL SWIFTNESS, PRACTICED
-  MOVES and COLOSSAL GRIP. `UsePrompt` deals the codex card beside the pay button
-  and the card prints its own AP, so a button charging 3 next to a card printing 4
-  reads as a bug at the exact moment somebody is deciding whether to pay. **Five
-  on one line is the argument for building somewhere to print a discounted cost**,
-  which is the fix if any of them should go live.
+- **PERFECT CASTING's discount** was the fifth card on this line and is now
+  **wired**. See "The cut, printed where it is charged" below. The other four stay
+  in prose.
 - **SPELLBOOK's free hand and voice.** A voice is not on the sheet at all. A free
   hand is, and it is still prose: the sheet has nowhere to refuse a *spell* for
   what is in your hands, and inventing one would refuse the Mycomancer's spells
@@ -4903,6 +4899,124 @@ book holds 40 spells, and the whole codex is 58 with 54 of them reachable. The
 superseded sheet's own `Open Questions` tab raised this about the older Mind +
 level formula: "a late Arcanist owns most of a school. That may be the point, or
 the formula may want to be flatter." It is still open, and it is one number.
+
+## The Arcanist's spellbook and the cut it earns, 2026-08-24
+
+Two bugs reported the same afternoon the set landed, both against the Arcanist,
+and both in the machinery the set had just introduced.
+
+> "Bug ranking up arcanist does not let you choose new spells. or change
+> yourspells
+>
+> The cost of spell shoud visible be reduced when yo utry to cast arcanist spell
+> at master, same fro all acarnist effect"
+
+### The rank-up bug: a panel capped at the wrong one of the two numbers
+
+A library has two numbers, and the day before this the whole codebase agreed that
+every chooser answered to the smaller one. `allowanceAt` is what a book may hold
+*tonight*: what is written in it, floored at the free five, plus whatever the
+window in front of the player is granting. On the sheet nothing is granting, so
+the allowance was **exactly what was already held**.
+
+Which meant the panel could never add a card, at any rank, ever. And because
+`toggleLoadoutPick` replaces the oldest pick once the allowance is met, a tap in
+that panel did not fail: it silently deleted a spell and wrote the new one in its
+place, so the count never moved. Ranking up made it worse, because ranking up
+opens the chooser: the rank widened the book by ten, the window came up on its
+own, and every tap in it looked like it had done nothing.
+
+Both halves of the report are the same line of code.
+
+**The fix is that the sheet's panel answers to the capacity and a rest answers to
+the allowance.** `loadoutState` takes `capped`, and the two panels that edit a
+pool (the set's block on the Advancement tab, and its block on the Abilities tab)
+pass `capped: 'capacity'`.
+
+This is a ruling and not only a fix, so it is worth saying what it rests on. The
+sheet's own panels are the **editing surface**: they can already change a
+Mycomancer's prepared hand on a day that is not a rest, and `swapsAtRest` says so
+in as many words. The rules live in the window that plays them, which is the rest.
+A library capped at its ceiling on the sheet is exactly parallel: the panel may
+fill the book, the rest is what grants one night's work, and a player who missed
+six nights of research is no longer locked out of them forever. **Say the word and
+it is one string in two call sites.**
+
+Three things fell out of it:
+
+- **`owed` is a third number**, because `remaining` stopped meaning what the
+  button needed. A hand owes its whole count. A library owes the five that arrive
+  with the set and *nothing after them*: room is not a debt, so a spellbook
+  holding its five with thirty places left reads as finished, and its button says
+  "open your spellbook" rather than "write in 30 more spells". `complete` is
+  measured off `owed` now, which is what stopped the count beside the label
+  reading unsettled for the rest of the character's life.
+- **A tap that displaces something says whose place it takes.** "Replace the
+  oldest" is a sensible rule and an invisible one. `displacedBy` reads the end
+  `toggleLoadoutPick` cuts from, and the wall's button reads `Learn it · Bramble
+  Whip goes`.
+- **The rest window was granting one spell per spell.** Found while proving the
+  above and fixed with it. `restSwaps` measured the allowance off the *draft*, and
+  the draft gains a card every time you tap one, so the allowance rose with it:
+  four taps, four spells, on a card that says "research a single spell". It is
+  measured off the record the night started from now, which `restActions` hands in
+  beside the draft. One tap adds, every tap after it replaces.
+
+Proved: a Rank 2 Arcanist holding five reads `5 of 24 written down` with room for
+19; a long rest offers exactly one and the second tap in it names what it would
+displace; a full book at 11 still gets its replacement.
+
+### The cut, printed where it is charged
+
+PERFECT CASTING was the fifth card in the codex to cut another card's Action Point
+cost, and the standing ruling on all five was that the arithmetic stays in prose.
+That ruling was never about the arithmetic. It was that `UsePrompt` deals the
+codex card beside the pay button, so a button charging 2 next to a card printing 3
+reads as a bug at the exact moment somebody is deciding whether to pay. Being the
+fifth is what bought the place to print it.
+
+The cut rides the card the way Empowering and advantage already do, and for the
+same reason: it is the *holder's*, not the card's. The same spell in somebody
+else's book prints its own cost.
+
+| Where | What it does |
+| ----- | ------------ |
+| `talents.js` | `discount: { from, ap: [null, 0, 0, 1], floor: 1 }` beside `boost`, indexed by rank |
+| `loadoutModifiers` | lays `apCut`, `apFloor` and `apCutFrom` on every card the pool hands out |
+| `cardCost` in `cardText.js` | the one place a printed cost and a rider that cuts it meet |
+| `CostOrb` | takes `was`, and draws the old number slashed beside the orb |
+| `combatBar` | `move.ap` is the cut number, so the chip, the prompt and the pools all charge it |
+
+The floor is the card's own word, "to a minimum of 1", so a spell printing 1 keeps
+1 and a card printing nothing is left alone: a passive has no cost for a discount
+to come off, and 1 subtracted from 0 and floored at 1 would invent a price for a
+card that has none.
+
+It shows in four places, all of which used to print the card's own number: the
+card face, the brief, the row on the Character tab and the button that charges it.
+The button also says it in words, `Perfect Casting · 3 Action Points cut to 2`,
+because that is the one line explaining why the orbs disagree with the card beside
+them. The quick-bar chip is 16 pixels of orb and has no room to slash anything, so
+it prints the cut number and says the rest on hover.
+
+**The slash is diagonal and drawn rather than decorated.** `line-through` runs a
+rule across the middle of a glyph, which is exactly where a 3, a 5 and an 8 keep
+their own crossbar: at the 12px a brief draws it at, a struck 3 stops reading as a
+3. Tried horizontal first, at two thicknesses, and it read as a currency symbol
+both times.
+
+"same for all arcanist effect" was already true of the other two. OVERLOAD's
+Empowered die and its advantage arrow have ridden the prepared card since the set
+landed, and they show on the card, the brief and the prompt.
+
+### The other four stay in prose, and it is not the same call twice
+
+RECKLESS VIOLENCE, MARTIAL SWIFTNESS, PRACTICED MOVES and COLOSSAL GRIP cut the
+cost of cards their sets hand out **no rider on**. A Berserker's attacks arrive
+off the weapon in their hands, not out of a `loadout` spec, so there is nothing of
+the set's riding them to carry an `apCut`. The place to print a discount now
+exists and is proven; what those four still need is a different rider, on the
+holder rather than on the pool. **Worth doing, and it is its own change.**
 
 ## The roster, 2026-08-24
 

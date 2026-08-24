@@ -75,7 +75,7 @@ import {
   sourceSet,
 } from './feral.js';
 import { addEffect } from './combatTurn.js';
-import { cardTitle } from './cardText.js';
+import { cardCost, cardTitle } from './cardText.js';
 import { cardUse, magazineUse, spendCardUse, spentNote, usageNote } from './uses.js';
 import {
   LEDGER_NOTE_MAX,
@@ -137,6 +137,14 @@ function rowsOf(source) {
  * so that the block only has to spend points and apply what it is handed.
  */
 function move(key, card, { name, source, modifiers = null, note = null, extra = null, ...rest }) {
+  /* What it costs in *these* hands rather than what it printed. An Arcanist at
+     Rank 3 casts everything in their spellbook for one Action Point less, so the
+     chip, the prompt's pay button and the pools all have to draw on the cut number
+     and not on the card's. `apWas` rides along so the two places that have room
+     for it can print the cost being revised rather than a number that dropped for
+     no stated reason. See cardCost in cardText.js. */
+  const cost = cardCost(card, modifiers);
+
   return {
     key,
     card,
@@ -145,7 +153,9 @@ function move(key, card, { name, source, modifiers = null, note = null, extra = 
     modifiers,
     note,
     extra,
-    ap: card?.ap ?? null,
+    ap: cost.ap ?? null,
+    apWas: cost.cut > 0 ? cost.printed : null,
+    apCutFrom: cost.from,
     wp: card?.wp ?? null,
     variable: Boolean(card?.variable),
     converts: card?.converts ?? null,

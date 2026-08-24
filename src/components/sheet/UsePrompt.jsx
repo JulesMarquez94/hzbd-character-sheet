@@ -157,6 +157,14 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
       ? extra
       : { ap: base.ap + extra.ap, wp: base.wp + extra.wp, health: extra.health };
 
+  /* What the card printed, when something the caster carries has already cut it:
+     an Arcanist at Rank 3 casts everything in their spellbook for one Action Point
+     less. Shown only while nothing else is being added on top, because an Overcast
+     moves the same number for its own reasons and two revisions on one orb is a sum
+     nobody can read. See cardCost in cardText.js. */
+  const apWas = !taken && Number(request.apWas) > 0 ? Number(request.apWas) : null;
+  const cutFrom = request.apCutFrom ?? [];
+
   const ways = converts ? [CONVERT] : price.ap > 0 ? WAYS : [CONFIRM_ONLY];
 
   /* How many more steps the pools could actually pay for. An "instead of" half
@@ -216,6 +224,18 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
         <div className="use-choices">
           <p className="use-source">{request.source}</p>
 
+          {/* Said in words as well as drawn, because this is the one line that
+              explains why the orbs below disagree with what the card was written
+              with. The card in the right-hand column strikes the old number
+              through in the same breath. */}
+          {apWas !== null && (
+            <p className="use-cut">
+              {cutFrom.length > 0 && <b>{listAnd(cutFrom)}</b>}
+              {cutFrom.length > 0 ? ' · ' : ''}
+              {apWas} Action Points cut to {price.ap}.
+            </p>
+          )}
+
           <span className="use-question">
             {converts
               ? 'How many points do you want waiting on somebody else?'
@@ -265,7 +285,15 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
                   aria-label={`${way.label}: ${costLine(price, way.resource)}`}
                 >
                   <span className="use-way-costs">
-                    {price.ap > 0 && <CostOrb kind={way.orb} value={price.ap} size={30} />}
+                    {price.ap > 0 && (
+                      <CostOrb
+                        kind={way.orb}
+                        value={price.ap}
+                        size={30}
+                        was={apWas}
+                        from={cutFrom}
+                      />
+                    )}
                     {/* A conversion shows both ends of the move, not one cost. */}
                     {converts && price.ap > 0 && <span className="use-way-arrow">&rarr;</span>}
                     {converts && price.ap > 0 && <CostOrb kind="rp" value={price.ap} size={30} />}
@@ -557,4 +585,10 @@ function shortfalls(character, { ap, wp, health }, way) {
   if (health > blood) short.push({ resource: 'Health', need: health, have: blood });
 
   return short;
+}
+
+/** "Perfect Casting", "Perfect Casting and Overload". */
+function listAnd(words) {
+  if (words.length <= 1) return words[0] ?? '';
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
