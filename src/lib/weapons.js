@@ -755,6 +755,350 @@ export const WEAPON_ABILITIES = withArt([
       'Make an {stat} Melee Attack {roll} against an entity within 1.5 Meter (5 Feet) of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage and gain Shield equal to [[stat]].',
   },
+
+  /* ----- the ten types the roster was missing, 2026-08-24 -----
+   * Off the conversion pass over data/Source Temp/. Six of the ten were named in
+   * the old weapon lists and never built (Polearm, Spear, Great Shield, Crossbow,
+   * Hand Crossbow, Tome of Incantations); three are the Thrown class, which was
+   * the only old weapon class with no descendant here at all (Javelins, Throwing
+   * Hatchets, Sling); and Paired One-Handed Weapons mirrors Paired Colossal,
+   * which was already built without its ordinary-sized twin.
+   *
+   * Every number below was priced off the scaling the other 35 cards already use,
+   * read back off them rather than invented:
+   *
+   *   light             1d6 + stat        1 to 2 AP    instinct
+   *   standard          2d6 + stat        1 to 3 AP    instinct
+   *   heavy two-handed  2d6 + 2*stat      3 to 4 AP    physique
+   *   concentrated      3d6 + stat        2 to 4 AP    mind or instinct
+   *   colossal          3d6 + 2*stat      5 to 6 AP    physique
+   *
+   * A Special Weapon Attack costs 1 Willpower and 0 to 1 AP over the plain one. A
+   * Reload costs no Willpower and its AP scales with the shots it restores: the
+   * pistol restores 3 for 3, the rifle 2 for 4, the canon 1 for 3.
+   *
+   * Three of these were wrong on the first pass and are corrected here. The Hand
+   * Crossbow shot for 1 AP and reloaded for 2, which beat the Flintlock Pistol on
+   * every axis; it is on the rifle's rate now. Paired Flurry cost 5 AP and a
+   * Willpower for what a One-Handed Weapon does in 5 AP and no Willpower. And the
+   * Great Shield's block cost what the ordinary shield's does for nearly twice
+   * the reduction.
+   */
+
+  /* ----- Polearm ----- */
+  {
+    id: 'polearm-thrust',
+    name: 'Polearm - Thrust',
+    kind: 'ability',
+    tags: ['Melee', 'Weapon Attack'],
+    ap: 4,
+    wp: null,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Melee Attack {roll} against an entity within 4.5 Meter (15 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
+  },
+  {
+    id: 'polearm-sweep',
+    name: 'Polearm - Sweep',
+    kind: 'ability',
+    tags: ['Melee', 'Special Weapon Attack'],
+    ap: 4,
+    wp: 1,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Melee Attack {roll} against all entities in a line within 4.5 Meter (15 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
+  },
+
+  /* ----- Spear -----
+   * The one weapon here that is both melee and thrown, so it teaches a melee
+   * attack and a ranged special. Throw is a Special Weapon Attack rather than a
+   * Weapon Attack because it costs the weapon: the spear is on the floor
+   * afterward, which is prose the table plays the way a placed totem would be.
+   */
+  {
+    id: 'spear-thrust',
+    name: 'Spear - Thrust',
+    kind: 'ability',
+    tags: ['Melee', 'Weapon Attack'],
+    ap: 3,
+    wp: null,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Melee Attack {roll} against an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
+  },
+  {
+    id: 'spear-throw',
+    name: 'Spear - Throw',
+    kind: 'ability',
+    tags: ['Ranged', 'Special Weapon Attack'],
+    ap: 3,
+    wp: null,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] as {damage} damage.\n\n' +
+      'The spear leaves your hand and lands where the throw ended.',
+  },
+
+  /* ----- Paired One-Handed Weapons -----
+   * Daggers are the light pair at 1d6; this is the standard one at 2d6. Flurry is
+   * 4 AP and a Willpower for two hits, against the 5 AP a One-Handed Weapon spends
+   * on a Strike and a Swift Strike for the same total. So the Willpower buys an
+   * Action Point, which is what a special is for.
+   */
+  {
+    id: 'paired-one-handed-strike',
+    name: 'Paired One-Handed Weapons - Strike',
+    kind: 'ability',
+    tags: ['Melee', 'Weapon Attack'],
+    ap: 3,
+    wp: null,
+    stat: 'instinct',
+    damage: ['Sharp', 'Blunt'],
+    body:
+      'Make an {stat} Melee Attack {roll} against an entity within 1.5 Meter (5 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
+  },
+  {
+    id: 'paired-one-handed-flurry',
+    name: 'Paired One-Handed Weapons - Flurry',
+    kind: 'ability',
+    tags: ['Melee', 'Special Weapon Attack'],
+    ap: 4,
+    wp: 1,
+    stat: 'instinct',
+    damage: ['Sharp', 'Blunt'],
+    body:
+      'Make two {stat} Melee Attacks {roll} against entities within 1.5 Meter (5 Feet) of you. You may send both at one entity or split them.\n\n' +
+      'On a hit, each deals [[2d6 + stat]] as {damage} damage.',
+  },
+
+  /* ----- Great Shield -----
+   * Wall is the only card added here that reaches another sheet, and the second
+   * sentence is the part that does. It is the same shape as the Guardian's
+   * INTERCEPT, so it is not a new idea, but cut that sentence and the card still
+   * works if reaching across turns out to be a problem.
+   */
+  {
+    id: 'great-shield-bash',
+    name: 'Great Shield - Bash',
+    kind: 'ability',
+    tags: ['Melee', 'Weapon Attack'],
+    ap: 3,
+    wp: null,
+    stat: 'physique',
+    damage: ['Blunt'],
+    body:
+      'Make a {stat} Melee Attack {roll} against an entity within 1.5 Meter (5 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] as {damage} damage and push the target 1.5 meters (5 Feet) away from you.',
+  },
+  {
+    id: 'great-shield-wall',
+    name: 'Great Shield - Wall',
+    kind: 'ability',
+    tags: ['Melee', 'Special Weapon Move'],
+    ap: 2,
+    wp: 1,
+    stat: 'physique',
+    damage: [],
+    body:
+      'You set the shield and hold it, reducing the damage from the next attack that hits you by [[3d6 + 2*stat]].\n\n' +
+      'While you hold it, an allied entity directly behind you reduces the damage of the next attack that hits it by the same amount.',
+  },
+
+  /* ----- Crossbow -----
+   * Both of these spend their special slot on the Reload, the way every firearm
+   * does, which is why the shot itself is the biggest single hit outside the
+   * Colossal class. The Crossbow holds one and restores it for 3 AP, the canon's
+   * rate. The Hand Crossbow holds two and restores them for 4, the rifle's.
+   */
+  {
+    id: 'crossbow-shoot',
+    name: 'Crossbow - Shoot',
+    kind: 'ability',
+    tags: ['Ranged', 'Weapon Attack'],
+    ap: 2,
+    wp: null,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Ranged Attack {roll} against an entity within 30 Meter (100 Feet) of you.\n\n' +
+      'On a hit, you deal [[3d6 + stat]] as {damage} damage.',
+  },
+  {
+    id: 'crossbow-reload',
+    name: 'Crossbow - Reload',
+    kind: 'ability',
+    tags: ['Ranged', 'Special Weapon Attack'],
+    ap: 3,
+    wp: null,
+    stat: 'instinct',
+    damage: [],
+    body:
+      'Your Crossbow starts loaded with 1 Shot. Every use of the Crossbow - Shoot ability consumes one shot.\n\n' +
+      'After you have used the shot, you must use this Reload ability before you can Shoot again.',
+  },
+  {
+    id: 'hand-crossbow-shoot',
+    name: 'Hand Crossbow - Shoot',
+    kind: 'ability',
+    tags: ['Ranged', 'Weapon Attack'],
+    ap: 2,
+    wp: null,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Ranged Attack {roll} against an entity within 25 Meter (80 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
+  },
+  {
+    id: 'hand-crossbow-reload',
+    name: 'Hand Crossbow - Reload',
+    kind: 'ability',
+    tags: ['Ranged', 'Special Weapon Attack'],
+    ap: 4,
+    wp: null,
+    stat: 'instinct',
+    damage: [],
+    body:
+      'Your Hand Crossbow starts loaded with 2 Shots. Every use of the Hand Crossbow - Shoot ability consumes one shot.\n\n' +
+      'After you have used all 2 shots, you must use this Reload ability to reload all shots before you can Shoot again.',
+  },
+
+  /* ----- the Thrown class -----
+   * Javelins throw for 3 AP where the Greatbow pays 4 for the same damage, and
+   * buy that Action Point with range: 18 meters against 30, and the weapon is on
+   * the floor afterward. Hatchets are the light pair, and the Sling is the
+   * lightest weapon in the game at 0.2 kg and reads like it.
+   *
+   * All three say the weapon leaves your hand and none of them says what happens
+   * next, because nothing here tracks where a thrown javelin landed. The
+   * Skirmisher set answers it for a Skirmisher; for anybody else it is the table's.
+   */
+  {
+    id: 'javelin-throw',
+    name: 'Javelins - Throw',
+    kind: 'ability',
+    tags: ['Ranged', 'Weapon Attack'],
+    ap: 3,
+    wp: null,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.\n\n' +
+      'The javelin leaves your hand and lands where the throw ended.',
+  },
+  {
+    id: 'javelin-volley',
+    name: 'Javelins - Volley',
+    kind: 'ability',
+    tags: ['Ranged', 'Special Weapon Attack'],
+    ap: 5,
+    wp: 1,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make three {stat} Ranged Attacks {roll} against entities within 18 Meter (60 Feet) of you. You may send them at one entity or split them.\n\n' +
+      'On a hit, each deals [[1d6 + stat]] as {damage} damage.',
+  },
+  {
+    id: 'hatchet-throw',
+    name: 'Throwing Hatchets - Throw',
+    kind: 'ability',
+    tags: ['Ranged', 'Weapon Attack'],
+    ap: 2,
+    wp: null,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'On a hit, you deal [[1d6 + stat]] as {damage} damage.\n\n' +
+      'The hatchet leaves your hand and lands where the throw ended.',
+  },
+  {
+    id: 'hatchet-double-throw',
+    name: 'Throwing Hatchets - Double Throw',
+    kind: 'ability',
+    tags: ['Ranged', 'Special Weapon Attack'],
+    ap: 4,
+    wp: 1,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make two {stat} Ranged Attacks {roll} against entities within 18 Meter (60 Feet) of you. You may send both at one entity or split them.\n\n' +
+      'On a hit, each deals [[1d6 + stat]] as {damage} damage.',
+  },
+  {
+    id: 'sling-shot',
+    name: 'Sling - Shot',
+    kind: 'ability',
+    tags: ['Ranged', 'Weapon Attack'],
+    ap: 2,
+    wp: null,
+    stat: 'instinct',
+    damage: ['Blunt'],
+    body:
+      'Make an {stat} Ranged Attack {roll} against an entity within 25 Meter (80 Feet) of you.\n\n' +
+      'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
+  },
+  {
+    id: 'sling-whirl',
+    name: 'Sling - Whirl',
+    kind: 'ability',
+    tags: ['Ranged', 'Special Weapon Attack'],
+    ap: 4,
+    wp: 1,
+    stat: 'instinct',
+    damage: ['Blunt'],
+    body:
+      'You whirl the sling until the stone is going faster than it should.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against an entity within 35 Meter (115 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
+  },
+
+  /* ----- Tome of Incantations -----
+   * The Incant the old weapon lists named twice and nobody built. A Focus like
+   * the Wand and the Staff, and Inscribe is their Imbue: the same card with a
+   * longer hold, 5 turns against 3, which is what both hands on it buys.
+   *
+   * Against the Staff it is the same 4 AP for 2d6 + 2*stat rather than 3d6 + stat.
+   * So the Staff has the higher floor and the Tome scales with Mind, and they
+   * cross at about Mind 4.
+   */
+  {
+    id: 'tome-recite',
+    name: 'Tome of Incantations - Recite',
+    kind: 'ability',
+    tags: ['Ranged', 'Weapon Attack'],
+    ap: 4,
+    wp: null,
+    stat: 'mind',
+    damage: ['Elemental'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
+  },
+  {
+    id: 'tome-inscribe',
+    name: 'Tome of Incantations - Inscribe',
+    kind: 'ability',
+    tags: ['Ranged', 'Special Weapon Move'],
+    ap: 2,
+    wp: 2,
+    stat: 'mind',
+    damage: [],
+    body:
+      'Before a Tome of Incantations can be used, you must use the Inscribe ability to activate it for 5 turns.\n\n' +
+      'When you Inscribe the tome, choose an elemental damage type from Cold, Fire or Lightning. Your tome deals damage of that chosen element.',
+  },
 ]);
 
 /* -------------------------------------------------------------- the weapons */
@@ -1026,6 +1370,149 @@ export const WEAPONS = [
     weight: 0,
     cost: 0,
     abilities: ['claws-shred', 'teeth-bite'],
+  },
+
+  /* ----- the ten missing types, 2026-08-24 -----
+   * See the block of the same name in WEAPON_ABILITIES above for where these came
+   * from and how every number was priced.
+   *
+   * **Two new tag values, and only two**: `Crossbow` and `Thrown`. Everything else
+   * reuses a tag the wall already knows, which is deliberate — a tag here is what
+   * a talent set matches on (`weaponRiders` in moves.js does a plain membership
+   * check), so a new tag value is a new thing for a set to fail to cover.
+   *
+   * **Three tags left off on purpose**, because carrying them would have quietly
+   * handed an existing set a weapon it was never written for:
+   *
+   *   Spear has no `One-Handed`. The Whip does not carry it either, though a whip
+   *   is swung one-handed, so on this wall a reach weapon carries `Reach` and
+   *   stops there. Adding it would have given a Duelist a spear that reaches 3
+   *   meters and can be thrown, on top of everything DEXTEROUS already gives.
+   *
+   *   Great Shield has no `Two-Handed`, matching Shield & One-Handed, which
+   *   carries `Shielded` alone. Adding it would have made this the only weapon in
+   *   the codex satisfying two sets' `weapon` tags at once, and a Colossus with a
+   *   shield is not a thing anybody has ruled on.
+   *
+   *   Tome of Incantations has no `Two-Handed`, matching the Staff. Same reason:
+   *   COLOSSAL FORCE would have started Elevating a spellbook.
+   *
+   * Polearm *does* carry `Two-Handed`, because Colossal Polearm already does and
+   * the ordinary one should read the same. That is the one new weapon an existing
+   * set reaches, and it is the Colossus reaching a polearm, which is right.
+   *
+   * No `natural: true` on any of them, and no art: nothing here has a picture yet,
+   * which is the same state every other weapon on this wall is in.
+   */
+  {
+    id: 'polearm',
+    name: 'Polearm',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Reach'],
+    blurb: 'A halberd or glaive, held at the far end, hitting things that have not arrived yet.',
+    burden: 0,
+    weight: 3,
+    cost: 4000,
+    abilities: ['polearm-thrust', 'polearm-sweep'],
+  },
+  {
+    id: 'spear',
+    name: 'Spear',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Melee Weapon', 'Reach', 'Thrown'],
+    blurb: 'A long shaft with a point on it, kept between you and the trouble, or sent at it.',
+    burden: 0,
+    weight: 2,
+    cost: 4000,
+    abilities: ['spear-thrust', 'spear-throw'],
+  },
+  {
+    id: 'paired-one-handed',
+    name: 'Paired One-Handed Weapons',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Melee Weapon', 'Paired'],
+    blurb: 'A full weapon in each hand, and nothing spare to catch anything with.',
+    burden: 0,
+    weight: 3,
+    cost: 4000,
+    abilities: ['paired-one-handed-strike', 'paired-one-handed-flurry'],
+  },
+  {
+    id: 'great-shield',
+    name: 'Great Shield',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Melee Weapon', 'Shielded'],
+    blurb: 'A door with a handle, and both hands are on it.',
+    burden: 0,
+    weight: 12,
+    cost: 4000,
+    abilities: ['great-shield-bash', 'great-shield-wall'],
+  },
+  {
+    id: 'crossbow',
+    name: 'Crossbow',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Ranged Weapon', 'Crossbow'],
+    blurb: 'Wound tight, held loaded and spent all at once.',
+    burden: 0,
+    weight: 4,
+    cost: 4000,
+    abilities: ['crossbow-shoot', 'crossbow-reload'],
+  },
+  {
+    id: 'hand-crossbow',
+    name: 'Hand Crossbow',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Ranged Weapon', 'Crossbow'],
+    blurb: 'Small enough for one hand, and quiet enough that the first anyone knows is the bolt.',
+    burden: 0,
+    weight: 1.5,
+    cost: 4000,
+    abilities: ['hand-crossbow-shoot', 'hand-crossbow-reload'],
+  },
+  {
+    id: 'javelins',
+    name: 'Javelins',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Ranged Weapon', 'Thrown'],
+    blurb: 'A bundle of iron-tipped shafts, and each one is meant to be left behind.',
+    burden: 0,
+    weight: 2.4,
+    cost: 4000,
+    abilities: ['javelin-throw', 'javelin-volley'],
+  },
+  {
+    id: 'throwing-hatchets',
+    name: 'Throwing Hatchets',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Ranged Weapon', 'Thrown', 'Paired'],
+    blurb: 'Short-hafted axes balanced to turn once and stop.',
+    burden: 0,
+    weight: 1.6,
+    cost: 4000,
+    abilities: ['hatchet-throw', 'hatchet-double-throw'],
+  },
+  {
+    id: 'sling',
+    name: 'Sling',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Ranged Weapon', 'Thrown'],
+    blurb: 'A strap and a stone, which is all it has ever needed to be.',
+    burden: 0,
+    weight: 0.2,
+    cost: 4000,
+    abilities: ['sling-shot', 'sling-whirl'],
+  },
+  {
+    id: 'tome-of-incantations',
+    name: 'Tome of Incantations',
+    slots: ['main_hand', 'off_hand'],
+    tags: ['Common', 'Ranged Weapon', 'Focus'],
+    blurb: 'A clasped book read aloud from, held open on the forearm.',
+    burden: 0,
+    weight: 2.2,
+    cost: 4000,
+    abilities: ['tome-recite', 'tome-inscribe'],
   },
 
   /* ----- enchanted weapons ----- */

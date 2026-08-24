@@ -15,3 +15,9 @@
 
 # The templates and the schema notes are the importer's contract, so they stay tracked.
 !templates/*.csv
+
+# Source Temp is the pile of everything ever made for the system across its
+# iterations: PDFs, docx, pptx, rar and a thousand pictures. It is here so it
+# can be read, never so it can ship. The rules above only catch sheets and
+# pictures, so the whole folder goes.
+Source Temp/

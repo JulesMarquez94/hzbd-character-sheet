@@ -225,9 +225,13 @@ function glyphForItem(item) {
   if (tags.includes('Bag')) return 'bag';
   if (tags.includes('Potion')) return 'flask';
   if (tags.includes('Bow')) return 'bow';
+  if (tags.includes('Crossbow')) return 'bow';
   if (tags.includes('Firearm')) return 'firearm';
   if (tags.includes('Focus')) return 'focus';
   if (tags.includes('Shielded')) return 'off_hand';
+  // A thrown weapon is a ranged one you hold, so it wears the hand rather than
+  // the bow the generic Ranged Weapon fallback below would have given it.
+  if (tags.includes('Thrown')) return 'main_hand';
   if (tags.includes('Melee Weapon')) return 'main_hand';
   if (tags.includes('Ranged Weapon')) return 'bow';
   // A trinket says what kind it is in its tags, and a ring and a cloak are not

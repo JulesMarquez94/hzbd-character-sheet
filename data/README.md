@@ -78,6 +78,7 @@ doing on its own.
 | Talent Set · Colossus · Overview and Ability | **2026-08-23, 1 set + 7 cards** | `src/lib/talents.js` (`TALENTS`) |
 | Talent Set · Colossus · Developpement Notes | **2026-08-23, a whole weapon category** | `src/lib/weapons.js`, 4 weapons + 8 cards |
 | Colossus art, from the `Colossus/` folder | **2026-08-23, 7 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| The ten missing weapon types, off `Source Temp/` | **2026-08-24, 10 weapons + 20 cards** | `src/lib/weapons.js`, `itemParts.jsx` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -3962,3 +3963,126 @@ adjective rather than the name, which two letters is enough to defeat. It is in
 
 Pasting the `id` and `Image` columns out of `templates/colossus-ability.csv` back
 into the sheet retires all three.
+
+## The ten missing weapon types, 2026-08-24
+
+Off the conversion pass over `data/Source Temp/`, which is a folder of everything
+ever made for the system across its iterations. That pass produced 20 workbooks
+under `data/Conversion/` and nothing else; this is the first of them to reach
+`src/`, and it is the weapons only.
+
+**Ten weapons and twenty ability cards.** Six were named in the old weapon lists
+and never built: Polearm, Spear, Great Shield, Crossbow, Hand Crossbow and the
+Tome of Incantations, which the old category tab called Incant. Three are the
+Thrown class, which was the only old weapon class with no descendant here at all:
+Javelins, Throwing Hatchets and the Sling. And Paired One-Handed Weapons mirrors
+Paired Colossal Weapons, which had been built without its ordinary-sized twin.
+
+The wall goes from 26 weapons to 36, and `CARDS` from 303 to 323.
+
+### Two new tag values, and only two
+
+`Crossbow` and `Thrown`. Everything else reuses a tag the wall already knows:
+`Reach` for the Polearm and the Spear, `Focus` for the Tome, `Paired` for the two
+new pairs, `Shielded` for the Great Shield.
+
+That restraint is deliberate, because a tag here is not decoration. `weaponRiders`
+in `moves.js` does a plain membership check against a talent set's `weapon` tag, so
+every new tag value is a new thing for a set to fail to cover.
+
+### Three tags left off on purpose
+
+This is the part worth knowing, because each one would have quietly handed an
+existing set a weapon nobody wrote it for.
+
+**Spear carries no `One-Handed`.** The Whip does not carry it either, though a whip
+is swung in one hand, so on this wall a reach weapon carries `Reach` and stops
+there. Tagging the Spear `One-Handed` would have given a Duelist a weapon that
+reaches 3 meters and can be thrown, on top of everything DEXTEROUS already grants.
+
+**Great Shield carries no `Two-Handed`**, matching `Shield & One-Handed`, which
+carries `Shielded` alone. Otherwise it would be the only weapon in the codex
+satisfying two sets' `weapon` tags at once, and a Colossus holding a shield is not
+a thing anybody has ruled on.
+
+**Tome of Incantations carries no `Two-Handed`**, matching the Staff, for the same
+reason: COLOSSAL FORCE would have started Elevating a spellbook.
+
+Polearm *does* carry `Two-Handed`, because Colossal Polearm already does and the
+ordinary one should read the same. It is the one new weapon an existing set
+reaches, and it is the Colossus reaching a polearm, which is right.
+
+### Every number came off the other 35 cards
+
+Read back off them rather than invented:
+
+| Class | Damage | AP | stat |
+| ----- | ------ | -- | ---- |
+| light | `1d6 + stat` | 1 to 2 | instinct |
+| standard | `2d6 + stat` | 1 to 3 | instinct |
+| heavy two-handed | `2d6 + 2*stat` | 3 to 4 | physique |
+| concentrated | `3d6 + stat` | 2 to 4 | mind or instinct |
+| colossal | `3d6 + 2*stat` | 5 to 6 | physique |
+
+A Special Weapon Attack costs 1 Willpower and 0 to 1 Action Points over the plain
+one. A Reload costs no Willpower and its Action Points scale with the shots it
+restores: the pistol restores 3 for 3, the rifle 2 for 4, the canon 1 for 3. The
+Crossbow restores 1 for 3 and the Hand Crossbow 2 for 4, which are the canon's
+rate and the rifle's.
+
+### Three of them were wrong, and the arithmetic is why
+
+Each new weapon was checked cycle by cycle against its nearest built neighbour at
+attribute 10. Three came out strictly better than something already shipped.
+
+**Hand Crossbow** shot for 1 Action Point and reloaded for 2, so a full cycle was
+4 points for 34 damage where a Flintlock Pistol spends 6 for 40.5. Better per
+point, better per shot, longer reach on the bigger die. It is on the rifle's rate
+now: 2 a shot, 4 to reload.
+
+**Paired One-Handed Flurry** cost 5 Action Points and a Willpower for two hits
+totalling 34, which is exactly what a One-Handed Weapon does with a Strike and a
+Swift Strike for 5 points and no Willpower. Now 4, so the Willpower buys a point.
+
+**Great Shield Wall** cost 1 point and a Willpower, the same as the ordinary
+`shield-block`, for `3d6 + 2*stat` against that card's `2d6 + stat` plus cover for
+an ally behind. Now 2.
+
+### Two trades left in, deliberately
+
+**Javelins throw for 3 Action Points** where the Greatbow pays 4 for the same
+`2d6 + 2*stat`. The javelin buys that point with range, 18 meters against 30, and
+with the weapon being on the floor afterward. If it should cost 4, it is one number.
+
+**Great Shield is a straight upgrade on `Shield & One-Handed`** on both cards. Its
+price is 12 kg against 6, and carry weight is 10 kg a point of Physique, so the
+6 kg is a real cost on the sheet rather than on the card. That is the flat-cost
+rule of 2026-08-22 doing its job: weight is the only field that separates two
+weapons, so weight is where a difference has to go.
+
+### No pictures, and that is not a gap
+
+`art_url` is `null` on all ten and on all twenty cards, which is the state every
+other weapon on this wall is already in: not one weapon or weapon ability has
+art today. Nothing was added to `itemArt.js` or `cardArt.js`, and nothing needs
+to be until there are pictures. The Image Prompts tab of
+`data/Conversion/Weapons.xlsx` holds a prompt for each of the ten.
+
+### Two glyph cases
+
+`glyphForItem` in `itemParts.jsx` picks an icon off the family tag, and its own
+comment says a bow should never show up as a sword. `Crossbow` now returns the bow
+and `Thrown` returns the hand, rather than both falling through to the generic
+`Ranged Weapon` bow, which would have drawn a longbow for a sling.
+
+### How it was proved
+
+`lint:text`, `lint:math`, `lint:halves`, `lint:riders`, `eslint` and `vite build`
+all clean. `lint:text` caught one serial comma in the Crossbow blurb, which is
+what it is for.
+
+Then every one of the twenty bodies was run through `resolveValue` against a
+Physique 8, Instinct 10, Mind 6 character at level 5: **20 of 20 resolve, no
+`NaN`, and no leftover marker outside `{stat}`, `{roll}` and `{damage}`.** Ids are
+unique across all 323 cards and every `abilities` reference resolves through
+`getCard`.
