@@ -88,6 +88,7 @@ import { feralArmorFrom, feralShieldShare, feralState } from './feral.js';
 import { levelGrants, levelPicksState, lineageBonuses } from './levelPicks.js';
 import { weaponRiders } from './moves.js';
 import { runningRiders } from './riders.js';
+import { spellbookWillpowerFrom } from './spellbook.js';
 import { pointCeilings, tricksterOf } from './tricks.js';
 
 /* Speed is the one stat whose formula is written in metres and printed in either
@@ -445,6 +446,12 @@ export function statMath(character) {
       term(2 * m, 'Mind'),
       ...grantTerms(sources, 'willpowerMax'),
       ...riderTerms(character.effects, 'willpowerMax'),
+      /* Named after the set and not the card, the way a form's hide is: what a
+         reader wants from a Willpower of 62 is the word "Arcanist", and the set
+         is what they can go and look at. */
+      ...spellbookWillpowerFrom(character.talents).map((row) =>
+        term(row.willpower, row.talent.name)
+      ),
     ],
     Math.floor(Number(character.willpower_max) || 0)
   );

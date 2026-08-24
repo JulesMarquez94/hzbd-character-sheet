@@ -25,6 +25,22 @@
  * permission is the set's own `swap` list, transcribed off the granting card,
  * and the bottom of this file is what a rest needs to honour it: who may swap,
  * and what actually changed when they did.
+ *
+ * ------------------------------------------------------------- two shapes
+ * A pool is either a **hand** or a **library**, and the spec says which by
+ * carrying `known` or `capacity`.
+ *
+ *   a hand      a fixed size per rank, re-chosen freely. A Mycomancer knows
+ *               four Primal spells at Rank 2, has four, and cannot have five.
+ *               `swap: ['long']` re-prepares any number of them.
+ *   a library   a ceiling per rank *and level*, filled one card at a time and
+ *               never emptied. An Arcanist's spellbook holds 10 x rank + level,
+ *               starts with `start` cards and grows by `research: ['long']`,
+ *               one a rest, replacing only once it is full.
+ *
+ * The difference the code actually turns on is **capacity against allowance**.
+ * A hand has one number and they are the same. A library has two: what it could
+ * hold one day, and what it may hold tonight. See `allowanceAt`.
  */
 
 import { castModifier } from './cardText.js';
@@ -38,6 +54,19 @@ function tierOf(card) {
     if (match) return match[1];
   }
   return null;
+}
+
+/**
+ * What a card calls its rung when the rung is not on the ladder: "Unique".
+ *
+ * Only ever used to say *why* a card was refused, so a reader is told the real
+ * word off the card rather than "no tier". A card whose first tag is not a rung
+ * at all has none to report, and "Untiered" is the honest answer for it.
+ */
+function tierWord(card) {
+  const first = (card.tags ?? [])[0] ?? '';
+  const word = first.replace(/\s*(Spell|Martial Move|Talent|Ability)\s*$/i, '').trim();
+  return word || 'Untiered';
 }
 
 /**
@@ -76,9 +105,108 @@ export function loadoutPool(spec) {
   return CARDS.filter((card) => card.kind === spec.kind);
 }
 
-/** How many cards a set knows at a given rank. */
-export function knownAt(spec, rank) {
+/** Whether a spec keeps a library rather than a prepared hand. */
+export function isLibrary(spec) {
+  return Boolean(spec?.capacity);
+}
+
+/**
+ * How many cards a set knows at a given rank.
+ *
+ * For a hand that is the whole story and `level` is ignored. For a library it
+ * falls through to the ceiling, so every caller that only ever wanted "how big
+ * can this get" keeps working without knowing which shape it is holding: the
+ * rank preview counts it, and `TalentBlock` compares two ranks of it to decide
+ * whether a rank just widened the pool enough to open the chooser.
+ */
+export function knownAt(spec, rank, level = 1) {
+  if (isLibrary(spec)) return capacityAt(spec, rank, level);
   return spec?.known?.[rank] ?? 0;
+}
+
+/**
+ * The ceiling on a library: everything it could ever hold at this rank and this
+ * level.
+ *
+ * ARCANE RESEARCH: "Your spellbook can hold a number of spells equal to your
+ * Rank in Arcanist multiplied by 10 + your level." The formula is the spec's
+ * `{ perRank, perLevel }` rather than a number per rank, because level moves
+ * underneath it and no `known` array can be indexed by two things.
+ *
+ * A rank of 0 is a set not taken, and it holds nothing. The level floors at 1,
+ * which is the only level a character can actually be at their lowest.
+ */
+export function capacityAt(spec, rank, level = 1) {
+  if (!isLibrary(spec)) return spec?.known?.[rank] ?? 0;
+  if (!(Math.floor(Number(rank) || 0) > 0)) return 0;
+
+  const perRank = Math.floor(Number(spec.capacity.perRank) || 0) * Math.floor(Number(rank) || 0);
+  const perLevel =
+    Math.floor(Number(spec.capacity.perLevel) || 0) * Math.max(1, Math.floor(Number(level) || 1));
+  return Math.max(0, perRank + perLevel);
+}
+
+/**
+ * How many a character may hold **right now**, which is the number every chooser
+ * is actually capped at.
+ *
+ * For a hand it is the hand: nothing about it grows between ranks.
+ *
+ * For a library it is the interesting one. A spellbook holding 11 does not hand
+ * over 11 spells, it hands over `start` of them and then one a night, and the
+ * only record of how many nights have been spent is **how many are written in
+ * it**. So the allowance is what is held, floored at the free grant and ceilinged
+ * at the capacity, plus whatever the window in front of the player is granting:
+ * `grant: 1` is a long rest's research action, and it is what lets exactly one
+ * more card in. Past that the chooser's own "replace the oldest" takes over,
+ * which is the card's "you will have to replace a spell" without a line of its
+ * own.
+ *
+ * No stored counter, deliberately. A `researched: 6` column on the talent entry
+ * would be a second source of truth for a thing the picks already say, and the
+ * two would drift the first time somebody edited a book by hand.
+ */
+export function allowanceAt(spec, rank, level = 1, held = 0, grant = 0) {
+  if (!isLibrary(spec)) return knownAt(spec, rank);
+
+  const capacity = capacityAt(spec, rank, level);
+  if (capacity === 0) return 0;
+
+  const start = Math.max(0, Math.floor(Number(spec.start) || 0));
+  const have = Math.max(0, Math.floor(Number(held) || 0));
+  const step = Math.max(0, Math.floor(Number(grant) || 0));
+  return Math.min(capacity, Math.max(start, have) + step);
+}
+
+/**
+ * The rider a set imposes on the cards it hands out, at the rank it is held at.
+ *
+ * Two things ride, and they arrive from different places. `cast` is the set's
+ * and never changes: a Mycomancer's spells are cast on Instinct at every rank.
+ * `boost` is a *rank's*, and the Arcanist's OVERLOAD is the first of them:
+ * "All spells from your spellbook are Empowered and you have Advantage when
+ * rolling for those spells" is a Rank 2 card, so it is an array indexed by rank
+ * like every other grant in the codex.
+ *
+ * Both end up on the prepared card rather than in its text, which is the whole
+ * point: the same spell in somebody else's book prints no extra die and no
+ * arrow, and neither card had to be rewritten to say so.
+ */
+export function loadoutModifiers(spec, rank) {
+  const cast = castModifier(spec);
+  if (!spec?.boost) return cast;
+
+  const empower = Math.max(0, Math.floor(Number(spec.boost.empower?.[rank]) || 0));
+  const advantage = Math.max(0, Math.floor(Number(spec.boost.advantage?.[rank]) || 0));
+  if (empower === 0 && advantage === 0) return cast;
+
+  return {
+    ...(cast ?? {}),
+    ...(empower > 0 ? { empower } : {}),
+    /* Named, because the arrow in the card's corner says what lent it and a
+       reader with two sources of advantage needs to know which came off. */
+    ...(advantage > 0 ? { advantage, advantageFrom: [spec.boost.from ?? spec.label] } : {}),
+  };
 }
 
 /** Which tiers that rank may learn from. */
@@ -127,7 +255,7 @@ export function loadoutOptions({ talent, rank, picks }) {
 
   const held = new Set(picks ?? []);
   const legalTiers = tiersAt(spec, rank);
-  const modifiers = castModifier(spec);
+  const modifiers = loadoutModifiers(spec, rank);
 
   return loadoutPool(spec)
     .map((card) => {
@@ -137,11 +265,32 @@ export function loadoutOptions({ talent, rank, picks }) {
       const known = held.has(card.id);
       const row = { card, tier, school, sub, known, modifiers };
 
+      /* A stand-in for a school nobody has written yet: `unwritten-light` and
+         `unwritten-shadow` in spells.js, which exist to fill an Innate slot and
+         say on their face that they are standing in. Refused as a school, because
+         that is what it is: the school is not written, so there is nothing here
+         to learn. */
+      if (card.placeholder) {
+        return { ...row, ok: false, gate: 'school', reason: 'a stand-in for a school not written yet' };
+      }
       if (spec.school && school && school !== spec.school) {
         return { ...row, ok: false, gate: 'school', reason: `${school} school, not ${spec.school}` };
       }
-      if (tier && legalTiers.length > 0 && !legalTiers.includes(tier)) {
-        return { ...row, ok: false, gate: 'tier', reason: `${tier} needs a higher rank` };
+      /* No `tier &&` guard any more, and that is a real change. A card off the
+         ladder used to pass this gate, and it was safe only because the school
+         gate above caught it first: spells.js says so in as many words, that a
+         Unique Spell stays out of every pool because "no set's school is
+         Elemental or Nightmare". The Arcanist is the first spec to name no
+         school at all, so that gate no longer fires and this one has to. */
+      if (legalTiers.length > 0 && !legalTiers.includes(tier)) {
+        return {
+          ...row,
+          ok: false,
+          gate: 'tier',
+          reason: tier
+            ? `${tier} needs a higher rank`
+            : `${tierWord(card)} is not a rung any set reaches`,
+        };
       }
       return { ...row, ok: true };
     })
@@ -151,8 +300,18 @@ export function loadoutOptions({ talent, rank, picks }) {
     });
 }
 
-/** Everything the panel needs about one set's loadout. */
-export function loadoutState(talents, talent) {
+/**
+ * Everything the panel needs about one set's loadout.
+ *
+ * `level` is the character's, and only a library reads it: it is half of the
+ * ceiling formula, so a state worked out without it would quietly under-report a
+ * spellbook by up to ten spells. Every caller that holds a character passes it.
+ *
+ * `grant` is what the window in front of the player is handing over on top of
+ * what they already hold, and it is only ever 1: a long rest's research action.
+ * See `allowanceAt`.
+ */
+export function loadoutState(talents, talent, { level = 1, grant = 0 } = {}) {
   const spec = loadoutOf(talent);
   if (!spec) return null;
 
@@ -164,7 +323,7 @@ export function loadoutState(talents, talent) {
   // is no longer legal. It is shown as held and counted, because quietly
   // deleting somebody's spell is worse than showing one they have to fix.
   const legal = new Set(options.filter((option) => option.ok).map((option) => option.card.id));
-  const modifiers = castModifier(spec);
+  const modifiers = loadoutModifiers(spec, rank);
   const picks = (entry?.picks ?? []).map((id) => ({
     id,
     card: options.find((option) => option.card.id === id)?.card ?? null,
@@ -172,13 +331,23 @@ export function loadoutState(talents, talent) {
     modifiers,
   }));
 
-  const known = knownAt(spec, rank);
+  /* The two numbers, and for a hand they are the same one twice. `known` is
+     what the chooser is capped at and what every "3 of 4 chosen" line counts
+     against; `capacity` is the ceiling a library is working towards, and it is
+     the only number ARCANE RESEARCH actually prints. */
+  const capacity = capacityAt(spec, rank, level);
+  const known = allowanceAt(spec, rank, level, picks.length, grant);
 
   return {
     spec,
     rank,
     picks,
     known,
+    capacity,
+    library: isLibrary(spec),
+    /* Whether there is any room left at all, which is what turns the rest window's
+       line from "adds one more" into "replaces one already written". */
+    full: isLibrary(spec) && picks.length >= capacity,
     chosen: picks.length,
     remaining: Math.max(0, known - picks.length),
     over: Math.max(0, picks.length - known),
@@ -225,6 +394,19 @@ export function swapsAtRest(spec, kind) {
 }
 
 /**
+ * And whether a set may research **one** more into its library on this rest.
+ *
+ * The other half of the same permission, kept apart from it because the two
+ * cards say different things and a rest has to offer the difference. FUNGAL
+ * INVOCATION changes any number of spells and takes nothing new; ARCANE RESEARCH
+ * takes exactly one new one and changes nothing. A spec carries one or the
+ * other, never both.
+ */
+export function researchesAtRest(spec, kind) {
+  return Array.isArray(spec?.research) && spec.research.includes(kind);
+}
+
+/**
  * Every set this character holds that may re-prepare itself on this rest, each
  * with the whole state its chooser needs.
  *
@@ -232,15 +414,31 @@ export function swapsAtRest(spec, kind) {
  * there is nothing to swap, and an empty pool in the rest window is a row that
  * only asks to be tapped and then apologises.
  */
-export function restSwaps(talents, kind) {
+export function restSwaps(talents, kind, level = 1) {
   const rows = [];
 
   for (const entry of normalizeTalents(talents)) {
     const talent = getTalent(entry.id);
-    if (!talent || !swapsAtRest(loadoutOf(talent), kind)) continue;
+    if (!talent) continue;
+    const spec = loadoutOf(talent);
 
-    const state = loadoutState(talents, talent);
-    if (state && state.known > 0) rows.push({ talent, state });
+    /* A library is offered its one research, and `grant: 1` is what makes that
+       real rather than a label: the window's chooser is capped at the state's
+       `known`, so an allowance one above what is held lets exactly one card in
+       and makes the tap after it replace instead of add.
+
+       Offered on `capacity` rather than on `known`, because a full book still
+       has something to do tonight. Refusing the row there would be refusing the
+       replacement the card promises. */
+    if (researchesAtRest(spec, kind)) {
+      const state = loadoutState(talents, talent, { level, grant: 1 });
+      if (state && state.capacity > 0) rows.push({ talent, state, mode: 'research' });
+      continue;
+    }
+
+    if (!swapsAtRest(spec, kind)) continue;
+    const state = loadoutState(talents, talent, { level });
+    if (state && state.known > 0) rows.push({ talent, state, mode: 'swap' });
   }
 
   return rows;
@@ -313,12 +511,15 @@ export function newAtRank(talent, rank) {
 }
 
 /** What a rank would open up, for the preview page that has not taken it yet. */
-export function rankPreview(talent, rank) {
+export function rankPreview(talent, rank, level = 1) {
   const spec = loadoutOf(talent);
   if (!spec) return null;
 
-  const known = knownAt(spec, rank);
-  const previous = knownAt(spec, rank - 1);
+  /* For a library these two are ceilings rather than hands, so `gained` below is
+     room made and not cards handed over. The note that prints it says which, and
+     it is the reason `library` rides along. See LoadoutRankNote. */
+  const known = knownAt(spec, rank, level);
+  const previous = knownAt(spec, rank - 1, level);
   const tiers = tiersAt(spec, rank);
   const { legal, fresh, opened, widens } = rankOptions(talent, rank);
 
@@ -335,5 +536,9 @@ export function rankPreview(talent, rank) {
        go on offering them. */
     count: fresh.length,
     reach: legal.length,
+    library: isLibrary(spec),
+    /* What a library actually hands you at this rank, which is only ever the free
+       grant at Rank 1. Every later rank raises the ceiling and gives no card. */
+    granted: isLibrary(spec) && rank === 1 ? Math.max(0, Math.floor(Number(spec.start) || 0)) : 0,
   };
 }

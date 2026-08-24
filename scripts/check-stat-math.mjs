@@ -377,6 +377,35 @@ const SHEETS = [
       if (bark && bark.value !== 1) fail(`Barkskin worth ${bark.value}, want 1`);
     },
   },
+  {
+    /* The only source of Willpower on the sheet that is neither worn nor running:
+       an Arcanist's SPELLBOOK is worth 4 a rank for holding the rank, and nothing
+       has to be laid, cast or transformed into for it. Which makes it the exact
+       shape this file exists to catch, because it lands in two files at once and
+       a rider that reached `deriveStats` without reaching `statMath` would leave
+       the tooltip quietly short by twelve.
+
+       Rank 3 rather than 1, so a wrong reading that dropped the multiplication
+       still fails: 4 and 12 are different numbers, where 4 and 4 would not be. */
+    name: 'a Master Arcanist, whose spellbook is worth Willpower for the rank alone',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      talents: [
+        {
+          id: 'arcanist',
+          rank: 3,
+          taken: [1, 2, 4],
+          picks: ['bramble-whip', 'barkskin', 'entangling-roots'],
+        },
+      ],
+    },
+    expect: (math, fail) => {
+      const book = math.willpower_max.terms.find((t) => t.label === 'Arcanist');
+      if (!book) fail('the spellbook raised the Willpower and the line does not name the set');
+      if (book && book.value !== 12) fail(`Arcanist worth ${book.value}, want 12`);
+    },
+  },
 ];
 
 /** A row the sheet has brought into line with its own ledger, then bent. */

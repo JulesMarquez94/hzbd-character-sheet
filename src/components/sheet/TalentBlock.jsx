@@ -148,6 +148,9 @@ export default function TalentPick({
             const rank = from + 1;
 
             const spec = loadoutOf(id);
+            /* A library widens with every rank too, so this opens the book the
+               moment a rank buys room in it. The level is not threaded here on
+               purpose: both sides read the same one, so it cancels. */
             if (spec && knownAt(spec, rank) > knownAt(spec, from)) setJustTook(id);
 
             /* And the same for a set that lays rather than picks. WIELDER OF

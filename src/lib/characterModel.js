@@ -16,6 +16,7 @@ import { ephemeralGrants, wornIds } from './enchanting.js';
 import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
 import { feralArmor, feralShieldShare } from './feral.js';
+import { spellbookWillpower } from './spellbook.js';
 import { effectRiders, riderShift } from './riders.js';
 
 export const BLANK_CHARACTER = {
@@ -408,7 +409,14 @@ export function deriveStats(character, extra = null, running = null) {
        BESTIAL SENSE says so, which is the one thing that lets FERAL FORM's "twice
        as much Shield" actually pay twice. See shieldShareFor below. */
     shield_cap: shieldCap(health_max, shieldShareFor(character)) + (gear.shieldCapMind ? m : 0),
-    willpower_max: Math.floor(2 * lvl + 2 * m + 10 + flat('willpowerMax')),
+      /* And what a bound book is worth. An Arcanist's SPELLBOOK grants 4 Willpower
+       a rank, which is the one thing on that track that is not about spells. Read
+       off the set rather than the tracker, because it is a Novice passive and not
+       a state: the Willpower is there before the first spell is written and stays
+       after the book is full. See spellbook.js. */
+    willpower_max: Math.floor(
+      2 * lvl + 2 * m + 10 + flat('willpowerMax') + spellbookWillpower(character?.talents)
+    ),
     avoid: Math.floor(avoid),
     defense: Math.floor(armorTotal),
     initiative: Math.floor(i + lvl),

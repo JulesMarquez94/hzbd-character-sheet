@@ -2258,6 +2258,225 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    id: 'arcanist',
+    name: 'Arcanist',
+    /* The eleventh set, from `Talent Set - Arcanist - Ability.csv`, 2026-08-24, and
+       the first caster on the wall whose spells are not a *hand*.
+
+       Every other choosing set prepares: a Mycomancer knows four Primal spells,
+       swaps any number of them at a long rest and is never allowed a fifth. An
+       Arcanist keeps a **library**. Spells go in one at a time, they stay in, and
+       the ceiling is a formula off rank and level rather than a number per rank.
+       That is the whole reason `capacity`, `start` and `research` exist on a
+       loadout spec at all. See loadouts.js.
+
+       ---------------------------------------------------------- the older draft
+       `data/Conversion/Talent Set - Arcanist.xlsx` (2026-08-23) is a six-card
+       proposal off the PDF: SPELLBOOK, TRANSCRIBING, IMPROVED FORMULAS, ARCANE
+       SPECIALIST, ANALYTIC SIGHT and ARCHMAGI, with a cap of Mind + level and a
+       24-hour transcription taken two hours at a time. **It is superseded** and
+       none of it is built. The four-card sheet above is a day newer, the five
+       pictures in `data/Arcanist/` are drawn for those four cards and the set
+       plate, and the xlsx's own Special Feature tab called the half-transcribed
+       spell "a progress bar the site has nowhere for". The new sheet deletes it:
+       research is one long rest action that finishes in that rest, which the site
+       already has a slot for. The proposal is logged in data/README.md rather than
+       thrown away, because its Overview tab is where the fantasy below comes from. */
+    tagline: 'A book bound to a life, and every spell in it was copied out by hand.',
+    art: '/talents/arcanist.jpg',
+    /* Mind, Support and Control are the superseded sheet's own Tags column, and
+       they still fit a set whose reach is whatever it has written down. The
+       fourth is added here: `spellcasting`, which is the role this whole track is,
+       and a caster missing off the casting shelf would be a hole in the filter
+       rather than a judgement. Flagged in data/README.md. */
+    tags: ['mind', 'spellcasting', 'support', 'control'],
+    stat: 'mind',
+    /* ARCANE RESEARCH, as data. Four things here are new and each one is a
+       sentence of that card:
+
+         `start`      "You start with 5 Novice Spells of your choice from any
+                      school". The free grant, and the only spells that arrive
+                      without a rest.
+         `capacity`   "a number of spells equal to your Rank in Arcanist
+                      multiplied by 10 + your level", read as (rank x 10) + level.
+                      Flagged in data/README.md.
+         `research`   "Whenever you take a Long Rest you can take the Arcane
+                      Research action and research a single spell". One spell, one
+                      rest, where every other set's `swap` is any number.
+         no `school`  "from any school". The first spec in the codex to name none,
+                      which is a bigger change than it looks: see the tier gate in
+                      loadouts.js.
+
+       No `cast`. A spell is printed for Mind and an Arcanist casts on Mind, so
+       there is nothing to override. The Mycomancer's `cast: 'instinct'` exists
+       because that set rolls a spell on an attribute it was not written for.
+
+       `tiers` is the ladder every casting set has, and this is the one card in the
+       codex that does not print it. ARCANE RESEARCH says "research a single
+       spell" and names no tier at all, so a literal reading lets a Rank 1
+       Arcanist research a Master spell on the first night. The ladder is the
+       reading that makes the rest of the codex work, and it is what the
+       superseded sheet's TRANSCRIBING spelled out in as many words. Flagged in
+       data/README.md. */
+    loadout: {
+      id: 'arcanist-spellbook',
+      label: 'Spellbook',
+      noun: 'spell',
+      kind: 'spell',
+      /* Cut by school, because that is the only question worth asking of a pool
+         this set does not narrow: fifty-odd spells across Primal and Elemental,
+         and a reader wants one shelf of it at a time. Every other spec groups by
+         sub-school, which is the right cut when the school is already fixed. */
+      group: 'school',
+      start: 5,
+      capacity: { perRank: 10, perLevel: 1 },
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      research: ['long'],
+      /* OVERLOAD, at Rank 2, on the cards this set hands out rather than on the
+         set: "All spells from your spellbook are Empowered and you have Advantage
+         when rolling for those spells." Empowered is one more die of the same
+         kind (see cardText.js), and the advantage is a count rather than a flag
+         for the reason GIANT SLAYER's is: advantage stacks and the arrow prints
+         the number. Both ride the prepared card, so a spell in the book shows the
+         numbers this Arcanist actually rolls. */
+      boost: {
+        /* The card the arrow in a spell's corner names, so a reader with two
+           sources of advantage can tell which one comes off. */
+        from: 'Overload',
+        empower: [null, 0, 1, 1],
+        advantage: [null, 0, 1, 1],
+      },
+      note: 'A spell goes in and stays in. Your long rest action researches one more, and the book only replaces a spell once it is full.',
+    },
+    /* SPELLBOOK's last sentence, which is the one number on this track that is not
+       about spells: "Your spellbook grants you 4 Additional Willpower per Rank in
+       Arcanist." Read by spellbook.js and summed into both places a Willpower
+       maximum is worked out. */
+    spellbook: {
+      willpower: 4,
+    },
+    blurb:
+      'An Arcanist does not know spells, they own them. The tome is bound to their being and comes when called even after it has been burned, and what it holds is exactly what has been written into it. Nothing arrives by revelation. A spell is found in somebody else’s book or taught by somebody who already has it, and then it is copied out by hand at the fire, one night’s work at a time.\n\n' + // text-style-ok: joins two clauses
+      'They excel at breadth. Where another caster carries the handful their talent gave them and trades one away when the morning asks a different question, an Arcanist carries everything they have ever written down. No school is closed to them and nothing is ever given back. Given enough nights and enough books worth stealing from, the tome ends up holding more magic than any one caster was ever meant to have.\n\n' + // text-style-ok: joins two clauses
+      'The book has to be held open and read aloud, which costs a hand and a voice. An Arcanist who can spare neither is a scholar standing in a fight with nothing to say. That is the whole bargain, and it is a good one: everything they have is on the page, the page is always with them, and what is written there only ever grows.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'spellbook',
+        rank: 1,
+        name: 'Spellbook',
+        summary: 'A bound tome you summon at will, and 4 more Willpower for every rank.',
+        kind: 'talent',
+        tags: ['Arcanist', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the Willpower is `spellbook.willpower` above, times
+           the rank, and nothing here is read out of this prose.
+
+           The hand and the voice stay printed rather than checked. A voice is not
+           on the sheet at all, and a free hand is: `martialDefense` in moves.js
+           already reads what is held. It is still prose, because the sheet has
+           nowhere to refuse a *spell* for what is in your hands and inventing one
+           would refuse the Mycomancer's spells too. The table plays it. Flagged in
+           data/README.md.
+
+           Three changes and no more. "As an Arcanist you record" loses its first
+           three words, the way MARTIAL TRAINING is not headed "As a Colossus": the
+           card is in the set, and the tag says so. The comma splice after "bound
+           tome" becomes the "and" it was standing in for, and "dismiss" gets the
+           "it" it was missing. "Additional" is lowercased, because the codex
+           capitalises a term and this is an adjective. The middle sentence is
+           untouched. */
+        body:
+          'You record all your spells in a bound tome, and you can summon and dismiss it at will.\n\n' + // text-style-ok: joins two clauses
+          'To be able to cast spells you need to have a free hand and be able to talk.\n\n' +
+          'Your spellbook grants you 4 additional Willpower per Rank in Arcanist.',
+      },
+      {
+        id: 'arcane-research',
+        rank: 1,
+        name: 'Arcane Research',
+        summary: 'Five Novice spells to start, and one more researched every long rest.',
+        kind: 'talent',
+        tags: ['Arcanist', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `loadout` above. `Long Rest` and not
+           `Passive`, the same tag the Enchanter's three evening cards carry, which
+           is what puts the row in the rest window.
+
+           Two changes. "you can take the Arcane Research action" becomes "you can
+           use your long rest action", which is FUNGAL INVOCATION's idiom word for
+           word: the site's rest buys one action and the card should say which one
+           it is spending, rather than naming itself.
+
+           And "multiplied by 10 + your level" is written out as the arithmetic it
+           resolves to, because the sheet's phrasing reads two ways and they only
+           agree at Rank 1: (rank x 10) + level, which is what precedence gives.
+           Flagged in data/README.md. Everything else is the cell. */
+        body:
+          'Spells you know to cast are recorded in your spellbook. You start with 5 Novice Spells of your choice from any school inscribed in the spellbook.\n\n' +
+          'Whenever you take a long rest you can use your long rest action to research a single spell to learn, adding it to your spellbook.\n\n' +
+          'Your spellbook can hold a number of spells equal to 10 x your Rank in Arcanist plus your level. If you have reached your limit of transcribed spells you will have to replace a spell.',
+      },
+      {
+        id: 'overload',
+        rank: 2,
+        name: 'Overload',
+        summary: 'Every spell in the book is Empowered, and rolled with advantage.',
+        kind: 'talent',
+        tags: ['Arcanist', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `loadout.boost` above, so the numbers print on the
+           spells themselves rather than being remembered against them.
+
+           The cell verbatim but for one letter. Advantage is lowercased: the codex
+           capitalises Empowered because it is a term off the Status & Terms sheet,
+           and writes "made with advantage" in prose everywhere else. See RAGING
+           BLOW. */
+        body:
+          'All spells from your spellbook are Empowered and you have advantage when rolling for those spells.',
+      },
+      {
+        id: 'perfect-casting',
+        rank: 3,
+        name: 'Perfect Casting',
+        summary: 'Every spell in the book costs 1 less Action Point, never below 1.',
+        kind: 'talent',
+        tags: ['Arcanist', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Two readings on the way in.
+
+           The sheet tags this `Long Rest`, which is ARCANE RESEARCH's tag two rows
+           above it and cannot be this card's: nothing here is done at a rest. Read
+           as `Passive`, which is what OVERLOAD beside it carries and what the
+           superseded sheet's IMPROVED FORMULAS carried for the same sentence.
+           Flagged in data/README.md.
+
+           And the discount stays **printed rather than wired**, which is the
+           standing ruling on every card that cuts another card's Action Point
+           cost. `UsePrompt` deals the codex card beside the pay button and the
+           card prints its own AP, so a button charging 3 next to a card printing 4
+           reads as a bug at the exact moment somebody is deciding whether to pay.
+           This is the fifth card on that line, after the Berserker's RECKLESS
+           VIOLENCE and the Colossus's MARTIAL SWIFTNESS, PRACTICED MOVES and
+           COLOSSAL GRIP. Five is the argument for building somewhere to print a
+           discounted cost. Flagged in data/README.md.
+
+           "cannot bring the spell below 1" is written as the floor it is, in the
+           words the designer used for the same rule on the superseded sheet: "to a
+           minimum of 1". */
+        body:
+          'Spells from your spellbook cost 1 less Action Point to cast, to a minimum of 1.',
+      },
+    ],
+  },
 ];
 
 /**

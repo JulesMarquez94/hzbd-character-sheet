@@ -5,6 +5,7 @@ import TagFilter from './TagFilter.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { levelForXp } from '../../lib/characterModel.js';
 import { loadoutState, newAtRank, rankPreview, toggleLoadoutPick } from '../../lib/loadouts.js';
 import { MOVE_TIERS } from '../../lib/martial.js';
 import { setTalentPicks } from '../../lib/talents.js';
@@ -43,17 +44,25 @@ export default function LoadoutSection({
   const [choosing, setChoosing] = useState(autoOpen);
   const stack = useCardStack();
 
-  const state = loadoutState(talents, talent);
+  /* The level, because half of a library's ceiling is made of it: a spellbook
+     worked out without one would under-report itself by up to ten spells. Free
+     for every other set, which reads it and ignores it. */
+  const state = loadoutState(talents, talent, { level: levelForXp(character?.xp) });
   if (!state) return null;
 
-  const { spec, picks, known, remaining, over, complete } = state;
+  const { spec, picks, known, remaining, over, complete, library, capacity } = state;
 
   return (
     <div className="pick-part">
       <span className="talent-summary-label">
         {spec.label}
+        {/* A hand counts against what it may hold; a library counts against what
+            it is filling. "5 of 5 chosen" would be a full spellbook, and the book
+            in question has room for six more. */}
         <span className={`pick-count${complete ? '' : ' is-open'}`}>
-          {picks.length} of {known} chosen
+          {library
+            ? `${picks.length} of ${capacity} written down`
+            : `${picks.length} of ${known} chosen`}
         </span>
       </span>
 
@@ -83,7 +92,15 @@ export default function LoadoutSection({
         </div>
       ) : (
         <p className="pick-line">
-          Nothing chosen yet. This set knows {known} {plural(spec.noun, known)} at rank {state.rank}.
+          {library
+            ? `Nothing written down yet. Your ${spec.label.toLowerCase()} begins with ${known} ${plural(
+                spec.noun,
+                known
+              )} of your choosing.`
+            : `Nothing chosen yet. This set knows ${known} ${plural(
+                spec.noun,
+                known
+              )} at rank ${state.rank}.`}
         </p>
       )}
 
@@ -95,10 +112,18 @@ export default function LoadoutSection({
 
       {!readOnly && (
         <div className="pick-tools pick-tools-tight">
+          {/* A library that owes nothing is not "changed", it is read: the only
+              thing that legitimately adds to it is the research action at a rest,
+              and the button that opens it should not promise otherwise. */}
           <button type="button" className="btn btn-sub btn-sm" onClick={() => setChoosing(true)}>
             {remaining
-              ? `Choose ${remaining} more ${plural(spec.noun, remaining)}`
-              : `Change your ${plural(spec.noun, 2)}`}
+              ? `${library ? 'Write in' : 'Choose'} ${remaining} more ${plural(
+                  spec.noun,
+                  remaining
+                )}`
+              : library
+                ? `Open your ${spec.label.toLowerCase()}`
+                : `Change your ${plural(spec.noun, 2)}`}
           </button>
         </div>
       )}
@@ -129,7 +154,7 @@ export default function LoadoutSection({
  * rather than a pool you choose from.
  */
 export function LoadoutChooser({ talent, character, state, readOnly, onToggle, onClear, onClose }) {
-  const { spec, options, known, rank, remaining, tiers } = state;
+  const { spec, options, known, rank, remaining, tiers, library, capacity } = state;
 
   /* Only what this rank can actually take, plus anything already known. A wall
      of cards that says "not yet" thirty times is a wall you scroll past. What
@@ -143,7 +168,7 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
   /* Only what a rank still owes you. Everything else the pool refused is
      another school's and no rank opens it, so counting it here would promise a
      Mycomancer thirty-four Elemental spells that are never coming. */
-  const later = options.filter((option) => option.gate === 'tier').length;
+  const later = options.filter((option) => option.gate === 'tier' && option.tier).length;
 
   return (
     <Modal
@@ -154,11 +179,13 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
       footer={
         <>
           <span className={`pick-count${remaining ? ' is-open' : ''}`}>
-            {known - remaining} of {known} chosen
+            {library
+              ? `${known - remaining} of ${capacity} written down`
+              : `${known - remaining} of ${known} chosen`}
           </span>
           {!readOnly && known - remaining > 0 && (
             <button type="button" className="btn btn-minimal btn-sm talent-drop" onClick={onClear}>
-              Clear them all
+              {library ? 'Empty it out' : 'Clear them all'}
             </button>
           )}
           <span className="spacer" />
@@ -168,9 +195,24 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
         </>
       }
     >
+      {/* What the rank is worth, said the way the pool works. A hand *knows* a
+          number and that number is the whole allowance. A library *holds* one,
+          and what it may take today is a different and smaller number, so both
+          are printed rather than one standing in for the other. */}
       <p className="frame-foot" style={{ marginTop: 0 }}>
-        At rank {rank} you know <b>{known}</b> {plural(spec.noun, known)}
-        {tiers.length > 0 ? `, up to ${listOut(tiers)}` : ''}. {spec.note}
+        {library ? (
+          <>
+            At rank {rank} your {spec.label.toLowerCase()} holds <b>{capacity}</b>{' '}
+            {plural(spec.noun, capacity)}
+            {tiers.length > 0 ? `, up to ${listOut(tiers)}` : ''}, and you can write in{' '}
+            <b>{known}</b> right now. {spec.note}
+          </>
+        ) : (
+          <>
+            At rank {rank} you know <b>{known}</b> {plural(spec.noun, known)}
+            {tiers.length > 0 ? `, up to ${listOut(tiers)}` : ''}. {spec.note}
+          </>
+        )}
       </p>
 
       {/* Both lines used to name the school outright, which reads as a hole in a
@@ -235,22 +277,30 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
  */
 export function LoadoutRankNote({ talent, rank, character = null }) {
   const [open, setOpen] = useState(false);
-  const preview = rankPreview(talent, rank);
+  const preview = rankPreview(talent, rank, levelForXp(character?.xp));
   if (!preview || preview.known === 0) return null;
 
-  const { spec, known, gained, opened, count } = preview;
+  const { spec, known, gained, opened, count, library, granted } = preview;
 
   return (
     <>
       <div className="loadout-note">
         <span className="loadout-note-body">
+          {/* A rank of a hand hands cards over. A rank of a library mostly hands
+              over *room*, and only Rank 1 gives anything to choose, so saying
+              "+10 spells of your choosing" at Rank 2 would promise ten spells that
+              have to be hunted down one night at a time. */}
           <b>
-            {gained > 0
-              ? `+${gained} ${plural(spec.noun, gained)} of your choosing`
-              : `${known} ${plural(spec.noun, known)} of your choosing`}
+            {library
+              ? granted > 0
+                ? `${granted} ${plural(spec.noun, granted)} to start, and room for more`
+                : `Room for ${gained} more ${plural(spec.noun, gained)}`
+              : gained > 0
+                ? `+${gained} ${plural(spec.noun, gained)} of your choosing`
+                : `${known} ${plural(spec.noun, known)} of your choosing`}
           </b>
           <span className="loadout-note-line">
-            {known} known at this rank
+            {library ? `holds ${known} at this rank` : `${known} known at this rank`}
             {rank === 1
               ? `, from the ${listOut(preview.tiers)} ${plural(spec.noun, 2)}`
               : opened.length > 0
@@ -416,7 +466,12 @@ function PoolWall({ options, noun, character, group = 'sub', action = null }) {
 function groupPool(options, by) {
   const groups = new Map();
   for (const option of options) {
-    const key = (by === 'tier' ? option.tier : option.sub) ?? 'Unfiled';
+    /* Three cuts now. `school` is the Arcanist's, and the only spec that wants
+       it: every other pool has one school or none, so cutting by it would make
+       one section holding everything. A pool spanning every school in the codex
+       is the one case where the school is the question. */
+    const key =
+      (by === 'tier' ? option.tier : by === 'school' ? option.school : option.sub) ?? 'Unfiled';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(option);
   }

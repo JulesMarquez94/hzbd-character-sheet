@@ -57,7 +57,7 @@
  * rather than going negative, exactly as the Supply ledger already does.
  */
 
-import { appendLedger, clamp, formatNumber, newLedgerId } from './characterModel.js';
+import { appendLedger, clamp, formatNumber, levelForXp, newLedgerId } from './characterModel.js';
 import { normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
 import { normalizeLevelPicks } from './levelPicks.js';
@@ -334,19 +334,27 @@ export function restActions(character, kind, talents = character?.talents) {
     }
   }
 
-  /* ---- what a set re-prepares ----
+  /* ---- what a set re-prepares, and what a set researches ----
      The permission is the granting card's: a Mycomancer's FUNGAL INVOCATION says
-     the swap costs the long rest's action, which is exactly what this list is. */
-  for (const { talent, state } of restSwaps(talents, kind)) {
+     the swap costs the long rest's action, which is exactly what this list is.
+
+     Two shapes through one row, because a rest offers one slot either way. A hand
+     is re-chosen whole and the row says "change"; a library takes exactly one new
+     card and the row says "research", which is ARCANE RESEARCH's own verb. The
+     difference the chooser actually enforces is the allowance riding on `state`
+     (see `restSwaps` in loadouts.js), so the step downstream needs no branch of
+     its own. */
+  for (const { talent, state, mode } of restSwaps(talents, kind, levelForXp(character?.xp))) {
     rows.push({
       id: `prepare:${talent.id}`,
       kind: 'prepare',
-      label: `Change your ${plural(state.spec.noun, state.known)}`,
+      mode,
+      label:
+        mode === 'research'
+          ? `Research a ${state.spec.noun}`
+          : `Change your ${plural(state.spec.noun, state.known)}`,
       from: `${talent.name} · ${state.spec.label}`,
-      note:
-        state.picks.length > 0
-          ? state.picks.map((pick) => pick.card?.name ?? pick.id).join(' · ')
-          : `Nothing prepared. This set knows ${state.known}.`,
+      note: researchNote(state, mode) ?? prepareNote(state),
       talent,
       state,
     });
@@ -358,6 +366,33 @@ export function restActions(character, kind, talents = character?.talents) {
 /** "spell" / "spells". */
 function plural(noun, count) {
   return count === 1 ? noun : `${noun}s`;
+}
+
+/** What a prepared hand is holding tonight, or what it is still short of. */
+function prepareNote(state) {
+  if (state.picks.length > 0) {
+    return state.picks.map((pick) => pick.card?.name ?? pick.id).join(' · ');
+  }
+  return `Nothing prepared. This set knows ${state.known}.`;
+}
+
+/**
+ * What tonight's research is about to do, which is the one line that decides
+ * whether the player is adding or trading.
+ *
+ * A book with room says how much room. A full one says so plainly, because "your
+ * spellbook holds 11" and "the next one costs you one you already have" are
+ * different pieces of news and the second is the one worth reading twice. Null
+ * for a hand, which has its own note.
+ */
+function researchNote(state, mode) {
+  if (mode !== 'research') return null;
+
+  const held = state.picks.length;
+  if (state.full) {
+    return `Full at ${state.capacity}. Tonight's ${state.spec.noun} replaces one already written.`;
+  }
+  return `${held} of ${state.capacity} written down. Tonight adds one more.`;
 }
 
 

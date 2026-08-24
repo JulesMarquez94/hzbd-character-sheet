@@ -33,6 +33,7 @@ import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
 import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from './items.js';
 import { getLineage, lineageCards } from './lineages.js';
+import { levelForXp } from './characterModel.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
 import { isMinionCard, minionModifiers, minionState } from './minions.js';
@@ -88,6 +89,15 @@ function listOut(words) {
  * whenever.
  */
 function swapLine(spec) {
+  /* A library is filled rather than re-chosen, and its permission is the other
+     one: ARCANE RESEARCH adds a single card a rest where FUNGAL INVOCATION
+     changes any number. Said in the verb, because "changed on a long rest" is the
+     wrong promise for a book you are only ever allowed to add one page to. */
+  const research = Array.isArray(spec?.research) ? spec.research : [];
+  if (research.length > 0) {
+    return `one more researched on ${listOut(research.map((kind) => `a ${kind} rest`))}`;
+  }
+
   const rests = Array.isArray(spec?.swap) ? spec.swap : [];
   if (rests.length === 0) return 'changed on the sheet at any time';
   const words = rests.map((kind) => `a ${kind} rest`);
@@ -259,7 +269,9 @@ function talentSources(character) {
 
     // The cards this set left to the player. loadoutState knows how many the
     // rank knows and which of the stored picks are still legal at it.
-    const loadout = loadoutOf(talent) ? loadoutState(character?.talents, talent) : null;
+    const loadout = loadoutOf(talent)
+      ? loadoutState(character?.talents, talent, { level: levelForXp(character?.xp) })
+      : null;
     if (loadout) {
       open.push({
         id: `loadout:${talent.id}`,
@@ -269,9 +281,9 @@ function talentSources(character) {
            read "swapped at any rest" for every pool, which was already loose — a
            Mycomancer swaps on a long rest and not a short one — and became plainly
            wrong the moment a set arrived whose card grants no swap at all. */
-        note: `${talent.name} · ${loadout.picks.length} of ${loadout.known} chosen, ${swapLine(
-          loadout.spec
-        )}`,
+        note: `${talent.name} · ${loadout.picks.length} of ${
+          loadout.library ? loadout.capacity : loadout.known
+        } ${loadout.library ? 'written down' : 'chosen'}, ${swapLine(loadout.spec)}`,
         art: talent.art ?? null,
         sections: [
           {

@@ -81,6 +81,9 @@ doing on its own.
 | The ten missing weapon types, off `Source Temp/` | **2026-08-24, 10 weapons + 20 cards** | `src/lib/weapons.js`, `itemParts.jsx` |
 | The weapon table, handed over in chat | **2026-08-24, the whole wall rebuilt: 39 weapons + 78 cards** | `src/lib/weapons.js`, `items.js`, `statMath.js`, `moves.js`, `talents.js` |
 | The wall read back, nine rulings in one message | **2026-08-24, the card face, the magazine and the tags** | [the card face](#the-card-face-the-magazine-and-the-tag-pass-2026-08-24) |
+| Talent Set · Arcanist · Ability | **2026-08-24, 4 cards** | `src/lib/talents.js` (`TALENTS`), `src/lib/loadouts.js`, `src/lib/spellbook.js` |
+| Talent Set · Arcanist · Overview | **2026-08-24, written here off the designer’s superseded Overview tab** | `src/lib/talents.js` (`tagline`, `blurb`) |
+| Arcanist art, from the `Arcanist/` folder | **2026-08-24, 4 cards + 1 plate** | `public/cards/`, `public/talents/` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -4687,3 +4690,216 @@ are the sheet's own columns and were carried across by id.
    designer holds their own copy of, so it was not touched.
 2. **A long rest reloads.** The house ruling above. Say the word and it comes out,
    and a magazine is filled only by the card that says it fills it.
+
+## The Arcanist, 2026-08-24
+
+The eleventh talent set, and the first caster whose spells are not a *hand*.
+
+It arrived as one tab, `Talent Set - Arcanist - Ability.csv`, with four cards and
+five pictures in `data/Arcanist/`. The Overview was written here, which the
+designer asked for in those words and asked to be about the fantasy rather than
+the rules. Its raw material is theirs: see "where the overview came from" below.
+
+| Rank | Cards |
+| ---- | ----- |
+| 1 · Novice | SPELLBOOK, ARCANE RESEARCH |
+| 2 · Adept | OVERLOAD |
+| 3 · Master | PERFECT CASTING |
+
+### The superseded six-card draft
+
+`data/Conversion/Talent Set - Arcanist.xlsx` (2026-08-23) is a seven-tab
+conversion off `Hazebound System - Arcanist.pdf`, and it proposes a **different
+set**: SPELLBOOK, TRANSCRIBING, IMPROVED FORMULAS, ARCANE SPECIALIST, ANALYTIC
+SIGHT and ARCHMAGI, with a tome capped at Mind + level and a spell taking 24
+hours of copying in two-hour pieces.
+
+**None of it is built.** Three things settle it, and they all point the same way:
+
+- the four-card CSV is a day newer,
+- the five pictures in `data/Arcanist/` are drawn for *those* four cards and the
+  set plate, and the xlsx's own `Image Prompts` tab names six different files
+  (`Transcribing.jpg`, `Improved Formulas.jpg` and the rest) that do not exist,
+- the xlsx's own `Special Feature` tab called the half-transcribed spell "a
+  progress bar the site has nowhere for", and the new sheet deletes it. Research
+  is one long rest action that finishes in that rest, which the site already has
+  a slot for.
+
+The proposal is kept rather than thrown away, because its `Overview` tab is the
+best writing anybody has done about this set and it is where the blurb comes
+from. The rest of it is a record of a road not taken.
+
+### Where the overview came from
+
+The designer's own `Overview` tab, with the withdrawn mechanics taken out. What
+survived is the fantasy, almost word for word: "An Arcanist does not know spells,
+they own them", the tome "bound to their being" that "comes when called even
+after it has been burned", nothing arriving "by revelation", a spell "found in
+somebody else's book or taught by somebody who has it", and the book that "has to
+be held and read aloud, which costs a hand and a voice".
+
+What came out was every sentence describing a rule that no longer exists: "24
+hours of transcription, taken two hours at a time", "as many as their Mind and
+their level allow", "a school is chosen and then cast from for free until the
+Willpower runs out", and the Rank 5 second school. The tagline is the `Summary`
+column untouched.
+
+### What the Ability tab needed on the way in
+
+The round trip, per card, against the designer's own cells:
+
+| Card | Words kept | Tags | AP · WP |
+| ---- | ---------- | ---- | ------- |
+| SPELLBOOK | 94% | same | same |
+| ARCANE RESEARCH | 89% | same | same |
+| OVERLOAD | 100% | same | same |
+| PERFECT CASTING | 71% | **changed**, see below | same |
+
+Every difference, and there are only six:
+
+- **"As an Arcanist you record"** loses its first three words on SPELLBOOK, the
+  way MARTIAL TRAINING is not headed "As a Colossus". The card is in the set and
+  the tag says so.
+- **A comma splice becomes an "and"**, and `dismiss` gets the `it` it was missing:
+  "you record all your spells in a bound tome, you can summon and dismiss at
+  will" reads "...bound tome, and you can summon and dismiss it at will".
+- **"Additional Willpower" and "Advantage" are lowercased.** The codex capitalises
+  a term off the Status & Terms sheet, and Empowered is one. An adjective is not,
+  and every other card writes "made with advantage" in prose. OVERLOAD is
+  otherwise the cell verbatim, all sixteen words of it.
+- **"you can take the Arcane Research action" reads "you can use your long rest
+  action"** on ARCANE RESEARCH. That is FUNGAL INVOCATION's idiom word for word.
+  The site's rest buys exactly one action, and a card should say which one it is
+  spending rather than naming itself.
+- **"multiplied by 10 + your level" is written out as the arithmetic.** See the
+  ruling below.
+- **"cannot bring the spell below 1" reads "to a minimum of 1"** on PERFECT
+  CASTING, which is the designer's own phrasing for the identical rule on the
+  superseded sheet's IMPROVED FORMULAS. The original is a subjectless fragment.
+
+No card in the codex that is not on the sheet. Nothing invented.
+
+### The spellbook is a library, not a hand
+
+This is the real build, and it is the first pool in the codex that does not
+behave like the Mycomancer's.
+
+Every other choosing set prepares. A Mycomancer knows four Primal spells at Rank
+2, has four, cannot have five, and swaps any number of them at a long rest. An
+Arcanist **keeps a library**: spells go in one at a time, they stay in, the
+ceiling is a formula off rank *and level*, and a spell entering a full book pushes
+one out.
+
+So a loadout spec grew four fields, all of them generic and all of them a sentence
+of ARCANE RESEARCH:
+
+| Field | The sentence |
+| ----- | ------------ |
+| `start: 5` | "You start with 5 Novice Spells of your choice" |
+| `capacity: { perRank: 10, perLevel: 1 }` | "a number of spells equal to your Rank in Arcanist multiplied by 10 + your level" |
+| `research: ['long']` | "Whenever you take a Long Rest ... research a single spell" |
+| no `school` | "from any school" |
+
+The distinction the code turns on is **capacity against allowance**. A hand has
+one number and they are the same. A library has two: what it could hold one day
+(`capacity`), and what it may hold tonight (`allowance`).
+
+The allowance is *what is written in the book*, floored at the free five and
+ceilinged at the capacity, plus whatever the window in front of the player grants.
+A long rest's research grants 1. That is what lets exactly one spell in, and it is
+what makes the tap after it replace instead of add, which is the card's "you will
+have to replace a spell" with no line of its own.
+
+**No stored counter, deliberately.** A `researched: 6` column on the talent entry
+would be a second source of truth for something the picks already say, and the two
+would drift the first time somebody edited a book by hand.
+
+Proved end to end: a fresh Rank 1 shows 5 of 11; the five are chosen off the
+sheet; a sixth chosen off the sheet **replaces** rather than adds; the long rest
+offers `Research a spell · 5 of 11 written down. Tonight adds one more.`; taking
+it leaves six. A full book at 11 reads `Full at 11. Tonight's spell replaces one
+already written.` and researching one names the spell it displaced.
+
+### A schoolless pool broke a gate nobody had to think about before
+
+`spells.js` says, in as many words, that a Unique Spell stays out of every pool
+without a line being added to either gate, "because no set's school is Elemental
+or Nightmare".
+
+**The Arcanist is the first spec to name no school at all**, so that gate stopped
+firing. Without a fix, a Rank 1 Arcanist could research `nightmare-wall` and
+`deep-sea-accretion`, which exist on one item each and are nobody's to prepare,
+plus `unwritten-light` and `unwritten-shadow`, which are stand-ins for two schools
+nobody has written yet.
+
+Two gates in `loadoutOptions` now, and both were free for every existing set:
+
+- a card carrying `placeholder` is refused as a school: the school is not written,
+  so there is nothing here to learn,
+- the tier gate lost its `tier &&` guard, so a card off the Novice/Adept/Master
+  ladder is refused rather than waved through. Every Martial Move and every real
+  spell carries a rung; only the four above do not.
+
+The pool comes out at **28 spells at Rank 1, 54 at Rank 3**, and the Mycomancer's
+is still exactly the 24 it was.
+
+### Four rulings, all flagged in the code where they sit
+
+1. **The capacity formula reads two ways.** "your Rank in Arcanist multiplied by
+   10 + your level" is either `(rank × 10) + level` or `rank × (10 + level)`. They
+   agree only at Rank 1. Built as `(rank × 10) + level`, which is what precedence
+   gives: 11 at Rank 1 level 1, 24 at Rank 2 level 4, 38 at Rank 3 level 8. The
+   other reading gives 28 and 54. **Say the word and it is one number in
+   `talents.js`.**
+2. **ARCANE RESEARCH names no tier.** It is the only card granting a pool that
+   does not print the "at Rank 2 you can learn Adept" ladder, so read literally a
+   Rank 1 Arcanist researches a Master spell on the first night. Built with the
+   ladder every other casting set has, which is also what the superseded sheet's
+   TRANSCRIBING spelled out.
+3. **PERFECT CASTING is tagged `Long Rest` on the sheet.** That is ARCANE
+   RESEARCH's tag two rows above it and cannot be this card's, because nothing on
+   it is done at a rest. Built as `Passive`, which is what OVERLOAD beside it
+   carries and what IMPROVED FORMULAS carried for the same sentence.
+4. **`spellcasting` was added to the Tags column.** The superseded sheet says
+   "Support, Control, Mind" and all three are kept. A caster missing off the
+   casting shelf of the chooser wall would be a hole in the filter.
+
+### Two things left printed rather than wired
+
+- **PERFECT CASTING's discount.** The fifth card on this line, after the
+  Berserker's RECKLESS VIOLENCE and the Colossus's MARTIAL SWIFTNESS, PRACTICED
+  MOVES and COLOSSAL GRIP. `UsePrompt` deals the codex card beside the pay button
+  and the card prints its own AP, so a button charging 3 next to a card printing 4
+  reads as a bug at the exact moment somebody is deciding whether to pay. **Five
+  on one line is the argument for building somewhere to print a discounted cost**,
+  which is the fix if any of them should go live.
+- **SPELLBOOK's free hand and voice.** A voice is not on the sheet at all. A free
+  hand is, and it is still prose: the sheet has nowhere to refuse a *spell* for
+  what is in your hands, and inventing one would refuse the Mycomancer's spells
+  too. The table plays it.
+
+### What the Willpower touched
+
+SPELLBOOK grants 4 Willpower a rank, and it is the only source of Willpower on
+the sheet that is neither worn nor running. It lands in `spellbook.js` and is
+summed into both places a Willpower maximum is worked out: `deriveStats`, which
+writes the column, and `statMath`, which promises the tile's breakdown adds up to
+it. A rider reaching one and not the other is exactly what
+`scripts/check-stat-math.mjs` exists to catch, so a thirteenth fixture was added
+for it. A Master Arcanist at level 10 reads `10 base + 20 your level + 12 Mind +
+12 Arcanist = 54`.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`lint:weapons` are all clean. The four pictures and the set plate were placed by
+`npm run art:cards` with no alias needed, because the designer's filenames match
+the card names exactly.
+
+### One thing for Jules
+
+**The capacity is generous and that may be the point.** At Rank 3 and level 10 the
+book holds 40 spells, and the whole codex is 58 with 54 of them reachable. The
+superseded sheet's own `Open Questions` tab raised this about the older Mind +
+level formula: "a late Arcanist owns most of a school. That may be the point, or
+the formula may want to be flatter." It is still open, and it is one number.
