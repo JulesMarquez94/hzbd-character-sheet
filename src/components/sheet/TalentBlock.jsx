@@ -218,7 +218,7 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
         <RankPips rank={rank} />
       </header>
 
-      {talent ? (
+      {talent && !talent.stub ? (
         <>
           <span className="talent-summary-label">
             {rank === 1 ? 'What this set opens with' : `What Rank ${rank} adds`}
@@ -290,8 +290,17 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
           )}
         </>
       ) : (
+        /* Two ways a filled slot has nothing to print, and they are not the same
+           thing. A set the codex has never heard of was typed into the column by
+           somebody. A roster placeholder is in the codex and holds no cards yet,
+           and cannot be reached through this app at all: `chooseAt` refuses it
+           and the tile that offers it is locked. It can only be here because the
+           column was edited by hand, and saying which of the two happened is
+           worth the branch. */
         <p className="level-block-hint">
-          Written in by hand. This build&rsquo;s codex has no cards for it.
+          {talent?.stub
+            ? 'On the roster and not written yet. This set has no cards to hand over.'
+            : 'Written in by hand. This build’s codex has no cards for it.'}
         </p>
       )}
 

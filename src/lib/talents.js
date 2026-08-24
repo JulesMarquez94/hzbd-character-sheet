@@ -46,6 +46,13 @@
  * is a leaf, and a spec that needed the codex to describe itself would cost it
  * that.
  *
+ * ------------------------------------------------------- and a set may be empty
+ * A set carrying `stub: true` is a **placeholder**: a name off the designer's
+ * roster, the shelf it was filed under, and nothing else. No cards, no spec, no
+ * prose of its own. It draws on the chooser wall so the shelf says what is
+ * coming, it can never be taken, and it is replaced by a real entry the day its
+ * sheet arrives. The roster and the reasoning are at the bottom of the codex.
+ *
  * ------------------------------------------------------------ what to roll
  * A card that asks for a roll against another entity has exactly two shapes,
  * and every new card has to pick one:
@@ -2479,6 +2486,151 @@ const TALENT_SETS = [
   },
 ];
 
+/* ------------------------------------------------------------- the roster *
+ * Twenty-three sets that have a name and nothing else.
+ *
+ * The designer keeps a roster of every set the game is going to have, four
+ * columns wide and cut by the attribute each one leans on. Eleven of them are
+ * written and sit in the codex above. These are the rest, standing in the codex
+ * as placeholders so the wall reads as the whole plan rather than as the part of
+ * it that happens to be finished.
+ *
+ * A placeholder reserves three things and promises nothing:
+ *
+ *   the id     what a saved sheet, a picture folder and a card link will point
+ *              at once the set exists, settled now so it never has to move.
+ *   the name   as the roster spells it, with its typos corrected and nothing
+ *              else touched. See the rulings in data/README.md for the two the
+ *              designer settled by hand.
+ *   the shelf  the column it was filed under, which is the one design fact the
+ *              roster actually carries.
+ *
+ * Everything else is deliberately absent. No tagline of its own, no blurb of its
+ * own, no cards, no loadout, no spec of any kind. A placeholder that guessed at
+ * what a Painseeker does would be this file inventing the game, which is the one
+ * thing it must never do: the sheet is the design, and no sheet has arrived for
+ * any of these.
+ *
+ * `stub: true` is what says so, and it is load-bearing in exactly one place:
+ * `optionsAt` refuses to let a level be spent on one, and `chooseAt` refuses it
+ * again in case anything ever asks around the wall. The tile still draws, on its
+ * own shelf, reading "Not written yet" where a price would be.
+ *
+ * The day a set's Ability tab lands, its placeholder is replaced by the real
+ * entry in the codex above and its line here goes. Nothing else has to change.
+ */
+
+/** What every placeholder says about itself, in one place so it says it once. */
+const STUB_TAGLINE = 'On the roster. Nothing written for it yet.';
+
+const STUB_BLURB =
+  'This set has a name and a shelf, and that is all it has. It is on the roster the designer ' +
+  'keeps and no sheet has been written for it, so there are no cards here, no ranks to read ' +
+  'and nothing a level can be spent on.\n\n' +
+  'What is held for it is the name above, the id underneath it and the attribute it will be ' +
+  'built on. Everything that makes it playable arrives with its own sheet.';
+
+/**
+ * One placeholder, in the shape a written set has and empty in every field that
+ * would otherwise be a guess.
+ *
+ * Written as a call rather than as twenty-three literals, which is the one place
+ * in this file that is not plain data. Plain data here would be the same eight
+ * lines twenty-three times over, and a reader skimming for the one set they came
+ * looking for would have to read all of it to be sure that none of them said
+ * anything different. A call says at a glance that none of them do.
+ */
+function placeholder(id, name, stat) {
+  return {
+    id,
+    name,
+    stub: true,
+    tagline: STUB_TAGLINE,
+    /* No plate, and the same null the Duelist and the Feral Curse carry rather
+       than a path to a file that is not there: the tiles draw the picture as a
+       CSS background and would show nothing either way, but the summary and the
+       presentation page use an `img` and would show a broken one. */
+    art: null,
+    /* The roster's column is the only tag that is known, and it is the attribute
+       the set was filed under. No role: a role is a reading of what the cards do,
+       and there are no cards. The Other column names no attribute at all, so
+       those carry nothing and the filter simply never matches them. */
+    tags: stat === 'other' ? [] : [stat],
+    /* `other` rather than the `level` the Draconic Bond carries. Both land on the
+       Other shelf, but `level` is a claim, and it is the Draconic Bond's own: an
+       ally whose stat block grows on nothing but the character's level. What a
+       Weaver scales on is not known, so this says only which shelf it sits on. */
+    stat,
+    blurb: STUB_BLURB,
+    cards: [],
+  };
+}
+
+/* The roster, column by column and in its own row order, so every shelf reads
+   its written sets first and then the rest of that column top to bottom. */
+const TALENT_PLACEHOLDERS = [
+  /* Physique, rows 1, 4, 5, 7, 8 and 9. Colossus, Berserker and Guardian are
+     rows 2, 3 and 6 and are written.
+
+     `Brawlere` is read as Brawler, and `Hamoturgy` as Hemoturgy, which the
+     designer settled on 2026-08-24 against Haemoturgy and Haemothurgy. Both are
+     recorded in data/README.md.
+
+     Dragon Aspect is row 9 and the Draconic Bond is not on the roster at all. It
+     stays exactly where it is on the Other shelf, ruled by the designer the same
+     day: three dragon-shaped entries in the codex for now, and which of them the
+     Draconic Bond turns out to be is a question its own sheet will answer. */
+  placeholder('brawler', 'Brawler', 'physique'),
+  placeholder('runebearer', 'Runebearer', 'physique'),
+  placeholder('hemoturgy', 'Hemoturgy', 'physique'),
+  placeholder('totemic', 'Totemic', 'physique'),
+  placeholder('painseeker', 'Painseeker', 'physique'),
+  placeholder('dragon-aspect', 'Dragon Aspect', 'physique'),
+
+  /* Instinct, rows 5 to 8. Mycomancer, Duelist, Trickster, Cauldron and Feral
+     Curse are rows 1, 2, 3, 4 and 9 and are written.
+
+     Row 4 reads `Cauldron` and the written set is the Cauldron Keeper, which is
+     the name on its own Ability tab and is kept. `SharpShooter` is read as
+     Sharpshooter, the way the codex writes Spellblade and Spellquill. */
+  placeholder('virtuoso', 'Virtuoso', 'instinct'),
+  placeholder('flowing-fist', 'Flowing Fist', 'instinct'),
+  placeholder('sharpshooter', 'Sharpshooter', 'instinct'),
+  placeholder('wilder', 'Wilder', 'instinct'),
+
+  /* Mind, rows 3 to 9. Arcanist and Enchanter are rows 1 and 2 and are written.
+
+     `Aclhemist` is read as Alchemist, `SpellBlade` as Spellblade and `Tachticain`
+     as Tactician. Row 9 reads `Elemental Aspe`, which is the column cutting the
+     cell off rather than a typo, and is read as Elemental Aspect: it is the pair
+     to Dragon Aspect on the Physique shelf.
+
+     The Alchemist and the Cauldron Keeper both mix things and sit on different
+     shelves, which is the roster's own arrangement and is left alone. */
+  placeholder('alchemist', 'Alchemist', 'mind'),
+  placeholder('necromancer', 'Necromancer', 'mind'),
+  placeholder('spellquill', 'Spellquill', 'mind'),
+  placeholder('spellblade', 'Spellblade', 'mind'),
+  placeholder('thaumaturge', 'Thaumaturge', 'mind'),
+  placeholder('tactician', 'Tactician', 'mind'),
+  placeholder('elemental-aspect', 'Elemental Aspect', 'mind'),
+
+  /* Other, all six rows. Nothing on this column is written, and the Draconic
+     Bond above it is the only thing on the shelf that is.
+
+     Every name here is spelled as the roster spells it. Beastbond, Oathbound and
+     Pactbound are one word each on the sheet and stay one word each. */
+  placeholder('beastbond', 'Beastbond', 'other'),
+  placeholder('oathbound', 'Oathbound', 'other'),
+  placeholder('pactbound', 'Pactbound', 'other'),
+  placeholder('quartermaster', 'Quartermaster', 'other'),
+  placeholder('weaver', 'Weaver', 'other'),
+  placeholder('weapon-master', 'Weapon Master', 'other'),
+];
+
+/** The whole codex: the written sets, then the roster standing in for the rest. */
+const TALENT_CODEX = [...TALENT_SETS, ...TALENT_PLACEHOLDERS];
+
 /**
  * The sets as everything else sees them, with every card wearing its picture.
  *
@@ -2487,8 +2639,12 @@ const TALENT_SETS = [
  * a card with no picture keeps both fields as null rather than losing them —
  * which is what the plates on the sheet already draw empty. See the note at the
  * top of this file for why it happens here and not on each set by hand.
+ *
+ * Reads the whole codex, written sets and roster placeholders alike. A
+ * placeholder holds no cards, so `withArt` is handed an empty array and hands one
+ * back: there is nothing here that has to know which kind it is looking at.
  */
-export const TALENTS = TALENT_SETS.map((talent) => ({
+export const TALENTS = TALENT_CODEX.map((talent) => ({
   ...talent,
   cards: withArt(talent.cards),
 }));
@@ -2796,6 +2952,14 @@ export function optionsAt(list, level, { all = false } = {}) {
   const owned = new Map(list.map((entry) => [entry.id, entry]));
 
   const options = TALENTS.map((talent) => {
+    /* A set on the roster with nothing written for it cannot be bought at any
+       level by anybody, so it is refused before its rank is even worked out.
+       There is no rank to name: `rank: null` is the same shape a finished Master
+       set hands back, and the tile prints the reason where a price would go. */
+    if (talent.stub) {
+      return { talent, held: 0, rank: null, ok: false, reason: 'Not written yet.' };
+    }
+
     const held = owned.get(talent.id);
     if (!held) return { talent, held: 0, rank: 1, ok: true };
 
@@ -2819,8 +2983,15 @@ export function optionsAt(list, level, { all = false } = {}) {
 
   /* A wall of sets you cannot take is a wall you read once and never again:
      Master sets that are finished, and ranks the level cannot reach, are left
-     off it. `all` is for the reader that wants the whole codex anyway. */
-  return all ? options : options.filter((option) => option.ok);
+     off it. `all` is for the reader that wants the whole codex anyway.
+
+     A roster placeholder is the exception, and it is kept on purpose. The other
+     two are about *this* character: a set they have finished, a rank they have
+     not reached yet, and both come back the moment that changes. A placeholder is
+     about the game, it will not come back for anybody, and the whole point of
+     standing it on the wall is that the shelf says what is coming. Ruled by the
+     designer on 2026-08-24; see data/README.md. */
+  return all ? options : options.filter((option) => option.ok || option.talent.stub);
 }
 
 /* ---------------------------------------------------- writing the talent list
@@ -2882,7 +3053,11 @@ export function chooseAt(talents, level, talentId) {
   }
 
   const talent = getTalent(talentId);
-  if (!talent) return serializeTalents(list);
+  /* A roster placeholder is refused here as well as on the wall. The tile is
+     already locked and its take button already disabled, so this is the model
+     holding the same line the UI does: a level spent on a set with no cards would
+     buy nothing at all and there would be no way to tell from the sheet. */
+  if (!talent || talent.stub) return serializeTalents(list);
   return serializeTalents([...list, { id: talent.id, name: talent.name, rank: 1, taken: [slot] }]);
 }
 

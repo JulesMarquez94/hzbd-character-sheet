@@ -4903,3 +4903,146 @@ book holds 40 spells, and the whole codex is 58 with 54 of them reachable. The
 superseded sheet's own `Open Questions` tab raised this about the older Mind +
 level formula: "a late Arcanist owns most of a school. That may be the point, or
 the formula may want to be flatter." It is still open, and it is one number.
+
+## The roster, 2026-08-24
+
+The whole plan is in the codex now. Thirty-four sets on the chooser wall, eleven
+of them written and twenty-three standing in as placeholders.
+
+It arrived as a screenshot of the roster sheet: four columns, `Physique`,
+`Instinct`, `Mind` and `Other`, nine rows deep on the first three and six on the
+last. Eleven of the names were already built. The other twenty-three had nothing
+but a name, and now they have a name, an id and a shelf.
+
+| Column | On the sheet | Written | Placeholders |
+| ------ | ------------ | ------- | ------------ |
+| Physique | 9 | Guardian, Berserker, Colossus | Brawler, Runebearer, Hemoturgy, Totemic, Painseeker, Dragon Aspect |
+| Instinct | 9 | Mycomancer, Duelist, Trickster, Cauldron Keeper, Feral Curse | Virtuoso, Flowing Fist, Sharpshooter, Wilder |
+| Mind | 9 | Arcanist, Enchanter | Alchemist, Necromancer, Spellquill, Spellblade, Thaumaturge, Tactician, Elemental Aspect |
+| Other | 6 | none | Beastbond, Oathbound, Pactbound, Quartermaster, Weaver, Weapon Master |
+
+The Draconic Bond is the thirty-fourth. It is built, it is on the Other shelf and
+it is not on the roster at all: see the ruling below.
+
+### What a placeholder is, and what it refuses to be
+
+`stub: true` on a set in `talents.js`, and three fields with anything in them:
+
+- **the id**, which is what a saved sheet, a picture folder and a card link will
+  point at once the set exists. Settled now so it never has to move.
+- **the name**, as the roster spells it, with its typos corrected and nothing
+  else touched.
+- **the shelf**, which is the column it was filed under and the one design fact
+  the roster actually carries.
+
+Everything else is absent on purpose. No cards, no loadout, no minion, no
+enchanting spec, no tagline of its own and no blurb of its own. The tagline and
+blurb are one shared pair of strings that say the set is not written yet, so all
+twenty-three say the same thing in the same words and none of them says anything
+about what the set does.
+
+**A placeholder that guessed would be the codex inventing the game.** Nobody
+knows what a Painseeker does. There is no sheet for it, and the `transcribe, do
+not invent` rule is exactly as binding on a set with no cards as on a set with
+four.
+
+### They draw on the wall, and they cannot be taken
+
+Ruled by the designer, asked as a choice between locked-and-visible and
+hidden-until-written: **visible**. So a shelf reads as the whole column rather
+than as the part of it that happens to be finished, and the Physique shelf says
+nine sets because the roster says nine.
+
+`optionsAt` refuses every stub before it works out a rank, with `rank: null` and
+the reason `Not written yet.` That is the same shape a finished Master set hands
+back, so `TalentTile` prints it where a price would go with no new branch and no
+new class. One line moved to keep them on the wall: the filter that drops
+unbuyable options now keeps a stub.
+
+That filter's other two cases are about *this character* and both come back the
+moment something changes: a set they have finished, a rank they have not reached.
+A placeholder will not come back for anybody, and standing it on the wall is the
+entire point.
+
+`chooseAt` refuses one too. The tile is locked and its take button disabled, so
+this is the model holding the line the UI already holds: a level spent on a set
+with no cards would buy nothing and there would be no way to tell from the sheet.
+
+`TalentSummary` gained the only branch a stub needed. A filled slot with nothing
+to print already said "Written in by hand. This build's codex has no cards for
+it", which is true of a name somebody typed into the column and false of a
+placeholder. A stub can only get onto a sheet by hand-editing the `talents`
+column, and when it does the block now says which of the two happened.
+
+### Two names the designer settled
+
+- **`Hamoturgy` is Hemoturgy.** Asked against Haemoturgy and Haemothurgy, and the
+  short US form won, which is the codex's spelling everywhere else: Defense,
+  Armor, Color.
+- **`Brawlere` is Brawler.** No question about that one.
+
+### Every other correction, and the one that is not a correction
+
+Read off the screenshot and applied without asking, because each one is a typo
+with exactly one reading:
+
+| On the sheet | In the codex |
+| ------------ | ------------ |
+| `Trcikster` | Trickster (already built) |
+| `Bersker` | Berserker (already built) |
+| `Echanter` | Enchanter (already built) |
+| `Aclhemist` | Alchemist |
+| `Tachticain` | Tactician |
+| `SharpShooter` | Sharpshooter |
+| `SpellBlade` | Spellblade |
+
+`Elemental Aspe` is the odd one out and is **not** a typo: it is the column
+cutting the cell off. Read as Elemental Aspect, which is what the Dragon Aspect
+on the Physique shelf pairs it with.
+
+`Cauldron` in row 4 of Instinct is the built set's short name. The set stays
+**Cauldron Keeper**, which is the name on its own Ability tab.
+
+Beastbond, Oathbound and Pactbound are one word each on the sheet and stay one
+word each.
+
+### The Draconic Bond is not on the roster, and stays anyway
+
+The roster has **Dragon Aspect** on Physique and **Beastbond** on Other. It has
+no Draconic Bond, which is a built set with nine cards, a minion spec, a picture
+folder and eight plates.
+
+Three readings were possible and the designer took the third: **leave it, add
+both**. So there are three dragon-shaped or bond-shaped entries in the codex now,
+one real and two empty, and which of them the Draconic Bond turns out to be is a
+question its own sheet will answer.
+
+The reasoning behind the ruling is worth keeping, because it is the argument the
+sheet will have to settle. Beastbond, Oathbound and Pactbound are a family of
+three on the Other shelf and the Draconic Bond fits it exactly. Dragon Aspect and
+Elemental Aspect are a family of two across Physique and Mind, and an Aspect
+reads like becoming the thing where a Bond reads like standing beside it. Either
+family could claim it. Renaming a transcribed set on a guess is the one move that
+cannot be undone cheaply, since the id is what saved sheets point at.
+
+### One thing for Jules
+
+**The Other column has no attribute, so its placeholders carry no tags at all.**
+The other three carry exactly one, the attribute their column names, and no role:
+a role is a reading of what the cards do and there are no cards. That means the
+six Other placeholders match no chip in the filter row and only turn up in an
+unfiltered wall or by name in the search box. It is the honest answer and it may
+not be the one you want. `level` was deliberately not borrowed from the Draconic
+Bond, because that tag is a claim about how its ally scales and nothing is known
+about how a Weaver does.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`lint:weapons` are all clean. The codex was walked directly as well: 34 sets, no
+duplicate id and no duplicate name, every placeholder holding no cards, no art
+and no spec of any kind, every one of the twenty-three landing on the shelf its
+column names, none of them offered as takeable at any of the seven advancement
+levels, and `chooseAt(weaver)` at level 1 returning an empty list where
+`chooseAt(guardian)` returns a Rank 1 Guardian. The filter row came out with the
+same nine tags it had before.
