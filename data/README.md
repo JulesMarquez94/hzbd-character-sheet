@@ -5160,3 +5160,289 @@ column names, none of them offered as takeable at any of the seven advancement
 levels, and `chooseAt(weaver)` at level 1 returning an empty list where
 `chooseAt(guardian)` returns a Rank 1 Guardian. The filter row came out with the
 same nine tags it had before.
+
+## The Alchemist, 2026-08-24
+
+The twelfth set, and the first one converted out of the pile rather than off a
+workbook. Jules asked for three things in one line:
+
+> "used the convert alchemist to create the alchemist talent set and also
+> implement all the potions. Potion to craft the cost need to be converted into
+> supplies for the long rest action"
+
+So: the set, the seven potions, and the craft cost paid in Supplies as the long
+rest action. All three are built.
+
+### The conversion pass had ruled the other way, and this reverses it
+
+`data/Conversion/00 - Conversion Overview.xlsx` read the pile on 2026-08-23 and
+filed the Alchemist under **Duplicate**: "On the site as Cauldron Keeper. Its
+potions convert as items instead, not as a set." `General Items.xlsx` says the
+same thing in its own Legend tab: "the Alchemist is the Cauldron Keeper on the
+site already, and the Cauldron Keeper brews at the table rather than carrying
+flasks."
+
+That reading is now overturned by the designer, and the roster is what makes it
+easy: **the Cauldron Keeper is on the Instinct shelf and the Alchemist is on
+Mind**, in the designer's own four-column roster. They are two sets, and they
+were always meant to be. The line each one holds is clean:
+
+| | Cauldron Keeper | Alchemist |
+| --- | --- | --- |
+| When | mid-fight, at the moment of use | the night before, at the fire |
+| What it makes | a Brew, which "takes effect immediately" and is stored nowhere | a flask, which goes in the pack and is carried |
+| What it costs | Action Points and Willpower | Supplies out of the crate |
+| Who can use it | the Keeper, that instant | anybody who is handed the bottle |
+
+### Three sources, and none of them an Ability tab
+
+There is no `Talent Set - Alchemist.xlsx` anywhere, because the conversion pass
+never wrote one. What exists is:
+
+| Source | What it holds |
+| --- | --- |
+| `Hazebound/Tables/Alchemist - Potions.xlsx` | 8 Novice potions: a name, a Willpower cost, an Improvised Brewing dice combination and full effect text apiece |
+| `Hazebound/Ressources/Skillsets/Alchemist/*.jpg` | 3 card renders: Rank 1, Alchemical Ingredients and Improvised Brewing. Every word of those three cards is read off the pictures |
+| `data/Conversion/General Items.xlsx` | the 2026-08-23 pass, which converted the potion table as consumables and left two rows amber |
+
+That is a **Rank 1 only** set. There is no Rank 2, 3, 4 or 5 card for the
+Alchemist in the pile, and the potions table is titled Novice. So three cards are
+transcribed and two are house-written, which is the Sharpshooter's arrangement at
+a slightly larger scale, and both house cards are marked `house` in
+`data/templates/alchemist-ability.csv`.
+
+| Rank | Card | Where it came from |
+| ---- | ---- | ------------------ |
+| 1 · Novice | ALCHEMY | `Alchemist - Rank 1 - Skill.jpg` |
+| 1 · Novice | ALCHEMICAL INGREDIENTS | `Alchemist - Alchemical Ingredients - Action.jpg` |
+| 1 · Novice | IMPROVISED BREWING | `Alchemist - Improvised Brewing - Action.jpg` |
+| 2 · Adept | REFINED REAGENTS | house |
+| 3 · Master | TWIN DISTILLATION | house |
+
+The Overview is house-written too, the same way the Enchanter's and the
+Sharpshooter's were: no source in the pile carries one. It is exported to
+`data/templates/alchemist-overview.csv` in the workbook's own column order.
+
+### The price, and where the number actually came from
+
+This is the ask, and it took two sources agreeing to answer it.
+
+The old system priced a brew in **two** currencies, and the cards keep them
+apart. ALCHEMICAL INGREDIENTS prices the *components* in coin: "when a recipe
+asks for 1000 coins' worth of Fire ingredients, this could be 100 spicy peppers
+or a dragon flower". ALCHEMY prices the *working* in Willpower: "you need to have
+the required components and willpower available". Jules asked for the first of
+those to become Supplies.
+
+**The problem is that the source prints no component price per potion.** The 1000
+coins is an illustration inside a card, not a column. The only per-potion number
+the table has is its Willpower column, and that column is the designer's own
+ordering of the seven:
+
+| Potion | Old Willpower |
+| --- | --- |
+| Healing Draught, Love Potion | 2 |
+| Flame Burst Flask, Strength, Agility, Intellect, Wits | 3 |
+| Growth Elixir | 4 |
+
+So the **shape** of the price is his and only the scale is this pass's:
+
+    Supplies = 10 x the Willpower the old table printed
+
+And the scale is not free either. The APOTHECARY background skill, on the site
+since the Skills tab landed, already crafts a healing potion at a long rest "by
+expending 20 Supplies" — and the Healing Draught's own 2 Willpower times ten is
+exactly 20. Two sources written years apart agree on the cheapest row in the
+table, which is what fixed the rate rather than a number that looked about right.
+
+| Recipe | Supplies | Coin |
+| --- | --- | --- |
+| Healing Draught | 20 | 100 |
+| Love Potion | 20 | 100 |
+| Flame Burst Flask | 30 | 150 |
+| Potion of Physique | 30 | 150 |
+| Potion of Instinct | 30 | 150 |
+| Potion of Mind | 30 | 150 |
+| Growth Elixir | 40 | 200 |
+
+Coin is 5 a Supply, which is the same anchor read the other way: the site's own
+Healing Potion is 100 coins on the belt shelf and Apothecary crafts one for 20.
+The numbers are written out per item in `utility.js`, the way an enchantment's
+`supplies` is written out per enchantment, so a row the designer reprices stays
+repriced and nothing recomputes it.
+
+### The Willpower is not charged, and that is a ruling
+
+Which leaves the old table's Willpower with nothing to do. It is **printed
+nowhere and charged nowhere**, for a reason that is specific to this site:
+brewing here only happens inside a long rest, and a long rest ends by filling
+Willpower to its maximum. A Willpower price paid in the middle of one is a price
+nobody ever pays. ALCHEMY's own words say the same thing from the other side: you
+brew "while still benefiting from a long rest".
+
+The seven potions therefore cost **2 Action Points and no Willpower** to use. The
+site's own Healing Potion costs 2 and 2, and that is the Ability List's printed
+card rather than an Alchemist recipe, so it is untouched.
+
+### Brewing is the long rest action, and it is the fifth kind
+
+`restActions` in rest.js had four kinds and now has five: `labour`, `enchant`,
+`worn`, `prepare` and `alchemy`. The row appears for an Alchemist on a long rest
+and never on a short one, because ALCHEMY names the long one.
+
+It is the only long rest action **whose output is a thing**. A labour moves the
+crate, a working lays a rider on something you already own, a prepared hand
+rewrites a column, and this one fills the pack. So `restPlan` takes a fifth
+argument, `brews` — a list of recipe ids, one per brew — prices it into the same
+plan and the same ledger as everything else, and appends the flasks to `pack` in
+the same patch. Backing out of the rest leaves the components in the crate and
+the flasks unmade, which is the whole point of that file.
+
+The window walks the way every other action does: **the slot → the still → back
+to the rest**. `BrewRest.jsx` is two halves, and the top one is the point: what
+is going in tonight, with the count and the running Supplies, above the shelf of
+recipes. A shelf on its own would be a wall you tap and hope, and the number a
+player is actually deciding against is how much of the crate is left. Every
+recipe is offered dead if it would overdraw the crate once the rest itself is
+paid for, which is the law `labourAffordable` and `layingAffordable` already
+read by.
+
+The flasks land in the **pack** and not on the belt. A loop is a place you have
+chosen to put something, and choosing is what the Inventory tab is for.
+
+### What the ranks buy
+
+`alchemy` on the set is the sixth shape of spec in the codex, beside `loadout`,
+`brewing`, `enchanting`, `minion` and `feral`.
+
+| | Rank 1 | Rank 2 | Rank 3 |
+| --- | --- | --- | --- |
+| Brews a night | 2 | 3 | 3 |
+| Off each price | nothing | 10 Supplies, never below 10 | the same |
+| Flasks a brew | 1 | 1 | 2 |
+| Shelf | Novice | Novice, Adept | Novice, Adept, Master |
+
+REFINED REAGENTS moves the two numbers ALCHEMY already prints, which is the test
+a house card has to pass: nothing new for the sheet to hold. TWIN DISTILLATION
+does not raise the count a third time, because that would have been the Adept
+card twice — it doubles what comes out instead. Six flasks a night at three
+prices.
+
+### A rank can open a shelf the codex has not filled
+
+The tier ladder is read off "you have learned to brew all Novice Potions", the
+same ladder every tiered set in the codex prints. **The codex holds no Adept and
+no Master potion**, because the only potions table in the pile is the Novice one.
+So Ranks 2 and 3 open shelves with nothing on them.
+
+That is left as it is rather than quietly deleted, and the presentation page is
+made to say so: `AlchemyRankNote` prints "No Adept potion is written yet, so this
+rank opens a shelf the codex has not filled" instead of a silent `+0`. The day an
+Adept potion is written it appears on both, and no card has to change.
+
+### IMPROVISED BREWING is printed and not wired
+
+The one card in the set with no button behind it, and the reason is two things
+the sheet does not hold.
+
+It says a potion brewed this way "will expire at the end of the day". **This site
+has no day.** It has rests. And an item in the pack is a bare id with no instance
+of its own for a state to live on: `forged.js` is the only thing on the sheet
+that gives an item an identity, and its own first rule is that "nothing
+mechanical is stored".
+
+Wiring it without both of those would hand over **free potions that never spoil**,
+and the spoiling is the entire reason they are free. So the card carries its own
+rule and the table plays it, the same way SPELLBOOK's free hand and voice are
+played. Every recipe still carries its dice on the shelf, so the combination the
+card sends you looking for is there to read: "any · any" for a Healing Draught,
+"Wind · Wind · Wind" for a Growth Elixir.
+
+### Every other reading, in order
+
+1. **"Rank 1 - Novice Alchemist" is ALCHEMY.** A card never names its own rank
+   here: the Tags column carries it. The name is the card's own first word.
+2. **"during a long rest, you can craft two potions"** becomes "whenever you take
+   a long rest you can use your long rest action to brew two of them". A rest
+   buys one action, and a card that spends it should say which one it is
+   spending. FUNGAL INVOCATION's idiom, and ARCANE RESEARCH's.
+3. **"You learn the Alchemical Ingredients and Improvised Brewing abilities"** is
+   dropped. Both are Novice Alchemist cards on the same rank, so the sentence
+   hands over what the set has already handed over.
+4. **"feathers are associated with winds" becomes Wind**, which is the name of
+   that Elemental family everywhere in the codex. It puts all four of IMPROVISED
+   BREWING's dice on words the site already uses: Earth, Water, Fire and Wind are
+   all real spell families today.
+5. **"half your power" is written out.** Old Power was the attribute plus the
+   level, this site has no such number, and the conversion key says every "your
+   power" becomes a die count and an attribute multiple. So it is "your Mind plus
+   your level, halved and rounded down".
+6. **The Intellect Potion and the Wits Potion are one card.** The site has three
+   attributes where the old system had four, and the conversion key sends both to
+   Mind. POTION OF MIND takes either row's die, so its combination reads "any ·
+   Fire or Wind" — the one place on the shelf where an element slot is a choice.
+7. **"the crafter's Spellpower" becomes the drinker's Mind.** This was the
+   conversion pass's amber row: "HEALING DRAUGHT and LOVE POTION scale off
+   whoever brewed them, not whoever drinks them. The site stores no such number
+   on an item instance." It still does not, and the site's own Healing Potion
+   already scales on whoever drinks it (`2d6 + 5 x level`), so both follow it.
+8. **"1000 coins' worth of Fire ingredients" becomes 20 Supplies of Fire.** A
+   recipe on this site asks in Supplies. The hundred spicy peppers and the dragon
+   flower are his.
+9. **Four potions move numbers, so four carry riders.** POTION OF PHYSIQUE,
+   POTION OF INSTINCT, POTION OF MIND and GROWTH ELIXIR are in `EFFECT_RIDERS`,
+   keyed on the card rather than on the drinker for the reason that table exists:
+   a potion is very often somebody else's, handed to you at the fire, with
+   nothing on your sheet for a rider to hang off. The Love Potion is not a rider
+   (nothing about being trusted is a number), the Healing Draught is a pool moved
+   once, and the Flame Burst Flask's lingering flames are a place on the table.
+10. **The Alchemist keeps a Recipes block on the Abilities tab**, `aside` the way
+    the Cauldron Keeper's Ingredients block is, so the shelf can be read outside
+    a rest. A recipe is not a move: you never use a Healing Draught off that
+    block, you brew one.
+
+### Six things for Jules
+
+1. **GROWTH ELIXIR takes a level-1 drinker to minus one Instinct.** The card says
+   "your Instinct is reduced by 5" and a fresh sheet starts at 4, so the sheet
+   honestly prints Instinct -1, Defense 1 and Initiative 0. Nothing floors it,
+   because the card names no floor. Say the word and it gets one.
+2. **Should the Healing Potion be on the Alchemist's shelf?** It is not, today.
+   It is the Ability List's flask rather than a row on the potions table, and
+   APOTHECARY already crafts it at exactly the 20 Supplies this pass's rate
+   gives. Putting it on the shelf would make the HEALING DRAUGHT beside it
+   pointless, since 2d6 + 5 x level beats 1d6 + Mind at every level for the same
+   price. Two clean answers: leave it off, or put it on and reprice the draught.
+3. **Is the Willpower really gone?** See above. The alternative that works is
+   charging it against the Willpower you *wake with*, so a night of brewing costs
+   you the morning's pool. That is a real cost and it contradicts "while still
+   benefiting from a long rest", which is why it was not taken.
+4. **Adept and Master potions.** Two empty rungs are waiting. Anything with a
+   tier of `Adept` or `Master` and a `brew` spec lands on them with no code.
+5. **Improvised brewing.** If it is worth wiring, the cheapest honest version is
+   an expiry keyed to the next long rest rather than to a day, which needs the
+   pack to hold something more than an id.
+6. **The two house cards.** REFINED REAGENTS and TWIN DISTILLATION are the whole
+   of Ranks 2 and 3 and neither has a source. If the real ones exist somewhere,
+   they replace these outright.
+
+### No pictures
+
+`data/Alchemist/` does not exist yet. Five cards and a set plate are wanted:
+Alchemy, Alchemical Ingredients, Improvised Brewing, Refined Reagents, Twin
+Distillation and an Alchemist Overview. Seven potion items want one each too, and
+`General Items.xlsx` already carries a written prompt for six of them on its
+Image Prompts tab. Drop them into `data/Alchemist/` and `data/Potions/` and run
+`npm run art`; until then every plate draws empty, which is what a card with no
+picture has always done.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves`,
+`lint:weapons` and `npm run build` are all clean. The codex was walked directly
+as well: 34 sets still, no duplicate card id and no new duplicate card name, the
+Alchemist offered at Rank 1 on level 1 and ranking to 2 at level 4 and 3 at level
+8, seven recipes on the shelf at every rank, `restActions` offering the still on a
+long rest and nothing at all on a short one, a two-potion night pricing 50
+Supplies out of a 200 crate and landing both flasks in the pack beside what was
+already there, and all four potion riders reaching the sheet and coming back off.

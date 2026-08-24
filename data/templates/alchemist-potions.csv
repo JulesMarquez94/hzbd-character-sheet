@@ -1,0 +1,14 @@
+id,Name,Tags,Tier,Supplies to brew,Coin,w (kg),AP,Improvised Brewing,Main Effect,Old Willpower,Came from
+healing-draught,HEALING DRAUGHT,"Common, Consumable, Potion",Novice,20,100,0.3,2,any / any,Drinking this draught restores 1d6 + Mind in Health.,2,"Novice 1, Healing Draugth"
+love-potion,LOVE POTION,"Uncommon, Consumable, Potion",Novice,20,100,0.3,2,Earth / Water / Water,"When an entity drinks this potion, make a Mind roll against its Grit.
+
+On a success, for 1 hour the drinker holds you as a trusted ally and is ready to do what it must to help you, so long as it does not put the drinker in harm.",2,"Novice 7, Love Potion"
+flame-burst-flask,FLAME BURST FLASK,"Common, Consumable, Potion",Novice,30,150,0.4,2,any / any,"Throw the flask at a point you can see within 9 meters (30 feet). It breaks on contact, and every entity within 3 meters (10 feet) takes 1d6 + Mind in Fire damage.
+
+The flames stay for 3 turns. An entity that starts its turn in them takes the same again.",3,"Novice 2, Flame Burst Flask"
+potion-of-instinct,POTION OF INSTINCT,"Common, Consumable, Potion",Novice,30,150,0.3,2,any / Water,Drinking this potion increases your Instinct by 2 for 1 hour.,3,"Novice 4, Agility Potion"
+potion-of-mind,POTION OF MIND,"Common, Consumable, Potion",Novice,30,150,0.3,2,any / Fire or Wind,Drinking this potion increases your Mind by 2 for 1 hour.,3,"Novice 5 and 6, Intellect Potion and Wits Potion, folded"
+potion-of-physique,POTION OF PHYSIQUE,"Common, Consumable, Potion",Novice,30,150,0.3,2,any / Earth,Drinking this potion increases your Physique by 2 for 1 hour.,3,"Novice 3, Srength Potion"
+growth-elixir,GROWTH ELIXIR,"Rare, Consumable, Potion",Novice,40,200,0.4,2,Wind / Wind / Wind,"Drinking this elixir adds 2 meters (6 feet) to your height and massively increases your muscle mass for 1 hour.
+
+While it lasts your Physique is increased by 5, your Movement Speed by 4 and your Defense by 2, and your Instinct is reduced by 5.",4,"Novice 8, Growth Elixir"

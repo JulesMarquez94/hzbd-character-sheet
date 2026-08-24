@@ -2511,6 +2511,233 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    id: 'alchemist',
+    name: 'Alchemist',
+    /* The twelfth set, converted 2026-08-24 out of the pile rather than off a
+       workbook. Three sources and no Ability tab anywhere:
+
+         data/Source Temp/Hazebound/Tables/Alchemist - Potions.xlsx
+           8 Novice potions, with a Willpower cost, an Improvised Brewing dice
+           combination and full effect text for each.
+         data/Source Temp/.../Skillsets/Alchemist/*.jpg
+           three card renders, which is where every word of ALCHEMY,
+           ALCHEMICAL INGREDIENTS and IMPROVISED BREWING comes from.
+         data/Conversion/General Items.xlsx
+           the 2026-08-23 pass, which converted the potion table as consumables
+           and explicitly did **not** build the set: "the Alchemist is the
+           Cauldron Keeper on the site already". Jules reversed that call on
+           2026-08-24 and asked for both, so the potions are items *and* this is
+           a set. The two sit on different shelves, which is what the roster
+           itself says: Cauldron Keeper on Instinct, Alchemist on Mind.
+
+       ------------------------------------------------------ the empty ranks
+       The source is **Rank 1 only**. There is no Rank 2, 3, 4 or 5 card for the
+       Alchemist anywhere in the pile, and the potions table is titled Novice.
+       So the three Novice cards are transcribed and the two above them are
+       house-written, in the set's own lexicon, each doing one thing this sheet
+       can actually honour. Both are flagged in data/README.md and exported to
+       data/templates/alchemist-ability.csv marked `house`. */
+    tagline: 'A still, a crate of components and a night at the fire. Whatever tomorrow needs, bottled.',
+    /* No plate yet. Drop pictures into data/Alchemist/ and run `npm run art`. */
+    art: null,
+    /* Mind is the roster’s column. Support and Control are this file’s reading of
+       seven cards: five of the seven potions hand somebody a number they did not
+       have, and the other two are a burning patch of ground and an hour of being
+       trusted. No `spellcasting`: nothing here is cast, and the whole point of a
+       flask is that it works in a hand that has never cast anything. */
+    tags: ['mind', 'support', 'control'],
+    stat: 'mind',
+    /* ALCHEMY, as data. The sixth shape of spec in the codex and the first whose
+       output is an **item**: a hand and a library pick cards (loadouts.js), a Brew
+       composes one and throws it away (brews.js), a working becomes a rider on
+       something you own (enchanting.js), and this fills the pack.
+
+         `tiers`     "you have learned to brew all Novice Potions", read as the
+                     ladder every other tiered set prints. The codex holds no
+                     Adept or Master potion yet, so Ranks 2 and 3 open nothing
+                     today and will the day one is written. Flagged.
+         `perRest`   "during a long rest, you can craft two potions while still
+                     benefiting from a long rest", and REFINED REAGENTS makes it
+                     three. Brews a night, never flasks.
+         `discount`  REFINED REAGENTS again, and `floor` is its own "to a minimum
+                     of 10". Rank 3 still carries it, because ranks stack.
+         `batch`     TWIN DISTILLATION: one brew, two flasks.
+         `brew`      which rest offers it, the same shape `swap` and `research`
+                     carry on a loadout. A short rest names none of this.
+
+       What a potion costs is on the potion (utility.js), never here, so a row the
+       designer reprices stays repriced. See alchemy.js for where those numbers
+       came from and why the old table’s Willpower is not charged. */
+    alchemy: {
+      id: 'alchemy',
+      label: 'Alchemy',
+      noun: 'potion',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      perRest: [null, 2, 3, 3],
+      discount: [null, 0, 10, 10],
+      floor: 10,
+      batch: [null, 1, 1, 2],
+      brew: ['long'],
+      note: 'Brewed at the fire and carried away. Your long rest action buys the night’s batch, and the crate pays for the components.',
+    },
+    blurb:
+      'An Alchemist does not cast. They distil. Every ingredient in the world carries an element that people have always read into it, and alchemy is the patience to draw that element back out of a feather or a pepper and hold it in glass. What comes out of the still is not a spell, and it does not need them standing there when it is drunk.\n\n' + // text-style-ok: joins two clauses
+      'They excel at arriving prepared. Their work is done the night before, out of the same crate the whole party travels on, and the morning is when it gets handed round. A flask of borrowed Physique, a draught that closes a wound, a clay bottle that puts a burning patch of ground between the party and whatever is coming: none of it asks for Willpower at the moment it matters, because all of it was paid for hours ago.\n\n' + // text-style-ok: joins two clauses
+      'An Alchemist’s presence is felt in what everybody else is carrying. Pressed with no night to spare, they can still brew out of whatever the ground around the camp gave up, and what that produces is real enough to save a life and gone by nightfall.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'alchemy',
+        rank: 1,
+        name: 'Alchemy',
+        summary: 'Two Novice potions on a long rest, paid for out of the crate.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `alchemy` spec above. `Long Rest` and not
+           `Passive`, the same tag ENCHANTING and ARCANE RESEARCH carry, which is
+           what puts the row in the rest window.
+
+           Three changes on the way in.
+
+           The render is headed "Rank 1 - Novice Alchemist" and the card is called
+           Alchemy, off its own first word. A card never names its own rank on this
+           site: the Tags column carries it.
+
+           "during a long rest, you can craft two potions while still benefiting
+           from a long rest" becomes "whenever you take a long rest you can use
+           your long rest action to brew two of them and still benefit from the
+           rest". A rest here buys exactly one action and a card that spends it
+           should say which one it is spending, which is FUNGAL INVOCATION’s idiom
+           and ARCANE RESEARCH’s.
+
+           "you need to have the required components and willpower available" is
+           the sentence Jules asked to be converted, and the components are now
+           priced in Supplies. The Willpower half is not charged: brewing happens
+           inside a long rest and a long rest ends by filling Willpower, so it is a
+           price nobody would ever pay. See alchemy.js, and data/README.md.
+
+           The last line of the render, "You learn the Alchemical Ingredients and
+           Improvised Brewing abilities", is dropped. Both are Novice Alchemist
+           cards on this same rank, so the sentence hands over what the set has
+           already handed over. */
+        body:
+          'Alchemy is the art of harnessing the elements and blending them with willpower to create a liquid with magical properties.\n\n' +
+          'You have learned to brew all Novice Potions. Brewing a potion takes 1 hour, and whenever you take a long rest you can use your long rest action to brew two of them and still benefit from the rest.\n\n' + // text-style-ok: joins two clauses
+          'To brew a potion you need its components. Every recipe prints what those cost in Supplies, and they come out of the crate on the night you brew it.',
+      },
+      {
+        id: 'alchemical-ingredients',
+        rank: 1,
+        name: 'Alchemical Ingredients',
+        summary: 'What an ingredient is worth is the element people read into it.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The render is tagged "Self / Alchemist Ability / n/a", which is a card
+           with no cost, no target and no clock: a Passive, which is what this site
+           calls that.
+
+           Two changes. "feathers are associated with winds" becomes Wind, which is
+           the name of that family everywhere in the codex, and it puts all four of
+           IMPROVISED BREWING’s dice on words the site already uses.
+
+           And the last paragraph is the coin sentence, converted. It read "when a
+           recipe asks for 1000 coins' worth of Fire ingredients, this could be 100
+           spicy peppers or a dragon flower". A recipe on this site asks in Supplies,
+           so the example is priced in Supplies and the rest of the sentence is his. */
+        body:
+          'In alchemy the ingredient itself is not important, but rather the element that people associate with it. Alchemy is the process of distilling that elemental essence out of the ingredient to then combine them to create potions.\n\n' +
+          'Determining an ingredient’s element is related to the perceived association. For example, feathers are associated with Wind, while spicy peppers are associated with Fire and Earth.\n\n' +
+          'A recipe asks for its components in Supplies, and what you hand over for them is yours to picture: 20 Supplies of Fire could be a hundred spicy peppers or a single dragon flower.',
+      },
+      {
+        id: 'improvised-brewing',
+        rank: 1,
+        name: 'Improvised Brewing',
+        summary: 'Brew out of what the camp gave up for no Supplies, and drink it before the day is out.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* **Printed and not wired**, and the only card in this set that is. The
+           rest window offers ALCHEMY and does not offer this, for two reasons that
+           are both about what the sheet does not hold:
+
+             it expires at the end of the day, and this site has no day. It has
+             rests, and an item in the pack with no instance of its own for a state
+             to live on (see forged.js: "nothing mechanical is stored").
+
+             which means wiring it would hand over free potions that never spoil,
+             and the spoiling is the whole reason they are free.
+
+           So the card carries its own rule and the table plays it, the same way
+           SPELLBOOK’s free hand and voice are played. Flagged in data/README.md as
+           an open question. Every recipe still carries its dice on the shelf, so
+           the combination the card sends you looking for is there to read.
+
+           Two changes on the way in. "a number of d4s equal to half your power" is
+           written out: old Power was the attribute plus the level, this site has no
+           such number, and the conversion key says every "your power" becomes a die
+           count and an attribute multiple. Halving the sum is what it resolves to.
+
+           And "you still have to spend the required Willpower" becomes "costs no
+           Supplies", which is the same sentence in the currency this pass moved the
+           price into: improvised brewing is the path that skips the components, and
+           the components are what Supplies now are. */
+        body:
+          'After you finish a long rest, you can brew potions through improvised brewing: ingredients you scavenged during your rest, infused heavily with willpower to make them viable.\n\n' +
+          'To find what you gathered, you roll a number of d4s equal to your {mind} plus your level, halved and rounded down, and note every value. Each die is one component: 1 is Earth, 2 is Water, 3 is Fire and 4 is Wind.\n\n' + // text-style-ok: joins two clauses
+          'Every recipe prints the combination of dice needed to craft it without having the exact ingredients, and a potion brewed this way costs no Supplies. It expires at the end of the day.\n\n' + // text-style-ok: joins two clauses
+          'Instead of rolling, you can also choose to redo the exact same batch as the last one you did.',
+      },
+      {
+        id: 'refined-reagents',
+        rank: 2,
+        name: 'Refined Reagents',
+        summary: 'Three potions a night, and every one of them 10 Supplies cheaper.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* **House-written.** The source has no Adept card, because it has no rank
+           above 1 at all. Both numbers here are the two ALCHEMY already prints,
+           moved: the count of brews and the price of one. Nothing new is invented
+           for the sheet to hold, which is the whole test a house card has to pass.
+
+           The discount reads the way PERFECT CASTING’s does, floor and all, because
+           that is the shape this codex settled on for a cost cut that rides a pool
+           the set hands out. See alchemy.js and data/README.md. */
+        body:
+          'Nothing you distil is wasted. You brew three potions on a long rest rather than two, and every potion you brew costs 10 fewer Supplies, to a minimum of 10.\n\n' + // text-style-ok: joins two clauses
+          'Adept Potions are within your reach.',
+      },
+      {
+        id: 'twin-distillation',
+        rank: 3,
+        name: 'Twin Distillation',
+        summary: 'Every potion you brew comes out of the still twice.',
+        kind: 'talent',
+        tags: ['Alchemist', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* **House-written**, for the same empty rank. A third card raising the
+           count would have been the Adept card twice, so this doubles the output of
+           a night instead of lengthening it: three brews and six flasks, at three
+           prices. `batch` in the spec above is the whole of it. */
+        body:
+          'Your still runs true enough to fill a second flask off the same working. Every potion you brew comes out of it twice, and you keep both.\n\n' + // text-style-ok: joins two clauses
+          'Master Potions are within your reach.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------- the roster *
@@ -2625,16 +2852,18 @@ const TALENT_PLACEHOLDERS = [
   placeholder('sharpshooter', 'Sharpshooter', 'instinct'),
   placeholder('wilder', 'Wilder', 'instinct'),
 
-  /* Mind, rows 3 to 9. Arcanist and Enchanter are rows 1 and 2 and are written.
+  /* Mind, rows 4 to 9. Arcanist, Enchanter and Alchemist are rows 1, 2 and 3 and
+     are written.
 
-     `Aclhemist` is read as Alchemist, `SpellBlade` as Spellblade and `Tachticain`
-     as Tactician. Row 9 reads `Elemental Aspe`, which is the column cutting the
-     cell off rather than a typo, and is read as Elemental Aspect: it is the pair
-     to Dragon Aspect on the Physique shelf.
+     `SpellBlade` is read as Spellblade and `Tachticain` as Tactician. Row 9 reads
+     `Elemental Aspe`, which is the column cutting the cell off rather than a typo,
+     and is read as Elemental Aspect: it is the pair to Dragon Aspect on the
+     Physique shelf.
 
-     The Alchemist and the Cauldron Keeper both mix things and sit on different
-     shelves, which is the roster's own arrangement and is left alone. */
-  placeholder('alchemist', 'Alchemist', 'mind'),
+     `Aclhemist` was read as Alchemist and stood here as a placeholder until
+     2026-08-24, when its own sheet was converted. The Alchemist and the Cauldron
+     Keeper both mix things and sit on different shelves, which is the roster’s own
+     arrangement and is left alone. */
   placeholder('necromancer', 'Necromancer', 'mind'),
   placeholder('spellquill', 'Spellquill', 'mind'),
   placeholder('spellblade', 'Spellblade', 'mind'),

@@ -169,11 +169,57 @@ export const EFFECT_RIDERS = {
     line: 'Disadvantage on your next Attack Roll or Skill Check',
   },
 
+  /* ---------------------------------------------------- the Alchemist's flasks
+     Four of the seven Novice potions name a number this sheet already holds, and
+     each of the four says it for an hour. They are keyed here rather than at the
+     moment the flask is drunk for the reason at the top of this file: a potion
+     is very often somebody else's, handed to you at the fire, and there is
+     nothing on your sheet for a rider to hang off. You track their card. */
+
+  /* "Drinking this potion increases your Physique by 2 for 1 hour." */
+  'potion-of-physique': {
+    attributes: { physique: 2, instinct: 0, mind: 0 },
+    line: 'Physique raised by 2',
+  },
+
+  /* "Drinking this potion increases your Instinct by 2 for 1 hour." */
+  'potion-of-instinct': {
+    attributes: { physique: 0, instinct: 2, mind: 0 },
+    line: 'Instinct raised by 2',
+  },
+
+  /* "Drinking this potion increases your Mind by 2 for 1 hour." */
+  'potion-of-mind': {
+    attributes: { physique: 0, instinct: 0, mind: 2 },
+    line: 'Mind raised by 2',
+  },
+
+  /* "While it lasts your Physique is increased by 5, your Movement Speed by 4
+     and your Defense by 2, and your Instinct is reduced by 5."
+
+     The only rider in the table that takes something away, and the shape already
+     allowed it: the attributes are summed and nothing floors them. The two
+     meters of height are the table's to picture. */
+  'growth-elixir': {
+    attributes: { physique: 5, instinct: -5, mind: 0 },
+    speed: 4,
+    defense: 2,
+    line: 'Physique up 5, Instinct down 5, Movement Speed up 4 and Defense up 2',
+  },
+
   /* -------------------------------------------------- considered and left out
    *
    * Cards that plainly last and plainly matter, whose rule this sheet cannot
    * apply without inventing something the card does not say. Each is still
    * trackable, and each still prints its own card on the row.
+   *
+   *   love-potion      the drinker holds the brewer as a trusted ally for an
+   *                    hour. Nothing about that is a number, on this sheet or
+   *                    on the drinker's.
+   *   healing-draught  healing is a pool moved once, not a rider that runs.
+   *   flame-burst-flask the flames stay for 3 turns and burn whatever stands in
+   *                    them, which is a place on the table rather than a number
+   *                    on anybody's sheet.
    *
    *   air-control      Light air "increases all entities' Movement Speed by 3",
    *                    Dense doubles the Move cost instead. One card with two

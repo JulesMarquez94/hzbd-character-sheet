@@ -29,6 +29,7 @@ import {
   normalizeBackgroundSkills,
   skillCards,
 } from './backgrounds.js';
+import { alchemistState } from './alchemy.js';
 import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
 import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from './items.js';
@@ -345,6 +346,46 @@ function talentSources(character) {
               };
         }).filter(Boolean),
       });
+    }
+
+    /* And what this set brews *into a bottle*. The same shelf the rest window
+       offers, standing open on this tab so an Alchemist can read what a night
+       would cost before there is a night to spend.
+
+       `aside`, like the Ingredients above it and for the same reason: a recipe is
+       not a move. You never use the Healing Draught off this block, you brew one,
+       and the card printed here is what the flask does once somebody drinks it.
+
+       Priced in the section's own rule line rather than card by card, because the
+       Supplies come off a rank and every row on the shelf takes the same cut. */
+    const still = talent.alchemy ? alchemistState(character) : null;
+    if (still) {
+      const recipes = still.shelf
+        .map((item) => ({ item, card: getCard(item.abilities?.[0]) }))
+        .filter((row) => row.card);
+
+      if (recipes.length > 0) {
+        open.push({
+          id: `recipes:${talent.id}`,
+          kind: 'ingredient',
+          title: 'Recipes',
+          note: `${talent.name} · ${recipes.length} on the shelf, ${listOut(still.tiers)}`,
+          art: talent.art ?? null,
+          aside: true,
+          sections: [
+            section(
+              'recipes',
+              plural(still.spec.noun, recipes.length),
+              recipes.map((row) => entry(row.card)),
+              `${still.perRest} a long rest, ${
+                still.discount > 0
+                  ? `at their printed price less ${still.discount} Supplies`
+                  : 'at their printed price in Supplies'
+              }${still.batch > 1 ? `, and ${still.batch} flasks off every working` : ''}`
+            ),
+          ],
+        });
+      }
     }
 
     return [set, ...open];

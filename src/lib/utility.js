@@ -80,6 +80,98 @@ export const UTILITY_CARDS = withArt([
       'Attacks made into, out of or through the smoke are made with Disadvantage.',
   },
 
+  /* ----- the Alchemist's Novice potions -----
+     The old Novice Potions table, converted 2026-08-24. Seven rows out of the
+     eight: the Intellect potion and the Wits potion both fold into POTION OF
+     MIND, because the site has three attributes where the old system had four.
+
+     Every one of them is 2 Action Points and no Willpower. The Willpower the old
+     table printed was the *brewer's* price, and this pass turns that into the
+     Supplies a brew costs (see `brew` on each item below, and alchemy.js). A
+     drinker charged it again would be paying for the flask twice.
+
+     They scale off whoever holds the card. The old table said "the crafter’s
+     Spellpower" and the site has nowhere on an item instance to keep a brewer’s
+     number, which is what the conversion pass flagged amber. The Healing Potion
+     above already scales on whoever drinks it, so these do too. Flagged in
+     data/README.md. */
+  {
+    id: 'healing-draught',
+    name: 'Healing Draught',
+    kind: 'item',
+    tags: ['Item', 'Consumable'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    body: 'Drinking this draught restores [[1d6 + stat]] in Health.',
+  },
+  {
+    id: 'flame-burst-flask',
+    name: 'Flame Burst Flask',
+    kind: 'item',
+    tags: ['Item', 'Consumable'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    body:
+      'Throw the flask at a point you can see within 9 meters (30 feet). It breaks on contact, and every entity within 3 meters (10 feet) takes [[1d6 + stat]] in {damage:Fire} damage.\n\n' +
+      'The flames stay for 3 turns. An entity that starts its turn in them takes the same again.',
+  },
+  {
+    id: 'potion-of-physique',
+    name: 'Potion of Physique',
+    kind: 'item',
+    tags: ['Item', 'Consumable'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    body: 'Drinking this potion increases your {physique} by 2 for 1 hour.',
+  },
+  {
+    id: 'potion-of-instinct',
+    name: 'Potion of Instinct',
+    kind: 'item',
+    tags: ['Item', 'Consumable'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    body: 'Drinking this potion increases your {instinct} by 2 for 1 hour.',
+  },
+  {
+    id: 'potion-of-mind',
+    name: 'Potion of Mind',
+    kind: 'item',
+    tags: ['Item', 'Consumable'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    body: 'Drinking this potion increases your {mind} by 2 for 1 hour.',
+  },
+  {
+    id: 'love-potion',
+    name: 'Love Potion',
+    kind: 'item',
+    tags: ['Item', 'Consumable'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    body:
+      'When an entity drinks this potion, make a {mind} roll {roll} against its **Grit**.\n\n' +
+      'On a success, for 1 hour the drinker holds you as a trusted ally and is ready to do what it must to help you, so long as it does not put the drinker in harm.',
+  },
+  {
+    id: 'growth-elixir',
+    name: 'Growth Elixir',
+    kind: 'item',
+    tags: ['Item', 'Consumable'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    body:
+      'Drinking this elixir adds 2 meters (6 feet) to your height and massively increases your muscle mass for 1 hour.\n\n' +
+      'While it lasts your {physique} is increased by 5, your **Movement Speed** by 4 and your **Defense** by 2, and your {instinct} is reduced by 5.',
+  },
+
   /* ----- usable ----- */
   {
     id: 'terra-cotta-disk',
@@ -231,6 +323,130 @@ export const UTILITY_ITEMS = [
     cost: 200,
     abilities: ['smoke-vial'],
     blurb: 'Two thin glass bulbs in a padded sleeve. Do not sit down hard.',
+  },
+
+  /* ----- the Alchemist's Novice potions -----
+   * `brew` is what puts a thing on an Alchemist’s shelf, and it is the only new
+   * field on this file. Three keys and nothing computed:
+   *
+   *   tier      which rung of ALCHEMY opens it, read the way an Ingredient tier
+   *             and an enchantment tier are.
+   *   supplies  what its components cost out of the crate, the night it is
+   *             brewed. See alchemy.js for where the number came from.
+   *   elements  the dice IMPROVISED BREWING asks for, off the old table’s own
+   *             column. `X` is any one of them. Printed on the recipe shelf and
+   *             nowhere else, because it is a rule only an Alchemist reads.
+   *
+   * An item with no `brew` cannot be brewed by anybody, which is every other row
+   * on this shelf. Nothing else in the codex carries one yet.
+   */
+  {
+    id: 'healing-draught',
+    name: 'Healing Draught',
+    slots: ['belt'],
+    tags: ['Common', 'Consumable', 'Potion'],
+    use: 'consumable',
+    charges: 1,
+    burden: 0,
+    weight: 0.3,
+    cost: 100,
+    brew: { tier: 'Novice', supplies: 20, elements: ['X', 'X'] },
+    abilities: ['healing-draught'],
+    blurb: 'A slim apothecary bottle of pale rose liquid, a paper label tied at the neck.',
+    lore:
+      'The first thing a still is ever put to, and the first thing an alchemist gets wrong. A bad one tastes of iron and does nothing at all.\n\n' +
+      'A good one is worth what it took, which was never very much.',
+  },
+  {
+    id: 'flame-burst-flask',
+    name: 'Flame Burst Flask',
+    slots: ['belt'],
+    tags: ['Common', 'Consumable', 'Potion'],
+    use: 'consumable',
+    charges: 1,
+    burden: 0,
+    weight: 0.4,
+    cost: 150,
+    brew: { tier: 'Novice', supplies: 30, elements: ['X', 'X'] },
+    abilities: ['flame-burst-flask'],
+    blurb: 'A round clay flask, orange light showing through a hairline crack.',
+  },
+  {
+    id: 'potion-of-physique',
+    name: 'Potion of Physique',
+    slots: ['belt'],
+    tags: ['Common', 'Consumable', 'Potion'],
+    use: 'consumable',
+    charges: 1,
+    burden: 0,
+    weight: 0.3,
+    cost: 150,
+    brew: { tier: 'Novice', supplies: 30, elements: ['X', 'Earth'] },
+    abilities: ['potion-of-physique'],
+    blurb: 'A heavy stoppered bottle of thick amber liquid, iron banding around the glass.',
+  },
+  {
+    id: 'potion-of-instinct',
+    name: 'Potion of Instinct',
+    slots: ['belt'],
+    tags: ['Common', 'Consumable', 'Potion'],
+    use: 'consumable',
+    charges: 1,
+    burden: 0,
+    weight: 0.3,
+    cost: 150,
+    brew: { tier: 'Novice', supplies: 30, elements: ['X', 'Water'] },
+    abilities: ['potion-of-instinct'],
+    blurb: 'A narrow bottle of clear green liquid that moves faster than it should.',
+  },
+  {
+    id: 'potion-of-mind',
+    name: 'Potion of Mind',
+    slots: ['belt'],
+    tags: ['Common', 'Consumable', 'Potion'],
+    use: 'consumable',
+    charges: 1,
+    burden: 0,
+    weight: 0.3,
+    cost: 150,
+    /* Two rows of the old table fold into this one, so it takes either of their
+       dice: the Intellect potion asked for a Fire and the Wits potion for a Wind.
+       This is the one place an element slot is a choice, and the shelf prints it
+       as "Fire or Wind". */
+    brew: { tier: 'Novice', supplies: 30, elements: ['X', 'Fire|Wind'] },
+    abilities: ['potion-of-mind'],
+    blurb: 'A faceted vial of luminous violet liquid, faint motes turning inside it.',
+  },
+  {
+    id: 'love-potion',
+    name: 'Love Potion',
+    slots: ['belt'],
+    tags: ['Uncommon', 'Consumable', 'Potion'],
+    use: 'consumable',
+    charges: 1,
+    burden: 0,
+    weight: 0.3,
+    cost: 100,
+    brew: { tier: 'Novice', supplies: 20, elements: ['Earth', 'Water', 'Water'] },
+    abilities: ['love-potion'],
+    blurb: 'A small heart-stoppered flask, a dried flower pressed against the inside of the glass.',
+    lore:
+      'Sold under the counter, brewed for a laugh and regretted at length. Nobody has ever been talked out of buying one.\n\n' +
+      'It wears off in an hour. What was said in that hour does not.',
+  },
+  {
+    id: 'growth-elixir',
+    name: 'Growth Elixir',
+    slots: ['belt'],
+    tags: ['Rare', 'Consumable', 'Potion'],
+    use: 'consumable',
+    charges: 1,
+    burden: 0,
+    weight: 0.4,
+    cost: 200,
+    brew: { tier: 'Novice', supplies: 40, elements: ['Wind', 'Wind', 'Wind'] },
+    abilities: ['growth-elixir'],
+    blurb: 'A tall bottle of murky brown elixir, far too large for the crate it is sitting in.',
   },
 
   /* ----- usable — they stay on the belt ----- */

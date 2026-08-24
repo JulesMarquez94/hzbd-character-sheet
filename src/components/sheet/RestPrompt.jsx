@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
+import BrewRest from './BrewRest.jsx';
 import EnchantAction from './EnchantRest.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { useCardStack } from '../../context/card-stack.js';
+import { brewSummary } from '../../lib/alchemy.js';
 import { formatNumber } from '../../lib/characterModel.js';
 import { enchantChanges } from '../../lib/enchanting.js';
 import { heldItem } from '../../lib/items.js';
@@ -66,6 +68,11 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
   /* The talents column as this window has re-prepared it, or null while it is
      untouched. */
   const [prepared, setPrepared] = useState(null);
+  /* And what an Alchemist has put in the still: recipe ids, one per brew. Its own
+     piece of state rather than part of the draft above, because a flask is not
+     something the `talents` column holds. It becomes pack entries in the rest's
+     own patch. See alchemy.js. */
+  const [brews, setBrews] = useState([]);
 
   /* Whether the list of actions is up, and which one's step is. */
   const [menu, setMenu] = useState(false);
@@ -86,8 +93,8 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      rule. */
   const picked = useMemo(() => (chosen ? [chosen] : []), [chosen]);
   const plan = useMemo(
-    () => restPlan(character, kind, picked, prepared),
-    [character, kind, picked, prepared]
+    () => restPlan(character, kind, picked, prepared, brews),
+    [character, kind, picked, prepared, brews]
   );
 
   /** Take the slot back, and everything the action had written into the draft. */
@@ -95,6 +102,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setActionId(null);
     setChosen(null);
     setPrepared(null);
+    setBrews([]);
   }
 
   /** Fill the slot. Whatever was in it, and whatever it did, goes first. */
@@ -102,6 +110,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setChosen(amount ? { card: row.card, amount: amount.amount, gain: amount.gain } : null);
     // A different action means the last one's work is given back, not added to.
     setPrepared(null);
+    setBrews([]);
     setActionId(row.id);
 
     setMenu(false);
@@ -111,7 +120,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
 
   if (!rest || !plan) return null;
 
-  const held = action ? summarise(action, { chosen, character, talents }) : null;
+  const held = action ? summarise(action, { chosen, character, talents, brews }) : null;
 
   return (
     <Modal
@@ -285,6 +294,17 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         />
       )}
 
+      {step?.kind === 'alchemy' && (
+        <BrewRest
+          character={character}
+          kind={kind}
+          state={step.state}
+          brews={brews}
+          onDraft={setBrews}
+          onClose={() => setStepId(null)}
+        />
+      )}
+
       {step?.kind === 'enchant' && (
         <EnchantAction
           character={character}
@@ -434,11 +454,16 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
  * laying anything leaves the slot open, and it says so rather than reading as a
  * night's work finished.
  */
-function summarise(action, { chosen, character, talents }) {
+function summarise(action, { chosen, character, talents, brews }) {
   if (action.kind === 'labour') {
     return chosen
       ? { done: true, says: `${chosen.gain ? '+' : '−'}${chosen.amount} Supplies` }
       : { done: false, says: 'No amount chosen yet' };
+  }
+
+  if (action.kind === 'alchemy') {
+    const said = brewSummary(brews, action.state);
+    return said ? { done: true, says: said } : { done: false, says: 'Nothing in the still yet' };
   }
 
   if (action.kind === 'prepare') {

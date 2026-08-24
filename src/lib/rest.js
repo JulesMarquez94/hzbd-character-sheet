@@ -50,6 +50,14 @@
  * verb beside each number is what says whether it leaves the crate or lands in
  * it ("expending 20 Supplies" against "gain 15 Supplies").
  *
+ * ------------------------------------------------------------------ the still
+ * And a long rest is when an Alchemist brews. That is the same shape as a labour
+ * with one difference worth naming: it is the only long rest action whose output
+ * is a **thing**. A labour moves the crate, an enchantment lays a rider, a
+ * prepared hand rewrites a column, and ALCHEMY turns Supplies into flasks that
+ * end up in the pack. Priced off the recipes themselves in alchemy.js, and
+ * written into this rest's own patch so backing out unmakes them.
+ *
  * ------------------------------------------------------------- the bookkeeping
  * Every supply movement is a ledger entry with its own reason, the same as one
  * typed into the crate by hand, because a rest that quietly drains ten supplies
@@ -57,6 +65,7 @@
  * rather than going negative, exactly as the Supply ledger already does.
  */
 
+import { brewAffordable, brewRows, brewedItems, normalizeBrews, restAlchemy } from './alchemy.js';
 import { appendLedger, clamp, formatNumber, levelForXp, newLedgerId } from './characterModel.js';
 import { normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
@@ -71,7 +80,7 @@ import {
   layingCost,
 } from './enchanting.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
-import { beltRest, characterGrants, heldItem } from './items.js';
+import { beltRest, characterGrants, heldItem, normalizePack } from './items.js';
 import { usesRest } from './uses.js';
 
 /** What each rest costs and what it gives back. */
@@ -271,7 +280,13 @@ export function restEnchanting(character, kind) {
  * One list, one shape, whatever the action actually is — the same trick
  * abilitySources.js plays with a "source". A new kind of long rest action is a
  * new branch here and a new step in the window, and nothing else has to learn
- * what it is.
+ * what it is. Five kinds so far:
+ *
+ *   `labour`   a background skill worked during a rest
+ *   `enchant`  ENCHANTING, and what it lays on what
+ *   `worn`     WIELDER OF WONDER, and what is on the Enchanter's own person
+ *   `alchemy`  ALCHEMY, and the flasks it fills out of the crate
+ *   `prepare`  a set with a `loadout` that swaps or researches on this rest
  */
 
 /**
@@ -332,6 +347,23 @@ export function restActions(character, kind, talents = character?.talents) {
         state: enchanter,
       });
     }
+  }
+
+  /* ---- the Alchemist's still ----
+     ALCHEMY: "whenever you take a long rest you can use your long rest action to
+     brew two of them and still benefit from the rest." One row whatever the
+     rank, because the rank only changes how many and how much. */
+  const alchemy = restAlchemy(held, kind);
+  if (alchemy) {
+    const flasks = alchemy.batch > 1 ? `, ${alchemy.batch} flasks apiece` : '';
+    rows.push({
+      id: 'alchemy',
+      kind: 'alchemy',
+      label: `Brew ${plural(alchemy.spec.noun, alchemy.perRest)}`,
+      from: `${alchemy.set.name} · ${alchemy.spec.label}`,
+      note: `${alchemy.perRest} a night${flasks}, off a shelf of ${alchemy.shelf.length}. The components come out of the crate.`,
+      state: alchemy,
+    });
   }
 
   /* ---- what a set re-prepares, and what a set researches ----
@@ -428,8 +460,14 @@ export function layingAffordable(character, kind, prepared, enchantment) {
  * in the window — the hands a choosing set carries out of the camp. It rides in
  * the same patch for the same reason, so a rest that is cancelled or refused
  * leaves yesterday's spells exactly where they were.
+ *
+ * `brews` is what an Alchemist put in the still tonight: a list of recipe ids,
+ * one per brew. It is the only long rest action whose output is a *thing* rather
+ * than a rider or a hand, so it is the only one that writes the pack — and it
+ * writes it in this same patch, so a rest backed out of leaves the components in
+ * the crate and the flasks unmade.
  */
-export function restPlan(character, kind, labours = [], prepared = null) {
+export function restPlan(character, kind, labours = [], prepared = null, brews = []) {
   const rest = getRest(kind);
   if (!rest) return null;
 
@@ -497,6 +535,33 @@ export function restPlan(character, kind, labours = [], prepared = null) {
             : 'Out of the crate.'
           : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
       tone: supplies >= 0 ? (labour.gain ? 'gain' : 'cost') : 'warn',
+    });
+  }
+
+  /* ---- what came off the still ----
+     One line a recipe rather than one a flask: "Healing Draught x2: 20 Supplies"
+     is what the crate actually pays and three identical rows is not. The count
+     printed is the count of *flasks*, because that is what ends up in the pack.
+
+     Priced off the character rather than off the draft for the same reason the
+     rest itself is: nothing tonight can change the rank that opened the shelf. */
+  const still = restAlchemy(character, kind);
+  const brewing = normalizeBrews(brews, still);
+
+  for (const row of brewRows(brewing, still)) {
+    const before = supplies;
+    move(-row.supplies, `${row.name}${row.brews > 1 ? ` x${row.brews}` : ''} brewed`);
+
+    lines.push({
+      key: `brewed-${row.id}`,
+      label: `${row.name}${row.made > 1 ? ` x${row.made}` : ''}: ${row.supplies} Supplies`,
+      detail:
+        supplies >= 0
+          ? still.batch > 1
+            ? `Components out of the crate, at ${row.price} a brew. Your still fills ${still.batch} flasks off each one.`
+            : 'Components out of the crate. The flask goes in your pack.'
+          : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
+      tone: supplies >= 0 ? 'cost' : 'warn',
     });
   }
 
@@ -569,6 +634,16 @@ export function restPlan(character, kind, labours = [], prepared = null) {
      pay for restores nothing and ends nothing: it did not happen. */
   if (!affordable) {
     return { rest, lines, patch: {}, supplies: held, affordable, short };
+  }
+
+  /* ---- and what is in the pack that was not there last night ----
+     The flasks themselves, appended rather than replacing, because the pack is
+     the flat list of what is carried and two Healing Draughts are two entries in
+     it. They land in the pack and not on the belt: a loop is a place you have
+     chosen to put something, and choosing is what the Inventory tab is for. */
+  const made = brewedItems(brewing, still);
+  if (made.length > 0) {
+    patch.pack = [...normalizePack(character?.pack), ...made];
   }
 
   /* ---- health ---- */
@@ -728,4 +803,16 @@ export function labourAffordable(character, kind, option) {
   if (option.gain) return true;
   const held = Math.max(0, Math.floor(Number(character?.supplies) || 0));
   return held - restPrice(character, kind) - option.amount >= 0;
+}
+
+/**
+ * And whether one more flask could go in the still, with the rest itself and
+ * everything already in the still paid for first.
+ *
+ * The third of the same shape, and the one place the price of a rest crosses into
+ * alchemy.js — which may not import this file, so the number goes down with the
+ * call rather than being looked up there.
+ */
+export function brewingAffordable(character, kind, brews, state, item) {
+  return brewAffordable(character, restPrice(character, kind), brews, state, item);
 }

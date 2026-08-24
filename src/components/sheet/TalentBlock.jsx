@@ -7,11 +7,13 @@ import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
 import MinionSection from './MinionPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { BrewRankNote } from './BrewWindow.jsx';
+import { AlchemyRankNote } from './BrewRest.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { alchemyPreview } from '../../lib/alchemy.js';
 import { brewPreview } from '../../lib/brews.js';
 import { enchantmentsAt } from '../../lib/enchantments.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
@@ -514,11 +516,13 @@ function TalentPresentation({ option, character }) {
         const choice = rankPreview(talent, rank);
         const brewing = brewPreview(talent, rank);
         const enchanting = enchantPreview(talent, rank);
+        const alchemy = alchemyPreview(talent, rank);
         if (
           cards.length === 0 &&
           !choice?.known &&
           !brewing?.tiers?.length &&
-          !enchanting?.tiers?.length
+          !enchanting?.tiers?.length &&
+          !alchemy?.tiers?.length
         )
           return null;
 
@@ -560,6 +564,11 @@ function TalentPresentation({ option, character }) {
                 which enchantments come within reach, and how many of them an
                 Enchanter wears themselves. */}
             <EnchantRankNote talent={talent} rank={rank} />
+
+            {/* And for the set whose ladder reaches shelves the codex has not
+                filled: how many recipes a rank actually opens, and what it does
+                to a night at the still. */}
+            <AlchemyRankNote talent={talent} rank={rank} />
           </section>
         );
       })}

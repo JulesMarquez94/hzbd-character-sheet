@@ -1,0 +1,24 @@
+id,Name,Tags,AP,WP,Main Effect,Source,Image,Old rank
+alchemy,ALCHEMY,"Alchemist, Novice Talent, Long Rest",,,"Alchemy is the art of harnessing the elements and blending them with willpower to create a liquid with magical properties.
+
+You have learned to brew all Novice Potions. Brewing a potion takes 1 hour, and whenever you take a long rest you can use your long rest action to brew two of them and still benefit from the rest.
+
+To brew a potion you need its components. Every recipe prints what those cost in Supplies, and they come out of the crate on the night you brew it.",sheet,,R1
+alchemical-ingredients,ALCHEMICAL INGREDIENTS,"Alchemist, Novice Talent, Passive",,,"In alchemy the ingredient itself is not important, but rather the element that people associate with it. Alchemy is the process of distilling that elemental essence out of the ingredient to then combine them to create potions.
+
+Determining an ingredient’s element is related to the perceived association. For example, feathers are associated with Wind, while spicy peppers are associated with Fire and Earth.
+
+A recipe asks for its components in Supplies, and what you hand over for them is yours to picture: 20 Supplies of Fire could be a hundred spicy peppers or a single dragon flower.",sheet,,R1
+improvised-brewing,IMPROVISED BREWING,"Alchemist, Novice Talent, Long Rest",,,"After you finish a long rest, you can brew potions through improvised brewing: ingredients you scavenged during your rest, infused heavily with willpower to make them viable.
+
+To find what you gathered, you roll a number of d4s equal to your Mind plus your level, halved and rounded down, and note every value. Each die is one component: 1 is Earth, 2 is Water, 3 is Fire and 4 is Wind.
+
+Every recipe prints the combination of dice needed to craft it without having the exact ingredients, and a potion brewed this way costs no Supplies. It expires at the end of the day.
+
+Instead of rolling, you can also choose to redo the exact same batch as the last one you did.",sheet,,R1
+refined-reagents,REFINED REAGENTS,"Alchemist, Adept Talent, Passive",,,"Nothing you distil is wasted. You brew three potions on a long rest rather than two, and every potion you brew costs 10 fewer Supplies, to a minimum of 10.
+
+Adept Potions are within your reach.",house,,none
+twin-distillation,TWIN DISTILLATION,"Alchemist, Master Talent, Passive",,,"Your still runs true enough to fill a second flask off the same working. Every potion you brew comes out of it twice, and you keep both.
+
+Master Potions are within your reach.",house,,none
