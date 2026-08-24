@@ -227,10 +227,17 @@ function glyphForItem(item) {
   if (tags.includes('Bow')) return 'bow';
   if (tags.includes('Crossbow')) return 'bow';
   if (tags.includes('Firearm')) return 'firearm';
-  if (tags.includes('Focus')) return 'focus';
+  /* `Focus` held all five caster's implements under one word and went out with
+     the tag pass of 2026-08-24. They share the one glyph the way the Bow and the
+     Crossbow do: a wand, a stave, a tome, a censer and a fiddle are five
+     silhouettes nobody has drawn, and one honest placeholder beats five wrong
+     ones. See the tag note in weapons.js. */
+  if (['Wand', 'Staff', 'Tome', 'Censer', 'Instrument'].some((tag) => tags.includes(tag))) {
+    return 'focus';
+  }
   if (tags.includes('Shielded')) return 'off_hand';
-  if (tags.includes('Melee Weapon')) return 'main_hand';
-  if (tags.includes('Ranged Weapon')) return 'bow';
+  if (tags.includes('Melee')) return 'main_hand';
+  if (tags.includes('Ranged')) return 'bow';
   // A trinket says what kind it is in its tags, and a ring and a cloak are not
   // the same shape. Everything else on the shelf falls back to the band.
   if (tags.includes('Necklace')) return 'necklace';
@@ -324,11 +331,25 @@ export function ItemIcon({ item, size = 40 }) {
 
 /* -------------------------------------------------------------------- chips */
 
+/**
+ * Tags a row carries and never shows.
+ *
+ * Jules's own pass of 2026-08-24: "weapon is redundant in the weapon category so
+ * it can have but hidden". Both of these are true of so much of the shelf that
+ * they tell a reader nothing about the row they are on — `Weapon` on a weapon,
+ * `Common` on the thing every shop stocks. They stay in the data, where the
+ * filter row and every talent set can still reach them, and come off the chips.
+ *
+ * Rarity above Common is not in here: Uncommon, Rare and Epic are news, and they
+ * are the chips that carry a colour. See RARITY_COLORS.
+ */
+const HIDDEN_TAGS = new Set(['Weapon', 'Common']);
+
 /** The item's tags as chips; the rarity tag carries the rarity's colour. */
 export function ItemTags({ item }) {
   return (
     <span className="item-tags">
-      {item.tags.map((tag) => {
+      {item.tags.filter((tag) => !HIDDEN_TAGS.has(tag)).map((tag) => {
         const color = RARITY_COLORS[tag] ?? null;
         return (
           <span
@@ -568,6 +589,56 @@ export function ChargeDots({ charges, used, onUse, readOnly = false }) {
           />
         );
       })}
+    </span>
+  );
+}
+
+/* --------------------------------------------------------------- ammunition */
+
+/**
+ * The two silhouettes a magazine is drawn with. Jules asked for "bullet shaped
+ * indicator that empty as you use" (2026-08-24), and a crossbow holds a bolt
+ * rather than a ball, so the shape is read off the round's own name: a cartridge
+ * for a Shot, a fletched bolt for a Bolt.
+ *
+ * Not the belt's round dots. A charge and a round are both a thing you spend, but
+ * one is a flask and one is loaded: the shape is the whole of what tells a reader
+ * which row is going to click empty on them.
+ */
+const ROUNDS = {
+  Shot: 'M5 0.6c2 1.7 3.4 3.5 3.4 5.5V14a1.3 1.3 0 0 1-1.3 1.3H2.9A1.3 1.3 0 0 1 1.6 14V6.1c0-2 1.4-3.8 3.4-5.5Z',
+  Bolt: 'M5 0.6 7.9 5.6H6.1v9.8H3.9V5.6H2.1Z',
+};
+
+/**
+ * What is left in a loaded weapon: one round per shot it holds, filled while the
+ * shot is still in it and an empty outline once it is gone.
+ *
+ * A readout and never a control, unlike the belt's dots. A round is spent by
+ * firing and put back by Reloading, and both of those are cards that cost Action
+ * Points — so there is nothing here for a tap to mean that the two rows beside it
+ * do not already mean properly.
+ */
+export function AmmoPips({ ammo, charges, used }) {
+  const remaining = Math.max(0, charges - used);
+  const unit = ammo?.unit ?? 'Shot';
+  const path = ROUNDS[unit] ?? ROUNDS.Shot;
+
+  return (
+    <span
+      className="ammo-pips"
+      title={`${remaining} of ${charges} ${unit}${charges === 1 ? '' : 's'} left`}
+    >
+      {Array.from({ length: charges }, (_, index) => (
+        <svg
+          key={index}
+          className={`ammo-pip${index < remaining ? ' loaded' : ''}`}
+          viewBox="0 0 10 16"
+          aria-hidden="true"
+        >
+          <path d={path} />
+        </svg>
+      ))}
     </span>
   );
 }

@@ -132,20 +132,46 @@ export const ACTION_CARDS = withArt([
  *   Cost 5   3d6 + 2*stat
  *   Cost 6   3d6 + 3*stat
  *
- * Nothing on this wall is priced any other way. A weapon that hits harder than
- * its neighbour costs more to swing, and that is the whole of the balance. What
- * a family buys with the points it spends is its *second* card.
+ * A weapon that hits harder than its neighbour costs more to swing, and that is
+ * the whole of the balance. What a family buys with the points it spends is its
+ * *second* card.
  *
- * Two families read one rung down the ladder and pay a point for what they gain
- * instead, which is the designer's own rule twice over:
+ * Three families read the grid sideways and each is the designer's own rule:
  *
  *   X + Shield   the base weapon's damage at 1 more Action Point, and the shield
  *                is worth 3 Armor and 1 Defense while it is in your hand
  *   Paired X     the base weapon's dice as d4 rolled twice, at 1 more Action
  *                Point, and every roll it makes is at disadvantage
+ *   Crossbow     its own rung's damage for 1 Action Point less, and a Reload
  *
  * So Finesse + Shield deals what a Finesse Weapon deals and costs 3 rather than
  * 2, and Paired Finesse deals 1d4 + stat twice for the same 3.
+ *
+ * **The firearms are off the cost column entirely.** "All shoot ability should
+ * cost 1 for firearms", 2026-08-24, so all three fire for 1 Action Point and keep
+ * the damage their rung buys. What prices them instead is the magazine: see
+ * `ammo` below.
+ *
+ * ---------------------------------------------------------------- what it is on
+ * `weapon` is the weapon the card belongs to, as the card itself names it. It is
+ * the only thing on a card the *title* does not print: on Jules's instruction of
+ * 2026-08-24, "the weapon name should be in the banner not the title", so
+ * `Short Bow - Shoot` is titled **Shoot** and banners RANGED - WEAPON ATTACK -
+ * SHORT BOW. `name` stays the whole of it, because that is what the art work
+ * list, every {{link}} and every saved row already point at. See `cardTitle` and
+ * `cardBanner` in cardText.js, and the round trip in scripts/check-weapons.mjs
+ * that holds the three in step.
+ *
+ * ------------------------------------------------------------------- the ammo
+ * A firearm and a crossbow hold a countable number of shots and hand them back
+ * to a Reload rather than to a rest:
+ *
+ *   ammo     `{ max, unit, reload }` on the attack. `unit` is the word the card
+ *            and the pips use, Shot or Bolt
+ *   reloads   the id of the attack a Reload fills, on the Reload
+ *
+ * Counted in `card_uses` beside everything else a card spends, and drawn as pips
+ * the shape of the round beside the row. See uses.js.
  *
  * ------------------------------------------------------------ what a range is
  * **Every melee weapon reaches 1 Meter unless it is a reach weapon**, on the
@@ -158,14 +184,17 @@ export const ACTION_CARDS = withArt([
  * The designer priced four of them outright and the rest are read off those:
  *
  *   Flurry       5 Action Points and 2 Willpower              (given)
+ *   Volley       5 Action Points and 2 Willpower              (given)
+ *   Chorus       4 Action Points and 2 Willpower              (given)
  *   Aimed Shot   the plain attack's cost + 1, and 1 Willpower (given)
  *   Drive        the plain attack's cost, and 1 Willpower     (given)
  *   Discord      the plain attack's cost, and 1 Willpower     (given)
  *
  * So a special that multiplies what one swing puts out costs a point more than
  * the plain attack, and one that spends itself on an area or a rider costs the
- * same. Willpower is 1 on every special that makes a roll. A Reload makes no
- * roll and costs no Willpower.
+ * same. Willpower is 1 on every special that makes a roll and 2 on the three the
+ * designer priced by hand, which are the three that put out more than one hit.
+ * A Reload makes no roll and costs no Willpower.
  *
  * --------------------------------------------------------------- card text
  * Card bodies are authored the way the printed cards read. See the note at the
@@ -188,6 +217,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'finesse-strike',
     name: 'Finesse Weapon - Strike',
+    weapon: 'Finesse Weapon',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 2,
@@ -201,6 +231,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'finesse-flurry',
     name: 'Finesse Weapon - Flurry',
+    weapon: 'Finesse Weapon',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 5,
@@ -221,6 +252,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'short-bow-shoot',
     name: 'Short Bow - Shoot',
+    weapon: 'Short Bow',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 2,
@@ -234,6 +266,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'short-bow-aimed-shot',
     name: 'Short Bow - Aimed Shot',
+    weapon: 'Short Bow',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 3,
@@ -246,36 +279,46 @@ export const WEAPON_ABILITIES = withArt([
   },
 
   /* ----- Flintlock Pistol -----
-   * "Flintlock weapon and portable canon remain the same", so all three keep the
-   * shot count and the Reload they already had. What changed is the plain
-   * attack, which is on the cost table like everything else: the pistol used to
-   * fire for 1 Action Point and now pays the 2 its damage is worth.
+   * **A firearm fires for 1 Action Point**, on the designer's rule of 2026-08-24:
+   * "all shoot ability should cost 1 for firearms". All three of them, whatever
+   * rung of the ladder their damage comes off, which takes the three plain
+   * attacks off the cost column and puts the whole family's price somewhere else:
+   * the magazine. A Portable Canon deals what 4 Action Points buys and fires for
+   * 1, and then it is empty until somebody spends 3 loading it.
+   *
+   * So `ammo` is what a firearm is balanced on rather than the swing, and it is a
+   * rider on the card the same way `uses` is. See uses.js.
    */
   {
     id: 'flintlock-pistol-shoot',
     name: 'Flintlock Pistol - Shoot',
+    weapon: 'Flintlock Pistol',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
-    ap: 2,
+    ap: 1,
     wp: null,
     stat: 'instinct',
     damage: ['Sharp'],
+    ammo: { max: 3, unit: 'Shot', reload: 'flintlock-pistol-reload' },
     body:
       'Make an {stat} Ranged Attack {roll} against an entity within 15 Meter (50 Feet) of you.\n\n' +
-      'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
+      'On a hit, you deal [[1d6 + stat]] as {damage} damage.\n\n' +
+      'A shot is spent. With all 3 gone you must Reload before you can Shoot again.',
   },
   {
     id: 'flintlock-pistol-reload',
     name: 'Flintlock Pistol - Reload',
+    weapon: 'Flintlock Pistol',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Move'],
     ap: 3,
     wp: null,
     stat: 'instinct',
     damage: [],
+    reloads: 'flintlock-pistol-shoot',
     body:
-      'Your Flintlock Pistol starts loaded with 3 Shots. Every use of the Flintlock Pistol - Shoot ability consumes one shot.\n\n' +
-      'After you have used all 3 shots, you must use this Reload ability before you can Shoot again.',
+      'You seat three fresh balls and prime the pan.\n\n' +
+      'Your Flintlock Pistol is loaded with 3 Shots again, and stays loaded until you Shoot them.',
   },
 
   /* ----- Fist Weapon -----
@@ -288,6 +331,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'fist-strike',
     name: 'Fist Weapon - Strike',
+    weapon: 'Fist Weapon',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 2,
@@ -301,6 +345,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'fist-flurry',
     name: 'Fist Weapon - Flurry',
+    weapon: 'Fist Weapon',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 5,
@@ -325,10 +370,16 @@ export const WEAPON_ABILITIES = withArt([
    * VOLLEY is the designer's: "3 projectile 1 attack roll but can choose
    * different target." One roll held against every target it is split between,
    * which is the same held-roll shape the old Colossal Bow's piercing shot used.
+   *
+   * They priced it by hand on 2026-08-24 as well: "wand volley should cost 5
+   * action points and 2 willpower". Three hits off one roll is what Flurry sells
+   * and it is now sold for exactly what Flurry costs, which is the whole reason
+   * the number is not read off the plain attack like every other special.
    */
   {
     id: 'fire-wand-bolt',
     name: 'Fire Wand - Bolt',
+    weapon: 'Fire Wand',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 2,
@@ -342,10 +393,11 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'fire-wand-volley',
     name: 'Fire Wand - Volley',
+    weapon: 'Fire Wand',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
-    ap: 3,
-    wp: 1,
+    ap: 5,
+    wp: 2,
     stat: 'mind',
     damage: ['Fire'],
     body:
@@ -356,6 +408,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'frost-wand-bolt',
     name: 'Frost Wand - Bolt',
+    weapon: 'Frost Wand',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 2,
@@ -369,10 +422,11 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'frost-wand-volley',
     name: 'Frost Wand - Volley',
+    weapon: 'Frost Wand',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
-    ap: 3,
-    wp: 1,
+    ap: 5,
+    wp: 2,
     stat: 'mind',
     damage: ['Cold'],
     body:
@@ -383,6 +437,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'lightning-wand-bolt',
     name: 'Lightning Wand - Bolt',
+    weapon: 'Lightning Wand',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 2,
@@ -396,10 +451,11 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'lightning-wand-volley',
     name: 'Lightning Wand - Volley',
+    weapon: 'Lightning Wand',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
-    ap: 3,
-    wp: 1,
+    ap: 5,
+    wp: 2,
     stat: 'mind',
     damage: ['Lightning'],
     body:
@@ -423,6 +479,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'melee-light-strike',
     name: 'Melee Light - Strike',
+    weapon: 'Melee Light',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 3,
@@ -436,6 +493,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'melee-light-swift-strike',
     name: 'Melee Light - Swift Strike',
+    weapon: 'Melee Light',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 2,
@@ -451,6 +509,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'bow-shoot',
     name: 'Bow - Shoot',
+    weapon: 'Bow',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 3,
@@ -464,6 +523,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'bow-aimed-shot',
     name: 'Bow - Aimed Shot',
+    weapon: 'Bow',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 4,
@@ -479,28 +539,33 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'flintlock-rifle-shoot',
     name: 'Flintlock Rifle - Shoot',
+    weapon: 'Flintlock Rifle',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
-    ap: 3,
+    ap: 1,
     wp: null,
     stat: 'instinct',
     damage: ['Sharp'],
+    ammo: { max: 2, unit: 'Shot', reload: 'flintlock-rifle-reload' },
     body:
       'Make an {stat} Ranged Attack {roll} against an entity within 30 Meter (100 Feet) of you.\n\n' +
-      'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
+      'On a hit, you deal [[2d6 + stat]] as {damage} damage.\n\n' +
+      'A shot is spent. With both gone you must Reload before you can Shoot again.',
   },
   {
     id: 'flintlock-rifle-reload',
     name: 'Flintlock Rifle - Reload',
+    weapon: 'Flintlock Rifle',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Move'],
     ap: 4,
     wp: null,
     stat: 'instinct',
     damage: [],
+    reloads: 'flintlock-rifle-shoot',
     body:
-      'Your Flintlock Rifle starts loaded with 2 Shots. Every use of the Flintlock Rifle - Shoot ability consumes one shot.\n\n' +
-      'After you have used all 2 shots, you must use this Reload ability before you can Shoot again.',
+      'You ram two charges home and prime the pan.\n\n' +
+      'Your Flintlock Rifle is loaded with 2 Shots again, and stays loaded until you Shoot them.',
   },
 
   /* ----- Whip -----
@@ -511,6 +576,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'whip-lash',
     name: 'Whip - Lash',
+    weapon: 'Whip',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 3,
@@ -524,6 +590,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'whip-pull',
     name: 'Whip - Pull',
+    weapon: 'Whip',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 3,
@@ -549,26 +616,30 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'light-crossbow-shoot',
     name: 'Light Crossbow - Shoot',
+    weapon: 'Light Crossbow',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 2,
     wp: null,
     stat: 'instinct',
     damage: ['Sharp'],
+    ammo: { max: 1, unit: 'Bolt', reload: 'light-crossbow-reload' },
     body:
       'Make an {stat} Ranged Attack {roll} against an entity within 25 Meter (80 Feet) of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.\n\n' +
-      'The bolt is spent. You cannot Shoot again until you have reloaded.',
+      'The bolt is spent. You cannot Shoot again until you have Reloaded.',
   },
   {
     id: 'light-crossbow-reload',
     name: 'Light Crossbow - Reload',
+    weapon: 'Light Crossbow',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Move'],
     ap: 1,
     wp: null,
     stat: 'instinct',
     damage: [],
+    reloads: 'light-crossbow-shoot',
     body:
       'You draw the string back and seat a fresh bolt.\n\n' +
       'Your Light Crossbow is loaded again, and stays loaded until you Shoot.',
@@ -584,11 +655,15 @@ export const WEAPON_ABILITIES = withArt([
    * on this wall that is not an Attack, and it is why the file header's "exactly
    * two shapes" note holds: a Tome takes the second one.
    *
-   * CHORUS is the designer's: "a 6m aoe around them."
+   * CHORUS is the designer's: "a 6m aoe around them", priced by them on
+   * 2026-08-24 at "4 action points and 2 WP". A ring that catches everything
+   * within it is the widest thing on this wall, and it is the one area special
+   * the designer took off the plain attack's price to charge for separately.
    */
   {
     id: 'psychic-tome-recite',
     name: 'Psychic Tome - Recite',
+    weapon: 'Psychic Tome',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 3,
@@ -602,10 +677,11 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'psychic-tome-chorus',
     name: 'Psychic Tome - Chorus',
+    weapon: 'Psychic Tome',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
-    ap: 3,
-    wp: 1,
+    ap: 4,
+    wp: 2,
     stat: 'mind',
     damage: ['Psychic'],
     body:
@@ -615,6 +691,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'sacred-tome-recite',
     name: 'Sacred Tome - Recite',
+    weapon: 'Sacred Tome',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 3,
@@ -628,10 +705,11 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'sacred-tome-chorus',
     name: 'Sacred Tome - Chorus',
+    weapon: 'Sacred Tome',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
-    ap: 3,
-    wp: 1,
+    ap: 4,
+    wp: 2,
     stat: 'mind',
     damage: ['Sacred'],
     body:
@@ -641,6 +719,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'decay-tome-recite',
     name: 'Decay Tome - Recite',
+    weapon: 'Decay Tome',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 3,
@@ -654,10 +733,11 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'decay-tome-chorus',
     name: 'Decay Tome - Chorus',
+    weapon: 'Decay Tome',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
-    ap: 3,
-    wp: 1,
+    ap: 4,
+    wp: 2,
     stat: 'mind',
     damage: ['Decay'],
     body:
@@ -681,6 +761,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'paired-finesse-strike',
     name: 'Paired Finesse - Strike',
+    weapon: 'Paired Finesse',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 3,
@@ -694,6 +775,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'paired-finesse-whirlwind',
     name: 'Paired Finesse - Whirlwind',
+    weapon: 'Paired Finesse',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 3,
@@ -711,12 +793,15 @@ export const WEAPON_ABILITIES = withArt([
    * disadvantage on the next roll of the target cost 1WP."
    *
    * Magic that runs on Instinct, which is the designer's own attribute list and
-   * the one weapon on this wall that is a Focus without being a Mind weapon. It
-   * is played rather than studied.
+   * the one caster's implement on this wall that is not a Mind weapon. It is
+   * played rather than studied.
+   *
+   * DISCORD stopped being an attack on 2026-08-24. See the card.
    */
   {
     id: 'enchanted-instrument-blast',
     name: 'Enchanted Instrument - Blast',
+    weapon: 'Enchanted Instrument',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 3,
@@ -730,15 +815,22 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'enchanted-instrument-discord',
     name: 'Enchanted Instrument - Discord',
+    weapon: 'Enchanted Instrument',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 3,
     wp: 1,
     stat: 'instinct',
     damage: ['Force'],
+    /* DISCORD is contested rather than aimed, on the designer's ruling of
+       2026-08-24: "Instrument discord is against the grit of an entity not an
+       attack roll." A wrong note is not thrown at anybody, it is endured, so what
+       answers it is the listener's Grit and not their Defense. The codex's second
+       roll shape, and the note at the top of this file is what says there is no
+       third. */
     body:
-      'You bend the note until it is wrong. Make an {stat} Ranged Attack {roll} against an entity within 15 Meter (50 Feet) of you.\n\n' +
-      'On a hit, you deal [[2d6 + stat]] as {damage} damage and the target has disadvantage on their next roll.',
+      'You bend the note until it is wrong. Make an {stat} Roll {roll} against the Grit of an entity within 15 Meter (50 Feet) of you.\n\n' +
+      'On a success, you deal [[2d6 + stat]] as {damage} damage and the target has disadvantage on their next roll.',
   },
 
   /* ----- Finesse + Shield -----
@@ -759,6 +851,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'finesse-shield-strike',
     name: 'Finesse + Shield - Strike',
+    weapon: 'Finesse + Shield',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 3,
@@ -772,6 +865,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'shield-guard',
     name: 'Shield - Guard',
+    weapon: 'Shield',
     kind: 'ability',
     tags: ['Melee', 'Passive'],
     ap: null,
@@ -799,6 +893,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'melee-heavy-strike',
     name: 'Melee Heavy - Strike',
+    weapon: 'Melee Heavy',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 4,
@@ -812,6 +907,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'melee-heavy-cleave',
     name: 'Melee Heavy - Cleave',
+    weapon: 'Melee Heavy',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 4,
@@ -827,6 +923,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'long-bow-shoot',
     name: 'Long Bow - Shoot',
+    weapon: 'Long Bow',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 4,
@@ -840,6 +937,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'long-bow-aimed-shot',
     name: 'Long Bow - Aimed Shot',
+    weapon: 'Long Bow',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 5,
@@ -855,28 +953,33 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'portable-canon-shoot',
     name: 'Portable Canon - Shoot',
+    weapon: 'Portable Canon',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
-    ap: 4,
+    ap: 1,
     wp: null,
     stat: 'instinct',
     damage: ['Blunt'],
+    ammo: { max: 1, unit: 'Shot', reload: 'portable-canon-reload' },
     body:
       'Make an {stat} Ranged Attack {roll} against an entity within 25 Meter (80 Feet) of you.\n\n' +
-      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
+      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.\n\n' +
+      'The shot is spent. You cannot Shoot again until you have Reloaded.',
   },
   {
     id: 'portable-canon-reload',
     name: 'Portable Canon - Reload',
+    weapon: 'Portable Canon',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Move'],
     ap: 3,
     wp: null,
     stat: 'instinct',
     damage: [],
+    reloads: 'portable-canon-shoot',
     body:
-      'Your Portable Canon starts loaded with 1 Shot. Every use of the Portable Canon - Shoot ability consumes one shot.\n\n' +
-      'After you have used your 1 shot, you must use this Reload ability before you can Shoot again.',
+      'You tip the muzzle up, pour the charge and seat the ball on it.\n\n' +
+      'Your Portable Canon is loaded with 1 Shot again, and stays loaded until you Shoot it.',
   },
 
   /* ----- Polearm -----
@@ -891,6 +994,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'polearm-thrust',
     name: 'Polearm - Thrust',
+    weapon: 'Polearm',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 4,
@@ -904,6 +1008,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'polearm-drive',
     name: 'Polearm - Drive',
+    weapon: 'Polearm',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 4,
@@ -919,26 +1024,30 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'crossbow-shoot',
     name: 'Crossbow - Shoot',
+    weapon: 'Crossbow',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 3,
     wp: null,
     stat: 'instinct',
     damage: ['Sharp'],
+    ammo: { max: 1, unit: 'Bolt', reload: 'crossbow-reload' },
     body:
       'Make an {stat} Ranged Attack {roll} against an entity within 30 Meter (100 Feet) of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.\n\n' +
-      'The bolt is spent. You cannot Shoot again until you have reloaded.',
+      'The bolt is spent. You cannot Shoot again until you have Reloaded.',
   },
   {
     id: 'crossbow-reload',
     name: 'Crossbow - Reload',
+    weapon: 'Crossbow',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Move'],
     ap: 1,
     wp: null,
     stat: 'instinct',
     damage: [],
+    reloads: 'crossbow-shoot',
     body:
       'You put a foot in the stirrup and haul the string back to the catch.\n\n' +
       'Your Crossbow is loaded again, and stays loaded until you Shoot.',
@@ -953,10 +1062,23 @@ export const WEAPON_ABILITIES = withArt([
    * Defense because that is what the designer named. The area is 3 Meter, which
    * is house-written off "small area": it is half the Tome's ring and it is the
    * smallest area anything in the codex throws. Listed in data/README.md.
+   *
+   * ------------------------------------------------------------------ the names
+   * Rivenstave, Sunderstave and Loadstave, on Jules's instruction of 2026-08-24:
+   * "name the staff something more in lore rather than just force blunt and
+   * sharp, arcane sounding things". Each one still says what it deals — riven air,
+   * a sundering shove, a load coming down — without naming the damage type twice.
+   *
+   * **The ids stay `sharp-staff`, `force-staff` and `blunt-staff`.** An id is what
+   * a saved sheet points at and what the art work list already names its files
+   * for (data/templates/weapon-icons.csv), so renaming one would orphan an
+   * equipped weapon and a picture at once. The name is what a reader sees and the
+   * id is what the sheet remembers; only the first of those was asked to change.
    */
   {
     id: 'sharp-staff-blast',
-    name: 'Sharp Staff - Blast',
+    name: 'Rivenstave - Blast',
+    weapon: 'Rivenstave',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 4,
@@ -969,7 +1091,8 @@ export const WEAPON_ABILITIES = withArt([
   },
   {
     id: 'sharp-staff-burst',
-    name: 'Sharp Staff - Burst',
+    name: 'Rivenstave - Burst',
+    weapon: 'Rivenstave',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 4,
@@ -982,7 +1105,8 @@ export const WEAPON_ABILITIES = withArt([
   },
   {
     id: 'force-staff-blast',
-    name: 'Force Staff - Blast',
+    name: 'Sunderstave - Blast',
+    weapon: 'Sunderstave',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 4,
@@ -995,7 +1119,8 @@ export const WEAPON_ABILITIES = withArt([
   },
   {
     id: 'force-staff-burst',
-    name: 'Force Staff - Burst',
+    name: 'Sunderstave - Burst',
+    weapon: 'Sunderstave',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 4,
@@ -1008,7 +1133,8 @@ export const WEAPON_ABILITIES = withArt([
   },
   {
     id: 'blunt-staff-blast',
-    name: 'Blunt Staff - Blast',
+    name: 'Loadstave - Blast',
+    weapon: 'Loadstave',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 4,
@@ -1021,7 +1147,8 @@ export const WEAPON_ABILITIES = withArt([
   },
   {
     id: 'blunt-staff-burst',
-    name: 'Blunt Staff - Burst',
+    name: 'Loadstave - Burst',
+    weapon: 'Loadstave',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 4,
@@ -1037,6 +1164,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'paired-light-strike',
     name: 'Paired Light Weapon - Strike',
+    weapon: 'Paired Light Weapon',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 4,
@@ -1050,6 +1178,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'paired-light-whirlwind',
     name: 'Paired Light Weapon - Whirlwind',
+    weapon: 'Paired Light Weapon',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 4,
@@ -1065,6 +1194,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'melee-light-shield-strike',
     name: 'Melee Light + Shield - Strike',
+    weapon: 'Melee Light + Shield',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 4,
@@ -1079,15 +1209,17 @@ export const WEAPON_ABILITIES = withArt([
   /* ================================================================= cost 5 */
 
   /* ----- Melee Great -----
-   * The Colossal tier, renamed. The designer confirmed on 2026-08-24 that the
-   * four Great weapons *are* the four Colossal ones the Colossus set was built
-   * against, which is why every one of them carries `Colossal` as a second tag:
-   * GIANT SLAYER and COLOSSAL GRIP both name it and would otherwise point at
-   * nothing. The Action Points line up exactly, 5 and 5 and 5 and 6.
+   * The top of the melee column. The four weapons whose names say Great carry
+   * `Great` as a second tag, which is the old `Colossal` under the name the wall
+   * itself uses: GIANT SLAYER reads it and would otherwise point at nothing. The
+   * Colossus reaches its own weapons through `Heavy Melee` and `Great Melee`
+   * instead, on the designer's word of 2026-08-24. The Action Points line up
+   * exactly, 5 and 5 and 5 and 6.
    */
   {
     id: 'melee-great-strike',
     name: 'Melee Great - Strike',
+    weapon: 'Melee Great',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 5,
@@ -1101,6 +1233,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'melee-great-cleave',
     name: 'Melee Great - Cleave',
+    weapon: 'Melee Great',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 5,
@@ -1116,6 +1249,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'great-bow-shoot',
     name: 'Great Bow - Shoot',
+    weapon: 'Great Bow',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 5,
@@ -1129,6 +1263,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'great-bow-aimed-shot',
     name: 'Great Bow - Aimed Shot',
+    weapon: 'Great Bow',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 6,
@@ -1144,6 +1279,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'great-polearm-thrust',
     name: 'Great Polearm - Thrust',
+    weapon: 'Great Polearm',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 5,
@@ -1157,6 +1293,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'great-polearm-drive',
     name: 'Great Polearm - Drive',
+    weapon: 'Great Polearm',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 5,
@@ -1172,26 +1309,30 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'heavy-crossbow-shoot',
     name: 'Heavy Crossbow - Shoot',
+    weapon: 'Heavy Crossbow',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 4,
     wp: null,
     stat: 'instinct',
     damage: ['Sharp'],
+    ammo: { max: 1, unit: 'Bolt', reload: 'heavy-crossbow-reload' },
     body:
       'Make an {stat} Ranged Attack {roll} against an entity within 45 Meter (150 Feet) of you.\n\n' +
       'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.\n\n' +
-      'The bolt is spent. You cannot Shoot again until you have reloaded.',
+      'The bolt is spent. You cannot Shoot again until you have Reloaded.',
   },
   {
     id: 'heavy-crossbow-reload',
     name: 'Heavy Crossbow - Reload',
+    weapon: 'Heavy Crossbow',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Move'],
     ap: 1,
     wp: null,
     stat: 'instinct',
     damage: [],
+    reloads: 'heavy-crossbow-shoot',
     body:
       'You crank the windlass until the catch takes it and lay a fresh bolt in the groove.\n\n' +
       'Your Heavy Crossbow is loaded again, and stays loaded until you Shoot.',
@@ -1209,6 +1350,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'decay-censer-waft',
     name: 'Decay Censer - Waft',
+    weapon: 'Decay Censer',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 5,
@@ -1222,6 +1364,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'decay-censer-fumigate',
     name: 'Decay Censer - Fumigate',
+    weapon: 'Decay Censer',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 5,
@@ -1235,6 +1378,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'sacred-censer-waft',
     name: 'Sacred Censer - Waft',
+    weapon: 'Sacred Censer',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 5,
@@ -1248,6 +1392,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'sacred-censer-fumigate',
     name: 'Sacred Censer - Fumigate',
+    weapon: 'Sacred Censer',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 5,
@@ -1261,6 +1406,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'psychic-censer-waft',
     name: 'Psychic Censer - Waft',
+    weapon: 'Psychic Censer',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 5,
@@ -1274,6 +1420,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'psychic-censer-fumigate',
     name: 'Psychic Censer - Fumigate',
+    weapon: 'Psychic Censer',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Attack'],
     ap: 5,
@@ -1289,6 +1436,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'paired-heavy-strike',
     name: 'Paired Heavy Weapon - Strike',
+    weapon: 'Paired Heavy Weapon',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 5,
@@ -1302,6 +1450,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'paired-heavy-whirlwind',
     name: 'Paired Heavy Weapon - Whirlwind',
+    weapon: 'Paired Heavy Weapon',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 5,
@@ -1317,6 +1466,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'melee-heavy-shield-strike',
     name: 'Melee Heavy + Shield - Strike',
+    weapon: 'Melee Heavy + Shield',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 5,
@@ -1343,26 +1493,30 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'ballista-shoot',
     name: 'Ballista - Shoot',
+    weapon: 'Ballista',
     kind: 'ability',
     tags: ['Ranged', 'Weapon Attack'],
     ap: 5,
     wp: null,
     stat: 'physique',
     damage: ['Sharp'],
+    ammo: { max: 1, unit: 'Bolt', reload: 'ballista-reload' },
     body:
       'Make a {stat} Ranged Attack {roll} against an entity within 60 Meter (200 Feet) of you.\n\n' +
       'On a hit, you deal [[3d6 + 3*stat]] as {damage} damage.\n\n' +
-      'The bolt is spent. You cannot Shoot again until you have reloaded.',
+      'The bolt is spent. You cannot Shoot again until you have Reloaded.',
   },
   {
     id: 'ballista-reload',
     name: 'Ballista - Reload',
+    weapon: 'Ballista',
     kind: 'ability',
     tags: ['Ranged', 'Special Weapon Move'],
     ap: 1,
     wp: null,
     stat: 'physique',
     damage: [],
+    reloads: 'ballista-shoot',
     body:
       'You throw your weight on the lever until the arms come back, and drop the next shaft in.\n\n' +
       'Your Ballista is loaded again, and stays loaded until you Shoot.',
@@ -1372,6 +1526,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'paired-great-strike',
     name: 'Paired Great Weapon - Strike',
+    weapon: 'Paired Great Weapon',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 6,
@@ -1385,6 +1540,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'paired-great-whirlwind',
     name: 'Paired Great Weapon - Whirlwind',
+    weapon: 'Paired Great Weapon',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 6,
@@ -1406,6 +1562,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'claws-shred',
     name: 'Claws - Shred',
+    weapon: 'Claws',
     kind: 'ability',
     tags: ['Melee', 'Weapon Attack'],
     ap: 2,
@@ -1419,6 +1576,7 @@ export const WEAPON_ABILITIES = withArt([
   {
     id: 'teeth-bite',
     name: 'Teeth - Bite',
+    weapon: 'Teeth',
     kind: 'ability',
     tags: ['Melee', 'Special Weapon Attack'],
     ap: 4,
@@ -1449,22 +1607,41 @@ export const WEAPON_ABILITIES = withArt([
  * is the only field that tells one weapon of a cost from another here.
  *
  * ------------------------------------------------------------------- the tags
- * Four axes, and a set matches on one of them:
+ * Rebuilt on 2026-08-24, on Jules's own pass: "weapon is redundant in the weapon
+ * category so it can have but hidden", "ranged weapon should just be ranged,
+ * melee just melee. So Great bow can be Great - Ranged - Two-handed - Bow", and
+ * "then Wand, Staffs etc are a tag". Five axes, and a set matches on one of them:
  *
  *   rarity      Common, Uncommon, Rare, Epic
- *   category    Melee Weapon or Ranged Weapon. The Whip and both Polearms are
- *               Melee at 4.5 and 3 Meter, which the designer ruled on 2026-08-24
+ *   kind        `Weapon`, on every weapon and shown on none of them. It is what
+ *               the word was always for — finding every weapon at once — and on a
+ *               weapon's own row it says nothing the reader cannot see. So it is
+ *               carried and hidden, which is what "can have but hidden" asked
+ *               for. See HIDDEN_TAGS in itemParts.jsx, which hides `Common` on
+ *               the same reasoning: it is the default and it is not news
+ *   size        `Great`, on the four weapons whose names say Great. This is the
+ *               `Colossal` tag renamed, and renamed on the designer's word that
+ *               the Colossus reaches its own weapons through `Heavy Melee` and
+ *               `Great Melee` rather than through this. GIANT SLAYER reads it
+ *   category    Melee or Ranged. The Whip and both Polearms are Melee at 4.5 and
+ *               3 Meter, which the designer ruled on 2026-08-24
  *   hands       One-Handed or Two-Handed, one of the two on every weapon. The
  *               designer's own one-handed list is Finesse Weapon, Melee Light,
  *               Flintlock Pistol, Whip and the Wands; the Light Crossbow and the
  *               Censers were read into it and everything else is Two-Handed
  *   family      what a talent set actually hangs on: Finesse, Light Melee, Heavy
- *               Melee, Great Melee, Fist, Bow, Crossbow, Firearm, Polearm,
- *               Reach, Focus, Paired, Shielded, Colossal, Natural
+ *               Melee, Great Melee, Fist, Bow, Crossbow, Firearm, Polearm, Whip,
+ *               Reach, Wand, Staff, Tome, Censer, Instrument, Paired, Shielded,
+ *               Natural
  *
- * The Duelist reads `Finesse` and `Light Melee`, the Colossus reads `Heavy Melee`
- * and `Great Melee`, and GIANT SLAYER still reads `Colossal`, which the four
- * Great weapons carry. See `martial` in talents.js and `weaponRiders` in moves.js.
+ * **`Focus` is gone.** It held the Wands, the Staves, the Tomes, the Censers and
+ * the Instrument under one word that told a reader nothing, and no talent set ever
+ * reached for it. Each implement is its own family tag now, which is the same rule
+ * the rest of the axis already followed: a Bow is a Bow and not a "Ranged Thing".
+ *
+ * The Duelist reads `Finesse`, `Whip`, `Fist` and `Polearm`, the Colossus reads
+ * `Heavy Melee` and `Great Melee`, and GIANT SLAYER reads `Great`. See `martial`
+ * in talents.js and `weaponRiders` in moves.js.
  *
  * A Paired weapon carries its family's tag, so a Colossus reaches Paired Great
  * Weapons the way COLOSSAL GRIP says they should. A shielded one carries
@@ -1477,7 +1654,7 @@ export const WEAPONS = [
     id: 'finesse-weapon',
     name: 'Finesse Weapon',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'One-Handed', 'Finesse'],
+    tags: ['Common', 'Weapon', 'Melee', 'One-Handed', 'Finesse'],
     blurb: 'A rapier, a smallsword, a long knife. Fast in, faster out.',
     burden: 0,
     weight: 0.9,
@@ -1488,7 +1665,7 @@ export const WEAPONS = [
     id: 'short-bow',
     name: 'Short Bow',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Bow'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Bow'],
     blurb: 'A hunting bow: light draw, fast nock, close work.',
     burden: 0,
     weight: 1,
@@ -1499,7 +1676,7 @@ export const WEAPONS = [
     id: 'flintlock-pistol',
     name: 'Flintlock Pistol',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'One-Handed', 'Firearm'],
+    tags: ['Common', 'Weapon', 'Ranged', 'One-Handed', 'Firearm'],
     blurb: 'Powder and shot in one hand. Three balls, then reload.',
     burden: 0,
     weight: 1.5,
@@ -1510,7 +1687,7 @@ export const WEAPONS = [
     id: 'fire-wand',
     name: 'Fire Wand',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'One-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'One-Handed', 'Wand'],
     blurb: 'Carved rowan with a seam of ember down it, and it never quite goes out.',
     burden: 0,
     weight: 0.3,
@@ -1521,7 +1698,7 @@ export const WEAPONS = [
     id: 'frost-wand',
     name: 'Frost Wand',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'One-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'One-Handed', 'Wand'],
     blurb: 'Rowan gone white to the grain. It is cold to hold and colder to point.',
     burden: 0,
     weight: 0.3,
@@ -1532,7 +1709,7 @@ export const WEAPONS = [
     id: 'lightning-wand',
     name: 'Lightning Wand',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'One-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'One-Handed', 'Wand'],
     blurb: 'Rowan with copper wound the length of it, and the hair on your arm knows.',
     burden: 0,
     weight: 0.3,
@@ -1543,7 +1720,7 @@ export const WEAPONS = [
     id: 'fist-weapon',
     name: 'Fist Weapon',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Fist'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Fist'],
     blurb: 'Banded cestus on both hands, and nothing between you and the work.',
     burden: 0,
     weight: 1,
@@ -1556,7 +1733,7 @@ export const WEAPONS = [
     id: 'melee-light',
     name: 'Melee Light',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'One-Handed', 'Light Melee'],
+    tags: ['Common', 'Weapon', 'Melee', 'One-Handed', 'Light Melee'],
     blurb: 'A sword, an axe or a mace: one hand on the grip, the other free.',
     burden: 0,
     weight: 1.5,
@@ -1567,7 +1744,7 @@ export const WEAPONS = [
     id: 'bow',
     name: 'Bow',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Bow'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Bow'],
     blurb: 'The bow everybody means when they say bow.',
     burden: 0,
     weight: 1.2,
@@ -1578,7 +1755,7 @@ export const WEAPONS = [
     id: 'flintlock-rifle',
     name: 'Flintlock Rifle',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Firearm'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Firearm'],
     blurb: 'A long barrel and a slow reload for a shot that carries.',
     burden: 0,
     weight: 4.5,
@@ -1589,7 +1766,7 @@ export const WEAPONS = [
     id: 'whip',
     name: 'Whip',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'One-Handed', 'Reach'],
+    tags: ['Common', 'Weapon', 'Melee', 'One-Handed', 'Whip', 'Reach'],
     blurb: 'Braided leather that bites at fifteen feet and drags them closer.',
     burden: 0,
     weight: 1.2,
@@ -1600,7 +1777,7 @@ export const WEAPONS = [
     id: 'light-crossbow',
     name: 'Light Crossbow',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'One-Handed', 'Crossbow'],
+    tags: ['Common', 'Weapon', 'Ranged', 'One-Handed', 'Crossbow'],
     blurb: 'Small enough for one hand, and the first anyone knows is the bolt.',
     burden: 0,
     weight: 2,
@@ -1611,7 +1788,7 @@ export const WEAPONS = [
     id: 'psychic-tome',
     name: 'Psychic Tome of Incantations',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Tome'],
     blurb: 'A clasped book read aloud from, and the words arrive before the sound does.',
     burden: 0,
     weight: 2.2,
@@ -1622,7 +1799,7 @@ export const WEAPONS = [
     id: 'sacred-tome',
     name: 'Sacred Tome of Incantations',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Tome'],
     blurb: 'A clasped book read aloud from, and what it says of you is held against you.',
     burden: 0,
     weight: 2.2,
@@ -1633,7 +1810,7 @@ export const WEAPONS = [
     id: 'decay-tome',
     name: 'Decay Tome of Incantations',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Tome'],
     blurb: 'A clasped book read aloud from, and the page is damp where the thumb goes.',
     burden: 0,
     weight: 2.2,
@@ -1644,7 +1821,7 @@ export const WEAPONS = [
     id: 'paired-finesse',
     name: 'Paired Finesse',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Finesse', 'Paired'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Finesse', 'Paired'],
     blurb: 'A matched pair of short blades, and nothing spare to catch anything with.',
     burden: 0,
     weight: 1.8,
@@ -1655,7 +1832,7 @@ export const WEAPONS = [
     id: 'enchanted-instrument',
     name: 'Enchanted Instrument',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Instrument'],
     blurb: 'A worked fiddle or hurdy-gurdy whose notes arrive as a shove rather than a sound.',
     burden: 0,
     weight: 2.5,
@@ -1666,7 +1843,7 @@ export const WEAPONS = [
     id: 'finesse-shield',
     name: 'Finesse + Shield',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Shielded'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Shielded'],
     blurb: 'A light blade in one hand and a banded round in the other.',
     burden: 0,
     weight: 5.4,
@@ -1681,7 +1858,7 @@ export const WEAPONS = [
     id: 'melee-heavy',
     name: 'Melee Heavy',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Heavy Melee'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Heavy Melee'],
     blurb: 'A greatsword or a maul that needs your whole body behind it.',
     burden: 0,
     weight: 3.5,
@@ -1692,7 +1869,7 @@ export const WEAPONS = [
     id: 'long-bow',
     name: 'Long Bow',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Bow'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Bow'],
     blurb: 'A tall yew bow that reaches across the whole field.',
     burden: 0,
     weight: 1.5,
@@ -1703,7 +1880,7 @@ export const WEAPONS = [
     id: 'portable-canon',
     name: 'Portable Canon',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Firearm'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Firearm'],
     blurb: 'A hand-braced cannon. One shot, and everything after it is ringing.',
     burden: 0,
     weight: 12,
@@ -1714,7 +1891,7 @@ export const WEAPONS = [
     id: 'polearm',
     name: 'Polearm',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Polearm', 'Reach'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Polearm', 'Reach'],
     blurb: 'A halberd or glaive, held at the far end, hitting things that have not arrived yet.',
     burden: 0,
     weight: 3,
@@ -1725,7 +1902,7 @@ export const WEAPONS = [
     id: 'crossbow',
     name: 'Crossbow',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Crossbow'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Crossbow'],
     blurb: 'Wound tight, held loaded and spent all at once.',
     burden: 0,
     weight: 4,
@@ -1734,9 +1911,9 @@ export const WEAPONS = [
   },
   {
     id: 'sharp-staff',
-    name: 'Sharp Staff',
+    name: 'Rivenstave',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Staff'],
     blurb: 'A caster’s stave that throws the air out in edges.',
     burden: 0,
     weight: 1.6,
@@ -1745,9 +1922,9 @@ export const WEAPONS = [
   },
   {
     id: 'force-staff',
-    name: 'Force Staff',
+    name: 'Sunderstave',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Staff'],
     blurb: 'A caster’s stave that throws nothing at all, very hard.',
     burden: 0,
     weight: 1.6,
@@ -1756,9 +1933,9 @@ export const WEAPONS = [
   },
   {
     id: 'blunt-staff',
-    name: 'Blunt Staff',
+    name: 'Loadstave',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Staff'],
     blurb: 'A caster’s stave that lands like something much heavier than a stave.',
     burden: 0,
     weight: 1.6,
@@ -1769,7 +1946,7 @@ export const WEAPONS = [
     id: 'paired-light',
     name: 'Paired Light Weapon',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Light Melee', 'Paired'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Light Melee', 'Paired'],
     blurb: 'A full weapon in each hand, and nothing spare to catch anything with.',
     burden: 0,
     weight: 3,
@@ -1780,7 +1957,7 @@ export const WEAPONS = [
     id: 'melee-light-shield',
     name: 'Melee Light + Shield',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Shielded'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Shielded'],
     blurb: 'A blade in one hand, a wall of banded wood in the other.',
     burden: 0,
     weight: 6,
@@ -1795,7 +1972,7 @@ export const WEAPONS = [
     id: 'melee-great',
     name: 'Melee Great',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Great Melee', 'Colossal'],
+    tags: ['Common', 'Weapon', 'Great', 'Melee', 'Two-Handed', 'Great Melee'],
     blurb: 'A greatsword built at siege scale, swung once and meant once.',
     burden: 0,
     weight: 8,
@@ -1806,7 +1983,7 @@ export const WEAPONS = [
     id: 'great-bow',
     name: 'Great Bow',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Bow', 'Colossal'],
+    tags: ['Common', 'Weapon', 'Great', 'Ranged', 'Two-Handed', 'Bow'],
     blurb: 'A siege bow braced against the ground and drawn on the whole body.',
     burden: 0,
     weight: 6,
@@ -1817,7 +1994,7 @@ export const WEAPONS = [
     id: 'great-polearm',
     name: 'Great Polearm',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Polearm', 'Reach', 'Colossal'],
+    tags: ['Common', 'Weapon', 'Great', 'Melee', 'Two-Handed', 'Polearm', 'Reach'],
     blurb: 'A wall-breaker on a haft, and it reaches the rank behind the one it hit.',
     burden: 0,
     weight: 7,
@@ -1828,7 +2005,7 @@ export const WEAPONS = [
     id: 'heavy-crossbow',
     name: 'Heavy Crossbow',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Crossbow'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Crossbow'],
     blurb: 'A windlass, a steel prod and one bolt at a time.',
     burden: 0,
     weight: 6,
@@ -1839,7 +2016,7 @@ export const WEAPONS = [
     id: 'decay-censer',
     name: 'Decay Censer',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'One-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'One-Handed', 'Censer'],
     blurb: 'A pierced brass bulb on a chain, and the smoke off it does not rise.',
     burden: 0,
     weight: 2,
@@ -1850,7 +2027,7 @@ export const WEAPONS = [
     id: 'sacred-censer',
     name: 'Sacred Censer',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'One-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'One-Handed', 'Censer'],
     blurb: 'A pierced brass bulb on a chain, swung the way a bell is rung.',
     burden: 0,
     weight: 2,
@@ -1861,7 +2038,7 @@ export const WEAPONS = [
     id: 'psychic-censer',
     name: 'Psychic Censer',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'One-Handed', 'Focus'],
+    tags: ['Common', 'Weapon', 'Ranged', 'One-Handed', 'Censer'],
     blurb: 'A pierced brass bulb on a chain, and the smoke smells like something you said.',
     burden: 0,
     weight: 2,
@@ -1872,7 +2049,7 @@ export const WEAPONS = [
     id: 'paired-heavy',
     name: 'Paired Heavy Weapon',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Heavy Melee', 'Paired'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Heavy Melee', 'Paired'],
     blurb: 'Two weapons that each wanted both hands, and you gave them one apiece.',
     burden: 0,
     weight: 7,
@@ -1883,7 +2060,7 @@ export const WEAPONS = [
     id: 'melee-heavy-shield',
     name: 'Melee Heavy + Shield',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Shielded'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Shielded'],
     blurb: 'A two-hander swung one-handed, because the other hand is holding a door.',
     burden: 0,
     weight: 8,
@@ -1898,7 +2075,7 @@ export const WEAPONS = [
     id: 'ballista',
     name: 'Ballista',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Ranged Weapon', 'Two-Handed', 'Crossbow'],
+    tags: ['Common', 'Weapon', 'Ranged', 'Two-Handed', 'Crossbow'],
     blurb: 'A siege engine with a shoulder stock bolted to it. It was never meant to be carried.',
     burden: 0,
     weight: 15,
@@ -1909,7 +2086,7 @@ export const WEAPONS = [
     id: 'paired-great',
     name: 'Paired Great Weapon',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Great Melee', 'Colossal', 'Paired'],
+    tags: ['Common', 'Weapon', 'Great', 'Melee', 'Two-Handed', 'Great Melee', 'Paired'],
     blurb: 'Two of them, one in each hand, and nothing left over for a shield.',
     burden: 0,
     weight: 16,
@@ -1921,7 +2098,7 @@ export const WEAPONS = [
     id: 'claws-and-teeth',
     name: 'Claws & Teeth',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Common', 'Melee Weapon', 'Two-Handed', 'Natural'],
+    tags: ['Common', 'Weapon', 'Melee', 'Two-Handed', 'Natural'],
     // Born with, not bought — no shop stocks it and no starting kit issues it.
     natural: true,
     blurb: 'What you were born with, when nothing else is left in your hands.',
@@ -1940,7 +2117,7 @@ export const WEAPONS = [
     id: 'cold-infused-sword',
     name: 'Cold-Infused Sword',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Uncommon', 'Melee Weapon', 'One-Handed', 'Light Melee'],
+    tags: ['Uncommon', 'Weapon', 'Melee', 'One-Handed', 'Light Melee'],
     blurb: 'A one-handed sword whose edge never stops shedding frost.',
     burden: 0,
     weight: 1.5,
@@ -1956,7 +2133,7 @@ export const WEAPONS = [
     id: 'imbued-flintlock-pistol',
     name: 'Imbued Flintlock Pistol',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Uncommon', 'Ranged Weapon', 'One-Handed', 'Firearm'],
+    tags: ['Uncommon', 'Weapon', 'Ranged', 'One-Handed', 'Firearm'],
     blurb: 'A pistol with green vines chased along the barrel.',
     burden: 0,
     weight: 1.5,
@@ -1976,7 +2153,7 @@ export const WEAPONS = [
     id: 'patien',
     name: 'Patien',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Rare', 'Melee Weapon', 'One-Handed', 'Light Melee'],
+    tags: ['Rare', 'Weapon', 'Melee', 'One-Handed', 'Light Melee'],
     blurb: 'A plain one-handed sword that never seems to be caught off guard.',
     burden: 0,
     weight: 1.5,
@@ -2001,7 +2178,7 @@ export const WEAPONS = [
     id: 'deep-sea-trident',
     name: 'Deep Sea Trident',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Epic', 'Melee Weapon', 'Two-Handed', 'Polearm', 'Reach'],
+    tags: ['Epic', 'Weapon', 'Melee', 'Two-Handed', 'Polearm', 'Reach'],
     blurb: 'A barnacled trident that sheds frost and keeps ice in orbit around whoever holds it.',
     burden: 0,
     weight: 4,
@@ -2018,7 +2195,7 @@ export const WEAPONS = [
     id: 'grave-lantern-blade',
     name: 'Grave-Lantern Blade',
     slots: ['main_hand', 'off_hand'],
-    tags: ['Rare', 'Melee Weapon', 'One-Handed', 'Light Melee'],
+    tags: ['Rare', 'Weapon', 'Melee', 'One-Handed', 'Light Melee'],
     blurb: 'A pitted sword that burns green along the fuller and rots what it cuts.',
     burden: 0,
     weight: 1.6,

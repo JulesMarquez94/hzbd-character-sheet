@@ -7,6 +7,7 @@ import { lockScroll } from '../lib/scrollLock.js';
 import { formatNumber } from '../lib/characterModel.js';
 import { ARMOR_SETS } from '../lib/items.js';
 import { forgedRecord } from '../lib/forged.js';
+import { cardTitle } from '../lib/cardText.js';
 import { getCard, itemEnchantments } from '../lib/weapons.js';
 import { wieldModifiers } from '../lib/items.js';
 import { ItemCarry, ItemIcon, ItemStats, ItemTags, StatText } from './sheet/itemParts.jsx';
@@ -265,7 +266,10 @@ function ItemCard({ item, character, onCard, onValue }) {
                     className="item-card-link item-card-link-card"
                     onClick={() => onCard(card, cardModifiers)}
                   >
-                    {card.name}
+                    {/* The item is the heading of the card this list is on, so a
+                        weapon card is named by its move here the way it is
+                        everywhere else. See cardTitle in cardText.js. */}
+                    {cardTitle(card)}
                   </button>
                   <CostOrbs ap={card.ap} wp={card.wp} size={20} className="item-card-costs" />
                 </li>

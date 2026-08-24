@@ -2,11 +2,17 @@
  * Sample cards transcribed from the printed Hazebound deck.
  * Offered as one-click seed data on an empty Abilities tab so a new character
  * has something to read — and so the card format is self-documenting.
+ *
+ * The two weapon rows carry their weapon at the end of the banner, the way every
+ * weapon card in the codex does since 2026-08-24. A hand-typed row has no
+ * `weapon` field to read, so its banner is written out: this is the one shape on
+ * the sheet where the split is the writer's to make. See cardBanner in
+ * cardText.js.
  */
 export const STARTER_DECK = [
   {
     name: 'Dual Pistols - Shoot',
-    type_line: 'RANGED - WEAPON ATTACK',
+    type_line: 'RANGED - WEAPON ATTACK - DUAL PISTOLS',
     kind: 'ability',
     ap_cost: 2,
     wp_cost: null,
@@ -18,7 +24,7 @@ export const STARTER_DECK = [
   },
   {
     name: 'Dual Pistols - Reload',
-    type_line: 'RANGED - SPECIAL WEAPON ATTACK',
+    type_line: 'RANGED - SPECIAL WEAPON MOVE - DUAL PISTOLS',
     kind: 'ability',
     ap_cost: 6,
     wp_cost: null,

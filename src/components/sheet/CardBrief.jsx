@@ -1,6 +1,6 @@
 import CostOrbs from '../CostOrbs.jsx';
 import useCodexArt from '../useCodexArt.js';
-import { cardBanner, cardGist, damageStyle } from '../../lib/cardText.js';
+import { cardBanner, cardGist, cardTitle, damageStyle } from '../../lib/cardText.js';
 
 /**
  * A card said in a line rather than printed in full.
@@ -54,9 +54,11 @@ export default function CardBrief({
 }) {
   const codexArt = useCodexArt();
 
-  // Tags become chips; a hand-written banner has nothing to cut up, so it
-  // stays a banner.
-  const tags = card.type_line ? [] : card.tags ?? [];
+  /* Tags become chips; a hand-written banner has nothing to cut up, so it
+     stays a banner. A weapon card carries the weapon it belongs to as one more
+     chip, in the place the printed banner puts it: a brief is often read in a
+     wall where the section header names the weapon, and just as often is not. */
+  const tags = card.type_line ? [] : [...(card.tags ?? []), ...(card.weapon ? [card.weapon] : [])];
   const banner = tags.length > 0 ? null : cardBanner(card);
   const damage = modifiers?.damage?.length ? modifiers.damage : card.damage ?? [];
   /* The card's own art first, the family's second. See the note above. Both
@@ -85,7 +87,7 @@ export default function CardBrief({
 
           <span className="card-brief-title">
             <span className="card-brief-name-row">
-              <span className="card-brief-name">{card.name}</span>
+              <span className="card-brief-name">{cardTitle(card)}</span>
               <CostOrbs ap={card.ap} wp={card.wp} size={20} className="card-brief-costs" />
             </span>
             {banner && <span className="card-brief-banner">{banner}</span>}

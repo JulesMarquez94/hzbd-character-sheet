@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from 'react';
 import CardText from './CardText.jsx';
 import CostOrbs from './CostOrbs.jsx';
 import RollArrow from './RollArrow.jsx';
-import { cardBanner } from '../lib/cardText.js';
+import { cardBanner, cardTitle } from '../lib/cardText.js';
 import useCodexArt from './useCodexArt.js';
 import './AbilityCard.css';
 
@@ -163,6 +163,10 @@ export default function AbilityCard({
   const artUrl = useCodexArt()(ability.art_url, artSource);
 
   const typeLine = cardBanner(ability);
+  /* What the card is headed with. A weapon card is headed with the move alone
+     and names its weapon in the banner instead; every other card heads with its
+     whole name, which is what this hands back. See cardText.js. */
+  const title = cardTitle(ability);
   const apCost = ability.ap_cost ?? ability.ap;
   const wpCost = ability.wp_cost ?? ability.wp;
 
@@ -246,7 +250,7 @@ export default function AbilityCard({
 
       {/* --ac-fit is written straight onto this node by useFitText. */}
       <div className="ac-body" ref={bodyRef}>
-        <h3 className="ac-title">{name}</h3>
+        <h3 className="ac-title">{title}</h3>
         <div className="ac-text">
           <CardText text={body} {...textProps} />
         </div>

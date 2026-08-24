@@ -4224,6 +4224,55 @@ body.sheet-fixed #root {
   cursor: default;
 }
 
+/* ---------------------------------------------------------- ammunition
+   What is loaded, drawn as the round itself. A belt charge is a dot because a
+   flask holds a measure of something; a magazine holds countable objects, and
+   the silhouette is what tells a reader at a glance which row is one trigger
+   pull from useless. Copper for a round still in it, an empty outline for one
+   that is gone, and never a control: rounds leave on the attack and come back
+   on the Reload, both of which are cards. See AmmoPips in itemParts.jsx. */
+.ammo-pips {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ammo-pip {
+  width: 7px;
+  height: 11px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: rgba(148, 167, 176, 0.45);
+  stroke-width: 1.4;
+}
+
+.ammo-pip.loaded {
+  fill: var(--copper);
+  stroke: var(--copper);
+  filter: drop-shadow(0 0 3px rgba(200, 138, 75, 0.6));
+}
+
+/* On the use prompt the same rounds get room to be read, with the count spelled
+   out beside them: this is the last screen before the trigger. */
+.use-ammo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.use-ammo .ammo-pip {
+  width: 10px;
+  height: 16px;
+}
+
+.use-ammo-line {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--copper);
+}
+
 /* Taking something off never destroys it — it goes to your inventory. Only
    the inventory block itself can throw a thing away for good. */
 .slot-remove-btn:hover {

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import AbilityCard from '../AbilityCard.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
+import { AmmoPips } from './itemParts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { VARIABLE_CAP } from '../../lib/actions.js';
 import { getKeyword } from '../../lib/keywords.js';
@@ -337,6 +338,25 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
                   Goes through as written. No points leave your sheet.
                 </span>
               </button>
+            </div>
+          )}
+
+          {/* What is loaded, drawn rather than only said. "The preview to use
+              should let you know as well", 2026-08-24: a round is the one cost the
+              printed card cannot show, and this is the last moment before the
+              trigger. The pips are what is in the weapon *now*, and the note under
+              them is what will be in it after. */}
+          {request.ammo && (
+            <div className="use-ammo">
+              <AmmoPips
+                ammo={request.ammo}
+                charges={request.ammoMax}
+                used={request.ammoMax - request.ammoLeft}
+              />
+              <span className="use-ammo-line">
+                {request.ammoLeft} of {request.ammoMax} {request.ammo.unit}
+                {request.ammoMax === 1 ? '' : 's'} loaded
+              </span>
             </div>
           )}
 

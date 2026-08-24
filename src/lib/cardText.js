@@ -263,10 +263,47 @@ export function resolveValue(expression, character, printedStat = 'instinct', op
   return { text: pieces.join(' + '), dice, flat, parts };
 }
 
-/** The printed banner across a card's art: "MELEE - WEAPON ATTACK". */
+/* ------------------------------------------------- the title and the banner
+ * A weapon card is the one kind that belongs to something. Every other card in
+ * the codex is called what it is; `Short Bow - Shoot` is called what it is and
+ * *whose* it is, and printing both in the title made the title mostly the
+ * weapon: a reader holding a Short Bow already knows they are holding one.
+ *
+ * So on Jules's instruction of 2026-08-24 — "the weapon name should be in the
+ * banner not the title, so Short bow shoot should just be called Shoot, and in
+ * the banner above read Ranged - Weapon Attack - Shortbow" — the two are split:
+ *
+ *   title    Shoot
+ *   banner   RANGED - WEAPON ATTACK - SHORT BOW
+ *
+ * `name` is untouched and stays the whole of it, because the name is the card's
+ * *identity* rather than its heading: it is what every {{link}} resolves against,
+ * what the art work list names its files for, and what a saved row that mentions
+ * a card mentions. Only what is drawn changed.
+ *
+ * The split is read off the card's own `weapon`, never off the punctuation in its
+ * name. A name is prose and a codex is full of cards with a dash in them; the
+ * field is data, and scripts/check-weapons.mjs holds it in step with the name.
+ */
+
+/** What a card prints as its heading: its name, less the weapon it belongs to. */
+export function cardTitle(card) {
+  const name = card?.name ?? '';
+  const weapon = card?.weapon;
+  if (!weapon) return name;
+
+  const prefix = `${weapon} - `;
+  return name.startsWith(prefix) ? name.slice(prefix.length) : name;
+}
+
+/**
+ * The printed banner across a card's art: "MELEE - WEAPON ATTACK", and on a
+ * weapon card the weapon it belongs to after them.
+ */
 export function cardBanner(card) {
   if (card?.type_line) return card.type_line;
-  return (card?.tags ?? []).join(' - ').toUpperCase();
+  const parts = [...(card?.tags ?? []), ...(card?.weapon ? [card.weapon] : [])];
+  return parts.join(' - ').toUpperCase();
 }
 
 /* ------------------------------------------------------------- the gist */

@@ -7,6 +7,7 @@ import { useCardStack } from '../../context/card-stack.js';
 import { WEAPON_SLOTS, heldItem, rarityColor, wieldModifiers } from '../../lib/items.js';
 import { getCard, itemEnchantments } from '../../lib/weapons.js';
 import { attackModifiers } from '../../lib/moves.js';
+import { cardTitle } from '../../lib/cardText.js';
 
 /**
  * The Inventory tab's weapon block: the two weapons a character has in hand.
@@ -185,7 +186,7 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
             </span>
 
             <span className="ability-box-body">
-              <span className="ability-box-name">{card.name}</span>
+              <span className="ability-box-name">{cardTitle(card)}</span>
               <span className="item-tags">
                 {card.tags.map((tag) => (
                   <span className="item-tag" key={tag}>

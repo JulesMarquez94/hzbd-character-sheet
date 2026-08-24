@@ -80,6 +80,7 @@ doing on its own.
 | Colossus art, from the `Colossus/` folder | **2026-08-23, 7 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | The ten missing weapon types, off `Source Temp/` | **2026-08-24, 10 weapons + 20 cards** | `src/lib/weapons.js`, `itemParts.jsx` |
 | The weapon table, handed over in chat | **2026-08-24, the whole wall rebuilt: 39 weapons + 78 cards** | `src/lib/weapons.js`, `items.js`, `statMath.js`, `moves.js`, `talents.js` |
+| The wall read back, nine rulings in one message | **2026-08-24, the card face, the magazine and the tags** | [the card face](#the-card-face-the-magazine-and-the-tag-pass-2026-08-24) |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -111,6 +112,18 @@ column beside the live one, so the Catalyst balance pass below reads as a diff
 rather than a claim, and `enchantments.csv` carries what each one costs to lay and
 what its sentence was turned into mechanically. Diff a fresh download against those to see exactly what
 changed before asking for a pull.
+
+**`weapon-icons.csv` and `weapon-cards.csv` run the other way.** Every other
+template is a record of a sheet that arrived; these two are a **work list going
+out**, added 2026-08-24 with the rebuilt weapon wall. Between them they name all
+123 pictures the wall still needs, 45 weapon icons and 78 ability cards, each with
+the id its files will be called, the sizes it is cut to and the plates it is drawn
+on. The `Name` and `Image` columns are the importers' own, so a filled-in copy
+dropped into `data/` is the input rather than a thing to transcribe. Keep the two
+apart when you drop them: one CSV holding both, with filenames on the icon rows
+and links on the card rows, makes `pull-card-art.mjs` report every icon row as a
+card name it has never heard of. `data/weapon-art.xlsx` is the same two tables
+plus a tab on how to deliver them.
 
 **`enchantments.csv` is the sheet's 23 rows and not the codex's 25.** PREPARED and
 UNIQUE IMBUEMENT came from chat rather than from the tab, so putting them in the
@@ -4197,6 +4210,10 @@ All four carry `Colossal` as a second tag, so GIANT SLAYER and COLOSSAL GRIP sti
 see them and neither card had to move. `check-weapons.mjs` asserts both halves:
 every Great weapon carries `Colossal`, and nothing else does.
 
+**Superseded the same day.** The tag pass later on 2026-08-24 renamed `Colossal` to
+`Great` and reworded both cards. See
+[the card face](#the-card-face-the-magazine-and-the-tag-pass-2026-08-24).
+
 ### The two sets moved onto families
 
 Jules, mid-build: "Update duelist to be : Finesse & Light Melee and Colossus to be
@@ -4391,3 +4408,282 @@ reference resolves through `getCard`.
 Nothing on this wall has art, which is the state the wall it replaced was in. The
 old weapon ids that had none still have none, and the ones that are gone took
 nothing with them: `cardArt.js` never carried a weapon card.
+
+## The card face, the magazine and the tag pass, 2026-08-24
+
+The wall rebuilt earlier the same day, read back and corrected. Nine instructions
+in one message, and they land in four places: what a card is headed with, what a
+firearm costs and holds, what four cards are priced at, and what a weapon's tags
+say.
+
+### The weapon name moved off the title and into the banner
+
+> "In the weapon card, the weapon name should be in the banner not the title. So
+> Short bow shoot should just be called Shoot. And in the banner above read
+> Ranged - Weapon Attack - Shortbow."
+
+So a dealt card reads:
+
+| | was | is |
+| --- | --- | --- |
+| title | Short Bow - Shoot | **Shoot** |
+| banner | RANGED - WEAPON ATTACK | **RANGED - WEAPON ATTACK - SHORT BOW** |
+
+**The card's `name` did not change**, and that is the whole of how this was built.
+A name is the card's identity rather than its heading: it is what every
+`{{link}}` resolves against, what `pull-card-art.mjs` matches a filename to, what
+`data/templates/weapon-cards.csv` lists for the artist, and what a saved row
+naming a card names. Renaming 78 of them to "Shoot", "Strike" and "Reload" would
+also have collided in `CARD_BY_NAME`, where seven cards called Shoot leave one
+card called Shoot.
+
+What changed is a new field, `weapon`, on all 78 cards, holding the weapon as the
+card names it. `cardTitle` takes it off the front of the name and `cardBanner`
+puts it on the end of the tags, both in `cardText.js`. Four surfaces print the
+title now: the dealt card, the brief, the Inventory tab's ability box and the
+loadout row. `shortName` in `combatBar.js` used to cut the same string on its
+dash and now reads the field, so the chip and the card can never disagree.
+
+`check-weapons.mjs` asserts that every weapon card carries a `weapon` and that it
+is the name's own prefix, which is the only way the two stay in step: the field is
+a copy of half the name, and a copy is a thing that drifts.
+
+A brief has no banner, so it carries the weapon as one more chip beside the tags.
+
+### Focus is gone, and the implements are tags
+
+> "Focus tag make no sense need to be removed. [...] Then Wand, Staffs ect are a
+> tag."
+
+`Focus` held the three Wands, the three Staves, the three Tomes, the three Censers
+and the Enchanted Instrument under one word, and **no talent set ever reached for
+it**: the only thing in the app that read it was the glyph picker. Each implement
+is its own family tag now, on the rule the rest of the axis already followed.
+
+| was | is |
+| --- | --- |
+| `Focus` on 13 weapons | `Wand`, `Staff`, `Tome`, `Censer`, `Instrument` |
+
+All five still share the one glyph, because a wand, a stave, a tome, a censer and
+a fiddle are five silhouettes nobody has drawn and one honest placeholder beats
+five wrong ones.
+
+### The tag axes, rewritten
+
+> "Weapon is redundant in the weapon category so it can have but hidden. Ranged
+> weapon should just be ranged, melee just melee. So Great bow can be
+> Great - Ranged - Two-handed - Bow."
+
+Five axes, and the first two are carried and never drawn:
+
+| axis | values | shown |
+| --- | --- | --- |
+| rarity | Common, Uncommon, Rare, Epic | all but `Common` |
+| kind | `Weapon`, on every weapon | no |
+| size | `Great`, on the four whose names say Great | yes |
+| category | `Melee`, `Ranged` | yes |
+| hands | `One-Handed`, `Two-Handed` | yes |
+| family | Finesse, Light Melee, Heavy Melee, Great Melee, Fist, Bow, Crossbow, Firearm, Polearm, Whip, Reach, Wand, Staff, Tome, Censer, Instrument, Paired, Shielded, Natural | yes |
+
+`Common` is hidden on the same reasoning `Weapon` is, and it was not asked for:
+the example tag line has no rarity in it, and Common is the default on every
+weapon but five. Uncommon, Rare and Epic still show, and still carry their colour.
+Both live in `HIDDEN_TAGS` in `itemParts.jsx`, so nothing was taken out of the
+data and the filter row still reaches all of it. Great Bow now reads exactly as
+asked: **Great · Ranged · Two-Handed · Bow**.
+
+`Whip` is a new family tag, for the same reason a Wand is one, and because the
+Duelist now reaches for it by name.
+
+### Colossal is Great, and two cards say so
+
+The tag renamed, on Jules's answer to where "Great" comes from: the Colossus
+reaches its own weapons through `Heavy Melee` and `Great Melee`, so the second tag
+on the four biggest is free to be the word the wall itself uses.
+
+| | was | is |
+| --- | --- | --- |
+| the tag | `Colossal` on 4 weapons | `Great` on the same 4 |
+| GIANT SLAYER reads | `Colossal` | `Great` |
+| GIANT SLAYER prints | "a Colossal Weapon" | **"a Great Weapon"** |
+| COLOSSAL GRIP prints | "your Colossal Weapon Attacks" | **"your Great Weapon Attacks"** |
+
+**The two card bodies changed, which is a step past a retag and worth knowing
+about.** The designer's own Ability tab spells the category "Colosal Weapon" on
+both cards. A card that names a category no weapon carries is a rule a player
+cannot check against the thing in their hands, so the printed word followed the
+tag. The card *names* are untouched: COLOSSAL FORCE and COLOSSAL GRIP are names,
+not categories. Ballista is deliberately **not** Great, so the tag still means
+exactly the four it meant as `Colossal`.
+
+### The Duelist reaches four families now
+
+> "Duelist is Finesse, Whip, Fist and polearm. Update text in cards as well."
+
+| | was | is |
+| --- | --- | --- |
+| Duelist | `['Finesse', 'Light Melee']` | `['Finesse', 'Whip', 'Fist', 'Polearm']` |
+| Colossus | `['Heavy Melee', 'Great Melee']` | unchanged |
+
+Wider in three places and narrower in one: the Whip, the Fist Weapon, the Polearm
+and the Great Polearm come in, and Melee Light goes out with its three enchanted
+cousins (Cold-Infused Sword, Patien, Grave-Lantern Blade). Six lines of card text
+follow it, on DEXTEROUS, AGILE and FOLLOW UP, summaries included.
+
+**Two of the four are Two-Handed**, which retires the reading that this set was
+ever about the free hand. The overview still says "A Duelist fights with one hand
+and keeps the other free" — that is prose the designer holds a copy of in
+`Talent Set - Duelist - Overview.csv`, so it was left alone rather than quietly
+rewritten. It now disagrees with the cards, and that is one for Jules.
+
+Great Polearm carries `Polearm`, so a Duelist reaches a siege halberd. Nobody has
+ruled on that either way and the tag the designer named is the tag that answers.
+
+### A firearm fires for 1 Action Point
+
+> "All shoot ablity should cost 1 for firams."
+
+| | was | is | deals |
+| --- | --- | --- | --- |
+| Flintlock Pistol · Shoot | 2 AP | **1 AP** | 1d6 + Instinct |
+| Flintlock Rifle · Shoot | 3 AP | **1 AP** | 2d6 + Instinct |
+| Portable Canon · Shoot | 4 AP | **1 AP** | 2d6 + 2 × Instinct |
+
+This takes the three firearms off the cost column, which was until now the only
+thing on the wall that set damage. They keep the damage their rung buys and pay
+for it somewhere else: the magazine. A Portable Canon puts out what 4 Action
+Points buys for 1, once, and then somebody spends 3 loading it. `check-weapons.mjs`
+carries it as a fourth sideways rule beside shield, paired and crossbow.
+
+The three Reloads are unchanged at 3, 4 and 3.
+
+### The magazine, drawn as rounds
+
+> "Fire arms need to have added a bullet ocunt tarchar. So on the action next to
+> shoot you you seel bullet shaped indicator that empty as you use. And the preive
+> w to use should let you know as well. Same for crossbow but with 1 bolt."
+
+Seven weapons hold ammunition and every one of them already had a Reload card and
+a shot count printed in prose that nothing read:
+
+| weapon | holds | Reload |
+| --- | --- | --- |
+| Flintlock Pistol | 3 Shots | 3 AP |
+| Flintlock Rifle | 2 Shots | 4 AP |
+| Portable Canon | 1 Shot | 3 AP |
+| Light Crossbow, Crossbow, Heavy Crossbow, Ballista | 1 Bolt | 1 AP |
+
+**It needed no new column.** `card_uses` already counts what a limited card has
+spent, keyed by card id, and a magazine is that same count filled by a different
+thing. So the attack carries `ammo: { max, unit, reload }` and the Reload carries
+`reloads`, both riders on the card the way `uses` and `recharge` are, and
+`magazineUse` in `uses.js` reads either end of the pair. One function, because a
+chip and a row that disagree about whether a gun is loaded is the failure this
+was built to avoid.
+
+What a player sees:
+
+- **rounds, not dots.** A belt charge is a dot because a flask holds a measure of
+  something. A magazine holds countable objects, so the pip is the object: a
+  cartridge for a Shot, a fletched bolt for a Bolt, filled copper while it is in
+  there and an empty outline once it is gone. `AmmoPips` in `itemParts.jsx`.
+- **on the loadout row, beside the attack**, which is where it was asked for. And
+  on the Reload row too, because the row that fills a magazine is the row a reader
+  looks at to find out whether it needs filling.
+- **on the quick-bar chip**, in place of the "×2" a charged item gets.
+- **on the use prompt**, at full size with the count spelled out. A round is the
+  one cost a printed card cannot show, and the prompt is the last thing before the
+  trigger.
+- **refused when it is empty**, greyed with "Empty" and the reason in the tooltip,
+  the way a spent flask is. A Reload with nothing to fill is refused as "Loaded".
+
+The card bodies were rewritten to match. They used to explain the mechanism
+("Every use of the Flintlock Pistol - Shoot ability consumes one shot") because
+nothing implemented it; now the sheet counts, so the attack says a shot is spent
+and the Reload says what it puts back.
+
+**A long rest fills a magazine too, and that is a house ruling.** Nothing else on
+the sheet is refillable only by spending Action Points, and a character who walked
+out of a fight with an empty pistol and then slept should not have to mime a
+Reload before the next one. The printed card still says what it says. One for
+Jules if it should be Reload and nothing else.
+
+### Four cards the designer priced by hand
+
+> "Wand Volley should cost 5 action points and 2 willpower. Tome of incations
+> Special attack should cost 4 action points and 2 WP."
+
+| | was | is |
+| --- | --- | --- |
+| Volley, all three Wands | 3 AP · 1 WP | **5 AP · 2 WP** |
+| Chorus, all three Tomes | 3 AP · 1 WP | **4 AP · 2 WP** |
+
+Both break the rule the other specials follow, which is that a special costs the
+plain attack's price or one more and 1 Willpower. Volley is now priced exactly as
+Flurry is, and both of them sell the same thing: more than one hit off one roll.
+`check-weapons.mjs` carries them by name beside Flurry rather than letting the
+generic rule wave them through.
+
+### Discord is contested, not aimed
+
+> "Instrument discord is against hte grit of an enetity not an attack roll."
+
+| | was | is |
+| --- | --- | --- |
+| Enchanted Instrument · Discord | Instinct Ranged Attack, vs Defense | **Instinct Roll, vs Grit** |
+
+A wrong note is not thrown at anybody, it is endured. Its cost is unchanged, and
+it is the codex's second roll shape rather than a third: the Tomes and the Censers
+already contest Grit, and the file header's "exactly two shapes" note holds.
+
+### The three staves have names
+
+> "Name the staff something more in lore rather than just roce blunt and and
+> sharp. Arcane sounding things."
+
+| was | is | deals |
+| --- | --- | --- |
+| Sharp Staff | **Rivenstave** | Sharp |
+| Force Staff | **Sunderstave** | Force |
+| Blunt Staff | **Loadstave** | Blunt |
+
+Jules picked the set. Each one still says what it does — riven air, a sundering
+shove, a load coming down — without naming the damage type twice.
+
+**The ids stay `sharp-staff`, `force-staff` and `blunt-staff`**, and the six card
+ids with them. An id is what a saved sheet points at and what the art work list
+already names its files for, so renaming one would orphan an equipped weapon and a
+picture at once. The name is what a reader sees, the id is what the sheet
+remembers, and only the first of those was asked to change.
+
+### How it was proved
+
+`check-weapons.mjs` gained four walks and kept the five it had:
+
+- the **firearm** rule, as a fourth way of reading the cost grid
+- **Volley** and **Chorus**, priced by name
+- the **tag axes**: one rarity, one of Melee and Ranged, one of the two hands, the
+  hidden `Weapon` on every weapon, no `Focus` anywhere, and `Great` on exactly the
+  four whose names say Great
+- the **title**: every weapon card carries a `weapon`, and it is the prefix of its
+  own name
+- the **magazines**: `ammo` and `reloads` point at each other, every count matches
+  the designer's sheet, every round has a unit, and no card tells a reader to
+  Reload without a rider that counts
+
+All 39 cells match the table across 45 weapons and 78 cards, `npm run lint` and
+`npm run lint:text` are clean, and the magazine was walked end to end: three shots
+out of a pistol, refused empty, filled by its Reload, and half-filled by a long
+rest.
+
+Both art work lists were regenerated off the codex, so the 45 icon rows and 78
+card rows carry the new names, tags, costs and bodies. `Image`, `Group` and `Note`
+are the sheet's own columns and were carried across by id.
+
+### Two things for Jules
+
+1. **The Duelist overview still says "one hand".** Two of its four weapon
+   families are Two-Handed now. The overview prose is the one thing here the
+   designer holds their own copy of, so it was not touched.
+2. **A long rest reloads.** The house ruling above. Say the word and it comes out,
+   and a magazine is filled only by the card that says it fills it.

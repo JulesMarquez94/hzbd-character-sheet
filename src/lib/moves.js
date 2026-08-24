@@ -60,9 +60,9 @@
  *
  * ---------------------------------------------------------- the weapon in hand
  * And the cards that hang on it, which are now two sets' worth. DEXTEROUS grants
- * a Duelist advantage with Finesse and Light Melee weapons and AGILE grants a
- * point of Defense while one is in hand; GIANT SLAYER grants a Colossus advantage
- * with a Colossal Weapon, COLOSSAL FORCE Elevates a Heavy or Great Melee swing and
+ * a Duelist advantage with Finesse, Whip, Fist and Polearm weapons and AGILE grants
+ * a point of Defense while one is in hand; GIANT SLAYER grants a Colossus advantage
+ * with a Great Weapon, COLOSSAL FORCE Elevates a Heavy or Great Melee swing and
  * PERFECT TECHNIQUE adds a die for every move riding one. All of them are
  * conditions the sheet can actually check — the tag on the item — and all of them
  * are declared as `grants` on the set rather than known here by name. A set may
@@ -396,10 +396,11 @@ function inHand(character) {
  * Whether the thing in hand carries the tag a set's `martial` spec asks for.
  *
  * A spec may name **more than one**, and two of them do: the Duelist reads
- * `['Finesse', 'Light Melee']` and the Colossus `['Heavy Melee', 'Great Melee']`
- * (2026-08-24, Jules: "Duelist to be Finesse & Light Melee and Colossus to be
- * Heavy & Great Melee"). Any one of them is a match, because they are the same
- * kind of weapon named twice rather than two conditions to meet at once.
+ * `['Finesse', 'Whip', 'Fist', 'Polearm']` and the Colossus
+ * `['Heavy Melee', 'Great Melee']` (2026-08-24, Jules: "Duelist is Finesse, Whip,
+ * Fist and polearm" and "Colossus uses Heavy Melee and Great melee weapons"). Any
+ * one of them is a match, because they are the kinds of weapon a set trains on
+ * rather than conditions to meet at once.
  */
 function tagged(item, tag) {
   if (!item || !tag) return false;
@@ -419,8 +420,8 @@ function tagged(item, tag) {
  * ------------------------------------------------------------------- `grants`
  * A list rather than one block of numbers, because the Colossus is the first set
  * whose cards hang on **two different tags at once**: GIANT SLAYER grants
- * advantage with a Colossal Weapon and COLOSSAL FORCE Elevates a Two-Handed one,
- * and a Colossal Two-Handed Weapon is both. So each entry names the tag it wants,
+ * advantage with a Great Weapon and COLOSSAL FORCE Elevates a Two-Handed one,
+ * and a Great Two-Handed Weapon is both. So each entry names the tag it wants,
  * falling back to the set's own `weapon` when it does not, which is what keeps the
  * Duelist's two entries reading as they always did.
  *

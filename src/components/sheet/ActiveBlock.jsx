@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import UsePrompt from './UsePrompt.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
 import { GroupHead } from './parts.jsx';
+import { AmmoPips } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
@@ -71,7 +72,7 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
     }
 
     setRequest({
-      name: move.card?.name ?? move.name,
+      name: move.name,
       source: move.source,
       ap: move.ap,
       wp: move.wp,
@@ -82,6 +83,11 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
       modifiers: move.modifiers,
       note: move.note,
       extra: move.extra,
+      /* And what is loaded, so the preview says it before the trigger does. The
+         chip already knows: the magazine was read building the bar. */
+      ammo: move.ammo ?? null,
+      ammoMax: move.charges ?? 0,
+      ammoLeft: (move.charges ?? 0) - (move.used ?? 0),
     });
   }
 
@@ -220,7 +226,15 @@ export function BarChip({ move, readOnly, onUse }) {
     >
       <span className="bar-chip-name">{move.name}</span>
 
-      {!spent && remaining !== null && (
+      {/* A magazine is drawn rather than counted. A round is a shape a player
+          recognises at a glance and "×2" is a number they have to read, and the
+          two rows that matter mid-fight are the gun that is about to click empty
+          and the Reload beside it. See AmmoPips in itemParts.jsx. */}
+      {!spent && move.ammo && (
+        <AmmoPips ammo={move.ammo} charges={charges} used={used} />
+      )}
+
+      {!spent && !move.ammo && remaining !== null && (
         <span className="bar-chip-left" title={`${remaining} left`}>
           &times;{remaining}
         </span>

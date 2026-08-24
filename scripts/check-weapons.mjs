@@ -16,11 +16,12 @@
  * table itself, and the attribute off the three lists they sent on 2026-08-24.
  * When a cell changes, it changes here and the run says which cards disagree.
  *
- * Three families read the grid sideways and each is the designer's own rule:
+ * Four families read the grid sideways and each is the designer's own rule:
  *
  *   shield     the base weapon's damage, one rung down, at 1 more Action Point
  *   paired     the same rung down with its dice as d4, rolled twice, +1 point
  *   crossbow   its own rung's damage for 1 Action Point less, and a Reload
+ *   firearm    its own rung's damage for 1 Action Point flat, and a magazine
  *
  * What this does not check is prose. A card that reads badly still passes, and
  * `npm run lint:text` is the other half.
@@ -51,7 +52,7 @@ const TABLE = {
   /* ---- cost 2 ---- */
   'finesse-weapon': [2, 'instinct', 'plain'],
   'short-bow': [2, 'instinct', 'plain'],
-  'flintlock-pistol': [2, 'instinct', 'plain'],
+  'flintlock-pistol': [2, 'instinct', 'firearm'],
   'fire-wand': [2, 'mind', 'plain'],
   'frost-wand': [2, 'mind', 'plain'],
   'lightning-wand': [2, 'mind', 'plain'],
@@ -59,7 +60,7 @@ const TABLE = {
   /* ---- cost 3 ---- */
   'melee-light': [3, 'physique', 'plain'],
   bow: [3, 'instinct', 'plain'],
-  'flintlock-rifle': [3, 'instinct', 'plain'],
+  'flintlock-rifle': [3, 'instinct', 'firearm'],
   whip: [3, 'instinct', 'plain'],
   'light-crossbow': [3, 'instinct', 'crossbow'],
   'psychic-tome': [3, 'mind', 'plain'],
@@ -71,7 +72,7 @@ const TABLE = {
   /* ---- cost 4 ---- */
   'melee-heavy': [4, 'physique', 'plain'],
   'long-bow': [4, 'physique', 'plain'],
-  'portable-canon': [4, 'instinct', 'plain'],
+  'portable-canon': [4, 'instinct', 'firearm'],
   polearm: [4, 'instinct', 'plain'],
   crossbow: [4, 'instinct', 'crossbow'],
   'sharp-staff': [4, 'mind', 'plain'],
@@ -94,14 +95,14 @@ const TABLE = {
   'paired-great': [6, 'physique', 'paired'],
 };
 
-/** The four Great weapons, which are the Colossal ones the Colossus reads. */
+/** The four weapons whose names say Great, and which carry the tag. */
 const GREAT = ['melee-great', 'great-bow', 'great-polearm', 'paired-great'];
 
 /** What each set hangs on, so a retag that orphans a card is a finding here. */
 const SET_TAGS = {
-  Duelist: ['Finesse', 'Light Melee'],
+  Duelist: ['Finesse', 'Whip', 'Fist', 'Polearm'],
   Colossus: ['Heavy Melee', 'Great Melee'],
-  'Giant Slayer': ['Colossal'],
+  'Giant Slayer': ['Great'],
   'Feral Curse': ['Natural'],
 };
 
@@ -119,6 +120,7 @@ function wants(cost, how) {
 
 /** What the plain attack costs, after its sideways rule. */
 function points(cost, how) {
+  if (how === 'firearm') return 1;
   return how === 'crossbow' ? cost - 1 : cost;
 }
 
@@ -200,6 +202,13 @@ for (const [id, [cost, stat, how]] of Object.entries(TABLE)) {
     }
   } else if (/Flurry$/.test(name)) {
     if (second.ap !== 5 || second.wp !== 2) note(where, `${name} costs ${second.ap} and ${second.wp}, and Flurry is 5 and 2`);
+  } else if (/Volley$/.test(name)) {
+    /* Priced by hand on 2026-08-24: "wand volley should cost 5 action points and 2
+       willpower". Three hits off one roll, sold for what Flurry is sold for. */
+    if (second.ap !== 5 || second.wp !== 2) note(where, `${name} costs ${second.ap} and ${second.wp}, and Volley is 5 and 2`);
+  } else if (/Chorus$/.test(name)) {
+    // And the same day: "tome of incantations special attack should cost 4 AP and 2 WP".
+    if (second.ap !== 4 || second.wp !== 2) note(where, `${name} costs ${second.ap} and ${second.wp}, and Chorus is 4 and 2`);
   } else if (/Aimed Shot$/.test(name)) {
     if (second.ap !== plain.ap + 1 || second.wp !== 1) {
       note(where, `${name} costs ${second.ap} and ${second.wp}, and an Aimed Shot is ${plain.ap + 1} and 1`);
@@ -227,18 +236,28 @@ for (const [id, [cost, stat, how]] of Object.entries(TABLE)) {
 
 /* -------------------------------------------------------------- the tagging */
 
+/* Rebuilt with the tag pass of 2026-08-24. Every weapon carries `Weapon` and
+   exactly one of Melee and Ranged, exactly one of the two hands, and a rarity. The
+   first of those is the one the reader never sees, which is exactly why it is
+   checked here: a tag nothing draws is a tag nothing notices going missing. */
+const RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic'];
+
 for (const weapon of WEAPONS) {
   const tags = weapon.tags ?? [];
   const where = `${weapon.name} (${weapon.id})`;
   const hands = tags.filter((tag) => tag === 'One-Handed' || tag === 'Two-Handed');
-  const kinds = tags.filter((tag) => tag === 'Melee Weapon' || tag === 'Ranged Weapon');
+  const kinds = tags.filter((tag) => tag === 'Melee' || tag === 'Ranged');
+  const rarity = tags.filter((tag) => RARITIES.includes(tag));
 
   if (hands.length !== 1) note(where, `carries ${hands.length} of One-Handed and Two-Handed, and every weapon carries one`);
-  if (kinds.length !== 1) note(where, `carries ${kinds.length} of Melee Weapon and Ranged Weapon, and every weapon carries one`);
+  if (kinds.length !== 1) note(where, `carries ${kinds.length} of Melee and Ranged, and every weapon carries one`);
+  if (rarity.length !== 1) note(where, `carries ${rarity.length} rarities, and every weapon carries one`);
+  if (!tags.includes('Weapon')) note(where, 'does not carry the hidden Weapon tag, so a filter for every weapon misses it');
+  if (tags.includes('Focus')) note(where, 'still carries Focus, which the tag pass of 2026-08-24 retired');
 
   /* Melee reaches 1 Meter unless the weapon says Reach. The designer's rule of
      2026-08-24, and the one number a reader would never think to check. */
-  if (kinds[0] === 'Melee Weapon' && !tags.includes('Reach')) {
+  if (kinds[0] === 'Melee' && !tags.includes('Reach')) {
     const { plain } = taught(weapon);
     if (plain && !/within 1 Meter/.test(plain.body ?? '')) {
       note(where, `${plain.name} does not reach 1 Meter, and only a Reach weapon reaches further`);
@@ -247,13 +266,13 @@ for (const weapon of WEAPONS) {
 }
 
 for (const id of GREAT) {
-  if (!(byId.get(id)?.tags ?? []).includes('Colossal')) {
-    note(id, 'is a Great weapon without the Colossal tag, so GIANT SLAYER cannot see it');
+  if (!(byId.get(id)?.tags ?? []).includes('Great')) {
+    note(id, 'is a Great weapon without the Great tag, so GIANT SLAYER cannot see it');
   }
 }
 for (const weapon of WEAPONS) {
-  if ((weapon.tags ?? []).includes('Colossal') && !GREAT.includes(weapon.id)) {
-    note(weapon.id, 'carries Colossal and is not one of the four Great weapons');
+  if ((weapon.tags ?? []).includes('Great') && !GREAT.includes(weapon.id)) {
+    note(weapon.id, 'carries Great and is not one of the four weapons whose name says Great');
   }
 }
 
@@ -265,6 +284,65 @@ for (const [set, tags] of Object.entries(SET_TAGS)) {
       note(set, `hangs on "${tag}" and no weapon in the codex carries it`);
     }
   }
+}
+
+/* ------------------------------------------ the title, and what it belongs to
+ * Every weapon card names its weapon in `weapon`, and the *title* it prints is
+ * its name with that taken off the front. So the field and the name have to agree
+ * to the character, or a card headed "Short Bow - Shoot" quietly appears on the
+ * one wall where the heading was supposed to be "Shoot". Two ways that goes
+ * wrong and both are silent, which is why they are checked rather than read:
+ *
+ *   no field      the card prints its whole name and nothing says why
+ *   wrong field   the prefix does not match, so nothing is taken off
+ *
+ * See cardTitle and cardBanner in src/lib/cardText.js.
+ */
+
+for (const card of WEAPON_ABILITIES) {
+  if (!card.weapon) {
+    note(card.id, 'is a weapon card with no weapon on it, so its title prints the whole name');
+    continue;
+  }
+  if (!card.name.startsWith(`${card.weapon} - `)) {
+    note(card.id, `is named "${card.name}" and belongs to "${card.weapon}", which is not its prefix`);
+  }
+  if (card.name === `${card.weapon} - `) note(card.id, 'has a weapon and no move after it');
+}
+
+/* ------------------------------------------------------------- the magazines
+ * A magazine is two cards pointing at each other: `ammo` on the attack names the
+ * Reload that fills it, and `reloads` on the Reload names the attack. Either half
+ * on its own is a weapon that empties and never fills, or a Reload that costs
+ * Action Points and does nothing, and neither of those throws. See uses.js.
+ */
+
+const AMMO_MAX = { 'flintlock-pistol-shoot': 3, 'flintlock-rifle-shoot': 2 };
+
+for (const card of WEAPON_ABILITIES) {
+  if (card.ammo) {
+    const wants = AMMO_MAX[card.id] ?? 1;
+    if (card.ammo.max !== wants) {
+      note(card.id, `holds ${card.ammo.max} rounds, and the designer's sheet says ${wants}`);
+    }
+    if (!card.ammo.unit) note(card.id, 'holds rounds with no name, so the pips cannot pick a shape');
+    const reload = getCard(card.ammo.reload);
+    if (!reload) note(card.id, `names "${card.ammo.reload}" as its Reload and no card has that id`);
+    else if (reload.reloads !== card.id) {
+      note(card.id, `names ${reload.name} as its Reload, and that card fills "${reload.reloads}"`);
+    }
+  }
+
+  if (card.reloads) {
+    const attack = getCard(card.reloads);
+    if (!attack) note(card.id, `fills "${card.reloads}" and no card has that id`);
+    else if (!attack.ammo) note(card.id, `fills ${attack.name}, which holds no ammunition to fill`);
+  }
+
+  /* And the other direction: a card whose prose counts rounds without a rider is
+     a weapon the sheet lets you fire for ever. Every one of them says Reload. */
+  const counts = /Reload/.test(card.body ?? '') && !/Reload$/.test(card.name);
+  if (counts && !card.ammo) note(card.id, 'tells the reader to Reload and carries no ammo rider, so nothing counts down');
 }
 
 /* ------------------------------------------- nothing taught by nothing at all */

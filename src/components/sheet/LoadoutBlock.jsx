@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import UsePrompt from './UsePrompt.jsx';
-import { ChargeDots, ItemIcon, SlotGlyph } from './itemParts.jsx';
+import { AmmoPips, ChargeDots, ItemIcon, SlotGlyph } from './itemParts.jsx';
 import CostOrbs, { CostOrb } from '../CostOrbs.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import {
@@ -16,6 +16,7 @@ import {
 import { getCard } from '../../lib/weapons.js';
 import { shortName, spendUse } from '../../lib/combatBar.js';
 import { attackModifiers, ridingLine } from '../../lib/moves.js';
+import { magazineUse } from '../../lib/uses.js';
 
 /**
  * The Character tab's third block: what you have in your hands and on your
@@ -75,9 +76,11 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
 
   function askWeaponCard(card) {
     const riders = attackModifiers(character, card, modifiers);
+    // What the use writes to the magazine, on either side of it. See uses.js.
+    const magazine = magazineUse(character, card);
 
     setRequest({
-      name: card.name,
+      name: shortName(card),
       source: `${primary.name} · in hand`,
       ap: card.ap,
       wp: card.wp,
@@ -89,7 +92,14 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
       modifiers: riders,
       /* And named, since the prompt is the last thing between the player and the
          swing that spends them. */
-      note: ridingLine(riders),
+      note: [ridingLine(riders), magazine?.note].filter(Boolean).join(' ') || null,
+      /* And drawn, because a round is the one cost a printed card cannot show: the
+         prompt is where the player last gets to change their mind about firing the
+         only shot they have. */
+      ammo: magazine?.ammo ?? null,
+      ammoMax: magazine?.charges ?? 0,
+      ammoLeft: (magazine?.charges ?? 0) - (magazine?.used ?? 0),
+      extra: magazine?.patch ?? null,
     });
   }
 
@@ -261,17 +271,34 @@ function AttackRow({ card, character, modifiers, stack, readOnly, onUse }) {
   const riders = attackModifiers(character, card, modifiers);
   const riding = ridingLine(riders);
 
+  /* And how much of it is loaded. Jules asked for it here, beside the attack:
+     "on the action next to shoot you see bullet shaped indicator that empty as you
+     use". The rounds are drawn on the Reload beside it as well, because the row
+     that fills a magazine is the row a reader looks at to find out whether it
+     needs filling. See uses.js. */
+  const magazine = magazineUse(character, card);
+  const spent = Boolean(magazine?.spent);
+
   return (
-    <div className={`use-row${riding ? ' use-row-riding' : ''}`}>
+    <div className={`use-row${riding ? ' use-row-riding' : ''}${spent ? ' use-row-spent' : ''}`}>
       <button
         type="button"
         className="use-row-main"
         onClick={onUse}
-        disabled={readOnly}
-        title={readOnly ? card.name : `Use ${card.name}`}
+        disabled={readOnly || spent}
+        title={spent ? magazine.spentNote : readOnly ? card.name : `Use ${shortName(card)}`}
       >
         <span className="use-row-name">{shortName(card)}</span>
-        <CostOrbs ap={card.ap} wp={card.wp} size={19} className="use-row-costs" />
+
+        {spent ? (
+          <span className="use-row-spent-note">{magazine.spentLabel}</span>
+        ) : (
+          <CostOrbs ap={card.ap} wp={card.wp} size={19} className="use-row-costs" />
+        )}
+
+        {magazine && (
+          <AmmoPips ammo={magazine.ammo} charges={magazine.charges} used={magazine.used} />
+        )}
       </button>
 
       <InfoButton onClick={() => stack?.openCard(card, riders)} label={`${card.name} card`} />

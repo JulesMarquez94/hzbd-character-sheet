@@ -14,6 +14,10 @@
  *   uses      how many times before it is spent. Absent means never.
  *   recharge  what fills it again, in the card's own words: 'Long Rest'.
  *
+ * And a third rider that is the same shape counted to a different number: a
+ * weapon that holds ammunition carries `ammo`, and the Reload beside it carries
+ * `reloads`. See the note on ammunition below.
+ *
  * ------------------------------------------------------------------- one or N
  * "Once per long rest" is `uses: 1` and nothing here treats it as a special
  * case. A card that says you may do it three times is `uses: 3`, spends one at a
@@ -75,11 +79,58 @@ function levelOf(character) {
  * rest below leaves it alone.
  */
 export function cardLimit(card, character = null) {
+  /* A magazine is the same limit counted to a different number and filled by a
+     different thing. See the note on ammunition below. */
+  if (card?.ammo) return magazine(card);
+
   const written = typeof card?.uses === 'function' ? card.uses(levelOf(character)) : card?.uses;
   const max = Math.max(0, Math.floor(Number(written) || 0));
   if (max === 0) return null;
 
   return { max, recharge: card?.recharge ?? null, fills: rechargeRest(card) };
+}
+
+/* ------------------------------------------------------------- ammunition
+ * "Fire arms need to have added a bullet count tracker. So on the action next to
+ * shoot you see bullet shaped indicator that empty as you use. And the preview to
+ * use should let you know as well. Same for crossbow but with 1 bolt."
+ * Jules, 2026-08-24.
+ *
+ * A magazine is this file's own shape with two of its three answers changed:
+ *
+ *   how many   `ammo.max` off the card instead of `uses`
+ *   what fills it   the weapon's own Reload card, which is an *action* and not a
+ *                   rest. So `recharge` is the word "Reload" and `reload` is the
+ *                   id of the card that does it
+ *
+ * Everything else is untouched, which is the whole reason it is written here
+ * rather than beside the weapons: the count lands in the same `card_uses` column,
+ * a spend is the same `spendCardUse`, and a chip greys out by the same `spent`.
+ * A firearm needed no new column, no new patch shape and no new rest hook.
+ *
+ * **A long rest fills it too**, which is a house ruling and not the card's own
+ * words. Nothing else on the sheet is refillable *only* by spending Action
+ * Points, and a character who walked out of the last fight with an empty pistol
+ * and then slept should not have to mime a Reload before the next one. The card
+ * still says what it says: at the table you Reload, and the rest is the sheet
+ * being tidy about a gun nobody would have left empty. Flagged in data/README.md.
+ */
+
+/** The limit a card's `ammo` rider describes. */
+function magazine(card) {
+  const max = Math.max(1, Math.floor(Number(card.ammo.max) || 1));
+
+  return {
+    max,
+    recharge: 'Reload',
+    fills: 'long',
+    ammo: { unit: card.ammo.unit ?? 'Shot', reload: card.ammo.reload ?? null },
+  };
+}
+
+/** How a magazine's rounds are named for a count: "1 Shot", "3 Shots". */
+export function rounds(count, unit) {
+  return `${count} ${unit}${count === 1 ? '' : 's'}`;
 }
 
 /**
@@ -217,6 +268,13 @@ export function cycleCardUse(character, card) {
 /** What using it costs the card, said before it happens. */
 export function usageNote(state) {
   const left = state.remaining - 1;
+
+  if (state.ammo) {
+    const unit = state.ammo.unit.toLowerCase();
+    if (left > 0) return `Spends a ${unit}. ${left} of ${state.max} left in it after this.`;
+    return `Your last ${unit}. You must Reload before you can fire again.`;
+  }
+
   if (left > 0) return `Spends a use. ${left} of ${state.max} left after this.`;
   return state.recharge
     ? `Its last use. It comes back after a ${state.recharge}.`
@@ -225,9 +283,88 @@ export function usageNote(state) {
 
 /** Why a chip is dead, said in the card's own terms. */
 export function spentNote(card, state) {
+  if (state.ammo) {
+    return 'Empty. Reload before you can fire again.';
+  }
   return state.recharge
     ? `${card.name} is spent. A ${state.recharge} brings it back.`
     : `${card.name} is spent, and nothing on the sheet brings it back.`;
+}
+
+/* -------------------------------------------------------------- the reload
+ * A Reload is the other half of a magazine, and it is a card like any other: it
+ * costs Action Points, it asks the action-or-reaction question, and it is dealt
+ * face up so the reader can see what they bought. What makes it different is that
+ * what it *writes* is somebody else's count.
+ *
+ * Named forwards as well as back — `ammo.reload` on the attack, `reloads` on the
+ * Reload — because both directions are asked. The attack's row needs to say which
+ * card fills it, and the Reload's row needs to know whether there is anything to
+ * fill.
+ */
+
+/** The attack a Reload card fills, or null when the card is not one. */
+export function reloadTarget(card) {
+  return card?.reloads ? resolveCard(card.reloads) : null;
+}
+
+/**
+ * Where a magazine stands and what using this card does to it, in the shape both
+ * a chip and a row already draw: `charges` and `used` are the belt's own two
+ * numbers, `ammo` is the round's name for the pips, and `patch` is what the use
+ * writes. Null for every card that has nothing to do with a magazine.
+ *
+ * **Both sides are answered here**, which is the point of one function: an attack
+ * that spends a round and the Reload that fills it are the same magazine read
+ * from either end, and the quick bar and the loadout block both need both. Three
+ * copies of the arithmetic is how a chip and a row end up disagreeing about
+ * whether a gun is loaded.
+ *
+ * A refused card says which way it is refused rather than being hidden, the way a
+ * flask with no charges left is: an empty weapon cannot fire, and loading a loaded
+ * one is not a move.
+ */
+export function magazineUse(character, card) {
+  const filling = reloadTarget(card);
+  const state = cardUse(character, filling ?? card);
+  if (!state?.ammo) return null;
+
+  const counted = { charges: state.max, used: state.used, ammo: state.ammo };
+  const held = rounds(state.max, state.ammo.unit);
+
+  if (filling) {
+    if (state.used === 0) {
+      return {
+        ...counted,
+        patch: null,
+        spent: true,
+        spentLabel: 'Loaded',
+        spentNote: `Already loaded with ${held}.`,
+      };
+    }
+    /* The count comes off the column outright rather than down by one: a Reload
+       fills the weapon, and a weapon is either loaded or it is not. */
+    return { ...counted, note: `Fills it back to ${held}.`, patch: emptied(character, filling.id) };
+  }
+
+  if (state.spent) {
+    return {
+      ...counted,
+      patch: null,
+      spent: true,
+      spentLabel: 'Empty',
+      spentNote: spentNote(card, state),
+    };
+  }
+
+  return { ...counted, note: usageNote(state), patch: spendCardUse(character, card) };
+}
+
+/** A patch body with one card's count taken out of the column. */
+function emptied(character, id) {
+  const stored = normalizeUses(character?.card_uses, character);
+  delete stored[id];
+  return { card_uses: stored };
 }
 
 /**
@@ -257,11 +394,20 @@ export function usesRest(character, ends = []) {
     if (!limit?.fills || !ends.includes(limit.fills)) continue;
 
     delete next[id];
+    /* A magazine reads as a magazine rather than as a use: "3 Shots back" says
+       what came back, and the reason is the rest itself and not the Reload the
+       card names. See the note on ammunition above. */
+    const ammo = limit.ammo;
     lines.push({
       key: `uses-${id}`,
-      label:
-        limit.max === 1 ? `${card.name} comes back` : `${card.name}: ${used} of ${limit.max} back`,
-      detail: `It was spent. A ${limit.recharge} is what fills it.`,
+      label: ammo
+        ? `${card.weapon ?? card.name}: ${rounds(used, ammo.unit)} back`
+        : limit.max === 1
+          ? `${card.name} comes back`
+          : `${card.name}: ${used} of ${limit.max} back`,
+      detail: ammo
+        ? 'Nobody sleeps with an empty weapon. It is loaded again.'
+        : `It was spent. A ${limit.recharge} is what fills it.`,
       tone: 'gain',
     });
   }

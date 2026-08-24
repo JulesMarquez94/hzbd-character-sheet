@@ -75,7 +75,8 @@ import {
   sourceSet,
 } from './feral.js';
 import { addEffect } from './combatTurn.js';
-import { cardUse, spendCardUse, spentNote, usageNote } from './uses.js';
+import { cardTitle } from './cardText.js';
+import { cardUse, magazineUse, spendCardUse, spentNote, usageNote } from './uses.js';
 import {
   LEDGER_NOTE_MAX,
   appendLedger,
@@ -95,10 +96,16 @@ import {
 /* ------------------------------------------------------------------- parts */
 
 /**
- * "Daggers - Triple Strike" is the printed name, and the row above already
- * says which weapon it belongs to. A chip has room for one of the two.
+ * "Short Bow - Shoot" is the printed name, and the row above already says which
+ * weapon it belongs to. A chip has room for one of the two.
+ *
+ * The same cut the dealt card makes, and made the same way: off the card's own
+ * `weapon` field rather than off the dash in its name. See cardTitle in
+ * cardText.js. The split is kept underneath it for the one shape that has no
+ * field to read — a row somebody typed into the Abilities tab themselves.
  */
 export function shortName(card, fallback = '') {
+  if (card?.weapon) return cardTitle(card);
   const name = card?.name ?? fallback;
   return String(name).split(' - ').pop();
 }
@@ -178,11 +185,20 @@ function handGroup(character) {
          Developpement Notes asked for. See attackModifiers in moves.js. */
       const riders = attackModifiers(character, card, modifiers);
 
-      return move(`hand:${card.id}`, card, {
+      const base = {
         source: `${primary.name} · in hand`,
         modifiers: riders,
         /* And named, so the prompt that is about to spend them says which. */
         note: ridingLine(riders),
+      };
+
+      /* And what is left in it. A firearm and a crossbow count rounds, and the
+         Reload beside them fills the count rather than spending one, so both
+         sides of the magazine are answered here and the chip draws whichever it
+         was handed. See uses.js. */
+      return move(`hand:${card.id}`, card, {
+        ...base,
+        ...(loaded(magazineUse(character, card), base) ?? limitedUse(character, card, base)),
       });
     });
 
@@ -463,6 +479,26 @@ function leadIn(character, form) {
  *
  * Spread last for exactly that reason.
  */
+/**
+ * A magazine's reading, in the shape a chip takes: what it writes folded into
+ * whatever the swing was already going to write, and what it costs said after the
+ * riders rather than instead of them.
+ *
+ * Null straight through for a card with no magazine, so the caller can offer this
+ * and the ordinary use tracker as two readings of the same row.
+ */
+function loaded(magazine, riders = {}) {
+  if (!magazine) return null;
+
+  const { patch, note, ...rest } = magazine;
+  if (rest.spent) return { ...rest, extra: null };
+
+  return {
+    ...rest,
+    note: [riders.note, note].filter(Boolean).join(' ') || null,
+    extra: { ...(riders.extra ?? {}), ...(patch ?? {}) },
+  };
+}
 function limitedUse(character, card, riders = {}) {
   const state = cardUse(character, card);
   if (!state) return {};
