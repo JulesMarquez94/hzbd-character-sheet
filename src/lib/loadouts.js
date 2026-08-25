@@ -43,6 +43,7 @@
  * hold one day, and what it may hold tonight. See `allowanceAt`.
  */
 
+import { compareCards } from './cardOrder.js';
 import { castModifier } from './cardText.js';
 import { CARDS } from './weapons.js';
 import { getTalent, normalizeTalents, setTalentPicks } from './talents.js';
@@ -319,9 +320,16 @@ export function loadoutOptions({ talent, rank, picks }) {
       }
       return { ...row, ok: true };
     })
+    /* What you may take first, and then the law in cardOrder.js: the rung, the
+       school, the family, and inside a family the codex's own order.
+
+       It sorted alphabetically here until 2026-08-25, which put Barkskin above
+       Bramble Whip and Wild Strider fifty rows from the Flora it is shelved
+       beside. Jules asked for the ladder: "Novice, Adept then Master, and then
+       inside that first main school and secondary school." */
     .sort((a, b) => {
       if (a.ok !== b.ok) return a.ok ? -1 : 1;
-      return a.card.name.localeCompare(b.card.name);
+      return compareCards(a.card, b.card);
     });
 }
 

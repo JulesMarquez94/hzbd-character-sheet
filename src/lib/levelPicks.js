@@ -45,6 +45,7 @@
  */
 
 import { ATTRIBUTE_BASE, ATTRIBUTE_KEYS, attributeLabel, baseValues } from './attributes.js';
+import { compareTags } from './cardOrder.js';
 import {
   BACKGROUND_CARDS,
   backgroundState,
@@ -636,7 +637,8 @@ export function usedSkillTags() {
       if (!UNNARROWING.has(tag)) seen.add(tag);
     }
   }
-  return [...seen].sort().map((tag) => ({ id: tag, label: tag, kind: 'skill' }));
+  // The same chip-row order every filter on the sheet uses. See cardOrder.js.
+  return [...seen].sort(compareTags).map((tag) => ({ id: tag, label: tag, kind: 'skill' }));
 }
 
 /**

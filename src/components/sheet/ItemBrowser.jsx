@@ -14,6 +14,7 @@ import {
   placementOf,
   rarityColor,
 } from '../../lib/items.js';
+import { compareTags, sortItems } from '../../lib/cardOrder.js';
 import { formatWeight } from '../../lib/characterModel.js';
 import { getCard } from '../../lib/weapons.js';
 import { useCardStack } from '../../context/card-stack.js';
@@ -174,13 +175,21 @@ export default function ItemBrowser({
     for (const item of compatible) {
       for (const tag of item.tags) if (!tags.includes(tag)) tags.push(tag);
     }
-    return tags;
+    // Rarity up its ladder rather than in whichever order the codex happened to
+    // hand it over, the same as every other chip row. See cardOrder.js.
+    return tags.sort(compareTags);
   }, [compatible]);
 
-  const filtered = compatible.filter((item) => {
-    if (query && !item.name.toLowerCase().includes(query.trim().toLowerCase())) return false;
-    return activeTags.every((tag) => item.tags.includes(tag));
-  });
+  /* Sorted, and it can be sorted flat because this window is one slot's: every
+     piece in it is armor, or every piece is a weapon, so the category grouping
+     the codex order was carrying here is grouping of one. What is left to order
+     by is rarity and then the name, which is `compareItems`. */
+  const filtered = sortItems(
+    compatible.filter((item) => {
+      if (query && !item.name.toLowerCase().includes(query.trim().toLowerCase())) return false;
+      return activeTags.every((tag) => item.tags.includes(tag));
+    })
+  );
 
   // Swapping frees the worn piece's burden before the new piece's is added.
   const burdenMax = magicBurdenMax(character);

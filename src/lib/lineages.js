@@ -170,6 +170,7 @@
 
 import { HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
+import { sortCards } from './cardOrder.js';
 import { castModifier } from './cardText.js';
 import { SPELLS } from './spells.js';
 
@@ -255,10 +256,16 @@ const SPROUT_WINGS = {
  * gets to sit wherever the sheet puts it.
  */
 function noviceSpells(school) {
-  return SPELLS.filter((spell) => {
-    const tags = spell.tags ?? [];
-    return tags.some((tag) => tag.startsWith('Novice')) && tags.includes(school);
-  });
+  /* Through cardOrder.js like every other shelf, although one word of one school
+     is already a family and already in codex order, so nothing moves today. It
+     is here so that a shelf naming a whole school tomorrow comes out family by
+     family without anybody having to remember to ask. */
+  return sortCards(
+    SPELLS.filter((spell) => {
+      const tags = spell.tags ?? [];
+      return tags.some((tag) => tag.startsWith('Novice')) && tags.includes(school);
+    })
+  );
 }
 
 function innate(school) {

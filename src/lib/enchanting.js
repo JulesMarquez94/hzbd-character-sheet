@@ -58,6 +58,7 @@
  * see what is worn.
  */
 
+import { sortCards } from './cardOrder.js';
 import { ENCHANTMENTS, getEnchantment, enchantBurden, enchantSupplies } from './enchantments.js';
 import { getTalent, normalizeTalents, serializeTalents } from './talents.js';
 
@@ -604,7 +605,11 @@ export function enchantOptions(character, { held = [], room = Infinity } = {}) {
 
   const taken = new Set(held);
 
-  return ENCHANTMENTS.filter((entry) => !entry.unique).map((entry) => {
+  /* Up the ladder and then by kind, which is what enchantments.js is already
+     written in, so nothing moves today. Through cardOrder.js anyway, so that a
+     working written in beside its cousins rather than at the foot of its tier
+     still lands on the right rung of the shelf. */
+  return sortCards(ENCHANTMENTS.filter((entry) => !entry.unique)).map((entry) => {
     const row = { enchantment: entry, held: taken.has(entry.id) };
 
     if (!state.tiers.includes(entry.tier)) {

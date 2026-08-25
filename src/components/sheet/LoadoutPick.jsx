@@ -5,6 +5,7 @@ import TagFilter from './TagFilter.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { compareTags, compareWords } from '../../lib/cardOrder.js';
 import { levelForXp } from '../../lib/characterModel.js';
 import {
   displacedBy,
@@ -14,7 +15,6 @@ import {
   rankPreview,
   toggleLoadoutPick,
 } from '../../lib/loadouts.js';
-import { MOVE_TIERS } from '../../lib/martial.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
 /**
@@ -494,12 +494,16 @@ function PoolWall({ options, noun, character, group = 'sub', action = null }) {
 
 /**
  * The options cut into sections, with anything the codex left unfiled gathered at
- * the end. Order inside a section is the order the pool arrived in: what this rank
- * can take first, then by name.
+ * the end. Order inside a section is the order the pool arrived in, which is now
+ * the law in cardOrder.js: what this rank can take first, then up the ladder and
+ * across the schools.
  *
- * Sections are named alphabetically except when they are tiers, which have an
- * order of their own — Novice, Adept, Master is a ladder, and sorting it by name
- * would put Adept at the top of it.
+ * **The headings stack in the same order the cards inside them do**, and that is
+ * `compareWords`'s whole job. Novice, Adept, Master is a ladder and sorting it by
+ * name would put Adept at the top of it; Primal, Arcane, Elemental, Ethereal is
+ * the order spells.js shelves the schools in and the alphabet knows nothing about
+ * it. A word on neither list falls through to alphabetical, which is what a
+ * heading with nothing behind it deserves.
  */
 function groupPool(options, by) {
   const groups = new Map();
@@ -514,16 +518,10 @@ function groupPool(options, by) {
     groups.get(key).push(option);
   }
 
-  const rank = (label) => {
-    const at = MOVE_TIERS.indexOf(label);
-    return at === -1 ? MOVE_TIERS.length : at;
-  };
-
   return [...groups]
     .sort(([a], [b]) => {
       if (a === 'Unfiled' || b === 'Unfiled') return a === 'Unfiled' ? 1 : -1;
-      if (by === 'tier') return rank(a) - rank(b);
-      return a.localeCompare(b);
+      return compareWords(a, b);
     })
     .map(([label, list]) => ({ label, options: list }));
 }
@@ -548,7 +546,8 @@ function poolTags(options) {
     }
   }
 
-  const all = [...tally.keys()].sort();
+  // Novice, Adept, Master and then the schools, never the alphabet. See cardOrder.js.
+  const all = [...tally.keys()].sort(compareTags);
   const narrowing = options.length > 1 ? all.filter((tag) => tally.get(tag) < options.length) : all;
 
   return (narrowing.length > 0 ? narrowing : all).map((tag) => ({

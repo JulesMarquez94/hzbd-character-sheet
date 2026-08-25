@@ -8,6 +8,7 @@ import { GroupHead } from './parts.jsx';
 import { ItemFoot, ItemIcon, ItemStats, ItemTags, ROW_ICON, SlotGlyph } from './itemParts.jsx';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { compareItems } from '../../lib/cardOrder.js';
 import {
   CATEGORY_ORDER,
   ITEMS,
@@ -463,11 +464,20 @@ function shelvePack(character, pack, filter) {
     else rows.set(key, { key, custom, item, entry, indices: [index], category: itemCategory(item) });
   });
 
+  /* The shelf is the category and the ladder on it is rarity, which is the item
+     codex's version of Novice, Adept, Master: `compareItems` reads Common,
+     Uncommon, Rare, Epic, Legendary and then falls to the name. So a shelf keeps
+     its colours together and a Legendary is never buried between two ropes
+     because of its initial.
+
+     Rarity within a shelf and never across one. The categories are what the
+     inventory is actually cut into, and a sort that put every Legendary at the
+     top would scatter the armor through the bags. */
   const shelves = [];
   for (const category of CATEGORY_ORDER) {
     const shelf = [...rows.values()]
       .filter((row) => row.category === category)
-      .sort((a, b) => a.item.name.localeCompare(b.item.name));
+      .sort((a, b) => compareItems(a.item, b.item));
     if (shelf.length === 0) continue;
 
     shelves.push({

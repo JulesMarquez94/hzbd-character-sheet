@@ -4,6 +4,7 @@ import Modal from '../Modal.jsx';
 import UsePrompt from './UsePrompt.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { sortCards } from '../../lib/cardOrder.js';
 import { spendUse } from '../../lib/combatBar.js';
 import { addEffect } from '../../lib/combatTurn.js';
 import { ENCHANT_KINDS, enchantKind } from '../../lib/enchantments.js';
@@ -314,8 +315,14 @@ function EnchantRow({ option, character, chosen, readOnly, onChoose, onOpen }) {
  * sword would be binding an Imbuement to a spell that does not exist yet.
  */
 function spellsAt(tier) {
-  return SPELLS.filter(
-    (spell) => !spell.placeholder && (spell.tags ?? []).some((tag) => tag.startsWith(tier))
+  /* One rung, so what the law in cardOrder.js does here is hold the schools
+     together: every Primal chip, then Arcane, then Elemental, then Ethereal,
+     rather than the codex's own school-by-school-and-rung interleave. Forty
+     Novice chips in a row is exactly the list that needed it. */
+  return sortCards(
+    SPELLS.filter(
+      (spell) => !spell.placeholder && (spell.tags ?? []).some((tag) => tag.startsWith(tier))
+    )
   );
 }
 

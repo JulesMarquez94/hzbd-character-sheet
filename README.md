@@ -205,6 +205,18 @@ how long. Nothing else takes bold. A defined term is not bolded but looked up, b
 keyword in `src/lib/keywords.js` is already coloured and carries its own explanation wherever it
 is printed. The full rule is at the top of that file.
 
+### The printed order
+
+Every list of cards on the sheet is in one order, and it is the order the card's own banner reads:
+the rung, then the school, then the family. So a wall of spells goes Novice, then Adept, then
+Master, and inside each of those the Primal spells stay together, and inside Primal the Flora ones
+do. Inside a family the codex order stands, because that order is the designer's.
+
+`src/lib/cardOrder.js` is the whole of it and the only place a school or a family is ranked.
+Nothing else on the sheet sorts cards. Items read the same way with rarity in place of the rung:
+Common, Uncommon, Rare, Epic, Legendary, then what the thing is, then the name. Rarity sorts inside
+a category shelf and never across one.
+
 ### Rules maths
 
 `src/lib/characterModel.js` holds the derived-stat formulas in one place:
@@ -230,11 +242,13 @@ npm run preview  # serve the production build
 npm run lint     # eslint
 ```
 
-Four checkers prove things eslint cannot:
+Six checkers prove things eslint cannot:
 
 ```bash
 npm run lint:text    # no em dashes and no Oxford commas in anything a player reads
 npm run lint:math    # every stat tooltip adds up to the number above it
 npm run lint:halves  # every card's optional half is priced off its own prose
 npm run lint:riders  # every tracker rider reaches the sheet and comes back off
+npm run lint:weapons # every weapon's cards match the cost table it was built from
+npm run lint:order   # every school and family has a place in the printed order
 ```

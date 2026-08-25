@@ -7,6 +7,7 @@ import { ItemCarry, ItemIcon, ItemStats, ItemTags } from './itemParts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { compareTags, sortCards } from '../../lib/cardOrder.js';
 import { ENCHANTMENTS, ENCHANT_KINDS, enchantKind, getEnchantment } from '../../lib/enchantments.js';
 import { FORGED_NAME_MAX, forgeRecord, readCode } from '../../lib/forged.js';
 import {
@@ -443,8 +444,10 @@ function SpellPick({ enchantId, ench, onPick }) {
      UNWRITTEN LIGHT holds a lineage's slot open, it is not a spell to bind. */
   const pool = useMemo(
     () =>
-      SPELLS.filter(
-        (spell) => !spell.placeholder && (spell.tags ?? []).some((tag) => tag.startsWith(tier))
+      sortCards(
+        SPELLS.filter(
+          (spell) => !spell.placeholder && (spell.tags ?? []).some((tag) => tag.startsWith(tier))
+        )
       ),
     [tier]
   );
@@ -487,7 +490,8 @@ function baseTags() {
       }
     }
   }
-  return [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
+  // Rarity up its own ladder, the way the pack's chip row reads. See cardOrder.js.
+  return [...seen.values()].sort((a, b) => compareTags(a.label, b.label));
 }
 
 /**

@@ -143,6 +143,7 @@
 
 import { HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
+import { sortCards } from './cardOrder.js';
 import { castModifier } from './cardText.js';
 import { SPELLS } from './spells.js';
 
@@ -561,9 +562,17 @@ const QUICK_DRAW = {
  * are deliberately identical: a player who has answered one has answered both.
  */
 
-/** Every spell of one rank, across every school, in the codex's own order. */
+/**
+ * Every spell of one rank, across every school, school by school.
+ *
+ * "From any school" is forty options at Novice, and the codex's own order walks
+ * a school at a time but climbs the rungs inside each one, so filtering to a
+ * rank left the schools interleaved. `sortCards` holds them together: all the
+ * Primal, then Arcane, then Elemental, then Ethereal, and the families in order
+ * under each. See src/lib/cardOrder.js.
+ */
 function spellsOfRank(rank) {
-  return SPELLS.filter((spell) => (spell.tags ?? []).includes(`${rank} Spell`));
+  return sortCards(SPELLS.filter((spell) => (spell.tags ?? []).includes(`${rank} Spell`)));
 }
 
 function innateSpell({ rank, minLevel }) {

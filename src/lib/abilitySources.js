@@ -31,6 +31,7 @@ import {
 } from './backgrounds.js';
 import { alchemistState } from './alchemy.js';
 import { cardProse } from './cardText.js';
+import { compareCards, compareTags, sortCardRows } from './cardOrder.js';
 import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
 import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from './items.js';
@@ -68,7 +69,18 @@ export function answerOn(card, choices) {
    lineageCards in lineages.js and skillCards in backgrounds.js. */
 
 function section(id, label, cards, note = null) {
-  return { id, label, note, cards };
+  /* **Every section on this tab is ordered here and nowhere else.** One funnel,
+     because a section is the only shape a source hands cards over in, so the law
+     in cardOrder.js reaches the Abilities tab, the Quick Bar and the Always On
+     block through this one line: both of those blocks read a source through
+     `rowsOf` in combatBar.js, which flattens exactly these sections.
+
+     Most sections do not move, and that is the point. A rank's cards all carry
+     one rung and the words under it are unshelved, so the codex order stands,
+     which is the designer's. What moves is every list that mixes rungs or
+     schools: the prepared hand, the Ingredient shelves, and the spells a piece
+     of gear carries. */
+  return { id, label, note, cards: sortCardRows(cards) };
 }
 
 /** "spell" / "spells", the only plural rule this file needs. */
@@ -428,7 +440,12 @@ function gearSource(character) {
        spreads that entry, so `spell` here is the id. */
     const carried = itemEnchantments(item)
       .map(({ enchantment, spell }) => ({ enchantment, card: getCard(spell) }))
-      .filter((row) => row.card);
+      .filter((row) => row.card)
+      /* Ordered here rather than left to `section`, because the note under the
+         heading names the workings in the order it was handed them: a note
+         reading Adept then Novice over cards reading Novice then Adept is two
+         lists disagreeing about one slot. */
+      .sort((a, b) => compareCards(a.card, b.card));
     if (carried.length === 0) return null;
 
     // Dealt without the item's modifiers on purpose: an infusion changes what
@@ -585,7 +602,10 @@ export function heldCardTags(sources) {
   for (const { card } of allSourceCards(sources)) {
     for (const tag of card.tags ?? []) seen.add(tag);
   }
-  return [...seen].sort().map((tag) => ({ id: tag, label: tag, kind: 'card' }));
+  /* The line above said the row reads in the banner's order and a bare `.sort()`
+     did not do it: alphabetical put Adept Spell first and scattered the schools
+     through the families. `compareTags` is that promise kept. */
+  return [...seen].sort(compareTags).map((tag) => ({ id: tag, label: tag, kind: 'card' }));
 }
 
 /**

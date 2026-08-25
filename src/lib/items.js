@@ -25,6 +25,7 @@ import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
 import { allGrants, damageEnchants, grantSources, laidEntries } from './enchanting.js';
 import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
 import { BAG_ITEMS } from './bags.js';
+import { compareTags } from './cardOrder.js';
 import { TRINKET_ITEMS } from './trinkets.js';
 import { UTILITY_ITEMS } from './utility.js';
 import { withArt } from './itemArt.js';
@@ -1586,5 +1587,8 @@ export function packTags(character, pack) {
       if (!seen.has(tag)) seen.set(tag, { id: tag, label: tag, kind: tag in RARITY_COLORS ? 'rarity' : 'kind' });
     }
   }
-  return [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
+  /* Rarity in its own order rather than the alphabet's, which had Common sitting
+     between Epic and Legendary in a row whose chips are coloured by rarity. See
+     src/lib/cardOrder.js. */
+  return [...seen.values()].sort((a, b) => compareTags(a.label, b.label));
 }

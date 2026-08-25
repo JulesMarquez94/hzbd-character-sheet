@@ -78,6 +78,7 @@
  */
 
 import { withArt } from './cardArt.js';
+import { sortCards } from './cardOrder.js';
 
 /** What each tier is called, in the order a rank opens them. */
 export const MOVE_TIERS = ['Novice', 'Adept', 'Master'];
@@ -329,8 +330,16 @@ export function moveTier(card) {
   return null;
 }
 
-/** Every move at the given tiers, in codex order. */
+/**
+ * Every move at the given tiers, up the ladder.
+ *
+ * The file is already written Novice, Adept, Master, so this changes nothing
+ * today. It goes through cardOrder.js anyway because a list that *happens* to be
+ * right is not the same as one that is ordered: the day a fifteenth move is
+ * written in beside its cousins rather than at the bottom of its tier, this
+ * still comes out climbing.
+ */
 export function movesAt(tiers = MOVE_TIERS) {
   const wanted = new Set(tiers);
-  return MARTIAL_MOVES.filter((card) => wanted.has(moveTier(card)));
+  return sortCards(MARTIAL_MOVES.filter((card) => wanted.has(moveTier(card))));
 }
