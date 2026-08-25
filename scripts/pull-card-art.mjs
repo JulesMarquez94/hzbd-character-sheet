@@ -150,6 +150,20 @@ const ALIASES = {
      asks of them. */
   'Martial Training': 'Matrtial Training.jpg',
   'Practiced Moves': 'Paracticed Move.jpg',
+
+  /* Three from data/Ethereal/, 2026-08-25, and the drop's Image column is empty
+     so there is nowhere else for them to be named. `Celestail Edict.jpg` is two
+     letters out of the sheet's CELESTIAL EDICT; the other two are a word short
+     of the name the sheet prints, LIGHTSTRIDER GATEWAY and THEON PERFECT
+     REPLICANTS. The school's other ten match, punctuation and case aside, which
+     is all `flatten` asks of them.
+
+     None of the three can quietly land on something else the way BERSERKER'S
+     RAGE could: Ethereal is not a talent set, so the plate branch has no set to
+     claim a leftover file for. Unaliased they would simply be reported. */
+  'Celestial Edict': 'Celestail Edict.jpg',
+  'Lightstrider Gateway': 'Lightstrider Gate.jpg',
+  'Theon Perfect Replicants': 'Theon Perfect replicant.jpg',
 };
 
 /**
@@ -335,6 +349,30 @@ async function lineageNames() {
 }
 
 /**
+ * The spells alone, for the same reason the lineage folder and the background
+ * family have their own maps: a school folder holds spells and nothing else, so
+ * a name in one is looked up against the spell codex rather than against all
+ * 355 cards.
+ *
+ * `cardIds` is one flat printed-name map and the last registry spread into it
+ * wins, which is the failure the DRAGON BREATH note above describes. BARRIER is
+ * the case that made it real: the Ethereal spell and a Novice enchantment both
+ * print that name, ENCHANTMENTS is spread after SPELLS, and `Barrier.jpg` from
+ * `data/Ethereal/` duly landed on the enchantment — a picture of a warded dwarf
+ * on a card about maximum Health, and the spell left with no art at all.
+ *
+ * Consulted after the sheet's own Image column and before the codex-wide map, so
+ * nothing that already resolved resolves differently: a school drop that names
+ * its files in the sheet is still placed by the sheet.
+ */
+async function spellNames() {
+  const { SPELLS } = await import(
+    path.join(ROOT, 'src/lib/spells.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return new Map(SPELLS.map((spell) => [flatten(spell.name), spell.id]));
+}
+
+/**
  * The background family's two maps, for the same reason the lineage folder has
  * its own: a name is looked up against backgrounds and skills alone, and never
  * against the whole codex. `Cunning` is a skill and there is a Trickster ability
@@ -442,8 +480,30 @@ const ONE_OFF = 'of';
  * in a file called LIGHTNING STRIKE — is placed by the sheet rather than by an
  * alias here, and a file no row names is reported, which is how the stray copy of
  * HURL in `Steam/` announces itself on every run until somebody deletes it.
+ *
+ * A drop with no Image column filled in falls back on the filename, and then a
+ * render whose name is not the card's needs an ALIASES entry after all. That is
+ * how `data/Ethereal/` arrived on 2026-08-25 and why three of its thirteen are
+ * in that table. See PLATE_SCHOOLS below for the other thing that drop settled.
  */
-const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature']);
+const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethereal']);
+
+/**
+ * The school folders whose files are art plates and must not be cut.
+ *
+ * A school folder's files are card renders by default, because that is how the
+ * first one arrived. `data/Ethereal/` landed 2026-08-25 as thirteen 2400x1792
+ * plates instead — no white border, no banner, the painting and nothing else,
+ * which is what the lineage and background drops are — and all thirteen sit at
+ * the top of the folder rather than in a family subfolder.
+ *
+ * Cutting one of these would take the top 45% of a painting that is already
+ * only the painting. So the crop is what the exception turns off, and nothing
+ * else about being a school changes: the folder is still claimed by name, still
+ * walked into any family folder a later drop brings, and still resolved against
+ * the codex the same way.
+ */
+const PLATE_SCHOOLS = new Set(['ethereal']);
 
 /**
  * The ancestries, which arrive as one folder with a folder inside it.
@@ -494,6 +554,9 @@ function pictures(setIds) {
 
   const mine = (name) => setIds.has(flatten(name)) || flatten(name) === ONE_OFF;
   const school = (name) => SCHOOL_FOLDERS.has(flatten(name));
+  /* A school whose files are whole cards, which is every school but the ones in
+     PLATE_SCHOOLS. This is the flag the crop reads, not the claim. */
+  const render = (name) => school(name) && !PLATE_SCHOOLS.has(flatten(name));
   const lineage = (name) => flatten(name) === LINEAGE_FOLDER;
 
   const walk = (dir, set, card, nest) =>
@@ -529,11 +592,18 @@ function pictures(setIds) {
       walk(
         dir.name,
         dir.name,
-        school(dir.name),
+        render(dir.name),
         school(dir.name) || lineage(dir.name) || isBackgroundFamily(dir.name)
       )
     );
 }
+
+/**
+ * A file anywhere in a school folder, at either depth. `set` is the folder it
+ * came from and carries the family under it when there is one, so the school is
+ * the first word of it: `Elemental/Fire` flattens to "elemental fire".
+ */
+const inSchool = (picture) => SCHOOL_FOLDERS.has(flatten(picture.set).split(' ')[0]);
 
 /** A file at the top of `data/Lineage/`: one of the thirteen ancestry plates. */
 const isLineagePlate = (picture) => flatten(picture.set) === LINEAGE_FOLDER;
@@ -672,6 +742,7 @@ const sets = await talentIds();
 const items = await itemNames();
 const lineages = await lineageNames();
 const backgrounds = await backgroundNames();
+const spells = await spellNames();
 mkdirSync(OUT, { recursive: true });
 mkdirSync(TALENT_OUT, { recursive: true });
 mkdirSync(LINEAGE_OUT, { recursive: true });
@@ -736,6 +807,13 @@ const folder = pictures(setIdByFolder).flatMap((picture) => {
     return [plateId ? { ...picture, plateId, into: BACKGROUND_OUT, kind: 'background' } : picture];
   }
 
+  /* A school folder holds spells, so it answers to the spell codex. See
+     spellNames: two cards print BARRIER and only one of them is a spell. */
+  if (inSchool(picture)) {
+    const spellId = spells.get(flat);
+    return [spellId ? { ...picture, spellId } : picture];
+  }
+
   if (!isLineageCard(picture)) return [picture];
   const found =
     LINEAGE_MODULAR[flat] ??
@@ -753,6 +831,7 @@ function cardIdFor(picture) {
     picture.lineageId ??
     picture.skillId ??
     idBySheetFile.get(flat) ??
+    picture.spellId ??
     idByFlatName.get(flat) ??
     idByAliasFile.get(flat) ??
     null
@@ -945,12 +1024,25 @@ for (const picture of folder) {
 
 /* ----------------------------------------------------------------- the links */
 
+/**
+ * A row that says on its own face that it is a spell, off the Tags column the
+ * drop already carries: "Ethereal, Novice Spell, Light".
+ *
+ * The other end of the BARRIER collision spellNames documents. The Ethereal
+ * drop's Barrier row is a spell and `ids` answers with the enchantment, so the
+ * row read as a card with no art and reported a missing link for a picture that
+ * had just been placed. The sheet's own tags settle it rather than the filename
+ * or the fold order.
+ */
+const isSpellRow = (row) => /\bSpells?\b/i.test(row.Tags ?? '');
+
 for (const row of sheets()) {
   const name = row.Name;
   const link = row.Image;
   if (!name) continue;
 
-  const id = ids.get(name.toLowerCase());
+  const id =
+    (isSpellRow(row) ? spells.get(flatten(name)) : null) ?? ids.get(name.toLowerCase());
 
   /* A Talent Set sheet's Overview row names the *set*, not a card, and its picture
      is the square plate behind talent.art. Placed here, then done with. */

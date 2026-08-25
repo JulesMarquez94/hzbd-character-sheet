@@ -84,6 +84,8 @@ doing on its own.
 | Talent Set · Arcanist · Ability | **2026-08-24, 4 cards** | `src/lib/talents.js` (`TALENTS`), `src/lib/loadouts.js`, `src/lib/spellbook.js` |
 | Talent Set · Arcanist · Overview | **2026-08-24, written here off the designer’s superseded Overview tab** | `src/lib/talents.js` (`tagline`, `blurb`) |
 | Arcanist art, from the `Arcanist/` folder | **2026-08-24, 4 cards + 1 plate** | `public/cards/`, `public/talents/` |
+| Spells · Ethereal · Light | **2026-08-25, 13 spells** | `src/lib/spells.js` (`SPELLS`) |
+| Ethereal art, from the `Ethereal/` folder | **2026-08-25, 13 plates** | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -97,6 +99,13 @@ places the files by. `draconic-bond-overview.csv`, `trickster-overview.csv`,
 they are tracked: a clone would otherwise lose the only copy. The two
 `colossus-*.csv` are the workbook's own tabs with the `Image` column filled in,
 tracked for the same reason the Berserker's pair are and read the same way.
+
+`ethereal-spells.csv` is the third generated one, 13 rows straight out of
+`spells.js` in the drop's own column order, with an `id` column the drop has not
+got and an `Image` column naming the picture each row came from. The drop left
+Image empty, so the art importer places the school by filename and three of the
+thirteen need an alias; putting those names in the drop's own Image column
+retires all three. See [the Ethereal school](#the-ethereal-school-2026-08-25).
 
 The Berserker's pair are the whole workbook rather than a missing tab: it was
 transcribed here out of a PDF, so `berserker-ability.csv` and
@@ -5446,3 +5455,237 @@ Alchemist offered at Rank 1 on level 1 and ranking to 2 at level 4 and 3 at leve
 long rest and nothing at all on a short one, a two-potion night pricing 50
 Supplies out of a 200 crate and landing both flasks in the pack beside what was
 already there, and all four potion riders reaching the sheet and coming back off.
+
+## The Ethereal school, 2026-08-25
+
+Asked for in as many words: "add the Ethereal Light spell, I have added the image
+in the etheral folder. Correct the text and make sure it is inline with the
+system wording."
+
+Two sources, both already on disk. `data/Spells - Ethereal - Light.csv` holds
+thirteen rows in the drop's usual eight columns, and `data/Ethereal/` holds
+thirteen 2400x1792 pictures, one per row. Ethereal is a main school level with
+Primal and Elemental, and Light is its first family: same three-tag banner, same
+tiers, same shelves.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | BARRIER, BOLSTER, LIGHT, LIGHTFORGED WEAPON |
+| Adept | ORBITING ARSENAL, WINGS OF RADIANCE, SIGIL OF TRUTH, HARD LIGHT |
+| Master | CELESTIAL EDICT, LIGHTSTRIDER GATEWAY, GUARDIAN ANGEL, BEND LIGHT |
+| Legendary | THEON PERFECT REPLICANTS |
+
+### What this retires
+
+**UNWRITTEN LIGHT is deleted.** Flag 4 in `lineages.js` was that a Celestial's
+INNATE LIGHT promised a Novice Light Spell the codex had not got, so the ancestry
+could never be settled and a stand-in card held the slot open. Four real Novice
+Light spells arrive here, and the Innate cards read their options off the Novice
+shelf of the school they name, so INNATE LIGHT now offers Barrier, Bolster, Light
+and Lightforged Weapon with nothing else changed. The note over the stand-in
+always said to delete it on this day, and it was.
+
+UNWRITTEN SHADOW stays. Shadow is still neither a school nor a family anywhere in
+`spells.js`, so an Infernal still holds a card standing in for one, and flag 4 is
+rewritten to be about that one card rather than two.
+
+### Legendary is a fourth rung, and it needs no gate
+
+THEON PERFECT REPLICANTS is tagged `Legendary Spell · Ethereal · Light` and is the
+first card in the codex to carry a tier that is not Novice, Adept or Master.
+Nothing had to learn the word. `tierOf` in `loadouts.js` reads exactly those three
+and returns nothing for anything else, so the card falls off the ladder and
+`loadoutOptions` refuses it by name — "Legendary is not a rung any set reaches" —
+and `spellsAt` in `EnchantWindow.jsx` matches the same three words, so no
+Imbuement can bind it either. This is the shape Unique already has, arrived at
+from the other direction: Unique is deliberately off the ladder, Legendary is
+above the top of it.
+
+Checked rather than assumed: at Rank 3 the Arcanist's spellbook offers twelve of
+the thirteen and refuses that one with that sentence.
+
+### The Arcanist's spellbook grew by twelve
+
+The Arcanist is the one spec that names no school, so it draws from the whole
+codex by tier, and a new school widens it. Its Rank 3 pool is now 24 Primal, 29
+Elemental, 12 Ethereal and 1 Arcane. That is the same thing the Elemental pull did
+on 2026-08-20 and not a new exposure. No other set is touched: every set that
+names a school refuses all thirteen with "Ethereal school, not Primal" or its
+equivalent.
+
+### BARRIER had to change its id
+
+**The spell is `barrier-spell`, not `barrier`.** A Novice enchantment already holds
+that id and already prints that name (2d6 in Shield at combat start), and `SPELLS`
+is spread into `CARDS` *before* `ENCHANTMENTS`, so the spell on the plain id would
+not have collided so much as swallowed it: `getCard('barrier')` would have stopped
+answering with the enchantment and a tracker row written for it would have opened
+the spell instead. Same call RESILIENCE and CREATE WATER made, for the same
+reason: an id is what a saved character points at, so the older record keeps it.
+
+The printed names still collide and a table will see two cards called Barrier.
+Worth renaming one at the source.
+
+### The art importer learned two things
+
+1. **A school folder can hold art plates instead of card renders.** `data/Elemental/`
+   set the default: a family per subfolder and every file a whole 1055x1496 card,
+   so `cardPlate` cuts the painting out of it. The Ethereal drop is thirteen
+   2400x1792 plates at the top of the folder with no border and no banner, which
+   is what the lineage and background drops are. Cutting one would have taken the
+   top 45% of a painting that is already only the painting. `PLATE_SCHOOLS` is the
+   exception and turns off the crop and nothing else: the folder is still claimed
+   by name and still walked into any family folder a later drop brings.
+2. **A school folder's files resolve against the spell codex.** This is the
+   BARRIER collision at the other end, and it is the failure the DRAGON BREATH
+   note in that file already predicted: `cardIds` is one flat printed-name map and
+   the last registry spread into it wins, so `Barrier.jpg` landed on the
+   *enchantment* — a picture of a warded dwarf on a card about maximum Health, and
+   the spell left with no art at all. A school folder holds spells, so it now
+   answers to a spells-only map, consulted after the sheet's own Image column and
+   before the codex-wide one so nothing that already resolved resolves
+   differently. The link pass reads the row's own Tags column for the same reason,
+   which is what stopped it reporting a missing picture for a row whose picture
+   had just been placed.
+
+Three files needed an alias, because the drop's Image column is empty and there is
+nowhere else for them to be named: `Celestail Edict.jpg` is two letters out of
+CELESTIAL EDICT, and `Lightstrider Gate.jpg` and `Theon Perfect replicant.jpg` are
+each a word short of the name the sheet prints. The other ten match. None of the
+three could have landed on something else the way BERSERKER'S RAGE could, since
+Ethereal is not a talent set and there is no plate branch to claim a leftover
+file; unaliased they would simply have been reported.
+
+### The rolls
+
+**Three rolls were brought onto the two legal targets** — a Mind Attack against
+Defense, or a Mind Roll against Grit or Reflex, rolled by the caster, which is the
+rule the Elemental pull established. LIGHT's burst named no defense at all, SIGIL
+OF TRUTH named Grit in the possessive-less "against all entities Grit", and
+CELESTIAL EDICT named Reflex the same way. The two that named one keep it. LIGHT's
+went to Grit, because that is what BLIND already rolls against to blind somebody,
+so the codex had the answer and it did not have to be invented.
+
+**BEND LIGHT is the one target-rolled contest kept**, the exception MAGMA CHAINS'
+breakout already is. The roll is made by the entity the spell is *on* when it
+acts, which may be an ally on the far side of the map, so it is neither the
+caster's roll nor the caster's attribute: it carries `{instinct}` as a name and no
+`{roll}`, because the number belongs to whoever makes it and the card has no way
+to know who that is. CONTAINMENT SPHERE's breakout prints no attribute for the
+same reason.
+
+That card's roll also needed a reading. "it must make an Instinct roll agasitn the
+target Grit" is read as the target of the *action*, not of the spell: the entity
+is the spell's target, so against its own Grit is a contest with itself. Acting on
+somebody and rolling against their Grit to stay unseen is the sentence that
+reading gives back, and it needs no number the sheet does not carry.
+
+### The halves
+
+**BEND LIGHT's is a Multicast, not the Overcast the sheet labels it.** Its prose is
+word for word BOLSTER's and WINGS OF RADIANCE's, both of which the same sheet
+labels MULTICAST, and what it buys is another target, which is what Multicast
+means in this codex. The label is the only thing that changed.
+
+**SIGIL OF TRUTH's opens later.** The sheet's copy begins "When casting Sigil of
+Truth", which `overcast.js` reads as a rider on the cast and prices on top of it,
+and then spends on consuming a branding that cannot exist until an entity has
+lied. So it opens "While a branding lasts", which charges the same 2 Action Points
+and 2 Willpower as its own spend the way every other later half is. "If you do You
+can consume" is the same paste the opening is.
+
+All seven halves parse: three Multicasts on top and repeatable, four Overcasts as
+their own spend, and `npm run lint:halves` prices all 45 in the codex off their own
+prose.
+
+### Every other reading, in order
+
+Each of these is a cell that could not be printed as it stood.
+
+- **Six ranges had the metres and lost the feet**: "6 meter (feet)", "9 Meter
+  (feet)", "15 Meter (feeet)". The metre leads every cell in this codex and the
+  conversion is the codex's own (6/20, 9/30, 15/50), which is the call WALL OF
+  FLAMES documents.
+- **LIGHT is cast "within range" and names none.** Its own illumination is a
+  15-meter radius, so that is the range it is read at. This is the one reading in
+  the pull that adds a number the row does not carry anywhere, and the only one
+  worth a second opinion.
+- **LIGHTFORGED WEAPON teleports "to a point within range"** and that range is the
+  row's own 15 meters, written out.
+- "at the start of each of your turns" is **Turn Start**, the defined term.
+- **LIGHTFORGED WEAPON's attack is a Melee Attack on both halves.** The weapon
+  teleports beside its target and swings at what is adjacent to it, which is what
+  "within reach" means in `keywords.js`; the sheet's second half says only "attack"
+  and takes the first's word for which.
+- **ORBITING ARSENAL's weapons "float around"** and the card never says what they
+  orbit. Read as around you, which is what the title says.
+- **GUARDIAN ANGEL says what it looks like twice**: "take the appearance you whish,
+  taking the form of a medium-sized entity of your choice". The second is the
+  specific one, so it is the one that survives.
+- "gain the benefits of Bolster" is a `{{link}}` to the card, which is the Novice
+  spell three rows above it.
+- **THEON PERFECT REPLICANTS' second sentence is two sentences run together**:
+  "This Action will target all Entities you can see you can choose if you want it
+  to have it target only hostile or allied entities."
+- Spelling, throughout: "an halo", "the rob explode", "Lightfroged", "additoanl",
+  "rol lagaisnt", "elegible", "lauch", "en entity", "cna", "enity", "abiltiy",
+  "houe", "feeet", "unconcious", "3turns", "agaisnt", "adjacvent", "tht",
+  "minnutes", "whish", "ocmpletly", "invisble", "entty", "agasitn", "your
+  perform".
+
+### Two names left as the sheet has them
+
+**"Lightmade Weapon" is kept as its own term.** ORBITING ARSENAL conjures six of
+them and calls them that twice; the stray "the Lightforged" in the middle of its
+Overcast is a paste from the row above and is dropped. They are not LIGHTFORGED
+WEAPON's weapon — that one teleports and swings itself every turn, these are
+thrown one at a time — so collapsing the two names would have made a Novice card's
+routine run six times off an Adept one. Worth settling at the source, and this is
+the reading that changes nothing if it is wrong.
+
+**THEON PERFECT REPLICANTS reads like a possessive with no apostrophe.** Left as
+the sheet prints it, the same way SPROUT WINGS' Celestial wording is.
+
+### The banner order, and one stray row
+
+The sheet writes the three tags two ways: four rows read "Ethereal, Novice Spell,
+Light" and the other nine lead with the tier. The banner is tier, school, family
+everywhere in this codex and `schoolOf` reads position rather than words, so all
+thirteen are normalised to that and nothing else moves.
+
+The drop also carries a fourteenth row at the bottom, VAMPIRIC TOUCH, tagged
+`Novice Spell, Primal, Blood` with a postimg link. That is the Primal spell pulled
+on 2026-08-19 and already in the codex with its art; it is ignored here. It is the
+only reason the tab counts as one that carries links at all, which is what made the
+link pass talkative until it learned to read the Tags column.
+
+### Nothing here is wired
+
+No effect in this drop moves a number on the sheet. Four of the thirteen are ones
+a tracker row would want to carry — BOLSTER's advantage, WINGS OF RADIANCE's
+flight, BEND LIGHT's two advantage and GUARDIAN ANGEL's damage sink — and none has
+a rider in `riders.js`. They print, they can be dealt, and the table does the
+arithmetic, which is where every effect in this codex starts.
+
+### Four things for Jules
+
+1. **LIGHT's range.** The row says "within range" and names none. Read as the
+   spell's own 15 meters. Confirm or give it a number.
+2. **Lightmade against Lightforged.** One term or two? Kept as two, above.
+3. **THEON PERFECT REPLICANTS.** Is "Theon" a possessive missing its apostrophe,
+   and is Legendary a rung a talent set is meant to reach one day? Nothing reaches
+   it today and nothing needed to change for that to be true.
+4. **Two cards called Barrier.** The enchantment and the spell. The ids are
+   separate and safe; the printed names are not, and only the sheet can settle it.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`npm run build` are all clean, and `npm run art:cards` reports only the four
+problems it reported before this drop. The codex was walked directly as well: 367
+cards with no duplicate id, all thirteen bodies and seven second halves resolved
+with no unspent token, all thirteen carrying art and a thumbnail, UNWRITTEN LIGHT
+gone and UNWRITTEN SHADOW still there, INNATE LIGHT offering the four real Novice
+spells, `{{Bolster}}` resolving, THEON PERFECT REPLICANTS refused by the tier gate
+with the sentence quoted above, and `templates/ethereal-spells.csv` read back
+column by column against `spells.js` with all thirteen rows matching.

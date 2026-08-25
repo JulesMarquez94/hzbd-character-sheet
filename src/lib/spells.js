@@ -22,9 +22,9 @@ import { withArt } from './cardArt.js';
  * school it belongs to, and the family inside that school. Those three are what
  * a talent set draws on, so they are the tags and not prose.
  *
- *   tier    Novice Spell · Adept Spell · Master Spell · Unique Spell
- *   school  Primal · Nature · Arcane · Elemental
- *   family  Flora · Wild · Life · Blood · Energy · Water
+ *   tier    Novice Spell · Adept Spell · Master Spell · Legendary Spell · Unique Spell
+ *   school  Primal · Nature · Arcane · Elemental · Ethereal
+ *   family  Flora · Wild · Life · Blood · Energy · Water · Light
  *
  * ------------------------------------------------------------------ modular
  * Nothing here names an attribute it does not have to. Every spell is written
@@ -45,10 +45,23 @@ import { withArt } from './cardArt.js';
  *
  * Two gates already keep it out of every pool without a line being added to
  * either. `loadoutOptions` refuses a card whose school is not the set's, and no
- * set's school is Elemental or Nightmare — a real shelf since 2026-08-20, but
- * still nobody's to prepare from; `spellsAt` in EnchantWindow.jsx matches the
- * tier word, and Novice, Adept and Master do not match Unique. So the only way
- * to hold one is to hold the item, whatever school it names.
+ * set's school is Elemental, Ethereal or Nightmare — real shelves since
+ * 2026-08-20 and 2026-08-25, but still nobody's to prepare from; `spellsAt` in
+ * EnchantWindow.jsx matches the tier word, and Novice, Adept and Master do not
+ * match Unique. So the only way to hold one is to hold the item, whatever
+ * school it names.
+ *
+ * ------------------------------------------------------------ the legendary
+ * **A Legendary Spell is a rung nothing reaches yet.** THEON PERFECT REPLICANTS
+ * arrived with the Ethereal drop on 2026-08-25 as the first of them, and no set
+ * on the wall opens a fourth tier. It needs no gate of its own for the same
+ * reason Unique needs none: `tierOf` in loadouts.js reads Novice, Adept and
+ * Master and nothing else, so a Legendary card falls off the ladder and is
+ * refused by name ("Legendary is not a rung any set reaches"), and `spellsAt`
+ * matches the same three words, so no Imbuement can bind one either.
+ *
+ * The day a set reaches it, the ladder in that set's `tiers` is the only thing
+ * that has to learn the word.
  *
  * The one attribute named outright is {physique}, on the Blood Tithe halves:
  * what a tithe costs is paid by the body, not by whatever the caster happens to
@@ -1141,6 +1154,368 @@ export const SPELLS = withArt([
     sub_body: null,
   },
 
+  /* ========================================================= Ethereal ====
+   *
+   * The whole school, pulled 2026-08-25 from `data/Spells - Ethereal -
+   * Light.csv` with its thirteen pictures in `data/Ethereal/`. Ethereal is a
+   * main school level with Primal and Elemental, and Light is its first family:
+   * same three-tag banner, same tiers, same shelves.
+   *
+   * **This retires UNWRITTEN LIGHT.** Flag 4 in lineages.js was that a
+   * Celestial's INNATE LIGHT promised a Novice Light Spell the codex had not
+   * got, so the ancestry could never be settled and a stand-in held the slot.
+   * Four real ones arrive here, the shelf is read off the codex, and the
+   * stand-in is deleted at the foot of this file. UNWRITTEN SHADOW stays: the
+   * Shadow school is still unwritten.
+   *
+   * ------------------------------------------------------------- the banners
+   * The sheet writes the three tags in two orders — four rows read "Ethereal,
+   * Novice Spell, Light" and the other nine lead with the tier. The banner is
+   * tier, school, family everywhere in this codex and `schoolOf` reads position,
+   * so all thirteen are normalised to that and nothing else moves.
+   *
+   * LEGENDARY SPELL is a fourth rung, and THEON PERFECT REPLICANTS is the first
+   * card in the codex to carry it. See "the legendary" in the header: it needs no
+   * gate, because the two that read the ladder read three words and this is not
+   * one of them.
+   *
+   * ------------------------------------------------------------- the id that moved
+   * **BARRIER is `barrier-spell`.** A Novice *enchantment* already holds
+   * `barrier` and already prints that name (2d6 in Shield at combat start), and
+   * SPELLS folds into `CARDS` before ENCHANTMENTS, so the spell on the plain id
+   * would not have collided so much as swallowed it: `getCard('barrier')` would
+   * have stopped answering with the enchantment and a tracker row written for it
+   * would have opened the spell. Same call RESILIENCE and CREATE WATER made, for
+   * the same reason: an id is what a saved character points at, so the older
+   * record keeps it. The printed names still collide, and a table will see two
+   * cards called Barrier. Worth renaming one at the source.
+   *
+   * ------------------------------------------------------------- the rolls
+   * **Three rolls were brought onto the two legal targets** — a {stat} Attack
+   * against Defense, or a {stat} Roll against Grit or Reflex, rolled by the
+   * caster. LIGHT's burst named no defense at all, SIGIL OF TRUTH named Grit in
+   * the possessive-less "against all entities Grit", and CELESTIAL EDICT named
+   * Reflex the same way. The two that named one keep it; LIGHT's went to Grit,
+   * which is what BLIND already rolls against to blind somebody.
+   *
+   * BEND LIGHT's is the one target-rolled contest kept, the exception MAGMA
+   * CHAINS' breakout already is: the roll is made by the *entity the spell is on*
+   * when it acts, which may be an ally on the far side of the map, so it is
+   * neither the caster's roll nor the caster's attribute. It carries `{instinct}`
+   * as a name and no `{roll}`, because the number belongs to whoever makes it and
+   * this card has no way to know who that is. CONTAINMENT SPHERE's breakout
+   * prints no attribute for the same reason.
+   *
+   * "it must make an Instinct roll agasitn the target Grit" is read as the target
+   * of the *action*, not of the spell: the entity is the spell's target, so
+   * against its own Grit is a contest with itself. Acting on somebody and rolling
+   * against their Grit to stay unseen is the sentence that reading gives back.
+   *
+   * ------------------------------------------------------------- the halves
+   * **BEND LIGHT's half is a Multicast, not the Overcast the sheet labels it.**
+   * Its prose is word for word BOLSTER's and WINGS OF RADIANCE's, both of which
+   * the same sheet labels MULTICAST, and what it buys is another target. That is
+   * what Multicast means in this codex (see the header) and the label is the only
+   * thing that changed.
+   *
+   * **SIGIL OF TRUTH's opens later.** The sheet's copy begins "When casting
+   * Sigil of Truth", which the parse in overcast.js reads as a rider on the cast
+   * and prices on top of it, and then spends on consuming a branding that cannot
+   * exist until an entity has lied. So it opens "While a branding lasts", which
+   * is the same 2 Action Points and 2 Willpower charged as its own spend the way
+   * every other later half is. "If you do You can consume" is the same paste.
+   *
+   * ------------------------------------------------------------- the readings
+   * Every one of these is a cell that could not be printed as it stood.
+   *
+   * - **Six ranges had the metres and lost the feet**: "6 meter (feet)", "9
+   *   Meter (feet)", "15 Meter (feeet)". The metre leads every cell in this codex
+   *   and the conversion is the codex's own (6/20, 9/30, 15/50), which is the
+   *   call WALL OF FLAMES documents.
+   * - **LIGHT is cast "within range" and names none.** Its own illumination is a
+   *   15-meter radius, so that is the range it is read at. The one reading here
+   *   that adds a number the sheet does not carry anywhere on the row.
+   * - **LIGHTFORGED WEAPON teleports "to a point within range"** and that range
+   *   is the row's own 15 meters, written out.
+   * - "at the start of each of your turns" is **Turn Start**, the defined term.
+   * - **ORBITING ARSENAL's weapons "float around"** and the card never says what
+   *   they orbit. Read as around you, which is what the title says.
+   * - **GUARDIAN ANGEL says what it looks like twice**: "take the appearance you
+   *   whish, taking the form of a medium-sized entity of your choice". The second
+   *   is the specific one, so it is the one that survives.
+   * - "gain the benefits of Bolster" is a `{{link}}` to the card, which is the
+   *   Novice spell three rows above it.
+   * - **THEON PERFECT REPLICANTS' second sentence is two sentences run together**:
+   *   "This Action will target all Entities you can see you can choose if you
+   *   want it to have it target only hostile or allied entities."
+   * - Spelling, throughout and without further comment: "an halo", "the rob
+   *   explode", "Lightfroged", "additoanl", "rol lagaisnt", "elegible", "lauch",
+   *   "en entity", "cna", "enity", "abiltiy", "houe", "feeet", "unconcious",
+   *   "3turns", "agaisnt", "adjacvent", "tht", "minnutes", "whish", "ocmpletly",
+   *   "invisble", "entty", "agasitn", "your perform".
+   *
+   * ------------------------------------------------------------- two names
+   * **"Lightmade Weapon" is kept as its own term.** ORBITING ARSENAL conjures
+   * six of them and calls them that twice; the stray "the Lightforged" in the
+   * middle of its Overcast is a paste from the row above and is dropped. They are
+   * not LIGHTFORGED WEAPON's weapon — that one teleports and swings itself every
+   * turn, these are thrown one at a time — so collapsing the two names would have
+   * made a Novice card's routine run six times off an Adept one. Worth settling
+   * at the source, and this is the reading that changes nothing if it is wrong.
+   *
+   * **THEON PERFECT REPLICANTS reads like a possessive with no apostrophe.** Left
+   * as the sheet prints it, the same way SPROUT WINGS' Celestial wording is.
+   *
+   * ------------------------------------------------------------- not wired
+   * Nothing here moves a number on the sheet. Four of the thirteen are effects a
+   * tracker row would want to carry — BOLSTER's advantage, WINGS OF RADIANCE's
+   * flight, BEND LIGHT's two advantage and GUARDIAN ANGEL's damage sink — and
+   * none of them has a rider in riders.js. They print, they can be dealt, and the
+   * table does the arithmetic, which is where every effect starts.
+   */
+
+  /* ------------------------------------------------------- Ethereal · Light ---- */
+  {
+    /* `barrier-spell`, not `barrier`. See "the id that moved" above. */
+    id: 'barrier-spell',
+    name: 'Barrier',
+    summary: 'A barrier of light on somebody you touch, three dice deep in Shield.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Light'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You create a barrier made of light on an entity you can touch.\n\n' +
+      'The target gains [[3d6 + 3*stat]] in Shield.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'bolster',
+    name: 'Bolster',
+    summary: 'A halo for an hour. Everything the target does is rolled with advantage.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Light'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You form a halo on an entity you can see within 6 meters (20 feet) that lasts for 1 hour.\n\n' +
+      'The halo grants advantage to all actions for its duration.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting Bolster, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
+      'For each time you do, target an additional eligible entity with Bolster.',
+  },
+  {
+    id: 'light',
+    name: 'Light',
+    summary: 'An orb of golden light that shows you fifty feet of road. Overcast bursts it to blind.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Light'],
+    ap: 2,
+    wp: null,
+    stat: 'mind',
+    /* "within range" is read as the row's own 15 meters, and the burst rolls
+       against Grit the way BLIND does. Both in "the readings" above. */
+    body:
+      'You conjure an orb of golden light at a point you can see within 15 meters (50 feet), illuminating a 15-meter (50-foot) radius.',
+    sub_name: 'Overcast',
+    sub_body:
+      'While Light is active, you may spend 2 Action Points and 2 Willpower.\n\n' +
+      'If you do, the orb explodes. Make a {stat} Roll {roll} against the Grit of all entities within 6 meters (20 feet). On a success, they are blinded until their next Turn End.',
+  },
+  {
+    id: 'lightforged-weapon',
+    name: 'Lightforged Weapon',
+    summary: 'A weapon of light that teleports and strikes for Sacred damage every turn.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Light'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Sacred'],
+    /* A Melee Attack, on both halves. The weapon teleports beside its target and
+       swings at what is adjacent to it, which is what "within reach" means in
+       keywords.js; the sheet's second half says only "attack" and takes the
+       first's word for which. */
+    body:
+      'You conjure an ethereal weapon of pure light in a shape of your choice at a point you can see within 15 meters (50 feet) that lasts for 3 turns. It cannot be damaged or destroyed.\n\n' +
+      'When summoned and at your Turn Start, it teleports to a point within 15 meters (50 feet) and you make a {stat} Melee Attack {roll} against an adjacent entity. On a hit, it deals [[2d6 + 2*stat]] in {damage} damage.',
+    sub_name: 'Overcast',
+    sub_body:
+      'While Lightforged Weapon is active, you may spend 4 Action Points.\n\n' +
+      'If you do, the Lightforged Weapon makes an additional {stat} Melee Attack {roll} against an eligible target.',
+  },
+  {
+    id: 'orbiting-arsenal',
+    name: 'Orbiting Arsenal',
+    summary: 'Six weapons of light in orbit for an hour, thrown one at a time.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Light'],
+    ap: 4,
+    wp: 6,
+    stat: 'mind',
+    damage: ['Sacred'],
+    /* "Lightmade" is this card's own term and is kept. See "two names" above.
+       Nothing on the row says a launched weapon is spent, and "while you still
+       have Lightmade Weapons active" is the only thing that hints it: left as
+       printed rather than made to say so. */
+    body:
+      'You conjure 6 Lightmade Weapons taking the form you wish, and they float around you for up to 1 hour.',
+    sub_name: 'Overcast',
+    sub_body:
+      'While you still have Lightmade Weapons active, you may spend 2 Action Points.\n\n' +
+      'If you do, you launch a Lightmade Weapon at an entity you can see within 9 meters (30 feet). Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.',
+  },
+  {
+    id: 'wings-of-radiance',
+    name: 'Wings of Radiance',
+    summary: 'Golden wings on somebody at range: three hours of flight at their own speed.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Light'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    /* "its Movement Speed" in plain words and not `{speed}`. The token resolves
+       against whoever holds the card, and these wings are on somebody else. The
+       trade SPROUT WINGS makes in lineages.js, for the same reason. */
+    body:
+      'You manifest golden, feathered wings on an entity you can see within 9 meters (30 feet) that last for 3 hours.\n\n' +
+      'While the wings last, the entity can fly at a speed equal to its Movement Speed.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting Wings of Radiance, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
+      'For each time you do, target an additional eligible entity with Wings of Radiance.',
+  },
+  {
+    id: 'sigil-of-truth',
+    name: 'Sigil of Truth',
+    summary: 'Bind a whole room to a sigil that brands whoever lies to you.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Light'],
+    ap: 2,
+    wp: 2,
+    stat: 'mind',
+    body:
+      'You manifest a Sigil of Truth, targeting any number of entities you can see.\n\n' +
+      'Make a {stat} Roll {roll} against the Grit of every entity targeted. On a success, they are bound to the sigil.\n\n' +
+      'If a bound entity utters a lie, the sigil shatters and brands them with its mark for 1 hour.',
+    /* Opens "While a branding lasts" rather than the sheet's "When casting", so
+       the parse charges it as its own spend. See "the halves" above. */
+    sub_name: 'Overcast',
+    sub_body:
+      'While a branding lasts, you may spend 2 Action Points and 2 Willpower any number of times.\n\n' +
+      'For each time you do, consume one branding to compel that entity to truthfully answer a single yes-or-no question.',
+  },
+  {
+    id: 'hard-light',
+    name: 'Hard Light',
+    summary: 'A wall, a bridge or whatever else you need, built out of solid light.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Light'],
+    ap: 6,
+    wp: 6,
+    stat: 'mind',
+    body:
+      'You conjure a static construct of solid light in a shape you wish, such as a wall or a bridge, at a point you can see within 15 meters (50 feet).\n\n' +
+      'The construct cannot exceed a volume of 125 cubic meters (5x5x5 meters).\n\n' +
+      'The construct has Health equal to [[10*stat]] and Defense equal to [[2*stat]]. It lasts until it is destroyed, you take a long rest or you fall unconscious.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'celestial-edict',
+    name: 'Celestial Edict',
+    summary: 'Forbid one kind of action for three turns. Breaking the edict calls down lightning.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Light'],
+    ap: 4,
+    wp: 6,
+    stat: 'mind',
+    damage: ['Sacred'],
+    body:
+      'You issue a divine edict to an entity that can hear you within 9 meters (30 feet), forbidding it from taking a specific type of action for 3 turns.\n\n' +
+      'When proclaiming the edict, choose one: movement, weapon actions, casting a spell or using an ability.\n\n' +
+      'Whenever the entity attempts an action matching the proclaimed edict, make a {stat} Roll {roll} against its Reflex.\n\n' +
+      'On a success, a bolt of sacred lightning strikes them, dealing [[2d6 + 2*stat]] in {damage} damage.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'lightstrider-gateway',
+    name: 'Lightstrider Gateway',
+    summary: 'A portal that carries whoever steps through it five kilometers at light speed.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Light'],
+    ap: 6,
+    wp: 12,
+    stat: 'mind',
+    body:
+      'You manifest a portal of pure light in a space adjacent to you and designate a point you can see within 5 kilometers (3 miles) that lasts for 15 minutes.\n\n' +
+      'Entities that walk through the portal are transformed into pure light, traveling at light speed to reappear at the chosen point.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'guardian-angel',
+    name: 'Guardian Angel',
+    summary: 'An angel that eats every hit your allies take, and bolsters them while it stands.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Light'],
+    ap: 5,
+    wp: 12,
+    stat: 'mind',
+    body:
+      'You manifest a Guardian Angel at a point you can see within 6 meters (20 feet) that lasts for 10 turns, taking the form of a medium-sized entity of your choice.\n\n' +
+      'The Guardian Angel cannot be damaged directly and has Health equal to [[20*stat]].\n\n' +
+      'Whenever an ally within line of sight of the Guardian Angel takes damage, that damage is negated and the Guardian Angel loses Health equal to the damage prevented.\n\n' +
+      'While the Guardian Angel persists, allies within line of sight gain the benefits of {{Bolster}}.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'bend-light',
+    name: 'Bend Light',
+    summary: 'An hour of near-invisibility. Acting on anything risks giving it away.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Light'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    /* The roll is the hidden entity's and not the caster's, so it names the
+       attribute and prints no number. Both halves of that, and the reading of
+       "the target", are in "the rolls" above. */
+    body:
+      'You bend light around an entity you can see within 6 meters (20 feet) for 1 hour.\n\n' +
+      'While the spell lasts, the entity is almost completely invisible. It gains 2 advantage when trying to hide or when taking a stealth-related action.\n\n' +
+      'Whenever the entity takes an action that is not a movement one, it must make an {instinct} Roll against the Grit of that action’s target. On a failure, the spell ends and they become visible.',
+    /* Labelled OVERCAST on the sheet and read as the Multicast its own words
+       are. See "the halves" above. */
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting Bend Light, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
+      'For each time you do, target an additional eligible entity with Bend Light.',
+  },
+  {
+    /* The first Legendary Spell in the codex. Nothing reaches the rung and
+       nothing has to: see "the legendary" in the header. */
+    id: 'theon-perfect-replicants',
+    name: 'Theon Perfect Replicants',
+    summary: 'Your next single-target Action hits everything you can see at once.',
+    kind: 'spell',
+    tags: ['Legendary Spell', 'Ethereal', 'Light'],
+    ap: 6,
+    wp: 30,
+    stat: 'mind',
+    body:
+      'The next Action you perform that targets a single entity is blessed by celestial might.\n\n' +
+      'That Action targets every entity you can see instead. You may have it target only hostile entities or only allied ones.',
+    sub_name: null,
+    sub_body: null,
+  },
+
   /* ------------------------------------------------------- the unique ones ---- */
   {
     /* Not off the Primal sheet. Jules handed this one over in chat on 2026-08-20
@@ -1209,38 +1584,25 @@ export const SPELLS = withArt([
     sub_body: null,
   },
 
-  /* --------------------------------------------------- the two stand-ins ----
-   * Light and Shadow are schools the lineage tab names and this sheet has not
-   * got. A Celestial's INNATE LIGHT and an Infernal's INNATE SHADOW each promise
-   * a Novice spell of one of them, and until the schools are written there is
-   * nothing for the promise to point at: those two are the only lineage cards
-   * whose question the codex cannot answer. See flag 4 in lineages.js.
+  /* ----------------------------------------------------- the last stand-in ----
+   * Shadow is a school the lineage tab names and no sheet has yet filled. An
+   * Infernal's INNATE SHADOW promises a Novice spell of it, and until the school
+   * is written there is nothing for the promise to point at: this is the last
+   * lineage card whose question the codex cannot answer. See flag 4 in
+   * lineages.js.
    *
-   * So each school gets one card that stands in and says on its face that it is
-   * standing in. They carry `placeholder`, which is what keeps them out of the
+   * So the school gets one card that stands in and says on its face that it is
+   * standing in. It carries `placeholder`, which is what keeps it out of the
    * enchanting and forging shelves: a stand-in exists to fill the one slot that
    * would otherwise be empty, not to be laid on somebody's sword.
    *
-   * The day the schools arrive, delete both. The Innate cards read their options
-   * off the Novice shelf of the school they name, so they pick up the real
-   * spells with nothing else to change.
+   * **There were two.** UNWRITTEN LIGHT sat here until 2026-08-25, when the
+   * Ethereal school arrived with four Novice Light spells and made it a card
+   * standing in for something written. It was deleted rather than kept, which is
+   * what the note over it always said to do: the Innate cards read their options
+   * off the Novice shelf of the school they name, so INNATE LIGHT picked up the
+   * real four with nothing else to change. Shadow's day works the same way.
    */
-  {
-    id: 'unwritten-light',
-    name: 'Unwritten Light',
-    summary: 'A stand-in. No Light spell has been written yet.',
-    kind: 'spell',
-    tags: ['Novice Spell', 'Light'],
-    ap: null,
-    wp: null,
-    stat: 'mind',
-    placeholder: true,
-    body:
-      'Your blood knows a Novice Light Spell, and the Light school is not in this codex yet.\n\n' +
-      'This card holds the slot until it is. Agree with your table on what the spell does, or leave it empty and take it up when the school arrives.',
-    sub_name: null,
-    sub_body: null,
-  },
   {
     id: 'unwritten-shadow',
     name: 'Unwritten Shadow',

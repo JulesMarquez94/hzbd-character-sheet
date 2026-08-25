@@ -113,15 +113,17 @@
  *      and Physique". `deriveStats` computes Health as 10 per character level
  *      plus 10 per Physique, so the app already reads the first half as level.
  *      The wording is the designer's to update.
- *   4. **Innate Light and Innate Shadow name schools the codex has not got.**
- *      Fire, Wind, Water and Earth are all Elemental families with Novice
- *      spells already written. Light and Shadow are neither a school nor a
- *      family anywhere in spells.js, so those two cards promised a spell that
- *      could not be looked up, and a Celestial could never finish their level 1.
- *      Both schools now hold one stand-in spell apiece, UNWRITTEN LIGHT and
- *      UNWRITTEN SHADOW, which say on their own face that they are standing in.
- *      See the note over them at the foot of spells.js. The shelves are read off
- *      the codex, so writing the real spells is all it takes to replace them.
+ *   4. **Innate Shadow names a school the codex has not got.** Fire, Wind,
+ *      Water and Earth are all Elemental families with Novice spells already
+ *      written, and Light is the Ethereal school's family as of 2026-08-25, so
+ *      Innate Light now offers the four real Novice ones. Shadow is still
+ *      neither a school nor a family anywhere in spells.js, so that one card
+ *      promises a spell that cannot be looked up and an Infernal could never
+ *      finish their level 1. It holds one stand-in spell, UNWRITTEN SHADOW,
+ *      which says on its own face that it is standing in. See the note over it
+ *      at the foot of spells.js. The shelf is read off the codex, so writing the
+ *      real spells is all it takes to replace it, which is exactly how
+ *      UNWRITTEN LIGHT was retired.
  *
  * Two more, smaller. SPROUT WINGS is tagged `Basic Action` on a tab of lineage
  * cards, and is treated as the Ability its 2 AP and 2 WP make it. LIVING
@@ -242,7 +244,7 @@ const SPROUT_WINGS = {
  * The shelf is read off spells.js rather than listed here, so a spell written
  * tomorrow is on offer tomorrow.
  *
- * Light and Shadow are flag 4 above.
+ * Shadow is flag 4 above.
  */
 
 /**
@@ -250,8 +252,9 @@ const SPROUT_WINGS = {
  *
  * One word, matched against the whole banner rather than against a position on
  * it, because the six schools a lineage names do not all sit in the same place:
- * Fire, Wind, Water and Earth are families under Elemental and read third,
- * while Light and Shadow are schools of their own and read second.
+ * Fire, Wind, Water and Earth are families under Elemental and Light is one
+ * under Ethereal, all of which read third, while Shadow is nowhere yet and its
+ * stand-in reads second.
  */
 function noviceSpells(school) {
   return SPELLS.filter((spell) => {
@@ -269,7 +272,7 @@ function innate(school) {
   if (import.meta.env?.DEV && shelf.length === 0) {
     console.error(
       `[hazebound] Innate ${school} offers no Novice spell, so the lineage holding it can never be settled. ` +
-        'Write one, or stand a placeholder in for it the way Light and Shadow have.'
+        'Write one, or stand a placeholder in for it the way Shadow has.'
     );
   }
 

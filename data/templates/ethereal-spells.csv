@@ -1,0 +1,64 @@
+id,Name,Tags,AP,WP,Main Effect,Secondary Type,Secondary Effect,Image
+barrier-spell,BARRIER,"Novice Spell, Ethereal, Light",4,4,"You create a barrier made of light on an entity you can touch.
+
+The target gains [[3d6 + 3*stat]] in Shield.",,,Barrier.jpg
+bolster,BOLSTER,"Novice Spell, Ethereal, Light",3,4,"You form a halo on an entity you can see within 6 meters (20 feet) that lasts for 1 hour.
+
+The halo grants advantage to all actions for its duration.",MULTICAST,"When casting Bolster, you may spend an additional 1 Action Point and 3 Willpower any number of times.
+
+For each time you do, target an additional eligible entity with Bolster.",Bolster.jpg
+light,LIGHT,"Novice Spell, Ethereal, Light",2,,"You conjure an orb of golden light at a point you can see within 15 meters (50 feet), illuminating a 15-meter (50-foot) radius.",OVERCAST,"While Light is active, you may spend 2 Action Points and 2 Willpower.
+
+If you do, the orb explodes. Make a {stat} Roll {roll} against the Grit of all entities within 6 meters (20 feet). On a success, they are blinded until their next Turn End.",Light.jpg
+lightforged-weapon,LIGHTFORGED WEAPON,"Novice Spell, Ethereal, Light",4,4,"You conjure an ethereal weapon of pure light in a shape of your choice at a point you can see within 15 meters (50 feet) that lasts for 3 turns. It cannot be damaged or destroyed.
+
+When summoned and at your Turn Start, it teleports to a point within 15 meters (50 feet) and you make a {stat} Melee Attack {roll} against an adjacent entity. On a hit, it deals [[2d6 + 2*stat]] in {damage} damage.",OVERCAST,"While Lightforged Weapon is active, you may spend 4 Action Points.
+
+If you do, the Lightforged Weapon makes an additional {stat} Melee Attack {roll} against an eligible target.",Lightforged Weapon.jpg
+orbiting-arsenal,ORBITING ARSENAL,"Adept Spell, Ethereal, Light",4,6,"You conjure 6 Lightmade Weapons taking the form you wish, and they float around you for up to 1 hour.",OVERCAST,"While you still have Lightmade Weapons active, you may spend 2 Action Points.
+
+If you do, you launch a Lightmade Weapon at an entity you can see within 9 meters (30 feet). Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.",Orbiting Arsenal.jpg
+wings-of-radiance,WINGS OF RADIANCE,"Adept Spell, Ethereal, Light",3,4,"You manifest golden, feathered wings on an entity you can see within 9 meters (30 feet) that last for 3 hours.
+
+While the wings last, the entity can fly at a speed equal to its Movement Speed.",MULTICAST,"When casting Wings of Radiance, you may spend an additional 1 Action Point and 3 Willpower any number of times.
+
+For each time you do, target an additional eligible entity with Wings of Radiance.",Wings of Radiance.jpg
+sigil-of-truth,SIGIL OF TRUTH,"Adept Spell, Ethereal, Light",2,2,"You manifest a Sigil of Truth, targeting any number of entities you can see.
+
+Make a {stat} Roll {roll} against the Grit of every entity targeted. On a success, they are bound to the sigil.
+
+If a bound entity utters a lie, the sigil shatters and brands them with its mark for 1 hour.",OVERCAST,"While a branding lasts, you may spend 2 Action Points and 2 Willpower any number of times.
+
+For each time you do, consume one branding to compel that entity to truthfully answer a single yes-or-no question.",Sigil of Truth.jpg
+hard-light,HARD LIGHT,"Adept Spell, Ethereal, Light",6,6,"You conjure a static construct of solid light in a shape you wish, such as a wall or a bridge, at a point you can see within 15 meters (50 feet).
+
+The construct cannot exceed a volume of 125 cubic meters (5x5x5 meters).
+
+The construct has Health equal to [[10*stat]] and Defense equal to [[2*stat]]. It lasts until it is destroyed, you take a long rest or you fall unconscious.",,,Hard Light.jpg
+celestial-edict,CELESTIAL EDICT,"Master Spell, Ethereal, Light",4,6,"You issue a divine edict to an entity that can hear you within 9 meters (30 feet), forbidding it from taking a specific type of action for 3 turns.
+
+When proclaiming the edict, choose one: movement, weapon actions, casting a spell or using an ability.
+
+Whenever the entity attempts an action matching the proclaimed edict, make a {stat} Roll {roll} against its Reflex.
+
+On a success, a bolt of sacred lightning strikes them, dealing [[2d6 + 2*stat]] in {damage} damage.",,,Celestail Edict.jpg
+lightstrider-gateway,LIGHTSTRIDER GATEWAY,"Master Spell, Ethereal, Light",6,12,"You manifest a portal of pure light in a space adjacent to you and designate a point you can see within 5 kilometers (3 miles) that lasts for 15 minutes.
+
+Entities that walk through the portal are transformed into pure light, traveling at light speed to reappear at the chosen point.",,,Lightstrider Gate.jpg
+guardian-angel,GUARDIAN ANGEL,"Master Spell, Ethereal, Light",5,12,"You manifest a Guardian Angel at a point you can see within 6 meters (20 feet) that lasts for 10 turns, taking the form of a medium-sized entity of your choice.
+
+The Guardian Angel cannot be damaged directly and has Health equal to [[20*stat]].
+
+Whenever an ally within line of sight of the Guardian Angel takes damage, that damage is negated and the Guardian Angel loses Health equal to the damage prevented.
+
+While the Guardian Angel persists, allies within line of sight gain the benefits of {{Bolster}}.",,,Guardian Angel.jpg
+bend-light,BEND LIGHT,"Master Spell, Ethereal, Light",3,4,"You bend light around an entity you can see within 6 meters (20 feet) for 1 hour.
+
+While the spell lasts, the entity is almost completely invisible. It gains 2 advantage when trying to hide or when taking a stealth-related action.
+
+Whenever the entity takes an action that is not a movement one, it must make an {instinct} Roll against the Grit of that action’s target. On a failure, the spell ends and they become visible.",MULTICAST,"When casting Bend Light, you may spend an additional 1 Action Point and 3 Willpower any number of times.
+
+For each time you do, target an additional eligible entity with Bend Light.",Bend Light.jpg
+theon-perfect-replicants,THEON PERFECT REPLICANTS,"Legendary Spell, Ethereal, Light",6,30,"The next Action you perform that targets a single entity is blessed by celestial might.
+
+That Action targets every entity you can see instead. You may have it target only hostile entities or only allied ones.",,,Theon Perfect replicant.jpg
