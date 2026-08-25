@@ -164,6 +164,17 @@ const ALIASES = {
   'Celestial Edict': 'Celestail Edict.jpg',
   'Lightstrider Gateway': 'Lightstrider Gate.jpg',
   'Theon Perfect Replicants': 'Theon Perfect replicant.jpg',
+
+  /* One from data/Shadow/, 2026-08-25, and that drop's Image column is empty as
+     well. `Hauting shadows.jpg` is an n short of HAUNTING SHADOWS.
+
+     The other eleven land without help, including the two that looked like they
+     would not. `Jules Absolute Edict.jpg` matches JULES' ABSOLUTE EDICT because
+     `flatten` drops the apostrophe, and `Cognitive Distortion.jpg` matches
+     because the card is COGNITIVE DISTORTION: the sheet prints "Cognite" and the
+     codex reads it as the word the picture was named for. See "one name" in the
+     Shadow section of spells.js. */
+  'Haunting Shadows': 'Hauting shadows.jpg',
 };
 
 /**
@@ -484,26 +495,52 @@ const ONE_OFF = 'of';
  * A drop with no Image column filled in falls back on the filename, and then a
  * render whose name is not the card's needs an ALIASES entry after all. That is
  * how `data/Ethereal/` arrived on 2026-08-25 and why three of its thirteen are
- * in that table. See PLATE_SCHOOLS below for the other thing that drop settled.
+ * in that table, and `data/Shadow/` the same afternoon for one of twelve. See
+ * PLATE_FOLDERS below for the other thing those drops settled, and FAMILY_FOLDERS
+ * for the folder that is not a school at all.
  */
 const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethereal']);
 
 /**
- * The school folders whose files are art plates and must not be cut.
+ * A spell *family* dropped at the top of `data/` rather than under its school.
  *
- * A school folder's files are card renders by default, because that is how the
+ * `data/Shadow/` landed 2026-08-25 with the Ethereal school's second family, and
+ * Shadow is a family and not a school: the sheet beside it is `Spells - Ethereal -
+ * Shadow.csv`, and the banner on all twelve cards reads Ethereal third-word
+ * Shadow. So it is claimed on its own rather than added to SCHOOL_FOLDERS, which
+ * would have put a word in that set that the codex does not use that way.
+ *
+ * Everything else about it is a school folder's behaviour, because what the two
+ * sets are really for is the same: a folder whose files are spell art. That is
+ * SPELL_FOLDERS below, and it is what every predicate reads.
+ *
+ * Moving the folder to `data/Ethereal/Shadow/` would retire this entry outright.
+ * A family under its school is the shape `data/Elemental/Fire/` already has and
+ * needs no claim of its own, since a school folder is walked into whatever
+ * subfolders it brings. Left where the drop put it.
+ */
+const FAMILY_FOLDERS = new Set(['shadow']);
+
+/** Every folder whose files are spell art, whether it names a school or a family. */
+const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
+
+/**
+ * The spell folders whose files are art plates and must not be cut.
+ *
+ * A spell folder's files are card renders by default, because that is how the
  * first one arrived. `data/Ethereal/` landed 2026-08-25 as thirteen 2400x1792
  * plates instead — no white border, no banner, the painting and nothing else,
  * which is what the lineage and background drops are — and all thirteen sit at
- * the top of the folder rather than in a family subfolder.
+ * the top of the folder rather than in a family subfolder. `data/Shadow/` is
+ * twelve more of the same, later the same day.
  *
  * Cutting one of these would take the top 45% of a painting that is already
  * only the painting. So the crop is what the exception turns off, and nothing
- * else about being a school changes: the folder is still claimed by name, still
- * walked into any family folder a later drop brings, and still resolved against
- * the codex the same way.
+ * else about the folder changes: it is still claimed by name, still walked into
+ * any family folder a later drop brings, and still resolved against the codex
+ * the same way.
  */
-const PLATE_SCHOOLS = new Set(['ethereal']);
+const PLATE_FOLDERS = new Set(['ethereal', 'shadow']);
 
 /**
  * The ancestries, which arrive as one folder with a folder inside it.
@@ -553,10 +590,10 @@ function pictures(setIds) {
   if (!existsSync(DATA)) return [];
 
   const mine = (name) => setIds.has(flatten(name)) || flatten(name) === ONE_OFF;
-  const school = (name) => SCHOOL_FOLDERS.has(flatten(name));
-  /* A school whose files are whole cards, which is every school but the ones in
-     PLATE_SCHOOLS. This is the flag the crop reads, not the claim. */
-  const render = (name) => school(name) && !PLATE_SCHOOLS.has(flatten(name));
+  const spells = (name) => SPELL_FOLDERS.has(flatten(name));
+  /* A spell folder whose files are whole cards, which is every one but the ones
+     in PLATE_FOLDERS. This is the flag the crop reads, not the claim. */
+  const render = (name) => spells(name) && !PLATE_FOLDERS.has(flatten(name));
   const lineage = (name) => flatten(name) === LINEAGE_FOLDER;
 
   const walk = (dir, set, card, nest) =>
@@ -584,7 +621,7 @@ function pictures(setIds) {
       (entry) =>
         entry.isDirectory() &&
         (mine(entry.name) ||
-          school(entry.name) ||
+          spells(entry.name) ||
           lineage(entry.name) ||
           isBackgroundFamily(entry.name))
     )
@@ -593,17 +630,18 @@ function pictures(setIds) {
         dir.name,
         dir.name,
         render(dir.name),
-        school(dir.name) || lineage(dir.name) || isBackgroundFamily(dir.name)
+        spells(dir.name) || lineage(dir.name) || isBackgroundFamily(dir.name)
       )
     );
 }
 
 /**
- * A file anywhere in a school folder, at either depth. `set` is the folder it
- * came from and carries the family under it when there is one, so the school is
- * the first word of it: `Elemental/Fire` flattens to "elemental fire".
+ * A file anywhere in a spell folder, at either depth. `set` is the folder it came
+ * from and carries the family under it when there is one, so the folder that was
+ * claimed is the first word of it: `Elemental/Fire` flattens to "elemental fire",
+ * and `Shadow` to "shadow".
  */
-const inSchool = (picture) => SCHOOL_FOLDERS.has(flatten(picture.set).split(' ')[0]);
+const inSpellFolder = (picture) => SPELL_FOLDERS.has(flatten(picture.set).split(' ')[0]);
 
 /** A file at the top of `data/Lineage/`: one of the thirteen ancestry plates. */
 const isLineagePlate = (picture) => flatten(picture.set) === LINEAGE_FOLDER;
@@ -807,9 +845,9 @@ const folder = pictures(setIdByFolder).flatMap((picture) => {
     return [plateId ? { ...picture, plateId, into: BACKGROUND_OUT, kind: 'background' } : picture];
   }
 
-  /* A school folder holds spells, so it answers to the spell codex. See
+  /* A spell folder holds spells, so it answers to the spell codex. See
      spellNames: two cards print BARRIER and only one of them is a spell. */
-  if (inSchool(picture)) {
+  if (inSpellFolder(picture)) {
     const spellId = spells.get(flat);
     return [spellId ? { ...picture, spellId } : picture];
   }

@@ -97,7 +97,7 @@
  * they were built from.
  *
  * ------------------------------------------------------------- and the flags
- * Four things the sheet leaves open. None is guessed at here.
+ * Three things the sheet leaves open. None is guessed at here.
  *
  *   1. **LIVING FURNACE does not say what you regain.** "You regain 10 + 5 for
  *      each Willpower spent" names no pool. Health is the only one that fits
@@ -113,17 +113,14 @@
  *      and Physique". `deriveStats` computes Health as 10 per character level
  *      plus 10 per Physique, so the app already reads the first half as level.
  *      The wording is the designer's to update.
- *   4. **Innate Shadow names a school the codex has not got.** Fire, Wind,
- *      Water and Earth are all Elemental families with Novice spells already
- *      written, and Light is the Ethereal school's family as of 2026-08-25, so
- *      Innate Light now offers the four real Novice ones. Shadow is still
- *      neither a school nor a family anywhere in spells.js, so that one card
- *      promises a spell that cannot be looked up and an Infernal could never
- *      finish their level 1. It holds one stand-in spell, UNWRITTEN SHADOW,
- *      which says on its own face that it is standing in. See the note over it
- *      at the foot of spells.js. The shelf is read off the codex, so writing the
- *      real spells is all it takes to replace it, which is exactly how
- *      UNWRITTEN LIGHT was retired.
+ * **There was a fourth, and it is closed.** Innate Light and Innate Shadow named
+ * schools the codex had not got, so those two cards promised a spell that could
+ * not be looked up and a Celestial or an Infernal could never finish their level
+ * 1. Both held a stand-in spell that said on its own face it was standing in. The
+ * Ethereal school arrived on 2026-08-25 with Light in the morning and Shadow in
+ * the afternoon, four Novice spells apiece, and both stand-ins were deleted. All
+ * six Innate cards now offer real spells and every lineage card can be settled.
+ * See "the stand-ins" at the foot of spells.js.
  *
  * Two more, smaller. SPROUT WINGS is tagged `Basic Action` on a tab of lineage
  * cards, and is treated as the Ability its 2 AP and 2 WP make it. LIVING
@@ -244,17 +241,18 @@ const SPROUT_WINGS = {
  * The shelf is read off spells.js rather than listed here, so a spell written
  * tomorrow is on offer tomorrow.
  *
- * Shadow is flag 4 above.
+ * All six shelves are real as of 2026-08-25. See the closed fourth flag above.
  */
 
 /**
  * The Novice shelf of one school word, in the codex's own order.
  *
  * One word, matched against the whole banner rather than against a position on
- * it, because the six schools a lineage names do not all sit in the same place:
- * Fire, Wind, Water and Earth are families under Elemental and Light is one
- * under Ethereal, all of which read third, while Shadow is nowhere yet and its
- * stand-in reads second.
+ * it. That was load-bearing while Light and Shadow were stand-ins reading
+ * second, and it is not any more: all six words a lineage names are families
+ * that read third, four under Elemental and Light and Shadow under Ethereal.
+ * Matching the whole banner is kept anyway, because the next school to arrive
+ * gets to sit wherever the sheet puts it.
  */
 function noviceSpells(school) {
   return SPELLS.filter((spell) => {
@@ -272,7 +270,7 @@ function innate(school) {
   if (import.meta.env?.DEV && shelf.length === 0) {
     console.error(
       `[hazebound] Innate ${school} offers no Novice spell, so the lineage holding it can never be settled. ` +
-        'Write one, or stand a placeholder in for it the way Shadow has.'
+        'Write one, or stand a placeholder in for it the way Light and Shadow were until 2026-08-25.'
     );
   }
 

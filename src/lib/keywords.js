@@ -420,6 +420,19 @@ export const KEYWORDS = [
     detail: 'The entity cannot take Actions or Reactions until the effect ends.',
   },
   {
+    /* Not provisional, and never was in doubt: SHADOW BIND (pulled 2026-08-25)
+       spells Constrained out at its own foot, and this is that sentence word for
+       word. The same trade ICE BLOCK made for Stunned above.
+
+       The Trickster's AMBUSH has named this status since 2026-08-23, beside
+       Stunned and Grappled, with nothing behind the word. It is lit now. */
+    id: 'constrained',
+    terms: ['constrained'],
+    color: 'var(--stat-health)',
+    detail:
+      'Constrained entities cannot take actions but are still aware of their surroundings.',
+  },
+  {
     id: 'incapacitated',
     terms: ['incapacitated'],
     color: 'var(--stat-health)',

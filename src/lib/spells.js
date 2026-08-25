@@ -24,7 +24,7 @@ import { withArt } from './cardArt.js';
  *
  *   tier    Novice Spell · Adept Spell · Master Spell · Legendary Spell · Unique Spell
  *   school  Primal · Nature · Arcane · Elemental · Ethereal
- *   family  Flora · Wild · Life · Blood · Energy · Water · Light
+ *   family  Flora · Wild · Life · Blood · Energy · Water · Light · Shadow
  *
  * ------------------------------------------------------------------ modular
  * Nothing here names an attribute it does not have to. Every spell is written
@@ -1516,6 +1516,352 @@ export const SPELLS = withArt([
     sub_body: null,
   },
 
+
+  /* ======================================================== Ethereal · Shadow ====
+   *
+   * The school's second family, pulled 2026-08-25 from `data/Spells - Ethereal -
+   * Shadow.csv` with its twelve pictures in `data/Shadow/`. Light arrived earlier
+   * the same day and set the shape; this is the same three-tag banner under the
+   * same school, and the sheet writes all twelve in tier, school, family order
+   * already, so nothing had to be normalised.
+   *
+   * Four Novice, four Adept, four Master, and no Legendary. THEON PERFECT
+   * REPLICANTS is still the only card on the fourth rung.
+   *
+   * **This retires UNWRITTEN SHADOW, and with it flag 4 in lineages.js.** An
+   * Infernal's INNATE SHADOW promised a Novice Shadow Spell the codex had not
+   * got, so the ancestry could never be settled and a stand-in held the slot.
+   * Four real ones arrive here, the shelf is read off the codex, and the stand-in
+   * is deleted at the foot of this file. That was the last of the two, so no
+   * lineage card is left whose question the codex cannot answer.
+   *
+   * ------------------------------------------------------------- the mirror
+   * Shadow is written against Light on purpose and three pairs are exact. SCOURGE
+   * is BOLSTER inverted at the same 3 Action Points and 4 Willpower, a crown for a
+   * halo and disadvantage on every action for advantage on every action, down to
+   * the Multicast costing the same 1 and 3. JULES' ABSOLUTE EDICT is CELESTIAL
+   * EDICT's opposite number, compelling one action where the other forbids one.
+   * GLOOM ECHO doubles your next Action where THEON PERFECT REPLICANTS widens it.
+   *
+   * Worth knowing because it is what settled one of the readings below: a Shadow
+   * card missing a number its Light twin carries is read at the twin's.
+   *
+   * -------------------------------------------------- what the codex learned
+   * **CONSTRAINED is a keyword now.** SHADOW BIND glosses it at its own foot,
+   * "Constrained entities cannot take actions but are still aware of their
+   * surroundings", and a defined term is never glossed in prose as well (see the
+   * writing rule at the top of keywords.js). So the sentence moved to keywords.js
+   * word for word and the parenthetical came off, which is exactly the trade ICE
+   * BLOCK made for Stunned. The Trickster's AMBUSH has named the Constrained
+   * status since 2026-08-23 with nothing behind the word; it is lit now.
+   *
+   * ------------------------------------------------------------- the rolls
+   * Every contest here is the caster's own, so all six are a {stat} Roll against
+   * Grit or Reflex, or a {stat} Ranged Attack. Nothing needed BEND LIGHT's
+   * target-rolled exception.
+   *
+   * **CLOUD MIND asks for a saving throw and this system has none.** "if they
+   * succeed the saving throw" is the sheet's only borrowed term, and it is the
+   * caster who rolls here, so the sentence is read from the other end: the target
+   * learns its mind was altered when the spell ends or when the roll fails. Same
+   * event, named the way the codex names it.
+   *
+   * ------------------------------------------------------------- the halves
+   * Seven, all labelled correctly for once: two Multicasts, three Overcasts and
+   * two Upkeeps.
+   *
+   * **Two of them open later than the sheet has them.** EFFIGY's Overcast reads
+   * "You can spend 2 Action Points and 2 Willpower" and says nothing about when,
+   * and its doll cannot be scryed through before it exists; SHADOW BIND's Upkeep
+   * is the same shape. Both open on the state they need, the way SIGIL OF TRUTH's
+   * does, so the parse in overcast.js charges them as their own spend rather than
+   * as a rider on the cast. DARK BARGAIN's genuinely is a rider on the cast and
+   * keeps "When casting". HAUNTING SHADOWS already opened "While Haunting Shadows
+   * is active" and needed nothing.
+   *
+   * **UMBRAL FORM's Upkeep says "may" and not "must".** Every other Upkeep in the
+   * codex is a toll on a spell that would otherwise run on; this one lasts until
+   * your next Turn Start on its own, so the payment buys another turn rather than
+   * preventing an ending. The house sentence follows it unchanged, because not
+   * paying does end the spell.
+   *
+   * ------------------------------------------------------------- the readings
+   * Every one of these is a cell that could not be printed as it stood.
+   *
+   * - **Four ranges had the metres and lost the feet**: "6 Meter (feet)", "9 meter
+   *   (feet)", "12 Meter (feet)". The metre leads every cell in this codex and the
+   *   conversion is the codex's own three metres to ten feet, which is the call
+   *   WALL OF FLAMES documents. 12 meters is the first 40 feet in the codex.
+   * - **JULES' ABSOLUTE EDICT is cast "within range" and names none**, the same
+   *   hole LIGHT had. Read at CELESTIAL EDICT's 9 meters: same tier, same school,
+   *   same "an entity that can hear you", and it is the card this one mirrors. The
+   *   codex had the answer rather than having to invent one.
+   * - **DARK BARGAIN names no range at all**, not even a broken one. Left at "an
+   *   entity you can see", which is a limit of its own. The one card in the drop
+   *   that ends without a distance.
+   * - "At the start of its turn" and "At each Start Turn" are **Turn Start**, and
+   *   "before the end of its next turn" is its **next Turn End**. The defined
+   *   terms.
+   * - **SHADOW BIND's "10 turns" is written out as 10 turns (1 minute)**, the form
+   *   ENTANGLING ROOTS uses. The codex prints the minute beside the count.
+   * - **SCOURGE names its own effect twice**, "a Crown of shadow" and then "The
+   *   Crown of Shadows". The second is the one that survives, which is the call
+   *   GUARDIAN ANGEL's double description documents.
+   * - **JULES' ABSOLUTE EDICT says the command must be possible twice**, once as
+   *   "If the command is impossible, the spell fails" and once as the feasibility
+   *   sentence with the non-flying example. Same call, and the survivor carries
+   *   the consequence the general one stated.
+   * - **DARK BARGAIN's Health is the target's own**, "Health equal to your 3 x
+   *   their level", where "your" is a paste from the column beside it. It is 3
+   *   times the target's level and the target may be anybody, so it is written in
+   *   plain words with no live value at all. The trade WINGS OF RADIANCE makes
+   *   with "its Movement Speed", for the same reason.
+   * - **EFFIGY mirrors "health"** and means the stat, so it is Health and lit.
+   * - Spelling and grammar, throughout and without further comment: "scarficice",
+   *   "conditions.The", "Cognite", "can ear you", "agaisth", "emeerge", "aciton",
+   *   "umbral from", "your have", "can slips", "traverser", "enitites", "thier",
+   *   "thir", "teh", "paranoi", "stoping", "form taking", "disvetnage",
+   *   "addtional", "Start Turn", "with 9 Meter".
+   *
+   * ------------------------------------------------------------- one name
+   * **COGNITE DISTORTION is read as COGNITIVE DISTORTION.** "Cognite" is not a
+   * word in any of the sheet's languages, cognitive distortion is the real term
+   * the card describes, and `data/Shadow/Cognitive Distortion.jpg` is what the
+   * picture drawn for it is called. Three things agreeing against one typo, and it
+   * is the only card name in the drop that moved. Worth confirming at the source,
+   * because a name is what a table calls a card.
+   *
+   * ------------------------------------------------------------- not wired
+   * Nothing here moves a number on the sheet, which is where the Light drop landed
+   * too. Six are effects a tracker row would want to carry, and the two worth
+   * naming are HAUNTING SHADOWS, which stops a rest and stops Health coming back,
+   * and GLOOM SPIKE, which ends any effect the target was paying Upkeep for.
+   * Neither has a rider in riders.js. They print, they can be dealt, and the table
+   * does the arithmetic, which is where every effect starts.
+   */
+
+  /* ------------------------------------------------------ Ethereal · Shadow ---- */
+  {
+    /* BOLSTER inverted, cost for cost. See "the mirror" above. */
+    id: 'scourge',
+    name: 'Scourge',
+    summary: 'A crown of shadow for an hour. Everything the target does is rolled with disadvantage.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Shadow'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You form a Crown of Shadows on **an entity** you can see within **6 meters (20 feet)**, weakening its soul for **1 hour**.\n\n' +
+      'The Crown of Shadows imposes disadvantage on all actions the entity attempts.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting Scourge, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
+      'For each time you do, target **an additional eligible entity** with Scourge.',
+  },
+  {
+    id: 'cloud-mind',
+    name: 'Cloud Mind',
+    summary: 'An hour where nobody finds you odd, and they only know once it lifts.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Shadow'],
+    ap: 2,
+    wp: 2,
+    stat: 'mind',
+    /* "if they succeed the saving throw" is read from the caster's end, because
+       the caster is who rolls. See "the rolls" above. */
+    body:
+      'You cloud the mind of **an entity** you can see within **9 meters (30 feet)** for **1 hour**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, it does not perceive the presence of you and your allies as odd or unusual, allowing you passage in places you would otherwise not be allowed.\n\n' +
+      'When the spell ends, or if the roll fails, the target becomes aware that you altered its mind.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting Cloud Mind, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
+      'For each time you do, target **an additional eligible entity** with Cloud Mind.',
+  },
+  {
+    id: 'gloom-spike',
+    name: 'Gloom Spike',
+    summary: 'A spike of shadow to the mind that also cuts whatever the target was upkeeping.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Shadow'],
+    ap: 2,
+    wp: 3,
+    stat: 'mind',
+    damage: ['Psychic'],
+    body:
+      'You assault the mind of **an entity** you can see within **9 meters (30 feet)** with a spike of shadow.\n\n' +
+      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.\n\n' +
+      'It also ends any effect the entity was paying Upkeep for.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* No range on the row at all, and the Health is the target's own level rather
+       than anything this caster can be asked for. Both in "the readings" above. */
+    id: 'dark-bargain',
+    name: 'Dark Bargain',
+    summary: 'Offer blood for one good roll. They pay it, and they choose whether to.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Shadow'],
+    ap: 1,
+    wp: 1,
+    stat: 'mind',
+    body:
+      'You offer **an entity** you can see a dark bargain.\n\n' +
+      'If it accepts, it sacrifices Health equal to 3 times its level and gains advantage on its next action.',
+    sub_name: 'Overcast',
+    sub_body:
+      'When casting Dark Bargain, you may spend an additional 2 Willpower.\n\n' +
+      'If you do and the target accepts, it sacrifices an additional Health equal to 3 times its level and also gains Empowered and Elevated on its next action.',
+  },
+  {
+    id: 'shadow-hex',
+    name: 'Shadow Hex',
+    summary: 'Ten minutes of waking nightmare. Every failure the target rolls draws blood.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Shadow'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    damage: ['Psychic'],
+    body:
+      'You afflict **an entity** you can see within **9 meters (30 feet)** with a creeping, waking nightmare that lasts for **10 minutes**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, the target is hexed.\n\n' +
+      'Whenever a hexed target fails a roll, it takes [[1d6 + stat]] in {damage} damage.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'effigy',
+    name: 'Effigy',
+    summary: 'A doll that shows you how somebody is doing, and can be looked through.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Shadow'],
+    ap: 6,
+    wp: 6,
+    stat: 'mind',
+    body:
+      'You create a small doll linked to **an entity** you can see within **9 meters (30 feet)**, or to **an entity** from whom you possess a physical sample such as hair, blood or skin.\n\n' +
+      'The effigy perfectly mirrors the physical condition and Health of the target, letting you track its current well-being and active statuses.\n\n' +
+      'The effigy lasts until it is destroyed or the target dies.',
+    /* Opens on the doll rather than on the cast, because there is nothing to scry
+       through until one exists. See "the halves" above. */
+    sub_name: 'Overcast',
+    sub_body:
+      'While the effigy lasts, you may spend 2 Action Points and 2 Willpower.\n\n' +
+      'If you do, you scry through the effigy for a brief, soundless 10-second vision of the target’s location.',
+  },
+  {
+    /* The sheet prints COGNITE DISTORTION. See "one name" above. */
+    id: 'cognitive-distortion',
+    name: 'Cognitive Distortion',
+    summary: 'Six words the target believes for an hour, until something hurts them.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Shadow'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You trick the mind of **an entity** that can hear you within **9 meters (30 feet)**, altering its perception of reality for **1 hour**.\n\n' +
+      'You make a statement to the target of no more than six words. It cannot be directly harmful to the target, and it cannot lead to the target killing itself.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, the target believes the statement to be true and only realizes it has been tricked when the spell ends.\n\n' +
+      'The spell ends if the target takes any damage.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* The gloss the sheet put at this card's foot is the Constrained entry in
+       keywords.js now. See "what the codex learned" above. */
+    id: 'shadow-bind',
+    name: 'Shadow Bind',
+    summary: 'Chains of shadow that hold for a minute, as long as you keep winning the contest.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Shadow'],
+    ap: 4,
+    wp: 6,
+    stat: 'mind',
+    body:
+      'Chains of shadow attempt to bind **an entity** you can touch for **10 turns (1 minute)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Reflex. On a success, it is constrained.',
+    sub_name: 'Upkeep',
+    sub_body:
+      'At your Turn Start, you must pay 2 Willpower to keep the chains bound. If you do not pay the Upkeep, the spell effect ends.\n\n' +
+      'Each time you pay it, make another {stat} Roll {roll} against the target’s Reflex. On a failure, the spell ends.',
+  },
+  {
+    /* Read at CELESTIAL EDICT's 9 meters, which is the card this one mirrors, and
+       the two sentences about possibility are read as one. Both in "the readings"
+       above. */
+    id: 'jules-absolute-edict',
+    name: 'Jules’ Absolute Edict',
+    summary: 'Name an action and a target. They do it on their turn, or it costs them eight dice.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Shadow'],
+    ap: 2,
+    wp: 10,
+    stat: 'mind',
+    damage: ['Psychic'],
+    body:
+      'You issue an edict, commanding **an entity** that can hear you within **9 meters (30 feet)** to take a specific action of your choice, against a target of your choice.\n\n' +
+      'At its Turn Start, it must fulfill your command. If the target refuses to obey before its **next Turn End**, it takes [[8d6 + 8*stat]] in {damage} damage.\n\n' +
+      'The edict must command an action that is feasible for the entity, so you cannot order a non-flying creature to fly. The spell fails if the command is impossible. The command may involve actions that put the creature at risk.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'haunting-shadows',
+    name: 'Haunting Shadows',
+    summary: 'A day of paranoia: no rest, no healing and a way out through their shadow.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Shadow'],
+    ap: 6,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You send shadow to haunt **an entity** you can see within **12 meters (40 feet)** for **24 hours**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, paranoia grips the target for as long as the spell lasts: it cannot rest, it cannot regain Health and it has disadvantage on skill checks.',
+    sub_name: 'Overcast',
+    sub_body:
+      'While Haunting Shadows is active, you may spend 4 Action Points and 12 Willpower.\n\n' +
+      'If you do, you and **up to 5 entities** you can touch are teleported to the haunted target and emerge from its shadow, ending Haunting Shadows.',
+  },
+  {
+    id: 'umbral-form',
+    name: 'Umbral Form',
+    summary: 'Become shadow for a turn: resistant to everything, and thin enough to pass a keyhole.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Shadow'],
+    ap: 4,
+    wp: 5,
+    stat: 'mind',
+    body:
+      'You turn yourself into an umbral form, made of shadow **until your next Turn Start**.\n\n' +
+      'While made of shadow you have resistance to all damage.\n\n' +
+      'You can also slip through any crack or gap that air can travel through, letting you pass between bars and under doors, as long as the passage does not exceed 6 seconds.',
+    /* "may" rather than the house "must", because this form ends on its own. See
+       "the halves" above. */
+    sub_name: 'Upkeep',
+    sub_body:
+      'At your Turn Start, you may pay 3 Willpower to hold the umbral form **until your next Turn Start**.\n\n' +
+      'If you do not pay the Upkeep, the spell effect ends.',
+  },
+  {
+    id: 'gloom-echo',
+    name: 'Gloom Echo',
+    summary: 'Your shadow performs your next Action again, die for die.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Shadow'],
+    ap: 2,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'Your shadow emerges from the ground, and the next Action you take is also performed by your shadow.\n\n' +
+      'The echo is an exact duplicate of that Action, using the same dice results and values.',
+    sub_name: null,
+    sub_body: null,
+  },
+
   /* ------------------------------------------------------- the unique ones ---- */
   {
     /* Not off the Primal sheet. Jules handed this one over in chat on 2026-08-20
@@ -1584,39 +1930,23 @@ export const SPELLS = withArt([
     sub_body: null,
   },
 
-  /* ----------------------------------------------------- the last stand-in ----
-   * Shadow is a school the lineage tab names and no sheet has yet filled. An
-   * Infernal's INNATE SHADOW promises a Novice spell of it, and until the school
-   * is written there is nothing for the promise to point at: this is the last
-   * lineage card whose question the codex cannot answer. See flag 4 in
-   * lineages.js.
+  /* ------------------------------------------------------- the stand-ins ----
+   * **Both are gone, and this is where they were.** Light and Shadow were schools
+   * the lineage tab named and no sheet had filled, so a Celestial's INNATE LIGHT
+   * and an Infernal's INNATE SHADOW each promised a Novice spell that could not be
+   * looked up. UNWRITTEN LIGHT and UNWRITTEN SHADOW held those two slots and said
+   * on their own faces that they were standing in.
    *
-   * So the school gets one card that stands in and says on its face that it is
-   * standing in. It carries `placeholder`, which is what keeps it out of the
-   * enchanting and forging shelves: a stand-in exists to fill the one slot that
-   * would otherwise be empty, not to be laid on somebody's sword.
+   * The Ethereal school retired both on 2026-08-25, Light in the morning and
+   * Shadow in the afternoon, and neither needed anything but the real spells: the
+   * Innate cards read their options off the Novice shelf of the school they name,
+   * so each picked up its four the moment they existed. Flag 4 in lineages.js went
+   * with them, and every lineage card can be settled now.
    *
-   * **There were two.** UNWRITTEN LIGHT sat here until 2026-08-25, when the
-   * Ethereal school arrived with four Novice Light spells and made it a card
-   * standing in for something written. It was deleted rather than kept, which is
-   * what the note over it always said to do: the Innate cards read their options
-   * off the Novice shelf of the school they name, so INNATE LIGHT picked up the
-   * real four with nothing else to change. Shadow's day works the same way.
+   * The machinery they used is still here and is worth knowing about, because the
+   * next school the lineage tab names before a sheet arrives will want it: a
+   * stand-in carries `placeholder`, which is what keeps it off the enchanting and
+   * forging shelves and what `loadoutOptions` refuses by name. That gate fires on
+   * nothing today. See the note beside it in loadouts.js.
    */
-  {
-    id: 'unwritten-shadow',
-    name: 'Unwritten Shadow',
-    summary: 'A stand-in. No Shadow spell has been written yet.',
-    kind: 'spell',
-    tags: ['Novice Spell', 'Shadow'],
-    ap: null,
-    wp: null,
-    stat: 'mind',
-    placeholder: true,
-    body:
-      'Your blood knows a Novice Shadow Spell, and the Shadow school is not in this codex yet.\n\n' +
-      'This card holds the slot until it is. Agree with your table on what the spell does, or leave it empty and take it up when the school arrives.',
-    sub_name: null,
-    sub_body: null,
-  },
 ]);

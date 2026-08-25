@@ -285,11 +285,16 @@ export function loadoutOptions({ talent, rank, picks }) {
       const known = held.has(card.id);
       const row = { card, tier, school, sub, known, modifiers };
 
-      /* A stand-in for a school nobody has written yet: `unwritten-light` and
-         `unwritten-shadow` in spells.js, which exist to fill an Innate slot and
-         say on their face that they are standing in. Refused as a school, because
-         that is what it is: the school is not written, so there is nothing here
-         to learn. */
+      /* A stand-in for a school nobody has written yet. Refused as a school,
+         because that is what it is: the school is not written, so there is
+         nothing here to learn.
+
+         **This fires on nothing today.** `unwritten-light` and `unwritten-shadow`
+         were the only two cards that ever carried the flag, and the Ethereal
+         school retired both on 2026-08-25 by simply existing. The gate stays for
+         the next school the lineage tab names before a sheet arrives, which is
+         the situation it was built for. See "the stand-ins" at the foot of
+         spells.js. */
       if (card.placeholder) {
         return { ...row, ok: false, gate: 'school', reason: 'a stand-in for a school not written yet' };
       }

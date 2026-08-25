@@ -1,64 +1,130 @@
 id,Name,Tags,AP,WP,Main Effect,Secondary Type,Secondary Effect,Image
-barrier-spell,BARRIER,"Novice Spell, Ethereal, Light",4,4,"You create a barrier made of light on an entity you can touch.
+barrier-spell,BARRIER,"Novice Spell, Ethereal, Light",4,4,"You create a barrier made of light on **an entity** you can touch.
 
 The target gains [[3d6 + 3*stat]] in Shield.",,,Barrier.jpg
-bolster,BOLSTER,"Novice Spell, Ethereal, Light",3,4,"You form a halo on an entity you can see within 6 meters (20 feet) that lasts for 1 hour.
+bolster,BOLSTER,"Novice Spell, Ethereal, Light",3,4,"You form a halo on **an entity** you can see within **6 meters (20 feet)** that lasts for **1 hour**.
 
 The halo grants advantage to all actions for its duration.",MULTICAST,"When casting Bolster, you may spend an additional 1 Action Point and 3 Willpower any number of times.
 
-For each time you do, target an additional eligible entity with Bolster.",Bolster.jpg
-light,LIGHT,"Novice Spell, Ethereal, Light",2,,"You conjure an orb of golden light at a point you can see within 15 meters (50 feet), illuminating a 15-meter (50-foot) radius.",OVERCAST,"While Light is active, you may spend 2 Action Points and 2 Willpower.
+For each time you do, target **an additional eligible entity** with Bolster.",Bolster.jpg
+light,LIGHT,"Novice Spell, Ethereal, Light",2,,"You conjure an orb of golden light at a point you can see within **15 meters (50 feet)**, illuminating a **15-meter (50-foot)** radius.",OVERCAST,"While Light is active, you may spend 2 Action Points and 2 Willpower.
 
-If you do, the orb explodes. Make a {stat} Roll {roll} against the Grit of all entities within 6 meters (20 feet). On a success, they are blinded until their next Turn End.",Light.jpg
-lightforged-weapon,LIGHTFORGED WEAPON,"Novice Spell, Ethereal, Light",4,4,"You conjure an ethereal weapon of pure light in a shape of your choice at a point you can see within 15 meters (50 feet) that lasts for 3 turns. It cannot be damaged or destroyed.
+If you do, the orb explodes. Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)**. On a success, they are blinded **until their next Turn End**.",Light.jpg
+lightforged-weapon,LIGHTFORGED WEAPON,"Novice Spell, Ethereal, Light",4,4,"You conjure an ethereal weapon of pure light in a shape of your choice at a point you can see within **15 meters (50 feet)** that lasts for **3 turns**. It cannot be damaged or destroyed.
 
-When summoned and at your Turn Start, it teleports to a point within 15 meters (50 feet) and you make a {stat} Melee Attack {roll} against an adjacent entity. On a hit, it deals [[2d6 + 2*stat]] in {damage} damage.",OVERCAST,"While Lightforged Weapon is active, you may spend 4 Action Points.
+When summoned and at your Turn Start, it teleports to a point within **15 meters (50 feet)** and you make a {stat} Melee Attack {roll} against **an adjacent entity**. On a hit, it deals [[2d6 + 2*stat]] in {damage} damage.",OVERCAST,"While Lightforged Weapon is active, you may spend 4 Action Points.
 
-If you do, the Lightforged Weapon makes an additional {stat} Melee Attack {roll} against an eligible target.",Lightforged Weapon.jpg
-orbiting-arsenal,ORBITING ARSENAL,"Adept Spell, Ethereal, Light",4,6,"You conjure 6 Lightmade Weapons taking the form you wish, and they float around you for up to 1 hour.",OVERCAST,"While you still have Lightmade Weapons active, you may spend 2 Action Points.
+If you do, the Lightforged Weapon makes an additional {stat} Melee Attack {roll} against **an eligible target**.",Lightforged Weapon.jpg
+orbiting-arsenal,ORBITING ARSENAL,"Adept Spell, Ethereal, Light",4,6,"You conjure 6 Lightmade Weapons taking the form you wish, and they float around you for up to **1 hour**.",OVERCAST,"While you still have Lightmade Weapons active, you may spend 2 Action Points.
 
-If you do, you launch a Lightmade Weapon at an entity you can see within 9 meters (30 feet). Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.",Orbiting Arsenal.jpg
-wings-of-radiance,WINGS OF RADIANCE,"Adept Spell, Ethereal, Light",3,4,"You manifest golden, feathered wings on an entity you can see within 9 meters (30 feet) that last for 3 hours.
+If you do, you launch a Lightmade Weapon at **an entity** you can see within **9 meters (30 feet)**. Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.",Orbiting Arsenal.jpg
+wings-of-radiance,WINGS OF RADIANCE,"Adept Spell, Ethereal, Light",3,4,"You manifest golden, feathered wings on **an entity** you can see within **9 meters (30 feet)** that last for **3 hours**.
 
 While the wings last, the entity can fly at a speed equal to its Movement Speed.",MULTICAST,"When casting Wings of Radiance, you may spend an additional 1 Action Point and 3 Willpower any number of times.
 
-For each time you do, target an additional eligible entity with Wings of Radiance.",Wings of Radiance.jpg
+For each time you do, target **an additional eligible entity** with Wings of Radiance.",Wings of Radiance.jpg
 sigil-of-truth,SIGIL OF TRUTH,"Adept Spell, Ethereal, Light",2,2,"You manifest a Sigil of Truth, targeting any number of entities you can see.
 
-Make a {stat} Roll {roll} against the Grit of every entity targeted. On a success, they are bound to the sigil.
+Make a {stat} Roll {roll} against the Grit of **every entity** targeted. On a success, they are bound to the sigil.
 
-If a bound entity utters a lie, the sigil shatters and brands them with its mark for 1 hour.",OVERCAST,"While a branding lasts, you may spend 2 Action Points and 2 Willpower any number of times.
+If a bound entity utters a lie, the sigil shatters and brands them with its mark for **1 hour**.",OVERCAST,"While a branding lasts, you may spend 2 Action Points and 2 Willpower any number of times.
 
 For each time you do, consume one branding to compel that entity to truthfully answer a single yes-or-no question.",Sigil of Truth.jpg
-hard-light,HARD LIGHT,"Adept Spell, Ethereal, Light",6,6,"You conjure a static construct of solid light in a shape you wish, such as a wall or a bridge, at a point you can see within 15 meters (50 feet).
+hard-light,HARD LIGHT,"Adept Spell, Ethereal, Light",6,6,"You conjure a static construct of solid light in a shape you wish, such as a wall or a bridge, at a point you can see within **15 meters (50 feet)**.
 
-The construct cannot exceed a volume of 125 cubic meters (5x5x5 meters).
+The construct cannot exceed a volume of **125 cubic meters (5x5x5 meters)**.
 
 The construct has Health equal to [[10*stat]] and Defense equal to [[2*stat]]. It lasts until it is destroyed, you take a long rest or you fall unconscious.",,,Hard Light.jpg
-celestial-edict,CELESTIAL EDICT,"Master Spell, Ethereal, Light",4,6,"You issue a divine edict to an entity that can hear you within 9 meters (30 feet), forbidding it from taking a specific type of action for 3 turns.
+celestial-edict,CELESTIAL EDICT,"Master Spell, Ethereal, Light",4,6,"You issue a divine edict to **an entity** that can hear you within **9 meters (30 feet)**, forbidding it from taking a specific type of action for **3 turns**.
 
 When proclaiming the edict, choose one: movement, weapon actions, casting a spell or using an ability.
 
 Whenever the entity attempts an action matching the proclaimed edict, make a {stat} Roll {roll} against its Reflex.
 
 On a success, a bolt of sacred lightning strikes them, dealing [[2d6 + 2*stat]] in {damage} damage.",,,Celestail Edict.jpg
-lightstrider-gateway,LIGHTSTRIDER GATEWAY,"Master Spell, Ethereal, Light",6,12,"You manifest a portal of pure light in a space adjacent to you and designate a point you can see within 5 kilometers (3 miles) that lasts for 15 minutes.
+lightstrider-gateway,LIGHTSTRIDER GATEWAY,"Master Spell, Ethereal, Light",6,12,"You manifest a portal of pure light in a space adjacent to you and designate a point you can see within **5 kilometers (3 miles)** that lasts for **15 minutes**.
 
 Entities that walk through the portal are transformed into pure light, traveling at light speed to reappear at the chosen point.",,,Lightstrider Gate.jpg
-guardian-angel,GUARDIAN ANGEL,"Master Spell, Ethereal, Light",5,12,"You manifest a Guardian Angel at a point you can see within 6 meters (20 feet) that lasts for 10 turns, taking the form of a medium-sized entity of your choice.
+guardian-angel,GUARDIAN ANGEL,"Master Spell, Ethereal, Light",5,12,"You manifest a Guardian Angel at a point you can see within **6 meters (20 feet)** that lasts for **10 turns**, taking the form of a medium-sized entity of your choice.
 
 The Guardian Angel cannot be damaged directly and has Health equal to [[20*stat]].
 
-Whenever an ally within line of sight of the Guardian Angel takes damage, that damage is negated and the Guardian Angel loses Health equal to the damage prevented.
+Whenever **an ally** within line of sight of the Guardian Angel takes damage, that damage is negated and the Guardian Angel loses Health equal to the damage prevented.
 
 While the Guardian Angel persists, allies within line of sight gain the benefits of {{Bolster}}.",,,Guardian Angel.jpg
-bend-light,BEND LIGHT,"Master Spell, Ethereal, Light",3,4,"You bend light around an entity you can see within 6 meters (20 feet) for 1 hour.
+bend-light,BEND LIGHT,"Master Spell, Ethereal, Light",3,4,"You bend light around **an entity** you can see within **6 meters (20 feet)** for **1 hour**.
 
 While the spell lasts, the entity is almost completely invisible. It gains 2 advantage when trying to hide or when taking a stealth-related action.
 
 Whenever the entity takes an action that is not a movement one, it must make an {instinct} Roll against the Grit of that action’s target. On a failure, the spell ends and they become visible.",MULTICAST,"When casting Bend Light, you may spend an additional 1 Action Point and 3 Willpower any number of times.
 
-For each time you do, target an additional eligible entity with Bend Light.",Bend Light.jpg
-theon-perfect-replicants,THEON PERFECT REPLICANTS,"Legendary Spell, Ethereal, Light",6,30,"The next Action you perform that targets a single entity is blessed by celestial might.
+For each time you do, target **an additional eligible entity** with Bend Light.",Bend Light.jpg
+theon-perfect-replicants,THEON PERFECT REPLICANTS,"Legendary Spell, Ethereal, Light",6,30,"The next Action you perform that targets **a single entity** is blessed by celestial might.
 
-That Action targets every entity you can see instead. You may have it target only hostile entities or only allied ones.",,,Theon Perfect replicant.jpg
+That Action targets **every entity** you can see instead. You may have it target only hostile entities or only allied ones.",,,Theon Perfect replicant.jpg
+scourge,SCOURGE,"Novice Spell, Ethereal, Shadow",3,4,"You form a Crown of Shadows on **an entity** you can see within **6 meters (20 feet)**, weakening its soul for **1 hour**.
+
+The Crown of Shadows imposes disadvantage on all actions the entity attempts.",MULTICAST,"When casting Scourge, you may spend an additional 1 Action Point and 3 Willpower any number of times.
+
+For each time you do, target **an additional eligible entity** with Scourge.",Scourge.jpg
+cloud-mind,CLOUD MIND,"Novice Spell, Ethereal, Shadow",2,2,"You cloud the mind of **an entity** you can see within **9 meters (30 feet)** for **1 hour**.
+
+Make a {stat} Roll {roll} against its Grit. On a success, it does not perceive the presence of you and your allies as odd or unusual, allowing you passage in places you would otherwise not be allowed.
+
+When the spell ends, or if the roll fails, the target becomes aware that you altered its mind.",MULTICAST,"When casting Cloud Mind, you may spend an additional 1 Action Point and 1 Willpower any number of times.
+
+For each time you do, target **an additional eligible entity** with Cloud Mind.",Cloud Mind.jpg
+gloom-spike,GLOOM SPIKE,"Novice Spell, Ethereal, Shadow",2,3,"You assault the mind of **an entity** you can see within **9 meters (30 feet)** with a spike of shadow.
+
+Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.
+
+It also ends any effect the entity was paying Upkeep for.",,,Gloom Spike.jpg
+dark-bargain,DARK BARGAIN,"Novice Spell, Ethereal, Shadow",1,1,"You offer **an entity** you can see a dark bargain.
+
+If it accepts, it sacrifices Health equal to 3 times its level and gains advantage on its next action.",OVERCAST,"When casting Dark Bargain, you may spend an additional 2 Willpower.
+
+If you do and the target accepts, it sacrifices an additional Health equal to 3 times its level and also gains Empowered and Elevated on its next action.",Dark Bargain.jpg
+shadow-hex,SHADOW HEX,"Adept Spell, Ethereal, Shadow",3,3,"You afflict **an entity** you can see within **9 meters (30 feet)** with a creeping, waking nightmare that lasts for **10 minutes**.
+
+Make a {stat} Roll {roll} against its Grit. On a success, the target is hexed.
+
+Whenever a hexed target fails a roll, it takes [[1d6 + stat]] in {damage} damage.",,,Shadow Hex.png
+effigy,EFFIGY,"Adept Spell, Ethereal, Shadow",6,6,"You create a small doll linked to **an entity** you can see within **9 meters (30 feet)**, or to **an entity** from whom you possess a physical sample such as hair, blood or skin.
+
+The effigy perfectly mirrors the physical condition and Health of the target, letting you track its current well-being and active statuses.
+
+The effigy lasts until it is destroyed or the target dies.",OVERCAST,"While the effigy lasts, you may spend 2 Action Points and 2 Willpower.
+
+If you do, you scry through the effigy for a brief, soundless 10-second vision of the target’s location.",Effigy.png
+cognitive-distortion,COGNITIVE DISTORTION,"Adept Spell, Ethereal, Shadow",4,4,"You trick the mind of **an entity** that can hear you within **9 meters (30 feet)**, altering its perception of reality for **1 hour**.
+
+You make a statement to the target of no more than six words. It cannot be directly harmful to the target, and it cannot lead to the target killing itself.
+
+Make a {stat} Roll {roll} against its Grit. On a success, the target believes the statement to be true and only realizes it has been tricked when the spell ends.
+
+The spell ends if the target takes any damage.",,,Cognitive Distortion.jpg
+shadow-bind,SHADOW BIND,"Adept Spell, Ethereal, Shadow",4,6,"Chains of shadow attempt to bind **an entity** you can touch for **10 turns (1 minute)**.
+
+Make a {stat} Roll {roll} against its Reflex. On a success, it is constrained.",UPKEEP,"At your Turn Start, you must pay 2 Willpower to keep the chains bound. If you do not pay the Upkeep, the spell effect ends.
+
+Each time you pay it, make another {stat} Roll {roll} against the target’s Reflex. On a failure, the spell ends.",Shadow Bind.jpg
+jules-absolute-edict,JULES’ ABSOLUTE EDICT,"Master Spell, Ethereal, Shadow",2,10,"You issue an edict, commanding **an entity** that can hear you within **9 meters (30 feet)** to take a specific action of your choice, against a target of your choice.
+
+At its Turn Start, it must fulfill your command. If the target refuses to obey before its **next Turn End**, it takes [[8d6 + 8*stat]] in {damage} damage.
+
+The edict must command an action that is feasible for the entity, so you cannot order a non-flying creature to fly. The spell fails if the command is impossible. The command may involve actions that put the creature at risk.",,,Jules Absolute Edict.jpg
+haunting-shadows,HAUNTING SHADOWS,"Master Spell, Ethereal, Shadow",6,4,"You send shadow to haunt **an entity** you can see within **12 meters (40 feet)** for **24 hours**.
+
+Make a {stat} Roll {roll} against its Grit. On a success, paranoia grips the target for as long as the spell lasts: it cannot rest, it cannot regain Health and it has disadvantage on skill checks.",OVERCAST,"While Haunting Shadows is active, you may spend 4 Action Points and 12 Willpower.
+
+If you do, you and **up to 5 entities** you can touch are teleported to the haunted target and emerge from its shadow, ending Haunting Shadows.",Hauting shadows.jpg
+umbral-form,UMBRAL FORM,"Master Spell, Ethereal, Shadow",4,5,"You turn yourself into an umbral form, made of shadow **until your next Turn Start**.
+
+While made of shadow you have resistance to all damage.
+
+You can also slip through any crack or gap that air can travel through, letting you pass between bars and under doors, as long as the passage does not exceed 6 seconds.",UPKEEP,"At your Turn Start, you may pay 3 Willpower to hold the umbral form **until your next Turn Start**.
+
+If you do not pay the Upkeep, the spell effect ends.",Umbral Form.jpg
+gloom-echo,GLOOM ECHO,"Master Spell, Ethereal, Shadow",2,8,"Your shadow emerges from the ground, and the next Action you take is also performed by your shadow.
+
+The echo is an exact duplicate of that Action, using the same dice results and values.",,,Gloom Echo.jpg

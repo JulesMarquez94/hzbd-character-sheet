@@ -86,6 +86,8 @@ doing on its own.
 | Arcanist art, from the `Arcanist/` folder | **2026-08-24, 4 cards + 1 plate** | `public/cards/`, `public/talents/` |
 | Spells · Ethereal · Light | **2026-08-25, 13 spells** | `src/lib/spells.js` (`SPELLS`) |
 | Ethereal art, from the `Ethereal/` folder | **2026-08-25, 13 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Ethereal · Shadow | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
+| Shadow art, from the `Shadow/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -100,12 +102,20 @@ they are tracked: a clone would otherwise lose the only copy. The two
 `colossus-*.csv` are the workbook's own tabs with the `Image` column filled in,
 tracked for the same reason the Berserker's pair are and read the same way.
 
-`ethereal-spells.csv` is the third generated one, 13 rows straight out of
-`spells.js` in the drop's own column order, with an `id` column the drop has not
-got and an `Image` column naming the picture each row came from. The drop left
-Image empty, so the art importer places the school by filename and three of the
-thirteen need an alias; putting those names in the drop's own Image column
-retires all three. See [the Ethereal school](#the-ethereal-school-2026-08-25).
+`ethereal-spells.csv` is the third generated one and holds the whole school, 25
+rows straight out of `spells.js` in the drop's own column order, with an `id`
+column the drops have not got and an `Image` column naming the picture each row
+came from. Both drops left Image empty, so the art importer places the files by
+filename and four of the twenty-five need an alias; putting those names in the
+drops' own Image column retires all four. One file per school folder, the way
+`elemental-spells.csv` covers every Elemental family. See
+[the Ethereal school](#the-ethereal-school-2026-08-25) and
+[the Shadow family](#the-shadow-family-2026-08-25).
+
+It is also the first generated template to carry the `**bold**` markers of the
+2026-08-25 card pass, because it was regenerated after it. Most of the others were
+not, so they are a backup of a codex that has since moved: `elemental-spells.csv`
+is the one worth fixing, and it is not fixed here.
 
 The Berserker's pair are the whole workbook rather than a missing tab: it was
 transcribed here out of a PDF, so `berserker-ability.csv` and
@@ -5798,3 +5808,233 @@ were run directly against the codex:
   floor, and the tightest card in the codex (BEND LIGHT, with a Multicast half)
   sets at 0.72 of full size bare and 0.60 loaded. 308 of the 367 need no shrinking
   at all.
+## The Shadow family, 2026-08-25
+
+Asked for in as many words: "shadow spell have been added to the data folder with
+image, correct text make sur wording is consitent and in the system prefered
+lingo."
+
+Two sources, both already on disk. `data/Spells - Ethereal - Shadow.csv` holds
+twelve rows in the drop's usual eight columns, and `data/Shadow/` holds twelve
+pictures, one per row. Shadow is the Ethereal school's second family, arriving the
+same day as its first: same three-tag banner, same tiers, same shelves. The sheet
+writes all twelve in tier, school, family order already, so unlike the Light drop
+nothing had to be normalised.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | SCOURGE, CLOUD MIND, GLOOM SPIKE, DARK BARGAIN |
+| Adept | SHADOW HEX, EFFIGY, COGNITIVE DISTORTION, SHADOW BIND |
+| Master | JULES' ABSOLUTE EDICT, HAUNTING SHADOWS, UMBRAL FORM, GLOOM ECHO |
+
+Four to a rung and no Legendary. THEON PERFECT REPLICANTS is still the only card
+in the codex on that fourth rung, and still nothing reaches it.
+
+### What this retires
+
+**UNWRITTEN SHADOW is deleted, and flag 4 in `lineages.js` is closed.** An
+Infernal's INNATE SHADOW promised a Novice Shadow Spell the codex had not got, so
+the ancestry could never be settled and a stand-in card held the slot open. Four
+real Novice Shadow spells arrive here, and the Innate cards read their options off
+the Novice shelf of the school they name, so INNATE SHADOW now offers Scourge,
+Cloud Mind, Gloom Spike and Dark Bargain with nothing else changed.
+
+That was the second of the two stand-ins, Light having gone the same morning. So
+the flag is not rewritten this time, it is retired: **there is no lineage card
+left whose question the codex cannot answer.** All six Innate cards offer real
+spells, and no card in the codex carries `placeholder` any more.
+
+The gate that read that flag is kept. `loadoutOptions` still refuses a
+`placeholder` card as a school, and it now fires on nothing, because the next
+school the lineage tab names before a sheet arrives is exactly the situation it
+was built for. Both notes say so, in `spells.js` and beside the gate.
+
+### The codex learned one word
+
+**CONSTRAINED is a keyword now.** SHADOW BIND glosses it at its own foot, and the
+rule at the top of `keywords.js` is that a defined term is never glossed in prose
+as well: "If a term needs explaining and is not in this file, the fix is to add it
+here, not to gloss it in the card body." So the designer's sentence moved into
+`keywords.js` word for word and the parenthetical came off the card. Not marked
+`provisional`, because it is transcribed rather than inferred. That is exactly the
+trade ICE BLOCK made for Stunned on 2026-08-20.
+
+This one was overdue. The Trickster's AMBUSH has named the Constrained status
+since 2026-08-23, beside Stunned and Grappled, with nothing at all behind the
+word. It is lit and answers for itself now, on both cards.
+
+### Shadow is written against Light, and it settled a reading
+
+Three pairs are exact, and worth knowing because the codex reads a missing number
+off the twin.
+
+- **SCOURGE is BOLSTER inverted**, cost for cost: 3 Action Points and 4 Willpower,
+  a crown for a halo, disadvantage on every action for advantage on every action,
+  and a Multicast at the same 1 and 3.
+- **JULES' ABSOLUTE EDICT is CELESTIAL EDICT's opposite number**, compelling one
+  kind of action where the other forbids one.
+- **GLOOM ECHO doubles your next Action where THEON PERFECT REPLICANTS widens it.**
+
+### The rolls
+
+Every contest in the drop is the caster's own, so all six are a Mind Roll against
+Grit or Reflex or a Mind Ranged Attack, which is the rule the Elemental pull
+established. Nothing here needed BEND LIGHT's target-rolled exception.
+
+**CLOUD MIND asks for a saving throw, and this system does not have one.** "if
+they succeed the saving throw" is the only borrowed term in the drop, and it is
+the caster who rolls here, so the sentence is read from the other end: the target
+learns its mind was altered when the spell ends or when the roll fails. Same
+event, named the way the codex names it. This is the clearest case of the "system
+preferred lingo" the request asked for.
+
+### The halves
+
+Seven, and for once every label on the sheet is the right one: two Multicasts,
+three Overcasts and two Upkeeps. `npm run lint:halves` prices all 52 in the codex
+off their own prose.
+
+**Two of them open later than the sheet has them.** EFFIGY's Overcast reads "You
+can spend 2 Action Points and 2 Willpower" and says nothing about when, and its
+doll cannot be scryed through before it exists. SHADOW BIND's Upkeep is the same
+shape. Both now open on the state they need, the way SIGIL OF TRUTH's does, so the
+parse in `overcast.js` charges them as their own spend rather than as a rider on
+the cast. DARK BARGAIN's genuinely is a rider on the cast and keeps "When
+casting". HAUNTING SHADOWS already opened "While Haunting Shadows is active" and
+needed nothing.
+
+**UMBRAL FORM's Upkeep says "may" and not "must".** Every other Upkeep in the
+codex is a toll on a spell that would otherwise run on. This one lasts until your
+next Turn Start on its own, so the payment buys another turn rather than
+preventing an ending, and writing "must" would have described a spell that does
+not exist. The house sentence follows it unchanged, because not paying does end
+it.
+
+### Every other reading, in order
+
+Each of these is a cell that could not be printed as it stood.
+
+- **Four ranges had the metres and lost the feet**: "6 Meter (feet)", "9 meter
+  (feet)", "12 Meter (feet)". The metre leads every cell in this codex and the
+  conversion is the codex's own three metres to ten feet, which is the call WALL
+  OF FLAMES documents. HAUNTING SHADOWS' 12 meters is the first 40 feet in the
+  codex.
+- **JULES' ABSOLUTE EDICT is cast "within range" and names none**, the same hole
+  LIGHT had in the morning. Read at CELESTIAL EDICT's 9 meters: same tier, same
+  school, same "an entity that can hear you", and it is the card this one mirrors.
+  The codex had the answer rather than having to invent one, which is what made
+  this reading safe where LIGHT's needed a second opinion.
+- **DARK BARGAIN names no range at all**, not even a broken one. Left at "an
+  entity you can see", which is a limit of its own. The one card in the drop that
+  ends without a distance.
+- **DARK BARGAIN's Health is the target's own.** "they scarficiceHealth equal to
+  your 3 x their level" carries a "your" pasted in from the column beside it. It
+  is 3 times the *target's* level, and the target may be anybody at the table, so
+  it is written in plain words with no live value at all. That is the trade WINGS
+  OF RADIANCE makes with "its Movement Speed", for the same reason: the sheet
+  cannot compute a number that belongs to somebody else.
+- "At the start of its turn" and "At each Start Turn" are **Turn Start**, and
+  "before the end of its next turn" is its **next Turn End**. The defined terms.
+- **SHADOW BIND's "10 turns" is written out as 10 turns (1 minute)**, the form
+  ENTANGLING ROOTS uses. The codex prints the minute beside the count.
+- **SCOURGE names its own effect twice**, "a Crown of shadow" and then "The Crown
+  of Shadows". The second survives, which is the call GUARDIAN ANGEL's double
+  description documents.
+- **JULES' ABSOLUTE EDICT says the command must be possible twice**, once as "If
+  the command is impossible, the spell fails" and once as the feasibility sentence
+  with the non-flying example. Same call, and the survivor carries the consequence
+  the general one stated.
+- **EFFIGY mirrors "health"** and means the stat, so it is Health and lit.
+- **GLOOM SPIKE ends any effect the target was paying Upkeep for.** The row reads
+  "any effect that required upkeep by the entity", and Upkeep is a defined term in
+  this codex, so the sentence names it. That makes this Novice spell the only card
+  in the codex that strips an Upkeep off somebody.
+- Spelling and grammar, throughout: "scarficice", "conditions.The", "can ear you",
+  "agaisth", "emeerge", "aciton", "umbral from", "your have", "can slips",
+  "traverser", "enitites", "thier", "thir", "teh", "paranoi", "stoping", "form
+  taking", "disvetnage", "addtional", "Start Turn", "with 9 Meter".
+
+### One card name moved
+
+**COGNITE DISTORTION is read as COGNITIVE DISTORTION.** "Cognite" is not a word in
+any of the sheet's languages, cognitive distortion is the real term for what the
+card does, and the picture drawn for it is called `Cognitive Distortion.jpg`.
+Three things agreeing against one typo. It is the only card name in the drop that
+moved, and it is worth confirming at the source, because a name is what a table
+calls a card.
+
+The two names that looked like they would need help did not.
+`Jules Absolute Edict.jpg` lands on JULES' ABSOLUTE EDICT because `flatten` drops
+the apostrophe, and the card keeps the apostrophe the sheet prints.
+
+### The art importer learned that a folder can be a family
+
+`data/Shadow/` sits at the top of `data/`, beside `Ethereal/` rather than inside
+it, and Shadow is a **family** and not a school: the sheet is `Spells - Ethereal -
+Shadow.csv` and the banner on all twelve cards reads Ethereal second and Shadow
+third. Adding "shadow" to `SCHOOL_FOLDERS` would have put a word in that set the
+codex does not use that way, so there is a `FAMILY_FOLDERS` set holding it and a
+`SPELL_FOLDERS` union that every predicate now reads. What the two sets are really
+for is the same thing, and it now has a name: a folder whose files are spell art.
+
+`PLATE_SCHOOLS` became `PLATE_FOLDERS` for the same reason and holds both, since
+these twelve are plates rather than card renders and must not be cut. Nothing else
+about the folder's handling changed.
+
+Moving the folder to `data/Ethereal/Shadow/` would retire the `FAMILY_FOLDERS`
+entry outright, because a family under its school is the shape
+`data/Elemental/Fire/` already has and a school folder is walked into whatever
+subfolders it brings. It is left where the drop put it, and the note beside the set
+says so.
+
+One file needed an alias: `Hauting shadows.jpg` is an n short of HAUNTING SHADOWS.
+The other eleven land without help.
+
+### Nothing here is wired
+
+No effect in this drop moves a number on the sheet, which is where the Light drop
+landed too. Six are effects a tracker row would want to carry, and the two worth
+naming are HAUNTING SHADOWS, which stops a rest and stops Health coming back, and
+GLOOM SPIKE, which ends an Upkeep. Neither has a rider in `riders.js`. They print,
+they can be dealt, and the table does the arithmetic, which is where every effect
+in this codex starts.
+
+### The Arcanist's spellbook grew by twelve
+
+The Arcanist is still the one spec that names no school, so it draws from the whole
+codex by tier and a new family widens it. Its Rank 3 pool is now 24 Primal, 29
+Elemental, 24 Ethereal and 1 Arcane, up from 12 Ethereal this morning. Every other
+set that names a school refuses all twelve: the Mycomancer does so with "Ethereal
+school, not Primal", and no other set on the wall has a spell pool at all.
+
+### Five things for Jules
+
+1. **COGNITE DISTORTION.** Read as COGNITIVE DISTORTION, off the picture's own
+   filename. The only card name in the drop that changed.
+2. **JULES' ABSOLUTE EDICT's range.** The row says "within range" and names none.
+   Read at CELESTIAL EDICT's 9 meters, the card it mirrors. Confirm or give it a
+   number.
+3. **DARK BARGAIN has no range at all.** Left at "an entity you can see". Is that
+   deliberate, or did a distance go missing?
+4. **DARK BARGAIN's Overcast.** The base half gives advantage and the Overcast
+   says Empowered and Elevated. Read as additive, so an overcast bargain gives all
+   three, because the cost it names is "an additional". If it was meant to replace
+   the advantage, say so and the word "also" comes out.
+5. **Two cards called Barrier, still.** Not this drop's doing, and still only the
+   sheet can settle it.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`lint:weapons` are all clean, `npm run build` is clean, and `npm run art:cards`
+reports only the four problems it reported before this drop. The codex was walked
+directly as well: 378 cards with no duplicate id, all twelve bodies and seven
+halves resolving with no unspent token, all twelve carrying art and a thumbnail on
+disk, UNWRITTEN SHADOW gone and no `placeholder` card left anywhere, all six INNATE
+cards offering real spells, CONSTRAINED lit on both SHADOW BIND and AMBUSH, the
+Arcanist offering all twelve at Rank 3 and the Mycomancer refusing all twelve.
+
+`templates/ethereal-spells.csv` was regenerated at 25 rows and read back: every row
+parses into the same card it came from, and the thirteen Light rows differ from the
+file they replace by nothing but the `**` markers of the 2026-08-25 card pass, which
+that file predated.

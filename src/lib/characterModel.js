@@ -124,7 +124,7 @@ export const BLANK_CHARACTER = {
   // writes the column.
   card_uses: {},
   // Choices a card leaves to the player, keyed by the card that asks for one:
-  // { "chromatic-resistance": "red", "dark-bargain": "mind" }. A card that
+  // { "draconic-scales": "red", "innate-shadow": "gloom-spike" }. A card that
   // names no choice never appears here.
   choices: {},
   lore: {
