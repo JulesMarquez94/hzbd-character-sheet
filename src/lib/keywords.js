@@ -433,6 +433,27 @@ export const KEYWORDS = [
       'Constrained entities cannot take actions but are still aware of their surroundings.',
   },
   {
+    /* Not provisional either, and this one was asked for outright: UNDO's cell on
+       the Time sheet (pulled 2026-08-25) ends with a note to the developer rather
+       than card text, "lets add the interrupted key word whcih means the next
+       action in question does not happen but the cost is still spent". So the
+       definition is the designer's and the note came off the card, which is the
+       same trade SHADOW BIND made for Constrained above.
+
+       Interrupted is not Stunned and the difference is the bill. A stunned entity
+       takes no Actions at all; an interrupted one loses the Action it was taking
+       and has already paid for it.
+
+       The word appears once elsewhere in the codex, in CONCUSS's summary, where it
+       means the ordinary English thing. A summary is printed as plain text and
+       never through CardText, so it is not lit and needed no rewording. */
+    id: 'interrupted',
+    terms: ['interrupted'],
+    color: 'var(--stat-ap)',
+    detail:
+      'The Action in question does not happen, but its cost is still spent.',
+  },
+  {
     id: 'incapacitated',
     terms: ['incapacitated'],
     color: 'var(--stat-health)',

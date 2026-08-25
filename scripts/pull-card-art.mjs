@@ -175,6 +175,15 @@ const ALIASES = {
      codex reads it as the word the picture was named for. See "one name" in the
      Shadow section of spells.js. */
   'Haunting Shadows': 'Hauting shadows.jpg',
+
+  /* One from data/Time/, 2026-08-25, and a third drop with an empty Image column.
+     `Temporall Collapse.jpg` has an l too many for the sheet's TEMPORAL COLLAPSE,
+     and the sheet is what the codex prints. See "one name" in the Time section of
+     spells.js.
+
+     The other eleven land without help, `TIme Skip.jpg` included: `flatten`
+     lowercases before it compares, so the capital I costs nothing. */
+  'Temporal Collapse': 'Temporall Collapse.jpg',
 };
 
 /**
@@ -495,7 +504,8 @@ const ONE_OFF = 'of';
  * A drop with no Image column filled in falls back on the filename, and then a
  * render whose name is not the card's needs an ALIASES entry after all. That is
  * how `data/Ethereal/` arrived on 2026-08-25 and why three of its thirteen are
- * in that table, and `data/Shadow/` the same afternoon for one of twelve. See
+ * in that table, `data/Shadow/` the same afternoon for one of twelve, and
+ * `data/Time/` that evening for one of twelve more. See
  * PLATE_FOLDERS below for the other thing those drops settled, and FAMILY_FOLDERS
  * for the folder that is not a school at all.
  */
@@ -518,8 +528,13 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethe
  * A family under its school is the shape `data/Elemental/Fire/` already has and
  * needs no claim of its own, since a school folder is walked into whatever
  * subfolders it brings. Left where the drop put it.
+ *
+ * `data/Time/` landed the same day with the school's third family and is the same
+ * shape again: `Spells - Ethereal - Time.csv` beside it, and Ethereal third-word
+ * Time on the banner of all twelve. Two entries make this a pattern rather than
+ * one drop's exception, and the fix for both is the same one folder move.
  */
-const FAMILY_FOLDERS = new Set(['shadow']);
+const FAMILY_FOLDERS = new Set(['shadow', 'time']);
 
 /** Every folder whose files are spell art, whether it names a school or a family. */
 const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
@@ -532,7 +547,10 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * plates instead — no white border, no banner, the painting and nothing else,
  * which is what the lineage and background drops are — and all thirteen sit at
  * the top of the folder rather than in a family subfolder. `data/Shadow/` is
- * twelve more of the same, later the same day.
+ * twelve more of the same, later the same day, and `data/Time/` twelve more after
+ * that. The Time drop is the first to arrive at two sizes, 2400x1792 for two of
+ * them and 1200x896 for the other ten, and neither is cut: the resize below takes
+ * whatever it is handed down to 720.
  *
  * Cutting one of these would take the top 45% of a painting that is already
  * only the painting. So the crop is what the exception turns off, and nothing
@@ -540,7 +558,7 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * any family folder a later drop brings, and still resolved against the codex
  * the same way.
  */
-const PLATE_FOLDERS = new Set(['ethereal', 'shadow']);
+const PLATE_FOLDERS = new Set(['ethereal', 'shadow', 'time']);
 
 /**
  * The ancestries, which arrive as one folder with a folder inside it.

@@ -88,6 +88,8 @@ doing on its own.
 | Ethereal art, from the `Ethereal/` folder | **2026-08-25, 13 plates** | `public/cards/` + `src/lib/cardArt.js` |
 | Spells · Ethereal · Shadow | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
 | Shadow art, from the `Shadow/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Ethereal · Time | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
+| Time art, from the `Time/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
@@ -102,15 +104,16 @@ they are tracked: a clone would otherwise lose the only copy. The two
 `colossus-*.csv` are the workbook's own tabs with the `Image` column filled in,
 tracked for the same reason the Berserker's pair are and read the same way.
 
-`ethereal-spells.csv` is the third generated one and holds the whole school, 25
+`ethereal-spells.csv` is the third generated one and holds the whole school, 37
 rows straight out of `spells.js` in the drop's own column order, with an `id`
 column the drops have not got and an `Image` column naming the picture each row
-came from. Both drops left Image empty, so the art importer places the files by
-filename and four of the twenty-five need an alias; putting those names in the
-drops' own Image column retires all four. One file per school folder, the way
+came from. All three drops left Image empty, so the art importer places the files
+by filename and five of the thirty-seven need an alias; putting those names in the
+drops' own Image column retires all five. One file per school folder, the way
 `elemental-spells.csv` covers every Elemental family. See
-[the Ethereal school](#the-ethereal-school-2026-08-25) and
-[the Shadow family](#the-shadow-family-2026-08-25).
+[the Ethereal school](#the-ethereal-school-2026-08-25),
+[the Shadow family](#the-shadow-family-2026-08-25) and
+[the Time family](#the-time-family-2026-08-25).
 
 It is also the first generated template to carry the `**bold**` markers of the
 2026-08-25 card pass, because it was regenerated after it. Most of the others were
@@ -6038,3 +6041,244 @@ Arcanist offering all twelve at Rank 3 and the Mycomancer refusing all twelve.
 parses into the same card it came from, and the thirteen Light rows differ from the
 file they replace by nothing but the `**` markers of the 2026-08-25 card pass, which
 that file predated.
+
+## The Time family, 2026-08-25
+
+Asked for in as many words: "I have added the tiem spell add them to the systme
+image are in time folder correct textand adapt to syustem wording."
+
+Two sources, both already on disk. `data/Spells - Ethereal - Time.csv` holds
+twelve rows in the drop's usual eight columns, and `data/Time/` holds twelve
+pictures, one per row. Time is the Ethereal school's third family and the third to
+arrive on the same day: same three-tag banner, same tiers, same shelves. The sheet
+writes all twelve in tier, school, family order already, so like the Shadow drop
+and unlike the Light one, nothing had to be normalised.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | SLOW, FORESIGHT, TEMPORAL EROSION, REVERSE |
+| Adept | TEMPORAL MEND, CHRONO LOCK, DELAY, UNDO |
+| Master | CHRONO ANOMALY, TEMPORAL COLLAPSE, SELF HELP, TIME SKIP |
+
+Four to a rung and no Legendary. THEON PERFECT REPLICANTS is still the only card
+in the codex on that fourth rung, and still nothing reaches it.
+
+The CSV also carries a stray VAMPIRIC TOUCH row after eleven empty ones, pasted in
+from the Primal sheet. It is already in the codex with its art placed, so the
+importer skipped it and nothing was read off it. Worth deleting at the source.
+
+### What this retires: nothing, for the first time
+
+Light and Shadow each closed something. Each was a school the lineage tab had
+named before any sheet filled it, so a Celestial's INNATE LIGHT and an Infernal's
+INNATE SHADOW promised a Novice spell that could not be looked up, and a stand-in
+card held the slot. Time was never promised by anything. No ancestry names the
+family, no talent set names it, and nothing was waiting.
+
+So this drop only adds. The Ethereal school went from two shelves to three, and
+every gate it passes through was already built for it.
+
+### What the codex learned: INTERRUPTED
+
+UNDO's Main Effect cell ends with a note to the developer rather than card text:
+
+> lets add the interrupted key word whcih means the next action in question does
+> not happen but the cost is still spent
+
+That is a definition, so it went to `keywords.js` in the designer's own sense and
+the note came off the card, which is exactly the trade SHADOW BIND made for
+Constrained the same afternoon. A defined term is never glossed in prose as well,
+and the writing rule at the top of `keywords.js` says so.
+
+Interrupted is not Stunned, and the difference is the bill. A stunned entity takes
+no Actions at all. An interrupted one loses the Action it was taking and has
+already paid for it, which is what makes UNDO worth 4 Action Points and 6
+Willpower rather than being a worse Chrono Lock.
+
+The word was already in the codex once, in CONCUSS's summary, where it means the
+ordinary English thing. A summary is printed as plain text and never through
+`CardText`, so it is not lit and needed no rewording. Nothing else in any card
+body uses the word, which was checked rather than assumed.
+
+### The readings
+
+Every one of these is a cell that could not be printed as it stood. They are all
+written down in the Time section of `spells.js` as well, beside the cards.
+
+- **Six ranges had the metres and lost the feet.** "9 meter (feet)", "6 Meter
+  (feet)", "9 meter()" and "3 (feet) Meter" are the four shapes it took. The metre
+  leads every cell in this codex and the conversion is the codex's own three metres
+  to ten feet, the call WALL OF FLAMES documents. This family settles its own
+  broken cells rather than being read against another: REVERSE and TEMPORAL
+  COLLAPSE print "9 meter (30 feet)" intact on the same sheet.
+- **DELAY calls itself Chrono Lock, twice.** "Until the Chrono lock ends" in the
+  body and "When Chrono Lock ends" in the Overcast are both pastes from the row
+  directly above it, which really is CHRONO LOCK. This card is DELAY in its Name
+  column, on its picture and in everything it describes, so both now name it. The
+  same call ORBITING ARSENAL's stray "the Lightforged" documents.
+- **TEMPORAL MEND's weight limit says "100 kg (imperial value here)"**, a note to
+  whoever was going to convert it. 220 lbs, in the form TELEKINESIS already prints.
+- **CHRONO ANOMALY's Overcast repositions it "within range" and names none**, the
+  same hole LIGHT had. Read at the row's own 6 meters.
+- **FORESIGHT covers "the next Attribute you make"**, which is an Attribute Roll
+  with the noun dropped. The average is left in plain words with no live value on
+  it, because the roll it covers may be any attribute rather than the one the spell
+  was cast with, so a number printed here would be the wrong number.
+- **CHRONO LOCK gives its duration twice**, "for a turn" and then "until the end of
+  its next turn". The precise one survives, which is the call GUARDIAN ANGEL's
+  double description documents.
+- "At each of the entity Start Turn" and "on their next Turn Start" are **Turn
+  Start**. "until the end of its next turn" and "its next End Turn" are its **next
+  Turn End**. The defined terms.
+- **REVERSE said "undoing wounds" and lit a term it did not mean.** Wound is a
+  defined thing in this system, and the sheet was using the word in its ordinary
+  sense, so the card reads "running its injuries backwards" instead. Reworded
+  rather than exempted, which is the trade GORE ARMOR and VAMPIRIC TOUCH made and
+  what the writing rule at the top of `keywords.js` asks for. Caught by reading
+  every Time card back through the keyword matcher, not by eye.
+- Spelling and grammar, throughout and without further comment: "tunrs", "you can
+  within", "ot its", "moer than", "bunrt", "with 6 Meter", "with in", "their
+  Grits", "tis grits", "Addtional", "loose", "repostion", "ntunred", "had happen",
+  "teh cost", "is undo", "Start Turn", "End Turn", "all effect", "Upkeep are",
+  "Damage and Healing effect".
+
+TIME SKIP is the one card that arrived almost clean and needed only its serial
+comma restructured, which `lint:text` caught.
+
+### One number here is not the designer's
+
+**TEMPORAL EROSION arrived with an empty AP column and an empty WP column.** That
+is not a blank meaning free, the way LIGHT's empty Willpower cell is: this spell
+deals damage every turn for five turns, and no spell in the codex has ever had an
+empty AP column at all.
+
+It is priced at **3 Action Points and 3 Willpower**, which is where its two Novice
+neighbours sit (SLOW at 3 and 2, FORESIGHT at 2 and 4) and what SHADOW HEX charges
+a rung up for the same creeping-damage shape. It sits in one place, on the card,
+and changing it is changing two numbers.
+
+This is the first thing to check, and the note beside the card says so in bold.
+
+### Exhaustion is a word the codex does not have
+
+TIME SKIP charges "1 level of Exhaustion for each additional cast" before a Long
+Rest. Nothing in `keywords.js` defines Exhaustion, no other card in the codex
+spends it, and no bar, pip or pool on the Character tab holds it.
+
+It prints as the plain words the sheet wrote, unlit, and the table runs it. This is
+not the INTERRUPTED case: UNDO's cell handed over a definition to add, and this one
+names a system that does not exist yet. Writing one off a single card's mention
+would be inventing rules rather than transcribing them.
+
+The second thing to check.
+
+### The halves
+
+Five, all labelled correctly: two Multicasts and three Overcasts. `lint:halves`
+reads all five off their own prose and the codex now stands at 57 second halves.
+
+| Card | Half | Opens | Costs |
+| ---- | ---- | ----- | ----- |
+| SLOW | Multicast | rides the cast | 1 Action Point and 1 Willpower |
+| FORESIGHT | Overcast | its own spend | 6 Willpower |
+| REVERSE | Multicast | rides the cast | 1 Action Point and 3 Willpower |
+| DELAY | Overcast | its own spend | 3 Willpower |
+| CHRONO ANOMALY | Overcast | its own spend | 2 Action Points |
+
+**Two of the three Overcasts open later than a cast**, and both had to be written
+that way rather than left in the sheet's words. FORESIGHT's is bought when a roll
+it covered fails, and DELAY's when the delay runs out. Neither is a rider on the
+cast, so the parse in `overcast.js` charges each as its own spend, the way SIGIL OF
+TRUTH's does. CHRONO ANOMALY's already opened "While Chrono Anomaly is active" and
+needed nothing.
+
+### The art importer needed one word and one alias
+
+`data/Time/` is the second folder to arrive as a family at the top of `data/`
+rather than under its school, so it went into the `FAMILY_FOLDERS` set beside
+`shadow` and into `PLATE_FOLDERS` beside `shadow` and `ethereal`, since these
+twelve are plates rather than card renders and must not be cut. Two entries make
+that a pattern rather than one drop's exception, and the note beside the set says
+what retires both: moving the folders to `data/Ethereal/Shadow/` and
+`data/Ethereal/Time/`, since a school folder is walked into whatever subfolders it
+brings.
+
+The drop is also the first to arrive at two sizes, 2400x1792 for FORESIGHT and SLOW
+and 1200x896 for the other ten. Neither is cut and the resize takes whatever it is
+handed down to 720, so the ten small ones cost 0.66 to 1.02 MB in and 35 to 82 KB
+out.
+
+One file needed an alias: `Temporall Collapse.jpg` has an l too many for the
+sheet's TEMPORAL COLLAPSE, and the sheet is the authority on what a card is called.
+The other eleven land without help, `TIme Skip.jpg` included, because `flatten`
+lowercases before it compares and the capital I costs nothing.
+
+That is the third drop running whose Image column is empty and whose files are
+therefore placed by filename. Five of the thirty-seven Ethereal rows now need an
+alias, and filling in the drops' own Image column retires all five at once.
+
+### Nothing here is wired
+
+No effect in this drop moves a number on the sheet, which is where both earlier
+Ethereal drops landed too. Four are effects a tracker row would want to carry, and
+the two worth naming are SLOW, which takes 2 Action Points off a turn that has not
+started yet, and CHRONO ANOMALY, which hands 2 back to everybody standing in it.
+Neither has a rider in `riders.js`.
+
+SELF HELP and TIME SKIP are a different shape again: they move a *turn* rather than
+a number, and `combatBar.js` has nothing that can hold a turn open or hand one
+back. Prose for both, and the table runs them.
+
+They print, they can be dealt, and the table does the arithmetic, which is where
+every effect in this codex starts.
+
+### The Arcanist's spellbook grew by twelve again
+
+The Arcanist is still the one spec that names no school, so it draws from the whole
+codex by tier and a new family widens it. Its Rank 3 pool is now 24 Primal, 29
+Elemental, 36 Ethereal and 1 Arcane, up from 24 Ethereal after the Shadow drop.
+Rank 1 offers the four Novice, Rank 2 adds the four Adept, and Rank 3 opens all
+twelve.
+
+Every other set that names a school refuses all twelve. The Mycomancer does so with
+"Ethereal school, not Primal", and no other set on the wall has a spell pool at
+all. Imbuements pick all twelve up on their own, because `spellsAt` matches the
+tier word and Novice, Adept and Master are three of the words it matches.
+
+### Two things for Jules
+
+1. **TEMPORAL EROSION's cost is a guess.** The sheet left both columns empty on a
+   spell that deals damage for five turns. Priced at 3 and 3 off its Novice
+   neighbours and SHADOW HEX. Give it a number.
+2. **Exhaustion is not a term this system has.** TIME SKIP is the only card that
+   charges it. Either it wants a `keywords.js` entry and something on the Character
+   tab to hold it, or the sentence wants rewriting in terms the codex already has.
+
+Two smaller ones, both already decided and both cheap to reverse: DELAY is named
+DELAY on both halves rather than Chrono Lock, and TEMPORAL COLLAPSE keeps the
+sheet's spelling over the picture's.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves` and
+`lint:weapons` are all clean, `npm run build` is clean, and `npm run art:cards`
+reports only the four problems it reported before this drop.
+
+The codex was walked directly as well: 390 cards with no duplicate id, all twelve
+Time bodies and five halves resolving with no unspent token, all twelve carrying a
+plate and a thumbnail on disk, INTERRUPTED lit on UNDO and on no other card body,
+CONCUSS still unlit because its use of the word is in a summary, the Arcanist
+offering 4 at Rank 1, 8 at Rank 2 and all 12 at Rank 3, and the Mycomancer refusing
+all twelve as the wrong school.
+
+All twelve were then printed the way a reader sees them, live values resolved
+against a sample caster and every keyword marked. That is what caught REVERSE
+lighting Wound, and it is worth doing on the next drop too: a term used in its
+ordinary sense reads perfectly well until the matcher colours it. TIME SKIP is the
+longest of the twelve at 565 characters, sixth of all 390 cards and well inside the
+667 the box already holds, so none of these needed the card to shrink further than
+it already does.
+
+`templates/ethereal-spells.csv` is 37 rows now, 13 Light and 12 Shadow and 12 Time,
+and every Time row was read back: each parses into the card it came from field for
+field, and every Image cell names a file that is really in `data/Time/`.

@@ -128,3 +128,63 @@ If you do not pay the Upkeep, the spell effect ends.",Umbral Form.jpg
 gloom-echo,GLOOM ECHO,"Master Spell, Ethereal, Shadow",2,8,"Your shadow emerges from the ground, and the next Action you take is also performed by your shadow.
 
 The echo is an exact duplicate of that Action, using the same dice results and values.",,,Gloom Echo.jpg
+slow,SLOW,"Novice Spell, Ethereal, Time",3,2,"You slow time for **an entity** you can see within **9 meters (30 feet)**.
+
+Make a {stat} Roll {roll} against its Grit. On a success, it has 2 fewer Action Points at its next Turn Start.",MULTICAST,"When casting Slow, you may spend an additional 1 Action Point and 1 Willpower any number of times.
+
+For each time you do, target **an additional eligible entity** with Slow.",Slow.jpg
+foresight,FORESIGHT,"Novice Spell, Ethereal, Time",2,4,"You catch a glimpse of the future.
+
+For the next Attribute Roll you make, you take the average result instead of rolling the dice.",OVERCAST,"When you fail an Attribute Roll covered by Foresight, you may spend 6 Willpower.
+
+If you do, the action is undone and is as if it never happened. This does not refund the cost of the action it applies to.",Foresight.jpg
+temporal-erosion,TEMPORAL EROSION,"Novice Spell, Ethereal, Time",3,3,"You use time to erode **an entity** you can see within **9 meters (30 feet)** for **5 turns**.
+
+At its Turn Start, it takes [[1d6 + stat]] in {damage} damage.",,,Temporal Erosion.jpg
+reverse,REVERSE,"Novice Spell, Ethereal, Time",4,4,"You reverse time for **an entity** you can see within **9 meters (30 feet)**, running its injuries backwards.
+
+You restore [[3d6 + 3*stat]] in Health to the entity.",MULTICAST,"When casting Reverse, you may spend an additional 1 Action Point and 3 Willpower any number of times.
+
+For each time you do, target **an additional eligible entity** with Reverse.",Reverse.jpg
+temporal-mend,TEMPORAL MEND,"Adept Spell, Ethereal, Time",4,8,"You restore a non-magical object you can see to its undamaged state.
+
+The object cannot exceed 100 kg (220 lbs) in weight.
+
+It can restore burnt books, mend broken doors and mend cloth. It does not work on living things.",,,Temporal Mend.jpg
+chrono-lock,CHRONO LOCK,"Adept Spell, Ethereal, Time",4,6,"You attempt to freeze **an entity** you can see within **6 meters (20 feet)** in time.
+
+Make a {stat} Roll {roll} against its Grit. On a success, the target is stunned **until its next Turn End**.",,,Chrono Lock.jpg
+delay,DELAY,"Adept Spell, Ethereal, Time",3,2,"You delay time for **an entity** you can see within **9 meters (30 feet)** until its **next Turn End**.
+
+Until Delay ends, all spells, attacks and abilities aimed at the target are delayed.
+
+Everything held this way is executed all at once at the target’s **next Turn End**.",OVERCAST,"When Delay ends, you may spend 3 Willpower.
+
+If you do, every delayed action is Elevated by 1.",Delay.jpg
+undo,UNDO,"Adept Spell, Ethereal, Time",4,6,"You use time magic to undo events that are not in your favour, targeting **an entity** you can see within **9 meters (30 feet)**.
+
+Make a {stat} Roll {roll} against its Grit. On a success, the entity’s next Action is interrupted.",,,Undo.jpg
+chrono-anomaly,CHRONO ANOMALY,"Master Spell, Ethereal, Time",4,10,"You bend time in a **3-meter (10-foot)** area around a point you can see within **6 meters (20 feet)** for **5 turns**.
+
+Entities that have their Turn Start inside the area gain 2 additional Action Points.
+
+Leaving the area costs the entity 3 Action Points, or 3 Reaction Points if it has no Action Points left.",OVERCAST,"While Chrono Anomaly is active, you may spend 2 Action Points.
+
+If you do, reposition the Chrono Anomaly around any point within **6 meters (20 feet)**.",Chrono Anomaly.jpg
+temporal-collapse,TEMPORAL COLLAPSE,"Master Spell, Ethereal, Time",4,8,"You accelerate time for **an entity** you can see within **9 meters (30 feet)**.
+
+Make a {stat} Roll {roll} against its Grit. On a success, you end every effect on it with a duration shorter than 20 turns or 30 minutes.
+
+Damage and healing effects instantly deal or restore everything they had left, as if every remaining turn had happened at once. Any effect the entity was paying Upkeep for ends outright.",,,Temporall Collapse.jpg
+self-help,SELF HELP,"Master Spell, Ethereal, Time",2,6,"You summon yourself from the near future to help you.
+
+At your next Turn End, you immediately take a second turn.
+
+You then skip the turn that would have followed it.",,,Self Help.jpg
+time-skip,TIME SKIP,"Master Spell, Ethereal, Time",3,8,"You instantly propel yourself 6 seconds forward into the stream of time, immediately ending your turn and disappearing from existence.
+
+**Until your next Turn Start**, you are completely untargetable and cannot be interacted with, damaged or affected by any entity, spell or environmental effect.
+
+At your next Turn Start, you reappear in the exact space you previously occupied. If that space is taken, you reappear in the nearest unoccupied one.
+
+Casting Time Skip more than once before completing a Long Rest gives you 1 level of Exhaustion for each additional cast.",,,TIme Skip.jpg

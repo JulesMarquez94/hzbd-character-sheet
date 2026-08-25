@@ -1862,6 +1862,338 @@ export const SPELLS = withArt([
     sub_body: null,
   },
 
+
+  /* ========================================================== Ethereal · Time ====
+   *
+   * The school's third family, pulled 2026-08-25 from `data/Spells - Ethereal -
+   * Time.csv` with its twelve pictures in `data/Time/`. Light landed that morning
+   * and Shadow that afternoon; this is the same three-tag banner under the same
+   * school, and the sheet writes all twelve in tier, school, family order already,
+   * so nothing had to be normalised.
+   *
+   * Four Novice, four Adept, four Master, and no Legendary. THEON PERFECT
+   * REPLICANTS is still the only card on the fourth rung.
+   *
+   * No lineage waits on this one. Light and Shadow each had an Innate card
+   * promising a Novice spell the codex had not got, and Time has none: no ancestry
+   * names the family, so nothing was standing in and nothing is retired here. The
+   * Ethereal school simply got a third shelf.
+   *
+   * -------------------------------------------------- what the codex learned
+   * **INTERRUPTED is a keyword now, and the sheet asked for it in so many words.**
+   * UNDO's cell ends with a note to the developer rather than card text: "lets add
+   * the interrupted key word whcih means the next action in question does not
+   * happen but the cost is still spent". That is a definition, so it went to
+   * keywords.js in the designer's own sense and the note came off the card, which
+   * is the same trade SHADOW BIND made for Constrained the same day.
+   *
+   * The word was already in the codex once, in CONCUSS's summary, and a summary is
+   * printed as plain text rather than through CardText. So nothing that used to
+   * read as ordinary English is lit by this.
+   *
+   * ------------------------------------------------------------- the rolls
+   * Five contests, all the caster's own and all against Grit: SLOW, CHRONO LOCK,
+   * UNDO and TEMPORAL COLLAPSE, plus FORESIGHT's Overcast, which is priced off a
+   * roll rather than making one. TEMPORAL EROSION makes no roll at all and simply
+   * lands, which MAGMA CHAINS' per-turn damage is the precedent for.
+   *
+   * ------------------------------------------------------------- the halves
+   * Five, all labelled correctly: two Multicasts and three Overcasts.
+   *
+   * **Two of the three Overcasts open later than a cast.** FORESIGHT's is bought
+   * when a roll it covered fails, and DELAY's when the delay runs out, so neither
+   * is a rider on the cast and the parse in overcast.js charges them as their own
+   * spend. CHRONO ANOMALY's already opened "While Chrono Anomaly is active" and
+   * needed nothing. Both Multicasts are genuine riders and keep "When casting".
+   *
+   * ------------------------------------------------------------- the readings
+   * Every one of these is a cell that could not be printed as it stood.
+   *
+   * - **Six ranges had the metres and lost the feet**: "9 meter (feet)", "6 Meter
+   *   (feet)", "9 meter()", "3 (feet) Meter". The metre leads every cell in this
+   *   codex and the conversion is the codex's own three metres to ten feet, which
+   *   is the call WALL OF FLAMES documents. REVERSE and TEMPORAL COLLAPSE print
+   *   "9 meter (30 feet)" intact on the same sheet, so the family settles its own
+   *   broken cells rather than being read against another.
+   * - **DELAY calls itself Chrono Lock, twice.** "Until the Chrono lock ends" in
+   *   the body and "When Chrono Lock ends" in the Overcast are both pastes from
+   *   the row above it, which really is CHRONO LOCK. This card is DELAY in its
+   *   Name column, on its picture and in everything it describes, so both now name
+   *   it. The same call ORBITING ARSENAL's stray "the Lightforged" documents.
+   * - **TEMPORAL EROSION arrived with no Action Point and no Willpower cost.** Not
+   *   a blank meaning free, the way LIGHT's empty Willpower cell is: it deals
+   *   damage every turn for five turns, and no spell in the codex has ever had an
+   *   empty AP column. Priced at 3 and 3, which is where its two Novice neighbours
+   *   sit (SLOW at 3 and 2, FORESIGHT at 2 and 4) and what SHADOW HEX charges a
+   *   rung up for the same creeping-damage shape. **This is the one number in the
+   *   drop that is not the designer's**, and it is the first thing to check.
+   * - **TEMPORAL MEND's weight limit says "100 kg (imperial value here)"**, a note
+   *   to whoever was going to convert it. 220 lbs, in the form TELEKINESIS prints.
+   * - **CHRONO ANOMALY's Overcast repositions it "within range" and names none**,
+   *   the same hole LIGHT had. Read at the row's own 6 meters.
+   * - **FORESIGHT covers "the next Attribute you make"**, which is an Attribute
+   *   Roll with the noun dropped. Left in plain words with no live value: the roll
+   *   it covers may be any attribute, not the one this spell was cast with, so a
+   *   number here would print the wrong one.
+   * - **TIME SKIP charges "1 level of Exhaustion" and the codex has no such term.**
+   *   Nothing in keywords.js defines it and nothing else in the codex spends it, so
+   *   it prints as the plain words the sheet wrote and is not lit. It is the second
+   *   thing to check.
+   * - "At each of the entity Start Turn" and "on their next Turn Start" are **Turn
+   *   Start**, and "until the end of its next turn" and "its next End Turn" are its
+   *   **next Turn End**. The defined terms.
+   * - **CHRONO LOCK gives its duration twice**, "for a turn" and then "until the
+   *   end of its next turn". The second is the one that survives, which is the call
+   *   GUARDIAN ANGEL's double description documents.
+   * - Spelling and grammar, throughout and without further comment: "tunrs", "you
+   *   can within", "ot its", "moer than", "bunrt", "with 6 Meter", "with in",
+   *   "their Grits", "tis grits", "Addtional", "loose", "repostion", "ntunred",
+   *   "had happen", "teh cost", "is undo", "Start Turn", "End Turn", "all effect",
+   *   "Upkeep are", "Damage and Healing effect".
+   *
+   * ------------------------------------------------------------- one name
+   * **The Name column prints TEMPORAL COLLAPSE and the picture is `Temporall
+   * Collapse.jpg`.** The sheet is the authority on what a card is called, so the
+   * codex prints TEMPORAL COLLAPSE and the file is aliased in pull-card-art.mjs.
+   * No card name moved in this drop.
+   *
+   * ------------------------------------------------------------- not wired
+   * Nothing here moves a number on the sheet, which is where both earlier Ethereal
+   * drops landed too. Four are effects a tracker row would want to carry, and the
+   * two worth naming are SLOW, which takes 2 Action Points off a turn that has not
+   * started yet, and CHRONO ANOMALY, which hands 2 back to everybody standing in
+   * it. Neither has a rider in riders.js. They print, they can be dealt, and the
+   * table does the arithmetic, which is where every effect starts.
+   *
+   * SELF HELP and TIME SKIP move a turn rather than a number, and combatBar.js has
+   * nothing that can hold a turn open or hand one back. Prose, and the table runs
+   * them.
+   */
+
+  /* -------------------------------------------------------- Ethereal · Time ---- */
+  {
+    id: 'slow',
+    name: 'Slow',
+    summary: 'Slow one target at range so their next turn opens two Action Points short.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Time'],
+    ap: 3,
+    wp: 2,
+    stat: 'mind',
+    body:
+      'You slow time for **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, it has 2 fewer Action Points at its next Turn Start.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting Slow, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
+      'For each time you do, target **an additional eligible entity** with Slow.',
+  },
+  {
+    /* The average is left in plain words. See "the readings" above: the roll this
+       covers need not be the one the spell was cast with. */
+    id: 'foresight',
+    name: 'Foresight',
+    summary: 'Take the average on your next roll instead of rolling, and buy it back if it still fails.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Time'],
+    ap: 2,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You catch a glimpse of the future.\n\n' +
+      'For the next Attribute Roll you make, you take the average result instead of rolling the dice.',
+    /* Opens on the failure rather than on the cast, so the parse charges it as its
+       own spend. See "the halves" above. */
+    sub_name: 'Overcast',
+    sub_body:
+      'When you fail an Attribute Roll covered by Foresight, you may spend 6 Willpower.\n\n' +
+      'If you do, the action is undone and is as if it never happened. This does not refund the cost of the action it applies to.',
+  },
+  {
+    /* **The 3 and the 3 are not the designer's.** The sheet left both columns empty
+       on a spell that deals damage for five turns. See "the readings" above. */
+    id: 'temporal-erosion',
+    name: 'Temporal Erosion',
+    summary: 'Five turns of time eating at one target, a die and a Mind at a time.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Time'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'You use time to erode **an entity** you can see within **9 meters (30 feet)** for **5 turns**.\n\n' +
+      'At its Turn Start, it takes [[1d6 + stat]] in {damage} damage.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* "Undoing wounds" on the sheet, and Wound is a defined term this card does
+       not mean. Reworded rather than exempted, the way GORE ARMOR and VAMPIRIC
+       TOUCH were. See the writing rule at the top of keywords.js. */
+    id: 'reverse',
+    name: 'Reverse',
+    summary: 'Run somebody’s injuries backwards for three dice and three Minds of Health.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Time'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You reverse time for **an entity** you can see within **9 meters (30 feet)**, running its injuries backwards.\n\n' +
+      'You restore [[3d6 + 3*stat]] in Health to the entity.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting Reverse, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
+      'For each time you do, target **an additional eligible entity** with Reverse.',
+  },
+  {
+    /* "100 kg (imperial value here)" is a note to the converter, and 220 lbs is the
+       form TELEKINESIS prints. See "the readings" above. */
+    id: 'temporal-mend',
+    name: 'Temporal Mend',
+    summary: 'Wind one broken object back to whole, up to a hundred kilos of it.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Time'],
+    ap: 4,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'You restore a non-magical object you can see to its undamaged state.\n\n' +
+      'The object cannot exceed 100 kg (220 lbs) in weight.\n\n' +
+      'It can restore burnt books, mend broken doors and mend cloth. It does not work on living things.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* The duration is given twice and the precise one survives. See "the readings"
+       above. */
+    id: 'chrono-lock',
+    name: 'Chrono Lock',
+    summary: 'Freeze one target in time, stunned until its next turn is over.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Time'],
+    ap: 4,
+    wp: 6,
+    stat: 'mind',
+    body:
+      'You attempt to freeze **an entity** you can see within **6 meters (20 feet)** in time.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, the target is stunned **until its next Turn End**.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* The sheet calls this card Chrono Lock twice, on both halves, and both are
+       pastes from the row above. See "the readings" above. */
+    id: 'delay',
+    name: 'Delay',
+    summary: 'Everything aimed at one target is held back and lands all at once on its turn.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Time'],
+    ap: 3,
+    wp: 2,
+    stat: 'mind',
+    body:
+      'You delay time for **an entity** you can see within **9 meters (30 feet)** until its **next Turn End**.\n\n' +
+      'Until Delay ends, all spells, attacks and abilities aimed at the target are delayed.\n\n' +
+      'Everything held this way is executed all at once at the target’s **next Turn End**.',
+    /* Opens on the ending rather than on the cast, so the parse charges it as its
+       own spend. See "the halves" above. */
+    sub_name: 'Overcast',
+    sub_body:
+      'When Delay ends, you may spend 3 Willpower.\n\n' +
+      'If you do, every delayed action is Elevated by 1.',
+  },
+  {
+    /* The gloss the sheet put at this card's foot is the Interrupted entry in
+       keywords.js now. See "what the codex learned" above. */
+    id: 'undo',
+    name: 'Undo',
+    summary: 'Interrupt one target’s next Action. It still pays for it.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Time'],
+    ap: 4,
+    wp: 6,
+    stat: 'mind',
+    body:
+      'You use time magic to undo events that are not in your favour, targeting **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, the entity’s next Action is interrupted.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'chrono-anomaly',
+    name: 'Chrono Anomaly',
+    summary: 'A bubble of bent time: two Action Points a turn inside it, three lost on the way out.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Time'],
+    ap: 4,
+    wp: 10,
+    stat: 'mind',
+    body:
+      'You bend time in a **3-meter (10-foot)** area around a point you can see within **6 meters (20 feet)** for **5 turns**.\n\n' +
+      'Entities that have their Turn Start inside the area gain 2 additional Action Points.\n\n' +
+      'Leaving the area costs the entity 3 Action Points, or 3 Reaction Points if it has no Action Points left.',
+    /* "within range" is read as the row's own 6 meters. See "the readings" above. */
+    sub_name: 'Overcast',
+    sub_body:
+      'While Chrono Anomaly is active, you may spend 2 Action Points.\n\n' +
+      'If you do, reposition the Chrono Anomaly around any point within **6 meters (20 feet)**.',
+  },
+  {
+    /* The sheet's Name column prints TEMPORAL COLLAPSE and the picture is called
+       `Temporall Collapse.jpg`. See "one name" above. */
+    id: 'temporal-collapse',
+    name: 'Temporal Collapse',
+    summary: 'Run one target’s clock out: every short effect on it resolves and ends at once.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Time'],
+    ap: 4,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'You accelerate time for **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, you end every effect on it with a duration shorter than 20 turns or 30 minutes.\n\n' +
+      'Damage and healing effects instantly deal or restore everything they had left, as if every remaining turn had happened at once. Any effect the entity was paying Upkeep for ends outright.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'self-help',
+    name: 'Self Help',
+    summary: 'Pull yourself in from the near future for a second turn, and skip the one after.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Time'],
+    ap: 2,
+    wp: 6,
+    stat: 'mind',
+    body:
+      'You summon yourself from the near future to help you.\n\n' +
+      'At your next Turn End, you immediately take a second turn.\n\n' +
+      'You then skip the turn that would have followed it.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* Exhaustion is not a term this codex defines, so it prints as the plain words
+       the sheet wrote. See "the readings" above. */
+    id: 'time-skip',
+    name: 'Time Skip',
+    summary: 'Step six seconds forward. Nothing can touch you, and doing it twice a day costs you.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Time'],
+    ap: 3,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'You instantly propel yourself 6 seconds forward into the stream of time, immediately ending your turn and disappearing from existence.\n\n' +
+      '**Until your next Turn Start**, you are completely untargetable and cannot be interacted with, damaged or affected by any entity, spell or environmental effect.\n\n' +
+      'At your next Turn Start, you reappear in the exact space you previously occupied. If that space is taken, you reappear in the nearest unoccupied one.\n\n' +
+      'Casting Time Skip more than once before completing a Long Rest gives you 1 level of Exhaustion for each additional cast.',
+    sub_name: null,
+    sub_body: null,
+  },
+
   /* ------------------------------------------------------- the unique ones ---- */
   {
     /* Not off the Primal sheet. Jules handed this one over in chat on 2026-08-20
