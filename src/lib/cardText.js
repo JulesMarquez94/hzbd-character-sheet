@@ -286,6 +286,27 @@ export function resolveValue(expression, character, printedStat = 'instinct', op
  * field is data, and scripts/check-weapons.mjs holds it in step with the name.
  */
 
+/* --------------------------------------------------------- prose to read from
+ * A card's text is read by more than the renderer. `effectDuration` reads how
+ * long it lasts off it, `secondHalf` reads what its optional half costs, and the
+ * search box looks inside it. All of those match on the words, and the words
+ * carry emphasis markers: since 2026-08-25 every range, target and duration in
+ * the codex is written **bold** (see the note in keywords.js), so "for **10
+ * turns**" and "**an entity**" is the normal shape of a sentence rather than the
+ * exception.
+ *
+ * A marker in the middle of a phrase is invisible to a reader and fatal to a
+ * regex — GIANT GROWTH's "for each additional entity" is what a Multicast says to
+ * mean it repeats, and "for **each additional entity**" said it to nobody. So
+ * every parser takes the markers off first, in one place, rather than each of
+ * them growing its own `\*\*` in the middle of every pattern.
+ */
+
+/** Card prose with its emphasis markers off, for anything matching on words. */
+export function cardProse(text) {
+  return String(text ?? '').replace(/\*\*/g, '');
+}
+
 /* ------------------------------------------------------------- what it costs
  * A card prints its own Action Points and the codex never changes them. What a
  * *holder* costs it is another matter, and this is where the two meet.
@@ -390,8 +411,7 @@ export function cardGist(card, { character = null, modifiers = null } = {}) {
   const stat = castStat(printedStat, who);
   const context = { character: who, stat, damage, choice };
 
-  return String(card?.body ?? '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
+  return cardProse(card?.body)
     .replace(/\{\{([^}]+)\}\}/g, '$1')
     .replace(/\[\[([^\]]+)\]\]/g, (_, expression) =>
       resolveValue(expression, who, stat, { empower, elevate, bonus }).text

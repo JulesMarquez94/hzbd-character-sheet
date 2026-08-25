@@ -244,7 +244,7 @@ const TALENT_SETS = [
            data/README.md. */
         body:
           'You prepare to intercept the next hit.\n\n' +
-          'The next time an adjacent entity makes a successful roll to hit or is the victim of one, you can choose to take the hit instead.\n\n' +
+          'The next time **an adjacent entity** makes a successful roll to hit or is the victim of one, you can choose to take the hit instead.\n\n' +
           'If you intercept a hit that deals damage, you can use your Shield & One-handed Block ability without paying its action point cost, even if you have already used a reaction on the same action.',
       },
       {
@@ -258,7 +258,7 @@ const TALENT_SETS = [
         wp: null,
         stat: 'instinct',
         body:
-          'You can now use {{Intercept}} on any entity you can see and could reach with a Move Action.\n\n' +
+          'You can now use {{Intercept}} on **any entity** you can see and could reach with a Move Action.\n\n' +
           'When you do, you move to an empty space in melee range of that entity, and the cost of {{Intercept}} is increased by 1 Action Point.\n\n' + // text-style-ok: joins two clauses
           'Additionally your Movement Speed is increased by 1.',
       },
@@ -382,7 +382,7 @@ const TALENT_SETS = [
         wp: 4,
         stat: 'instinct',
         body:
-          'You release a cloud of spores that affects all entities within 9 meters (30 feet).\n\n' +
+          'You release a cloud of spores that affects **all entities** within **9 meters (30 feet)**.\n\n' +
           'Allies within the range of the cloud gain a shield equal to your {instinct} attribute.\n\n' +
           'Enemies within the range of the cloud take {damage:Decay} damage equal to your {instinct} attribute.',
       },
@@ -397,7 +397,7 @@ const TALENT_SETS = [
         wp: 1,
         stat: 'instinct',
         body:
-          'You bond with a willing entity you can touch, making them a temporary part of the fungal network until your next long rest.\n\n' +
+          'You bond with **a willing entity** you can touch, making them a temporary part of the fungal network **until your next long rest**.\n\n' +
           'While bonded, you can communicate telepathically with all bonded entities.',
       },
       {
@@ -411,7 +411,7 @@ const TALENT_SETS = [
         wp: 5,
         stat: 'instinct',
         body:
-          'You empower an ally through your mycelial bond, the next time this ally lands an attack they deal an additional [[4d6 + 4*stat]] in {damage:Decay} damage.',
+          'You empower **an ally** through your mycelial bond, the next time this ally lands an attack they deal an additional [[4d6 + 4*stat]] in {damage:Decay} damage.',
       },
       {
         id: 'deepening-connection',
@@ -658,7 +658,7 @@ const TALENT_SETS = [
         opens: 'ephemeral',
         pays: 'window',
         body:
-          'You temporarily enchant an item you can touch for the next 1 hour.\n\n' +
+          'You temporarily enchant an item you can touch for the next **1 hour**.\n\n' +
           'When doing so, you choose an enchantment you know, applying its effect to the wielder of the item.\n\n' +
           'Ephemeral Enchantment costs an amount of Willpower equal to the enchantment\u2019s Magic Burden.\n\n' +
           'This does not count toward the wielder\u2019s Magic Burden and makes the item Attuned to the person wielding it at the moment of enchantment.',
@@ -832,7 +832,7 @@ const TALENT_SETS = [
           'You have bonded with a draconic beast; your lives are now forever intertwined.\n\n' +
           'During your turn, you also control your draconic ally. It uses its own Action Points and Reaction Points, but uses your Willpower for its abilities.\n\n' +
           'Whenever your draconic ally takes damage, you can choose to take any amount of that damage yourself in its stead.\n\n' +
-          'If it would die, it instead retreats into your shadow and is unable to reemerge until you take a Long Rest.\n\n' +
+          'If it would die, it instead retreats into your shadow and is unable to reemerge **until you take a Long Rest**.\n\n' +
           'If you die, it dies along with you.',
       },
       {
@@ -851,7 +851,7 @@ const TALENT_SETS = [
            as the typo it is rather than transcribed into a term that would not
            light. Flagged in data/README.md. */
         body:
-          'Your draconic ally shoots a magic projectile at an entity it can see within 9 meters (30 feet).\n\n' +
+          'Your draconic ally shoots a magic projectile at **an entity** it can see within **9 meters (30 feet)**.\n\n' +
           'It makes a {stat} Ranged Attack {roll}.\n\n' +
           'On a hit, it deals [[2d4 + stat]] damage in your draconic ally’s chosen damage type.',
       },
@@ -893,7 +893,7 @@ const TALENT_SETS = [
         wp: null,
         stat: 'mind',
         body:
-          'Whenever your draconic ally deals damage to an enemy, it bears a Draconic Mark until your next Turn End.\n\n' +
+          'Whenever your draconic ally deals damage to **an enemy**, it bears a Draconic Mark **until your next Turn End**.\n\n' +
           'The next time you make an Attack Roll against the target, you can do so with Advantage.',
       },
       {
@@ -907,7 +907,7 @@ const TALENT_SETS = [
         wp: 2,
         stat: 'mind',
         body:
-          'Your draconic ally breathes a torrent of magical energy in front of itself, affecting all entities in a 6 meter (20 feet) cone.\n\n' +
+          'Your draconic ally breathes a torrent of magical energy in front of itself, affecting **all entities** in a **6 meter (20 feet)** cone.\n\n' +
           'It makes a {stat} roll {roll} against the entities’ Reflex.\n\n' +
           'On a success, it deals [[2d4 + 2*stat]] damage in your draconic ally’s chosen damage type.',
       },
@@ -941,9 +941,9 @@ const TALENT_SETS = [
            trade every other term on a card has made. See the note in
            keywords.js. */
         body:
-          'While Empowered, you can have your draconic ally bellow a frightening roar intimidating all enemy entities within 18 meters (60 feet) that can hear it.\n\n' +
+          'While Empowered, you can have your draconic ally bellow a frightening roar intimidating **all enemy entities** within **18 meters (60 feet)** that can hear it.\n\n' +
           'It makes a {stat} roll {roll} against the entities’ Grit.\n\n' +
-          'On a success, they are Frightened of you and your draconic ally for the next 2 Turns.',
+          'On a success, they are Frightened of you and your draconic ally for the next **2 Turns**.',
       },
       {
         id: 'draconic-link',
@@ -1045,9 +1045,9 @@ const TALENT_SETS = [
            FRIGHTFUL ROAR made, and the one every other term on a card has made.
            See the note in keywords.js. */
         body:
-          'You attempt to Blind a target you can see within 3 meters (10 feet).\n' +
+          'You attempt to Blind **a target** you can see within **3 meters (10 feet)**.\n' +
           'Make an {stat} roll {roll} against the target\'s Grit.\n' +
-          'On a success, the target is Blinded until its Turn End.',
+          'On a success, the target is Blinded **until its Turn End**.',
       },
       {
         id: 'ambush',
@@ -1070,7 +1070,7 @@ const TALENT_SETS = [
            THE BEAST's own. */
         opens: 'ambush',
         body:
-          'When making a Weapon Attack against a target that cannot see you or is afflicted with the Stunned, Grappled or Constrained status. (The cost of this ability is equal to the weapon number of base damage dice before enchant or boost)\n\n' +
+          'When making a Weapon Attack against **a target** that cannot see you or is afflicted with the Stunned, Grappled or Constrained status. (The cost of this ability is equal to the weapon number of base damage dice before enchant or boost)\n\n' +
           'The Weapon Attack is made with Advantage.\n\n' +
           'On a hit, the Weapon Attack is Elevated a number of times equal to the Willpower paid.',
       },
@@ -1085,8 +1085,8 @@ const TALENT_SETS = [
         wp: null,
         stat: 'instinct',
         body:
-          'You can use the {{Hide}} action even if entities can see you, as long as you are at least 9 meters (30 feet) away from them.\n' +
-          'Additionally, when you or an ally within 3 meters (10 feet) use the {{Hide}} action or make a Skill Check related to sleight of hand or stealth, they do so with Advantage.',
+          'You can use the {{Hide}} action even if entities can see you, as long as you are at least **9 meters (30 feet)** away from them.\n' +
+          'Additionally, when you or **an ally** within **3 meters (10 feet)** use the {{Hide}} action or make a Skill Check related to sleight of hand or stealth, they do so with Advantage.',
       },
       {
         id: 'dodge',
@@ -1831,9 +1831,9 @@ const TALENT_SETS = [
            compulsion stays prose because the sheet does not know where anybody is
            standing: it cannot tell you the nearest target is your friend. */
         body:
-          'You enter a Berserker’s Rage for 10 turns.\n\n' +
+          'You enter a Berserker’s Rage for **10 turns**.\n\n' +
           'While in this state, you gain additional {physique} equal to your Berserker Rank. Your Damage Dice are Elevated by 1.\n\n' +
-          'While raging, you are compelled to make at least one melee attack per turn, prioritizing it over any other action. If no enemies are within reach, you must attack the nearest target, even if it is an ally.\n\n' +
+          'While raging, you are compelled to make at least one melee attack per turn, prioritizing it over any other action. If no enemies are within reach, you must attack the nearest target, even if it is **an ally**.\n\n' +
           'If no valid targets are within reach, you must use your Action Points to move toward the nearest target.',
       },
       {
@@ -1882,7 +1882,7 @@ const TALENT_SETS = [
            name and the file is placed by an alias in pull-card-art.mjs. */
         body:
           '{{Raging Blow}} can now be used with a Special Weapon Attack.\n\n' +
-          'Rolls you make against a target’s Reflex or Grit as part of a Special Weapon Attack are made with advantage.',
+          'Rolls you make against **a target**’s Reflex or Grit as part of a Special Weapon Attack are made with advantage.',
       },
       {
         id: 'ignore-pain',
@@ -2625,7 +2625,7 @@ const TALENT_SETS = [
            already handed over. */
         body:
           'Alchemy is the art of harnessing the elements and blending them with willpower to create a liquid with magical properties.\n\n' +
-          'You have learned to brew all Novice Potions. Brewing a potion takes 1 hour, and whenever you take a long rest you can use your long rest action to brew two of them and still benefit from the rest.\n\n' + // text-style-ok: joins two clauses
+          'You have learned to brew all Novice Potions. Brewing a potion takes **1 hour**, and whenever you take a long rest you can use your long rest action to brew two of them and still benefit from the rest.\n\n' + // text-style-ok: joins two clauses
           'To brew a potion you need its components. Every recipe prints what those cost in Supplies, and they come out of the crate on the night you brew it.',
       },
       {

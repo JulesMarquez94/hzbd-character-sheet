@@ -199,8 +199,11 @@ violet-flame **Willpower** badges, a green or red **advantage arrow** when the h
 grey chevron type banner, a heavy condensed title and black-on-white rules text with an optional
 secondary section (e.g. *Blood Tithe*).
 
-Card text is authored in a mini-markdown: wrap keywords in `**double asterisks**` to bold them,
-and leave a blank line between paragraphs.
+Card text is authored in a mini-markdown. Leave a blank line between paragraphs, and bold with
+`**double asterisks**` for the three things a player scans a card for: how far, at whom and for
+how long. Nothing else takes bold. A defined term is not bolded but looked up, because every
+keyword in `src/lib/keywords.js` is already coloured and carries its own explanation wherever it
+is printed. The full rule is at the top of that file.
 
 ### Rules maths
 

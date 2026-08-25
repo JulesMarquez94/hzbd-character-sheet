@@ -6,9 +6,8 @@ import { getKeyword, keywordPattern } from '../lib/keywords.js';
 /**
  * Card and item rules text, rendered the way the printed cards read.
  *
- *   **bold**            emphasis. Still understood, for cards a player types
- *                       into their own Abilities tab, but no card in the codex
- *                       uses it any more — see the note in keywords.js
+ *   **bold**            a parameter: how far, at whom, for how long. Only those
+ *                       three, and the rule is in keywords.js
  *   {stat} {mind} …     an attribute by name, in that attribute's colour
  *   {damage}            the card's damage type as a coloured chip — already
  *                       swapped for whatever an enchantment turned it into
@@ -25,7 +24,10 @@ import { getKeyword, keywordPattern } from '../lib/keywords.js';
  * the Abilities tab keep working untouched.
  */
 
-const TOKEN = /(\*\*[^*]+\*\*|\[\[[^\]]+\]\]|\{\{[^}]+\}\}|\{[a-zA-Z]+(?::[A-Za-z]+)?\})/g;
+/* The bold run reads to the next `**` rather than to the next `*`, because a
+   live value is allowed inside one: "**[[2*stat]] meters**" is a distance, and
+   `[^*]+` would have stopped at the multiplication sign and printed the marker. */
+const TOKEN = /(\*\*(?:[^*]|\*(?!\*))+\*\*|\[\[[^\]]+\]\]|\{\{[^}]+\}\}|\{[a-zA-Z]+(?::[A-Za-z]+)?\})/g;
 
 /** A damage type written in its own colour, lit like the stat names are. */
 function DamageChip({ type }) {

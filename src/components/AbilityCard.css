@@ -298,20 +298,21 @@
   gap: 0.35rem;
   flex-grow: 1;
   min-height: 0;
-  /* The last resort for a card too dense even at the smallest readable type.
-     Everything that fits is fitted first — see useFitText. */
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  /* A card does not scroll. Whatever is printed on it is fitted to it instead,
+     down to the floor in useFitText, which nothing in the codex reaches. */
+  overflow: hidden;
 }
 
-/* A card name is set at ONE size on every card. It deliberately does not ride
-   --ac-fit: tying it to the body made a dense card print a small name and a
-   sparse card a large one, so no two cards agreed. The rules text absorbs all
-   of the shrinking instead, and a long name wraps rather than shrinking. */
+/* A card name rides --ac-name-fit, which is --ac-fit at half the rate: a dense
+   card gives up a little of its heading so the rules text does not have to
+   absorb every bit of the shrinking on its own. It used to be set at ONE size
+   on every card, so that no two cards disagreed about how big a name is, and
+   that was the right trade while a card's last lines could scroll. They cannot
+   now. A long name still wraps before it shrinks any further. */
 .ac-title {
   position: relative;
   font-family: var(--font-card-display);
-  font-size: 1.72rem;
+  font-size: calc(1.72rem * var(--ac-name-fit, 1));
   line-height: 1.05;
   color: var(--text-silver);
   text-align: center;
@@ -338,7 +339,7 @@
 }
 
 .ac-title-sub {
-  font-size: 1.34rem;
+  font-size: calc(1.34rem * var(--ac-name-fit, 1));
   margin-top: calc(1rem * var(--ac-fit, 1));
 }
 
@@ -356,9 +357,10 @@
   margin-bottom: 0;
 }
 
-/* Emphasis is weight and nothing else. Colour belongs to keywords now — see
+/* Emphasis is weight and nothing else. Colour belongs to keywords — see
    src/lib/keywords.js — and a card where everything is coloured has nothing
-   highlighted at all. */
+   highlighted at all. Weight carries the card's three numbers instead: how far,
+   at whom and for how long. */
 .ac-text strong {
   font-weight: 700;
   color: inherit;

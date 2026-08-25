@@ -79,6 +79,7 @@ import {
   enchanterState,
   layingCost,
 } from './enchanting.js';
+import { cardProse } from './cardText.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
 import { beltRest, characterGrants, heldItem, normalizePack } from './items.js';
 import { usesRest } from './uses.js';
@@ -157,7 +158,7 @@ function lastMatch(text, pattern) {
  * dialog falls back to a free amount for it.
  */
 export function labourOptions(card) {
-  const whole = `${card?.body ?? ''}\n${card?.sub_body ?? ''}`.replace(/\*+/g, '');
+  const whole = `${cardProse(card?.body)}\n${cardProse(card?.sub_body)}`;
 
   /* Only the paragraphs that speak of the rest itself. Field Medic names
      10 Supplies for its mid-combat stabilise a paragraph earlier, and that
@@ -217,7 +218,7 @@ export function restLabours(character) {
     const card = getBackgroundSkill(id);
     if (!card) continue;
 
-    const text = `${card.body ?? ''}\n${card.sub_body ?? ''}`.replace(/\*+/g, '');
+    const text = `${cardProse(card.body)}\n${cardProse(card.sub_body)}`;
     const tags = card.tags ?? [];
     const isLabour =
       tags.includes('Long Rest') ||

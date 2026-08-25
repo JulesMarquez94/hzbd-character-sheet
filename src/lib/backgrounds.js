@@ -261,7 +261,7 @@ const EMPATH = insight({
   name: 'Empath',
   tags: ['Insight', 'Social'],
   summary: 'Advantage on reading what another entity feels or intends.',
-  domain: 'to gain insight on the behavior, emotion or thought of another entity',
+  domain: 'to gain insight on the behavior, emotion or thought of **another entity**',
 });
 
 const CHARISMATIC = insight({
@@ -386,8 +386,8 @@ const TAILOR = {
   summary: 'Sew a disguise or bandages on a Long Rest, and read anyone by their clothes.',
   body:
     'Whenever you take a Long Rest, you can spend 10 Supplies to create a disguise or Bandages.\n\n' +
-    'Additionally, you can gain information about a clothed entity if you can spend at least ' +
-    '1 minute looking at its garments without doing a skill check. This can include social ' +
+    'Additionally, you can gain information about **a clothed entity** if you can spend at least ' +
+    '**1 minute** looking at its garments without doing a skill check. This can include social ' +
     'status and standing, authenticity and provenance.',
 };
 
@@ -422,7 +422,7 @@ const HEALER = {
   tags: ['Skill', 'Passive', 'Support'],
   summary: 'Your healing dice are elevated, and elevated twice over the unconscious.',
   body:
-    'When rolling dice to restore Health to yourself or an ally, the dice are elevated by 1, ' +
+    'When rolling dice to restore Health to yourself or **an ally**, the dice are elevated by 1, ' +
     'or by 2 if the target is unconscious.',
 };
 
@@ -444,8 +444,8 @@ const LIGHT_ARMOR_MASTERY = {
   minLevel: 5,
   summary: 'Movement Speed +1.5 meters in a full set of light armor.',
   body:
-    'When wearing a full set of light armor, your Movement Speed is increased by 1.5 meters ' +
-    '(5 feet).',
+    'When wearing a full set of light armor, your Movement Speed is increased by ' +
+    '**1.5 meters (5 feet)**.',
 };
 
 const SPELLED_ARMOR_MASTERY = {
@@ -509,7 +509,7 @@ const HELPFUL = {
   name: 'Helpful',
   tags: ['Skill', 'Passive', 'Support', 'Social'],
   summary: 'Hand an ally advantage on their own check for 1 Willpower.',
-  body: 'Whenever an ally makes a skill check, you can spend 1 Willpower to give them advantage.',
+  body: 'Whenever **an ally** makes a skill check, you can spend 1 Willpower to give them advantage.',
 };
 
 const SPELL_EATER = {

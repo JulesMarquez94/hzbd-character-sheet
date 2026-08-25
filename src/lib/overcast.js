@@ -55,7 +55,7 @@
  * This file reads cards. It writes nothing and it changes no character.
  */
 
-import { attributeOf, resolveValue } from './cardText.js';
+import { attributeOf, cardProse, resolveValue } from './cardText.js';
 
 /** The four names, and whether each is something you choose or something you owe. */
 const HALVES = {
@@ -106,7 +106,9 @@ export function secondHalf(card) {
   const kind = HALVES[name];
   if (!kind) return null;
 
-  const text = String(card?.sub_body ?? '');
+  /* Emphasis off before a word is matched: a marker inside a phrase is invisible
+     to a reader and fatal to a pattern. See cardProse in cardText.js. */
+  const text = cardProse(card?.sub_body);
   if (!text) return null;
 
   /* The price is always in the opening paragraph. The ones after it are what

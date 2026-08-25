@@ -225,7 +225,7 @@ const SPROUT_WINGS = {
   recharge: 'Long Rest',
   summary: 'Wings for an hour: fly at your Movement Speed, once a long rest.',
   body:
-    'You can manifest Celestial wings for 1 hour.\n\n' +
+    'You can manifest Celestial wings for **1 hour**.\n\n' +
     'While the wings last, you can fly at a speed equal to your Movement Speed.\n\n' +
     'You must take a long rest before you can use this ability again.',
 };
@@ -381,7 +381,7 @@ const WILD_SWIFTNESS = own('Wildkin', {
   id: 'wild-swiftness',
   name: 'Wild Swiftness',
   summary: 'Movement Speed +1.5 meters.',
-  body: 'Your Movement Speed is permanently increased by 1.5 meters (5 feet).',
+  body: 'Your Movement Speed is permanently increased by **1.5 meters (5 feet)**.',
 });
 
 const STICKY = own('Wildkin', {
@@ -530,7 +530,7 @@ const LINEAGE_CODEX = [
         id: 'wind-grace',
         name: 'Wind Grace',
         summary: 'Movement Speed +1.5 meters.',
-        body: 'Your Movement Speed is permanently increased by 1.5 meters (5 feet).',
+        body: 'Your Movement Speed is permanently increased by **1.5 meters (5 feet)**.',
       }),
       INNATE_WIND,
     ],
@@ -608,7 +608,7 @@ const LINEAGE_CODEX = [
            in, and the damage that attribute buys. See castStat in cardText.js. */
         stat: HIGHEST,
         body:
-          'You breathe a torrent of magical energy in front of you, affecting all in a 6-meter (20-foot) cone.\n\n' +
+          'You breathe a torrent of magical energy in front of you, affecting all in a **6-meter (20-foot)** cone.\n\n' +
           'You make a {stat} roll {roll} against the entity’s Reflex.\n\n' +
           'On a success, it deals [[2d6 + 2*stat]] damage in your {{Draconic Scales}} colour.',
       }),

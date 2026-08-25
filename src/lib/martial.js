@@ -114,7 +114,7 @@ export const MARTIAL_MOVES = withArt([
     rides: { advantage: 1 },
     body:
       'Your next Weapon Attack is made with advantage, and on a hit the entity’s {{Move}} action cost is increased by 1 Action Point.\n\n' +
-      'If this hits a flying entity, it falls down toward the ground up to 18 meters (60 feet) if possible.',
+      'If this hits a flying entity, it falls down toward the ground up to **18 meters (60 feet)** if possible.',
   },
   {
     id: 'concuss',
@@ -127,7 +127,7 @@ export const MARTIAL_MOVES = withArt([
     stat: 'instinct',
     body:
       'If your next Weapon Attack hits, it removes 2 Reaction Points from the target entity.\n\n' +
-      'If this attack hits an entity that you are taking a reaction to, that entity’s current action is cancelled.\n\n' +
+      'If this attack hits **an entity** that you are taking a reaction to, that entity’s current action is cancelled.\n\n' +
       'When you take Concuss as a reaction, you can make a Weapon Attack as part of the same reaction by paying the standard Action Point cost for the attack.',
   },
   {
@@ -204,7 +204,7 @@ export const MARTIAL_MOVES = withArt([
     house: true,
     body:
       'Your next Weapon Attack is made with advantage.\n\n' +
-      'On a hit, make a {stat} roll {roll} against the target’s Grit. On a success, whatever it was holding lands 3 meters (10 feet) away in a direction of your choice, and it must take the {{Interact}} action to pick the thing up again.',
+      'On a hit, make a {stat} roll {roll} against the target’s Grit. On a success, whatever it was holding lands **3 meters (10 feet)** away in a direction of your choice, and it must take the {{Interact}} action to pick the thing up again.',
   },
   {
     id: 'feint',
@@ -232,7 +232,7 @@ export const MARTIAL_MOVES = withArt([
     stat: 'instinct',
     house: true,
     body:
-      'Your next Weapon Attack is made against every entity within your reach rather than against one of them.\n\n' +
+      'Your next Weapon Attack is made against **every entity** within your reach rather than against one of them.\n\n' +
       'On a hit, the entity is knocked prone.',
   },
 
@@ -267,7 +267,7 @@ export const MARTIAL_MOVES = withArt([
     rides: { advantage: 1 },
     house: true,
     body:
-      'Your next Weapon Attack is a Critical Hit if it hits an entity that is prone, grappled, stunned or carrying a Wound.\n\n' +
+      'Your next Weapon Attack is a Critical Hit if it hits **an entity** that is prone, grappled, stunned or carrying a Wound.\n\n' +
       'Against anything else it is made with advantage and nothing more.',
   },
   {
@@ -296,7 +296,7 @@ export const MARTIAL_MOVES = withArt([
     stat: 'instinct',
     house: true,
     body:
-      'Your next Weapon Attack that hits will inflict a Wound on the target and on every entity within 3 meters (10 feet) of it.\n\n' +
+      'Your next Weapon Attack that hits will inflict a Wound on the target and on **every entity** within **3 meters (10 feet)** of it.\n\n' +
       'For as long as the target carries a Wound inflicted by this move, it cannot regain Health.',
   },
 ]);

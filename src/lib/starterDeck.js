@@ -17,7 +17,7 @@ export const STARTER_DECK = [
     ap_cost: 2,
     wp_cost: null,
     body:
-      'Make two Instinct Ranged Attack against up to two entities within 25 Meter (80 Feet) of you.\n\n' +
+      'Make two Instinct Ranged Attack against **up to two entities** within **25 Meter (80 Feet)** of you.\n\n' +
       'For each hit, you deal 1d6 + your Instinct as Sharp damage.',
     sub_name: null,
     sub_body: null,
@@ -41,7 +41,7 @@ export const STARTER_DECK = [
     ap_cost: 3,
     wp_cost: 2,
     body:
-      'You manifest a spear of blood and hurl it at an entity you can see within 9 meters (30 feet).\n\n' +
+      'You manifest a spear of blood and hurl it at **an entity** you can see within **9 meters (30 feet)**.\n\n' +
       'Make a Mind Ranged Attack against the target. On a hit, you deal 3d6 + 3 x Mind in Sharp damage.',
     sub_name: 'Blood Tithe',
     sub_body:
@@ -56,7 +56,7 @@ export const STARTER_DECK = [
     wp_cost: 4,
     body:
       'You touch a blood sample to create a trail of red mist that only you can see.\n\n' +
-      'The trail lasts for 12 hours and if followed leads you directly to the entity the blood came from.',
+      'The trail lasts for **12 hours** and if followed leads you directly to the entity the blood came from.',
     sub_name: 'Blood Tithe',
     sub_body:
       'When casting this spell, you may sacrifice Health equal to your Physique.\n\n' +
@@ -69,9 +69,9 @@ export const STARTER_DECK = [
     ap_cost: 3,
     wp_cost: 4,
     body:
-      'You form a predatory bond with up to 5 allies you can see for 10 turns (1 minute), binding you together as a Wild Pack. While this spell is active:\n\n' +
+      'You form a predatory bond with **up to 5 allies** you can see for **10 turns (1 minute)**, binding you together as a Wild Pack. While this spell is active:\n\n' +
       'Attack rolls against a Wild Pack member have Disadvantage while that member is adjacent to at least one other Wild Pack member.\n\n' +
-      'Wild Pack members gain Advantage on attack rolls against an entity if at least 2 Wild Pack members are adjacent to that same entity.\n\n' +
+      'Wild Pack members gain Advantage on attack rolls against **an entity** if at least 2 Wild Pack members are adjacent to that same entity.\n\n' +
       'If a Wild Pack member falls Unconscious or dies, all remaining members’ next attack is a guaranteed Critical Hit. (Friendly fire and self-harm cannot trigger this effect).',
     sub_name: null,
     sub_body: null,
@@ -83,10 +83,10 @@ export const STARTER_DECK = [
     ap_cost: 4,
     wp_cost: 5,
     body:
-      'You conjure a wall of fire at a location you can see within 15 meters (50 feet).\n\n' +
-      'The wall can be up to 15 meters (50 feet) long and 2 meters (10 feet) thick, and it does not have to be a straight line.\n\n' +
+      'You conjure a wall of fire at a location you can see within **15 meters (50 feet)**.\n\n' +
+      'The wall can be up to **15 meters (50 feet)** long and **2 meters (10 feet)** thick, and it does not have to be a straight line.\n\n' +
       'The wall blocks line of sight.\n\n' +
-      'Any entity passing through the wall or having their Turn Start within it takes 4d6 + 4 x Mind in Fire damage.',
+      '**Any entity** passing through the wall or having their Turn Start within it takes 4d6 + 4 x Mind in Fire damage.',
     sub_name: null,
     sub_body: null,
   },

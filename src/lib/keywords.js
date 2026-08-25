@@ -1,21 +1,44 @@
 /**
  * The glossary — the words on a card that mean something exact.
  *
- * Exactly three things on a card are allowed to stand out from the prose, and
+ * Exactly four things on a card are allowed to stand out from the prose, and
  * this file holds the third:
  *
  *   an attribute    Mind, Instinct, Physique, in that attribute's colour
  *   a damage type   Sharp, Decay, Force, in its own
  *   a keyword       a *defined term*. It wears its colour and answers what it
  *                   means when you point at it.
+ *   a **parameter** how far, at whom, for how long. Weight, never colour.
  *
- * Nothing else. The card bodies used to carry `**bold**` for emphasis as well
- * — distances, durations, the clause that mattered — and that emphasis was
- * removed from the codex outright, because a card with thirty emphasised
- * phrases has nothing emphasised at all. The renderer still understands the
- * marker, for cards a player types into their own Abilities tab, but no card
- * in this codex uses it. If you are tempted to bold something, either it is a
- * defined term and belongs in this file, or it is prose and belongs plain.
+ * ------------------------------------------------------------------- the bold
+ * The fourth is new, and it is narrow on purpose. Card bodies once carried
+ * `**bold**` for emphasis in general — whatever clause the writer thought
+ * mattered — and that emphasis was removed from the codex outright, because a
+ * card with thirty emphasised phrases has nothing emphasised at all.
+ *
+ * On Jules's instruction of 2026-08-25 it is back, spending its one mark on the
+ * three things a player scans a card for and on nothing else:
+ *
+ *   range      "within **9 meters (30 feet)**", "a **6-meter (20-foot)** radius"
+ *   targeting  the target the card *declares* — "**an entity**", "**all
+ *              entities**", "**up to two entities**". Never a back-reference:
+ *              "the target" and "the entity" point at something already named
+ *              and are prose.
+ *   duration   "for **10 turns (1 minute)**", "**until your next Long Rest**".
+ *              A measured span, or the rest or turn it runs to. A condition is
+ *              not a duration: "until it is destroyed" stays plain.
+ *
+ * A phrase already lit is not bolded on top of being lit: MOVE prints
+ * "[[speed]] meters" and the live value is louder than any weight. A term
+ * inside a bolded phrase keeps its own colour, which is the point of the two
+ * marks being different — "**all entities**" is a scope wearing a defined word.
+ *
+ * If you are tempted to bold anything else, either it is a defined term and
+ * belongs in this file, or it is prose and belongs plain.
+ *
+ * Every parser that reads card prose takes the markers off first, in one place:
+ * see `cardProse` in cardText.js. A marker in the middle of a phrase is
+ * invisible to a reader and fatal to a regex.
  *
  * A keyword is matched wherever it appears, so Willpower is violet every time
  * it is printed and never violet in one card and plain in the next. The

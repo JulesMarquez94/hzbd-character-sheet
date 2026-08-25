@@ -5689,3 +5689,112 @@ gone and UNWRITTEN SHADOW still there, INNATE LIGHT offering the four real Novic
 spells, `{{Bolster}}` resolving, THEON PERFECT REPLICANTS refused by the tier gate
 with the sentence quoted above, and `templates/ethereal-spells.csv` read back
 column by column against `spells.js` with all thirteen rows matching.
+
+## The bold, and the card that stopped scrolling, 2026-08-25
+
+Asked for in as many words: "In spells and ability, I want you to put in bold in
+card in general notions of distance, targeting and duration. So 3 turn, 1 hour,
+etc do a pass over everything. Also I dont want scrolling in cards. If text get
+smaller name and sub name like overcast etc can be shrinked a bit."
+
+Two changes, and neither of them writes a word of new rules text. Every card body
+in the codex came back byte for byte with the markers taken off again, which is
+the one thing worth proving about a pass this wide.
+
+### What is bold, and what is not
+
+Emphasis had been removed from the codex outright once before, because a card
+with thirty emphasised phrases has nothing emphasised at all. It is back with a
+job and only that job: **how far, at whom, and for how long** — the three things
+a player scans a card for before playing it. The rule is written at the top of
+`src/lib/keywords.js`, beside the three kinds of colour, because that is where
+anybody writing a new card will look for it.
+
+| | bold | plain |
+| - | - | - |
+| range | "within **9 meters (30 feet)**", "a **6-meter (20-foot)** radius" | "regardless of the distance" |
+| targeting | the target a card *declares* — "**an entity**", "**all entities**", "**up to two entities**", "**a dying entity**" | a back-reference — "the target", "the entity", "that specific entity" |
+| duration | "for **10 turns (1 minute)**", "**until your next Long Rest**", "**until its Turn End**" | a condition — "until it is destroyed", "until you Shoot", "until all Shield is gone" |
+
+Three rulings inside that, each of which decides dozens of phrases:
+
+1. **The declaration, never the back-reference.** "an entity" is bold on 89
+   cards and "the target" is plain on 66, because the first says whom you may
+   pick and the second points at somebody already picked. Bolding both would
+   have made the mark mean "this sentence mentions a creature", which is not
+   information.
+2. **Nothing already lit is lit twice.** MOVE prints "[[speed]] meters" and the
+   live value is louder than any weight could be, so it stays plain. A keyword
+   *inside* a bolded phrase keeps its own colour — "**all entities**" is a scope
+   wearing a defined word, and the two marks are different on purpose.
+3. **A measured span, not a condition.** "for 10 turns" and "until your next
+   Long Rest" answer the same question; "until it is destroyed" is a thing that
+   might happen. Only the first two are bold.
+
+Four bolds already in the codex predate the rule. `**Claws & Teeth**` on the two
+Feral Curse cards stays: it is deliberate and its reason is written beside it —
+the weapon has no card of its own for a `{{link}}` to reach. `**Grit**`,
+`**Movement Speed**` and `**Defense**` on the two potions came off, because all
+three are keywords and were already coloured and underlined before the bold was
+added on top.
+
+### Every parser reads the words, so every parser strips the markers first
+
+A marker in the middle of a phrase is invisible to a reader and fatal to a
+regex. `combatTurn.js` and `rest.js` already knew this and each stripped by hand;
+`overcast.js` did not, and GIANT GROWTH's Multicast stopped repeating the moment
+"for each additional entity" became "for **each additional entity**". The search
+box had the same hole the other way round: a card printing "within **9 meters (30
+feet)**" could not be found by typing "within 9 meters".
+
+So `cardProse` in `cardText.js` is the one place that takes them off, and all four
+call it: `effectDuration`, `secondHalf`, `labourOptions` and `cardHaystack`, plus
+`scripts/check-weapons.mjs`, which reads "within 1 Meter" off a Strike to hold the
+melee reach rule. `cardGist` uses it too, so a brief still reads as plain prose.
+
+The renderer learned one thing as well: a bold run now reads to the next `**`
+rather than to the next `*`, so a live value is allowed inside one.
+
+### A card does not scroll any more
+
+`.ac-body` was `overflow-y: auto` — the last resort for a card too dense even at
+the smallest readable type. It is `overflow: hidden` now, which means the fit has
+to actually land rather than nearly land, and the single `box / natural` pass it
+did could not: that ratio is only the right answer while everything in the box
+scales together, and the heading does not. `useFitText` searches instead — seven
+halvings between the floor and full size, keeping the largest that fits.
+
+The heading gives up a little of its own room now, which is what "name and sub
+name can be shrinked a bit" bought. It rides `--ac-name-fit`, which is `--ac-fit`
+at half the rate and floored at 0.72, so a dense card sets its name a shade
+smaller instead of making the rules text absorb all of the shrinking alone. It
+used to be one size on every card, deliberately, so that no two cards disagreed
+about how big a card name is; that was the right trade while the last lines could
+scroll, and they cannot now.
+
+### One number for the designer
+
+ARM SWEEP (`actions.js`) pushes the target back "1.5 meters (3 feet)". Everywhere
+else in the codex 1.5 meters reads as 5 feet, including LIGHT ARMOR MASTERY on the
+same conversion. Left exactly as the sheet has it and flagged here rather than
+corrected, because either half of it could be the one that is right.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves`,
+`lint:weapons` and `npm run build` are all clean. Beyond those, three round trips
+were run directly against the codex:
+
+- **The prose.** All 367 cards dumped before and after, markers stripped from
+  both: not one character of card text differs. The pass adds `**` and nothing
+  else.
+- **What the sheet reads out of the prose.** `effectDuration`, `secondHalf`,
+  `labourOptions` and `cardGist` compared card by card across all 367. Every
+  answer is identical; the only field that moved is `cardHaystack`, which is the
+  intended fix.
+- **The fit.** All 367 cards dealt at once in a browser and measured, twice: bare,
+  and again with a footer and a row of buttons on every one of them, which is the
+  worst case the sheet can hand a card. Nothing scrolls, nothing reaches the type
+  floor, and the tightest card in the codex (BEND LIGHT, with a Multicast half)
+  sets at 0.72 of full size bare and 0.60 loaded. 308 of the 367 need no shrinking
+  at all.

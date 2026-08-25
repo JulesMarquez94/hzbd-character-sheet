@@ -221,7 +221,7 @@ export const ENCHANTMENTS = withArt([
     effect: 'Can be turned on or off to illuminate a 15 meters (50 feet) area.',
     body:
       'The item can be turned on or off at will.\n\n' +
-      'While lit, it illuminates an area of 15 meters (50 feet) around it.',
+      'While lit, it illuminates an area of **15 meters (50 feet)** around it.',
   },
 
   {
@@ -583,7 +583,7 @@ export const ENCHANTMENTS = withArt([
       'You cannot be targeted by any scrying effects or magical means of remote observation. The ring glows a faint red if an entity is currently spying on you or your immediate area through any means.',
     body:
       'The wielder cannot be targeted by any scrying effects or magical means of remote observation.\n\n' +
-      'The ring glows a faint red if an entity is currently spying on the wielder or their immediate area through any means.',
+      'The ring glows a faint red if **an entity** is currently spying on the wielder or their immediate area through any means.',
   },
 ]);
 

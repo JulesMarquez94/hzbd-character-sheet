@@ -76,6 +76,7 @@ import {
   normalizeBelt,
   normalizeEquipment,
 } from './items.js';
+import { cardProse } from './cardText.js';
 import { shieldCapFor } from './characterModel.js';
 import { CARDS, getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
@@ -505,15 +506,14 @@ export function effectDuration(card) {
   if (!card) return null;
 
   /* The printed text carries the cards' own emphasis markers, and a duration
-     is as often written "until your next **Long Rest**" as in plain words.
+     is as often written "**until your next Long Rest**" as in plain words.
      They come off before anything is matched, or every pattern below has to
      carry them — which is exactly how Wild Strider came out as a vague "until
-     it ends" when the card plainly says which rest ends it. */
-  const strip = (value) => String(value ?? '').replace(/\*+/g, '');
-
+     it ends" when the card plainly says which rest ends it. Off in one place
+     for every parser now; see cardProse in cardText.js. */
   return (
-    readDuration(strip(card.body)) ??
-    readDuration(strip(card.sub_body), { upkeep: card.sub_name === 'Upkeep' })
+    readDuration(cardProse(card.body)) ??
+    readDuration(cardProse(card.sub_body), { upkeep: card.sub_name === 'Upkeep' })
   );
 }
 

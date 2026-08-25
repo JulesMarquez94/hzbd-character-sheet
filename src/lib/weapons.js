@@ -225,7 +225,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
   },
   {
@@ -239,7 +239,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, the blade lands three times, each landing dealing [[1d6 + stat]] as {damage} damage.',
   },
 
@@ -260,7 +260,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against **an entity** within **18 Meter (60 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
   },
   {
@@ -274,7 +274,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Ranged Attack {roll} with disadvantage against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} with disadvantage against **an entity** within **18 Meter (60 Feet)** of you.\n\n' +
       'On a hit, the shot is a Critical Hit, dealing [[1d6 + stat]] as {damage} damage.',
   },
 
@@ -301,7 +301,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp'],
     ammo: { max: 3, unit: 'Shot', reload: 'flintlock-pistol-reload' },
     body:
-      'Make an {stat} Ranged Attack {roll} against an entity within 15 Meter (50 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against **an entity** within **15 Meter (50 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.\n\n' +
       'A shot is spent. With all 3 gone you must Reload before you can Shoot again.',
   },
@@ -339,7 +339,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Blunt'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
   },
   {
@@ -353,7 +353,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Blunt'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, the fists land three times, each landing dealing [[1d6 + stat]] as {damage} damage.',
   },
 
@@ -387,7 +387,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Fire'],
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **18 Meter (60 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
   },
   {
@@ -401,7 +401,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Fire'],
     body:
-      'Three bolts leave the wand at once. You may send them all at one entity within 18 Meter (60 Feet) of you or split them between any entities in that range.\n\n' +
+      'Three bolts leave the wand at once. You may send them all at **one entity** within **18 Meter (60 Feet)** of you or split them between **any entities** in that range.\n\n' +
       'Make one {stat} Ranged Attack {roll} and hold it against each of them.\n\n' +
       'Every bolt that beats its target deals [[1d6 + stat]] as {damage} damage.',
   },
@@ -416,7 +416,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Cold'],
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **18 Meter (60 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
   },
   {
@@ -430,7 +430,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Cold'],
     body:
-      'Three bolts leave the wand at once. You may send them all at one entity within 18 Meter (60 Feet) of you or split them between any entities in that range.\n\n' +
+      'Three bolts leave the wand at once. You may send them all at **one entity** within **18 Meter (60 Feet)** of you or split them between **any entities** in that range.\n\n' +
       'Make one {stat} Ranged Attack {roll} and hold it against each of them.\n\n' +
       'Every bolt that beats its target deals [[1d6 + stat]] as {damage} damage.',
   },
@@ -445,7 +445,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Lightning'],
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **18 Meter (60 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
   },
   {
@@ -459,7 +459,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Lightning'],
     body:
-      'Three bolts leave the wand at once. You may send them all at one entity within 18 Meter (60 Feet) of you or split them between any entities in that range.\n\n' +
+      'Three bolts leave the wand at once. You may send them all at **one entity** within **18 Meter (60 Feet)** of you or split them between **any entities** in that range.\n\n' +
       'Make one {stat} Ranged Attack {roll} and hold it against each of them.\n\n' +
       'Every bolt that beats its target deals [[1d6 + stat]] as {damage} damage.',
   },
@@ -487,7 +487,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -501,7 +501,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} with disadvantage against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
   },
 
@@ -517,7 +517,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Ranged Attack {roll} against an entity within 25 Meter (80 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against **an entity** within **25 Meter (80 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -531,7 +531,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Ranged Attack {roll} with disadvantage against an entity within 25 Meter (80 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} with disadvantage against **an entity** within **25 Meter (80 Feet)** of you.\n\n' +
       'On a hit, the shot is a Critical Hit, dealing [[2d6 + stat]] as {damage} damage.',
   },
 
@@ -548,7 +548,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp'],
     ammo: { max: 2, unit: 'Shot', reload: 'flintlock-rifle-reload' },
     body:
-      'Make an {stat} Ranged Attack {roll} against an entity within 30 Meter (100 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against **an entity** within **30 Meter (100 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.\n\n' +
       'A shot is spent. With both gone you must Reload before you can Shoot again.',
   },
@@ -584,7 +584,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 4.5 Meter (15 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **4.5 Meter (15 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -598,8 +598,8 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 4.5 Meter (15 Feet) of you.\n\n' +
-      'On a hit, you deal [[2d6 + stat]] as {damage} damage. You then either pull the target 4.5 Meter (15 Feet) toward you or pull yourself 4.5 Meter (15 Feet) toward the target.',
+      'Make an {stat} Melee Attack {roll} against **an entity** within **4.5 Meter (15 Feet)** of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] as {damage} damage. You then either pull the target **4.5 Meter (15 Feet)** toward you or pull yourself **4.5 Meter (15 Feet)** toward the target.',
   },
 
   /* ----- Light Crossbow -----
@@ -625,7 +625,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp'],
     ammo: { max: 1, unit: 'Bolt', reload: 'light-crossbow-reload' },
     body:
-      'Make an {stat} Ranged Attack {roll} against an entity within 25 Meter (80 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against **an entity** within **25 Meter (80 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.\n\n' +
       'The bolt is spent. You cannot Shoot again until you have Reloaded.',
   },
@@ -671,7 +671,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Psychic'],
     body:
-      'You read a line aloud. Make a {stat} Roll {roll} against the Grit of an entity within 12 Meter (40 Feet) of you.\n\n' +
+      'You read a line aloud. Make a {stat} Roll {roll} against the Grit of **an entity** within **12 Meter (40 Feet)** of you.\n\n' +
       'On a success, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -685,7 +685,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Psychic'],
     body:
-      'You read the whole passage. Make a {stat} Roll {roll} against the Grit of all entities within 6 Meter (20 Feet) of you.\n\n' +
+      'You read the whole passage. Make a {stat} Roll {roll} against the Grit of **all entities** within **6 Meter (20 Feet)** of you.\n\n' +
       'On a success, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -699,7 +699,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Sacred'],
     body:
-      'You read a line aloud. Make a {stat} Roll {roll} against the Grit of an entity within 12 Meter (40 Feet) of you.\n\n' +
+      'You read a line aloud. Make a {stat} Roll {roll} against the Grit of **an entity** within **12 Meter (40 Feet)** of you.\n\n' +
       'On a success, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -713,7 +713,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Sacred'],
     body:
-      'You read the whole passage. Make a {stat} Roll {roll} against the Grit of all entities within 6 Meter (20 Feet) of you.\n\n' +
+      'You read the whole passage. Make a {stat} Roll {roll} against the Grit of **all entities** within **6 Meter (20 Feet)** of you.\n\n' +
       'On a success, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -727,7 +727,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Decay'],
     body:
-      'You read a line aloud. Make a {stat} Roll {roll} against the Grit of an entity within 12 Meter (40 Feet) of you.\n\n' +
+      'You read a line aloud. Make a {stat} Roll {roll} against the Grit of **an entity** within **12 Meter (40 Feet)** of you.\n\n' +
       'On a success, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -741,7 +741,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Decay'],
     body:
-      'You read the whole passage. Make a {stat} Roll {roll} against the Grit of all entities within 6 Meter (20 Feet) of you.\n\n' +
+      'You read the whole passage. Make a {stat} Roll {roll} against the Grit of **all entities** within **6 Meter (20 Feet)** of you.\n\n' +
       'On a success, you deal [[2d6 + stat]] as {damage} damage.',
   },
 
@@ -769,7 +769,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} with disadvantage against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, both blades land and you deal [[1d4 + stat]] as {damage} damage twice.',
   },
   {
@@ -783,7 +783,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'You turn once with both blades out. Make an {stat} Roll {roll} with disadvantage against the Reflex of all entities within 1 Meter (3 Feet) of you.\n\n' +
+      'You turn once with both blades out. Make an {stat} Roll {roll} with disadvantage against the Reflex of **all entities** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a success, you deal [[1d4 + stat]] as {damage} damage twice.',
   },
 
@@ -809,7 +809,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Force'],
     body:
-      'You strike a note and the air in front of it moves. Make an {stat} Ranged Attack {roll} against an entity within 15 Meter (50 Feet) of you.\n\n' +
+      'You strike a note and the air in front of it moves. Make an {stat} Ranged Attack {roll} against **an entity** within **15 Meter (50 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
   },
   {
@@ -829,7 +829,7 @@ export const WEAPON_ABILITIES = withArt([
        roll shape, and the note at the top of this file is what says there is no
        third. */
     body:
-      'You bend the note until it is wrong. Make an {stat} Roll {roll} against the Grit of an entity within 15 Meter (50 Feet) of you.\n\n' +
+      'You bend the note until it is wrong. Make an {stat} Roll {roll} against the Grit of **an entity** within **15 Meter (50 Feet)** of you.\n\n' +
       'On a success, you deal [[2d6 + stat]] as {damage} damage and the target has disadvantage on their next roll.',
   },
 
@@ -859,7 +859,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
   },
   {
@@ -901,7 +901,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -915,7 +915,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} against all entities within 1 Meter (3 Feet) in front of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} against **all entities** within **1 Meter (3 Feet)** in front of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
 
@@ -931,7 +931,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp'],
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 45 Meter (150 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **45 Meter (150 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -945,7 +945,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp'],
     body:
-      'Make a {stat} Ranged Attack {roll} with disadvantage against an entity within 45 Meter (150 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} with disadvantage against **an entity** within **45 Meter (150 Feet)** of you.\n\n' +
       'On a hit, the shot is a Critical Hit, dealing [[2d6 + 2*stat]] as {damage} damage.',
   },
 
@@ -962,7 +962,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Blunt'],
     ammo: { max: 1, unit: 'Shot', reload: 'portable-canon-reload' },
     body:
-      'Make an {stat} Ranged Attack {roll} against an entity within 25 Meter (80 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against **an entity** within **25 Meter (80 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.\n\n' +
       'The shot is spent. You cannot Shoot again until you have Reloaded.',
   },
@@ -1002,7 +1002,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **3 Meter (10 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1016,8 +1016,8 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 3 Meter (10 Feet) of you.\n\n' +
-      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage and push the target 3 Meter (10 Feet) directly away from you.',
+      'Make an {stat} Melee Attack {roll} against **an entity** within **3 Meter (10 Feet)** of you.\n\n' +
+      'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage and push the target **3 Meter (10 Feet)** directly away from you.',
   },
 
   /* ----- Crossbow ----- */
@@ -1033,7 +1033,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp'],
     ammo: { max: 1, unit: 'Bolt', reload: 'crossbow-reload' },
     body:
-      'Make an {stat} Ranged Attack {roll} against an entity within 30 Meter (100 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against **an entity** within **30 Meter (100 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.\n\n' +
       'The bolt is spent. You cannot Shoot again until you have Reloaded.',
   },
@@ -1086,7 +1086,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Sharp'],
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **18 Meter (60 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1100,7 +1100,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Sharp'],
     body:
-      'Choose a point within 18 Meter (60 Feet) of you. Make a {stat} Roll {roll} against the Reflex of all entities within 3 Meter (10 Feet) of it.\n\n' +
+      'Choose a point within **18 Meter (60 Feet)** of you. Make a {stat} Roll {roll} against the Reflex of **all entities** within **3 Meter (10 Feet)** of it.\n\n' +
       'On a success, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1114,7 +1114,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Force'],
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **18 Meter (60 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1128,7 +1128,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Force'],
     body:
-      'Choose a point within 18 Meter (60 Feet) of you. Make a {stat} Roll {roll} against the Reflex of all entities within 3 Meter (10 Feet) of it.\n\n' +
+      'Choose a point within **18 Meter (60 Feet)** of you. Make a {stat} Roll {roll} against the Reflex of **all entities** within **3 Meter (10 Feet)** of it.\n\n' +
       'On a success, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1142,7 +1142,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Blunt'],
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 18 Meter (60 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **18 Meter (60 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1156,7 +1156,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Blunt'],
     body:
-      'Choose a point within 18 Meter (60 Feet) of you. Make a {stat} Roll {roll} against the Reflex of all entities within 3 Meter (10 Feet) of it.\n\n' +
+      'Choose a point within **18 Meter (60 Feet)** of you. Make a {stat} Roll {roll} against the Reflex of **all entities** within **3 Meter (10 Feet)** of it.\n\n' +
       'On a success, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
 
@@ -1172,7 +1172,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} with disadvantage against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, both weapons land and you deal [[2d4 + stat]] as {damage} damage twice.',
   },
   {
@@ -1186,7 +1186,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of all entities within 1 Meter (3 Feet) of you.\n\n' +
+      'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of **all entities** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a success, you deal [[2d4 + stat]] as {damage} damage twice.',
   },
 
@@ -1202,7 +1202,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + stat]] as {damage} damage.',
   },
 
@@ -1227,7 +1227,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1241,7 +1241,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} against all entities within 1 Meter (3 Feet) in front of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} against **all entities** within **1 Meter (3 Feet)** in front of you.\n\n' +
       'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
 
@@ -1257,7 +1257,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp'],
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 60 Meter (200 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **60 Meter (200 Feet)** of you.\n\n' +
       'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1271,7 +1271,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp'],
     body:
-      'Make a {stat} Ranged Attack {roll} with disadvantage against an entity within 60 Meter (200 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} with disadvantage against **an entity** within **60 Meter (200 Feet)** of you.\n\n' +
       'On a hit, the shot is a Critical Hit, dealing [[3d6 + 2*stat]] as {damage} damage.',
   },
 
@@ -1287,7 +1287,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp'],
     body:
-      'Make a {stat} Melee Attack {roll} against an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} against **an entity** within **3 Meter (10 Feet)** of you.\n\n' +
       'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1301,8 +1301,8 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp'],
     body:
-      'Make a {stat} Melee Attack {roll} against an entity within 3 Meter (10 Feet) of you.\n\n' +
-      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage and push the target 3 Meter (10 Feet) directly away from you.',
+      'Make a {stat} Melee Attack {roll} against **an entity** within **3 Meter (10 Feet)** of you.\n\n' +
+      'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage and push the target **3 Meter (10 Feet)** directly away from you.',
   },
 
   /* ----- Heavy Crossbow ----- */
@@ -1318,7 +1318,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp'],
     ammo: { max: 1, unit: 'Bolt', reload: 'heavy-crossbow-reload' },
     body:
-      'Make an {stat} Ranged Attack {roll} against an entity within 45 Meter (150 Feet) of you.\n\n' +
+      'Make an {stat} Ranged Attack {roll} against **an entity** within **45 Meter (150 Feet)** of you.\n\n' +
       'On a hit, you deal [[3d6 + 2*stat]] as {damage} damage.\n\n' +
       'The bolt is spent. You cannot Shoot again until you have Reloaded.',
   },
@@ -1358,7 +1358,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Decay'],
     body:
-      'You swing the censer and the smoke goes where you send it. Make a {stat} Roll {roll} against the Grit of an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'You swing the censer and the smoke goes where you send it. Make a {stat} Roll {roll} against the Grit of **an entity** within **3 Meter (10 Feet)** of you.\n\n' +
       'On a success, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1372,7 +1372,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Decay'],
     body:
-      'The censer opens and the smoke goes out in every direction at once. Make a {stat} Roll {roll} against the Grit of all entities within 3 Meter (10 Feet) of you.\n\n' +
+      'The censer opens and the smoke goes out in every direction at once. Make a {stat} Roll {roll} against the Grit of **all entities** within **3 Meter (10 Feet)** of you.\n\n' +
       'On a success, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1386,7 +1386,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Sacred'],
     body:
-      'You swing the censer and the smoke goes where you send it. Make a {stat} Roll {roll} against the Grit of an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'You swing the censer and the smoke goes where you send it. Make a {stat} Roll {roll} against the Grit of **an entity** within **3 Meter (10 Feet)** of you.\n\n' +
       'On a success, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1400,7 +1400,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Sacred'],
     body:
-      'The censer opens and the smoke goes out in every direction at once. Make a {stat} Roll {roll} against the Grit of all entities within 3 Meter (10 Feet) of you.\n\n' +
+      'The censer opens and the smoke goes out in every direction at once. Make a {stat} Roll {roll} against the Grit of **all entities** within **3 Meter (10 Feet)** of you.\n\n' +
       'On a success, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1414,7 +1414,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Psychic'],
     body:
-      'You swing the censer and the smoke goes where you send it. Make a {stat} Roll {roll} against the Grit of an entity within 3 Meter (10 Feet) of you.\n\n' +
+      'You swing the censer and the smoke goes where you send it. Make a {stat} Roll {roll} against the Grit of **an entity** within **3 Meter (10 Feet)** of you.\n\n' +
       'On a success, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
   {
@@ -1428,7 +1428,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'mind',
     damage: ['Psychic'],
     body:
-      'The censer opens and the smoke goes out in every direction at once. Make a {stat} Roll {roll} against the Grit of all entities within 3 Meter (10 Feet) of you.\n\n' +
+      'The censer opens and the smoke goes out in every direction at once. Make a {stat} Roll {roll} against the Grit of **all entities** within **3 Meter (10 Feet)** of you.\n\n' +
       'On a success, you deal [[3d6 + 2*stat]] as {damage} damage.',
   },
 
@@ -1444,7 +1444,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} with disadvantage against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, both weapons land and you deal [[2d4 + 2*stat]] as {damage} damage twice.',
   },
   {
@@ -1458,7 +1458,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of all entities within 1 Meter (3 Feet) of you.\n\n' +
+      'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of **all entities** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a success, you deal [[2d4 + 2*stat]] as {damage} damage twice.',
   },
 
@@ -1474,7 +1474,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage.',
   },
 
@@ -1502,7 +1502,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp'],
     ammo: { max: 1, unit: 'Bolt', reload: 'ballista-reload' },
     body:
-      'Make a {stat} Ranged Attack {roll} against an entity within 60 Meter (200 Feet) of you.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **60 Meter (200 Feet)** of you.\n\n' +
       'On a hit, you deal [[3d6 + 3*stat]] as {damage} damage.\n\n' +
       'The bolt is spent. You cannot Shoot again until you have Reloaded.',
   },
@@ -1534,7 +1534,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'Make a {stat} Melee Attack {roll} with disadvantage against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make a {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, both weapons land and you deal [[3d4 + 2*stat]] as {damage} damage twice.',
   },
   {
@@ -1548,7 +1548,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'physique',
     damage: ['Sharp', 'Blunt'],
     body:
-      'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of all entities within 1 Meter (3 Feet) of you.\n\n' +
+      'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of **all entities** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a success, you deal [[3d4 + 2*stat]] as {damage} damage twice.',
   },
 
@@ -1570,7 +1570,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[1d6 + stat]] as {damage} damage.',
   },
   {
@@ -1584,7 +1584,7 @@ export const WEAPON_ABILITIES = withArt([
     stat: 'instinct',
     damage: ['Sharp'],
     body:
-      'Make an {stat} Melee Attack {roll} against an entity within 1 Meter (3 Feet) of you.\n\n' +
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 Meter (3 Feet)** of you.\n\n' +
       'On a hit, you deal [[2d6 + 2*stat]] as {damage} damage and gain Shield equal to [[stat]].',
   },
 ]);

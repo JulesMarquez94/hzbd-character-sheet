@@ -27,6 +27,7 @@
  * `npm run lint:text` is the other half.
  */
 
+import { cardProse } from '../src/lib/cardText.js';
 import { WEAPONS, WEAPON_ABILITIES, getCard } from '../src/lib/weapons.js';
 
 const LIST = process.argv.includes('--list');
@@ -259,7 +260,7 @@ for (const weapon of WEAPONS) {
      2026-08-24, and the one number a reader would never think to check. */
   if (kinds[0] === 'Melee' && !tags.includes('Reach')) {
     const { plain } = taught(weapon);
-    if (plain && !/within 1 Meter/.test(plain.body ?? '')) {
+    if (plain && !/within 1 Meter/.test(cardProse(plain.body))) {
       note(where, `${plain.name} does not reach 1 Meter, and only a Reach weapon reaches further`);
     }
   }

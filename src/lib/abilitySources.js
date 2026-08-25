@@ -30,6 +30,7 @@ import {
   skillCards,
 } from './backgrounds.js';
 import { alchemistState } from './alchemy.js';
+import { cardProse } from './cardText.js';
 import { brewLimits, brewingOf, knownIngredients } from './brews.js';
 import { INGREDIENT_PARTS } from './ingredients.js';
 import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from './items.js';
@@ -587,9 +588,22 @@ export function heldCardTags(sources) {
   return [...seen].sort().map((tag) => ({ id: tag, label: tag, kind: 'card' }));
 }
 
-/** Everything about a card the search box may look inside. */
+/**
+ * Everything about a card the search box may look inside.
+ *
+ * The two prose fields come through `cardProse`, because a marker sits inside
+ * the phrase a reader would type: the card says "within **9 meters (30 feet)**"
+ * and a search for "within 9 meters" would find nothing.
+ */
 export function cardHaystack(card) {
-  return [card.name, card.summary, card.body, card.sub_name, card.sub_body, card.type_line]
+  return [
+    card.name,
+    card.summary,
+    cardProse(card.body),
+    card.sub_name,
+    cardProse(card.sub_body),
+    card.type_line,
+  ]
     .concat(card.tags ?? [])
     .concat(card.damage ?? [])
     .filter(Boolean)

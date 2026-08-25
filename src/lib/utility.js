@@ -65,8 +65,8 @@ export const UTILITY_CARDS = withArt([
     ap: 3,
     wp: null,
     body:
-      'Bind a wound on yourself or an entity within 1.5 meters (5 feet), healing [[1d6 + level]].\n\n' +
-      'The same entity cannot be bound a second time until they have taken a Long Rest.',
+      'Bind a wound on yourself or **an entity** within **1.5 meters (5 feet)**, healing [[1d6 + level]].\n\n' +
+      'The same entity cannot be bound a second time **until they have taken a Long Rest**.',
   },
   {
     id: 'smoke-vial',
@@ -76,7 +76,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     body:
-      'Throw the vial at a point you can see within 9 meters (30 feet). It bursts into a bank of smoke 4.5 meters (15 feet) across that hangs for 3 turns.\n\n' +
+      'Throw the vial at a point you can see within **9 meters (30 feet)**. It bursts into a bank of smoke **4.5 meters (15 feet)** across that hangs for **3 turns**.\n\n' +
       'Attacks made into, out of or through the smoke are made with Disadvantage.',
   },
 
@@ -114,8 +114,8 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     stat: 'mind',
     body:
-      'Throw the flask at a point you can see within 9 meters (30 feet). It breaks on contact, and every entity within 3 meters (10 feet) takes [[1d6 + stat]] in {damage:Fire} damage.\n\n' +
-      'The flames stay for 3 turns. An entity that starts its turn in them takes the same again.',
+      'Throw the flask at a point you can see within **9 meters (30 feet)**. It breaks on contact, and **every entity** within **3 meters (10 feet)** takes [[1d6 + stat]] in {damage:Fire} damage.\n\n' +
+      'The flames stay for **3 turns**. **An entity** that starts its turn in them takes the same again.',
   },
   {
     id: 'potion-of-physique',
@@ -125,7 +125,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     stat: 'mind',
-    body: 'Drinking this potion increases your {physique} by 2 for 1 hour.',
+    body: 'Drinking this potion increases your {physique} by 2 for **1 hour**.',
   },
   {
     id: 'potion-of-instinct',
@@ -135,7 +135,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     stat: 'mind',
-    body: 'Drinking this potion increases your {instinct} by 2 for 1 hour.',
+    body: 'Drinking this potion increases your {instinct} by 2 for **1 hour**.',
   },
   {
     id: 'potion-of-mind',
@@ -145,7 +145,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     stat: 'mind',
-    body: 'Drinking this potion increases your {mind} by 2 for 1 hour.',
+    body: 'Drinking this potion increases your {mind} by 2 for **1 hour**.',
   },
   {
     id: 'love-potion',
@@ -156,8 +156,8 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     stat: 'mind',
     body:
-      'When an entity drinks this potion, make a {mind} roll {roll} against its **Grit**.\n\n' +
-      'On a success, for 1 hour the drinker holds you as a trusted ally and is ready to do what it must to help you, so long as it does not put the drinker in harm.',
+      'When **an entity** drinks this potion, make a {mind} roll {roll} against its Grit.\n\n' +
+      'On a success, for **1 hour** the drinker holds you as a trusted ally and is ready to do what it must to help you, so long as it does not put the drinker in harm.',
   },
   {
     id: 'growth-elixir',
@@ -168,8 +168,8 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     stat: 'mind',
     body:
-      'Drinking this elixir adds 2 meters (6 feet) to your height and massively increases your muscle mass for 1 hour.\n\n' +
-      'While it lasts your {physique} is increased by 5, your **Movement Speed** by 4 and your **Defense** by 2, and your {instinct} is reduced by 5.',
+      'Drinking this elixir adds **2 meters (6 feet)** to your height and massively increases your muscle mass for **1 hour**.\n\n' +
+      'While it lasts your {physique} is increased by 5, your Movement Speed by 4 and your Defense by 2, and your {instinct} is reduced by 5.',
   },
 
   /* ----- usable ----- */
@@ -182,7 +182,7 @@ export const UTILITY_CARDS = withArt([
     wp: 30,
     body:
       'Infusing the disk with energy manifests a cart made of terracotta.\n\n' +
-      'This cart can carry up to 500 kg, moves at a speed of 6 km per hour and lasts for 12 hours.\n\n' +
+      'This cart can carry up to 500 kg, moves at a speed of **6 km per hour** and lasts for **12 hours**.\n\n' +
       'It moves on its own with no need for a beast of burden but only functions on smooth surfaces such as roads.\n\n' +
       'After the effect ends, you must take a Long Rest before the disk can be used again.',
   },
@@ -194,7 +194,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     body:
-      'Throw the hook at a ledge, beam or lip you can see within 9 meters (30 feet).\n\n' +
+      'Throw the hook at a ledge, beam or lip you can see within **9 meters (30 feet)**.\n\n' +
       'If it catches, the line bears 200 kg and anyone may climb it at half their Speed. Setting the hook by hand from where you already stand needs no throw at all.',
   },
   {
@@ -206,7 +206,7 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     body:
       'Open or close the shutter.\n\n' +
-      'Open, it lights 9 meters (30 feet) around you and burns for 6 hours on one filling of oil. Closed, it keeps its flame and shows nothing.',
+      'Open, it lights **9 meters (30 feet)** around you and burns for **6 hours** on one filling of oil. Closed, it keeps its flame and shows nothing.',
   },
   {
     /* Jules's, 2026-08-20: "a special called Druidic Tome — which the player can
@@ -235,7 +235,7 @@ export const UTILITY_CARDS = withArt([
     body:
       'You look the answer up instead of guessing at it.\n\n' +
       'Once a day, you succeed automatically on a skill check to do with the natural world: a plant, a beast, a venom or disease, the weather or the ground you are standing on.\n\n' +
-      'The tome is spent once it has answered, and has nothing more to say until you have taken a Long Rest.',
+      'The tome is spent once it has answered, and has nothing more to say **until you have taken a Long Rest**.',
   },
   {
     id: 'thiefs-picks',
@@ -245,7 +245,7 @@ export const UTILITY_CARDS = withArt([
     ap: null,
     wp: null,
     body:
-      'Working the picks opens a mundane lock, given 1 minute, a free hand and quiet enough to hear the pins.\n\n' +
+      'Working the picks opens a mundane lock, given **1 minute**, a free hand and quiet enough to hear the pins.\n\n' +
       'A lock built against picking, or one held shut by a working, is beyond them.',
   },
 ]);

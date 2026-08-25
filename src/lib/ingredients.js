@@ -113,7 +113,7 @@ export const INGREDIENTS = withArt([
     summary: 'Health back.',
     body:
       'You drop a vibrant, life-giving leaf into the brew.\n\n' +
-      'A target entity affected by the Brew regains [[2d6 + 2*stat]] in Health.',
+      '**A target entity** affected by the Brew regains [[2d6 + 2*stat]] in Health.',
   },
 
   /* The one place this file departs from the sheet, and on the designer's own
@@ -166,7 +166,7 @@ export const INGREDIENTS = withArt([
     body:
       'You drop a shimmering, hardened scale into the brew.\n\n' +
       'The brewer chooses one of the following damage types: Fire, Cold, Lightning, Blunt, Force, Sharp, Decay, Psychic or Sacred.\n\n' +
-      'An entity affected by the Brew gains resistance to the chosen damage type until they take a Short Rest.',
+      '**An entity** affected by the Brew gains resistance to the chosen damage type **until they take a Short Rest**.',
   },
 
   {
@@ -217,7 +217,7 @@ export const INGREDIENTS = withArt([
     summary: 'Stunned until their next Turn End.',
     body:
       'You drop a glowing, heat-pulsing shard into the brew.\n\n' +
-      'Entities affected by the Brew become Stunned until their next Turn End.',
+      'Entities affected by the Brew become Stunned **until their next Turn End**.',
   },
 
   {
@@ -236,7 +236,7 @@ export const INGREDIENTS = withArt([
       'You drop a dense, brain-shaped nut into the brew.\n\n' +
       'The brewer names a specific skill (such as Stealth, Carpentry, Investigation, hot dog eating or Diplomacy).\n\n' +
       'Entities affected by the Brew have Advantage in the named skill.\n\n' +
-      'This effect lasts until the target takes a Long Rest.',
+      'This effect lasts **until the target takes a Long Rest**.',
   },
 
   {
@@ -253,7 +253,7 @@ export const INGREDIENTS = withArt([
     summary: 'Poison damage, and leaves them poisoned.',
     body:
       'You drop a bloated, neon-colored frog into the brew.\n\n' +
-      'An entity affected by the Brew takes [[2d6 + 2*stat]] in {damage:Poison} damage.\n\n' +
+      '**An entity** affected by the Brew takes [[2d6 + 2*stat]] in {damage:Poison} damage.\n\n' +
       'The entity is also Poisoned.',
   },
 
@@ -275,7 +275,7 @@ export const INGREDIENTS = withArt([
     summary: 'Aims the Brew at one target you can see within 9 meters.',
     body:
       'You drop a preserved, lidless eye into the brew to sharpen its focus.\n\n' +
-      'Your Brew affects a single target you can see within 9 meters (30 feet).',
+      'Your Brew affects **a single target** you can see within **9 meters (30 feet)**.',
   },
 
   {
@@ -291,7 +291,7 @@ export const INGREDIENTS = withArt([
     summary: 'Bubbles the Brew out over everything within 6 meters.',
     body:
       'You drop a Puffball mushroom in the brew, making the smoke bubble out of the cauldron.\n\n' +
-      'Your Brew affects all entities within 6 meters (20 feet).',
+      'Your Brew affects **all entities** within **6 meters (20 feet)**.',
   },
 
   {
@@ -306,7 +306,7 @@ export const INGREDIENTS = withArt([
     stat: 'instinct',
     summary: 'A piece of somebody carries the Brew to them at any distance.',
     body:
-      'You drop a piece of a specific entity (such as hair, skin or blood) into the cauldron.\n\n' +
+      'You drop a piece of **a specific entity** (such as hair, skin or blood) into the cauldron.\n\n' +
       'The Brew affects that specific entity regardless of the distance between you and the target.\n\n' +
       'The target must be on the same plane of existence as the brewer for the effect to take hold.',
   },
@@ -341,9 +341,9 @@ export const INGREDIENTS = withArt([
     summary: 'A storm cloud that keeps applying the Brew for 5 turns.',
     body:
       'You drop a captured bolt of pure energy into the brew, causing it to evaporate into a dark storm cloud.\n\n' +
-      'The cloud appears at a point you can see within 30 meters (100 feet).\n\n' +
-      'The storm covers a 15-meter (50-foot) radius area and lasts for 5 turns.\n\n' +
-      'An entity is affected by the Brew\'s effects when the cloud is placed, the first time it enters the area and at each of its Turn Starts while inside of it.',
+      'The cloud appears at a point you can see within **30 meters (100 feet)**.\n\n' +
+      'The storm covers a **15-meter (50-foot)** radius area and lasts for **5 turns**.\n\n' +
+      '**An entity** is affected by the Brew\'s effects when the cloud is placed, the first time it enters the area and at each of its Turn Starts while inside of it.',
   },
 
   {
@@ -359,8 +359,8 @@ export const INGREDIENTS = withArt([
     summary: 'A glyph that waits on the ground until somebody walks into it.',
     body:
       'You grind a piece of sacred chalk into the cauldron, binding the brew to the ground.\n\n' +
-      'You create a 3-meter (10-foot) radius glyph at a point you can see within 9 meters (30 feet).\n\n' +
-      'An entity that enters the glyph triggers the Brew\'s effects.\n\n' +
+      'You create a **3-meter (10-foot)** radius glyph at a point you can see within **9 meters (30 feet)**.\n\n' +
+      '**An entity** that enters the glyph triggers the Brew\'s effects.\n\n' +
       'The glyph lasts until it is triggered, removed by the brewer or a new glyph is created by the brewer.',
   },
 
