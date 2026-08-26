@@ -90,11 +90,14 @@ doing on its own.
 | Shadow art, from the `Shadow/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
 | Spells · Ethereal · Time | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
 | Time art, from the `Time/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Ethereal · Spacial | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`) |
+| Spacial art, from the `Space/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
-else: the codex also carries one Arcane spell, Containment Sphere, which no
-sheet covers yet. `elemental-spells.csv` holds the 29 Elemental spells — a tab
+else, which is now the whole of what the codex has under that school: the one
+Arcane spell it used to carry beside them, Containment Sphere, moved to Ethereal ·
+Spacial on 2026-08-25 when a sheet finally covered it. `elemental-spells.csv` holds the 29 Elemental spells — a tab
 with no sheet behind it, generated straight out of `spells.js`, and its Image
 column names the render each row came from, which is what the art importer
 places the files by. `draconic-bond-overview.csv`, `trickster-overview.csv`,
@@ -2124,8 +2127,9 @@ stale-while-revalidate. Not `immutable`, deliberately: the filename does not
 change when the picture does, so an immutable copy would never be replaced for
 anyone who had already seen the old one.
 
-Two cards have no picture, both correctly: **Climb**, which is not on the sheet,
-and **Containment Sphere**, which no sheet covers yet.
+One card has no picture, correctly: **Climb**, which is not on the sheet.
+Containment Sphere was the other until the Spacial drop on 2026-08-25 brought a
+render with it.
 
 **Who sees them is a separate question.** Card art is a paid capability, so a
 `free` account gets the empty plate and `premium` upward get the picture. The
@@ -2321,7 +2325,7 @@ them imply, not something transcribed from a rules sheet. They are marked
 | `rooted` | Entangling Roots, Thorn Rampart |
 | `prone` | Shove |
 | `grappled` | Grapple |
-| `stunned` | Containment Sphere |
+| `stunned` | Ice Block, Magma Chains, Chrono Lock, Execute |
 | `incapacitated` | Bird View |
 | `unconscious` | Pack Bond, Stabilize |
 | `elevates` | Verdant Field |
@@ -6282,3 +6286,295 @@ it already does.
 `templates/ethereal-spells.csv` is 37 rows now, 13 Light and 12 Shadow and 12 Time,
 and every Time row was read back: each parses into the card it came from field for
 field, and every Image cell names a file that is really in `data/Time/`.
+
+## The Spacial family, and colour on every tag, 2026-08-25
+
+Asked for in as many words: "I ahve added the Spacial spells you have hte image in
+the space folder. I also want you to do a pass color on tags for the spells, each
+school and sub schoo lshould have a color here they can be close to each other. Try
+to establsih one htat make sense for each . Also clean the tags so damage type does
+not show in the list or overcast and multicast ect but can still be serach (like
+invisible tags)."
+
+Three things, and the first is another spell drop.
+
+Two sources, both already on disk. `data/Spells - Ethreal - Spacial.csv` holds
+twelve rows in the drop's usual eight columns, and `data/Space/` holds twelve
+pictures at 1200x896, one per row. Spacial is the Ethereal school's fourth family
+and the fourth to arrive on the same day: same three-tag banner, same tiers, same
+shelves. The sheet writes all twelve in tier, school, family order already, so
+nothing had to be normalised.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | DIMENSIONAL POCKET, COMPRESSION BLAST, DIMENSIONAL REACH, WARP TIDE |
+| Adept | SPATIAL FOLD, PORTAL TRICK, ENERGY BEAM, CONTAINMENT SPHERE |
+| Master | TRANSPOSITION BEACON, SPATIAL TRANSPOSITION, BANISHMENT VAULT, EVENT HORIZON |
+
+Four to a rung and no Legendary. THEON PERFECT REPLICANTS is still the only card in
+the codex on that fourth rung, and still nothing reaches it.
+
+### The family is Spacial, with a c
+
+All twelve Tags cells say Spacial and so does the sheet's filename. Two of the
+cards are named with a t (SPATIAL FOLD, SPATIAL TRANSPOSITION), a third says
+"spatial pocket" in its body, and the picture folder is called Space. The Tags
+column is what a banner prints and what a filter chips, so the tag is the sheet's
+Spacial and the card names are the sheet's Spatial. Neither was corrected against
+the other, and it is worth a glance at the source since a family name is what a
+whole shelf is called.
+
+### What this retires: the Arcane school
+
+CONTAINMENT SPHERE was the codex's only Arcane spell. It had no sheet behind it and
+no picture on disk, and the two exceptions this file has been carrying since the
+Primal pull, "one Arcane spell no sheet covers yet" and "two cards have no
+picture", were both about that one card.
+
+This sheet has it at the same tier, the same 4 Action Points and 4 Willpower, and
+the same three paragraphs, with a render beside it. So it is the same card finally
+filed. It moved rather than being written twice: the id `containment-sphere` is
+unchanged, so a spellbook already holding it still resolves and simply reads
+Ethereal · Spacial from here on.
+
+Two things about it did change, and both are the sheet's:
+
+- the trapped entity is **Constrained** where the old card said stunned, which is
+  the keyword SHADOW BIND defined that afternoon and the better word for a thing
+  sealed inside a sphere
+- the Overcast costs **3 Willpower** where it used to cost 2
+
+Arcane is empty now, which is exactly where Nature has always been: a word on the
+shelf in `cardOrder.js` with nothing standing on it. Both keep their places, so the
+day a sheet arrives it lands where the designer already put the word.
+
+### The rolls
+
+Seven contests, all the caster's own and all against Reflex: COMPRESSION BLAST,
+WARP TIDE, PORTAL TRICK, ENERGY BEAM, SPATIAL TRANSPOSITION, BANISHMENT VAULT and
+EVENT HORIZON. No family in the codex has leaned this hard on one defense.
+
+CONTAINMENT SPHERE's breakout is the eighth roll and is the trapped entity's, so it
+prints `{stat}` as a name and no `{roll}`: the number belongs to whoever is in the
+sphere and the card has no way to know who that is. BEND LIGHT is the only other
+card that does this, and it is unchanged from the old Arcane version.
+
+### The halves
+
+Six, and five are labelled the way the codex uses the words. Three Overcasts that
+buy more (COMPRESSION BLAST widens, ENERGY BEAM bends, CONTAINMENT SPHERE hampers
+the breakout), one that closes a spell early (SPATIAL FOLD), one that spends the
+beacon you left (TRANSPOSITION BEACON) and one genuine Multicast (BANISHMENT
+VAULT).
+
+**DIMENSIONAL POCKET's is called a Multicast and moves an item rather than catching
+a target.** Multicast means spending more to reach more, and one more item in the
+pocket is the nearest thing this card has to another target. The sheet's word
+stands. Worth a glance: an Overcast is what the same half would be called if the
+thing it reached were not countable.
+
+Four of the six open later than a cast. SPATIAL FOLD, TRANSPOSITION BEACON and
+DIMENSIONAL POCKET all begin "While X is active", and CONTAINMENT SPHERE's opens on
+the breakout, so `overcast.js` charges all four as their own spend rather than as a
+rider on the cast. COMPRESSION BLAST's, ENERGY BEAM's and BANISHMENT VAULT's keep
+"When casting" and are riders.
+
+### Two numbers here are not the designer's
+
+1. **ENERGY BEAM arrived with no Action Point and no Willpower cost**, the same hole
+   TEMPORAL EROSION had on the Time sheet the evening before. It is priced at 4 and
+   5, which is what SAVAGE SLAM and WALL OF FLAMES both charge for the same shape:
+   an Adept spell catching everything in an area for `4d6 + 4*stat`. It sits at the
+   top of its rung in the family, above SPATIAL FOLD and PORTAL TRICK at 3 and 4
+   and level with CONTAINMENT SPHERE's 4, which is where the family's one damage
+   card belongs. Give it a number.
+2. **COMPRESSION BLAST deals damage and names no type.** Its two siblings both say
+   Force and this one says nothing, so it prints untyped rather than being given a
+   type it does not carry: a damage type is what a resistance answers, and DRACONIC
+   SCALE grants one without the other. Force is the obvious answer and it is one
+   word at the source.
+
+### Every other reading, in order
+
+- **Nine ranges had the metres and lost the feet**: "3 Meter()", "9 Meter ()",
+  "with 18 meter ()", "with in 9 Meters ()", "1.5m ()", "20 meter ()". The metre
+  leads every cell in this codex and the conversion is the codex's own three metres
+  to ten feet, which is the call WALL OF FLAMES documents.
+- **EVENT HORIZON's 20 meters is the first range in the codex off its own ladder.**
+  Every other distance is a multiple of 3 metres or the two halves 1.5 and 4.5, and
+  20 is neither, so it converts to 65 feet rather than to one of the round numbers
+  the rest of the codex prints. The number is the designer's and it stands. 18
+  meters (60 feet) is what it would be on the ladder, and SPATIAL TRANSPOSITION on
+  the same rung is already there.
+- **SPATIAL FOLD's Overcast calls the spell Dimensional Pocket**, a paste from the
+  row two above it, and its second sentence closes "the Spatial Fold". The card is
+  SPATIAL FOLD in its Name column, on its picture and in everything it describes,
+  so both halves name it. The same call DELAY documents.
+- **ENERGY BEAM's Overcast calls the spell Arcane Ray** and bends "the ray". Same
+  paste and same call: the Name column, the picture and the body all say Energy
+  Beam, so the half says Energy Beam and bends the beam.
+- **DIMENSIONAL POCKET's weight limit says "20 Kg (imperial value)"**, a note to
+  whoever was going to convert it, exactly as TEMPORAL MEND's did. 44 lbs, in the
+  form TELEKINESIS prints.
+- **DIMENSIONAL REACH is cast with "special magic".** Left as the sheet wrote it.
+  It is a real word in a real sentence, so the COGNITE reading does not apply, but
+  every other card in the family says space or spatial and this one is called
+  DIMENSIONAL REACH. One letter at the source either way.
+- **PORTAL TRICK intercepts "the next attack and entity you can see"**, which is an
+  attack *of* an entity with one letter turned. Nothing else in the sentence
+  parses: a portal that intercepts an entity is what CONTAINMENT SPHERE does.
+- "Until the end of your next turn" is your **next Turn End**, and "At each of your
+  Turn end" is **at your Turn End**. The defined terms.
+- Spelling and grammar, throughout and without further comment: "abiltieis", "YOu",
+  "agasn", "tey", "entitles", "this two points", "are connect", "is redirect",
+  "entiteis", "Transpostion", "that last for", "orginaly", "intendend", "all action
+  apply", "htier", "teh", "They banished", "item fall out into the ground".
+
+### The art importer learned one word
+
+`data/Space/` is the third family folder dropped at the top of `data/` rather than
+under its school, after `data/Shadow/` and `data/Time/`, so `space` joined
+`FAMILY_FOLDERS` and `PLATE_FOLDERS` in `pull-card-art.mjs`. The first says the
+folder is spell art; the second says its files are paintings rather than whole card
+renders and must not be cropped.
+
+It is the one entry there that is not named for the family it holds: the folder is
+Space and the family is Spacial. Nothing in that script compares a folder's name to
+a tag, so the mismatch costs nothing. The name is only how the folder is claimed,
+and the cards inside it are matched to the codex by their own filenames.
+
+**No alias was needed, which is a first for these drops.** All twelve filenames
+match the names the sheet prints once `flatten` has lowercased them and dropped the
+punctuation, `Containment SPhere.png` included.
+
+### Nothing here is wired
+
+Which is where all three earlier Ethereal drops landed. Five are effects a tracker
+row would want to carry, and the two worth naming are DIMENSIONAL POCKET, which
+holds two items off the Inventory tab until a Long Rest, and BANISHMENT VAULT,
+which takes an entity off the board for two turns. Neither has a rider in
+`riders.js`.
+
+The pocket in particular is a new shape: it is the first card in the codex that
+changes what a character is carrying without the item leaving the sheet, so a bag
+that knew about it would have to hold an item that is neither worn, on the belt nor
+in the inventory. They print, they can be dealt, and the table does the arithmetic,
+which is where every effect in this codex starts.
+
+### The Arcanist's spellbook grew by eleven
+
+Eleven and not twelve, because CONTAINMENT SPHERE was already in it under another
+school. The Arcanist is still the one spec that names no school, so it draws from
+the whole codex by tier: its Rank 3 pool is now 24 Primal, 29 Elemental and 48
+Ethereal, up from 24 Primal, 29 Elemental, 36 Ethereal and 1 Arcane. Rank 1 offers
+44 cards and Rank 2 offers 77.
+
+Every other set that names a school refuses all twelve. The Mycomancer does so with
+"Ethereal school, not Primal", and no other set on the wall has a spell pool at
+all. Imbuements pick all twelve up on their own, because `spellsAt` matches the
+tier word and Novice, Adept and Master are three of the words it matches.
+
+## Colour on every school and every family, 2026-08-25
+
+The second and third parts of the same ask, and both are about the chip row rather
+than about any card's text.
+
+### One law, and six leans
+
+**The school owns a hue and a family is a shade of it.** So the school is what you
+see first and the family what you see second, which is the order the banner itself
+reads in. Every family sits inside about thirty degrees of its school's hue and
+separates from its siblings on lightness and saturation instead.
+
+| School | Hue | Families |
+| --- | --- | --- |
+| Primal | green | Flora leaf, Wild moss, Life spring, **Blood** |
+| Nature | teal-green | none yet |
+| Arcane | magenta | Energy, lighter |
+| Elemental | ember amber | **Fire**, Magma, Earth, **Lightning**, Wind, **Water** |
+| Ethereal | sky | **Light** palest, Time cyan, Spacial indigo, **Shadow** deepest |
+| Nightmare | crimson-magenta | none yet |
+
+The bold six are the leans, and they are written into the law rather than around
+it: **where the codex already knows what colour a family is, that colour is what
+its shade leans to.** Fire, Water, Lightning and Blood each answer to a damage or
+stat token that has been in `index.css` since the beginning; Light and Shadow are
+their own names, and being the palest and the deepest thing on the Ethereal shelf
+is the whole of that pair. Blood is the one that leaves its school's band outright,
+because a green Blood chip would read as poison.
+
+None of the six is a second copy of the token it answers to. A chip is 0.56rem
+uppercase on a dark ground and needs more light than a body-text colour does, so
+each is its own value and says at the token which one it answers to.
+
+Nature and Arcane have no spell in the codex and are coloured anyway, so the day a
+sheet arrives it lands somewhere rather than falling to grey.
+
+### Where it lives
+
+`src/lib/tagColors.js`, a leaf that imports nothing, for the reason `cardOrder.js`
+is one: it is reached from the card brief and from the filter row, so anything it
+pulled in would be pulled into both. Every value in it is a `var(--...)`, so
+`index.css` stays the one place a colour is written down and `tagColors.js` stays
+the one place a *word* is matched to one.
+
+Two callers, and they agree on purpose. A brief's chips take the colour, so a wall
+of spells reads school by school; the filter row's chips take the same one, so
+"Ethereal" in the box and Ethereal on a brief are visibly the same thing. The
+ground and the border are mixed off `currentColor` in the stylesheet rather than
+written in the module, so one property lights a whole chip and the CSS keeps
+deciding how strongly.
+
+**The rung is not coloured.** `Novice Spell` and its siblings keep the card's own
+accent, the violet the printed card is capped with, because what a card *is* is a
+different question from what school it belongs to and the brief already answers it.
+Nothing that is not a school or a family is coloured either: a martial move's
+`Martial Move`, a talent's `Passive`, an item's `Uncommon` are all still grey, and
+`tagColor` gives back null for every one of them so a caller can leave the chip
+alone rather than having to know which words are in the table.
+
+### The damage type and the second half are not chips any more
+
+A brief was carrying the tier, the school, the family, often the weapon, then the
+damage type and then the name of the second half. Six chips under a name that then
+had nowhere to sit. Both of the last two went.
+
+Neither is lost. The damage type is written into the sentence that deals it, in its
+own colour, on the card itself, and the second half has its own heading there. And
+both are still **searchable**, which is the other half of what was asked: the box
+above a wall reads `cardHaystack`, which has carried the damage types and the
+half's name the whole time whether or not anything printed them. Typing "force" or
+"overcast" narrows a wall to the cards that have them.
+
+One thing had to change for that to be true everywhere. The spell chooser was
+searching `card.name` and `card.body` only, so a damage type and a half's name were
+the two things about a card it could not find. It reads `cardHaystack` now, which
+the Abilities tab has always read. Nothing was added to the chip *suggestions*: an
+invisible tag that appeared in the list of tags would not be invisible.
+
+### The proof
+
+`npm run lint`, `lint:text`, `lint:math`, `lint:riders`, `lint:halves`,
+`lint:order` and `lint:weapons` are all clean, `npm run build` is clean, and
+`npm run art:cards` reports only the four problems it reported before this drop.
+
+The codex was walked directly as well: 401 cards with no duplicate id, all twelve
+Spacial bodies and six halves resolving with no unspent token, all twelve carrying
+a plate and a thumbnail on disk, CONSTRAINED lit on CONTAINMENT SPHERE, every
+keyword each of the twelve lights read out and checked, the Arcanist offering 44 at
+Rank 1, 77 at Rank 2 and 101 at Rank 3, and the Mycomancer refusing all twelve as
+the wrong school. BANISHMENT VAULT is the longest of the twelve at 547 characters,
+eighth of all the spells and well inside the 667 the box already holds, so none of
+these needed the card to shrink further than it already does.
+
+The chips were then read out of a running browser rather than reasoned about: every
+school and family chip resolves to its own colour with none left grey, a Spacial
+brief carries three chips and not five, and no `card-brief-dmg` element exists
+anywhere on a page of twenty-seven briefs. The search was walked the same way:
+"force" finds 7 cards including ENERGY BEAM, "overcast" finds 33, "blood tithe"
+finds 4 and "spacial" finds all 12.
+
+`templates/ethereal-spells.csv` is 49 rows now, 13 Light and 12 Shadow and 12 Time
+and 12 Spacial, and every Spacial row was read back: each parses into the card it
+came from field for field, and every Image cell names a file that is really in
+`data/Space/`.

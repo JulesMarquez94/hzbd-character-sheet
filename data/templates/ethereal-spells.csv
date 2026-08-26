@@ -188,3 +188,55 @@ time-skip,TIME SKIP,"Master Spell, Ethereal, Time",3,8,"You instantly propel you
 At your next Turn Start, you reappear in the exact space you previously occupied. If that space is taken, you reappear in the nearest unoccupied one.
 
 Casting Time Skip more than once before completing a Long Rest gives you 1 level of Exhaustion for each additional cast.",,,TIme Skip.jpg
+dimensional-pocket,DIMENSIONAL POCKET,"Novice Spell, Ethereal, Spacial",1,1,"You stow **up to 2 items** from your hands or belt into an extradimensional space **until your next Long Rest**.
+
+An item stowed this way can only be found by magical means, and cannot exceed 20 kg (44 lbs) or be alive.
+
+When the spell ends, the items fall to the ground.",MULTICAST,"While Dimensional Pocket is active, you may spend 1 Action Point and 1 Willpower.
+
+If you do, you may retrieve an item or stow away an additional item.",Dimensional Pocket.jpg
+compression-blast,COMPRESSION BLAST,"Novice Spell, Ethereal, Spacial",5,3,"You compress space **3 meters (10 feet)** around a point you can see within **9 meters (30 feet)**.
+
+Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[3d6 + 3*stat]] damage.",OVERCAST,"When casting Compression Blast, you may spend an additional 1 Action Point and 2 Willpower.
+
+If you do, the area of Compression Blast increases to **6 meters (20 feet)** around a point you can see.",Compression Blast.jpg
+dimensional-reach,DIMENSIONAL REACH,"Novice Spell, Ethereal, Spacial",1,1,"You use special magic to extend the range of your abilities.
+
+The range of your next action is increased by **9 meters (30 feet)**.",,,Dimensional Reach.jpg
+warp-tide,WARP TIDE,"Novice Spell, Ethereal, Spacial",3,2,"You attempt to push away **all entities** within **6 meters (20 feet)** of you.
+
+Make a {stat} Roll {roll} against their Reflex. On a success, they are pushed **6 meters (20 feet)**.",,,Warp Tide.jpg
+spatial-fold,SPATIAL FOLD,"Adept Spell, Ethereal, Spacial",3,4,"You fold space between two points you can see within **18 meters (60 feet)**.
+
+Until your **next Turn End**, the two points in space are connected, allowing **any entity** to walk through with **1.5 meters (5 feet)** of movement to instantly emerge on the other side.",OVERCAST,"While Spatial Fold is active, you may spend 2 Action Points.
+
+If you do, you close the Spatial Fold early.",Spatial Fold.jpg
+portal-trick,PORTAL TRICK,"Adept Spell, Ethereal, Spacial",3,4,"You prepare to use a portal to intercept the next attack of **an entity** you can see within **9 meters (30 feet)**.
+
+Make a {stat} Roll {roll} against its Reflex. On a success, the entity’s next attack is redirected through a portal at itself.",,,Portal Trick.jpg
+energy-beam,ENERGY BEAM,"Adept Spell, Ethereal, Spacial",4,5,"You release a beam of pure energy in a **9-meter (30-foot)** straight line originating from yourself.
+
+Make a {stat} Roll {roll} against the Reflex of **all entities** in the line. On a success, you deal [[4d6 + 4*stat]] in {damage} damage.",OVERCAST,"When casting Energy Beam, you may spend 1 Action Point and 2 Willpower to bend the beam at any point along its line, projecting an additional **9-meter (30-foot)** line in any direction from that point.",Energy Beam.png
+containment-sphere,CONTAINMENT SPHERE,"Adept Spell, Ethereal, Spacial",4,4,"You enclose **a target entity** you can see within **6 meters (20 feet)** inside a sphere of dense arcane energy.
+
+While trapped inside the sphere, the entity is Constrained.
+
+The trapped entity can spend 3 Action Points to attempt to break free by making a {stat} roll against your {stat}. On a success, the sphere shatters and the effect ends.",OVERCAST,"When **a trapped entity** attempts to break out of the sphere, you may spend 3 Willpower. If you do, that entity makes their breakout roll with Disadvantage.",Containment SPhere.png
+transposition-beacon,TRANSPOSITION BEACON,"Master Spell, Ethereal, Spacial",6,8,You place a Transposition Beacon at your current location that lasts for up to **1 hour**.,OVERCAST,"While Transposition Beacon is active, you may spend 2 Action Points.
+
+If you do, you instantly teleport to the location of your beacon, removing it.",Transposition Beacon.jpg
+spatial-transposition,SPATIAL TRANSPOSITION,"Master Spell, Ethereal, Spacial",3,6,"You attempt to swap the position of **two entities** you can see within **18 meters (60 feet)**.
+
+Make a {stat} Roll {roll} against the Reflex of unwilling entities. On a success, you instantly swap the physical locations of both targets.
+
+If you use this as a reaction, all actions apply to the swapped target instead of the originally intended one unless it would mean an entity is targeting itself.",,,Spatial Transposition.jpg
+banishment-vault,BANISHMENT VAULT,"Master Spell, Ethereal, Spacial",4,8,"You attempt to trap **an entity** you can see within **9 meters (30 feet)** in an extradimensional space for **2 turns**.
+
+Make a {stat} Roll {roll} against their Reflex. On a success, you banish the target to an isolated spatial pocket, removing them completely from the battlefield. They can still take their turn.",MULTICAST,"When casting Banishment Vault, you may spend an additional 1 Action Point and 6 Willpower any number of times.
+
+For each time you do, target **an additional eligible entity** with Banishment Vault. They are banished into the same spatial pocket.",Banishment Vault.jpg
+event-horizon,EVENT HORIZON,"Master Spell, Ethereal, Spacial",5,7,"You manifest a singularity at a point you can see within **20 meters (65 feet)** that lasts for **3 turns**.
+
+At your **Turn End**, the singularity attempts to pull **all entities** within **12 meters (40 feet)** to it. Make a {stat} Roll {roll} against their Reflex.
+
+On a success, you pull them **12 meters (40 feet)** toward the singularity and they take [[2d6 + 2*stat]] in {damage} damage.",,,Event Horizon.jpg

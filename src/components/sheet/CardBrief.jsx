@@ -1,6 +1,7 @@
 import CostOrbs from '../CostOrbs.jsx';
 import useCodexArt from '../useCodexArt.js';
-import { cardBanner, cardCost, cardGist, cardTitle, damageStyle } from '../../lib/cardText.js';
+import { cardBanner, cardCost, cardGist, cardTitle } from '../../lib/cardText.js';
+import { tagStyle } from '../../lib/tagColors.js';
 
 /**
  * A card said in a line rather than printed in full.
@@ -35,9 +36,25 @@ import { cardBanner, cardCost, cardGist, cardTitle, damageStyle } from '../../li
  * filters on, and every other place on the sheet that shows a tag shows it as a
  * chip. Running them together into one uppercase line made the brief the only
  * place they read as a title instead. The first chip is the card's kind and
- * wears the card's accent; the rest are plain. Only a card carrying a
- * hand-written `type_line` instead of tags still prints a banner, since there
- * is nothing there to cut into chips.
+ * wears the card's accent; a school or a family wears its own colour (see
+ * tagColors.js); anything else is plain. Only a card carrying a hand-written
+ * `type_line` instead of tags still prints a banner, since there is nothing
+ * there to cut into chips.
+ *
+ * ------------------------------------------------------------ what is not here
+ * **The damage type and the second half used to be chips too, and are not any
+ * more.** Jules asked for the row to be cut back on 2026-08-25: a brief already
+ * carries the tier, the school, the family and often the weapon, and adding
+ * FORCE and OVERCAST to that made a five and six chip row under a name that then
+ * had nowhere to sit. Both are still on the card itself, where the damage type
+ * is written into the sentence that deals it and the second half has its own
+ * heading.
+ *
+ * **Both are still searchable**, which is the other half of what was asked: the
+ * box above a wall reads `cardHaystack` (see abilitySources.js), and that has
+ * always carried the damage types and the half's name whether or not anything
+ * printed them. Typing "force" or "overcast" narrows a wall to the cards that
+ * have them. Only the chips went.
  *
  * `children` is hung under the brief for whatever the view wants, which in the
  * spell chooser is the button that learns it. The face is a button, so an
@@ -60,7 +77,6 @@ export default function CardBrief({
      wall where the section header names the weapon, and just as often is not. */
   const tags = card.type_line ? [] : [...(card.tags ?? []), ...(card.weapon ? [card.weapon] : [])];
   const banner = tags.length > 0 ? null : cardBanner(card);
-  const damage = modifiers?.damage?.length ? modifiers.damage : card.damage ?? [];
   /* The card's own art first, the family's second. See the note above. Both
      come out of the codex, so both are behind the tier gate.
 
@@ -104,33 +120,25 @@ export default function CardBrief({
             </span>
             {banner && <span className="card-brief-banner">{banner}</span>}
 
-            {(tags.length > 0 || damage.length > 0 || card.sub_name || card.choice) && (
+            {(tags.length > 0 || card.choice) && (
               <span className="card-brief-chips">
 
                 {/* The first tag is what the card is: Talent, Novice Spell,
-                    Skill. So it takes the accent and leads. */}
-                {tags.map((tag, index) => (
-                  <span
-                    className={`card-brief-chip${index === 0 ? ' is-kind' : ''}`}
-                    key={tag}
-                  >
-                    {tag}
-                  </span>
-                ))}
-
-                {damage.map((type) => (
-                  <span
-                    className="card-brief-chip card-brief-dmg"
-                    key={type}
-                    style={damageStyle(type) ? { color: damageStyle(type).color } : undefined}
-                  >
-                    {type}
-                  </span>
-                ))}
-
-                {/* Overcast, Multicast, Upkeep, Blood Tithe: what the second
-                    half of the card is called is worth knowing up front. */}
-                {card.sub_name && <span className="card-brief-chip">{card.sub_name}</span>}
+                    Skill. So it takes the accent and leads. The ones after it
+                    take their own colour when they name a school or a family,
+                    and stay grey when they name anything else. */}
+                {tags.map((tag, index) => {
+                  const tone = index === 0 ? undefined : tagStyle(tag);
+                  return (
+                    <span
+                      className={`card-brief-chip${index === 0 ? ' is-kind' : ''}${tone ? ' is-toned' : ''}`}
+                      key={tag}
+                      style={tone}
+                    >
+                      {tag}
+                    </span>
+                  );
+                })}
 
                 {/* A card that leaves something to you says so before you take it. */}
                 {card.choice && <span className="card-brief-chip is-open">Your choice</span>}

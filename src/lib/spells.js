@@ -506,24 +506,18 @@ export const SPELLS = withArt([
       'If you do so, the attack is made with advantage and the damage is Empowered by 1.',
   },
 
-  /* ---------------------------------------------------- Arcane · Energy ---- */
-  {
-    id: 'containment-sphere',
-    name: 'Containment Sphere',
-    summary: 'Seal one target in arcane energy, stunned until it breaks out.',
-    kind: 'spell',
-    tags: ['Adept Spell', 'Arcane', 'Energy'],
-    ap: 4,
-    wp: 4,
-    stat: 'mind',
-    body:
-      'You enclose **a target entity** you can see within **6 meters (20 feet)** inside a sphere of dense arcane energy.\n\n' +
-      'While trapped inside the sphere, the entity is stunned.\n\n' +
-      'The trapped entity can spend 3 Action Points to attempt to break free by making a {stat} roll against your {stat}. On a success, the sphere shatters and the effect ends.',
-    sub_name: 'Overcast',
-    sub_body:
-      'When **a trapped entity** attempts to break out of the sphere, you may spend 2 Willpower. If you do, that entity makes their breakout roll with Disadvantage.',
-  },
+  /* ---------------------------------------------------- Arcane · Energy ----
+   * **Empty, and this is where it was.** CONTAINMENT SPHERE stood here as the
+   * codex's only Arcane spell and the only card in it no sheet covered: it had no
+   * drop behind it, no picture on disk, and data/README.md had been carrying it as
+   * an exception on both counts since the Primal pull.
+   *
+   * The Spacial sheet on 2026-08-25 has it as an Adept Ethereal Spacial spell with
+   * a picture beside it, so the card moved down to that family with its id intact
+   * and the school it was parked in is empty again. Arcane is where Nature is now:
+   * a word on the shelf in cardOrder.js with nothing standing on it, waiting for a
+   * sheet.
+   */
 
   /* ======================================================== Elemental ====
    *
@@ -2190,6 +2184,355 @@ export const SPELLS = withArt([
       '**Until your next Turn Start**, you are completely untargetable and cannot be interacted with, damaged or affected by any entity, spell or environmental effect.\n\n' +
       'At your next Turn Start, you reappear in the exact space you previously occupied. If that space is taken, you reappear in the nearest unoccupied one.\n\n' +
       'Casting Time Skip more than once before completing a Long Rest gives you 1 level of Exhaustion for each additional cast.',
+    sub_name: null,
+    sub_body: null,
+  },
+
+  /* ======================================================= Ethereal · Spacial ====
+   *
+   * The school's fourth family, pulled 2026-08-25 from `data/Spells - Ethreal -
+   * Spacial.csv` with its twelve pictures in `data/Space/`. Light, Shadow and Time
+   * all landed earlier the same day; this is the same three-tag banner under the
+   * same school, and the sheet writes all twelve in tier, school, family order
+   * already, so nothing had to be normalised.
+   *
+   * Four Novice, four Adept, four Master, and no Legendary. THEON PERFECT
+   * REPLICANTS is still the only card on the fourth rung.
+   *
+   * ------------------------------------------------------------- the spelling
+   * **The family is Spacial, with a c.** That is what all twelve Tags cells say and
+   * what the sheet's own filename says. Two of the cards are named with a t
+   * (SPATIAL FOLD, SPATIAL TRANSPOSITION), a third says "spatial pocket" in its
+   * body, and the picture folder is called Space. The Tags column is what a banner
+   * prints and what a filter chips, so the tag is the sheet's Spacial and the card
+   * names are the sheet's Spatial. Neither was corrected against the other.
+   *
+   * ------------------------------------------- what this retires: the Arcane one
+   * **CONTAINMENT SPHERE was the codex's only Arcane spell and is a Spacial one
+   * now.** It had no sheet behind it and no picture on disk, and data/README.md
+   * carried it as the exception to both. This sheet has it at the same tier, the
+   * same 4 and 4, and the same three paragraphs, with a render beside it. So it is
+   * the same card finally filed, and it moved rather than being written twice:
+   * the id `containment-sphere` is unchanged, so a spellbook already holding it
+   * still resolves and simply reads Ethereal · Spacial from here on.
+   *
+   * Two things about it did change, both the sheet's: the trapped entity is
+   * **Constrained** where the old card said stunned, which is the keyword SHADOW
+   * BIND defined that afternoon and the better word for a thing sealed in a sphere,
+   * and the Overcast costs **3 Willpower** where it used to cost 2.
+   *
+   * Arcane is empty again, which is exactly where Nature has always been: a word on
+   * the shelf in cardOrder.js with nothing standing on it.
+   *
+   * ------------------------------------------------------------- the rolls
+   * Seven contests, all the caster's own and all against Reflex: COMPRESSION BLAST,
+   * WARP TIDE, PORTAL TRICK, ENERGY BEAM, SPATIAL TRANSPOSITION, BANISHMENT VAULT
+   * and EVENT HORIZON. No family in the codex has leaned this hard on one defense.
+   * CONTAINMENT SPHERE's breakout is the eighth roll and is the trapped entity's,
+   * so it prints no {roll} — see the note on the card.
+   *
+   * ------------------------------------------------------------- the halves
+   * Six, and five are labelled the way the codex uses the word: three Overcasts
+   * that buy more (COMPRESSION BLAST widens, ENERGY BEAM bends, CONTAINMENT SPHERE
+   * hampers the breakout), one that closes a spell early (SPATIAL FOLD), one that
+   * spends the beacon you left (TRANSPOSITION BEACON), and BANISHMENT VAULT's
+   * Multicast, which is a genuine one.
+   *
+   * **DIMENSIONAL POCKET's is called a Multicast and moves an item rather than
+   * catching a target.** Multicast means spending more to reach more, and one more
+   * item in the pocket is the nearest thing this card has to another target. The
+   * sheet's word stands, and it is worth a glance: an Overcast is what the same
+   * half would be called if the thing it reached were not countable.
+   *
+   * Three of the six open later than a cast (SPATIAL FOLD, TRANSPOSITION BEACON and
+   * DIMENSIONAL POCKET all begin "While X is active", CONTAINMENT SPHERE's on the
+   * breakout), so the parse in overcast.js charges them as their own spend rather
+   * than as a rider. COMPRESSION BLAST's, ENERGY BEAM's and BANISHMENT VAULT's are
+   * genuine riders and keep "When casting".
+   *
+   * ------------------------------------------------------------- the readings
+   * Every one of these is a cell that could not be printed as it stood.
+   *
+   * - **Nine ranges had the metres and lost the feet**: "3 Meter()", "9 Meter ()",
+   *   "with 18 meter ()", "with in 9 Meters ()", "1.5m ()", "20 meter ()". The metre
+   *   leads every cell in this codex and the conversion is the codex's own three
+   *   metres to ten feet, which is the call WALL OF FLAMES documents.
+   * - **EVENT HORIZON's 20 meters is the first range off the codex's ladder.**
+   *   Every other distance in the codex is a multiple of 3 metres or the two halves
+   *   1.5 and 4.5, and 20 is neither, so it converts to 65 feet rather than to one
+   *   of the round numbers the rest of the codex prints. The number is the
+   *   designer's and it stands. 18 meters (60 feet) is what it would be on the
+   *   ladder, and SPATIAL TRANSPOSITION on the same rung is already there.
+   * - **ENERGY BEAM arrived with no Action Point and no Willpower cost**, the same
+   *   hole TEMPORAL EROSION had on the Time sheet. Priced at 4 and 5, which is what
+   *   SAVAGE SLAM and WALL OF FLAMES both charge for the same shape: an Adept spell
+   *   catching everything in an area for [[4d6 + 4*stat]]. **This is the one number
+   *   in the drop that is not the designer's**, and it is the first thing to check.
+   * - **COMPRESSION BLAST deals damage and names no type.** Its two siblings both
+   *   say Force and this one says nothing, so it prints untyped rather than being
+   *   given a type it does not carry: a damage type is what a resistance answers,
+   *   and DRACONIC SCALE grants one without the other. It is the second thing to
+   *   check, and Force is the obvious answer.
+   * - **SPATIAL FOLD's Overcast calls the spell Dimensional Pocket**, a paste from
+   *   the row two above it, and its second sentence closes "the Spatial Fold". The
+   *   card is SPATIAL FOLD in its Name column, on its picture and in everything it
+   *   describes, so both halves name it. The same call DELAY documents.
+   * - **ENERGY BEAM's Overcast calls the spell Arcane Ray** and bends "the ray".
+   *   Same paste, same call: the Name column, the picture and the body all say
+   *   Energy Beam, so the half says Energy Beam and bends the beam.
+   * - **DIMENSIONAL POCKET's weight limit says "20 Kg (imperial value)"**, a note to
+   *   whoever was going to convert it, exactly as TEMPORAL MEND's did. 44 lbs, in
+   *   the form TELEKINESIS prints.
+   * - **DIMENSIONAL REACH is cast with "special magic".** Left as the sheet wrote
+   *   it. It is a real word in a real sentence, so the COGNITE reading does not
+   *   apply, but every other card in the family says space or spatial and this one
+   *   is called DIMENSIONAL REACH. It is the third thing to check.
+   * - **PORTAL TRICK intercepts "the next attack and entity you can see"**, which is
+   *   an attack *of* an entity with one letter turned. Nothing else in the sentence
+   *   parses: a portal that intercepts an entity is what CONTAINMENT SPHERE does.
+   * - "Until the end of your next turn" is your **next Turn End** and "At each of
+   *   your Turn end" is **at your Turn End**. The defined terms.
+   * - Spelling and grammar, throughout and without further comment: "abiltieis",
+   *   "YOu", "agasn", "tey", "entitles", "this two points", "are connect",
+   *   "is redirect", "entiteis", "Transpostion", "that last for", "orginaly",
+   *   "intendend", "all action apply", "htier", "teh", "They banished",
+   *   "item fall out into the ground".
+   *
+   * ------------------------------------------------------------- not wired
+   * Nothing here moves a number on the sheet, which is where all three earlier
+   * Ethereal drops landed. Five are effects a tracker row would want to carry, and
+   * the two worth naming are DIMENSIONAL POCKET, which holds two items off the
+   * Inventory tab until a Long Rest, and BANISHMENT VAULT, which takes an entity
+   * off the board for two turns. Neither has a rider in riders.js, and the pocket
+   * in particular would want the bag to know: it is the first card in the codex
+   * that changes what a character is carrying without the item leaving the sheet.
+   * They print, they can be dealt, and the table does the arithmetic, which is
+   * where every effect starts.
+   */
+
+  /* ----------------------------------------------------- Ethereal · Spacial ---- */
+  {
+    /* "20 Kg (imperial value)" is a note to the converter, and 44 lbs is the form
+       TELEKINESIS prints. See "the readings" above. */
+    id: 'dimensional-pocket',
+    name: 'Dimensional Pocket',
+    summary: 'Stow two things in a pocket of nowhere until you sleep. Nothing living, nothing heavy.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Spacial'],
+    ap: 1,
+    wp: 1,
+    stat: 'mind',
+    body:
+      'You stow **up to 2 items** from your hands or belt into an extradimensional space **until your next Long Rest**.\n\n' +
+      'An item stowed this way can only be found by magical means, and cannot exceed 20 kg (44 lbs) or be alive.\n\n' +
+      'When the spell ends, the items fall to the ground.',
+    /* Called a Multicast on a half that moves an item rather than catching a
+       target. The sheet's word stands. See "the halves" above. */
+    sub_name: 'Multicast',
+    sub_body:
+      'While Dimensional Pocket is active, you may spend 1 Action Point and 1 Willpower.\n\n' +
+      'If you do, you may retrieve an item or stow away an additional item.',
+  },
+  {
+    /* **The damage carries no type.** The sheet named none and its two siblings both
+       say Force, so it prints untyped. See "the readings" above. */
+    id: 'compression-blast',
+    name: 'Compression Blast',
+    summary: 'Crush three meters of space at range. Overcast doubles what it catches.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Spacial'],
+    ap: 5,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'You compress space **3 meters (10 feet)** around a point you can see within **9 meters (30 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[3d6 + 3*stat]] damage.',
+    sub_name: 'Overcast',
+    sub_body:
+      'When casting Compression Blast, you may spend an additional 1 Action Point and 2 Willpower.\n\n' +
+      'If you do, the area of Compression Blast increases to **6 meters (20 feet)** around a point you can see.',
+  },
+  {
+    /* "special magic" is the sheet's, and it is left alone. See "the readings"
+       above. */
+    id: 'dimensional-reach',
+    name: 'Dimensional Reach',
+    summary: 'Nine more meters of reach on your next action, whatever it turns out to be.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Spacial'],
+    ap: 1,
+    wp: 1,
+    stat: 'mind',
+    body:
+      'You use special magic to extend the range of your abilities.\n\n' +
+      'The range of your next action is increased by **9 meters (30 feet)**.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'warp-tide',
+    name: 'Warp Tide',
+    summary: 'A wave of folded space that shoves everything around you six meters back.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Ethereal', 'Spacial'],
+    ap: 3,
+    wp: 2,
+    stat: 'mind',
+    body:
+      'You attempt to push away **all entities** within **6 meters (20 feet)** of you.\n\n' +
+      'Make a {stat} Roll {roll} against their Reflex. On a success, they are pushed **6 meters (20 feet)**.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* The sheet calls this card Dimensional Pocket in its Overcast, a paste from the
+       row two above it. See "the readings" above. */
+    id: 'spatial-fold',
+    name: 'Spatial Fold',
+    summary: 'Two points eighteen meters apart, joined. A meter and a half of movement crosses it.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Spacial'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You fold space between two points you can see within **18 meters (60 feet)**.\n\n' +
+      'Until your **next Turn End**, the two points in space are connected, allowing **any entity** to walk through with **1.5 meters (5 feet)** of movement to instantly emerge on the other side.',
+    /* Opens on the spell already being up rather than on the cast, so the parse
+       charges it as its own spend. See "the halves" above. */
+    sub_name: 'Overcast',
+    sub_body:
+      'While Spatial Fold is active, you may spend 2 Action Points.\n\n' +
+      'If you do, you close the Spatial Fold early.',
+  },
+  {
+    /* "the next attack and entity you can see" is an attack *of* an entity. See
+       "the readings" above. */
+    id: 'portal-trick',
+    name: 'Portal Trick',
+    summary: 'Hang a portal in front of one target. Its next attack arrives back at itself.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Spacial'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You prepare to use a portal to intercept the next attack of **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Reflex. On a success, the entity’s next attack is redirected through a portal at itself.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* **The 4 and the 5 are not the designer's.** The sheet left both columns empty
+       on the family's one damage spell. See "the readings" above. */
+    id: 'energy-beam',
+    name: 'Energy Beam',
+    summary: 'A nine-meter line of pure energy. Overcast bends it into a second line.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Spacial'],
+    ap: 4,
+    wp: 5,
+    stat: 'mind',
+    damage: ['Force'],
+    body:
+      'You release a beam of pure energy in a **9-meter (30-foot)** straight line originating from yourself.\n\n' +
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the line. On a success, you deal [[4d6 + 4*stat]] in {damage} damage.',
+    /* The sheet calls this card Arcane Ray in its Overcast, and bends "the ray".
+       Same paste and same call as Spatial Fold's. See "the readings" above. */
+    sub_name: 'Overcast',
+    sub_body:
+      'When casting Energy Beam, you may spend 1 Action Point and 2 Willpower to bend the beam at any point along its line, projecting an additional **9-meter (30-foot)** line in any direction from that point.',
+  },
+  {
+    /* **This is the old Arcane · Energy card, filed.** Same id, same tier, same
+       costs, and the school the sheet gives it. See "what this retires" above.
+
+       The breakout prints `{stat}` as a name and no `{roll}`: the roll is the
+       trapped entity's, so the number belongs to whoever is in the sphere and this
+       card has no way to know who that is. BEND LIGHT is the other one. */
+    id: 'containment-sphere',
+    name: 'Containment Sphere',
+    summary: 'Seal one target in dense arcane energy, Constrained until it breaks out.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Ethereal', 'Spacial'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You enclose **a target entity** you can see within **6 meters (20 feet)** inside a sphere of dense arcane energy.\n\n' +
+      'While trapped inside the sphere, the entity is Constrained.\n\n' +
+      'The trapped entity can spend 3 Action Points to attempt to break free by making a {stat} roll against your {stat}. On a success, the sphere shatters and the effect ends.',
+    sub_name: 'Overcast',
+    sub_body:
+      'When **a trapped entity** attempts to break out of the sphere, you may spend 3 Willpower. If you do, that entity makes their breakout roll with Disadvantage.',
+  },
+  {
+    id: 'transposition-beacon',
+    name: 'Transposition Beacon',
+    summary: 'Leave a marker behind. Two Action Points brings you back to it any time within the hour.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Spacial'],
+    ap: 6,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'You place a Transposition Beacon at your current location that lasts for up to **1 hour**.',
+    /* Opens on the beacon already being out rather than on the cast, so the parse
+       charges it as its own spend. See "the halves" above. */
+    sub_name: 'Overcast',
+    sub_body:
+      'While Transposition Beacon is active, you may spend 2 Action Points.\n\n' +
+      'If you do, you instantly teleport to the location of your beacon, removing it.',
+  },
+  {
+    id: 'spatial-transposition',
+    name: 'Spatial Transposition',
+    summary: 'Swap two people eighteen meters apart. As a reaction, it swaps who the blow lands on.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Spacial'],
+    ap: 3,
+    wp: 6,
+    stat: 'mind',
+    body:
+      'You attempt to swap the position of **two entities** you can see within **18 meters (60 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against the Reflex of unwilling entities. On a success, you instantly swap the physical locations of both targets.\n\n' +
+      'If you use this as a reaction, all actions apply to the swapped target instead of the originally intended one unless it would mean an entity is targeting itself.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'banishment-vault',
+    name: 'Banishment Vault',
+    summary: 'Put one target in a pocket outside the world for two turns. Multicast to vault a crowd into it.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Spacial'],
+    ap: 4,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'You attempt to trap **an entity** you can see within **9 meters (30 feet)** in an extradimensional space for **2 turns**.\n\n' +
+      'Make a {stat} Roll {roll} against their Reflex. On a success, you banish the target to an isolated spatial pocket, removing them completely from the battlefield. They can still take their turn.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting Banishment Vault, you may spend an additional 1 Action Point and 6 Willpower any number of times.\n\n' +
+      'For each time you do, target **an additional eligible entity** with Banishment Vault. They are banished into the same spatial pocket.',
+  },
+  {
+    /* **20 meters is the first range in the codex off its own ladder**, so it
+       converts to 65 feet rather than to a round number. See "the readings" above. */
+    id: 'event-horizon',
+    name: 'Event Horizon',
+    summary: 'A singularity that drags everything within twelve meters into itself, every turn for three.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Ethereal', 'Spacial'],
+    ap: 5,
+    wp: 7,
+    stat: 'mind',
+    damage: ['Force'],
+    body:
+      'You manifest a singularity at a point you can see within **20 meters (65 feet)** that lasts for **3 turns**.\n\n' +
+      'At your **Turn End**, the singularity attempts to pull **all entities** within **12 meters (40 feet)** to it. Make a {stat} Roll {roll} against their Reflex.\n\n' +
+      'On a success, you pull them **12 meters (40 feet)** toward the singularity and they take [[2d6 + 2*stat]] in {damage} damage.',
     sub_name: null,
     sub_body: null,
   },

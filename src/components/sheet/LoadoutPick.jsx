@@ -5,6 +5,7 @@ import TagFilter from './TagFilter.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { cardHaystack } from '../../lib/abilitySources.js';
 import { compareTags, compareWords } from '../../lib/cardOrder.js';
 import { levelForXp } from '../../lib/characterModel.js';
 import {
@@ -179,8 +180,14 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
      the later ranks hold is said in one line under the lead instead. */
   const offered = options.filter((option) => option.ok || option.known);
   const filter = useTagFilter(poolTags(offered), { searchable: true });
+  /* The whole card, not just its name and body. It used to be those two, which
+     meant a spell's damage type and the name of its second half were the only
+     things about it a search could not find. Both stopped being printed as chips
+     on 2026-08-25 (see CardBrief.jsx), so being searchable is now the only way
+     either is reachable at all, and `cardHaystack` has carried them the whole
+     time. The Abilities tab has always read this. */
   const visible = offered.filter(
-    (option) => filter.matches(option.card.tags) && filter.text(option.card.name, option.card.body)
+    (option) => filter.matches(option.card.tags) && filter.text(cardHaystack(option.card))
   );
 
   /* Only what a rank still owes you. Everything else the pool refused is
@@ -403,7 +410,7 @@ function LoadoutBrowser({ talent, rank, spec, opened = [], character, onClose })
   const options = newAtRank(talent, rank);
   const filter = useTagFilter(poolTags(options), { searchable: true });
   const visible = options.filter(
-    (option) => filter.matches(option.card.tags) && filter.text(option.card.name, option.card.body)
+    (option) => filter.matches(option.card.tags) && filter.text(cardHaystack(option.card))
   );
 
   return (

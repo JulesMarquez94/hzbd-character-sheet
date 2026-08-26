@@ -103,7 +103,7 @@ export const SHELVES = [
   ['Flora', 'Wild', 'Life', 'Blood'],
   ['Energy'],
   ['Fire', 'Water', 'Wind', 'Lightning', 'Magma', 'Earth'],
-  ['Light', 'Shadow', 'Time'],
+  ['Light', 'Shadow', 'Time', 'Spacial'],
 
   /* The Ingredient parts, in the order BREW names them. Also INGREDIENT_PARTS in
      ingredients.js, where it is a configuration rule rather than a presentation

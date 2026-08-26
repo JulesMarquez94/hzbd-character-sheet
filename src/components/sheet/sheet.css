@@ -2893,6 +2893,25 @@ body.sheet-fixed #root {
   color: var(--copper);
 }
 
+/* A chip naming a school or a family carries its own colour, written on as
+   `color` by tagColors.js. Both states are mixed off currentColor rather than
+   off the copper, so the row reads as the same object either way: an offered
+   chip is an outline of the colour and a taken one is filled with it. The
+   `color` declarations are deliberately absent here, since the inline style is
+   what carries them and repeating them would only fight it. */
+.filter-chip.is-toned {
+  border-color: color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.filter-chip.is-toned:hover {
+  border-color: color-mix(in srgb, currentColor 60%, transparent);
+}
+
+.filter-chip.active.is-toned {
+  background-color: color-mix(in srgb, currentColor 15%, transparent);
+  border-color: color-mix(in srgb, currentColor 70%, transparent);
+}
+
 .form-hint code {
   background: rgba(0, 0, 0, 0.35);
   padding: 1px 5px;
@@ -6620,8 +6639,12 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
-/* A damage type keeps its own colour, the way it does everywhere else. */
-.card-brief-dmg {
+/* A school or a family carries its own colour, written onto the chip as `color`
+   by tagColors.js. The border and ground are mixed off it here rather than there,
+   so one property lights the whole chip and the stylesheet keeps saying how
+   strongly. Same three lines the kind chip above uses, off currentColor instead
+   of the card accent. */
+.card-brief-chip.is-toned {
   border-color: color-mix(in srgb, currentColor 40%, transparent);
   background-color: color-mix(in srgb, currentColor 10%, rgba(9, 17, 21, 0.6));
 }

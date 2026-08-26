@@ -48,6 +48,64 @@
     --dmg-poison: #A8E063;
     --dmg-sacred: #FFF59D;
 
+    /* Spell schools, and the families under them.
+
+       One law: **the school owns a hue and a family is a shade of it.** A wall
+       of spells is read school by school, so the school has to be the thing you
+       see first and the family the thing you see second. Every family below sits
+       inside about thirty degrees of its school's hue and separates from its
+       siblings on lightness and saturation instead.
+
+       The exception is written into the law rather than around it: **where the
+       codex already knows what colour a family is, that colour is what its shade
+       leans to.** Fire, Water, Lightning and Blood have damage and stat tokens
+       above; Light and Shadow are their own names. Six leans, and each one is
+       marked. Nothing here is a second copy of those tokens — a chip at 0.56rem
+       on a dark panel needs more light than a body-text colour does, so these are
+       their own values and say which token they answer to.
+
+       Nature and Arcane have no spell in the codex. They are coloured anyway, so
+       the day a sheet arrives it lands somewhere rather than falling to grey. */
+
+    /* Primal: things that grow, hunt and bleed. */
+    --school-primal: #5FC46B;
+    --family-flora: #7BD165;
+    --family-wild: #AFC94A;
+    --family-life: #4FD9A6;
+    /* Leans to --stat-health, lifted far enough to read as type. */
+    --family-blood: #D2685A;
+
+    /* Nature: the cooler green beside Primal. */
+    --school-nature: #3FB394;
+
+    /* Arcane: magic with no element under it. Magenta rather than the haze violet,
+       which the first chip on every spell brief already wears. */
+    --school-arcane: #C56BE8;
+    --family-energy: #D89BF2;
+
+    /* Elemental: ember amber, and the six elements around it. */
+    --school-elemental: #EE9448;
+    /* Leans to --dmg-fire. */
+    --family-fire: #FF7A4D;
+    --family-magma: #E8593C;
+    --family-earth: #C79663;
+    /* Leans to --dmg-lightning, dropped out of pure yellow so it holds an edge. */
+    --family-lightning: #E8CD4A;
+    --family-wind: #8FD3CB;
+    /* Leans to --dmg-frost, deepened so it is not mistaken for the Ethereal sky. */
+    --family-water: #4AA6E8;
+
+    /* Ethereal: sky, and the four things a sky can be. Light is the palest thing
+       on the shelf and Shadow the deepest, which is the whole of that pair. */
+    --school-ethereal: #86B6EE;
+    --family-light: #B7D6FA;
+    --family-time: #4FBFD9;
+    --family-spacial: #6C86F0;
+    --family-shadow: #9080D8;
+
+    /* Nightmare: the school that is none of them. */
+    --school-nightmare: #DE5F93;
+
     /* Defense Types */
     --def-healing: #2ECC71;
     --def-shield: #00E5FF;
