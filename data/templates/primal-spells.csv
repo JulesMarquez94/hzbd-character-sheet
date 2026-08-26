@@ -77,6 +77,18 @@ For the duration, you gain an aerial view of the surrounding area through the cr
 While controlling the creature, your physical body is incapacitated and cannot take actions.
 
 You may end Bird View early.",,,
+stamped,STAMPED,"Master Spell, Primal, Wild",5,10,"A herd of beast spirits charges in a **24-meter (80-foot)** straight line originating from yourself.
+
+Make a {stat} Roll {roll} against the Reflex of **all entities** in the line. On a success, you deal [[6d6 + 6*stat]] damage and they are knocked prone, or half as much on a failure.",,,Stamped.jpg
+quarry,QUARRY,"Master Spell, Primal, Wild",4,10,"You name **an entity** you can see within **36 meters (120 feet)** as your quarry, marked **until your next Long Rest**.
+
+You sense it at any distance and through total cover, and your damage against it is Empowered and Elevated.",,,Quarry.jpg
+critter-form,CRITTER FORM,"Master Spell, Primal, Wild",3,4,"You take the shape of a small critter you choose for **1 hour**: a rabbit, a rat or the like. Anything that sees you sees an ordinary animal.
+
+You keep every number on your sheet and gain no movement or breathing you lacked, so the shape flies only if you fly. You cannot speak, attack, cast spells or use items while shaped.",MULTICAST,"When casting this spell, you may spend 3 Willpower for **each additional entity** you can touch.",Critter Form.jpg
+molt,MOLT,"Master Spell, Primal, Wild",2,8,"You shed your skin and leave it standing where you were. This can be used while constrained.
+
+Every effect on you ends, harmful or not, and you appear in an unoccupied space you can see within **6 meters (20 feet)**.",,,Molt.jpg
 force-inebriation,FORCE INEBRIATION,"Novice Spell, Primal, Life",2,2,"You attempt to ferment the blood of **an entity** you can see within **15 meters (50 feet)**.
 
 Make a {stat} Roll {roll} against its Grit. On a success, the target becomes poisoned. Outside of combat, the target is unaware of the spell’s source and believes it fell suddenly ill.",MULTICAST,"When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional eligible entity**.",

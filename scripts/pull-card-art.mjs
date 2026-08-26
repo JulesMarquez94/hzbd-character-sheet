@@ -553,8 +553,15 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethe
  * Flora.csv`, all twelve of its rows read Primal third-word Flora, and only the
  * four Master ones brought a picture. So a folder here is not a new family any
  * more than it is a new school — it is only where a drop's files happened to land.
+ *
+ * `data/Wild/` is the sixth, later the same day, and it is the Flora drop twice
+ * over: a family the codex has held from the beginning, a sheet of twelve rows
+ * reading Primal third-word Wild, and a picture on the four Master ones alone. Its
+ * sheet sits at the top of `data/` as `Spells - Primal - Wild.csv` rather than
+ * inside the folder, which is the one thing about it that differs and the one thing
+ * nothing here reads.
  */
-const FAMILY_FOLDERS = new Set(['shadow', 'time', 'space', 'death', 'flora']);
+const FAMILY_FOLDERS = new Set(['shadow', 'time', 'space', 'death', 'flora', 'wild']);
 
 /** Every folder whose files are spell art, whether it names a school or a family. */
 const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
@@ -572,7 +579,7 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * them and 1200x896 for the other ten, and neither is cut: the resize below takes
  * whatever it is handed down to 720. `data/Space/` is twelve more at 1200x896,
  * which is the size the Time drop settled, `data/Death/` is eleven back at
- * 2400x1792 and `data/Flora/` is four more at the same.
+ * 2400x1792, and `data/Flora/` and `data/Wild/` are four more each at the same.
  *
  * Cutting one of these would take the top 45% of a painting that is already
  * only the painting. So the crop is what the exception turns off, and nothing
@@ -580,7 +587,7 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * any family folder a later drop brings, and still resolved against the codex
  * the same way.
  */
-const PLATE_FOLDERS = new Set(['ethereal', 'shadow', 'time', 'space', 'death', 'flora']);
+const PLATE_FOLDERS = new Set(['ethereal', 'shadow', 'time', 'space', 'death', 'flora', 'wild']);
 
 /**
  * The ancestries, which arrive as one folder with a folder inside it.

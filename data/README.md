@@ -97,15 +97,17 @@ doing on its own.
 | GORE SPIKE, the blank twelfth row, handed over in chat | **2026-08-26, 1 spell** | `src/lib/spells.js` (`SPELLS`) |
 | Spells · Primal · Flora, the Master rung | **2026-08-26, 4 spells** (8 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
 | Flora art, from the `Flora/` folder | **2026-08-26, 4 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Primal · Wild, the Master rung | **2026-08-26, 4 spells** (8 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
+| Wild art, from the `Wild/` folder | **2026-08-26, 4 plates** | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
-own column order. `primal-spells.csv` holds the 40 Primal spells and nothing
+own column order. `primal-spells.csv` holds the 44 Primal spells and nothing
 else, which is the whole of what the codex has under that school: the one Arcane
 spell it used to carry beside them, Containment Sphere, moved to Ethereal ·
 Spacial on 2026-08-25 when a sheet finally covered it, and the twelve Death rows
-joined them on 2026-08-26. Those twelve and Flora's four Masters are the only
-rows in the file with an `Image` column filled in, because they are the only ones
-whose art arrived as a folder rather than as a postimg link.
+joined them on 2026-08-26. Those twelve and the Flora and Wild Masters are the
+only rows in the file with an `Image` column filled in, because they are the only
+ones whose art arrived as a folder rather than as a postimg link.
 
 **Every other file in `templates/` is still pre-readability-pass.** That pass
 (2026-08-26) rewrote card text across the codex and did not re-export the tabs,
@@ -7107,3 +7109,154 @@ adds nothing to `ALIASES`: 4 encoded, 0 fetched, 35 to 56 KB of WebP apiece.
   `lint:weapons` clean and unchanged.
 - `data/templates/primal-spells.csv` at 40 rows with Flora's four exported into it,
   their `Image` column carrying the filename each picture arrived under.
+
+## The Wild Masters, 2026-08-26
+
+Asked for in as many words: "I have added hte missing WIld spell in the data folder
+and the missing image in the Wild folder. Make sure you only add the 4 missing wild
+maste spell and not change anything lese make sure the newspell are in line with
+wording and system rule and presentation".
+
+Two sources, and unlike the Flora drop they are not in the same place.
+`data/Spells - Primal - Wild.csv` sits at the top of `data/` with twelve rows in the
+usual eight columns, and `data/Wild/` holds four pictures at 2400x1792. Only the four
+Master rows were asked for, only the four Master rows have a picture, and the eight
+above them carry a `postimg.cc` link the way the opening drop did. All three signals
+agree on the scope.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | WILD STRIDER, SNAKE!, SHARPEN SENSES, PRIMAL ROAR *(already in the codex)* |
+| Adept | WILD SWEEP, SAVAGE SLAM, PACK BOND, BIRD VIEW *(already in the codex)* |
+| Master | STAMPED, QUARRY, CRITTER FORM, MOLT |
+
+### The eight rows above them are the opening drop, unchanged
+
+Wild's Novice four and Adept four came in on 2026-08-19 with the first sheet, and
+this file holds all eight of them again with four new rows underneath. They were read
+against what is printed and **not one of them has moved**. The sheet still carries
+the pre-readability-pass wording those cards were rewritten out of earlier the same
+day: "2d6 + 2 x Mind" where the card says `[[2d6 + 2*stat]]`, "in Decay damage" where
+it says "{damage} damage", "an Advantage on all Skill Checks" where it says
+"advantage on all skill checks", and PACK BOND's four paragraphs where the card has
+three. Where the sheet and the card differ on wording alone the card is the later
+artifact and it stands.
+
+So this drop is four cards and not twelve, which is what the ask said. It is the
+Flora drop's shape exactly, twelve hours later.
+
+### The third Primal family to reach Master
+
+Primal had no Master spell at all until this morning. Death's four were the school's
+first, Flora's four the second set and these are the third, so the top rung goes from
+eight to twelve and **three of the five Primal families have one**. Life and Blood
+are still Novice and Adept only.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Primal before Death | 16 | 8 | 0 | 24 |
+| after Death | 20 | 12 | 4 | 36 |
+| after Flora | 20 | 12 | 8 | 40 |
+| **after Wild** | **20** | **12** | **12** | **44** |
+
+The Mycomancer draws Primal by tier, so its Rank 3 goes from 40 to 44 against a Rank
+2 still standing at 32. The Arcanist, which names no school, goes from 48, 85 and 117
+to 48, 85 and 121.
+
+### The second sheet in the codex's own notation
+
+The Flora sheet was the first to arrive already written in the codex's markers, and
+this one is the second. It only needed them once: STAMPED's cell carries
+`[[6d6 + 6*stat]]`, `{roll}` and `{damage}`, and the other three name no number at
+all. Metres arrive with their feet beside them on every row. So the transcription is
+a copy, and marker insertion plus emphasis was the whole of the work.
+
+### The readings
+
+- **The name STAMPED is the one thing here worth a second look, and it is Jules'
+  call.** The cell says it, the picture file says `Stamped.jpg`, and the card's own
+  first line says "a herd of beast spirits charges", which is a stampede. It is
+  transcribed as the sheet spells it, because a card name is the designer's word and
+  nothing but his own prose suggests the other one. Renaming it later is one edit in
+  `spells.js` plus an `ALIASES` entry in `pull-card-art.mjs`, since the plate would
+  no longer match.
+- **STAMPED writes the damage token and names no type**, so it prints untyped. That
+  is the call COMPRESSION BLAST, CORPSE STRIDE and IMPALING GROVE all took, and it is
+  now **the fourth card in a row with the hole**, which is worth settling for all
+  four at once. Force is the obvious answer here: it is what SAVAGE SLAM's beast
+  deals two rungs down in this same family, and a herd running you over is the same
+  kind of blow.
+- **QUARRY empowers and elevates with no count for either**, so the card prints
+  Empowered and Elevated bare. DREDGE CORPSE's Overcast is written the same way and
+  reads the same, and the two are worth settling together.
+- **QUARRY's sense has no clock of its own.** "You sense it at any distance and
+  through total cover" hangs off the marked duration in the paragraph above it, which
+  is the reading that makes the card one effect rather than two, and it is the Long
+  Rest the tracker reads for the whole card.
+- **CRITTER FORM's Multicast is GIANT GROWTH's shape to the word**: 3 Willpower for
+  each additional entity you can touch, with no Action Point on top. It is the
+  codex's only second half priced in Willpower alone, and `secondHalf` already reads
+  "for each additional" as the repeat, so nothing in `overcast.js` had to change.
+- The four names arrived in sentence case where the sheet's own eight rows above them
+  are capitals. Nothing else needed a hand.
+
+### Nothing is wired, and QUARRY is why
+
+Two of the four are offered on the tracker: QUARRY's mark runs to a Long Rest and
+CRITTER FORM's shape for an hour, so `effectDuration` has a clock for both. STAMPED's
+prone carries its own end inside the keyword — a move action ends it — and MOLT
+resolves the instant it is cast, so neither wants a row.
+
+**QUARRY is the closest thing to a wired rider this family has and it is not wired
+either.** Empowered and Elevated are numbers the sheet knows how to bend, but both
+are printed without a count and both apply only to damage against one named entity,
+which is a condition the tracker cannot see: a rider raises a number on a sheet,
+never a number against a target. Written up beside sickness in the
+considered-and-left-out list in `riders.js`.
+
+### The shelf, the colour and the art
+
+**The second spell drop in a row that added no word to anything.** Wild has been on
+the Primal shelf in `cardOrder.js` and had `--family-wild` in `index.css` since those
+files existed, so `lint:order` still reports 4 schools and 15 families and the tag
+colours were not touched.
+
+Four plates at 2400x1792, the same shape the Ethereal, Death and Flora drops arrived
+in: no white border, no banner, the painting and nothing else. So `data/Wild/` joins
+both `FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs` and the crop
+is turned off for it. It is the sixth folder there claimed as a family rather than a
+school, and the first whose sheet is *not* inside it — which nothing in that script
+reads, so it cost nothing.
+
+Every filename matched the name its card prints, so the drop adds nothing to
+`ALIASES`: 4 encoded from a folder, 0 fetched, 35 to 52 KB of WebP apiece.
+
+### The proof
+
+- **The renderer was asked directly, card by card.** `--ac-fit` read off the real
+  `AbilityCard` node: **STAMPED, QUARRY and MOLT print at full size**, CRITTER FORM
+  at 0.949. Nothing is fine print, and 0.949 sits just above RAIN OF FIRE's 0.945.
+- **The harness was proved wrong first, then fixed.** Rebuilt as `fit.html` plus
+  `src/fit-harness.jsx` and deleted after, it read SENSE LIFE at 0.930 against the
+  0.902 on the record — because the page did not load the three Google faces
+  `index.html` does and was measuring the sans-serif fallback. With the faces linked
+  *and nothing rendered until `document.fonts.ready`* (`useFitText` measures once in
+  a layout effect, so a face that lands after the mount is a face the fit never saw),
+  all three control cards came back exactly on the record: SENSE LIFE 0.902, RAIN OF
+  FIRE 0.945, PESTILENT CLOUD 0.969. **Worth knowing for the next drop: without the
+  fonts every number reads about 0.03 to 0.04 high, which is the difference between
+  fine print and fine.**
+- `npm run lint:cards`: 429 cards inside the 600 ceiling and spelled one way. One of
+  the four is over the 480 target, CRITTER FORM at 573, in the band IMPALING GROVE
+  (579) already sits in.
+- `npm run lint:halves`: all 71 priced off their own prose, up from 70. The new one is
+  CRITTER FORM's Multicast, read as 0 Action Points and 3 Willpower, repeatable.
+- `npm run lint:order`: 4 schools and 15 families shelved, 184 cards sorting up the
+  ladder, unchanged in shape.
+- `npm run lint:text` clean across 136 files. `lint`, `lint:riders`, `lint:math` and
+  `lint:weapons` clean and unchanged. `npm run build` clean.
+- Every keyword the four cards name lights on the rendered card: prone, marked, Long
+  Rest, total cover, Empowered, Elevated, constrained.
+- `data/templates/primal-spells.csv` at 44 rows with Wild's four inserted after BIRD
+  VIEW where the codex has them, their `Image` column carrying the filename each
+  picture arrived under. Twelve inserted lines and no other byte touched.

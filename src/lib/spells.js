@@ -219,9 +219,10 @@ export const SPELLS = withArt([
    * ---------------------------------------- the second Primal family to top out
    * Primal had no Master spell at all until the Death family brought four the same
    * day (see its own header below). These four double that, and every one of them
-   * is something a Mycomancer's Rank 3 now opens over its Rank 2. The school is 40
-   * spells at 20 Novice, 12 Adept and 8 Master, and the two families that reached
-   * the rung own four apiece: Wild, Life and Blood are still Novice and Adept only.
+   * is something a Mycomancer's Rank 3 now opens over its Rank 2. Wild followed with
+   * four of its own later the same day, so the school is 44 spells at 20 Novice, 12
+   * Adept and 12 Master, and the three families that reached the rung own four
+   * apiece: Life and Blood are still Novice and Adept only.
    *
    * ------------------------------------------------------- the sheet's own hand
    * **This is the first drop written in the codex's own notation.** The cells carry
@@ -487,6 +488,138 @@ export const SPELLS = withArt([
     sub_body: null,
   },
 
+  /* =============================================== Primal · Wild, the Masters ==
+   * The family's four Master spells, pulled 2026-08-26 from `data/Spells - Primal
+   * - Wild.csv` with their four pictures in `data/Wild/`.
+   *
+   * The eight cards above are the opening Primal drop of 2026-08-19 and this sheet
+   * holds all eight of them unchanged, four new rows under them. Nothing already
+   * printed moved, and those eight cells still carry their pre-readability-pass
+   * wording where the cards above carry the pass's. Only the top rung is new.
+   * The Flora sheet arrived in exactly this shape earlier the same day.
+   *
+   * ----------------------------------------- the third Primal family to top out
+   * Primal had no Master spell at all until this morning, when Death brought four
+   * and Flora four more. These are the third set, and they take the school to 44
+   * spells at 20 Novice, 12 Adept and 12 Master. Three of its five families now
+   * own four Masters apiece, and Life and Blood are still Novice and Adept only.
+   * A Mycomancer's Rank 3 offers 44 where its Rank 2 offers 32.
+   *
+   * ------------------------------------------------------- the sheet's own hand
+   * The second sheet written in the codex's own notation, and it only needed it
+   * once: STAMPED's cell carries `[[6d6 + 6*stat]]`, `{roll}` and `{damage}`, and
+   * the other three name no number at all. Metres arrive with their feet already
+   * beside them on every row. So the transcription is a copy, and the readings
+   * below are the whole of what it took.
+   *
+   * ------------------------------------------------------------- the readings
+   * - **The name STAMPED is the one thing here worth a second look.** The cell
+   *   says it, the picture file says it, and the card's own first line says "a
+   *   herd of beast spirits charges", which is a stampede. Transcribed as the
+   *   sheet spells it, because a card name is the designer's word and nothing but
+   *   his own prose suggests the other one. Renaming it is one edit here plus an
+   *   ALIASES entry in `pull-card-art.mjs`, since the plate is `Stamped.jpg`.
+   * - **STAMPED writes the damage token and names no type.** `{damage}` prints
+   *   the type the card declares and this card declares none, so it prints
+   *   untyped, the call COMPRESSION BLAST, CORPSE STRIDE and IMPALING GROVE all
+   *   took, and the fourth card in a row with the hole. Force is the obvious
+   *   answer here: it is what SAVAGE SLAM's beast deals two rungs down in this
+   *   same family, and a herd running you over is the same kind of blow.
+   * - **QUARRY empowers and elevates with no count for either**, so the card
+   *   prints Empowered and Elevated bare. DREDGE CORPSE's Overcast is written the
+   *   same way and reads the same, and the two are worth settling at once.
+   * - **QUARRY's sense has no clock of its own.** "You sense it at any distance
+   *   and through total cover" hangs off the marked duration in the paragraph
+   *   above it, which is the reading that makes the card one effect rather than
+   *   two, and the tracker reads that Long Rest for the whole card.
+   * - CRITTER FORM's Multicast is **GIANT GROWTH's shape to the word**: 3
+   *   Willpower for each additional entity you can touch, no Action Point on top.
+   *   It is the codex's second half priced in Willpower alone, and `secondHalf`
+   *   already reads "for each additional" as the repeat (see overcast.js).
+   * - Spelling and grammar, without further comment: the four names arrived in
+   *   sentence case where the sheet's own eight rows above them are capitals.
+   *
+   * --------------------------------------------------------------- not wired
+   * Two of the four are offered on the tracker: QUARRY's mark runs to a Long Rest
+   * and CRITTER FORM's shape for an hour, so `effectDuration` has a clock for
+   * both. STAMPED's prone carries its own end in the keyword, a move action ends
+   * it, and MOLT resolves the instant it is cast, so neither wants a row.
+   *
+   * **QUARRY is the closest thing to a wired rider this family has, and it is not
+   * wired either.** Empowered and Elevated are numbers the sheet knows how to
+   * bend, but both are printed without a count and both apply only to damage
+   * against one named entity, which is a condition the tracker cannot see: a
+   * rider raises a number on a sheet, never a number against a target. Written up
+   * beside sickness in the considered-and-left-out list in riders.js.
+   */
+  {
+    /* The sheet's spelling of the name, and the damage is untyped because the
+       sheet names no type: see "the readings" above. */
+    id: 'stamped',
+    name: 'Stamped',
+    summary: 'A herd tramples a 24-meter line, knocking down everything that fails to get clear.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Wild'],
+    ap: 5,
+    wp: 10,
+    stat: 'mind',
+    body:
+      'A herd of beast spirits charges in a **24-meter (80-foot)** straight line originating from yourself.\n\n' +
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the line. On a success, you deal [[6d6 + 6*stat]] damage and they are knocked prone, or half as much on a failure.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* Empowered and Elevated print bare because the sheet gives no count for
+       either: see "the readings" above. */
+    id: 'quarry',
+    name: 'Quarry',
+    summary: 'Mark one entity until you rest. You always know where it is and you hit it harder.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Wild'],
+    ap: 4,
+    wp: 10,
+    stat: 'mind',
+    body:
+      'You name **an entity** you can see within **36 meters (120 feet)** as your quarry, marked **until your next Long Rest**.\n\n' +
+      'You sense it at any distance and through total cover, and your damage against it is Empowered and Elevated.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* The Multicast is GIANT GROWTH's to the word, Willpower and no Action Point:
+       see "the readings" above. */
+    id: 'critter-form',
+    name: 'Critter Form',
+    summary: 'An hour as a rabbit or a rat. Your sheet is unchanged and you cannot act while shaped.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Wild'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You take the shape of a small critter you choose for **1 hour**: a rabbit, a rat or the like. Anything that sees you sees an ordinary animal.\n\n' +
+      'You keep every number on your sheet and gain no movement or breathing you lacked, so the shape flies only if you fly. You cannot speak, attack, cast spells or use items while shaped.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting this spell, you may spend 3 Willpower for **each additional entity** you can touch.',
+  },
+  {
+    id: 'molt',
+    name: 'Molt',
+    summary: 'Shed your skin and every effect on it, good or bad, and step out 6 meters.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Wild'],
+    ap: 2,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'You shed your skin and leave it standing where you were. This can be used while constrained.\n\n' +
+      'Every effect on you ends, harmful or not, and you appear in an unoccupied space you can see within **6 meters (20 feet)**.',
+    sub_name: null,
+    sub_body: null,
+  },
+
   /* ------------------------------------------------------ Primal · Life ---- */
   {
     id: 'force-inebriation',
@@ -648,15 +781,16 @@ export const SPELLS = withArt([
    * **Primal had no Master spell at all until this drop**: 24 cards in four
    * families, sixteen Novice and eight Adept. Death's four were the school's first,
    * and Flora's four (DEVOURING BLOSSOM, SEEDLING SPIRITS, IMPALING GROVE, BLIGHT
-   * POLLEN) followed later the same day, so Primal stands at 40 spells: 20 Novice,
-   * 12 Adept and 8 Master.
+   * POLLEN) followed later the same day, with Wild's four after them, so Primal
+   * stands at 44 spells: 20 Novice, 12 Adept and 12 Master.
    *
    * That moves a pool nobody touched. The Mycomancer draws Primal by tier and its
    * Rank 3 offered the same 24 cards its Rank 2 did, because the extra rung it
-   * opened had nothing standing on it. Death took Rank 3 to 36, Flora took it to 40,
-   * and Rank 2 is still 32, so for the first time reaching the top of that set is
-   * worth something. The Arcanist, which names no school, goes from 44, 77 and 101
-   * to 48, 85 and 113 on this drop and to 48, 85 and 117 once Flora landed.
+   * opened had nothing standing on it. Death took Rank 3 to 36, Flora took it to 40
+   * and Wild to 44, and Rank 2 is still 32, so for the first time reaching the top of
+   * that set is worth something. The Arcanist, which names no school, goes from 44,
+   * 77 and 101 to 48, 85 and 113 on this drop, and to 48, 85 and 121 once Flora and
+   * Wild landed.
    *
    * --------------------------------------------------------- the twelfth row
    * Four Novice, four Adept and four Master, which is what every Ethereal family
