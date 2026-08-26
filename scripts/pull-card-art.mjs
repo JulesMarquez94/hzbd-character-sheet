@@ -184,6 +184,25 @@ const ALIASES = {
      The other eleven land without help, `TIme Skip.jpg` included: `flatten`
      lowercases before it compares, so the capital I costs nothing. */
   'Temporal Collapse': 'Temporall Collapse.jpg',
+
+  /* Two from data/Life/, 2026-08-26, and they are the two different reasons a
+     file ends up here rather than one reason twice.
+
+     `Agony.jpg` is not a misspelling of anything. AGONY is what the sheet and the
+     plate both call the card and EXPOSED NERVES is what Jules renamed it to on the
+     day of the drop, so this is the first entry in the table that records a rename
+     rather than a typo. It is also the trade the STAMPED note in spells.js was
+     written to describe, taken for the first time: one line in the codex, one line
+     here, and the picture keeps its old name on disk.
+
+     `Ressurection.jpg` is the ordinary kind. The sheet's cell spells it REssurection
+     and the file spells it Ressurection, which is two different misspellings of one
+     English word, and the codex prints RESURRECTION. See "the readings" in the Life
+     section of spells.js.
+
+     The other six land without help. */
+  'Exposed Nerves': 'Agony.jpg',
+  Resurrection: 'Ressurection.jpg',
 };
 
 /**
@@ -560,8 +579,15 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethe
  * sheet sits at the top of `data/` as `Spells - Primal - Wild.csv` rather than
  * inside the folder, which is the one thing about it that differs and the one thing
  * nothing here reads.
+ *
+ * `data/Life/` is the seventh, the same day again, and the first whose drop is not
+ * a Master rung: its sheet is twelve rows reading Primal third-word Life and the
+ * pictures cover eight of them, the whole Adept rung as well as the whole Master
+ * one. Nothing here counts them, which is the point of saying so: a folder is
+ * claimed by name and its files are resolved one at a time against the codex, so a
+ * drop of eight costs exactly what a drop of four does.
  */
-const FAMILY_FOLDERS = new Set(['shadow', 'time', 'space', 'death', 'flora', 'wild']);
+const FAMILY_FOLDERS = new Set(['shadow', 'time', 'space', 'death', 'flora', 'wild', 'life']);
 
 /** Every folder whose files are spell art, whether it names a school or a family. */
 const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
@@ -579,7 +605,8 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * them and 1200x896 for the other ten, and neither is cut: the resize below takes
  * whatever it is handed down to 720. `data/Space/` is twelve more at 1200x896,
  * which is the size the Time drop settled, `data/Death/` is eleven back at
- * 2400x1792, and `data/Flora/` and `data/Wild/` are four more each at the same.
+ * 2400x1792, `data/Flora/` and `data/Wild/` are four more each at the same, and
+ * `data/Life/` is eight more still.
  *
  * Cutting one of these would take the top 45% of a painting that is already
  * only the painting. So the crop is what the exception turns off, and nothing
@@ -587,7 +614,7 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * any family folder a later drop brings, and still resolved against the codex
  * the same way.
  */
-const PLATE_FOLDERS = new Set(['ethereal', 'shadow', 'time', 'space', 'death', 'flora', 'wild']);
+const PLATE_FOLDERS = new Set(['ethereal', 'shadow', 'time', 'space', 'death', 'flora', 'wild', 'life']);
 
 /**
  * The ancestries, which arrive as one folder with a folder inside it.

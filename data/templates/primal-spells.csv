@@ -97,6 +97,34 @@ sense-life,SENSE LIFE,"Novice Spell, Primal, Life",1,1,"You open your awareness 
 For **10 turns (1 minute)**, you sense the exact location and health state of **all living entities** within **18 meters (60 feet)**, even through total cover or darkness.",OVERCAST,"While this spell is active, you may spend 3 Action Points and 3 Willpower to mark **an entity** within range. You keep sensing its location and health state **until your next Long Rest**, even past your range.",
 renew,RENEW,"Novice Spell, Primal, Life",2,2,"You mend the flesh of **an entity** you touch, restoring [[1d6 + stat]] Health immediately and again at the Turn Start of the target’s next **2 turns**.",OVERCAST,"When casting this spell, you may spend an additional 2 Action Points and 2 Willpower. If you do, you instantly restore [[2d6 + 2*stat]] Health to **all entities** currently affected by your Renew, regardless of range or line of sight.",
 giant-growth,GIANT GROWTH,"Novice Spell, Primal, Life",4,4,"You infuse **an entity** you can touch with life energy, tripling its size, doubling its Movement Speed and granting it Empowered for **10 turns**.",MULTICAST,"When casting this spell, you may spend 3 Willpower for **each additional entity** you can touch.",
+heal,HEAL,"Adept Spell, Primal, Life",4,4,"You mend the flesh of **an entity** you can see within **9 meters (30 feet)**.
+
+You restore [[4d6 + 4*stat]] Health.",MULTICAST,"When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.",Heal.jpg
+purge,PURGE,"Adept Spell, Primal, Life",2,3,"You flood **an entity** you touch with raw life energy.
+
+You remove one negative effect from the target.",MULTICAST,"When casting this spell, you may spend an additional 1 Action Point and 2 Willpower any number of times. For each time you do, target **an additional eligible entity**.",Purge.jpg
+exposed-nerves,EXPOSED NERVES,"Adept Spell, Primal, Life",3,4,"You set every nerve in **an entity** you can see within **12 meters (40 feet)** alight.
+
+Make a {stat} Roll {roll} against its Grit. On a success, you deal [[2d6 + 2*stat]] {damage} damage and it has disadvantage on Rolls **until its next Turn End**.",,,Agony.jpg
+vigor,VIGOR,"Adept Spell, Primal, Life",3,3,"You swell the life of **an entity** you touch for **1 hour**.
+
+Its maximum Health rises by [[3*stat]] and it restores that much Health.",MULTICAST,"When casting this spell, you may spend an additional 1 Action Point and 2 Willpower any number of times. For each time you do, target **an additional eligible entity**.",Vigor.jpg
+hibernation,HIBERNATION,"Master Spell, Primal, Life",4,10,"You put **an entity** you touch below 10% of its maximum Health into a deathlike sleep for **24 hours**.
+
+Make a {stat} Roll {roll} against its Grit. On a success it sleeps, incapacitated and immune to all damage. It does not breathe or bleed, and cannot be brought down.",UPKEEP,"At each Long Rest, pay 10 Willpower to keep the sleeper under. Miss the Upkeep and the spell ends.",Hibernation.jpg
+resurrection,RESURRECTION,"Master Spell, Primal, Life",6,12,"You attempt to return **an entity** you touch to life.
+
+If it has been dead for less than **1 minute**, it returns at 1 Health.
+
+Otherwise, make a {stat} Roll {roll} with a difficulty of 14, raised by 1 for every hour since it died. On a failure the spell fails and the body is destroyed.",,,Ressurection.jpg
+life-link,LIFE LINK,"Master Spell, Primal, Life",4,10,"You link **up to 5 entities** you can see within **12 meters (40 feet)** for **5 turns**.
+
+Health any linked entity loses or restores is split evenly between all of them, rounding down.
+
+A linked entity more than **12 meters (40 feet)** from you at its Turn End leaves the link.",,,Life Link.jpg
+sever-life,SEVER LIFE,"Master Spell, Primal, Life",4,8,"You cut into the life of **an entity** you can see within **9 meters (30 feet)**.
+
+Make a {stat} Roll {roll} against its Grit. On a success, you deal [[4d6 + 4*stat]] {damage} damage and its maximum Health falls by the damage dealt **until its next Long Rest**.",,,Sever Life.jpg
 bleeding-trail,BLEEDING TRAIL,"Novice Spell, Primal, Blood",6,4,"You touch a blood sample to create a trail of red mist that only you can see.
 
 The trail lasts for **12 hours** and, if followed, leads you directly to the entity the blood came from.",BLOOD TITHE,"When casting this spell, you may sacrifice Health equal to your {physique} [[physique]]. If you do, you receive a clear mental image of the entity the blood originated from.",

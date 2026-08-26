@@ -146,6 +146,20 @@ export const EFFECT_RIDERS = {
     line: 'Your weapon deals Fire, Empowered by 1',
   },
 
+  /* "On a success, you deal [[2d6 + 2*stat]] {damage} damage and it has
+     disadvantage on Rolls until its next Turn End."
+
+     The damage lands once and the disadvantage runs, so the disadvantage is the
+     half of the card a row can hold. The card says Rolls and this bends the
+     swing, which is the trade LUCKY CLOVER and UNLUCKY CLOVER already make and
+     document below: the Attack Roll is the sheet's, the skill check is the
+     table's. The turn it runs for is the card's own, so the row expires without
+     anybody dropping it. */
+  'exposed-nerves': {
+    disadvantage: 1,
+    line: 'Disadvantage on your next Attack Roll while the nerves are lit',
+  },
+
   /* "Entities affected by the Brew have their Movement Speed increased by 50%." */
   'wisp-of-mist': {
     speedFactor: 1.5,
@@ -274,6 +288,22 @@ export const EFFECT_RIDERS = {
    *                    bend but a heal to refuse, which is the wall DEATH WAIL's
    *                    second sentence hit. Offered on the tracker for the 5
    *                    turns it does print, and bending nothing while it runs.
+   *
+   *   vigor            **the closest call the Life drop brought, and the number
+   *                    is the whole reason.** `healthMax` is a field this table
+   *                    already holds and the card plainly names it: "its maximum
+   *                    Health rises by [[3*stat]]". But that stat is the
+   *                    *caster's* Mind, and a rider is keyed on the card rather
+   *                    than on the caster, so the sheet holding the row is the
+   *                    one sheet that cannot work the number out. Every entry
+   *                    above is a literal constant for exactly that reason.
+   *                    What unlocks it is a row that remembers a number rather
+   *                    than only a card, and nothing needs that yet.
+   *   sever-life       the same wall from the other side. Its cut to maximum
+   *                    Health is "the damage dealt", which is a number nobody
+   *                    knows until the dice land, so there is nothing to write
+   *                    here even in principle. Offered on the tracker until the
+   *                    Long Rest it prints, and bending nothing while it runs.
    */
 };
 

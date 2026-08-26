@@ -99,6 +99,8 @@ doing on its own.
 | Flora art, from the `Flora/` folder | **2026-08-26, 4 plates** | `public/cards/` + `src/lib/cardArt.js` |
 | Spells · Primal · Wild, the Master rung | **2026-08-26, 4 spells** (8 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
 | Wild art, from the `Wild/` folder | **2026-08-26, 4 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Primal · Life, the Adept and Master rungs | **2026-08-26, 8 spells** (4 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
+| Life art, from the `Life/` folder | **2026-08-26, 8 plates** | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 44 Primal spells and nothing
@@ -7260,3 +7262,188 @@ Every filename matched the name its card prints, so the drop adds nothing to
 - `data/templates/primal-spells.csv` at 44 rows with Wild's four inserted after BIRD
   VIEW where the codex has them, their `Image` column carrying the filename each
   picture arrived under. Twelve inserted lines and no other byte touched.
+
+## The Life Adepts and Masters, 2026-08-26
+
+Asked for in as many words: "added life file and folder iwth image, Add the Master
+and adept life spell just thoose spell. The image are i nth life folder. Make sur
+they are inline with system wording and format. rename Agony to exposed nevers".
+
+Two sources, in the shape the Wild drop set. `data/Spells - Primal - Life.csv` sits
+at the top of `data/` with twelve rows in the usual eight columns, and `data/Life/`
+holds eight pictures at 2400x1792. The Adept and Master rows were asked for, those
+same eight rows are the ones with a picture, and the four above them carry a
+`postimg.cc` link the way the opening drop did. All three signals agree on the scope.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | FORCE INEBRIATION, SENSE LIFE, RENEW, GIANT GROWTH *(already in the codex)* |
+| Adept | HEAL, PURGE, EXPOSED NERVES, VIGOR |
+| Master | HIBERNATION, RESURRECTION, LIFE LINK, SEVER LIFE |
+
+This is the third drop of the day in that shape and **the first to bring a whole
+Adept rung with it**. Flora and Wild each added four cards to a family that already
+had eight; Life had four and now has twelve.
+
+### The four rows above them are the opening drop, unchanged
+
+Life's Novice four came in on 2026-08-19 with the first sheet, and this file holds
+all four of them again with eight new rows underneath. They were read against what is
+printed and **not one of them has moved**. The sheet still carries the
+pre-readability-pass wording those cards were rewritten out of earlier the same day:
+"1d6 + Mind" where RENEW says `[[1d6 + stat]]`, "the target becomes Poisoned" where
+FORCE INEBRIATION says "poisoned", "While Sense Life is active" where the card says
+"While this spell is active". Where the sheet and the card differ on wording alone the
+card is the later artifact and it stands.
+
+### The fourth Primal family to reach Master, and the last one left
+
+Primal had no Master spell at all this morning. Death's four were the school's first,
+Flora's four the second set, Wild's four the third, and these eight are the fourth
+family and the largest single drop of the four.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Primal before Death | 16 | 8 | 0 | 24 |
+| after Death | 20 | 12 | 4 | 36 |
+| after Flora | 20 | 12 | 8 | 40 |
+| after Wild | 20 | 12 | 12 | 44 |
+| **after Life** | **20** | **16** | **16** | **52** |
+
+**Four of the five Primal families now stand at a full twelve**, four cards a rung.
+Blood is the only one left and it is still the four Novice cards it opened with:
+BLEEDING TRAIL, BLOOD SPEAR, GORE ARMOR, VAMPIRIC TOUCH.
+
+The Mycomancer draws Primal by tier, so its Rank 3 goes from 44 to 52 and **its Rank
+2 moves for the first time since the school opened**, 32 to 36, because this is the
+first drop of the day to touch a rung below the top. The Arcanist, which names no
+school, goes from 48, 85 and 121 to 48, 89 and 129.
+
+### The third sheet in the codex's notation, and the first that half commits
+
+Flora's sheet was the first written in the codex's own markers and Wild's was the
+second. This one is split down the middle: HEAL, VIGOR and SEVER LIFE carry `[[...]]`,
+`{roll}` and `{damage}`, while EXPOSED NERVES and HIBERNATION are longhand from the
+drops before them ("2d6 + 2 x Mind", "Make Mind roll"). HEAL's cell writes
+`[[4d6 + 4*Mind]]` with the attribute inside the token, where every spell in the
+codex takes its numbers off `*stat` so a Mycomancer's Instinct can print through the
+same card. Metres arrive with their feet beside them on every row.
+
+**Every difference between cell and card was listed and checked one at a time**, by
+mapping the markers back to the longhand the sheet writes and diffing the two sides
+word by word. SEVER LIFE and VIGOR came back word for word; the other six are the
+list under "the readings" and nothing besides.
+
+### The readings
+
+- **AGONY is printed as EXPOSED NERVES**, which is the rename the ask carries. The
+  plate on disk is still `Agony.jpg`, so this is the first entry in the `ALIASES`
+  table in `pull-card-art.mjs` that records a rename rather than a misspelling, and
+  it is the exact trade the STAMPED note predicted a day early: one line in the
+  codex, one line in the script, and the file keeps its old name.
+- **RESURRECTION is spelled out.** The cell says REssurection and the picture says
+  Ressurection, which is two different misspellings of one English word rather than a
+  name, and that is what separates it from STAMPED one family over: STAMPED is a word
+  on its own and this is not. Aliased the same way, for the ordinary reason.
+- **VIGOR arrived with no Action Point and no Willpower**, the only blank in the
+  sheet, and it is read as **3 and 3**. Every repeatable half on this family prices
+  its repeat one Willpower under the card's own cost (FORCE INEBRIATION 2 to 1, PURGE
+  3 to 2, HEAL 4 to 3), and VIGOR's repeat is 2, so the card reads 3. The 3 Action
+  Points are the only count the rung had not already used, between PURGE's 2 and
+  HEAL's 4. **This one wants Jules' word**: it is the only number in the drop that is
+  not on the sheet.
+- **VIGOR's half is labelled OVERCAST and written as a MULTICAST**, word for word the
+  sentence HEAL and PURGE carry two rows above it, resolution line included. It is
+  printed as a Multicast, because the codex's own split is that an Overcast spends
+  more to do more and a Multicast spends more to hit more, and buying another target
+  is the second of those. **Also worth Jules' word**, since the label is his too.
+- **LIFE LINK's leash converts wrong.** The cast range is "12 meters (40 feet)" and
+  the leash three lines later is "12 meters (60 feet)". Twelve metres is forty feet,
+  and a leash at the cast range is what makes the card one shape, so both are printed
+  40. If the leash was meant to reach past the cast, the number wanted is 18 meters.
+- **EXPOSED NERVES and SEVER LIFE both write the damage token and name no type**, so
+  both print untyped. That is the **fifth and sixth card in a row** with the hole
+  after COMPRESSION BLAST, CORPSE STRIDE, IMPALING GROVE and STAMPED, and the whole
+  set is still one ruling waiting to be made.
+- **RESURRECTION never says what a success does.** Its second paragraph gives a body
+  dead under a minute back at 1 Health and its third rolls for anything older and
+  names only the failure. Read as returning at 1 Health, which is the only rate the
+  card states.
+- **HIBERNATION's Upkeep is the first in the codex not paid at a Turn Start.** "At
+  each Long Rest, pay 10 Willpower" is the right clock for a spell that runs a day.
+  `secondHalf` prices it off the same words a Turn Start toll uses and needed no
+  change, and the tracker takes the card's 24 hours off the body before it ever reads
+  the toll.
+- Spelling and grammar, without further comment: the eight names arrived in four
+  different cases, HIBERNATION's roll sentence carried a comma splice and a repeated
+  clause ("On a success it sleeps, While it sleeps, it is incapacitated"), PURGE
+  ended on "entitiy", EXPOSED NERVES on a stray asterisk and SEVER LIFE on a stray
+  `**`.
+
+### EXPOSED NERVES is wired, and VIGOR is the one that got away
+
+Six of the eight are offered on the tracker: EXPOSED NERVES for a turn, VIGOR for an
+hour, HIBERNATION for a day, LIFE LINK for 5 turns and SEVER LIFE until a Long Rest.
+HEAL and PURGE resolve the instant they are cast and want no row.
+
+**EXPOSED NERVES is the first Life card that moves a number on the sheet**, and the
+number is the one it prints: disadvantage, on the sheet of whoever holds the row.
+That is UNLUCKY CLOVER's rider exactly, down to the trade it already documents (the
+Attack Roll is the sheet's, the skill check is the table's), and the card carries its
+own clock so the row expires without anybody dropping it. `lint:riders` walks it from
+a stored row through to the printed attack and back off: 11 riders now, up from 10.
+
+**VIGOR is the closest thing to a second rider and it cannot be one.** `healthMax` is
+a field the table already holds and the card plainly names it, but it names it as
+`[[3*stat]]` off the *caster's* Mind, and a rider is keyed on the card rather than on
+the caster, so the one sheet holding the row is the one sheet that cannot work the
+number out. Every entry in `EFFECT_RIDERS` today is a literal constant for exactly
+that reason. SEVER LIFE is the same wall from the other side: its cut to maximum
+Health is "the damage dealt", a number nobody knows until the dice land. Both are
+written up in the considered-and-left-out list in `riders.js`.
+
+### The shelf, the colour and the art
+
+**The third spell drop in a row that added no word to anything.** Life has been on
+the Primal shelf in `cardOrder.js` and had `--family-life` in `index.css` since those
+files existed, so `lint:order` still reports 4 schools and 15 families and the tag
+colours were not touched.
+
+Eight plates at 2400x1792, the same shape the Ethereal, Death, Flora and Wild drops
+arrived in: no white border, no banner, the painting and nothing else. So `data/Life/`
+joins both `FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs` and
+the crop is turned off for it. It is the seventh folder there claimed as a family
+rather than a school, and the first whose drop is not a Master rung, which nothing in
+that script counts.
+
+### What was checked
+
+- **The fits are the renderer's own**, off the throwaway harness rebuilt for the
+  purpose and deleted after (`fit.html` plus `src/fit-harness.jsx`, cards rendered
+  through the real `AbilityCard` behind `showsArt: () => false`, `--ac-fit` read off
+  each `.ac-body`). Proved first against the three cards whose fit is on the record
+  and all three came back exact: SENSE LIFE 0.902, RAIN OF FIRE 0.945, PESTILENT
+  CLOUD 0.969. **Seven of the eight print at full size** and HIBERNATION prints at
+  0.965, comfortably above the 0.9 floor.
+- **The transcription was proved rather than claimed.** Markers mapped back to the
+  sheet's longhand, both sides whitespace-normalised and diffed word by word: SEVER
+  LIFE and VIGOR matched exactly, and every word that moved on the other six is in
+  "the readings" above. Every AP, WP and tag matched except VIGOR's blank pair.
+- `npm run lint:cards`: 437 cards inside the 600 ceiling and spelled one way. One of
+  the eight is over the 480 target, HIBERNATION at 521, in a band the codex has 93
+  cards in and well under NATURALIZE's 599.
+- `npm run lint:halves`: all 75 priced off their own prose, up from 71. The four new
+  ones are three Multicasts and HIBERNATION's Upkeep, which is priced at 10 Willpower
+  off a Long Rest sentence rather than a Turn Start one.
+- `npm run lint:riders`: all 11 reach the sheet and come back off, up from 10.
+- `npm run lint:order`: 4 schools and 15 families shelved, 192 cards sorting up the
+  ladder, unchanged in shape.
+- `npm run lint:text` clean across 136 files. `lint`, `lint:math` and `lint:weapons`
+  clean and unchanged. `npm run build` clean.
+- Every marker resolves on the rendered card and every keyword the eight name lights:
+  entity, see, touch, Health, Grit, Action Point, Willpower, disadvantage, Turn End,
+  incapacitated, Long Rest, Upkeep. The two untyped cards render "you deal 4d6 damage"
+  with no type word, which is what STAMPED and IMPALING GROVE already do.
+- `data/templates/primal-spells.csv` at 52 rows with Life's eight exported into it
+  after GIANT GROWTH where the codex has them, their `Image` column carrying the
+  filename each picture arrived under, `Agony.jpg` and `Ressurection.jpg` included.

@@ -220,9 +220,10 @@ export const SPELLS = withArt([
    * Primal had no Master spell at all until the Death family brought four the same
    * day (see its own header below). These four double that, and every one of them
    * is something a Mycomancer's Rank 3 now opens over its Rank 2. Wild followed with
-   * four of its own later the same day, so the school is 44 spells at 20 Novice, 12
-   * Adept and 12 Master, and the three families that reached the rung own four
-   * apiece: Life and Blood are still Novice and Adept only.
+   * four of its own later the same day, and Life brought a whole Adept and Master
+   * rung after that, so the school is 52 spells at 20 Novice, 16 Adept and 16
+   * Master, and the four families that reached the rung own four apiece: Blood
+   * alone is still the four Novice cards it opened with.
    *
    * ------------------------------------------------------- the sheet's own hand
    * **This is the first drop written in the codex's own notation.** The cells carry
@@ -500,10 +501,11 @@ export const SPELLS = withArt([
    *
    * ----------------------------------------- the third Primal family to top out
    * Primal had no Master spell at all until this morning, when Death brought four
-   * and Flora four more. These are the third set, and they take the school to 44
-   * spells at 20 Novice, 12 Adept and 12 Master. Three of its five families now
-   * own four Masters apiece, and Life and Blood are still Novice and Adept only.
-   * A Mycomancer's Rank 3 offers 44 where its Rank 2 offers 32.
+   * and Flora four more. These are the third set, and Life's eight followed them
+   * the same day to take the school to 52 spells at 20 Novice, 16 Adept and 16
+   * Master. Four of its five families now own four Masters apiece, and Blood alone
+   * is still the four Novice cards it opened with. A Mycomancer's Rank 3 offers 52
+   * where its Rank 2 offers 36.
    *
    * ------------------------------------------------------- the sheet's own hand
    * The second sheet written in the codex's own notation, and it only needed it
@@ -684,6 +686,234 @@ export const SPELLS = withArt([
       'When casting this spell, you may spend 3 Willpower for **each additional entity** you can touch.',
   },
 
+  /* ============================= Primal · Life, the Adepts and the Masters ==
+   * The family's eight upper cards, pulled 2026-08-26 from `data/Spells - Primal
+   * - Life.csv` with their eight pictures in `data/Life/`.
+   *
+   * The four cards above are the opening Primal drop of 2026-08-19 and this sheet
+   * holds all four of them unchanged, eight new rows under them. Nothing already
+   * printed moved, and those four cells still carry their pre-readability-pass
+   * wording where the cards above carry the pass's. Only the top two rungs are new.
+   * The Flora and Wild sheets arrived in the same shape earlier the same day, and
+   * this is the first of the three to bring a whole Adept rung with it.
+   *
+   * ---------------------------------------- the fourth Primal family to top out
+   * Primal had no Master spell at all until this morning, when Death brought four,
+   * then Flora four and Wild four. These eight take the school to 52 spells at 20
+   * Novice, 16 Adept and 16 Master, and four of its five families now stand at a
+   * full twelve. **Blood is the last one left**, and it is still the four Novice
+   * cards it opened with. A Mycomancer's Rank 3 offers 52 where its Rank 2 offers
+   * 36, and the Arcanist, which names no school, goes from 48, 85 and 121 to 48,
+   * 89 and 129.
+   *
+   * ------------------------------------------------------- the sheet's own hand
+   * The third sheet in the codex's own notation and the first that only half
+   * commits to it. HEAL, VIGOR and SEVER LIFE carry `[[...]]`, `{roll}` and
+   * `{damage}`; EXPOSED NERVES and HIBERNATION are longhand from the drops before
+   * it ("2d6 + 2 x Mind", "Make Mind roll"), and HEAL's cell writes
+   * `[[4d6 + 4*Mind]]` with the attribute inside the token, which every spell here
+   * takes off `*stat` instead. Metres arrive with their feet beside them.
+   *
+   * ------------------------------------------------------------- the readings
+   * - **AGONY is printed as EXPOSED NERVES**, asked for in chat on the day of the
+   *   drop. The plate is still `Agony.jpg`, so the rename is this entry plus an
+   *   ALIASES row in `pull-card-art.mjs`, which is the same two-line trade the
+   *   STAMPED note above describes and the first time the codex has taken it.
+   * - **RESURRECTION is spelled out.** The cell says REssurection and the picture
+   *   says Ressurection, which is two different misspellings of one English word
+   *   rather than a name, and that is what separates it from STAMPED one family
+   *   over: nothing here is a word on its own. Aliased for the same reason.
+   * - **VIGOR arrived with no Action Point and no Willpower**, the only blank in
+   *   the sheet, and it is read as **3 and 3**. Every repeatable half on this
+   *   family prices its repeat one Willpower under the card's own cost (FORCE
+   *   INEBRIATION 2 to 1, PURGE 3 to 2, HEAL 4 to 3), and VIGOR's repeat is 2, so
+   *   the card reads 3. The 3 Action Points are the only count the rung has not
+   *   already used between PURGE's 2 and HEAL's 4. **Worth Jules's word.**
+   * - **VIGOR's half is labelled OVERCAST and written as a MULTICAST**, word for
+   *   word the sentence HEAL and PURGE carry two rows above it. Printed as a
+   *   Multicast, because the codex's own split is that an Overcast spends more to
+   *   do more and a Multicast spends more to hit more (see the header of this
+   *   file), and buying another target is the second of those. **Worth Jules's
+   *   word**, since the label is his too.
+   * - **LIFE LINK's leash converts wrong.** The cast range is "12 meters (40
+   *   feet)" and the leash three lines later is "12 meters (60 feet)". Twelve
+   *   metres is forty feet, and a leash at the cast range is what makes the card
+   *   one shape, so both are printed 40. If the leash was meant to be longer than
+   *   the cast, it is 18 meters and not 12.
+   * - **EXPOSED NERVES and SEVER LIFE both write the damage token and name no
+   *   type**, so both print untyped. That is the fifth and sixth card in a row
+   *   with the hole after COMPRESSION BLAST, CORPSE STRIDE, IMPALING GROVE and
+   *   STAMPED, and the whole set is still one ruling.
+   * - **RESURRECTION never says what a success does.** Its second paragraph gives
+   *   a body dead under a minute back at 1 Health, its third rolls for anything
+   *   older and names only the failure. Read as returning at 1 Health, which is
+   *   the only rate the card states.
+   * - **HIBERNATION's Upkeep is the first in the codex not paid at a Turn Start.**
+   *   "At each Long Rest, pay 10 Willpower" is the right clock for a spell that
+   *   runs a day, `secondHalf` prices it off the same words, and the tracker takes
+   *   its 24 hours off the body before it ever reads the toll.
+   * - Spelling and grammar, without further comment: the eight names arrived in
+   *   four different cases, HIBERNATION's roll sentence carried a comma splice and
+   *   a repeated clause, and SEVER LIFE closed on a stray `**`.
+   *
+   * --------------------------------------------------------------- the wiring
+   * **EXPOSED NERVES is the first Life card that moves a number**, and the number
+   * is the one it prints: disadvantage, on the sheet of whoever holds the row.
+   * That is UNLUCKY CLOVER's rider exactly, down to the same trade it documents
+   * (the Attack Roll is the sheet's, the skill check is the table's), and the card
+   * carries a clock of its own so the row expires on its own. In riders.js.
+   *
+   * Six of the eight are offered on the tracker: EXPOSED NERVES for a turn, VIGOR
+   * for an hour, HIBERNATION for a day, LIFE LINK for 5 turns and SEVER LIFE until
+   * a Long Rest. HEAL and PURGE resolve the instant they are cast and want no row.
+   *
+   * **VIGOR is the closest thing to a second rider and it cannot be one.**
+   * `healthMax` is a field the table already holds, but the number is `[[3*stat]]`
+   * off the *caster's* Mind and a rider is keyed on the card rather than on the
+   * caster, so the sheet holding the row has no way to work it out. Every entry in
+   * EFFECT_RIDERS today is a literal constant, and that is why. SEVER LIFE is the
+   * same wall from the other side: its cut to maximum Health is the damage rolled,
+   * which is a number no table can carry. Both are written up in the
+   * considered-and-left-out list in riders.js.
+   */
+  {
+    id: 'heal',
+    name: 'Heal',
+    summary: 'Mend one entity at range, and Multicast to mend the whole party.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Primal', 'Life'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You mend the flesh of **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'You restore [[4d6 + 4*stat]] Health.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
+  },
+  {
+    id: 'purge',
+    name: 'Purge',
+    summary: 'A touch of raw life strips one negative effect, off as many as you pay for.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Primal', 'Life'],
+    ap: 2,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'You flood **an entity** you touch with raw life energy.\n\n' +
+      'You remove one negative effect from the target.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting this spell, you may spend an additional 1 Action Point and 2 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
+  },
+  {
+    /* AGONY on the sheet and on the plate, renamed in chat. The damage is untyped
+       because the sheet names no type: see "the readings" above. */
+    id: 'exposed-nerves',
+    name: 'Exposed Nerves',
+    summary: 'Set a target’s nerves alight for damage and disadvantage on its Rolls.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Primal', 'Life'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You set every nerve in **an entity** you can see within **12 meters (40 feet)** alight.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, you deal [[2d6 + 2*stat]] {damage} damage and it has disadvantage on Rolls **until its next Turn End**.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* The 3 and the 3 are read off the rung rather than printed on the sheet, and
+       the half is labelled Overcast there: see "the readings" above. */
+    id: 'vigor',
+    name: 'Vigor',
+    summary: 'An hour of swollen life: more maximum Health, and the Health to fill it.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Primal', 'Life'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'You swell the life of **an entity** you touch for **1 hour**.\n\n' +
+      'Its maximum Health rises by [[3*stat]] and it restores that much Health.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting this spell, you may spend an additional 1 Action Point and 2 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
+  },
+  {
+    /* The one Upkeep in the codex paid at a rest rather than at a Turn Start: see
+       "the readings" above. */
+    id: 'hibernation',
+    name: 'Hibernation',
+    summary: 'A dying entity sleeps out a day, untouchable, for as long as you keep paying.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Life'],
+    ap: 4,
+    wp: 10,
+    stat: 'mind',
+    body:
+      'You put **an entity** you touch below 10% of its maximum Health into a deathlike sleep for **24 hours**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success it sleeps, incapacitated and immune to all damage. It does not breathe or bleed, and cannot be brought down.', // text-style-ok: joins two clauses
+    sub_name: 'Upkeep',
+    sub_body:
+      'At each Long Rest, pay 10 Willpower to keep the sleeper under. Miss the Upkeep and the spell ends.',
+  },
+  {
+    /* REssurection in the cell and Ressurection on the plate, which is a
+       misspelling twice over rather than a name: see "the readings" above. */
+    id: 'resurrection',
+    name: 'Resurrection',
+    summary: 'Call the dead back, and the longer they have been gone the harder it gets.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Life'],
+    ap: 6,
+    wp: 12,
+    stat: 'mind',
+    body:
+      'You attempt to return **an entity** you touch to life.\n\n' +
+      'If it has been dead for less than **1 minute**, it returns at 1 Health.\n\n' +
+      'Otherwise, make a {stat} Roll {roll} with a difficulty of 14, raised by 1 for every hour since it died. On a failure the spell fails and the body is destroyed.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* The leash is printed at the cast range, because the sheet's own conversion
+       of it does not hold: see "the readings" above. */
+    id: 'life-link',
+    name: 'Life Link',
+    summary: 'Five turns where a party splits every wound and every heal evenly.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Life'],
+    ap: 4,
+    wp: 10,
+    stat: 'mind',
+    body:
+      'You link **up to 5 entities** you can see within **12 meters (40 feet)** for **5 turns**.\n\n' +
+      'Health any linked entity loses or restores is split evenly between all of them, rounding down.\n\n' +
+      'A linked entity more than **12 meters (40 feet)** from you at its Turn End leaves the link.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* Untyped for the same reason EXPOSED NERVES is: see "the readings" above. */
+    id: 'sever-life',
+    name: 'Sever Life',
+    summary: 'A cut that takes away the maximum Health to hold it, until they rest.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Life'],
+    ap: 4,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'You cut into the life of **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, you deal [[4d6 + 4*stat]] {damage} damage and its maximum Health falls by the damage dealt **until its next Long Rest**.',
+    sub_name: null,
+    sub_body: null,
+  },
+
   /* ----------------------------------------------------- Primal · Blood ---- */
   {
     id: 'bleeding-trail',
@@ -781,16 +1011,17 @@ export const SPELLS = withArt([
    * **Primal had no Master spell at all until this drop**: 24 cards in four
    * families, sixteen Novice and eight Adept. Death's four were the school's first,
    * and Flora's four (DEVOURING BLOSSOM, SEEDLING SPIRITS, IMPALING GROVE, BLIGHT
-   * POLLEN) followed later the same day, with Wild's four after them, so Primal
-   * stands at 44 spells: 20 Novice, 12 Adept and 12 Master.
+   * POLLEN) followed later the same day, with Wild's four after them and Life's
+   * whole Adept and Master rung after that, so Primal stands at 52 spells: 20
+   * Novice, 16 Adept and 16 Master.
    *
    * That moves a pool nobody touched. The Mycomancer draws Primal by tier and its
    * Rank 3 offered the same 24 cards its Rank 2 did, because the extra rung it
-   * opened had nothing standing on it. Death took Rank 3 to 36, Flora took it to 40
-   * and Wild to 44, and Rank 2 is still 32, so for the first time reaching the top of
-   * that set is worth something. The Arcanist, which names no school, goes from 44,
-   * 77 and 101 to 48, 85 and 113 on this drop, and to 48, 85 and 121 once Flora and
-   * Wild landed.
+   * opened had nothing standing on it. Death took Rank 3 to 36, Flora took it to 40,
+   * Wild to 44 and Life to 52, and Life's Adepts took Rank 2 from 32 to 36, so for
+   * the first time reaching the top of that set is worth something. The Arcanist,
+   * which names no school, goes from 44, 77 and 101 to 48, 85 and 113 on this drop,
+   * and to 48, 89 and 129 once Flora, Wild and Life landed.
    *
    * --------------------------------------------------------- the twelfth row
    * Four Novice, four Adept and four Master, which is what every Ethereal family
