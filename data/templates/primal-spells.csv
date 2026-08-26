@@ -33,6 +33,20 @@ naturalize,NATURALIZE,"Adept Spell, Primal, Flora",3,4,"You touch a common objec
 The object cannot exceed 200 kg (440 lbs) or a **2-meter (6-foot)** cube, and cannot be metallic.
 
 If the object is worn or held by **an entity**, destroying it takes a successful {stat} Melee Attack {roll} against them.",OVERCAST,"When casting this spell, you may spend an additional 3 Action Points and 6 Willpower to target uncommon objects.",
+devouring-blossom,DEVOURING BLOSSOM,"Master Spell, Primal, Flora",5,10,"A carnivorous flower opens at a point you can see within **15 meters (50 feet)** for **10 turns (1 minute)**. It has Health equal to [[10*stat]] and Defense equal to [[2*stat]].
+
+At your Turn End, it snaps at **an entity** within **3 meters (10 feet)**. Make a {stat} Roll {roll} against its Reflex. On a success, the entity is swallowed: grappled and taking [[2d6 + 2*stat]] {damage} damage at each of its Turn Starts.
+
+The flower holds **up to 2 entities**, and frees what it holds when destroyed.",,,Devouring Blossom.jpg
+seedling-spirits,SEEDLING SPIRITS,"Master Spell, Primal, Flora",4,12,"You call up a number of plant spirits equal to half your {stat}, each in a space you can see within **9 meters (30 feet)**, for **10 turns (1 minute)**.
+
+Each spirit follows an ally of your choice and moves with them. At that ally’s Turn Start, it restores [[1d6 + stat]] Health.
+
+An ally can spend 1 Action Point to crush their spirit and shed poisoned, diseased or bleeding out. The spirit is then gone, and cannot be targeted otherwise.",,,Seedling Spirits.jpg
+impaling-grove,IMPALING GROVE,"Master Spell, Primal, Flora",5,9,"Hardwood spears erupt in a **12-meter (40-foot)** area centered on a point you can see within **18 meters (60 feet)**. Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[4d6 + 4*stat]] damage and they are rooted and prone **until their next Turn End**.",OVERCAST,"When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, the area grows **3 meters (10 feet)**.",Impaling Grove.jpg
+blight-pollen,BLIGHT POLLEN,"Master Spell, Primal, Flora",3,4,"You exhale a **9-meter (30-foot)** cone of grey pollen.
+
+Make a {stat} Roll {roll} against the Grit of **all entities** in the area. On a success, they cannot restore Health for **5 turns**.",BLOOD TITHE,"When casting this spell, you may sacrifice Health equal to [[3*level]]. If you do, they are also diseased.",Blight pollen.jpg
 wild-strider,WILD STRIDER,"Novice Spell, Primal, Wild",2,2,You embody the freedom of the wild **until your next Long Rest**. The Action Point cost of your {{Move}} action can no longer exceed 1 and your Movement Speed cannot be reduced. Your Jump Distance and Jump Height are doubled.,MULTICAST,"When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional entity** you can see within **6 meters (20 feet)**.",
 snake,SNAKE!,"Novice Spell, Primal, Wild",4,2,"You manifest a snake spirit which hurls itself at **an entity** you can see within **6 meters (20 feet)**.
 
@@ -118,3 +132,6 @@ death-wail,DEATH WAIL,"Master Spell, Primal, Death",4,5,"You ward yourself with 
 The next time you would be brought down, you return to 1 Health instead and gain Shield equal to your maximum Health.
 
 You cannot restore Health until you take a Long Rest, and any Health damage you take kills you instantly.",,,Death Wail.jpg
+gore-spike,GORE SPIKE,"Master Spell, Primal, Death",4,10,"A corpse you can see within **15 meters (50 feet)** erupts into a spike of gore.
+
+Make a {stat} Ranged Attack {roll} against **an entity** within **6 meters (20 feet)** of it. On a hit, you deal [[6d6 + 6*stat]] {damage} damage.",,,Gore Spike.jpg

@@ -208,6 +208,152 @@ export const SPELLS = withArt([
       'When casting this spell, you may spend an additional 3 Action Points and 6 Willpower to target uncommon objects.',
   },
 
+  /* ============================================== Primal · Flora, the Masters ==
+   * The family's four Master spells, pulled 2026-08-26 from `data/Flora/Spells -
+   * Primal - Flora.csv` with their four pictures in `data/Flora/`.
+   *
+   * Flora is the codex's oldest family: the eight cards above are the opening drop
+   * of 2026-08-19, and this sheet holds all eight of them unchanged with four new
+   * rows under them. Nothing already printed moved. Only the top rung is new.
+   *
+   * ---------------------------------------- the second Primal family to top out
+   * Primal had no Master spell at all until the Death family brought four the same
+   * day (see its own header below). These four double that, and every one of them
+   * is something a Mycomancer's Rank 3 now opens over its Rank 2. The school is 40
+   * spells at 20 Novice, 12 Adept and 8 Master, and the two families that reached
+   * the rung own four apiece: Wild, Life and Blood are still Novice and Adept only.
+   *
+   * ------------------------------------------------------- the sheet's own hand
+   * **This is the first drop written in the codex's own notation.** The cells carry
+   * `[[2d6 + 2*stat]]` where every earlier sheet wrote "2d6 + 2 x Mind", `{roll}`
+   * and `{damage}` where they belong, and metres with their feet already beside
+   * them. So the transcription is close to a copy and the readings below are the
+   * whole of what it took, where the Death sheet the same day needed ten ranges
+   * repaired before a card could print at all.
+   *
+   * ------------------------------------------------------------- the readings
+   * - **IMPALING GROVE writes the damage token and never names a type.** The cell
+   *   says "you deal [[4d6 + 4*stat]] {damage} damage", and `{damage}` prints the
+   *   type the card declares — which this card declares nowhere. It prints untyped,
+   *   the call COMPRESSION BLAST and CORPSE STRIDE both took: a damage type is what
+   *   a resistance answers, so it is not one to hand out. Sharp is the obvious
+   *   answer and it is what the family's other two physical cards deal (BRAMBLE
+   *   WHIP's vine, THORN RAMPART's briars). Third card in a row with this hole, and
+   *   worth settling for all three at once.
+   * - **SEEDLING SPIRITS counts its spirits off Mind and the card counts them off
+   *   the caster's own attribute**, which is the same turn every card above it
+   *   takes: the sheet has always written "Make a Mind Roll" and the codex has
+   *   always printed the caster's. There is no live token for a half, so a half is
+   *   written as the attribute's *name*, the way GLACIAL ACCRETION does. That
+   *   one keeps Mind because its cap and its throw measure the same Ice Spikes;
+   *   here the count and the healing are separate quantities, so the whole card
+   *   stays on one attribute and a Mycomancer calls up spirits by Instinct.
+   * - **BLIGHT POLLEN's Blood Tithe is the first not paid in Physique.** "Health
+   *   equal to your 3xlevel" reads as three times the caster's level and prints
+   *   `[[3*level]]`; every other tithe in the codex costs `{physique}`, on the
+   *   grounds that a body pays it. A level is not an attribute, so nothing casts
+   *   off it and `secondHalf` prices this the same way either. Whether a tithe is
+   *   allowed to leave Physique is the designer's call.
+   * - Spelling and grammar, without further comment: "BLight Pollen", "1 Action
+   *   Points", "The spirit cannot be target otherwise". DEVOURING BLOSSOM's "for 10
+   *   turns" gained the "(1 minute)" its three siblings and the row under it print.
+   *
+   * ----------------------------------------------------------- what it confirms
+   * DEVOURING BLOSSOM's flower is a conjured thing with a Health bar, and it landed
+   * on the ladder HARD LIGHT already set: `[[10*stat]]` Health and `[[2*stat]]`
+   * Defense, the same two expressions in the same order, off a sheet that has never
+   * seen that card. It is not a minion — nothing here hands over a body with a
+   * sheet of its own (see minions.js) — it is an object on the table, which is all
+   * SHAPE EARTH's wall and HARD LIGHT's bridge are either.
+   *
+   * --------------------------------------------------------------- not wired
+   * All four are offered on the tracker: three print a count of turns and IMPALING
+   * GROVE's rooted runs to a Turn End, so `effectDuration` has a clock for every
+   * one of them. The Death drop offered five of its twelve.
+   *
+   * **BLIGHT POLLEN moves two numbers and neither is wired.** Its diseased is
+   * SICKNESS's problem exactly — -1 to all three attributes, `growth-elixir`'s own
+   * shape, on a card whose other half gives the caster a reason to hold the row
+   * too, so a rider would take the point off the wrong sheet. And "cannot restore
+   * Health" is a rule rather than a number: nothing on this sheet can refuse a
+   * heal, which is the wall DEATH WAIL's second sentence hit. Both are written up
+   * beside sickness in riders.js.
+   */
+  {
+    id: 'devouring-blossom',
+    name: 'Devouring Blossom',
+    summary: 'A carnivorous flower with a Health bar of its own. What it catches is held and rotted.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Flora'],
+    ap: 5,
+    wp: 10,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'A carnivorous flower opens at a point you can see within **15 meters (50 feet)** for **10 turns (1 minute)**. It has Health equal to [[10*stat]] and Defense equal to [[2*stat]].\n\n' +
+      'At your Turn End, it snaps at **an entity** within **3 meters (10 feet)**. Make a {stat} Roll {roll} against its Reflex. On a success, the entity is swallowed: grappled and taking [[2d6 + 2*stat]] {damage} damage at each of its Turn Starts.\n\n' +
+      'The flower holds **up to 2 entities**, and frees what it holds when destroyed.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* "half your {stat}" and not "half your {mind}": see "the readings" above. */
+    id: 'seedling-spirits',
+    name: 'Seedling Spirits',
+    summary: 'A spirit per ally, healing them each turn, crushed to shed a poison or a disease.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Flora'],
+    ap: 4,
+    wp: 12,
+    stat: 'mind',
+    body:
+      'You call up a number of plant spirits equal to half your {stat}, each in a space you can see within **9 meters (30 feet)**, for **10 turns (1 minute)**.\n\n' +
+      'Each spirit follows an ally of your choice and moves with them. At that ally’s Turn Start, it restores [[1d6 + stat]] Health.\n\n' +
+      'An ally can spend 1 Action Point to crush their spirit and shed poisoned, diseased or bleeding out. The spirit is then gone, and cannot be targeted otherwise.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* The damage is untyped because the sheet names no type, and Sharp is the
+       obvious answer: see "the readings" above. */
+    id: 'impaling-grove',
+    name: 'Impaling Grove',
+    summary: 'Hardwood spears through a twelve-meter area, leaving everything rooted and prone.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Flora'],
+    ap: 5,
+    wp: 9,
+    stat: 'mind',
+    body:
+      /* One paragraph and not the usual two, and it is the fit that decided it:
+         the break between the declaration and the roll costs this card 0.03 of
+         its type size, which is the difference between 0.895 and fine print and
+         0.930 in the band RAIN OF FIRE and PESTILENT CLOUD already sit in. The
+         sheet's "erupt from the ground" came off for the same reason, and is the
+         only thing that did. */
+      'Hardwood spears erupt in a **12-meter (40-foot)** area centered on a point you can see within **18 meters (60 feet)**. Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[4d6 + 4*stat]] damage and they are rooted and prone **until their next Turn End**.',
+    sub_name: 'Overcast',
+    sub_body:
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, the area grows **3 meters (10 feet)**.',
+  },
+  {
+    /* The one tithe in the codex not paid in Physique: see "the readings" above. */
+    id: 'blight-pollen',
+    name: 'Blight Pollen',
+    summary: 'A cone of grey pollen that shuts healing off. Tithe blood to leave them diseased.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Flora'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You exhale a **9-meter (30-foot)** cone of grey pollen.\n\n' +
+      'Make a {stat} Roll {roll} against the Grit of **all entities** in the area. On a success, they cannot restore Health for **5 turns**.',
+    sub_name: 'Blood Tithe',
+    sub_body:
+      'When casting this spell, you may sacrifice Health equal to [[3*level]]. If you do, they are also diseased.',
+  },
+
   /* ------------------------------------------------------ Primal · Wild ---- */
   {
     id: 'wild-strider',
@@ -500,21 +646,29 @@ export const SPELLS = withArt([
    *
    * ------------------------------------------- the first Master spells in Primal
    * **Primal had no Master spell at all until this drop**: 24 cards in four
-   * families, sixteen Novice and eight Adept. Death brings three, so the school is
-   * 35 spells at 20 Novice, 12 Adept and 3 Master.
+   * families, sixteen Novice and eight Adept. Death's four were the school's first,
+   * and Flora's four (DEVOURING BLOSSOM, SEEDLING SPIRITS, IMPALING GROVE, BLIGHT
+   * POLLEN) followed later the same day, so Primal stands at 40 spells: 20 Novice,
+   * 12 Adept and 8 Master.
    *
    * That moves a pool nobody touched. The Mycomancer draws Primal by tier and its
    * Rank 3 offered the same 24 cards its Rank 2 did, because the extra rung it
-   * opened had nothing standing on it. Rank 3 is 35 now where Rank 2 is 32, and for
-   * the first time reaching the top of that set is worth something. The Arcanist,
-   * which names no school, goes from 44, 77 and 101 to 48, 85 and 112.
+   * opened had nothing standing on it. Death took Rank 3 to 36, Flora took it to 40,
+   * and Rank 2 is still 32, so for the first time reaching the top of that set is
+   * worth something. The Arcanist, which names no school, goes from 44, 77 and 101
+   * to 48, 85 and 113 on this drop and to 48, 85 and 117 once Flora landed.
    *
-   * ------------------------------------------------------------- what is missing
-   * Four Novice, four Adept and **three** Master, where every Ethereal family
-   * landed four of each. The sheet's twelfth row is not absent, it is *blank*: a
-   * row carrying "Master Spell, Primal, Death" in its Tags cell and nothing in any
-   * other column. So a fourth Master was laid out and not written, and the family
-   * is one card short by the designer's own count rather than by a reading here.
+   * --------------------------------------------------------- the twelfth row
+   * Four Novice, four Adept and four Master, which is what every Ethereal family
+   * landed. **It did not arrive that way.** The sheet's twelfth row was not absent,
+   * it was *blank*: a row carrying "Master Spell, Primal, Death" in its Tags cell
+   * and nothing in any other column, so a fourth Master had been laid out and never
+   * written.
+   *
+   * GORE SPIKE is that row, handed over in chat later the same day with its picture
+   * dropped into `data/Death/` beside the other eleven. It is the only card in
+   * the family that did not come off the CSV, which is why its cell is quoted on the
+   * card itself rather than here.
    *
    * ------------------------------------------------------------- what it retires
    * Nothing. Unlike the Spacial drop, which finally filed the one loose Arcane
@@ -522,11 +676,16 @@ export const SPELLS = withArt([
    * no card moved into it. Arcane and Nature are still empty shelves.
    *
    * ----------------------------------------------------------------- the rolls
-   * Five contests and they are not all one shape, which is what settles SICKNESS
+   * Six contests and they are not all one shape, which is what settles SICKNESS
    * below. Three are the caster's Roll against a named defense: CORRUPT LIFE and
-   * ENBRITTLE against Grit, GORE BLAST against the Reflex of an area. Two are
-   * attacks against Defense: ROTTING TOUCH in melee and SICKNESS at range. MIMIC
-   * DEATH's inspection is a sixth Roll and is not the caster's at all.
+   * ENBRITTLE against Grit, GORE BLAST against the Reflex of an area. Three are
+   * attacks against Defense: ROTTING TOUCH in melee, SICKNESS and GORE SPIKE at
+   * range. MIMIC DEATH's inspection is a seventh Roll and is not the caster's at
+   * all.
+   *
+   * GORE SPIKE is the family's only Master attack and closes a hole the other three
+   * left: UNALIVE deals its damage without rolling for it, ENBRITTLE rolls against
+   * Grit and DEATH WAIL rolls nothing, so the top rung had no Attack Roll on it.
    *
    * ----------------------------------------------------------------- the halves
    * Five, all the designer's word and all read the way the codex uses it. Four
@@ -597,9 +756,18 @@ export const SPELLS = withArt([
    * - **GORE BLAST hits for [[1d6 + stat]]**, the smallest damage on any Adept spell
    *   in the codex that catches an area. That looks like the point rather than a
    *   slip: what the card is really for is the Corpse Carrion behind it.
-   * - **UNALIVE costs 12 Willpower**, the highest printed Willpower on any card in
-   *   the codex. Left exactly as it stands: a spell that kills outright or does
-   *   nothing at all is priced like one.
+   * - **UNALIVE costs 12 Willpower and GORE SPIKE costs 10**, where nothing else in
+   *   Primal had ever charged more than THORN RAMPART's 6. Both stand as written.
+   *   Neither is the codex's highest, which is the 30 THEON PERFECT REPLICANTS and
+   *   TERRA COTTA DISK both ask; 12 ties LIGHTSTRIDER GATEWAY and GUARDIAN ANGEL.
+   *   The pair is worth reading side by side, since GORE SPIKE lands 6d6 + 6x the
+   *   attribute for 4 and 10 and always keeps it, where UNALIVE lands 8d6 + 8x for
+   *   5 and 12 and is negated outright unless the hit kills.
+   * - **GORE SPIKE's cell writes the damage token as {decay}**, and it prints as
+   *   {damage} over a Decay on the card. Every other card in the codex writes it the
+   *   second way, and the difference is not cosmetic: {damage} prints whatever type
+   *   the card is carrying, so a Decay Infusion or a Draconic Scale can move it,
+   *   where a type written into the token could never be moved by anything.
    * - Spelling and grammar, throughout and without further comment: "O n a hit",
    *   "your del", "nad", "withn", "coprse", "concious", "YOu", "a corpse emerge",
    *   "turn stat", "that last for", "agiasnt", "entitles", "wtih", "CorpsCarriosn",
@@ -618,9 +786,9 @@ export const SPELLS = withArt([
    * keyword's and not its own prose. SNAKE SPIRIT has had the same hole since the
    * opening drop, for the same reason, with poisoned.
    *
-   * Five of the eleven are offered on the tracker (MIMIC DEATH, PESTILENT CLOUD,
-   * CORRUPT LIFE, GORE BLAST and DEATH WAIL) and four of the six left out are
-   * instants with nothing to run. **SICKNESS and ENBRITTLE are the two that plainly
+   * Five of the twelve are offered on the tracker (MIMIC DEATH, PESTILENT CLOUD,
+   * CORRUPT LIFE, GORE BLAST and DEATH WAIL) and five of the seven left out are
+   * instants with nothing to run, GORE SPIKE among them. **SICKNESS and ENBRITTLE are the two that plainly
    * last and are still not offered**, and both for the same reason: what they leave
    * on a target has no clock printed on the card. ENBRITTLE's runs until the next
    * time the target takes damage, which is a condition and not a duration.
@@ -804,6 +972,27 @@ export const SPELLS = withArt([
       'You ward yourself with necrotic magic **until your next Long Rest**.\n\n' +
       'The next time you would be brought down, you return to 1 Health instead and gain Shield equal to your maximum Health.\n\n' +
       'You cannot restore Health until you take a Long Rest, and any Health damage you take kills you instantly.',
+  },
+  {
+    /* The twelfth row, handed over in chat on 2026-08-26 rather than arriving on
+       the sheet, which left it blank. See "the twelfth row" above.
+
+       Written as `{decay}` in the cell and printed as `{damage}` over a
+       `damage: ['Decay']`, which is the form every other card in the codex
+       takes: the token prints the card's own type, and writing the type into the
+       token would stop a Decay Infusion from ever moving it. */
+    id: 'gore-spike',
+    name: 'Gore Spike',
+    summary: 'Burst a corpse into a spike and run one thing beside it through.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Death'],
+    ap: 4,
+    wp: 10,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'A corpse you can see within **15 meters (50 feet)** erupts into a spike of gore.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against **an entity** within **6 meters (20 feet)** of it. On a hit, you deal [[6d6 + 6*stat]] {damage} damage.',
   },
 
   /* ---------------------------------------------------- Arcane · Energy ----

@@ -263,6 +263,17 @@ export const EFFECT_RIDERS = {
    *                    because its duration lives in the diseased keyword rather
    *                    than in its prose — the same hole SNAKE SPIRIT has had since
    *                    the opening drop, for the same reason, with poisoned.
+   *
+   *   blight-pollen    SICKNESS's problem a second time, and it does not need the
+   *                    Overcast to have it. Its Blood Tithe inflicts the same
+   *                    diseased, and the *caster* is the one who paid Health for
+   *                    it, so a row that took -1 off all three attributes would
+   *                    have every reason to be sitting on the wrong sheet. Its
+   *                    5-turn "cannot restore Health" is a second thing this
+   *                    table cannot hold and a different kind: not a number to
+   *                    bend but a heal to refuse, which is the wall DEATH WAIL's
+   *                    second sentence hit. Offered on the tracker for the 5
+   *                    turns it does print, and bending nothing while it runs.
    */
 };
 

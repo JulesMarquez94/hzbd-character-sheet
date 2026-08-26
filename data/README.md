@@ -93,16 +93,19 @@ doing on its own.
 | Spells · Ethereal · Spacial | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`) |
 | Spacial art, from the `Space/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
 | Spells · Primal · Death | **2026-08-26, 11 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
-| Death art, from the `Death/` folder | **2026-08-26, 11 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Death art, from the `Death/` folder | **2026-08-26, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| GORE SPIKE, the blank twelfth row, handed over in chat | **2026-08-26, 1 spell** | `src/lib/spells.js` (`SPELLS`) |
+| Spells · Primal · Flora, the Master rung | **2026-08-26, 4 spells** (8 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
+| Flora art, from the `Flora/` folder | **2026-08-26, 4 plates** | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
-own column order. `primal-spells.csv` holds the 35 Primal spells and nothing
+own column order. `primal-spells.csv` holds the 40 Primal spells and nothing
 else, which is the whole of what the codex has under that school: the one Arcane
 spell it used to carry beside them, Containment Sphere, moved to Ethereal ·
-Spacial on 2026-08-25 when a sheet finally covered it, and the eleven Death rows
-joined them on 2026-08-26. Those eleven are the only rows in the file with an
-`Image` column filled in, because they are the only ones whose art arrived as a
-folder rather than as a postimg link.
+Spacial on 2026-08-25 when a sheet finally covered it, and the twelve Death rows
+joined them on 2026-08-26. Those twelve and Flora's four Masters are the only
+rows in the file with an `Image` column filled in, because they are the only ones
+whose art arrived as a folder rather than as a postimg link.
 
 **Every other file in `templates/` is still pre-readability-pass.** That pass
 (2026-08-26) rewrote card text across the codex and did not re-export the tabs,
@@ -6658,16 +6661,21 @@ folder for the death school of magic. Add it, make sure the text is correct and
 alligne with your guilde lins and style for the system."
 
 Two sources, both already on disk. `data/Spells - Primal - Death.csv` holds eleven
-rows in the drop's usual eight columns, and `data/Death/` holds eleven pictures at
+rows in the drop's usual eight columns, and `data/Death/` holds the pictures at
 2400x1792, one per row. The CSV is on disk **twice**, once at the top of `data/` and
 once inside `data/Death/`, and the two are byte for byte identical, so nothing had to
 choose between them.
+
+A twelfth card, GORE SPIKE, came later the same day: the sheet had left a blank row
+for it, and it was handed over in chat with its picture dropped into the same folder.
+So the family is twelve, and the folder is twelve, and only eleven of them came off
+the CSV.
 
 | Tier | Spells |
 | ---- | ------ |
 | Novice | ROTTING TOUCH, SICKNESS, MIMIC DEATH, DREDGE CORPSE |
 | Adept | PESTILENT CLOUD, CORPSE STRIDE, CORRUPT LIFE, GORE BLAST |
-| Master | UNALIVE, ENBRITTLE, DEATH WAIL |
+| Master | UNALIVE, ENBRITTLE, DEATH WAIL, GORE SPIKE |
 
 ### Death is a family and Primal is the school
 
@@ -6687,30 +6695,55 @@ have been nobody's.
 
 The most consequential thing in the drop, and it is a side effect rather than a
 card. Primal was 24 spells in four families and **not one of them was Master**:
-sixteen Novice and eight Adept. Death brings three, so Primal is 35 spells now, at
-20 Novice, 12 Adept and 3 Master.
+sixteen Novice and eight Adept. **Death's four were the school's first.** Flora's
+four followed later the same day (DEVOURING BLOSSOM, SEEDLING SPIRITS, IMPALING
+GROVE, BLIGHT POLLEN), so Primal stands at 40 spells now, at 20 Novice, 12 Adept and
+8 Master. The four that opened the rung were these.
 
 That moves a pool nobody touched. The Mycomancer draws Primal by tier, and its Rank
 3 offered the same 24 cards its Rank 2 did, because the extra rung it opened had
-nothing standing on it. Rank 3 is now 35 where Rank 2 is 32, and for the first time
-reaching the top of that set is worth something.
+nothing standing on it. Death took Rank 3 to 36 and Flora took it to 40, where Rank
+2 is still 32, so for the first time reaching the top of that set is worth
+something.
 
-| Mycomancer pool | Before | After |
-| --------------- | ------ | ----- |
-| Rank 1 (Novice) | 16 | 20 |
-| Rank 2 (+ Adept) | 24 | 32 |
-| Rank 3 (+ Master) | 24 | 35 |
+| Mycomancer pool | Before | After Death | With Flora |
+| --------------- | ------ | ----------- | ---------- |
+| Rank 1 (Novice) | 16 | 20 | 20 |
+| Rank 2 (+ Adept) | 24 | 32 | 32 |
+| Rank 3 (+ Master) | 24 | 36 | 40 |
 
 The Arcanist, which names no school and draws the whole codex by tier, goes from 44,
-77 and 101 to **48, 85 and 112**.
+77 and 101 to **48, 85 and 113** on this drop, and to 48, 85 and 117 once Flora's
+Masters landed.
 
-### The twelfth row is blank
+### The twelfth row, and what went in it
 
-Four Novice, four Adept and three Master, where every Ethereal family landed four of
-each. The sheet's twelfth row is not absent, it is *blank*: a row carrying "Master
-Spell, Primal, Death" in its Tags cell and nothing in any other column. So a fourth
-Master was laid out and not written, and the family is one card short by the
-designer's own count rather than by a reading here.
+Four Novice, four Adept and four Master, which is what every Ethereal family landed.
+**It did not arrive that way.** The sheet's twelfth row was not absent, it was
+*blank*: a row carrying "Master Spell, Primal, Death" in its Tags cell and nothing in
+any other column, so a fourth Master had been laid out and never written.
+
+GORE SPIKE is that row. It was designed in chat against the gap the other eleven left
+and handed back as a finished cell, so it is the one card in the family that did not
+come off the CSV.
+
+> A corpse you can see within **15 meters (50 feet)** erupts into a spike of gore.
+>
+> Make a {stat} Ranged Attack {roll} against **an entity** within **6 meters
+> (20 feet)** of it. On a hit, you deal [[6d6 + 6*stat]] {damage} damage.
+
+4 Action Points, 10 Willpower, Decay. It is GORE BLAST's sentence structure line for
+line with the Roll against Reflex swapped for an Attack Roll and the area swapped for
+one target, so the corpse engine now has its area payoff at Adept and its focused one
+at Master.
+
+The 6-meter tether is what makes it interesting. You need a corpse within 6 meters of
+what you want dead, and DREDGE CORPSE is the only card that puts one there, at 2
+Action Points and 1 Willpower with no range of its own beyond what you can see.
+Overcast that dredge and the corpse comes up bloated, which leaves any ability using
+it Empowered and Elevated, so the spike lands as 7d6 elevated to 7d8 with no extra
+words on this card. DREDGE CORPSE goes from the cheapest card in the family to the
+thing three others want.
 
 ### Three glosses became keywords
 
@@ -6735,11 +6768,15 @@ three sentences are the designer's own, and the glossary is 76 terms where it wa
 
 ### The rolls and the halves
 
-Five contests and they are not all one shape. Three are the caster's Roll against a
+Six contests and they are not all one shape. Three are the caster's Roll against a
 named defense (CORRUPT LIFE and ENBRITTLE against Grit, GORE BLAST against the
-Reflex of an area) and two are attacks against Defense (ROTTING TOUCH in melee,
-SICKNESS at range). MIMIC DEATH's inspection is a sixth Roll and is the examiner's
-rather than the caster's, so it prints no dice arrow.
+Reflex of an area) and three are attacks against Defense (ROTTING TOUCH in melee,
+SICKNESS and GORE SPIKE at range). MIMIC DEATH's inspection is a seventh Roll and is
+the examiner's rather than the caster's, so it prints no dice arrow.
+
+GORE SPIKE is the family's only Master attack, and it closes a hole the other three
+left: UNALIVE deals its damage without rolling for it, ENBRITTLE rolls against Grit
+and DEATH WAIL rolls nothing, so the top rung had no Attack Roll on it at all.
 
 Five second halves, all the designer's word: four Overcasts and CORRUPT LIFE's
 Multicast. Two of the five open later than a cast (SICKNESS's on an entity already
@@ -6785,9 +6822,18 @@ Every one of these is a cell that could not be printed as it stood.
 - **GORE BLAST hits for one die plus the attribute**, the smallest damage on any
   Adept spell in the codex that catches an area. That looks like the point rather
   than a slip: what the card is really for is the Corpse Carrion behind it.
-- **UNALIVE costs 12 Willpower**, the highest printed Willpower on any card in the
-  codex. Left exactly as it stands: a spell that kills outright or does nothing at
-  all is priced like one.
+- **UNALIVE costs 12 Willpower and GORE SPIKE costs 10**, where nothing else in
+  Primal had ever charged more than THORN RAMPART's 6. Both stand as written.
+  Neither is the codex's highest, which is the 30 that THEON PERFECT REPLICANTS and
+  TERRA COTTA DISK both ask, and 12 ties LIGHTSTRIDER GATEWAY and GUARDIAN ANGEL.
+  The pair is worth reading side by side: GORE SPIKE lands 6d6 and six times the
+  attribute for 4 and 10 and always keeps it, where UNALIVE lands 8d6 and eight times
+  for 5 and 12 and is negated outright unless the hit kills.
+- **GORE SPIKE's cell writes the damage token as `{decay}`** and it prints as
+  `{damage}` over a Decay, which is the form every other card in the codex takes. The
+  difference is not cosmetic: `{damage}` prints whatever type the card is carrying,
+  so a Decay Infusion or a Draconic Scale can move it, where a type written into the
+  token could never be moved by anything.
 - Spelling and grammar, throughout and without further comment: "O n a hit", "your
   del", "nad", "withn", "coprse", "concious", "YOu", "a corpse emerge", "turn stat",
   "that last for", "agiasnt", "entitles", "wtih", "CorpsCarriosn", "nleash a beam co
@@ -6809,9 +6855,9 @@ all three of *their* attributes for holding a reminder. A wrong number is worse 
 a missing one. What unlocks it is the tracker learning which side of a card a row is
 on.
 
-Five of the eleven are offered on the tracker (MIMIC DEATH, PESTILENT CLOUD, CORRUPT
-LIFE, GORE BLAST and DEATH WAIL) and four of the six left out are instants with
-nothing to run. SICKNESS and ENBRITTLE are the two that plainly last and are still
+Five of the twelve are offered on the tracker (MIMIC DEATH, PESTILENT CLOUD, CORRUPT
+LIFE, GORE BLAST and DEATH WAIL) and five of the seven left out are instants with
+nothing to run, GORE SPIKE among them. SICKNESS and ENBRITTLE are the two that plainly last and are still
 not offered, both because what they leave on a target has no clock printed on the
 card: SICKNESS's duration is the diseased keyword's, and ENBRITTLE's runs until the
 next time the target takes damage, which is a condition and not a duration. SNAKE
@@ -6832,34 +6878,232 @@ bright ones, which is what rot looks like beside things that grow.
 
 ### The art needed no aliases
 
-Eleven plates at 2400x1792, the same shape the Ethereal drop arrived in: no white
+Twelve plates at 2400x1792, the same shape the Ethereal drop arrived in: no white
 border, no banner, the painting and nothing else. So `data/Death/` joins both
 `FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs`, and the crop a
 school folder's files get is turned off for it.
 
-Every one of the eleven filenames matched the name its card prints, so the drop adds
+Every one of the twelve filenames matched the name its card prints, so the drop adds
 nothing to `ALIASES`. That is the second drop in a row to manage it: the Ethereal,
 Shadow and Time folders needed five entries between them and `data/Space/` needed
-none. 11 encoded, 0 fetched, 43 KB of WebP apiece.
+none. 12 encoded, 0 fetched, around 43 KB of WebP apiece.
+
+GORE SPIKE was drawn to a prompt written against GORE BLAST, its sibling, so the two
+share a palette: desaturated grey green and olive, with arterial red and toxic green
+as the only saturated colours. That is also what `--family-death` answers to, so the
+plate and the chip agree.
 
 ### The proof
 
-- `npm run lint:cards`: 420 cards inside the 600 ceiling and spelled one way. Three
-  of the eleven sit over the 480 target and under the ceiling (PESTILENT CLOUD 541,
-  CORRUPT LIFE 520, SICKNESS 484), which puts them in the lower half of a band the
-  codex already has 85 cards in.
-- **The renderer was asked directly, and it is kinder than the estimate.** All eleven
+- `npm run lint:cards`: every Death card is inside the 600 ceiling and spelled one
+  way. Three of the twelve sit over the 480 target and under the ceiling (PESTILENT
+  CLOUD 541, CORRUPT LIFE 520, SICKNESS 484), which puts them in the lower half of a
+  band the codex already has 85 cards in. GORE SPIKE is not among them.
+- **The run was red for a while, and not on a Death card.** IMPALING GROVE, one of
+  Flora's four new Masters, was still mid-transcription at 632 and 32 past the
+  ceiling. It was left alone here on the grounds that trimming somebody's card in
+  flight is not this file's business, and it came down to 579 in that other session.
+  See "the fit that cost a paragraph" below.
+- **The renderer was asked directly, and it is kinder than the estimate.** All twelve
   were rendered through the real `AbilityCard` and their `--ac-fit` read off the
-  node: **ten print at full size** and PESTILENT CLOUD alone shrinks, to 0.969, which
-  is well above the 0.9 floor the budget was set at. Nothing in the family is fine
-  print. The static load is an approximation and the browser is the authority, which
-  is what `docs/card-text.md` says of it.
-- `npm run lint:order`: 4 schools and 15 families are shelved, and 175 cards sort up
-  the ladder. Death is the fifteenth family and the first added to a school other
+  node: **eleven print at full size** and PESTILENT CLOUD alone shrinks, to 0.969,
+  which is well above the 0.9 floor the budget was set at. Nothing in the family is
+  fine print. The static load is an approximation and the browser is the authority,
+  which is what `docs/card-text.md` says of it.
+- `npm run lint:order`: 4 schools and 15 families are shelved, and 180 cards sort up
+  the ladder (176 of them before Flora's four Masters landed). Death is the fifteenth family and the first added to a school other
   than Ethereal since the Elemental pull.
-- `npm run lint:halves`: all 68 priced off their own prose, up from 63.
+- `npm run lint:halves`: all 70 priced off their own prose, up from 63. GORE SPIKE
+  carries none, so the family stays at four Overcasts and one Multicast.
 - `npm run lint:text`: clean across 136 files.
 - `npm run lint:riders`, `lint:math`, `lint:weapons`: unchanged and clean.
-- `data/templates/primal-spells.csv` re-exported at 35 rows, and the exporter was
+- `data/templates/primal-spells.csv` re-exported at 40 rows, which carries Flora's
+  four new Masters along with the twelve Death rows. The exporter was
   proved first by regenerating `ethereal-spells.csv` and diffing: every difference
   was a readability-pass spelling that file has not caught up with, and nothing else.
+
+## The Flora Masters, 2026-08-26
+
+Asked for in as many words: "added flora file and folder iwth image, Add the Maste
+flora spell just the mast flora spell. The image are i nth flora folder. Make sur
+they are inline with system wording and format."
+
+Two sources, both in the same new folder. `data/Flora/Spells - Primal - Flora.csv`
+holds twelve rows in the drop's usual eight columns, and `data/Flora/` holds four
+pictures at 2400x1792. Only the four Master rows were asked for and only the four
+Master rows have a picture, so the two sources agree on the scope.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | BRAMBLE WHIP, BARKSKIN, ENTANGLING ROOTS, SLEEPING SPORES *(already in the codex)* |
+| Adept | PARASITIC SPORE, VERDANT FIELD, THORN RAMPART, NATURALIZE *(already in the codex)* |
+| Master | DEVOURING BLOSSOM, SEEDLING SPIRITS, IMPALING GROVE, BLIGHT POLLEN |
+
+### The eight rows above them are the opening drop, unchanged
+
+Flora is the codex's oldest family. Its Novice four and Adept four came in on
+2026-08-19 with the very first sheet, and this file holds all eight of them again
+with four new rows underneath. They were read against what is printed and **not one
+of them has moved**: the readability pass of earlier the same day rewrote several of
+these cards, and the sheet still carries the pre-pass wording ("2d6 + 2 x Mind", "in
+Sharp damage", capitalised states). Where the sheet and the card differ on wording
+alone, the card is the later artifact and it stands.
+
+So this drop is four cards and not twelve, which is what the ask said.
+
+### The second Primal family to reach Master
+
+Primal had no Master spell at all until this morning. Death's four were the school's
+first and Flora's four are the second set, so the top rung goes from four to eight
+and two of the five Primal families have one. Wild, Life and Blood are still Novice
+and Adept only.
+
+| Pool | Before today | After Death | With Flora |
+| ---- | ------------ | ----------- | ---------- |
+| Mycomancer Rank 1 (Novice) | 16 | 20 | 20 |
+| Mycomancer Rank 2 (+ Adept) | 24 | 32 | 32 |
+| Mycomancer Rank 3 (+ Master) | 24 | 36 | **40** |
+| Arcanist Rank 3 (the whole codex) | 101 | 113 | **117** |
+
+The Mycomancer is the set this lands on: it draws Primal by tier, so all four of
+these are cards its Rank 3 opens over its Rank 2, and Rank 3 was worth nothing at
+all before today.
+
+### The first sheet written in the codex's own notation
+
+Every earlier drop arrived in the designer's longhand and had to be translated:
+"2d6 + 2 x Mind" became `[[2d6 + 2*stat]]`, a bare "Mind Roll" grew its dice arrow, a
+range that said "12 meter ()" had its feet put back. This one arrives with
+`[[10*stat]]`, `{roll}`, `{damage}` and "15 meters (50 feet)" already in the cells,
+and BLIGHT POLLEN writes `{stat}` where its three siblings still name Mind.
+
+That is worth recording because it changes what a pull costs. The Death sheet the
+same morning needed ten ranges repaired before a card could print at all; this one
+needed four readings and three typos, and the rest is a copy.
+
+### The readings
+
+- **IMPALING GROVE writes the damage token and never names a type.** The cell says
+  "you deal [[4d6 + 4*stat]] {damage} damage", and `{damage}` prints the type the
+  card declares, which this card declares nowhere. It prints untyped, the call
+  COMPRESSION BLAST and CORPSE STRIDE both took: a damage type is what a resistance
+  answers, so it is not one to hand out. Sharp is the obvious answer and it is what
+  the family's other two physical cards deal, BRAMBLE WHIP's vine and THORN RAMPART's
+  briars. **Third card in a row with this hole**, and worth settling for all three at
+  once.
+- **SEEDLING SPIRITS counts its spirits off Mind and the card prints the caster's own
+  attribute**, which is the same turn all eight cards above it take: the sheet has
+  always said "Make a Mind Roll" and the codex has always printed `{stat}`. There is
+  no live token for a half, so a half is written as the attribute's *name*, the way
+  GLACIAL ACCRETION writes "half your {mind}". That card keeps Mind because its cap
+  and its throw measure the same Ice Spikes; here the count and the healing are
+  separate quantities, so the whole card stays on one attribute and a Mycomancer
+  calls up spirits by Instinct.
+- **BLIGHT POLLEN's Blood Tithe is the first in the codex not paid in Physique.**
+  "Health equal to your 3xlevel" reads as three times the caster's level and prints
+  `[[3*level]]`. Every other tithe costs `{physique}`, on the stated grounds that a
+  body pays it, and `level` is a pseudo-attribute nothing is cast off. `secondHalf`
+  in `overcast.js` prices it the same either way, so nothing broke; whether a tithe
+  is allowed to leave Physique is the designer's call.
+- Spelling and grammar, without further comment: "BLight Pollen", "1 Action Points",
+  "The spirit cannot be target otherwise". DEVOURING BLOSSOM's "for 10 turns" gained
+  the "(1 minute)" its three siblings and the row under it all print.
+
+### What it confirms
+
+DEVOURING BLOSSOM's flower is a conjured thing with a Health bar, and it arrived on
+the ladder HARD LIGHT already set: `[[10*stat]]` Health and `[[2*stat]]` Defense, the
+same two expressions in the same order, off a sheet that has never seen that card.
+
+It is **not a minion**. Nothing here hands over a body with a sheet of its own, which
+is what `minions.js` is for; it is an object on the table, which is all SHAPE EARTH's
+wall and HARD LIGHT's bridge are either.
+
+### The fit that cost a paragraph
+
+IMPALING GROVE would not fit. Transcribed as it stood it loaded 632, which is 32 past
+the ceiling `lint:cards` fails the build at, and the real renderer put it at **0.895**
+— just under the 0.9 floor and into fine print.
+
+Its Overcast is what makes it heavy. A repeatable half is 161 characters before it
+says anything of its own, because the price has to be spelled the way `secondHalf`
+reads it and the resolution the way all twenty repeatable halves in the codex write
+it. Nothing in the half could come off, and the body is a declaration, a Roll and two
+states.
+
+So four variants were rendered through the real `AbilityCard` and their `--ac-fit`
+read off the node:
+
+| Variant | Fit |
+| ------- | --- |
+| Declaration alone, then Roll and result | 0.895 |
+| Declaration and Roll, then result | 0.898 |
+| One paragraph, keeping "erupt from the ground" | 0.926 |
+| One paragraph, without it | **0.930** |
+
+The paragraph break is worth about 0.03 of type size and the four words are worth
+0.004. That settles it against the usual two-paragraph shape: **the break was what
+made the card unreadable, not the words in it**, and `docs/card-text.md` is explicit
+that a break has to buy clarity worth most of a line. So the body is one paragraph,
+declaration and Roll and result together, which is the shape PARASITIC SPORE already
+has two rungs down in the same family. "from the ground" came off with it and is the
+only thing that did, because the one-paragraph version still loads 595 with it and
+the checker fails at 600.
+
+### Nothing is wired, and BLIGHT POLLEN is why
+
+**All four are offered on the tracker**: three print a count of turns and IMPALING
+GROVE's rooted runs to a Turn End, so `effectDuration` has a clock for each. Death
+offered five of its twelve.
+
+**BLIGHT POLLEN moves two numbers and neither is wired**, and it is written up beside
+sickness in `riders.js` rather than left silent:
+
+- Its diseased is SICKNESS's problem a second time. Diseased is -1 to all three
+  attributes, exactly `growth-elixir`'s shape, so the arithmetic is not what stops it.
+  A rider is keyed on the card and not on the caster, and here the caster is the one
+  who paid Health for the tithe, so a row taking a point off all three attributes has
+  every reason to be sitting on the wrong sheet. A wrong number is worse than a
+  missing one.
+- "Cannot restore Health for 5 turns" is a different kind of gap: not a number to bend
+  but a heal to refuse, and the sheet has no channel that refuses one. That is the
+  wall DEATH WAIL's second sentence hit this morning.
+
+### The shelf, the colour and the art
+
+**This is the first spell drop that added no word to anything.** Flora has been on
+the Primal shelf in `cardOrder.js` and had `--family-flora` in `index.css` since those
+files existed, so `lint:order` still reports 4 schools and 15 families and the tag
+colours were not touched. Four cards landed inside a family that was already fully
+furnished, which is what a family's second rung should cost.
+
+Four plates at 2400x1792, the same shape the Ethereal and Death drops arrived in: no
+white border, no banner, the painting and nothing else. So `data/Flora/` joins both
+`FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs` and the crop is
+turned off for it. It is the fifth folder there claimed as a family rather than a
+school, and the first that names a family the codex has held from the beginning.
+
+Every filename matched the name its card prints, including "Blight pollen.jpg"
+against BLIGHT POLLEN, since a name is flattened before it is compared. So the drop
+adds nothing to `ALIASES`: 4 encoded, 0 fetched, 35 to 56 KB of WebP apiece.
+
+### The proof
+
+- **The renderer was asked directly, card by card.** `--ac-fit` read off the real
+  `AbilityCard` node: **DEVOURING BLOSSOM, SEEDLING SPIRITS and BLIGHT POLLEN print
+  at full size**, IMPALING GROVE at 0.930. Nothing is fine print, and 0.930 sits
+  between SENSE LIFE's 0.902, which is the codex's floor, and RAIN OF FIRE's 0.945.
+  The harness was proved first by re-reading three cards whose fit is already on the
+  record and matching them.
+- `npm run lint:cards`: 425 cards inside the 600 ceiling and spelled one way. Three
+  of the four are over the 480 target and under it (IMPALING GROVE 579, DEVOURING
+  BLOSSOM 539, SEEDLING SPIRITS 491), in a band the codex has 91 cards in.
+- `npm run lint:halves`: all 70 priced off their own prose, up from 68. The two new
+  ones are IMPALING GROVE's Overcast and BLIGHT POLLEN's Blood Tithe, and the tithe is
+  the first the parser has priced off a level.
+- `npm run lint:order`: 4 schools and 15 families shelved, 180 cards sorting up the
+  ladder, unchanged in shape.
+- `npm run lint:text`: clean across 136 files. `lint`, `lint:riders`, `lint:math` and
+  `lint:weapons` clean and unchanged.
+- `data/templates/primal-spells.csv` at 40 rows with Flora's four exported into it,
+  their `Image` column carrying the filename each picture arrived under.
