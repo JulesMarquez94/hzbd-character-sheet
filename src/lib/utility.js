@@ -77,7 +77,7 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     body:
       'Throw the vial at a point you can see within **9 meters (30 feet)**. It bursts into a bank of smoke **4.5 meters (15 feet)** across that hangs for **3 turns**.\n\n' +
-      'Attacks made into, out of or through the smoke are made with Disadvantage.',
+      'Attacks made into, out of or through the smoke are made with disadvantage.',
   },
 
   /* ----- the Alchemist's Novice potions -----
@@ -103,7 +103,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     stat: 'mind',
-    body: 'Drinking this draught restores [[1d6 + stat]] in Health.',
+    body: 'Drinking this draught restores [[1d6 + stat]] Health.',
   },
   {
     id: 'flame-burst-flask',
@@ -114,7 +114,7 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     stat: 'mind',
     body:
-      'Throw the flask at a point you can see within **9 meters (30 feet)**. It breaks on contact, and **every entity** within **3 meters (10 feet)** takes [[1d6 + stat]] in {damage:Fire} damage.\n\n' +
+      'Throw the flask at a point you can see within **9 meters (30 feet)**. It breaks on contact, and **every entity** within **3 meters (10 feet)** takes [[1d6 + stat]] {damage:Fire} damage.\n\n' +
       'The flames stay for **3 turns**. **An entity** that starts its turn in them takes the same again.',
   },
   {
@@ -156,7 +156,7 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     stat: 'mind',
     body:
-      'When **an entity** drinks this potion, make a {mind} roll {roll} against its Grit.\n\n' +
+      'When **an entity** drinks this potion, make a {mind} Roll {roll} against its Grit.\n\n' +
       'On a success, for **1 hour** the drinker holds you as a trusted ally and is ready to do what it must to help you, so long as it does not put the drinker in harm.',
   },
   {

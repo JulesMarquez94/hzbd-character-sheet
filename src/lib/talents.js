@@ -216,10 +216,10 @@ const TALENT_SETS = [
         wp: null,
         stat: 'instinct',
         body:
-          'While wielding a weapon that includes a shield, you gain an advantage on {instinct} contested rolls {roll:instinct} and your Defense is increased by 1.\n\n' +
+          'While wielding a weapon that includes a shield, you gain advantage on {instinct} contested rolls {roll:instinct} and your Defense is increased by 1.\n\n' +
           'You learn a number of Novice Martial Moves equal to 1 + your Rank in Guardian.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.\n\n' + // text-style-ok: joins two clauses
-          'After successfully blocking damage with a shield, your next weapon attack costs 1 less Action Point and can be used immediately after the block, even if you have already used a reaction to an action.',
+          'After blocking damage with a shield, your next weapon attack costs 1 less Action Point and can follow immediately, even if you have already used a reaction to it.',
       },
       {
         id: 'intercept',
@@ -330,14 +330,14 @@ const TALENT_SETS = [
       known: [null, 4, 6, 8],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       /* Which rests may re-prepare the hand, straight off Fungal Invocation:
-         "Whenever you take a long rest, you can use your long rest action to
-         change any number of learned spells." A long rest and no other — the
+         "Whenever you take a Long Rest, you can use your Long Rest action to
+         change any number of learned spells." A Long Rest and no other — the
          short rest was withdrawn on 2026-08-20, and the swap now costs the long
          rest's action rather than riding along free. The rest window reads this
          to decide whether to offer the swap while the camp is being made, which
          is where the swap actually happens at a table. */
       swap: ['long'],
-      note: 'Your long rest action can change any number of them, so nothing here is spent for good.',
+      note: 'Your Long Rest action can change any number of them, so nothing here is spent for good.',
     },
     blurb:
       'Mycomancers are living conduits of nature’s life and death cycle, their bodies host to a symbiotic mycelial network. This connection allows them to commune with and command the flora around them, weaving powerful spells that can either usher in renewal or accelerate decay.\n\n' +
@@ -347,7 +347,7 @@ const TALENT_SETS = [
         id: 'fungal-invocation',
         rank: 1,
         name: 'Fungal Invocation',
-        summary: 'Cast Primal spells, more of them each rank and change them on a long rest.',
+        summary: 'Cast Primal spells, more of them each rank and change them on a Long Rest.',
         kind: 'talent',
         tags: ['Talent', 'Mycomancer', 'Passive'],
         ap: null,
@@ -355,7 +355,7 @@ const TALENT_SETS = [
         stat: 'instinct',
         body:
           'Your deep connection with the mycelial network lets you cast Primal Spells. You learn a number of Primal School spells equal to 2 + 2 x your Rank in Mycomancer.\n\n' +
-          'Whenever you take a long rest, you can use your long rest action to change any number of learned spells.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned spells.\n\n' +
           'At Rank 2, you can learn Adept Primal Spells, and at Rank 3, you gain access to Master Primal Spells.', // text-style-ok: joins two clauses
       },
       {
@@ -397,7 +397,7 @@ const TALENT_SETS = [
         wp: 1,
         stat: 'instinct',
         body:
-          'You bond with **a willing entity** you can touch, making them a temporary part of the fungal network **until your next long rest**.\n\n' +
+          'You bond with **a willing entity** you can touch, making them a temporary part of the fungal network **until your next Long Rest**.\n\n' +
           'While bonded, you can communicate telepathically with all bonded entities.',
       },
       {
@@ -411,7 +411,7 @@ const TALENT_SETS = [
         wp: 5,
         stat: 'instinct',
         body:
-          'You empower **an ally** through your mycelial bond, the next time this ally lands an attack they deal an additional [[4d6 + 4*stat]] in {damage:Decay} damage.',
+          'You empower **an ally** through your mycelial bond, the next time this ally lands an attack they deal an additional [[4d6 + 4*stat]] {damage:Decay} damage.',
       },
       {
         id: 'deepening-connection',
@@ -504,10 +504,10 @@ const TALENT_SETS = [
         opens: 'brew',
         body:
           'While your Cauldron is Summoned, you can combine Ingredients to unleash a magical effect.\n\n' +
-          'You choose Ingredients from your known list in the following configuration:\n\n' +
+          'You choose Ingredients from your known list:\n\n' +
           'At least 1 Essence, exactly 1 Catalyst and any number of Infusions.\n\n' +
           'You must pay the combined Action Point and Willpower cost of all chosen Ingredients. The resulting Brew takes effect immediately.\n\n' +
-          'You gain access to Novice Ingredients at Rank 1, Adept Ingredients at Rank 2 and Master Ingredients at Rank 3.',
+          'You gain access to Novice Ingredients at Rank 1, Adept at Rank 2 and Master at Rank 3.',
       },
       {
         id: 'efficient-brewing',
@@ -635,8 +635,8 @@ const TALENT_SETS = [
         body:
           'You have learned the art of imbuing an item with Willpower.\n\n' +
           'Whenever you take a Long Rest, you can use your Long Rest action to enchant.\n\n' +
-          'Enchanting an item costs you an amount of supplies equal to 70 times the Magic Burden value of the enchantment.\n\n' +
-          'At Rank 1 you learn Novice enchantments, at Rank 2 you learn Adept enchantments, and at Rank 3 you learn Master enchantments.\n\n' + // text-style-ok: joins two clauses
+          'Enchanting an item costs Supplies equal to 70 times the enchantment’s Magic Burden.\n\n' +
+          'You learn Novice enchantments at Rank 1, Adept at Rank 2 and Master at Rank 3.\n\n' + // text-style-ok: joins two clauses
           'An item can hold one enchantment at a time.',
       },
       {
@@ -686,7 +686,7 @@ const TALENT_SETS = [
            says its one free thing one way. `magicBurdenUsed` in items.js is
            where it is now true. */
         body:
-          'The enchanter body is able to withstand the power of enchantments onto itself. Enchantments apply to your person. Choose one when becoming an enchanter, you can change it during a Long Rest. The amount of such enchantments you can have is equal to your rank in enchanter.\n\n' +
+          'Your body withstands the power of enchantments laid onto itself: enchantments can apply to your person. Choose one when becoming an Enchanter; you can change it during a Long Rest. You can carry a number of them equal to your Rank in Enchanter.\n\n' +
           'These do not count toward your Magic Burden.',
       },
       {
@@ -783,8 +783,8 @@ const TALENT_SETS = [
          ONE AND THE SAME's own business, and the block prints that line. */
       floor: 0,
       /* "If it would die, it instead retreats into your shadow and is unable to
-         reemerge until you take a Long Rest." The long rest and no other: a
-         short rest is offered nothing here because the card never printed one. */
+         reemerge until you take a Long Rest." The Long Rest and no other: a
+         Short Rest is offered nothing here because the card never printed one. */
       returns: 'long',
       down: 'Retreated into your shadow. It cannot reemerge until you take a Long Rest.',
       /* EMPOWERED BOND, at Rank 3: "its damage is Elevated by 1". Indexed by
@@ -832,8 +832,7 @@ const TALENT_SETS = [
           'You have bonded with a draconic beast; your lives are now forever intertwined.\n\n' +
           'During your turn, you also control your draconic ally. It uses its own Action Points and Reaction Points, but uses your Willpower for its abilities.\n\n' +
           'Whenever your draconic ally takes damage, you can choose to take any amount of that damage yourself in its stead.\n\n' +
-          'If it would die, it instead retreats into your shadow and is unable to reemerge **until you take a Long Rest**.\n\n' +
-          'If you die, it dies along with you.',
+          'If it would die, it instead retreats into your shadow **until you take a Long Rest**. If you die, it dies along with you.',
       },
       {
         id: 'wyrm-bolt',
@@ -894,7 +893,7 @@ const TALENT_SETS = [
         stat: 'mind',
         body:
           'Whenever your draconic ally deals damage to **an enemy**, it bears a Draconic Mark **until your next Turn End**.\n\n' +
-          'The next time you make an Attack Roll against the target, you can do so with Advantage.',
+          'The next time you make an Attack Roll against the target, you can do so with advantage.',
       },
       {
         id: 'dragon-breath',
@@ -907,8 +906,8 @@ const TALENT_SETS = [
         wp: 2,
         stat: 'mind',
         body:
-          'Your draconic ally breathes a torrent of magical energy in front of itself, affecting **all entities** in a **6 meter (20 feet)** cone.\n\n' +
-          'It makes a {stat} roll {roll} against the entities’ Reflex.\n\n' +
+          'Your draconic ally breathes a torrent of magical energy in front of itself, affecting **all entities** in a **6-meter (20-foot)** cone.\n\n' +
+          'It makes a {stat} Roll {roll} against the entities’ Reflex.\n\n' +
           'On a success, it deals [[2d4 + 2*stat]] damage in your draconic ally’s chosen damage type.',
       },
       {
@@ -942,8 +941,8 @@ const TALENT_SETS = [
            keywords.js. */
         body:
           'While Empowered, you can have your draconic ally bellow a frightening roar intimidating **all enemy entities** within **18 meters (60 feet)** that can hear it.\n\n' +
-          'It makes a {stat} roll {roll} against the entities’ Grit.\n\n' +
-          'On a success, they are Frightened of you and your draconic ally for the next **2 Turns**.',
+          'It makes a {stat} Roll {roll} against the entities’ Grit.\n\n' +
+          'On a success, they are frightened of you and your draconic ally for the next **2 turns**.',
       },
       {
         id: 'draconic-link',
@@ -1045,15 +1044,15 @@ const TALENT_SETS = [
            FRIGHTFUL ROAR made, and the one every other term on a card has made.
            See the note in keywords.js. */
         body:
-          'You attempt to Blind **a target** you can see within **3 meters (10 feet)**.\n' +
-          'Make an {stat} roll {roll} against the target\'s Grit.\n' +
-          'On a success, the target is Blinded **until its Turn End**.',
+          'You attempt to Blind **an entity** you can see within **3 meters (10 feet)**.\n\n' +
+          'Make an {stat} Roll {roll} against its Grit. ' +
+          'On a success, the target is blinded **until its Turn End**.',
       },
       {
         id: 'ambush',
         rank: 1,
         name: 'Ambush',
-        summary: 'Ride a weapon attack on somebody who cannot see you: Advantage, and the damage Elevated.',
+        summary: 'Ride a weapon attack on somebody who cannot see you: advantage, and the damage Elevated.',
         kind: 'talent',
         tags: ['Trickster', 'Novice Talent', 'Ability'],
         ap: null,
@@ -1070,23 +1069,23 @@ const TALENT_SETS = [
            THE BEAST's own. */
         opens: 'ambush',
         body:
-          'When making a Weapon Attack against **a target** that cannot see you or is afflicted with the Stunned, Grappled or Constrained status. (The cost of this ability is equal to the weapon number of base damage dice before enchant or boost)\n\n' +
-          'The Weapon Attack is made with Advantage.\n\n' +
+          'Use this when making a Weapon Attack against **an entity** that cannot see you, or one that is stunned, grappled or constrained. It costs Willpower equal to the weapon’s printed number of damage dice, before any enchantment or boost.\n\n' +
+          'The Weapon Attack is made with advantage.\n\n' +
           'On a hit, the Weapon Attack is Elevated a number of times equal to the Willpower paid.',
       },
       {
         id: 'skulk',
         rank: 1,
         name: 'Skulk',
-        summary: 'Hide in plain sight at 9 meters, and Hide or palm anything with Advantage.',
+        summary: 'Hide in plain sight at 9 meters, and Hide or palm anything with advantage.',
         kind: 'talent',
         tags: ['Trickster', 'Novice Talent', 'Passive'],
         ap: null,
         wp: null,
         stat: 'instinct',
         body:
-          'You can use the {{Hide}} action even if entities can see you, as long as you are at least **9 meters (30 feet)** away from them.\n' +
-          'Additionally, when you or **an ally** within **3 meters (10 feet)** use the {{Hide}} action or make a Skill Check related to sleight of hand or stealth, they do so with Advantage.',
+          'You can use the {{Hide}} action even if entities can see you, as long as you are at least **9 meters (30 feet)** away from them.\n\n' +
+          'Additionally, when you or **an ally** within **3 meters (10 feet)** use the {{Hide}} action or make a skill check related to sleight of hand or stealth, they do so with advantage.',
       },
       {
         id: 'dodge',
@@ -1099,7 +1098,7 @@ const TALENT_SETS = [
         wp: 2,
         stat: 'instinct',
         body:
-          'When an attack lands on you, you can use this ability to make an {stat} roll {roll} with a difficulty rating equal to the attack roll that hit you. On a success, the attack misses instead.',
+          'When an attack lands on you, you can use this ability to make an {stat} Roll {roll} with a difficulty rating equal to the Attack Roll that hit you. On a success, the attack misses instead.',
       },
       {
         id: 'distract',
@@ -1112,7 +1111,7 @@ const TALENT_SETS = [
         wp: 1,
         stat: 'instinct',
         body:
-          'If you fail a Hiding or Stealth-related Skill Check, you can use Distract once to immediately retry the check.',
+          'If you fail a Hiding or Stealth-related skill check, you can use Distract once to immediately retry the check.',
       },
       {
         id: 'steal',
@@ -1129,10 +1128,10 @@ const TALENT_SETS = [
            which is what the Developpement Notes asked for. */
         opens: 'steal',
         body:
-          'You make an Attack Roll with your {stat} Attribute {roll}. On a hit, you steal something from a humanoid. Roll a d4 and choose any one effect whose value is below the number you rolled:\n' +
-          '1: Healing Tonic · Restores [[2d6 + 2*stat]] in Health.\n' +
-          '2: Poison · Your next Weapon Attacks deal additional damage equal to your {stat} Attribute.\n' +
-          '3: Protective Charm · Provides a Shield equal to [[3*stat]].\n' +
+          'You make an Attack Roll with your {stat} Attribute {roll}. On a hit, you steal something from a humanoid. Roll a d4 and choose any one effect whose value is below the number you rolled: ' +
+          '1: Healing Tonic · Restores [[2d6 + 2*stat]] Health. ' +
+          '2: Poison · Your next Weapon Attacks deal additional damage equal to your {stat} Attribute. ' +
+          '3: Protective Charm · Provides a Shield equal to [[3*stat]]. ' +
           '4: Strange Dust · Grants 3 Action Points for the current round and refunds the Steal Willpower cost.',
       },
       {
@@ -1153,7 +1152,7 @@ const TALENT_SETS = [
            either that rule restated or a number that did not export. Flagged in
            data/README.md. */
         body:
-          'Your Action Points and Reaction Points maximum are increased to 7 and you start with Action Points each turn.',
+          'Your Action Point and Reaction Point maximums are increased to 7, and you start each turn with 7 Action Points.',
       },
     ],
   },
@@ -1189,7 +1188,7 @@ const TALENT_SETS = [
        equal to 2 + your Rank in Duelist" is [null, 3, 4, 5], and "at Rank 2, you
        can learn Adept Martial Moves, and at Rank 3, you gain access to Master
        Martial Moves" is the tier ladder. `swap: ['long']` is the card's own next
-       sentence, word for word the one FUNGAL INVOCATION prints, so the long rest
+       sentence, word for word the one FUNGAL INVOCATION prints, so the Long Rest
        window offers the change as one of the actions the night buys.
 
        `group: 'tier'` because a move has no school and no family to wall it by:
@@ -1205,7 +1204,7 @@ const TALENT_SETS = [
       known: [null, 3, 4, 5],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       swap: ['long'],
-      note: 'Your long rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
+      note: 'Your Long Rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
     },
     /* A seventh shape of what a set can hand over, beside a fixed hand, a
        `loadout`, a `brewing` spec, an `enchanting` one, a `minion` and the
@@ -1244,7 +1243,7 @@ const TALENT_SETS = [
       grants: [
         /* DEXTEROUS: "You have advantage when using One-handed weapons", read onto
            the four families the designer named on 2026-08-24. A count rather than a
-           flag because Advantage stacks (each instance is another d4), which is
+           flag because advantage stacks (each instance is another d4), which is
            what lets the arrow on the card print a number. */
         { advantage: [null, 1, 1, 1] },
         /* AGILE: "While you have a Finesse or Light Melee weapon in hand your
@@ -1282,13 +1281,13 @@ const TALENT_SETS = [
 
            Four spellings corrected on the way in, each so a defined term lights
            rather than sitting in the sentence as plain text: "adventage" reads
-           advantage, "Martial moves" reads Martial Moves, "long rest" keeps the
+           advantage, "Martial moves" reads Martial Moves, "Long Rest" keeps the
            lowercase FUNGAL INVOCATION prints it in, and "rank in duelist.." ends
            on one full stop. */
         body:
           'You have advantage when using Finesse, Whip, Fist or Polearm weapons.\n\n' +
           'You learn a number of Novice Martial Moves equal to 2 + your Rank in Duelist.\n\n' +
-          'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned Martial Moves.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
       },
       {
@@ -1387,7 +1386,7 @@ const TALENT_SETS = [
        the set names is one: FERAL RAGE rolls it, BESTIAL SENSE is the five senses
        and both Claws & Teeth cards are Instinct attacks. Martial because the
        whole set is a weapon and the manoeuvres for it. Defense because the form
-       is bought in Shield and thickened in Armor, which is the only reason a
+       is bought Shield and thickened in Armor, which is the only reason a
        transformation costing half your blood is worth making. */
     tags: ['instinct', 'martial', 'defense'],
     stat: 'instinct',
@@ -1399,7 +1398,7 @@ const TALENT_SETS = [
        ladder DEXTEROUS prints, off a different set's card.
 
        `swap: ['long']` is the card's own next sentence, word for word the one
-       DEXTEROUS and FUNGAL INVOCATION both print, so the long rest window offers
+       DEXTEROUS and FUNGAL INVOCATION both print, so the Long Rest window offers
        the change as one of the actions the night buys.
 
        `group: 'tier'` because a move has no school and no family: the tier is the
@@ -1413,7 +1412,7 @@ const TALENT_SETS = [
       known: [null, 3, 4, 5],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       swap: ['long'],
-      note: 'Used with Claws & Teeth. Your long rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
+      note: 'Used with Claws & Teeth. Your Long Rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
     },
     /* What this set does to the Martial Move *system*, read by moves.js. The same
        spec the Duelist carries, and deliberately so: the rule was parsed out of a
@@ -1565,7 +1564,7 @@ const TALENT_SETS = [
         body:
           'Whenever you enter your Feral Form, you lose half your current Health and gain twice as much Shield.\n\n' +
           'You remain in your Feral Form until all Shield is gone or you take a Short Rest.\n\n' +
-          'While in this form you have advantage on all attack rolls and your **Claws & Teeth** attacks are Empowered by 1.\n\n' +
+          'While in this form you have advantage on all Attack Rolls and your **Claws & Teeth** attacks are Empowered by 1.\n\n' +
           'In this form you are unable to use items, or abilities and spells that are not Feral Curse ones.',
       },
       {
@@ -1593,7 +1592,7 @@ const TALENT_SETS = [
            BEAST was written to fill. */
         body:
           'Whenever you lose Health or spend Willpower, you have a chance to transform into your Feral Form.\n\n' +
-          'Each time, make an {stat} roll {roll} with a difficulty of 8. On a failure the difficulty increases by 1 for your next roll. It resets to 8 on a transformation.\n\n' +
+          'Each time, make an {stat} Roll {roll} with a difficulty of 8. On a failure the difficulty increases by 1 for your next roll. It resets to 8 on a transformation.\n\n' +
           'You can choose to willingly fail the roll.',
       },
       {
@@ -1624,16 +1623,16 @@ const TALENT_SETS = [
            it also contradicts this card's own next clause: a slot that always
            holds the weapon is a pair of hands that is never empty. */
         body:
-          'When you become Feral Cursed, you choose a Carnivore Mammal. This beast represents how your ability manifests.\n\n' +
-          'While your hands are empty, you can use the **Claws & Teeth** weapon. You learn a number of Novice Martial Moves equal to 2 + your Rank in Feral Curse, which you can use with **Claws & Teeth**.\n\n' +
-          'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
+          'When you become Feral Cursed, you choose a Carnivore Mammal: the beast your ability manifests as.\n\n' +
+          'While your hands are empty, you can use the **Claws & Teeth** weapon. You learn a number of Novice Martial Moves equal to 2 + your Rank in Feral Curse to use with them.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned Martial Moves.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
       },
       {
         id: 'bestial-sense',
         rank: 1,
         name: 'Bestial Sense',
-        summary: 'Advantage on any Skill Check that runs through your five senses, and a Shield pool the size of your Health.',
+        summary: 'Advantage on any skill check that runs through your five senses, and a Shield pool the size of your Health.',
         kind: 'talent',
         tags: ['Feral Curse', 'Novice Talent', 'Passive'],
         ap: null,
@@ -1642,8 +1641,8 @@ const TALENT_SETS = [
         /* Two reads. The card's own *name* is misspelled on the tab — "BEATIAL
            SENSE" — and is set as Bestial Sense, which is the only name correction
            in the set and carries no risk, because the id `bestial-sense` is new
-           and nothing has ever pointed at the other spelling. And "You Advantage
-           on Skill Checks" reads "You have advantage on Skill Checks": the verb is
+           and nothing has ever pointed at the other spelling. And "You advantage
+           on skill checks" reads "You have advantage on skill checks": the verb is
            missing, and both terms light once it is there.
 
            And one *addition*, which is the only one in the set: the second
@@ -1656,7 +1655,7 @@ const TALENT_SETS = [
            the ceiling moves. Flagged in data/README.md as an amendment rather
            than a transcription. */
         body:
-          'You have advantage on Skill Checks related to using your 5 senses.\n\n' +
+          'You have advantage on skill checks related to using your 5 senses.\n\n' +
           'Your maximum Shield is now equal to your Health instead of half of it.',
       },
       {
@@ -1833,8 +1832,8 @@ const TALENT_SETS = [
         body:
           'You enter a Berserker’s Rage for **10 turns**.\n\n' +
           'While in this state, you gain additional {physique} equal to your Berserker Rank. Your Damage Dice are Elevated by 1.\n\n' +
-          'While raging, you are compelled to make at least one melee attack per turn, prioritizing it over any other action. If no enemies are within reach, you must attack the nearest target, even if it is **an ally**.\n\n' +
-          'If no valid targets are within reach, you must use your Action Points to move toward the nearest target.',
+          'While raging, you must make at least one melee attack per turn, prioritizing it over any other action. If no enemies are within reach, you attack the nearest target, even if it is **an ally**.\n\n' +
+          'With no valid target in reach, you must spend your Action Points moving toward the nearest one.',
       },
       {
         id: 'raging-blow',
@@ -1882,7 +1881,7 @@ const TALENT_SETS = [
            name and the file is placed by an alias in pull-card-art.mjs. */
         body:
           '{{Raging Blow}} can now be used with a Special Weapon Attack.\n\n' +
-          'Rolls you make against **a target**’s Reflex or Grit as part of a Special Weapon Attack are made with advantage.',
+          'Rolls you make against **an entity**’s Reflex or Grit as part of a Special Weapon Attack are made with advantage.',
       },
       {
         id: 'ignore-pain',
@@ -1960,7 +1959,7 @@ const TALENT_SETS = [
 
            No `uses` rider, and that is the fourth open question. "Once per combat"
            is a count plus the boundary that refills it, and the only boundaries
-           the sheet can refill on are the short rest and the long one — see
+           the sheet can refill on are the Short Rest and the long one — see
            uses.js, which will not quietly refill a thing whose refill it is not.
            So the limit is a rule the table keeps.
 
@@ -2046,7 +2045,7 @@ const TALENT_SETS = [
       known: [null, 3, 4, 5],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       swap: ['long'],
-      note: 'Your long rest action can change any number of them, and this is the set that swings them with both hands on the haft.',
+      note: 'Your Long Rest action can change any number of them, and this is the set that swings them with both hands on the haft.',
     },
     /* What this set does to the move system, and what it hangs on the weapon in
        hand. Numbers here, behaviour in moves.js, indexed by rank the way the
@@ -2079,7 +2078,7 @@ const TALENT_SETS = [
         /* GIANT SLAYER, at Rank 1: "When you attack with a Colosal Weapon, the
            attack is made with advantage." The one grant in the codex that names a
            tag its own set's `weapon` is not, and the whole reason `grants` is a
-           list rather than a block. A count and not a flag, because Advantage
+           list rather than a block. A count and not a flag, because advantage
            stacks and the arrow on the card prints the number. */
         { weapon: 'Great', advantage: [null, 1, 1, 1] },
         /* COLOSSAL FORCE, at Rank 2: "Your Heavy and Great Melee Weapon Attacks
@@ -2126,7 +2125,7 @@ const TALENT_SETS = [
            clause is the difference between the two sets. */
         body:
           'You learn a number of Novice Martial Moves equal to 2 + your Rank in Colossus, and you can use them with Heavy and Great Melee Weapons.\n\n' + // text-style-ok: joins two clauses
-          'Whenever you take a long rest, you can use your long rest action to change any number of learned Martial Moves.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned Martial Moves.\n\n' +
           'At Rank 2, you can learn Adept Martial Moves, and at Rank 3, you gain access to Master Martial Moves.', // text-style-ok: joins two clauses
       },
       {
@@ -2272,7 +2271,7 @@ const TALENT_SETS = [
        the first caster on the wall whose spells are not a *hand*.
 
        Every other choosing set prepares: a Mycomancer knows four Primal spells,
-       swaps any number of them at a long rest and is never allowed a fifth. An
+       swaps any number of them at a Long Rest and is never allowed a fifth. An
        Arcanist keeps a **library**. Spells go in one at a time, they stay in, and
        the ceiling is a formula off rank and level rather than a number per rank.
        That is the whole reason `capacity`, `start` and `research` exist on a
@@ -2287,7 +2286,7 @@ const TALENT_SETS = [
        pictures in `data/Arcanist/` are drawn for those four cards and the set
        plate, and the xlsx's own Special Feature tab called the half-transcribed
        spell "a progress bar the site has nowhere for". The new sheet deletes it:
-       research is one long rest action that finishes in that rest, which the site
+       research is one Long Rest action that finishes in that rest, which the site
        already has a slot for. The proposal is logged in data/README.md rather than
        thrown away, because its Overview tab is where the fantasy below comes from. */
     tagline: 'A book bound to a life, and every spell in it was copied out by hand.',
@@ -2341,7 +2340,7 @@ const TALENT_SETS = [
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       research: ['long'],
       /* OVERLOAD, at Rank 2, on the cards this set hands out rather than on the
-         set: "All spells from your spellbook are Empowered and you have Advantage
+         set: "All spells from your spellbook are Empowered and you have advantage
          when rolling for those spells." Empowered is one more die of the same
          kind (see cardText.js), and the advantage is a count rather than a flag
          for the reason GIANT SLAYER's is: advantage stacks and the arrow prints
@@ -2370,7 +2369,7 @@ const TALENT_SETS = [
         ap: [null, 0, 0, 1],
         floor: 1,
       },
-      note: 'A spell goes in and stays in. Your long rest action researches one more, and the book only replaces a spell once it is full.',
+      note: 'A spell goes in and stays in. Your Long Rest action researches one more, and the book only replaces a spell once it is full.',
     },
     /* SPELLBOOK's last sentence, which is the one number on this track that is not
        about spells: "Your spellbook grants you 4 Additional Willpower per Rank in
@@ -2420,7 +2419,7 @@ const TALENT_SETS = [
         id: 'arcane-research',
         rank: 1,
         name: 'Arcane Research',
-        summary: 'Five Novice spells to start, and one more researched every long rest.',
+        summary: 'Five Novice spells to start, and one more researched every Long Rest.',
         kind: 'talent',
         tags: ['Arcanist', 'Novice Talent', 'Long Rest'],
         ap: null,
@@ -2431,7 +2430,7 @@ const TALENT_SETS = [
            is what puts the row in the rest window.
 
            Two changes. "you can take the Arcane Research action" becomes "you can
-           use your long rest action", which is FUNGAL INVOCATION's idiom word for
+           use your Long Rest action", which is FUNGAL INVOCATION's idiom word for
            word: the site's rest buys one action and the card should say which one
            it is spending, rather than naming itself.
 
@@ -2441,7 +2440,7 @@ const TALENT_SETS = [
            Flagged in data/README.md. Everything else is the cell. */
         body:
           'Spells you know to cast are recorded in your spellbook. You start with 5 Novice Spells of your choice from any school inscribed in the spellbook.\n\n' +
-          'Whenever you take a long rest you can use your long rest action to research a single spell to learn, adding it to your spellbook.\n\n' +
+          'Whenever you take a Long Rest you can use your Long Rest action to research a single spell to learn, adding it to your spellbook.\n\n' +
           'Your spellbook can hold a number of spells equal to 10 x your Rank in Arcanist plus your level. If you have reached your limit of transcribed spells you will have to replace a spell.',
       },
       {
@@ -2457,7 +2456,7 @@ const TALENT_SETS = [
         /* Mechanics as data: `loadout.boost` above, so the numbers print on the
            spells themselves rather than being remembered against them.
 
-           The cell verbatim but for one letter. Advantage is lowercased: the codex
+           The cell verbatim but for one letter. advantage is lowercased: the codex
            capitalises Empowered because it is a term off the Status & Terms sheet,
            and writes "made with advantage" in prose everywhere else. See RAGING
            BLOW. */
@@ -2557,14 +2556,14 @@ const TALENT_SETS = [
                      ladder every other tiered set prints. The codex holds no
                      Adept or Master potion yet, so Ranks 2 and 3 open nothing
                      today and will the day one is written. Flagged.
-         `perRest`   "during a long rest, you can craft two potions while still
-                     benefiting from a long rest", and REFINED REAGENTS makes it
+         `perRest`   "during a Long Rest, you can craft two potions while still
+                     benefiting from a Long Rest", and REFINED REAGENTS makes it
                      three. Brews a night, never flasks.
          `discount`  REFINED REAGENTS again, and `floor` is its own "to a minimum
                      of 10". Rank 3 still carries it, because ranks stack.
          `batch`     TWIN DISTILLATION: one brew, two flasks.
          `brew`      which rest offers it, the same shape `swap` and `research`
-                     carry on a loadout. A short rest names none of this.
+                     carry on a loadout. A Short Rest names none of this.
 
        What a potion costs is on the potion (utility.js), never here, so a row the
        designer reprices stays repriced. See alchemy.js for where those numbers
@@ -2579,7 +2578,7 @@ const TALENT_SETS = [
       floor: 10,
       batch: [null, 1, 1, 2],
       brew: ['long'],
-      note: 'Brewed at the fire and carried away. Your long rest action buys the night’s batch, and the crate pays for the components.',
+      note: 'Brewed at the fire and carried away. Your Long Rest action buys the night’s batch, and the crate pays for the components.',
     },
     blurb:
       'An Alchemist does not cast. They distil. Every ingredient in the world carries an element that people have always read into it, and alchemy is the patience to draw that element back out of a feather or a pepper and hold it in glass. What comes out of the still is not a spell, and it does not need them standing there when it is drunk.\n\n' + // text-style-ok: joins two clauses
@@ -2590,7 +2589,7 @@ const TALENT_SETS = [
         id: 'alchemy',
         rank: 1,
         name: 'Alchemy',
-        summary: 'Two Novice potions on a long rest, paid for out of the crate.',
+        summary: 'Two Novice potions on a Long Rest, paid for out of the crate.',
         kind: 'talent',
         tags: ['Alchemist', 'Novice Talent', 'Long Rest'],
         ap: null,
@@ -2606,9 +2605,9 @@ const TALENT_SETS = [
            Alchemy, off its own first word. A card never names its own rank on this
            site: the Tags column carries it.
 
-           "during a long rest, you can craft two potions while still benefiting
-           from a long rest" becomes "whenever you take a long rest you can use
-           your long rest action to brew two of them and still benefit from the
+           "during a Long Rest, you can craft two potions while still benefiting
+           from a Long Rest" becomes "whenever you take a Long Rest you can use
+           your Long Rest action to brew two of them and still benefit from the
            rest". A rest here buys exactly one action and a card that spends it
            should say which one it is spending, which is FUNGAL INVOCATION’s idiom
            and ARCANE RESEARCH’s.
@@ -2616,7 +2615,7 @@ const TALENT_SETS = [
            "you need to have the required components and willpower available" is
            the sentence Jules asked to be converted, and the components are now
            priced in Supplies. The Willpower half is not charged: brewing happens
-           inside a long rest and a long rest ends by filling Willpower, so it is a
+           inside a Long Rest and a Long Rest ends by filling Willpower, so it is a
            price nobody would ever pay. See alchemy.js, and data/README.md.
 
            The last line of the render, "You learn the Alchemical Ingredients and
@@ -2624,8 +2623,8 @@ const TALENT_SETS = [
            cards on this same rank, so the sentence hands over what the set has
            already handed over. */
         body:
-          'Alchemy is the art of harnessing the elements and blending them with willpower to create a liquid with magical properties.\n\n' +
-          'You have learned to brew all Novice Potions. Brewing a potion takes **1 hour**, and whenever you take a long rest you can use your long rest action to brew two of them and still benefit from the rest.\n\n' + // text-style-ok: joins two clauses
+          'Alchemy is the art of blending the elements with willpower into liquids with magical properties.\n\n' +
+          'You have learned to brew all Novice Potions. Brewing a potion takes **1 hour**, and whenever you take a Long Rest you can use your Long Rest action to brew two of them and still benefit from the rest.\n\n' + // text-style-ok: joins two clauses
           'To brew a potion you need its components. Every recipe prints what those cost in Supplies, and they come out of the crate on the night you brew it.',
       },
       {
@@ -2651,8 +2650,8 @@ const TALENT_SETS = [
            spicy peppers or a dragon flower". A recipe on this site asks in Supplies,
            so the example is priced in Supplies and the rest of the sentence is his. */
         body:
-          'In alchemy the ingredient itself is not important, but rather the element that people associate with it. Alchemy is the process of distilling that elemental essence out of the ingredient to then combine them to create potions.\n\n' +
-          'Determining an ingredient’s element is related to the perceived association. For example, feathers are associated with Wind, while spicy peppers are associated with Fire and Earth.\n\n' +
+          'In alchemy the ingredient itself is not important, but rather the element people associate with it. Alchemy distills that elemental essence out of the ingredient to combine into potions.\n\n' +
+          'An ingredient’s element is the perceived association: feathers go with Wind, while spicy peppers go with Fire and Earth.\n\n' +
           'A recipe asks for its components in Supplies, and what you hand over for them is yours to picture: 20 Supplies of Fire could be a hundred spicy peppers or a single dragon flower.',
       },
       {
@@ -2691,10 +2690,10 @@ const TALENT_SETS = [
            price into: improvised brewing is the path that skips the components, and
            the components are what Supplies now are. */
         body:
-          'After you finish a long rest, you can brew potions through improvised brewing: ingredients you scavenged during your rest, infused heavily with willpower to make them viable.\n\n' +
-          'To find what you gathered, you roll a number of d4s equal to your {mind} plus your level, halved and rounded down, and note every value. Each die is one component: 1 is Earth, 2 is Water, 3 is Fire and 4 is Wind.\n\n' + // text-style-ok: joins two clauses
-          'Every recipe prints the combination of dice needed to craft it without having the exact ingredients, and a potion brewed this way costs no Supplies. It expires at the end of the day.\n\n' + // text-style-ok: joins two clauses
-          'Instead of rolling, you can also choose to redo the exact same batch as the last one you did.',
+          'After a Long Rest, you can brew from ingredients scavenged during it, infused with willpower to make them viable.\n\n' +
+          'Roll a number of d4s equal to your {mind} plus your level, halved and rounded down. Each die is one component: 1 is Earth, 2 is Water, 3 is Fire and 4 is Wind.\n\n' + // text-style-ok: joins two clauses
+          'Every recipe prints the dice that craft it this way. A potion brewed this way costs no Supplies and expires at the end of the day.\n\n' + // text-style-ok: joins two clauses
+          'Instead of rolling, you may redo your last batch exactly.',
       },
       {
         id: 'refined-reagents',
@@ -2715,7 +2714,7 @@ const TALENT_SETS = [
            that is the shape this codex settled on for a cost cut that rides a pool
            the set hands out. See alchemy.js and data/README.md. */
         body:
-          'Nothing you distil is wasted. You brew three potions on a long rest rather than two, and every potion you brew costs 10 fewer Supplies, to a minimum of 10.\n\n' + // text-style-ok: joins two clauses
+          'Nothing you distil is wasted. You brew three potions on a Long Rest rather than two, and every potion you brew costs 10 fewer Supplies, to a minimum of 10.\n\n' + // text-style-ok: joins two clauses
           'Adept Potions are within your reach.',
       },
       {

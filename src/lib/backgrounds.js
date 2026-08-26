@@ -376,7 +376,7 @@ const SCAVENGER = {
   summary: 'Scavenge the ground around a camp for Supplies on a Long Rest.',
   body:
     'Whenever you take a Long Rest in the outdoors, you can take the scavenge action: you make ' +
-    'a {stat} roll {roll} and gain that much Supplies.',
+    'a {stat} Roll {roll} and gain that much Supplies.',
 };
 
 const TAILOR = {
@@ -412,7 +412,7 @@ const HAGGLER = {
   summary: 'Talk a price 20% up or down for 2 Willpower.',
   body:
     'When buying or selling something, after you hear the price you can attempt to haggle.\n\n' +
-    'You spend 2 Willpower and make a {stat} roll {roll} against the target’s Grit. ' +
+    'You spend 2 Willpower and make a {stat} Roll {roll} against the target’s Grit. ' +
     'On a success the price is increased or decreased by 20%.',
 };
 
@@ -487,8 +487,8 @@ const VIGILANT = {
   summary: 'Punish anything that moves near you, and it may not get to move at all.',
   body:
     'Weapon attacks made as a reaction to a move action are made with advantage.\n\n' +
-    'On a hit, the target must succeed on an Instinct saving throw against your weapon attack ' +
-    'roll or lose the move action.',
+    'On a hit, the target must beat your Attack Roll with an {instinct} Roll or lose its ' +
+    'Move action.',
 };
 
 const UNSEEN_SPELLWORK = {
@@ -524,7 +524,7 @@ const SPELL_EATER = {
   summary: 'Swallow a spell that hit you and heal on it, once a Long Rest.',
   body:
     'Whenever you take non-physical damage, you can attempt to consume the damage.\n\n' +
-    'Make a {stat} roll {roll}, reducing the damage taken by the result and healing an ' +
+    'Make a {stat} Roll {roll}, reducing the damage taken by the result and healing an ' +
     'equal amount.\n\n' +
     'You can use this feature once, regaining it after a Long Rest. The number of uses ' +
     'increases to 2 at level 6.',

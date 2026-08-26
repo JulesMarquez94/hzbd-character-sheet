@@ -217,15 +217,15 @@ const SPROUT_WINGS = {
   ap: 2,
   wp: 2,
   /* "You must take a long rest before you can use this ability again." One use,
-     and the long rest is what fills it. The sentence stays the designer's and
+     and the Long Rest is what fills it. The sentence stays the designer's and
      the rider is what the sheet counts. See uses.js. */
   uses: 1,
   recharge: 'Long Rest',
-  summary: 'Wings for an hour: fly at your Movement Speed, once a long rest.',
+  summary: 'Wings for an hour: fly at your Movement Speed, once a Long Rest.',
   body:
     'You can manifest Celestial wings for **1 hour**.\n\n' +
     'While the wings last, you can fly at a speed equal to your Movement Speed.\n\n' +
-    'You must take a long rest before you can use this ability again.',
+    'You must take a Long Rest before you can use this ability again.',
 };
 
 /* ------------------------------------------------------------ INNATE X built
@@ -509,14 +509,14 @@ const LINEAGE_CODEX = [
         kind: 'ability',
         ap: 2,
         /* "Once this ability is used you need to take a long rest before you can
-           do it again." One use, filled by the long rest. See uses.js. */
+           do it again." One use, filled by the Long Rest. See uses.js. */
         uses: 1,
         recharge: 'Long Rest',
         summary: 'Spend up to your level in Willpower to regain 10, plus 5 for each point.',
         body:
           'You let fire rage in your core. Spend up to your level in Willpower.\n\n' +
           'You regain 10 + 5 for each Willpower spent.\n\n' +
-          'Once this ability is used you need to take a long rest before you can do it again.',
+          'Once this ability is used you need to take a Long Rest before you can do it again.',
       }),
       INNATE_FIRE,
     ],
@@ -614,7 +614,7 @@ const LINEAGE_CODEX = [
         stat: HIGHEST,
         body:
           'You breathe a torrent of magical energy in front of you, affecting all in a **6-meter (20-foot)** cone.\n\n' +
-          'You make a {stat} roll {roll} against the entity’s Reflex.\n\n' +
+          'You make a {stat} Roll {roll} against the entity’s Reflex.\n\n' +
           'On a success, it deals [[2d6 + 2*stat]] damage in your {{Draconic Scales}} colour.',
       }),
     ],
@@ -696,7 +696,7 @@ const LINEAGE_CODEX = [
         summary: '15 Health per level instead of 10, and rests barely mend you.',
         body:
           'You gain 15 Health per level in Fortitude and {physique} instead of 10.\n\n' +
-          'However short rests no longer restore Health, and long rests only let you regain half your maximum Health.', // text-style-ok: joins two clauses
+          'However Short Rests no longer restore Health, and Long Rests only let you regain half your maximum Health.', // text-style-ok: joins two clauses
       }),
       own('Undead', {
         id: 'cannibalism',
@@ -705,13 +705,13 @@ const LINEAGE_CODEX = [
         ap: 6,
         wp: 6,
         /* "Once used you need to take a long rest before you can use it again."
-           One use, filled by the long rest. See uses.js. */
+           One use, filled by the Long Rest. See uses.js. */
         uses: 1,
         recharge: 'Long Rest',
-        summary: 'Feast on a fresh corpse for half your maximum Health, once a long rest.',
+        summary: 'Feast on a fresh corpse for half your maximum Health, once a Long Rest.',
         body:
           'You can feast on a fresh organic dead body to regain half your maximum Health.\n\n' +
-          'Once used you need to take a long rest before you can use it again.',
+          'Once used you need to take a Long Rest before you can use it again.',
       }),
     ],
   },

@@ -256,12 +256,12 @@ for (const weapon of WEAPONS) {
   if (!tags.includes('Weapon')) note(where, 'does not carry the hidden Weapon tag, so a filter for every weapon misses it');
   if (tags.includes('Focus')) note(where, 'still carries Focus, which the tag pass of 2026-08-24 retired');
 
-  /* Melee reaches 1 Meter unless the weapon says Reach. The designer's rule of
+  /* Melee reaches 1 meter unless the weapon says Reach. The designer's rule of
      2026-08-24, and the one number a reader would never think to check. */
   if (kinds[0] === 'Melee' && !tags.includes('Reach')) {
     const { plain } = taught(weapon);
-    if (plain && !/within 1 Meter/.test(cardProse(plain.body))) {
-      note(where, `${plain.name} does not reach 1 Meter, and only a Reach weapon reaches further`);
+    if (plain && !/within 1 meter/.test(cardProse(plain.body))) {
+      note(where, `${plain.name} does not reach 1 meter, and only a Reach weapon reaches further`);
     }
   }
 }

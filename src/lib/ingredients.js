@@ -81,7 +81,7 @@ export const INGREDIENTS = withArt([
     summary: 'Advantage on the next roll.',
     body:
       'You drop a rare, lucky plant into the brew.\n\n' +
-      'Entities affected by a Lucky Brew gain Advantage on their next Skill Check or Attack Roll.',
+      'Entities affected by a Lucky Brew gain advantage on their next skill check or Attack Roll.',
   },
 
   {
@@ -97,7 +97,7 @@ export const INGREDIENTS = withArt([
     summary: 'Disadvantage on the next roll.',
     body:
       'You drop a rare, unlucky plant into the brew.\n\n' +
-      'Entities affected by an Unlucky Brew gain Disadvantage on their next Skill Check or Attack Roll.',
+      'Entities affected by an Unlucky Brew gain disadvantage on their next skill check or Attack Roll.',
   },
 
   {
@@ -113,7 +113,7 @@ export const INGREDIENTS = withArt([
     summary: 'Health back.',
     body:
       'You drop a vibrant, life-giving leaf into the brew.\n\n' +
-      '**A target entity** affected by the Brew regains [[2d6 + 2*stat]] in Health.',
+      '**An entity** affected by the Brew regains [[2d6 + 2*stat]] Health.',
   },
 
   /* The one place this file departs from the sheet, and on the designer's own
@@ -135,7 +135,7 @@ export const INGREDIENTS = withArt([
     summary: 'Fire damage.',
     body:
       'You drop a fire-infused ingredient in the brew.\n\n' +
-      'Entities affected by the Brew take [[3d6 + 3*stat]] in {damage:Fire} damage.',
+      'Entities affected by the Brew take [[3d6 + 3*stat]] {damage:Fire} damage.',
   },
 
   {
@@ -183,7 +183,7 @@ export const INGREDIENTS = withArt([
     summary: 'Cold damage, and the next step out costs more.',
     body:
       'You drop a shard of perpetual ice into the brew.\n\n' +
-      'Entities affected by the Brew take [[2d6 + 2*stat]] in {damage:Cold} damage.\n\n' +
+      'Entities affected by the Brew take [[2d6 + 2*stat]] {damage:Cold} damage.\n\n' +
       'The cost of the entity\'s next Move action is increased by 1 Action Point.',
   },
 
@@ -217,7 +217,7 @@ export const INGREDIENTS = withArt([
     summary: 'Stunned until their next Turn End.',
     body:
       'You drop a glowing, heat-pulsing shard into the brew.\n\n' +
-      'Entities affected by the Brew become Stunned **until their next Turn End**.',
+      'Entities affected by the Brew become stunned **until their next Turn End**.',
   },
 
   {
@@ -235,7 +235,7 @@ export const INGREDIENTS = withArt([
     body:
       'You drop a dense, brain-shaped nut into the brew.\n\n' +
       'The brewer names a specific skill (such as Stealth, Carpentry, Investigation, hot dog eating or Diplomacy).\n\n' +
-      'Entities affected by the Brew have Advantage in the named skill.\n\n' +
+      'Entities affected by the Brew have advantage in the named skill.\n\n' +
       'This effect lasts **until the target takes a Long Rest**.',
   },
 
@@ -253,8 +253,8 @@ export const INGREDIENTS = withArt([
     summary: 'Poison damage, and leaves them poisoned.',
     body:
       'You drop a bloated, neon-colored frog into the brew.\n\n' +
-      '**An entity** affected by the Brew takes [[2d6 + 2*stat]] in {damage:Poison} damage.\n\n' +
-      'The entity is also Poisoned.',
+      '**An entity** affected by the Brew takes [[2d6 + 2*stat]] {damage:Poison} damage.\n\n' +
+      'The entity is also poisoned.',
   },
 
   /* ========================================================== CATALYST ====
@@ -275,7 +275,7 @@ export const INGREDIENTS = withArt([
     summary: 'Aims the Brew at one target you can see within 9 meters.',
     body:
       'You drop a preserved, lidless eye into the brew to sharpen its focus.\n\n' +
-      'Your Brew affects **a single target** you can see within **9 meters (30 feet)**.',
+      'Your Brew affects **an entity** you can see within **9 meters (30 feet)**.',
   },
 
   {

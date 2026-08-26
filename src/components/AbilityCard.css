@@ -290,9 +290,13 @@
 }
 
 /* ---------- RULES TEXT ---------- */
-/* The extra top padding is the half-banner hanging over this half. */
+/* The extra top padding is the half-banner hanging over this half.
+   The measures here are the tight side of comfortable, on purpose: every pixel
+   of chrome is a pixel the fitter takes off the type instead, and the type is
+   what a card is for. Measured on 2026-08-26 (docs/card-text.md): this block's
+   trims buy a dense card about one full line of text at full size. */
 .ac-body {
-  padding: 1.5rem 0.8rem 1.1rem;
+  padding: 1.4rem 0.8rem 0.9rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -318,8 +322,8 @@
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin: 0.15rem 0 0.75rem;
-  padding-bottom: calc(0.55rem * var(--ac-fit, 1));
+  margin: 0.1rem 0 0.6rem;
+  padding-bottom: calc(0.45rem * var(--ac-fit, 1));
   word-break: break-word;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
 }
@@ -340,17 +344,20 @@
 
 .ac-title-sub {
   font-size: calc(1.34rem * var(--ac-name-fit, 1));
-  margin-top: calc(1rem * var(--ac-fit, 1));
+  margin-top: calc(0.7rem * var(--ac-fit, 1));
 }
 
 .ac-text p {
   font-family: var(--font-body);
   font-size: calc(0.92rem * var(--ac-fit, 1));
-  line-height: 1.5;
+  line-height: 1.45;
   /* Rules text is what a card is *for* — kept near full brightness so a dealt
      card reads at arm's length rather than only up close. */
   color: rgba(234, 242, 248, 0.94);
-  margin-bottom: calc(0.7rem * var(--ac-fit, 1));
+  /* A break has to read as a break beside a 1.45 line: 0.55rem of margin is
+     8.8px against the 6.6px between wrapped lines, clear without costing what
+     a whole blank line would. */
+  margin-bottom: calc(0.55rem * var(--ac-fit, 1));
 }
 
 .ac-text p:last-child {

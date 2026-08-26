@@ -205,7 +205,7 @@ export const MARTIAL_MOVES = withArt([
     house: true,
     body:
       'Your next Weapon Attack is made with advantage.\n\n' +
-      'On a hit, make a {stat} roll {roll} against the target’s Grit. On a success, whatever it was holding lands **3 meters (10 feet)** away in a direction of your choice, and it must take the {{Interact}} action to pick the thing up again.',
+      'On a hit, roll your {stat} {roll} against the target’s Grit. On a success, whatever it was holding lands **3 meters (10 feet)** away in a direction of your choice, and it must take the {{Interact}} action to pick the thing up again.',
   },
   {
     id: 'feint',

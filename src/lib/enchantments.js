@@ -113,9 +113,9 @@ export const ENCHANTMENTS = withArt([
     cost: 3000,
     supplies: 280,
     shieldAtCombat: '2d6',
-    effect: 'Gain 2d6 in Shield at combat start.',
+    effect: 'Gain 2d6 Shield at combat start.',
     body:
-      'When the wielder enters combat, they start it with [[2d6]] in Shield.\n\n' +
+      'When the wielder enters combat, they start it with [[2d6]] Shield.\n\n' +
       'It stacks with everything else that grants Shield at the start of a fight, and is held to the same cap.',
   },
 
@@ -335,13 +335,13 @@ export const ENCHANTMENTS = withArt([
     /* Half a rider now. Nothing on this sheet knows that a character *went
        down*, so the trigger is still the table's to notice, the way every other
        printed conditional on this sheet is. But "has triggered since your last
-       long rest" is a fact about the character rather than about the moment, and
-       that half is tracked: one use, filled by a long rest, marked on the Always
+       Long Rest" is a fact about the character rather than about the moment, and
+       that half is tracked: one use, filled by a Long Rest, marked on the Always
        On row by the hand that noticed it fire. See uses.js. */
     uses: 1,
     recharge: 'Long Rest',
     effect:
-      'When you go down, you stabilize to 0 health points instead of going into negative. Once this effect has triggered you need to take a long rest before you can use it again.',
+      'When you go down, you stabilize to 0 health points instead of going into negative. Once this effect has triggered you need to take a Long Rest before you can use it again.',
     body:
       'When the wielder would drop below 0 Health, they stop at 0 instead of bleeding out.\n\n' +
       'Once it has fired it is spent, and comes back after a Long Rest.',
@@ -420,11 +420,11 @@ export const ENCHANTMENTS = withArt([
     cost: 6000,
     supplies: 560,
     /* Printed and tracked the same way Defibrillation is: the trigger is the
-       table's, the one use and the long rest that fills it are the sheet's. */
+       table's, the one use and the Long Rest that fills it are the sheet's. */
     uses: 1,
     recharge: 'Long Rest',
     effect:
-      'When you go down, you spring back up to 1 Health instead. Once the effect has triggered you need to take a long rest before you can use it again.',
+      'When you go down, you spring back up to 1 Health instead. Once the effect has triggered you need to take a Long Rest before you can use it again.',
     body:
       'When the wielder would drop below 0 Health, they come back up on 1 instead.\n\n' +
       'Once it has fired it is spent, and comes back after a Long Rest.',
@@ -443,7 +443,7 @@ export const ENCHANTMENTS = withArt([
        the cell names both, and floored at nothing by rest.js rather than here. */
     restSupplies: 2,
     effect:
-      'You need less to sustain yourself, the cost in supplies of short and long rest are reduced by 2.',
+      'You need less to sustain yourself, the cost in supplies of short and Long Rest are reduced by 2.',
     body:
       'The wielder needs less to keep going.\n\n' +
       'A Short Rest and a Long Rest each cost 2 fewer Supplies out of the crate.',

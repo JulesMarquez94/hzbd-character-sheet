@@ -86,11 +86,10 @@ export const SPELLS = withArt([
     damage: ['Sharp'],
     body:
       'You summon forth a vine from the ground to whip **an entity** you can see within **9 meters (30 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[1d6 + 2*stat]] in {damage} damage.',
+      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[1d6 + 2*stat]] {damage} damage.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Bramble Whip, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Bramble Whip.',
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     id: 'barkskin',
@@ -102,13 +101,11 @@ export const SPELLS = withArt([
     wp: 2,
     stat: 'mind',
     body:
-      'You cover the skin of **a creature** you can touch with bark.\n\n' +
-      'The target gains [[2d6 + 2*stat]] in Shield and +1 Defense.\n\n' +
-      'This effect is lost when all Shield is depleted.',
+      'You cover the skin of **an entity** you can touch with bark.\n\n' +
+      'The target gains [[2d6 + 2*stat]] Shield and +1 Defense. The effect ends when all Shield is depleted.',
     sub_name: 'Overcast',
     sub_body:
-      'When casting Barkskin, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, the target entity gains an additional [[1d6 + stat]] in Shield.',
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, the target gains an additional [[1d6 + stat]] Shield.',
   },
   {
     id: 'entangling-roots',
@@ -153,13 +150,11 @@ export const SPELLS = withArt([
     stat: 'mind',
     damage: ['Decay'],
     body:
-      'You launch a burrowing spore pod at **an entity** you can see within **12 meters (40 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll} against the target. On a hit, the spore embeds itself in the target.\n\n' +
-      'At your Turn End, the embedded spore deals [[2d6 + 2*stat]] in {damage} damage to the target, and you regain Health equal to half the damage dealt.',
+      'You launch a burrowing spore pod at **an entity** you can see within **12 meters (40 feet)**. Make a {stat} Ranged Attack {roll}. On a hit, the spore embeds itself in the target.\n\n' +
+      'At your Turn End, the spore deals [[2d6 + 2*stat]] {damage} damage to the target, and you regain Health equal to half the damage dealt.',
     sub_name: 'Upkeep',
     sub_body:
-      'At your Turn Start, you must pay 2 Willpower to maintain the spore on the target.\n\n' +
-      'If you do not pay the Upkeep, the spell effect ends.',
+      'At your Turn Start, pay 2 Willpower to keep the spore in place. Miss the Upkeep and the spell ends.',
   },
   {
     id: 'verdant-field',
@@ -171,13 +166,11 @@ export const SPELLS = withArt([
     wp: 4,
     stat: 'mind',
     body:
-      'You create a field of greenery in a **30-meter (100-foot)** radius centered on yourself for **1 hour**.\n\n' +
-      'Entities taking a Short Rest inside gain [[2d6 + 2*stat]] in Shield and 1 Karma.\n\n' +
-      'Standing in the field elevates your Flora spells by 1.',
+      'You create a field of greenery in a **30-meter (100-foot)** radius around you for **1 hour**.\n\n' +
+      'A Short Rest inside grants [[2d6 + 2*stat]] Shield and 1 Karma. Standing in the field elevates your Flora spells by 1.',
     sub_name: 'Overcast',
     sub_body:
-      'When casting Verdant Field, you may spend an additional 3 Action Points and 4 Willpower.\n\n' +
-      'If you do, the field lasts for **24 hours**, or becomes permanent in natural terrain, and entities taking a Long Rest inside also receive the Short Rest benefits and reduce their Supplies cost by 1.',
+      'When casting this spell, you may spend an additional 3 Action Points and 4 Willpower to make the field last **24 hours** (permanent in natural terrain). A Long Rest inside then also grants these benefits and costs 1 fewer Supplies.',
   },
   {
     id: 'thorn-rampart',
@@ -192,8 +185,8 @@ export const SPELLS = withArt([
     body:
       'You conjure a dense wall of razor-sharp briars at a location you can see within **15 meters (50 feet)** for **10 turns (1 minute)**.\n\n' +
       'The wall can be up to **12 meters (40 feet)** long, **1.5 meters (5 feet)** thick and **3 meters (10 feet)** tall, blocking line of sight.\n\n' +
-      '**Any entity** attempting to pass through the wall or having their Turn Start in it takes [[3d6 + 3*stat]] in {damage} damage, and you make a {stat} Roll {roll} against that entity’s Grit.\n\n' +
-      'On a success, the entity becomes rooted **until the end of its turn**.',
+      '**Any entity** attempting to pass through the wall or having their Turn Start in it takes [[3d6 + 3*stat]] {damage} damage, and you make a {stat} Roll {roll} against that entity’s Grit.\n\n' +
+      'On a success, the entity becomes rooted **until its next Turn End**.',
     sub_name: null,
     sub_body: null,
   },
@@ -207,13 +200,12 @@ export const SPELLS = withArt([
     wp: 4,
     stat: 'mind',
     body:
-      'You touch a common object, instantly breaking it down into decaying organic matter and destroying it.\n\n' +
-      'The object cannot exceed 200 kg (440 lbs) in weight or a **2-meter (6-foot)** cube in size, and cannot be metallic.\n\n' +
-      'If the object is being worn or held by **an entity**, you must make a successful {stat} Melee Attack {roll} against the target to destroy it.',
+      'You touch a common object, instantly breaking it down into decaying organic matter.\n\n' +
+      'The object cannot exceed 200 kg (440 lbs) or a **2-meter (6-foot)** cube, and cannot be metallic.\n\n' +
+      'If the object is worn or held by **an entity**, destroying it takes a successful {stat} Melee Attack {roll} against them.',
     sub_name: 'Overcast',
     sub_body:
-      'When casting Naturalize, you may spend an additional 3 Action Points and 6 Willpower.\n\n' +
-      'If you do, you can target uncommon objects.',
+      'When casting this spell, you may spend an additional 3 Action Points and 6 Willpower to target uncommon objects.',
   },
 
   /* ------------------------------------------------------ Primal · Wild ---- */
@@ -227,13 +219,11 @@ export const SPELLS = withArt([
     wp: 2,
     stat: 'mind',
     body:
-      'You embody the freedom of the wild **until your next Long Rest**.\n\n' +
-      'The Action Point cost of your {{Move}} action can no longer exceed 1 Action Point, and your Movement Speed cannot be reduced by any effect.\n\n' +
-      'Additionally, your jump distance and jump height are doubled.',
+      'You embody the freedom of the wild **until your next Long Rest**. ' +
+      'The Action Point cost of your {{Move}} action can no longer exceed 1 and your Movement Speed cannot be reduced. Your Jump Distance and Jump Height are doubled.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Wild Strider, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional entity** you can see within **6 meters (20 feet)** with Wild Strider.',
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional entity** you can see within **6 meters (20 feet)**.',
   },
   {
     id: 'snake',
@@ -247,7 +237,7 @@ export const SPELLS = withArt([
     damage: ['Decay'],
     body:
       'You manifest a snake spirit which hurls itself at **an entity** you can see within **6 meters (20 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage, and the target is poisoned.',
+      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] {damage} damage, and the target is poisoned.',
     sub_name: null,
     sub_body: null,
   },
@@ -265,8 +255,7 @@ export const SPELLS = withArt([
       'For the duration of the spell, you gain advantage on all skill checks that rely on one of your five senses.',
     sub_name: 'Overcast',
     sub_body:
-      'While Sharpen Senses is active, when you fail a skill check that relies on one of your five senses, you may spend 2 Willpower to reroll the check.\n\n' +
-      'You can only use this effect once per skill check.',
+      'While this spell is active, you may spend 2 Willpower to reroll a failed skill check that relies on one of your five senses. You can only use this effect once per skill check.',
   },
   {
     id: 'primal-roar',
@@ -295,12 +284,11 @@ export const SPELLS = withArt([
     stat: 'mind',
     damage: ['Sharp'],
     body:
-      'You manifest the spirit of a large flying creature that swoops down on **an entity** you can see within **12 meters (40 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage, and the target is carried **12 meters (40 feet)** in any direction of your choice.',
+      'You manifest the spirit of a large flying creature to swoop at **an entity** you can see within **12 meters (40 feet)**.\n\n' +
+      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] {damage} damage and the target is carried **12 meters (40 feet)** where you choose.',
     sub_name: 'Overcast',
     sub_body:
-      'When Wild Sweep hits, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, the target is carried an additional **3 meters (10 feet)**.',
+      'When this spell hits, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, it is carried an additional **3 meters (10 feet)**.',
   },
   {
     id: 'savage-slam',
@@ -314,11 +302,10 @@ export const SPELLS = withArt([
     damage: ['Force'],
     body:
       'You manifest the spirit of a mighty beast to slam the ground in a **6-meter (20-foot)** cone in front of you.\n\n' +
-      'Make a {stat} Attack Roll {roll} against **all entities** in the area. On a hit, you deal [[4d6 + 4*stat]] in {damage} damage.',
+      'Make a {stat} Attack Roll {roll} against **all entities** in the area. On a hit, you deal [[4d6 + 4*stat]] {damage} damage.',
     sub_name: 'Overcast',
     sub_body:
-      'When casting Savage Slam, you may spend an additional 2 Action Points and 2 Willpower.\n\n' +
-      'If you do, the spell affects a **6-meter (20-foot)** radius centered on you instead of a cone.',
+      'When casting this spell, you may spend an additional 2 Action Points and 2 Willpower to affect a **6-meter (20-foot)** radius centered on you instead of a cone.',
   },
   {
     id: 'pack-bond',
@@ -331,9 +318,8 @@ export const SPELLS = withArt([
     stat: 'mind',
     body:
       'You form a predatory bond with **up to 5 allies** you can see for **10 turns (1 minute)**, binding you together as a Wild Pack. While this spell is active:\n\n' +
-      'Attack rolls against a Wild Pack member have disadvantage while that member is adjacent to at least one other Wild Pack member.\n\n' +
-      'Wild Pack members gain advantage on attack rolls against **an entity** if at least 2 Wild Pack members are adjacent to that same entity.\n\n' +
-      'If a Wild Pack member falls unconscious or dies, every remaining member’s next attack is a guaranteed critical hit. Friendly fire and self-harm cannot trigger this effect.',
+      'Attack Rolls against a member have disadvantage while it is adjacent to another member. Members gain advantage on Attack Rolls against **an entity** adjacent to at least 2 members.\n\n' +
+      'If a member falls unconscious or dies, every remaining member’s next attack is a guaranteed Critical Hit. Friendly fire and self-harm cannot trigger this.',
     sub_name: null,
     sub_body: null,
   },
@@ -367,12 +353,10 @@ export const SPELLS = withArt([
     stat: 'mind',
     body:
       'You attempt to ferment the blood of **an entity** you can see within **15 meters (50 feet)**.\n\n' +
-      'Make a {stat} Roll {roll} against the target’s Grit. On a success, the target becomes poisoned.\n\n' +
-      'Outside of combat, the target is unaware of the spell’s source and believes they became suddenly sick.',
+      'Make a {stat} Roll {roll} against its Grit. On a success, the target becomes poisoned. Outside of combat, the target is unaware of the spell’s source and believes it fell suddenly ill.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Force Inebriation, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** within range.',
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     id: 'sense-life',
@@ -384,12 +368,11 @@ export const SPELLS = withArt([
     wp: 1,
     stat: 'mind',
     body:
-      'You open your awareness to the pulse and life force of surrounding living organisms.\n\n' +
+      'You open your awareness to the pulse of surrounding life.\n\n' +
       'For **10 turns (1 minute)**, you sense the exact location and health state of **all living entities** within **18 meters (60 feet)**, even through total cover or darkness.',
     sub_name: 'Overcast',
     sub_body:
-      'While Sense Life is active, you may spend 3 Action Points and 3 Willpower to mark **an entity** within range.\n\n' +
-      'You continue to sense the marked entity’s location and health state **until your next Long Rest**, even if the target leaves your range.',
+      'While this spell is active, you may spend 3 Action Points and 3 Willpower to mark **an entity** within range. You keep sensing its location and health state **until your next Long Rest**, even past your range.',
   },
   {
     id: 'renew',
@@ -401,11 +384,10 @@ export const SPELLS = withArt([
     wp: 2,
     stat: 'mind',
     body:
-      'You mend the flesh of **an entity** you touch, restoring [[1d6 + stat]] in Health immediately and again at the Turn Start of the target’s next **2 turns**.',
+      'You mend the flesh of **an entity** you touch, restoring [[1d6 + stat]] Health immediately and again at the Turn Start of the target’s next **2 turns**.',
     sub_name: 'Overcast',
     sub_body:
-      'When casting Renew, you may spend an additional 2 Action Points and 2 Willpower.\n\n' +
-      'If you do, you instantly restore [[2d6 + 2*stat]] in Health to **all entities** currently affected by your Renew, regardless of range or line of sight.',
+      'When casting this spell, you may spend an additional 2 Action Points and 2 Willpower. If you do, you instantly restore [[2d6 + 2*stat]] Health to **all entities** currently affected by your Renew, regardless of range or line of sight.',
   },
   {
     id: 'giant-growth',
@@ -420,7 +402,7 @@ export const SPELLS = withArt([
       'You infuse **an entity** you can touch with life energy, tripling its size, doubling its Movement Speed and granting it Empowered for **10 turns**.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Giant Growth, you may spend 3 Willpower for **each additional entity** you can touch.',
+      'When casting this spell, you may spend 3 Willpower for **each additional entity** you can touch.',
   },
 
   /* ----------------------------------------------------- Primal · Blood ---- */
@@ -438,8 +420,7 @@ export const SPELLS = withArt([
       'The trail lasts for **12 hours** and, if followed, leads you directly to the entity the blood came from.',
     sub_name: 'Blood Tithe',
     sub_body:
-      'When casting Bleeding Trail, you may sacrifice Health equal to your {physique} [[physique]].\n\n' +
-      'If you do so, you receive a clear mental image of the entity the blood originated from.',
+      'When casting this spell, you may sacrifice Health equal to your {physique} [[physique]]. If you do, you receive a clear mental image of the entity the blood originated from.',
   },
   {
     id: 'blood-spear',
@@ -453,11 +434,10 @@ export const SPELLS = withArt([
     damage: ['Sharp'],
     body:
       'You manifest a spear of blood and hurl it at **an entity** you can see within **9 meters (30 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll} against the target. On a hit, you deal [[3d6 + 3*stat]] in {damage} damage.',
+      'Make a {stat} Ranged Attack {roll} against the target. On a hit, you deal [[3d6 + 3*stat]] {damage} damage.',
     sub_name: 'Blood Tithe',
     sub_body:
-      'When casting Blood Spear, you may sacrifice Health equal to your {physique} [[physique]].\n\n' +
-      'If you do so, the attack is made with advantage and the damage is Empowered by 1.',
+      'When casting this spell, you may sacrifice Health equal to your {physique} [[physique]]. If you do, the attack is made with advantage and the damage is Empowered by 1.',
   },
   {
     id: 'gore-armor',
@@ -479,8 +459,7 @@ export const SPELLS = withArt([
        grants Shield and no Armor at all. It is the only name in the codex a
        keyword collides with. */
     sub_body:
-      'When casting this spell, you may sacrifice a further Health equal to [[2*physique]].\n\n' +
-      'If you do so, you gain additional Shield equal to the Health sacrificed.',
+      'When casting this spell, you may sacrifice a further Health equal to [[2*physique]]. If you do, you gain additional Shield equal to the Health sacrificed.',
   },
   {
     id: 'vampiric-touch',
@@ -494,7 +473,7 @@ export const SPELLS = withArt([
     damage: ['Necrotic'],
     body:
       'You attempt to drain the life force of **an entity** you can touch.\n\n' +
-      'Make a {stat} Melee Attack {roll} against the target. On a hit, you deal [[3d6 + 3*stat]] in {damage} damage and regain Health equal to half the damage dealt.',
+      'Make a {stat} Melee Attack {roll} against the target. On a hit, you deal [[3d6 + 3*stat]] {damage} damage and regain Health equal to half the damage dealt.',
     sub_name: 'Blood Tithe',
     /* "this spell" rather than "Vampiric Touch", for the same reason Gore
        Armor says it: touch is a defined range and a keyword is lit wherever it
@@ -502,8 +481,7 @@ export const SPELLS = withArt([
        offer "close enough to put a hand on" as the explanation of a word being
        used as a name. */
     sub_body:
-      'When casting this spell, you may sacrifice Health equal to your {physique} [[physique]].\n\n' +
-      'If you do so, the attack is made with advantage and the damage is Empowered by 1.',
+      'When casting this spell, you may sacrifice Health equal to your {physique} [[physique]]. If you do, the attack is made with advantage and the damage is Empowered by 1.',
   },
 
   /* ---------------------------------------------------- Arcane · Energy ----
@@ -570,8 +548,7 @@ export const SPELLS = withArt([
       'Dropping the flame extinguishes it.',
     sub_name: 'Overcast',
     sub_body:
-      'You can spend 2 Action Points and 4 Willpower to hurl the flame at **a target** you can see within **15 meters (50 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[3d6 + 3*stat]] in {damage} damage.',
+      'You can spend 2 Action Points and 4 Willpower to hurl the flame at **an entity** you can see within **15 meters (50 feet)**. Make a {stat} Ranged Attack {roll}. On a hit, you deal [[3d6 + 3*stat]] {damage} damage.',
   },
   {
     /* The card render titles itself PRODUCE FLAME — a paste left over from the
@@ -588,7 +565,7 @@ export const SPELLS = withArt([
     damage: ['Fire'],
     body:
       'You envelop yourself in a fiery cloak that lasts for **5 turns**.\n\n' +
-      'Entities having their Turn Start within **1.5 meters (5 feet)** of you take [[stat]] in {damage} damage.',
+      'Entities having their Turn Start within **1.5 meters (5 feet)** of you take [[stat]] {damage} damage.',
     /* The Burn parenthesis at the card's foot went to keywords.js word for word,
        the trade FRIGHTFUL ROAR and BLIND both made. */
     sub_name: 'Overcast',
@@ -613,8 +590,7 @@ export const SPELLS = withArt([
        own toll. Same on every Upkeep half below. */
     sub_name: 'Upkeep',
     sub_body:
-      'At your Turn Start, you must pay 1 Willpower to keep the weapon kindled.\n\n' +
-      'If you do not pay the Upkeep, the spell effect ends.',
+      'At your Turn Start, pay 1 Willpower to keep the weapon kindled. Miss the Upkeep and the spell ends.',
   },
   {
     id: 'fire-seed',
@@ -627,12 +603,11 @@ export const SPELLS = withArt([
     stat: 'mind',
     damage: ['Fire'],
     body:
-      'You embed a seed of pure elemental fire in **an entity** you can see within **9 meters (30 feet)**. The target is unaware of the seed being placed if it does not see you cast the spell.\n\n' +
-      'This effect lasts **until the target takes a Long Rest**, and for as long as it lasts you know the seed’s relative direction.',
+      'You embed a seed of elemental fire in **an entity** you can see within **9 meters (30 feet)**. The target is unaware unless it saw you cast.\n\n' +
+      'The seed lasts **until the target takes a Long Rest**, and while it does you know its direction.',
     sub_name: 'Overcast',
     sub_body:
-      'If you have any active Fire Seed, you may pay 3 Action Points and 4 Willpower to detonate it.\n\n' +
-      'All seeds explode, dealing [[3d6 + 3*stat]] in {damage} damage to the target and **any entities** within **4.5 meters (15 feet)** of it.',
+      'If you have any active Fire Seed, you may pay 3 Action Points and 4 Willpower to detonate. Every seed explodes, dealing [[3d6 + 3*stat]] {damage} damage to its target and **any entities** within **4.5 meters (15 feet)**.',
   },
   {
     id: 'molten-grasp',
@@ -647,12 +622,10 @@ export const SPELLS = withArt([
     /* The card writes the area as "1.5² meters (5² feet)"; a superscript is not
        prose, so it reads "square meters" here. */
     body:
-      'You ignite your hands, gaining the ability to melt metal and stone with your touch for **5 turns**.\n\n' +
-      'For the duration of the spell, you can melt up to **1.5 square meters (5 square feet)** of metal on a surface up to **15 cm (6 inches)** thick.',
+      'You ignite your hands, melting metal and stone with your touch for **5 turns**. For the duration, you can melt up to **1.5 square meters (5 square feet)** of metal on a surface up to **15 cm (6 inches)** thick.',
     sub_name: 'Overcast',
     sub_body:
-      'You can spend 2 Action Points and 3 Willpower to transfer the heat into a metallic object.\n\n' +
-      'For the remainder of the spell duration, entities in contact with the object at their Turn Start take [[2d6 + 2*stat]] in {damage} damage.',
+      'You can spend 2 Action Points and 3 Willpower to transfer the heat into a metallic object. For the rest of the duration, entities in contact with the object at their Turn Start take [[2d6 + 2*stat]] {damage} damage.',
   },
   {
     id: 'wall-of-flames',
@@ -671,7 +644,7 @@ export const SPELLS = withArt([
     body:
       'You conjure a wall of fire at a location you can see within **15 meters (50 feet)**.\n\n' +
       'The wall is **15 meters (50 feet)** long and **2 meters (6 feet)** thick, and it does not have to be a straight line. The wall blocks line of sight.\n\n' +
-      '**Any entity** passing through the wall or having their Turn Start within it takes [[4d6 + 4*stat]] in {damage} damage.',
+      '**Any entity** passing through the wall or having their Turn Start within it takes [[4d6 + 4*stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -690,7 +663,7 @@ export const SPELLS = withArt([
     sub_name: 'Overcast',
     sub_body:
       'Whenever you deal damage or heal, you can spend 1 Willpower to expend one of your spheres.\n\n' +
-      'Doing so increases the damage or healing by [[2*stat]] in {damage} damage when applicable.',
+      'Doing so increases the damage or healing by [[2*stat]] {damage} damage when applicable.',
   },
   {
     id: 'cauterize',
@@ -704,11 +677,10 @@ export const SPELLS = withArt([
     damage: ['Fire'],
     body:
       'You use swift and intense heat to cauterize the wound of **an entity** you can see within **9 meters (30 feet)**.\n\n' +
-      'The target takes [[2d6 + 2*stat]] in {damage} damage and then regains [[5d6 + 5*stat]] in Health. This removes any Bleed or Poison effect on the target.',
+      'The target takes [[2d6 + 2*stat]] {damage} damage and then regains [[5d6 + 5*stat]] Health. This removes any Bleed or Poison effect.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Cauterize, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Cauterize.',
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     id: 'rain-of-fire',
@@ -723,13 +695,11 @@ export const SPELLS = withArt([
     /* The card rolled "against the Instinct" of everyone in the area. Instinct
        is not a roll target — fire out of the sky is dodged, so it is Reflex. */
     body:
-      'You call down a devastating rain of fire in a **12-meter (40-foot)** radius centered on a point you can see within **30 meters (100 feet)**.\n\n' +
-      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[4d6 + 4*stat]] in {damage} damage, or half as much on a failure.\n\n' +
-      'Another wave falls down at each of your Turn Starts for as long as you pay the Upkeep.',
+      'You call down a rain of fire in a **12-meter (40-foot)** radius on a point you can see within **30 meters (100 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[4d6 + 4*stat]] {damage} damage, or half as much on a failure. Another wave falls at your Turn Start while you pay the Upkeep.',
     sub_name: 'Upkeep',
     sub_body:
-      'At your Turn Start, you must pay 3 Willpower to keep the rain falling.\n\n' +
-      'If you do not pay the Upkeep, the spell effect ends.',
+      'At your Turn Start, pay 3 Willpower to keep the rain falling. Miss the Upkeep and the spell ends.',
   },
 
   /* ----------------------------------------------------- Elemental · Water ---- */
@@ -743,10 +713,10 @@ export const SPELLS = withArt([
     wp: 2,
     stat: 'mind',
     body:
-      'You gain control over water for the next **1 hour**. You can manipulate water within **3 meters (10 feet)** in the following ways:\n\n' +
-      'Create Currents: You create currents within **3 meters (10 feet)** that move objects and entities at a speed of your choice, up to **18 meters (60 feet)** per turn.\n\n' +
-      'Water Tension: You manipulate the tension of the water, allowing targets of your choice within **3 meters (10 feet)** to walk on water.\n\n' +
-      'Part Water: You can part a body of water, creating a sphere around you as large as **3 meters (10 feet)**, allowing you to walk underwater.',
+      'You gain control over water within **3 meters (10 feet)** for the next **1 hour**, in the following ways:\n\n' +
+      'Create Currents: currents move objects and entities at a speed of your choice, up to **18 meters (60 feet)** per turn.\n\n' +
+      'Water Tension: targets of your choice can walk on water.\n\n' +
+      'Part Water: you part a body of water in a sphere around you, letting you walk underwater.',
     sub_name: null,
     sub_body: null,
   },
@@ -767,13 +737,10 @@ export const SPELLS = withArt([
     stat: 'mind',
     damage: ['Sharp'],
     body:
-      'You condense the moisture in the air to create a small volume of water.\n\n' +
-      'You create up to 2 liters (0.5 gallons) of water in an open container or on a surface you can see within **9 meters (30 feet)**.',
+      'You condense the moisture in the air. You create up to 2 liters (0.5 gallons) of water in an open container or on a surface you can see within **9 meters (30 feet)**.',
     sub_name: 'Overcast',
     sub_body:
-      'If there is at least 1 liter (0.25 gallons) of water within **9 meters (30 feet)**, you may spend 3 Action Points and 1 Willpower.\n\n' +
-      'You hurl the water as a high-pressure beam at **an entity** within **9 meters (30 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.',
+      'If there is at least 1 liter (0.25 gallons) of water within **9 meters (30 feet)**, you may spend 3 Action Points and 1 Willpower. You hurl the water as a high-pressure beam at **an entity** in that range. Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] {damage} damage.',
   },
   {
     id: 'ice-armor',
@@ -787,8 +754,8 @@ export const SPELLS = withArt([
     damage: ['Sharp'],
     body:
       'You coat your body in a layer of protective frost that lashes out when shattered.\n\n' +
-      'You gain [[2d6 + 2*stat]] in Shield.\n\n' +
-      'When an attack causes you to lose Shield, an ice spike immediately fires at the attacker if they are within **9 meters (30 feet)** and you can see them. The target takes [[1d6 + stat]] in {damage} damage.',
+      'You gain [[2d6 + 2*stat]] Shield.\n\n' +
+      'When an attack causes you to lose Shield, an ice spike immediately fires at the attacker if they are within **9 meters (30 feet)** and you can see them. The target takes [[1d6 + stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -806,13 +773,11 @@ export const SPELLS = withArt([
        target — holding your insides where they belong is Grit, the same save
        FORCE INEBRIATION already asks for. */
     body:
-      'You reach out with your magical influence to siphon the internal liquids from **a target entity** you can see within **9 meters (30 feet)**.\n\n' +
-      'Make a {stat} Roll {roll} against the target’s Grit.\n\n' +
-      'On a success, the target takes [[2d6 + 2*stat]] in {damage} damage, and then again at each of your Turn Starts.',
+      'You reach out to siphon the internal fluids of **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, the target takes [[2d6 + 2*stat]] {damage} damage, and then again at each of your Turn Starts.',
     sub_name: 'Upkeep',
     sub_body:
-      'At your Turn Start, you must pay 2 Willpower to keep siphoning. If you do not pay the Upkeep, the spell effect ends.\n\n' +
-      'The spell effect also ends if you cannot see the target at your Turn Start.',
+      'At your Turn Start, pay 2 Willpower to keep siphoning. Miss the Upkeep and the spell ends. The spell also ends if you cannot see the target at your Turn Start.',
   },
   {
     id: 'flash-freeze',
@@ -849,7 +814,7 @@ export const SPELLS = withArt([
       'You create and send a tidal wave crashing onto your foes.\n\n' +
       'The wave starts at a point you can see within **24 meters (80 feet)** and moves **12 meters (40 feet)** in a direction of your choice. It is **9 meters (30 feet)** wide and **3 meters (10 feet)** tall.\n\n' +
       'Make a {stat} Roll {roll} against the Grit of **all entities** caught in its path. On a success, the entity is pushed **12 meters (40 feet)**.\n\n' +
-      'If they encounter an obstacle before they are moved the full distance, they take [[3d6 + 3*stat]] in {damage} damage.',
+      'If they encounter an obstacle before they are moved the full distance, they take [[3d6 + 3*stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -871,11 +836,10 @@ export const SPELLS = withArt([
     damage: ['Sharp'],
     body:
       'For the next **5 turns**, you manifest a freezing aura that crystallizes your spent energy into jagged shards of ice.\n\n' +
-      'Every 2 Willpower you spend, you form an Ice Spike that orbits your body, up to a maximum equal to half your {mind}.',
+      'Every 2 Willpower you spend forms an Ice Spike that orbits you, up to half your {mind}.',
     sub_name: 'Overcast',
     sub_body:
-      'You may spend 3 Action Points to hurl all active Ice Spikes at **a single target** you can see within **18 meters (60 feet)**.\n\n' +
-      'Make a {mind} Ranged Attack {roll} against the target. On a hit, you deal [[1d6 + mind]] in {damage} damage for each Ice Spike consumed.',
+      'You may spend 3 Action Points to hurl all active Ice Spikes at **an entity** you can see within **18 meters (60 feet)**. Make a {mind} Ranged Attack {roll}. On a hit, you deal [[1d6 + mind]] {damage} damage for each Ice Spike consumed.',
   },
   {
     id: 'ice-block',
@@ -891,12 +855,11 @@ export const SPELLS = withArt([
        — and the gloss went to keywords.js word for word, retiring the
        provisional wording Amber Shard had been leaning on. */
     body:
-      'You condense water and freeze it around **a target entity** you can see within **18 meters (60 feet)**.\n\n' +
+      'You condense water and freeze it around **an entity** you can see within **18 meters (60 feet)**.\n\n' +
       'Make a {stat} Roll {roll} against the target’s Reflex. On a success, the entity is encased in ice, becoming stunned and immune to all non-{damage:Psychic} damage.',
     sub_name: 'Upkeep',
     sub_body:
-      'At your Turn Start, you must pay 4 Willpower to keep the ice frozen.\n\n' +
-      'If you do not pay the Upkeep, the spell effect ends.',
+      'At your Turn Start, pay 4 Willpower to keep the ice frozen. Miss the Upkeep and the spell ends.',
   },
   {
     id: 'water-vortex',
@@ -912,10 +875,9 @@ export const SPELLS = withArt([
        and the height clause turned over with it: what was the target's Advantage
        is Disadvantage on your roll. */
     body:
-      'You manifest a swirling vortex of water at a point you can see within **9 meters (30 feet)** that lasts for **10 turns (1 minute)**.\n\n' +
-      'The vortex has a **15-meter (50-foot)** radius and the area is considered Difficult Terrain.\n\n' +
+      'You manifest a swirling vortex of water at a point you can see within **9 meters (30 feet)** that lasts for **10 turns (1 minute)**. The vortex has a **15-meter (50-foot)** radius and is Difficult Terrain.\n\n' +
       'At **each entity**’s Turn Start within the area, make a {stat} Roll {roll} against its Grit. On a success, the entity is pulled **9 meters (30 feet)** toward the center of the vortex.\n\n' +
-      'You make the roll with 1 Disadvantage against entities with a height of **3 meters (10 feet)** or more, and 1 more for every **1.5 meters (5 feet)** of height over it.',
+      'The roll takes 1 disadvantage against entities **3 meters (10 feet)** tall or more, and 1 more for every **1.5 meters (5 feet)** over it.',
     sub_name: null,
     sub_body: null,
   },
@@ -955,11 +917,10 @@ export const SPELLS = withArt([
     damage: ['Force'],
     body:
       'You use strong force to instantly displace yourself to a point you can see within **15 meters (50 feet)**.\n\n' +
-      'If you would collide with an obstacle before reaching your destination, you stop and take [[6d6]] in {damage} damage.',
+      'If you would collide with an obstacle before reaching your destination, you stop and take [[6d6]] {damage} damage.',
     sub_name: 'Overcast',
     sub_body:
-      'When casting Fling, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional entity** within touch to move the same distance in the same direction.',
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional entity** within touch: it moves the same distance in the same direction.',
   },
   {
     id: 'wind-blade',
@@ -973,7 +934,7 @@ export const SPELLS = withArt([
     damage: ['Sharp'],
     body:
       'You launch a sharp wind blade at **an entity** you can see within **15 meters (50 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + stat]] in {damage} damage.',
+      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -992,7 +953,7 @@ export const SPELLS = withArt([
     body:
       'You create a strong gust of wind in an attempt to hurl **an entity** you can see within **9 meters (30 feet)**.\n\n' +
       'Make a {stat} Roll {roll} against the target’s Grit. On a success, the entity is moved **9 meters (30 feet)** in a direction of your choice.\n\n' +
-      'If the entity collides with **another entity**, both take [[2d6 + 2*stat]] in {damage} damage and the movement stops.',
+      'If the entity collides with **another entity**, both take [[2d6 + 2*stat]] {damage} damage and the movement stops.',
     sub_name: null,
     sub_body: null,
   },
@@ -1011,7 +972,7 @@ export const SPELLS = withArt([
     /* "against its Instinct" on the card — Reflex, like RAIN OF FIRE. */
     body:
       'You call down lightning to strike a point you can see within **9 meters (30 feet)**.\n\n' +
-      'If the space is occupied by **an entity**, make a {stat} Roll {roll} against its Reflex. On a success, you deal [[2d6 + 2*stat]] in {damage} damage, or half as much on a failure.\n\n' +
+      'If the space is occupied by **an entity**, make a {stat} Roll {roll} against its Reflex. On a success, you deal [[2d6 + 2*stat]] {damage} damage, or half as much on a failure.\n\n' +
       'If you used Lightning Strike in the last **12 hours**, the last point you struck with lightning is also struck.',
     sub_name: null,
     sub_body: null,
@@ -1031,7 +992,7 @@ export const SPELLS = withArt([
     damage: ['Lightning'],
     body:
       'You turn into pure energy and instantly teleport yourself to a point you can see within **6 meters (20 feet)**.\n\n' +
-      '**All entities** in a line between your start and end point take [[1d6 + stat]] in {damage} damage.',
+      '**All entities** in a line between your start and end point take [[1d6 + stat]] {damage} damage.',
     sub_name: 'Overcast',
     /* The one second half in the codex whose opening clause does not say when it
        happens and cannot mean "later". Voltaic Jolt is instantaneous — you are
@@ -1041,8 +1002,7 @@ export const SPELLS = withArt([
        paid for. See sub_when in overcast.js. */
     sub_when: 'cast',
     sub_body:
-      'You can spend 1 Action Point and 2 Willpower to teleport any number of entities you can touch along with you.\n\n' +
-      'They move the same distance parallel to you.',
+      'You can spend 1 Action Point and 2 Willpower to teleport any number of entities you can touch along with you. They move the same distance parallel to you.',
   },
   {
     id: 'galvanize',
@@ -1055,13 +1015,11 @@ export const SPELLS = withArt([
     stat: 'mind',
     damage: ['Lightning'],
     body:
-      'You touch **an entity**, infusing them with volatile electrical energy that reacts to impacts.\n\n' +
-      '**A target entity** you can touch becomes Galvanized.\n\n' +
-      'Whenever a Galvanized entity is hit, a spark erupts which deals an additional [[stat]] in {damage} damage to them.',
+      'You infuse **an entity** you can touch with volatile electrical energy that reacts to impacts: it becomes Galvanized.\n\n' +
+      'Whenever a Galvanized entity is hit, a spark erupts which deals an additional [[stat]] {damage} damage to them.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Galvanize, you may spend an additional 1 Action Point and 4 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Galvanize.',
+      'When casting this spell, you may spend an additional 1 Action Point and 4 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
 
   /* ----------------------------------------------------- Elemental · Magma ---- */
@@ -1077,11 +1035,10 @@ export const SPELLS = withArt([
     damage: ['Fire'],
     body:
       'You fire a small orb of magma at **an entity** you can see within **15 meters (50 feet)**.\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[1d6 + stat]] in {damage} damage and the target is afflicted with Burn.',
+      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[1d6 + stat]] {damage} damage and the target is afflicted with Burn.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Slag Shot, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, cast Slag Shot an additional time.',
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, cast Slag Shot an additional time.',
   },
   {
     id: 'magma-chains',
@@ -1098,9 +1055,9 @@ export const SPELLS = withArt([
        rule's, so the designer's "Physique roll against your Mind" stands. */
     body:
       'Chains made of magma erupt from the ground, binding **an entity** you can see within **6 meters (20 feet)**.\n\n' +
-      'The entity is bound by 3 Chains. It can spend 2 Action Points to attempt to break a Chain by making a {physique} roll against your {stat}. On a success, it breaks 1 Chain. On a critical success, it breaks 2 Chains.\n\n' +
+      'The entity is bound by 3 Chains. It can spend 2 Action Points to make a {physique} Roll against your {stat}: on a success it breaks 1 Chain, on a critical success 2.\n\n' +
       'While 3 Chains remain, the target is stunned and can only attempt to break Chains. While 2 or fewer Chains remain, the target is rooted.\n\n' +
-      'At its Turn Start, the entity takes [[stat]] in {damage} damage.',
+      'At its Turn Start, the entity takes [[stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -1119,12 +1076,11 @@ export const SPELLS = withArt([
     stat: 'mind',
     damage: ['Fire'],
     body:
-      'You call forth molten rock to flood at a point you can see within **18 meters (60 feet)**, creating a **9-meter (30-foot)** radius pool of magma that is considered Difficult Terrain.\n\n' +
-      '**Any entity** entering the area or having their Turn Start within it takes [[3d6 + 3*stat]] in {damage} damage.',
+      'You flood a point you can see within **18 meters (60 feet)**, forming a **9-meter (30-foot)** magma pool that is Difficult Terrain.\n\n' +
+      '**Any entity** entering the pool or with its Turn Start in it takes [[3d6 + 3*stat]] {damage} damage.',
     sub_name: 'Upkeep',
     sub_body:
-      'At your Turn Start, you must pay 2 Willpower to keep the magma molten. If you do not pay the Upkeep, the spell effect ends.\n\n' +
-      'When the spell ends, the magma solidifies into stone, and **all creatures** currently in the area become rooted **until their next Turn End**.', // text-style-ok: joins two clauses
+      'At your Turn Start, pay 2 Willpower to keep the magma molten. Miss the Upkeep and the spell ends. When the spell ends, the magma solidifies and **all entities** in it become rooted **until their next Turn End**.', // text-style-ok: joins two clauses
   },
 
   /* ----------------------------------------------------- Elemental · Earth ----
@@ -1281,7 +1237,7 @@ export const SPELLS = withArt([
     stat: 'mind',
     body:
       'You create a barrier made of light on **an entity** you can touch.\n\n' +
-      'The target gains [[3d6 + 3*stat]] in Shield.',
+      'The target gains [[3d6 + 3*stat]] Shield.',
     sub_name: null,
     sub_body: null,
   },
@@ -1299,8 +1255,7 @@ export const SPELLS = withArt([
       'The halo grants advantage to all actions for its duration.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Bolster, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Bolster.',
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     id: 'light',
@@ -1317,8 +1272,7 @@ export const SPELLS = withArt([
       'You conjure an orb of golden light at a point you can see within **15 meters (50 feet)**, illuminating a **15-meter (50-foot)** radius.',
     sub_name: 'Overcast',
     sub_body:
-      'While Light is active, you may spend 2 Action Points and 2 Willpower.\n\n' +
-      'If you do, the orb explodes. Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)**. On a success, they are blinded **until their next Turn End**.',
+      'While this spell is active, you may spend 2 Action Points and 2 Willpower. If you do, the orb explodes. Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)**. On a success, they are blinded **until their next Turn End**.',
   },
   {
     id: 'lightforged-weapon',
@@ -1335,12 +1289,11 @@ export const SPELLS = withArt([
        keywords.js; the sheet's second half says only "attack" and takes the
        first's word for which. */
     body:
-      'You conjure an ethereal weapon of pure light in a shape of your choice at a point you can see within **15 meters (50 feet)** that lasts for **3 turns**. It cannot be damaged or destroyed.\n\n' +
-      'When summoned and at your Turn Start, it teleports to a point within **15 meters (50 feet)** and you make a {stat} Melee Attack {roll} against **an adjacent entity**. On a hit, it deals [[2d6 + 2*stat]] in {damage} damage.',
+      'You conjure a weapon of pure light in any shape at a point you can see within **15 meters (50 feet)**. It lasts **3 turns** and cannot be damaged or destroyed. ' +
+      'When cast and at your Turn Start, it teleports in range and makes a {stat} Melee Attack {roll} against **an adjacent entity**. On a hit, it deals [[2d6 + 2*stat]] {damage} damage.',
     sub_name: 'Overcast',
     sub_body:
-      'While Lightforged Weapon is active, you may spend 4 Action Points.\n\n' +
-      'If you do, the Lightforged Weapon makes an additional {stat} Melee Attack {roll} against **an eligible target**.',
+      'While this spell is active, you may spend 4 Action Points for another such attack at **an eligible entity**.',
   },
   {
     id: 'orbiting-arsenal',
@@ -1360,8 +1313,7 @@ export const SPELLS = withArt([
       'You conjure 6 Lightmade Weapons taking the form you wish, and they float around you for up to **1 hour**.',
     sub_name: 'Overcast',
     sub_body:
-      'While you still have Lightmade Weapons active, you may spend 2 Action Points.\n\n' +
-      'If you do, you launch a Lightmade Weapon at **an entity** you can see within **9 meters (30 feet)**. Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.',
+      'While you still have Lightmade Weapons active, you may spend 2 Action Points. If you do, you launch a Lightmade Weapon at **an entity** you can see within **9 meters (30 feet)**. Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] {damage} damage.',
   },
   {
     id: 'wings-of-radiance',
@@ -1380,8 +1332,7 @@ export const SPELLS = withArt([
       'While the wings last, the entity can fly at a speed equal to its Movement Speed.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Wings of Radiance, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Wings of Radiance.',
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     id: 'sigil-of-truth',
@@ -1393,15 +1344,13 @@ export const SPELLS = withArt([
     wp: 2,
     stat: 'mind',
     body:
-      'You manifest a Sigil of Truth, targeting any number of entities you can see.\n\n' +
-      'Make a {stat} Roll {roll} against the Grit of **every entity** targeted. On a success, they are bound to the sigil.\n\n' +
-      'If a bound entity utters a lie, the sigil shatters and brands them with its mark for **1 hour**.',
+      'You manifest a Sigil of Truth against any number of entities you can see. Make a {stat} Roll {roll} against each one’s Grit. On a success, it is bound to the sigil. ' +
+      'If a bound entity lies, the sigil shatters and brands it for **1 hour**.',
     /* Opens "While a branding lasts" rather than the sheet's "When casting", so
        the parse charges it as its own spend. See "the halves" above. */
     sub_name: 'Overcast',
     sub_body:
-      'While a branding lasts, you may spend 2 Action Points and 2 Willpower any number of times.\n\n' +
-      'For each time you do, consume one branding to compel that entity to truthfully answer a single yes-or-no question.',
+      'While a branding lasts, you may spend 2 Action Points and 2 Willpower any number of times. For each time you do, consume a branding: its entity must answer a yes-or-no question truthfully.',
   },
   {
     id: 'hard-light',
@@ -1415,7 +1364,7 @@ export const SPELLS = withArt([
     body:
       'You conjure a static construct of solid light in a shape you wish, such as a wall or a bridge, at a point you can see within **15 meters (50 feet)**.\n\n' +
       'The construct cannot exceed a volume of **125 cubic meters (5x5x5 meters)**.\n\n' +
-      'The construct has Health equal to [[10*stat]] and Defense equal to [[2*stat]]. It lasts until it is destroyed, you take a long rest or you fall unconscious.',
+      'The construct has Health equal to [[10*stat]] and Defense equal to [[2*stat]]. It lasts until it is destroyed, you take a Long Rest or you fall unconscious.',
     sub_name: null,
     sub_body: null,
   },
@@ -1433,7 +1382,7 @@ export const SPELLS = withArt([
       'You issue a divine edict to **an entity** that can hear you within **9 meters (30 feet)**, forbidding it from taking a specific type of action for **3 turns**.\n\n' +
       'When proclaiming the edict, choose one: movement, weapon actions, casting a spell or using an ability.\n\n' +
       'Whenever the entity attempts an action matching the proclaimed edict, make a {stat} Roll {roll} against its Reflex.\n\n' +
-      'On a success, a bolt of sacred lightning strikes them, dealing [[2d6 + 2*stat]] in {damage} damage.',
+      'On a success, a bolt of sacred lightning strikes them, dealing [[2d6 + 2*stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -1462,10 +1411,10 @@ export const SPELLS = withArt([
     wp: 12,
     stat: 'mind',
     body:
-      'You manifest a Guardian Angel at a point you can see within **6 meters (20 feet)** that lasts for **10 turns**, taking the form of a medium-sized entity of your choice.\n\n' +
+      'You manifest a Guardian Angel at a point you can see within **6 meters (20 feet)** for **10 turns**, in the form of a medium-sized entity of your choice.\n\n' +
       'The Guardian Angel cannot be damaged directly and has Health equal to [[20*stat]].\n\n' +
-      'Whenever **an ally** within line of sight of the Guardian Angel takes damage, that damage is negated and the Guardian Angel loses Health equal to the damage prevented.\n\n' +
-      'While the Guardian Angel persists, allies within line of sight gain the benefits of {{Bolster}}.',
+      'Whenever **an ally** in its line of sight takes damage, that damage is negated and the Guardian Angel loses that much Health instead.\n\n' +
+      'While it stands, allies in its line of sight gain the benefits of {{Bolster}}.',
     sub_name: null,
     sub_body: null,
   },
@@ -1482,15 +1431,13 @@ export const SPELLS = withArt([
        attribute and prints no number. Both halves of that, and the reading of
        "the target", are in "the rolls" above. */
     body:
-      'You bend light around **an entity** you can see within **6 meters (20 feet)** for **1 hour**.\n\n' +
-      'While the spell lasts, the entity is almost completely invisible. It gains 2 advantage when trying to hide or when taking a stealth-related action.\n\n' +
-      'Whenever the entity takes an action that is not a movement one, it must make an {instinct} Roll against the Grit of that action’s target. On a failure, the spell ends and they become visible.',
+      'You bend light around **an entity** you can see within **6 meters (20 feet)** for **1 hour**. It is almost invisible, with 2 advantage on hiding and stealth.\n\n' +
+      'Taking any action but movement asks an {instinct} Roll against its target’s Grit. On a failure, the spell ends.',
     /* Labelled OVERCAST on the sheet and read as the Multicast its own words
        are. See "the halves" above. */
     sub_name: 'Multicast',
     sub_body:
-      'When casting Bend Light, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Bend Light.',
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     /* The first Legendary Spell in the codex. Nothing reaches the rung and
@@ -1650,8 +1597,7 @@ export const SPELLS = withArt([
       'The Crown of Shadows imposes disadvantage on all actions the entity attempts.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Scourge, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Scourge.',
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     id: 'cloud-mind',
@@ -1666,12 +1612,10 @@ export const SPELLS = withArt([
        the caster is who rolls. See "the rolls" above. */
     body:
       'You cloud the mind of **an entity** you can see within **9 meters (30 feet)** for **1 hour**.\n\n' +
-      'Make a {stat} Roll {roll} against its Grit. On a success, it does not perceive the presence of you and your allies as odd or unusual, allowing you passage in places you would otherwise not be allowed.\n\n' +
-      'When the spell ends, or if the roll fails, the target becomes aware that you altered its mind.',
+      'Make a {stat} Roll {roll} against its Grit. On a success, it finds nothing odd about you and your allies. When the spell ends, or if the roll fails, it knows its mind was altered.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Cloud Mind, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Cloud Mind.',
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     id: 'gloom-spike',
@@ -1685,7 +1629,7 @@ export const SPELLS = withArt([
     damage: ['Psychic'],
     body:
       'You assault the mind of **an entity** you can see within **9 meters (30 feet)** with a spike of shadow.\n\n' +
-      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] in {damage} damage.\n\n' +
+      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + 2*stat]] {damage} damage.\n\n' +
       'It also ends any effect the entity was paying Upkeep for.',
     sub_name: null,
     sub_body: null,
@@ -1706,8 +1650,7 @@ export const SPELLS = withArt([
       'If it accepts, it sacrifices Health equal to 3 times its level and gains advantage on its next action.',
     sub_name: 'Overcast',
     sub_body:
-      'When casting Dark Bargain, you may spend an additional 2 Willpower.\n\n' +
-      'If you do and the target accepts, it sacrifices an additional Health equal to 3 times its level and also gains Empowered and Elevated on its next action.',
+      'When casting this spell, you may spend an additional 2 Willpower. If the target accepts, it sacrifices a further Health equal to 3 times its level and also gains Empowered and Elevated on its next action.',
   },
   {
     id: 'shadow-hex',
@@ -1722,7 +1665,7 @@ export const SPELLS = withArt([
     body:
       'You afflict **an entity** you can see within **9 meters (30 feet)** with a creeping, waking nightmare that lasts for **10 minutes**.\n\n' +
       'Make a {stat} Roll {roll} against its Grit. On a success, the target is hexed.\n\n' +
-      'Whenever a hexed target fails a roll, it takes [[1d6 + stat]] in {damage} damage.',
+      'Whenever a hexed target fails a roll, it takes [[1d6 + stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -1736,15 +1679,13 @@ export const SPELLS = withArt([
     wp: 6,
     stat: 'mind',
     body:
-      'You create a small doll linked to **an entity** you can see within **9 meters (30 feet)**, or to **an entity** from whom you possess a physical sample such as hair, blood or skin.\n\n' +
-      'The effigy perfectly mirrors the physical condition and Health of the target, letting you track its current well-being and active statuses.\n\n' +
-      'The effigy lasts until it is destroyed or the target dies.',
+      'You create a small doll linked to **an entity** you can see within **9 meters (30 feet)**, or to one whose physical sample you hold, such as hair, blood or skin.\n\n' +
+      'The effigy mirrors the target’s physical condition, Health and active statuses. It lasts until it is destroyed or the target dies.',
     /* Opens on the doll rather than on the cast, because there is nothing to scry
        through until one exists. See "the halves" above. */
     sub_name: 'Overcast',
     sub_body:
-      'While the effigy lasts, you may spend 2 Action Points and 2 Willpower.\n\n' +
-      'If you do, you scry through the effigy for a brief, soundless 10-second vision of the target’s location.',
+      'While the effigy lasts, you may spend 2 Action Points and 2 Willpower to scry a brief, soundless 10-second vision of the target’s location.',
   },
   {
     /* The sheet prints COGNITE DISTORTION. See "one name" above. */
@@ -1780,7 +1721,7 @@ export const SPELLS = withArt([
       'Make a {stat} Roll {roll} against its Reflex. On a success, it is constrained.',
     sub_name: 'Upkeep',
     sub_body:
-      'At your Turn Start, you must pay 2 Willpower to keep the chains bound. If you do not pay the Upkeep, the spell effect ends.\n\n' +
+      'At your Turn Start, pay 2 Willpower to keep the chains bound. Miss the Upkeep and the spell ends.\n\n' +
       'Each time you pay it, make another {stat} Roll {roll} against the target’s Reflex. On a failure, the spell ends.',
   },
   {
@@ -1798,7 +1739,7 @@ export const SPELLS = withArt([
     damage: ['Psychic'],
     body:
       'You issue an edict, commanding **an entity** that can hear you within **9 meters (30 feet)** to take a specific action of your choice, against a target of your choice.\n\n' +
-      'At its Turn Start, it must fulfill your command. If the target refuses to obey before its **next Turn End**, it takes [[8d6 + 8*stat]] in {damage} damage.\n\n' +
+      'At its Turn Start, it must fulfill your command. If the target refuses to obey before its **next Turn End**, it takes [[8d6 + 8*stat]] {damage} damage.\n\n' +
       'The edict must command an action that is feasible for the entity, so you cannot order a non-flying creature to fly. The spell fails if the command is impossible. The command may involve actions that put the creature at risk.',
     sub_name: null,
     sub_body: null,
@@ -1814,11 +1755,10 @@ export const SPELLS = withArt([
     stat: 'mind',
     body:
       'You send shadow to haunt **an entity** you can see within **12 meters (40 feet)** for **24 hours**.\n\n' +
-      'Make a {stat} Roll {roll} against its Grit. On a success, paranoia grips the target for as long as the spell lasts: it cannot rest, it cannot regain Health and it has disadvantage on skill checks.',
+      'Make a {stat} Roll {roll} against its Grit. On a success, paranoia grips it while the spell lasts: it cannot rest, cannot regain Health and has disadvantage on skill checks.',
     sub_name: 'Overcast',
     sub_body:
-      'While Haunting Shadows is active, you may spend 4 Action Points and 12 Willpower.\n\n' +
-      'If you do, you and **up to 5 entities** you can touch are teleported to the haunted target and emerge from its shadow, ending Haunting Shadows.',
+      'While this spell is active, you may spend 4 Action Points and 12 Willpower to emerge from the haunted target’s shadow with **up to 5 entities** you can touch, ending the spell.',
   },
   {
     id: 'umbral-form',
@@ -1830,15 +1770,13 @@ export const SPELLS = withArt([
     wp: 5,
     stat: 'mind',
     body:
-      'You turn yourself into an umbral form, made of shadow **until your next Turn Start**.\n\n' +
-      'While made of shadow you have resistance to all damage.\n\n' +
-      'You can also slip through any crack or gap that air can travel through, letting you pass between bars and under doors, as long as the passage does not exceed 6 seconds.',
+      'You turn yourself into an umbral form, made of shadow **until your next Turn Start**. While made of shadow you have resistance to all damage.\n\n' +
+      'You can slip through any gap air can travel through, between bars and under doors, as long as the passage does not exceed 6 seconds.',
     /* "may" rather than the house "must", because this form ends on its own. See
        "the halves" above. */
     sub_name: 'Upkeep',
     sub_body:
-      'At your Turn Start, you may pay 3 Willpower to hold the umbral form **until your next Turn Start**.\n\n' +
-      'If you do not pay the Upkeep, the spell effect ends.',
+      'At your Turn Start, you may pay 3 Willpower to hold the umbral form **until your next Turn Start**. Miss the Upkeep and the spell ends.',
   },
   {
     id: 'gloom-echo',
@@ -1979,8 +1917,7 @@ export const SPELLS = withArt([
       'Make a {stat} Roll {roll} against its Grit. On a success, it has 2 fewer Action Points at its next Turn Start.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Slow, you may spend an additional 1 Action Point and 1 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Slow.',
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     /* The average is left in plain words. See "the readings" above: the roll this
@@ -2000,8 +1937,7 @@ export const SPELLS = withArt([
        own spend. See "the halves" above. */
     sub_name: 'Overcast',
     sub_body:
-      'When you fail an Attribute Roll covered by Foresight, you may spend 6 Willpower.\n\n' +
-      'If you do, the action is undone and is as if it never happened. This does not refund the cost of the action it applies to.',
+      'When you fail an Attribute Roll covered by Foresight, you may spend 6 Willpower. If you do, the action is undone and is as if it never happened. This does not refund the cost of the action it applies to.',
   },
   {
     /* **The 3 and the 3 are not the designer's.** The sheet left both columns empty
@@ -2017,7 +1953,7 @@ export const SPELLS = withArt([
     damage: ['Decay'],
     body:
       'You use time to erode **an entity** you can see within **9 meters (30 feet)** for **5 turns**.\n\n' +
-      'At its Turn Start, it takes [[1d6 + stat]] in {damage} damage.',
+      'At its Turn Start, it takes [[1d6 + stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -2035,11 +1971,10 @@ export const SPELLS = withArt([
     stat: 'mind',
     body:
       'You reverse time for **an entity** you can see within **9 meters (30 feet)**, running its injuries backwards.\n\n' +
-      'You restore [[3d6 + 3*stat]] in Health to the entity.',
+      'You restore [[3d6 + 3*stat]] Health to the entity.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Reverse, you may spend an additional 1 Action Point and 3 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Reverse.',
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
   },
   {
     /* "100 kg (imperial value here)" is a note to the converter, and 220 lbs is the
@@ -2088,15 +2023,14 @@ export const SPELLS = withArt([
     wp: 2,
     stat: 'mind',
     body:
-      'You delay time for **an entity** you can see within **9 meters (30 feet)** until its **next Turn End**.\n\n' +
-      'Until Delay ends, all spells, attacks and abilities aimed at the target are delayed.\n\n' +
+      'You delay time for **an entity** you can see within **9 meters (30 feet)** **until its next Turn End**.\n\n' +
+      'Until the spell ends, all spells, attacks and abilities aimed at the target are delayed.\n\n' +
       'Everything held this way is executed all at once at the target’s **next Turn End**.',
     /* Opens on the ending rather than on the cast, so the parse charges it as its
        own spend. See "the halves" above. */
     sub_name: 'Overcast',
     sub_body:
-      'When Delay ends, you may spend 3 Willpower.\n\n' +
-      'If you do, every delayed action is Elevated by 1.',
+      'When this spell ends, you may spend 3 Willpower. If you do, every delayed action is Elevated by 1.',
   },
   {
     /* The gloss the sheet put at this card's foot is the Interrupted entry in
@@ -2126,13 +2060,11 @@ export const SPELLS = withArt([
     stat: 'mind',
     body:
       'You bend time in a **3-meter (10-foot)** area around a point you can see within **6 meters (20 feet)** for **5 turns**.\n\n' +
-      'Entities that have their Turn Start inside the area gain 2 additional Action Points.\n\n' +
-      'Leaving the area costs the entity 3 Action Points, or 3 Reaction Points if it has no Action Points left.',
+      'An entity with its Turn Start inside gains 2 additional Action Points. Leaving costs 3 Action Points, or 3 Reaction Points if it has none left.',
     /* "within range" is read as the row's own 6 meters. See "the readings" above. */
     sub_name: 'Overcast',
     sub_body:
-      'While Chrono Anomaly is active, you may spend 2 Action Points.\n\n' +
-      'If you do, reposition the Chrono Anomaly around any point within **6 meters (20 feet)**.',
+      'While this spell is active, you may spend 2 Action Points to reposition it around any point within **6 meters (20 feet)**.',
   },
   {
     /* The sheet's Name column prints TEMPORAL COLLAPSE and the picture is called
@@ -2180,10 +2112,10 @@ export const SPELLS = withArt([
     wp: 8,
     stat: 'mind',
     body:
-      'You instantly propel yourself 6 seconds forward into the stream of time, immediately ending your turn and disappearing from existence.\n\n' +
-      '**Until your next Turn Start**, you are completely untargetable and cannot be interacted with, damaged or affected by any entity, spell or environmental effect.\n\n' +
-      'At your next Turn Start, you reappear in the exact space you previously occupied. If that space is taken, you reappear in the nearest unoccupied one.\n\n' +
-      'Casting Time Skip more than once before completing a Long Rest gives you 1 level of Exhaustion for each additional cast.',
+      'You propel yourself 6 seconds forward in time, immediately ending your turn and disappearing from existence.\n\n' +
+      '**Until your next Turn Start**, you cannot be targeted, interacted with, damaged or affected by any entity, spell or environmental effect.\n\n' +
+      'You then reappear in the space you occupied, or the nearest unoccupied one if it is taken.\n\n' +
+      'Casting this spell more than once before completing a Long Rest gives you 1 level of Exhaustion for each additional cast.',
     sub_name: null,
     sub_body: null,
   },
@@ -2330,8 +2262,7 @@ export const SPELLS = withArt([
        target. The sheet's word stands. See "the halves" above. */
     sub_name: 'Multicast',
     sub_body:
-      'While Dimensional Pocket is active, you may spend 1 Action Point and 1 Willpower.\n\n' +
-      'If you do, you may retrieve an item or stow away an additional item.',
+      'While this spell is active, you may spend 1 Action Point and 1 Willpower to retrieve an item or stow an additional one.',
   },
   {
     /* **The damage carries no type.** The sheet named none and its two siblings both
@@ -2349,8 +2280,7 @@ export const SPELLS = withArt([
       'Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[3d6 + 3*stat]] damage.',
     sub_name: 'Overcast',
     sub_body:
-      'When casting Compression Blast, you may spend an additional 1 Action Point and 2 Willpower.\n\n' +
-      'If you do, the area of Compression Blast increases to **6 meters (20 feet)** around a point you can see.',
+      'When casting this spell, you may spend an additional 1 Action Point and 2 Willpower to widen the area to **6 meters (20 feet)**.',
   },
   {
     /* "special magic" is the sheet's, and it is left alone. See "the readings"
@@ -2397,13 +2327,12 @@ export const SPELLS = withArt([
     stat: 'mind',
     body:
       'You fold space between two points you can see within **18 meters (60 feet)**.\n\n' +
-      'Until your **next Turn End**, the two points in space are connected, allowing **any entity** to walk through with **1.5 meters (5 feet)** of movement to instantly emerge on the other side.',
+      '**Until your next Turn End**, the two points in space are connected, allowing **any entity** to walk through with **1.5 meters (5 feet)** of movement to instantly emerge on the other side.',
     /* Opens on the spell already being up rather than on the cast, so the parse
        charges it as its own spend. See "the halves" above. */
     sub_name: 'Overcast',
     sub_body:
-      'While Spatial Fold is active, you may spend 2 Action Points.\n\n' +
-      'If you do, you close the Spatial Fold early.',
+      'While this spell is active, you may spend 2 Action Points. If you do, you close the Spatial Fold early.',
   },
   {
     /* "the next attack and entity you can see" is an attack *of* an entity. See
@@ -2436,12 +2365,12 @@ export const SPELLS = withArt([
     damage: ['Force'],
     body:
       'You release a beam of pure energy in a **9-meter (30-foot)** straight line originating from yourself.\n\n' +
-      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the line. On a success, you deal [[4d6 + 4*stat]] in {damage} damage.',
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the line. On a success, you deal [[4d6 + 4*stat]] {damage} damage.',
     /* The sheet calls this card Arcane Ray in its Overcast, and bends "the ray".
        Same paste and same call as Spatial Fold's. See "the readings" above. */
     sub_name: 'Overcast',
     sub_body:
-      'When casting Energy Beam, you may spend 1 Action Point and 2 Willpower to bend the beam at any point along its line, projecting an additional **9-meter (30-foot)** line in any direction from that point.',
+      'When casting this spell, you may spend 1 Action Point and 2 Willpower to bend the beam at any point along its line, projecting an additional **9-meter (30-foot)** line in any direction from that point.',
   },
   {
     /* **This is the old Arcane · Energy card, filed.** Same id, same tier, same
@@ -2459,12 +2388,11 @@ export const SPELLS = withArt([
     wp: 4,
     stat: 'mind',
     body:
-      'You enclose **a target entity** you can see within **6 meters (20 feet)** inside a sphere of dense arcane energy.\n\n' +
-      'While trapped inside the sphere, the entity is Constrained.\n\n' +
-      'The trapped entity can spend 3 Action Points to attempt to break free by making a {stat} roll against your {stat}. On a success, the sphere shatters and the effect ends.',
+      'You enclose **an entity** you can see within **6 meters (20 feet)** inside a sphere of dense arcane energy. While trapped inside, the entity is constrained.\n\n' +
+      'The trapped entity can spend 3 Action Points to make a {stat} Roll against your {stat}. On a success, the sphere shatters and the effect ends.',
     sub_name: 'Overcast',
     sub_body:
-      'When **a trapped entity** attempts to break out of the sphere, you may spend 3 Willpower. If you do, that entity makes their breakout roll with Disadvantage.',
+      'When **a trapped entity** attempts to break out, you may spend 3 Willpower. If you do, it makes its breakout Roll with disadvantage.',
   },
   {
     id: 'transposition-beacon',
@@ -2481,8 +2409,7 @@ export const SPELLS = withArt([
        charges it as its own spend. See "the halves" above. */
     sub_name: 'Overcast',
     sub_body:
-      'While Transposition Beacon is active, you may spend 2 Action Points.\n\n' +
-      'If you do, you instantly teleport to the location of your beacon, removing it.',
+      'While this spell is active, you may spend 2 Action Points. If you do, you instantly teleport to the location of your beacon, removing it.',
   },
   {
     id: 'spatial-transposition',
@@ -2510,12 +2437,10 @@ export const SPELLS = withArt([
     wp: 8,
     stat: 'mind',
     body:
-      'You attempt to trap **an entity** you can see within **9 meters (30 feet)** in an extradimensional space for **2 turns**.\n\n' +
-      'Make a {stat} Roll {roll} against their Reflex. On a success, you banish the target to an isolated spatial pocket, removing them completely from the battlefield. They can still take their turn.',
+      'You attempt to trap **an entity** you can see within **9 meters (30 feet)** in an extradimensional space for **2 turns**. Make a {stat} Roll {roll} against its Reflex. On a success, the target is banished to an isolated pocket, off the battlefield entirely. It can still take its turn.',
     sub_name: 'Multicast',
     sub_body:
-      'When casting Banishment Vault, you may spend an additional 1 Action Point and 6 Willpower any number of times.\n\n' +
-      'For each time you do, target **an additional eligible entity** with Banishment Vault. They are banished into the same spatial pocket.',
+      'When casting this spell, you may spend an additional 1 Action Point and 6 Willpower any number of times. For each time you do, target **an additional eligible entity**, banished into the same pocket.',
   },
   {
     /* **20 meters is the first range in the codex off its own ladder**, so it
@@ -2532,7 +2457,7 @@ export const SPELLS = withArt([
     body:
       'You manifest a singularity at a point you can see within **20 meters (65 feet)** that lasts for **3 turns**.\n\n' +
       'At your **Turn End**, the singularity attempts to pull **all entities** within **12 meters (40 feet)** to it. Make a {stat} Roll {roll} against their Reflex.\n\n' +
-      'On a success, you pull them **12 meters (40 feet)** toward the singularity and they take [[2d6 + 2*stat]] in {damage} damage.',
+      'On a success, you pull them **12 meters (40 feet)** toward the singularity and they take [[2d6 + 2*stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },
@@ -2567,11 +2492,10 @@ export const SPELLS = withArt([
     damage: ['Sharp'],
     body:
       'For the next **5 hours**, you manifest a freezing aura that crystallizes your spent energy into jagged shards of ice.\n\n' +
-      'Every 4 Willpower you spend, you form an Ice Spike that orbits your body, up to a maximum equal to half your {mind}.',
+      'Every 4 Willpower you spend forms an Ice Spike that orbits you, up to half your {mind}.',
     sub_name: 'Overcast',
     sub_body:
-      'You may spend 3 Action Points to hurl all active Ice Spikes at **a single target** you can see within **18 meters (60 feet)**.\n\n' +
-      'Make a {mind} Ranged Attack {roll} against the target. On a hit, you deal [[1d6 + mind]] in {damage} damage for each Ice Spike consumed.',
+      'You may spend 3 Action Points to hurl all active Ice Spikes at **an entity** you can see within **18 meters (60 feet)**. Make a {mind} Ranged Attack {roll}. On a hit, you deal [[1d6 + mind]] {damage} damage for each Ice Spike consumed.',
   },
   {
     /* Handed over in chat on 2026-08-20 as a card render headed "SPECIAL SPELL -
@@ -2600,7 +2524,7 @@ export const SPELLS = withArt([
     body:
       'You conjure a wall of pure night at a location centered on yourself.\n\n' +
       'The wall is **3 meters (10 feet)** in radius around the caster and **2 meters (6 feet)** tall. The wall blocks line of sight.\n\n' +
-      '**Any entity** passing through the wall or having their Turn Start within it takes [[2d6 + 2*stat]] in {damage} damage.',
+      '**Any entity** passing through the wall or having their Turn Start within it takes [[2d6 + 2*stat]] {damage} damage.',
     sub_name: null,
     sub_body: null,
   },

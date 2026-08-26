@@ -6578,3 +6578,63 @@ finds 4 and "spacial" finds all 12.
 and 12 Spacial, and every Spacial row was read back: each parses into the card it
 came from field for field, and every Image cell names a file that is really in
 `data/Space/`.
+
+## The readability pass, 2026-08-26
+
+Jules asked for a pass on all the card text: "It need to be redable", a
+researched maximum before text stops being readable, blank space organized, the
+system wording made easier and more concise, and a reference document so it
+stays that way. The reference is `docs/card-text.md` and its checker is
+`npm run lint:cards`; this entry is the record of what moved.
+
+### The research
+
+All 409 cards were measured against the real renderer in a browser: each one's
+`--ac-fit` taken by the same binary search `useFitText` runs. The cost model
+came out as **load = prose characters + 30 per paragraph break + 100 for an
+optional second half**; a card at 480 or less prints at full size (14.7px) and
+past 600 it falls under 0.9 fit (13.2px), which is where reading at arm's
+length stops being comfortable. Before the pass 93 cards were shrunk and 21 sat
+below 0.8 fit, the worst at 0.69 (BEND LIGHT). After it, nothing in the codex
+is below 0.9 and 349 of 409 print at full size.
+
+Part of the room came from the card's own chrome rather than from the text:
+paragraph gap 0.7rem to 0.55rem, line-height 1.5 to 1.45, title margins and
+body padding trimmed, the second-half heading pulled closer. About one full
+line of text at full size, on every card, without the type getting smaller.
+
+### The wording
+
+One spelling per mechanic now, the codex-wide sweeps first: lowercase
+measurements ("18 meters (60 feet)", the weapon wall said "18 Meter"), damage
+dealt plain ("deal X {damage} damage", where the codex had both "as" and "in"),
+"restore X Health" and "gain X Shield", "Long Rest" and "Short Rest" as the
+proper nouns they are, "Attack Roll" capitalised and advantage, disadvantage
+and skill check in lowercase, states as adjectives in lowercase (rooted,
+stunned, constrained), "entity" where "a creature", "a target entity" and "a
+single target" had drifted in, and "Roll" capitalised where it is the game's
+noun.
+
+Every optional second half is one paragraph now, price and resolution together,
+and never names its own card: "When casting this spell", where twenty-odd cards
+each said their own name. Multicast resolves as "For each time you do, target
+**an additional eligible entity**." An Upkeep reads "At your Turn Start, pay 2
+Willpower to keep <X>. Miss the Upkeep and the spell ends." All of it stays
+inside the shapes `secondHalf`, `halfPrice` and `effectDuration` parse, and
+`lint:halves` still prices all 63 halves off their own prose.
+
+About sixty of the densest cards were also trimmed by hand: restatements cut
+(GALVANIZE declared its target twice), filler dropped ("devastating",
+"completely", "the following ways"), declaration and roll merged where they are
+one beat. Mechanics, numbers and names untouched throughout, and where a
+sentence was broken it was mended rather than shortened: WIELDER OF WONDER's
+comma splice, THRILLED's missing 7, AMBUSH's developer note turned into a
+sentence, VIGILANT's "saving throw" turned into the house's own Roll.
+
+### The proof
+
+`lint`, `lint:text`, `lint:cards`, `lint:halves`, `lint:riders`, `lint:math`,
+`lint:order` and `lint:weapons` are all clean (`check-weapons` itself learned
+the lowercase meter), `npm run build` is clean, and the whole codex was
+re-measured in the browser after the last edit: 0 cards under 0.9 fit, worst
+card 0.902, 349 of 409 at full size.

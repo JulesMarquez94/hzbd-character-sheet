@@ -13,6 +13,7 @@
     "lint:riders": "node scripts/check-riders.mjs",
     "lint:weapons": "node scripts/check-weapons.mjs",
     "lint:order": "node scripts/check-order.mjs",
+    "lint:cards": "node scripts/lint-cards.mjs",
     "preview": "vite preview",
     "art": "node scripts/pull-card-art.mjs && node scripts/pull-item-art.mjs",
     "art:cards": "node scripts/pull-card-art.mjs",

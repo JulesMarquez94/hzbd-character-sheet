@@ -106,7 +106,7 @@ export const BASIC_ACTIONS = withArt([
     summary: 'Read a room or read an enemy, and learn something worth knowing.',
     body:
       'While in combat, you attempt to ascertain the weakness or the strength of **an enemy**, or to find a weak point or a hazard in the place you are fighting in.\n\n' +
-      'Make a {mind} {roll:mind} or {instinct} {roll:instinct} roll against **an enemy entity**’s Grit, or against an environment difficulty rating your Game Master sets.\n\n' +
+      'Make a {mind} {roll:mind} or {instinct} {roll:instinct} Roll against **an enemy entity**’s Grit, or against an environment difficulty rating your Game Master sets.\n\n' +
       /* The sheet writes "critical information" here. Critical is a defined
          term meaning a natural 20, and it is lit wherever it appears, so that
          wording would offer the crit rule as the explanation of a word being
@@ -139,7 +139,7 @@ export const BASIC_ACTIONS = withArt([
     stat: 'instinct',
     summary: 'Break line of sight and stay unfound until someone goes looking.',
     body:
-      'If no enemy has line of sight on you, you may attempt to hide with an {instinct} roll {roll:instinct} against the Grit of **every enemy**.\n\n' +
+      'If no enemy has line of sight on you, you may attempt to hide with an {instinct} Roll {roll:instinct} against the Grit of **every enemy**.\n\n' +
       '**Every enemy** whose Grit you beat loses sight of you.\n\n' +
       'On their turn they use {{Investigate}} to attempt to find you.',
   },
@@ -154,7 +154,7 @@ export const BASIC_ACTIONS = withArt([
     summary: 'Take hold of something within reach and stop it leaving.',
     body:
       'You attempt to restrain **an entity** within your reach.\n\n' +
-      'Make a {physique} roll {roll:physique} against the target’s Reflex.\n\n' +
+      'Make a {physique} Roll {roll:physique} against the target’s Reflex.\n\n' +
       'On a success, the target is grappled.',
   },
   {
@@ -168,7 +168,7 @@ export const BASIC_ACTIONS = withArt([
     summary: 'Put something on the floor, or put it somewhere else.',
     body:
       'You use force to push **an entity** you can touch away from you.\n\n' +
-      'Make a {physique} attack roll {roll:physique} against the target.\n\n' +
+      'Make a {physique} Attack Roll {roll:physique} against the target.\n\n' +
       'On a hit, you push the target back **1.5 meters (3 feet)** or knock it prone.',
   },
   {
@@ -200,7 +200,7 @@ export const BASIC_ACTIONS = withArt([
     summary: 'Stop a dying ally dying. They stay down, but they stay.',
     body:
       'You attempt to stabilize **a dying entity** within your reach.\n\n' +
-      'Make a {mind} roll {roll:mind} against the target’s negative Health divided by 5.\n\n' +
+      'Make a {mind} Roll {roll:mind} against the target’s negative Health divided by 5.\n\n' +
       'On a success they are no longer dying and sit at 0 Health. They remain unconscious until healed.',
   },
   {
