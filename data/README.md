@@ -92,12 +92,24 @@ doing on its own.
 | Time art, from the `Time/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
 | Spells · Ethereal · Spacial | **2026-08-25, 12 spells** | `src/lib/spells.js` (`SPELLS`) |
 | Spacial art, from the `Space/` folder | **2026-08-25, 12 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Primal · Death | **2026-08-26, 11 spells** | `src/lib/spells.js` (`SPELLS`), `keywords.js` |
+| Death art, from the `Death/` folder | **2026-08-26, 11 plates** | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
-own column order. `primal-spells.csv` holds the 24 Primal spells and nothing
-else, which is now the whole of what the codex has under that school: the one
-Arcane spell it used to carry beside them, Containment Sphere, moved to Ethereal ·
-Spacial on 2026-08-25 when a sheet finally covered it. `elemental-spells.csv` holds the 29 Elemental spells — a tab
+own column order. `primal-spells.csv` holds the 35 Primal spells and nothing
+else, which is the whole of what the codex has under that school: the one Arcane
+spell it used to carry beside them, Containment Sphere, moved to Ethereal ·
+Spacial on 2026-08-25 when a sheet finally covered it, and the eleven Death rows
+joined them on 2026-08-26. Those eleven are the only rows in the file with an
+`Image` column filled in, because they are the only ones whose art arrived as a
+folder rather than as a postimg link.
+
+**Every other file in `templates/` is still pre-readability-pass.** That pass
+(2026-08-26) rewrote card text across the codex and did not re-export the tabs,
+so `ethereal-spells.csv` still says "in Shield" where the card now says "Shield",
+and every second half in it still names its own card. `primal-spells.csv` was
+re-exported when Death landed and is current; the rest are a regenerate away and
+nobody has asked for it. `elemental-spells.csv` holds the 29 Elemental spells — a tab
 with no sheet behind it, generated straight out of `spells.js`, and its Image
 column names the render each row came from, which is what the art importer
 places the files by. `draconic-bond-overview.csv`, `trickster-overview.csv`,
@@ -6638,3 +6650,216 @@ sentence, VIGILANT's "saving throw" turned into the house's own Roll.
 the lowercase meter), `npm run build` is clean, and the whole codex was
 re-measured in the browser after the last edit: 0 cards under 0.9 fit, worst
 card 0.902, 349 of 409 at full size.
+
+## The Death family, 2026-08-26
+
+Asked for in as many words: "I have added death spells and deaht iamge in death
+folder for the death school of magic. Add it, make sure the text is correct and
+alligne with your guilde lins and style for the system."
+
+Two sources, both already on disk. `data/Spells - Primal - Death.csv` holds eleven
+rows in the drop's usual eight columns, and `data/Death/` holds eleven pictures at
+2400x1792, one per row. The CSV is on disk **twice**, once at the top of `data/` and
+once inside `data/Death/`, and the two are byte for byte identical, so nothing had to
+choose between them.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | ROTTING TOUCH, SICKNESS, MIMIC DEATH, DREDGE CORPSE |
+| Adept | PESTILENT CLOUD, CORPSE STRIDE, CORRUPT LIFE, GORE BLAST |
+| Master | UNALIVE, ENBRITTLE, DEATH WAIL |
+
+### Death is a family and Primal is the school
+
+The ask calls it a school and the sheet does not. All eleven Tags cells read
+"Novice Spell, Primal, Death", and the sheet's own filename says the same thing in
+the same order the four Ethereal drops did: the school, then the family. So Death
+goes on the shelf in `cardOrder.js` beside Flora, Wild, Life and Blood rather than
+beside Primal, Elemental and Ethereal, and a card's banner reads NOVICE SPELL ·
+PRIMAL · DEATH.
+
+The Tags column is what a banner prints and what a filter chips, so it is what the
+codex follows. Worth a glance, because it decides which specs can ever prepare
+these: a family under Primal is the Mycomancer's, where a school of its own would
+have been nobody's.
+
+### Primal has Master spells for the first time
+
+The most consequential thing in the drop, and it is a side effect rather than a
+card. Primal was 24 spells in four families and **not one of them was Master**:
+sixteen Novice and eight Adept. Death brings three, so Primal is 35 spells now, at
+20 Novice, 12 Adept and 3 Master.
+
+That moves a pool nobody touched. The Mycomancer draws Primal by tier, and its Rank
+3 offered the same 24 cards its Rank 2 did, because the extra rung it opened had
+nothing standing on it. Rank 3 is now 35 where Rank 2 is 32, and for the first time
+reaching the top of that set is worth something.
+
+| Mycomancer pool | Before | After |
+| --------------- | ------ | ----- |
+| Rank 1 (Novice) | 16 | 20 |
+| Rank 2 (+ Adept) | 24 | 32 |
+| Rank 3 (+ Master) | 24 | 35 |
+
+The Arcanist, which names no school and draws the whole codex by tier, goes from 44,
+77 and 101 to **48, 85 and 112**.
+
+### The twelfth row is blank
+
+Four Novice, four Adept and three Master, where every Ethereal family landed four of
+each. The sheet's twelfth row is not absent, it is *blank*: a row carrying "Master
+Spell, Primal, Death" in its Tags cell and nothing in any other column. So a fourth
+Master was laid out and not written, and the family is one card short by the
+designer's own count rather than by a reading here.
+
+### Three glosses became keywords
+
+The drop explains three effects at the foot of the cards that inflict them, and a
+gloss on a card is exactly what `keywords.js` exists to absorb. All three moved, all
+three sentences are the designer's own, and the glossary is 76 terms where it was
+73.
+
+- **diseased**, off SICKNESS: -1 to all attributes until a Long Rest. The only state
+  in the codex that moves every attribute at once.
+- **vulnerable**, off ENBRITTLE, which spells it out in a parenthesis the designer
+  marked "(note ...)". BURN has been *defined in terms of* this word since
+  2026-08-20 and the word itself was never lit. It is now, on three cards: ENBRITTLE,
+  BURN's own explanation and the Nightmare Curse in `enchantments.js`.
+- **Corpse Carrion**, off GORE BLAST. The term carries what it does and the card
+  keeps how long, the way BLIND prints a duration over the blinded keyword. That
+  split is not cosmetic: `effectDuration` in `combatTurn.js` reads a count off the
+  card's own prose, so the 5 turns had to stay printed or the tracker would have
+  nothing to count. Its damage is the caster's attribute and is written out in words,
+  which no other entry in that file has had to do, since a glossary entry is one
+  static sentence with no card under it to resolve a live value against.
+
+### The rolls and the halves
+
+Five contests and they are not all one shape. Three are the caster's Roll against a
+named defense (CORRUPT LIFE and ENBRITTLE against Grit, GORE BLAST against the
+Reflex of an area) and two are attacks against Defense (ROTTING TOUCH in melee,
+SICKNESS at range). MIMIC DEATH's inspection is a sixth Roll and is the examiner's
+rather than the caster's, so it prints no dice arrow.
+
+Five second halves, all the designer's word: four Overcasts and CORRUPT LIFE's
+Multicast. Two of the five open later than a cast (SICKNESS's on an entity already
+diseased, PESTILENT CLOUD's on a cloud already up), so `overcast.js` charges them as
+their own spend rather than as a rider on the cast. Three of the five said "pay"
+where the codex says "spend", which is the word the price is read off.
+
+### The readings
+
+Every one of these is a cell that could not be printed as it stood.
+
+- **Ten ranges had the metres and lost the feet**: "6 meter ()", "9 Meter ()",
+  "12 meter ()", "18 meter ()", "15 meter ()", "6meter ()", "3 Meter ()". The
+  conversion is the codex's own three metres to ten feet. UNALIVE's "9 meter
+  (30 feet)" is the only range on the sheet that arrived whole.
+- **DREDGE CORPSE names no range at all**: "at a point you can see on the ground".
+  Every other card in the family gives a distance. Left as line of sight rather than
+  given a number the sheet does not carry, and it is the first thing to check.
+- **SICKNESS is an attack and not a Roll.** Its cell says "You make a Mind roll
+  attack. On a hit", and it names no defense to roll against, where the family's
+  three Rolls all name one and all resolve "on a success". An attack is rolled
+  against Defense by definition, so reading it that way invents nothing; reading it
+  as a Roll would have meant choosing a defense for it. Printed as a Ranged Attack,
+  because the target is 6 metres off and the codex's attack sentence names which
+  kind.
+- **MIMIC DEATH's inspection Roll prints Mind and not the caster's attribute.** The
+  examiner's Mind is Mind whoever cast the spell, and a Mycomancer casting this off
+  Instinct must not make the examiner roll Instinct. CONTAINMENT SPHERE prints the
+  caster's attribute for the trapped entity's breakout, which is the same question
+  answered the other way, and it is worth settling once for both.
+- **CORPSE STRIDE's Overcast deals damage and names no type**, the hole COMPRESSION
+  BLAST had on the Spacial sheet. Every other damaging card in this family says Decay
+  and this one says nothing, so it prints untyped rather than being given a type it
+  does not carry: a damage type is what a resistance answers. Decay is the obvious
+  answer. Its "2d66" is 2d6.
+- **DREDGE CORPSE's Overcast names two defined terms and no amount**: "empowering and
+  elevating abilities using a the corpse". Empowered is one more die and Elevated is
+  one step of die size, both of which the glossary already says, but the cell gives no
+  count for either, so the card prints the two words bare. How many of each is a
+  ruling, and it is the second thing to check.
+- **DEATH WAIL's cell ends on a comma**: "gain shield equal to your maximum,".
+  Maximum Health is the only reading that resolves, and it is what the card prints.
+- **GORE BLAST hits for one die plus the attribute**, the smallest damage on any
+  Adept spell in the codex that catches an area. That looks like the point rather
+  than a slip: what the card is really for is the Corpse Carrion behind it.
+- **UNALIVE costs 12 Willpower**, the highest printed Willpower on any card in the
+  codex. Left exactly as it stands: a spell that kills outright or does nothing at
+  all is priced like one.
+- Spelling and grammar, throughout and without further comment: "O n a hit", "your
+  del", "nad", "withn", "coprse", "concious", "YOu", "a corpse emerge", "turn stat",
+  "that last for", "agiasnt", "entitles", "wtih", "CorpsCarriosn", "nleash a beam co
+  carkcling magic etempty", "weakend to constitution", "Wilppower", "diseases by
+  Sickenss", "entites", "along rest".
+
+### Nothing here is wired, and SICKNESS is why
+
+**SICKNESS came closer than anything in the last four drops and is still written up
+in `riders.js` rather than wired.** Diseased is -1 to all three attributes, which is
+exactly the shape `growth-elixir` already takes, so the arithmetic is not what
+stopped it.
+
+A rider is keyed on the card and not on the caster, which works everywhere else
+because only the entity a spell landed on has any reason to hold the row. SICKNESS
+breaks that: its Overcast only exists "while an entity is diseased by this spell", so
+the caster has to keep the row too, and a rider here would quietly take a point off
+all three of *their* attributes for holding a reminder. A wrong number is worse than
+a missing one. What unlocks it is the tracker learning which side of a card a row is
+on.
+
+Five of the eleven are offered on the tracker (MIMIC DEATH, PESTILENT CLOUD, CORRUPT
+LIFE, GORE BLAST and DEATH WAIL) and four of the six left out are instants with
+nothing to run. SICKNESS and ENBRITTLE are the two that plainly last and are still
+not offered, both because what they leave on a target has no clock printed on the
+card: SICKNESS's duration is the diseased keyword's, and ENBRITTLE's runs until the
+next time the target takes damage, which is a condition and not a duration. SNAKE
+SPIRIT has had the same hole since the opening drop, with poisoned.
+
+DEATH WAIL is the other one worth naming. It hands out Shield equal to a full Health
+bar and then forbids healing until a Long Rest, and the second half of that is a rule
+the sheet has no channel for, so wiring the first half alone would be a promise half
+kept.
+
+### The colour, and the shelf
+
+Death is the fifth Primal family and the seventh lean under the colour law: it
+answers to `--dmg-decay`, which is what every damaging card in it deals. Decay's own
+green is within five degrees of the school hue, so the lean is taken on hue and the
+separation on saturation. `--family-death` is the one grey green on a shelf of four
+bright ones, which is what rot looks like beside things that grow.
+
+### The art needed no aliases
+
+Eleven plates at 2400x1792, the same shape the Ethereal drop arrived in: no white
+border, no banner, the painting and nothing else. So `data/Death/` joins both
+`FAMILY_FOLDERS` and `PLATE_FOLDERS` in `scripts/pull-card-art.mjs`, and the crop a
+school folder's files get is turned off for it.
+
+Every one of the eleven filenames matched the name its card prints, so the drop adds
+nothing to `ALIASES`. That is the second drop in a row to manage it: the Ethereal,
+Shadow and Time folders needed five entries between them and `data/Space/` needed
+none. 11 encoded, 0 fetched, 43 KB of WebP apiece.
+
+### The proof
+
+- `npm run lint:cards`: 420 cards inside the 600 ceiling and spelled one way. Three
+  of the eleven sit over the 480 target and under the ceiling (PESTILENT CLOUD 541,
+  CORRUPT LIFE 520, SICKNESS 484), which puts them in the lower half of a band the
+  codex already has 85 cards in.
+- **The renderer was asked directly, and it is kinder than the estimate.** All eleven
+  were rendered through the real `AbilityCard` and their `--ac-fit` read off the
+  node: **ten print at full size** and PESTILENT CLOUD alone shrinks, to 0.969, which
+  is well above the 0.9 floor the budget was set at. Nothing in the family is fine
+  print. The static load is an approximation and the browser is the authority, which
+  is what `docs/card-text.md` says of it.
+- `npm run lint:order`: 4 schools and 15 families are shelved, and 175 cards sort up
+  the ladder. Death is the fifteenth family and the first added to a school other
+  than Ethereal since the Elemental pull.
+- `npm run lint:halves`: all 68 priced off their own prose, up from 63.
+- `npm run lint:text`: clean across 136 files.
+- `npm run lint:riders`, `lint:math`, `lint:weapons`: unchanged and clean.
+- `data/templates/primal-spells.csv` re-exported at 35 rows, and the exporter was
+  proved first by regenerating `ethereal-spells.csv` and diffing: every difference
+  was a readability-pass spelling that file has not caught up with, and nothing else.

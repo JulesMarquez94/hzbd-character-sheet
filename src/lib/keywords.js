@@ -371,6 +371,20 @@ export const KEYWORDS = [
       'Rest or regain any amount of Health.',
   },
   {
+    /* SICKNESS's own foot, word for word: the Death sheet (pulled 2026-08-26)
+       spells it out under the card as "Diseased: The afflicted entity receives -1
+       to all attributes until they take a long rest". The gloss then came off the
+       card, which is the trade BURN, BLIND and SHADOW BIND all made before it.
+
+       It is the only state in the codex that moves every attribute at once, and
+       the one card that inflicts it is the one card that spreads it. */
+    id: 'diseased',
+    terms: ['diseased'],
+    color: 'var(--dmg-decay)',
+    detail:
+      'The afflicted entity receives -1 to all attributes until they take a Long Rest.',
+  },
+  {
     /* The Elemental cards' own parenthesis, word for word — CLOAK OF FLAMES and
        SLAG SHOT both spell it out at their foot, and a defined term is never
        glossed in prose as well. Pulled 2026-08-20. */
@@ -378,6 +392,23 @@ export const KEYWORDS = [
     terms: ['burn'],
     color: 'var(--dmg-fire)',
     detail: 'The entity becomes vulnerable to Fire damage until they take a Short Rest.',
+  },
+  {
+    /* Here because BURN above has been defined in terms of it since 2026-08-20 and
+       the word was never lit, and because ENBRITTLE on the Death sheet (pulled
+       2026-08-26) closes with the gloss outright: "(note vulnerable means takes
+       double damage from the damage type.)". A parenthesis on a card is what this
+       file exists to absorb, so the sentence moved here and the parenthesis went.
+
+       It lights in three places now rather than one: ENBRITTLE, BURN's own detail
+       and the Nightmare Curse in enchantments.js, which has said "You are
+       vulnerable to the damage dealt by your own Nightmare Wall spell" with
+       nothing behind the word since the school arrived. All three mean the
+       doubling. */
+    id: 'vulnerable',
+    terms: ['vulnerable'],
+    color: 'var(--stat-health)',
+    detail: 'A vulnerable entity takes double damage from that damage type.',
   },
   {
     id: 'rooted',
@@ -491,6 +522,29 @@ export const KEYWORDS = [
     detail:
       'Stackable effect that cause the entity to take 1d6 decay damage at every one of its ' +
       'turn starts until they receive healing or they take a rest.',
+  },
+  {
+    /* GORE BLAST's own foot on the Death sheet (pulled 2026-08-26), and the same
+       trade WOUND above made: the card named a compound effect and then spent
+       three lines explaining it, so the explanation is here and the card keeps
+       only what it grants.
+
+       **What it does is the term and how long is the card's.** GORE BLAST prints
+       "for 5 turns", the way BLIND prints "until their next Turn End" over the top
+       of the blinded keyword. That split is not cosmetic: effectDuration in
+       combatTurn.js reads a duration off the card's own prose, so a count that
+       moved in here would leave the tracker with nothing to count.
+
+       The damage is the caster's attribute and is written out rather than lit,
+       because a detail is one static sentence and has no card under it to resolve
+       a live value against. It is the first term in this file whose number is not
+       its own, and it is worth a look. */
+    id: 'corpse-carrion',
+    terms: ['Corpse Carrion'],
+    color: 'var(--dmg-decay)',
+    detail:
+      'The afflicted entity takes the caster’s attribute in Decay damage at every one of ' +
+      'its Turn Starts.',
   },
 
   /* ------------------------------------------------------------- distances

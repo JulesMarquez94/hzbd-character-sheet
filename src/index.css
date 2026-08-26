@@ -58,9 +58,9 @@
 
        The exception is written into the law rather than around it: **where the
        codex already knows what colour a family is, that colour is what its shade
-       leans to.** Fire, Water, Lightning and Blood have damage and stat tokens
-       above; Light and Shadow are their own names. Six leans, and each one is
-       marked. Nothing here is a second copy of those tokens — a chip at 0.56rem
+       leans to.** Fire, Water, Lightning, Blood and Death have damage and stat
+       tokens above; Light and Shadow are their own names. Seven leans, and each
+       one is marked. Nothing here is a second copy of those tokens — a chip at 0.56rem
        on a dark panel needs more light than a body-text colour does, so these are
        their own values and say which token they answer to.
 
@@ -74,6 +74,12 @@
     --family-life: #4FD9A6;
     /* Leans to --stat-health, lifted far enough to read as type. */
     --family-blood: #D2685A;
+    /* Leans to --dmg-decay, which is what every damaging card in the family
+       deals. Decay's own #4CAF50 is within five degrees of the school hue, so
+       the lean is taken on hue and the separation on saturation: this is the one
+       grey green on a shelf of four bright ones, which is what rot looks like
+       beside things that grow. */
+    --family-death: #6FA271;
 
     /* Nature: the cooler green beside Primal. */
     --school-nature: #3FB394;

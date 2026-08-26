@@ -541,8 +541,14 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethe
  * mismatch costs nothing: the name is only how the folder is claimed, and the
  * cards inside it are resolved against the codex by their own filenames. See "the
  * spelling" in the Spacial section of spells.js.
+ *
+ * `data/Death/` landed 2026-08-26 and is the fourth, the first of them under a
+ * school other than Ethereal: the sheet beside it is `Spells - Primal - Death.csv`
+ * and the banner on all eleven reads Primal third-word Death. Same shape, same one
+ * folder move that would retire it (`data/Primal/Death/`), and the same reason it
+ * was left where the drop put it.
  */
-const FAMILY_FOLDERS = new Set(['shadow', 'time', 'space']);
+const FAMILY_FOLDERS = new Set(['shadow', 'time', 'space', 'death']);
 
 /** Every folder whose files are spell art, whether it names a school or a family. */
 const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
@@ -559,7 +565,8 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * that. The Time drop is the first to arrive at two sizes, 2400x1792 for two of
  * them and 1200x896 for the other ten, and neither is cut: the resize below takes
  * whatever it is handed down to 720. `data/Space/` is twelve more at 1200x896,
- * which is the size the Time drop settled.
+ * which is the size the Time drop settled, and `data/Death/` is eleven back at
+ * 2400x1792.
  *
  * Cutting one of these would take the top 45% of a painting that is already
  * only the painting. So the crop is what the exception turns off, and nothing
@@ -567,7 +574,7 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * any family folder a later drop brings, and still resolved against the codex
  * the same way.
  */
-const PLATE_FOLDERS = new Set(['ethereal', 'shadow', 'time', 'space']);
+const PLATE_FOLDERS = new Set(['ethereal', 'shadow', 'time', 'space', 'death']);
 
 /**
  * The ancestries, which arrive as one folder with a folder inside it.

@@ -18,8 +18,8 @@
  * from its siblings on lightness and saturation instead. The one thing that bends
  * it is written into it rather than around it: **where the codex already knows
  * what colour a family is, that colour is what its shade leans to.** Fire, Water,
- * Lightning and Blood each answer to a damage or stat token; Light and Shadow are
- * their own names. Six leans, all marked at the tokens in index.css.
+ * Lightning, Blood and Death each answer to a damage or stat token; Light and
+ * Shadow are their own names. Seven leans, all marked at the tokens in index.css.
  *
  * --------------------------------------------------------------- a leaf, again
  * This file imports nothing, for cardOrder.js's reason: it is reached from the
@@ -64,6 +64,7 @@ export const FAMILY_COLORS = {
   Wild: 'var(--family-wild)',
   Life: 'var(--family-life)',
   Blood: 'var(--family-blood)',
+  Death: 'var(--family-death)',
 
   // Arcane
   Energy: 'var(--family-energy)',

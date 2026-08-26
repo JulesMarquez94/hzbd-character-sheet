@@ -242,6 +242,27 @@ export const EFFECT_RIDERS = {
    *   thrilled         a permanent ceiling, off `pointCeilings` in tricks.js.
    *   martial moves    the `move` rider already carries these, laid by the
    *                    quick bar and spent by the swing.
+   *
+   *   sickness         **the closest call in the table, and the reason is the
+   *                    card's own second half.** Diseased is -1 to all three
+   *                    attributes until a Long Rest, which is exactly the shape
+   *                    `growth-elixir` above already takes, so the arithmetic is
+   *                    not what stops it.
+   *
+   *                    A rider is keyed on the card and not on the caster, which
+   *                    works everywhere else because only the entity a spell
+   *                    landed on has any reason to hold the row. SICKNESS breaks
+   *                    that: its Overcast only exists "while an entity is diseased
+   *                    by this spell", so the *caster* has to keep the row too, and
+   *                    a rider here would quietly take a point off all three of
+   *                    their attributes for holding a reminder. A wrong number is
+   *                    worse than a missing one.
+   *
+   *                    What unlocks it is the tracker learning which side of a card
+   *                    a row is on. Until then SICKNESS is not offered at all,
+   *                    because its duration lives in the diseased keyword rather
+   *                    than in its prose — the same hole SNAKE SPIRIT has had since
+   *                    the opening drop, for the same reason, with poisoned.
    */
 };
 

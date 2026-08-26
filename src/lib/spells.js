@@ -484,6 +484,328 @@ export const SPELLS = withArt([
       'When casting this spell, you may sacrifice Health equal to your {physique} [[physique]]. If you do, the attack is made with advantage and the damage is Empowered by 1.',
   },
 
+  /* ======================================================== Primal · Death ====
+   * The school's fifth family, pulled 2026-08-26 from `data/Spells - Primal -
+   * Death.csv` with its eleven pictures in `data/Death/`.
+   *
+   * **Death is a family and Primal is the school.** All eleven Tags cells read
+   * "Novice Spell, Primal, Death", so the banner is the ordinary three and the word
+   * Death goes on the shelf beside Flora, Wild, Life and Blood rather than beside
+   * Primal, Elemental and Ethereal. The sheet's own filename says the same thing in
+   * the same order the four Ethereal drops did: the school, then the family.
+   *
+   * It is the first family added to any school but Ethereal since the Elemental
+   * pull, and the first thing Primal has grown since the codex's opening drop on
+   * 2026-08-19.
+   *
+   * ------------------------------------------- the first Master spells in Primal
+   * **Primal had no Master spell at all until this drop**: 24 cards in four
+   * families, sixteen Novice and eight Adept. Death brings three, so the school is
+   * 35 spells at 20 Novice, 12 Adept and 3 Master.
+   *
+   * That moves a pool nobody touched. The Mycomancer draws Primal by tier and its
+   * Rank 3 offered the same 24 cards its Rank 2 did, because the extra rung it
+   * opened had nothing standing on it. Rank 3 is 35 now where Rank 2 is 32, and for
+   * the first time reaching the top of that set is worth something. The Arcanist,
+   * which names no school, goes from 44, 77 and 101 to 48, 85 and 112.
+   *
+   * ------------------------------------------------------------- what is missing
+   * Four Novice, four Adept and **three** Master, where every Ethereal family
+   * landed four of each. The sheet's twelfth row is not absent, it is *blank*: a
+   * row carrying "Master Spell, Primal, Death" in its Tags cell and nothing in any
+   * other column. So a fourth Master was laid out and not written, and the family
+   * is one card short by the designer's own count rather than by a reading here.
+   *
+   * ------------------------------------------------------------- what it retires
+   * Nothing. Unlike the Spacial drop, which finally filed the one loose Arcane
+   * card, this one stands nothing down: no placeholder claimed the word Death and
+   * no card moved into it. Arcane and Nature are still empty shelves.
+   *
+   * ----------------------------------------------------------------- the rolls
+   * Five contests and they are not all one shape, which is what settles SICKNESS
+   * below. Three are the caster's Roll against a named defense: CORRUPT LIFE and
+   * ENBRITTLE against Grit, GORE BLAST against the Reflex of an area. Two are
+   * attacks against Defense: ROTTING TOUCH in melee and SICKNESS at range. MIMIC
+   * DEATH's inspection is a sixth Roll and is not the caster's at all.
+   *
+   * ----------------------------------------------------------------- the halves
+   * Five, all the designer's word and all read the way the codex uses it. Four
+   * Overcasts: SICKNESS spreads what is already running, PESTILENT CLOUD walks it,
+   * DREDGE CORPSE and CORPSE STRIDE both buy more at the moment of casting. CORRUPT
+   * LIFE's Multicast is a genuine one.
+   *
+   * Two of the five open later than a cast (SICKNESS's on a diseased entity,
+   * PESTILENT CLOUD's on a cloud already up), so the parse in overcast.js charges
+   * them as their own spend rather than as a rider. The other three keep "When
+   * casting". Three of the five said "pay" where the codex says "spend", which is
+   * the word the price is read off.
+   *
+   * ------------------------------------------------------- three terms came off
+   * The drop glosses three effects at the foot of the cards that inflict them, and
+   * a gloss on a card is what keywords.js exists to absorb. All three moved and all
+   * three sentences are the designer's own:
+   *
+   * - **diseased**, off SICKNESS: -1 to all attributes until a Long Rest.
+   * - **vulnerable**, off ENBRITTLE, which spells it out in a parenthesis marked
+   *   "(note ...)". BURN has been defined in terms of the word since 2026-08-20 and
+   *   it was never lit. It is now, on three cards.
+   * - **Corpse Carrion**, off GORE BLAST. The term carries what it does and the
+   *   card keeps how long, the way BLIND prints a duration over the blinded
+   *   keyword: effectDuration in combatTurn.js reads its count off the card's own
+   *   prose, so the 5 turns had to stay printed. Its damage is the caster's
+   *   attribute and is written out in words, which no other detail in that file has
+   *   had to do.
+   *
+   * ------------------------------------------------------------- the readings
+   * Every one of these is a cell that could not be printed as it stood.
+   *
+   * - **Ten ranges had the metres and lost the feet**: "6 meter ()", "9 Meter ()",
+   *   "12 meter ()", "18 meter ()", "15 meter ()", "6meter ()", "3 Meter ()". The
+   *   conversion is the codex's own three metres to ten feet, which is the call
+   *   WALL OF FLAMES documents. UNALIVE's "9 meter (30 feet)" is the only range on
+   *   the sheet that arrived whole.
+   * - **DREDGE CORPSE names no range at all**: "at a point you can see on the
+   *   ground". Every other card in the family gives a distance. Left as line of
+   *   sight rather than given a number the sheet does not carry, and it is the
+   *   first thing to check.
+   * - **SICKNESS is an attack and not a Roll.** Its cell says "You make a Mind roll
+   *   attack. On a hit", and it names no defense to roll against, where the family's
+   *   three Rolls all name one and all resolve "on a success". An attack is rolled
+   *   against Defense by definition, so reading it that way invents nothing; reading
+   *   it as a Roll would have meant choosing a defense for it. Printed as a **Ranged
+   *   Attack**, because the target is 6 metres off and the codex's attack sentence
+   *   names which kind.
+   * - **MIMIC DEATH's inspection Roll is the examiner's, not the caster's**, so it
+   *   prints no {roll} and it prints {mind} rather than {stat}: the examiner's Mind
+   *   is Mind whoever cast the spell, and a Mycomancer casting this off Instinct
+   *   must not make the examiner roll Instinct. CONTAINMENT SPHERE prints {stat} for
+   *   the trapped entity's breakout, which is the same question answered the other
+   *   way. Worth settling once for both.
+   * - **CORPSE STRIDE's Overcast deals damage and names no type**, the hole
+   *   COMPRESSION BLAST had. Every other damaging card in this family says Decay and
+   *   this one says nothing, so it prints untyped rather than being given a type it
+   *   does not carry: a damage type is what a resistance answers. Decay is the
+   *   obvious answer. Its "2d66" is 2d6.
+   * - **DREDGE CORPSE's Overcast names two defined terms and no amount**:
+   *   "empowering and elevating abilities using a the corpse". Empowered is one more
+   *   die and Elevated is one step of die size, both of which the glossary already
+   *   says, but the cell gives no count for either. The card prints the two words
+   *   bare. How many of each is a ruling, and it is the second thing to check.
+   * - **DEATH WAIL's cell ends on a comma**: "gain shield equal to your maximum,".
+   *   Maximum Health is the only reading that resolves, and it is what the card
+   *   prints.
+   * - **GORE BLAST hits for [[1d6 + stat]]**, the smallest damage on any Adept spell
+   *   in the codex that catches an area. That looks like the point rather than a
+   *   slip: what the card is really for is the Corpse Carrion behind it.
+   * - **UNALIVE costs 12 Willpower**, the highest printed Willpower on any card in
+   *   the codex. Left exactly as it stands: a spell that kills outright or does
+   *   nothing at all is priced like one.
+   * - Spelling and grammar, throughout and without further comment: "O n a hit",
+   *   "your del", "nad", "withn", "coprse", "concious", "YOu", "a corpse emerge",
+   *   "turn stat", "that last for", "agiasnt", "entitles", "wtih", "CorpsCarriosn",
+   *   "nleash a beam co carkcling magic etempty", "weakend to constitution",
+   *   "Wilppower", "diseases by Sickenss", "entites", "along rest".
+   *
+   * --------------------------------------------------------------- not wired
+   * Nothing here moves a number on the sheet, which is where the last four drops
+   * have all landed. **SICKNESS came closest and is written up in riders.js rather
+   * than wired**: diseased is -1 to all three attributes, which is the shape
+   * `growth-elixir` already takes, but a rider is keyed on the card and this card's
+   * Overcast gives the caster a reason to hold the row as well as the target, so
+   * wiring it would take a point off the wrong sheet.
+   *
+   * That leaves SICKNESS untrackable, because its duration is the diseased
+   * keyword's and not its own prose. SNAKE SPIRIT has had the same hole since the
+   * opening drop, for the same reason, with poisoned.
+   *
+   * Five of the eleven are offered on the tracker (MIMIC DEATH, PESTILENT CLOUD,
+   * CORRUPT LIFE, GORE BLAST and DEATH WAIL) and four of the six left out are
+   * instants with nothing to run. **SICKNESS and ENBRITTLE are the two that plainly
+   * last and are still not offered**, and both for the same reason: what they leave
+   * on a target has no clock printed on the card. ENBRITTLE's runs until the next
+   * time the target takes damage, which is a condition and not a duration.
+   *
+   * DEATH WAIL is the other one worth naming: it hands out Shield equal to a full
+   * Health bar and then forbids healing until a Long Rest, and the second half of
+   * that is a rule the sheet has no channel for, so wiring the first half alone
+   * would be a promise half kept.
+   */
+
+  /* -------------------------------------------------------- Primal · Death ---- */
+  {
+    id: 'rotting-touch',
+    name: 'Rotting Touch',
+    summary: 'Rot away whatever you can put a hand on, for four dice of Decay.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Primal', 'Death'],
+    ap: 5,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'You attempt to rot away **an entity** you can touch.\n\n' +
+      'Make a {stat} Melee Attack {roll} against the target. On a hit, you deal [[4d6 + 4*stat]] {damage} damage.',
+  },
+  {
+    /* An attack, because the cell says "attack" and "on a hit" and names no defense
+       to roll against. Ranged, because the target is 6 metres off. See "the
+       readings" above. */
+    id: 'sickness',
+    name: 'Sickness',
+    summary: 'Infect one target at range. Overcast to spread it to everything around them.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Primal', 'Death'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You attempt to infect **an entity** you can see within **6 meters (20 feet)**.\n\n' +
+      'Make a {stat} Ranged Attack {roll} against the target. On a hit, the target is diseased.',
+    sub_name: 'Overcast',
+    sub_body:
+      'While an entity is diseased by this spell, you may spend 4 Action Points and 4 Willpower. If you do, **all entities** within **6 meters (20 feet)** of it are also diseased.',
+  },
+  {
+    /* {mind} rather than {stat}, and no {roll}: the inspection is the examiner's
+       Roll and not the caster's. See "the readings" above. */
+    id: 'mimic-death',
+    name: 'Mimic Death',
+    summary: 'You and five others pass for corpses for an hour, until one of you moves.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Primal', 'Death'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'You disguise yourself and **up to 5 entities** you can see within **9 meters (30 feet)** as corpses for **1 hour**, at a freshness you choose.\n\n' +
+      'A disguised entity stays conscious, and taking any action breaks the spell.\n\n' +
+      'A physical inspection treats it as a corpse unless the examiner succeeds on a {mind} Roll against your Grit.',
+  },
+  {
+    /* The one card in the family that names no range, and the Overcast names two
+       defined terms with no amount for either. See "the readings" above. */
+    id: 'dredge-corpse',
+    name: 'Dredge Corpse',
+    summary: 'Pull a corpse up out of the ground. Overcast and it comes up bloated.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Primal', 'Death'],
+    ap: 2,
+    wp: 1,
+    stat: 'mind',
+    body: 'A corpse rises from the earth at a point on the ground you can see.',
+    sub_name: 'Overcast',
+    sub_body:
+      'When casting this spell, you may spend an additional 2 Action Points and 2 Willpower. If you do, the corpse rises bloated. Any ability that uses it is Empowered and Elevated.',
+  },
+  {
+    id: 'pestilent-cloud',
+    name: 'Pestilent Cloud',
+    summary: 'A plague cloud that sits on the field for five turns. Overcast to walk it.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Primal', 'Death'],
+    ap: 5,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'You raise a Pestilent Cloud in a **6-meter (20-foot)** area centered on a point you can see within **12 meters (40 feet)** that lasts for **5 turns**.\n\n' +
+      'An entity that enters the cloud, or is inside it at its Turn Start, takes [[2d6 + 2*stat]] {damage} damage.',
+    sub_name: 'Overcast',
+    sub_body:
+      'While this spell is active, you may spend 2 Action Points and 2 Willpower to move the cloud to another point you can see within range.',
+  },
+  {
+    /* The damage carries no type: the cell named none where the rest of the family
+       says Decay, so it prints untyped. See "the readings" above. */
+    id: 'corpse-stride',
+    name: 'Corpse Stride',
+    summary: 'Step to any corpse in sight. Overcast and it goes up behind you.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Primal', 'Death'],
+    ap: 1,
+    wp: 1,
+    stat: 'mind',
+    body: 'You teleport to a corpse you can see within **18 meters (60 feet)**.',
+    sub_name: 'Overcast',
+    sub_body:
+      'When casting this spell, you may spend an additional 2 Action Points and 2 Willpower. If you do, the corpse explodes, dealing [[2d6 + 2*stat]] damage to **all entities** within **3 meters (10 feet)** of it.',
+  },
+  {
+    id: 'corrupt-life',
+    name: 'Corrupt Life',
+    summary: 'A curse that turns every point of healing the target receives into Decay.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Primal', 'Death'],
+    ap: 2,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'You curse **an entity** you can see within **6 meters (20 feet)** for **2 turns**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, Health the target would restore is converted into {damage} damage.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting this spell, you may spend an additional 1 Action Point and 3 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
+  },
+  {
+    id: 'gore-blast',
+    name: 'Gore Blast',
+    summary: 'Detonate a corpse. What survives carries Corpse Carrion for five turns.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Primal', 'Death'],
+    ap: 3,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'A corpse you can see within **15 meters (50 feet)** explodes.\n\n' +
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** within **6 meters (20 feet)** of it. On a success, you deal [[1d6 + stat]] {damage} damage and afflict them with Corpse Carrion for **5 turns**.',
+  },
+  {
+    id: 'unalive',
+    name: 'Unalive',
+    summary: 'Eight dice of Decay that either kill outright or do nothing at all.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Death'],
+    ap: 5,
+    wp: 12,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'You unleash a beam of crackling magic at **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'You deal [[8d6 + 8*stat]] {damage} damage. If it does not reduce the target to 0 Health it is negated, and if it does the target dies instantly.\n\n' +
+      'This damage cannot be modified in any way.',
+  },
+  {
+    id: 'enbrittle',
+    name: 'Enbrittle',
+    summary: 'Weaken one target so the next damage it takes lands for double.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Death'],
+    ap: 3,
+    wp: 5,
+    stat: 'mind',
+    body:
+      'You attempt to weaken the constitution of **an entity** you can see within **15 meters (50 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, the next time the target takes damage it is vulnerable to that damage type.',
+  },
+  {
+    /* "gain shield equal to your maximum," is where the cell stops. Maximum Health
+       is the only reading that resolves. See "the readings" above. */
+    id: 'death-wail',
+    name: 'Death Wail',
+    summary: 'One free return from the brink, and no healing at all after it.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Primal', 'Death'],
+    ap: 4,
+    wp: 5,
+    stat: 'mind',
+    body:
+      'You ward yourself with necrotic magic **until your next Long Rest**.\n\n' +
+      'The next time you would be brought down, you return to 1 Health instead and gain Shield equal to your maximum Health.\n\n' +
+      'You cannot restore Health until you take a Long Rest, and any Health damage you take kills you instantly.',
+  },
+
   /* ---------------------------------------------------- Arcane · Energy ----
    * **Empty, and this is where it was.** CONTAINMENT SPHERE stood here as the
    * codex's only Arcane spell and the only card in it no sheet covered: it had no

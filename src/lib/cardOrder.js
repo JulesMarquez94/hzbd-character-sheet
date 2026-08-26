@@ -100,7 +100,7 @@ export const SHELVES = [
   ['Primal', 'Nature', 'Arcane', 'Elemental', 'Ethereal', 'Nightmare'],
 
   // The families under each school, in the order spells.js shelves them.
-  ['Flora', 'Wild', 'Life', 'Blood'],
+  ['Flora', 'Wild', 'Life', 'Blood', 'Death'],
   ['Energy'],
   ['Fire', 'Water', 'Wind', 'Lightning', 'Magma', 'Earth'],
   ['Light', 'Shadow', 'Time', 'Spacial'],
