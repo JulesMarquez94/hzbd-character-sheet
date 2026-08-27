@@ -8661,3 +8661,34 @@ Four sentences back, and the first one reversed a ruling:
 Every checker still passes, `lint:potions` included, and the renderer still prints
 23 of 24 potion cards at full size: the Poison body grew by six characters and the
 cost orbs are chrome rather than text.
+
+### Corrected after review, round two
+
+The second review pass (data flow and integration) confirmed five defects, all
+fixed and all covered by the smoke test:
+
+- **Changing the bargain now carries the standing over.** The kinds differ by
+  around five hundred to one, and the old write re-read the same lifetime total
+  in the new unit: 4,000 coins became 4,000 souls (nineteen filled bars), and a
+  Soulreaper switching back stranded their souls at nothing. convertPactProgress
+  preserves the bars filled and the fraction into the next one, and the ledger
+  row says what was carried.
+- **Re-tapping the bargain already held is a no-op** instead of a false
+  "reshaped" ledger row and a needless save.
+- **A rank given back lapses what it opened.** A claimed rung above the held
+  rank grants nothing (no card dealt, no working on the blade, no skill held)
+  until the rank returns, and the bar it cost stays spent, the way a stripped
+  enchantment keeps its Supplies. The claim window prints the waiting pick on
+  its rung.
+- **The weapon riders tie to the pact weapon's own cards.** The stowed
+  weapon's attacks, opened from the Inventory tab, printed the pact's
+  highest-Attribute, Empower and advantage riders; pactWeaponRiders now checks
+  the card against the form's own two abilities.
+- **The burden exemption ends with the set, at the reading.** The pact flag on
+  the forged record survives normalizeForged on purpose, so heldItem's forged
+  path now strips it when no held set answers to it (ruling 11's "ordinary
+  item" made true), and while the set is held it reads the ench list off the
+  pact's own picks, so a lapsed working comes off the blade without waiting
+  for a reshape to heal the record.
+- **Backing out of a boon's card wall returns to the claim ladder** instead of
+  closing the whole claim window; only a pick made closes it.

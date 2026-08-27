@@ -998,7 +998,8 @@ function pactTrimmed(character, record) {
 
   const state = pactState(character).find((row) => row.id === record.pact);
   if (!state) {
-    const { pact, ...ordinary } = record;
+    const ordinary = { ...record };
+    delete ordinary.pact;
     return ordinary;
   }
   return { ...record, ench: pactWeaponEnch(state) };
