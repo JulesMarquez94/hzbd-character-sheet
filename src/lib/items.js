@@ -24,6 +24,7 @@
 import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
 import { allGrants, damageEnchants, grantSources, laidEntries } from './enchanting.js';
 import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
+import { pactState, pactWeaponEnch } from './pact.js';
 import { BAG_ITEMS } from './bags.js';
 import { compareTags } from './cardOrder.js';
 import { TRINKET_ITEMS } from './trinkets.js';
@@ -973,7 +974,34 @@ export function placementOf(character, id) {
 function forgedFor(character, id) {
   if (!character || !isForgedId(id)) return null;
   const record = forgedRecord(character, id);
-  return record ? forgedItem(record, getItem(record.base)) : null;
+  return record ? forgedItem(pactTrimmed(character, record), getItem(record.base)) : null;
+}
+
+/**
+ * A pact-flagged record read against the bargain that flagged it, in the one
+ * funnel where a forged id becomes an item.
+ *
+ * Two corrections, both the "a level lost takes back what it bought" law:
+ *
+ * - **The set handed back strips the flag.** The record itself is ruled to
+ *   stay (data/README.md, the Pact of Ordenance's ruling 11: "the forged
+ *   weapon record stays equipped as an ordinary item"), and an ordinary item
+ *   pays Magic Burden for its workings — so the flag, and the free carry it
+ *   buys in `itemBurden`, come off at the moment of reading.
+ * - **While the set is held, the blade wears exactly what the rank reaches.**
+ *   The record's `ench` is a copy that heals on the next reshape or claim; a
+ *   rank given back between heals would leave a lapsed working standing, so
+ *   the ench list is read off the pact's own picks instead of trusted.
+ */
+function pactTrimmed(character, record) {
+  if (!record.pact) return record;
+
+  const state = pactState(character).find((row) => row.id === record.pact);
+  if (!state) {
+    const { pact, ...ordinary } = record;
+    return ordinary;
+  }
+  return { ...record, ench: pactWeaponEnch(state) };
 }
 
 /**

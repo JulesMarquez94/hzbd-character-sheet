@@ -78,17 +78,23 @@ export const UTILITY_CARDS = withArt([
      three is a different row from the one it replaces.
 
      -------------------------------------------------------- what the columns are
-     The sheet is Name, Tags, AP, WP and Main Effect, and the reading of it is the
-     one the 2026-08-24 pass settled and this drop confirms:
+     The sheet is Name, Tags, AP, WP and Main Effect:
 
        AP    the drinker's, printed on the card. 2 for all but three rows.
-       WP    **the brewer's price, not the drinker's.** Every card here is `wp:
-             null`, and the number turns into two prices on the item: 100 coins a
-             point and 10 Supplies a point. See the items below.
+       WP    **the drinker's too, and settled by Jules on the day of the drop**:
+             "The willpower is for the cost of using the poitions". So every card
+             charges it, and the same column *also* sets both of the flask's
+             prices, 100 coins and 10 Supplies a point. One number doing two jobs,
+             which reads right: the hard potion to brew is the hard one to drink.
+             See the items below, and the note over `SUPPLIES_PER_WILLPOWER` in
+             alchemy.js for the ruling this reverses.
        Tags  `Item, Consumable, <rung> Potion`, which is the first time an item
              card in this codex carries a rung. `cardRung` reads the first word of
              a tag, so `Novice Potion` places the card and leaves `Potion` as its
              shelf word.
+
+     Life Tree Tea is the one card with no Willpower on it, because its cell on
+     the sheet is empty. 6 Action Points and nothing else.
 
      The old table's Improvised Brewing column is **not on this sheet** and its
      element dice are gone with the rows they belonged to. `brew.elements` is
@@ -107,7 +113,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Novice Potion'],
     ap: 2,
-    wp: null,
+    wp: 2,
     /* "Drinking this potion heals for 2d6 + five time your level." The dice and
        the scale are the sheet's; "restores X Health" is the codex's one spelling
        for a heal, and it is the unit the old card was missing. */
@@ -119,15 +125,21 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Novice Potion'],
     ap: 2,
-    wp: null,
+    wp: 2,
     /* Three paragraphs, and the second is the shape three rows on this sheet
        share: a concoction that can go on a blade instead of down a throat. "for
        the duraiton of combat" is left as a combat rather than a turn count, so
-       the tracker holds the row without a clock on it. */
+       the tracker holds the row without a clock on it.
+
+       **The coat's bonus is twice the dice, not once.** The sheet said "equal to
+       the number of dice rolled" and Jules doubled it on the day of the drop:
+       "dobule the bonus of poison". So a swing rolling 3d6 adds 6 Decay. Still
+       not wired, for the reason in data/README.md: the rider table has no field
+       for a bonus that counts dice. */
     body:
       'Drinking this potion deals [[8d6 + 8*level]] {damage:Decay} damage.\n\n' +
       'This concoction can also be applied to a weapon, where it lasts for the rest of the combat.\n\n' +
-      'On a hit with the weapon, you deal additional {damage:Decay} damage equal to the number of Damage Dice rolled.',
+      'On a hit with the weapon, you deal additional {damage:Decay} damage equal to twice the number of Damage Dice rolled.',
   },
   {
     id: 'luck-potion',
@@ -135,7 +147,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Novice Potion'],
     ap: 2,
-    wp: null,
+    wp: 4,
     body: 'Drinking this potion grants you advantage on all skill checks for **1 hour**.',
   },
   {
@@ -144,7 +156,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Novice Potion'],
     ap: 2,
-    wp: null,
+    wp: 4,
     /* The row changed completely. The old Growth Elixir spelled its own numbers
        out; this one hands the drinker a spell the codex already prints, so the
        card links it rather than restating it. */
@@ -156,7 +168,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Novice Potion'],
     ap: 2,
-    wp: null,
+    wp: 4,
     body: 'Drinking this draught grants you advantage on all Attack Rolls for **1 hour**.',
   },
   {
@@ -165,7 +177,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Novice Potion'],
     ap: 2,
-    wp: null,
+    wp: 3,
     /* "increases the user's Health and Max Health by 5x level". The user is the
        drinker, so the scale is the sheet holding the card and `level` is the
        token for it. Not wired as a rider: see riders.js. */
@@ -178,7 +190,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Novice Potion'],
     ap: 2,
-    wp: null,
+    wp: 6,
     body: 'Drinking this draught increases your Defense by 1 for **1 hour**.',
   },
   {
@@ -187,11 +199,15 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Novice Potion'],
     ap: 2,
-    wp: null,
+    wp: 4,
     /* Two numbers in this cell needed a reading. "up to 6 meter ()" has an empty
        parenthesis where the feet go, and 6 meters is 20 feet. "within 3 meters
-       (15 feet)" is two different distances: 3 meters is 10 feet, and the codex
-       prints a radius in meters first, so the meters win. Both flagged. */
+       (15 feet)" is two different distances, since 3 meters is 10 feet, and the
+       meters won because the codex prints a radius in meters first.
+
+       **Confirmed by Jules on the day of the drop**: "explosion conction is 3meter
+       a radius". So the parenthesis was the wrong half, and the throw range is
+       still the sheet's 6. */
     body:
       'Throw the flask at a point you can see within **6 meters (20 feet)**.\n\n' +
       'It bursts into flame, and **all entities** within **3 meters (10 feet)** of the point of impact take [[8d4]] {damage:Fire} damage.',
@@ -204,7 +220,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Adept Potion'],
     ap: 2,
-    wp: null,
+    wp: 2,
     /* The cell's last sentence, "The changes last until the effect ends", is cut:
        the duration is declared in the first paragraph and a line that only
        restates one is a line the card cannot spare. */
@@ -218,7 +234,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Adept Potion'],
     ap: 2,
-    wp: null,
+    wp: 6,
     body:
       'Drinking this draught grants you resistance to all {damage:Lightning}, {damage:Cold} and {damage:Fire} damage for **1 hour**.',
   },
@@ -228,7 +244,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Adept Potion'],
     ap: 2,
-    wp: null,
+    wp: 6,
     body:
       'Drinking this draught grants you resistance to all {damage:Sharp}, {damage:Blunt} and {damage:Force} damage for **1 hour**.',
   },
@@ -238,7 +254,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Adept Potion'],
     ap: 2,
-    wp: null,
+    wp: 2,
     body:
       'Drinking this elixir grants you the ability to breathe underwater and move at your normal Movement Speed. The effect lasts for **1 hour**.',
   },
@@ -248,7 +264,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Adept Potion'],
     ap: 2,
-    wp: null,
+    wp: 2,
     /* A different row from the Love Potion this id used to hold: that one was a
        Novice card the drinker was rolled against, this one is an Adept card the
        drinker hands the advantage to. "double advante" is advantage twice, which
@@ -263,7 +279,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Adept Potion'],
     ap: 2,
-    wp: null,
+    wp: 4,
     /* "untl your next End Turn" is the codex's Turn End, which is also the form
        the tracker reads a clock off. */
     body:
@@ -277,7 +293,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Adept Potion'],
     ap: 2,
-    wp: null,
+    wp: 4,
     /* The ten-row table is authored as one flowing paragraph, the way STEAL's
        numbered list is: ten paragraphs would not fit the card and ten line breaks
        are not a shape this renderer has. Every name on it is a row on this sheet,
@@ -292,7 +308,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Adept Potion'],
     ap: 2,
-    wp: null,
+    wp: 4,
     /* "the damage dice you take are empowred by while the damage dice you deal
        are depowered by 1" is missing its first number, and the symmetry answers
        it: 1 either way. "Depowered" is not a word this codex has, so the clause
@@ -309,7 +325,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Master Potion'],
     ap: 2,
-    wp: null,
+    wp: 6,
     /* "20 turns or less" is a threshold rather than a duration, so it is not
        bolded: bold on a card is how far, at whom and for how long. */
     body: 'Drinking this draught removes all status effects on you that last 20 turns or less.',
@@ -320,7 +336,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Master Potion'],
     ap: 2,
-    wp: null,
+    wp: 6,
     body:
       'Drinking this potion makes you ethereal for **2 turns**.\n\n' +
       'While ethereal you cannot take any actions, but you cannot be touched or interacted with, and you are immune to all effects.',
@@ -331,7 +347,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Master Potion'],
     ap: 2,
-    wp: null,
+    wp: 10,
     /* Elemental and Physical are two damage *families* rather than two of the
        codex's types, and the sheet's own rows above name what is in each:
        BRIGHTSCALE is Lightning, Cold and Fire, SKINSTONE is Sharp, Blunt and
@@ -347,7 +363,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Master Potion'],
     ap: 2,
-    wp: null,
+    wp: 8,
     body:
       'Drinking this potion grants you a flight speed equal to your Movement Speed for **12 hours**.',
   },
@@ -357,7 +373,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Master Potion'],
     ap: 2,
-    wp: null,
+    wp: 20,
     /* The longest cell on the sheet, and the one that had to be cut to fit. What
        went is the restatement: "restarting your turn" and "allows you to replay
        your turn" are one clause said twice, and "a second Elixir of Time" is the
@@ -374,7 +390,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Master Potion'],
     ap: 3,
-    wp: null,
+    wp: 8,
     /* Titansbane is named on the card because the third paragraph has to point at
        it: what the weapon passes on is the affliction, not the flask. */
     body:
@@ -388,7 +404,7 @@ export const UTILITY_CARDS = withArt([
     kind: 'item',
     tags: ['Item', 'Consumable', 'Master Potion'],
     ap: 3,
-    wp: null,
+    wp: 12,
     /* "You make a highest attribute rol agaisnt thier reflex" is HIGHEST, the
        same rule the lineage and background innate spells carry: not an attribute
        but the rule that picks one. The article is left off `{stat}` for that
@@ -557,9 +573,9 @@ export const UTILITY_ITEMS = [
    * eight Novice, eight Adept, seven Master and the one Legendary.
    *
    * ------------------------------------------------------------------ the prices
-   * **Both prices come off the sheet's Willpower column**, which is the brewer's
-   * number rather than the drinker's, and Jules set the coin rate in chat on the
-   * day of the drop:
+   * **Both prices come off the sheet's Willpower column**, which is also what the
+   * drinker pays (see the cards above). Jules set the coin rate in chat on the day
+   * of the drop:
    *
    *     coin     = 100 x Willpower, + 1000 at Adept, + 2000 at Master
    *     Supplies = 10 x Willpower

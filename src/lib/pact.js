@@ -386,17 +386,50 @@ function logged(row, entry) {
   ].slice(0, PACT_LOG_LIMIT);
 }
 
-/** Strike the bargain: which of the two pacts this is. */
+/**
+ * A lifetime total carried across the two bargains. Souls and coins differ by
+ * around five hundred to one, so re-reading the same number in the other unit
+ * would hand a Collector nineteen filled bars or strand a Soulreaper at none.
+ * What is preserved is the *standing*: the bars filled, and how far into the
+ * next one the feeding reached.
+ */
+export function convertPactProgress(spec, from, to, progress) {
+  const total = Math.max(0, Math.floor(Number(progress) || 0));
+  if (!from || !to || from.id === to.id || total === 0) return total;
+
+  const bars = pactBars(spec, from, total);
+  let out = 0;
+  for (let i = 0; i < bars.filled; i += 1) out += pactThreshold(spec, to, i);
+
+  const need = pactThreshold(spec, to, bars.filled);
+  if (bars.need > 0 && Number.isFinite(need)) {
+    out += Math.floor((bars.into / bars.need) * need);
+  }
+  return out;
+}
+
+/**
+ * Strike the bargain: which of the two pacts this is. Re-tapping the one
+ * already held is a no-op rather than a false ledger row, and changing a fed
+ * pact carries the standing over rather than re-reading the number.
+ */
 export function sealPactKind(character, state, kindId) {
   const kind = pactKind(state.spec, kindId);
-  if (!kind) return null;
+  if (!kind || state.row.kind === kind.id) return null;
+
+  const from = pactKind(state.spec, state.row.kind);
+  const carried = convertPactProgress(state.spec, from, kind, state.row.progress);
+  const moved = carried !== state.row.progress;
 
   return writePact(character, state.id, {
     kind: kind.id,
+    ...(moved ? { progress: carried } : {}),
     log: logged(state.row, {
       kind: 'seal',
       delta: 0,
-      note: state.chosen ? `The bargain reshaped: ${kind.label}` : `${kind.label} sealed`,
+      note: state.chosen
+        ? `The bargain reshaped: ${kind.label}${moved ? `, standing carried over as ${carried} ${kind.unit}` : ''}`
+        : `${kind.label} sealed`,
     }),
   });
 }
@@ -422,10 +455,13 @@ export function mintPactWeapon(state, weapon) {
  * The enchant boons a pact has claimed, in the shape a forged record's `ench`
  * takes. Handed a picks map so a claim being written right now can build the
  * record it is about to store, rather than the one from a render ago.
+ *
+ * Only rungs the held rank still reaches: a lapsed enchant waits with its
+ * pick and comes off the blade until the rank returns.
  */
 export function pactWeaponEnch(state, picks = state.row.picks) {
   return (state.spec.boons ?? [])
-    .filter((boon) => boon.kind === 'enchant' && picks[boon.id])
+    .filter((boon) => boon.kind === 'enchant' && boon.rank <= state.rank && picks[boon.id])
     .map((boon) => {
       const pick = picks[boon.id];
       return typeof pick === 'string' ? { id: pick } : pick;
@@ -646,7 +682,8 @@ export function pactModifiers(state) {
  * Every card the pact has granted, as `{ card, modifiers }` rows: the two
  * sealed with it, the claimed rungs of the ladder, then the endless picks.
  * Enchant boons are left out — the working rides the weapon, and the weapon's
- * own cards are where it shows.
+ * own cards are where it shows. A lapsed rung grants nothing, and the endless
+ * picks lapse with the rank that opened the loop.
  */
 export function pactBoonRows(state) {
   const riders = pactModifiers(state);
@@ -661,12 +698,18 @@ export function pactBoonRows(state) {
   for (const one of state.boons) {
     if (one.state === 'claimed' && one.boon.kind !== 'enchant') push(one.pick);
   }
-  for (const held of state.extra) push(held.pick);
+  if (state.rank >= 3) {
+    for (const held of state.extra) push(held.pick);
+  }
 
   return rows;
 }
 
-/** The skills the pact has taught, so no other chooser offers them again. */
+/**
+ * The skills the pact has taught, so no other chooser offers them again.
+ * Claimed rungs only: a lapsed skill is not held, so another chooser may
+ * teach it, and the lapsed pick simply stands satisfied if the rank returns.
+ */
 export function pactSkillIds(character) {
   const out = [];
   for (const state of pactState(character)) {
@@ -694,14 +737,19 @@ export function pactWeaponId(character) {
 }
 
 /**
- * What holding the pact weapon is worth on a swing, folded into
- * `attackModifiers` in moves.js beside the Colossus and the hide.
+ * What swinging the pact weapon is worth, folded into `attackModifiers` in
+ * moves.js beside the Colossus and the hide.
  *
  * The weapon itself is a boon — the first one, sealed with the pact — so
- * FIRST BOON's best-attribute rule and the two rank riders land on its
+ * FIRST BOON's highest-Attribute rule and the two rank riders land on its
  * attacks exactly as they land on a granted spell.
+ *
+ * Tied to the card, not to the moment: FIRST BOON says "your pact-bound
+ * weapon's attacks", so a stowed bow's own card, opened from the Inventory
+ * tab while the pact weapon fills the first slot, prints its own numbers.
+ * Only the cards the weapon's current form teaches carry the riders.
  */
-export function pactWeaponRiders(character) {
+export function pactWeaponRiders(character, card) {
   for (const state of pactState(character)) {
     if (!state.weapon) continue;
 
@@ -709,6 +757,10 @@ export function pactWeaponRiders(character) {
        ordinary case. Read without items.js: the map is slot -> id. */
     const equipment = readEquipment(character?.equipment);
     if (equipment.main_hand !== state.weapon.id) continue;
+
+    /* The form's own two attacks, off the codex weapon the record points at. */
+    const form = WEAPONS.find((weapon) => weapon.id === state.weapon.base);
+    if (card && !(form?.abilities ?? []).includes(card.id)) continue;
 
     const riders = pactModifiers(state);
     if (!riders) return null;

@@ -515,12 +515,12 @@ export function attackModifiers(character, card, base) {
   const swings = isWeaponAttack(card);
   const worn = swings ? weaponRiders(character) : null;
   /* And the Pact of Ordenance's weapon, when it is the thing being swung. The
-     weapon is itself a boon, so FIRST BOON's best-attribute rule and the two
-     rank riders land on its attacks the way they land on a granted spell. Only
-     the primary's cards are playable and the pact pins itself to that slot, so
-     "a weapon attack while the pact weapon is in hand" is the whole test. See
+     weapon is itself a boon, so FIRST BOON's highest-Attribute rule and the
+     two rank riders land on its attacks the way they land on a granted spell.
+     Handed the card, because the Inventory tab opens the stowed weapon's own
+     attacks through this same fold and those are not the pact's. See
      pactWeaponRiders in pact.js. */
-  const bound = swings ? pactWeaponRiders(character) : null;
+  const bound = swings ? pactWeaponRiders(character, card) : null;
   /* And the Feral Curse's form, which grants advantage on every attack roll and
      another die to the natural weapon's own. Read here rather than in
      `weaponRiders` because it hangs on the *shape you are in* and not on the tag

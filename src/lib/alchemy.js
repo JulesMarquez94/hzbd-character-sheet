@@ -25,17 +25,16 @@
  * which is what a rest is paid in on this site and what every other labour at
  * the fire already costs.
  *
- * The old table printed no component price per potion. What it did print, for
+ * The potion sheet printed no component price per potion. What it did print, for
  * every row, is a Willpower cost, and that column is the designer's own ordering
- * of the seven: 2 for the Healing Draught and the Love Potion, 3 for the Flame
- * Burst Flask and the three attribute potions, 4 for the Growth Elixir. So the
- * shape of the price is his and only the scale is this file's:
+ * of the shelf. So the shape of the price is his and only the scale is this
+ * file's:
  *
- *     Supplies = 10 x the Willpower the old table printed
+ *     Supplies = 10 x the Willpower the sheet prints
  *
  * The scale is not free either. The APOTHECARY background skill already crafts a
  * healing potion at a Long Rest "by expending 20 Supplies", and the Healing
- * Draught's own 2 Willpower times ten is exactly 20. Two sources that were
+ * Potion's own 2 Willpower times ten is exactly 20. Two sources that were
  * written years apart agree on the cheapest row in the table, which is what
  * fixed the rate rather than a number somebody liked the look of.
  *
@@ -44,12 +43,20 @@
  * reprices stays repriced, and nothing here recomputes it.
  *
  * ------------------------------------------------------- and the Willpower
- * Which leaves the old table's Willpower with nothing to do, and it is **not
- * charged**. Brewing on this site happens inside a long rest, and a long rest
- * ends by filling Willpower to its maximum: a Willpower price paid in the middle
- * of one is a price nobody ever pays. ALCHEMY's own words are that you brew
- * "while still benefiting from a long rest", which says the same thing from the
- * other side. Flagged in data/README.md as a ruling for the designer.
+ * **One column, two jobs, and it is charged.** From 2026-08-24 to 2026-08-27 this
+ * file read the Willpower as the *brewer's* price and nothing else, on the
+ * argument that a price paid inside a long rest is a price nobody pays, since a
+ * long rest ends by filling the pool. Jules settled it the other way on the day
+ * the new potion sheet landed: "The willpower is for the cost of using the
+ * poitions."
+ *
+ * So the column is the drinker's cost, printed on every card (utility.js), *and*
+ * the input to both of the flask's prices. Nothing above changes: the argument
+ * that the brewer is never billed for it still holds, and the rate below is still
+ * the rate. What was wrong was the "and nothing else".
+ *
+ * The reading that makes it one number rather than two coincidences: a potion's
+ * Willpower is how much of a working it is. Hard to distil, hard to hold down.
  *
  * ------------------------------------------------------------------- the leaf
  * This file reads the item codex and the talent codex and nothing else. rest.js
@@ -63,11 +70,15 @@ import { getTalent, normalizeTalents } from './talents.js';
 export const ALCHEMIST_ID = 'alchemist';
 
 /**
- * What one point of the old table's Willpower is worth in Supplies.
+ * What one point of the potion sheet's Willpower is worth in Supplies.
  *
  * Not read at runtime: every price is written out on its own item. It is here
- * because it is the working behind all seven of them, and a rate with no name is
- * a rate the next potion gets wrong.
+ * because it is the working behind all twenty three brewable ones, and a rate
+ * with no name is a rate the next potion gets wrong.
+ *
+ * Its sibling is 100 coins a point, which is Jules's and lives in utility.js
+ * beside the prices it sets. `npm run lint:potions` proves both against the
+ * sheet's own column.
  */
 export const SUPPLIES_PER_WILLPOWER = 10;
 

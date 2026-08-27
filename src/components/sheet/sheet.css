@@ -10408,6 +10408,7 @@ body.sheet-fixed #root {
 }
 
 .pact-rung.is-claimed,
+.pact-rung.is-lapsed,
 .pact-rung.is-locked {
   cursor: default;
   opacity: 0.65;

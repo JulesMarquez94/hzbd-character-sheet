@@ -11,8 +11,10 @@
  * `SHEET` below, and every one of them fixes something no line of the app derives:
  *
  *   AP    the drinker's cost, typed on the card
- *   WP    **the brewer's price**, which is not charged to the drinker at all and
- *         is instead the only input to both of the flask's prices
+ *   WP    the drinker's cost too, typed on the card, **and** the only input to
+ *         both of the flask's prices. One column, two jobs: settled by Jules on
+ *         2026-08-27 with "The willpower is for the cost of using the poitions",
+ *         which reversed the 2026-08-24 reading that it was the brewer's alone
  *   Tags  the rung, which is a chip on the card and the rarity on the item and
  *         the tier on the recipe: three fields that have to agree
  *
@@ -112,8 +114,8 @@ for (const [id, [rung, ap, wp]] of Object.entries(SHEET)) {
 
   /* ---- the card ---- */
   if (card.ap !== ap) fail(id, `card costs ${card.ap} Action Points, the sheet says ${ap}`);
-  if (card.wp !== null) {
-    fail(id, `card charges ${card.wp} Willpower; the sheet's Willpower is the brewer's price`);
+  if (card.wp !== wp) {
+    fail(id, `card charges ${card.wp ?? 'no'} Willpower, the sheet says ${wp ?? 'none'}`);
   }
   if (cardRung(card) !== rung) fail(id, `card reads ${cardRung(card)}, the sheet says ${rung}`);
 

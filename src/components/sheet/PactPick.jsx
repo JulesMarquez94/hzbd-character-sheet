@@ -436,7 +436,13 @@ export function PactWindow({ character, state, patch, readOnly = false, onClose 
               type="button"
               className={`pact-kind${live.kind?.id === kind.id ? ' is-on' : ''}`}
               disabled={readOnly}
-              onClick={() => patch(sealPactKind(character, live, kind.id))}
+              /* Null when the tap names the bargain already held, so a mis-tap
+                 writes nothing and logs nothing. A change carries the standing
+                 over between the two ladders — see sealPactKind. */
+              onClick={() => {
+                const body = sealPactKind(character, live, kind.id);
+                if (body) patch(body);
+              }}
             >
               <span className="pact-kind-name">{kind.label}</span>
               <span className="pact-kind-line">{kind.line}</span>
@@ -572,18 +578,22 @@ export function ClaimBoonWindow({ character, state, patch, readOnly = false, onC
             title={
               rung === 'claimed'
                 ? `Claimed: ${pickName(boon.kind, pick)}`
-                : rung === 'locked'
-                  ? `Opens at Rank ${boon.rank}`
-                  : undefined
+                : rung === 'lapsed'
+                  ? `${pickName(boon.kind, pick)} waits on Rank ${boon.rank} coming back. The bar it cost stays spent.`
+                  : rung === 'locked'
+                    ? `Opens at Rank ${boon.rank}`
+                    : undefined
             }
           >
             <span className="pact-rung-label">{boon.label}</span>
             <span className="pact-rung-state">
               {rung === 'claimed'
                 ? pickName(boon.kind, pick)
-                : rung === 'locked'
-                  ? `Rank ${boon.rank}`
-                  : 'Open'}
+                : rung === 'lapsed'
+                  ? `Rank ${boon.rank} · ${pickName(boon.kind, pick)} waits`
+                  : rung === 'locked'
+                    ? `Rank ${boon.rank}`
+                    : 'Open'}
             </span>
           </button>
         ))}
@@ -616,6 +626,8 @@ export function ClaimBoonWindow({ character, state, patch, readOnly = false, onC
         )}
       </div>
 
+      {/* Backing out of the wall lands back on the ladder: only a pick made
+          closes the whole claim, because a changed mind is not a claim spent. */}
       {claiming && !claiming.loop && (
         <PactChooser
           title={claiming.label}
@@ -624,11 +636,11 @@ export function ClaimBoonWindow({ character, state, patch, readOnly = false, onC
           character={character}
           state={live}
           current={null}
-          onPick={(pick) => writeClaim(character, live, claiming.id, pick, patch)}
-          onClose={() => {
-            setClaiming(null);
+          onPick={(pick) => {
+            writeClaim(character, live, claiming.id, pick, patch);
             onClose();
           }}
+          onClose={() => setClaiming(null)}
         />
       )}
 
@@ -640,11 +652,11 @@ export function ClaimBoonWindow({ character, state, patch, readOnly = false, onC
           character={character}
           state={live}
           current={null}
-          onPick={(pick) => patch(claimLoopBoon(character, live, claiming.loop, pick))}
-          onClose={() => {
-            setClaiming(null);
+          onPick={(pick) => {
+            patch(claimLoopBoon(character, live, claiming.loop, pick));
             onClose();
           }}
+          onClose={() => setClaiming(null)}
         />
       )}
     </Modal>

@@ -4,7 +4,7 @@ poison,POISON,"Common, Consumable, Potion",Novice,2,2,200,20,0.3,Poison (2).jpg,
 
 This concoction can also be applied to a weapon, where it lasts for the rest of the combat.
 
-On a hit with the weapon, you deal additional Decay damage equal to the number of Damage Dice rolled."
+On a hit with the weapon, you deal additional Decay damage equal to twice the number of Damage Dice rolled."
 luck-potion,LUCK POTION,"Common, Consumable, Potion",Novice,2,4,400,40,0.3,Luck Potion.jpg,Drinking this potion grants you advantage on all skill checks for 1 hour.
 growth-elixir,GROWTH ELIXIR,"Common, Consumable, Potion",Novice,2,4,400,40,0.4,Growth elixir.jpg,Drinking this elixir grants you the effect of the Giant Growth spell for 1 hour.
 power-draught,POWER DRAUGHT,"Common, Consumable, Potion",Novice,2,4,400,40,0.3,Power Draught.jpg,Drinking this draught grants you advantage on all Attack Rolls for 1 hour.

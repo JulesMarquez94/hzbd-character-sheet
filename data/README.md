@@ -8453,8 +8453,8 @@ reading rather than by your sentence.
 coin anchor for the whole codex, your own "a healing potion is like 100 coins,
 and 100 coins is 10 dollars". Nothing else was repriced, so the scale is
 untouched and the sentence is still true of everything mundane. It is just no
-longer this row that says it. If the anchor was meant to hold, the fix is a
-Healing Potion at 1 Willpower on the sheet rather than 2.
+longer this row that says it. **Confirmed the same day: "200 coin healing poitons
+i fine."**
 
 | Rung | Rarity | Coin range | Supplies range |
 | ---- | ------ | ---------- | -------------- |
@@ -8506,12 +8506,12 @@ the word back** if you would rather it said potion throughout.
 
 ### Four readings the sheet needed
 
-1. **EXPLOSIVE CONCOCTION's two distances.** "up to 6 meter ()" has an empty
-   parenthesis where the feet go, and 6 meters is 20 feet. "within 3 meters (15
-   feet)" is two different distances: 3 meters is 10 feet, 15 feet is 4.5 meters.
-   The meters won, because the codex writes a radius in meters first and because
-   the old Flame Burst Flask was 3 meters (10 feet). **If the burst was meant to
-   be 4.5 meters, that is the number to change.**
+1. **EXPLOSIVE CONCOCTION's two distances. Settled: 3 meters.** "up to 6 meter ()"
+   has an empty parenthesis where the feet go, and 6 meters is 20 feet. "within 3
+   meters (15 feet)" is two different distances: 3 meters is 10 feet, 15 feet is
+   4.5 meters. The meters were taken, and your answer the same day was "explosion
+   conction is 3meter a radius", so the parenthesis was the wrong half. The throw
+   range is still the sheet's 6 meters.
 2. **SHRINK ELIXIR's missing 1.** "the damage dice you take are empowred by while
    the damage dice you deal are depowered by 1" has no number on the first half,
    and the symmetry answers it: 1 either way.
@@ -8537,7 +8537,8 @@ both parentheses were read as instructions and neither is wired.
    rider table has no field for a bonus that counts dice. It has `empower` (one
    more die), `elevate` (a bigger die) and `damage` (a replacement type), and this
    is none of the three. **A fourth field would do it: a flat bonus, in a named
-   damage type, equal to the Damage Dice count.** VULNERABILITY POTION and
+   damage type, equal to twice the Damage Dice count** (see the correction below,
+   where you doubled it). VULNERABILITY POTION and
    TITANSBANE POISON coat a weapon too, and neither is wireable either: one asks
    the sheet to hold a vulnerability and the other to pass an affliction to
    somebody else's sheet.
@@ -8577,10 +8578,13 @@ both parentheses were read as instructions and neither is wired.
    Measured twice, with no character and at level 20 with every attribute at 10,
    and the two readings agree: the live values cost nothing. So the two loads over
    target bought back 84% of your wording for no visible type at all.
-5. **The Willpower is still not charged to the drinker**, which is the same ruling
-   the 2026-08-24 pass left open and which your coin rule now confirms from the
-   other side: a column that sets the price of the flask is the brewer's column.
-   Every card is `wp: null`.
+5. **The Willpower is charged to the drinker. Settled, and it reversed a ruling
+   two days old.** This section first said the opposite, on the 2026-08-24
+   argument that a Willpower price paid inside a long rest is a price nobody pays,
+   since a long rest ends by filling the pool. Your answer was "The willpower is
+   for the cost of using the poitions", so every card carries it (Life Tree Tea
+   excepted: its cell is empty) and the same column still sets both prices. See
+   the correction below.
 6. **Adept and Master brewing is live for the first time.** ALCHEMY's Rank 2 and
    Rank 3 opened tiers the codex had nothing on, and the note over `alchemyPreview`
    in alchemy.js was written about exactly that. Rank 1 reaches 8 recipes, Rank 2
@@ -8611,3 +8615,49 @@ SURGE: the plate is named for the card. All three cards already had art cut from
 those renders, so all three are shadowed and the newest wins by seven months.
 **`data/Elemental/Magma/` can be deleted**, and the run names its three files on
 every pass until it is, the same as `data/Elemental/FIRE/`.
+
+### Corrected the same day
+
+Four sentences back, and the first one reversed a ruling:
+
+> "The willpower is for the cost of using the poitions, explosion conction is
+> 3meter a radius. 200 coin healing poitons i fine. dobule the bonus of poison."
+
+1. **The Willpower is the drinker's cost.** Every one of the twenty three cards
+   with a Willpower cell now charges it, from the Healing Potion's 2 to the ELIXIR
+   OF TIME's 20. Life Tree Tea stays at 6 Action Points and nothing else, because
+   its cell is empty.
+
+   **The same column still sets both prices**, since you confirmed the 200-coin
+   Healing Potion in the next sentence. So one number does two jobs: what the
+   potion costs to make and what it costs to drink. That reads right rather than
+   merely being convenient, and it is now the shortest statement of the shelf: a
+   potion's Willpower is how much of a working it is, so ELIXIR OF SLIME is 10 to
+   distil, 100 Supplies to brew, 3000 coins to buy and 10 to hold down.
+
+   What this reversed is the 2026-08-24 ruling in alchemy.js, which argued the
+   Willpower was the brewer's alone because a price paid inside a long rest is a
+   price nobody pays. That argument was sound and incomplete: the brewer is still
+   never billed for it. The header there is rewritten rather than deleted, so the
+   two days it was read the other way stay on the record.
+
+   **It changes the shelf in play, not just the text.** A drinker now pays for the
+   flask a second time, and the top of the shelf is expensive: 20 Willpower for
+   ELIXIR OF TIME against a level-1 pool of 2 x Level + 2 x Mind + 10. Nothing on
+   this site refuses a use it cannot pay for without the "Use it anyway" prompt, so
+   the sheet will offer it and the table will decide.
+
+2. **EXPLOSIVE CONCOCTION's radius is 3 meters**, which is what the card already
+   said. The "(15 feet)" in the cell was the wrong half of the pair. Ruling closed.
+
+3. **200 coins for a Healing Potion is intended.** The anchor moved on purpose.
+   Ruling closed.
+
+4. **POISON's weapon coat is doubled**: "additional Decay damage equal to **twice**
+   the number of Damage Dice rolled". A swing rolling 3d6 adds 6 Decay, and one
+   rolling 3d6 Empowered by 1 adds 8. Still not wired, and the field it would need
+   is now twice the dice count rather than once.
+
+Every checker still passes, `lint:potions` included, and the renderer still prints
+23 of 24 potion cards at full size: the Poison body grew by six characters and the
+cost orbs are chrome rather than text.
