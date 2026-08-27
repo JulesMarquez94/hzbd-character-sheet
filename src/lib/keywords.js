@@ -411,6 +411,23 @@ export const KEYWORDS = [
     detail: 'A vulnerable entity takes double damage from that damage type.',
   },
   {
+    /* STONEFLESH's own parenthesis, pulled 2026-08-26. The Earth cell glosses the
+       word inside its own sentence, "(reistance means halved damaged)", and a
+       defined term is never glossed in prose as well. The trade BURN made when the
+       Elemental school arrived and VULNERABLE above made on the Death sheet.
+
+       It lands beside VULNERABLE on purpose: the two are one rule read from both
+       ends, doubled against halved, and only one end of it was written down. Five
+       card bodies have printed this word with nothing behind it since each of them
+       arrived — UMBRAL FORM's resistance to all damage, DRACONIC SCALES' chosen
+       type, AMPHIBIAN's Cold, the Cauldron Keeper's hardened scale and now
+       STONEFLESH. All five light. */
+    id: 'resistance',
+    terms: ['resistance', 'resistant'],
+    color: 'var(--stat-shield)',
+    detail: 'A resistant entity takes half damage from that damage type.',
+  },
+  {
     id: 'rooted',
     terms: ['rooted'],
     color: 'var(--dmg-decay)',

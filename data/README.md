@@ -101,9 +101,12 @@ doing on its own.
 | Wild art, from the `Wild/` folder | **2026-08-26, 4 plates** | `public/cards/` + `src/lib/cardArt.js` |
 | Spells · Primal · Life, the Adept and Master rungs | **2026-08-26, 8 spells** (4 on 08-19) | `src/lib/spells.js` (`SPELLS`) |
 | Life art, from the `Life/` folder | **2026-08-26, 8 plates** | `public/cards/` + `src/lib/cardArt.js` |
+| Spells · Elemental · Earth | **2026-08-26, 8 spells** (1 on 08-20) | `src/lib/spells.js` (`SPELLS`) |
+| Earth art, from the `Earth/` folder | **2026-08-26, 9 plates** (SHAPE EARTH redrawn) | `public/cards/` + `src/lib/cardArt.js` |
+| Fire art, from the `Fire/` folder | **2026-08-26, 9 plates**, all redraws | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
-own column order. `primal-spells.csv` holds the 44 Primal spells and nothing
+own column order. `primal-spells.csv` holds the 52 Primal spells and nothing
 else, which is the whole of what the codex has under that school: the one Arcane
 spell it used to carry beside them, Containment Sphere, moved to Ethereal ·
 Spacial on 2026-08-25 when a sheet finally covered it, and the twelve Death rows
@@ -111,15 +114,19 @@ joined them on 2026-08-26. Those twelve and the Flora and Wild Masters are the
 only rows in the file with an `Image` column filled in, because they are the only
 ones whose art arrived as a folder rather than as a postimg link.
 
-**Every other file in `templates/` is still pre-readability-pass.** That pass
+**Most other files in `templates/` are still pre-readability-pass.** That pass
 (2026-08-26) rewrote card text across the codex and did not re-export the tabs,
 so `ethereal-spells.csv` still says "in Shield" where the card now says "Shield",
 and every second half in it still names its own card. `primal-spells.csv` was
-re-exported when Death landed and is current; the rest are a regenerate away and
-nobody has asked for it. `elemental-spells.csv` holds the 29 Elemental spells — a tab
-with no sheet behind it, generated straight out of `spells.js`, and its Image
-column names the render each row came from, which is what the art importer
-places the files by. `draconic-bond-overview.csv`, `trickster-overview.csv`,
+re-exported when Death landed and `elemental-spells.csv` when Earth did, so those two
+are current; the rest are a regenerate away and nobody has asked for it.
+`elemental-spells.csv` holds the 37 Elemental spells — a tab with no sheet behind it,
+generated straight out of `spells.js`, and its Image column names the picture each row
+came from, which is what the art importer places the files by. Nineteen of them name a
+whole card render in `data/Elemental/`; the other eighteen name a plate in
+`data/Fire/` or `data/Earth/`, because the 2026-08-26 drop redrew them.
+
+`draconic-bond-overview.csv`, `trickster-overview.csv`,
 `duelist-overview.csv`, `martial-moves.csv`, `enchanter-ability.csv` and the two
 `berserker-*.csv` are the tabs that were written here rather than exported, so
 they are tracked: a clone would otherwise lose the only copy. The two
@@ -7447,3 +7454,218 @@ that script counts.
 - `data/templates/primal-spells.csv` at 52 rows with Life's eight exported into it
   after GIANT GROWTH where the codex has them, their `Image` column carrying the
   filename each picture arrived under, `Agony.jpg` and `Ressurection.jpg` included.
+
+## The Earth family and the Fire redraws, 2026-08-26
+
+Asked for in as many words: "In the fire folder there is all the final iamge to use
+for the fire spells. Also I have added all the elemental earht spell in the data with
+all image in the earth folder. including for shape arth. Remeberto correct the text,
+make sure it follow the system wording and guide line."
+
+Two folders and one sheet. `data/Fire/` holds nine pictures and asks for nothing else:
+Fire's nine cards have been in the codex since the school arrived, and these are the
+finished paintings for them. `data/Spells - Elemental - Earth.csv` sits at the top of
+`data/` with eight rows in the usual eight columns, and `data/Earth/` holds nine
+pictures for them, the ninth being a redraw of SHAPE EARTH.
+
+| Tier | Spells |
+| ---- | ------ |
+| Novice | SHAPE EARTH *(already in the codex)*, STONE BARRAGE, STONEFLESH |
+| Adept | TREMOR SENSE, EARTH GLIDE, SINKHOLE |
+| Master | MOUNTAIN'S WEIGHT, EARTHQUAKE, AEGIS OF STONE |
+
+### Earth was one card, and is now three a rung
+
+Earth arrived with the Elemental school on 2026-08-20 as a single loose render at the
+top of `data/Elemental/`, no family folder under it and no rung above Novice. Its own
+note in `spells.js` said "the family exists the moment a second card does". Eight
+arrived at once.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Elemental before | 12 | 9 | 8 | 29 |
+| **after** | **14** | **12** | **11** | **37** |
+
+**Earth is the fifth of the school's seven families to reach Master** and the third to
+stand at a full nine, beside Fire and Water. Lightning and Magma reach Master on one
+card a rung. Wind is the short family now at three Novice and one Adept, and Steam is
+still an empty folder holding somebody else's HURL.
+
+No talent set casts from Elemental yet, so no set's pool moves. The Arcanist, which
+names no school, goes from 48, 89 and 129 to **50, 94 and 137**. An Imbuement binds "a
+NOVICE spell" with no school named, so STONE BARRAGE and STONEFLESH can reach an item
+from the day they exist.
+
+### The sheet's own hand
+
+Longhand, like every Elemental cell before it: "Make a Mind Ranged Attack roll", "2d6 +
+Mind Blunt damage", "4d6 + 4 × Mind Shield". The markers were put back the way the
+school's first pull put them back, and every number comes off `*stat` rather than off
+Mind, so an Instinct caster prints through the same card. Metres arrive with their feet
+beside them on five of the eight rows and with the brackets left empty on three.
+
+### The readings
+
+- **AEGIS OF STONE is spelled out.** The Name cell says "Aegis of Stron" and the
+  picture says `Aegiis of stone.jpg`, which is two different misspellings of one
+  English phrase rather than a name. The read RESURRECTION got one school over, and
+  aliased in `pull-card-art.mjs` for the same reason.
+- **STONEFLESH's resistance gloss went to the glossary.** The cell spells the word out
+  inside its own sentence, "(reistance means halved damaged)", and a defined term is
+  never glossed in prose as well. `keywords.js` carries **resistance** now, beside
+  VULNERABLE: the two are one rule read from both ends, doubled against halved, and
+  only one end of it was written down. Five card bodies have printed the word with
+  nothing behind it since each of them arrived (UMBRAL FORM, DRACONIC SCALES,
+  AMPHIBIAN, the Cauldron Keeper's hardened scale and now STONEFLESH) and all five
+  light. It is the trade BURN made when this school first arrived.
+- **STONEFLESH costs 8 Willpower, and no Novice spell in the codex costs more than 4.**
+  It is level with the priciest Adept, double every other Novice, and it is what the
+  sheet says. **Worth Jules's word.**
+- **STONEFLESH names "physical damage"**, a category the codex does not define. The
+  only other card that uses the word is the Soak background's "non-physical damage",
+  unlit since it arrived. Left plain, and on the pile for the statuses tab this file
+  has been asking for since August.
+- **TREMOR SENSE and SINKHOLE are both labelled OVERCAST over an empty cell.** Neither
+  prints a second half, because there is no half to print. **Worth Jules's word**:
+  either the label is a leftover or two riders went missing on the way out of the
+  sheet.
+- **Three conversions arrived empty.** TREMOR SENSE reads "18 meter ()", EARTH GLIDE
+  "20 meter (.)" and MOUNTAIN'S WEIGHT "9 meters ( feet)". Filled at the codex's own
+  rates: 60 feet, 65 feet and 30 feet, the middle one being the conversion SINGULARITY
+  settled a day earlier.
+- **EARTHQUAKE doubles against "inaniamte entity"**, printed as inanimate ones. Nothing
+  in the codex defines an inanimate entity, and SHAPE EARTH's wall two rungs up is the
+  only thing in the school with Health of its own, so it is very likely the card that
+  was meant to break. On the statuses tab's pile with Difficult Terrain and Slow Fall.
+- **MOUNTAIN'S WEIGHT has no clock.** The boulder holds until 6 Action Points get the
+  target out from under it, which is the card's only exit and is priced the way a
+  grapple's is. Read as constrained until freed, and the tracker offers it no row.
+- **STONE BARRAGE and EARTHQUAKE print Blunt**, the sheet's own word on both rows and
+  the first typed damage this family has had.
+- Spelling and grammar, without further comment: "YOu", "teh", "entites", "isnbile
+  one", "silouhte", "imapre you vision", "your resitant", "bouldr", "boulder rock", a
+  missing space after a comma in STONEFLESH, and a "He" that is every entity the spell
+  can land on.
+
+### Two cards were cut to fit, and the estimate did not catch either
+
+`lint:cards` passed EARTHQUAKE at a load of 596, inside the 600 ceiling. The renderer
+disagreed: **0.894**, under the codex's 0.9 floor and the first card that would have
+gone out as fine print. EARTH GLIDE read **0.902**, exactly on it. Both were cut, and
+what went was repetition rather than rules:
+
+- EARTHQUAKE's "The area is Difficult Terrain" folded into the sentence that makes it,
+  and "The damage is double on inaniamte entity" became "Inanimate ones take double".
+  **0.949**, better than RAIN OF FIRE beside it.
+- EARTH GLIDE's "You move through earth and stone" is a second telling of "pass through
+  it like water" one line above, so the Movement Speed moved up into that sentence and
+  the repetition went. **0.965**.
+
+Every mechanic on both rows is still printed. This is the case docs/card-text.md
+describes: cut words, never mechanics.
+
+**The estimate has a blind spot worth knowing about.** RAIN OF FIRE at load 594 prints
+at 0.945 and EARTHQUAKE at 596 printed at 0.894, two cards two characters apart and
+half a rung of type apart, because the fitter breaks lines and the estimate counts
+characters. The static number is a gate, not an answer.
+
+### The redraws, and one folder that should be deleted
+
+**This is the first drop that replaces art the codex already had.** Elemental arrived
+in August as whole card renders in `data/Elemental/<family>/` — 1055x1496 with a white
+border, cost orbs and the banner baked in — and `cardPlate` cropped the painting out of
+the top 45% of each one. These nineteen files are those paintings, dropped as plates:
+1200x896 and 2400x1792, no border and no banner.
+
+So `data/Fire/` and `data/Earth/` join both `FAMILY_FOLDERS` and `PLATE_FOLDERS` in
+`scripts/pull-card-art.mjs`, and the crop is off for both. They are the eighth and
+ninth folders claimed as a family rather than a school and the first two under
+Elemental. This is the retirement the school's own note predicted on 2026-08-20: "a
+drop of art-only files would retire them, and nothing needs renaming when it comes."
+
+**Ten files in `data/Elemental/` are now dead weight and the art run says so on every
+pass.** Every picture in the two drops claims a card that a render in
+`data/Elemental/` also claims, so the "one card, two files" rule settles it: the newest
+file wins, by seven months, and the loser is named in the report. Ten lines a run:
+
+    shape-earth   two files claim it — using Earth/Shape Earth, not NOVICE SPELL - ELEMENTAL - EARTH - SHAPE EARTH
+    produce-flame two files claim it — using Fire/Produce Flame, not NOVICE SPELL - ELEMENTAL - FIRE - PRODUCE FLAME
+    ... and eight more
+
+**Deleting `data/Elemental/FIRE/` and the loose `NOVICE SPELL - ELEMENTAL - EARTH -
+SHAPE EARTH.jpg` beside it makes the report go quiet.** Nothing is lost: those renders
+are the paintings with a card drawn around them, and the paintings are now in `Fire/`
+and `Earth/`. Left in place rather than deleted here, the way the stray HURL in
+`Steam/` was left, because a picture in `data/` is the designer's.
+
+Three filenames needed an ALIASES row, all three from the Earth drop, whose Image
+column is empty: `Stone Flesh.jpg` for STONEFLESH, `Earth Quake.jpg` for EARTHQUAKE and
+`Aegiis of stone.jpg` for AEGIS OF STONE. The other six land on their own,
+`Mountain s Weight.jpg` included, because `flatten` turns the sheet's apostrophe into a
+space and the file already has one there. All nine Fire files land on their own.
+
+### The shelf and the colour did not move
+
+Nothing to shelve or colour. Earth has been sixth on the Elemental shelf in
+`cardOrder.js` and had `--family-earth` in `index.css` since those files existed, both
+put there by the drop that brought SHAPE EARTH. `lint:order` still reports 4 schools
+and 15 families.
+
+### What was checked
+
+- **The fits are the renderer's own**, off the throwaway harness rebuilt for the
+  purpose and deleted after (`fit.html` plus `src/fit-harness.jsx`, cards rendered
+  through the real `AbilityCard` behind `showsArt: () => false`, `--ac-fit` read off
+  each `.ac-body`). Proved first against the three cards whose fit is on the record and
+  all three came back exact: SENSE LIFE 0.902, RAIN OF FIRE 0.945, PESTILENT CLOUD
+  0.969. **Seven of the nine print at full size**, EARTHQUAKE at 0.949 and EARTH GLIDE
+  at 0.965.
+- **Every marker resolves and nothing is unspent**, resolved the way `CardText.jsx`
+  resolves it: `[[stat + level]]`, `[[5*stat]]`, `[[2d6 + stat]]`, `[[4d6 + 4*stat]]`
+  and `[[2d6 + 2*stat]]` all give numbers, `{damage}` finds Blunt on the two cards that
+  carry a type, and `{stat}` and `{roll}` find Mind. Twenty-one defined terms light
+  across the family, resistance among them.
+- `npm run lint:cards`: 445 cards inside the 600 ceiling and spelled one way, up from
+  437. Three of the nine are over the 480 target: EARTHQUAKE 585, EARTH GLIDE 544 and
+  STONE BARRAGE 515, in a band the codex holds 96 cards in.
+- `npm run lint:halves`: all 79 priced off their own prose, up from 75. The four new
+  ones are STONE BARRAGE's Multicast, EARTH GLIDE's and AEGIS OF STONE's Overcasts and
+  EARTHQUAKE's Upkeep.
+- **The tracker reads the durations off the prose**, unchanged: TREMOR SENSE 1 hour,
+  AEGIS OF STONE 3 hours, EARTHQUAKE an Upkeep each turn. STONEFLESH is offered no row
+  on purpose: its clock is the Shield pool, which is a condition and not a duration.
+- `npm run lint:order`: 4 schools and 15 families shelved, 200 cards sorting up the
+  ladder, up from 192. `lint:riders`: all 11 still reach the sheet and come back off.
+- `npm run lint:text` clean across 136 files. `lint`, `lint:math` and `lint:weapons`
+  clean and unchanged. `npm run build` clean.
+- **The art was looked at rather than counted.** Eighteen plates re-encoded, 720px and
+  a 200px thumbnail apiece, 21 to 67 KB. PRODUCE FLAME and EARTHQUAKE were opened: the
+  whole painting, no white border and no banner, which is what a plate is and what the
+  crop would have ruined.
+- `data/templates/elemental-spells.csv` regenerated straight out of `spells.js` at 37
+  rows, Earth's nine included, every named picture proved to exist on disk. It had been
+  stale since 2026-08-20 and carried the pre-readability-pass wording for all 29 of the
+  old rows; it now carries what the cards print. The Image column names the file each
+  picture came out of, `Stone Flesh.jpg` and `Aegiis of stone.jpg` included.
+
+### This is the Earth half of the compound-element proposal, written by hand
+
+Earlier the same day Jules asked for every missing Elemental spell to be designed and
+gave the shape: **Earth and Wind each at 3 Novice, 3 Adept and 3 Master, and Sand,
+Steam, Mud and Storm at 1 of each**, because "they are compound elements like magma is
+fire + earth, wind and water are storm". Twenty-five spells were proposed against that
+and none were written, because he said not to change the files.
+
+**These eight are Earth's share of that count, and they are his rather than the
+proposal's.** They land on exactly the 3/3/3 he specified. So the proposal's Earth half
+is retired, and what is left of it is **seventeen** spells: five to finish Wind and
+three each for the four compound families, none of which exist yet. Those designs and
+the nine rulings they raise are still only in the artifact and the `.mjs` handed over
+in chat, not in this file.
+
+### Still open
+
+Four, all of them Jules's to settle: **STONEFLESH's 8 Willpower** on a Novice card;
+**the two empty OVERCAST cells** on TREMOR SENSE and SINKHOLE; **what an inanimate
+entity is**, which EARTHQUAKE doubles against and nothing defines; and whether
+**"physical damage"** is Sharp and Blunt or something wider.

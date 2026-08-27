@@ -203,6 +203,26 @@ const ALIASES = {
      The other six land without help. */
   'Exposed Nerves': 'Agony.jpg',
   Resurrection: 'Ressurection.jpg',
+
+  /* Three from data/Earth/, 2026-08-26, and a fourth drop with an empty Image
+     column. All three are one word joined or split the way the sheet does not
+     join or split it: the sheet prints STONEFLESH and the file is `Stone
+     Flesh.jpg`, the sheet prints EARTHQUAKE and the file is `Earth Quake.jpg`.
+
+     `Aegiis of stone.jpg` is the odd one and is the RESURRECTION case again: the
+     Name cell says "Aegis of Stron" and the picture says "Aegiis", which is two
+     different misspellings of one English phrase rather than a name, so the codex
+     prints AEGIS OF STONE and neither side of the drop matches it.
+
+     The other six land without help, `Mountain s Weight.jpg` included: `flatten`
+     turns the sheet's apostrophe into a space and the file already has one there.
+
+     Nothing in this drop can quietly land on something else the way BERSERKER'S
+     RAGE could. Earth is not a talent set, so the plate branch has no set to claim
+     a leftover file for, and unaliased these three would simply be reported. */
+  Stoneflesh: 'Stone Flesh.jpg',
+  Earthquake: 'Earth Quake.jpg',
+  'Aegis of Stone': 'Aegiis of stone.jpg',
 };
 
 /**
@@ -523,8 +543,9 @@ const ONE_OFF = 'of';
  * A drop with no Image column filled in falls back on the filename, and then a
  * render whose name is not the card's needs an ALIASES entry after all. That is
  * how `data/Ethereal/` arrived on 2026-08-25 and why three of its thirteen are
- * in that table, `data/Shadow/` the same afternoon for one of twelve, and
- * `data/Time/` that evening for one of twelve more. See
+ * in that table, `data/Shadow/` the same afternoon for one of twelve,
+ * `data/Time/` that evening for one of twelve more and `data/Earth/` on
+ * 2026-08-26 for three of nine. See
  * PLATE_FOLDERS below for the other thing those drops settled, and FAMILY_FOLDERS
  * for the folder that is not a school at all.
  */
@@ -586,8 +607,35 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethe
  * one. Nothing here counts them, which is the point of saying so: a folder is
  * claimed by name and its files are resolved one at a time against the codex, so a
  * drop of eight costs exactly what a drop of four does.
+ *
+ * `data/Fire/` and `data/Earth/` are the eighth and ninth, 2026-08-26, and they
+ * are the first two under Elemental rather than Ethereal or Primal. Both are
+ * something none of the seven above them were: **a redraw of art this script has
+ * already placed once**. Elemental arrived on 2026-08-20 as whole card renders in
+ * `data/Elemental/<family>/`, and these nineteen files are the paintings those
+ * renders were built out of, dropped as plates. So both folders name a family that
+ * is not new, in a school whose own folder is still claimed and still walked.
+ *
+ * That means every file in them claims a card a file in `data/Elemental/` also
+ * claims, which is exactly what "one card, two files" below is for: the newest
+ * file wins, the older is named in the run's report, and deleting
+ * `data/Elemental/FIRE/` and the two loose renders at the top of that folder is
+ * what makes the report go quiet. Nothing here needs to know which of the two is
+ * the plate — the mtime decides, and the drop is the newer artifact by seven
+ * months.
  */
-const FAMILY_FOLDERS = new Set(['shadow', 'time', 'space', 'death', 'flora', 'wild', 'life']);
+const FAMILY_FOLDERS = new Set([
+  'shadow',
+  'time',
+  'space',
+  'death',
+  'flora',
+  'wild',
+  'life',
+  'fire',
+  'earth',
+]);
+
 
 /** Every folder whose files are spell art, whether it names a school or a family. */
 const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
@@ -606,7 +654,9 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * whatever it is handed down to 720. `data/Space/` is twelve more at 1200x896,
  * which is the size the Time drop settled, `data/Death/` is eleven back at
  * 2400x1792, `data/Flora/` and `data/Wild/` are four more each at the same, and
- * `data/Life/` is eight more still.
+ * `data/Life/` is eight more still. `data/Fire/` and `data/Earth/` are nine each
+ * on 2026-08-26, mixed 2400x1792 and 1200x896 within one folder, which is the Time
+ * drop's shape and costs nothing for the same reason.
  *
  * Cutting one of these would take the top 45% of a painting that is already
  * only the painting. So the crop is what the exception turns off, and nothing
@@ -614,7 +664,18 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * any family folder a later drop brings, and still resolved against the codex
  * the same way.
  */
-const PLATE_FOLDERS = new Set(['ethereal', 'shadow', 'time', 'space', 'death', 'flora', 'wild', 'life']);
+const PLATE_FOLDERS = new Set([
+  'ethereal',
+  'shadow',
+  'time',
+  'space',
+  'death',
+  'flora',
+  'wild',
+  'life',
+  'fire',
+  'earth',
+]);
 
 /**
  * The ancestries, which arrive as one folder with a folder inside it.

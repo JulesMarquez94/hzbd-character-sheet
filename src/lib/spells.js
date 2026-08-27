@@ -1959,9 +1959,100 @@ export const SPELLS = withArt([
       'At your Turn Start, pay 2 Willpower to keep the magma molten. Miss the Upkeep and the spell ends. When the spell ends, the magma solidifies and **all entities** in it become rooted **until their next Turn End**.', // text-style-ok: joins two clauses
   },
 
-  /* ----------------------------------------------------- Elemental · Earth ----
-   * One card so far, loose in the school folder with no family folder of its
-   * own. The family exists the moment a second card does.
+  /* ======================================================= Elemental · Earth ====
+   *
+   * The family's other eight cards, pulled 2026-08-26 from `data/Spells -
+   * Elemental - Earth.csv` with nine pictures in `data/Earth/`: eight new ones
+   * and a redraw of SHAPE EARTH, the one card the family already had.
+   *
+   * Earth arrived with the school on 2026-08-20 as a single loose render at the
+   * top of `data/Elemental/`, no family folder under it and no rung above Novice.
+   * This is the drop that fills it in, three cards a rung, which is the shape Fire
+   * and Water have had since the school opened. **Earth is the fifth of the
+   * school's seven families to reach Master** and the third to stand at a full
+   * nine, beside Fire and Water. Lightning and Magma reach Master on one card a
+   * rung. Wind is the short one now, three Novice cards and one Adept, and Steam
+   * is still an empty folder with somebody else's HURL in it.
+   *
+   * The school goes from 30 spells to 38, and an Imbuement can bind either of the
+   * two new Novice ones from the day they exist.
+   *
+   * ------------------------------------------------------- the sheet's own hand
+   * Longhand, like every Elemental cell before it: "Make a Mind Ranged Attack
+   * roll", "2d6 + Mind Blunt damage", "4d6 + 4 × Mind Shield". The markers are put
+   * back the way the school's first pull put them back, and the numbers come off
+   * `*stat` rather than off Mind, so an Instinct caster prints through the same
+   * card. Metres arrive with their feet beside them on five of the eight rows and
+   * with the brackets left empty on three.
+   *
+   * ------------------------------------------------------------- the readings
+   * - **AEGIS OF STONE is spelled out.** The Name cell says "Aegis of Stron" and
+   *   the picture says `Aegiis of stone.jpg`, which is two different misspellings
+   *   of one English phrase rather than a name. The same read RESURRECTION got one
+   *   school over, aliased in `pull-card-art.mjs` for the same reason.
+   * - **STONEFLESH's resistance gloss went to the glossary.** The cell spells it
+   *   out inside its own sentence, "(reistance means halved damaged)", and a
+   *   defined term is never glossed in prose as well. `keywords.js` carries
+   *   **resistance** now, which is the trade BURN made in this school's first pull
+   *   and VULNERABLE made on the Death sheet. Five card bodies have printed the
+   *   word with nothing behind it since each of them arrived, and all five light.
+   * - **STONEFLESH costs 8 Willpower, and no Novice spell in the codex costs more
+   *   than 4.** It is level with the priciest Adept, double every other Novice,
+   *   and it is what the sheet says. **Worth Jules's word.**
+   * - **STONEFLESH names "physical damage"**, a category the codex does not
+   *   define. The only other card that uses the word is the Soak background's
+   *   "non-physical damage", unlit since it arrived. Left plain, and it belongs on
+   *   the statuses tab data/README.md has been asking for since August.
+   * - **TREMOR SENSE and SINKHOLE are both labelled OVERCAST over an empty cell.**
+   *   Neither prints a second half, because there is no half to print. **Worth
+   *   Jules's word**: either the label is a leftover or two riders went missing on
+   *   the way out of the sheet.
+   * - **Three conversions arrived empty.** TREMOR SENSE reads "18 meter ()",
+   *   EARTH GLIDE "20 meter (.)" and MOUNTAIN'S WEIGHT "9 meters ( feet)". Filled
+   *   at the codex's own rates: 60 feet, 65 feet and 30 feet, the middle one being
+   *   the conversion SINGULARITY settled a day earlier.
+   * - **EARTHQUAKE doubles against "inaniamte entity"**, printed as inanimate
+   *   ones. Nothing in the codex defines one, and SHAPE EARTH's wall two rungs up
+   *   is the only thing in the school with Health of its own, so this is very
+   *   likely the card that was meant to break it. On the statuses tab's pile with
+   *   Difficult Terrain and Slow Fall.
+   * - **MOUNTAIN'S WEIGHT has no clock.** The boulder holds until 6 Action Points
+   *   get the target out from under it, which is the card's only exit and is
+   *   priced the way a grapple's is. Read as constrained until freed.
+   * - **STONE BARRAGE and EARTHQUAKE print Blunt**, which is the sheet's own word
+   *   on both rows and the first typed damage this family has had.
+   * - **EARTHQUAKE and EARTH GLIDE carry every mechanic on their rows and not
+   *   every sentence.** Both were cut to fit, against the real renderer rather
+   *   than the estimate: EARTHQUAKE first printed at 0.894 and EARTH GLIDE at
+   *   0.902, under and on the codex's floor. What went was repetition. The
+   *   Difficult Terrain sentence folded into the cast that makes it, "the damage
+   *   is double on inanimate entity" became "Inanimate ones take double", and
+   *   EARTH GLIDE's "You move through earth and stone" is a second telling of the
+   *   sentence above it, so its Movement Speed moved up into that one. 0.949 and
+   *   0.965 now. See docs/card-text.md: cut words, never mechanics.
+   * - Spelling and grammar, without further comment: "YOu", "teh", "entites",
+   *   "isnbile one", "silouhte", "imapre you vision", "your resitant", "bouldr",
+   *   "boulder rock", a missing space after a comma in STONEFLESH, and a "He" that
+   *   is every entity the spell can land on.
+   *
+   * ------------------------------------------------------ the shelf and the art
+   * Nothing new to shelve or colour. Earth has been sixth on the Elemental shelf
+   * in `cardOrder.js` and had `--family-earth` in `index.css` since those files
+   * existed, both put there by the drop that brought SHAPE EARTH.
+   *
+   * The nine pictures are 1200x896 art plates, no white border and no banner, so
+   * `data/Earth/` joins `FAMILY_FOLDERS` and `PLATE_FOLDERS` in
+   * `pull-card-art.mjs` and the crop stays off. `data/Fire/` arrived in the same
+   * drop and does the same for Fire's nine, which are all redraws of art the codex
+   * already had: they are the eighth and ninth folders claimed as a family rather
+   * than a school, and the first two under Elemental.
+   *
+   * SHAPE EARTH's plate is cut from the drop now rather than out of the 2026-08-20
+   * render, which is the retirement the school's own note predicted: "a drop of
+   * art-only files would retire them, and nothing needs renaming when it comes".
+   * Ten renders in `data/Elemental/` are dead weight now and the art run names one
+   * of them on every pass. Deleting `data/Elemental/FIRE/` and the loose SHAPE
+   * EARTH render beside it makes the report go quiet, and loses nothing.
    */
   {
     id: 'shape-earth',
@@ -1978,6 +2069,136 @@ export const SPELLS = withArt([
       'The object has a Defense equal to [[stat + level]] and Health equal to [[5*stat]].',
     sub_name: null,
     sub_body: null,
+  },
+  {
+    id: 'stone-barrage',
+    name: 'Stone Barrage',
+    summary: 'Tear a rock out of the ground and throw it. Multicast buys another target.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Elemental', 'Earth'],
+    ap: 2,
+    wp: 1,
+    stat: 'mind',
+    damage: ['Blunt'],
+    body:
+      'You tear a stone loose from the ground and hurl it at **an entity** you can see within **12 meters (40 feet)**.\n\n' +
+      'Make a {stat} Ranged Attack {roll}. On a hit, you deal [[2d6 + stat]] {damage} damage.',
+    sub_name: 'Multicast',
+    sub_body:
+      'When casting this spell, you may spend an additional 1 Action Point and 1 Willpower any number of times. For each time you do, target **an additional eligible entity**.',
+  },
+  {
+    /* The gloss the cell put inside its own sentence is the Resistance entry in
+       keywords.js now. See "the readings" above. */
+    id: 'stoneflesh',
+    name: 'Stoneflesh',
+    summary: 'Skin of packed stone: a large Shield, resistance to the physical and half your Speed.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Elemental', 'Earth'],
+    ap: 4,
+    wp: 8,
+    stat: 'mind',
+    body:
+      'Your skin hardens into a shell of packed stone.\n\n' +
+      'You gain [[4d6 + 4*stat]] Shield. While the Shield holds, you cannot be moved against your will or knocked prone, you have resistance to physical damage and your Movement Speed is halved.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'tremor-sense',
+    name: 'Tremor Sense',
+    summary: 'An hour of reading the ground: everything standing on it, invisible or walled off.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Elemental', 'Earth'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'You extend your senses into the earth, sensing **all entities** within **18 meters (60 feet)** for **1 hour**.\n\n' +
+      'While they touch the ground or stone you know their exact position and see them as silhouettes through walls and darkness, invisible ones included.\n\n' +
+      'You ignore blinded and any other effect that would impair your vision.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'earth-glide',
+    name: 'Earth Glide',
+    summary: 'Swim twenty meters through solid stone, blind. Bring company for a price.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Elemental', 'Earth'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'You loosen the stone around you and pass through it like water at your Movement Speed for up to **20 meters (65 feet)**.\n\n' +
+      'You cannot see while inside. If the spell ends while you are enclosed, you are pushed to the nearest open space and knocked prone.',
+    sub_name: 'Overcast',
+    sub_body:
+      'When casting this spell, you may spend an additional 2 Action Points and 3 Willpower to bring **any entities** you can touch along with you.',
+  },
+  {
+    id: 'sinkhole',
+    name: 'Sinkhole',
+    summary: 'Drop a six-meter circle of ground into a pit nobody climbs out of quickly.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Elemental', 'Earth'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'The ground gives way in a **6-meter (20-foot)** area centered on a point you can see within **15 meters (50 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, the entity falls into the pit and is knocked prone.\n\n' +
+      'The pit is **3 meters (10 feet)** deep and its walls are Difficult Terrain.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'mountains-weight',
+    name: 'Mountain’s Weight',
+    summary: 'A boulder pins one entity. Six Action Points is the only way out from under it.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Elemental', 'Earth'],
+    ap: 4,
+    wp: 5,
+    stat: 'mind',
+    body:
+      'You settle the weight of a mountain onto **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against its Reflex. On a success, the target is constrained under a boulder.\n\n' +
+      'The target or an ally can spend 6 Action Points to get it out from under the boulder.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'earthquake',
+    name: 'Earthquake',
+    summary: 'Break an eighteen-meter radius of ground, and keep breaking it every turn you pay.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Elemental', 'Earth'],
+    ap: 4,
+    wp: 6,
+    stat: 'mind',
+    damage: ['Blunt'],
+    body:
+      'You split an **18-meter (60-foot)** radius of ground you can see within **30 meters (100 feet)** into Difficult Terrain.\n\n' +
+      'Make a {stat} Roll {roll} against the Grit of **all entities** in the area. On a success, you deal [[4d6 + 4*stat]] {damage} damage and they are knocked prone, or half as much on a failure. Inanimate ones take double.',
+    sub_name: 'Upkeep',
+    sub_body:
+      'At your Turn Start, pay 4 Willpower to break the ground again. Miss the Upkeep and the spell ends.',
+  },
+  {
+    id: 'aegis-of-stone',
+    name: 'Aegis of Stone',
+    summary: 'Four slabs orbit you for three hours. Spend one to take the weight off a hit.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Elemental', 'Earth'],
+    ap: 2,
+    wp: 3,
+    stat: 'mind',
+    body: 'You raise 4 slabs of stone that orbit your body for **3 hours**.',
+    sub_name: 'Overcast',
+    sub_body:
+      'Whenever you take damage, you can spend 1 Willpower to expend one of your slabs.\n\n' +
+      'Doing so reduces the damage taken by [[2d6 + 2*stat]].',
   },
 
   /* ========================================================= Ethereal ====
