@@ -104,6 +104,7 @@ doing on its own.
 | Spells · Elemental · Earth | **2026-08-26, 8 spells** (1 on 08-20) | `src/lib/spells.js` (`SPELLS`) |
 | Earth art, from the `Earth/` folder | **2026-08-26, 9 plates** (SHAPE EARTH redrawn) | `public/cards/` + `src/lib/cardArt.js` |
 | Fire art, from the `Fire/` folder | **2026-08-26, 9 plates**, all redraws | `public/cards/` + `src/lib/cardArt.js` |
+| A content hash on every art URL | **2026-08-27, 295 rows** | `src/lib/cardArt.js`, `src/lib/itemArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 52 Primal spells and nothing
@@ -7669,3 +7670,68 @@ Four, all of them Jules's to settle: **STONEFLESH's 8 Willpower** on a Novice ca
 **the two empty OVERCAST cells** on TREMOR SENSE and SINKHOLE; **what an inanimate
 entity is**, which EARTHQUAKE doubles against and nothing defines; and whether
 **"physical damage"** is Sharp and Blunt or something wider.
+
+## A redraw needs a new URL, 2026-08-27
+
+Reported the morning after the Fire drop: "in the spell preview I see the old image
+so like in arcanist spellbook and blazing suns is wrong no matter what".
+
+**Nothing was wrong with the drop.** The pictures were on disk, `cardArt.js` pointed
+at them, the build carried them and the render path asked for the right file. It was
+checked end to end: the brief that the Arcanist's spellbook draws asks for
+`/cards/blazing-suns-thumb.webp`, and the dev server answered with the new 5,912
+bytes rather than the old 7,154.
+
+**The bug is that the URL did not change when the picture did.** A redraw keeps the
+filename and swaps the pixels, which is the one shape of change no cache can see.
+Every browser and every Cloudflare edge that had already fetched
+`/cards/blazing-suns.webp` went on serving the painting it already had, and would
+have kept doing it until something evicted it. Eighteen redrawn pictures shipped to
+readers who could not see any of them.
+
+### Eight characters on the end of every art URL
+
+`pull-card-art.mjs` and `pull-item-art.mjs` now stamp each row with the first eight
+characters of its file's SHA-256:
+
+    'blazing-suns': '/cards/blazing-suns.webp?v=ff3242fd',
+
+The old Blazing Suns art hashes to `77fa1925` and the new one to `ff3242fd`, so had
+this been in place on 2026-08-26 the drop would have reached every reader the moment
+it deployed.
+
+- **Same bytes, same URL.** A run that changes no picture changes no line of
+  `cardArt.js`, which was proved by running it twice and diffing. The lookup does not
+  churn and neither does the diff.
+- **A query string rather than a hashed filename.** The file on disk keeps the name a
+  person would look for, and Cloudflare's default cache key already includes the
+  query. A hashed filename would work as well and would leave the beaten file behind
+  on every redraw, which is a second thing to clean up.
+- **The thumbnail rides the full picture's hash.** The two are cut from one source in
+  the same pass and are only ever written together, so they cannot disagree, and one
+  token per card keeps the lookup one flat map of one string. `thumbFor` inserts
+  `-thumb` before the query rather than at the end of the string.
+- **Items got the same treatment**, since `itemArt.js` is generated the same way and
+  has the same hole in it. Nothing has been redrawn there yet, which is the only
+  reason it had not bitten.
+
+### What is still uncovered
+
+**A talent, lineage or background plate has no version on it.** Those are not
+generated: `art: '/backgrounds/mercenary.jpg'` is written by hand in
+`backgrounds.js`, and the same in `talents.js` and `lineages.js`. Redraw one of those
+and the same thing happens again, with no generator to stamp it. The Mycomancer's
+overview plate has already been redrawn once, on 2026-08-20, back when nobody was
+looking at a cache.
+
+Fixing it means either generating those three lookups the way the two art files are
+generated, or hand-editing a hash into a data file on every redraw, which nobody will
+remember to do. **Left alone until a plate is actually redrawn**, and written down
+here so that day is not spent rediscovering this page.
+
+### While you wait for a deploy
+
+A reader already holding an old picture picks the new one up on their next load,
+because the URL they are asking for no longer exists in their cache. Nothing has to
+be purged and nobody has to hard-reload. That is the whole point of the eight
+characters.

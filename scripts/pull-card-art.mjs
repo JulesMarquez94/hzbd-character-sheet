@@ -37,6 +37,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -1302,11 +1303,38 @@ for (const id of art.keys()) {
   thumbsMade += 1;
 }
 
+/* ------------------------------------------------------ the version on a URL
+
+   A redraw keeps the filename and changes the pixels, which is the one shape of
+   change a cache cannot see. `/cards/blazing-suns.webp` was the same URL before
+   and after the Fire drop of 2026-08-26, so every browser and every Cloudflare
+   edge holding the old painting went on serving it: the drop reached the disk,
+   the lookup and the build, and readers still saw what they already had. Jules
+   reported it the next morning as the spell preview showing the old picture, and
+   it was not the preview. It was every surface that draws card art.
+
+   So the URL carries eight characters of the file's own content hash. Same bytes,
+   same URL, and a run that changes nothing changes nothing in the diff; new bytes,
+   new URL, and every cache in the chain misses on it at once, with no purge to
+   remember and nothing to do by hand.
+
+   A query string rather than a hashed filename, because the file on disk keeps
+   the name a person would look for and Cloudflare's default cache key already
+   includes the query. A hashed *filename* would also work and would leave the old
+   file behind on every redraw, which is a second thing to clean up.
+
+   **The thumbnail rides the full picture's hash rather than carrying its own.**
+   The two are cut from one source in the same pass and are only ever written
+   together, so they cannot disagree, and one token per card keeps the lookup one
+   flat map of one string. */
+const version = (file) =>
+  createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 8);
+
 /* ------------------------------------------------------------ write the lookup */
 
 const rows = [...art.entries()]
   .sort((a, b) => a[0].localeCompare(b[0]))
-  .map(([id, src]) => `  '${id}': '${src}',`)
+  .map(([id, src]) => `  '${id}': '${src}?v=${version(path.join(OUT, `${id}.webp`))}',`)
   .join('\n');
 
 writeFileSync(
@@ -1329,6 +1357,14 @@ writeFileSync(
  * of it, which matters because a wall of two dozen briefs is the commonest
  * sight on the sheet.
  *
+ * ------------------------------------------------------------- the ?v=
+ * Every URL carries eight characters of its file's content hash. A redraw
+ * keeps the filename and changes the pixels, which no cache can see, so
+ * without this a reader who had already loaded a picture kept the old one
+ * until their browser felt like asking again. Same bytes, same URL; new
+ * bytes, new URL, and every cache misses at once. See the note over the
+ * version helper in scripts/pull-card-art.mjs.
+ *
  * ------------------------------------------------------------------ the gate
  * Nothing here decides who *sees* a picture. Card art is a paid capability
  * (see \`showsArt\` in tiers.js), checked at the moment of drawing in
@@ -1347,7 +1383,7 @@ export function artFor(id) {
 /** The small cut of it, for the 92px plate a brief draws. */
 export function thumbFor(id) {
   const full = CARD_ART[id];
-  return full ? full.replace(/\\.webp$/, '-thumb.webp') : null;
+  return full ? full.replace(/\\.webp(\\?|$)/, '-thumb.webp$1') : null;
 }
 
 /**

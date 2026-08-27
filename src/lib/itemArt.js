@@ -15,6 +15,14 @@
  * one, so the tile is the commonest picture on the sheet and the card is the
  * rarest.
  *
+ * ------------------------------------------------------------- the ?v=
+ * Every URL carries eight characters of its file's content hash. A redraw
+ * keeps the filename and changes the pixels, which no cache can see, so
+ * without this a reader who had already loaded a picture kept the old one
+ * until their browser felt like asking again. Same bytes, same URL; new
+ * bytes, new URL, and every cache misses at once. See the note over the
+ * version helper in scripts/pull-item-art.mjs.
+ *
  * ------------------------------------------------------------------ the gate
  * Nothing here decides who *sees* a picture. Codex art is a paid capability
  * (see `showsArt` in tiers.js), checked at the moment of drawing in
@@ -22,33 +30,33 @@
  */
 
 const ITEM_ART = {
-  'chainmail-chausses': '/items/chainmail-chausses.webp',
-  'chainmail-coif': '/items/chainmail-coif.webp',
-  'chainmail-hauberk': '/items/chainmail-hauberk.webp',
-  'full-plate-cuirass': '/items/full-plate-cuirass.webp',
-  'full-plate-helm': '/items/full-plate-helm.webp',
-  'full-plate-pants': '/items/full-plate-pants.webp',
-  'greater-runed-hood': '/items/greater-runed-hood.webp',
-  'greater-runed-leggings': '/items/greater-runed-leggings.webp',
-  'greater-runed-robes': '/items/greater-runed-robes.webp',
-  'half-plate-cuirass': '/items/half-plate-cuirass.webp',
-  'half-plate-greaves': '/items/half-plate-greaves.webp',
-  'half-plate-helm': '/items/half-plate-helm.webp',
-  'leather-helm': '/items/leather-helm.webp',
-  'leather-pants': '/items/leather-pants.webp',
-  'leather-vest': '/items/leather-vest.webp',
-  'runed-hood': '/items/runed-hood.webp',
-  'runed-leggings': '/items/runed-leggings.webp',
-  'runed-robes': '/items/runed-robes.webp',
-  'scale-armor': '/items/scale-armor.webp',
-  'scale-helm': '/items/scale-helm.webp',
-  'scale-leggings': '/items/scale-leggings.webp',
-  'studded-leather-breeches': '/items/studded-leather-breeches.webp',
-  'studded-leather-helm': '/items/studded-leather-helm.webp',
-  'studded-leather-tunic': '/items/studded-leather-tunic.webp',
-  'supreme-runed-hood': '/items/supreme-runed-hood.webp',
-  'supreme-runed-leggings': '/items/supreme-runed-leggings.webp',
-  'supreme-runed-robes': '/items/supreme-runed-robes.webp',
+  'chainmail-chausses': '/items/chainmail-chausses.webp?v=24da266d',
+  'chainmail-coif': '/items/chainmail-coif.webp?v=7e6f6962',
+  'chainmail-hauberk': '/items/chainmail-hauberk.webp?v=ed7f519c',
+  'full-plate-cuirass': '/items/full-plate-cuirass.webp?v=fdaa060d',
+  'full-plate-helm': '/items/full-plate-helm.webp?v=389ef554',
+  'full-plate-pants': '/items/full-plate-pants.webp?v=0c82926b',
+  'greater-runed-hood': '/items/greater-runed-hood.webp?v=64446e4b',
+  'greater-runed-leggings': '/items/greater-runed-leggings.webp?v=6ad33ac3',
+  'greater-runed-robes': '/items/greater-runed-robes.webp?v=04c588ae',
+  'half-plate-cuirass': '/items/half-plate-cuirass.webp?v=f073838d',
+  'half-plate-greaves': '/items/half-plate-greaves.webp?v=4677e7b0',
+  'half-plate-helm': '/items/half-plate-helm.webp?v=f843fc22',
+  'leather-helm': '/items/leather-helm.webp?v=54b51438',
+  'leather-pants': '/items/leather-pants.webp?v=5ce5ad62',
+  'leather-vest': '/items/leather-vest.webp?v=23f8bae6',
+  'runed-hood': '/items/runed-hood.webp?v=9a83cbee',
+  'runed-leggings': '/items/runed-leggings.webp?v=1d740e79',
+  'runed-robes': '/items/runed-robes.webp?v=24ec88c5',
+  'scale-armor': '/items/scale-armor.webp?v=ee25bd18',
+  'scale-helm': '/items/scale-helm.webp?v=88a6abc6',
+  'scale-leggings': '/items/scale-leggings.webp?v=fbf76754',
+  'studded-leather-breeches': '/items/studded-leather-breeches.webp?v=12b4a260',
+  'studded-leather-helm': '/items/studded-leather-helm.webp?v=23fb57c8',
+  'studded-leather-tunic': '/items/studded-leather-tunic.webp?v=6c4b5efd',
+  'supreme-runed-hood': '/items/supreme-runed-hood.webp?v=75932e00',
+  'supreme-runed-leggings': '/items/supreme-runed-leggings.webp?v=22ba9870',
+  'supreme-runed-robes': '/items/supreme-runed-robes.webp?v=1cd5d779',
 };
 
 /** The art for one item, or null for an item that has none yet. */
@@ -59,7 +67,7 @@ export function artFor(id) {
 /** The small square cut of it, for the 64px icon tiles. */
 export function thumbFor(id) {
   const full = ITEM_ART[id];
-  return full ? full.replace(/\.webp$/, '-thumb.webp') : null;
+  return full ? full.replace(/\.webp(\?|$)/, '-thumb.webp$1') : null;
 }
 
 /**
