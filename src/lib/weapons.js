@@ -2149,9 +2149,14 @@ export const WEAPONS = [
     /* Jules's, named by them on 2026-08-20: "an enchanted one-hand sword called
        Patien with that enchantment, making it rare." The enchantment is PREPARED,
        which is where the name comes from — the blade is the waiting, not the
-       swing. */
+       swing.
+
+       **Printed PATIENT since 2026-08-27**, on Jules's word that the name was a
+       typo. The id keeps the old spelling, the way `leather-vest` keeps its own
+       under the sheet's newer name: an id is what a saved character points at,
+       and this is the same sword renamed rather than a second one. */
     id: 'patien',
-    name: 'Patien',
+    name: 'Patient',
     slots: ['main_hand', 'off_hand'],
     tags: ['Rare', 'Weapon', 'Melee', 'One-Handed', 'Light Melee'],
     blurb: 'A plain one-handed sword that never seems to be caught off guard.',
@@ -2174,7 +2179,15 @@ export const WEAPONS = [
        **Two workings, and the codex names them separately.** Cold Infusion turns
        the prongs' Sharp into Cold. The imbuement's spell is dealt without the
        item's modifiers on purpose (see gearSource in abilitySources.js), so Deep
-       Sea Accretion's Ice Spikes stay Sharp. */
+       Sea Accretion's Ice Spikes stay Sharp.
+
+       **And a third that weighs the other two down to nothing.** Jules's, on
+       2026-08-27: "The deep sea trident should no cost Burden, is a special
+       item." UNBURDENED is how that is written down rather than a 0 typed over
+       the sum, so the reason is on the card the player reads. It matters more
+       here than anywhere: 9 for the Unique Imbuement and 4 for the Infusion is
+       13 of a capacity that starts at Level + Mind + 10, which no level-1
+       character could carry at all. */
     id: 'deep-sea-trident',
     name: 'Deep Sea Trident',
     slots: ['main_hand', 'off_hand'],
@@ -2184,9 +2197,13 @@ export const WEAPONS = [
     weight: 4,
     cost: 4000,
     abilities: ['polearm-thrust', 'polearm-drive'],
-    enchants: [{ id: 'unique-imbuement', spell: 'deep-sea-accretion' }, { id: 'cold-infusion' }],
+    enchants: [
+      { id: 'unique-imbuement', spell: 'deep-sea-accretion' },
+      { id: 'cold-infusion' },
+      { id: 'unburdened' },
+    ],
     enchantText:
-      'Two workings share this haft: a {{Unique Imbuement}} holding {{Deep Sea Accretion}}, and {{Cold Infusion}} in the prongs.',
+      'Three workings share this haft: a {{Unique Imbuement}} holding {{Deep Sea Accretion}}, {{Cold Infusion}} in the prongs, and {{Unburdened}}, which is why none of it weighs on whoever carries it.',
     lore:
       'Dredged up rather than forged, off a shelf where the water is cold enough that the pressure keeps it from freezing.\n\n' +
       'It is heavier out of the sea than in it, and the ice it grows will not melt indoors. Every owner has been told the same thing by the last one: spend freely, and count the shards.',

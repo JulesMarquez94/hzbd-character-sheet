@@ -10,12 +10,13 @@
  * a card needs a sentence. A round trip checks the `effect` strings, the tags and
  * the burdens, never the bodies.
  *
- * **Four rows here are not off that sheet**, and each is marked where it sits:
+ * **Six rows here are not off that sheet**, and each is marked where it sits:
  * PREPARED, which Jules handed over in as many words on 2026-08-20; UNIQUE
  * IMBUEMENT, which is what a Unique spell needs in order to reach an item at all;
- * and NIGHTMARE'S CURSE and SHROUDING, handed over the same day as card renders,
- * each the working its own trinket comes wearing (see trinkets.js). A round trip
- * against the sheet skips all four rather than failing on them.
+ * NIGHTMARE'S CURSE and SHROUDING, handed over the same day as card renders,
+ * each the working its own trinket comes wearing (see trinkets.js); and
+ * UNBURDENED and ACCOLADE, handed over on 2026-08-27 the same way. A round trip
+ * against the sheet skips all six rather than failing on them.
  *
  * **The tiers are real now**, which is what the Enchanter's ranks 2 and 3 were
  * waiting on: ENCHANTING opens Novice at Rank 1, Adept at 2 and Master at 3, and
@@ -60,6 +61,10 @@
  *                 `spellTier` is the tier it may bind. What spell is chosen when
  *                 it is laid, not here.
  *   light         it can be turned on, and does nothing else.
+ *   burdenFree    the odd one out: it carries no number of its own and instead
+ *                 takes every *other* working in the same item down to 0 Magic
+ *                 Burden. Read by `itemBurden` in items.js, off the item, never
+ *                 summed into a character.
  *
  * A field that is absent is a rider the enchantment does not carry. Nothing here
  * is computed: `cost` and `supplies` are written out per row rather than derived
@@ -584,6 +589,76 @@ export const ENCHANTMENTS = withArt([
     body:
       'The wielder cannot be targeted by any scrying effects or magical means of remote observation.\n\n' +
       'The ring glows a faint red if **an entity** is currently spying on the wielder or their immediate area through any means.',
+  },
+
+  {
+    /* Jules's, 2026-08-27, and it is a mechanic rather than a rule the table
+       plays: "to fix the no burden thing just add a special enchant that make
+       the cost of en enchant go down to 0 in burden."
+
+       **This is the first working that reads another working.** Every other row
+       on the shelf carries its own number and `itemBurden` sums them; this one
+       carries no number and *silences* the sum, so the flag is read there
+       (`burdenFree`, in items.js) rather than added up in enchanting.js. It is
+       laid on the Deep Sea Trident and the Cloak of Nightmare, both of which the
+       designer called out by name as costing none.
+
+       **Burden 0 and coin 0 on itself, and the piece keeps its price.** What a
+       working is worth is a different question from what its wielder carries:
+       `itemCost` still reads every enchantment's own `burden` at 1000 a point,
+       so a trident that weighs nothing on the meter is still worth what thirteen
+       points of working are worth. Only the carrying is free.
+
+       `unique` keeps it off the Enchanter's shelf the way it keeps the two above
+       it off: no rank opens a Unique tier, so `enchantOptions` drops the row
+       outright. It comes on the item. */
+    id: 'unburdened',
+    name: 'Unburdened',
+    kind: 'passive',
+    tags: ['Unique Enchantment', 'Utility'],
+    tier: 'Unique',
+    unique: true,
+    burden: 0,
+    cost: 0,
+    supplies: 0,
+    /* The one field on this shelf read off the *item* rather than summed into a
+       character. See itemBurden in items.js. */
+    burdenFree: true,
+    effect: 'Every enchantment on this item costs 0 Magic Burden.',
+    body:
+      'The item carries its own workings, and whoever holds it carries none of them.\n\n' +
+      'Every enchantment laid on this item costs **0 Magic Burden**, whatever it would weigh anywhere else.',
+  },
+
+  {
+    /* Handed over in chat on 2026-08-27 with the ring it comes on: "Create a
+       Ring called First Place: that increases your Willpower by +2 ... 4
+       burden." The working is named rather than the ring, the way SHROUDING is
+       named beside the Ring of Shrouding: an item's power has to be an
+       enchantment for the rider to reach the wielder at all.
+
+       **The burden is the designer's, not the shelf's rate.** ARCANE BATTERY
+       buys 8 Willpower for 6, which makes 2 for 4 a much worse trade. Burden on
+       this sheet tracks what a working is *worth* rather than what it does, and
+       a token from the Liche of Bones is worth carrying for reasons the sheet
+       does not measure. Flagged in data/README.md as Jules's to reprice.
+
+       Coin and Supplies are the shelf's own two rates for a burden-4 row, which
+       is what PREPARED already charges. */
+    id: 'accolade',
+    name: 'Accolade',
+    kind: 'passive',
+    tags: ['Unique Enchantment', 'Body'],
+    tier: 'Unique',
+    unique: true,
+    burden: 4,
+    cost: 3000,
+    supplies: 280,
+    willpowerMax: 2,
+    effect: 'Willpower is increased by 2.',
+    body:
+      'The wielder carries 2 more maximum Willpower than they otherwise would.\n\n' +
+      'It is capacity rather than restoration: the points are there to be filled, and a rest is what fills them.',
   },
 ]);
 

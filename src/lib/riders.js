@@ -183,42 +183,70 @@ export const EFFECT_RIDERS = {
     line: 'Disadvantage on your next Attack Roll or Skill Check',
   },
 
-  /* ---------------------------------------------------- the Alchemist's flasks
-     Four of the seven Novice potions name a number this sheet already holds, and
-     each of the four says it for an hour. They are keyed here rather than at the
-     moment the flask is drunk for the reason at the top of this file: a potion
-     is very often somebody else's, handed to you at the fire, and there is
-     nothing on your sheet for a rider to hang off. You track their card. */
+  /* --------------------------------------------------------------- the potions
+     The potion shelf was replaced wholesale on 2026-08-27 (see utility.js), and
+     four of the twenty four rows name a number this sheet already holds. The
+     three attribute potions and the old Growth Elixir that used to sit here are
+     gone with the rows they were read from.
 
-  /* "Drinking this potion increases your Physique by 2 for 1 hour." */
-  'potion-of-physique': {
-    attributes: { physique: 2, instinct: 0, mind: 0 },
-    line: 'Physique raised by 2',
-  },
+     They are keyed here rather than at the moment the flask is drunk for the
+     reason at the top of this file: a potion is very often somebody else's,
+     handed to you at the fire, and there is nothing on your sheet for a rider to
+     hang off. You track their card. */
 
-  /* "Drinking this potion increases your Instinct by 2 for 1 hour." */
-  'potion-of-instinct': {
-    attributes: { physique: 0, instinct: 2, mind: 0 },
-    line: 'Instinct raised by 2',
-  },
+  /* "Drinking this elixir grants you the effect of the Giant Growth spell for 1
+     hour."
 
-  /* "Drinking this potion increases your Mind by 2 for 1 hour." */
-  'potion-of-mind': {
-    attributes: { physique: 0, instinct: 0, mind: 2 },
-    line: 'Mind raised by 2',
-  },
-
-  /* "While it lasts your Physique is increased by 5, your Movement Speed by 4
-     and your Defense by 2, and your Instinct is reduced by 5."
-
-     The only rider in the table that takes something away, and the shape already
-     allowed it: the attributes are summed and nothing floors them. The two
-     meters of height are the table's to picture. */
+     The one rider in the table that is a *copy* of another, and it has to be: the
+     drinker is holding the elixir's card and not the spell's, so a row for the
+     elixir is the only row there is. Whatever `giant-growth` above carries, this
+     carries, and the two are meant to be read together. */
   'growth-elixir': {
-    attributes: { physique: 5, instinct: -5, mind: 0 },
-    speed: 4,
-    defense: 2,
-    line: 'Physique up 5, Instinct down 5, Movement Speed up 4 and Defense up 2',
+    speedFactor: 2,
+    empower: 1,
+    line: 'Movement Speed doubled, and your damage Empowered by 1',
+  },
+
+  /* "Drinking this draught grants you advantage on all Attack Rolls for 1 hour."
+
+     The whole clause, and the cleanest entry the potions brought: the card says
+     Attack Rolls and the Attack Roll is exactly what this channel bends. */
+  'power-draught': {
+    advantage: 1,
+    line: 'Advantage on your Attack Rolls',
+  },
+
+  /* "Drinking this draught increases your Defense by 1 for 1 hour." */
+  'defense-draught': {
+    defense: 1,
+    line: 'Defense raised by 1',
+  },
+
+  /* "Drinking this elixir shrinks you to a quarter of your size for 1 hour. Your
+     Defense is reduced by 2, the Damage Dice you take are Empowered by 1, and you
+     roll one Damage Die fewer on the damage you deal."
+
+     Only the first of the three numbers lands. The Damage Dice *you take* are
+     nobody's field on this sheet: damage arrives from somewhere else and is
+     applied by hand. The die off your own damage cannot be written either, and
+     that one is the shape refusing rather than the sheet: `empower` is summed
+     through `Math.max(0, ...)`, so a negative is not a small penalty, it is a
+     zero. Both are the table's, and the quarter size is the table's to picture. */
+  'shrink-elixir': {
+    defense: -2,
+    line: 'Defense lowered by 2 while you are shrunk',
+  },
+
+  /* "Drinking this poison afflicts you with Titansbane, which gives you
+     disadvantage twice on every action until you take a Long Rest."
+
+     Two, on a channel that counts them: the sum is a number of d4s against the
+     roll rather than a flag, so "two disadvantages" is written as the two it is.
+     The card's other half coats a weapon and passes Titansbane on, which is a
+     thing that happens to somebody else's sheet. */
+  'titansbane-poison': {
+    disadvantage: 2,
+    line: 'Disadvantage twice on your Attack Rolls until a Long Rest',
   },
 
   /* -------------------------------------------------- considered and left out

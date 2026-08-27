@@ -50,7 +50,7 @@
 import { HIGHEST } from './attributes.js';
 import { getEnchantment } from './enchantments.js';
 import { forgeRecord, normalizeForged } from './forged.js';
-import { getCard } from './weapons.js';
+import { WEAPONS, getCard } from './weapons.js';
 import { getTalent, normalizeTalents } from './talents.js';
 
 /** How many log rows a pact keeps. Old feedings fall off the end, like the ledger. */
@@ -268,15 +268,31 @@ export function pactState(character) {
 
     /* The ladder, each rung wearing its state. `locked` is a rung whose rank
        this character has not bought; a locked rung can be seen and never
-       claimed, the same way a stub set sits on the wall. */
+       claimed, the same way a stub set sits on the wall.
+
+       `lapsed` is a claimed rung whose rank has since been given back: the
+       pick is remembered and grants nothing until the rank returns. A level
+       lost takes back what it bought — the codex's own law — and what it does
+       not give back is the bar the claim spent, the same way a stripped
+       enchantment keeps the Supplies that went into the work. */
     const boons = (spec.boons ?? []).map((boon) => {
       const pick = row.picks[boon.id] ?? null;
-      const state = pick ? 'claimed' : boon.rank <= rank ? 'open' : 'locked';
+      const state = pick
+        ? boon.rank <= rank
+          ? 'claimed'
+          : 'lapsed'
+        : boon.rank <= rank
+          ? 'open'
+          : 'locked';
       return { boon, state, pick };
     });
 
+    /* Lapsed rungs and the endless picks still count against the bars: the
+       claim was paid when it was made, and giving the rank back does not
+       refund the feeding. */
     const claimedCount =
-      boons.filter((one) => one.state === 'claimed').length + row.extra.length;
+      boons.filter((one) => one.state === 'claimed' || one.state === 'lapsed').length +
+      row.extra.length;
     const allClaimed = boons.every((one) => one.state === 'claimed');
     const loopOpen = Boolean(spec.loop) && rank >= 3 && allClaimed;
 

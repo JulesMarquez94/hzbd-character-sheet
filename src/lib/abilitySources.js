@@ -433,7 +433,7 @@ function talentSources(character) {
               'boons',
               'Boons of the pact',
               rows,
-              pact.sealed ? 'Cast with your best attribute' : 'The bargain is not sealed yet'
+              pact.sealed ? 'Cast with your highest Attribute' : 'The bargain is not sealed yet'
             ),
             pact: { talent, state: pact },
           },

@@ -2846,7 +2846,7 @@ const TALENT_SETS = [
     },
     blurb:
       'Somewhere an old and powerful entity took a weapon for its home, and the weapon took you for its wielder. The bargain is plain: it lends you its power now, and you feed it what it hungers for. A Soulreaping Pact is fed on the souls of those who die carrying your damage. A Collector’s Pact is fed on coin and treasure given up forever.\n\n' +
-      'What it grants starts small and grows with the feeding. Each time the bargain is satisfied the entity hands over a boon: a working laid into the weapon itself, a spell, a Martial Move or a skill, and every gift of the pact runs on the best of you. The weapon cannot be lost, stolen or disarmed, and over a Long Rest it reshapes itself into any form its wielder asks of it.\n\n' +
+      'What it grants starts small and grows with the feeding. Each time the bargain is satisfied the entity hands over a boon: a working laid into the weapon itself, a spell, a Martial Move or a skill, and every gift of the pact runs on your highest Attribute. The weapon cannot be lost, stolen or disarmed, and over a Long Rest it reshapes itself into any form its wielder asks of it.\n\n' +
       'The pact giver is patient, and it is never finished. It may offer missions worth a measure of progress, and a wielder who has claimed everything it holds finds the bargain simply deepens: every further payment costs half again the last, and the boons never stop coming.',
     cards: [
       {
@@ -2884,25 +2884,28 @@ const TALENT_SETS = [
            cannot be lost, immune to disarm, reshaped on a Long Rest. */
         body:
           'The pact giver dwells in your weapon. It takes the form of any weapon you choose and always fills your first weapon slot. It cannot be lost or stolen, you are immune to effects that would disarm it, and it returns to your hand at a word.\n\n' +
-          'During a Long Rest, you can spend your Long Rest Action to reshape it into another form.',
+          'Whenever you take a Long Rest, you can use your Long Rest action to reshape it into another form.',
       },
       {
         id: 'first-boon',
         rank: 1,
         name: 'First Boon',
-        summary: 'A Novice spell and a Novice Martial Move, and every pact gift runs on your best attribute.',
+        summary: 'A Novice spell and a Novice Martial Move, and every pact gift runs on your highest Attribute.',
         kind: 'talent',
         tags: ['Pact of Ordenance', 'Novice Talent', 'Passive'],
         ap: null,
         wp: null,
         stat: HIGHEST,
-        /* The best-attribute rule is the spec's `cast: 'highest'`, riding every
-           granted card and the weapon's attacks as a modifier. The codex card
-           underneath is never rewritten, exactly like the Mycomancer's Instinct
-           casting. */
+        /* The highest-Attribute rule is the spec's `cast: 'highest'`, riding
+           every granted card and the weapon's attacks as a modifier. The codex
+           card underneath is never rewritten, exactly like the Mycomancer's
+           Instinct casting. "Your highest Attribute" is the codex's one
+           spelling for this mechanic — the INNATE lineage cards and the
+           background grants print those exact words — so this card says the
+           same thing the same way. */
         body:
           'You learn one Novice spell of any school and one Novice Martial Move.\n\n' +
-          'Every ability your pact grants you, and your pact-bound weapon’s attacks, use your best attribute in place of the one they print.',
+          'Every ability your pact grants you, and your pact-bound weapon’s attacks, use your highest Attribute in place of the one they print.',
       },
       {
         id: 'deepened-bargain',

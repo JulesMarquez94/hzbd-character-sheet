@@ -1189,6 +1189,9 @@ export function magicBurdenMax({ level, mind }) {
  * What one item weighs on the Magic Burden meter: its own burden plus every
  * enchantment laid on it. A plain weapon carries none at all; a blade with
  * three workings on it carries all three.
+ *
+ * **Two things zero it out**, and they are the same idea reached twice: a piece
+ * can be carried by something other than the wielder.
  */
 export function itemBurden(item) {
   if (!item) return 0;
@@ -1198,6 +1201,19 @@ export function itemBurden(item) {
      entity carries in its own home is not carried by the wielder. The flag
      rides the forged record (see forged.js), so this needs no pact import. */
   if (item.pact) return 0;
+  /* UNBURDENED, and it is the one enchantment that reads the others rather than
+     adding to them. Jules's, 2026-08-27: "just add a special enchant that make
+     the cost of en enchant go down to 0 in burden." A working carrying it takes
+     the whole piece to nothing, its own `burden` field included, because the
+     item is what holds the workings now and not the person.
+
+     It is read here rather than summed in enchanting.js on purpose: this is the
+     one function every meter, browser, equip prompt and math line goes through
+     (see burdenTerms in statMath.js), so a piece that weighs nothing weighs
+     nothing everywhere it is printed. `itemCost` deliberately does *not* read
+     it — what a working is worth is a different question from what it costs to
+     carry, and a burden-free trident is still worth its workings in coin. */
+  if (itemEnchantments(item).some(({ enchantment }) => enchantment.burdenFree)) return 0;
   return itemEnchantments(item).reduce(
     (total, { enchantment }) => total + (Number(enchantment.burden) || 0),
     Number(item.burden) || 0
@@ -1273,6 +1289,11 @@ export function itemWeight(item) {
  * A working that weighs nothing adds nothing, which is the honest reading of a
  * rule written per point. The two pieces in the codex that carry one price
  * themselves instead. See the Ring of Shrouding in trinkets.js.
+ *
+ * **UNBURDENED does not touch this.** It is the working that takes a piece to 0
+ * on the Magic Burden meter, and it leaves every other working's own `burden`
+ * where it is, which is what this reads. A trident nobody has to carry is worth
+ * exactly what it was worth when they did.
  */
 export const ENCHANT_COIN_PER_BURDEN = 1000;
 

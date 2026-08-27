@@ -405,10 +405,10 @@ export function restActions(character, kind, talents = character?.talents) {
   }
 
   /* ---- and what shape the pact's weapon wakes up in ----
-     PACT-BOUND WEAPON: "During a Long Rest, you can spend your Long Rest Action
-     to reshape it into another form." The permission is the spec's `reshape`
-     list, the same rest-keyed shape a loadout's `swap` carries, and it is only
-     offered once the pact has a weapon to reshape. */
+     PACT-BOUND WEAPON: "Whenever you take a Long Rest, you can use your Long
+     Rest action to reshape it into another form." The permission is the spec's
+     `reshape` list, the same rest-keyed shape a loadout's `swap` carries, and
+     it is only offered once the pact has a weapon to reshape. */
   for (const pact of pactState(held)) {
     if (!pact.weapon || !(pact.spec.reshape ?? []).includes(kind)) continue;
     rows.push({

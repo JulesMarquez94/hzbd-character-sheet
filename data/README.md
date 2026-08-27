@@ -8236,3 +8236,140 @@ change if the reading is wrong:
 Nothing painted yet. The set plate goes in `data/Pact of Ordenance/` and the five
 card plates are keyed `what-it-hungers-for`, `pact-bound-weapon`, `first-boon`,
 `deepened-bargain` and `endless-bargain`; run `npm run art:cards` when they land.
+
+### The wording, corrected after review
+
+Three text-law findings from the same-day review pass, all fixed:
+
+- FIRST BOON said "your best attribute" where the codex's one spelling for the
+  mechanic is **"your highest Attribute"** (the INNATE lineage cards and the
+  background grants print those exact words, and the tie rule is documented
+  under that phrase). Card body, summary, the Abilities-tab note and both
+  templates now print the codex's own phrase.
+- PACT-BOUND WEAPON spelled the rest mechanic "spend your Long Rest Action"
+  where seven sibling cards print "use your Long Rest action". Reworded to the
+  sibling idiom.
+- The Tribute window abbreviated Game Master to "GM", the only place in the app
+  that did. Spelled out.
+
+## Four one-offs on the item shelf, 2026-08-27
+
+Handed over in chat, four sentences and one parenthesis:
+
+> "The deep sea trident should no cost Burden is a special item.
+>
+> Patien blade is misspelled fix it.
+>
+> Cloak of nightmare should have no burden.
+>
+> (to fix the no burden thing just add a special enchant that make the cost of
+> en enchant go down to 0 in burden.)
+>
+> Create a Ring called First Place: that increases your Willpower by +2, 'A rare
+> token given by the Liche of bones to those that have impressed them. Beside its
+> slight magical properties, it might impress the right persons.' 4 burden"
+
+| What | Where it landed |
+| ---- | --------------- |
+| UNBURDENED, the working that zeroes a piece | `src/lib/enchantments.js`, read by `itemBurden` in `src/lib/items.js` |
+| Deep Sea Trident and Cloak of Nightmare wearing it | `src/lib/weapons.js`, `src/lib/trinkets.js` |
+| Patien printed **Patient** | `src/lib/weapons.js`, both weapon templates |
+| ACCOLADE, +2 maximum Willpower at 4 burden | `src/lib/enchantments.js` |
+| First Place, the ring that carries it | `src/lib/trinkets.js` |
+
+### The parenthesis is the whole design
+
+The instruction could have been read as a field: type `burden: 0` on two rows and
+move on. It was read as the parenthesis says instead, because a 0 typed over a
+sum is a number with no reason attached to it — the player opens the trident,
+reads a Unique Imbuement worth 9 and a Cold Infusion worth 4, and the meter says
+nothing moved. UNBURDENED is that reason, printed on a card they can read.
+
+It is the first working on the shelf that reads *another* working. Every other
+row carries its own number and `itemBurden` adds them up; this one carries no
+number and silences the sum. So it is a flag (`burdenFree`) read on the item in
+`itemBurden`, never summed into a character in `enchanting.js` — which also means
+it lands everywhere at once, because that one function is what the meter, the
+codex browser, the equip prompt and the math line under the tile all go through.
+See `burdenTerms` in `statMath.js`.
+
+**Coin is untouched, on purpose.** `itemCost` still reads every enchantment's own
+`burden` at 1000 a point, so the trident is still worth 17,000 and the cloak
+9,150. What a working is worth and what it costs to carry are two questions, and
+only the second one was asked.
+
+`unique: true` keeps it off the Enchanter's shelf the way it keeps UNIQUE
+IMBUEMENT and SHROUDING off: no rank opens a Unique tier, so `enchantOptions`
+drops the row outright rather than refusing it as "needs a higher rank", which is
+the one thing a higher rank would never fix. Nobody lays this. It comes on the
+item.
+
+### What the two pieces weighed
+
+| Piece | Was | Now |
+| ----- | --- | --- |
+| Deep Sea Trident | 13 (Unique Imbuement 9 + Cold Infusion 4) | 0 |
+| Cloak of Nightmare | 9 (Unique Imbuement 9, the curse already free) | 0 |
+
+The trident is the one that mattered. Capacity is Level + Mind + 10, so 13 was
+more than a level-1 character had in total — the note over `unique-imbuement`
+flagged exactly that and left it as Jules's to reprice. This is that repricing,
+and it went to the item rather than to the working, so a Unique Imbuement laid on
+anything else still weighs what it weighs.
+
+The Ring of Shrouding reaches the same 0 the older way, with a working that costs
+nothing itself. Two routes to one number, and neither is worth rewriting into the
+other: SHROUDING is a cheap working, UNBURDENED is an expensive piece nobody has
+to carry.
+
+### Patien became Patient
+
+Jules's word that the name was a typo, and the sword's own comment already said
+where the name came from: the enchantment is PREPARED, and the blade is the
+waiting rather than the swing. Patient is that word spelled.
+
+**The id stays `patien`.** An id is what a saved character points at, and this is
+the same sword renamed rather than a second one — the same call `leather-vest`
+took when the sheet renamed it Leather Tunic. Both weapon templates print the new
+name; the art brief still names the plate `patien.webp`, which is a filename and
+not a label.
+
+### First Place, and the number left open
+
+The ring is a trinket like every other: burden 0 of its own, weight 0, and
+everything it does lives in `enchants`. The +2 had to be an enchantment, because
+`characterGrants` is what carries an item's riders to its wearer and it reads
+`enchants` and nothing else. So the working is named, the way SHROUDING is named
+beside the Ring of Shrouding, and it is called ACCOLADE.
+
+Jules's sentence is the ring's lore verbatim, with one edit: **Liche of Bones is
+capitalised** as the title it reads like. Nothing else in the codex names them
+yet, so that is a first appearance rather than a correction.
+
+Priced at a gold ring's 800 plus the working's 4 points at 1000 apiece, so the
+tile reads 4,800. Rare, because one working is what the Ring of Shrouding is
+rated on and because the designer's own sentence calls it rare.
+
+### The readings, open for Jules
+
+1. **4 burden is the designer's, and it is not the shelf's rate.** ARCANE BATTERY
+   buys 8 maximum Willpower for 6 burden; ACCOLADE buys 2 for 4, which is six
+   times worse per point. Burden on this sheet tracks what a working is *worth*
+   rather than what it does, and "it might impress the right persons" is worth
+   something the sheet cannot measure — but if 4 was meant as the ring's price
+   rather than its weight, it is one field.
+2. **"Willpower +2" reads as maximum Willpower**, the pool, not an attribute.
+   Willpower is derived (2 x Level + 2 x Mind + 10) and ARCANE BATTERY is the
+   only other thing that moves it, so `willpowerMax: 2` is the same rider.
+3. **Two First Places do not stack**, and the second one still weighs 4. That is
+   the same-source law working as written: the effect is deduped where the sum
+   happens, never on burden. Wearing two is 8 burden for +2 Willpower.
+4. **UNBURDENED is printed on the piece, so the player sees it.** If it was meant
+   as invisible bookkeeping, the card body is what to cut, not the flag.
+5. **The trident's and cloak's coin values did not move.** If "no burden" was
+   also meant to mean "worth less", `itemCost` is where that would go.
+
+### The art
+
+Nothing painted. First Place is keyed `first-place` in `public/items/`, and the
+two new enchantments carry no picture the way most of that shelf does not.

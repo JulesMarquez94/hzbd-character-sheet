@@ -481,7 +481,7 @@ function Tribute({ character, state, patch, onClose }) {
       ) : (
         <p className="pick-line">
           Nothing in your inventory has a price the sheet knows. A thing the codex has not priced is
-          the GM&rsquo;s to value. Offer it as a mission instead.
+          the Game Master&rsquo;s to value. Offer it as a mission instead.
         </p>
       )}
     </Modal>
