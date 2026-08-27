@@ -102,7 +102,7 @@ export const SHELVES = [
   // The families under each school, in the order spells.js shelves them.
   ['Flora', 'Wild', 'Life', 'Blood', 'Death'],
   ['Energy'],
-  ['Fire', 'Water', 'Wind', 'Lightning', 'Magma', 'Earth'],
+  ['Fire', 'Water', 'Wind', 'Lightning', 'Magma', 'Earth', 'Storm'],
   ['Light', 'Shadow', 'Time', 'Spacial'],
 
   /* The Ingredient parts, in the order BREW names them. Also INGREDIENT_PARTS in

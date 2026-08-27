@@ -271,7 +271,7 @@ export const KEYWORDS = [
   },
   {
     id: 'ranged-attack',
-    terms: ['Ranged Attack'],
+    terms: ['Ranged Attacks', 'Ranged Attack'],
     color: 'var(--dmg-sharp)',
     detail: 'An attack made at distance, rolled against the target’s Defense.',
   },
@@ -600,7 +600,7 @@ export const KEYWORDS = [
    */
   {
     id: 'turn-start',
-    terms: ['Turn Start'],
+    terms: ['Turn Starts', 'Turn Start'],
     color: 'var(--stat-ap)',
     detail:
       'The moment your turn opens, before you have spent anything. Upkeeps are paid here and effects that tick, tick here.',
@@ -767,7 +767,7 @@ export const KEYWORDS = [
   },
   {
     id: 'attack-roll',
-    terms: ['Attack Roll'],
+    terms: ['Attack Rolls', 'Attack Roll'],
     color: 'var(--copper)',
     detail:
       'A Roll made to hit a target. The attack succeeds if the total result equals or ' +

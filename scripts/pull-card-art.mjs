@@ -224,6 +224,12 @@ const ALIASES = {
   Stoneflesh: 'Stone Flesh.jpg',
   Earthquake: 'Earth Quake.jpg',
   'Aegis of Stone': 'Aegiis of stone.jpg',
+
+  /* One from data/Storm/, 2026-08-27, and the plainest kind of entry in this
+     table. The picture is `Downpou.jpg` and the sheet prints DOWNPOUR: a dropped
+     letter on the file with nothing wrong with the row. The other two land
+     without help, `Eye of the Storm.jpg` included. */
+  Downpour: 'Downpou.jpg',
 };
 
 /**
@@ -624,6 +630,13 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethe
  * what makes the report go quiet. Nothing here needs to know which of the two is
  * the plate — the mtime decides, and the drop is the newer artifact by seven
  * months.
+ *
+ * `data/Storm/` is the tenth, 2026-08-27, and the third under Elemental. It is the
+ * one that shows what the two above it cost: Storm has no card in the codex before
+ * this drop, so nothing in `data/Elemental/` claims any of its three, no file is
+ * shadowed and the run says nothing about them. The shape is the Space drop’s,
+ * three plates at the top of the folder with the sheet beside them at the top of
+ * `data/`.
  */
 const FAMILY_FOLDERS = new Set([
   'shadow',
@@ -635,6 +648,7 @@ const FAMILY_FOLDERS = new Set([
   'life',
   'fire',
   'earth',
+  'storm',
 ]);
 
 
@@ -659,6 +673,10 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  * on 2026-08-26, mixed 2400x1792 and 1200x896 within one folder, which is the Time
  * drop's shape and costs nothing for the same reason.
  *
+ * `data/Storm/` is three more at 2400x1792 on 2026-08-27, one a pixel narrow at
+ * 2398, which costs nothing for the same reason: the resize takes whatever it is
+ * handed down to 720.
+ *
  * Cutting one of these would take the top 45% of a painting that is already
  * only the painting. So the crop is what the exception turns off, and nothing
  * else about the folder changes: it is still claimed by name, still walked into
@@ -676,6 +694,7 @@ const PLATE_FOLDERS = new Set([
   'life',
   'fire',
   'earth',
+  'storm',
 ]);
 
 /**

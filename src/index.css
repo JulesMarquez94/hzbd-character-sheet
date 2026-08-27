@@ -59,10 +59,11 @@
        The exception is written into the law rather than around it: **where the
        codex already knows what colour a family is, that colour is what its shade
        leans to.** Fire, Water, Lightning, Blood and Death have damage and stat
-       tokens above; Light and Shadow are their own names. Seven leans, and each
-       one is marked. Nothing here is a second copy of those tokens — a chip at 0.56rem
-       on a dark panel needs more light than a body-text colour does, so these are
-       their own values and say which token they answer to.
+       tokens above; Light and Shadow are their own names; Storm is taken between
+       the two families it is made of. Eight leans, and each one is marked. Nothing
+       here is a second copy of those tokens — a chip at 0.56rem on a dark panel
+       needs more light than a body-text colour does, so these are their own values
+       and say which token they answer to.
 
        Nature and Arcane have no spell in the codex. They are coloured anyway, so
        the day a sheet arrives it lands somewhere rather than falling to grey. */
@@ -89,7 +90,7 @@
     --school-arcane: #C56BE8;
     --family-energy: #D89BF2;
 
-    /* Elemental: ember amber, and the six elements around it. */
+    /* Elemental: ember amber, and the seven elements around it. */
     --school-elemental: #EE9448;
     /* Leans to --dmg-fire. */
     --family-fire: #FF7A4D;
@@ -98,6 +99,11 @@
     /* Leans to --dmg-lightning, dropped out of pure yellow so it holds an edge. */
     --family-lightning: #E8CD4A;
     --family-wind: #8FD3CB;
+    /* Leans to both of the families it is made of: taken between Wind's teal and
+       Water's blue on hue, then pulled down on saturation toward --dmg-blunt so
+       it reads as neither of them. A storm sky is the one grey thing in a school
+       of embers, and Storm deals Blunt and Cold. */
+    --family-storm: #7E9CB8;
     /* Leans to --dmg-frost, deepened so it is not mistaken for the Ethereal sky. */
     --family-water: #4AA6E8;
 

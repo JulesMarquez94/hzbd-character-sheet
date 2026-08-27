@@ -2201,6 +2201,134 @@ export const SPELLS = withArt([
       'Doing so reduces the damage taken by [[2d6 + 2*stat]].',
   },
 
+  /* ======================================================= Elemental · Storm ====
+   *
+   * The eighth family, pulled 2026-08-27 from `data/Spells - Elemental -
+   * Storm.csv` with three pictures in `data/Storm/`. One card a rung, which is
+   * the compound shape: Storm is wind and water, the way Magma is fire and
+   * earth, and a compound family runs three deep where a base element runs nine.
+   *
+   * The school goes from 38 spells to 41, and an Imbuement can bind DOWNPOUR
+   * from the day it exists.
+   *
+   * ------------------------------------------------------- the sheet's own hand
+   * Longhand, like every Elemental cell before it: "Make a Mind Roll roll",
+   * "2d6 + 2 × Mind Cold damage". The markers are put back the way the school's
+   * first pull put them back, and the numbers come off `*stat` rather than off
+   * Mind, so an Instinct caster prints through the same card.
+   *
+   * ------------------------------------------------------------- the readings
+   * - **EYE OF THE STORM costs 6 Willpower and the sheet says 10.** Asked for in
+   *   the drop itself, "reduce the cost of eye fo teh storm to 6", so the cast is
+   *   the designer's second number and the 4 Willpower Upkeep is untouched.
+   * - **DOWNPOUR's radius is twice its range**, a **36-meter** circle placed at
+   *   **18 meters**, which makes it the largest area in the codex by three times
+   *   and puts the caster well inside their own weather. It is what the cell
+   *   says, so it is what prints. **Worth Jules's word**: 3.6 or 6 meters would
+   *   both read as the number that was meant.
+   * - **The conversion arrived empty.** DOWNPOUR reads "36-meter ()", filled at
+   *   the codex's own rate as 120 feet, which is the third Elemental sheet in a
+   *   row to leave a bracket open.
+   * - **HAILSTORM prints Cold, the school's first.** `DAMAGE_TYPES` answers to
+   *   Cold and Frost off one token and every real use in the codex writes Cold,
+   *   so the sheet's own word needed nothing done to it.
+   * - **Storm deals Cold and Blunt and no Lightning**, which is the sheet's own
+   *   choice on both rows and the thing that keeps the Lightning family's edge.
+   * - **EYE OF THE STORM carries a printed duration and an Upkeep at once.**
+   *   HIBERNATION and SHADOW BIND are the two cards that already do, so the
+   *   **10 turns (1 minute)** is the ceiling and the toll is what reaches it.
+   * - **The Upkeep is spelled out.** The Secondary Effect cell reads "4
+   *   Willpower or ti stops", which is the toll and its consequence in shorthand,
+   *   and it prints in the codex's own Upkeep shape.
+   * - **Three plurals light now.** DOWNPOUR prints "Ranged Attacks" and EYE OF
+   *   THE STORM prints "Attack Rolls" and "Turn Starts". All three singulars have
+   *   been defined terms since keywords.js existed, and a term is listed by its
+   *   printed forms rather than guessed at by suffix, so all three arrived half
+   *   lit, with the colour stopping in the middle of a phrase. Adding the plurals
+   *   lights them in the five other card bodies that have printed one since each
+   *   arrived, which is the trade STONEFLESH's **resistance** made a day earlier.
+   *
+   *   `.ac-kw` is bold, so lighting a phrase widens it and the fitter can feel it.
+   *   All eight cards were measured before and after: only PACK BOND moved, 0.934
+   *   to 0.930, one step of the binary search, and nothing came near the floor.
+   * - **EYE OF THE STORM was cut to fit**, against the real renderer rather than
+   *   the estimate: it first printed at 0.902, level with SENSE LIFE for the worst
+   *   card in the codex. What went was repetition. "calm within 3 meters of you"
+   *   already says "around you" a second time, and "at each of their Turn Starts
+   *   you deal ... damage to them" is the long way round "take ... damage at each
+   *   of their Turn Starts", which is what MAGMA CHAINS and PESTILENT CLOUD
+   *   already print. Nineteen characters of load, two rungs of type: 0.969 now.
+   *   See docs/card-text.md: cut words, never mechanics.
+   * - Spelling and grammar, without further comment: "Downpou" on the picture and
+   *   "ti stops" in the Upkeep cell.
+   *
+   * ------------------------------------------------------ the shelf and the art
+   * **Storm is new to the shelf and to the palette.** It goes seventh on the
+   * Elemental shelf in `cardOrder.js`, after Earth and in the order this file
+   * writes it, and `--family-storm` is a slate taken between Wind's teal and
+   * Water's blue and pulled down on saturation so it reads as neither. See
+   * index.css: a storm sky is the one thing in this school that is grey.
+   *
+   * The three pictures are 2400x1792 art plates, no white border and no banner,
+   * so `data/Storm/` joins `FAMILY_FOLDERS` and `PLATE_FOLDERS` in
+   * `pull-card-art.mjs` and the crop stays off. Nothing in `data/Elemental/` holds
+   * a Storm render, so unlike `data/Fire/` and `data/Earth/` a day earlier these
+   * three shadow nothing and the run says nothing about them.
+   */
+  {
+    id: 'downpour',
+    name: 'Downpour',
+    summary: 'Driving rain for a minute. Shots into it are rolled with disadvantage and fires go out.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Elemental', 'Storm'],
+    ap: 2,
+    wp: 2,
+    stat: 'mind',
+    /* The radius is twice the range and the conversion cell was empty. Both are
+       in "the readings" above. */
+    body:
+      'Driving rain falls in a **36-meter (120-foot)** radius on a point you can see within **18 meters (60 feet)** for **10 turns (1 minute)**.\n\n' +
+      'Ranged Attacks made into or through the area have disadvantage, and any fire in the area is extinguished.', // text-style-ok: joins two clauses
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'hailstorm',
+    name: 'Hailstorm',
+    summary: 'Hail on a nine-meter circle for Cold damage, and ice underfoot for a minute after.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Elemental', 'Storm'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Cold'],
+    body:
+      'Hail falls in a **9-meter (30-foot)** radius on a point you can see within **24 meters (80 feet)**.\n\n' +
+      'Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[2d6 + 2*stat]] {damage} damage, or half as much on a failure.\n\n' +
+      'The ice left behind makes the area Difficult Terrain for **10 turns (1 minute)**.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* 10 Willpower on the sheet, 6 here, asked for in the drop. See "the
+       readings" above. */
+    id: 'eye-of-the-storm',
+    name: 'Eye of the Storm',
+    summary: 'A storm that walks with you: calm at the middle, violent out to eighteen meters.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Elemental', 'Storm'],
+    ap: 4,
+    wp: 6,
+    stat: 'mind',
+    damage: ['Blunt'],
+    body:
+      'A storm opens around you for **10 turns (1 minute)**, calm within **3 meters (10 feet)** and violent out to **18 meters (60 feet)**. It moves with you.\n\n' +
+      '**All entities** in the violent band have disadvantage on Attack Rolls, and take [[2d6 + 2*stat]] {damage} damage at each of their Turn Starts.', // text-style-ok: joins two clauses
+    sub_name: 'Upkeep',
+    sub_body:
+      'At your Turn Start, pay 4 Willpower to keep the storm turning. Miss the Upkeep and the spell ends.',
+  },
+
   /* ========================================================= Ethereal ====
    *
    * The whole school, pulled 2026-08-25 from `data/Spells - Ethereal -

@@ -144,3 +144,14 @@ Make a {stat} Roll {roll} against the Grit of **all entities** in the area. On a
 aegis-of-stone,AEGIS OF STONE,"Master Spell, Elemental, Earth",2,3,You raise 4 slabs of stone that orbit your body for **3 hours**.,OVERCAST,"Whenever you take damage, you can spend 1 Willpower to expend one of your slabs.
 
 Doing so reduces the damage taken by [[2d6 + 2*stat]].",Aegiis of stone.jpg
+downpour,DOWNPOUR,"Novice Spell, Elemental, Storm",2,2,"Driving rain falls in a **36-meter (120-foot)** radius on a point you can see within **18 meters (60 feet)** for **10 turns (1 minute)**.
+
+Ranged Attacks made into or through the area have disadvantage, and any fire in the area is extinguished.",,,Downpou.jpg
+hailstorm,HAILSTORM,"Adept Spell, Elemental, Storm",4,4,"Hail falls in a **9-meter (30-foot)** radius on a point you can see within **24 meters (80 feet)**.
+
+Make a {stat} Roll {roll} against the Reflex of **all entities** in the area. On a success, you deal [[2d6 + 2*stat]] {damage} damage, or half as much on a failure.
+
+The ice left behind makes the area Difficult Terrain for **10 turns (1 minute)**.",,,Hailstorm.jpg
+eye-of-the-storm,EYE OF THE STORM,"Master Spell, Elemental, Storm",4,6,"A storm opens around you for **10 turns (1 minute)**, calm within **3 meters (10 feet)** and violent out to **18 meters (60 feet)**. It moves with you.
+
+**All entities** in the violent band have disadvantage on Attack Rolls, and take [[2d6 + 2*stat]] {damage} damage at each of their Turn Starts.",UPKEEP,"At your Turn Start, pay 4 Willpower to keep the storm turning. Miss the Upkeep and the spell ends.",Eye of the Storm.jpg

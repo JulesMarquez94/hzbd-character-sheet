@@ -7735,3 +7735,180 @@ A reader already holding an old picture picks the new one up on their next load,
 because the URL they are asking for no longer exists in their cache. Nothing has to
 be purged and nobody has to hard-reload. That is the whole point of the eight
 characters.
+
+## The Storm family, 2026-08-27
+
+Asked for in as many words: "In the data there is now the Storm spells and in data I
+have the storm folder wiht hte images, add the spells. Add the m and make sure to
+conrecct the text and make the wording up to the system. reduce the cost of eye fo teh
+storm to 6"
+
+One sheet and one folder. `data/Spells - Elemental - Storm.csv` sits at the top of
+`data/` with three rows in the usual eight columns, and `data/Storm/` holds a picture
+for each of them.
+
+| Tier | Spell |
+| ---- | ----- |
+| Novice | DOWNPOUR |
+| Adept | HAILSTORM |
+| Master | EYE OF THE STORM |
+
+### Storm is the school's eighth family, and the first compound to open
+
+One card a rung is the compound shape. Storm is wind and water the way Magma is fire
+and earth, and a compound family runs three deep where a base element runs nine.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Elemental before | 14 | 12 | 11 | 37 |
+| **after** | **15** | **13** | **12** | **40** |
+
+Plus DEEP SEA ACCRETION, which is Unique and item-bound, so the school holds 41 rows.
+
+No talent set casts from Elemental yet, so no set's pool moves. The Arcanist, which
+names no school, goes from 50, 94 and 137 to **51, 96 and 140**. An Imbuement binds "a
+NOVICE spell" with no school named, so DOWNPOUR can reach an item from the day it
+exists.
+
+### The one thing that is not the sheet's
+
+**EYE OF THE STORM costs 6 Willpower and the sheet says 10.** Asked for in the drop
+itself, so the cast is the second number. The 4 Willpower Upkeep is untouched, and 6
+sits inside the Master rung either way: the priciest cast in the codex is 12 and there
+are four of them.
+
+### The sheet's own hand
+
+Longhand, like every Elemental cell before it: "Make a Mind Roll roll", "2d6 + 2 x
+Mind Cold damage". The markers were put back the way the school's first pull put them
+back, and every number comes off `*stat` rather than off Mind, so an Instinct caster
+prints through the same card.
+
+### The readings
+
+- **DOWNPOUR's radius is twice its range.** A **36-meter** circle placed at
+  **18 meters**, which makes it the largest area in the codex by three times over and
+  puts the caster well inside their own weather. EARTHQUAKE's 18-meter radius at 30
+  meters is the next biggest. It is what the cell says, so it is what prints. **Worth
+  Jules's word**: 3.6 or 6 meters would both read as the number that was meant.
+- **The conversion arrived empty**, "36-meter ()", filled at the codex's own rate as
+  120 feet. Third Elemental sheet in a row to leave a bracket open.
+- **HAILSTORM prints Cold, the school's first.** The damage table answers to Cold and
+  Frost off one token and every real use in the codex writes Cold, so the sheet's own
+  word needed nothing done to it.
+- **Storm deals Cold and Blunt and no Lightning**, which is the sheet's own choice on
+  both rows and the thing that keeps the Lightning family's edge.
+- **EYE OF THE STORM carries a printed duration and an Upkeep at once.** HIBERNATION
+  and SHADOW BIND already do, so the **10 turns (1 minute)** is the ceiling and the
+  toll is what reaches it.
+- **The Upkeep is spelled out.** The Secondary Effect cell reads "4 Willpower or ti
+  stops", the toll and its consequence in shorthand, and it prints in the codex's own
+  Upkeep shape: "At your Turn Start, pay 4 Willpower to keep the storm turning. Miss
+  the Upkeep and the spell ends."
+- **Difficult Terrain stays plain** on HAILSTORM, which is where SINKHOLE, MAGMA SURGE
+  and EARTHQUAKE already leave it. Still on the statuses tab's pile.
+- Spelling, without further comment: "Downpou" on the picture and "ti stops" in the
+  Upkeep cell.
+
+### Three plurals light now, and one card paid a step for it
+
+DOWNPOUR prints "Ranged Attacks" and EYE OF THE STORM prints "Attack Rolls" and "Turn
+Starts". All three singulars have been defined terms since `keywords.js` existed, and
+a term is listed by its printed forms rather than guessed at by suffix, so all three
+arrived half lit, with the colour stopping in the middle of a phrase. The three
+plurals are in the table now, which is the trade STONEFLESH's **resistance** made a
+day earlier.
+
+It lights five other card bodies that have printed one of them since each arrived:
+PACK BOND and TAUNTING carry "Attack Rolls", DEVOURING BLOSSOM and DRAIN FLUIDS carry
+"Turn Starts", and FERAL FORM and LIGHTNING IN A BOTTLE carry one each.
+
+**`.ac-kw` is bold, so lighting a phrase widens it and the fitter can feel it.** All
+eight cards were measured against the real renderer before and after. Only PACK BOND
+moved, 0.934 to 0.930, one step of the binary search, and nothing came near the 0.9
+floor.
+
+### EYE OF THE STORM was cut to fit, and the estimate did not catch it
+
+`lint:cards` passed it at a load of 557 against a 600 ceiling. The renderer printed it
+at **0.902**, level with SENSE LIFE for the worst card in the codex. This is the
+EARTHQUAKE lesson again: **take the fit off the harness for any card over about 550,
+never off the static number.**
+
+What went was repetition, not mechanics.
+
+- "calm within **3 meters (10 feet)** of you" already says "around you" a second time,
+  so "of you" went.
+- "at each of their Turn Starts you deal [[2d6 + 2*stat]] {damage} damage to them" is
+  the long way round "take [[2d6 + 2*stat]] {damage} damage at each of their Turn
+  Starts", which is the shape MAGMA CHAINS and PESTILENT CLOUD already print.
+
+Nineteen characters of load, two rungs of type: **0.969** now. The other two print at
+full size.
+
+### The shelf, and a colour that did not exist
+
+**Storm is the first new family word since Spacial.** It goes seventh on the Elemental
+shelf in `cardOrder.js`, after Earth and in the order `spells.js` writes it, and
+`lint:order` now counts 16 families where it counted 15.
+
+`--family-storm` is **#7E9CB8**, a slate: taken between Wind's teal (h173) and Water's
+blue (h205) on hue, then pulled down on saturation toward `--dmg-blunt` so it reads as
+neither of them. A storm sky is the one grey thing in a school of embers, and Storm
+deals Blunt and Cold. It is the eighth marked lean in `index.css` and the first taken
+off two families rather than off a token.
+
+Checked numerically rather than by eye, against every school and family token in
+`index.css`: its nearest neighbour is Wind at a distance of 25, where the palette's
+own tightest existing pairs sit at 10 to 17 (Elemental and Magma, Ethereal and
+Spacial, Arcane and Energy). Nothing new is closer than what is already there.
+
+### The art
+
+Three 2400x1792 plates, one of them a pixel narrow at 2398, no white border and no
+banner, so `data/Storm/` joins `FAMILY_FOLDERS` and `PLATE_FOLDERS` in
+`pull-card-art.mjs` and the crop stays off. `Downpou.jpg` is a dropped letter and gets
+an `ALIASES` entry. The other two land on their own names.
+
+**This is the tenth family folder and the first that shadows nothing.** `data/Fire/`
+and `data/Earth/` a day earlier each claimed cards a render in `data/Elemental/` also
+claimed, which is what prints the ten "two files claim it" lines on every art run.
+Storm had no card in the codex before this drop, so nothing in `data/Elemental/`
+claims one of its three and the run says nothing about them.
+
+### What was checked
+
+- **A round trip.** Every marker mapped back to the sheet's written form and diffed
+  against the cell, whitespace-normalised. HAILSTORM matches byte for byte. DOWNPOUR
+  differs only by the filled conversion, EYE OF THE STORM only by the four departures
+  named above, and all three tag triplets and all three AP values match.
+- `lint:cards` 448 cards inside the ceiling, `lint:text` clean across 136 files,
+  `lint:halves` all 80 priced off their own prose, `lint:order` 4 schools and 16
+  families shelved and 203 cards sorting up the ladder, then `lint:math`,
+  `lint:riders`, `lint:weapons`, `eslint` and `vite build`, all clean.
+- **The printed order**, read off `sortCards` rather than off the shelf: Storm comes
+  last in each of the three rungs, after Earth.
+- **The fit**, off the real renderer with the fonts awaited, proved first against the
+  three cards whose numbers are on the record. SENSE LIFE 0.902, RAIN OF FIRE 0.945
+  and PESTILENT CLOUD 0.969 all read exactly as recorded, so the harness was telling
+  the truth about the rest. DOWNPOUR 1.0, HAILSTORM 1.0, EYE OF THE STORM 0.969.
+- **The art run twice**, second pass zero diff on `cardArt.js`, which is what the
+  content hashes are for.
+- `data/templates/elemental-spells.csv` carries the three new rows in the sheet's own
+  column order, so the workbook can catch up.
+
+### Still open
+
+Four for Jules, three of them small:
+
+1. **DOWNPOUR's 36-meter radius at 18-meter range.** Transcribed as printed. The
+   likeliest reading is that a decimal point or a digit went missing.
+2. Whether the Elemental shelf regroups as four bases then six compounds rather than
+   the arrival order it has now. Storm is the second compound to land and the question
+   is the one the Earth drop left open.
+3. One base and three compounds are still short: Wind stops at Adept and wants five
+   more, and Steam, Sand and Mud have nothing. Fourteen of the original twenty-five
+   proposals are left.
+4. **"Ranged Attacks", "Attack Rolls" and "Turn Starts" are three plurals somebody
+   noticed.** There may be others in the codex reading half lit. Nobody has swept for
+   them.
