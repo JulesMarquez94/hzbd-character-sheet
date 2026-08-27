@@ -101,6 +101,23 @@ const ALIASES = {
      the file is the garment that piece is, so this is where it goes — which is
      also why that piece's id is `leather-vest`. */
   'Leather Tunic': 'Leather Leggings.jpg',
+
+  /* Seven of the twenty four from `data/Potions/`, 2026-08-27. The same seven
+     pull-card-art.mjs carries and for the same reasons, because every file in that
+     folder is both an item's picture and a card's: three misspellings, three files
+     naming the thing where the sheet names the row, and `Poison (2).jpg`, which is
+     what a browser calls a second download.
+
+     Two tables rather than one shared one, because these scripts share no module
+     and never have. The note over that copy is the long one; renaming a file
+     retires both entries at once. */
+  'Draught of Cleansing': 'Draguth of cleansing.jpg',
+  'Explosive Concoction': 'Explosive Concotion.jpg',
+  'Shrink Elixir': 'Shrinking Elixir.jpg',
+  'Healing Potion': 'Healing.jpg',
+  'Elixir of Chaos': 'Chaos Potion.jpg',
+  'Seafarer’s Elixir': 'Seafarer elixir.jpg',
+  Poison: 'Poison (2).jpg',
 };
 
 /* ------------------------------------------------------------------- the sheet */
@@ -206,10 +223,27 @@ const SHELVES = new Set(CATEGORY_ORDER.map(flatten));
 /** The folder both scripts walk. Kept in step with pull-card-art.mjs. */
 const ONE_OFF = 'of';
 
+/**
+ * A folder named for a *kind* of item rather than for the shelf it stands on.
+ *
+ * `data/Potions/` landed 2026-08-27 with the whole potion shelf: twenty four
+ * 1024x1024 plates, one for each row of the sheet beside them. Every one of them
+ * stands on Belt Gear, so the folder is not a shelf and cannot be claimed by
+ * `SHELVES`; and every one of them is a consumable that teaches exactly one card,
+ * so pull-card-art.mjs claims the folder too. That is the `data/OF/` arrangement
+ * again, and for the same reason: the 128px tile and the card plate are different
+ * crops of one painting, and neither script reports the other's work as missing.
+ *
+ * ITEM_FOLDERS in pull-card-art.mjs is this same claim from the other side. The
+ * two lists are kept in step by hand, the way ONE_OFF is.
+ */
+const KIND_FOLDERS = new Set(['potions']);
+
 function pictures() {
   if (!existsSync(DATA)) return [];
 
-  const mine = (name) => SHELVES.has(flatten(name)) || flatten(name) === ONE_OFF;
+  const mine = (name) =>
+    SHELVES.has(flatten(name)) || KIND_FOLDERS.has(flatten(name)) || flatten(name) === ONE_OFF;
 
   return readdirSync(DATA, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && mine(entry.name))

@@ -1,0 +1,61 @@
+id,Name,Tags,Rung,AP,WP,Coin,Supplies to brew,w (kg),Image,Main Effect
+healing-potion,HEALING POTION,"Common, Consumable, Potion",Novice,2,2,200,20,0.5,Healing.jpg,Drinking this potion restores 2d6 + 5 x Level Health.
+poison,POISON,"Common, Consumable, Potion",Novice,2,2,200,20,0.3,Poison (2).jpg,"Drinking this potion deals 8d6 + 8 x Level Decay damage.
+
+This concoction can also be applied to a weapon, where it lasts for the rest of the combat.
+
+On a hit with the weapon, you deal additional Decay damage equal to the number of Damage Dice rolled."
+luck-potion,LUCK POTION,"Common, Consumable, Potion",Novice,2,4,400,40,0.3,Luck Potion.jpg,Drinking this potion grants you advantage on all skill checks for 1 hour.
+growth-elixir,GROWTH ELIXIR,"Common, Consumable, Potion",Novice,2,4,400,40,0.4,Growth elixir.jpg,Drinking this elixir grants you the effect of the Giant Growth spell for 1 hour.
+power-draught,POWER DRAUGHT,"Common, Consumable, Potion",Novice,2,4,400,40,0.3,Power Draught.jpg,Drinking this draught grants you advantage on all Attack Rolls for 1 hour.
+life-draught,LIFE DRAUGHT,"Common, Consumable, Potion",Novice,2,3,300,30,0.3,Life Draught.jpg,Drinking this draught increases your Health and your maximum Health by 5 x Level for 1 hour.
+defense-draught,DEFENSE DRAUGHT,"Common, Consumable, Potion",Novice,2,6,600,60,0.3,Defense Draught.jpg,Drinking this draught increases your Defense by 1 for 1 hour.
+explosive-concoction,EXPLOSIVE CONCOCTION,"Common, Consumable, Potion",Novice,2,4,400,40,0.4,Explosive Concotion.jpg,"Throw the flask at a point you can see within 6 meters (20 feet).
+
+It bursts into flame, and all entities within 3 meters (10 feet) of the point of impact take 8d4 Fire damage."
+potion-of-disguise,POTION OF DISGUISE,"Uncommon, Consumable, Potion",Adept,2,2,1200,20,0.3,Potion of Disguise.jpg,"Drinking this potion allows you to alter your appearance for 3 hours.
+
+You can change your height by up to 30 cm (1 foot) and adjust your build to appear thinner or heavier. Your body type must remain the same, maintaining the basic arrangement of limbs. The potion’s effect does not alter your clothing, armor or belongings."
+brightscale-draught,BRIGHTSCALE DRAUGHT,"Uncommon, Consumable, Potion",Adept,2,6,1600,60,0.3,Brightscale Draught.jpg,"Drinking this draught grants you resistance to all Lightning, Cold and Fire damage for 1 hour."
+skinstone-draught,SKINSTONE DRAUGHT,"Uncommon, Consumable, Potion",Adept,2,6,1600,60,0.3,Skinstone Draught.jpg,"Drinking this draught grants you resistance to all Sharp, Blunt and Force damage for 1 hour."
+seafarers-elixir,SEAFARER’S ELIXIR,"Uncommon, Consumable, Potion",Adept,2,2,1200,20,0.3,Seafarer elixir.jpg,Drinking this elixir grants you the ability to breathe underwater and move at your normal Movement Speed. The effect lasts for 1 hour.
+love-potion,LOVE POTION,"Uncommon, Consumable, Potion",Adept,2,2,1200,20,0.3,Love Potion.jpg,"Drinking this potion makes you irresistible for 1 hour, granting you advantage on all Rolls related to persuading or gaining favors.
+
+Add the hair, blood or a piece of skin of an entity before you drink, and that entity falls in love with you instead, granting you double advantage toward it."
+vulnerability-potion,VULNERABILITY POTION,"Uncommon, Consumable, Potion",Adept,2,4,1400,40,0.3,Vulnerability Potion.jpg,"Drinking this potion makes you vulnerable to Sharp, Force and Blunt damage for 1 hour.
+
+This concoction can also be applied to a weapon, where it lasts until your next Turn End.
+
+On a hit with the weapon, damage dealt is calculated as if the entity were vulnerable."
+elixir-of-chaos,ELIXIR OF CHAOS,"Uncommon, Consumable, Potion",Adept,2,4,1400,40,0.3,Chaos Potion.jpg,"When drinking this elixir, you gain the effects of two random potions. Determine them by rolling 2d10 and reading each result against the list below.
+
+1. Healing Potion 2. Luck Potion 3. Poison 4. Growth Elixir 5. Power Draught 6. Life Draught 7. Defense Draught 8. Explosive Concoction 9. Shrink Elixir 10. Elixir of Chaos"
+shrink-elixir,SHRINK ELIXIR,"Uncommon, Consumable, Potion",Adept,2,4,1400,40,0.3,Shrinking Elixir.jpg,"After drinking this elixir you shrink to one-fourth of your size for 1 hour.
+
+Your Defense is reduced by 2, the Damage Dice you take are Empowered by 1, and you roll one Damage Die fewer on the damage you deal."
+draught-of-cleansing,DRAUGHT OF CLEANSING,"Rare, Consumable, Potion",Master,2,6,2600,60,0.3,Draguth of cleansing.jpg,Drinking this draught removes all status effects on you that last 20 turns or less.
+etherealness-potion,ETHEREALNESS POTION,"Rare, Consumable, Potion",Master,2,6,2600,60,0.3,Etherealness Potion.jpg,"Drinking this potion makes you ethereal for 2 turns.
+
+While ethereal you cannot take any actions, but you cannot be touched or interacted with, and you are immune to all effects."
+elixir-of-slime,ELIXIR OF SLIME,"Rare, Consumable, Potion",Master,2,10,3000,100,0.4,Elixir of Slime.jpg,"Drinking this elixir turns your body and equipment into slime for 1 hour, and you gain control over whether your body is slimy or solid.
+
+While in this form you can occupy the same space as another entity and move through spaces as narrow as 2.5 cm (1 inch). You also gain resistance to Elemental and Physical damage."
+potion-of-flying,POTION OF FLYING,"Rare, Consumable, Potion",Master,2,8,2800,80,0.3,Potion of Flying.jpg,Drinking this potion grants you a flight speed equal to your Movement Speed for 12 hours.
+elixir-of-time,ELIXIR OF TIME,"Rare, Consumable, Potion",Master,2,20,4000,200,0.4,Elixir of Time.jpg,"Drinking this elixir activates a short time loop. At your Turn End, time rewinds and your turn starts again.
+
+Rewinding time returns to you all resources, items and statuses as they were when you drank it, and lets you replay your turn. The rewind only affects you and does not apply to the environment or enemies. Others just see two versions of yourself acting at the same time.
+
+A second dose within 7 days would kill you, and the elixir used to trigger the rewind is lost."
+titansbane-poison,TITANSBANE POISON,"Rare, Consumable, Potion",Master,3,8,2800,80,0.3,Titansbane Poison.jpg,"Drinking this poison afflicts you with Titansbane. Titansbane gives you two disadvantages on all actions until you take a Long Rest.
+
+This concoction can also be applied to a weapon, where it lasts until your next Turn End.
+
+On a hit with the weapon, the entity contracts Titansbane."
+bottled-lightning,BOTTLED LIGHTNING,"Rare, Consumable, Potion",Master,3,12,3200,120,0.4,Bottled Lightning.jpg,"Throw the flask at a point you can see within 6 meters (20 feet). It bursts, releasing a bolt of lightning that jumps to the closest entity within 3 meters (10 feet).
+
+Roll your highest Attribute against its Reflex. On a success it takes 5d20 Lightning damage, or half as much on a failure.
+
+The bolt then jumps to the closest entity within 3 meters (10 feet) it has not affected, dealing damage and repeating this process until it cannot bounce anymore."
+life-tree-tea,LIFE TREE TEA,"Legendary, Consumable, Potion",Legendary,6,,8000,,0.3,LIFE TREE TEA.jpg,"Drinking this tea gives you the benefit of a Long Rest. It costs no Supplies and it does not spend your Long Rest action.
+
+A second cup within 7 days would kill you."

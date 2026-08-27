@@ -230,6 +230,30 @@ const ALIASES = {
      letter on the file with nothing wrong with the row. The other two land
      without help, `Eye of the Storm.jpg` included. */
   Downpour: 'Downpou.jpg',
+
+  /* Seven from data/Potions/, 2026-08-27, out of twenty four, and they are the
+     widest spread of reasons any one drop has brought.
+
+     Three are plain misspellings of the row beside them: `Draguth of
+     cleansing.jpg` for DRAUGHT OF CLEANSING, `Explosive Concotion.jpg` for
+     EXPLOSIVE CONCOCTION, `Shrinking Elixir.jpg` for SHRINK ELIXIR.
+
+     `Healing.jpg` and `Chaos Potion.jpg` are the file naming the *thing* where the
+     sheet names the row: HEALING POTION and ELIXIR OF CHAOS. `Seafarer
+     elixir.jpg` is the same again with an apostrophe missing, which `flatten`
+     cannot bridge because the codex prints SEAFARER’S ELIXIR and the possessive
+     leaves an s behind.
+
+     `Poison (2).jpg` is the one that is not about spelling at all. It is what a
+     browser calls the second download of one file, and there is no `Poison.jpg`
+     beside it. Renaming it retires this entry, which is true of all seven. */
+  'Draught of Cleansing': 'Draguth of cleansing.jpg',
+  'Explosive Concoction': 'Explosive Concotion.jpg',
+  'Shrink Elixir': 'Shrinking Elixir.jpg',
+  'Healing Potion': 'Healing.jpg',
+  'Elixir of Chaos': 'Chaos Potion.jpg',
+  'Seafarer’s Elixir': 'Seafarer elixir.jpg',
+  Poison: 'Poison (2).jpg',
 };
 
 /**
@@ -642,6 +666,15 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethe
  * three plates for a family with no card in the codex before the drop, so nothing
  * is shadowed and nothing goes in `ALIASES` either, since all three filenames are
  * already the card names.
+ *
+ * `data/Magma/` is the twelfth, the same day, and it is the Fire and Earth case a
+ * third time: three plates for a family the codex has held since the opening
+ * Elemental drop of 2026-08-20, where all three cards already carry art cut from
+ * the whole renders in `data/Elemental/Magma/`. So all three are shadowed, the
+ * newest wins by seven months of mtime, and the run names the three older files
+ * until somebody deletes that folder. All three filenames are already the card
+ * names, `Magma Slide.jpg` notably not among them: the render is called MAGMA
+ * SLIDE and the card is MAGMA SURGE, and the plate is named for the card.
  */
 const FAMILY_FOLDERS = new Set([
   'shadow',
@@ -655,6 +688,7 @@ const FAMILY_FOLDERS = new Set([
   'earth',
   'storm',
   'mud',
+  'magma',
 ]);
 
 
@@ -703,6 +737,7 @@ const PLATE_FOLDERS = new Set([
   'earth',
   'storm',
   'mud',
+  'magma',
 ]);
 
 /**
@@ -738,6 +773,29 @@ const SKILL_FOLDER = 'skills';
 /** A folder in the background family: `data/Background/`, or `data/Skills/`. */
 const isBackgroundFamily = (name) =>
   flatten(name) === BACKGROUND_FOLDER || flatten(name) === SKILL_FOLDER;
+
+/**
+ * A folder of *item* art whose items also teach a card, claimed by both scripts.
+ *
+ * `data/Potions/` landed 2026-08-27 with the whole potion shelf: twenty four
+ * 1024x1024 art plates and the sheet that names them, one picture for each of the
+ * twenty four rows. A belt item teaches exactly one card, so every file in there
+ * is both an item's picture and a card's, and both scripts have to walk it for
+ * the same reason both walk `data/OF/`: the tile and the card plate are different
+ * crops of one painting. See the note over ONE_OFF above, and SHELF_EXTRAS in
+ * pull-item-art.mjs, which is the same claim from the other side.
+ *
+ * It is not a shelf folder, because the shelf these things stand on is Belt Gear
+ * and a folder called Potions is a *kind* rather than a slot. Claiming it by name
+ * is what keeps `data/Armor/` meaning the Armor shelf.
+ *
+ * Nothing here is cut. The pictures are plates, the way the lineage and school
+ * drops are, and the crop only ever fires for a whole card render.
+ */
+const ITEM_FOLDERS = new Set(['potions']);
+
+/** A folder whose files are item art that also wants a card plate. */
+const isItemFolder = (name) => ITEM_FOLDERS.has(flatten(name));
 
 /**
  * A duplicate Windows made rather than a picture somebody drew.
@@ -786,6 +844,7 @@ function pictures(setIds) {
         (mine(entry.name) ||
           spells(entry.name) ||
           lineage(entry.name) ||
+          isItemFolder(entry.name) ||
           isBackgroundFamily(entry.name))
     )
     .flatMap((dir) =>

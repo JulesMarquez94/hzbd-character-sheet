@@ -255,12 +255,40 @@ export const EFFECT_RIDERS = {
    * apply without inventing something the card does not say. Each is still
    * trackable, and each still prints its own card on the row.
    *
-   *   love-potion      the drinker holds the brewer as a trusted ally for an
-   *                    hour. Nothing about that is a number, on this sheet or
-   *                    on the drinker's.
-   *   healing-draught  healing is a pool moved once, not a rider that runs.
-   *   flame-burst-flask the flames stay for 3 turns and burn whatever stands in
-   *                    them, which is a place on the table rather than a number
+   *   life-draught     **the closest call the potion drop brought.** `healthMax`
+   *                    is a field this table holds and the card names it and its
+   *                    maximum both: "increases your Health and your maximum
+   *                    Health by 5 x level". Unlike VIGOR below, the scale is the
+   *                    *drinker's* level and the drinker is the sheet holding the
+   *                    row, so the number is knowable here. What stops it is the
+   *                    shape: every entry above is a literal constant, and
+   *                    `runningRiders` is handed an effects list and no character
+   *                    to measure a level against. One argument threaded through
+   *                    it unlocks this row and VIGOR at the same time.
+   *   love-potion      advantage on Rolls to persuade or win a favor. The Attack
+   *                    Roll is the sheet's and this is not one: it is the skill
+   *                    check, which is the table's, and LUCKY CLOVER's own note
+   *                    below is where that line was drawn.
+   *   luck-potion      the same, for all skill checks.
+   *   healing-potion   healing is a pool moved once, not a rider that runs. So is
+   *                    the Poison's damage, from the other side.
+   *   brightscale-draught, skinstone-draught, elixir-of-slime
+   *                    resistance to three damage types, or to two whole
+   *                    families. The sheet holds no resistances yet, which is
+   *                    DRACONIC SCALE's wall below.
+   *   vulnerability-potion the same wall reversed: no vulnerabilities either.
+   *   potion-of-flying a flight speed. The sheet holds one Movement Speed and
+   *                    nowhere to say what it moves through.
+   *   etherealness-potion "immune to all effects" is every rule at once, which is
+   *                    not a number. Two turns of it is the table's.
+   *   potion-of-disguise, seafarers-elixir, draught-of-cleansing, elixir-of-chaos,
+   *   elixir-of-time, life-tree-tea
+   *                    none of them names a number this sheet holds. A height, a
+   *                    lungful of water, a status effect removed, two potions
+   *                    rolled for, a turn replayed and a night's rest.
+   *   explosive-concoction, bottled-lightning
+   *                    thrown, and the damage lands once. The flames and the
+   *                    bouncing bolt are places on the table rather than numbers
    *                    on anybody's sheet.
    *
    *   air-control      Light air "increases all entities' Movement Speed by 3",

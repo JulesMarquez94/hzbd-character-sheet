@@ -126,8 +126,8 @@ export const UTILITY_CARDS = withArt([
        the tracker holds the row without a clock on it. */
     body:
       'Drinking this potion deals [[8d6 + 8*level]] {damage:Decay} damage.\n\n' +
-      'It can be applied to a weapon instead, where it lasts for the rest of the combat.\n\n' +
-      'On a hit with that weapon, you deal additional {damage:Decay} damage equal to the number of Damage Dice rolled.',
+      'This concoction can also be applied to a weapon, where it lasts for the rest of the combat.\n\n' +
+      'On a hit with the weapon, you deal additional {damage:Decay} damage equal to the number of Damage Dice rolled.',
   },
   {
     id: 'luck-potion',
@@ -209,8 +209,8 @@ export const UTILITY_CARDS = withArt([
        the duration is declared in the first paragraph and a line that only
        restates one is a line the card cannot spare. */
     body:
-      'Drinking this potion lets you alter your appearance for **3 hours**.\n\n' +
-      'You can change your height by up to 30 cm (1 foot) and make your build look thinner or heavier. Your body type stays the same, keeping the basic arrangement of limbs, and your clothing, armor and belongings are unchanged.',
+      'Drinking this potion allows you to alter your appearance for **3 hours**.\n\n' +
+      'You can change your height by up to 30 cm (1 foot) and adjust your build to appear thinner or heavier. Your body type must remain the same, maintaining the basic arrangement of limbs. The potion’s effect does not alter your clothing, armor or belongings.',
   },
   {
     id: 'brightscale-draught',
@@ -220,7 +220,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     body:
-      'Drinking this draught grants you resistance to {damage:Lightning}, {damage:Cold} and {damage:Fire} damage for **1 hour**.',
+      'Drinking this draught grants you resistance to all {damage:Lightning}, {damage:Cold} and {damage:Fire} damage for **1 hour**.',
   },
   {
     id: 'skinstone-draught',
@@ -230,7 +230,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     body:
-      'Drinking this draught grants you resistance to {damage:Sharp}, {damage:Blunt} and {damage:Force} damage for **1 hour**.',
+      'Drinking this draught grants you resistance to all {damage:Sharp}, {damage:Blunt} and {damage:Force} damage for **1 hour**.',
   },
   {
     id: 'seafarers-elixir',
@@ -240,7 +240,7 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: null,
     body:
-      'Drinking this elixir lets you breathe underwater and move at your normal Movement Speed for **1 hour**.',
+      'Drinking this elixir grants you the ability to breathe underwater and move at your normal Movement Speed. The effect lasts for **1 hour**.',
   },
   {
     id: 'love-potion',
@@ -254,8 +254,8 @@ export const UTILITY_CARDS = withArt([
        drinker hands the advantage to. "double advante" is advantage twice, which
        is the count TITANSBANE POISON writes from the other side. */
     body:
-      'Drinking this potion makes you irresistible for **1 hour**, granting you advantage on every Roll to persuade somebody or to win a favor.\n\n' +
-      'Stir in the hair, blood or skin of **an entity** before you drink and it falls in love with you instead, granting you advantage twice on those Rolls toward it.',
+      'Drinking this potion makes you irresistible for **1 hour**, granting you advantage on all Rolls related to persuading or gaining favors.\n\n' +
+      'Add the hair, blood or a piece of skin of **an entity** before you drink, and that entity falls in love with you instead, granting you double advantage toward it.',
   },
   {
     id: 'vulnerability-potion',
@@ -268,8 +268,8 @@ export const UTILITY_CARDS = withArt([
        the tracker reads a clock off. */
     body:
       'Drinking this potion makes you vulnerable to {damage:Sharp}, {damage:Force} and {damage:Blunt} damage for **1 hour**.\n\n' +
-      'It can be applied to a weapon instead, where it lasts **until your next Turn End**.\n\n' +
-      'On a hit with that weapon, damage is worked out as though the entity were vulnerable.',
+      'This concoction can also be applied to a weapon, where it lasts **until your next Turn End**.\n\n' +
+      'On a hit with the weapon, damage dealt is calculated as if the entity were vulnerable.',
   },
   {
     id: 'elixir-of-chaos',
@@ -283,7 +283,7 @@ export const UTILITY_CARDS = withArt([
        are not a shape this renderer has. Every name on it is a row on this sheet,
        which is what makes the list checkable. */
     body:
-      'Drinking this elixir gives you the effects of two random potions. Roll 2d10 and read each die against the list.\n\n' +
+      'When drinking this elixir, you gain the effects of two random potions. Determine them by rolling 2d10 and reading each result against the list below.\n\n' +
       '1. Healing Potion 2. Luck Potion 3. Poison 4. Growth Elixir 5. Power Draught 6. Life Draught 7. Defense Draught 8. Explosive Concoction 9. Shrink Elixir 10. Elixir of Chaos',
   },
   {
@@ -298,7 +298,7 @@ export const UTILITY_CARDS = withArt([
        it: 1 either way. "Depowered" is not a word this codex has, so the clause
        is written as one die fewer. Flagged. */
     body:
-      'Drinking this elixir shrinks you to a quarter of your size for **1 hour**.\n\n' +
+      'After drinking this elixir you shrink to one-fourth of your size for **1 hour**.\n\n' +
       'Your Defense is reduced by 2, the Damage Dice you take are Empowered by 1, and you roll one Damage Die fewer on the damage you deal.',
   },
 
@@ -312,7 +312,7 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     /* "20 turns or less" is a threshold rather than a duration, so it is not
        bolded: bold on a card is how far, at whom and for how long. */
-    body: 'Drinking this draught removes every status effect on you that lasts 20 turns or less.',
+    body: 'Drinking this draught removes all status effects on you that last 20 turns or less.',
   },
   {
     id: 'etherealness-potion',
@@ -323,7 +323,7 @@ export const UTILITY_CARDS = withArt([
     wp: null,
     body:
       'Drinking this potion makes you ethereal for **2 turns**.\n\n' +
-      'While you are ethereal you can take no actions, and nothing can touch you, interact with you or affect you at all.',
+      'While ethereal you cannot take any actions, but you cannot be touched or interacted with, and you are immune to all effects.',
   },
   {
     id: 'elixir-of-slime',
@@ -338,8 +338,8 @@ export const UTILITY_CARDS = withArt([
        Force. So they stay the words the sheet wrote and are not chipped as damage
        types. */
     body:
-      'Drinking this elixir turns your body and your equipment to slime for **1 hour**, and you choose from moment to moment whether you are slime or solid.\n\n' +
-      'While you are slime you can share a space with another entity and pass through a gap as narrow as 2.5 cm (1 inch). You also gain resistance to Elemental and Physical damage.',
+      'Drinking this elixir turns your body and equipment into slime for **1 hour**, and you gain control over whether your body is slimy or solid.\n\n' +
+      'While in this form you can occupy the same space as another entity and move through spaces as narrow as 2.5 cm (1 inch). You also gain resistance to Elemental and Physical damage.',
   },
   {
     id: 'potion-of-flying',
@@ -364,9 +364,9 @@ export const UTILITY_CARDS = withArt([
        card naming itself where "a second dose" says the same thing. Every
        mechanic survives, which is the order the budget is spent in. */
     body:
-      'Drinking this elixir opens a short time loop. At your Turn End, time rewinds and your turn starts again.\n\n' +
-      'The rewind gives you back every resource, item and status as it stood when you drank. It reaches you alone: the ground and your enemies do not move, and everybody else sees two of you acting at once.\n\n' +
-      'A second dose within **7 days** would kill you, and the elixir that triggered the rewind is not given back.',
+      'Drinking this elixir activates a short time loop. At your Turn End, time rewinds and your turn starts again.\n\n' +
+      'Rewinding time returns to you all resources, items and statuses as they were when you drank it, and lets you replay your turn. The rewind only affects you and does not apply to the environment or enemies. Others just see two versions of yourself acting at the same time.\n\n' +
+      'A second dose within **7 days** would kill you, and the elixir used to trigger the rewind is lost.',
   },
   {
     id: 'titansbane-poison',
@@ -378,9 +378,9 @@ export const UTILITY_CARDS = withArt([
     /* Titansbane is named on the card because the third paragraph has to point at
        it: what the weapon passes on is the affliction, not the flask. */
     body:
-      'Drinking this poison afflicts you with Titansbane, which gives you disadvantage twice on every action **until you take a Long Rest**.\n\n' +
-      'It can be applied to a weapon instead, where it lasts **until your next Turn End**.\n\n' +
-      'On a hit with that weapon, the entity contracts Titansbane.',
+      'Drinking this poison afflicts you with Titansbane. Titansbane gives you two disadvantages on all actions **until you take a Long Rest**.\n\n' +
+      'This concoction can also be applied to a weapon, where it lasts **until your next Turn End**.\n\n' +
+      'On a hit with the weapon, the entity contracts Titansbane.',
   },
   {
     id: 'bottled-lightning',
@@ -395,9 +395,9 @@ export const UTILITY_CARDS = withArt([
        reason, the way DISARM leaves it off. */
     stat: HIGHEST,
     body:
-      'Throw the flask at a point you can see within **6 meters (20 feet)**. A bolt of lightning jumps to the closest **entity** within **3 meters (10 feet)**.\n\n' +
+      'Throw the flask at a point you can see within **6 meters (20 feet)**. It bursts, releasing a bolt of lightning that jumps to the closest **entity** within **3 meters (10 feet)**.\n\n' +
       'Roll your {stat} {roll} against its Reflex. On a success it takes [[5d20]] {damage:Lightning} damage, or half as much on a failure.\n\n' +
-      'It then jumps to the closest entity within **3 meters (10 feet)** it has not hit, damaging it the same way, and keeps going until it cannot.',
+      'The bolt then jumps to the closest entity within **3 meters (10 feet)** it has not affected, dealing damage and repeating this process until it cannot bounce anymore.',
   },
 
   /* ----- Legendary ----- */

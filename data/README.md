@@ -105,6 +105,9 @@ doing on its own.
 | Earth art, from the `Earth/` folder | **2026-08-26, 9 plates** (SHAPE EARTH redrawn) | `public/cards/` + `src/lib/cardArt.js` |
 | Fire art, from the `Fire/` folder | **2026-08-26, 9 plates**, all redraws | `public/cards/` + `src/lib/cardArt.js` |
 | A content hash on every art URL | **2026-08-27, 295 rows** | `src/lib/cardArt.js`, `src/lib/itemArt.js` |
+| Items · Potions, replacing the whole shelf | **2026-08-27, 24 potions** (9 removed) | `src/lib/utility.js`, `riders.js`, `scripts/check-potions.mjs` |
+| Potion art, from the `Potions/` folder | **2026-08-27, 24 plates and 24 tiles** | `public/cards/`, `public/items/` |
+| Magma art, from the `Magma/` folder | **2026-08-27, 3 plates**, all redraws | `public/cards/` + `src/lib/cardArt.js` |
 
 `templates/` holds the current state of each, exported back out in the sheet's
 own column order. `primal-spells.csv` holds the 52 Primal spells and nothing
@@ -119,8 +122,11 @@ ones whose art arrived as a folder rather than as a postimg link.
 (2026-08-26) rewrote card text across the codex and did not re-export the tabs,
 so `ethereal-spells.csv` still says "in Shield" where the card now says "Shield",
 and every second half in it still names its own card. `primal-spells.csv` was
-re-exported when Death landed and `elemental-spells.csv` when Earth did, so those two
+re-exported when Death landed, `elemental-spells.csv` when Earth did and
+`potions.csv` when the potion shelf was replaced, so those three
 are current; the rest are a regenerate away and nobody has asked for it.
+`potions.csv` replaced `alchemist-potions.csv` on 2026-08-27: the shelf is no
+longer only the Alchemist's, since it now runs to a Legendary rung nothing brews.
 `elemental-spells.csv` holds the 37 Elemental spells — a tab with no sheet behind it,
 generated straight out of `spells.js`, and its Image column names the picture each row
 came from, which is what the art importer places the files by. Nineteen of them name a
@@ -8373,3 +8379,235 @@ rated on and because the designer's own sentence calls it rare.
 
 Nothing painted. First Place is keyed `first-place` in `public/items/`, and the
 two new enchantments carry no picture the way most of that shelf does not.
+
+## The potion shelf, replaced, 2026-08-27
+
+Handed over in chat, three sentences:
+
+> "In the the Potions folder you will find the design for all the potions and
+> their assoaicte iamge. Remove all the existing one and replace them iwth this
+> ones.
+>
+> Add the magma image from the magma folder to the magma spells.
+>
+> For price a potion cost 100 x Willpower cost in coins. Adpet add 1000 to that
+> and Master add 2000
+>
+> The tea cost 8000"
+
+`data/Potions/` is twenty four 1024x1024 plates and
+`Equipment, Enchantments and Items - Items - Potions.csv`: Name, Tags, AP, WP,
+Main Effect, twenty four rows, Novice to Legendary. `data/Magma/` is three
+2400x1792 plates for a family the codex has held since the opening Elemental
+drop.
+
+| What | Where it landed |
+| ---- | --------------- |
+| 24 potion cards and 24 flasks, replacing 9 | `src/lib/utility.js` |
+| Both prices off the sheet's Willpower column | the same, typed per flask |
+| The round trip that proves it | `scripts/check-potions.mjs`, `npm run lint:potions` |
+| 5 riders, replacing 4 | `src/lib/riders.js` |
+| The Aristocrat's belt, which lost its item | `src/lib/backgrounds.js` |
+| `data/Potions/` claimed by both art scripts | `scripts/pull-card-art.mjs`, `scripts/pull-item-art.mjs` |
+| Magma claimed as a family folder | `scripts/pull-card-art.mjs` |
+| 24 card plates, 24 item tiles, 3 Magma redraws | `public/cards/`, `public/items/` |
+| The importer's contract, rewritten | `data/templates/potions.csv` |
+
+### Nine went, twenty four came
+
+| Was | Now |
+| --- | --- |
+| Healing Potion (printed card, 2 AP) | HEALING POTION, the sheet's row 1, same id |
+| Love Potion (Novice, rolled against the drinker) | LOVE POTION, Adept, the drinker gets the advantage. Same id, different card |
+| Growth Elixir (its own numbers) | GROWTH ELIXIR, which hands over GIANT GROWTH. Same id, different card |
+| Healing Draught, Flame Burst Flask, Potion of Physique, Potion of Instinct, Potion of Mind | gone. The sheet has no row for any of them |
+| Aether Draught | gone. It was a stand-in written to fill a belt loop, and stand-ins go when the design arrives |
+
+The Aether Draught is the only one worth a second look, because it was the codex's
+one way to put Willpower back in a flask and the new sheet has no row that does
+that. It was also the **Aristocrat's starting kit item**, so that background now
+starts with a Luck Potion instead. One line in backgrounds.js if you want another.
+
+Bandage Roll and Smoke Vial stayed. Neither is tagged Potion, and neither is on
+the sheet: a Field Kit and a piece of Alchemy.
+
+### The prices, and the anchor that moved
+
+Your rule, applied to the sheet's Willpower column, which is the brewer's price
+rather than the drinker's:
+
+    coin     = 100 x WP, + 1000 at Adept, + 2000 at Master
+    Supplies = 10 x WP, at every rung
+
+Every number is typed on its own flask rather than computed, the way a weapon's
+damage is typed card by card, and `npm run lint:potions` is what proves the
+twenty four of them still add up. The Supplies rate is the one alchemy.js has
+carried since 2026-08-24 and it did not move.
+
+**The rung surcharge is coin only.** You said nothing about the crate, and a
+night's brewing is components rather than scarcity, so an Adept recipe costs ten
+a point like every other one. That is the one place the rule was extended by a
+reading rather than by your sentence.
+
+**The Healing Potion is 200 coins now, and it used to be 100.** That row was the
+coin anchor for the whole codex, your own "a healing potion is like 100 coins,
+and 100 coins is 10 dollars". Nothing else was repriced, so the scale is
+untouched and the sentence is still true of everything mundane. It is just no
+longer this row that says it. If the anchor was meant to hold, the fix is a
+Healing Potion at 1 Willpower on the sheet rather than 2.
+
+| Rung | Rarity | Coin range | Supplies range |
+| ---- | ------ | ---------- | -------------- |
+| Novice, 8 rows | Common | 200 to 600 | 20 to 60 |
+| Adept, 8 rows | Uncommon | 1200 to 1600 | 20 to 60 |
+| Master, 7 rows | Rare | 2600 to 4000 | 60 to 200 |
+| Legendary, 1 row | Legendary | 8000, by hand | none |
+
+**Rarity is not on the sheet** and is read straight off the rung. Epic is skipped:
+four rungs into five words leaves a gap somewhere, and a gap is cleaner than
+crowding. Your coin surcharge is the same ladder said in money, which is what
+makes that a reading rather than a taste.
+
+**Life Tree Tea is the exception on every count.** Its Willpower cell is empty, so
+there is no number to multiply and you priced it at 8000 directly. It carries no
+`brew` either, for that reason and one more: ALCHEMY's ladder stops at Master, so
+nothing opens a Legendary tier for a recipe to sit on.
+
+**Weight is not on the sheet.** 0.3 kg is the shelf's flask, 0.4 kg the two that
+are thrown and the two heaviest elixirs, and the Healing Potion keeps the 0.5 kg
+it has always had rather than being quietly relabelled underneath somebody's
+pack. `check-stat-math.mjs` weighs four of them in one of its thirteen sheets.
+
+### The round trip
+
+Every body was mapped back to the words a reader of your sheet would have
+written and compared to your cell, whitespace and case flattened. **736 of your
+876 words survive, 84%**, and ETHEREALNESS POTION survives whole. Every one of
+the other 140 is one of six things:
+
+| Kind | Example |
+| ---- | ------- |
+| A misspelling | `applyig`, `duraiton`, `iresitable`, `lessl`, `agaisnt`, `secondlife`, `hte`, `peice` |
+| A unit written short | `1h` to **1 hour**, `12h` to **12 hours**, `a duration 3 hour` to **3 hours** |
+| `potion` where the row's own name says otherwise, 15 of them | LIFE DRAUGHT says draught, ELIXIR OF SLIME says elixir |
+| `creature` where the codex says entity, 3 of them | the vocabulary rule in docs/card-text.md |
+| `the user's` where every other row says `your` | LIFE DRAUGHT, DEFENSE DRAUGHT |
+| A garbled clause or a restatement | the four readings below, and POTION OF DISGUISE's "The changes last until the effect ends" |
+
+Three Oxford commas came out as well, which the word count does not see because
+punctuation is stripped before it compares: `lightning, cold, and fire` and its
+two siblings. That is `docs/text-style.md`, enforced by `npm run lint:text`.
+
+The fifteen `potion` swaps are the one systematic edit worth arguing about. Every
+row on the sheet opens "Drinking this potion", including the ones called draught
+and elixir and tea, and it reads as the copy-paste it is. The 2026-08-24 pass had
+already made the same swap for HEALING DRAUGHT and GROWTH ELIXIR. **One sed puts
+the word back** if you would rather it said potion throughout.
+
+### Four readings the sheet needed
+
+1. **EXPLOSIVE CONCOCTION's two distances.** "up to 6 meter ()" has an empty
+   parenthesis where the feet go, and 6 meters is 20 feet. "within 3 meters (15
+   feet)" is two different distances: 3 meters is 10 feet, 15 feet is 4.5 meters.
+   The meters won, because the codex writes a radius in meters first and because
+   the old Flame Burst Flask was 3 meters (10 feet). **If the burst was meant to
+   be 4.5 meters, that is the number to change.**
+2. **SHRINK ELIXIR's missing 1.** "the damage dice you take are empowred by while
+   the damage dice you deal are depowered by 1" has no number on the first half,
+   and the symmetry answers it: 1 either way.
+3. **"Depowered" is not a word this codex has.** Empowered is one more die of the
+   same kind and there is no printed opposite, so the clause reads "you roll one
+   Damage Die fewer on the damage you deal". If Depowered is meant to be a real
+   keyword, it belongs in `keywords.js` and this card can name it.
+4. **ELIXIR OF SLIME's "Elemental and Physical".** Neither is one of the codex's
+   damage types; both are families, and your own two rows above name what is in
+   each: BRIGHTSCALE is Lightning, Cold and Fire, SKINSTONE is Sharp, Blunt and
+   Force. So the two words stay as you wrote them and are not chipped as damage
+   types.
+
+### Two notes to the developer, neither printed, both open
+
+A card never carries a note to the developer (docs/card-text.md section 7), so
+both parentheses were read as instructions and neither is wired.
+
+1. **POISON.** "make sure it is tracker o nteh tracker and modify the active
+   weapon". The tracking works already: every card in the codex can go on the
+   block. What cannot be wired is the weapon rider, because the effect is
+   "additional Decay damage equal to the number of Damage Dice rolled" and the
+   rider table has no field for a bonus that counts dice. It has `empower` (one
+   more die), `elevate` (a bigger die) and `damage` (a replacement type), and this
+   is none of the three. **A fourth field would do it: a flat bonus, in a named
+   damage type, equal to the Damage Dice count.** VULNERABILITY POTION and
+   TITANSBANE POISON coat a weapon too, and neither is wireable either: one asks
+   the sheet to hold a vulnerability and the other to pass an affliction to
+   somebody else's sheet.
+2. **LIFE TREE TEA.** "make is so that when use it does all the thing a long rest
+   does but does not cost anything nor does it propoer a a long rst action". This
+   is a real feature and a big one: nothing on this site can take a rest from an
+   item. A rest is a window with a plan in it (`restPlan` in rest.js), priced in
+   Supplies and buying exactly one Long Rest action, and the tea asks for that
+   window with the price and the action taken out. **The card prints both clauses
+   so the table can apply it by hand**, and the wiring is a job of its own.
+
+### Six more rulings
+
+1. **The Improvised Brewing column is gone.** The old table had an element-dice
+   column per row and this sheet has none, so `brew.elements` is absent on all
+   twenty four and the recipe shelf prints the price and nothing else. The old
+   dice could not be carried over: five of the seven rows that had them no longer
+   exist, and the three ids that survived are different rows now. IMPROVISED
+   BREWING still prints on the Alchemist's card and still asks for dice the codex
+   cannot name.
+2. **LIFE DRAUGHT is the rider that got away.** "increases the user's Health and
+   Max Health by 5 x level" is `healthMax`, a field the rider table holds, and
+   unlike VIGOR the scale is the *drinker's* level, which is the sheet holding the
+   row. What stops it is the shape: every rider is a literal constant, and
+   `runningRiders` is handed an effects list and no character to measure a level
+   against. One argument threaded through it unlocks this row and VIGOR together.
+3. **The card tags now carry a rung, and no item card did before.** Your Tags
+   column says `Item, Consumable, Novice Potion`, so that is what the cards say.
+   It changes where they sort on the Abilities tab: potions now stack Novice,
+   Adept, Master, Legendary instead of by name.
+4. **Nothing prints small, and the estimate said two would.** `lint:cards` puts
+   ELIXIR OF TIME at 536 and BOTTLED LIGHTNING at 523, both over the 480 target,
+   so the harness was rebuilt and the renderer asked (controls: SENSE LIFE 0.902,
+   RAIN OF FIRE 0.945, PESTILENT CLOUD 0.969, EARTHQUAKE 0.949, EYE OF THE STORM
+   0.969, all to the recorded digit). **23 of 24 print at full size and ELIXIR OF
+   TIME prints at 0.973**, which is better than five cards already in the codex.
+   Measured twice, with no character and at level 20 with every attribute at 10,
+   and the two readings agree: the live values cost nothing. So the two loads over
+   target bought back 84% of your wording for no visible type at all.
+5. **The Willpower is still not charged to the drinker**, which is the same ruling
+   the 2026-08-24 pass left open and which your coin rule now confirms from the
+   other side: a column that sets the price of the flask is the brewer's column.
+   Every card is `wp: null`.
+6. **Adept and Master brewing is live for the first time.** ALCHEMY's Rank 2 and
+   Rank 3 opened tiers the codex had nothing on, and the note over `alchemyPreview`
+   in alchemy.js was written about exactly that. Rank 1 reaches 8 recipes, Rank 2
+   reaches 16 and Rank 3 reaches 23, the dearest of them ELIXIR OF TIME at 200
+   Supplies against a Rank 3 discount of 10. **That is worth a look**: a Rank 3
+   Alchemist brews three a night, so one night at the still can cost 570 Supplies,
+   and the discount was scaled against a table that topped out at 40.
+
+### The art
+
+Both scripts claim `data/Potions/` now, the way both claim `data/OF/`, because a
+belt item teaches exactly one card and every file in there is both an item's
+picture and a card's. 24 card plates at 720 and 200 px, 24 item pictures at 720
+and 128 px, 1.70 MB out of 15.8 MB read. Nothing is cropped: the plates are
+paintings rather than whole card renders.
+
+**Seven of the twenty four filenames are not the row's name**, and they are in the
+ALIASES table of both scripts. Three are misspellings (`Draguth of cleansing`,
+`Explosive Concotion`, `Shrinking Elixir`), three name the thing where the sheet
+names the row (`Healing`, `Chaos Potion`, `Seafarer elixir`), and `Poison (2).jpg`
+is what a browser calls a second download, with no `Poison.jpg` beside it.
+Renaming any of the seven retires two entries at once.
+
+**Magma is the twelfth family folder and the third redraw.** All three files match
+the card names, `Magma Surge.jpg` included, which is worth noting because the old
+render in `data/Elemental/Magma/` is called MAGMA SLIDE and the card is MAGMA
+SURGE: the plate is named for the card. All three cards already had art cut from
+those renders, so all three are shadowed and the newest wins by seven months.
+**`data/Elemental/Magma/` can be deleted**, and the run names its three files on
+every pass until it is, the same as `data/Elemental/FIRE/`.

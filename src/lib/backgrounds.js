@@ -927,7 +927,12 @@ const BACKGROUND_CODEX = [
     kit: {
       weapons: 1,
       armor: true,
-      belt: ['aether-draught'],
+      /* Was the Aether Draught until 2026-08-27, when the potion drop replaced
+         the whole shelf and took the stand-in with it. The Luck Potion is the
+         nearest thing the new sheet has for a house name: an hour of advantage on
+         every skill check is what "it buys credit in places coin cannot" is, and
+         it is a Novice row like every other kit item. */
+      belt: ['luck-potion'],
       pack: [
         {
           name: 'Signet Ring',
