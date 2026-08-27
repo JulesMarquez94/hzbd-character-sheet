@@ -7912,3 +7912,327 @@ Four for Jules, three of them small:
 4. **"Ranged Attacks", "Attack Rolls" and "Turn Starts" are three plurals somebody
    noticed.** There may be others in the codex reading half lit. Nobody has swept for
    them.
+
+## The Mud family, 2026-08-27
+
+Asked for in as many words: "In the data there is now the Mud spells and in data I have
+the Mud folder wiht hte images, add the spells. Add the m and make sure to conrecct the
+text and make the wording up to the system."
+
+One sheet and one folder. `data/Spells - Elemental - Mud.csv` sits at the top of `data/`
+with three rows in the usual eight columns, and `data/Mud/` holds a picture for each of
+them, named after the card it belongs to.
+
+| Tier | Spell |
+| ---- | ----- |
+| Novice | MIRE |
+| Adept | ENGULF |
+| Master | DROWNING EARTH |
+
+### Mud is the school's ninth family, and its second compound
+
+One card a rung is the compound shape. Mud is water and earth the way Storm is wind and
+water, and a compound family runs three deep where a base element runs nine.
+
+| | Novice | Adept | Master | Total |
+| - | - | - | - | - |
+| Elemental before | 15 | 13 | 12 | 40 |
+| **after** | **16** | **14** | **13** | **43** |
+
+Plus DEEP SEA ACCRETION, which is Unique and item-bound, so the school holds 44 rows.
+
+No talent set casts from Elemental yet, so no set's pool moves. The Arcanist, which
+names no school, goes from 51, 96 and 140 to **52, 98 and 143**. An Imbuement binds "a
+NOVICE spell" with no school named, so MIRE can reach an item from the day it exists.
+
+Nothing in this drop is anything but the sheet's, except the wording the request asked
+for and the cut DROWNING EARTH needed to fit on a card. Both are below.
+
+Against the compound law written up under the Earth family, this closes Mud and leaves
+**eleven of the original twenty-five proposals**: five to finish Wind, and three each
+for Sand and Steam. Wind still stops at Adept, and Sand and Steam are still empty.
+
+| Family | Kind | Has | Wants |
+| --- | --- | --- | --- |
+| Fire, Water, Earth | base | 9, 10, 9 | done |
+| Wind | base | 4 | 5 more |
+| Lightning, Magma, Storm, **Mud** | compound | 3 each | done |
+| Sand, Steam | compound | 0 | 3 each |
+
+### What the family does
+
+All three cards hold an entity down, and each one prices its own way out. MIRE trips
+whoever walks into it, ENGULF seals one target and bills it every turn, DROWNING EARTH
+sinks a whole area by degrees. None of them is a save-or-suffer with no exit: MIRE ends
+the moment the prone entity stands, ENGULF sells a Physique contest for 3 Action Points
+and DROWNING EARTH sells a stage back for 4.
+
+### Open for Jules
+
+1. **`buried` is not a defined term, and DROWNING EARTH is the card that wants one.**
+   Its ladder is "rooted, then constrained, then buried". The first two are keywords
+   that carry their own explanations; the third is a word the card glosses itself,
+   "buried and taking [damage] at each Turn Start". That reads fine as printed, because
+   the damage is stated on the line, so it is transcribed as prose rather than lit,
+   which is how Difficult Terrain has sat in five card bodies since the school arrived.
+   **But whether buried is a status with rules of its own is a design answer, not a
+   wording one.** Does it stop actions the way constrained does? Does it suffocate? Does
+   it end when the spell ends? Say the word and it becomes a keyword in `keywords.js`
+   with its own colour and its own tap-to-read explanation, the way STONEFLESH's
+   **resistance** did a day earlier. Inventing the definition here would have been
+   inventing design.
+2. **DROWNING EARTH's ladder has no stated floor and no stated release.** An entity
+   that fails once is rooted and one that fails three times is buried. Nothing says
+   what a fourth failure does, and nothing says the stages come off when the entity
+   leaves the slurry or when the spell ends. The Upkeep is the only clock, which is
+   EARTHQUAKE's shape, so the spell ending is what has been read as releasing them.
+3. **ENGULF deals 1d6 + Mind at Adept**, where that rung's damage is otherwise
+   2d6 + 2 × Mind. It is a toll every turn rather than a cast, and MAGMA CHAINS is the
+   precedent: an Adept card that binds one entity and bills it Mind at each Turn Start.
+   Engulf asks for more per turn than that. Transcribed as printed.
+4. **DROWNING EARTH casts for 5 Action Points**, the only Master spell in the school
+   that does; every other one casts at 4. MAGMA CHAINS spends 5 at Adept, so the number
+   is unusual rather than unprecedented. Transcribed as printed.
+5. **ENGULF's escape rolls against your Grit**, not your Mind. MAGMA CHAINS is the one
+   other card where a target buys a contest with its own Action Points, and it rolls
+   Physique against your Mind. Grit is a defence and the sentence works either way, so
+   the sheet's own word stands.
+
+### The wording, corrected
+
+Three typos and one verb, and nothing else was touched:
+
+| The cell said | The card says |
+| --- | --- |
+| "The netity" | "It" |
+| "4 action poitns" | "4 Action Points" |
+| "reduce teh effect" | "reduce the effect", then cut (below) |
+| "can use 4 action poitns" | "can spend 4 Action Points" |
+
+The verb is the only one that is a house rule rather than a spelling: the codex spends
+Action Points and never uses them, which is MOUNTAIN'S WEIGHT's word and CONTAINMENT
+SPHERE's. ENGULF's own clause already read "can spend".
+
+The rest of the pass is the school's usual one. Every "Make a Mind Roll roll" becomes
+`{stat} Roll {roll}` so the markers light and an Instinct caster reads the same card;
+"3d6 + 3 × Mind Blunt damage" becomes `[[3d6 + 3*stat]] {damage} damage` off the same
+rule; ranges, radii and durations take the bold that says how far, at whom and for how
+long. `rooted`, `constrained`, `prone`, `Difficult Terrain`, `Turn Start`, `Reflex`,
+`Grit` and `Action Points` were already the codex's own spellings and needed nothing.
+
+### DROWNING EARTH had to be cut to fit, and the cut is worth reading
+
+It arrived at a load of **696 against a 600 ceiling**, the worst overrun of any card
+pulled so far. The reason is that it carries four mechanics and an Upkeep: an area, a
+per-turn contest, a three-rung ladder with damage on the last rung, an escape priced in
+Action Points, and a toll. The Upkeep alone eats 192 of the budget, 92 of prose and the
+flat 100 that any second half costs, which left the body about 310 to work in.
+
+What went was repetition and one paragraph break. No mechanic was dropped.
+
+- **The clock is said once.** The paragraph opens "At the Turn Start of **any entity**
+  in the area", so the buried rung's damage inherits it instead of printing "at each
+  Turn Start" a second time, which is what the cell did.
+- **The escape moved into the paragraph of the ladder it undoes**, worth 30 on its own.
+  It also reads better there: "rise a stage" is the sheet's "reduce the effect by 1
+  stage" in half the words and the exact inverse of the "sinks a stage" above it.
+- **The range dropped "on a point"**, which is EARTHQUAKE's own shorter form for an
+  area made of ground.
+- The Upkeep holds "it" where "the ground" was.
+
+696 to **593**. See docs/card-text.md: cut words, never mechanics.
+
+That leaves it 3 short of EARTHQUAKE's 596, and EARTHQUAKE is the card that proved the
+static estimate wrong by printing at 0.894 under a 0.9 floor. So the fit was taken off
+the renderer rather than the number.
+
+| Card | Load | Real fit |
+| --- | --- | --- |
+| MIRE | 321 | 1 (full size) |
+| ENGULF | 399 | 1 (full size) |
+| DROWNING EARTH | 593 | **0.961** |
+
+0.961 is better than RAIN OF FIRE and level with EYE OF THE STORM. The estimate reads
+this card high because it counts markers at their source length, and this one carries 36
+characters of `{stat}`, `{roll}`, `[[3d6 + 3*stat]]` and `{damage}` that render to about
+17. The harness was proved first against SENSE LIFE, RAIN OF FIRE, PESTILENT CLOUD,
+EARTHQUAKE and EYE OF THE STORM and read all five to the recorded digit.
+
+### The shelf, and a colour that could not be sited the way Storm's was
+
+Mud goes eighth on the Elemental shelf in `cardOrder.js`, after Storm.
+
+`--family-mud` is `#9C8E70`. **Storm's method does not transfer to it.** Storm took the
+midpoint of the two families it is made of, because Wind and Water sit 32 degrees apart
+on hue and a midpoint between them is a colour. **Water and Earth sit 174 degrees
+apart, so their midpoint is green or purple.** So the lean is taken on the axis the
+colour law already names: Mud is Earth's hue, and the whole separation is lightness and
+saturation. Which is also what water does to earth, so the physical reading and the
+law's reading agree for once.
+
+Measured rather than eyeballed, in CIE76 against every school and family token in
+`index.css`:
+
+| Pair | Distance |
+| --- | --- |
+| Mud / Earth | 20.9 |
+| Mud / Death | 27.7 |
+| Mud / Storm | 36.2 |
+
+The palette's own tightest pairs sit at 10.8 (Primal / Flora) to 17.9 (Storm /
+Ethereal), so Mud against Earth is looser than nine pairs already on the wall, Storm's
+own nearest included. Two candidate families were rejected on measurement rather than
+taste: a grey-beige Mud separated from Earth better but landed 26 from Storm, which
+already owns the one grey slot in a school of embers, and an olive Mud landed 25 from
+Wild and read as moss.
+
+One thing that fell out of siting it: **Lab lightness is the binding constraint on any
+new family token, not hue.** A chip is 0.56rem on a dark panel, and every existing
+token sits between L\* 56 (Blood) and 85 (Light). Every genuinely mud-coloured brown is
+down at L\* 39 to 46, which is why Mud is a dulled tan rather than the brown the word
+suggests.
+
+### The art
+
+Three 2400x1792 plates, no white border and no banner, so `data/Mud/` joins both
+`FAMILY_FOLDERS` and `PLATE_FOLDERS` in `pull-card-art.mjs` and the crop stays off. All
+three filenames are already the card names, so unlike the Storm drop nothing goes in
+`ALIASES`. Nothing in `data/Elemental/` holds a Mud render, so like Storm these three
+shadow nothing and the run says nothing about them.
+
+### One thing found while measuring, which is not about Mud
+
+The card budget in docs/card-text.md was calibrated against cards rendered **without a
+character attached**, and that is what every recorded fit number in this file is. A card
+in a player's hands has one, and a live value renders longer with it: `[[3d6 + 3*stat]]`
+prints "3d6" with no character and "3d6 + 30" at Mind 10, and `{roll}` prints nothing
+against "(+10)".
+
+Swept the whole codex both ways at Mind 10, which is the worst case:
+
+| | At full size | Under the 0.9 floor |
+| --- | --- | --- |
+| No character (how the budget was set) | 386 of 448 | 0, worst 0.902 |
+| Character at 10 | 383 of 448 | **1: EARTHQUAKE at 0.894** |
+
+So the cost is three cards' full size and exactly one card under the floor, and that
+card is EARTHQUAKE, which this file already records as having been fixed to 0.949 on
+2026-08-26. That 0.949 is a no-character number. **Nothing was changed about it here**,
+because it is not this drop's card and the fix is a wording pass on somebody else's
+paragraph. Flagged so the next person to touch EARTHQUAKE knows, and so the budget's
+own calibration is on the record. The three Mud cards read identically under both, so
+the drop does not depend on which way it is measured.
+
+
+## The Pact of Ordenance, 2026-08-27
+
+Handed over in chat rather than as a sheet: a set built around a bargain with the
+entity living in a weapon. It filled the roster's `pactbound` slot (the id stays
+`pactbound`, the name is the one given in chat), so the wall is 13 written and 21
+placeholders. Every card is house-written to the chat spec and the whole tab is
+exported back to `data/templates/pact-of-ordenance-ability.csv` and
+`-overview.csv` with a `Source` column of `chat`, which is the overwrite list if a
+real sheet ever arrives.
+
+### What landed
+
+- **The set**, 5 cards across three ranks, in `src/lib/talents.js` under a new
+  `pact` spec — the ninth shape of what a set can hand over, resolved by the new
+  `src/lib/pact.js` the way `minions.js` and `feral.js` resolve theirs.
+- **A new jsonb column, `pact`**, keyed by the granting set id: which bargain,
+  the weapon's form and forged-record id, lifetime progress, the picks, the
+  standing missions and a capped log. `supabase/schema.sql` has the column and
+  the backfill line; re-run it in the SQL editor to deploy.
+- **The Pact block** on the Character tab (`PactBlock.jsx`, id `pact:<set>`),
+  grown into `block_order` like a creature's: rank and chosen pact on top, the
+  XP-style bar (tap it for the pact's own ledger), the claim button when a bar
+  fills, the next-boon line, then the mission tracker — one built-in action
+  (Tally souls / Offer tribute), at most two standing missions and a create
+  button.
+- **The sealing walk** (`PactPick.jsx`), opened on top of the Rank 1 take:
+  Soulreaping or Collector's, the weapon's form off the plain weapon wall, then
+  FIRST BOON's Novice spell and Novice Martial Move. Done stays disabled and
+  names what is missing; an unsealed pact badges the Advancement tab through
+  `levelQuestions`.
+- **The pact-bound weapon** is a forged-record instance flagged `pact`, pinned to
+  the Primary slot: the equip hook redirects anything aimed at that slot to the
+  Secondary, unequip refuses, the Loadout block's Swap is offered dead with the
+  reason, and the Inventory row wears a Pact-Bound chip and opens the item
+  instead of the browser. Its workings weigh **nothing** on Magic Burden
+  (`itemBurden` returns 0 for a pact item), which is the designer's own "does
+  not take burden".
+- **Reshaping** is a sixth long-rest action kind (`pact` in `restActions` /
+  `restPlan`), one night, no Supplies, workings ride along.
+- **The boon ladder**: four a rank in printed order (enchantment for the weapon,
+  spell, Martial Move, skill), Novice / Adept / Master, each claimable once.
+  Rank 3 opens the endless bargain once all twelve are claimed: each further bar
+  costs half again the last, for any spell or any Martial Move.
+- **The riders**: everything the pact grants (the weapon's attacks included) is
+  cast with the best attribute (`cast: 'highest'`, the lineage cards' own
+  HIGHEST), Empowered by 1 at Rank 2 and rolled with advantage at Rank 3 —
+  `pactModifiers` on the granted cards, `pactWeaponRiders` folded into
+  `attackModifiers` beside the Colossus and the hide.
+- **The Abilities tab** grows a "Boons of the pact" block per pact (kind
+  `pact`), riders on every row, with `PactTools` under it: adjust the bargain,
+  the form and every claimed pick. Permanent at the table, correctable there,
+  the pair every permanent choice keeps.
+- A skill the pact granted is refused by the odd-level chooser ("Your pact
+  already granted you this") and the pact's own skill wall refuses the ones a
+  background or a level taught, so no skill is ever sold twice.
+
+### The prices
+
+The designer's numbers, on the spec: a Collector's Pact starts at 4,000 coins and
+grows by 2,000 a bar; a Soulreaping Pact starts at 8 and grows by 4, a soul worth
+the dead entity's level (two level 4 kills are 8). Progress is a lifetime total
+like XP and bars are derived, so nothing is ever spent down or lost.
+
+### The readings, open for Jules
+
+The chat spec left more open than a sheet does. Each of these is one line to
+change if the reading is wrong:
+
+1. **The name is kept letter for letter: "Pact of Ordenance".** If Ordnance
+   (weaponry) or Ordinance (a decree) was meant, it is one string in talents.js
+   and two filenames in `data/templates/`.
+2. **It filled the roster's Pactbound slot.** If it was meant as a new set
+   beside Pactbound, the placeholder line goes back and the id changes.
+3. **Claim order.** The spec says boons "come in a specific order" and also that
+   the player is asked "which of the 4 he wants". Reading: the printed order is
+   what the block announces as next; the claim menu offers every open rung and
+   the player chooses. If the ladder is strict, the menu locks to the first open
+   rung.
+4. **Banked bars.** Progress keeps accruing past the current rank's rungs (a
+   Rank 1 pact that fills five bars claims the fifth the moment Rank 2 opens),
+   because the bar is lifetime like XP. If overflow should be lost, the walk in
+   `pactBars` caps instead.
+5. **The endless price compounds**: bar 13 is bar 12's cost times 1.5 rounded
+   up, and so on. If "increased by 50%" meant 50% of the flat step, the factor
+   line in `pactThreshold` changes.
+6. **The endless boon reaches every tier** (Novice, Adept and Master; Legendary
+   and Unique stay out of reach, as everywhere).
+7. **The weapon's own attacks count as pact abilities**: best attribute, the
+   Rank 2 Empower and the Rank 3 advantage all land on them. FIRST BOON prints
+   it, so the card is the place to correct it.
+8. **"Weapon enchant" reads as every enchantment that is not Body or Curse.**
+   An Imbuement binds its spell at the moment the boon is claimed. The spell an
+   Imbuement carries is dealt as gear (printed attribute, no pact riders): the
+   enchantment is the boon, the spell rides the item.
+9. **"Any existing weapon" reads as the plain weapon wall** (Common,
+   unenchanted, not Claws & Teeth). The five named enchanted blades are
+   particular items, not forms.
+10. **A skill boon is gated by level** the way the odd-level skill is, off "a
+    skill that he could learn".
+11. **Handing the set back** (a level lost) removes the block, the boons and
+    the guards. The forged weapon record stays equipped as an ordinary item
+    until removed by hand — what the entity does about a broken bargain is the
+    table's, not the sheet's.
+12. **An item tribute feeds the pact its codex price** and the item is
+    destroyed. A custom item has no price the sheet knows and goes through a
+    mission instead.
+
+### The art
+
+Nothing painted yet. The set plate goes in `data/Pact of Ordenance/` and the five
+card plates are keyed `what-it-hungers-for`, `pact-bound-weapon`, `first-boon`,
+`deepened-bargain` and `endless-bargain`; run `npm run art:cards` when they land.

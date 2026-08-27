@@ -10133,3 +10133,405 @@ body.sheet-fixed #root {
   border-radius: 4px;
   background-color: var(--inset-bg);
 }
+
+/* =========================================================
+   THE PACT BLOCK — the bargain a set struck.
+
+   The rank and the chosen pact at the top, the bar that buys
+   the boons, then the mission tracker. The cell wears talent
+   amber on its top edge like a creature's and a form's,
+   because the same kind of choice granted it.
+   ========================================================= */
+.sheet-cell.cell-pact {
+  border-top-color: var(--level-amber);
+}
+
+.pact-block {
+  gap: 0.55rem;
+}
+
+/* ---------- the bargain and the blade ---------- */
+.pact-id {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid var(--level-amber);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+.pact-id-kind {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.pact-id-weapon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--text-silver);
+}
+
+.pact-id-open {
+  color: var(--level-amber);
+}
+
+.pact-line {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-silver);
+}
+
+.pact-line-quiet {
+  color: rgba(148, 167, 176, 0.75);
+}
+
+.pact-next {
+  color: var(--level-amber);
+}
+
+/* ---------- the bar ----------
+   The XP meter's own anatomy in the pact's colour, because it is the same kind
+   of number: a lifetime total the next reward is read off. */
+.bar-fill-pact {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--level-amber) 45%, var(--bg-black)),
+    var(--level-amber)
+  );
+}
+
+.pact-claim {
+  width: 100%;
+}
+
+/* ---------- the missions ---------- */
+.pact-mission {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.45);
+}
+
+.pact-mission-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pact-mission-title {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.pact-mission-worth {
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--level-amber);
+}
+
+/* Two lines and no more: the block has 640px for everything, and the errand's
+   whole text is one hover away on the row itself. */
+.pact-mission-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--text-silver);
+}
+
+.pact-mission-tools {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* ---------- the two bargains, in the sealing window ----------
+   The accent lives on the frame and the text, never on a fill. */
+.pact-kinds {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.pact-kind {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  border-radius: 6px;
+  background-color: var(--inset-bg);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.pact-kind:hover,
+.pact-kind:focus-visible {
+  border-color: color-mix(in srgb, var(--level-amber) 55%, transparent);
+}
+
+.pact-kind.is-on {
+  border-color: var(--level-amber);
+}
+
+.pact-kind-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.pact-kind.is-on .pact-kind-name {
+  color: var(--level-amber);
+}
+
+.pact-kind-line {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--text-silver);
+}
+
+.pact-kind-price {
+  font-size: 0.7rem;
+  color: rgba(148, 167, 176, 0.75);
+}
+
+/* ---------- the weapon's forms ----------
+   A shelf, so it flows three across on a desktop and one on a phone. */
+.pact-form-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+}
+
+.pact-form {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  border-radius: 6px;
+  background-color: var(--inset-bg);
+}
+
+.pact-form.is-on {
+  border-color: var(--level-amber);
+}
+
+.pact-form-take {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pact-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.pact-form-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.pact-form.is-on .pact-form-name {
+  color: var(--level-amber);
+}
+
+.pact-form-info {
+  font-size: 0.8rem;
+}
+
+/* ---------- the ladder, in the claim window ---------- */
+.pact-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
+
+.pact-rung {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pact-rung-label {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text-bright);
+}
+
+.pact-rung-state {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--text-silver);
+}
+
+.pact-rung.is-open {
+  border-color: color-mix(in srgb, var(--level-amber) 55%, transparent);
+}
+
+.pact-rung.is-open .pact-rung-state {
+  color: var(--level-amber);
+}
+
+.pact-rung.is-claimed,
+.pact-rung.is-locked {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.pact-rung.is-claimed .pact-rung-label {
+  text-decoration: line-through;
+  text-decoration-color: rgba(148, 167, 176, 0.6);
+}
+
+/* ---------- the feeding forms ---------- */
+.pact-feed-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 0.8rem;
+}
+
+.pact-mission-input {
+  resize: none;
+}
+
+.pact-modes {
+  margin-top: 0.7rem;
+}
+
+/* ---------- the valuables a Collector can give up ---------- */
+.pact-valuables {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.pact-valuable {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pact-valuable.is-on {
+  border-color: var(--level-amber);
+}
+
+.pact-valuable-name {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--text-bright);
+}
+
+.pact-valuable-worth {
+  font-size: 0.72rem;
+  white-space: nowrap;
+  color: var(--level-amber);
+}
+
+/* ---------- the pact's own ledger ---------- */
+.pact-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pact-log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(148, 167, 176, 0.12);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.45);
+}
+
+.pact-log-delta {
+  min-width: 3.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--text-silver);
+}
+
+.pact-log-delta.is-gain {
+  color: var(--level-amber);
+}
+
+.pact-log-note {
+  flex: 1;
+  font-size: 0.76rem;
+  color: var(--text-silver);
+}
+
+.pact-log-when {
+  font-size: 0.68rem;
+  white-space: nowrap;
+  color: rgba(148, 167, 176, 0.75);
+}
+
+/* ---------- the weapon row, pact-bound ----------
+   The chip is the tell: the row cannot be put away and its tap reads the item
+   rather than opening the browser, and the chip says why at a glance. */
+.pact-chip {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--level-amber) 55%, transparent);
+  border-radius: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  color: var(--level-amber);
+}
+
+/* ---------- the adjusting tools on the Abilities tab ---------- */
+.pact-tools {
+  flex-wrap: wrap;
+}

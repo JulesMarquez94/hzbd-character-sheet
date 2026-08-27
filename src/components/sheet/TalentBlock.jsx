@@ -5,6 +5,7 @@ import PickBlock from './PickBlock.jsx';
 import FeralSection from './FeralPick.jsx';
 import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
 import MinionSection from './MinionPick.jsx';
+import PactSection, { PactRankNote } from './PactPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { BrewRankNote } from './BrewWindow.jsx';
 import { AlchemyRankNote } from './BrewRest.jsx';
@@ -19,6 +20,7 @@ import { enchantmentsAt } from '../../lib/enchantments.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
 import { feralOf } from '../../lib/feral.js';
 import { minionOf } from '../../lib/minions.js';
+import { pactOf } from '../../lib/pact.js';
 import {
   TALENT_RANKS,
   cardsAtRank,
@@ -172,6 +174,11 @@ export default function TalentPick({
                "when you become Feral Cursed, you choose a Carnivore Mammal" —
                which is this exact moment, and only this one. */
             if (rank === 1 && feralOf(id)) setJustTook(id);
+
+            /* And the same for a set that strikes a *bargain*. The pact is
+               sealed once, at Rank 1: which of the two it is, the weapon's
+               form and FIRST BOON's two picks all belong to this moment. */
+            if (rank === 1 && pactOf(id)) setJustTook(id);
           }}
           onClose={() => setChoosing(false)}
         />
@@ -268,6 +275,18 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
               ranks above it are the same animal getting better at it. */}
           {rank === 1 && talent.feral && (
             <FeralSection
+              talent={talent}
+              character={character}
+              patch={patch}
+              readOnly={readOnly}
+              autoOpen={justTook === talent.id}
+            />
+          )}
+
+          {/* And the bargain it strikes, for a set that grants a pact. Sealed
+              once at Rank 1: the ranks above deepen a debt already owed. */}
+          {rank === 1 && talent.pact && (
+            <PactSection
               talent={talent}
               character={character}
               patch={patch}
@@ -569,6 +588,10 @@ function TalentPresentation({ option, character }) {
                 filled: how many recipes a rank actually opens, and what it does
                 to a night at the still. */}
             <AlchemyRankNote talent={talent} rank={rank} />
+
+            {/* And for the set that buys with a debt: what the rank puts on the
+                pact's ladder, which no card body counts out. */}
+            <PactRankNote talent={talent} rank={rank} />
           </section>
         );
       })}

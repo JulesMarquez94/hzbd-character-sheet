@@ -637,6 +637,11 @@ const SCHOOL_FOLDERS = new Set(['elemental', 'primal', 'arcane', 'nature', 'ethe
  * shadowed and the run says nothing about them. The shape is the Space drop’s,
  * three plates at the top of the folder with the sheet beside them at the top of
  * `data/`.
+ *
+ * `data/Mud/` is the eleventh, later on 2026-08-27, and Storm's shape exactly:
+ * three plates for a family with no card in the codex before the drop, so nothing
+ * is shadowed and nothing goes in `ALIASES` either, since all three filenames are
+ * already the card names.
  */
 const FAMILY_FOLDERS = new Set([
   'shadow',
@@ -649,6 +654,7 @@ const FAMILY_FOLDERS = new Set([
   'fire',
   'earth',
   'storm',
+  'mud',
 ]);
 
 
@@ -675,7 +681,8 @@ const SPELL_FOLDERS = new Set([...SCHOOL_FOLDERS, ...FAMILY_FOLDERS]);
  *
  * `data/Storm/` is three more at 2400x1792 on 2026-08-27, one a pixel narrow at
  * 2398, which costs nothing for the same reason: the resize takes whatever it is
- * handed down to 720.
+ * handed down to 720. `data/Mud/` is three more the same day, all three square on
+ * 2400x1792.
  *
  * Cutting one of these would take the top 45% of a painting that is already
  * only the painting. So the crop is what the exception turns off, and nothing
@@ -695,6 +702,7 @@ const PLATE_FOLDERS = new Set([
   'fire',
   'earth',
   'storm',
+  'mud',
 ]);
 
 /**

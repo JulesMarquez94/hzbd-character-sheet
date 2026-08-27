@@ -101,6 +101,12 @@ export function normalizeForged(value) {
       ench: normalizeEnch(raw.ench),
       name: cleanName(raw.name),
       art: cleanArt(raw.art),
+      /* A Pact of Ordenance's weapon, carrying the id of the set that bound it.
+         Kept through the repair or the flag would fall off on the very next
+         read, and with it the slot pin, the disarm immunity and the free
+         Magic Burden its workings ride on. Never in a share code: a pasted
+         copy is an ordinary enchanted weapon, not somebody else's bargain. */
+      ...(typeof raw.pact === 'string' && raw.pact ? { pact: raw.pact } : {}),
     };
   }
   return out;
@@ -203,6 +209,10 @@ export function forgedItem(record, base) {
     art_url: record.art ?? base.art_url ?? null,
     art_thumb: record.art ?? base.art_thumb ?? null,
     artOwn: Boolean(record.art),
+    /* The pact flag rides onto the item, so the burden meter, the equip guards
+       and the two weapon blocks can tell the entity's weapon from a forged one
+       without reaching for the pact column. */
+    ...(record.pact ? { pact: record.pact } : {}),
   };
 }
 

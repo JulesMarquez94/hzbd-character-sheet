@@ -60,7 +60,8 @@
        codex already knows what colour a family is, that colour is what its shade
        leans to.** Fire, Water, Lightning, Blood and Death have damage and stat
        tokens above; Light and Shadow are their own names; Storm is taken between
-       the two families it is made of. Eight leans, and each one is marked. Nothing
+       the two families it is made of and Mud off the one of its two that it can
+       be taken off. Nine leans, and each one is marked. Nothing
        here is a second copy of those tokens — a chip at 0.56rem on a dark panel
        needs more light than a body-text colour does, so these are their own values
        and say which token they answer to.
@@ -90,12 +91,22 @@
     --school-arcane: #C56BE8;
     --family-energy: #D89BF2;
 
-    /* Elemental: ember amber, and the seven elements around it. */
+    /* Elemental: ember amber, and the eight elements around it. */
     --school-elemental: #EE9448;
     /* Leans to --dmg-fire. */
     --family-fire: #FF7A4D;
     --family-magma: #E8593C;
     --family-earth: #C79663;
+    /* Leans to --family-earth, because Mud is what water does to earth and the
+       compound-midpoint trick Storm used does not work here: Wind and Water are
+       32 degrees apart on hue so their midpoint is a colour, Water and Earth are
+       174 degrees apart so theirs is green or purple. So Mud takes Earth's hue
+       and the whole separation on lightness and saturation, which is the law's
+       own axis: darker and duller than Earth, the way wet ground is darker and
+       duller than dry. Measured rather than eyeballed, in CIE76 against every
+       school and family token: 21 from Earth and 28 from its next neighbour,
+       where the palette's own tightest pairs sit at 11 to 18. */
+    --family-mud: #9C8E70;
     /* Leans to --dmg-lightning, dropped out of pure yellow so it holds an edge. */
     --family-lightning: #E8CD4A;
     --family-wind: #8FD3CB;

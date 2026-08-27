@@ -80,7 +80,7 @@
  * both end up importing it back.
  */
 
-import { ATTRIBUTES } from './attributes.js';
+import { ATTRIBUTES, HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
 
 /* --------------------------------------------------------------- the ranks */
@@ -2737,14 +2737,218 @@ const TALENT_SETS = [
       },
     ],
   },
+
+  /* =================================================================== *
+   *  PACT OF ORDENANCE                                                  *
+   * =================================================================== */
+  {
+    /* The roster's `pactbound` slot, filled. The id stays the roster's — short,
+       already reserved, and "pact-bound" is the set's own word for its wielder —
+       while the name is the one the designer gave the set in chat on 2026-08-27.
+       Handed over in chat rather than as a sheet, so every card here is written
+       to his spec; the readings the spec left open are in data/README.md under
+       "The Pact of Ordenance, 2026-08-27". */
+    id: 'pactbound',
+    name: 'Pact of Ordenance',
+    tagline: 'A weapon with something living in it, and power on loan until you feed it.',
+    /* No plate yet, the same null the Duelist and the Feral Curse carry. Drop
+       the overview picture into `data/Pact of Ordenance/` and run
+       `npm run art:cards`. */
+    art: null,
+    /* No attribute tag: everything the pact grants runs on the wielder's best
+       attribute, so the set leans on whichever number is highest. Martial for
+       the weapon, spellcasting for the boons that are spells. */
+    tags: ['martial', 'spellcasting'],
+    /* The Other shelf, like the roster filed it: scaled on the best of you
+       rather than on one attribute you raise. */
+    stat: 'other',
+    /* The ninth shape of what a set can hand over: a **debt**. The spec is the
+       designer's chat notes as numbers, and pact.js is the resolver that reads
+       it, the same split minions.js and feral.js keep. Rank-indexed arrays use
+       index = rank, index 0 = null. */
+    pact: {
+      id: 'pact',
+      label: 'The Pact',
+      noun: 'boon',
+      weaponLabel: 'Pact-Bound Weapon',
+      /* The two bargains, chosen when the set is taken. `start` is the first
+         bar's price and `step` what every fill adds to the next one: "collectors
+         starts at 4000 coins and then increase by 2000 every time it's completed.
+         Soul collector starts at 8 and increase by 4." A soul is worth the dead
+         entity's level, so two level 4 kills feed a Soulreaping Pact 8. */
+      kinds: [
+        {
+          id: 'souls',
+          label: 'Soulreaping Pact',
+          unit: 'souls',
+          verb: 'Tally souls',
+          line: 'Advances by the level of every entity that dies carrying your damage. The blow that ends them does not have to be yours.',
+          start: 8,
+          step: 4,
+        },
+        {
+          id: 'collector',
+          label: "Collector's Pact",
+          unit: 'coins',
+          verb: 'Offer tribute',
+          line: 'Advances by every coin of gold or valuables you give up forever. Sacrificed, not spent.',
+          start: 4000,
+          step: 2000,
+        },
+      ],
+      /* Sealed with the pact at Rank 1, before any bar fills: FIRST BOON's two
+         picks. Same shape as a ladder rung so one chooser serves both. */
+      grants: [
+        { id: 'grant-spell', kind: 'spell', tiers: ['Novice'], label: 'A Novice spell of any school' },
+        { id: 'grant-move', kind: 'martial-move', tiers: ['Novice'], label: 'A Novice Martial Move' },
+      ],
+      /* The ladder: four boons a rank, in the printed order the designer gave
+         ("they come in a specific order and cap at 4 per rank"). The next
+         unclaimed rung is what the block announces; which rung a filled bar is
+         spent on is the wielder's choice among the open ones. */
+      boons: [
+        { id: 'novice-enchant', rank: 1, kind: 'enchant', tiers: ['Novice'], label: 'A Novice enchantment for your pact-bound weapon' },
+        { id: 'novice-spell', rank: 1, kind: 'spell', tiers: ['Novice'], label: 'A Novice spell of any school' },
+        { id: 'novice-move', rank: 1, kind: 'martial-move', tiers: ['Novice'], label: 'A Novice Martial Move' },
+        { id: 'novice-skill', rank: 1, kind: 'skill', label: 'A skill' },
+        { id: 'adept-enchant', rank: 2, kind: 'enchant', tiers: ['Adept'], label: 'An Adept enchantment for your pact-bound weapon' },
+        { id: 'adept-spell', rank: 2, kind: 'spell', tiers: ['Adept'], label: 'An Adept spell of any school' },
+        { id: 'adept-move', rank: 2, kind: 'martial-move', tiers: ['Adept'], label: 'An Adept Martial Move' },
+        { id: 'adept-skill', rank: 2, kind: 'skill', label: 'Another skill' },
+        { id: 'master-enchant', rank: 3, kind: 'enchant', tiers: ['Master'], label: 'A Master enchantment for your pact-bound weapon' },
+        { id: 'master-spell', rank: 3, kind: 'spell', tiers: ['Master'], label: 'A Master spell of any school' },
+        { id: 'master-move', rank: 3, kind: 'martial-move', tiers: ['Master'], label: 'A Master Martial Move' },
+        { id: 'master-skill', rank: 3, kind: 'skill', label: 'A third skill' },
+      ],
+      /* ENDLESS BARGAIN: once every rung is claimed, the ladder loops. Half
+         again more each fill instead of the flat step, and the pick widens to
+         any spell or any Martial Move the codex prints a rung for. */
+      loop: {
+        factor: 1.5,
+        kinds: ['spell', 'martial-move'],
+        tiers: ['Novice', 'Adept', 'Master'],
+      },
+      /* FIRST BOON: "all abilities earned through the pact use the best stat
+         instead of the one normally indicated." The same HIGHEST the lineage
+         cards use, riding as a modifier so the codex card is never rewritten. */
+      cast: 'highest',
+      /* DEEPENED BARGAIN at Rank 2 and ENDLESS BARGAIN at Rank 3, as the rank
+         riders every pact-granted card and the weapon's own attacks carry. */
+      empower: [null, 0, 1, 1],
+      advantage: [null, 0, 0, 1],
+      boostFrom: 'Endless Bargain',
+      /* GM errands, role-played as the pact giver and worth a set amount of
+         progress. "Can only have 2 active at most." */
+      missions: { max: 2 },
+      /* PACT-BOUND WEAPON: reshaped over a Long Rest, as that night's one
+         action. The same rest-keyed permission a loadout's `swap` carries. */
+      reshape: ['long'],
+    },
+    blurb:
+      'Somewhere an old and powerful entity took a weapon for its home, and the weapon took you for its wielder. The bargain is plain: it lends you its power now, and you feed it what it hungers for. A Soulreaping Pact is fed on the souls of those who die carrying your damage. A Collector’s Pact is fed on coin and treasure given up forever.\n\n' +
+      'What it grants starts small and grows with the feeding. Each time the bargain is satisfied the entity hands over a boon: a working laid into the weapon itself, a spell, a Martial Move or a skill, and every gift of the pact runs on the best of you. The weapon cannot be lost, stolen or disarmed, and over a Long Rest it reshapes itself into any form its wielder asks of it.\n\n' +
+      'The pact giver is patient, and it is never finished. It may offer missions worth a measure of progress, and a wielder who has claimed everything it holds finds the bargain simply deepens: every further payment costs half again the last, and the boons never stop coming.',
+    cards: [
+      {
+        id: 'what-it-hungers-for',
+        rank: 1,
+        name: 'What It Hungers For',
+        summary: 'Feed the pact souls or treasure, and claim a boon every time the bar fills.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* Mechanics as data: the whole card is the `pact` spec above. The two
+           prices and the growing bar live on the spec's `kinds`, the missions on
+           `missions`, and the block on the Character tab is where the feeding is
+           tallied. */
+        body:
+          'When you strike your bargain, choose its shape. A Soulreaping Pact advances by the level of every entity that dies carrying your damage. A Collector’s Pact advances by every coin of gold or valuables you give up forever.\n\n' +
+          'Each time your progress fills the pact’s bar you claim a boon from the pact giver, and the bar grows larger. The pact giver may also offer missions worth a set amount of progress.',
+      },
+      {
+        id: 'pact-bound-weapon',
+        rank: 1,
+        name: 'Pact-Bound Weapon',
+        summary: 'A weapon that cannot be lost or disarmed, reshaped into any form over a Long Rest.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "The pact bound weapon permanently takes a slot in the weapon selection
+           screen" is the sheet's business rather than the card's: the instance is
+           pinned to the first slot by the equip hook, and the slot 1 weapon it
+           displaces goes to the inventory. The card carries the table half:
+           cannot be lost, immune to disarm, reshaped on a Long Rest. */
+        body:
+          'The pact giver dwells in your weapon. It takes the form of any weapon you choose and always fills your first weapon slot. It cannot be lost or stolen, you are immune to effects that would disarm it, and it returns to your hand at a word.\n\n' +
+          'During a Long Rest, you can spend your Long Rest Action to reshape it into another form.',
+      },
+      {
+        id: 'first-boon',
+        rank: 1,
+        name: 'First Boon',
+        summary: 'A Novice spell and a Novice Martial Move, and every pact gift runs on your best attribute.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* The best-attribute rule is the spec's `cast: 'highest'`, riding every
+           granted card and the weapon's attacks as a modifier. The codex card
+           underneath is never rewritten, exactly like the Mycomancer's Instinct
+           casting. */
+        body:
+          'You learn one Novice spell of any school and one Novice Martial Move.\n\n' +
+          'Every ability your pact grants you, and your pact-bound weapon’s attacks, use your best attribute in place of the one they print.',
+      },
+      {
+        id: 'deepened-bargain',
+        rank: 2,
+        name: 'Deepened Bargain',
+        summary: 'Everything the pact grants hits a die harder, and four Adept boons open up.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* `empower: [null, 0, 1, 1]` on the spec. The second sentence is the
+           allowed tier-widening shape, the one DEXTEROUS and FUNGAL INVOCATION
+           print, never "at Rank 2 you learn". */
+        body:
+          'Every ability your pact grants you, and your pact-bound weapon’s attacks, are Empowered by 1.\n\n' +
+          'The pact now offers Adept boons: an Adept enchantment for your weapon, an Adept spell, an Adept Martial Move and another skill.',
+      },
+      {
+        id: 'endless-bargain',
+        rank: 3,
+        name: 'Endless Bargain',
+        summary: 'Every pact gift rolls with advantage, and the bargain never runs out of boons.',
+        kind: 'talent',
+        tags: ['Pact of Ordenance', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* `advantage: [null, 0, 0, 1]` and `loop` on the spec. "Half again more
+           than the last" is the 1.5 factor, compounding, rounded up where the
+           threshold is worked out in pact.js. */
+        body:
+          'Every ability your pact grants you, and your pact-bound weapon’s attacks, are rolled with advantage.\n\n' +
+          'The pact now offers Master boons. Once every boon is claimed the bargain has no end: each bar costs half again more than the last, and each grants any spell or any Martial Move of your choice.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------- the roster *
- * Twenty-three sets that have a name and nothing else.
+ * Twenty-one sets that have a name and nothing else.
  *
  * The designer keeps a roster of every set the game is going to have, four
- * columns wide and cut by the attribute each one leans on. Eleven of them are
- * written and sit in the codex above. These are the rest, standing in the codex
+ * columns wide and cut by the attribute each one leans on. Thirteen of its
+ * slots are written and sit in the codex above (the Alchemist and the Pact of
+ * Ordenance were placeholders here first). These are the rest, standing in the codex
  * as placeholders so the wall reads as the whole plan rather than as the part of
  * it that happens to be finished.
  *
@@ -2870,14 +3074,15 @@ const TALENT_PLACEHOLDERS = [
   placeholder('tactician', 'Tactician', 'mind'),
   placeholder('elemental-aspect', 'Elemental Aspect', 'mind'),
 
-  /* Other, all six rows. Nothing on this column is written, and the Draconic
-     Bond above it is the only thing on the shelf that is.
+  /* Other, five of six rows. Row 3 was `Pactbound`, whose slot the Pact of
+     Ordenance filled on 2026-08-27: the id stays the roster's, the name is the
+     one the designer gave the set in chat. The Draconic Bond and the Pact of
+     Ordenance are what the shelf holds written.
 
-     Every name here is spelled as the roster spells it. Beastbond, Oathbound and
-     Pactbound are one word each on the sheet and stay one word each. */
+     Every name here is spelled as the roster spells it. Beastbond and Oathbound
+     are one word each on the sheet and stay one word each. */
   placeholder('beastbond', 'Beastbond', 'other'),
   placeholder('oathbound', 'Oathbound', 'other'),
-  placeholder('pactbound', 'Pactbound', 'other'),
   placeholder('quartermaster', 'Quartermaster', 'other'),
   placeholder('weaver', 'Weaver', 'other'),
   placeholder('weapon-master', 'Weapon Master', 'other'),

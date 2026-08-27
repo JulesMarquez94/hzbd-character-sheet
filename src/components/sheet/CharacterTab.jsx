@@ -4,6 +4,7 @@ import FeralBlock from './FeralBlock.jsx';
 import LedgerModal from './LedgerModal.jsx';
 import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
+import PactBlock from './PactBlock.jsx';
 import PassiveBlock from './PassiveBlock.jsx';
 import TurnBlock from './TurnBlock.jsx';
 import {
@@ -34,6 +35,7 @@ import {
 } from '../../lib/characterModel.js';
 import { feralBlockIds, feralState } from '../../lib/feral.js';
 import { minionBlockIds, minionState } from '../../lib/minions.js';
+import { pactBlockIds, pactState } from '../../lib/pact.js';
 import { statMath } from '../../lib/statMath.js';
 import { normalizeTalents } from '../../lib/talents.js';
 
@@ -181,8 +183,12 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      needs is a picture, a difficulty and three presses. See feral.js. */
   const forms = useMemo(() => feralState(character), [character]);
 
+  /* And the bargains struck. One block each: the pact's bar, its boons and its
+     missions, there for as long as the set is held. See pact.js. */
+  const pacts = useMemo(() => pactState(character), [character]);
+
   const grown = useMemo(
-    () => [...minionBlockIds(character), ...feralBlockIds(character)],
+    () => [...minionBlockIds(character), ...feralBlockIds(character), ...pactBlockIds(character)],
     [character]
   );
 
@@ -217,6 +223,17 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           : { name: String(id), note: null };
       }
 
+      const struck = /^pact:(.+)$/.exec(String(id));
+      if (struck) {
+        const pact = pacts.find((row) => row.id === struck[1]);
+        return pact
+          ? {
+              name: pact.kind ? pact.kind.label : pact.spec.label,
+              note: `${pact.talent.name}: the bar, the boons and the missions`,
+            }
+          : { name: String(id), note: null };
+      }
+
       const match = /^minion:([^:]+)(?::(bar))?$/.exec(String(id));
       const minion = match ? minions.find((row) => row.id === match[1]) : null;
       if (!minion) return { name: String(id), note: null };
@@ -231,7 +248,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             note: `${minion.spec.label}: attributes, defenses, Health and Shield`,
           };
     },
-    [minions, forms]
+    [minions, forms, pacts]
   );
 
   /* Arranging happens in a modal rather than on the tab itself. Dragging a
@@ -550,6 +567,16 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ])
     ),
 
+    /* ============ A BARGAIN'S ONE ============
+       Only there when a set has struck one. The rank and the chosen pact, the
+       bar that buys the boons, and the mission tracker under it. */
+    ...Object.fromEntries(
+      pacts.map((pact) => [
+        `pact:${pact.id}`,
+        <PactBlock character={character} pact={pact} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
     ...Object.fromEntries(
       PLACEHOLDERS.map((n) => [
         n,
@@ -582,7 +609,9 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             key={id}
             className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}${
               String(id).startsWith('minion:') ? ' cell-minion' : ''
-            }${String(id).startsWith('feral:') ? ' cell-feral' : ''}`}
+            }${String(id).startsWith('feral:') ? ' cell-feral' : ''}${
+              String(id).startsWith('pact:') ? ' cell-pact' : ''
+            }`}
           >
             {blocks[id]}
           </section>

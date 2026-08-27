@@ -1192,6 +1192,12 @@ export function magicBurdenMax({ level, mind }) {
  */
 export function itemBurden(item) {
   if (!item) return 0;
+  /* A pact-bound weapon weighs nothing on the meter, workings and all. The
+     designer's own line for its enchantment boons — "does not take burden" —
+     and the same reasoning as WIELDER OF WONDER's body slots below: what the
+     entity carries in its own home is not carried by the wielder. The flag
+     rides the forged record (see forged.js), so this needs no pact import. */
+  if (item.pact) return 0;
   return itemEnchantments(item).reduce(
     (total, { enchantment }) => total + (Number(enchantment.burden) || 0),
     Number(item.burden) || 0

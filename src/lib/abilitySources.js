@@ -40,6 +40,7 @@ import { levelForXp } from './characterModel.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
 import { isMinionCard, minionModifiers, minionState } from './minions.js';
+import { pactBoonRows, pactState } from './pact.js';
 import { cardsAtRank, getTalent, normalizeTalents, rankInfo } from './talents.js';
 import { getCard, itemEnchantments } from './weapons.js';
 
@@ -399,6 +400,45 @@ function talentSources(character) {
           ],
         });
       }
+    }
+
+    /* And what the pact has handed over so far. Its own block beside the set,
+       like a loadout, because the boons are the standing hand a pact-bound
+       wielder actually reaches for. Every row is dealt with the pact's riders:
+       the best attribute in place of the printed one, and the Empower and
+       advantage the held rank grants. Enchant boons are not rows here — the
+       working rides the weapon, and the weapon's own cards are where it shows.
+
+       The section carries `pact` the way a loadout's carries `loadout`: the
+       block reads it to raise the adjusting window, which is what keeps a
+       permanent choice changeable when the table needs it changed. */
+    const pact = talent.pact ? pactState(character).find((row) => row.id === talent.id) : null;
+    if (pact) {
+      const rows = pactBoonRows(pact);
+      /* Counted off the claims, not the rows: an enchantment boon rides the
+         weapon rather than sitting here as a card, and it is still granted. */
+      const granted =
+        pact.grants.filter((one) => one.pick).length +
+        pact.boons.filter((one) => one.state === 'claimed').length +
+        pact.extra.length;
+      open.push({
+        id: `pact:${talent.id}`,
+        kind: 'pact',
+        title: pact.kind ? pact.kind.label : 'The Pact',
+        note: `${talent.name} · ${granted} ${plural('boon', granted)} granted`,
+        art: talent.art ?? null,
+        sections: [
+          {
+            ...section(
+              'boons',
+              'Boons of the pact',
+              rows,
+              pact.sealed ? 'Cast with your best attribute' : 'The bargain is not sealed yet'
+            ),
+            pact: { talent, state: pact },
+          },
+        ],
+      });
     }
 
     return [set, ...open];

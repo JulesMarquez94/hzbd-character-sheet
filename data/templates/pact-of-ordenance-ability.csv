@@ -1,0 +1,16 @@
+id,Name,Tags,AP,WP,Main Effect,Source,Image
+what-it-hungers-for,WHAT IT HUNGERS FOR,"Pact of Ordenance, Novice Talent, Passive",,,"When you strike your bargain, choose its shape. A Soulreaping Pact advances by the level of every entity that dies carrying your damage. A Collector’s Pact advances by every coin of gold or valuables you give up forever.
+
+Each time your progress fills the pact’s bar you claim a boon from the pact giver, and the bar grows larger. The pact giver may also offer missions worth a set amount of progress.",chat,
+pact-bound-weapon,PACT-BOUND WEAPON,"Pact of Ordenance, Novice Talent, Passive",,,"The pact giver dwells in your weapon. It takes the form of any weapon you choose and always fills your first weapon slot. It cannot be lost or stolen, you are immune to effects that would disarm it, and it returns to your hand at a word.
+
+During a Long Rest, you can spend your Long Rest Action to reshape it into another form.",chat,
+first-boon,FIRST BOON,"Pact of Ordenance, Novice Talent, Passive",,,"You learn one Novice spell of any school and one Novice Martial Move.
+
+Every ability your pact grants you, and your pact-bound weapon’s attacks, use your best attribute in place of the one they print.",chat,
+deepened-bargain,DEEPENED BARGAIN,"Pact of Ordenance, Adept Talent, Passive",,,"Every ability your pact grants you, and your pact-bound weapon’s attacks, are Empowered by 1.
+
+The pact now offers Adept boons: an Adept enchantment for your weapon, an Adept spell, an Adept Martial Move and another skill.",chat,
+endless-bargain,ENDLESS BARGAIN,"Pact of Ordenance, Master Talent, Passive",,,"Every ability your pact grants you, and your pact-bound weapon’s attacks, are rolled with advantage.
+
+The pact now offers Master boons. Once every boon is claimed the bargain has no end: each bar costs half again more than the last, and each grants any spell or any Martial Move of your choice.",chat,

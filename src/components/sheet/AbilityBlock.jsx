@@ -3,6 +3,7 @@ import CardBrief from './CardBrief.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { ChoicePicker } from './LineagePick.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
+import { PactTools } from './PactPick.jsx';
 import { BrewTools } from './BrewWindow.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { answerOn, sourceCount } from '../../lib/abilitySources.js';
@@ -142,6 +143,17 @@ function Section({ part, source, character, patch, readOnly, onOpen }) {
       {part.brewing && (
         <BrewTools
           talent={part.brewing.talent}
+          character={character}
+          patch={patch}
+          readOnly={readOnly || !patch}
+        />
+      )}
+
+      {/* The pact's own standing choice: what was claimed can be corrected
+          here, which is the adjustable half every permanent choice keeps. */}
+      {part.pact && (
+        <PactTools
+          pact={part.pact}
           character={character}
           patch={patch}
           readOnly={readOnly || !patch}

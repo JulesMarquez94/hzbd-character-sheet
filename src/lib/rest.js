@@ -81,7 +81,9 @@ import {
 } from './enchanting.js';
 import { cardProse } from './cardText.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
-import { beltRest, characterGrants, heldItem, normalizePack } from './items.js';
+import { beltRest, characterGrants, getItem, heldItem, normalizePack } from './items.js';
+import { normalizeForged } from './forged.js';
+import { pactState, reshapePactWeapon, writePactForm } from './pact.js';
 import { usesRest } from './uses.js';
 
 /** What each rest costs and what it gives back. */
@@ -402,6 +404,23 @@ export function restActions(character, kind, talents = character?.talents) {
     });
   }
 
+  /* ---- and what shape the pact's weapon wakes up in ----
+     PACT-BOUND WEAPON: "During a Long Rest, you can spend your Long Rest Action
+     to reshape it into another form." The permission is the spec's `reshape`
+     list, the same rest-keyed shape a loadout's `swap` carries, and it is only
+     offered once the pact has a weapon to reshape. */
+  for (const pact of pactState(held)) {
+    if (!pact.weapon || !(pact.spec.reshape ?? []).includes(kind)) continue;
+    rows.push({
+      id: `pact:${pact.id}`,
+      kind: 'pact',
+      label: 'Reshape your pact-bound weapon',
+      from: `${pact.talent.name} · ${pact.spec.weaponLabel}`,
+      note: `It is a ${getItem(pact.weapon.base)?.name ?? pact.weapon.base} tonight. Any form in the codex, and the workings ride along.`,
+      state: pact,
+    });
+  }
+
   return rows;
 }
 
@@ -468,7 +487,7 @@ export function layingAffordable(character, kind, prepared, enchantment) {
  * writes it in this same patch, so a rest backed out of leaves the components in
  * the crate and the flasks unmade.
  */
-export function restPlan(character, kind, labours = [], prepared = null, brews = []) {
+export function restPlan(character, kind, labours = [], prepared = null, brews = [], reshaped = null) {
   const rest = getRest(kind);
   if (!rest) return null;
 
@@ -765,6 +784,35 @@ export function restPlan(character, kind, labours = [], prepared = null, brews =
           tone: 'gain',
         });
       }
+    }
+  }
+
+  /* ---- and what shape the entity's weapon wakes up in ----
+     `reshaped` is the weapon id the window's step chose, or null for a night
+     the slot was spent elsewhere. No Supplies move: the card prices the change
+     at the night's one action and nothing else. The record and the pact row
+     move in this same patch, so a rest backed out of leaves the blade as it
+     was. */
+  if (reshaped) {
+    for (const pact of pactState(character)) {
+      if (!pact.weapon || !(pact.spec.reshape ?? []).includes(kind)) continue;
+      const weapon = getItem(reshaped);
+      if (!weapon || weapon.id === pact.weapon.base) continue;
+
+      const record = reshapePactWeapon(pact, weapon);
+      if (!record) continue;
+
+      patch.forged = { ...normalizeForged(character?.forged), [record.id]: record };
+      Object.assign(patch, writePactForm(character, pact, weapon));
+      lines.push({
+        key: `pact-${pact.id}`,
+        label: `${pact.spec.weaponLabel} reshaped`,
+        detail: `Into a ${weapon.name}. Its workings ride along, and it keeps its place in your hand.`,
+        tone: 'gain',
+      });
+
+      // One slot, one action: the first pact with a weapon takes the night.
+      break;
     }
   }
 

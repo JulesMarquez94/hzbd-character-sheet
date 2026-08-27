@@ -112,6 +112,12 @@ export const BLANK_CHARACTER = {
   // because the card says "until all Shield is gone". feral.js owns the shape,
   // and a sheet with no such set never writes the column.
   feral: {},
+  // The bargains a talent set has struck, keyed by the set that granted one:
+  // { "pactbound": { kind, form, weapon, progress, picks, extra, missions,
+  // log } }. Which pact it is, what shape the weapon wears, the lifetime
+  // progress fed into it and every boon claimed off it. pact.js owns the
+  // shape, and a sheet with no such set never writes the column.
+  pact: {},
   // Everything a level handed out that isn't a talent, keyed by the level that
   // granted it: the +2 / +1 spread at level 1, and an attribute point and a
   // learned skill at every odd level after. levelPicks.js owns the shape.

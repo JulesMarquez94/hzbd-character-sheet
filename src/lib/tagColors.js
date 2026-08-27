@@ -77,6 +77,7 @@ export const FAMILY_COLORS = {
   Magma: 'var(--family-magma)',
   Earth: 'var(--family-earth)',
   Storm: 'var(--family-storm)',
+  Mud: 'var(--family-mud)',
 
   // Ethereal
   Light: 'var(--family-light)',

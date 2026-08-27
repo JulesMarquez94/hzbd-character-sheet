@@ -17,6 +17,7 @@ import {
   pruneForged,
 } from '../../lib/items.js';
 import { normalizeForged } from '../../lib/forged.js';
+import { pactWeaponId } from '../../lib/pact.js';
 
 /**
  * Equipping, for every block on the Inventory tab.
@@ -121,8 +122,20 @@ export function useEquipSlots(character, patch) {
     write({ belt: nextBelt, pack: nextPack });
   }
 
+  /* The Pact of Ordenance's weapon, while its set is held. PACT-BOUND WEAPON:
+     it "always fills your first weapon slot" and cannot be lost — so the
+     Primary slot is not a slot while the pact stands. Equipping another weapon
+     lands it in the Secondary instead of asking, and nothing here can take the
+     pact weapon off. Reshaping it is a Long Rest action, not an equip. */
+  const pactId = pactWeaponId(character);
+  const pinned = Boolean(pactId) && equipment.main_hand === pactId;
+
   function equip(slotKey, item) {
     if (!item) return;
+    if (pinned && slotKey === 'main_hand') {
+      equip('off_hand', item);
+      return;
+    }
     if (placedElsewhere(item, equipment[slotKey])) return;
     if (equipment[slotKey] && equipment[slotKey] !== item.id) {
       setPending({ target: { kind: 'slot', key: slotKey }, item });
@@ -134,6 +147,7 @@ export function useEquipSlots(character, patch) {
   /** Taking something off always sends it to the pack — nothing is lost. */
   function unequip(slotKey) {
     if (!equipment[slotKey]) return;
+    if (pinned && slotKey === 'main_hand') return;
     commitSlot(slotKey, null, true);
   }
 

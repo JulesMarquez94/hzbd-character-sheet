@@ -3,12 +3,13 @@ import Modal from '../Modal.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
 import BrewRest from './BrewRest.jsx';
 import EnchantAction from './EnchantRest.jsx';
+import { PactFormWall } from './PactPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { brewSummary } from '../../lib/alchemy.js';
 import { formatNumber } from '../../lib/characterModel.js';
 import { enchantChanges } from '../../lib/enchanting.js';
-import { heldItem } from '../../lib/items.js';
+import { getItem, heldItem } from '../../lib/items.js';
 import { getEnchantment } from '../../lib/enchantments.js';
 import { getRest, labourAffordable, restActions, restPlan } from '../../lib/rest.js';
 import { pickChanges, toggleLoadoutPick } from '../../lib/loadouts.js';
@@ -73,6 +74,11 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      something the `talents` column holds. It becomes pack entries in the rest's
      own patch. See alchemy.js. */
   const [brews, setBrews] = useState([]);
+  /* And the form a pact-bound weapon is reshaping into tonight: a weapon id, or
+     null while the blade keeps yesterday's shape. Its own piece of state for
+     the same reason `brews` is — a weapon's form is nothing the `talents` draft
+     holds. It becomes a forged-record write in the rest's own patch. */
+  const [reshaped, setReshaped] = useState(null);
 
   /* Whether the list of actions is up, and which one's step is. */
   const [menu, setMenu] = useState(false);
@@ -93,8 +99,8 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      rule. */
   const picked = useMemo(() => (chosen ? [chosen] : []), [chosen]);
   const plan = useMemo(
-    () => restPlan(character, kind, picked, prepared, brews),
-    [character, kind, picked, prepared, brews]
+    () => restPlan(character, kind, picked, prepared, brews, reshaped),
+    [character, kind, picked, prepared, brews, reshaped]
   );
 
   /** Take the slot back, and everything the action had written into the draft. */
@@ -103,6 +109,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setChosen(null);
     setPrepared(null);
     setBrews([]);
+    setReshaped(null);
   }
 
   /** Fill the slot. Whatever was in it, and whatever it did, goes first. */
@@ -111,6 +118,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     // A different action means the last one's work is given back, not added to.
     setPrepared(null);
     setBrews([]);
+    setReshaped(null);
     setActionId(row.id);
 
     setMenu(false);
@@ -120,7 +128,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
 
   if (!rest || !plan) return null;
 
-  const held = action ? summarise(action, { chosen, character, talents, brews }) : null;
+  const held = action ? summarise(action, { chosen, character, talents, brews, reshaped }) : null;
 
   return (
     <Modal
@@ -315,6 +323,35 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         />
       )}
 
+      {step?.kind === 'pact' && (
+        <Modal
+          title="Reshape your pact-bound weapon"
+          onClose={() => setStepId(null)}
+          size="page"
+          footer={
+            <>
+              <span className="spacer" />
+              <button type="button" className="btn btn-take btn-sm" onClick={() => setStepId(null)}>
+                ← Back to the rest
+              </button>
+            </>
+          }
+        >
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            Any form in the codex. The workings laid into it ride along, it keeps its place in your
+            first weapon slot, and nothing about the change costs Supplies. It is written when the
+            rest is.
+          </p>
+          <PactFormWall
+            character={character}
+            current={reshaped ?? step.state.weapon?.base ?? null}
+            onPick={(weaponId) =>
+              setReshaped(weaponId === step.state.weapon?.base ? null : weaponId)
+            }
+          />
+        </Modal>
+      )}
+
       {step?.kind === 'worn' && (
         <Modal
           title="On your own person"
@@ -454,11 +491,17 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
  * laying anything leaves the slot open, and it says so rather than reading as a
  * night's work finished.
  */
-function summarise(action, { chosen, character, talents, brews }) {
+function summarise(action, { chosen, character, talents, brews, reshaped }) {
   if (action.kind === 'labour') {
     return chosen
       ? { done: true, says: `${chosen.gain ? '+' : '−'}${chosen.amount} Supplies` }
       : { done: false, says: 'No amount chosen yet' };
+  }
+
+  if (action.kind === 'pact') {
+    return reshaped
+      ? { done: true, says: `Reshaped into a ${getItem(reshaped)?.name ?? reshaped}` }
+      : { done: false, says: 'No form chosen yet' };
   }
 
   if (action.kind === 'alchemy') {

@@ -155,3 +155,14 @@ The ice left behind makes the area Difficult Terrain for **10 turns (1 minute)**
 eye-of-the-storm,EYE OF THE STORM,"Master Spell, Elemental, Storm",4,6,"A storm opens around you for **10 turns (1 minute)**, calm within **3 meters (10 feet)** and violent out to **18 meters (60 feet)**. It moves with you.
 
 **All entities** in the violent band have disadvantage on Attack Rolls, and take [[2d6 + 2*stat]] {damage} damage at each of their Turn Starts.",UPKEEP,"At your Turn Start, pay 4 Willpower to keep the storm turning. Miss the Upkeep and the spell ends.",Eye of the Storm.jpg
+mire,MIRE,"Novice Spell, Elemental, Mud",2,2,"The ground softens into deep mud in a **6-meter (20-foot)** area centered on a point you can see within **12 meters (40 feet)** for **10 turns (1 minute)**.
+
+The area is Difficult Terrain. When **an entity** enters it, make a {stat} Roll {roll} against its Reflex. On a success, the entity is knocked prone.",,,Mire.jpg
+engulf,ENGULF,"Adept Spell, Elemental, Mud",4,4,"Mud rises over **an entity** you can see within **9 meters (30 feet)**, sealing it inside.
+
+Make a {stat} Roll {roll} against its Grit. On a success, the entity is constrained and takes [[1d6 + stat]] {damage} damage at its Turn Start.
+
+The entity can spend 3 Action Points to make a {physique} Roll against your Grit: on a success it breaks free.",,,Engulf.jpg
+drowning-earth,DROWNING EARTH,"Master Spell, Elemental, Mud",5,6,"The ground turns to slurry in a **12-meter (40-foot)** radius you can see within **24 meters (80 feet)**.
+
+At the Turn Start of **any entity** in the area, make a {stat} Roll {roll} against its Reflex. On a success it sinks a stage: rooted, constrained, then buried, taking [[3d6 + 3*stat]] {damage} damage. It can spend 4 Action Points to rise a stage.",UPKEEP,"At your Turn Start, pay 3 Willpower to keep it churning. Miss the Upkeep and the spell ends.",Drowning Earth.jpg

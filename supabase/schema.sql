@@ -265,6 +265,12 @@ create table if not exists public.characters (
   -- is the creature's own tracker in the same shape as the character's own
   -- `effects` column below. See src/lib/minions.js.
   minions      jsonb not null default '{}'::jsonb,
+  -- The bargains a talent set struck, keyed by the set that granted one:
+  -- { "pactbound": { kind, form, weapon, progress, picks, extra, missions,
+  -- log } }. Which of the two pacts it is, what shape the pact-bound weapon
+  -- wears, the lifetime progress fed into it, every boon claimed off it, the
+  -- standing missions and the feeding log. See src/lib/pact.js.
+  pact         jsonb not null default '{}'::jsonb,
 
   -- Left-to-right order of the Character-tab blocks, e.g. [3,1,2,6,4,5]. The
   -- six numbered ones are every character's; a set that grants a creature adds
@@ -328,6 +334,10 @@ alter table public.characters add column if not exists minions     jsonb not nul
 -- The form's *clock* is not in here: it is the `shield` column above, because the
 -- card says the form lasts "until all Shield is gone".
 alter table public.characters add column if not exists feral       jsonb not null default '{}'::jsonb;
+-- And one that hands you a debt: the Pact of Ordenance's bargain, keyed by the
+-- set that granted it. Which pact was struck, the weapon's current form, the
+-- lifetime progress fed into it and the boons claimed off it.
+alter table public.characters add column if not exists pact        jsonb not null default '{}'::jsonb;
 -- Rings, chains and cloaks. A plain list of item ids with no ceiling on it, which
 -- is why it is not in the `equipment` map: that has one key per place and a fixed
 -- set of keys, and a character wearing nine rings is wearing nine rings.

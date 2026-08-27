@@ -7,6 +7,7 @@ import { useCardStack } from '../../context/card-stack.js';
 import { WEAPON_SLOTS, heldItem, rarityColor, wieldModifiers } from '../../lib/items.js';
 import { getCard, itemEnchantments } from '../../lib/weapons.js';
 import { attackModifiers } from '../../lib/moves.js';
+import { pactWeaponId } from '../../lib/pact.js';
 import { cardTitle } from '../../lib/cardText.js';
 
 /**
@@ -49,6 +50,10 @@ export default function WeaponBlock({
         /* What this character carries, not what the codex prints: an Enchanter's
            own work on their own blade is on their sheet. See heldItem. */
         const item = heldItem(character, equipment[slot.key]);
+        /* The Pact of Ordenance's weapon, while its set is held. It cannot be
+           put away or swapped out: the browser and the remove button both step
+           aside, and the row says why. Its form changes over a Long Rest. */
+        const bound = Boolean(item) && pactWeaponId(character) === item.id;
 
         return (
           <section className="weapon-panel" key={slot.key}>
@@ -56,6 +61,7 @@ export default function WeaponBlock({
               <WeaponFace
                 item={item}
                 slot={slot}
+                bound={bound}
                 character={character}
                 stack={stack}
                 readOnly={readOnly}
@@ -115,7 +121,7 @@ function listOr(words) {
   return `${words.slice(0, -1).join(', ')} or ${words[words.length - 1]}`;
 }
 
-function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove }) {
+function WeaponFace({ item, slot, bound = false, character, stack, readOnly, onBrowse, onRemove }) {
   const cards = (item.abilities ?? []).map(getCard).filter(Boolean);
   const enchantments = itemEnchantments(item);
   /* What this weapon does in *this* character's hands: what is worked into it,
@@ -124,12 +130,24 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
 
   return (
     <>
-      <div className="item-row weapon-row" style={{ borderLeftColor: rarityColor(item) }}>
+      <div
+        className={`item-row weapon-row${bound ? ' weapon-row-pact' : ''}`}
+        style={{ borderLeftColor: rarityColor(item) }}
+      >
         <button
           type="button"
           className="item-row-tap"
-          onClick={onBrowse}
-          title={readOnly ? item.name : `${item.name} · tap to swap or send to inventory`}
+          /* A pact-bound weapon has no browser to open: nothing swaps it out and
+             nothing puts it away. Its tap reads the item instead, which is where
+             its workings and its lore already live. */
+          onClick={bound ? () => stack?.openItem(item) : onBrowse}
+          title={
+            bound
+              ? `${item.name} · pact-bound. It cannot be put away, and it reshapes over a Long Rest.`
+              : readOnly
+                ? item.name
+                : `${item.name} · tap to swap or send to inventory`
+          }
         >
           <span className="item-row-top">
             {/* The smaller tile, and the only item row on the tab that keeps it.
@@ -144,6 +162,7 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
               <span className="item-row-line">
                 <span className="item-row-name">{item.name}</span>
                 <span className="equip-slot-label">{slot.label}</span>
+                {bound && <span className="pact-chip">Pact-Bound</span>}
               </span>
               <ItemTags item={item} />
             </span>
@@ -157,7 +176,7 @@ function WeaponFace({ item, slot, character, stack, readOnly, onBrowse, onRemove
           <SlotTools
             item={item}
             onInfo={() => stack?.openItem(item)}
-            onRemove={readOnly ? null : onRemove}
+            onRemove={readOnly || bound ? null : onRemove}
             removeTitle={`Put ${item.name} away. It goes to your inventory.`}
           />
         </ItemFoot>

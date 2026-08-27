@@ -2329,6 +2329,165 @@ export const SPELLS = withArt([
       'At your Turn Start, pay 4 Willpower to keep the storm turning. Miss the Upkeep and the spell ends.',
   },
 
+  /* ========================================================= Elemental · Mud ====
+   *
+   * The ninth family, pulled 2026-08-27 from `data/Spells - Elemental - Mud.csv`
+   * with three pictures in `data/Mud/`. One card a rung, which is the compound
+   * shape: Mud is water and earth, the way Storm is wind and water, and a
+   * compound family runs three deep where a base element runs nine.
+   *
+   * The school goes from 40 learnable spells to 43 (44 rows with DEEP SEA
+   * ACCRETION, which is Unique and item-bound), and the Arcanist, which names no
+   * school, from 51, 96 and 140 to **52, 98 and 143**. No talent set casts from
+   * Elemental, so no set's pool moves, and an Imbuement binds "a NOVICE spell"
+   * with no school named, so MIRE can reach an item from the day it exists.
+   *
+   * ------------------------------------------------------- the sheet's own hand
+   * Longhand, like every Elemental cell before it: "Make a Mind Roll roll",
+   * "3d6 + 3 × Mind Blunt damage". The markers are put back the way the school's
+   * first pull put them back, and the numbers come off `*stat` rather than off
+   * Mind, so an Instinct caster prints through the same card.
+   *
+   * ------------------------------------------------------------- the readings
+   * - **The whole family holds one entity down**, three ways: MIRE trips whoever
+   *   walks in, ENGULF seals one target, DROWNING EARTH sinks a crowd by degrees.
+   *   Every rung is a Reflex or Grit contest and none of them is save-or-suffer
+   *   with no way out: each prints its own price in Action Points to escape.
+   * - **`buried` is not a defined term and this is the card that wants one.**
+   *   DROWNING EARTH's ladder is "rooted, then constrained, then buried". The
+   *   first two are keywords carrying their own explanations and the third is
+   *   prose the card glosses itself, "buried and taking [damage] at each Turn
+   *   Start". That is readable as printed, because the damage is stated on the
+   *   line, so it is transcribed as prose rather than lit. **Worth Jules's word**:
+   *   whether buried is a status with rules of its own (does it stop actions the
+   *   way constrained does? does it suffocate? does it end when the spell does?)
+   *   is a design answer, and inventing one here would be inventing design. Until
+   *   then it reads as the ordinary English word, which is how Difficult Terrain
+   *   has sat in five card bodies since the school arrived.
+   * - **The ladder has no stated floor.** An entity that fails once is rooted and
+   *   one that fails three times is buried. Nothing says what a fourth failure
+   *   does, and nothing says the stages fall off when the entity leaves the
+   *   slurry. The Upkeep is the only clock, which is EARTHQUAKE's shape, so the
+   *   spell ending is what releases them.
+   * - **ENGULF deals 1d6 + Mind at Adept**, where the rung's damage is otherwise
+   *   2d6 + 2 × Mind. It is a per-turn toll rather than a cast, and MAGMA CHAINS
+   *   is the precedent: an Adept card that binds one entity and bills it [[stat]]
+   *   at each Turn Start. Engulf asks more per turn than that does, and it is the
+   *   sheet's own number either way.
+   * - **DROWNING EARTH casts for 5 Action Points**, the only Master spell in the
+   *   school that does. Every other one casts at 4 and MAGMA CHAINS spends 5 at
+   *   Adept, so the number is unusual rather than unprecedented, and it is what
+   *   the cell says.
+   * - **The escape clause changed one verb.** The sheet reads "can use 4 action
+   *   poitns"; the codex spends Action Points and never uses them, which is
+   *   MOUNTAIN'S WEIGHT's word and CONTAINMENT SPHERE's. ENGULF's own clause was
+   *   already "can spend".
+   * - **ENGULF rolls its escape against your Grit** rather than against your Mind.
+   *   MAGMA CHAINS is the one other card where a target buys a contest with its
+   *   own Action Points and it rolls Physique against your Mind. Grit is a defence
+   *   and the sentence works, so the sheet's own word stands.
+   * - Spelling, without further comment: "netity", "poitns" and "teh" in DROWNING
+   *   EARTH's cell.
+   * - **DROWNING EARTH is the biggest card in this drop by a long way and it had
+   *   to be cut to fit.** It arrived at a load of 696 against a 600 ceiling, the
+   *   worst overrun of any card pulled so far, because it carries four mechanics
+   *   and an Upkeep: an area, a per-turn contest, a three-rung ladder with damage
+   *   on the last rung, an escape priced in Action Points, and a toll. The Upkeep
+   *   alone is 192 of the budget (92 of prose and the flat 100 a second half
+   *   costs), so the body had about 310 to work in.
+   *
+   *   What went was repetition and one paragraph break, never a mechanic. The
+   *   clock is now said once: the paragraph opens "At the Turn Start of **any
+   *   entity** in the area", so the buried rung's damage inherits it rather than
+   *   printing "at each Turn Start" a second time. The escape moved into the same
+   *   paragraph as the ladder it undoes, which is worth 30 on its own and reads
+   *   better beside "sinks a stage": "rise a stage" is the sheet's "reduce the
+   *   effect by 1 stage" in half the words and the exact inverse of the verb above
+   *   it. The range dropped "on a point", which is EARTHQUAKE's own shorter form
+   *   for an area made of ground, and the Upkeep holds "it" where "the ground"
+   *   was. 696 to 593. See docs/card-text.md: cut words, never mechanics.
+   *
+   *   That leaves it 3 short of EARTHQUAKE's 596, and EARTHQUAKE is the card that
+   *   proved the static estimate wrong by printing at 0.894 under a 0.9 floor. So
+   *   the fit was taken off the renderer rather than the number: **0.961**, better
+   *   than RAIN OF FIRE and level with EYE OF THE STORM, and MIRE and ENGULF both
+   *   print at full size. The estimate reads this card high because it counts
+   *   markers at source length, and this one carries 36 characters of `{stat}`,
+   *   `{roll}`, `[[3d6 + 3*stat]]` and `{damage}` that render to about 17. The
+   *   harness was proved first against SENSE LIFE, RAIN OF FIRE, PESTILENT CLOUD,
+   *   EARTHQUAKE and EYE OF THE STORM, and read all five to the recorded digit.
+   *
+   * ------------------------------------------------------ the shelf and the art
+   * **Mud is new to the shelf and to the palette**, eighth on the Elemental shelf
+   * in `cardOrder.js`, after Storm and in the order this file writes it.
+   *
+   * `--family-mud` is the one token in this school that could not be sited the way
+   * Storm's was. Storm took the midpoint of the two families it is made of because
+   * Wind and Water sit 32 degrees apart on hue. **Water and Earth sit 174 degrees
+   * apart, so their midpoint is green or purple and the method does not transfer.**
+   * The lean is taken on the axis the law already names instead: Mud is Earth's
+   * hue, separated on lightness and saturation, which is what water does to earth.
+   * See index.css for the measured result.
+   *
+   * The three pictures are 2400x1792 art plates, no white border and no banner, so
+   * `data/Mud/` joins `FAMILY_FOLDERS` and `PLATE_FOLDERS` in `pull-card-art.mjs`
+   * and the crop stays off. All three filenames are the card names, so nothing goes
+   * in `ALIASES`, and nothing in `data/Elemental/` holds a Mud render, so like
+   * Storm a day earlier these three shadow nothing and the run says nothing about
+   * them.
+   */
+  {
+    id: 'mire',
+    name: 'Mire',
+    summary: 'Six meters of deep mud for a minute. Everything that walks into it goes down.',
+    kind: 'spell',
+    tags: ['Novice Spell', 'Elemental', 'Mud'],
+    ap: 2,
+    wp: 2,
+    stat: 'mind',
+    body:
+      'The ground softens into deep mud in a **6-meter (20-foot)** area centered on a point you can see within **12 meters (40 feet)** for **10 turns (1 minute)**.\n\n' +
+      'The area is Difficult Terrain. When **an entity** enters it, make a {stat} Roll {roll} against its Reflex. On a success, the entity is knocked prone.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    id: 'engulf',
+    name: 'Engulf',
+    summary: 'Mud seals one entity in, and bills it every turn it stays there.',
+    kind: 'spell',
+    tags: ['Adept Spell', 'Elemental', 'Mud'],
+    ap: 4,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Blunt'],
+    body:
+      'Mud rises over **an entity** you can see within **9 meters (30 feet)**, sealing it inside.\n\n' +
+      'Make a {stat} Roll {roll} against its Grit. On a success, the entity is constrained and takes [[1d6 + stat]] {damage} damage at its Turn Start.\n\n' +
+      'The entity can spend 3 Action Points to make a {physique} Roll against your Grit: on a success it breaks free.',
+    sub_name: null,
+    sub_body: null,
+  },
+  {
+    /* `buried` is the sheet's own word and the codex has no such status. It is
+       transcribed as prose and flagged in "the readings" above. */
+    id: 'drowning-earth',
+    name: 'Drowning Earth',
+    summary: 'Twelve meters of slurry that swallows by degrees: rooted, then held, then under.',
+    kind: 'spell',
+    tags: ['Master Spell', 'Elemental', 'Mud'],
+    ap: 5,
+    wp: 6,
+    stat: 'mind',
+    damage: ['Blunt'],
+    body:
+      'The ground turns to slurry in a **12-meter (40-foot)** radius you can see within **24 meters (80 feet)**.\n\n' +
+      'At the Turn Start of **any entity** in the area, make a {stat} Roll {roll} against its Reflex. On a success it sinks a stage: rooted, constrained, then buried, taking [[3d6 + 3*stat]] {damage} damage. It can spend 4 Action Points to rise a stage.',
+    sub_name: 'Upkeep',
+    sub_body:
+      'At your Turn Start, pay 3 Willpower to keep it churning. Miss the Upkeep and the spell ends.',
+  },
+
   /* ========================================================= Ethereal ====
    *
    * The whole school, pulled 2026-08-25 from `data/Spells - Ethereal -

@@ -84,6 +84,7 @@ import { loadoutOf, loadoutState } from './loadouts.js';
 import { heldItem, normalizeEquipment } from './items.js';
 import { isWeaponAttack, trickArrow, trickRider } from './tricks.js';
 import { feralRiders } from './feral.js';
+import { pactWeaponRiders } from './pact.js';
 import { bendsSwing, effectRiders, riderOf } from './riders.js';
 
 /** What anybody who knows a move may have waiting on one swing. */
@@ -513,6 +514,13 @@ export function attackModifiers(character, card, base) {
   const moves = moveRider(character?.effects, card);
   const swings = isWeaponAttack(card);
   const worn = swings ? weaponRiders(character) : null;
+  /* And the Pact of Ordenance's weapon, when it is the thing being swung. The
+     weapon is itself a boon, so FIRST BOON's best-attribute rule and the two
+     rank riders land on its attacks the way they land on a granted spell. Only
+     the primary's cards are playable and the pact pins itself to that slot, so
+     "a weapon attack while the pact weapon is in hand" is the whole test. See
+     pactWeaponRiders in pact.js. */
+  const bound = swings ? pactWeaponRiders(character) : null;
   /* And the Feral Curse's form, which grants advantage on every attack roll and
      another die to the natural weapon's own. Read here rather than in
      `weaponRiders` because it hangs on the *shape you are in* and not on the tag
@@ -526,17 +534,21 @@ export function attackModifiers(character, card, base) {
   const running = effectRiders(character?.effects);
   const laid = running && bendsSwing(running) ? running : null;
   const passive =
-    (Number(worn?.advantage) || 0) + (Number(hide?.advantage) || 0) + (Number(laid?.advantage) || 0);
+    (Number(worn?.advantage) || 0) +
+    (Number(hide?.advantage) || 0) +
+    (Number(laid?.advantage) || 0) +
+    (Number(bound?.advantage) || 0);
   /* And what holding this weapon is worth that is not an arrow. A Rank 2 Colossus
      with a plain Two-Handed Weapon and nothing waiting on it has COLOSSAL FORCE's
      Elevate and no advantage at all, so a guard that counted only arrows would
      hand the untouched card back and drop the die size on the way out. */
   const held = (Number(worn?.elevate) || 0) + (Number(worn?.perMove) || 0);
 
-  if (!trick && !moves && !laid && !hide && passive === 0 && held === 0) return base;
+  if (!trick && !moves && !laid && !hide && !bound && passive === 0 && held === 0) return base;
 
   const empower =
     (Number(base?.empower) || 0) +
+    (Number(bound?.empower) || 0) +
     (Number(moves?.empower) || 0) +
     /* PERFECT TECHNIQUE: "Each Martial Move on the attack Empowers its damage by
        1." A die per move riding rather than a die for having any, so a Master
@@ -591,7 +603,12 @@ export function attackModifiers(character, card, base) {
     disadvantage: (Number(base?.disadvantage) || 0) + (Number(laid?.disadvantage) || 0),
     /* And where it came from, so the badge can say. An arrow with a 3 in it and no
        explanation is a number the reader has to go and reconstruct. */
-    advantageFrom: advantageSources(worn, moves, hide, trick, laid),
+    advantageFrom: advantageSources(worn, moves, hide, trick, laid, bound),
+    /* The pact's best-attribute rule, riding the swing the way a loadout's
+       `cast` rides a spell. Only when the pact lends one: nothing else on this
+       path moves a card's attribute, and `modifiers.stat` wins over the card's
+       own in every renderer. */
+    ...(bound?.stat ? { stat: bound.stat } : {}),
     /* What the sheet prints beside the attack, and deliberately not on the card:
        "when possible updating the attack text to say (not on the card) that this
        attack will MARTIAL MOVE NAME". */
@@ -612,9 +629,12 @@ function instinctOf(character) {
  * the same weapon, or a form that only grants a die of Empowered on some other
  * weapon, is not credited with an arrow it had nothing to do with.
  */
-function advantageSources(worn, moves, hide, trick, laid) {
+function advantageSources(worn, moves, hide, trick, laid, bound = null) {
   const held = (worn?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
   const shape = (hide?.from ?? []).filter((row) => row.advantage > 0).map((row) => row.talent.name);
+  /* The pact's, named off its own rider: `from` there is the set's name, and
+     ENDLESS BARGAIN is the card a reader will go looking for. */
+  const sworn = bound && Number(bound.advantage) > 0 ? bound.advantageFrom ?? [bound.from] : [];
   /* And the tracker, named after the row rather than the card id: a Lucky Brew is
      tracked under whatever the row says, and that is the name the player will go
      looking for when they want to know where the arrow came from.
@@ -633,6 +653,7 @@ function advantageSources(worn, moves, hide, trick, laid) {
      stolen Poison rides the swing and lends it no arrow. */
   return [
     ...held,
+    ...sworn,
     ...shape,
     ...tracked,
     ...(moves?.advantaged ?? []),

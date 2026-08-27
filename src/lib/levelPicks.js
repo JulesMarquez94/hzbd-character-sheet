@@ -60,6 +60,7 @@ import { getLineage, lineageCards, openPicks } from './lineages.js';
 import { advancementState, normalizeTalents, pruneTalents } from './talents.js';
 import { minionOf, minionSettled } from './minions.js';
 import { feralOf, feralSettled } from './feral.js';
+import { pactOf, pactSettled, pactSkillIds } from './pact.js';
 import { MAX_LEVEL } from './characterModel.js';
 
 /** What a level hands out. The one place the even / odd rule is written down. */
@@ -159,6 +160,16 @@ export function levelQuestions(character, level, { talents, picks, background })
        once, and the ranks above it are the same animal getting better at it. */
     if (slot?.filled && slot.rank === 1 && feralOf(slot.talent)) {
       asked.push(feralSettled(character, slot.talent.id));
+    }
+
+    /* And a set that strikes a bargain asks four at once: which pact, what
+       form the weapon takes, and FIRST BOON's spell and Martial Move. All at
+       Rank 1 — the bargain is struck once, and the ranks above it are the same
+       debt growing deeper. One boolean rather than four, because the window
+       asks them as one walk and "the pact is not sealed" is the one fact the
+       badge needs. */
+    if (slot?.filled && slot.rank === 1 && pactOf(slot.talent)) {
+      asked.push(pactSettled(character, slot.talent.id));
     }
   }
   if (grants.lineage) asked.push(lineageSettled(character));
@@ -588,6 +599,12 @@ export function skillOptionsAt(character, level) {
     if (entry.skill && Number(when) !== Number(level)) elsewhere.set(entry.skill, Number(when));
   }
 
+  /* And what a pact has taught. A skill claimed as a boon is held exactly the
+     way a background's is, so offering it here again would sell one skill
+     twice. See pactSkillIds in pact.js, which keeps the same rule in the
+     other direction. */
+  const fromPact = new Set(pactSkillIds(character));
+
   return allSkills().map((skill) => {
     if (skill.id === mine) return { skill, ok: true, held: true };
     if (fromBackground.has(skill.id)) {
@@ -597,6 +614,15 @@ export function skillOptionsAt(character, level) {
         held: false,
         gate: 'held',
         reason: 'Your background already taught you this',
+      };
+    }
+    if (fromPact.has(skill.id)) {
+      return {
+        skill,
+        ok: false,
+        held: false,
+        gate: 'held',
+        reason: 'Your pact already granted you this',
       };
     }
     if (elsewhere.has(skill.id)) {

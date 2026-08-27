@@ -16,6 +16,7 @@ import {
 import { getCard } from '../../lib/weapons.js';
 import { shortName, spendUse } from '../../lib/combatBar.js';
 import { attackModifiers, ridingLine } from '../../lib/moves.js';
+import { pactWeaponId } from '../../lib/pact.js';
 import { magazineUse } from '../../lib/uses.js';
 
 /**
@@ -51,6 +52,9 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
 
   const primary = heldItem(character, equipment.main_hand);
   const secondary = heldItem(character, equipment.off_hand);
+  /* Whether the drawn weapon is the pact's, which is the one thing that can
+     kill the swap: PACT-BOUND WEAPON "always fills your first weapon slot". */
+  const bound = Boolean(primary) && pactWeaponId(character) === primary.id;
   /* `wieldModifiers` rather than `itemModifiers`: an Enchanter's own workings
      travel with their hands, and this block prints what the weapon does in
      *these* hands. It was reading the blade alone, so a Fire Infusion on the
@@ -143,12 +147,20 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
       <div className="loadout-head">
         <span className="stat-category-label">Weapons</span>
 
+        {/* A pact-bound weapon holds the first slot for as long as its set is
+            held, so there is nothing a swap could draw: the button is offered
+            dead, wearing the reason, the way an unaffordable labour chip is. */}
         {!readOnly && (primary || secondary) && (
           <button
             type="button"
             className="swap-btn"
-            onClick={askSwap}
-            title={`${swapLine(primary, secondary)}. It costs ${SWAP_AP} Action Points`}
+            onClick={bound ? undefined : askSwap}
+            disabled={bound}
+            title={
+              bound
+                ? `${primary.name} is pact-bound and always fills your first weapon slot. Reshape it over a Long Rest instead.`
+                : `${swapLine(primary, secondary)}. It costs ${SWAP_AP} Action Points`
+            }
           >
             <span className="swap-glyph" aria-hidden="true">
               ⇄
