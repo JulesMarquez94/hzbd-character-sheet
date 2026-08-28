@@ -1,11 +1,19 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import AbilityCard from '../AbilityCard.jsx';
+import RollArrow from '../RollArrow.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
 import { AmmoPips } from './itemParts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { VARIABLE_CAP } from '../../lib/actions.js';
+import { castLine } from '../../lib/combatBar.js';
 import { getKeyword } from '../../lib/keywords.js';
+import { normalizeEffects } from '../../lib/combatTurn.js';
+import { cardAccent } from '../../lib/tagColors.js';
+import { getCard } from '../../lib/weapons.js';
+import { effectAdvantage } from '../../lib/moves.js';
+import { riderLine } from '../../lib/riders.js';
+import { triggerLine } from '../../lib/onUse.js';
 import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.js';
 
 /**
@@ -69,6 +77,28 @@ import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.j
  * made while casting: it is a toll at every Turn Start. It is printed as a line
  * so the player knows what they are signing up for, and combatTurn.js goes on
  * tracking it as the running effect it is.
+ *
+ * ------------------------------------------------------- what is already on you
+ * And under the two ways, **everything currently running**. "when you click on
+ * the quick bar button to use an action, it should list all the active effect on
+ * under the use buttons", 2026-08-28.
+ *
+ * This is the moment it matters. Half of what the tracker holds changes the thing
+ * you are about to do: an arrow on the roll, a die on the damage, a Speed that is
+ * not the Speed printed on block 1. All of it was on another block, behind the
+ * dialog you are looking at. So the list comes to the decision instead: what is
+ * running, how long it has left, and what it is doing to this sheet, each row in
+ * its own school's colour so it can be matched to the block behind.
+ *
+ * It is a reminder and not a control. Nothing here is spent, dropped or nudged.
+ * The block is where a tracker is edited, and a dialog that let you edit one
+ * while paying for something else would be two decisions wearing one Cancel.
+ *
+ * ------------------------------------------------------ and what this one starts
+ * Above them, when the card lasts, the row this use is about to write. A sheet
+ * that quietly starts counting things is a sheet you stop trusting, so it is said
+ * before the tap rather than found on the block afterwards. See `castEffect` in
+ * combatBar.js.
  *
  * Two things on the sheet do not have a printed cost, and both are standard
  * actions (see actions.js):
@@ -138,6 +168,20 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
 
   // What the card rolls with, for a tithe written off an attribute.
   const stat = request.modifiers?.stat ?? request.card?.stat ?? 'instinct';
+
+  /* What is on this character right now, for the list under the ways, and how
+     long this use will itself be on them. Both read off the request and the
+     character rather than off anything the dialog decides, so neither moves while
+     a half is being dialled. */
+  const running = useMemo(
+    () => normalizeEffects(character?.effects).filter((effect) => effect.turns !== 0),
+    [character?.effects]
+  );
+  const lasts = useMemo(() => castLine(request), [request]);
+  /* And what the card writes on its own, for the two that write anything. See
+     useTriggers.js: a sheet that quietly rewrites six columns because you drank
+     something has to say so first. */
+  const writes = useMemo(() => triggerLine(request.card, character), [request.card, character]);
 
   const base = {
     ap: request.variable ? dialled : Number(request.ap) || 0,
@@ -391,6 +435,37 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
           {/* What the item itself loses, on top of the points. */}
           {request.note && <p className="use-note">{request.note}</p>}
 
+          {/* What the card does to the sheet on its own, for the two cards that
+              do anything. Above the tracking line, because it is the larger of
+              the two writes by a long way. */}
+          {writes && (
+            <p className="use-writes">
+              <b>This one writes your sheet</b> · {writes}
+            </p>
+          )}
+
+          {/* And what this use starts counting. Said here rather than discovered
+              on block 6 afterwards. See the note at the top. */}
+          {lasts && (
+            <p className="use-lasts">
+              <b>Goes on the tracker</b> · {lasts}. Recasting it refreshes the same row.
+            </p>
+          )}
+
+          {/* And what is already on you. See the note at the top: this is the
+              moment half of it matters, and until now all of it was behind this
+              dialog. */}
+          {running.length > 0 && (
+            <div className="use-running">
+              <span className="use-running-head">
+                Running on you · {running.length}
+              </span>
+              {running.map((effect) => (
+                <RunningRow key={effect.id} effect={effect} />
+              ))}
+            </div>
+          )}
+
           {/* And what this one keeps costing once it is running. Not an option,
               because nobody chooses an Upkeep: they owe it. */}
           {toll && (
@@ -422,6 +497,48 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
         )}
       </div>
     </Modal>
+  );
+}
+
+/**
+ * One thing already running, at the size a reminder is.
+ *
+ * The tracker's own row in miniature and deliberately so: same count on the left,
+ * same school colour down the edge, same sentence about what it is doing to this
+ * sheet, same arrow when it is bending a roll. A reader should recognise it as
+ * the row on block 6 rather than have to work out what it is.
+ *
+ * What it drops is everything that acts: no nudges, no drop, no card to open. See
+ * the note at the top.
+ */
+function RunningRow({ effect }) {
+  const open = effect.turns === null;
+  const accent = cardAccent(getCard(effect.card)?.tags);
+  const arrow = effectAdvantage(effect);
+  const does = riderLine(effect.card);
+
+  return (
+    <div
+      className={`use-running-row${accent ? ' has-accent' : ''}`}
+      style={accent ? { '--fx-accent': accent } : undefined}
+    >
+      <span className={`use-running-turns${open ? ' is-open' : ''}`}>
+        {open ? '∞' : effect.turns}
+      </span>
+
+      <span className="use-running-body">
+        <span className="use-running-name">
+          {effect.name}
+          {effect.from && <span className="use-running-from">{effect.from}</span>}
+        </span>
+        {/* What it is doing to the numbers on the card beside this. Only the rows
+            that do anything: a note the table applies by hand has nothing to say
+            here that its own row does not already say. */}
+        {does && <span className="use-running-does">{does}</span>}
+      </span>
+
+      {arrow && <RollArrow {...arrow} size={18} />}
+    </div>
   );
 }
 

@@ -340,6 +340,13 @@ export function minionActor(character, minion) {
     reaction: minion.reaction,
     willpower: Number(character?.willpower) || 0,
     willpower_max: Number(character?.willpower_max) || 0,
+    /* And its own tracker, because a use can now lay a row on it: a creature
+       casting something that lasts is a creature with something running on it,
+       and the block beside its bar is where that shows. Read off the creature's
+       row and never off the character's `effects` column, which is the same line
+       `setMinionEffects` draws below. See `castEffect` in combatBar.js, and
+       `minionSpend`, which is what sends the answer back to the right sheet. */
+    effects: minion.effects ?? [],
   };
 }
 
@@ -459,6 +466,9 @@ export function setMinionPool(character, minion, pool, value) {
   return writeMinion(character, minion.id, { [pool]: clamp(value, caps[0], caps[1]) });
 }
 
+/** What a use writes onto the creature's row rather than onto its bonded's. */
+const MINION_KEYS = new Set(['ap', 'reaction', 'effects']);
+
 /**
  * A use the creature paid for, as one patch: its points off its own pools, and
  * the Willpower off its bonded's.
@@ -467,13 +477,22 @@ export function setMinionPool(character, minion, pool, value) {
  * actor. All this does is send each half where it belongs, so a use played from
  * the creature's bar writes exactly one row and can never take Action Points off
  * the wrong sheet.
+ *
+ * `effects` goes the creature's way for the same reason its points do. A use
+ * that lasts now lays its own row the moment it is paid for, and a creature's
+ * rows live on the creature (see `setMinionEffects`): a spell the ally kept up
+ * writing itself onto its bonded's tracker would be counting down on the wrong
+ * block, and taking a turn off it on the wrong press.
+ *
+ * The Willpower is the one thing that crosses back, because it always did: an
+ * ally spends its bonded's.
  */
 export function minionSpend(character, minion, body) {
   const mine = {};
   const theirs = {};
 
   for (const [key, value] of Object.entries(body ?? {})) {
-    if (key === 'ap' || key === 'reaction') theirs[key] = value;
+    if (MINION_KEYS.has(key)) theirs[key] = value;
     else mine[key] = value;
   }
 

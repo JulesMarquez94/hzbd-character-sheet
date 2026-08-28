@@ -390,8 +390,14 @@ export function cardBanner(card) {
  * The numbers are still this character's. "1d6 + 8" is worth reading at a
  * glance in a way "1d6 + 2*stat" never is, which is the whole point of the
  * line.
+ *
+ * `part: 'sub'` reads the card's second half instead of its main text, resolved
+ * the same way. The brief never asks for it. The turn prompt does, because every
+ * Upkeep in the codex is written down there and an Upkeep is the one thing on a
+ * card that comes due while you are looking at something else. See
+ * turnTriggers.js.
  */
-export function cardGist(card, { character = null, modifiers = null } = {}) {
+export function cardGist(card, { character = null, modifiers = null, part = 'body' } = {}) {
   // A set that casts off another attribute overrides what the card is printed
   // with; see castModifier above.
   const printedStat = modifiers?.stat ?? card?.stat ?? 'instinct';
@@ -411,7 +417,7 @@ export function cardGist(card, { character = null, modifiers = null } = {}) {
   const stat = castStat(printedStat, who);
   const context = { character: who, stat, damage, choice };
 
-  return cardProse(card?.body)
+  return cardProse(part === 'sub' ? card?.sub_body : card?.body)
     .replace(/\{\{([^}]+)\}\}/g, '$1')
     .replace(/\[\[([^\]]+)\]\]/g, (_, expression) =>
       resolveValue(expression, who, stat, { empower, elevate, bonus }).text

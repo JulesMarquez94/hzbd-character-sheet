@@ -513,8 +513,23 @@ export function layingAffordable(character, kind, prepared, enchantment) {
  * than a rider or a hand, so it is the only one that writes the pack — and it
  * writes it in this same patch, so a rest backed out of leaves the components in
  * the crate and the flasks unmade.
+ *
+ * `free` is a rest nobody paid for, and there is exactly one: LIFE TREE TEA
+ * "gives you the benefit of a Long Rest. It costs no Supplies and it does not
+ * spend your Long Rest action." The crate is untouched and no cost line is
+ * printed, because a line saying 0 Supplies came out of the crate is a line about
+ * nothing. Everything else a night does happens exactly as it does at a campfire.
+ * See useTriggers.js.
  */
-export function restPlan(character, kind, labours = [], prepared = null, brews = [], reshaped = null) {
+export function restPlan(
+  character,
+  kind,
+  labours = [],
+  prepared = null,
+  brews = [],
+  reshaped = null,
+  { free = false } = {}
+) {
   const rest = getRest(kind);
   if (!rest) return null;
 
@@ -552,25 +567,29 @@ export function restPlan(character, kind, labours = [], prepared = null, brews =
     return delta;
   };
 
-  const price = restPrice(character, kind);
+  const price = free ? 0 : restPrice(character, kind);
   const discount = restCut(character);
   const cut = rest.supplies - price;
 
-  move(-price, rest.label);
-  lines.push({
-    key: 'cost',
-    label: `${price} Supplies`,
-    /* And what cut it, by name. A Pick is worked into something and a Frugal
-       upbringing is on the Advancement tab, so neither is anywhere the reader
-       can see from here. See restCut above. */
-    detail:
-      supplies < 0
-        ? `The crate holds ${formatNumber(held)}. You cannot pay for this rest.`
-        : cut > 0
-          ? `Out of the crate. ${rest.supplies} less ${cut}, which is ${listOut(discount.names)}.`
-          : 'Out of the crate.',
-    tone: supplies >= 0 ? 'cost' : 'warn',
-  });
+  // A rest nobody paid for takes nothing out of the crate and says nothing
+  // about it. See `free` in the note above.
+  if (!free) {
+    move(-price, rest.label);
+    lines.push({
+      key: 'cost',
+      label: `${price} Supplies`,
+      /* And what cut it, by name. A Pick is worked into something and a Frugal
+         upbringing is on the Advancement tab, so neither is anywhere the reader
+         can see from here. See restCut above. */
+      detail:
+        supplies < 0
+          ? `The crate holds ${formatNumber(held)}. You cannot pay for this rest.`
+          : cut > 0
+            ? `Out of the crate. ${rest.supplies} less ${cut}, which is ${listOut(discount.names)}.`
+            : 'Out of the crate.',
+      tone: supplies >= 0 ? 'cost' : 'warn',
+    });
+  }
 
   for (const labour of labours) {
     const delta = labour.gain ? labour.amount : -labour.amount;

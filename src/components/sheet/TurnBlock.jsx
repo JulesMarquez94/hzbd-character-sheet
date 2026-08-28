@@ -3,10 +3,14 @@ import EffectPrompt from './EffectPrompt.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
 import RestPrompt from './RestPrompt.jsx';
 import RollArrow from '../RollArrow.jsx';
+import TurnPrompt from './TurnPrompt.jsx';
+import { cardAccent } from '../../lib/tagColors.js';
+import { getCard } from '../../lib/weapons.js';
 import { isEnchanter } from '../../lib/enchanting.js';
 import { effectAdvantage } from '../../lib/moves.js';
 import { riderLine } from '../../lib/riders.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
+import { turnTriggers } from '../../lib/turnTriggers.js';
 import { useCardStack } from '../../context/card-stack.js';
 import {
   combatReactionGrant,
@@ -52,6 +56,9 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
   /* Whether the Ephemeral Enchantment shelf is up, raised from the tracker's own
      add prompt. The same window the quick bar raises. */
   const [enchanting, setEnchanting] = useState(false);
+  /* What the turn press found waiting on this boundary, held while the reminder
+     is up. Null the rest of the time, which is nearly all of it. */
+  const [reminder, setReminder] = useState(null);
   const stack = useCardStack();
 
   const turn = turnState(character);
@@ -59,6 +66,27 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
 
   const running = effects.filter((effect) => effect.turns !== 0).length;
   const ended = effects.length - running;
+
+  /**
+   * The one button, pressed.
+   *
+   * Two of the three moves cross a turn boundary, and either of those stops for
+   * a reminder when there is one to give. Entering a fight crosses nothing and
+   * goes straight through, as does a boundary with nothing waiting on it, which
+   * is what keeps the reminder from becoming the thing you dismiss twice a round
+   * without reading. See turnTriggers.js.
+   */
+  function press() {
+    const when = turn.move === 'turn' ? 'start' : turn.move === 'end' ? 'end' : null;
+    const found = when ? turnTriggers(character, when) : null;
+
+    if (found?.any) {
+      setReminder(found);
+      return;
+    }
+
+    patch(MOVES[turn.move](character));
+  }
 
   return (
     <div className="cell-scroll turn-block">
@@ -108,7 +136,7 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
       <button
         type="button"
         className={`turn-btn turn-btn-${turn.move}`}
-        onClick={() => patch(MOVES[turn.move](character))}
+        onClick={press}
         disabled={readOnly}
       >
         {turn.label}
@@ -182,6 +210,21 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
           character={character}
           onRest={(body) => patch(body)}
           onClose={() => setResting(null)}
+        />
+      )}
+
+      {/* Read off the move the button was showing when it was pressed rather
+          than off `turn` now, so a reminder left open through somebody else's
+          write still confirms the press it was raised for. */}
+      {reminder && (
+        <TurnPrompt
+          triggers={reminder}
+          character={character}
+          onConfirm={() => {
+            patch(MOVES[reminder.when === 'start' ? 'turn' : 'end'](character));
+            setReminder(null);
+          }}
+          onClose={() => setReminder(null)}
         />
       )}
     </div>
@@ -266,9 +309,21 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, bends = t
      own effects column, so a line here promising a doubled Speed would be
      describing something that did not happen. See MinionBlock.jsx. */
   const does = over || !bends ? null : riderLine(effect.card);
+  /* And what school it came out of, as a colour. "tracker should use tag
+     coloring like spell school", 2026-08-28: a block with six things running on
+     it is read by scanning, and until now every row on it was the same cyan
+     whether it was a Fire spell, a Shadow spell or a note about being grappled.
+     The rule down the left edge is the family's shade of its school's hue, off
+     the same table the chips on a card's banner use, so a row and its card are
+     visibly the same thing. A row with no school keeps the block's own cyan.
+     See cardAccent in tagColors.js. */
+  const accent = cardAccent(getCard(effect.card)?.tags);
 
   return (
-    <div className={`fx-row${over ? ' is-over' : ''}`}>
+    <div
+      className={`fx-row${over ? ' is-over' : ''}${accent ? ' has-accent' : ''}`}
+      style={accent ? { '--fx-accent': accent } : undefined}
+    >
       <div className="fx-row-top">
         <span className={`fx-turns${open ? ' is-open' : ''}${over ? ' is-over' : ''}`}>
           {over ? 'Ended' : open ? '∞' : effect.turns}

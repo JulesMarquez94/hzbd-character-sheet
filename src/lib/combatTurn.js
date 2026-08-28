@@ -448,6 +448,42 @@ export function dropEffect(effects, id) {
 }
 
 /**
+ * The same card laid again, rather than laid twice.
+ *
+ * `addEffect` is what a hand-written row and the picker both use: whatever you
+ * asked for goes on the block, because the table asked for it. This is what a
+ * *use* goes through, and a use has a rule the picker does not: "unless they say
+ * otherwise, effects do not stack from the same source." One card is one source
+ * however many times it is cast, so recasting KINDLE WEAPON on the turn before
+ * it lapses is a fresh count on the row that is already there and not a second
+ * row racing the first to zero. `runningRiders` has always deduplicated by card
+ * id for the same reason; this keeps the block agreeing with the arithmetic.
+ *
+ * The refreshed row goes back to the top, because the thing you just cast is the
+ * thing you are checking, which is the rule the whole list is ordered by.
+ *
+ * A row with no card behind it never matches: two hand-written "Grappled" rows
+ * are two grapples, and nothing here can tell otherwise.
+ */
+export function layEffect(effects, entry) {
+  const list = normalizeEffects(effects);
+  const card = getCard(entry?.card) ? String(entry.card) : null;
+  if (!card) return addEffect(list, entry);
+
+  const standing = list.find((effect) => effect.card === card);
+  if (!standing) return addEffect(list, entry);
+
+  const refreshed = addEffect(
+    list.filter((effect) => effect.id !== standing.id),
+    entry
+  );
+
+  // The row keeps the id it was written with, so anything holding a reference to
+  // it (a minion's tracker, an open reminder) is still pointing at it.
+  return refreshed.map((effect, at) => (at === 0 ? { ...effect, id: standing.id } : effect));
+}
+
+/**
  * The table adjudicates. A turn given back or taken away by hand is normal,
  * and an open-ended effect nudged upward becomes a counted one.
  */
@@ -536,7 +572,11 @@ const LASTS = '(?:for|lasts?|last|lasting|remains?|stays?|persists?|hovers?|hang
  * position decides, and that is what the note above `effectDuration` is about.
  */
 function readDuration(text, { upkeep = false } = {}) {
-  if (!text.trim()) return upkeep ? { turns: null, label: 'Upkeep, each turn', until: null } : null;
+  if (!text.trim()) {
+    // An Upkeep half with no prose at all is still a toll paid every turn, which
+    // is as precise as a duration gets. See `vague` at the foot of this function.
+    return upkeep ? { turns: null, label: 'Upkeep, each turn', until: null, vague: false } : null;
+  }
 
   const found = [];
   /* `rank` 0 is a clause that says how long. 1 is a clause that only says the
@@ -557,7 +597,14 @@ function readDuration(text, { upkeep = false } = {}) {
     at(turnEnd, { turns: 1, label: `Until ${whose} next turn`, until: null });
   }
 
-  const turns = /(\d+)\s*turns?\b/i.exec(text);
+  /* A count of turns, unless it is a *threshold* rather than a clock. The
+     DRAUGHT OF CLEANSING is the one that proved it: "removes every status effect
+     on you that lasts 20 turns or less" was read as a spell running for 20 turns,
+     which put the potion itself on the tracker for twenty rounds. Its own card
+     comment already said the number was a threshold ("20 turns or less is a
+     threshold rather than a duration, so it is not bolded"), and now the parser
+     agrees with the comment. */
+  const turns = /(\d+)\s*turns?\b(?!\s+or\s+(?:less|fewer|more|greater))/i.exec(text);
   if (turns) {
     const n = clampTurns(turns[1]);
     at(turns, { turns: n, label: `${n} ${n === 1 ? 'turn' : 'turns'}`, until: null });
@@ -606,9 +653,16 @@ function readDuration(text, { upkeep = false } = {}) {
      BARKSKIN is the "when" half of it, and the one that made the clause worth
      having: "This effect is lost when all Shield is depleted" is a duration with
      no duration word in it at all. The lasting verb is what keeps the placeholder
-     cards out, whose only "until" is "this card holds the slot until it is". */
+     cards out, whose only "until" is "this card holds the slot until it is".
+
+     **The leading word boundary matters and was missing.** The alternation ends
+     in `ends?`, and without a `\b` in front of it that matched the tail of any
+     word ending in "end": DISCORD opens "You bend the note until it is wrong" and
+     was read as a spell running until it ends, which put a weapon attack on the
+     tracker. Every word that could do it is common in card prose (bend, send,
+     extend, defend, blend), so the boundary goes on the whole group. */
   const ends = new RegExp(
-    `(?:${LASTS}|is\\s+lost|ends?)\\b[^.\\n]{0,40}?\\s(?:until|when)\\b`,
+    `\\b(?:${LASTS}|is\\s+lost|ends?)\\b[^.\\n]{0,40}?\\s(?:until|when)\\b`,
     'i'
   ).exec(text);
   if (ends) at(ends, { turns: null, label: 'Until it ends', until: null }, 1);
@@ -622,7 +676,13 @@ function readDuration(text, { upkeep = false } = {}) {
   if (upkeep) at({ index: text.length }, { turns: null, label: 'Upkeep, each turn', until: null }, 1);
 
   if (found.length === 0) return null;
-  return found.sort((a, b) => a.rank - b.rank || a.index - b.index)[0].value;
+
+  /* And the rank travels with the answer, as `vague`. The picker never cared
+     which of the two it got: a player looking at a shelf can read the label and
+     decide. Using a card does care, because that writes a row nobody asked for.
+     See `castEffect` in combatBar.js. */
+  const best = found.sort((a, b) => a.rank - b.rank || a.index - b.index)[0];
+  return { ...best.value, vague: best.rank > 0 };
 }
 
 /**
@@ -667,7 +727,7 @@ export function trackableCards(character, { all = false, codex = false } = {}) {
        sheet will actually bend a tile for is a card worth offering whatever its
        prose left out. The duration then goes on the dial as open, because the
        card printed none and this is not the place to invent one. See riders.js. */
-    const duration = effectDuration(card) ?? riderDuration(card);
+    const duration = trackedDuration(card);
     if (!duration && !all) return;
 
     rows.push({
@@ -720,7 +780,23 @@ export function trackableCards(character, { all = false, codex = false } = {}) {
  * and the table decides, which is what every duration here has always been.
  */
 function riderDuration(card) {
-  return riderOf(card?.id) ? { turns: null, label: 'While it lasts', until: null } : null;
+  /* Not vague, for all that the words are. The card printed no clock, and the
+     reason to offer this row at all is that the sheet knows a number to bend for
+     it: a use that laid no row would be a use whose Speed never moved. See
+     `castEffect` in combatBar.js, which is what reads the flag. */
+  return riderOf(card?.id) ? { turns: null, label: 'While it lasts', until: null, vague: false } : null;
+}
+
+/**
+ * How long a card runs, by either measure: what its own text says, and failing
+ * that whether this sheet already knows how to bend a number for it.
+ *
+ * The two were folded together inside `trackableCards` because the picker was
+ * the only thing that asked. Using a card asks the same question now, so it is
+ * a name rather than a line in a loop. See `castEffect` in combatBar.js.
+ */
+export function trackedDuration(card) {
+  return effectDuration(card) ?? riderDuration(card);
 }
 
 /** Where a card nobody here owns comes from: what is printed on its own banner. */

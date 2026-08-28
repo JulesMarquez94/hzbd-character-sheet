@@ -9010,3 +9010,201 @@ pattern and it is worth rebuilding for any block work.
   direction, and neither hand will give the pact weapon up
 
 `npm run lint`, all eight lint scripts and the build are clean.
+
+## The tracker learns to fill itself, 2026-08-28
+
+Jules, on the sheet in general: "any skill, ability, spell, item or other that
+impact your character sheet should be visualy done." Then five things the tracker
+had to do, and one more that came in while it was being built.
+
+Block 6 could always hold a name, a count and a note. What it could not do was
+find out about anything on its own. You cast a ten-turn spell, you paid for it,
+and then you went back to the block, opened the picker and found the same card in
+a list of a hundred and forty to say so. Nobody did that twice in a fight.
+
+### A use lays its own row
+
+`spendUse` is where every use on the sheet turns into a write, so it is where the
+row is laid. What lands is what the picker would have offered: the card's own
+printed duration, read out of its prose by `effectDuration`.
+
+**Laid rather than added.** "Unless they say otherwise, effects do not stack from
+the same source", and one card is one source however many times it is cast. So
+`layEffect` refreshes a row that is already there and moves it back to the top,
+keeping its id. Recasting KINDLE WEAPON on the turn before it lapses is a fresh
+count on one row, not two rows racing each other to zero. `runningRiders` has
+always deduplicated by card id, so the block now agrees with the arithmetic.
+
+**A vague duration is offered and never written.** `effectDuration` answers at two
+confidences: a clause that says how long ("10 turns", "until a Long Rest", an
+Upkeep, "for 1 hour"), and one that only says the thing lasts at all ("stays
+until", "while it is active"). The picker takes both, because a player reading a
+shelf can look at the label and decide. Writing a row nobody asked for cannot
+decide. Three cards proved it inside an hour:
+
+- every Reload in the codex "stays loaded until you Shoot them", which is the
+  magazine the ammo pips already draw
+- STABILIZE leaves somebody else "unconscious until healed", on somebody else's
+  sheet
+- DISCORD opens "You bend the note until it is wrong", which is a sentence
+
+A card carrying a rider is the exception and is barely one: it printed no clock at
+all, and the reason to lay its row is that the sheet knows a number to bend for
+it. A WISP OF MIST that laid no row is a WISP OF MIST whose Speed never moved.
+
+116 cards now write their own row. 15 more are still offered in the picker and
+never written, and BARKSKIN is the only one of those worth a second look: "this
+effect is lost when all Shield is depleted" is a condition rather than a clock,
+and one tap in the picker is the honest answer for now.
+
+### Two parser bugs found on the way
+
+Both were already wrong in the picker. Auto-writing is what made them visible.
+
+- **A threshold is not a duration.** DRAUGHT OF CLEANSING removes "all status
+  effects that last 20 turns or less", and the count pattern read that as a potion
+  running for 20 turns. Its own card comment already said the number was a
+  threshold. Now the pattern agrees: a count followed by "or less", "or fewer",
+  "or more" or "or greater" is not a clock.
+- **A missing word boundary.** The open-ended pattern ends in `ends?` with no word
+  boundary in front of the group, so it matched the tail of any word ending in
+  "end". DISCORD's "bend the note until it is wrong" was read as a spell that runs
+  until it ends. Every word that could do it is common in card prose: bend, send,
+  extend, defend, blend.
+
+### The rows wear their school
+
+"tracker should use tag coloring like spell school." One rule down the left edge
+and the count beside it, off the same table the chips on a card's banner use. The
+family wins over the school, because it is the narrower of the two and it is a
+shade of its school's hue anyway: a block sorts into schools by eye and separates
+inside them. A row with no school keeps the block's own cyan, which is what makes
+the coloured ones read as spells. An ended row goes grey whatever school it was.
+
+`cardAccent` in tagColors.js, which stays a leaf: it is handed a tag list rather
+than a card.
+
+### The turn stops and says what is waiting
+
+"Whenever you press turn start or turn end. If there is effect that say either you
+get a pop up with a reminder of what happens."
+
+`turnTriggers.js` reads the running rows for the boundary that is about to be
+crossed. Nothing is a field on a card: the codex writes these in its own words and
+writes them consistently, which is what makes them findable.
+
+- 29 cards in the codex name a Turn Start, 8 a Turn End
+- whole sentences come back, resolved for this character, so the reminder reads
+  "2d6 + 12 Decay damage" rather than the token the card is authored with
+- an Upkeep's price rides along, and only when the Upkeep half is what matched.
+  Every Upkeep in the codex but one is paid at a Turn Start, and that one is paid
+  at a rest: reading the boundary off its own prose is what keeps it off the list,
+  rather than a rule naming the card
+- **`until` is not a trigger.** "rooted until its next Turn End" names the same
+  boundary and means the opposite thing: a duration the row's count is already
+  keeping. A reminder that fired every turn to say a root ends eventually is noise
+  on top of a number that already says so
+- **the keyword half is case-sensitive and the longhand half is not.** ELIXIR OF
+  TIME says "At your Turn End, time rewinds and your turn starts again", which
+  contains the letters of the Turn Start keyword and means a sentence. A keyword
+  is capitalised everywhere the codex prints one. A row typed in by hand is read
+  loosely, because nobody writing "save at the start of my turn" into the note box
+  is following the codex's capitalisation
+
+The prompt also says the two things no card prints: what runs out on this press,
+and what gets swept off the block. Nothing is paid or applied. Missing an Upkeep
+is a real choice, and a sheet that quietly paid it would be making that choice for
+the player, so the prompt says what is owed and against what is in the pool.
+
+**It only opens when it has something to say.** A turn with nothing running goes
+through on one press exactly as it always did, which is the whole reason a
+reminder is tolerable at a table.
+
+### The two cards that write your sheet
+
+"If there is trigger like long rest or clean potion that do something do it." Both
+printed the promise long before anything kept it. `onUse.js` is the table, keyed
+on the card id the way `EFFECT_RIDERS` is.
+
+- **DRAUGHT OF CLEANSING** clears rows off the tracker, and the card is wider than
+  it was. Jules: "update cleans potion to remove all effect under 20 turn of that
+  require a long rest". The designer's line was a count of turns, which left the
+  draught unable to touch the effects worth drinking a Master potion over: a
+  Titansbane, a disease, anything written to sit on you until you have slept. So
+  it is drawn at both ends now, and the second half is **everything a Long Rest
+  would have ended**, which is `until` of either kind since a long rest ends
+  everything a short one does.
+
+  Written "would only have ended at a Long Rest" and not "lasts until your next
+  Long Rest", because the second is how the codex writes a *duration* and
+  `effectDuration` reads it as one. The draught would have put itself on the
+  tracker as a thing running until bedtime.
+
+- **LIFE TREE TEA** is a Long Rest, run through the one function that knows what
+  one is. Not a copy of it: a rest fills six pools, brings a downed creature back,
+  reloads a belt, gives back every card that said you had to sleep before using it
+  again and ends everything written to end at one. `restPlan` grew a `free` flag,
+  which is what the card's own two clauses ask for: no Supplies out of the crate,
+  and no Long Rest action, so no labours, no prepared hand, no brews and no
+  reshaped blade.
+
+Both fire **after** the pools are paid, which is also the order the cards
+describe: you pay six Action Points for the tea and then you have the benefit of a
+night. And both fire for a use that was waved through, because an override
+withholds the price and never the effect.
+
+Left out, with reasons in the table: ETHEREALNESS POTION ("immune to all effects"
+is every rule at once), ELIXIR OF CHAOS (the 2d10 is the table's, and rolling it
+would take the one interesting thing away), ELIXIR OF TIME (a snapshot of a whole
+character, which nothing here keeps).
+
+### What is running, where the decision is
+
+Jules, while this was being built: "when you click on the quick bar button to use
+an action, it should list all the active effect on under the use buttons."
+
+This is the moment it matters. Half of what the tracker holds changes the thing
+you are about to do, and all of it was on another block behind the dialog you were
+looking at. So the list comes to the decision: block 6's rows at reminder size,
+same count, same school colour, same line about what each is doing to the sheet,
+same arrow when one is bending a roll. Nothing that acts, because the block is
+where a tracker is edited and a dialog that let you edit one while paying for
+something else would be two decisions wearing one Cancel.
+
+Above them, when the card lasts, the row this use is about to write, and for the
+two cards above, what they are about to rewrite. A sheet that quietly starts
+counting things is a sheet you stop trusting.
+
+### What a running card does to your swing
+
+The display half of the ask, and the piece that was missing. A tracked card can
+bend a tile, a swing, or both. The tile half was on block 1 already, in the
+"Running" line and in the tooltips. The swing half was applied correctly to every
+attack card the sheet printed and announced nowhere, so a player who was not
+looking at an attack card had no way of knowing.
+
+`swingShift` says it on block 2, in copper: Advantage or Disadvantage netted the
+way the arrow on a card nets them, the dice Empowered, the dice Elevated, the
+damage type a card laid on the blade, and the cards behind all of it by name.
+
+### The creature's own tracker
+
+A use played from a creature's bar goes through the same `spendUse`, so it lays
+rows too, and its rows live on the creature. `minionActor` now carries the
+creature's `effects` and `minionSpend` sends them back the creature's way beside
+its Action Points. Without both, an ally keeping a spell up would have written the
+row onto its bonded's block, counting down on the wrong press.
+
+### Still open
+
+- **A rider that scales off the holder.** `runningRiders` is handed an effects
+  list and no character, so every entry in the table is a literal constant. LIFE
+  DRAUGHT raises "Health and maximum Health by 5 x level" and the level is the
+  drinker's, which is the sheet holding the row, so the number is knowable: one
+  argument threaded through unlocks it. What stops it today is the other half of
+  the same sentence. A rider can raise `healthMax`, which is derived, and it
+  cannot move current Health, which is a stored column and a one-way pool move.
+  Half a potion wired is worse than none, so it waits on a ruling: does the
+  current Health rise with the maximum, and where does it go when the hour is up?
+- **BARKSKIN and five like it** are offered in the picker and never written,
+  because "lost when all Shield is depleted" is a condition rather than a clock.

@@ -327,8 +327,24 @@ export const UTILITY_CARDS = withArt([
     ap: 2,
     wp: 6,
     /* "20 turns or less" is a threshold rather than a duration, so it is not
-       bolded: bold on a card is how far, at whom and for how long. */
-    body: 'Drinking this draught removes all status effects on you that last 20 turns or less.',
+       bolded: bold on a card is how far, at whom and for how long.
+
+       The second clause is Jules', 2026-08-28: "update cleans potion to remove
+       all effect under 20 turn of that require a long rest". The designer's sheet
+       drew the line at a count of turns, which leaves the draught unable to touch
+       exactly the effects worth drinking a Master potion over: a Titansbane, a
+       disease, anything written to sit on you until you have slept. So the line
+       is drawn at both ends now, and everything a night's sleep would have lifted
+       comes off in a mouthful.
+
+       Written "would only have ended at a Long Rest" rather than "lasts until
+       your next Long Rest" on purpose. The second is how the codex writes a
+       *duration*, and `effectDuration` reads it as one, which would put the
+       draught on the tracker as a thing running until bedtime. See readDuration
+       in combatTurn.js. */
+    body:
+      'Drinking this draught removes every status effect on you that lasts 20 turns or less, ' +
+      'along with every one that would only have ended at a Long Rest.',
   },
   {
     id: 'etherealness-potion',

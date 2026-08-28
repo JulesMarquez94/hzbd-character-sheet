@@ -74,7 +74,8 @@ import {
   passesForm,
   sourceSet,
 } from './feral.js';
-import { addEffect } from './combatTurn.js';
+import { addEffect, layEffect, trackedDuration } from './combatTurn.js';
+import { fireTrigger } from './onUse.js';
 import { cardCost, cardTitle } from './cardText.js';
 import { cardUse, magazineUse, spendCardUse, spentNote, usageNote } from './uses.js';
 import {
@@ -939,39 +940,143 @@ export function spendUse(request, character, mode, amount, { free = false, price
     if (cleared) body.effects = effects;
   }
 
-  /* Waved through. Everything the use *does* is already in the body; the points
-     are what an override withholds, so this is where it stops. */
-  if (free) return body;
+  /* ---- and what the use leaves running ----
+     "anytime an action is used that should tracker turn duration of something it
+     is auto added to the trackers", 2026-08-28. Until now the tracker was
+     entirely a thing you remembered to fill in: you cast a 10-turn spell, you
+     paid for it, and then you went back to the block and picked the same card out
+     of a list of a hundred and forty to say so. Nobody did it twice in a fight.
 
-  if (request.converts === 'reaction') {
-    // Anticipate spends nothing. The points cross from one pool to the other,
-    // and the dial has already been held inside what both can hold.
-    body.ap = character.ap - ap;
-    body.reaction = Math.min(character.reaction_max, character.reaction + ap);
-  } else {
-    if (ap > 0) {
-      if (mode === 'reaction') body.reaction = character.reaction - ap;
-      else body.ap = character.ap - ap;
+     So a card that says how long it lasts lays its own row the moment it is paid
+     for. What lands is what the picker would have offered: the card's own printed
+     duration, or the fact that this sheet already knows how to bend a number for
+     it. See `trackedDuration` in combatTurn.js.
+
+     Laid rather than added, so recasting is a fresh count on one row and not two
+     rows of the same card. See `layEffect`, and the same-source law it quotes.
+
+     `request.extra` carrying an effects list of its own is the one thing that
+     stops it: a Martial Move and an AMBUSH both *are* a row on the tracker, laid
+     deliberately with a rider in it, and a second row read off the same card's
+     prose would be the sheet tracking one use twice. */
+  const cast = request.extra?.effects ? null : castEffect(request);
+  if (cast) body.effects = layEffect(body.effects ?? character?.effects, cast);
+
+  /* Waved through. The points are what an override withholds, and nothing else
+     about the use changes: everything below this guard is a pool moving, and
+     everything after it happens either way. */
+  if (!free) {
+    if (request.converts === 'reaction') {
+      // Anticipate spends nothing. The points cross from one pool to the other,
+      // and the dial has already been held inside what both can hold.
+      body.ap = character.ap - ap;
+      body.reaction = Math.min(character.reaction_max, character.reaction + ap);
+    } else {
+      if (ap > 0) {
+        if (mode === 'reaction') body.reaction = character.reaction - ap;
+        else body.ap = character.ap - ap;
+      }
+      if (wp > 0) body.willpower = character.willpower - wp;
     }
-    if (wp > 0) body.willpower = character.willpower - wp;
+
+    /* And the tithe, if one was taken. Written through the ledger rather than
+       straight onto the column, so "why am I on 12 Health" has an answer with the
+       spell's name in it. Floored at nothing for the same reason the pools are:
+       the prompt has already refused a tithe bigger than the body can pay. */
+    if (health > 0) {
+      const left = Math.max(0, (Number(character?.health) || 0) - health);
+      body.health = left;
+      body.ledger = ledgerRows(character, [
+        {
+          kind: 'health',
+          delta: -health,
+          balance: left,
+          note: price?.note ?? `${request.name}: the tithe`,
+        },
+      ]);
+    }
   }
 
-  /* And the tithe, if one was taken. Written through the ledger rather than
-     straight onto the column, so "why am I on 12 Health" has an answer with the
-     spell's name in it. Floored at nothing for the same reason the pools are:
-     the prompt has already refused a tithe bigger than the body can pay. */
-  if (health > 0) {
-    const left = Math.max(0, (Number(character?.health) || 0) - health);
-    body.health = left;
-    body.ledger = ledgerRows(character, [
-      {
-        kind: 'health',
-        delta: -health,
-        balance: left,
-        note: price?.note ?? `${request.name}: the tithe`,
-      },
-    ]);
-  }
+  /* ---- and what the card writes on its own ----
+     Two cards do. A DRAUGHT OF CLEANSING clears rows off the tracker and a LIFE
+     TREE TEA does everything a Long Rest does, and both of them printed the
+     promise long before anything kept it. "If there is trigger like long rest or
+     clean potion that do something do it", 2026-08-28. See onUse.js.
+
+     **Last, and after the pools have been paid.** A trigger is handed the
+     character as this use has already left them, so it reads spent points, a
+     belt with the flask's charge gone and whatever row the cast above laid. That
+     is also the order the card describes: you pay six Action Points for the tea
+     and *then* you have the benefit of a Long Rest, so what the rest gives back
+     is what stands. Fired the same way for a use that was waved through, because
+     an override withholds the price and never the effect. */
+  const wrote = fireTrigger(request.card, { ...character, ...body });
+  if (wrote) Object.assign(body, wrote);
 
   return body;
+}
+
+/**
+ * The row a use leaves on the tracker, or null for a use that leaves nothing.
+ *
+ * Most of what a character plays leaves nothing. A sword swing resolves and is
+ * over, a Healing Potion moves a pool once, an Interact opens a door. What is
+ * left is the small set whose printed text says how long it runs, and that is
+ * exactly the set `trackedDuration` answers for.
+ *
+ * The row is named after the card and credited to whatever handed the card over,
+ * which is the same pair the picker writes: "Rain of Fire" under "Mycomancer -
+ * Rank 2", or under "Healing Potion - loop 1" when it came off the belt. The
+ * source is what a reader needs to find the thing again.
+ *
+ * No note. A row with a card behind it prints "Read the card" and opens it,
+ * which is better than any sentence this could copy out of it.
+ *
+ * -------------------------------------------------- what the picker may guess at
+ * **A vague duration is offered and never written.** `effectDuration` answers at
+ * two levels of confidence: a clause that says *how long* ("10 turns", "until a
+ * Long Rest", an Upkeep, "for 1 hour"), and a clause that only says the thing
+ * lasts at all ("lasts until", "while it is active"). The picker takes both,
+ * because a player reading a shelf can look at the label and decide. Writing a
+ * row nobody asked for cannot decide, and the second level is a guess about
+ * English rather than a reading of a rule.
+ *
+ * Three cards proved it inside an hour of this being wired. Every Reload in the
+ * codex "stays loaded until you Shoot them", which is the magazine the pips
+ * already draw. STABILIZE leaves somebody else "unconscious until healed", on
+ * somebody else's sheet. DISCORD opens "You bend the note until it is wrong",
+ * which is a sentence.
+ *
+ * A card carrying a rider is the exception, and it is not really one: it has no
+ * printed clock at all, and the reason to lay its row is that the sheet knows a
+ * number to bend for it. A WISP OF MIST that laid no row is a WISP OF MIST whose
+ * Movement Speed never moved. See `riderDuration` in combatTurn.js.
+ */
+export function castEffect(request) {
+  const card = request?.card;
+  const duration = trackedDuration(card);
+  if (!duration || duration.vague) return null;
+
+  return {
+    name: shortName(card, request.name),
+    card: card.id,
+    turns: duration.turns,
+    until: duration.until,
+    from: request.source ?? '',
+  };
+}
+
+/**
+ * What that row will say, for the prompt that is about to write it.
+ *
+ * Said before the tap rather than discovered on the block afterwards, because a
+ * sheet that quietly starts counting things is a sheet you stop trusting. The
+ * duration is the card's own label, which is the same words the picker's dial
+ * shows: "10 turns", "Until a long rest", "Upkeep, each turn".
+ */
+export function castLine(request) {
+  const duration = trackedDuration(request?.card);
+  // The same test the write is made on, so the promise and the row cannot come
+  // apart: a vague duration is offered in the picker and never written here.
+  return duration && !duration.vague ? duration.label : null;
 }

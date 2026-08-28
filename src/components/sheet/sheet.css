@@ -5066,6 +5066,131 @@ body.sheet-fixed #root {
   color: var(--haze-glow);
 }
 
+/* What this use is about to write onto the tracker. Cyan, because that is the
+   tracker's own colour everywhere else on the sheet, and the line is a promise
+   about block 6 rather than about anything in this dialog. */
+.use-lasts {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.use-lasts b {
+  color: var(--focus-cyan);
+}
+
+/* The two cards that rewrite columns on their own. Copper, the colour every
+   other receipt on the sheet is printed in. */
+.use-writes {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-silver);
+}
+
+.use-writes b {
+  color: var(--copper-bright);
+}
+
+/* And what is already running, under the ways that pay for the next thing.
+   Block 6's rows at reminder size: same count, same school colour, nothing that
+   acts. See the note at the top of UsePrompt.jsx. */
+.use-running {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.use-running-head {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.use-running-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0.25rem 0.35rem;
+  background-color: var(--inset-bg);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--focus-cyan);
+  border-radius: 3px;
+}
+
+.use-running-row.has-accent {
+  border-left-color: var(--fx-accent);
+}
+
+.use-running-turns {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  background-color: color-mix(in srgb, var(--focus-cyan) 16%, transparent);
+  border-radius: 3px;
+  font-family: var(--font-headings);
+  font-size: 0.72rem;
+  line-height: 1;
+  color: var(--focus-cyan);
+}
+
+.use-running-turns.is-open {
+  font-size: 0.85rem;
+}
+
+.use-running-row.has-accent .use-running-turns {
+  background-color: color-mix(in srgb, var(--fx-accent) 16%, transparent);
+  color: var(--fx-accent);
+}
+
+.use-running-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.use-running-name {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.use-running-from {
+  flex-shrink: 1;
+  min-width: 0;
+  font-size: 0.52rem;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The receipt for a number that moved on another block, the same words and the
+   same copper the tracker's own row prints it in. */
+.use-running-does {
+  font-size: 0.58rem;
+  line-height: 1.35;
+  color: var(--copper-bright);
+}
+
 /* The card beside the choices: what you are about to spend the points on,
    printed for this character, at the size every other card is printed. */
 .use-card {
@@ -7701,6 +7826,166 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
+/* The school this row came out of, worn the way its chip wears it on a card's
+   banner. One rule down the left edge and the count beside it: enough to sort a
+   full block by eye, not enough to turn a list into a paint chart. A row with no
+   school keeps the block's cyan, which is what makes the coloured ones read as
+   spells. See cardAccent in tagColors.js. */
+.fx-row.has-accent {
+  border-left-color: var(--fx-accent);
+}
+
+.fx-row.has-accent .fx-turns {
+  background-color: color-mix(in srgb, var(--fx-accent) 16%, transparent);
+  color: var(--fx-accent);
+}
+
+/* Ended is ended, whatever school it was. A row that has stopped doing anything
+   should not still be the loudest thing on the block. */
+.fx-row.has-accent.is-over {
+  border-left-color: var(--text-muted);
+}
+
+.fx-row.has-accent.is-over .fx-turns {
+  background-color: rgba(148, 167, 176, 0.14);
+  color: var(--text-muted);
+}
+
+/* =========================================
+   THE TURN, BEFORE IT MOVES
+   =========================================
+   What the running cards say about this boundary, printed before the press that
+   sets it off. Only ever open when there is something in it, so it is styled as
+   something to read rather than as something to dismiss. */
+.turn-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.turn-prompt-lead {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.turn-prompt-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* One running thing, in its own school's colour, so a reminder can be matched
+   to the row that raised it without reading either name. */
+.turn-trigger {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.6rem;
+  background-color: var(--inset-bg);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--fx-accent, var(--focus-cyan));
+  border-radius: 3px;
+}
+
+.turn-trigger-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.turn-trigger-name {
+  flex-shrink: 0;
+  font-family: var(--font-headings);
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: var(--fx-accent, var(--focus-cyan));
+}
+
+.turn-trigger-from {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.55rem;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.turn-trigger-toll {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.turn-trigger-turns {
+  flex-shrink: 0;
+  font-size: 0.55rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The card's own sentence, with this character's numbers already in it. */
+.turn-trigger-clause {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.turn-trigger-read {
+  align-self: flex-start;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-decoration-color: rgba(120, 139, 149, 0.4);
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.turn-trigger-read:hover,
+.turn-trigger-read:focus-visible {
+  color: var(--focus-cyan);
+}
+
+/* What the press itself does, which is printed on no card. */
+.turn-prompt-note {
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.turn-prompt-note b {
+  color: var(--text-silver);
+}
+
+.turn-prompt-ending b {
+  color: var(--focus-cyan);
+}
+
+/* Violet, the colour Upkeep wears everywhere it is named. */
+.turn-prompt-owed b {
+  color: var(--haze-glow);
+}
+
+.turn-prompt-foot {
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 /* =========================================
    TRACKING SOMETHING: THE DIALOG
    =========================================
@@ -9021,6 +9306,15 @@ body.sheet-fixed #root {
 .attr-shift b {
   color: var(--text-bright);
   font-weight: 700;
+}
+
+/* The same line on block 2, in the colour of the thing it is talking about. The
+   green on block 1 is a body being raised; this is a weapon, and every attack
+   number on the sheet is copper. */
+.swing-shift {
+  margin-bottom: 0.4rem;
+  border-left-color: var(--copper);
+  background-color: color-mix(in srgb, var(--copper) 7%, transparent);
 }
 
 /* =========================================================

@@ -110,3 +110,33 @@ export function tagStyle(tag) {
   const color = tagColor(tag);
   return color ? { color } : undefined;
 }
+
+/**
+ * One colour for a whole card, off its banner, or null for a card that belongs
+ * to no school.
+ *
+ * A chip gets to wear the school and the family both, because it is a word and
+ * there are two words. A tracker row gets one 2-pixel rule down its left edge,
+ * so it has to choose, and **the family wins**: it is the narrower of the two
+ * and it is a shade of its school's hue anyway, so a column of rows still sorts
+ * into schools by eye and separates inside them. See the law at the top.
+ *
+ * Null for everything that is not a spell. A martial move, a potion, a lineage
+ * trait and a hand-written condition all keep the block's own cyan, which is
+ * what makes the coloured rows read as spells rather than as decoration.
+ */
+export function cardAccent(tags) {
+  const words = Array.isArray(tags) ? tags : [];
+
+  for (const word of words) {
+    const family = FAMILY_COLORS[String(word).trim()];
+    if (family) return family;
+  }
+
+  for (const word of words) {
+    const school = SCHOOL_COLORS[String(word).trim()];
+    if (school) return school;
+  }
+
+  return null;
+}
