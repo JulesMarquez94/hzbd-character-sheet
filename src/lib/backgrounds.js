@@ -125,6 +125,12 @@
  *      a derived stat while a full set is worn, and none of the three is wired
  *      into `deriveStats`. All three are level 5, so nothing is missing from a
  *      level-1 sheet, and all three print what they promise.
+ *
+ *      The place to wire one exists now: a skill card may carry a `grants` map
+ *      beside its prose, which is what FRUGAL's Supplies and QUICK DRAW's Action
+ *      Point ride. See `skillGrantSources` below. These three are left alone
+ *      because a set bonus is conditional on what is worn, and `grants` is a
+ *      flat rider with nowhere to put the condition.
  *   4. **Tailor asks for two items that do not exist.** Its cell asks for a
  *      Disguise Kit ("advantage on skill checks to deceive for the day") and for
  *      Bandages as a one-use consumable. `bandage-roll` in utility.js is already
@@ -400,6 +406,11 @@ const FRUGAL = {
   name: 'Frugal',
   tags: ['Skill', 'Passive', 'Supplies'],
   summary: 'Every rest costs 2 Supplies less.',
+  /* And the rest button charges it. The same number twice on purpose: the
+     sentence is what a reader looks up and the rider is what `restPrice` in
+     rest.js takes off the price, and carrying both on one card is what stops
+     them drifting. See `skillGrantSources` below. */
+  grants: { restSupplies: 2 },
   body: 'The cost of your Long and Short Rests is reduced by 2 Supplies.',
 };
 
@@ -545,6 +556,11 @@ const QUICK_DRAW = {
   name: 'Quick Draw',
   tags: ['Skill', 'Passive', 'Warfare'],
   summary: 'Swapping weapon costs 1 less, and the swing after it has advantage.',
+  /* The first half of it, declared. SWAP WEAPONS is a card like any other, so
+     the cut rides it as `apCut` rides a spellbook's spells, and the Loadout
+     block's button prints 1 with the 2 struck out beside it. The advantage on
+     the swing after is the half nothing reads yet. See data/README.md. */
+  grants: { swapAp: 1 },
   body:
     'The cost of swapping weapon is reduced by 1. The next attack after you swap is done with ' +
     'advantage.',
@@ -1126,6 +1142,60 @@ export function skillCards(skills, choices) {
     const learned = learnedFromSkill(skill, choices);
     return learned ? [mine, { card: learned, modifiers: castModifier(skill.choice) }] : [mine];
   });
+}
+
+/* ------------------------------------------------------ what a skill does
+ * A skill card has always said its piece in prose and left the sheet to print
+ * it and nothing else. FRUGAL read "reduced by 2 Supplies" and the rest button
+ * still charged 10; QUICK DRAW read "reduced by 1" and the swap still charged
+ * 2. `grants` is that sentence written as a number, carried on the card that
+ * prints it, so the two can never drift apart.
+ *
+ * The same rider a lineage card carries and read the same way, deliberately:
+ * see `lineageGrantSources` in lineages.js. Two fields are declared today.
+ *
+ *   restSupplies  what comes off the price of a rest, both kinds. FRUGAL.
+ *   swapAp        what comes off SWAP WEAPONS. QUICK DRAW.
+ *
+ * This file is a leaf and cannot see a character, so the reader is handed a
+ * list of ids. `characterSkillGrantSources` in levelPicks.js is the composed
+ * reading, and it is the one every consumer wants: a skill can arrive from a
+ * background, from an odd level or from a pact, and only that file can see all
+ * three.
+ */
+
+/** The same list with each id once, in the order it was first met. */
+function dedupeIds(ids) {
+  return [...new Set((Array.isArray(ids) ? ids : [...(ids ?? [])]).map(String).filter(Boolean))];
+}
+
+/**
+ * What a set of skills does to the sheet's own numbers, one row per skill that
+ * does anything, named after the skill.
+ *
+ * Named after the card rather than the background, because the card is the thing
+ * a reader can go and look at: a rest that cost 8 instead of 10 says "Frugal",
+ * not "Merchant". The rows come back in the shape `grantTerms` in statMath.js
+ * already draws an enchantment with, so anything that has to explain a number
+ * can hand them straight to it.
+ *
+ * Deduplicated on the way in for the same reason `grantsFrom` in enchanting.js
+ * is: one skill is one source however many places offered it, and a background
+ * and a pact both teaching Frugal is one skill and one cut. The choosers already
+ * refuse the second, so this is the belt to that pair of braces.
+ *
+ * Rows rather than a sum, because every consumer so far has a second question to
+ * answer: a rest that cost 8 instead of 10 has to say what cut it, and so does a
+ * swap that cost 1 instead of 2. Whoever is reading knows which field it wants
+ * and sums that one. Wiring the next rider is a `grants` on the card and one
+ * short reduction where the number is spent: the three Armor Masteries' "+2 to
+ * Armor" is the next one, and is still printed only. See data/README.md.
+ */
+export function skillGrantSources(ids) {
+  return dedupeIds(ids)
+    .map(getBackgroundSkill)
+    .filter((skill) => skill?.grants)
+    .map((skill) => ({ name: skill.name, ...skill.grants }));
 }
 
 /* --------------------------------------------------------- reading the row */

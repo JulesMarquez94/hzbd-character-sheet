@@ -264,7 +264,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   const blocks = {
     /* ============ BLOCK 1 — IDENTITY & ATTRIBUTES ============ */
     1: (
-      <div className="cell-scroll">
+      <div className="cell-scroll id-block">
         <div className="id-head">
           <span className="id-name">
             {hp.dead && (
@@ -274,10 +274,19 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             )}
             {character.name}
           </span>
-          <span className="id-level">
+          {/* The level is the Experience ledger's other door. It is the number
+              the ledger moves, so reaching for it and finding nothing there was
+              the wrong answer — the meter further down is a long way from the
+              thing you were looking at. */}
+          <button
+            type="button"
+            className="id-level"
+            onClick={() => setLedgerKind('xp')}
+            title={readOnly ? 'View the Experience log' : 'Open the Experience ledger'}
+          >
             Lvl {String(xp.level).padStart(2, '0')}
             {xp.isMax && <span className="id-level-cap">MAX</span>}
-          </span>
+          </button>
         </div>
 
         <div className="id-portrait">

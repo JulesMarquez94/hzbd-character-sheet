@@ -768,20 +768,42 @@ body.sheet-fixed #root {
   min-width: 0;
 }
 
+/*
+ * A button, because the level is the Experience ledger's other door — see the
+ * note on it in CharacterTab.jsx.
+ *
+ * Laid out inline rather than as a flex row, which is what it used to be for
+ * the sake of the MAX chip's gap. `align-items: baseline` on the head can only
+ * reach an item that hands a baseline up, and a flex container hands up a
+ * synthesised one instead: the level sat 4px above the name's baseline, which
+ * is the whole of why it never looked seated next to it. Inline layout gives
+ * the head the real baseline, and the chip takes a margin instead of a gap.
+ */
 .id-level {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: inline-block;
   flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--copper);
   white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.id-level:hover,
+.id-level:focus-visible {
+  color: var(--level-amber);
 }
 
 .id-level-cap {
+  display: inline-block;
+  margin-left: 6px;
   font-size: 0.58rem;
   padding: 1px 5px;
   border-radius: 2px;
@@ -828,7 +850,41 @@ body.sheet-fixed #root {
   letter-spacing: 3px;
 }
 
-/* ---------- BLOCK 1: XP / COIN METERS ---------- */
+/* ---------- BLOCK 1: XP / COIN METERS ----------
+ *
+ * Magic Burden, Experience, Coins and Supplies are four readouts of the same
+ * kind — a label, a number, and for two of them a bar — and they are one
+ * height. They were three heights, for a reason nobody chose: Experience and
+ * the two purses are buttons, so the browser handed them `line-height: normal`,
+ * while Magic Burden is a div and inherited the body's 1.6. That accident alone
+ * was worth 8px, and the purses' tighter padding was worth another 4.
+ *
+ * 51.2px is the height Experience already came to on its own. Naming it is what
+ * lets the other three be held to it, and `min-height` rather than `height` so
+ * an overburdened character's warning line can still push its panel taller.
+ */
+:root {
+  --id-meter-h: 51.2px;
+}
+
+.id-block .burden-panel,
+.id-block .meter {
+  min-height: var(--id-meter-h);
+}
+
+/* Spelled out rather than left to the browser, so the div and the buttons agree
+   on it. 1.25 is what `normal` was already giving the buttons, so Experience
+   does not move; Magic Burden comes down to meet it. */
+.id-block .meter-head {
+  line-height: 1.25;
+}
+
+/* Five, to match the Experience bar under it. The Inventory tab's copy keeps
+   its eight, where it is drawn as the twin of the carry meter beside it. */
+.id-block .burden-panel .bar-track {
+  height: 5px;
+}
+
 .meter {
   display: flex;
   flex-direction: column;
@@ -896,11 +952,15 @@ body.sheet-fixed #root {
   flex-shrink: 0;
 }
 
+/* A purse is held to the meters' height from the outside, so what is declared
+   here only has to fit inside it — `justify-content: center` is what sets the
+   space you actually see above and below the two lines. */
 .meter-tight {
   min-width: 0;
   flex: 1 1 0;
   gap: 4px;
-  padding: 0.5rem 0.6rem;
+  padding: 0.35rem 0.6rem;
+  justify-content: center;
 }
 
 /* Label and glyph on one line, the total under it — a purse is a number, not

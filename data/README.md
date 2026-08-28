@@ -5081,6 +5081,13 @@ the set's riding them to carry an `apCut`. The place to print a discount now
 exists and is proven; what those four still need is a different rider, on the
 holder rather than on the pool. **Worth doing, and it is its own change.**
 
+> **Amended 2026-08-28.** One holder-level cut exists now: QUICK DRAW takes an
+> Action Point off SWAP WEAPONS, read off the skills a character holds rather
+> than off a pool. It does not close these four out, because a swap is one card
+> at one button and these four cut every attack a weapon makes. It is the shape
+> though. See [Three bugs off the
+> sheet](#three-bugs-off-the-sheet-2026-08-28).
+
 ## The roster, 2026-08-24
 
 The whole plan is in the codex now. Thirty-four sets on the chooser wall, eleven
@@ -8863,3 +8870,143 @@ on a Wildkin's pool card, and the two cards now disagree about whether the sheet
 believes them. The last three are a different shape: they change the *rate*
 Health is bought at rather than adding a lump to it, and nothing on the sheet can
 hold that yet.
+
+## Three bugs off the sheet, 2026-08-28
+
+Handed over in one message:
+
+> "Quick draw skill should properly recude the swap weapon cost when used.
+> Swap does not work with the pact weapon of ordenance.
+> frugal skill need to properly update the cost of supplies for long and short
+> rest"
+
+| What | Where it landed |
+| ---- | --------------- |
+| `grants` on a skill card | `src/lib/backgrounds.js`, on FRUGAL and QUICK DRAW |
+| The reader that turns it into rows | `skillGrantSources`, same file |
+| The composed reading, over all three sources | `characterSkillGrantSources` in `src/lib/levelPicks.js` |
+| What a rest costs | `restCut` and `restPrice` in `src/lib/rest.js` |
+| What a swap costs | `swapModifiers` in `src/components/sheet/LoadoutBlock.jsx` |
+| The pact weapon's pin | `useEquipSlots` in `src/components/sheet/useEquipSlots.jsx` |
+
+### A skill card can carry its own number now
+
+Two of the three were the same bug: a skill said a number in prose and nothing
+read it. FRUGAL read "reduced by 2 Supplies" and the rest button still charged
+10, QUICK DRAW read "reduced by 1" and the swap still charged 2.
+
+The fix is the one [Wind Grace](#wind-grace-moves-the-tile-2026-08-28) made the
+same week for lineage cards, in the same shape and deliberately so. A skill card
+may carry a `grants` map, beside the prose that says the same thing:
+
+    grants: { restSupplies: 2 }   on FRUGAL
+    grants: { swapAp: 1 }         on QUICK DRAW
+
+`skillGrantSources(ids)` walks a list of skills and hands back one row per skill
+that has one, named after the card. Rows rather than a sum, which is the one
+place this differs from the lineage reading: both consumers have a second
+question to answer, because a rest that cost 8 instead of 10 has to be able to
+say what cut it.
+
+**A skill reaches it from three places, not two.** `heldSkillIds` in
+`levelPicks.js` was reading the background and the odd-level picks, and a pact's
+skill boon is held exactly the way a background's is: `skillOptionsAt` in the
+same file has always refused to sell one twice. So it reads `pactSkillIds` as
+well now, and `characterSkillGrantSources` is the composed reading every consumer
+wants. Composed there for the reason `characterGrantSources` is composed in
+`items.js`: that is the file that knows where a skill can have come from.
+
+### What a rest costs, and who cut it
+
+`restCut(character)` is new and `restPrice` reads it. It merges two deduplicated
+readings that were never going to be one:
+
+| Source | Reading | Cuts |
+| ------ | ------- | ---- |
+| OZ'EM PICK, an enchantment | `characterGrantSources` in `items.js` | 2 Supplies |
+| FRUGAL, a skill | `characterSkillGrantSources` in `levelPicks.js` | 2 Supplies |
+
+**A working and a skill are different sources, so the two stack.** A Frugal
+Enchanter wearing a Pick rests for 6 rather than 10. The same-source law bites
+inside each half and never across them, which is exactly what keeping the two
+readings apart buys: two rings carrying a Pick cut it once, and a background and
+a pact both teaching Frugal cut it once.
+
+The rest window's own line names them now. It used to read `10 less 2, which is
+what you have laid on yourself`, which was true only while an enchantment was the
+only thing that could do it. It reads `10 less 4, which is Oz'em Pick and Frugal.`
+
+### What a swap costs
+
+SWAP WEAPONS is a card in `weapons.js` printing 2 Action Points, and the Loadout
+block was carrying its own `SWAP_AP = 2` beside it. It reads the card now, and
+`SWAP_AP` is only the fallback for a codex that has lost it.
+
+QUICK DRAW's cut rides that card the way an Arcanist's PERFECT CASTING rides a
+spellbook: `apCut` and `apCutFrom` meet the printed cost in `cardCost`, so the orb
+on the button, the orb on the pay button and the card inside the prompt all print
+1 with the 2 struck out beside it.
+
+**This is the second cut in the codex to be wired, and the first to ride the
+holder rather than a pool.** [The other four stay in
+prose](#the-other-four-stay-in-prose-and-it-is-not-the-same-call-twice) said what
+those four are waiting for: "a different rider, on the holder rather than on the
+pool". This is one, in the smallest possible case. It is not general enough to
+close them out, because a swap is one card and RECKLESS VIOLENCE cuts every
+weapon attack a Berserker makes, which has to be read where the attack is priced
+rather than at one button.
+
+**The advantage is the half still printed only.** "The next attack after you swap
+is done with advantage" is a rider on the swing after a named action, which is
+the shape AMBUSH and a Martial Move already have on the effects tracker (see
+`tricks.js` and `moves.js`) and which nothing yet lays from a swap. It is one
+`addEffect` in `askSwap` plus a read in `attackModifiers`, and it is not done here
+because the report named the cost.
+
+### The pact-bound weapon swaps hands
+
+PACT-BOUND WEAPON prints "always fills your first weapon slot", and the sheet read
+that as: the Primary slot is the pact's, so the Swap button is dead. That made the
+second weapon unreachable for the whole life of the pact, which is not what the
+card is for. The card's own next clause is "it returns to your hand at a word".
+
+The ruling taken, which is Jules's to overturn: **what the pact holds for good is
+a weapon slot, not the first one.** That is the designer's own sentence for it,
+off the 2026-08-27 spec: "the pact bound weapon permanently takes a slot in the
+weapon selection screen". So:
+
+- The Swap button is live. It moves the pact weapon between the hands like any
+  other weapon, at the same price.
+- **The pin follows the weapon** rather than naming the Primary slot.
+  `useEquipSlots` finds which hand holds it and guards that one: equipping another
+  weapon over it lands in the other hand, and `unequip` refuses. A stowed pact
+  weapon still cannot be lost or stolen.
+- `pactWeaponRiders` needed no change and reads better for it. It checks
+  `main_hand`, which is to say it rides the weapon only while it is actually
+  drawn, and a stowed weapon makes no attacks.
+- The Inventory row's Pact-Bound chip was already slot-agnostic, so it follows the
+  weapon on its own. Its tooltip says where the swap is.
+
+The one thing this allows that reads oddly: swapping a pact weapon with nothing
+stowed leaves both hands empty for 2 Action Points. That is what the swap has
+always done with a single weapon, so it is left alone rather than special-cased.
+
+### How this was proved
+
+Four harnesses in the scratchpad, 46 checks, all passing. Two are plain node
+against `src/lib`, and two mount the real components through Vite's own
+`ssrLoadModule` and `renderToStaticMarkup`, with a stub `AuthContext` standing in
+for the tier gate `useCodexArt` reads. That is the Pact of Ordenance's own
+pattern and it is worth rebuilding for any block work.
+
+- the cards declare what they print, and the codex still prints 2 and 5 and 10
+- Frugal cuts both rests from a background, from an odd level and from a pact,
+  and held twice it cuts once
+- a Pick and a Frugal upbringing cut 4 between them, and the plan's line names
+  both
+- Quick Draw cuts the swap to 1 and the orb carries the struck-out 2
+- the Swap button is live and not disabled with the pact weapon in either hand
+- a weapon equipped over the pact's hand lands in the other one, in either
+  direction, and neither hand will give the pact weapon up
+
+`npm run lint`, all eight lint scripts and the build are clean.

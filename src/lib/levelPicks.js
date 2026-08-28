@@ -54,6 +54,7 @@ import {
   normalizeBackgroundSkills,
   skillAnswer,
   skillCards,
+  skillGrantSources,
   skillLevel,
 } from './backgrounds.js';
 import { getLineage, lineageCards, openPicks } from './lineages.js';
@@ -333,7 +334,20 @@ export function lineageBonuses(lineage) {
   return bonuses;
 }
 
-/** Every skill this character holds, background and learned alike, by id. */
+/**
+ * Every skill this character holds, by id, from all three places one can come
+ * from: the life they led, the odd levels they climbed and what a pact taught
+ * them.
+ *
+ * Three rather than two. A pact's skill boon is held exactly the way a
+ * background's is — `skillOptionsAt` below already refuses to sell it twice —
+ * so a Frugal claimed off the pact giver has to cut the price of a rest the same
+ * as a Frugal learned at a mother's table. Claimed rungs only, which is
+ * `pactSkillIds`'s own rule: a lapsed boon is not held.
+ *
+ * This is the only file that can see all three, which is why the composed
+ * reading below lives here rather than in backgrounds.js.
+ */
 export function heldSkillIds(character) {
   const picks = normalizeLevelPicks(character?.level_picks);
   const background = getBackground(character?.background);
@@ -343,7 +357,25 @@ export function heldSkillIds(character) {
     ...Object.values(picks)
       .map((entry) => entry.skill)
       .filter(Boolean),
+    ...pactSkillIds(character),
   ]);
+}
+
+/**
+ * What those skills do to the sheet's own numbers, one named row per skill that
+ * does anything.
+ *
+ * The composed reading of `skillGrantSources` in backgrounds.js, and the one
+ * every consumer wants: `restCut` in rest.js takes FRUGAL's two Supplies off
+ * both rests, and the Loadout block takes QUICK DRAW's Action Point off SWAP
+ * WEAPONS. Composed here for the reason `characterGrantSources` is composed in
+ * items.js: this is the file that knows where a skill can have come from.
+ *
+ * A skill and an enchantment are different sources, so their cuts stack and the
+ * same-source law never reaches across them. See grantsFrom in enchanting.js.
+ */
+export function characterSkillGrantSources(character) {
+  return skillGrantSources(heldSkillIds(character));
 }
 
 /**

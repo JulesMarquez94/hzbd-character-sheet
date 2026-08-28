@@ -3,6 +3,7 @@ import ReplacePrompt from './ReplacePrompt.jsx';
 import {
   BELT_MAX,
   EQUIPMENT_SLOTS,
+  WEAPON_SLOTS,
   beltEntry,
   beltSlotCount,
   heldItem,
@@ -18,6 +19,9 @@ import {
 } from '../../lib/items.js';
 import { normalizeForged } from '../../lib/forged.js';
 import { pactWeaponId } from '../../lib/pact.js';
+
+/** The two hands, as keys. Read once rather than mapped at every call. */
+const WEAPON_KEYS = WEAPON_SLOTS.map((slot) => slot.key);
 
 /**
  * Equipping, for every block on the Inventory tab.
@@ -123,17 +127,28 @@ export function useEquipSlots(character, patch) {
   }
 
   /* The Pact of Ordenance's weapon, while its set is held. PACT-BOUND WEAPON:
-     it "always fills your first weapon slot" and cannot be lost — so the
-     Primary slot is not a slot while the pact stands. Equipping another weapon
-     lands it in the Secondary instead of asking, and nothing here can take the
-     pact weapon off. Reshaping it is a Long Rest action, not an equip. */
+     it cannot be lost or stolen, so the hand it is in is not a slot you can
+     empty. Equipping another weapon over it lands in the other hand instead of
+     asking, and nothing here can take it off. Reshaping it is a Long Rest
+     action, not an equip.
+
+     The pin follows the weapon rather than naming the Primary slot, because
+     which hand it is in is the Loadout block's swap to change: a pact weapon
+     stowed for the bow is still a pact weapon, and it still cannot be dropped.
+     What the pact holds for good is *a* weapon slot, which is the designer's
+     own "the pact bound weapon permanently takes a slot in the weapon selection
+     screen". See LoadoutBlock.jsx. */
   const pactId = pactWeaponId(character);
-  const pinned = Boolean(pactId) && equipment.main_hand === pactId;
+  const pactSlot = pactId ? (WEAPON_KEYS.find((key) => equipment[key] === pactId) ?? null) : null;
 
   function equip(slotKey, item) {
     if (!item) return;
-    if (pinned && slotKey === 'main_hand') {
-      equip('off_hand', item);
+    if (pactSlot && slotKey === pactSlot) {
+      /* The other hand, found rather than named, so a third weapon slot would
+         not silently make this the wrong one. Nothing happens at all if there
+         is no other hand to send it to, which is the safe end of the trade. */
+      const free = WEAPON_KEYS.find((key) => key !== pactSlot);
+      if (free) equip(free, item);
       return;
     }
     if (placedElsewhere(item, equipment[slotKey])) return;
@@ -147,7 +162,7 @@ export function useEquipSlots(character, patch) {
   /** Taking something off always sends it to the pack — nothing is lost. */
   function unequip(slotKey) {
     if (!equipment[slotKey]) return;
-    if (pinned && slotKey === 'main_hand') return;
+    if (pactSlot && slotKey === pactSlot) return;
     commitSlot(slotKey, null, true);
   }
 

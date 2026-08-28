@@ -14,9 +14,10 @@ import {
   wieldModifiers,
 } from '../../lib/items.js';
 import { getCard } from '../../lib/weapons.js';
+import { cardCost } from '../../lib/cardText.js';
+import { characterSkillGrantSources } from '../../lib/levelPicks.js';
 import { shortName, spendUse } from '../../lib/combatBar.js';
 import { attackModifiers, ridingLine } from '../../lib/moves.js';
-import { pactWeaponId } from '../../lib/pact.js';
 import { magazineUse } from '../../lib/uses.js';
 
 /**
@@ -38,8 +39,44 @@ import { magazineUse } from '../../lib/uses.js';
  * costs, and what is left of it.
  */
 
-/** Drawing the other weapon is an action of its own. */
+/**
+ * Drawing the other weapon is an action of its own, and it is a card like any
+ * other: SWAP WEAPONS prints its own price in weapons.js and this block reads it
+ * rather than restating it. The number here is only what to charge if the codex
+ * has somehow lost the card.
+ */
 const SWAP_AP = 2;
+
+/**
+ * What the holder does to SWAP WEAPONS.
+ *
+ * QUICK DRAW: "The cost of swapping weapon is reduced by 1." It is the one skill
+ * in the codex that prices an action rather than a roll, and it rides the card
+ * exactly as an Arcanist's PERFECT CASTING rides a spellbook. `apCut` and
+ * `apCutFrom` meet the printed cost in `cardCost`, so the orb on the button,
+ * the orb on the pay button and the card in the prompt all print 1 with the 2
+ * struck out beside it, and none of the three can disagree with the others.
+ *
+ * No floor is passed, because the card names none: "reduced by 1" and nothing
+ * about a minimum. `cardCost` floors at nothing when it is given nothing.
+ *
+ * Read off the named rows rather than a sum so the orb can say what cut it, the
+ * same trade `restCut` in rest.js makes. Here rather than in the codex because
+ * this block is the only place SWAP WEAPONS is ever played; it moves the day the
+ * swap reaches the quick bar.
+ */
+function swapModifiers(character) {
+  const rows = characterSkillGrantSources(character)
+    .map((row) => ({ name: row.name, cut: Math.floor(Number(row.swapAp) || 0) }))
+    .filter((row) => row.cut > 0);
+
+  if (rows.length === 0) return null;
+
+  return {
+    apCut: rows.reduce((sum, row) => sum + row.cut, 0),
+    apCutFrom: rows.map((row) => row.name),
+  };
+}
 
 export default function LoadoutBlock({ character, patch, readOnly = false }) {
   // The use waiting on the action-or-reaction question, or null.
@@ -52,14 +89,18 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
 
   const primary = heldItem(character, equipment.main_hand);
   const secondary = heldItem(character, equipment.off_hand);
-  /* Whether the drawn weapon is the pact's, which is the one thing that can
-     kill the swap: PACT-BOUND WEAPON "always fills your first weapon slot". */
-  const bound = Boolean(primary) && pactWeaponId(character) === primary.id;
   /* `wieldModifiers` rather than `itemModifiers`: an Enchanter's own workings
      travel with their hands, and this block prints what the weapon does in
      *these* hands. It was reading the blade alone, so a Fire Infusion on the
      Enchanter changed the chip on the Inventory tab and not the one here. */
   const modifiers = wieldModifiers(character, primary);
+
+  /* What the swap costs these hands: off the card, and after whatever the holder
+     takes off it. Read once for the block, so the button prints it, the prompt
+     charges it and the card inside the prompt shows the same revision. */
+  const swapCard = getCard('swap-weapons');
+  const swapRiders = swapModifiers(character);
+  const swapCost = cardCost(swapCard ?? { ap: SWAP_AP }, swapRiders);
 
   /* What the weapon itself does — its own two attacks, printed for whoever is
      holding it. A spell an enchantment carries is not one of them: that is
@@ -108,14 +149,17 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
   }
 
   function askSwap() {
-    const card = getCard('swap-weapons');
-
     setRequest({
-      name: card?.name ?? 'Swap Weapons',
+      name: swapCard?.name ?? 'Swap Weapons',
       source: swapLine(primary, secondary),
-      ap: SWAP_AP,
+      ap: swapCost.ap,
       wp: null,
-      card,
+      card: swapCard,
+      /* The cut, named, so the prompt says the number was revised and by what
+         rather than quietly charging less than the card beside it prints. */
+      modifiers: swapRiders,
+      apWas: swapCost.cut > 0 ? swapCost.printed : null,
+      apCutFrom: swapCost.from,
       extra: {
         equipment: { ...equipment, main_hand: equipment.off_hand, off_hand: equipment.main_hand },
       },
@@ -147,26 +191,31 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
       <div className="loadout-head">
         <span className="stat-category-label">Weapons</span>
 
-        {/* A pact-bound weapon holds the first slot for as long as its set is
-            held, so there is nothing a swap could draw: the button is offered
-            dead, wearing the reason, the way an unaffordable labour chip is. */}
+        {/* A pact-bound weapon swaps like anything else. It holds a weapon slot
+            for as long as its set is held and it cannot be lost, both of which
+            the equip hook enforces in whichever hand it is in. Which hand that
+            is is a thing you do in a fight, and PACT-BOUND WEAPON's own "it
+            returns to your hand at a word" is the sentence that says so. */}
         {!readOnly && (primary || secondary) && (
           <button
             type="button"
             className="swap-btn"
-            onClick={bound ? undefined : askSwap}
-            disabled={bound}
-            title={
-              bound
-                ? `${primary.name} is pact-bound and always fills your first weapon slot. Reshape it over a Long Rest instead.`
-                : `${swapLine(primary, secondary)}. It costs ${SWAP_AP} Action Points`
-            }
+            onClick={askSwap}
+            title={`${swapLine(primary, secondary)}. It costs ${swapCost.ap} Action ${
+              swapCost.ap === 1 ? 'Point' : 'Points'
+            }${swapCost.cut > 0 ? `, cut from ${swapCost.printed} by ${listOut(swapCost.from)}` : ''}`}
           >
             <span className="swap-glyph" aria-hidden="true">
               ⇄
             </span>
             Swap
-            <CostOrb kind="ap" value={SWAP_AP} size={17} />
+            <CostOrb
+              kind="ap"
+              value={swapCost.ap}
+              size={17}
+              was={swapCost.cut > 0 ? swapCost.printed : null}
+              from={swapCost.from}
+            />
           </button>
         )}
       </div>
@@ -394,6 +443,12 @@ function InfoButton({ onClick, label }) {
       i
     </button>
   );
+}
+
+/** "Quick Draw", "Quick Draw and something else". No Oxford comma. */
+function listOut(words) {
+  if (words.length <= 1) return words[0] ?? '';
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
 /** What the swap actually does, said plainly — one hand may well be empty. */

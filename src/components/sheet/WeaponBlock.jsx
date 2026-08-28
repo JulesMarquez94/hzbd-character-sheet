@@ -51,8 +51,9 @@ export default function WeaponBlock({
            own work on their own blade is on their sheet. See heldItem. */
         const item = heldItem(character, equipment[slot.key]);
         /* The Pact of Ordenance's weapon, while its set is held. It cannot be
-           put away or swapped out: the browser and the remove button both step
-           aside, and the row says why. Its form changes over a Long Rest. */
+           put away or replaced: the browser and the remove button both step
+           aside, and the row says why. Which hand holds it is the Character
+           tab's swap to change, and its form changes over a Long Rest. */
         const bound = Boolean(item) && pactWeaponId(character) === item.id;
 
         return (
@@ -137,13 +138,13 @@ function WeaponFace({ item, slot, bound = false, character, stack, readOnly, onB
         <button
           type="button"
           className="item-row-tap"
-          /* A pact-bound weapon has no browser to open: nothing swaps it out and
+          /* A pact-bound weapon has no browser to open: nothing replaces it and
              nothing puts it away. Its tap reads the item instead, which is where
              its workings and its lore already live. */
           onClick={bound ? () => stack?.openItem(item) : onBrowse}
           title={
             bound
-              ? `${item.name} · pact-bound. It cannot be put away, and it reshapes over a Long Rest.`
+              ? `${item.name} · pact-bound. It cannot be put away. Swap hands on the Character tab, reshape it over a Long Rest.`
               : readOnly
                 ? item.name
                 : `${item.name} · tap to swap or send to inventory`

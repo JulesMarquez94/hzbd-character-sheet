@@ -69,7 +69,7 @@ import { brewAffordable, brewRows, brewedItems, normalizeBrews, restAlchemy } fr
 import { appendLedger, clamp, formatNumber, levelForXp, newLedgerId } from './characterModel.js';
 import { normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
-import { normalizeLevelPicks } from './levelPicks.js';
+import { characterSkillGrantSources, normalizeLevelPicks } from './levelPicks.js';
 import { pickChanges, restSwaps } from './loadouts.js';
 import { minionRest } from './minions.js';
 import { feralRest } from './feral.js';
@@ -81,7 +81,7 @@ import {
 } from './enchanting.js';
 import { cardProse } from './cardText.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
-import { beltRest, characterGrants, getItem, heldItem, normalizePack } from './items.js';
+import { beltRest, characterGrantSources, getItem, heldItem, normalizePack } from './items.js';
 import { normalizeForged } from './forged.js';
 import { pactState, reshapePactWeapon, writePactForm } from './pact.js';
 import { usesRest } from './uses.js';
@@ -110,16 +110,43 @@ export function getRest(kind) {
 }
 
 /**
+ * Everything that takes Supplies off a rest, named as well as counted.
+ *
+ * Two things do, and they come from opposite ends of the sheet:
+ *
+ *   OZ'EM PICK   "the cost in supplies of short and long rest are reduced by 2",
+ *                the only enchantment that moves a rest rather than a stat.
+ *   FRUGAL       "The cost of your Long and Short Rests is reduced by 2
+ *                Supplies", a background skill.
+ *
+ * A working and a skill are **different sources, so the two stack**: a Frugal
+ * Enchanter wearing a Pick rests for 6 rather than 10. The same-source law bites
+ * inside each half and never across them, which is why each half is read by its
+ * own file's own deduplicated reading — `characterGrantSources` in items.js for
+ * the workings, `characterSkillGrantSources` in levelPicks.js for the skills.
+ * Two rings carrying a Pick cut it once; a background and a pact both teaching
+ * Frugal cut it once.
+ *
+ * Named rather than only summed, because the rest window prints the arithmetic
+ * and "10 less 4" with nothing to attribute it to is a number the reader has to
+ * go and reconstruct off two other tabs.
+ */
+export function restCut(character) {
+  const rows = [...characterGrantSources(character), ...characterSkillGrantSources(character)]
+    .map((row) => ({ name: row.name, amount: Math.floor(Number(row.restSupplies) || 0) }))
+    .filter((row) => row.amount > 0);
+
+  return {
+    amount: rows.reduce((sum, row) => sum + row.amount, 0),
+    names: rows.map((row) => row.name),
+  };
+}
+
+/**
  * What a rest costs *this* character, which is not always what it costs.
  *
- * OZ'EM PICK: "the cost in supplies of short and long rest are reduced by 2." The
- * only enchantment that moves a rest rather than a stat, and the only reason this
- * is a function rather than the number on `RESTS`. Floored at nothing, because a
- * rest that paid you would be a strange kind of rest.
- *
- * `characterGrants` rather than the enchanting file's own reading, so a Pick
- * worked into a ring cuts the price the same as one laid on the Enchanter — and
- * two rings carrying it cut it once, which is the same-source law.
+ * Floored at nothing, because a rest that paid you would be a strange kind of
+ * rest.
  *
  * Everything that prices a rest goes through here: the plan, and the two
  * affordability checks that offer a chip dead rather than letting it fail at the
@@ -128,7 +155,7 @@ export function getRest(kind) {
 export function restPrice(character, kind) {
   const rest = getRest(kind);
   if (!rest) return 0;
-  return Math.max(0, rest.supplies - characterGrants(character).restSupplies);
+  return Math.max(0, rest.supplies - restCut(character).amount);
 }
 
 /* ------------------------------------------------------------- the labours */
@@ -526,17 +553,21 @@ export function restPlan(character, kind, labours = [], prepared = null, brews =
   };
 
   const price = restPrice(character, kind);
+  const discount = restCut(character);
   const cut = rest.supplies - price;
 
   move(-price, rest.label);
   lines.push({
     key: 'cost',
     label: `${price} Supplies`,
+    /* And what cut it, by name. A Pick is worked into something and a Frugal
+       upbringing is on the Advancement tab, so neither is anywhere the reader
+       can see from here. See restCut above. */
     detail:
       supplies < 0
         ? `The crate holds ${formatNumber(held)}. You cannot pay for this rest.`
         : cut > 0
-          ? `Out of the crate. ${rest.supplies} less ${cut}, which is what you have laid on yourself.`
+          ? `Out of the crate. ${rest.supplies} less ${cut}, which is ${listOut(discount.names)}.`
           : 'Out of the crate.',
     tone: supplies >= 0 ? 'cost' : 'warn',
   });

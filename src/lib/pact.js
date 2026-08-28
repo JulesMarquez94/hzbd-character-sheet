@@ -753,8 +753,10 @@ export function pactWeaponRiders(character, card) {
   for (const state of pactState(character)) {
     if (!state.weapon) continue;
 
-    /* Only while it is actually in the first slot, which the guards make the
-       ordinary case. Read without items.js: the map is slot -> id. */
+    /* Only while it is actually drawn. The pact weapon holds a weapon slot for
+       good, but a swap decides which hand that is, and a stowed weapon makes no
+       attacks for a rider to ride. Read without items.js: the map is slot ->
+       id. */
     const equipment = readEquipment(character?.equipment);
     if (equipment.main_hand !== state.weapon.id) continue;
 
