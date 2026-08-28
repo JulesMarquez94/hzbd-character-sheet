@@ -24,6 +24,22 @@
  * source contributed, so two sources of advantage are two rows and the reader can
  * see which is which.
  *
+ * ------------------------------------------------------------------- and it opens
+ * "I want to be able to click on the text block like dexterous to see the
+ * associated card", 2026-08-28. A name a reader can look up is only half a
+ * promise if looking it up means leaving the dialog, so a row carries `card`: the
+ * id of the thing it is naming.
+ *
+ * Optional, because for most rows the name **is** the id. `getCard` resolves a
+ * printed name as readily as an id, so DEXTEROUS, OVERLOAD, FIRE INFUSION and
+ * RECKLESS all open off `from` alone. `card` is for the rows where the two come
+ * apart: a tracker row is named after whatever the player typed into it, and the
+ * card behind it is on the row rather than in its name.
+ *
+ * A row naming something the codex has no card for keeps its name and simply does
+ * not open. A Feral Curse's form is the case: the source is the set, and a set is
+ * not a card.
+ *
  * The rows ride on the modifiers object as `sources`, beside the sums they were
  * built from. Nothing reads them to do arithmetic: the sums are still the truth
  * and this is the account of them, which is why a row that gives nothing is never
@@ -50,7 +66,7 @@ const GIVES = ['advantage', 'disadvantage', 'empower', 'elevate', 'bonus', 'apCu
  * row crediting it here would be the sheet pointing at a number that never moved.
  * "only what modifies it."
  */
-export function sourceRow(from, gives) {
+export function sourceRow(from, gives, card = null) {
   if (!from) return null;
 
   const kept = {};
@@ -65,7 +81,12 @@ export function sourceRow(from, gives) {
   // A cast attribute is not a number and still changes every roll on the card.
   if (gives?.stat) kept.stat = String(gives.stat);
 
-  return Object.keys(kept).length > 0 ? { from: String(from), gives: kept } : null;
+  if (Object.keys(kept).length === 0) return null;
+
+  /* The name doubles as the lookup unless the builder knew better. See "and it
+     opens" above: `getCard` reads a printed name as readily as an id, so a row
+     that names a card is already a row that opens one. */
+  return { from: String(from), card: card ? String(card) : String(from), gives: kept };
 }
 
 /**

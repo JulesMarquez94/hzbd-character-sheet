@@ -490,10 +490,7 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
             <div className="use-sources">
               <span className="use-sources-head">Changing this · {sources.length}</span>
               {sources.map((row, at) => (
-                <div className="use-source-row" key={`${row.from}-${at}`}>
-                  <span className="use-source-from">{row.from}</span>
-                  <span className="use-source-gives">{sourceWords(row.gives)}</span>
-                </div>
+                <SourceRow key={`${row.from}-${at}`} row={row} stack={cards} />
               ))}
             </div>
           )}
@@ -544,6 +541,45 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
         )}
       </div>
     </Modal>
+  );
+}
+
+/**
+ * One source and what it did, with the source itself a way into its card.
+ *
+ * "I want to be able to click on the text block like dexterous to see the
+ * associated card", 2026-08-28. Naming DEXTEROUS is only half an answer if
+ * reading it means closing the prompt, walking to the Abilities tab and finding
+ * the set: the name is the question, so the name is the button.
+ *
+ * The card deals onto the same pile every other card on the sheet deals onto,
+ * which sits above every dialog, so it opens over the prompt and closes back onto
+ * it with nothing spent and nothing lost.
+ *
+ * A row whose source the codex has no card for stays a plain name rather than
+ * becoming a button that does nothing. A Feral Curse's form is the case today:
+ * the source is the set, and a set is not a card.
+ */
+function SourceRow({ row, stack }) {
+  const card = getCard(row.card ?? row.from);
+  const open = card && stack ? () => stack.openCard(card) : null;
+
+  return (
+    <div className="use-source-row">
+      {open ? (
+        <button
+          type="button"
+          className="use-source-from is-card"
+          onClick={open}
+          title={`Read ${card.name}`}
+        >
+          {row.from}
+        </button>
+      ) : (
+        <span className="use-source-from">{row.from}</span>
+      )}
+      <span className="use-source-gives">{sourceWords(row.gives)}</span>
+    </div>
   );
 }
 

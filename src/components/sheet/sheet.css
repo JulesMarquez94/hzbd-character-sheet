@@ -5127,6 +5127,11 @@ body.sheet-fixed #root {
   flex: 0 1 auto;
   min-width: 0;
   max-width: 45%;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: var(--font-body);
   font-size: 0.66rem;
   font-weight: 700;
   line-height: 1.35;
@@ -5134,6 +5139,24 @@ body.sheet-fixed #root {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* And the ones that open. Underlined rather than coloured, because the row is
+   already copper and a second colour on the loud half would make a list of five
+   sources read as five warnings. The rule brightens on hover, which is the same
+   affordance `.fx-read` uses on block 6. */
+.use-source-from.is-card {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(200, 138, 75, 0.45);
+  text-underline-offset: 2px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.use-source-from.is-card:hover,
+.use-source-from.is-card:focus-visible {
+  color: var(--copper-bright);
+  text-decoration-color: var(--copper-bright);
 }
 
 /* And what. In the codex's own words: Empowered, Elevated, Advantage. */

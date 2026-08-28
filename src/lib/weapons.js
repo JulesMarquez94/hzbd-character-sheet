@@ -2339,10 +2339,16 @@ export function itemModifiers(item, extra = []) {
     const die = Number(enchantment.empower) || 0;
     empower += die;
 
-    /* And the receipt, so the use prompt can say which working did it. An
-       enchantment named twice is one source and has already been skipped above, so
-       one row is one contribution. See attribution.js. */
-    const row = sourceRow(enchantment.name, { empower: die, damage: type ? [type] : [] });
+    /* And the receipt, so the use prompt can say which working did it, and open
+       it. An enchantment named twice is one source and has already been skipped
+       above, so one row is one contribution. Its id goes on the row rather than
+       being read back off its name, because an enchantment is the one kind of
+       source that is a card and a working at once. See attribution.js. */
+    const row = sourceRow(
+      enchantment.name,
+      { empower: die, damage: type ? [type] : [] },
+      enchantment.id
+    );
     if (row) sources.push(row);
   };
 

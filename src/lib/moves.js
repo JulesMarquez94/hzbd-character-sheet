@@ -346,7 +346,11 @@ export function moveRider(effects, card, special = false) {
        A move that only *names* something (WOUND, MOMENTUM) writes no row: it is
        riding the attack without changing a number, and `ridingLine` is where that
        belongs. See attribution.js. */
-    const row = sourceRow(move.name, { advantage: gain, empower: die, elevate: step });
+    const row = sourceRow(
+      move.name,
+      { advantage: gain, empower: die, elevate: step },
+      move.id
+    );
     if (row) sources.push(row);
   }
 
@@ -770,15 +774,21 @@ function attackSources({ base, worn, hide, bound, laid, moves, trick, character 
   );
 
   /* The tracker, named after the row rather than the card, because that is the
-     name the player will go looking for on block 6. */
-  const tracked = (laid?.from ?? []).map(({ name, rider }) =>
-    sourceRow(name, {
-      advantage: rider.advantage,
-      disadvantage: rider.disadvantage,
-      empower: rider.empower,
-      elevate: rider.elevate,
-      damage: rider.damage,
-    })
+     name the player will go looking for on block 6. The card id rides separately
+     for exactly that reason: a row typed in by hand is named whatever its owner
+     called it, and the name is no longer the lookup. */
+  const tracked = (laid?.from ?? []).map(({ id, name, rider }) =>
+    sourceRow(
+      name,
+      {
+        advantage: rider.advantage,
+        disadvantage: rider.disadvantage,
+        empower: rider.empower,
+        elevate: rider.elevate,
+        damage: rider.damage,
+      },
+      id
+    )
   );
 
   /* A Trickster's rider is one row however many were laid, because `trickRider`

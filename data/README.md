@@ -9347,3 +9347,26 @@ with a stub `AuthContext`, which is the Pact of Ordenance's own pattern.
 - KINDLE WEAPON is credited on both weapon attacks and on no spell
 
 `npm run lint`, all eight lint scripts and the build are clean.
+
+### And the source rows open
+
+"I want to be able to click on the text block like dexterous to see the
+associated card", 2026-08-28, straight after the receipts landed. Naming
+DEXTEROUS is half an answer if reading it means closing the prompt, walking to
+the Abilities tab and finding the set.
+
+So a receipt carries `card` beside `from`, and the name is a button. It deals onto
+the same pile every other card on the sheet deals onto, which sits above every
+dialog, so the card opens over the prompt and closes back onto it with nothing
+spent.
+
+The field is optional and for most rows it is redundant: `getCard` resolves a
+printed name as readily as an id, so DEXTEROUS, OVERLOAD, PERFECT CASTING, FIRE
+INFUSION and RECKLESS all open off their own name. It exists for the rows where
+the two come apart, and the tracker is the case: a row is named whatever the
+player typed into it, so a Kindle Weapon renamed "The blade is lit" credits that
+name and opens KINDLE WEAPON.
+
+A row naming something with no card behind it stays a plain name rather than
+becoming a button that does nothing. A Feral Curse's form is the only one today:
+the source is the set, and a set is not a card.
