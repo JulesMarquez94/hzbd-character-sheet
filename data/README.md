@@ -9208,3 +9208,142 @@ row onto its bonded's block, counting down on the wrong press.
   current Health rise with the maximum, and where does it go when the hour is up?
 - **BARKSKIN and five like it** are offered in the picker and never written,
   because "lost when all Shield is depleted" is a condition rather than a clock.
+
+## Which card a rider rides, and who did it, 2026-08-28
+
+Two findings off the same afternoon of testing, and they turn out to be the same
+question asked from both ends: **what is this rider actually touching, and does
+the sheet say so.**
+
+### Reckless was riding an attack it never named
+
+Jules: "reckless is only for weapon attacks, then gets updated to also special
+weapon attack if you have the rank 3 talent."
+
+`Weapon Attack` and `Special Weapon Attack` are two different tags in this codex
+and every weapon teaches one card of each. `isWeaponAttack` matches both, and
+Martial Moves read it, so a RECKLESS bought for one swing was quietly doubling the
+value of a Cleave.
+
+The cards were on the right side of this all along. Every Martial Move in the
+codex that names an attack names the same one:
+
+- WOUND, WING CLIP, CONCUSS, RECKLESS, REND, DISARM, FEINT, SWEEP, EXECUTE,
+  PERFECT FORM, BLEED: "your next **Weapon Attack**"
+- none of the fourteen says Special
+
+So this supersedes the 2026-08-21 ruling the file was built on ("in the case of
+martial move it just apply to both and the first one of the two action used remove
+the effect"). A move now reads `isPlainAttack`, which is the narrow test a
+Trickster's AMBUSH always read, and the two rider systems finally agree.
+
+`spendMoves` takes the card now. It used to take none, and that one missing
+argument *was* the old ruling: a move rode either attack, so whichever was paid
+for spent it and there was nothing to check. A Flurry now leaves a RECKLESS
+sitting on the tracker waiting for the swing it was bought for, exactly as it
+always left an ambush.
+
+**The widening is built and nothing carries it.** `martial.special` is a
+rank-indexed array beside `perAttack` and `onReaction`, `moveAllowance` hands it
+out with the rest, and three places read the one answer: what prints on a card,
+what a swing spends, and what the tracker row says it is waiting for. No set
+declares it, because no card in the codex prints the rule. The three rank-3
+Martial Move talents each say something else:
+
+- Duelist SHARP: two moves on one swing, or one before a reaction
+- Feral Curse BESTIAL FRENZY: the same two clauses
+- Colossus PERFECT TECHNIQUE: two moves on one Heavy or Great Melee attack
+
+The only card in the codex that widens anything to a Special Weapon Attack is the
+Berserker's MASTER OF PAIN at Rank 2, and it widens RAGING BLOW rather than
+Martial Moves. **Open for Jules: which card carries this, and what should its text
+say?** One line of data turns it on once that is settled.
+
+### Nothing said who was doing it
+
+Jules, the same afternoon: "My finesse pact bound weapon as two adventage and on
+the action view I dont see the source. It is also empowred and I dont see the
+source below the action buttons. Everything that is modified need to be seen but
+only what modifies it. So if my spells are empowerd because of talents I should
+see on the side below the action buttons. No exceptions."
+
+The sheet always folded these in correctly and almost never said whose they were.
+`advantageFrom` existed and carried names, because the arrow badge in a card's
+corner needed them. An Empowered die carried not even that: the number moved and
+nothing anywhere said why.
+
+So every fold keeps a receipt now. `attribution.js` is the shape, a leaf like
+`tagColors.js`:
+
+    { from: 'Fire Infusion', gives: { empower: 1, damage: ['Fire'] } }
+
+`from` is the name a reader can look up: a card, an enchantment, a working. Never
+a number and never a mechanism. `gives` is what that one source contributed, so
+two sources of advantage are two rows.
+
+Five places build them and one place reads them:
+
+- `itemModifiers` a weapon's own workings, one row an enchantment
+- `loadoutModifiers` a set's boost, its cut and the attribute it casts off
+- `pactModifiers` the bargain's rank riders and its highest-Attribute rule
+- `moveRider` one row a Martial Move riding the swing
+- `attackModifiers` merges all of it with what the weapon in hand grants, what
+  shape you are in, what a Trickster bought and what is on the tracker
+
+The use prompt prints them under the two ways, as **Changing this**, and under
+that the tracker rows the list did not account for, as **Also running**. Nothing
+is printed twice.
+
+**"only what modifies it" was the harder half.** A row is written where a source
+gave something to *this* card and nowhere else. A Duelist's AGILE grants a point
+of Defense for the same Finesse weapon DEXTEROUS lends an arrow for, and only one
+of those two is changing the swing.
+
+### Three things the receipts caught
+
+Chasing "no exceptions" turned up three cases where the fold was wrong rather than
+merely quiet.
+
+- **The grants were credited to the set rather than to the card.** A Duelist
+  swinging with advantage was told the source was "Duelist" when the card they
+  wanted was DEXTEROUS. Every grant already named its card in a code comment, so
+  the comments became a `from` field: Dexterous, Agile, Giant Slayer, Colossal
+  Force, Perfect Technique.
+
+- **Running riders never reached a spell.** `attackModifiers` has always folded
+  them onto every card and said why in as many words ("a spell attack is an attack
+  and granting it Empowered names no weapon"), and the hand was the only group that
+  ever called it. So a GIANT GROWTH Empowered your sword and left your Fireball
+  alone. `knownGroups` folds it now, and a spell picks up the tracker and nothing
+  else, since every other rider in that function is already gated on a weapon
+  attack.
+
+- **KINDLE WEAPON would then have leaked onto spells.** Its clause is "when the
+  **imbued weapon** lands a hit, its damage is Empowered by 1 and the damage type
+  becomes Fire", so folding it onto a Frost Bolt would have changed what the spell
+  was made of. It carries `weapon: true` now and `runningRiders` takes a
+  `{ weapon }` option; it is the only entry in the table that needs one, because
+  every other rider names an attack, a roll or a sheet rather than a weapon.
+
+And one narrowing on top: riders fold only onto a card there is something to bend.
+Empowered and Elevate are both about damage dice, so a card that rolls none has
+nothing for them to do. A RECKLESS waiting on the tracker is not itself Empowered
+by a GIANT GROWTH, and neither is a RENEW.
+
+### How this was proved
+
+Two node harnesses over `src/lib` and one Vite bench mounting the real use prompt
+with a stub `AuthContext`, which is the Pact of Ordenance's own pattern.
+
+- a Duelist 3 with RECKLESS waiting: Strike carries it and spends it, Flurry
+  carries neither and leaves it on the tracker
+- the same swing credits Fire Infusion, Dexterous, Kindle Weapon and Reckless, each
+  with what it gave
+- an Arcanist 3 casting: Overload lends Advantage and a die, Perfect Casting takes
+  an Action Point off, and both are named
+- a damaging spell picks up a running GIANT GROWTH and prints 5d6 where it printed
+  4d6, keeping its own Fire
+- RENEW picks up neither, and neither does a Martial Move or any basic action
+- KINDLE WEAPON is credited on both weapon attacks and on no spell
+
+`npm run lint`, all eight lint scripts and the build are clean.

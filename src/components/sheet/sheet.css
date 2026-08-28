@@ -5091,6 +5091,61 @@ body.sheet-fixed #root {
   color: var(--copper-bright);
 }
 
+/* Every source changing this card, and what each one changed. Copper, because
+   that is the colour of a receipt everywhere else on the sheet, and two columns
+   because the question is always "who" before it is "what". See attribution.js. */
+.use-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.use-sources-head {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+.use-source-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 0.2rem 0.35rem;
+  border-left: 2px solid var(--copper);
+  background-color: color-mix(in srgb, var(--copper) 7%, transparent);
+  border-radius: 3px;
+}
+
+/* Who. Held to a third of the row so a long talent name cannot push what it did
+   off the end, which is the half a reader is actually checking. */
+.use-source-from {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 45%;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-silver);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* And what. In the codex's own words: Empowered, Elevated, Advantage. */
+.use-source-gives {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  text-align: right;
+  color: var(--copper-bright);
+}
+
 /* And what is already running, under the ways that pay for the next thing.
    Block 6's rows at reminder size: same count, same school colour, nothing that
    acts. See the note at the top of UsePrompt.jsx. */

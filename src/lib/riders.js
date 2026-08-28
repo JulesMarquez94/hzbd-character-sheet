@@ -139,8 +139,15 @@ export const EFFECT_RIDERS = {
   },
 
   /* "When the imbued weapon lands a hit, its damage is Empowered by 1 and the
-     damage type becomes Fire." */
+     damage type becomes Fire."
+
+     `weapon` is what the first three words of that clause mean. Both halves of
+     this rider are about the thing in your hand, so neither reaches a spell, and
+     this is the only entry in the table that has to say so: every other rider here
+     names an attack, a roll or a sheet, and none of them names a weapon. See
+     `weapon` in `runningRiders` below. */
   'kindle-weapon': {
+    weapon: true,
     empower: 1,
     damage: ['Fire'],
     line: 'Your weapon deals Fire, Empowered by 1',
@@ -412,7 +419,7 @@ function rows(effects) {
  * is the names in the order they were met, which is what a tile or an arrow
  * credits.
  */
-export function runningRiders(effects) {
+export function runningRiders(effects, { weapon = true } = {}) {
   const total = noRider();
   const seen = new Set();
 
@@ -422,6 +429,14 @@ export function runningRiders(effects) {
     const id = row.card ? String(row.card) : '';
     const rider = riderOf(id);
     if (!rider || seen.has(id)) continue;
+    /* A rider whose printed clause names a weapon has nothing to say about a
+       spell. `weapon: false` is a caller asking about something that is not a
+       weapon attack, and KINDLE WEAPON is the one entry it drops: "when the
+       imbued weapon lands a hit" is a sentence about the thing in your hand, and
+       folding its Fire onto a Frost Bolt would change what the spell is made of.
+       Skipped before `seen` records it, so nothing is quietly deduplicated away
+       from a later question that does want it. */
+    if (rider.weapon && !weapon) continue;
     seen.add(id);
 
     total.any = true;
@@ -458,8 +473,8 @@ export function runningRiders(effects) {
  * "nothing", so the null saves them all the same branch. `runningRiders` above
  * is the one that always hands back a shape.
  */
-export function effectRiders(effects) {
-  const total = runningRiders(effects);
+export function effectRiders(effects, options) {
+  const total = runningRiders(effects, options);
   return total.any ? total : null;
 }
 

@@ -90,6 +90,7 @@ import {
   isMartialMove,
   moveEffect,
   moveSetFor,
+  movesReachSpecial,
   ridingLine,
   spendMoves,
 } from './moves.js';
@@ -312,9 +313,20 @@ function knownGroups(character, locks) {
             ...formRefusal(card, locks, { set }),
           };
 
+          /* And whatever is on the tracker, which used to reach a weapon attack
+             and nothing else. `attackModifiers` has always folded running riders
+             onto every card and said why in as many words ("a spell attack is an
+             attack and granting it Empowered names no weapon"), and the hand was
+             the only group that ever called it: a GIANT GROWTH Empowered your
+             sword and left your Fireball alone. Nothing else in the fold reaches a
+             card that is not a weapon attack, so a spell picks up the tracker and
+             nothing more. It also picks up its own sources list, which is what the
+             use prompt credits. See attribution.js. */
+          const folded = attackModifiers(character, card, modifiers);
+
           return move(`${source.id}:${card.id}`, card, {
             source: `${card.name} · ${source.title}`,
-            modifiers,
+            modifiers: folded,
             ...riders,
             ...limitedUse(character, card, riders),
           });
@@ -345,13 +357,20 @@ function knownGroups(character, locks) {
 function martialUse(character, card, room) {
   if (!isMartialMove(card)) return {};
 
+  /* Which attacks this character's moves reach, so the row written onto the
+     tracker says the true one. Off the same `moveAllowance` the printing and the
+     spending both read. See "which attack" in moves.js. */
+  const special = movesReachSpecial(character?.talents);
+
   return {
-    note: 'It waits on the tracker until you swing, and is spent the moment you do.',
+    note: special
+      ? 'It waits on the tracker until you swing, and is spent the moment you do.'
+      : 'It waits on the tracker until your next plain Weapon Attack, and a special one leaves it there.',
     extra: room.ok
       ? {
           effects: addEffect(
             character?.effects,
-            moveEffect(card, moveSetFor(character?.talents, card.id))
+            moveEffect(card, moveSetFor(character?.talents, card.id), special)
           ),
         }
       : null,
@@ -912,11 +931,12 @@ export function spendUse(request, character, mode, amount, { free = false, price
      Started from whatever the request already put there, on the off chance a card
      ever carries an effects patch of its own.
 
-     Only `spendTricks` is told *which* attack it was, and that is the one
-     asymmetry between the two rider systems: an ambush is bought against the plain
-     attack alone, while a Martial Move "just apply to both and the first one of the
-     two action used remove the effect". So a Triple Strike takes the Wound off and
-     leaves the ambush waiting for the swing it was paid for.
+     **Both are told which attack it was now.** They used to differ: an ambush was
+     bought against the plain attack alone, while a Martial Move "just apply to
+     both and the first one of the two action used remove the effect". Jules
+     narrowed the second on 2026-08-28, so both rider systems read the attack they
+     were bought for, and a Triple Strike now leaves a RECKLESS waiting exactly as
+     it always left an ambush. See "which attack" in moves.js.
 
      Guarded on the card rather than on the character, because a creature's block
      pays through here too and hands its own row in as `character`. No minion
@@ -931,7 +951,11 @@ export function spendUse(request, character, mode, amount, { free = false, price
       cleared = true;
     }
 
-    const withoutMoves = spendMoves(effects);
+    const withoutMoves = spendMoves(
+      effects,
+      request.card,
+      movesReachSpecial(character?.talents)
+    );
     if (withoutMoves) {
       effects = withoutMoves;
       cleared = true;

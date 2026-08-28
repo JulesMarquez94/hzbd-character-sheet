@@ -47,6 +47,7 @@
  * through arguments at the call.
  */
 
+import { sourceRow } from './attribution.js';
 import { HIGHEST } from './attributes.js';
 import { getEnchantment } from './enchantments.js';
 import { forgeRecord, normalizeForged } from './forged.js';
@@ -674,6 +675,17 @@ export function pactModifiers(state) {
     riders.advantage = advantage;
     riders.advantageFrom = [state.spec.boostFrom ?? state.talent.name];
   }
+
+  /* And the itemised version of all three, for the use prompt. The bargain's own
+     card is the name a reader can look up: FIRST BOON is where the highest-Attribute
+     rule is written and ENDLESS BARGAIN is where the rank riders are. See
+     attribution.js. */
+  const row = sourceRow(state.spec.boostFrom ?? state.talent.name, {
+    empower,
+    advantage,
+    stat: riders.stat,
+  });
+  if (row) riders.sources = [row];
 
   return Object.keys(riders).length > 0 ? riders : null;
 }

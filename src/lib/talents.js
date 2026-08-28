@@ -1239,16 +1239,21 @@ const TALENT_SETS = [
       /* One entry per card that hangs on the weapon in hand. Neither names a tag,
          so both take the set's own, which is what they always read. The list is
          the Colossus's doing: it holds cards on two different tags at once and
-         needed somewhere to say which. See `grants` in moves.js. */
+         needed somewhere to say which. See `grants` in moves.js.
+
+         `from` is the card the grant *is*, and it is what the use prompt credits.
+         Both were only ever named in these comments, so a Duelist swinging with
+         advantage was told the source was "Duelist" when the card they wanted was
+         DEXTEROUS. See attribution.js. */
       grants: [
         /* DEXTEROUS: "You have advantage when using One-handed weapons", read onto
            the four families the designer named on 2026-08-24. A count rather than a
            flag because advantage stacks (each instance is another d4), which is
            what lets the arrow on the card print a number. */
-        { advantage: [null, 1, 1, 1] },
+        { from: 'Dexterous', advantage: [null, 1, 1, 1] },
         /* AGILE: "While you have a Finesse or Light Melee weapon in hand your
            Defense is increased by 1", now read against the four families. */
-        { defense: [null, 1, 1, 1] },
+        { from: 'Agile', defense: [null, 1, 1, 1] },
       ],
       /* FOLLOW UP is deliberately not here. It hangs on the same weapon, but the
          sheet does not know an attack missed and never will, so its reroll is a
@@ -2080,16 +2085,16 @@ const TALENT_SETS = [
            tag its own set's `weapon` is not, and the whole reason `grants` is a
            list rather than a block. A count and not a flag, because advantage
            stacks and the arrow on the card prints the number. */
-        { weapon: 'Great', advantage: [null, 1, 1, 1] },
+        { from: 'Giant Slayer', weapon: 'Great', advantage: [null, 1, 1, 1] },
         /* COLOSSAL FORCE, at Rank 2: "Your Heavy and Great Melee Weapon Attacks
            are Elevated by 1." The first thing in the codex to Elevate a swing for
            the weapon in hand rather than for something that was paid for. */
-        { elevate: [null, 0, 1, 1] },
+        { from: 'Colossal Force', elevate: [null, 0, 1, 1] },
         /* PERFECT TECHNIQUE's second sentence, at Rank 3: "Each Martial Move on
            the attack Empowers its damage by 1." On the same tag as its first
            sentence, which is what makes it a Heavy or Great Melee Weapon Attack, and per
            move rather than per attack. */
-        { perMove: [null, 0, 0, 1] },
+        { from: 'Perfect Technique', perMove: [null, 0, 0, 1] },
       ],
       /* PERFECT TECHNIQUE's first sentence: "You can now use two Martial Moves on
          the same Heavy or Great Melee Weapon Attack." Not gated on the weapon, the same way

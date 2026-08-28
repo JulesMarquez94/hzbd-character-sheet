@@ -1199,7 +1199,7 @@ export function startingWeapons() {
  * that knows what equipment is. weapons.js is handed the answer.
  */
 export function wieldModifiers(character, item) {
-  if (!item) return { damage: [], empower: 0 };
+  if (!item) return { damage: [], empower: 0, sources: [] };
 
   const worn = normalizeEquipment(character?.equipment);
   const held = Object.values(worn).includes(item.id);

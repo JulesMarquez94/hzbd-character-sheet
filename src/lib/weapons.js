@@ -40,6 +40,7 @@
  * two — there is no third target number.
  */
 
+import { sourceRow } from './attribution.js';
 import { withArt } from './cardArt.js';
 import { SPELLS } from './spells.js';
 import { MARTIAL_MOVES } from './martial.js';
@@ -2322,22 +2323,33 @@ export function itemEnchantments(item) {
 export function itemModifiers(item, extra = []) {
   const damage = [];
   const counted = new Set();
+  const sources = [];
   let empower = 0;
 
   const fold = (enchantment) => {
     if (!enchantment || counted.has(enchantment.id)) return;
     counted.add(enchantment.id);
 
-    if (enchantment.damageType && !damage.includes(enchantment.damageType)) {
-      damage.push(enchantment.damageType);
-    }
-    empower += Number(enchantment.empower) || 0;
+    const type =
+      enchantment.damageType && !damage.includes(enchantment.damageType)
+        ? enchantment.damageType
+        : null;
+    if (type) damage.push(type);
+
+    const die = Number(enchantment.empower) || 0;
+    empower += die;
+
+    /* And the receipt, so the use prompt can say which working did it. An
+       enchantment named twice is one source and has already been skipped above, so
+       one row is one contribution. See attribution.js. */
+    const row = sourceRow(enchantment.name, { empower: die, damage: type ? [type] : [] });
+    if (row) sources.push(row);
   };
 
   for (const { enchantment } of itemEnchantments(item)) fold(enchantment);
   for (const enchantment of extra) fold(enchantment);
 
-  return { damage, empower };
+  return { damage, empower, sources };
 }
 
 /** The cards an item teaches while it is equipped, plus any spell it carries. */

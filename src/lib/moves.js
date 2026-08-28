@@ -40,15 +40,34 @@
  * attempt. Advantage applies to the roll and the roll has happened. Flagged in
  * data/README.md in case the designer means the other thing.
  *
- * *Which* weapon attack is not asked either, and that is Jules's own ruling on
- * 2026-08-21: "in the case of martial move it just apply to both and the first one
- * of the two action used remove the effect". So a move rides both of the two
- * attacks a weapon teaches, prints on both, and comes off on whichever of them is
- * made first. Two moves waiting on a Master Duelist's swing are that same rule
- * twice: both ride, and the first attack takes both. A Trickster's AMBUSH is the
- * narrow one and reads the plain attack alone, which is the whole reason
- * `spendMoves` takes no card and `spendTricks` does. See `trickRides` in
- * tricks.js.
+ * ------------------------------------------------------------ which attack
+ * **The plain one, and the special one only when something says so.** Jules,
+ * 2026-08-28, testing: "reckless is only for weapon attacks, then gets updated to
+ * also special weapon attack if you have the rank 3 talent."
+ *
+ * That supersedes the 2026-08-21 ruling this file was built on ("in the case of
+ * martial move it just apply to both"), and the cards were on the new side of it
+ * all along. Every Martial Move in the codex that names an attack names the same
+ * one: "Your next **Weapon Attack** is made with advantage". `Weapon Attack` and
+ * `Special Weapon Attack` are two different tags in this codex, every weapon
+ * teaches one card of each, and the broad test read both. So a RECKLESS bought for
+ * a swing was quietly doubling the value of a Cleave.
+ *
+ * A move now reads `isPlainAttack`, the same narrow test a Trickster's AMBUSH
+ * always read. What widens it is a rank, declared as data on the set's `martial`
+ * block beside `perAttack` and `onReaction`:
+ *
+ *   special: [null, false, false, true]   indexed by rank, the way both its
+ *                                         neighbours already are
+ *
+ * `moveAllowance` reads it and hands it out with the rest, so the whole system
+ * asks the same one question. Nothing carries it yet: no card in the codex prints
+ * the rule, and a rank that widened a move without a card saying so would be the
+ * sheet inventing a talent. See data/README.md.
+ *
+ * The knock-on is that `spendMoves` now takes the card, because a move that did
+ * not ride this attack must not be spent by it. It used to take none, and that was
+ * the whole of the old ruling in one argument.
  *
  * ---------------------------------------------------------------- the allowance
  * One move to a swing for everybody who knows one, and two sets move it: a Master
@@ -82,10 +101,11 @@ import { getTalent, normalizeTalents } from './talents.js';
 import { getMartialMove, isMartialMove } from './martial.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
 import { heldItem, normalizeEquipment } from './items.js';
-import { isWeaponAttack, trickArrow, trickRider } from './tricks.js';
+import { isPlainAttack, isWeaponAttack, trickArrow, trickRider } from './tricks.js';
 import { feralRiders } from './feral.js';
 import { pactWeaponRiders } from './pact.js';
 import { bendsSwing, effectRiders, riderOf } from './riders.js';
+import { mergeSources, sourceRow } from './attribution.js';
 
 /** What anybody who knows a move may have waiting on one swing. */
 export const MOVE_ALLOWANCE = 1;
@@ -176,16 +196,22 @@ export function moveSetFor(talents, cardId) {
 
 /**
  * What the move system allows this character, as
- * `{ perAttack, onReaction, from }`.
+ * `{ perAttack, onReaction, special, from }`.
  *
  * `from` is the set that raised it, so the sheet can say whose rule it is when it
  * refuses a second move. A character with no set that teaches moves still gets a
  * shape rather than a null, so no caller has to branch — they just never reach a
  * point where it matters, since they hold no moves to lay.
+ *
+ * `special` is the third of the rank-indexed rules and the newest: whether this
+ * character's moves reach a Special Weapon Attack as well as the plain one. No
+ * set declares it today, so it is false for everybody, which is exactly what the
+ * cards print. See "which attack" at the top of this file.
  */
 export function moveAllowance(talents) {
   let perAttack = MOVE_ALLOWANCE;
   let onReaction = false;
+  let special = false;
   let from = null;
 
   for (const { talent, rank, spec } of martialSets(talents)) {
@@ -198,9 +224,38 @@ export function moveAllowance(talents) {
       onReaction = true;
       if (!from) from = talent;
     }
+    /* One set is enough. A Duelist 3 / Guardian 1 who bought the widening once
+       has it on every move they hold, the same way `perAttack` is the best of
+       what they hold rather than the worst. */
+    if (spec?.special?.[rank]) {
+      special = true;
+      if (!from) from = talent;
+    }
   }
 
-  return { perAttack, onReaction, from };
+  return { perAttack, onReaction, special, from };
+}
+
+/**
+ * Whether this character's Martial Moves reach a Special Weapon Attack.
+ *
+ * Its own name because three places ask it and none of them wants the rest of the
+ * allowance: the rider that prints on a card, the spend that takes it off, and the
+ * note written onto the tracker row.
+ */
+export function movesReachSpecial(talents) {
+  return moveAllowance(talents).special;
+}
+
+/**
+ * Whether a Martial Move waiting on the tracker rides *this* card.
+ *
+ * The one place the narrowing lives, so what a card prints and what a swing spends
+ * cannot come apart. `trickRides` in tricks.js is the same function for the other
+ * rider system, written the same way and for the same reason.
+ */
+export function moveRides(card, special = false) {
+  return special ? isWeaponAttack(card) : isPlainAttack(card);
 }
 
 /* ------------------------------------------------------------- the riders */
@@ -257,32 +312,47 @@ export function pendingCount(effects) {
  * Empowered adds a die each time and Elevate grows the die each time, capped at a
  * d12 where the number is actually printed. So all three simply add up.
  *
- * Only on a weapon attack, and on either of the two a weapon teaches: "it just
- * apply to both". `isWeaponAttack` is the broad test and a move reads it, where an
- * ambush reads the narrow one. A reload and a Shield Block are tagged Weapon
- * *Move* and carry nothing at all.
+ * Only on the attack the moves actually name. Every Martial Move in the codex
+ * says "your next Weapon Attack", which is the plain one, and a rank can widen
+ * that to the special one: `special` is what `moveAllowance` answers. A reload
+ * and a Shield Block are tagged Weapon *Move* and carry nothing either way. See
+ * "which attack" at the top of this file.
  */
-export function moveRider(effects, card) {
-  if (!isWeaponAttack(card)) return null;
+export function moveRider(effects, card, special = false) {
+  if (!moveRides(card, special)) return null;
 
   let advantage = 0;
   let empower = 0;
   let elevate = 0;
   const names = [];
   const advantaged = [];
+  const sources = [];
 
   for (const { card: move } of pendingMoves(effects)) {
     const gain = Math.max(0, Number(move.rides?.advantage) || 0);
+    const die = Math.max(0, Number(move.rides?.empower) || 0);
+    const step = Math.max(0, Number(move.rides?.elevate) || 0);
+
     advantage += gain;
-    empower += Math.max(0, Number(move.rides?.empower) || 0);
-    elevate += Math.max(0, Number(move.rides?.elevate) || 0);
+    empower += die;
+    elevate += step;
     names.push(move.name);
     // Separately, because the arrow credits only what is bending the roll while
     // the line beside the attack names everything that is riding it.
     if (gain > 0) advantaged.push(move.name);
+
+    /* And the receipt. One row a move, because two moves riding one swing are two
+       sources and the reader is entitled to know which of them bought which die.
+       A move that only *names* something (WOUND, MOMENTUM) writes no row: it is
+       riding the attack without changing a number, and `ridingLine` is where that
+       belongs. See attribution.js. */
+    const row = sourceRow(move.name, { advantage: gain, empower: die, elevate: step });
+    if (row) sources.push(row);
   }
 
-  return names.length > 0 ? { advantage, empower, elevate, names, advantaged } : null;
+  return names.length > 0
+    ? { advantage, empower, elevate, names, advantaged, sources }
+    : null;
 }
 
 /**
@@ -324,11 +394,19 @@ export function effectAdvantage(effect) {
  * The effects list with every Martial Move rider taken off it, or null if none
  * was.
  *
- * No card, unlike `spendTricks`. A move rides both of the two attacks a weapon
- * teaches, so whichever one was paid for is the one that spent it, and the caller
- * has already established that a weapon attack is what was paid for.
+ * **It takes the card now**, exactly the way `spendTricks` always has. It used to
+ * take none, and that one missing argument was the whole of the 2026-08-21 ruling:
+ * a move rode either of a weapon's two attacks, so whichever was paid for spent
+ * it and there was nothing to check. Now a move rides the attack its own card
+ * names, so a Cleave has to leave a RECKLESS sitting on the tracker waiting for
+ * the swing it was bought for.
+ *
+ * Same law as the printing half, through the same `moveRides`, so the card that
+ * showed the arrow is the card that takes it off.
  */
-export function spendMoves(effects) {
+export function spendMoves(effects, card, special = false) {
+  if (!moveRides(card, special)) return null;
+
   const list = rows(effects);
   const kept = list.filter((row) => !(row && typeof row === 'object' && row.move));
   return kept.length === list.length ? null : kept;
@@ -343,10 +421,15 @@ export function spendMoves(effects) {
  * two attacks is the swing that takes it, and that it goes whether or not the
  * swing lands.
  */
-export function moveEffect(card, talent = null) {
+export function moveEffect(card, talent = null, special = false) {
   return {
     name: card.name,
-    note: 'Rides your next weapon attack, special or not. Spent the moment you swing.',
+    /* What it rides, said the way this character's rank actually has it. A note
+       promising a special attack to somebody whose moves do not reach one is the
+       row lying about the thing it is there to remind you of. */
+    note: special
+      ? 'Rides your next weapon attack, special or not. Spent the moment you swing.'
+      : 'Rides your next plain Weapon Attack, not a special one. Spent the moment you swing.',
     turns: null,
     until: null,
     from: talent?.name ? `${talent.name} · Martial Move` : 'Martial Move',
@@ -461,7 +544,11 @@ export function weaponRiders(character, talents = character?.talents) {
       defense += gains.defense;
       elevate += gains.elevate;
       perMove += gains.perMove;
-      from.push({ talent, ...gains });
+      /* `name` is the card the grant is, which is what a reader can look up, and
+         it falls back to the set for a grant that never named one. The set is kept
+         beside it because the arrow badge has always credited the set and there is
+         no reason to move that: a 20-pixel arrow wants the shorter word. */
+      from.push({ talent, name: grant.from ?? talent.name, ...gains });
     }
   }
 
@@ -511,7 +598,12 @@ export function martialDefense(character) {
  */
 export function attackModifiers(character, card, base) {
   const trick = trickRider(character?.effects, card);
-  const moves = moveRider(character?.effects, card);
+  /* Whether this character's moves reach a Special Weapon Attack. Asked once for
+     the whole fold rather than inside `moveRider`, because the same answer decides
+     what prints here and what the swing spends in combatBar.js, and the two must
+     never disagree. See "which attack" at the top of this file. */
+  const special = movesReachSpecial(character?.talents);
+  const moves = moveRider(character?.effects, card, special);
   const swings = isWeaponAttack(card);
   const worn = swings ? weaponRiders(character) : null;
   /* And the Pact of Ordenance's weapon, when it is the thing being swung. The
@@ -526,12 +618,22 @@ export function attackModifiers(character, card, base) {
      `weaponRiders` because it hangs on the *shape you are in* and not on the tag
      of the thing in your hand — see feralRiders in feral.js. */
   const hide = swings ? feralRiders(character) : null;
-  /* And whatever is on the tracker. GIANT GROWTH grants Empowered and KINDLE
-     WEAPON changes what the blade is made of, and neither of them cares whose
-     card it was: a row on the block bends the swing under it. Read on every
-     attack rather than only a weapon one, because a spell attack is an attack and
-     "granting it Empowered" names no weapon. See riders.js. */
-  const running = effectRiders(character?.effects);
+  /* And whatever is on the tracker. GIANT GROWTH grants Empowered and it does not
+     care whose card it was: a row on the block bends the card under it. Read on
+     every attack rather than only a weapon one, because a spell attack is an
+     attack and "granting it Empowered" names no weapon.
+
+     **Only on a card there is something to bend.** Empowered and Elevate are
+     both about damage dice, so a card that rolls none has nothing for them to do:
+     a RECKLESS waiting on the tracker is not itself Empowered by a GIANT GROWTH,
+     and neither is a Healing Potion. `damage` is the field that answers it, and
+     every card in the codex that deals any carries one.
+
+     `weapon` is the second narrowing and there is exactly one card in it: KINDLE
+     WEAPON changes what the *blade* is made of, so on anything that is not a
+     weapon attack it is skipped rather than folded. See riders.js. */
+  const bendable = swings || (card?.damage ?? []).length > 0;
+  const running = bendable ? effectRiders(character?.effects, { weapon: swings }) : null;
   const laid = running && bendsSwing(running) ? running : null;
   const passive =
     (Number(worn?.advantage) || 0) +
@@ -604,6 +706,12 @@ export function attackModifiers(character, card, base) {
     /* And where it came from, so the badge can say. An arrow with a 3 in it and no
        explanation is a number the reader has to go and reconstruct. */
     advantageFrom: advantageSources(worn, moves, hide, trick, laid, bound),
+    /* And the same question asked about every other number on the card, itemised.
+       The badge above has room for a list of names and this has room for what each
+       of them actually did, which is what the use prompt prints under the two
+       ways. "Everything that is modified need to be seen but only what modifies
+       it", 2026-08-28. See attribution.js. */
+    sources: attackSources({ base, worn, hide, bound, laid, moves, trick, character }),
     /* The pact's best-attribute rule, riding the swing the way a loadout's
        `cast` rides a spell. Only when the pact lends one: nothing else on this
        path moves a card's attribute, and `modifiers.stat` wins over the card's
@@ -619,6 +727,74 @@ export function attackModifiers(character, card, base) {
 /** A character's Instinct, floored — what a Trickster's lent damage is worth. */
 function instinctOf(character) {
   return Math.floor(Number(character?.instinct) || 0);
+}
+
+/**
+ * Every source changing this attack, itemised and named.
+ *
+ * `advantageSources` above answers the same question about one number, in names
+ * only, because the badge it feeds is a 20-pixel arrow. This answers it about all
+ * of them and says what each source did, for the one place that has the room.
+ *
+ * The order is the order a player would explain it in, and it is deliberately not
+ * the order the sums are written in above: **what you carry, then what you are,
+ * then what you paid for.** The blade and its workings first, because that is the
+ * thing in your hands; the sets and the bargain next, because those are true of
+ * you whatever you are holding; the form after; then the two riders you bought
+ * this turn, which are the only rows that will not be there next turn.
+ *
+ * Every row comes back through `sourceRow`, so a source that lent this attack
+ * nothing is never credited on it. A Duelist's AGILE grants a point of Defense
+ * for the same Finesse weapon that DEXTEROUS lends an arrow for, and only one of
+ * those two is changing the swing.
+ */
+function attackSources({ base, worn, hide, bound, laid, moves, trick, character }) {
+  /* PERFECT TECHNIQUE is the one rider whose number is not its own: "each Martial
+     Move on the attack Empowers its damage by 1", so what it is worth depends on
+     how many moves are riding. Worked out here the same way the sum above works
+     it out, off the same two values. */
+  const riding = moves?.names?.length ?? 0;
+
+  const held = (worn?.from ?? []).map((row) =>
+    sourceRow(row.name ?? row.talent?.name, {
+      advantage: row.advantage,
+      elevate: row.elevate,
+      empower: (Number(row.perMove) || 0) * riding,
+    })
+  );
+
+  const sworn = bound?.sources ?? [];
+
+  const shape = (hide?.from ?? []).map((row) =>
+    sourceRow(row.talent?.name, { advantage: row.advantage, empower: row.empower })
+  );
+
+  /* The tracker, named after the row rather than the card, because that is the
+     name the player will go looking for on block 6. */
+  const tracked = (laid?.from ?? []).map(({ name, rider }) =>
+    sourceRow(name, {
+      advantage: rider.advantage,
+      disadvantage: rider.disadvantage,
+      empower: rider.empower,
+      elevate: rider.elevate,
+      damage: rider.damage,
+    })
+  );
+
+  /* A Trickster's rider is one row however many were laid, because `trickRider`
+     has already summed them and its `flat` is a multiplier on Instinct rather
+     than a number: the same fold the `bonus` above does. */
+  const stolen = trick
+    ? [
+        sourceRow((trick.advantaged ?? [])[0] ?? 'A trick you bought', {
+          advantage: trick.advantage,
+          elevate: trick.elevate,
+          bonus: (Number(trick.flat) || 0) * instinctOf(character),
+        }),
+      ]
+    : [];
+
+  return mergeSources(base?.sources ?? [], held, sworn, shape, tracked, moves?.sources ?? [], stolen);
 }
 
 /**

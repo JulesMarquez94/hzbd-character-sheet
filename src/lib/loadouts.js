@@ -43,6 +43,7 @@
  * hold one day, and what it may hold tonight. See `allowanceAt`.
  */
 
+import { sourceRow } from './attribution.js';
 import { compareCards } from './cardOrder.js';
 import { castModifier } from './cardText.js';
 import { CARDS } from './weapons.js';
@@ -195,6 +196,17 @@ export function allowanceAt(spec, rank, level = 1, held = 0, grant = 0) {
  */
 export function loadoutModifiers(spec, rank) {
   const riders = { ...(castModifier(spec) ?? {}) };
+  /* Every rider on this object, itemised and named, for the one place with room
+     to print all of it. "if my spells are empowerd because of talents I should
+     see", 2026-08-28: a set that Empowers a whole spellbook used to move the
+     number on fifty cards and appear on none of them. See attribution.js. */
+  const sources = [];
+
+  /* The attribute a set casts off, which is not a number and changes every roll
+     on every card in the pool. Credited to the set, since that is the only name
+     a reader can look up. */
+  const cast = sourceRow(spec?.label, { stat: riders.stat });
+  if (cast) sources.push(cast);
 
   const empower = Math.max(0, Math.floor(Number(spec?.boost?.empower?.[rank]) || 0));
   const advantage = Math.max(0, Math.floor(Number(spec?.boost?.advantage?.[rank]) || 0));
@@ -205,6 +217,9 @@ export function loadoutModifiers(spec, rank) {
        reader with two sources of advantage needs to know which came off. */
     riders.advantageFrom = [spec.boost.from ?? spec.label];
   }
+
+  const boost = sourceRow(spec?.boost?.from ?? spec?.label, { empower, advantage });
+  if (boost) sources.push(boost);
 
   /* And what a rank takes *off* a card, which is the same shape running the other
      way. PERFECT CASTING is the first of them: "Spells from your spellbook cost 1
@@ -225,7 +240,12 @@ export function loadoutModifiers(spec, rank) {
     riders.apCut = cut;
     riders.apFloor = Math.max(0, Math.floor(Number(spec.discount.floor) || 0));
     riders.apCutFrom = [spec.discount.from ?? spec.label];
+
+    const saved = sourceRow(spec.discount.from ?? spec.label, { apCut: cut });
+    if (saved) sources.push(saved);
   }
+
+  if (sources.length > 0) riders.sources = sources;
 
   return Object.keys(riders).length > 0 ? riders : null;
 }

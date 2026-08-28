@@ -13,6 +13,7 @@ import { cardAccent } from '../../lib/tagColors.js';
 import { getCard } from '../../lib/weapons.js';
 import { effectAdvantage } from '../../lib/moves.js';
 import { riderLine } from '../../lib/riders.js';
+import { sourceWords } from '../../lib/attribution.js';
 import { triggerLine } from '../../lib/onUse.js';
 import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.js';
 
@@ -78,21 +79,37 @@ import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.j
  * so the player knows what they are signing up for, and combatTurn.js goes on
  * tracking it as the running effect it is.
  *
- * ------------------------------------------------------- what is already on you
- * And under the two ways, **everything currently running**. "when you click on
- * the quick bar button to use an action, it should list all the active effect on
- * under the use buttons", 2026-08-28.
+ * ------------------------------------------------------------ who did this to it
+ * And under the two ways, **every source changing this card, and what each one
+ * changed.** Jules, 2026-08-28, testing: "My finesse pact bound weapon as two
+ * adventage and on the action view I dont see the source. It is also empowred and
+ * I dont see the source below the action buttons. Everything that is modified need
+ * to be seen but only what modifies it. So if my spells are empowerd because of
+ * talents I should see on the side below the action buttons. No exceptions."
  *
- * This is the moment it matters. Half of what the tracker holds changes the thing
- * you are about to do: an arrow on the roll, a die on the damage, a Speed that is
- * not the Speed printed on block 1. All of it was on another block, behind the
- * dialog you are looking at. So the list comes to the decision instead: what is
- * running, how long it has left, and what it is doing to this sheet, each row in
- * its own school's colour so it can be matched to the block behind.
+ * The sheet always folded these in correctly and almost never said whose they
+ * were. The arrow in a card's corner carries names and has room for nothing else;
+ * an Empowered die carried not even that. So every fold keeps a receipt now, they
+ * ride on the modifiers object as `sources`, and this is where they are read. See
+ * attribution.js, which is where the shape lives.
  *
- * It is a reminder and not a control. Nothing here is spent, dropped or nudged.
- * The block is where a tracker is edited, and a dialog that let you edit one
- * while paying for something else would be two decisions wearing one Cancel.
+ * "only what modifies it" is the other half and the harder one. A Duelist's AGILE
+ * grants a point of Defense for the same Finesse weapon DEXTEROUS lends an arrow
+ * for, and a list crediting AGILE on an attack would be pointing at a number that
+ * never moved. So a row is written where a source actually gave something to
+ * *this* card, and nowhere else.
+ *
+ * ------------------------------------------------------- what else is on you
+ * Under that, the rows on the tracker the list above did not account for. "it
+ * should list all the active effect on under the use buttons", the day before.
+ * Half of what the tracker holds changes the thing you are about to do and is
+ * credited above; the other half is a Grappled or a mark somebody laid on you,
+ * which changes no number here and is still worth having in front of you at the
+ * moment you decide. Nothing is printed twice.
+ *
+ * Both lists are reminders and not controls. Nothing here is spent, dropped or
+ * nudged. The block is where a tracker is edited, and a dialog that let you edit
+ * one while paying for something else would be two decisions wearing one Cancel.
  *
  * ------------------------------------------------------ and what this one starts
  * Above them, when the card lasts, the row this use is about to write. A sheet
@@ -177,6 +194,19 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
     () => normalizeEffects(character?.effects).filter((effect) => effect.turns !== 0),
     [character?.effects]
   );
+
+  /* Everything changing this card, itemised and named. Built where the numbers
+     are folded rather than reconstructed here, so the list and the card beside it
+     can never disagree about what is on the swing. See attribution.js. */
+  const sources = useMemo(() => request.modifiers?.sources ?? [], [request.modifiers]);
+
+  /* And what is running that this list has not already accounted for. A row
+     credited above is a row the reader has read: printing it twice under two
+     headings is the sheet padding itself. */
+  const aside = useMemo(() => {
+    const credited = new Set(sources.map((row) => row.from));
+    return running.filter((effect) => !credited.has(effect.name));
+  }, [running, sources]);
   const lasts = useMemo(() => castLine(request), [request]);
   /* And what the card writes on its own, for the two that write anything. See
      useTriggers.js: a sheet that quietly rewrites six columns because you drank
@@ -452,15 +482,32 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
             </p>
           )}
 
-          {/* And what is already on you. See the note at the top: this is the
-              moment half of it matters, and until now all of it was behind this
-              dialog. */}
-          {running.length > 0 && (
+          {/* Everything that is changing this card, named. The first list is the
+              one that matters and it is exhaustive on purpose: an arrow with a 2
+              in it and no account of where it came from is a number the reader has
+              to reconstruct. See the note at the top and attribution.js. */}
+          {sources.length > 0 && (
+            <div className="use-sources">
+              <span className="use-sources-head">Changing this · {sources.length}</span>
+              {sources.map((row, at) => (
+                <div className="use-source-row" key={`${row.from}-${at}`}>
+                  <span className="use-source-from">{row.from}</span>
+                  <span className="use-source-gives">{sourceWords(row.gives)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* And what else is on you that this card is not being changed by. Only
+              the rows the list above has not already credited, so nothing is said
+              twice: a KINDLE WEAPON is up there lending a die, and a Grappled is
+              down here doing nothing to a spell and still worth knowing about. */}
+          {aside.length > 0 && (
             <div className="use-running">
               <span className="use-running-head">
-                Running on you · {running.length}
+                Also running · {aside.length}
               </span>
-              {running.map((effect) => (
+              {aside.map((effect) => (
                 <RunningRow key={effect.id} effect={effect} />
               ))}
             </div>
