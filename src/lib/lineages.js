@@ -151,10 +151,18 @@
  * `{{Dragon Breath}}` link exists today, and one written now would resolve to the
  * ally's card, because that is the one the registry sees first.
  *
- * What a lineage card *says* and what the sheet *computes* are still two
+ * What a lineage card *says* and what the sheet *computes* used to be two
  * different things, exactly as they were under V4: only the three attribute
- * grants below are declared, and Defense, Willpower, Health per level and
- * Movement Speed are printed and not yet wired. See data/README.md.
+ * grants below were declared, and Defense, Willpower, Health per level and
+ * Movement Speed were printed and not read by anything.
+ *
+ * **A card can carry its own number now.** `grants` on a card is the sentence
+ * written as a rider, and `lineageGrantSources` below hands the lot to
+ * `deriveStats` and to the Speed tile's own math line. WIND GRACE is the first
+ * and so far only card to use it: its 1.5 metres are 1.5 metres. MINERAL SKIN
+ * and SCALEY's Defense, INNER TIDE's Willpower, WILD SWIFTNESS's own 1.5 metres
+ * and the four cards that change Health per level are one `grants` each away and
+ * are still printed only. See data/README.md.
  *
  * --------------------------------------------------------------- card text
  * Card bodies use the same markers as every other card — see the header of
@@ -535,6 +543,11 @@ const LINEAGE_CODEX = [
         id: 'wind-grace',
         name: 'Wind Grace',
         summary: 'Movement Speed +1.5 meters.',
+        /* And the tile moves. "Permanently increased by 1.5 meters" names a
+           number this sheet holds, so it is declared here as well as printed,
+           which is the same trade STRONG's Physique made. See
+           `lineageGrantSources` below. */
+        grants: { speed: 1.5 },
         body: 'Your Movement Speed is permanently increased by **1.5 meters (5 feet)**.',
       }),
       INNATE_WIND,
@@ -870,6 +883,63 @@ export function lineageCards(lineage, choices) {
     const learned = learnedFrom(card, choices);
     return learned ? [mine, { card: learned, modifiers: castModifier(card.choice) }] : [mine];
   });
+}
+
+/**
+ * What this character's blood does to the sheet's own numbers, one row per card
+ * that does anything, named after the card.
+ *
+ * A lineage card has always said its piece in prose and left the sheet to print
+ * it and nothing else: WIND GRACE read "+1.5 meters" and the Speed tile never
+ * moved. `grants` is that sentence written as a number, carried on the card that
+ * prints it, so the two can never drift apart.
+ *
+ * Named after the card rather than the ancestry, because the card is the thing a
+ * reader can go and look at. A Skybound's Speed hovers to `3 base + 2 half your
+ * Instinct + 1.5 Wind Grace`, not to `1.5 Skybound`.
+ *
+ * The rows come back in the shape `grantTerms` in statMath.js already draws an
+ * enchantment with, which is why that file can hand these to it unchanged.
+ *
+ * **Attributes are not in here.** A lineage's three attribute grants are the
+ * level ledger's, declared on the ancestry as `attributes` and rebuilt by
+ * `reapplyTotals` into the stored columns. A card that raised one from here
+ * would raise it twice.
+ *
+ * A Wildkin's hand is the two they kept, so this reads `lineageCards` rather
+ * than `lineage.cards`: a pool card with a rider is worth nothing until it has
+ * been taken, and worth its rider the moment it is.
+ */
+export function lineageGrantSources(key, choices) {
+  const lineage = getLineage(key);
+  if (!lineage) return [];
+
+  return lineageCards(lineage, choices)
+    .map(({ card }) => card)
+    .filter((card) => card.grants)
+    .map((card) => ({ name: card.name, ...card.grants }));
+}
+
+/**
+ * The same rows summed per field, which is the shape `deriveStats` reads.
+ *
+ * Whatever a card declares lands in the map whether or not anything reads it
+ * yet, so wiring the next one is a `grants` on the card and, if the stat is not
+ * already summed through `flat`, one word where it is. WIND GRACE's Speed is the
+ * only rider declared today; MINERAL SKIN's Defense, INNER TIDE's Willpower and
+ * the four cards that change Health per level are still printed and not wired.
+ * See data/README.md.
+ */
+export function lineageGrants(key, choices) {
+  const total = {};
+
+  for (const row of lineageGrantSources(key, choices)) {
+    for (const [field, value] of Object.entries(row)) {
+      if (field === 'name') continue;
+      total[field] = (total[field] ?? 0) + (Number(value) || 0);
+    }
+  }
+  return total;
 }
 
 /** How many of a pool's picks are still outstanding. Zero when there is no pool. */

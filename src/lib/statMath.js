@@ -86,6 +86,7 @@ import {
 } from './items.js';
 import { feralArmorFrom, feralShieldShare, feralState } from './feral.js';
 import { levelGrants, levelPicksState, lineageBonuses } from './levelPicks.js';
+import { lineageGrantSources } from './lineages.js';
 import { weaponRiders } from './moves.js';
 import { runningRiders } from './riders.js';
 import { spellbookWillpowerFrom } from './spellbook.js';
@@ -495,6 +496,12 @@ export function statMath(character) {
   const speedTerms = [
     term(3, 'base'),
     term(i / 2, 'half your Instinct'),
+    /* What their blood is worth, named after the card that carries it: a
+       Skybound reads `3 base + 2 half your Instinct + 1.5 Wind Grace`. Drawn with
+       the same helper an enchantment is, because `lineageGrantSources` hands back
+       the same shape. Unfloored, for the same reason the enchantment line is: 1.5
+       metres is a real distance and 1 is the wrong one. */
+    ...grantTerms(lineageGrantSources(character.lineage, character.choices), 'speed', false),
     ...grantTerms(sources, 'speed', false),
   ];
   let speedRaw = speedTerms.reduce((total, row) => total + row.value, 0);

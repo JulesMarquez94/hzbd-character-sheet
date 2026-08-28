@@ -129,6 +129,30 @@ const SHEETS = [
     },
   },
   {
+    /* The one lineage card that moves a stat rather than an attribute. WIND
+       GRACE is +1.5 metres of Movement Speed, and the Speed line has to name it:
+       a rider `deriveStats` adds and `statMath` does not know about reads as
+       `unaccounted` on the tile, which is the exact drift this script exists to
+       catch. The half metre is the other half of it. Every other term on this
+       sheet is a whole number, and a line that floored this one would be a metre
+       short of the tile above it. */
+    name: 'a Skybound, whose blood is worth a metre and a half',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      lineage: 'Skybound',
+    },
+    expect: (math, fail) => {
+      const named = math.speed_m.terms.find((t) => t.label === 'Wind Grace');
+      if (named?.value !== 1.5) fail(`Wind Grace is worth ${named?.value ?? 0}, want 1.5`);
+
+      const line = mathLine(math.speed_m);
+      if (line !== '3m base + 5m half your Instinct + 1.5m Wind Grace = 9.5m') {
+        fail(`Speed reads "${line}"`);
+      }
+    },
+  },
+  {
     name: 'a Master Trickster with a creature on the board',
     row: {
       xp: 44000,

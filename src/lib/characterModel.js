@@ -18,6 +18,7 @@ import { martialDefense } from './moves.js';
 import { feralArmor, feralShieldShare } from './feral.js';
 import { spellbookWillpower } from './spellbook.js';
 import { effectRiders, riderShift } from './riders.js';
+import { lineageGrants } from './lineages.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -325,6 +326,13 @@ export function normalizeGridColumns(value) {
  * `liveCharacter` passes it, and only for what the sheet *shows*. See
  * enchanting.js.
  *
+ * **And so does a lineage card.** WIND GRACE says a Skybound's Movement Speed is
+ * permanently 1.5 metres longer, and until 2026-08-27 the Speed tile disagreed.
+ * A card carrying `grants` is read here through `lineageGrants`, which is a
+ * fourth source and stacks like one: blood and a ring are not the same source.
+ * Permanent, so `syncDerived` bakes it into the stored column the way it bakes in
+ * a breastplate. See lineages.js.
+ *
  * `running` is the third kind, and the newest: what is on the *tracker*. A card
  * whose printed text names a number this sheet holds moves that number for as
  * long as its row is on the block, whoever cast it. Same contract as `extra` and
@@ -349,11 +357,25 @@ export function deriveStats(character, extra = null, running = null) {
   const m = (Number(mind) || 0) + add('mind');
   const lvl = Number(level) || 1;
 
-  /* The flat riders, worn and running, summed once each. `extra` is only ever
-     the ephemeral half; the worn half is already in `worn`. And `running` is
-     whatever is on the tracker, which is a third source and adds like one. */
+  /* And what their blood is worth. A lineage card that names a number this sheet
+     holds moves that number, the same way a worn enchantment does: WIND GRACE's
+     "permanently increased by 1.5 meters" is 1.5 metres of Movement Speed rather
+     than a sentence the table has to remember. Read off the ancestry *and* the
+     choices bag, because a Wildkin's riders are the two cards they kept.
+
+     Attributes are deliberately not in it. Those are the level ledger's, and
+     `reapplyTotals` has already put them in the three columns `add` reads. See
+     lineageGrants in lineages.js. */
+  const blood = lineageGrants(character?.lineage, character?.choices);
+
+  /* The flat riders, blood, worn and running, summed once each. `extra` is only
+     ever the ephemeral half; the worn half is already in `worn`. And `running` is
+     whatever is on the tracker, which is a fourth source and adds like one. */
   const flat = (key) =>
-    (worn[key] ?? 0) + (Number(extra?.[key]) || 0) + (Number(running?.[key]) || 0);
+    (worn[key] ?? 0) +
+    (blood[key] ?? 0) +
+    (Number(extra?.[key]) || 0) +
+    (Number(running?.[key]) || 0);
 
   const health_max = Math.floor(10 * lvl + 10 * p) + Math.floor(flat('healthMax'));
   const reflex = Math.floor(p + i);

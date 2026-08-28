@@ -3262,6 +3262,10 @@ printed on the card and not read by the sheet.** That is exactly where V4 left
 them, so nothing regressed, but the list is longer now and INNER TIDE's +4 is the
 largest number on it.
 
+> **Amended 2026-08-28.** WIND GRACE is off this list. A lineage card can carry a
+> `grants` rider now, and that one does. The other six are unchanged and are one
+> line each. See [Wind Grace moves the tile](#wind-grace-moves-the-tile-2026-08-28).
+
 ### Two ids came free
 
 **`resilience` and `create-water` are no longer held by a lineage trait.** Both
@@ -8692,3 +8696,170 @@ fixed and all covered by the smoke test:
   for a reshape to heal the record.
 - **Backing out of a boon's card wall returns to the claim ladder** instead of
   closing the whole claim window; only a pick made closes it.
+
+## The bag ladder, redrawn, 2026-08-28
+
+Handed over in chat, two sentences:
+
+> "redo naming scheme for the bags, starting uncommon it should be magic. The
+> wieght should be form lowest to highest 5- 10-15-20-30-40-50. And price 20x the
+> weigh they add."
+
+| What | Where it landed |
+| ---- | --------------- |
+| 7 bags on a fixed ladder, replacing 6 | `src/lib/bags.js` |
+| Every price off the capacity | the same, typed per bag |
+
+### Seven rungs, and one number sets the price
+
+Seven capacities were named and there were six bags, so the shelf grew by one.
+Fives to twenty and tens after:
+
+| Rarity | Bag | Holds | Weighs | Costs |
+| ------ | --- | ----- | ------ | ----- |
+| Common | Canvas Satchel | 5 kg | 0.4 kg | 100 |
+| Common | Leather Rucksack | 10 kg | 1.5 kg | 200 |
+| Common | Ash Frame | 15 kg | 3 kg | 300 |
+| Uncommon | Twofold Pocket | 20 kg | 1.2 kg | 400 |
+| Rare | Threefold Pocket | 30 kg | 0.9 kg | 600 |
+| Epic | Fivefold Pocket | 40 kg | 0.6 kg | 800 |
+| Legendary | Ninefold Pocket | 50 kg | 0.3 kg | 1000 |
+
+    cost = 20 x capacity
+
+No rung surcharge and no rarity multiplier, unlike the potion shelf: you said the
+price is the weight it adds, so the price is the weight it adds. A bag is worth
+exactly what it lets you carry, and the Legendary one costs a fifteenth of what
+the old Legendary one did.
+
+### Three Commons, because the count forces it
+
+"Starting uncommon it should be magic" puts the first magic bag on the Uncommon
+rung. There is one rarity below Uncommon and five in all, so seven capacities
+into five rarities has only one solution: **three Commons and then one apiece.**
+Nothing was chosen there, it was counted.
+
+### The naming scheme
+
+The break at Uncommon is the scheme, and both halves are named off it.
+
+**Craft, at Common.** Material and form, the plainest word for each: Canvas
+Satchel, Leather Rucksack, Ash Frame. What a market town sells.
+
+**Magic, from Uncommon up.** One family, and the number in the name is the
+ladder: a Pocket is a pouch folded through itself, and how many times says how
+much is behind the seam. Twofold, Threefold, Fivefold, Ninefold. That is the
+Ninefold Pocket's own lore promoted to a naming rule, since it already read
+"folded through itself nine times" and was the only bag on the shelf explaining
+what it was.
+
+The two halves run opposite ways on the third column. A craft bag gets
+**heavier** as it grows, because more room is more canvas. A Pocket gets
+**lighter**, because the deeper it folds the less of it is actually here. A
+Ninefold holds fifty kilos at three hundred grams; an Ash Frame holds fifteen and
+takes three of them back. That gap is the argument for the magic half, and it is
+why the craft three are a worse deal than their capacity first suggests.
+
+### The tag is `Relic`, which the codex already had
+
+`Relic` is this codex's word for a piece that is magic without anybody having
+worked it, and the belt was already using it: the Terra Cotta Disk and the
+Druidic Tome carry it. The four Pockets take the same word rather than a new one,
+so the item browser gains one chip that cuts the shelf in half instead of a
+seventh vocabulary term.
+
+**No Magic Burden, and becoming magic did not change that.** What costs Burden is
+a *working*, laid at a forge or at a rest. A Pocket is folded, the way a Relic is
+found rather than made, and both Relics on the belt carry none either. The Runed
+armor set settled the shape of that argument already.
+
+### Three ids retired
+
+| Was | Now |
+| --- | --- |
+| `porters-frame`, Porter's Frame, Uncommon, 22 kg | `ash-frame`, Ash Frame, **Common**, 15 kg |
+| `quartermasters-pack`, Quartermaster's Pack, 35 kg | `threefold-pocket`, Threefold Pocket, 30 kg. Its ledger lore moved with it |
+| `hollowed-satchel`, Hollowed Satchel, 55 kg | `fivefold-pocket`, Fivefold Pocket, 40 kg. Its "do not climb in" rule moved with it |
+
+The Porter's Frame is the one that had to move rather than the one that happened
+to. It was Uncommon and its own blurb said "nothing magic about it", which is
+precisely the row your sentence outlaws: it cannot sit above the line that says
+magic starts here. It is Common now and keeps every word.
+
+`canvas-satchel`, `leather-rucksack` and `ninefold-pocket` kept their ids. An id
+is what a saved character points at, so **a sheet wearing one of the three
+retired bags finds its bag slot empty** and its carry ceiling back down to
+Physique alone. Nothing throws: `heldItem` hands back null for an id the codex
+has lost, and the slot reads as empty. The Canvas Satchel keeping both its id and
+its 5 kg is also what keeps the two carry fixtures in `check-stat-math.mjs`
+honest, since their arithmetic is written against a 40 kg ceiling.
+
+## Wind Grace moves the tile, 2026-08-28
+
+Handed over in the same message:
+
+> "Wind Grace should properly increase movement speed."
+
+| What | Where it landed |
+| ---- | --------------- |
+| `grants` on a lineage card | `src/lib/lineages.js`, on WIND GRACE |
+| The two readers that turn it into a number | `lineageGrantSources`, `lineageGrants`, same file |
+| The stat it moves | `deriveStats` in `src/lib/characterModel.js` |
+| The line the tile prints | `statMath` in `src/lib/statMath.js` |
+| The sheet that proves it | `scripts/check-stat-math.mjs`, one of 14 |
+
+### What was wrong
+
+Nothing was broken, exactly. WIND GRACE printed "Your Movement Speed is
+permanently increased by 1.5 meters (5 feet)" and the Speed tile ignored it,
+which is where [What is printed and not yet
+wired](#what-is-printed-and-not-yet-wired) said it stood. A Skybound's Speed read
+5 and should have read 6.5.
+
+### A card can carry its own number now
+
+The fix is not a special case for one card. A lineage card may carry a `grants`
+map, and `lineageGrantSources` walks the cards this character actually holds and
+hands back one row per card that has one:
+
+    grants: { speed: 1.5 }    on WIND GRACE, and nowhere else yet
+
+Two things follow from where that walk reads. It goes through `lineageCards`
+rather than `lineage.cards`, so **a Wildkin's pool card would count only once it
+has been taken** and would count the moment it is. And a row is named after the
+card rather than the ancestry, because the card is what a reader can go and look
+at:
+
+    3m base + 2m half your Instinct + 1.5m Wind Grace = 6.5m
+
+That is the shape `grantTerms` already drew an enchantment with, which is why
+statMath.js hands these rows to it unchanged rather than growing a second helper.
+
+**Attributes are deliberately not sayable this way.** A lineage's three attribute
+grants are the level ledger's, declared on the ancestry as `attributes` and
+rebuilt into the columns by `reapplyTotals`. A card that raised one from `grants`
+would raise it twice.
+
+**It stacks like a fourth source.** Blood, a worn working, an ephemeral hour and
+a card on the tracker are four different sources, so the same-source law never
+touches this. And it is permanent, so `syncDerived` bakes it into the stored
+`speed_m` column the way it bakes in a breastplate's Armor.
+
+### The six still printed only
+
+WIND GRACE was one of seven. The rest are left alone, because you named one card:
+
+| Card | Says | Would be |
+| ---- | ---- | -------- |
+| WILD SWIFTNESS | Movement Speed +1.5 meters | `{ speed: 1.5 }`, which `flat` already reads |
+| MINERAL SKIN | Defense +1 | `{ armor: 1 }` |
+| SCALEY | Defense +1 | `{ armor: 1 }` |
+| INNER TIDE | Willpower +4 | `{ willpowerMax: 4 }` |
+| FEY BLOOD, UNDEATH RESILIENCE, HEARTHY | Health per level, not a lump | a rider `flat` has no field for |
+
+The first four are one line apiece and a fixture each in `check-stat-math.mjs`.
+**WILD SWIFTNESS is the one worth a ruling**, because it is the same 1.5 metres
+on a Wildkin's pool card, and the two cards now disagree about whether the sheet
+believes them. The last three are a different shape: they change the *rate*
+Health is bought at rather than adding a lump to it, and nothing on the sheet can
+hold that yet.
