@@ -80,6 +80,9 @@ export default function SiteMenu() {
               <NavLink to="/dashboard" className="dropdown-link">
                 My Characters
               </NavLink>
+              <NavLink to="/campaigns" className="dropdown-link">
+                My Campaigns
+              </NavLink>
               <NavLink to="/account" className="dropdown-link">
                 Account Settings
               </NavLink>

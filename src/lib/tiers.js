@@ -106,6 +106,27 @@ export function can(tier, capability) {
   return rankOf(tier) >= rankOf(needed);
 }
 
+/* ------------------------------------------------------------ the ceilings */
+
+/**
+ * How many campaigns each tier may run. A number per tier rather than a
+ * capability, because the question is "how many" and not "may they at all".
+ *
+ * This is what the interface offers; `public.campaign_slots` in
+ * supabase/schema.sql is the same ladder again, behind a trigger, and is what
+ * actually enforces it. Change one and change the other.
+ */
+export const CAMPAIGN_SLOTS = {
+  free: 1,
+  premium: 10,
+  friend: 10,
+  admin: 20,
+};
+
+export function campaignSlots(tier) {
+  return CAMPAIGN_SLOTS[normalizeTier(tier)] ?? CAMPAIGN_SLOTS.free;
+}
+
 /* ----------------------------------------------------------------- the art */
 
 /**

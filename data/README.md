@@ -9391,3 +9391,82 @@ bent number, and a hovered tile still prints its own arithmetic with every
 source named, off `statMath`. The lines sit above the list rather than in it,
 pinned with the head: an accounting line that can scroll out of sight accounts
 for nothing.
+
+## The attacks line comes back off, 2026-08-29
+
+Jules: "The On your attack block is redundant. The tracer already tell you
+that remove that block."
+
+The entry above moved two accounting lines onto the tracker, and one of them
+did not survive the day. "On your attacks" summed what the rows under it were
+already saying: a row that rides a swing wears the arrow and prints what it
+does under its own name, so the copper line was the list repeating itself one
+line up. "On your stats" stays, because the tiles it accounts for sit on other
+blocks and the rows are the only place that can say which card bent them.
+
+`swingShift` lost its one caller and is deleted, along with its copper CSS.
+What a riding row does to an attack is untouched: it still folds into every
+card the sheet prints, through `attackModifiers`.
+
+## The refused move chip counts itself, 2026-08-29
+
+Jules: "When you cannot have more martial move at once it should say 1/1
+active."
+
+A Martial Move chip with no room on the next swing used to wear "No room",
+which named the refusal and hid the arithmetic. It wears the count against the
+allowance now, "1/1 active" for everybody and "2/2 active" for a Master
+Duelist, off the same `canLayMove` answer the refusal has always read. The
+tooltip behind it still says the rule in words, and whose rule it is when a
+set raised the count.
+
+## The campaign manager opens, 2026-08-29
+
+Jules: "Accounts have a new page that is the Campaigns... Then the campaign is
+a page that as several tabs like similar character one. For now we will just
+have Overview and Details."
+
+Two new tables and two new pages. `campaigns` is a row the DM owns outright:
+name, description, thumbnail link, a join code and the Overview tab's own
+`overview_order` and `overview_columns`. `campaign_members` is one row per
+character sitting at the table, its `user_id` written by a trigger from the
+character's real owner rather than trusted from the client. Both live in
+supabase/schema.sql, which has to be re-run in the SQL editor before any of
+this works.
+
+**The Campaigns page** (`/campaigns`, behind the login) is the dashboard's
+grammar again: one card per campaign wearing the thumbnail, the title, the
+sentence and a small rectangle per linked character (face, name, level), a
+dashed Create card and a dashed Join card. How many campaigns an account may
+*run* is the tier's ceiling: 1 free, 10 premium and friend, 20 admin. The
+ladder is `campaignSlots` in src/lib/tiers.js for the interface and
+`public.campaign_slots` behind a trigger for the truth, because the client is
+not trusted with a ceiling. Campaigns you play in sit under the ones you run
+and count against nothing.
+
+**Two ways to a table, deliberately different.** The DM links a character by
+pasting its sheet link, on create or later from Details. A player links
+themselves by redeeming the campaign's join code (`KQ2M-8VXR`, minted by the
+app, dash optional, case ignored) for one of their own characters, through a
+definer function, so holding the code never requires being able to read the
+campaign. The code sits on the Details tab with Copy and New code beside it. A
+new code retires the old one and unlinks nobody.
+
+**The campaign page** (`/campaigns/:id`) wears the sheet's own chrome: the tab
+bar, the canvas, the block grid, the save light for the DM and the Live View
+badge for everyone else. Two tabs for now. **Overview** is one block per
+linked character, blocks 1 and 2 folded into one cell: round portrait, name,
+level, Experience, the two purses, attributes, combat stats, defenses, the
+three bars, the two pools and Karma. A member who controls a creature also
+puts that creature's first page on the grid, read only, drawn by the sheet's
+own MinionStatsBlock. Every number comes off `liveCharacter` and every hover
+off `statMath`, so a block can never disagree with the sheet it mirrors. The
+blocks rearrange from the same arranger the three tabs share, stored on the
+campaign row. **Details** edits everything the campaign has: the three fields,
+the code, the roster with Remove on every row for the DM, and Leave on your
+own row when you are the player.
+
+Nothing on either page ever writes to a character. The party streams in live
+over one `id=in.(...)` subscription, the roster over another, and the campaign
+row itself streams only to those not holding its pen, which is the editor
+guard the sheet already keeps.

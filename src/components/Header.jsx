@@ -17,7 +17,9 @@ import './Header.css';
  * one, folded to the wordmark and the burger.
  */
 function standsDownFor(pathname) {
-  return /^\/characters\/[^/]+\/?$/.test(pathname);
+  // A campaign page carries the same bar a sheet does, so this one stands
+  // down there too.
+  return /^\/characters\/[^/]+\/?$/.test(pathname) || /^\/campaigns\/[^/]+\/?$/.test(pathname);
 }
 
 /** Folded: the wordmark and the burger, and nothing else. */
@@ -91,11 +93,18 @@ export default function Header() {
               </NavLink>
             </li>
             {user ? (
-              <li>
-                <NavLink to="/dashboard" className="nav-link">
-                  Characters
-                </NavLink>
-              </li>
+              <>
+                <li>
+                  <NavLink to="/dashboard" className="nav-link">
+                    Characters
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/campaigns" className="nav-link">
+                    Campaigns
+                  </NavLink>
+                </li>
+              </>
             ) : (
               <li>
                 <span className="nav-link nav-link-locked" title="Sign in to open your character vault">
@@ -123,6 +132,9 @@ export default function Header() {
                 <div className="account-dropdown" role="menu">
                   <Link to="/dashboard" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                     My Characters
+                  </Link>
+                  <Link to="/campaigns" className="dropdown-link" onClick={() => setMenuOpen(false)}>
+                    My Campaigns
                   </Link>
                   <Link to="/account" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                     Account Settings

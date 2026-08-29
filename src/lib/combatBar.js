@@ -351,8 +351,11 @@ function knownGroups(character, locks) {
  * The allowance rides in rather than being asked for per card. One move rides a
  * swing, or two for a Master Duelist, and a chip offered when there is no room is
  * a chip that takes your Willpower and lays nothing. It is shown refused instead,
- * wearing the reason, which is what the belt already does for a flask with no
- * charges left.
+ * which is what the belt already does for a flask with no charges left. The label
+ * is the count against the allowance — "1/1 active", or "2/2 active" for the
+ * Duelist — because this refusal *is* arithmetic ("when you cannot have more
+ * martial move at once it should say 1/1 active", 2026-08-29). The tooltip
+ * behind it still says the rule in words.
  */
 function martialUse(character, card, room) {
   if (!isMartialMove(card)) return {};
@@ -375,7 +378,7 @@ function martialUse(character, card, room) {
         }
       : null,
     spent: !room.ok,
-    spentLabel: 'No room',
+    spentLabel: `${room.waiting}/${room.perAttack} active`,
     spentNote: room.reason,
   };
 }

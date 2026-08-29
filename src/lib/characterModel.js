@@ -17,7 +17,7 @@ import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
 import { feralArmor, feralShieldShare } from './feral.js';
 import { spellbookWillpower } from './spellbook.js';
-import { bendsSwing, effectRiders, riderShift } from './riders.js';
+import { effectRiders, riderShift } from './riders.js';
 import { lineageGrants } from './lineages.js';
 
 export const BLANK_CHARACTER = {
@@ -611,58 +611,12 @@ function attributeWord(key) {
   return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
-/**
- * The other half of the same sentence: what is running on your *attacks*.
- *
- * `liveShift` above accounts for the tiles, and a tile is only half of what a
- * tracked card can bend. GIANT GROWTH doubles a Speed *and* Empowers the damage;
- * KINDLE WEAPON moves no tile at all and changes what the blade is made of. The
- * first half was said out loud and the second half showed up nowhere: it was
- * applied, correctly, to every attack card the sheet printed, and a player who
- * was not looking at an attack card had no way of knowing.
- *
- * So the tracker says it. Not the arithmetic, which belongs on the card that
- * rolls it, but the fact and the name behind it: "your damage is Empowered by 1,
- * and it deals Fire" is enough to know what you are holding. Both halves print
- * on the tracker block, above the rows they are read from — they used to sit on
- * blocks 1 and 2, next to the tiles they bent, until temporary things were
- * confined to the block about the moment. See TurnBlock.jsx.
- *
- * Empty for everyone with nothing riding, which is nearly everyone. See
- * riders.js, which is where the sum is made.
- */
-export function swingShift(character) {
-  const running = effectRiders(character?.effects);
-  if (!running || !bendsSwing(running)) return null;
-
-  /* Advantage and Disadvantage net against each other one for one, which is the
-     rule the arrow on every attack card is already drawn from: two of one and
-     one of the other is one arrow, not three. So they are summed before they are
-     said, and a swing that comes out even says nothing about either. */
-  const arrows = running.advantage - running.disadvantage;
-
-  const said = [];
-  if (arrows !== 0) {
-    const word = arrows > 0 ? 'Advantage' : 'Disadvantage';
-    const count = Math.abs(arrows);
-    said.push(`${word}${count > 1 ? ` x${count}` : ''} on Attack Rolls`);
-  }
-  if (running.empower) said.push(`damage Empowered by ${running.empower}`);
-  if (running.elevate) said.push(`Damage Dice Elevated by ${running.elevate}`);
-  if (running.damage.length > 0) said.push(`dealing ${listAnd(running.damage)}`);
-
-  /* Named, because "+1 die" says nothing about where to take it off and
-     "Kindle Weapon" says everything. The same rule liveShift is written to. */
-  const from = running.from.filter(({ rider }) => bendsSwing(rider)).map(({ name }) => name);
-
-  return said.length > 0 ? { said: said.join(', '), from: listAnd(from) } : null;
-}
-
-/** "Barkskin", "Barkskin and Giant Growth". No Oxford comma. */
-function listAnd(words) {
-  if (words.length <= 1) return String(words[0] ?? '');
-  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
-}
+/* There is no `swingShift` twin accounting for the *attacks*, and there was one
+   for a day: every tracker row that rides a swing already wears its arrow and
+   prints what it does under its own name, so a summary line above the rows was
+   the list repeating itself ("the On your attack block is redundant. The
+   tracker already tells you that", 2026-08-29). What a riding row does to an
+   attack still folds into every card the sheet prints, in attackModifiers. */
 
 /* ------------------------------------------------------------------- health */
 

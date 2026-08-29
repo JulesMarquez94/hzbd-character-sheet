@@ -14,6 +14,8 @@ const Codex = lazy(() => import('./pages/Codex.jsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const CharacterSheet = lazy(() => import('./pages/CharacterSheet.jsx'));
 const Account = lazy(() => import('./pages/Account.jsx'));
+const Campaigns = lazy(() => import('./pages/Campaigns.jsx'));
+const CampaignPage = lazy(() => import('./pages/CampaignPage.jsx'));
 
 /**
  * The router keeps one mounted element across `/characters/A` ->
@@ -25,6 +27,13 @@ const Account = lazy(() => import('./pages/Account.jsx'));
 function SheetRoute(props) {
   const { id } = useParams();
   return <CharacterSheet key={id} {...props} />;
+}
+
+/** Keyed by id for the same reason the sheet is: a campaign's pending saves
+    must never survive into another campaign's URL. */
+function CampaignRoute() {
+  const { id } = useParams();
+  return <CampaignPage key={id} />;
 }
 
 export default function App() {
@@ -57,6 +66,25 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <SheetRoute creating />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/campaigns"
+              element={
+                <ProtectedRoute>
+                  <Campaigns />
+                </ProtectedRoute>
+              }
+            />
+            {/* Readable by the campaign's table only — RLS decides, the page
+                just reports. Behind the login gate because a signed-out reader
+                could never be on the table. */}
+            <Route
+              path="/campaigns/:id"
+              element={
+                <ProtectedRoute>
+                  <CampaignRoute />
                 </ProtectedRoute>
               }
             />

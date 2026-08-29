@@ -9388,14 +9388,6 @@ body.sheet-fixed #root {
   font-weight: 700;
 }
 
-/* The same line for the swings, in the colour of the thing it is talking about.
-   The green above is a body being raised; this is a weapon, and every attack
-   number on the sheet is copper. */
-.swing-shift {
-  border-left-color: var(--copper);
-  background-color: color-mix(in srgb, var(--copper) 7%, transparent);
-}
-
 /* =========================================================
    THE CREATURE'S TWO BLOCKS
 
@@ -9419,9 +9411,12 @@ body.sheet-fixed #root {
    box, same padding, same readout inside the track. Block 2 tightens the meter
    it draws and this block was left on the default, which is why the two bars
    were plainly not the same bar — 5px of padding and a gap apart. One rule for
-   both now, so neither can drift again. */
+   all of them now, so none can drift again. The campaign overview's party
+   block prints the same bars a third time and joins the rule for the same
+   reason (see src/components/campaign/PartyBlock.jsx). */
 .combat-block .meter,
-.minion-block .meter {
+.minion-block .meter,
+.party-block .meter {
   padding: 0.45rem 0.7rem;
   gap: 5px;
 }
