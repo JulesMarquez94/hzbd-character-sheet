@@ -353,17 +353,67 @@
   }
 }
 
-/* ---------- THE PARTY BLOCK ----------
-   Blocks 1 and 2 folded into one cell. Eleven readouts is more than 640px
-   holds, so this is one of the blocks allowed to scroll, like 4 and 5. */
+/* =========================================================
+   THE PARTY BLOCK
+
+   Everything the Character tab spreads over blocks 1 and 2, in one 360x640
+   cell that does NOT scroll. At the sheet's own spacing those rows come to
+   about 850px, and the answer is not a scrollbar: a party overview is read by
+   glancing across it, and a number you have to scroll to find is a number
+   nobody checks. So the rows are laid tighter here and nothing is dropped.
+
+   The three compactions, each paying for itself:
+
+     the rows lie down   five labels move beside their bar instead of above it,
+                         sharing one label column, so every track and every pip
+                         row starts at the same x.
+     the headings go     nine tiles that each name themselves had three lines
+                         of heading over them. On the sheet those separate two
+                         blocks. Here they were a third of the grid.
+     the purse is a chip Experience is one thin line and the purses are two
+                         chips, where the sheet gives each of the three a panel.
+
+   The parts themselves are the sheet's own — AttrTile, StatBox, ResourceBar,
+   PipRow, KarmaPill — so a Grit here is drawn in the same box as a Grit there
+   and hovering it prints the same arithmetic.
+   ========================================================= */
 .party-block {
+  /* Everything the sheet's .cell-scroll does, minus the scrolling. The block
+     fits, so there is nothing to scroll to; `hidden` is the guarantee that a
+     freak-length name can never push a bar half off the bottom edge. */
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+
+  /* The rows come to about 580 of the 636 on offer, and the leftover is spread
+     between them rather than left pooled under Karma. Every party block holds
+     the same fourteen rows, so this is a fixed few pixels a seam and not a
+     layout that changes shape per character. If a row ever grows, the free
+     space is simply gone and the gaps fall back to the one above. */
+  justify-content: space-between;
+
+  /* One column for all five pool labels. Wide enough for "Reaction Points"
+     and its count on one line, which is the longest of them. */
+  --party-label: 104px;
 }
 
+/* The two seams the dropped headings used to draw. Cheaper than a line of
+   words and they do the one job the headings were doing here, which is saying
+   where the identity ends, the stats begin and the pools take over. */
+.party-purses + .attr-row,
+.attr-row + .meter {
+  margin-top: 0.3rem;
+}
+
+/* ---------- who ---------- */
 .party-id {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
   flex-shrink: 0;
   min-width: 0;
 }
@@ -380,6 +430,9 @@
   justify-content: center;
   flex-shrink: 0;
   position: relative;
+  /* It is a link to the sheet, so without this the initials wear the
+     browser's underline. */
+  text-decoration: none;
 }
 
 .party-portrait img {
@@ -399,24 +452,23 @@
   letter-spacing: 1px;
 }
 
-.party-id-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
+/* Two lines and then it stops. The block's whole promise is that it fits, and
+   an eight-word name is the one thing on it with no natural ceiling. The full
+   name is always a click away on the sheet. */
 .party-name {
   font-family: var(--font-headings);
-  font-size: 1.15rem;
-  line-height: 1.15;
+  font-size: 1.05rem;
+  line-height: 1.2;
   color: var(--focus-cyan);
   letter-spacing: 0.5px;
   overflow-wrap: anywhere;
+  flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .party-name a {
@@ -430,23 +482,190 @@
 }
 
 .party-level {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--copper);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
-/* Readouts, not doors: the meters keep the sheet's look but none of them opens
-   a ledger here, so they drop the hand cursor and the hover invitation. */
+/* ---------- experience and the purses ----------
+   Three panels on the sheet, three strips here. The label is the same small
+   caps in all of them so the strips read as one group. */
+.party-strip-label {
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-bright);
+  white-space: nowrap;
+}
+
+.party-xp {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.party-xp .bar-track {
+  flex: 1;
+  min-width: 0;
+}
+
+.party-xp-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.party-purses {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.party-purse {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: rgba(9, 17, 21, 0.45);
+  border: 1px solid rgba(148, 167, 176, 0.1);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+}
+
+.party-purse .meter-glyph {
+  width: 12px;
+  height: 12px;
+}
+
+.party-purse:first-child .meter-glyph {
+  color: var(--stat-coin);
+}
+
+.party-purse:last-child .meter-glyph {
+  color: var(--stat-supply);
+}
+
+.party-purse-num {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-left: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- the nine tiles ----------
+   The sheet's own tiles, shorter. The value keeps most of its size because it
+   is the thing being read; the padding is what pays. */
+.party-block .attr-row {
+  gap: 7px;
+}
+
+.party-block .attr-tile,
+.party-block .stat-box {
+  padding: 0.48rem 0.2rem;
+  gap: 2px;
+}
+
+.party-block .attr-value,
+.party-block .stat-box-value {
+  font-size: 1.3rem;
+}
+
+.party-block .attr-label,
+.party-block .stat-box-label {
+  font-size: 0.56rem;
+}
+
+/* ---------- the five pools ----------
+   Label beside the bar, in the shared column, and no ledger behind any of
+   them: these are readouts, so they drop the hand cursor and the hover
+   invitation the sheet's own meters carry. */
 .party-block .meter {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 0.38rem 0.5rem;
   cursor: default;
 }
 
 .party-block .meter:hover {
   border-color: rgba(148, 167, 176, 0.1);
   background-color: rgba(9, 17, 21, 0.45);
+}
+
+.party-block .meter .meter-label {
+  flex: 0 0 var(--party-label);
+  font-size: 0.58rem;
+  letter-spacing: 0.6px;
+}
+
+.party-block .mana-track {
+  height: 22px;
+  flex: 1;
+  min-width: 0;
+}
+
+.party-block .mana-text {
+  font-size: 0.7rem;
+}
+
+/* The two pip rows take the same shape, so all five lines agree. */
+.party-block .pool-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 0.1rem 0.5rem;
+}
+
+.party-block .pool-head {
+  flex: 0 0 var(--party-label);
+}
+
+.party-block .pool-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.party-block .pip-row {
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+/* Smaller than the sheet's 18px: a pip nobody can press needs no touch target,
+   only a size you can count at a glance. */
+.party-block .res-pip {
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+}
+
+.party-block .karma-pill {
+  padding: 0.3rem 0.5rem;
+}
+
+.party-block .karma-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.6px;
+}
+
+/* A stepper that can never step is furniture. The value stays, and it is the
+   only thing in the pill that was ever a readout. */
+.party-block .karma-btn {
+  display: none;
+}
+
+.party-block .karma-value {
+  font-size: 0.88rem;
+  min-width: 0;
 }
 
 /* ---------- THE DETAILS TAB ---------- */

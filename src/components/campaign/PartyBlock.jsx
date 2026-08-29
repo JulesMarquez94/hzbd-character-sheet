@@ -11,6 +11,7 @@ import {
 } from '../sheet/parts.jsx';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import {
+  compactNumber,
   formatNumber,
   healthState,
   initialsOf,
@@ -21,23 +22,43 @@ import {
 } from '../../lib/characterModel.js';
 
 /**
- * One member of the party, at a glance: the Character tab's blocks 1 and 2
- * folded into a single block for the campaign Overview.
+ * One member of the party, at a glance: everything the Character tab spreads
+ * over blocks 1 and 2, in a single cell that does not scroll.
  *
- * Everything here is a *readout*. The sheet stays the only writer of its own
- * numbers, so the bars have no ledgers behind them, the pips are still and the
- * name is the way to the sheet itself. What earns the block its place is that
- * it is drawn with the sheet's own parts, off the sheet's own maths: a Grit
- * here is the same Grit, in the same box, with the same arithmetic on hover.
+ * ------------------------------------------------------------- the compaction
+ * Two blocks' worth of rows do not fit 640px at the sheet's own spacing, and
+ * the answer is not a scrollbar: a party overview is read by glancing across
+ * it, and a number you have to scroll to find is a number you will not check.
+ * So the same readouts are laid out tighter, in three ways, and nothing is
+ * dropped:
  *
- * Takes the character as the sheet would *show* them, off `liveCharacter`, for
- * the same reason the tabs do: a worn enchantment's Instinct is Instinct.
+ *   the rows lie down   Health, Shield, Willpower and the two point pools put
+ *                       their label beside the bar rather than above it. One
+ *                       label column for all five, so every track and every
+ *                       pip row starts at the same place.
+ *   the headings go     "Attributes", "Combat Stats" and "Defenses" were three
+ *                       lines naming nine tiles that each name themselves. On
+ *                       the sheet they separate blocks; here they would be a
+ *                       third of the tile grid spent on words.
+ *   the purse is a chip Experience is a thin bar and the two purses are two
+ *                       chips, where the sheet gives each of the three a panel.
+ *
+ * What is *not* traded is which numbers these are. The tiles, the bars and the
+ * pips are the sheet's own parts, off the sheet's own `liveCharacter` and
+ * `statMath`, so a Grit here is the same Grit and a hovered tile prints the
+ * same arithmetic. See src/pages/Campaigns.css for the measurements.
+ *
+ * Everything here is a readout. The sheet stays the only writer of its own
+ * numbers, so no bar opens a ledger, no pip moves and the name is the way to
+ * the sheet itself.
+ *
+ * `math` is worked out by the page beside `liveCharacter`, one pass per member
+ * rather than one per render of this block.
  */
 
-/* The six stat tiles, copied from CharacterTab.jsx so the two can be read
-   against each other. Same trap, same note: `avoid` prints as "Defense" (hard
-   to hit) and `defense` prints as "Armor" (flat reduction), because the columns
-   predate the relabel. */
+/* The nine tiles, in the sheet's own order. Same trap, same note: `avoid`
+   prints as "Defense" (hard to hit) and `defense` prints as "Armor" (flat
+   reduction), because the columns predate the relabel. */
 const TOP_LINE = [
   {
     key: 'initiative',
@@ -83,19 +104,13 @@ const DEFENSE_LINE = [
 
 const STILL = () => {};
 
-/**
- * `math` is the same hover arithmetic the sheet's own tiles carry, off
- * statMath, so a DM asking "why is their Defense 9" gets the sheet's own
- * answer. It is worked out by the page beside `liveCharacter`, one pass per
- * member rather than one per render of this block.
- */
 export default function PartyBlock({ character, math = {}, unit = 'metric' }) {
   const xp = xpProgress(character.xp);
   const hp = healthState(character.health, character.health_max);
   const shieldMax = shieldCapFor(character);
 
   return (
-    <div className="cell-scroll party-block">
+    <div className="party-block">
       {/* ---------- WHO ---------- */}
       <div className="party-id">
         <Link
@@ -110,62 +125,59 @@ export default function PartyBlock({ character, math = {}, unit = 'metric' }) {
           )}
         </Link>
 
-        <span className="party-id-body">
-          <span className="party-name">
-            {hp.dead && (
-              <span className="dead-mark" title="Dead" aria-label="Dead">
-                <SkullIcon />
-              </span>
-            )}
-            <Link to={`/characters/${character.id}`}>{character.name}</Link>
-          </span>
-          <span className="party-level">
-            Lvl {String(xp.level).padStart(2, '0')}
-            {xp.isMax && <span className="id-level-cap">MAX</span>}
-          </span>
+        <span className="party-name">
+          {hp.dead && (
+            <span className="dead-mark" title="Dead" aria-label="Dead">
+              <SkullIcon />
+            </span>
+          )}
+          <Link to={`/characters/${character.id}`}>{character.name}</Link>
+        </span>
+
+        <span className="party-level">
+          Lvl {String(xp.level).padStart(2, '0')}
+          {xp.isMax && <span className="id-level-cap">MAX</span>}
         </span>
       </div>
 
-      {/* ---------- XP ---------- */}
-      <div className="meter">
-        <span className="meter-head">
-          <span className="meter-label">Experience</span>
-          <span className="meter-value" style={{ color: 'var(--haze-glow)' }}>
-            {xp.isMax
-              ? `${formatNumber(xp.total)} XP`
-              : `${formatNumber(xp.into)} / ${formatNumber(xp.span)}`}
-          </span>
-        </span>
+      {/* ---------- EXPERIENCE ----------
+          A bar and its numbers on one line. The sheet gives this a panel of
+          its own because the ledger opens off it; nothing opens off this one. */}
+      <div className="party-xp">
+        <span className="party-strip-label">XP</span>
         <span className="bar-track">
           <span className="bar-fill bar-fill-xp" style={{ width: `${xp.percent}%` }} />
+        </span>
+        <span className="party-xp-num" style={{ color: 'var(--haze-glow)' }}>
+          {xp.isMax
+            ? `${compactNumber(xp.total)}`
+            : `${compactNumber(xp.into)} / ${compactNumber(xp.span)}`}
         </span>
       </div>
 
       {/* ---------- COINS & SUPPLIES ---------- */}
-      <div className="meter-pair">
-        <div className="meter meter-tight">
-          <span className="meter-label">
-            <CoinIcon />
-            Coins
-          </span>
-          <span className="meter-value" style={{ color: 'var(--stat-coin)' }}>
+      <div className="party-purses">
+        <span className="party-purse">
+          <CoinIcon />
+          <span className="party-strip-label">Coins</span>
+          <span className="party-purse-num" style={{ color: 'var(--stat-coin)' }}>
             {formatNumber(character.wealth)} ¢
           </span>
-        </div>
+        </span>
 
-        <div className="meter meter-tight">
-          <span className="meter-label">
-            <CrateIcon />
-            Supplies
-          </span>
-          <span className="meter-value" style={{ color: 'var(--stat-supply)' }}>
+        <span className="party-purse">
+          <CrateIcon />
+          <span className="party-strip-label">Supplies</span>
+          <span className="party-purse-num" style={{ color: 'var(--stat-supply)' }}>
             {formatNumber(character.supplies)}
           </span>
-        </div>
+        </span>
       </div>
 
-      {/* ---------- ATTRIBUTES ---------- */}
-      <div className="stat-category-label">Attributes</div>
+      {/* ---------- THE NINE TILES ----------
+          Attributes, then combat stats, then defenses, in the sheet's own
+          order and colours. Each tile names itself, so the three headings that
+          separate them on the sheet are not repeated here. */}
       <div className="attr-row">
         {ATTRIBUTES.map(({ key, label, color, info }) => (
           <AttrTile
@@ -179,8 +191,6 @@ export default function PartyBlock({ character, math = {}, unit = 'metric' }) {
         ))}
       </div>
 
-      {/* ---------- COMBAT STATS ---------- */}
-      <div className="stat-category-label">Combat Stats</div>
       <div className="attr-row">
         {TOP_LINE.map(({ key, label, color, info, kind }) => {
           const isSpeed = kind === 'speed';
@@ -205,10 +215,6 @@ export default function PartyBlock({ character, math = {}, unit = 'metric' }) {
         })}
       </div>
 
-      {/* ---------- AND THE DEFENSES, UNDER THE SAME HEADING ----------
-          The minion block's trade, made for the minion block's reason: this
-          cell holds what the character spreads over two, and a heading costs
-          it the same height as three more tiles would. */}
       <div className="attr-row">
         {DEFENSE_LINE.map(({ key, label, color, info }) => (
           <StatBox
@@ -222,9 +228,9 @@ export default function PartyBlock({ character, math = {}, unit = 'metric' }) {
         ))}
       </div>
 
-      {/* ---------- RESOURCES ---------- */}
-      <div className="stat-category-label">Resources</div>
-
+      {/* ---------- THE FIVE POOLS AND KARMA ----------
+          Each label sits beside its bar rather than above it, in one shared
+          column, so all five tracks begin at the same place. */}
       <ResourceBar
         label={hp.dead ? 'Health · Dead' : 'Health'}
         current={hp.hp}

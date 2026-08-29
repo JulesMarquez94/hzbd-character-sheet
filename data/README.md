@@ -9470,3 +9470,44 @@ Nothing on either page ever writes to a character. The party streams in live
 over one `id=in.(...)` subscription, the roster over another, and the campaign
 row itself streams only to those not holding its pen, which is the editor
 guard the sheet already keeps.
+
+## The party block stops scrolling, 2026-08-29
+
+Jules: "I don't want to have scrolling in the character overview, I need a more
+compact overview."
+
+The overview's block was blocks 1 and 2 stacked at the sheet's own spacing,
+which comes to about 850px in a 640px cell, so it scrolled. A party overview is
+read by glancing across it, and a number you have to scroll to find is a number
+nobody checks. So the block is laid out tighter and **nothing is dropped**: it
+now measures 580px of the 636 on offer, and the leftover is spread between the
+rows rather than pooled under Karma.
+
+Three compactions, each paying for itself:
+
+- **The rows lie down.** Health, Shield, Willpower and the two point pools put
+  their label beside the bar instead of above it, sharing one 104px label
+  column, so every track and every pip row starts at the same place. That is
+  five rows at roughly half their old height.
+- **The headings go.** "Attributes", "Combat Stats" and "Defenses" were three
+  lines of heading over nine tiles that each name themselves. On the sheet they
+  separate two blocks; here they were a third of the tile grid spent on words.
+  Two hairline seams do that job instead, at a fraction of the height.
+- **The purse is a chip.** Experience is one thin line and Coins and Supplies
+  are two chips, where the sheet gives each of the three a panel of its own.
+
+What is not traded is which numbers these are. The tiles, bars and pips are
+still the sheet's own parts off `liveCharacter` and `statMath`, so a Grit here
+is drawn in the same box as a Grit there and hovering it prints the same
+arithmetic.
+
+The block is `overflow: hidden` rather than a scroller, which is the promise
+made honest: it fits, so there is nothing to scroll to. The name clamps at two
+lines, which is the one thing on the block with no natural ceiling, and it
+costs no height at all because the portrait sets that row. Measured at 580px
+with the real fonts and 580px with them replaced by the generic fallbacks, so
+a font that fails to load cannot push Karma off the bottom.
+
+The block-2 meter rule in sheet.css deliberately does **not** cover this one
+any more: it lays its labels differently, so sharing the rule would have meant
+one of the two drifting the moment the other changed.
