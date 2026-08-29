@@ -9370,3 +9370,24 @@ name and opens KINDLE WEAPON.
 A row naming something with no card behind it stays a plain name rather than
 becoming a button that does nothing. A Feral Curse's form is the only one today:
 the source is the set, and a set is not a card.
+
+## The accounting lines move to the tracker, 2026-08-29
+
+Jules: "There is message about temporary effect appearing on the block 1 and 2
+of charactersheet, this should be confined to the tracker block."
+
+The two sentences that account for what is running: the green "Running" line
+block 1 printed under its attribute tiles, and the copper "On your attacks" line
+block 2 printed under its combat stats. Both were readouts of the tracker
+standing on blocks that describe the character, and both print on block 6 now,
+between the tracker's head and its list. The head says how many are running and
+these two lines say what that adds up to: one for the tiles, one for the swings.
+The first is relabelled **On your stats** so the pair reads as the two halves it
+always was.
+
+Nothing else moved. `liveShift` and `swingShift` are unchanged and still have
+one caller, TurnBlock now rather than CharacterTab. The tiles still show the
+bent number, and a hovered tile still prints its own arithmetic with every
+source named, off `statMath`. The lines sit above the list rather than in it,
+pinned with the head: an accounting line that can scroll out of sight accounts
+for nothing.

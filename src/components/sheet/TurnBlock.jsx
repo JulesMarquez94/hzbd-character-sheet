@@ -5,6 +5,7 @@ import RestPrompt from './RestPrompt.jsx';
 import RollArrow from '../RollArrow.jsx';
 import TurnPrompt from './TurnPrompt.jsx';
 import { cardAccent } from '../../lib/tagColors.js';
+import { liveShift, swingShift } from '../../lib/characterModel.js';
 import { getCard } from '../../lib/weapons.js';
 import { isEnchanter } from '../../lib/enchanting.js';
 import { effectAdvantage } from '../../lib/moves.js';
@@ -66,6 +67,17 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
 
   const running = effects.filter((effect) => effect.turns !== 0).length;
   const ended = effects.length - running;
+
+  /* What the rows below add up to, on the rest of the sheet. A running card can
+     bend a tile and ride every swing besides, and the two sentences that account
+     for it used to sit on blocks 1 and 2, next to the numbers they bent — which
+     put temporary things on the two blocks that describe the character. They
+     print here instead, with the rows they are read from, so the tracker is the
+     one block that talks about what is running. The tiles still show the bent
+     number, and a hovered tile still prints its own arithmetic. Both empty for
+     anyone with nothing running, which is nearly everyone. */
+  const shift = useMemo(() => liveShift(character), [character]);
+  const swing = useMemo(() => swingShift(character), [character]);
 
   /**
    * The one button, pressed.
@@ -151,6 +163,22 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
           {running} running{ended > 0 ? `, ${ended} just ended` : ''}
         </span>
       </div>
+
+      {/* The sum, above the list: the head says how many are running and these
+          two lines say what that adds up to — one for the tiles, one for the
+          swings. Pinned with the head rather than scrolling with the rows,
+          because an accounting line that can scroll out of sight accounts for
+          nothing. */}
+      {shift.length > 0 && (
+        <p className="attr-shift">
+          <b>On your stats:</b> {shift.join(', ')}. Temporary, and not on your sheet.
+        </p>
+      )}
+      {swing && (
+        <p className="attr-shift swing-shift">
+          <b>On your attacks:</b> {swing.said}. From {swing.from}. Off your sheet when they are.
+        </p>
+      )}
 
       {!readOnly && (
         <button type="button" className="fx-add" onClick={() => setAdding(true)}>

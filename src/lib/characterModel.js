@@ -617,13 +617,16 @@ function attributeWord(key) {
  * `liveShift` above accounts for the tiles, and a tile is only half of what a
  * tracked card can bend. GIANT GROWTH doubles a Speed *and* Empowers the damage;
  * KINDLE WEAPON moves no tile at all and changes what the blade is made of. The
- * first half showed up on block 1 and the second half showed up nowhere: it was
+ * first half was said out loud and the second half showed up nowhere: it was
  * applied, correctly, to every attack card the sheet printed, and a player who
  * was not looking at an attack card had no way of knowing.
  *
- * So block 2 says it. Not the arithmetic, which belongs on the card that rolls
- * it, but the fact and the name behind it: "your damage is Empowered by 1, and
- * it deals Fire" is enough to know what you are holding.
+ * So the tracker says it. Not the arithmetic, which belongs on the card that
+ * rolls it, but the fact and the name behind it: "your damage is Empowered by 1,
+ * and it deals Fire" is enough to know what you are holding. Both halves print
+ * on the tracker block, above the rows they are read from — they used to sit on
+ * blocks 1 and 2, next to the tiles they bent, until temporary things were
+ * confined to the block about the moment. See TurnBlock.jsx.
  *
  * Empty for everyone with nothing riding, which is nearly everyone. See
  * riders.js, which is where the sum is made.

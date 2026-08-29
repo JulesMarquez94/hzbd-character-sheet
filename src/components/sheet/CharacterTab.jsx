@@ -26,12 +26,10 @@ import {
   healthState,
   initialsOf,
   karmaCap,
-  liveShift,
   metersToFeet,
   normalizeBlockOrder,
   normalizeGridColumns,
   shieldCapFor,
-  swingShift,
   xpProgress,
 } from '../../lib/characterModel.js';
 import { feralBlockIds, feralState } from '../../lib/feral.js';
@@ -158,18 +156,6 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   // Health is the one pool that runs past zero, and a second full bar of
   // damage past it is fatal.
   const hp = healthState(character.health, character.health_max);
-
-  /* What is on this character for the hour and not on their row. This tab is
-     handed the *bent* character (see liveCharacter), so the tiles below already
-     show the raised number; this is the sentence that accounts for it. Empty for
-     everyone with nothing running, which is nearly everyone. */
-  const shift = useMemo(() => liveShift(character), [character]);
-
-  /* And the other half of it, for block 2. A tracked card can bend a tile, a
-     swing, or both, and until now only the tile half was ever said out loud: the
-     die KINDLE WEAPON adds and the Fire it deals were applied to every attack
-     card correctly and announced nowhere. See swingShift. */
-  const swing = useMemo(() => swingShift(character), [character]);
 
   /* And where every number on the tab came from, so a hovered tile can print its
      own arithmetic with each source named. Worked out once for the whole tab
@@ -392,18 +378,6 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             />
           ))}
         </div>
-
-        {/* An Ephemeral Enchantment raises an attribute for an hour and is not
-            written on the row, so these three tiles are showing a number the
-            Advancement tab does not agree with. A card on the tracker does the
-            same, for as long as its row is up. Said out loud either way, because
-            a stat nobody can account for is worse than a stat that is merely
-            bent. */}
-        {shift.length > 0 && (
-          <p className="attr-shift">
-            <b>Running:</b> {shift.join(', ')}. Temporary, and not on your sheet.
-          </p>
-        )}
       </div>
     ),
 
@@ -438,16 +412,6 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             );
           })}
         </div>
-
-        {/* What is riding every swing you make, off the tracker. The tiles above
-            are already bent by anything that bends them; this is the half of a
-            running card that lands on the roll instead, and it had nowhere on the
-            sheet to be said. See swingShift in characterModel.js. */}
-        {swing && (
-          <p className="attr-shift swing-shift">
-            <b>On your attacks:</b> {swing.said}. From {swing.from}. Off your sheet when they are.
-          </p>
-        )}
 
         {/* ---------- DEFENSES ---------- */}
         <div className="stat-category-label">Defenses</div>

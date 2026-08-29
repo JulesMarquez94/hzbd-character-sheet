@@ -9368,10 +9368,12 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
-/* An attribute tile showing a number the row does not carry, accounted for.
-   Green, because what bent it is an enchantment. */
+/* What the tracker's rows add up to on the rest of the sheet, said between the
+   head and the list. A tile showing a number the row does not carry, accounted
+   for; green, because what bent it is an enchantment. No margin of its own —
+   the turn block's gap is the spacing. */
 .attr-shift {
-  margin: 0.4rem 0 0;
+  margin: 0;
   padding: 0.35rem 0.5rem;
   border-left: 2px solid var(--def-healing);
   border-radius: 3px;
@@ -9386,11 +9388,10 @@ body.sheet-fixed #root {
   font-weight: 700;
 }
 
-/* The same line on block 2, in the colour of the thing it is talking about. The
-   green on block 1 is a body being raised; this is a weapon, and every attack
+/* The same line for the swings, in the colour of the thing it is talking about.
+   The green above is a body being raised; this is a weapon, and every attack
    number on the sheet is copper. */
 .swing-shift {
-  margin-bottom: 0.4rem;
   border-left-color: var(--copper);
   background-color: color-mix(in srgb, var(--copper) 7%, transparent);
 }
