@@ -715,6 +715,157 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
+--  THE EVENT LOG
+--  What happened at the table, one row per thing that happened, insert only.
+--
+--  A character sitting at a campaign writes here every time it does something:
+--  a card played, a rest taken, a turn crossed. Every member reads the whole
+--  log, so a player watching their own sheet sees the fight going on around it
+--  without anybody having to say it out loud.
+--
+--  Insert only, deliberately. Nothing updates a row and nothing deletes one but
+--  the sweep at the bottom, because a log that can be edited after the fact is
+--  not a log. It is also the channel the plan builds targeted casting on later
+--  (see data/README.md): an event is already the whole account of an action, so
+--  a future delivery is a reader of these rows rather than a second table.
+-- ----------------------------------------------------------------------------
+create table if not exists public.campaign_events (
+  id           uuid primary key default gen_random_uuid(),
+  -- A gapless-enough count for reading in order and for a cursor later. The
+  -- clock is not enough on its own: two players acting in the same millisecond
+  -- must still land in some order, and every reader must agree which.
+  seq          bigint generated always as identity,
+
+  campaign_id  uuid not null references public.campaigns  on delete cascade,
+  -- Null for an event the table itself raised rather than a character. Set
+  -- null rather than cascade on a deleted sheet: what happened still happened.
+  character_id uuid references public.characters on delete set null,
+  user_id      uuid not null references auth.users on delete cascade,
+
+  -- 'use' | 'rest' | 'turn'. Kept as text rather than an enum so a new kind is
+  -- a deploy of the app and not a migration.
+  kind         text not null,
+  -- The name that acted, copied at the time. Denormalized on purpose: a
+  -- character can be renamed or deleted, and a log that then reads "someone
+  -- cast Fireball" has lost the only thing worth keeping.
+  actor        text not null default '',
+  -- What was done, and the one line under it. "Fireball", "2 Action Points and
+  -- 4 Willpower · Quick Bar".
+  title        text not null default '',
+  detail       text not null default '',
+  -- The receipt: the card id the row opens, what it cost, how it was tapped.
+  -- Read by the block for the tap-through and by nothing for arithmetic.
+  data         jsonb not null default '{}'::jsonb,
+
+  created_at   timestamptz not null default now()
+);
+
+-- The one query there is: this campaign, newest first.
+create index if not exists campaign_events_feed_idx
+  on public.campaign_events (campaign_id, seq desc);
+-- And the one the sweep runs.
+create index if not exists campaign_events_age_idx
+  on public.campaign_events (campaign_id, created_at);
+
+alter table public.campaign_events enable row level security;
+
+-- The actor is taken from the session, never from the client, exactly as
+-- campaign_members takes its owner. Two things are checked rather than trusted:
+-- the character is one you own, and it is actually sitting at this table. A DM
+-- may write an event with no character on it; that is the table speaking.
+create or replace function public.claim_event_actor()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  is_dm boolean;
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in to write to a campaign log.';
+  end if;
+
+  new.user_id = auth.uid();
+
+  select c.dm_user_id = auth.uid() into is_dm
+  from public.campaigns c where c.id = new.campaign_id;
+
+  if new.character_id is not null then
+    -- An admin edits any sheet on this site, so an admin may speak for one.
+    if not exists (select 1 from public.characters ch
+                   where ch.id = new.character_id
+                     and (ch.user_id = auth.uid() or public.is_admin())) then
+      raise exception 'Only a character you own can act in a log.';
+    end if;
+    if not exists (select 1 from public.campaign_members m
+                   where m.campaign_id = new.campaign_id
+                     and m.character_id = new.character_id) then
+      raise exception 'That character does not sit at this table.';
+    end if;
+  elsif not coalesce(is_dm, false) then
+    raise exception 'Only the Game Master can write a table event.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists campaign_events_claim_actor on public.campaign_events;
+create trigger campaign_events_claim_actor
+  before insert on public.campaign_events
+  for each row execute function public.claim_event_actor();
+
+-- Read by the table sitting at the campaign, the same reach that reads the
+-- roster.
+drop policy if exists "campaign_events: table read" on public.campaign_events;
+create policy "campaign_events: table read" on public.campaign_events
+  for select using (
+    public.is_campaign_member(campaign_id)
+    or exists (select 1 from public.campaigns c
+               where c.id = campaign_events.campaign_id
+                 and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+-- Written by the same table. The trigger above is what makes this safe: the
+-- policy answers "may you speak here", the trigger answers "as whom".
+drop policy if exists "campaign_events: table insert" on public.campaign_events;
+create policy "campaign_events: table insert" on public.campaign_events
+  for insert with check (
+    public.is_campaign_member(campaign_id)
+    or exists (select 1 from public.campaigns c
+               where c.id = campaign_events.campaign_id
+                 and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+-- There is deliberately no update policy and no delete policy. A log nobody can
+-- rewrite is the whole point, and the sweep below runs as its owner.
+
+-- ----------------------------------------------------------------------------
+--  How long an event lives. Ninety days: long enough that a campaign meeting
+--  once a fortnight can still read back over half a year of sessions, short
+--  enough that a table playing weekly for years does not carry every arrow it
+--  ever loosed.
+--
+--  Swept on insert rather than on a schedule, because there is no scheduler
+--  here. One insert in fifty pays for it, which on a table mid-fight is a sweep
+--  every few minutes and on a quiet one is a sweep whenever somebody plays.
+--  SECURITY DEFINER because the policies above give nobody a delete.
+-- ----------------------------------------------------------------------------
+create or replace function public.trim_campaign_events()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if random() < 0.02 then
+    delete from public.campaign_events e
+    where e.campaign_id = new.campaign_id
+      and e.created_at < now() - interval '90 days';
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists campaign_events_trim on public.campaign_events;
+create trigger campaign_events_trim
+  after insert on public.campaign_events
+  for each row execute function public.trim_campaign_events();
+
+-- ----------------------------------------------------------------------------
 --  updated_at housekeeping
 -- ----------------------------------------------------------------------------
 create or replace function public.touch_updated_at()
@@ -749,12 +900,17 @@ alter table public.abilities        replica identity full;
 alter table public.inventory_items  replica identity full;
 alter table public.campaigns        replica identity full;
 alter table public.campaign_members replica identity full;
+-- The log is insert only for everyone; the sweep is the only delete and no
+-- client cares about one. Full identity all the same, so it matches its
+-- neighbours and a filtered delete would carry its campaign if one ever mattered.
+alter table public.campaign_events  replica identity full;
 
 do $$
 declare
   t text;
 begin
-  foreach t in array array['characters', 'abilities', 'inventory_items', 'campaigns', 'campaign_members'] loop
+  foreach t in array array['characters', 'abilities', 'inventory_items',
+                          'campaigns', 'campaign_members', 'campaign_events'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

@@ -11,6 +11,8 @@ import { ATTRIBUTES } from '../../lib/attributes.js';
 import { damageStyle } from '../../lib/cardText.js';
 import { metersToFeet } from '../../lib/characterModel.js';
 import { minionBar, spendUse } from '../../lib/combatBar.js';
+import { playEvent } from '../../lib/campaignLog.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
 import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
 import { minionActor, minionSpend, setMinionEffects, setMinionPool } from '../../lib/minions.js';
 import { minionMath } from '../../lib/statMath.js';
@@ -382,6 +384,7 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
   const [request, setRequest] = useState(null);
   const [adding, setAdding] = useState(false);
   const stack = useCardStack();
+  const { log } = useCampaignLog();
 
   const groups = useMemo(() => minionBar(character, minion), [character, minion]);
   const total = groups.reduce((sum, group) => sum + group.moves.length, 0);
@@ -404,6 +407,10 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
     const body = spendUse(request, actor, mode, amount, options);
     const write = minionSpend(character, minion, body);
     if (Object.keys(write).length > 0) patch(write);
+    /* Logged under the creature's own name, because that is who acted. The row
+       still belongs to the bonded character: one use paid from two sheets is
+       one line at the table. See minions.js. */
+    log(playEvent(request, actor, mode, amount, options));
     setRequest(null);
   }
 

@@ -5,6 +5,8 @@ import SiteMenu from '../components/SiteMenu.jsx';
 import BlockArrange from '../components/sheet/BlockArrange.jsx';
 import { MinionStatsBlock } from '../components/sheet/MinionBlock.jsx';
 import PartyBlock from '../components/campaign/PartyBlock.jsx';
+import LogBlock from '../components/campaign/LogBlock.jsx';
+import { CardStackProvider } from '../components/CardStack.jsx';
 import CampaignDetails from '../components/campaign/CampaignDetails.jsx';
 import {
   addMember,
@@ -264,6 +266,12 @@ export default function CampaignPage() {
         });
       }
     }
+
+    /* And the table's own block: what everyone has been doing, as they do it.
+       Only once there is somebody to do it, so an empty campaign still gets the
+       empty state with the join code on it rather than a log of nothing. */
+    if (list.length > 0) list.push({ id: 'log', kind: 'log' });
+
     return list;
   }, [members]);
 
@@ -284,10 +292,21 @@ export default function CampaignPage() {
 
   const columns = normalizeGridColumns(campaign?.overview_columns);
 
+  /* Who played the card a log row names, so a spell opened out of the feed
+     prints the caster's numbers rather than nobody's. The page has every linked
+     sheet in hand; the same block on a character sheet has only its own. */
+  const actorFor = useCallback(
+    (event) => byId.get(`member:${event?.character_id}`)?.shown ?? null,
+    [byId]
+  );
+
   const describeBlock = useCallback(
     (blockId) => {
       const block = byId.get(blockId);
       if (!block) return { name: String(blockId), note: null };
+      if (block.kind === 'log') {
+        return { name: 'Table Log', note: 'Everything that has happened at this table' };
+      }
       if (block.kind === 'minion') {
         return {
           name: block.minion.title,
@@ -442,30 +461,39 @@ export default function CampaignPage() {
                 )}
               </div>
             ) : (
-              <div className="sheet-grid-6">
-                {order.map((blockId) => {
-                  const block = byId.get(blockId);
-                  if (!block) return null;
-                  return (
-                    <section
-                      key={blockId}
-                      className={`sheet-cell${block.kind === 'minion' ? ' cell-minion' : ''}`}
-                    >
-                      {block.kind === 'minion' ? (
-                        <MinionStatsBlock
-                          character={block.shown}
-                          minion={block.minion}
-                          patch={STILL}
-                          readOnly
-                          unit={unit}
-                        />
-                      ) : (
-                        <PartyBlock character={block.shown} math={block.math} unit={unit} />
-                      )}
-                    </section>
-                  );
-                })}
-              </div>
+              /* The pile of cards a log row deals, over the whole overview. No
+                 character of its own: which sheet a card is printed against is
+                 decided per row by `actorFor`. See CardStack.jsx. */
+              <CardStackProvider character={null}>
+                <div className="sheet-grid-6">
+                  {order.map((blockId) => {
+                    const block = byId.get(blockId);
+                    if (!block) return null;
+                    return (
+                      <section
+                        key={blockId}
+                        className={`sheet-cell${block.kind === 'minion' ? ' cell-minion' : ''}`}
+                      >
+                        {block.kind === 'log' && (
+                          <LogBlock campaignId={id} title="Table Log" actorFor={actorFor} />
+                        )}
+                        {block.kind === 'minion' && (
+                          <MinionStatsBlock
+                            character={block.shown}
+                            minion={block.minion}
+                            patch={STILL}
+                            readOnly
+                            unit={unit}
+                          />
+                        )}
+                        {block.kind === 'member' && (
+                          <PartyBlock character={block.shown} math={block.math} unit={unit} />
+                        )}
+                      </section>
+                    );
+                  })}
+                </div>
+              </CardStackProvider>
             )}
 
             {arranging && (

@@ -13,6 +13,8 @@ import { riderLine } from '../../lib/riders.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
 import { turnTriggers } from '../../lib/turnTriggers.js';
 import { useCardStack } from '../../context/card-stack.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
+import { restEvent, turnEvent } from '../../lib/campaignLog.js';
 import {
   combatReactionGrant,
   combatShieldGrant,
@@ -61,6 +63,10 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
      is up. Null the rest of the time, which is nearly all of it. */
   const [reminder, setReminder] = useState(null);
   const stack = useCardStack();
+  /* The clock is the one thing on this block the whole table wants to see. A
+     turn crossed between two casts is what makes a log read as a fight rather
+     than as a list. See campaignLog.js. */
+  const { log } = useCampaignLog();
 
   const turn = turnState(character);
   const effects = useMemo(() => normalizeEffects(character.effects), [character.effects]);
@@ -101,6 +107,7 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
     }
 
     patch(MOVES[turn.move](character));
+    log(turnEvent(turn.move, character, turn));
   }
 
   return (
@@ -134,7 +141,10 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
           <button
             type="button"
             className="turn-reset"
-            onClick={() => patch(endCombat())}
+            onClick={() => {
+              patch(endCombat());
+              log(turnEvent('reset', character, turn));
+            }}
             disabled={readOnly}
             title="Set the count back to nothing. Whatever you are tracking stays."
           >
@@ -233,7 +243,15 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
         <RestPrompt
           kind={resting}
           character={character}
-          onRest={(body) => patch(body)}
+          onRest={(body, taken) => {
+            patch(body);
+            log(
+              restEvent(resting, character, {
+                action: taken?.action ?? null,
+                supplies: restPrice(character, resting),
+              })
+            );
+          }}
           onClose={() => setResting(null)}
         />
       )}
@@ -246,7 +264,9 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
           triggers={reminder}
           character={character}
           onConfirm={() => {
-            patch(MOVES[reminder.when === 'start' ? 'turn' : 'end'](character));
+            const move = reminder.when === 'start' ? 'turn' : 'end';
+            patch(MOVES[move](character));
+            log(turnEvent(move, character, turn));
             setReminder(null);
           }}
           onClose={() => setReminder(null)}

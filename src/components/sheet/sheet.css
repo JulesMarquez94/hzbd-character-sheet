@@ -10966,3 +10966,126 @@ body.sheet-fixed #root {
 .pact-tools {
   flex-wrap: wrap;
 }
+
+/* ---------------------------------------------------------------- THE TABLE LOG
+   The one block that is about somebody else. It sits on the campaign page beside
+   the party and on the Character tab of every sheet linked to that campaign, so
+   its styles live here rather than in Campaigns.css: this is the file both pages
+   load. See LogBlock.jsx.
+
+   Read like a feed and not like a table. Every row is one line of who did what
+   and one line of what it cost, and the two are told apart by weight rather than
+   by a rule between them, because a 360 pixel block cannot spare the pixels a
+   rule costs and a fight puts forty rows in here. */
+.log-block {
+  gap: 0.45rem;
+}
+
+.log-note {
+  margin: 0;
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.log-empty {
+  margin: 0.4rem 0 0;
+}
+
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The colour is the kind. A cast and a rest and a turn are three different sorts
+   of thing to a reader scanning for one of them, and the left edge is the only
+   place a row this thin has to say so. */
+.log-row {
+  --log-accent: var(--haze-glow);
+  padding: 0.3rem 0.45rem;
+  border: 1px solid transparent;
+  border-left: 2px solid color-mix(in srgb, var(--log-accent) 55%, transparent);
+  border-radius: 3px;
+  background-color: var(--inset-bg);
+}
+
+.log-row.log-rest {
+  --log-accent: var(--vital-green);
+}
+
+.log-row.log-turn {
+  --log-accent: var(--copper);
+}
+
+.log-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+/* The sentence takes the row and the clock takes what is left. A tap deals the
+   card, so it is a button where there is one to deal and plain text where there
+   is not, and the two are the same shape either way. */
+.log-open {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--text-silver);
+  cursor: pointer;
+}
+
+.log-open.is-still {
+  cursor: default;
+}
+
+.log-open:hover:not(.is-still) .log-title,
+.log-open:focus-visible:not(.is-still) .log-title {
+  color: var(--log-accent);
+}
+
+.log-actor {
+  font-weight: 700;
+}
+
+.log-verb {
+  color: var(--text-muted);
+}
+
+.log-title {
+  font-weight: 700;
+  color: color-mix(in srgb, var(--log-accent) 70%, var(--text-silver));
+  transition: color 0.15s ease;
+}
+
+.log-when {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  white-space: nowrap;
+  color: rgba(148, 167, 176, 0.75);
+}
+
+/* What it cost, on one line and clipped. Whatever does not fit is on the card. */
+.log-detail {
+  margin-top: 1px;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log-tools {
+  margin-top: 0.5rem;
+}

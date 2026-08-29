@@ -5,6 +5,8 @@ import UsePrompt from './UsePrompt.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { spendUse } from '../../lib/combatBar.js';
+import { playEvent } from '../../lib/campaignLog.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
 import {
   addIngredient,
   blankBrew,
@@ -70,6 +72,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
   const [picking, setPicking] = useState(null);
 
   const stack = useCardStack();
+  const { log } = useCampaignLog();
 
   if (!limits) return null;
 
@@ -92,6 +95,9 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
   function confirm(mode, amount, options) {
     const body = spendUse(paying, character, mode, amount, options);
     if (Object.keys(body).length > 0) patch(body);
+    // What went into it is the brewer's business; that a Brew was made is the
+    // table's. See campaignLog.js.
+    log(playEvent(paying, character, mode, amount, options));
     setPaying(null);
     setDraft(blankBrew());
     onClose();

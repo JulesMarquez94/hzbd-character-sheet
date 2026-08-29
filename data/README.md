@@ -9511,3 +9511,103 @@ a font that fails to load cannot push Karma off the bottom.
 The block-2 meter rule in sheet.css deliberately does **not** cover this one
 any more: it lays its labels differently, so sharing the rule would have meant
 one of the two drifting the moment the other changed.
+
+## The table log, 2026-08-29
+
+Jules: "when you connect a character in a campaign there is log event block that
+is added to all campaigns character page. this work as log of action. so
+whenever a character or later the gm from campaign take action. it shows for
+example if someone cast a spell, it shows on the log"
+
+This is the campaign plan's phase 1 log, and the first thing on the site that
+carries anything **between** two sheets. Until now a campaign could show you the
+party's numbers; it could not show you what the party was doing.
+
+### One table, one row per thing that happened
+
+`campaign_events` is insert only for everybody. A row is a name, a line under it
+and the receipt behind it:
+
+| Column | What it holds |
+| ------ | ------------- |
+| `kind` | `use`, `rest` or `turn` |
+| `actor` | the name that did it, copied at the time |
+| `title` | "Fireball", "Long Rest", "Turn 3" |
+| `detail` | "Spent 2 Action Points and 4 Willpower · lasts 3 turns" |
+| `data` | the card id the row opens, the pools that moved, the verb |
+| `seq` | an identity count, so every reader agrees what order it happened in |
+
+`actor` is denormalized on purpose. A character can be renamed or deleted, and a
+log that then reads "someone cast Fireball" has lost the only thing worth
+keeping, so `character_id` is `on delete set null` and the name stays.
+
+There is no update policy and no delete policy: a log that can be rewritten
+after the fact is not a log. The actor is taken from the session by the
+`claim_event_actor` trigger, which also refuses a character you do not own and a
+character that does not sit at the table it is speaking at. A Game Master may
+write a row with no character on it, which is the table speaking rather than a
+player; nothing raises one yet, and that is the hook the "later the gm" half of
+the ask hangs on.
+
+**Events live 90 days.** Swept by `trim_campaign_events` on insert rather than on
+a schedule, because there is no scheduler here, and one insert in fifty pays for
+the sweep so a table mid-fight cleans up every few minutes and a quiet one
+whenever somebody plays.
+
+**schema.sql must be re-run in the Supabase SQL editor** before any of this
+works.
+
+### The block is the same block in two places
+
+`LogBlock` takes a campaign id and nothing else, which is what lets it sit in
+both homes the ask named:
+
+- **On the campaign page**, one block on the Overview beside the party, arranged
+  with everything else.
+- **On the Character tab of every linked sheet**, one block per campaign that
+  sheet sits at, id `log:<campaign_id>`, appearing when the membership does and
+  going when it goes. It is arranged, moved and named like a creature's block.
+
+Newest at the top, because a log read during a fight is read from the top. A row
+whose event names a card deals that card onto the same stack the rest of the
+sheet deals onto, and on the campaign page it is dealt **against whoever played
+it**, so a spell read out of the feed prints the caster's numbers rather than the
+reader's. Older pages are asked for by a button rather than by an infinite
+scroller, which a 640px block has no room to fight.
+
+The block never writes. It reads once on mount and then rides a
+`campaign_events` insert subscription, so a use on somebody else's sheet lands
+here a second after they press the button, and a reconnect refetches rather than
+leaving a hole where the socket was down.
+
+### What writes to it
+
+Every place that already spends something, and nowhere else. The log is written
+**after** the patch and never instead of it: the points have left the pool
+either way, and a table nobody can reach must not be able to turn a use that
+happened into an error. `postEvent` swallows its own failure for that reason.
+
+| Where | What it says |
+| ----- | ------------ |
+| Quick Bar, Loadout | "Kaelen cast Fireball", "Kaelen attacked with Ashen Blade" |
+| A creature's action bar | logged under the creature's own name, because that is who acted |
+| Brewing, Ephemeral Enchantment | the window pays, so the window speaks |
+| The two rests | "Long Rest · 4 Supplies · spent the night on Enchant an item" |
+| The turn button | "Turn 3", "Ended turn 3", "Entered combat", "Left combat" |
+
+Three verbs and no more: a spell is **cast**, a weapon attack is **attacked
+with**, everything else is **used**. The distinction earns its place because the
+log is scanned mid-fight and those are the two things a reader is looking for.
+
+A BREW is the one use that logs nothing where it was tapped. Its printed cost is
+"x" and it spends nothing; what it actually costs is worked out in the window,
+and that is where its line comes from. One brew, one entry.
+
+### Who reads it
+
+Everybody at the table and nobody else. The read policy is the same reach that
+reads the roster, so a viewer looking at a public sheet they are not seated at
+sees no log block at all: the memberships come back empty and the blocks are
+never grown. That is also what makes the tables list worth reading once for the
+whole page, in `LogProvider`, and handing down through context the way the card
+stack is.

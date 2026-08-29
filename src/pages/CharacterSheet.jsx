@@ -13,6 +13,7 @@ import { subscribeToTable } from '../lib/realtime.js';
 import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
+import LogProvider from '../components/campaign/LogProvider.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
 import InventoryTab from '../components/sheet/InventoryTab.jsx';
 import LoreTab from '../components/sheet/LoreTab.jsx';
@@ -368,6 +369,10 @@ export default function CharacterSheet({ creating = false }) {
 
   return (
     <UnitContext.Provider value={unit}>
+    {/* Which campaigns this sheet sits at, read once for the whole page: the
+        Character tab grows a log block per table, and everything that spends
+        something posts what it did to all of them. See LogProvider.jsx. */}
+    <LogProvider characterId={character.id} canWrite={canEdit}>
     <div className="sheet" style={{ '--sheet-cols': canvasColumns }} data-columns={canvasColumns}>
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">
@@ -564,6 +569,7 @@ export default function CharacterSheet({ creating = false }) {
         )}
       </main>
     </div>
+    </LogProvider>
     </UnitContext.Provider>
   );
 }

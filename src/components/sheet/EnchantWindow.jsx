@@ -6,6 +6,8 @@ import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { sortCards } from '../../lib/cardOrder.js';
 import { spendUse } from '../../lib/combatBar.js';
+import { playEvent } from '../../lib/campaignLog.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
 import { addEffect } from '../../lib/combatTurn.js';
 import { ENCHANT_KINDS, enchantKind } from '../../lib/enchantments.js';
 import { enchantOptions, enchanterState, ephemeralCost, ephemeralEffect } from '../../lib/enchanting.js';
@@ -57,6 +59,7 @@ import { SPELLS } from '../../lib/spells.js';
 export default function EnchantWindow({ character, patch, readOnly = false, onClose }) {
   const state = enchanterState(character);
   const stack = useCardStack();
+  const { log } = useCampaignLog();
 
   /** The enchantment being laid, or null while the shelf is being read. */
   const [chosen, setChosen] = useState(null);
@@ -107,6 +110,7 @@ export default function EnchantWindow({ character, patch, readOnly = false, onCl
     );
 
     patch(body);
+    log(playEvent(paying, character, mode, amount, options));
     setPaying(null);
     onClose();
   }

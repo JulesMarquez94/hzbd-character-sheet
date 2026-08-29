@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import ActiveBlock from './ActiveBlock.jsx';
 import FeralBlock from './FeralBlock.jsx';
 import LedgerModal from './LedgerModal.jsx';
+import LogBlock from '../campaign/LogBlock.jsx';
 import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
 import PactBlock from './PactBlock.jsx';
@@ -20,6 +21,7 @@ import {
 } from './parts.jsx';
 import BlockArrange from './BlockArrange.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
+import { useCampaignLog } from '../../context/campaign-log.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import {
   formatNumber,
@@ -180,9 +182,21 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      missions, there for as long as the set is held. See pact.js. */
   const pacts = useMemo(() => pactState(character), [character]);
 
+  /* And the tables this character sits at. One log block each, there for as
+     long as the membership is: a sheet linked to no campaign has none of them
+     and is exactly the sheet it always was. Read by the page rather than here,
+     because everything on this tab that spends something posts to the same
+     list. See LogProvider.jsx. */
+  const { tables } = useCampaignLog();
+
   const grown = useMemo(
-    () => [...minionBlockIds(character), ...feralBlockIds(character), ...pactBlockIds(character)],
-    [character]
+    () => [
+      ...minionBlockIds(character),
+      ...feralBlockIds(character),
+      ...pactBlockIds(character),
+      ...tables.map((table) => `log:${table.id}`),
+    ],
+    [character, tables]
   );
 
   const order = useMemo(() => normalizeBlockOrder(character.block_order, grown), [
@@ -216,6 +230,14 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           : { name: String(id), note: null };
       }
 
+      const table = /^log:(.+)$/.exec(String(id));
+      if (table) {
+        const camp = tables.find((row) => row.id === table[1]);
+        return camp
+          ? { name: camp.name, note: 'What has happened at this table' }
+          : { name: String(id), note: null };
+      }
+
       const struck = /^pact:(.+)$/.exec(String(id));
       if (struck) {
         const pact = pacts.find((row) => row.id === struck[1]);
@@ -241,7 +263,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             note: `${minion.spec.label}: attributes, defenses, Health and Shield`,
           };
     },
-    [minions, forms, pacts]
+    [minions, forms, pacts, tables]
   );
 
   /* Arranging happens in a modal rather than on the tab itself. Dragging a
@@ -564,6 +586,17 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       pacts.map((pact) => [
         `pact:${pact.id}`,
         <PactBlock character={character} pact={pact} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
+    /* ============ A TABLE'S ONE ============
+       Only there when this character is linked to a campaign, one per campaign.
+       The one block on the tab that is about somebody else: what the whole
+       party has been doing, as they do it. Nothing here writes. */
+    ...Object.fromEntries(
+      tables.map((table) => [
+        `log:${table.id}`,
+        <LogBlock campaignId={table.id} title={table.name} />,
       ])
     ),
 

@@ -165,7 +165,10 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
               type="button"
               className="btn btn-copper btn-sm"
               onClick={() => {
-                onRest(plan.patch);
+                /* The write, and beside it what this rest was spent on. Only
+                   the table log reads the second argument, and a caller that
+                   ignores it is a caller that behaves exactly as it did. */
+                onRest(plan.patch, { action: action?.label ?? null });
                 onClose();
               }}
               disabled={!plan.affordable}

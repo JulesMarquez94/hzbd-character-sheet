@@ -17,6 +17,8 @@ import { getCard } from '../../lib/weapons.js';
 import { cardCost } from '../../lib/cardText.js';
 import { characterSkillGrantSources } from '../../lib/levelPicks.js';
 import { shortName, spendUse } from '../../lib/combatBar.js';
+import { playEvent } from '../../lib/campaignLog.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
 import { attackModifiers, ridingLine } from '../../lib/moves.js';
 import { magazineUse } from '../../lib/uses.js';
 
@@ -82,6 +84,7 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
   // The use waiting on the action-or-reaction question, or null.
   const [request, setRequest] = useState(null);
   const stack = useCardStack();
+  const { log } = useCampaignLog();
 
   const equipment = normalizeEquipment(character.equipment);
   const belt = normalizeBelt(character.belt);
@@ -116,6 +119,8 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
   function confirmUse(mode, amount, options) {
     const body = spendUse(request, character, mode, amount, options);
     if (Object.keys(body).length > 0) patch(body);
+    // And the table, exactly as the quick bar does: one swing, one line.
+    log(playEvent(request, character, mode, amount, options));
     setRequest(null);
   }
 
