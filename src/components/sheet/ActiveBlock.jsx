@@ -7,9 +7,8 @@ import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
 import StealWindow from './StealWindow.jsx';
-import { moveCount, quickBar, spendUse } from '../../lib/combatBar.js';
-import { playEvent } from '../../lib/campaignLog.js';
-import { useCampaignLog } from '../../context/campaign-log.js';
+import { moveCount, quickBar } from '../../lib/combatBar.js';
+import { usePlayCard } from './usePlayCard.js';
 import { brewSetFor } from '../../lib/brews.js';
 import { trickSetFor } from '../../lib/tricks.js';
 
@@ -60,8 +59,8 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
      teaches, so the chip knows the price and pays it. See src/lib/tricks.js. */
   const [stealing, setStealing] = useState(null);
 
-  // Where a use is told about, if this sheet sits at a table at all.
-  const { log } = useCampaignLog();
+  // Paying, telling the table and rolling, in one place. See usePlayCard.js.
+  const play = usePlayCard({ character, patch });
 
   const groups = useMemo(() => quickBar(character), [character]);
   const total = moveCount(groups);
@@ -101,20 +100,13 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
     });
   }
 
-  /** The spend itself lives in combatBar.js, shared with block 3. */
+  /** Paying, telling the table and rolling all live in usePlayCard.js now,
+      shared with block 3 and with a creature's own bar. */
   function confirmUse(mode, amount, options) {
-    const body = spendUse(request, character, mode, amount, options);
-    if (Object.keys(body).length > 0) patch(body);
-
-    /* And the table is told, if this character sits at one. After the write and
-       never instead of it: the points have left the pool either way, and a log
-       nobody can reach must not be able to stop a use that already happened.
-       See campaignLog.js.
-
-       Except for a BREW, whose printed cost is "x" and spends nothing: what it
-       actually costs is worked out in the window below, and that is where the
-       line comes from. One brew, one entry. */
-    if (request.opens !== 'brew') log(playEvent(request, character, mode, amount, options));
+    /* A BREW spends nothing here: its printed cost is "x" and what it actually
+       costs is worked out in the window below, which is where it is paid and
+       where the one line about it is written. */
+    play(request, mode, amount, options, { tell: request.opens !== 'brew' });
 
     /* A card may say that using it opens something. BREW does: what a Brew
        costs is the sum of what goes into it, so the window is where the cost is

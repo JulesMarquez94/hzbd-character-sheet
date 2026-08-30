@@ -16,9 +16,12 @@ import { VERDICTS, rollNotation, verdictLabel } from '../lib/dice.js';
  * from the moment they tap.
  *
  * ------------------------------------------------------------------ the beats
- * A roll has three, and they are what makes it read as a throw rather than as a
+ * A roll has four, and they are what makes it read as a throw rather than as a
  * number appearing:
  *
+ *   dc        what is it against? Only for a check raised off a card, and only
+ *             once per chain. The dice are already on the table behind the
+ *             question, so it is asked about a roll you can see.
  *   ready     the dice are on the surface and have not been thrown. Press the
  *             button or tap anywhere. Jules asked for this beat by name, and it
  *             is the one that makes the roll *yours*.
@@ -68,9 +71,10 @@ function prefersStill() {
   );
 }
 
-export default function DiceSurface({ job, onThrow, onCall, onDone, onClose }) {
+export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onDc }) {
   const { spec, result, phase } = job;
 
+  const [dc, setDc] = useState('');
   const [tick, setTick] = useState(0);
   /* How many of the bursts have bloomed. Bases are never staged: they land
      together, the way dice actually do. */
@@ -159,6 +163,10 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose }) {
       aria-label={spec.name || 'Dice'}
       onMouseDown={(event) => {
         if (event.target !== event.currentTarget) return;
+        /* A roll waiting on its DC is waiting on an answer, so a stray tap does
+           nothing. Everything else on the surface is a tap away from its next
+           beat. */
+        if (phase === 'dc') return;
         if (phase === 'ready') onThrow();
         else if (phase === 'rolling') skip();
         else if (!needsCall) onClose();
@@ -171,11 +179,48 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose }) {
         </p>
 
         <p className="dice-asked">
-          {phase === 'ready' ? askedFor(spec) : rollNotation(result)}
-          {spec.dc !== null && spec.dc !== undefined && (
+          {result ? rollNotation(result) : askedFor(spec)}
+          {phase !== 'dc' && spec.dc !== null && spec.dc !== undefined && (
             <span className="dice-dc">against {spec.dc}</span>
           )}
         </p>
+
+        {/* ---------- THE DC ----------
+            Asked once, after the price is paid and before the dice are thrown,
+            exactly as Jules laid the flow out. It sits on the surface rather
+            than in a window of its own so the dice are already on the table
+            behind it: you are answering a question about a roll you can see,
+            and the answer is the last thing between you and throwing it.
+
+            Blank is a real answer and the button says so. A crit is 6 over the
+            DC, so a roller that has not been told the number genuinely cannot
+            judge the throw, and pretending otherwise is the one thing it must
+            never do. */}
+        {phase === 'dc' && (
+          <div className="dice-ask">
+            <label className="dice-ask-label" htmlFor="dice-dc">
+              What is it against?
+            </label>
+            <input
+              id="dice-dc"
+              type="number"
+              className="dice-input dice-ask-input"
+              value={dc}
+              autoFocus
+              onChange={(event) => setDc(event.target.value)}
+              onKeyDown={(event) => event.key === 'Enter' && onDc(dc)}
+              placeholder="The DC"
+            />
+            <span className="dice-ask-row">
+              <button type="button" className="btn btn-minimal btn-sm" onClick={() => onDc('')}>
+                Nobody knows
+              </button>
+              <button type="button" className="btn btn-copper btn-sm" onClick={() => onDc(dc)}>
+                {dc === '' ? 'Roll it blind' : `Against ${dc}`}
+              </button>
+            </span>
+          </div>
+        )}
 
         <div className="dice-floor">
           {visible.map((die) => (
@@ -189,7 +234,7 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose }) {
               hot={phase !== 'rolling' && die.value === die.sides && result.shape === 'value'}
             />
           ))}
-          {phase === 'ready' &&
+          {(phase === 'ready' || phase === 'dc') &&
             plannedDice(spec).map((die, i) => (
               <Die key={`ready-${i}`} die={die} face={null} rolling={false} hot={false} />
             ))}
@@ -244,13 +289,15 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose }) {
         </div>
 
         <p className="dice-hint">
-          {phase === 'ready'
-            ? 'Tap anywhere to roll'
-            : phase === 'rolling'
-              ? 'Tap to skip'
-              : needsCall
-                ? 'Pick the one the table called'
-                : 'Tap anywhere to clear'}
+          {phase === 'dc'
+            ? 'Leave it blank and the table calls the result'
+            : phase === 'ready'
+              ? 'Tap anywhere to roll'
+              : phase === 'rolling'
+                ? 'Tap to skip'
+                : needsCall
+                  ? 'Pick the one the table called'
+                  : 'Tap anywhere to clear'}
         </p>
       </div>
     </div>

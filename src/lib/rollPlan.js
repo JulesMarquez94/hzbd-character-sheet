@@ -1,0 +1,167 @@
+import { attributeOf, cardProse, castStat, resolveValue } from './cardText.js';
+
+/**
+ * What a card is going to make you roll, read off the card.
+ *
+ * A card already says what it rolls. It has said so since the codex was typed:
+ * `{roll}` is the check, and every `[[2d6 + 2*stat]]` is a handful of dice with
+ * a number after it. So there is no new field on any card and no table of
+ * exceptions here. The plan is the card's own text, in the order it is printed,
+ * which is also the order it is read aloud at a table.
+ *
+ * That order matters more than it looks. "Make a {stat} Melee Attack {roll}
+ * against an entity. On a hit, you deal [[1d6 + stat]] damage" is two links, and
+ * the second one only happens because the first one landed. Printing order is
+ * resolution order, so walking the text left to right is walking the chain.
+ *
+ * ------------------------------------------------------------ what is a link
+ * Two kinds, and a third thing that looks like one and is not.
+ *
+ *   {roll}          a check. 2d6 plus what this character adds, against a DC.
+ *   [[2d6 + stat]]  dice to roll, for damage or healing or a Shield.
+ *   [[stat]]        **not a link.** "gain Shield equal to your Instinct" is a
+ *                   number, not a throw. `resolveValue` says so itself: no
+ *                   dice in it, nothing to roll. teeth-bite is the card that
+ *                   has both in one sentence, and rolling the second would put
+ *                   a die on the table for a value the card states outright.
+ *
+ * ------------------------------------------------------------- the first roll
+ * Only the first `{roll}` becomes a check, and two cards in the codex have a
+ * second one. That is deliberate rather than a limit worth removing: a chain
+ * asks for its DC once, per Jules on 2026-08-30, so a card with two checks would
+ * have to ask twice or guess that the second shares the first one's number.
+ * Neither is obviously right, so the plan takes the one it is sure about. Both
+ * cards are flagged in the checker.
+ *
+ * ----------------------------------------------------------- naming a throw
+ * A throw is named for what it is *for*, which the card says in the word right
+ * after the dice: "{damage} damage", "Health", "Shield". Read from the text
+ * following the token rather than from the sentence around it, because a
+ * sentence that deals damage and heals in one breath would otherwise call both
+ * of them the same thing. Where the following word settles nothing the sentence
+ * is asked, and where that settles nothing either the throw is just a Roll,
+ * which is honest and costs nothing: the dice and the total are right either
+ * way, and only the word above them was ever in question.
+ */
+
+/** A check or a value, wherever one appears in a card's text. */
+const LINK = /\{roll(?::([a-zA-Z]+))?\}|\[\[([^\]]+)\]\]/g;
+
+/** What the dice are for, when the words after them say. */
+const AFTER = [
+  [/^\s*(?:\{damage(?::[A-Za-z]+)?\}\s*)?damage\b/i, 'damage'],
+  [/^\s*(?:\{damage(?::[A-Za-z]+)?\}\s*)?Health\b/i, 'healing'],
+  [/^\s*Shield\b/i, 'shield'],
+];
+
+/**
+ * The chain a use is about to raise, as specs `present` can take.
+ *
+ *   card       the card being played
+ *   character  whose numbers it prints. A creature plays its own.
+ *   modifiers  what the holder brings: the stat it casts off, Empower, Elevate,
+ *              a lent bonus, and the advantage riding the swing. The same
+ *              object AbilityCard prints the card with, so the dice that land
+ *              are the dice the player was looking at when they pressed use.
+ *   half       whether the card's second half was paid for. Eleven halves in
+ *              the codex roll dice and none of them repeats the base card's,
+ *              so a paid half is extra links rather than replacement ones.
+ */
+export function rollPlan(card, character, modifiers = null, { half = false } = {}) {
+  const mods = modifiers ?? {};
+  const who = mods.actor ?? character;
+  const stat = castStat(mods.stat ?? card?.stat ?? 'instinct', who);
+  const sums = {
+    empower: Number(mods.empower) || 0,
+    elevate: Number(mods.elevate) || 0,
+    bonus: Number(mods.bonus) || 0,
+  };
+
+  const links = [];
+  const texts = [card?.body, half ? card?.sub_body : null];
+
+  for (const raw of texts) {
+    if (!raw) continue;
+    /* Markers off first. A bold run may wrap a live value, so "**[[2d6]]**
+       damage" would otherwise be asked what follows it and be told "** damage".
+       See cardProse in cardText.js. */
+    const text = cardProse(raw);
+
+    LINK.lastIndex = 0;
+    let match;
+    while ((match = LINK.exec(text))) {
+      const [whole, named, expression] = match;
+      const after = text.slice(match.index + whole.length);
+
+      if (expression === undefined) {
+        // Already have the one check this chain will ask a DC for.
+        if (links.some((link) => link.shape === 'check')) continue;
+
+        const attribute = attributeOf(named ?? 'stat', stat);
+        if (!attribute) continue;
+
+        links.push({
+          shape: 'check',
+          kind: sentenceAround(text, match.index).includes('attack') ? 'attack' : 'check',
+          flat: resolveValue(attribute.key, who, stat, sums).flat,
+          advantage: Number(mods.advantage) || 0,
+          disadvantage: Number(mods.disadvantage) || 0,
+          /* The one question the sheet cannot answer for itself. A critical is 6
+             over the DC, so without the number there is no verdict to give. */
+          askDc: true,
+          askVerdict: true,
+        });
+        continue;
+      }
+
+      const resolved = resolveValue(expression, who, stat, sums);
+      // A value with no dice in it is a number the card states, not a throw.
+      if (resolved.dice.length === 0) continue;
+
+      links.push({
+        shape: 'value',
+        kind: purposeOf(after, sentenceAround(text, match.index)),
+        dice: resolved.dice,
+        flat: resolved.flat,
+        parts: resolved.parts,
+        askVerdict: false,
+      });
+    }
+  }
+
+  return links;
+}
+
+/** Whether a card is going to ask for anything at all when it is played. */
+export function rollsAnything(card, character, modifiers = null, options = {}) {
+  return rollPlan(card, character, modifiers, options).length > 0;
+}
+
+/* --------------------------------------------------------------- the reading */
+
+/** What the dice are for: the word after them, then the sentence, then nothing. */
+function purposeOf(after, sentence) {
+  for (const [pattern, kind] of AFTER) {
+    if (pattern.test(after)) return kind;
+  }
+  if (/\bdamage\b/i.test(sentence)) return 'damage';
+  /* "healing [[1d6 + level]]" puts the word in front of the dice, which is why
+     the sentence is asked at all: Bandage Roll is the one card in the codex that
+     says what it is for before saying how much. */
+  if (/\bhealing\b|\bheals?\b|\bHealth\b/i.test(sentence)) return 'healing';
+  return 'roll';
+}
+
+/**
+ * The sentence a token sits in, lowercased, for the two questions the word after
+ * it cannot settle: whether a Roll is an Attack Roll, and what a bare handful of
+ * dice is for.
+ */
+function sentenceAround(text, at) {
+  const from = Math.max(
+    text.lastIndexOf('.', at) + 1,
+    text.lastIndexOf('\n', at) + 1
+  );
+  const dot = text.indexOf('.', at);
+  return text.slice(from, dot < 0 ? text.length : dot + 1).toLowerCase();
+}

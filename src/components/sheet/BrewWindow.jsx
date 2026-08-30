@@ -4,9 +4,7 @@ import Modal from '../Modal.jsx';
 import UsePrompt from './UsePrompt.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
-import { spendUse } from '../../lib/combatBar.js';
-import { playEvent } from '../../lib/campaignLog.js';
-import { useCampaignLog } from '../../context/campaign-log.js';
+import { usePlayCard } from './usePlayCard.js';
 import {
   addIngredient,
   blankBrew,
@@ -72,7 +70,7 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
   const [picking, setPicking] = useState(null);
 
   const stack = useCardStack();
-  const { log } = useCampaignLog();
+  const play = usePlayCard({ character, patch });
 
   if (!limits) return null;
 
@@ -93,11 +91,13 @@ export default function BrewWindow({ talent, character, patch, readOnly = false,
 
   /** The one write a confirmed Brew makes: the points, and nothing else. */
   function confirm(mode, amount, options) {
-    const body = spendUse(paying, character, mode, amount, options);
-    if (Object.keys(body).length > 0) patch(body);
-    // What went into it is the brewer's business; that a Brew was made is the
-    // table's. See campaignLog.js.
-    log(playEvent(paying, character, mode, amount, options));
+    /* What went into it is the brewer's business; that a Brew was made is the
+       table's. See campaignLog.js.
+
+       `roll: false` because this pays for a potion that does not exist yet. The
+       card being charged against describes what the potion will do when it is
+       drunk, and rolling that at the cauldron would roll it a day early. */
+    play(paying, mode, amount, options, { roll: false });
     setPaying(null);
     setDraft(blankBrew());
     onClose();

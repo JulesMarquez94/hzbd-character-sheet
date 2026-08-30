@@ -104,7 +104,13 @@ export function DiceTrayProvider({ children }) {
         setOpen(false);
         setAsking(false);
         ticket.current += 1;
-        setJob({ id: ticket.current, spec: normalize(spec), phase: 'ready', result: null });
+        const ready = normalize(spec);
+        setJob({
+          id: ticket.current,
+          spec: ready,
+          phase: ready.askDc ? 'dc' : 'ready',
+          result: null,
+        });
       }),
     []
   );
@@ -149,6 +155,24 @@ export function DiceTrayProvider({ children }) {
     if (!job || job.phase !== 'ready') return;
     const result = job.spec.shape === 'check' ? rollCheck(job.spec) : rollValue(job.spec);
     setJob({ ...job, result, phase: 'rolling' });
+  }
+
+  /**
+   * The DC, answered or waved off.
+   *
+   * It lands on the spec rather than beside it, so that everything downstream
+   * reads one number from one place: `rollCheck` judges against `spec.dc`, and
+   * the surface prints it. An empty answer leaves it null, which is what raises
+   * the four buttons once the dice land.
+   */
+  function setDc(value) {
+    if (!job || job.phase !== 'dc') return;
+    const dc = String(value ?? '').trim() === '' ? null : Math.trunc(Number(value));
+    setJob({
+      ...job,
+      spec: { ...job.spec, dc: Number.isFinite(dc) ? dc : null },
+      phase: 'ready',
+    });
   }
 
   /* The table's own verdict, for a check thrown with no DC. It closes the roll
@@ -291,6 +315,7 @@ export function DiceTrayProvider({ children }) {
           onThrow={throwIt}
           onCall={call}
           onDone={() => setJob((held) => (held ? { ...held, phase: 'done' } : held))}
+          onDc={setDc}
           onClose={() => finish(job.result, job.spec)}
         />
       )}
@@ -327,6 +352,10 @@ function normalize(spec) {
        to head a block with, and a feed full of unnamed d6 is a feed nobody
        reads. See the two modes at the top. */
     log: Boolean(spec.log),
+    /* Whether the roll opens by asking what it is against. Only a check off a
+       card does: the tray's own custom roll collected its DC in the window that
+       set it up, and a damage roll has nothing to be against. */
+    askDc: Boolean(spec.askDc),
     chain: spec.chain ?? null,
     card: spec.card ?? null,
   };
