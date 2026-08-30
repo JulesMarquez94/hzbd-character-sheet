@@ -156,12 +156,23 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
     onDone();
   }
 
-  /* Escape closes a finished roll and skips an unfinished one, which is the
-     same instinct either way: get me out of this. */
+  /* Escape is the way out of every beat, which is the same instinct at each of
+     them: get me out of this.
+
+     Including the two before the throw, which had no way out at all. The price
+     is already paid by the time a card raises dice, so abandoning is allowed and
+     `present` resolves null for it: the chain stops and the log keeps whatever
+     was thrown. Until this, that documented path could not be reached from the
+     interface, and a player who did not want to roll was stuck on the surface.
+
+     A roll waiting on the table's verdict is the one exception. It is not asking
+     whether to continue, it is asking what happened, and the four buttons are
+     the only honest answers. */
   useEffect(() => {
     function onKey(event) {
       if (event.key !== 'Escape') return;
-      if (phase === 'rolling') skip();
+      if (phase === 'dc' || phase === 'ready') onClose();
+      else if (phase === 'rolling') skip();
       else if (phase === 'done' && !needsCall) onClose();
     }
     document.addEventListener('keydown', onKey);
@@ -181,7 +192,7 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
 
   return (
     <div
-      className={`dice-surface is-${phase}`}
+      className={`dice-surface is-${phase}${watching ? ' is-watching' : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label={spec.name || 'Dice'}
@@ -327,9 +338,9 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
           {watching
             ? 'Someone else at the table. It clears itself.'
             : phase === 'dc'
-            ? 'Leave it blank and the table calls the result'
+            ? 'Leave it blank and the table calls the result · Escape to walk away'
             : phase === 'ready'
-              ? 'Tap anywhere to roll'
+              ? 'Tap anywhere to roll · Escape to walk away'
               : phase === 'rolling'
                 ? 'Tap to skip'
                 : needsCall

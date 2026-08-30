@@ -145,6 +145,13 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
       if (resolved.dice.length === 0) continue;
 
       const sentence = sentenceAround(text, match.index);
+      /* And a value inside a menu is an option, not something that happened.
+         STEAL lists four things you might have lifted, one of which restores
+         [[2d6 + 2*stat]] Health, and rolling that during the attack would put a
+         number on the table for an outcome the player has not picked and will
+         probably not get. It is the only card in the codex shaped this way, and
+         the rule is here rather than an exception for it by name. */
+      if (isMenuEntry(text, match.index)) continue;
       const link = {
         shape: 'value',
         kind: purposeOf(after, sentence),
@@ -169,6 +176,19 @@ export function rollsAnything(card, character, modifiers = null, options = {}) {
 }
 
 /* --------------------------------------------------------------- the reading */
+
+/**
+ * Whether a value is an entry in a numbered list of options.
+ *
+ * "…whose value is below the number you rolled: 1: Healing Tonic · Restores
+ * [[2d6 + 2*stat]] Health. 2: Poison · …". A menu has no full stops between its
+ * entries, so the whole list reads as one sentence and the test is what sits
+ * between the sentence starting and the dice: a bare "N:" is a list, not prose.
+ */
+function isMenuEntry(text, at) {
+  const from = Math.max(text.lastIndexOf('.', at) + 1, text.lastIndexOf('\n', at) + 1);
+  return /\b\d+\s*:\s*\S/.test(text.slice(from, at));
+}
 
 /** How many times the card lands this value. One unless its sentence says more. */
 function repeatsOf(sentence) {

@@ -92,6 +92,33 @@ section('a stated number is not a throw');
   }
 }
 
+section('a value inside a menu is an option, not a throw');
+{
+  /* STEAL lists four things you might have lifted and one of them restores
+     [[2d6 + 2*stat]] Health. Rolling that during the attack puts a number on the
+     table for an outcome the player has not picked and probably will not get.
+     The only card in the codex shaped this way, which is why the rule is written
+     rather than the card being named. */
+  const steal = rollPlan(getCard('steal'), WHO);
+  check('the attack is still rolled', shape(steal), ['check:attack+5']);
+  check('and the menu is left to the window', steal.filter((l) => l.shape === 'value').length, 0);
+
+  /* A menu has no full stops between its entries, so the list reads as one
+     sentence and the tell is a bare "N:" sitting before the dice. */
+  const menu = rollPlan(
+    { stat: 'instinct', body: 'Choose one: 1: Mend · Restores [[2d6]] Health. 2: Ward.' },
+    WHO
+  );
+  check('any numbered list, not just that one', menu.length, 0);
+
+  /* And prose that merely contains a colon is still prose. */
+  const prose = rollPlan(
+    { stat: 'instinct', body: 'The blade drinks deep: you deal [[2d6]] damage.' },
+    WHO
+  );
+  check('a colon alone is not a menu', shape(prose), ['damage:2d6+0']);
+}
+
 section('a card that rolls nothing plans nothing');
 {
   const plan = rollPlan({ body: 'You stand up. Nothing about this is a roll.' }, WHO);
