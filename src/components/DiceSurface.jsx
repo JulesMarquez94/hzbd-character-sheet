@@ -71,8 +71,21 @@ function prefersStill() {
   );
 }
 
-export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onDc }) {
+export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onDc, Stage = null }) {
   const { spec, result, phase } = job;
+
+  /* A physics table, when the tier and the machine both allow one. It replaces
+     the floor and nothing else, and it owns the timing while it is up: dice
+     falling take as long as they take, so the tumble below stands down and waits
+     to be told they landed. See DiceStage.jsx.
+
+     Dropped the moment it says it could not manage, which puts the flat floor
+     back mid-roll with the same faces on it. Nothing about the roll changes. */
+  const [staged, setStaged] = useState(Boolean(Stage));
+  /* Only from the throw onward. Before that the dice are waiting rather than
+     falling, and a physics table has nothing to show: the dashed placeholders
+     say "these are about to be thrown" better than an empty green field would. */
+  const solid = Boolean(Stage && staged && (phase === 'rolling' || phase === 'done'));
 
   const [dc, setDc] = useState('');
   const [tick, setTick] = useState(0);
@@ -105,7 +118,7 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
      still version cannot drift away from the moving one, and every timer still
      goes through `timers` so it is still cancellable. */
   useEffect(() => {
-    if (phase !== 'rolling') return undefined;
+    if (phase !== 'rolling' || solid) return undefined;
 
     const still = prefersStill();
     const tumble = still ? 0 : TUMBLE_MS;
@@ -126,12 +139,19 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
       clearTimers();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  }, [phase, solid]);
 
-  /** Cut to the end. Everything is already decided, so this shows it. */
+  /**
+   * Cut to the end. Everything is already decided, so this shows it.
+   *
+   * Skipping a physics roll takes the table away with it. There is no way to
+   * fast-forward a falling die, and the honest end of the animation is the faces
+   * it was always going to show, which the flat floor draws immediately.
+   */
   function skip() {
     if (phase !== 'rolling') return;
     clearTimers();
+    setStaged(false);
     setBloomed(bursts.length);
     onDone();
   }
@@ -227,18 +247,28 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
           </div>
         )}
 
-        <div className="dice-floor">
-          {visible.map((die) => (
-            <Die
-              key={die.id}
-              die={die}
-              face={phase === 'rolling' ? flickerFace(die, tick) : die.value}
-              rolling={phase === 'rolling'}
-              /* A die on its own maximum is why the next one exists, so it stays
-                 lit rather than glowing once and cooling. */
-              hot={phase !== 'rolling' && die.value === die.sides && result.shape === 'value'}
+        <div className={`dice-floor${solid ? ' is-solid' : ''}`}>
+          {solid && (
+            <Stage
+              dice={result?.dice ?? []}
+              onLanded={onDone}
+              /* A table that cannot be built is not a roll that cannot be seen.
+                 The flat floor takes over with the same numbers on it. */
+              onFail={() => setStaged(false)}
             />
-          ))}
+          )}
+          {!solid &&
+            visible.map((die) => (
+              <Die
+                key={die.id}
+                die={die}
+                face={phase === 'rolling' ? flickerFace(die, tick) : die.value}
+                rolling={phase === 'rolling'}
+                /* A die on its own maximum is why the next one exists, so it
+                   stays lit rather than glowing once and cooling. */
+                hot={phase !== 'rolling' && die.value === die.sides && result.shape === 'value'}
+              />
+            ))}
           {(phase === 'ready' || phase === 'dc') &&
             plannedDice(spec).map((die, i) => (
               <Die key={`ready-${i}`} die={die} face={null} rolling={false} hot={false} />

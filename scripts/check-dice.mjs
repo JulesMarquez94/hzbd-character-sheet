@@ -36,6 +36,7 @@ import {
   judge,
   netSwing,
   parseDie,
+  predeterminedNotation,
   previewOf,
   rollCheck,
   rollLine,
@@ -303,6 +304,31 @@ section('the notation and the line read back');
   const burst = rollValue({ dice: ['1d6'], flat: 2, random: scripted([[6, 6], [3, 8]]) });
   check('a burst is named in the line', rollLine(burst), '1d6 + 2 · 6 · burst d8: 3 · 11');
   check('and never in the notation', rollNotation(burst), '1d6 + 2');
+}
+
+/* ------------------------------------------------- telling a table where to land */
+
+section('a settled roll, as the notation a physics table takes');
+{
+  /* The values after the `@` are consumed in the order the die groups are
+     written, so dice sorted differently from the way they were counted would put
+     a d8 on a d6's number and show the table a roll nobody made. Silent if it is
+     wrong, which is why it is pinned here rather than trusted in the renderer. */
+  const die = (sides, value, role = 'base') => ({ id: 0, sides, value, role, from: null });
+
+  check('one die', predeterminedNotation([die(6, 4)]), '1d6@4');
+  check('two of a kind', predeterminedNotation([die(6, 4), die(6, 2)]), '2d6@4,2');
+  check(
+    'mixed sizes group, and the values follow the groups',
+    predeterminedNotation([die(6, 4), die(8, 7), die(6, 2)]),
+    '2d6+1d8@4,2,7'
+  );
+  check(
+    'a whole cascade of climbing dice',
+    predeterminedNotation([die(6, 6), die(8, 8), die(10, 3)]),
+    '1d6+1d8+1d10@6,8,3'
+  );
+  check('nothing to throw', predeterminedNotation([]), '@');
 }
 
 /* ------------------------------------------------------------------ report */

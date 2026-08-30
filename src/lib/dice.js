@@ -328,6 +328,31 @@ export function verdictLabel(id) {
   return VERDICT_BY_ID.get(id)?.label ?? '';
 }
 
+/**
+ * A settled roll as the notation a physics table takes: "2d6+1d8@5,3,6".
+ *
+ * The dice to throw, then where each of them must come to rest. It lives here
+ * rather than beside the renderer that uses it because it is pure, because it is
+ * about dice, and mostly because getting it wrong is silent: the values after
+ * the `@` are consumed in the order the die groups are written, so dice sorted
+ * differently from the way they were counted would land a d8 on a d6's number
+ * and show the table a roll nobody made.
+ *
+ * Grouped by die size in first-seen order, and the values re-sorted to match.
+ * See scripts/check-dice.mjs, and DiceStage.jsx for what throws it.
+ */
+export function predeterminedNotation(dice = []) {
+  const counted = new Map();
+  for (const die of dice) counted.set(die.sides, (counted.get(die.sides) ?? 0) + 1);
+
+  const terms = [...counted].map(([sides, count]) => `${count}d${sides}`);
+  const ordered = [...counted.keys()].flatMap((sides) =>
+    dice.filter((die) => die.sides === sides).map((die) => die.value)
+  );
+
+  return `${terms.join('+')}@${ordered.join(',')}`;
+}
+
 /* -------------------------------------------------------------- reading it */
 
 /**

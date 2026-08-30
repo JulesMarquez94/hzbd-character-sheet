@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DiceTrayContext } from '../context/dice-tray.js';
+import { useAuth } from '../context/auth-context.js';
 import { previewOf, rollCheck, rollValue } from '../lib/dice.js';
 import { REPLAY_DEPTH } from '../lib/logChain.js';
 import CustomRoll from './CustomRoll.jsx';
@@ -64,6 +65,14 @@ const SCRATCH = [4, 6, 8, 10, 12, 20, 100];
  */
 const WATCH_LINGER_MS = 2600;
 
+/** Whether this reader has asked their machine to move things less. */
+function prefersStill() {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
+  );
+}
+
 export function DiceTrayProvider({ children }) {
   /* Whose sheet is open, when one is. The custom roll window reads its three
      attributes off this so a Skill Check can be thrown without the player
@@ -72,6 +81,45 @@ export function DiceTrayProvider({ children }) {
      has no idea a character exists. */
   const [sheet, setSheet] = useState(null);
   const character = sheet?.character ?? null;
+
+  /* Which floor a roll lands on. Premium and above get the physics table, unless
+     the reader has asked for less motion, in which case a tumbling die is
+     exactly what they asked not to be shown. Everyone else gets the flat one,
+     which shows the same faces and the same total: the tier buys the tumble and
+     nothing else. See CAPABILITIES.physics in tiers.js. */
+  const { can } = useAuth();
+  const wantsSolid = can('physics') && !prefersStill();
+
+  /**
+   * The physics table, fetched only by the sheets that are going to use one.
+   *
+   * three.js and a physics engine are the heaviest thing this site can load, and
+   * a free sheet, a signed-out visitor and a reader who asked for less motion
+   * must never pay for them. Nothing eager imports it, so the chunk is fetched
+   * the first time a sheet entitled to one is open.
+   *
+   * Imported by hand rather than through `lazy`, which would want a Suspense
+   * boundary above it and would throw into the tray if the chunk never arrived.
+   * Here a chunk that fails to load simply leaves this null, and null is already
+   * the flat floor. The failure path and the fallback path are the same path.
+   */
+  const [stage, setStage] = useState(null);
+  useEffect(() => {
+    if (!wantsSolid) return undefined;
+
+    let live = true;
+    import('./DiceStage.jsx')
+      .then((module) => {
+        if (live) setStage(() => module.default);
+      })
+      .catch((error) => {
+        console.warn('The physics table did not load. Rolling flat.', error);
+      });
+
+    return () => {
+      live = false;
+    };
+  }, [wantsSolid]);
   const [open, setOpen] = useState(false);
   const [asking, setAsking] = useState(false);
   const [pool, setPool] = useState([]);
@@ -400,6 +448,7 @@ export function DiceTrayProvider({ children }) {
         <DiceSurface
           key={`watch-${watching.key}`}
           job={watching.job}
+          Stage={stage}
           onThrow={() => {}}
           onCall={() => {}}
           onDc={() => {}}
@@ -418,6 +467,7 @@ export function DiceTrayProvider({ children }) {
         <DiceSurface
           key={job.id}
           job={job}
+          Stage={stage}
           onThrow={throwIt}
           onCall={call}
           onDone={() => setJob((held) => (held ? { ...held, phase: 'done' } : held))}

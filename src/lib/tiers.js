@@ -92,6 +92,19 @@ export function rankOf(value) {
 export const CAPABILITIES = {
   /** See the art on cards and codex entries. The card rework's whole point. */
   art: 'premium',
+  /**
+   * Roll on a physics table rather than a flat one.
+   *
+   * The one capability that changes nothing about what happens. Every roll is
+   * decided by dice.js before anything draws it, so a free sheet and a paid one
+   * are shown the same faces, the same total and the same verdict, and the log
+   * cannot tell which of them threw it. What this buys is the tumble.
+   *
+   * Which is also why it can be refused for reasons that have nothing to do with
+   * the tier: a reader who asked for less motion and a browser that failed to
+   * fetch the chunk both fall back to the flat table and lose nothing.
+   */
+  physics: 'premium',
   /** Open and edit a sheet somebody else owns. */
   editAny: 'admin',
   /** Set another account's tier. */

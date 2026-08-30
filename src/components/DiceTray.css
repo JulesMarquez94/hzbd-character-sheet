@@ -248,6 +248,34 @@
   align-items: center;
 }
 
+/* The physics table takes a real box to fall in, where the flat floor only needs
+   room for the dice it draws. Wider than the stage so the throw has somewhere to
+   go, and clipped so a die that gets away does not push the page out. */
+.dice-floor.is-solid {
+  display: block;
+  width: 100%;
+  height: 300px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dice-table {
+  width: 100%;
+  height: 100%;
+}
+
+.dice-table canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 560px) {
+  .dice-floor.is-solid {
+    height: 220px;
+  }
+}
+
 /* ---------------------------------------------------------------- one die */
 
 .die {
