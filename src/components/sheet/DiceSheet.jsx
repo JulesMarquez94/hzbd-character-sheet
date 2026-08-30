@@ -1,13 +1,14 @@
 import { useCallback, useEffect } from 'react';
 import { useDiceTray } from '../../context/dice-tray.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
-import { rollEvent } from '../../lib/logChain.js';
+import { resultFromRow, rollEvent, worthReplaying } from '../../lib/logChain.js';
+import { subscribeToTable } from '../../lib/realtime.js';
 
 /**
  * A sheet telling the tray who is holding it, and how to tell the table.
  *
- * Renders nothing. It exists because the two halves of a logged roll are in two
- * different places: the tray is mounted above the router and knows how to roll,
+ * It draws nothing of its own. It exists because the two halves of a logged roll
+ * are in two different places: the tray is mounted above the router and knows how to roll,
  * and the log provider is inside the sheet and knows which tables to write to.
  * This component is the one spot where both are in scope, so it is where they
  * are introduced.
@@ -35,7 +36,7 @@ export default function DiceSheet({ character }) {
   /* Allowed to find nothing. `useDiceTray` reads a context that defaults to
      null, so a sheet mounted without a tray around it still renders. */
   const hold = useDiceTray()?.hold;
-  const { log } = useCampaignLog();
+  const { log, tables } = useCampaignLog();
 
   /* What the tray calls when a roll settles. The character is closed over rather
      than passed back in, so the row is signed by whoever the sheet was showing
@@ -50,6 +51,56 @@ export default function DiceSheet({ character }) {
     hold({ character, logRoll });
     return () => hold(null);
   }, [hold, character, logRoll]);
+
+  return <DiceWatch tables={tables} mine={character?.id ?? null} />;
+}
+
+/**
+ * Somebody else's dice, on your table.
+ *
+ * One subscription per campaign this sheet sits at, listening for the same
+ * inserts the log block listens for and putting the ones worth watching on the
+ * tray. The row carries every die that was thrown (see rollEvent), so this is
+ * not a second roll of the same name: it is the same dice, showing the same
+ * faces, on another screen.
+ *
+ * It listens on the realtime channel and never on a fetch, which is what keeps a
+ * backlog off the table without having to detect one. A channel only carries
+ * rows written after you joined it, so a laptop that has been shut all evening
+ * reconnects, refetches the feed into the log block, and replays nothing. What
+ * `worthReplaying` then filters is the rest: your own rolls, anything that
+ * arrived late enough to be history, and the overflow when four people act at
+ * once.
+ *
+ * Renders nothing. A roll it declines to replay is not a roll it hides: every
+ * row still lands in the block underneath.
+ */
+function DiceWatch({ tables, mine }) {
+  const watch = useDiceTray()?.watch;
+
+  useEffect(() => {
+    if (!watch || tables.length === 0) return undefined;
+
+    const drop = tables.map((table) =>
+      subscribeToTable({
+        table: 'campaign_events',
+        filter: `campaign_id=eq.${table.id}`,
+        onChange: (payload) => {
+          if (payload.eventType !== 'INSERT') return;
+          const row = payload.new;
+          /* Whose it is and how old it is are the row's business and settled
+             here. How many are already waiting is the queue's, and the queue is
+             the tray's, so the cap is applied there. */
+          if (!worthReplaying(row, { mine })) return;
+
+          const result = resultFromRow(row);
+          if (result) watch({ key: row.id, name: row.title, actor: row.actor, result });
+        },
+      })
+    );
+
+    return () => drop.forEach((off) => off());
+  }, [watch, tables, mine]);
 
   return null;
 }

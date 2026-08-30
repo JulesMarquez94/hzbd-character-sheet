@@ -25,7 +25,14 @@
  *   node scripts/check-log.mjs --list print every case, then exit 0
  */
 
-import { groupEvents, newChain, rollEvent } from '../src/lib/logChain.js';
+import {
+  REPLAY_WINDOW,
+  groupEvents,
+  newChain,
+  resultFromRow,
+  rollEvent,
+  worthReplaying,
+} from '../src/lib/logChain.js';
 import { rollCheck, rollValue } from '../src/lib/dice.js';
 
 const LIST = process.argv.includes('--list');
@@ -222,6 +229,62 @@ section('a chain id is its own');
   const ids = new Set([newChain(), newChain(), newChain()]);
   check('three chains are three ids', ids.size, 3);
   check('and none of them is empty', [...ids].every((id) => typeof id === 'string' && id.length > 8), true);
+}
+
+/* ------------------------------------------------------------------ replaying */
+
+section('a roll read back off the row is the roll that was thrown');
+{
+  /* The one promise the replay makes: nothing is recomputed. Two players reading
+     different numbers off the same roll is the failure this whole design exists
+     to prevent, so the row is copied and never re-added. */
+  const thrown = rollValue({
+    dice: ['1d6'],
+    flat: 8,
+    kind: 'damage',
+    random: scriptedFaces([[6, 6], [3, 8]]),
+  });
+  const back = resultFromRow(rollEvent(thrown, { name: 'Kaelen' }, { chain: 'c1' }));
+
+  check('the same dice', back.dice, thrown.dice);
+  check('the same total', back.total, thrown.total);
+  check('the same shape and kind', [back.shape, back.kind], [thrown.shape, thrown.kind]);
+
+  const judged = rollCheck({ flat: 4, dc: 12, random: scriptedFaces([[5, 6], [3, 6]]) });
+  const readBack = resultFromRow(rollEvent(judged, { name: 'Kaelen' }));
+  check('and the same verdict', readBack.verdict, judged.verdict);
+  check('and the DC it was against', readBack.dc, 12);
+
+  check('a row with no dice reads back as nothing', resultFromRow({ data: {} }), null);
+  check('and so does no row at all', resultFromRow(null), null);
+}
+
+section('what is worth interrupting somebody to show them');
+{
+  const now = Date.UTC(2026, 7, 30, 12, 0, 0);
+  const row = (over = {}) => ({
+    kind: 'roll',
+    character_id: 'them',
+    created_at: new Date(now - 2000).toISOString(),
+    data: { dice: [{ id: 0, sides: 6, value: 4, role: 'base' }] },
+    ...over,
+  });
+
+  check('somebody else, a moment ago', worthReplaying(row(), { mine: 'me', now }), true);
+  check('your own is not replayed at you', worthReplaying(row({ character_id: 'me' }), { mine: 'me', now }), false);
+  check('a use is not a throw', worthReplaying(row({ kind: 'use' }), { mine: 'me', now }), false);
+  check('a throw with no dice cannot be drawn', worthReplaying(row({ data: { dice: [] } }), { mine: 'me', now }), false);
+
+  /* A laptop shut all evening reconnects and the channel catches up. Those rolls
+     are history: they belong in the feed, not in an animation over the page. */
+  const old = row({ created_at: new Date(now - 60 * 60 * 1000).toISOString() });
+  check('an hour late is history', worthReplaying(old, { mine: 'me', now }), false);
+  const edge = row({ created_at: new Date(now - REPLAY_WINDOW * 1000 + 500).toISOString() });
+  check('just inside the window still plays', worthReplaying(edge, { mine: 'me', now }), true);
+
+  /* Nothing to compare against: a viewer with no character of their own still
+     watches the table roll. */
+  check('a reader with no character watches anyway', worthReplaying(row(), { mine: null, now }), true);
 }
 
 /* ------------------------------------------------------------------ report */

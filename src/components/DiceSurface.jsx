@@ -83,6 +83,10 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
 
   const bursts = (result?.dice ?? []).filter((one) => one.role === 'explosion');
   const landed = phase === 'done';
+  /* Somebody else's roll, replayed off the log. It plays itself and clears
+     itself, so it carries none of the controls: there is nothing here for a
+     watcher to decide. Tapping still dismisses it. */
+  const watching = Boolean(spec.watching);
 
   /* Every timer this component started, dropped in one place. A surface that is
      unmounted mid-tumble (the player closed it, or a chain moved on) must not
@@ -174,8 +178,9 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
     >
       <div className="dice-stage">
         <p className="dice-name">
+          {watching && <span className="dice-whose">{spec.note || 'Someone'} rolled</span>}
           {spec.name || 'A roll'}
-          {spec.note && <span className="dice-note">{spec.note}</span>}
+          {!watching && spec.note && <span className="dice-note">{spec.note}</span>}
         </p>
 
         <p className="dice-asked">
@@ -271,7 +276,7 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
         )}
 
         <div className="dice-tools">
-          {phase === 'ready' && (
+          {!watching && phase === 'ready' && (
             <button type="button" className="btn btn-copper" onClick={onThrow}>
               Roll
             </button>
@@ -281,7 +286,7 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
               Skip
             </button>
           )}
-          {landed && !needsCall && (
+          {!watching && landed && !needsCall && (
             <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
               Done
             </button>
@@ -289,7 +294,9 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
         </div>
 
         <p className="dice-hint">
-          {phase === 'dc'
+          {watching
+            ? 'Someone else at the table. It clears itself.'
+            : phase === 'dc'
             ? 'Leave it blank and the table calls the result'
             : phase === 'ready'
               ? 'Tap anywhere to roll'

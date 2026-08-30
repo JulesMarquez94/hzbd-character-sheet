@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DiceTrayContext } from '../context/dice-tray.js';
 import { previewOf, rollCheck, rollValue } from '../lib/dice.js';
+import { REPLAY_DEPTH } from '../lib/logChain.js';
 import CustomRoll from './CustomRoll.jsx';
 import DiceSurface from './DiceSurface.jsx';
 import './DiceTray.css';
@@ -54,6 +55,15 @@ import './DiceTray.css';
 /** The dice a scratch roll can reach for. The game's own ladder, and two more. */
 const SCRATCH = [4, 6, 8, 10, 12, 20, 100];
 
+/**
+ * How long somebody else's landed roll stays on screen before it clears itself.
+ *
+ * Long enough to read a total and a verdict, short enough that a fight does not
+ * become a slideshow. Nobody pressed anything to start it, so nobody should have
+ * to press anything to end it.
+ */
+const WATCH_LINGER_MS = 2600;
+
 export function DiceTrayProvider({ children }) {
   /* Whose sheet is open, when one is. The custom roll window reads its three
      attributes off this so a Skill Check can be thrown without the player
@@ -67,6 +77,16 @@ export function DiceTrayProvider({ children }) {
   const [pool, setPool] = useState([]);
   const [explode, setExplode] = useState(false);
   const [job, setJob] = useState(null);
+  /* Somebody else's roll, waiting to be shown. A queue rather than a slot: two
+     players acting at once is a fight, not an error, and the second one is worth
+     watching too. Capped just below in `watch`, so it can never grow into a
+     backlog somebody has to sit through. */
+  const [queue, setQueue] = useState([]);
+  /* The one being shown is simply the head of the queue, rather than a slot of
+     its own that an effect shifts into. Two pieces of state that have to be
+     moved between are two pieces of state that can disagree, and the shifting
+     had to happen during a render to do it. */
+  const watching = queue[0] ?? null;
 
   /* The promise `present` handed out, kept off the render state: resolving is
      not a render and a resolver living in state would be copied by every
@@ -92,6 +112,59 @@ export function DiceTrayProvider({ children }) {
     held.current = sheet;
   }, [sheet]);
 
+  /**
+   * Put somebody else's roll on the table.
+   *
+   * The dice were settled by the client that threw them and written into the
+   * log, so this is a renderer being told what happened rather than a second
+   * roll of the same name. Nothing here decides a number. See resultFromRow.
+   */
+  const watch = useCallback((replay) => {
+    if (!replay?.result) return;
+    setQueue((held) => {
+      /* At the cap the new one is dropped rather than stacked behind the others.
+         A fight where four people act at once must not put you behind a queue
+         you cannot skip, and every dropped roll is still a row in the block
+         underneath. */
+      if (held.length >= REPLAY_DEPTH) return held;
+      return [
+        ...held,
+        {
+        key: replay.key,
+        job: {
+          id: `watch-${replay.key}`,
+          spec: {
+            shape: replay.result.shape,
+            name: replay.name,
+            note: replay.actor,
+            watching: true,
+            dc: replay.result.dc,
+            flat: replay.result.flat,
+            preview: [],
+            askVerdict: false,
+            askDc: false,
+          },
+          result: replay.result,
+          /* Straight to the tumble. Nobody here is going to throw it: it was
+             thrown a second ago on somebody else's screen. */
+            phase: 'rolling',
+          },
+        },
+      ];
+    });
+  }, []);
+
+  /** The head of the queue has landed. Let it be read, then move on. */
+  const dismissWatch = useCallback(() => setQueue((held) => held.slice(1)), []);
+
+  /* And it clears itself. Nobody pressed anything to start it, so nobody should
+     have to press anything to end it. Tapping still dismisses it early. */
+  useEffect(() => {
+    if (watching?.job?.phase !== 'done') return undefined;
+    const id = setTimeout(dismissWatch, WATCH_LINGER_MS);
+    return () => clearTimeout(id);
+  }, [watching, dismissWatch]);
+
   const present = useCallback(
     (spec) =>
       new Promise((resolve) => {
@@ -103,6 +176,11 @@ export function DiceTrayProvider({ children }) {
 
         setOpen(false);
         setAsking(false);
+        /* Your own dice take the table, and whatever was queued behind them is
+           dropped rather than held. A replay is something to watch and a roll is
+           something to do, and nobody should have to sit through somebody else's
+           animation to take their turn. Every dropped one is still in the log. */
+        setQueue([]);
         ticket.current += 1;
         const ready = normalize(spec);
         setJob({
@@ -196,8 +274,15 @@ export function DiceTrayProvider({ children }) {
   }
 
   const value = useMemo(
-    () => ({ character, hold, present, open: () => setOpen(true), close: () => setOpen(false) }),
-    [character, hold, present]
+    () => ({
+      character,
+      hold,
+      present,
+      watch,
+      open: () => setOpen(true),
+      close: () => setOpen(false),
+    }),
+    [character, hold, present, watch]
   );
 
   return (
@@ -305,6 +390,27 @@ export function DiceTrayProvider({ children }) {
             setAsking(false);
             present(spec);
           }}
+        />
+      )}
+
+      {/* Somebody else's, when the table is free. Drawn by the same surface: it
+          is the same dice showing the same faces, and the only difference is
+          that this one plays itself. */}
+      {!job && watching && (
+        <DiceSurface
+          key={`watch-${watching.key}`}
+          job={watching.job}
+          onThrow={() => {}}
+          onCall={() => {}}
+          onDc={() => {}}
+          onDone={() =>
+            setQueue((held) =>
+              held.length === 0
+                ? held
+                : [{ ...held[0], job: { ...held[0].job, phase: 'done' } }, ...held.slice(1)]
+            )
+          }
+          onClose={dismissWatch}
         />
       )}
 
