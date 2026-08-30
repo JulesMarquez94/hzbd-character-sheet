@@ -282,9 +282,18 @@ section('what is worth interrupting somebody to show them');
   const edge = row({ created_at: new Date(now - REPLAY_WINDOW * 1000 + 500).toISOString() });
   check('just inside the window still plays', worthReplaying(edge, { mine: 'me', now }), true);
 
-  /* Nothing to compare against: a viewer with no character of their own still
-     watches the table roll. */
+  /* Nothing to compare against: a Game Master watching the campaign page has no
+     character at the table, and gets to watch everything. */
   check('a reader with no character watches anyway', worthReplaying(row(), { mine: null, now }), true);
+  check('and an empty list is the same thing', worthReplaying(row(), { mine: [], now }), true);
+
+  /* A player may have two sheets at one table, so `mine` is a list. It used to
+     be one id, which meant a second character of your own replayed its dice back
+     at you a second after you threw them. */
+  const two = { mine: ['me', 'my-other'], now };
+  check('one id still works as a list of one', worthReplaying(row({ character_id: 'me' }), { mine: 'me', now }), false);
+  check('neither of your own is replayed at you', worthReplaying(row({ character_id: 'my-other' }), two), false);
+  check('and somebody else still is', worthReplaying(row({ character_id: 'them' }), two), true);
 }
 
 /* ------------------------------------------------------------------ report */

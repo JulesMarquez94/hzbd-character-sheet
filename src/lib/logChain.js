@@ -160,7 +160,12 @@ export const REPLAY_DEPTH = 3;
 export function worthReplaying(row, { mine = null, now = Date.now() } = {}) {
   if (row?.kind !== 'roll') return false;
   if (!Array.isArray(row?.data?.dice) || row.data.dice.length === 0) return false;
-  if (mine && row.character_id === mine) return false;
+
+  /* `mine` is a list, because a player may have two sheets at one table and a
+     Game Master watching the campaign page has none. One id is allowed as a
+     shorthand for a list of one. */
+  const ours = [].concat(mine ?? []).filter(Boolean);
+  if (ours.includes(row.character_id)) return false;
 
   const at = new Date(row?.created_at ?? '').getTime();
   // A row with no readable stamp is treated as live: it just arrived down a

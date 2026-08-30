@@ -368,11 +368,23 @@ function Die({ die, face, rolling, hot }) {
   );
 }
 
-/** What a die is for, in the words the glossary uses for it. */
+/**
+ * What a die is for, in the words the glossary uses for it.
+ *
+ * The burst says the whole rule rather than naming it, because this is where a
+ * player meets it: a die they did not ask for appears, and the question is why.
+ * No card in the codex states the rule, so there is nothing to tap for it and
+ * nowhere else to read it. See the `Exploding Dice` entry in keywords.js.
+ */
 function dieTitle(die) {
   if (die.role === 'advantage') return 'Advantage: added to the roll';
   if (die.role === 'disadvantage') return 'Disadvantage: taken off the roll';
-  if (die.role === 'explosion') return `Burst: thrown by the die before it maxing out`;
+  if (die.role === 'explosion') {
+    return (
+      'Exploding Dice: the die before this one rolled its maximum, so it threw one of the ' +
+      'category above. That adds to the total, and can explode again.'
+    );
+  }
   return `d${die.sides}`;
 }
 

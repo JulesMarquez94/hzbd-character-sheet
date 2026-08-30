@@ -258,6 +258,28 @@ export const KEYWORDS = [
       '(2d6 becomes 3d6).',
   },
   {
+    /**
+     * The rule Jules gave on 2026-08-30, in his own words as far as they go:
+     * "when you roll max value on a damage or healing dice that dice explode
+     * and you roll a dice of a category above. So if you roll an 8 on a d8 you
+     * roll an additional d10 and add to the total." The two edges after it are
+     * his rulings from the same day: the chain keeps going, and the ladder caps.
+     *
+     * `Exploding Dice` rather than `explodes`, which is not a spare choice. Three
+     * spells already say a corpse or a seed "explodes", and a term that matched
+     * those would hang a dice rule off a body going off. No card states this rule
+     * yet, so the entry lights nothing today and is here for when one does. Where
+     * a player actually meets it is the roller: see dieTitle in DiceSurface.jsx.
+     */
+    id: 'exploding',
+    terms: ['Exploding Dice'],
+    color: 'var(--level-amber)',
+    detail:
+      'When you roll the maximum value on a damage or healing die, that die explodes: roll an ' +
+      'additional die of the category above and add it to the total. An 8 on a d8 throws a d10. ' +
+      'A die that explodes into another maximum explodes again, and a d12 throws another d12.',
+  },
+  {
     id: 'critical',
     terms: ['Critical Hit', 'critical'],
     color: 'var(--level-amber)',

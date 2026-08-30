@@ -6,6 +6,7 @@ import BlockArrange from '../components/sheet/BlockArrange.jsx';
 import { MinionStatsBlock } from '../components/sheet/MinionBlock.jsx';
 import PartyBlock from '../components/campaign/PartyBlock.jsx';
 import LogBlock from '../components/campaign/LogBlock.jsx';
+import DiceWatch from '../components/campaign/DiceWatch.jsx';
 import { CardStackProvider } from '../components/CardStack.jsx';
 import CampaignDetails from '../components/campaign/CampaignDetails.jsx';
 import {
@@ -295,6 +296,17 @@ export default function CampaignPage() {
   /* Who played the card a log row names, so a spell opened out of the feed
      prints the caster's numbers rather than nobody's. The page has every linked
      sheet in hand; the same block on a character sheet has only its own. */
+  /* Which of the characters at this table are the reader's own, so their own
+     rolls are not replayed back at them a second after they threw them. A Game
+     Master watching this page has none here, and gets to watch everything. */
+  const mine = useMemo(
+    () =>
+      members
+        .filter((member) => member.characters?.user_id === user?.id)
+        .map((member) => member.character_id),
+    [members, user]
+  );
+
   const actorFor = useCallback(
     (event) => byId.get(`member:${event?.character_id}`)?.shown ?? null,
     [byId]
@@ -383,6 +395,9 @@ export default function CampaignPage() {
       style={{ '--sheet-cols': canvasColumns }}
       data-columns={canvasColumns}
     >
+      {/* Somebody else's dice, on the page a Game Master spends the evening on.
+          Renders nothing; it puts rolls on the tray as they are written. */}
+      <DiceWatch tables={[{ id }]} mine={mine} />
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">
           <span className="camp-title" title={campaign.name}>
