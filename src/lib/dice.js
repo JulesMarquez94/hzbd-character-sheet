@@ -347,29 +347,42 @@ export function rollNotation(result) {
 }
 
 /**
- * The one line a log row prints: what was rolled, what it came to and what that
- * meant. "2d6 + 4 · 5, 3 · 12 · Success".
+ * The working, without the answer: what was asked for, what the dice showed and
+ * what burst out of them. "2d6 + 4 · 5, 3 · burst d8: 3".
+ *
+ * Split from the total on purpose. A log row prints the total and the verdict
+ * big, on the line a reader scans, and the working underneath in the small type
+ * that says where the number came from. Handing both back as one string would
+ * make the row choose between showing its answer and showing its arithmetic.
  *
  * Middots rather than dashes, and no serial comma. See docs/text-style.md.
  */
-export function rollLine(result) {
+export function rollWorking(result) {
   const faces = (result?.dice ?? [])
     .filter((one) => one.role !== 'explosion')
     .map((one) => one.value)
     .join(', ');
   const burst = (result?.dice ?? []).filter((one) => one.role === 'explosion');
 
-  const said = [
+  return [
     rollNotation(result),
     faces,
     burst.length > 0
       ? `burst ${burst.map((one) => `d${one.sides}: ${one.value}`).join(', ')}`
       : null,
-    String(result?.total ?? 0),
-    verdictLabel(result?.verdict) || null,
-  ].filter(Boolean);
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
 
-  return said.join(' · ');
+/**
+ * The whole of it on one line, for anywhere with room for one line and no more.
+ * "2d6 + 4 · 5, 3 · 12 · Success".
+ */
+export function rollLine(result) {
+  return [rollWorking(result), String(result?.total ?? 0), verdictLabel(result?.verdict) || null]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 /* -------------------------------------------------------------- the plumbing */

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useCardStack } from '../../context/card-stack.js';
 import { FEED_PAGE, eventStamp, eventWords, listEvents } from '../../lib/campaignLog.js';
+import { groupEvents } from '../../lib/logChain.js';
+import { verdictLabel } from '../../lib/dice.js';
 import { getCard } from '../../lib/weapons.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 
@@ -118,12 +120,13 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
       )}
 
       <ul className="log-list">
-        {events.map((event) => (
+        {groupEvents(events).map((group) => (
           <LogRow
-            key={event.id}
-            event={event}
+            key={group.key}
+            event={group.head}
+            rolls={group.rolls}
             stack={stack}
-            actor={actorFor ? actorFor(event) : null}
+            actor={actorFor ? actorFor(group.head) : null}
           />
         ))}
       </ul>
@@ -146,7 +149,7 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
  * reads as a sentence at a glance: a reader scanning a fight is looking for the
  * name and the card, and both are where a sentence puts them.
  */
-function LogRow({ event, stack, actor = null }) {
+function LogRow({ event, stack, actor = null, rolls = [] }) {
   const card = event.data?.card ? getCard(event.data.card) : null;
   const verb = eventWords(event);
   const opens = Boolean(card && stack);
@@ -154,7 +157,10 @@ function LogRow({ event, stack, actor = null }) {
   const line = (
     <>
       <span className="log-actor">{event.actor || 'Someone'}</span>
-      {verb && <span className="log-verb"> {verb} </span>}
+      {/* A turn has no verb ("Kaelen Turn 3"), and the two names ran together
+          into "KaelenTurn 3" without this. The gap on .log-line does not reach
+          them: they are both inside the button, which is not the flex box. */}
+      {verb ? <span className="log-verb"> {verb} </span> : ' '}
       <span className="log-title">{event.title}</span>
     </>
   );
@@ -181,6 +187,56 @@ function LogRow({ event, stack, actor = null }) {
       </div>
 
       {event.detail && <div className="log-detail">{event.detail}</div>}
+
+      {/* What the use set rolling, in the order it was rolled. See groupEvents:
+          a chain reads forwards even though the feed above it reads backwards. */}
+      {rolls.length > 0 && (
+        <ul className="log-chain">
+          {rolls.map((roll) => (
+            <Throw key={roll.id} roll={roll} />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+/**
+ * One throw under the thing that caused it.
+ *
+ * Two lines, and which goes on which is the whole of the layout. The answer is
+ * on the line a reader scans: what was rolled, what it came to and what that
+ * meant. The arithmetic is underneath in the small type, because "2d6 + 4 · 5,
+ * 3" is what you read when you want to check the 12 and never what you were
+ * looking for in the first place.
+ *
+ * A throw with no verdict is either a damage roll, which is not a success or a
+ * failure and never claims to be, or a check nobody has judged yet. Neither
+ * prints a word, and the absence is the honest answer to both.
+ */
+function Throw({ roll }) {
+  const { total = 0, verdict = null, dc = null, called = false } = roll.data ?? {};
+
+  return (
+    <li className={`log-throw${verdict ? ` is-${verdict}` : ''}`}>
+      <span className="log-throw-line">
+        <span className="log-throw-name">{roll.title}</span>
+        <span className="log-throw-sum">{total}</span>
+        {verdict && (
+          <span
+            className="log-throw-said"
+            title={
+              called
+                ? 'The table called this one: no DC was given'
+                : `Against a DC of ${dc}`
+            }
+          >
+            {verdictLabel(verdict)}
+            {called && <span className="log-throw-called">called</span>}
+          </span>
+        )}
+      </span>
+      {roll.detail && <span className="log-throw-work">{roll.detail}</span>}
     </li>
   );
 }

@@ -134,7 +134,13 @@ export async function postEvent(tables, event) {
  * one the sheet paid for. `price` is what the card's second half settled on
  * where there was one, exactly as in combatBar.js.
  */
-export function playEvent(request, character, mode, amount, { free = false, price = null } = {}) {
+export function playEvent(
+  request,
+  character,
+  mode,
+  amount,
+  { free = false, price = null, chain = null } = {}
+) {
   const ap = Number(price?.ap ?? amount ?? request?.ap) || 0;
   const wp = Number(price?.wp ?? request?.wp) || 0;
   const health = Math.max(0, Number(price?.health) || 0);
@@ -170,6 +176,10 @@ export function playEvent(request, character, mode, amount, { free = false, pric
     title: request?.name ?? 'Something',
     detail,
     data: {
+      /* Set when this use is about to raise dice, so the throws that follow can
+         be gathered back under it. Null when nothing is going to be rolled, and
+         a head with no throws is simply a row. See newChain. */
+      chain,
       card: request?.card?.id ?? null,
       verb: verbFor(request?.card),
       mode,
@@ -267,6 +277,9 @@ export function eventStamp(event) {
 export function eventWords(event) {
   if (event?.kind === 'use') return event.data?.verb ?? 'used';
   if (event?.kind === 'rest') return 'took a';
+  /* Only ever read for a row standing on its own: a throw nested under its use
+     is drawn by the chain and takes the step's name rather than a sentence. */
+  if (event?.kind === 'roll') return 'rolled';
   return '';
 }
 

@@ -14,7 +14,7 @@ import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
-import { DiceSheet } from '../components/DiceTray.jsx';
+import DiceSheet from '../components/sheet/DiceSheet.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
 import InventoryTab from '../components/sheet/InventoryTab.jsx';
 import LoreTab from '../components/sheet/LoreTab.jsx';

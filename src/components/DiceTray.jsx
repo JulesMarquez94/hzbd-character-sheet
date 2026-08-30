@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DiceTrayContext, useDiceTray } from '../context/dice-tray.js';
+import { DiceTrayContext } from '../context/dice-tray.js';
 import { previewOf, rollCheck, rollValue } from '../lib/dice.js';
 import CustomRoll from './CustomRoll.jsx';
 import DiceSurface from './DiceSurface.jsx';
@@ -40,8 +40,15 @@ import './DiceTray.css';
  * so a chain can stop rather than invent a number for a roll that never
  * happened.
  *
- * Nothing here writes to the log yet. That is phase 3, and it hangs off the same
- * resolved result.
+ * ------------------------------------------------------------------- the log
+ * A finished roll writes itself to every table the sheet sits at, from `finish`
+ * and nowhere else, so that all three ways a roll can end write the same row.
+ * `spec.chain` is what ties it to the use that raised it: a chain of rows drawn
+ * as one block with its throws under it. See newChain and groupEvents in
+ * campaignLog.js.
+ *
+ * Only a roll made on your own sheet reaches a table, because that is the only
+ * place a character and a log provider are both in scope. See DiceSheet.
  */
 
 /** The dice a scratch roll can reach for. The game's own ladder, and two more. */
@@ -53,7 +60,8 @@ export function DiceTrayProvider({ children }) {
      copying a number off the page. Registered by the sheet through `hold`
      rather than passed down, because this provider sits above the router and
      has no idea a character exists. */
-  const [character, setCharacter] = useState(null);
+  const [sheet, setSheet] = useState(null);
+  const character = sheet?.character ?? null;
   const [open, setOpen] = useState(false);
   const [asking, setAsking] = useState(false);
   const [pool, setPool] = useState([]);
@@ -71,7 +79,18 @@ export function DiceTrayProvider({ children }) {
      bursts already shown. */
   const ticket = useRef(0);
 
-  const hold = useCallback((next) => setCharacter(next ?? null), []);
+  /* Whose sheet, and the way to tell that sheet's tables what happened. Both
+     arrive together because both come from the same place, and a log with no
+     character to name as the actor would write rows signed by nobody. */
+  const hold = useCallback((next) => setSheet(next ?? null), []);
+
+  /* Read through a ref so `finish` stays stable while the sheet's numbers move,
+     which on a live character is constantly. Synced in an effect rather than
+     assigned during render, the same shape Modal.jsx uses for its `onClose`. */
+  const held = useRef(null);
+  useEffect(() => {
+    held.current = sheet;
+  }, [sheet]);
 
   const present = useCallback(
     (spec) =>
@@ -90,11 +109,31 @@ export function DiceTrayProvider({ children }) {
     []
   );
 
-  /** Hand the caller what happened and clear the surface. */
-  const finish = useCallback((result) => {
+  /**
+   * Hand the caller what happened, tell the table, and clear the surface.
+   *
+   * The log write goes here rather than at the call site so that every way a
+   * roll can finish writes the same row: thrown and judged by its DC, thrown and
+   * called by the table, or thrown from a chain four blocks away. A roll that
+   * was never thrown has no result and writes nothing, which is right: it did
+   * not happen.
+   *
+   * `spec.log` is what asks for the row, so a scratch roll in the corner of the
+   * screen stays private and a named one does not.
+   */
+  const finish = useCallback((result, spec) => {
     const resolve = settle.current;
     settle.current = null;
     setJob(null);
+
+    if (result && spec?.log) {
+      held.current?.logRoll?.(result, {
+        chain: spec.chain ?? null,
+        card: spec.card ?? null,
+        name: spec.shape === 'check' ? spec.name : '',
+      });
+    }
+
     resolve?.(result ?? null);
   }, []);
 
@@ -117,7 +156,7 @@ export function DiceTrayProvider({ children }) {
      waiting on, so pressing one is finishing it. */
   function call(verdict) {
     if (!job?.result) return;
-    finish({ ...job.result, verdict, calledByHand: true });
+    finish({ ...job.result, verdict, calledByHand: true }, job.spec);
   }
 
   function scratch() {
@@ -252,32 +291,11 @@ export function DiceTrayProvider({ children }) {
           onThrow={throwIt}
           onCall={call}
           onDone={() => setJob((held) => (held ? { ...held, phase: 'done' } : held))}
-          onClose={() => finish(job.result)}
+          onClose={() => finish(job.result, job.spec)}
         />
       )}
     </DiceTrayContext.Provider>
   );
-}
-
-/**
- * A sheet telling the tray who is holding it, and taking it back on the way out.
- *
- * Renders nothing. It exists so the character sheet does not have to reach up
- * past the router to a provider it does not own, and so that leaving the sheet
- * cannot leave the tray offering somebody else's Instinct.
- */
-export function DiceSheet({ character }) {
-  /* Allowed to find nothing. `useDiceTray` reads a context that defaults to
-     null, so a sheet mounted without a tray around it still renders. */
-  const hold = useDiceTray()?.hold;
-
-  useEffect(() => {
-    if (!hold) return undefined;
-    hold(character);
-    return () => hold(null);
-  }, [hold, character]);
-
-  return null;
 }
 
 /* -------------------------------------------------------------- the plumbing */
@@ -305,6 +323,12 @@ function normalize(spec) {
     explode: spec.explode !== false,
     parts: spec.parts ?? [],
     askVerdict: spec.askVerdict ?? shape === 'check',
+    /* Whether the table hears about it. A scratch roll does not: it has no name
+       to head a block with, and a feed full of unnamed d6 is a feed nobody
+       reads. See the two modes at the top. */
+    log: Boolean(spec.log),
+    chain: spec.chain ?? null,
+    card: spec.card ?? null,
   };
   return { ...full, preview: previewOf(full) };
 }

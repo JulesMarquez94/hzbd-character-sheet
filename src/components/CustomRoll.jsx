@@ -75,6 +75,9 @@ export default function CustomRoll({ character, onClose, onRoll }) {
          box must not quietly become one. */
       dc: whole(dc),
       askVerdict: true,
+      /* Named, so the table hears about it. The name is what heads the block in
+         the log, which is the whole reason the field is there. */
+      log: true,
       parts: [
         fromSheet !== null
           ? { kind: 'stat', text: String(fromSheet), detail: `your ${labelOf(attribute)}` }
