@@ -14,6 +14,7 @@ import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
+import { DiceSheet } from '../components/DiceTray.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
 import InventoryTab from '../components/sheet/InventoryTab.jsx';
 import LoreTab from '../components/sheet/LoreTab.jsx';
@@ -373,6 +374,11 @@ export default function CharacterSheet({ creating = false }) {
         Character tab grows a log block per table, and everything that spends
         something posts what it did to all of them. See LogProvider.jsx. */}
     <LogProvider characterId={character.id} canWrite={canEdit}>
+    {/* And who the dice tray is rolling for, so a Skill Check thrown from the
+        corner of the screen adds the right attribute. Only when the sheet is
+        yours: a reader on somebody else's public sheet must not be handed their
+        Instinct to roll with. Renders nothing. See DiceTray.jsx. */}
+    {canEdit && <DiceSheet character={shown} />}
     <div className="sheet" style={{ '--sheet-cols': canvasColumns }} data-columns={canvasColumns}>
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">

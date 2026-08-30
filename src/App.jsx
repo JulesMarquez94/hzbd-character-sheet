@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { DiceTrayProvider } from './components/DiceTray.jsx';
 import Header from './components/Header.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
@@ -40,6 +41,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        {/* Above the router, because a roll does not belong to the character
+            sheet. You roll on the campaign page while somebody else is taking
+            their turn, and on the codex in the middle of an argument. */}
+        <DiceTrayProvider>
         <Header />
 
         <Suspense fallback={<div className="loading-veil">Unrolling the sheet…</div>}>
@@ -100,6 +105,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </DiceTrayProvider>
       </AuthProvider>
     </BrowserRouter>
   );

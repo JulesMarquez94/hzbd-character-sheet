@@ -1,0 +1,546 @@
+/* The dice tray: the button in the corner, the panel over it, the surface a roll
+   lands on and the window that sets one up.
+
+   ------------------------------------------------------------------ the layers
+   Both z-indexes come off the scale in index.css rather than being picked, and
+   both were wrong the first time in ways worth recording:
+
+     the button and its panel   --z-drawer. It is exactly what that rung is for,
+                                "the panels those two open". Below --z-drawer the
+                                sheet's own sticky tab bar (--z-sticky, 900) and
+                                the site header (1000) paint straight over it.
+     the surface                --z-overlay-top, the rung the card stack is on. A
+                                roll in flight has to be over a modal backdrop
+                                (--z-overlay) and over a dealt card, and the
+                                provider renders it after its children so it wins
+                                the tie against a card stack inside them.
+
+   ------------------------------------------------------------------ the colours
+   Every colour here is a token from index.css. There is no --panel, no --ink and
+   no --line in this app: the surfaces are --panel-teal over --bg-black, the type
+   is --text-silver over --text-muted, and a border is --hairline. Writing those
+   from memory got a brown palette in a teal app, which fallbacks hid.
+
+   ------------------------------------------------------------------- the window
+   The custom roll window styles its own fields rather than borrowing the sheet's
+   .fx-* ones. sheet.css is loaded with the character sheet and the tray is on
+   every page, so a borrowed class is an unstyled form everywhere the sheet is
+   not. */
+
+.dice-fab {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: var(--z-drawer);
+
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+  border: 1px solid rgba(200, 138, 75, 0.35);
+  background: var(--panel-teal);
+  color: var(--copper);
+  box-shadow: 0 6px 18px rgba(4, 8, 10, 0.55);
+  cursor: pointer;
+  transition: transform 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.dice-fab:hover,
+.dice-fab.is-open {
+  color: var(--copper-bright);
+  border-color: var(--copper);
+  transform: translateY(-2px);
+}
+
+.dice-fab-mark {
+  width: 26px;
+  height: 26px;
+}
+
+/* ------------------------------------------------------------- the panel */
+
+.dice-tray {
+  position: fixed;
+  left: 18px;
+  bottom: 82px;
+  z-index: var(--z-drawer);
+
+  width: 320px;
+  max-width: calc(100vw - 36px);
+  padding: 14px;
+
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  border-top: 3px solid var(--copper);
+  border-radius: 6px;
+  background: var(--panel-teal);
+  box-shadow: 0 10px 30px rgba(4, 8, 10, 0.6);
+}
+
+.dice-tray-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dice-tray-ladder {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dice-pick {
+  flex: 1 0 auto;
+  min-width: 46px;
+  padding: 7px 4px;
+
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--text-silver);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dice-pick:hover {
+  border-color: var(--copper);
+  color: var(--copper-bright);
+}
+
+.dice-tray-pool {
+  margin: 10px 0 8px;
+  min-height: 1.4em;
+  font-size: 0.95rem;
+  color: var(--copper-bright);
+}
+
+.dice-tray-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.dice-tray-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.dice-tray-tools {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dice-tray-custom {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 10px;
+  text-align: left;
+
+  border: 1px dashed var(--hairline);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-silver);
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.dice-tray-custom:hover {
+  border-color: var(--copper);
+  border-style: solid;
+}
+
+.dice-tray-custom-line {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------ the surface */
+
+.dice-surface {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay-top);
+
+  display: grid;
+  place-items: center;
+  padding: 24px;
+
+  background: rgba(4, 8, 10, 0.82);
+  backdrop-filter: blur(3px);
+}
+
+.dice-stage {
+  width: min(560px, 100%);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* The stage is a label, not a target: clicks belong to the surface behind it so
+   that "tap anywhere" means anywhere. The controls take theirs back. */
+.dice-stage button,
+.dice-stage input {
+  pointer-events: auto;
+}
+
+.dice-name {
+  margin: 0;
+  font-family: var(--font-headings);
+  font-size: 1.15rem;
+  color: var(--text-silver);
+}
+
+.dice-note {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.dice-asked {
+  margin: 4px 0 20px;
+  font-size: 0.88rem;
+  color: var(--copper);
+}
+
+.dice-dc {
+  margin-left: 8px;
+  color: var(--text-muted);
+}
+
+.dice-floor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  min-height: 76px;
+  align-items: center;
+}
+
+/* ---------------------------------------------------------------- one die */
+
+.die {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+
+  border: 2px solid var(--die-tone, var(--copper));
+  border-radius: 10px;
+  background: rgba(9, 17, 21, 0.92);
+  color: var(--die-tone, var(--copper));
+
+  animation: die-land 260ms ease-out both;
+}
+
+.die-sides {
+  position: absolute;
+  top: 4px;
+  left: 7px;
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+
+.die-face {
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--text-silver);
+}
+
+.die.is-advantage {
+  --die-tone: var(--def-healing);
+}
+
+.die.is-disadvantage {
+  --die-tone: var(--stat-health);
+}
+
+.die.is-burst {
+  --die-tone: var(--level-amber);
+  animation: die-bloom 380ms ease-out both;
+}
+
+.die.is-waiting {
+  opacity: 0.42;
+  border-style: dashed;
+  animation: none;
+}
+
+.die.is-rolling {
+  animation: die-tumble 320ms ease-in-out infinite;
+}
+
+/* A die on its own maximum is the reason the next one exists. It stays lit. */
+.die.is-hot {
+  box-shadow: 0 0 14px 2px rgba(255, 179, 0, 0.55);
+  border-color: var(--level-amber);
+}
+
+@keyframes die-tumble {
+  0% { transform: translateY(0) rotate(-7deg); }
+  50% { transform: translateY(-9px) rotate(8deg); }
+  100% { transform: translateY(0) rotate(-7deg); }
+}
+
+@keyframes die-land {
+  from { transform: translateY(-14px) scale(1.08); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes die-bloom {
+  0% { transform: scale(0.4); opacity: 0; box-shadow: 0 0 26px 8px rgba(255, 179, 0, 0.8); }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: none; opacity: 1; box-shadow: 0 0 0 0 rgba(255, 179, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .die,
+  .die.is-burst,
+  .die.is-rolling {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------- the answer */
+
+.dice-total {
+  margin: 22px 0 0;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.dice-flat {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.dice-sum {
+  font-family: var(--font-headings);
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--text-bright);
+}
+
+.dice-verdict {
+  margin: 8px 0 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dice-verdict.is-success { color: var(--def-healing); }
+.dice-verdict.is-failure { color: var(--text-muted); }
+.dice-verdict.is-critical-success { color: var(--level-amber); }
+.dice-verdict.is-critical-failure { color: var(--stat-health); }
+
+.dice-call {
+  margin-top: 16px;
+}
+
+.dice-call-ask {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.dice-call-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dice-call-opt {
+  padding: 7px 12px;
+  border: 1px solid var(--dice-tone, var(--hairline));
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--dice-tone, var(--text-silver));
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dice-call-opt:hover {
+  background: rgba(234, 242, 248, 0.08);
+}
+
+.dice-tools {
+  margin-top: 20px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dice-hint {
+  margin: 12px 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------- setting a roll up
+   The custom roll window's own fields. Styled here and not borrowed from
+   sheet.css, which is not loaded on four of the five pages this window opens
+   over. */
+
+.dice-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dice-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dice-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dice-input {
+  width: 100%;
+  padding: 8px 10px;
+
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--text-silver);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+}
+
+.dice-input:focus {
+  outline: none;
+  border-color: var(--focus-cyan);
+}
+
+.dice-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dice-chip {
+  flex: 1 1 auto;
+  padding: 7px 10px;
+
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dice-chip:hover {
+  color: var(--text-silver);
+  border-color: var(--copper);
+}
+
+.dice-chip.is-on {
+  border-color: var(--dice-tone, var(--copper));
+  color: var(--dice-tone, var(--copper-bright));
+  background: rgba(200, 138, 75, 0.1);
+}
+
+.dice-chip b {
+  color: var(--dice-tone, var(--text-silver));
+}
+
+.dice-swing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dice-step {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--text-silver);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dice-step:hover {
+  border-color: var(--copper);
+  color: var(--copper-bright);
+}
+
+.dice-swing-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 96px;
+}
+
+.dice-swing-n {
+  font-family: var(--font-headings);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--dice-tone, var(--text-silver));
+}
+
+.dice-swing-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dice-field-line {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.dice-field-sum {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.9rem;
+  color: var(--copper-bright);
+}
+
+@media (max-width: 560px) {
+  .dice-tray {
+    width: calc(100vw - 36px);
+  }
+
+  .die {
+    width: 52px;
+    height: 52px;
+  }
+
+  .die-face {
+    font-size: 1.4rem;
+  }
+}

@@ -76,8 +76,12 @@
  *   Empowered    adds a die (2d6 becomes 3d6). **Elevate** is the one that grows
  *                the die (d6 becomes d8). The codex had one doing the other's job;
  *                see the note in cardText.js.
- *   Critical Hit is a maximum result on an Attack Roll. It cannot be "a natural
- *                20": a Roll in this game is 2d6 plus an attribute.
+ *   Critical Hit is a Roll landing 6 or more above the DC, and a Critical Failure
+ *                is one landing 6 or more below it. It cannot be "a natural 20":
+ *                a Roll in this game is 2d6 plus an attribute. Until 2026-08-30
+ *                this entry read "a maximum result on an Attack Roll", which was
+ *                the rule before Jules settled the four bands the roller judges
+ *                against. See the bands in dice.js.
  *
  * What is still provisional is what no sheet has covered yet: asleep, marked
  * and unconscious. **Stunned left that list on 2026-08-20** — ICE BLOCK spells
@@ -258,8 +262,9 @@ export const KEYWORDS = [
     terms: ['Critical Hit', 'critical'],
     color: 'var(--level-amber)',
     detail:
-      'A maximum success outcome on an Attack Roll that guarantees a hit and maximizes or ' +
-      'amplifies damage dealt or secondary effects.',
+      'A Roll that lands 6 or more above the DC. It guarantees a hit and maximizes the damage ' +
+      'dealt, and a maximized damage die explodes the way any other one does. A Roll that lands ' +
+      '6 or more below the DC is a Critical Failure.',
   },
 
   /* --------------------------------------------------------- what you swing */
