@@ -299,6 +299,17 @@ export function isCriticalSuccess(verdict) {
 }
 
 /**
+ * Whether a check came up short, either way of coming up short.
+ *
+ * What a chain reads to know it is over. Almost every card that rolls damage
+ * says "On a hit" before it, so a miss has nothing left to roll, and rolling it
+ * anyway would put a number on the table that the card never offered.
+ */
+export function isFailure(verdict) {
+  return verdict === 'failure' || verdict === 'critical-failure';
+}
+
+/**
  * The four bands, in the order they are offered when the table has to call it
  * by hand. Worst first, the way a result reads when you are looking for the bad
  * news.

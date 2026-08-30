@@ -55,6 +55,32 @@ const AFTER = [
 ];
 
 /**
+ * A value the card lands more than once, and how many times.
+ *
+ * Eleven cards in the codex do this and they say it two ways, both of them in
+ * the sentence the dice are in:
+ *
+ *   "the blade lands three times, each landing dealing [[1d6 + stat]] damage"
+ *   "you deal [[1d4 + stat]] damage twice"
+ *
+ * Each landing is its own throw, per Jules on 2026-08-30, which matters for more
+ * than tidiness: three separate d6 are not one d6 counted three times, and each
+ * of them gets its own chance to explode.
+ *
+ * `twice` is guarded against "twice the number of Damage Dice rolled", which is
+ * a multiplier on a count rather than a repeat. That phrasing is on the Poison
+ * potion, in a different paragraph from its dice, so the sentence scope already
+ * keeps it out. The guard is here because the sentence scope is the only thing
+ * keeping it out, and a card drop could put the two in one sentence.
+ */
+const REPEATS = [
+  [/\btwice\b(?!\s+the\b)/i, 2],
+  [/\b(?:three times|thrice)\b/i, 3],
+  [/\bfour times\b/i, 4],
+  [/\bfive times\b/i, 5],
+];
+
+/**
  * The chain a use is about to raise, as specs `present` can take.
  *
  *   card       the card being played
@@ -118,14 +144,19 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
       // A value with no dice in it is a number the card states, not a throw.
       if (resolved.dice.length === 0) continue;
 
-      links.push({
+      const sentence = sentenceAround(text, match.index);
+      const link = {
         shape: 'value',
-        kind: purposeOf(after, sentenceAround(text, match.index)),
+        kind: purposeOf(after, sentence),
         dice: resolved.dice,
         flat: resolved.flat,
         parts: resolved.parts,
         askVerdict: false,
-      });
+      };
+
+      /* A landing each, rather than one throw counted twice. Three d6 are not
+         one d6 read three times, and each landing explodes on its own. */
+      for (let i = 0; i < repeatsOf(sentence); i += 1) links.push({ ...link });
     }
   }
 
@@ -138,6 +169,14 @@ export function rollsAnything(card, character, modifiers = null, options = {}) {
 }
 
 /* --------------------------------------------------------------- the reading */
+
+/** How many times the card lands this value. One unless its sentence says more. */
+function repeatsOf(sentence) {
+  for (const [pattern, times] of REPEATS) {
+    if (pattern.test(sentence)) return times;
+  }
+  return 1;
+}
 
 /** What the dice are for: the word after them, then the sentence, then nothing. */
 function purposeOf(after, sentence) {

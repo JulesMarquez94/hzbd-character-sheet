@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useDiceTray } from '../../context/dice-tray.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
-import { isCriticalSuccess } from '../../lib/dice.js';
+import { isCriticalSuccess, isFailure } from '../../lib/dice.js';
 import { newChain } from '../../lib/logChain.js';
 import { playEvent } from '../../lib/campaignLog.js';
 import { rollPlan } from '../../lib/rollPlan.js';
@@ -39,12 +39,14 @@ import { spendUse } from '../../lib/combatBar.js';
  *
  * ------------------------------------------------------------------- the chain
  * What gets rolled is read off the card by `rollPlan`, so no card needed a new
- * field for any of this. The links run in printed order and stop dead if one is
- * abandoned: close the surface on the attack roll and you are not then asked for
- * damage, because the damage was conditional on a hit that never landed.
+ * field for any of this. The links run in printed order, and a check ends the
+ * chain two ways: closing the surface stops it where the player stopped it, and
+ * *missing* stops it outright. Almost every card that rolls damage says "On a
+ * hit" before it, so a miss has nothing left to roll and a number put on the
+ * table there would be one the card never offered.
  *
- * A critical success maximises the damage roll after it. That is the one place a
- * link is changed by the link before it.
+ * A critical success maximises the damage after it, every landing of it, until
+ * the next check. That is the one place a link is changed by the link before it.
  *
  * **An abandoned chain stays open**, on Jules's call. The use is in the log and
  * so is whatever was thrown, and the block simply has fewer rows under it than
@@ -129,6 +131,11 @@ export function usePlayCard({ character, patch }) {
  * as an unhandled rejection in the console of a player whose dice worked fine.
  */
 async function throwChain(tray, plan, { request, actor, chain }) {
+  /* Set by a critical success and held until the next check. Every landing of
+     the damage maximises, not just the first: a Flurry's three landings are one
+     attack's damage, and maximising only the first of them would be arbitrary.
+     Damage only, because the ruling is about the damage dealt, so a card that
+     heals or shields on the same breath rolls those honestly. */
   let maximize = false;
 
   try {
@@ -140,15 +147,21 @@ async function throwChain(tray, plan, { request, actor, chain }) {
         card: request?.card?.id ?? null,
         chain,
         log: true,
-        maximize: link.shape === 'value' ? maximize : false,
+        maximize: maximize && link.kind === 'damage',
       });
 
       // Closed without throwing. The chain stops where the player stopped it.
       if (!result) return;
 
-      /* A critical success maximises the damage that follows it, and only the
-         one roll: a second damage link on the same card is its own throw. */
-      maximize = link.shape === 'check' && isCriticalSuccess(result.verdict);
+      if (link.shape !== 'check') continue;
+
+      /* A miss ends it. Almost every card that rolls damage says "On a hit"
+         before it, so there is nothing left to roll and a number put on the
+         table here would be one the card never offered. Jules's call of
+         2026-08-30. */
+      if (isFailure(result.verdict)) return;
+
+      maximize = isCriticalSuccess(result.verdict);
     }
   } catch (error) {
     console.warn('The dice stopped mid-chain:', error);

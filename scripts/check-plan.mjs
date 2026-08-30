@@ -100,6 +100,43 @@ section('a card that rolls nothing plans nothing');
   check('and no card at all', rollPlan(null, WHO), []);
 }
 
+/* ------------------------------------------------------- a value landed twice */
+
+section('a value the card lands more than once is thrown more than once');
+{
+  /* Three d6 are not one d6 read three times: each landing rolls its own dice
+     and gets its own chance to explode. Jules, 2026-08-30. */
+  const flurry = rollPlan(getCard('finesse-flurry'), WHO);
+  check('the check, then a landing each', shape(flurry), [
+    'check:attack+5',
+    'damage:1d6+5',
+    'damage:1d6+5',
+    'damage:1d6+5',
+  ]);
+
+  const paired = rollPlan(getCard('paired-finesse-strike'), WHO);
+  check('"damage twice" is two throws', paired.filter((l) => l.shape === 'value').length, 2);
+
+  const once = rollPlan(getCard('finesse-strike'), WHO);
+  check('and a card that says nothing lands once', once.filter((l) => l.shape === 'value').length, 1);
+}
+
+section('a multiplier is not a repeat');
+{
+  /* The Poison potion says "damage equal to twice the number of Damage Dice
+     rolled", which is a multiplier on a count. Its dice are in another paragraph
+     so the sentence scope already keeps them apart, and the guard is what keeps
+     them apart if a card drop ever puts the two in one sentence. */
+  const poison = rollPlan(getCard('poison'), WHO);
+  check('the potion throws once', poison.filter((l) => l.shape === 'value').length, 1);
+
+  const same = rollPlan(
+    { stat: 'instinct', body: 'Deal [[2d6]] damage equal to twice the number of Damage Dice.' },
+    WHO
+  );
+  check('even said in one breath', same.length, 1);
+}
+
 /* ------------------------------------------------------------ the second half */
 
 section('a paid second half rolls too');
