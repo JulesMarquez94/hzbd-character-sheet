@@ -180,6 +180,11 @@ export function playEvent(
          be gathered back under it. Null when nothing is going to be rolled, and
          a head with no throws is simply a row. See newChain. */
       chain,
+      /* Copied in for the same reason `actor` is, and the schema's note about
+         that covers this too: a character can be renamed, redrawn or deleted, and
+         a log that then shows the wrong face beside the right name has lost the
+         only thing worth keeping. Rows written before this read as initials. */
+      portrait: character?.portrait_url ?? null,
       card: request?.card?.id ?? null,
       verb: verbFor(request?.card),
       mode,

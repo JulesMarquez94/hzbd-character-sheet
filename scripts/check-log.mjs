@@ -27,6 +27,7 @@
 
 import {
   REPLAY_WINDOW,
+  chainSummary,
   groupEvents,
   newChain,
   resultFromRow,
@@ -229,6 +230,74 @@ section('a chain id is its own');
   const ids = new Set([newChain(), newChain(), newChain()]);
   check('three chains are three ids', ids.size, 3);
   check('and none of them is empty', [...ids].every((id) => typeof id === 'string' && id.length > 8), true);
+}
+
+/* ------------------------------------------------------------------ the summary */
+
+section('what an entry came to, in one sentence');
+{
+  const throwRow = (step, total, over = {}) => ({
+    kind: 'roll',
+    title: step,
+    data: { shape: 'value', step, total, damage: [], ...over },
+  });
+  const checkRow = (verdict, total = 12) => ({
+    kind: 'roll',
+    title: 'Attack Roll',
+    data: { shape: 'check', step: 'attack', total, verdict },
+  });
+
+  check(
+    'damage names its type',
+    chainSummary([checkRow('success'), throwRow('damage', 17, { damage: ['Necrotic'] })]),
+    'Dealt 17 Necrotic damage.'
+  );
+  check(
+    'healing does not, because it is Health',
+    chainSummary([throwRow('healing', 12)]),
+    'Restored 12 Health.'
+  );
+  check('a Shield is gained', chainSummary([throwRow('shield', 8)]), 'Gained 8 Shield.');
+
+  /* Three landings of a Flurry are one number at the table, even though they are
+     three throws in the log. */
+  check(
+    'landings add up',
+    chainSummary([
+      checkRow('critical-success'),
+      throwRow('damage', 6, { damage: ['Sharp'] }),
+      throwRow('damage', 7, { damage: ['Sharp'] }),
+      throwRow('damage', 5, { damage: ['Sharp'] }),
+    ]),
+    'Dealt 18 Sharp damage.'
+  );
+
+  check(
+    'a card that damages and heals says both',
+    chainSummary([throwRow('damage', 9, { damage: ['Fire'] }), throwRow('healing', 4)]),
+    'Dealt 9 Fire damage and Restored 4 Health.'
+  );
+
+  /* A miss ends a chain, so the check is the whole story. Jules asked for a line
+     on every outcome, including this one. */
+  check('a miss says so', chainSummary([checkRow('failure', 7)]), 'Missed.');
+  check('and a bad one says that', chainSummary([checkRow('critical-failure', 3)]), 'Missed badly.');
+
+  /* A check that landed and asked for nothing else. Its own row already prints
+     the total and the verdict, so a summary would only repeat it. */
+  check('a check with nothing after it needs no summary', chainSummary([checkRow('success')]), null);
+  check('and an entry with no throws at all has none', chainSummary([]), null);
+
+  check(
+    'a type nobody named is left unnamed',
+    chainSummary([throwRow('damage', 11)]),
+    'Dealt 11 damage.'
+  );
+  check(
+    'and two types read as the choice the card offers',
+    chainSummary([throwRow('damage', 11, { damage: ['Fire', 'Cold'] })]),
+    'Dealt 11 Fire or Cold damage.'
+  );
 }
 
 /* ------------------------------------------------------------------ replaying */

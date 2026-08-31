@@ -63,7 +63,11 @@ const STEP_WORDS = {
  * dice and a burst rather than a typo, and another player's client can put the
  * same faces on its own table. See phase 5.
  */
-export function rollEvent(result, character, { chain = null, card = null, name = '' } = {}) {
+export function rollEvent(
+  result,
+  character,
+  { chain = null, card = null, name = '', damage = [] } = {}
+) {
   const step = result?.kind ?? 'attack';
 
   return {
@@ -75,6 +79,12 @@ export function rollEvent(result, character, { chain = null, card = null, name =
       chain,
       step,
       card,
+      portrait: character?.portrait_url ?? null,
+      /* What kind of damage, for the summary line under the rolls: "Dealt 17
+         Necrotic damage". The card's own types, already swapped for whatever an
+         enchantment turned them into, because the summary has to name the damage
+         that was actually dealt. */
+      damage,
       shape: result?.shape ?? 'check',
       dice: result?.dice ?? [],
       flat: result?.flat ?? 0,
@@ -87,6 +97,86 @@ export function rollEvent(result, character, { chain = null, card = null, name =
       called: Boolean(result?.calledByHand),
     },
   };
+}
+
+/* ------------------------------------------------------------- the summary
+ *
+ * What a whole entry came to, in one sentence, under the rolls that got there.
+ *
+ * A chain is a sequence of numbers and a reader scanning a fight wants the
+ * answer, not the arithmetic: "Dealt 17 Necrotic damage" is the thing somebody
+ * shouts across the table, and the dice above it are the receipt. Jules asked
+ * for a line on every outcome including a miss, which is the version that never
+ * leaves a reader wondering whether the block is still loading.
+ */
+
+/** What each kind of value roll did, as a verb and a noun. */
+const DID = {
+  damage: { verb: 'Dealt', noun: 'damage' },
+  healing: { verb: 'Restored', noun: 'Health' },
+  shield: { verb: 'Gained', noun: 'Shield' },
+  roll: { verb: 'Rolled', noun: '' },
+};
+
+/**
+ * The line under the rolls, or null when there is nothing to summarise.
+ *
+ * Read off the throws rather than off the use, because the use only knows what
+ * was played and the throws know what came of it. A chain whose check failed is
+ * a miss whatever the card was going to do; a chain that rolled nothing at all
+ * gets no line, because a card that does not roll has already said everything it
+ * does on its own row.
+ */
+export function chainSummary(rolls = []) {
+  if (rolls.length === 0) return null;
+
+  const checks = rolls.filter((row) => row.data?.shape === 'check');
+  const values = rolls.filter((row) => row.data?.shape === 'value');
+
+  /* A miss ends a chain, so a check that failed and nothing after it is the
+     whole story. See usePlayCard: the damage was never rolled. */
+  const missed = checks.some(
+    (row) => row.data?.verdict === 'failure' || row.data?.verdict === 'critical-failure'
+  );
+  if (missed && values.length === 0) {
+    return checks.some((row) => row.data?.verdict === 'critical-failure')
+      ? 'Missed badly.'
+      : 'Missed.';
+  }
+
+  if (values.length === 0) {
+    /* A check that landed and asked for nothing else. Its own row already prints
+       the total and the verdict, so there is nothing a summary could add. */
+    return null;
+  }
+
+  /* Every value throw of the same kind added up, because three landings of a
+     Flurry are one number at the table. Kept in the order they were thrown so a
+     card that damages and heals reads in the order the card does. */
+  const totals = new Map();
+  for (const row of values) {
+    const kind = row.data?.step ?? 'damage';
+    const was = totals.get(kind) ?? { total: 0, types: new Set() };
+    was.total += Number(row.data?.total) || 0;
+    for (const type of row.data?.damage ?? []) was.types.add(type);
+    totals.set(kind, was);
+  }
+
+  const said = [...totals].map(([kind, sum]) => {
+    const { verb, noun } = DID[kind] ?? DID.damage;
+    /* "Fire or Cold" the way the card prints a choice of types, and nothing at
+       all where the card never named one. */
+    const type = [...sum.types].join(' or ');
+    return [verb, sum.total, type, noun].filter(Boolean).join(' ');
+  });
+
+  return `${listAnd(said)}.`;
+}
+
+/** "a, b and c". No Oxford comma, the way every list on the sheet is written. */
+function listAnd(words) {
+  if (words.length <= 1) return String(words[0] ?? '');
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
 /* ----------------------------------------------------------------- replaying

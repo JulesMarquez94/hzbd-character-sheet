@@ -296,6 +296,7 @@ export function DiceTrayProvider({ children }) {
         chain: spec.chain ?? null,
         card: spec.card ?? null,
         name: spec.shape === 'check' ? spec.name : '',
+        damage: spec.damage ?? [],
       });
     }
 
@@ -538,6 +539,7 @@ function normalize(spec) {
     maximize: Boolean(spec.maximize),
     explode: spec.explode !== false,
     parts: spec.parts ?? [],
+    damage: spec.damage ?? [],
     askVerdict: spec.askVerdict ?? shape === 'check',
     /* Whether the table hears about it. A scratch roll does not: it has no name
        to head a block with, and a feed full of unnamed d6 is a feed nobody

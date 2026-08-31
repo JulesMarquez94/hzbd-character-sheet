@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { VERDICTS, rollNotation, verdictLabel } from '../lib/dice.js';
+import Die from './Die.jsx';
 
 /**
  * The flat roller: dice on a surface, without the physics.
@@ -398,87 +399,6 @@ export default function DiceSurface({
 }
 
 /** One die, face up. `face` of null is a die that has not been thrown yet. */
-/**
- * The outline each die is drawn as, so a d4 reads as a d4 without being labelled
- * one.
- *
- * A physical die is recognised by its silhouette before anything else, which is
- * the whole reason a table can be read at a glance. Drawn as a polygon rather
- * than clipped out of a box, because a clip cuts the border off with the corners
- * and the border is what carries the die's colour: green for advantage, red for
- * disadvantage, amber for a burst.
- *
- * Points are in a 100 by 100 box. The `drop` beside each one is how far the
- * number sits below centre, because a shape that narrows upward puts its visual
- * middle lower than its geometric one: a numeral centred in a triangle looks
- * like it is falling out of the top.
- */
-const SHAPES = {
-  4: { points: '50,8 95,88 5,88', drop: 14 },
-  6: { points: '10,10 90,10 90,90 10,90', drop: 0 },
-  8: { points: '50,4 94,50 50,96 6,50', drop: 0 },
-  10: { points: '50,3 92,40 50,97 8,40', drop: 2 },
-  12: { points: '50,5 95,38 78,92 22,92 5,38', drop: 4 },
-  20: { points: '50,4 92,27 92,73 50,96 8,73 8,27', drop: 0 },
-};
-
-function Die({ die, face, rolling, hot }) {
-  const role = die.role === 'explosion' ? 'burst' : die.role;
-  /* A d100 and anything else the tray grows later is a circle. Better an honest
-     round blank than a square pretending to be a shape it is not. */
-  const shape = SHAPES[die.sides] ?? null;
-
-  return (
-    <span
-      className={`die is-${role}${rolling ? ' is-rolling' : ''}${hot ? ' is-hot' : ''}${
-        face === null ? ' is-waiting' : ''
-      }`}
-      title={dieTitle(die)}
-    >
-      <svg className="die-shape" viewBox="0 0 100 100" aria-hidden="true">
-        {shape ? (
-          <polygon points={shape.points} />
-        ) : (
-          <circle cx="50" cy="50" r="45" />
-        )}
-      </svg>
-      <span className="die-sides">d{die.sides}</span>
-      <span
-        className="die-face"
-        /* Centred on the shape, then nudged down where the silhouette narrows
-           upward: see `drop` in SHAPES. The translate carries the -50% that puts
-           it on the middle in the first place. */
-        style={{ transform: `translate(-50%, calc(-50% + ${shape?.drop ?? 0}%))` }}
-      >
-        {face === null ? '' : face}
-      </span>
-    </span>
-  );
-}
-
-/**
- * What a die is for, in the words the glossary uses for it.
- *
- * The burst says the whole rule rather than naming it, because this is where a
- * player meets it: a die they did not ask for appears, and the question is why.
- * No card in the codex states the rule, so there is nothing to tap for it and
- * nowhere else to read it. See the `Exploding Dice` entry in keywords.js.
- */
-function dieTitle(die) {
-  if (die.role === 'advantage') return 'Advantage: added to the roll';
-  if (die.role === 'disadvantage') return 'Disadvantage: taken off the roll';
-  if (die.role === 'karma') {
-    return `${die.source ?? 'Karma'}: bought after the dice had stopped, and added to the roll`;
-  }
-  if (die.role === 'explosion') {
-    return (
-      'Exploding Dice: the die before this one rolled its maximum, so it threw one of the ' +
-      'category above. That adds to the total, and can explode again.'
-    );
-  }
-  return `d${die.sides}`;
-}
-
 /** "+4" and "-2", for a modifier sitting beside a total. */
 function signed(flat) {
   return flat < 0 ? `${flat}` : `+${flat}`;

@@ -1,50 +1,71 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCardStack } from '../../context/card-stack.js';
 import { FEED_PAGE, eventStamp, eventWords, listEvents } from '../../lib/campaignLog.js';
-import { groupEvents } from '../../lib/logChain.js';
+import { chainSummary, groupEvents } from '../../lib/logChain.js';
 import { verdictLabel } from '../../lib/dice.js';
 import { getCard } from '../../lib/weapons.js';
 import { subscribeToTable } from '../../lib/realtime.js';
+import { CostOrb } from '../CostOrbs.jsx';
+import Die from '../Die.jsx';
 
 /**
  * The table's log, as a block.
  *
  * The same block in two places, which is the whole reason it takes a campaign id
  * and nothing else: it sits on the campaign page beside the party, and it sits
- * on the Character tab of every sheet linked to that campaign. A player watching
- * their own numbers sees the fight happening around them in the same 360 pixels
- * everything else on that tab is drawn in.
+ * on the Character tab of every sheet linked to that campaign.
  *
  * ---------------------------------------------------------------- how it reads
- * Newest at the top, because a log read during a fight is read from the top and
- * nobody scrolls to find out what just happened. Every row is one line of who
- * and what, and one line of the price under it:
+ * Like a chat. Oldest at the top, newest at the bottom, and it follows the
+ * bottom unless you have scrolled up to read history. That is the opposite of
+ * how this block started and it is the right way round: a fight is a
+ * conversation, and a conversation that grew upward would put a reply above the
+ * thing it answered.
  *
- *   Kaelen cast Fireball
- *   Spent 2 Action Points and 4 Willpower · lasts 3 turns
+ * One entry is one thing somebody did, and it is a block rather than a line:
  *
- * A row whose event names a card opens that card, dealt onto the same stack the
- * rest of the sheet deals onto. That is why the card id rides in the event's
- * data rather than the card's name being enough: a log is read months later and
- * "Fireball" is not a lookup.
+ *   the face and the name    who. A portrait if the sheet has one, initials if
+ *                            not, and the name in the site's own teal.
+ *   what they did            "cast Fireball", with the cost as orbs on the same
+ *                            line, gold for Action Points and orange for
+ *                            Reaction, exactly as the sheet prints them.
+ *   a block per roll         the dice as their own silhouettes, then the bonus,
+ *                            an equals and the total, then the verdict.
+ *   the summary              what it all came to. "Dealt 17 Necrotic damage."
+ *   the clock                last, because it is the least of it.
+ *
+ * ------------------------------------------------------------------ folding
+ * Only the newest entry is open. A fight is forty entries long and nobody wants
+ * to scroll through everybody's arithmetic to find out what just happened, so an
+ * entry that is no longer the latest closes to its face, its name, its cost and
+ * its result. Tapping the head opens any of them again, and having opened one by
+ * hand it stays open: the automatic collapse only ever moves the entry that was
+ * newest a moment ago.
  *
  * -------------------------------------------------------------------- the feed
- * One read on mount and one insert subscription after it, so a use on somebody
- * else's sheet lands here a second after they press the button. Older pages are
- * asked for by the button at the foot rather than by scrolling, the same way the
- * journal opens one log at a time: this block is 640 pixels tall and an infinite
- * scroller inside it would fight the canvas it sits on.
+ * One read on mount and one insert subscription after it. Older pages are asked
+ * for by the button at the *top* now, and the scroll is pinned across the load
+ * so the page does not jump under a reader who was mid-sentence.
  *
- * Nothing here writes. The block is a reader of a table that is insert only for
- * everybody, and what puts rows in it is every place on the sheet that already
- * spends something. See src/lib/campaignLog.js.
+ * Nothing here writes. See src/lib/campaignLog.js for what does.
  */
 export default function LogBlock({ campaignId, title = 'Table Log', note = null, actorFor = null }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [more, setMore] = useState(false);
+  /* Which entry the reader opened by hand, if any. Null means "whichever is
+     newest", which is what makes the latest one open without anybody choosing
+     it and lets a new arrival take over. */
+  const [opened, setOpened] = useState(null);
   const stack = useCardStack();
+
+  const scroller = useRef(null);
+  /* Whether the reader is at the bottom. Read before the paint that adds an
+     entry and used after it, because "should this follow the newest" is a
+     question about where they were, not where the new content put them. */
+  const wasAtBottom = useRef(true);
+  const pinnedHeight = useRef(null);
 
   const read = useCallback(() => {
     if (!campaignId) return;
@@ -87,7 +108,40 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
     });
   }, [campaignId, read]);
 
+  /**
+   * Follow the bottom, the way a chat does.
+   *
+   * Two cases, and they need different handling. A new entry arriving should
+   * scroll only if the reader was already at the bottom, or it would yank them
+   * out of the history they were reading. A page of *older* entries loading
+   * should not scroll at all, and since it is inserted above, holding still
+   * means adding the height it grew by. Both are measured before the browser
+   * paints, which is what `useLayoutEffect` is for.
+   */
+  useLayoutEffect(() => {
+    const box = scroller.current;
+    if (!box) return;
+
+    if (pinnedHeight.current !== null) {
+      box.scrollTop += box.scrollHeight - pinnedHeight.current;
+      pinnedHeight.current = null;
+      return;
+    }
+    if (wasAtBottom.current) box.scrollTop = box.scrollHeight;
+  }, [events]);
+
+  function onScroll() {
+    const box = scroller.current;
+    if (!box) return;
+    // Within a line of the bottom counts as at the bottom: a reader who has not
+    // deliberately scrolled up should not lose the follow to a rounding error.
+    wasAtBottom.current = box.scrollHeight - box.scrollTop - box.clientHeight < 24;
+  }
+
   function older() {
+    const box = scroller.current;
+    pinnedHeight.current = box ? box.scrollHeight : null;
+
     const last = events[events.length - 1];
     listEvents(campaignId, { before: last?.seq })
       .then((rows) => {
@@ -96,6 +150,13 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
       })
       .catch((err) => setError(err.message));
   }
+
+  /* Oldest first, because that is the order a conversation happens in.
+     `groupEvents` works in the feed's own order and puts each block at its
+     newest row, so reversing it puts a chain that has just been given its damage
+     roll at the bottom, which is where the newest thing belongs. */
+  const entries = groupEvents(events).reverse();
+  const newest = entries[entries.length - 1]?.key ?? null;
 
   return (
     <div className="cell-scroll log-block">
@@ -119,124 +180,193 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
         </p>
       )}
 
-      <ul className="log-list">
-        {groupEvents(events).map((group) => (
-          <LogRow
-            key={group.key}
-            event={group.head}
-            rolls={group.rolls}
-            stack={stack}
-            actor={actorFor ? actorFor(group.head) : null}
-          />
-        ))}
-      </ul>
+      <div className="log-feed" ref={scroller} onScroll={onScroll}>
+        {/* At the top, because older is up. */}
+        {more && events.length > 0 && (
+          <div className="log-older">
+            <button type="button" className="btn btn-minimal btn-sm" onClick={older}>
+              Older
+            </button>
+          </div>
+        )}
 
-      {more && events.length > 0 && (
-        <div className="pick-tools log-tools">
-          <button type="button" className="btn btn-minimal btn-sm" onClick={older}>
-            Older
-          </button>
+        <ul className="log-list">
+          {entries.map((group) => (
+            <LogEntry
+              key={group.key}
+              event={group.head}
+              rolls={group.rolls}
+              stack={stack}
+              actor={actorFor ? actorFor(group.head) : null}
+              open={opened === null ? group.key === newest : opened === group.key}
+              onToggle={() =>
+                setOpened((was) => (was === group.key ? '' : group.key))
+              }
+            />
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One thing somebody did, and everything that came of it.
+ *
+ * The head is always drawn: a face, a name, what they did and what it cost. It
+ * is a button, because the head is also the way to open and close the rest, and
+ * a row this small has no room for a separate handle.
+ *
+ * `open` is decided by the block above rather than held here, so that "only the
+ * newest is open" is one rule in one place and not forty components each with an
+ * opinion.
+ */
+function LogEntry({ event, rolls, stack, actor, open, onToggle }) {
+  const card = event.data?.card ? getCard(event.data.card) : null;
+  const verb = eventWords(event);
+  const { ap = 0, wp = 0, health = 0, mode, portrait } = event.data ?? {};
+  /* A roll made from the tray has no use above it: the entry *is* the throw. So
+     the head stands in for its own child, which is what lets one component draw
+     both shapes without the block above having to know which it is holding. See
+     groupEvents, where a roll with no chain comes back as its own group. */
+  const throws = rolls.length > 0 ? rolls : event.kind === 'roll' ? [event] : [];
+  const alone = rolls.length === 0 && throws.length === 1;
+  const summary = chainSummary(throws);
+
+  /* The result, on the head, so a closed entry still says how it went. The last
+     verdict in the chain is the one that matters: a chain is a sequence and its
+     answer is at the end of it. */
+  const last = [...throws].reverse().find((row) => row.data?.verdict);
+  const verdict = last?.data?.verdict ?? null;
+
+  return (
+    <li className={`log-entry log-${event.kind}${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="log-head"
+        onClick={onToggle}
+        aria-expanded={open}
+        title={open ? 'Close this' : 'Open this'}
+      >
+        <Face name={event.actor} src={portrait} />
+
+        <span className="log-head-body">
+          <span className="log-who">{event.actor || 'Someone'}</span>
+
+          <span className="log-did">
+            {verb && <span className="log-verb">{verb} </span>}
+            <span className="log-title">{event.title}</span>
+            {/* The cost, on the same line, in the same orbs the sheet and every
+                card print it in. `mode` is what decides whether the Action Points
+                were paid out of the other pool: the card never says. */}
+            {ap > 0 && <CostOrb kind={mode === 'reaction' ? 'rp' : 'ap'} value={ap} size={17} />}
+            {wp > 0 && <CostOrb kind="wp" value={wp} size={17} />}
+            {health > 0 && <CostOrb kind="hp" value={health} size={17} />}
+          </span>
+        </span>
+
+        {verdict && (
+          <span className={`log-band is-${verdict}`}>{verdictLabel(verdict)}</span>
+        )}
+      </button>
+
+      {open && (
+        <div className="log-body">
+          {/* A block per throw, in the order they were thrown. A standalone roll
+              is drawn without its name repeated: the head above already said it. */}
+          {throws.map((roll) => (
+            <Throw key={roll.id} roll={roll} named={!alone} />
+          ))}
+
+          {summary && <p className="log-summary">{summary}</p>}
+
+          {event.detail && <p className="log-detail">{event.detail}</p>}
+
+          {/* And the card it was, for anybody reading this months later. The id
+              rides in the row precisely because "Fireball" is not a lookup. */}
+          {card && stack && (
+            <button
+              type="button"
+              className="log-open-card"
+              /* Dealt against whoever played it where the page knows them, so a
+                 spell read out of the log prints the caster's numbers rather
+                 than the reader's. See `modifiers.actor` in AbilityCard.jsx. */
+              onClick={() => stack.openCard(card, actor ? { actor } : null)}
+            >
+              Read {card.name}
+            </button>
+          )}
+
+          <p className="log-when">{eventStamp(event)}</p>
         </div>
+      )}
+    </li>
+  );
+}
+
+/**
+ * One throw: the dice as themselves, then the sum, then what it meant.
+ *
+ * The dice are the same component the roller draws, at a quarter of the size, so
+ * a d4 is the same triangle in the log as it was on the table. A row that said
+ * "2d6 + 1d4" in text would be asking the reader to picture what they already
+ * watched.
+ */
+function Throw({ roll, named = true }) {
+  const { dice = [], flat = 0, total = 0, verdict = null, dc = null, called = false } =
+    roll.data ?? {};
+
+  return (
+    <div className={`log-throw${verdict ? ` is-${verdict}` : ''}`}>
+      {named && <span className="log-throw-name">{roll.title}</span>}
+
+      <span className="log-throw-dice">
+        {dice.map((die) => (
+          <Die key={die.id} die={die} face={die.value} size={26} caption={false} />
+        ))}
+      </span>
+
+      <span className="log-throw-sum">
+        {flat !== 0 && <span className="log-throw-flat">{flat < 0 ? flat : `+ ${flat}`}</span>}
+        <span className="log-throw-eq">=</span>
+        <span className="log-throw-total">{total}</span>
+      </span>
+
+      {verdict && (
+        <span
+          className="log-throw-said"
+          title={called ? 'The table called this one: no DC was given' : `Against a DC of ${dc}`}
+        >
+          {verdictLabel(verdict)}
+          {called && <span className="log-throw-called">called</span>}
+        </span>
       )}
     </div>
   );
 }
 
 /**
- * One thing that happened.
+ * Whose entry this is, as a face.
  *
- * The verb sits between the two names rather than in front of them, so the line
- * reads as a sentence at a glance: a reader scanning a fight is looking for the
- * name and the card, and both are where a sentence puts them.
+ * The portrait was copied into the row when it was written, for the same reason
+ * the name was: a character can be redrawn or deleted and the log still has to
+ * read. With no portrait it falls back to initials, which is also what every row
+ * written before the log carried one will show.
  */
-function LogRow({ event, stack, actor = null, rolls = [] }) {
-  const card = event.data?.card ? getCard(event.data.card) : null;
-  const verb = eventWords(event);
-  const opens = Boolean(card && stack);
+function Face({ name, src }) {
+  const initials = String(name || '?')
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
 
-  const line = (
-    <>
-      <span className="log-actor">{event.actor || 'Someone'}</span>
-      {/* A turn has no verb ("Kaelen Turn 3"), and the two names ran together
-          into "KaelenTurn 3" without this. The gap on .log-line does not reach
-          them: they are both inside the button, which is not the flex box. */}
-      {verb ? <span className="log-verb"> {verb} </span> : ' '}
-      <span className="log-title">{event.title}</span>
-    </>
-  );
-
+  if (src) {
+    return <img className="log-face" src={src} alt="" loading="lazy" />;
+  }
   return (
-    <li className={`log-row log-${event.kind}`}>
-      <div className="log-line">
-        {opens ? (
-          <button
-            type="button"
-            className="log-open"
-            /* Dealt against whoever played it where the page knows them, so a
-               spell read out of the log prints the caster's numbers rather than
-               the reader's. See `modifiers.actor` in AbilityCard.jsx. */
-            onClick={() => stack.openCard(card, actor ? { actor } : null)}
-            title={`Read ${card.name}`}
-          >
-            {line}
-          </button>
-        ) : (
-          <span className="log-open is-still">{line}</span>
-        )}
-        <span className="log-when">{eventStamp(event)}</span>
-      </div>
-
-      {event.detail && <div className="log-detail">{event.detail}</div>}
-
-      {/* What the use set rolling, in the order it was rolled. See groupEvents:
-          a chain reads forwards even though the feed above it reads backwards. */}
-      {rolls.length > 0 && (
-        <ul className="log-chain">
-          {rolls.map((roll) => (
-            <Throw key={roll.id} roll={roll} />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
-
-/**
- * One throw under the thing that caused it.
- *
- * Two lines, and which goes on which is the whole of the layout. The answer is
- * on the line a reader scans: what was rolled, what it came to and what that
- * meant. The arithmetic is underneath in the small type, because "2d6 + 4 · 5,
- * 3" is what you read when you want to check the 12 and never what you were
- * looking for in the first place.
- *
- * A throw with no verdict is either a damage roll, which is not a success or a
- * failure and never claims to be, or a check nobody has judged yet. Neither
- * prints a word, and the absence is the honest answer to both.
- */
-function Throw({ roll }) {
-  const { total = 0, verdict = null, dc = null, called = false } = roll.data ?? {};
-
-  return (
-    <li className={`log-throw${verdict ? ` is-${verdict}` : ''}`}>
-      <span className="log-throw-line">
-        <span className="log-throw-name">{roll.title}</span>
-        <span className="log-throw-sum">{total}</span>
-        {verdict && (
-          <span
-            className="log-throw-said"
-            title={
-              called
-                ? 'The table called this one: no DC was given'
-                : `Against a DC of ${dc}`
-            }
-          >
-            {verdictLabel(verdict)}
-            {called && <span className="log-throw-called">called</span>}
-          </span>
-        )}
-      </span>
-      {roll.detail && <span className="log-throw-work">{roll.detail}</span>}
-    </li>
+    <span className="log-face is-blank" aria-hidden="true">
+      {initials}
+    </span>
   );
 }

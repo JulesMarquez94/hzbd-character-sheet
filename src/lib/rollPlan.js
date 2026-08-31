@@ -102,6 +102,10 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
     elevate: Number(mods.elevate) || 0,
     bonus: Number(mods.bonus) || 0,
   };
+  /* What kind of damage, for the line the log prints under the rolls: "Dealt 17
+     Necrotic damage". An Infusion replaces the card's printed type outright, so
+     the holder's is read first, exactly as AbilityCard prints it. */
+  const damage = mods.damage?.length ? mods.damage : (card?.damage ?? []);
 
   const links = [];
   const texts = [card?.body, half ? card?.sub_body : null];
@@ -152,13 +156,16 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
          probably not get. It is the only card in the codex shaped this way, and
          the rule is here rather than an exception for it by name. */
       if (isMenuEntry(text, match.index)) continue;
+      const kind = purposeOf(after, sentence);
       const link = {
         shape: 'value',
-        kind: purposeOf(after, sentence),
+        kind,
         dice: resolved.dice,
         flat: resolved.flat,
         parts: resolved.parts,
         askVerdict: false,
+        // Only damage has a type. Healing and a Shield are what they are.
+        damage: kind === 'damage' ? damage : [],
       };
 
       /* A landing each, rather than one throw counted twice. Three d6 are not
