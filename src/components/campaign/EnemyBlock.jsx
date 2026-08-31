@@ -17,13 +17,14 @@ import { useCardStack } from '../../context/card-stack.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import { metersToFeet } from '../../lib/characterModel.js';
 import { foeBar } from '../../lib/combatBar.js';
-import { difficultyLine } from '../../lib/creatures.js';
+import { CREATURE_MAX_LEVEL, difficultyLine } from '../../lib/creatures.js';
 import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
 import {
   breakWard,
   foeActor,
   foeSpend,
   setFoeEffects,
+  setFoeLevel,
   setFoePool,
   stepFoePool,
 } from '../../lib/encounters.js';
@@ -163,6 +164,7 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
      step is a delta rather than a destination, for the same reason: see
      `stepFoePool`. */
   const step = (pool, delta) => patch((row) => stepFoePool(row, foe, pool, delta));
+  const onLevel = (delta) => patch((row) => setFoeLevel(row, foe.key, delta, { by: true }));
 
   return (
     <div className="cell-scroll foe-pane foe-pane-stats">
@@ -218,9 +220,45 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
             <span className="foe-chip foe-chip-rank" style={{ '--rank-tone': rank.color }}>
               {rank.label}
             </span>
-            <span className="foe-chip" title={difficultyLine(creature)}>
-              Lvl {String(creature.level).padStart(2, '0')} · {creature.xp} XP
+
+            {/* The level, and the way to change it. "All enemies should have a
+                level scale option", 2026-08-31: the same Blightgeist is level 1
+                in the crypt and level 9 in the vault, so the level belongs to
+                this enemy and not to the page it came off. Two steps rather than
+                a dial, because a Game Master nudges it while building and never
+                jumps from 2 to 11.
+
+                It says out loud when it has been moved off the level its page
+                was written at, so nobody reads a scaled block as the printed
+                one. */}
+            <span className={`foe-chip foe-level${foe.scaled ? ' is-scaled' : ''}`}>
+              {!readOnly && (
+                <button
+                  type="button"
+                  className="foe-level-step"
+                  onClick={() => onLevel(-1)}
+                  disabled={foe.level <= 1}
+                  aria-label="A level lower"
+                >
+                  −
+                </button>
+              )}
+              <span title={difficultyLine(creature, foe.level)}>
+                Lvl {String(foe.level).padStart(2, '0')} · {stats.xp} XP
+              </span>
+              {!readOnly && (
+                <button
+                  type="button"
+                  className="foe-level-step"
+                  onClick={() => onLevel(1)}
+                  disabled={foe.level >= CREATURE_MAX_LEVEL}
+                  aria-label="A level higher"
+                >
+                  +
+                </button>
+              )}
             </span>
+
             {foe.down && (
               <span className="foe-chip is-down" title="At 0 Health. Nothing it knows can be played.">
                 Down
@@ -239,18 +277,24 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
           the same trade for the same reason and it is the precedent this
           follows. See PartyBlock.jsx.
 
-          What the headings were doing structurally is done by the hairlines on
-          the three printed lines below and by the Resources heading under them,
-          which is kept because the two bars under it are a different kind of
-          thing from a tile. */}
+          What the headings were doing structurally is done by the seam over
+          Resources, which is kept because the three bars under it are a
+          different kind of thing from a tile. */}
       <div className="attr-row">
         {ATTRIBUTES.map(({ key, label, color }) => (
           <AttrTile
             key={key}
             label={label}
             color={color}
-            value={creature[key]}
-            info={`Its own ${label}, printed on its page.`}
+            /* Off the level rather than off the page: a creature carries no
+               attributes of its own any more, only the shape that produces them.
+               See creatureAttributes in creatures.js. */
+            value={foe.attributes[key]}
+            info={
+              creature.primary === key
+                ? `Its ${label}, and the one it is built on. It climbs to 12 by level 12.`
+                : `Its ${label} at level ${foe.level}.`
+            }
           />
         ))}
       </div>
@@ -290,30 +334,27 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
         ))}
       </div>
 
-      {/* ---------- THE THREE LINES THE PAGE PRINTS AND THE SHEET HAS NO TILE FOR
-          Proficiencies, Sense and Language. Words rather than numbers, so they
-          are a small list rather than three more boxes. */}
-      <div className="foe-lines">
-        <p>
-          <b>Proficiencies:</b> {creature.proficiencies || 'none'}
-        </p>
-        <p>
-          <b>Sense:</b> {creature.sense || 'none'}
-        </p>
-        <p>
-          <b>Language:</b> {creature.language || 'none'}
-        </p>
-      </div>
+      {/* ---------- THE THREE POOLS ----------
+          Health, Shield and Willpower, with the four steps under each rather
+          than a ledger: an enemy's Health is moved several times a turn and none
+          of those movements is worth a reason.
 
-      {/* ---------- HEALTH AND SHIELD ----------
-          The same bars the party's blocks draw, with the four steps under them
-          rather than a ledger. A creature's Health is moved several times a turn
-          and none of those movements is worth a reason. */}
-      <div className="stat-category-label">Resources</div>
+          Willpower is here rather than beside the two point pools it used to sit
+          with (Jules, 2026-08-31: "move the willpower to the first block"). It
+          reads better for it: this pane is what an enemy *has* and the other is
+          what it can *do*, and Willpower is a pool that gets spent down over a
+          fight exactly the way Health is, not a bar that refills every turn.
+
+          The "Resources" heading over them is gone too, and for the reason the
+          two stat headings went: measured, the pane came out 25 over its 636
+          with Willpower added, which is a heading line, and all three bars name
+          themselves inside their own track. What the heading was doing is done
+          by the seam, which costs a pixel. */}
+      <div className="foe-seam" aria-hidden="true" />
 
       <FoePool
         label={foe.down ? 'Health · Down' : 'Health'}
-        title={`Printed ${stats.health_max}, hit die ${creature.hit_die}`}
+        title={`${stats.health_max} at level ${foe.level}, hit die ${stats.hit_die}`}
         current={foe.health}
         max={stats.health_max}
         color="var(--stat-health)"
@@ -328,6 +369,18 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
         color="var(--stat-shield)"
         readOnly={readOnly}
         onStep={(delta) => step('shield', delta)}
+      />
+
+      {/* Its own, which is the one line that separates an enemy from a bonded
+          minion: a minion spends its bonded's. */}
+      <FoePool
+        label="Willpower"
+        title={`${stats.willpower_max} at level ${foe.level}. Its own: an enemy borrows nothing.`}
+        current={foe.willpower}
+        max={stats.willpower_max}
+        color="var(--stat-wp)"
+        readOnly={readOnly || stats.willpower_max === 0}
+        onStep={(delta) => step('willpower', delta)}
       />
     </div>
   );
@@ -400,10 +453,15 @@ function FoeActions({ foe, patch, readOnly }) {
   const effects = useMemo(() => normalizeEffects(foe.effects), [foe.effects]);
   const running = effects.filter((effect) => effect.turns !== 0).length;
 
+  /* Whether a tap on a chip can spend anything. False on the Bestiary tab and
+     false for a body at 0 Health, and in both cases the tap reads the card
+     instead. See the chips below. */
+  const canPlay = !readOnly && !foe.down;
+
   /* The pip rows set a pool outright rather than stepping it, because a pip is
      a place and not a movement: tapping the fourth pip means four. */
   const pool = (key, value) => patch((row) => setFoePool(row, foe, key, value));
-  const step = (key, delta) => patch((row) => stepFoePool(row, foe, key, delta));
+
   /* Curried, so `patch(writeEffects(list))` reads as one call: what the list
      becomes is decided by combatTurn.js against the rows this block already
      holds, and where it lands is decided against the newest encounter. */
@@ -444,29 +502,9 @@ function FoeActions({ foe, patch, readOnly }) {
         onChange={(value) => pool('reaction', value)}
       />
 
-      <ResourceBar
-        label="Willpower"
-        current={foe.willpower}
-        max={stats.willpower_max}
-        color="var(--stat-wp)"
-        title="Its own. An enemy borrows nothing from anybody."
-      />
-
-      {!readOnly && stats.willpower_max > 0 && (
-        <div className="minion-steps foe-wp-steps">
-          {[-5, -1, 1, 5].map((delta) => (
-            <button
-              type="button"
-              key={delta}
-              className={`minion-step${delta > 0 ? ' is-up' : ''}`}
-              onClick={() => step('willpower', delta)}
-              aria-label={`${delta > 0 ? 'Add' : 'Take'} ${Math.abs(delta)} Willpower`}
-            >
-              {delta > 0 ? `+${delta}` : delta}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Willpower is not here. It moved to the pane on the left, beside Health
+          and Shield, because that pane is what an enemy *has* and this one is
+          what it can *do*. Jules, 2026-08-31. */}
 
       {/* The rank's one rule, printed where it bites rather than left for
           somebody to remember. Every rank has one and every one of them is about
@@ -498,21 +536,35 @@ function FoeActions({ foe, patch, readOnly }) {
                     <BarChip
                       key={entry.key}
                       move={entry}
-                      readOnly={readOnly || foe.down}
+                      /* Never disabled, because a chip that cannot be played is
+                         still a card that can be read. Jules, 2026-08-31: "I
+                         should be able to preview the abilities." On the
+                         Bestiary tab there was no way to read a creature's card
+                         at all, and on a live block a Game Master reading what a
+                         Blightbolt does should not have to spend the Action
+                         Points to find out.
+
+                         So the tap does the most it is allowed to do: it opens
+                         the use where a use is possible, and deals the card
+                         where it is not. Either way the card is on the screen a
+                         tap later, because the prompt prints it too. */
+                      readOnly={false}
                       onUse={() =>
-                        setRequest({
-                          name: entry.card?.name ?? entry.name,
-                          source: entry.source,
-                          ap: entry.ap,
-                          wp: entry.wp,
-                          variable: entry.variable,
-                          converts: entry.converts,
-                          opens: entry.opens,
-                          card: entry.card,
-                          modifiers: entry.modifiers,
-                          note: entry.note,
-                          extra: entry.extra,
-                        })
+                        canPlay
+                          ? setRequest({
+                              name: entry.card?.name ?? entry.name,
+                              source: entry.source,
+                              ap: entry.ap,
+                              wp: entry.wp,
+                              variable: entry.variable,
+                              converts: entry.converts,
+                              opens: entry.opens,
+                              card: entry.card,
+                              modifiers: entry.modifiers,
+                              note: entry.note,
+                              extra: entry.extra,
+                            })
+                          : stack?.openCard(entry.card, entry.modifiers)
                       }
                     />
                   ))}
@@ -648,7 +700,7 @@ function LoreWindow({ foe, onClose }) {
   return (
     <Modal title={creature.name} onClose={onClose} accent={rank.color}>
       <p className="foe-lore-head">
-        {creature.type} · {difficultyLine(creature)}
+        {creature.type} · {difficultyLine(creature, foe.level)}
       </p>
 
       {creature.lore ? (

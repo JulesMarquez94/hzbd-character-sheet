@@ -260,6 +260,105 @@ export function turnEvent(move, character, turn) {
   };
 }
 
+/* ------------------------------------------------------ the fight, announced
+ *
+ * "when you have built an encounter you can run it which will take control of
+ * the character turn start and end", Jules, 2026-08-31.
+ *
+ * A Game Master cannot write to a player's sheet. RLS says so and so does every
+ * page on this site: a sheet is the only writer of its own numbers. So the
+ * runner does not push a turn onto anybody, it **announces** one, here, on the
+ * table log every seated sheet is already reading. The player's own client sees
+ * its own id go by, starts its own turn through its own patch, and puts the call
+ * on the screen.
+ *
+ * Four rows, and the order they appear in is the fight:
+ *
+ *   initiative  the order, rolled. Written by the Game Master as the table.
+ *   your-turn   whose turn it is now. Also the table's, with the character it
+ *               names in `data` rather than on the row: a Game Master may not
+ *               write a row *as* somebody else's character, and must not be able
+ *               to. `claim_event_actor` in schema.sql is what enforces that.
+ *   ended       a player saying they are done. Written by the player, as
+ *               themselves, which is the one row in the fight that is.
+ *   fight-over  the run stopped.
+ *
+ * All four are `kind: 'turn'`, so the log block draws them with the rows the
+ * sheet's own turn button already writes, and `groupEvents` gathers everything
+ * that happened during one of them underneath it. See bundleTurns in
+ * logChain.js.
+ */
+
+/** The order, rolled. `order` is the run's own, already sorted. */
+export function initiativeEvent(order = [], { encounter = null } = {}) {
+  const names = order.slice(0, 4).map((entry) => entry.name);
+  const rest = order.length - names.length;
+
+  return {
+    kind: 'turn',
+    actor: 'The table',
+    title: 'Initiative',
+    detail:
+      order.length === 0
+        ? 'Nobody is in the fight'
+        : `${listAnd(names)}${rest > 0 ? ` and ${rest} more` : ''}`,
+    data: {
+      move: 'initiative',
+      encounter,
+      order: order.map((entry) => ({ kind: entry.kind, name: entry.name, init: entry.init })),
+    },
+  };
+}
+
+/**
+ * Whose turn it is now.
+ *
+ * The character is in `data` and never on the row, for the reason above. A
+ * player's client matches on `data.character`; everybody else reads a line
+ * saying whose turn it is, which is worth having on its own.
+ */
+export function turnCallEvent(entry, round, { encounter = null } = {}) {
+  const isPlayer = entry?.kind === 'member';
+
+  return {
+    kind: 'turn',
+    actor: entry?.name ?? 'Someone',
+    title: `Turn ${round}`,
+    detail: isPlayer ? 'It is their turn' : 'The Game Master is playing this one',
+    data: {
+      move: 'your-turn',
+      encounter,
+      round,
+      /* Only for a player. A foe's turn is announced so the log reads as a
+         fight, and there is no sheet for it to reach. */
+      character: isPlayer ? entry.ref : null,
+      side: entry?.kind ?? 'foe',
+    },
+  };
+}
+
+/** A player saying they are done. Written by the player, as themselves. */
+export function turnDoneEvent(character, round) {
+  return {
+    kind: 'turn',
+    actor: character?.name ?? '',
+    title: `Ended turn ${round}`,
+    detail: 'Whatever ends here, ends',
+    data: { move: 'ended', round, character: character?.id ?? null },
+  };
+}
+
+/** The run stopped, either because it is over or because it was called off. */
+export function fightOverEvent({ encounter = null, rounds = 0 } = {}) {
+  return {
+    kind: 'turn',
+    actor: 'The table',
+    title: 'The fight ends',
+    detail: rounds > 0 ? `After ${rounds} ${rounds === 1 ? 'round' : 'rounds'}` : 'Called off',
+    data: { move: 'fight-over', encounter, rounds },
+  };
+}
+
 /* ------------------------------------------------------------- reading it */
 
 /** "17:42" for today, "Aug 29, 17:42" for anything older. */

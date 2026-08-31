@@ -574,7 +574,7 @@ export default function CampaignPage() {
 
         {tab === 'Encounters' && canEdit && (
           <CardStackProvider character={null}>
-            <EncounterTab campaign={campaign} canEdit={canEdit} unit={unit} />
+            <EncounterTab campaign={campaign} members={members} canEdit={canEdit} unit={unit} />
           </CardStackProvider>
         )}
       </main>

@@ -9830,3 +9830,182 @@ comment is true.
 6. **General health** is printed near the character line (10 a level and 10 a
    Physique) so a General takes about as long to bring down as a player. The
    Overlords sit well above it. Both are numbers rather than a rule.
+
+## Creatures scale, and an encounter can be run, 2026-08-31
+
+Jules, on the second pass: "move the willpower to the first block. The
+proficiencies, sense and language block here make no sense, remove it. I should
+be able to preview the abilities. All enemies should have a level scale option
+... The main goal at the end here is that when you have built an encounter you
+can run it which will take control of the character turn start and end."
+
+### Three rulings, taken first
+
+The curve was the one Jules flagged as open, so it was settled before a line was
+written.
+
+| Question | Ruling |
+| -------- | ------ |
+| The curve | **The character's own.** Base 4, +2 and +1 at level 1, +1 on two attributes at every odd level after. |
+| Does DEF scale | **It tracks Instinct plus a bonus**, exactly as a character's Defense tracks theirs. |
+| Where the level lives | **Per enemy in the encounter.** The same Blightgeist is level 1 in the crypt and level 9 in the vault. |
+
+### Almost nothing about a creature is a printed number any more
+
+A creature used to be twenty numbers. It is now a **shape**: a `primary`
+attribute, a `secondary`, a `bonus` spread set when it was written, two
+conversions and a die size. A level turns those into a stat block.
+
+    primary    4 + 2 + one per odd level from 3
+    secondary  4 + 1 + one per odd level from 3
+    the third  4
+    plus the creature's own `bonus`
+
+which is the character's growth read against the creature's own shape, and
+**a +1 bonus on the primary is what carries it to 12 at level 12**, where a
+character without a lineage tops out at 11. Every General and every Overlord
+carries that +1. The Minions deliberately do not: topping out lower is the point
+of being a Minion.
+
+What stays custom is exactly what Jules named and no more. Health is `perLevel`
+per level and `perPhysique` per Physique, where a character is ten and ten.
+Willpower is `perLevel`, `perMind` and a `flat`, where a character is two, two
+and ten. Defense is Instinct plus `avoid_bonus`. Speed and Armor stay printed,
+because neither is an attribute and neither breaks at level 12 the way an
+unscaled Defense would.
+
+The hit die is the design sheet's own arithmetic kept honest at every level: the
+creature carries a **die size** and the count is derived to average the Health
+beside it. 8 Health on a d4 creature is 3d4 because 3d4 averages 7.5.
+
+**The Blightgeist reproduces its own printed page from the curve.** All eleven
+lines: STR 2, AGI 2, WIT 5, DEF 8, HP 8 (3d4), WP 8, AP 6, Speed 3m, INI +3, and
+the Difficulty line. It is the only ground truth in the file and it is now the
+first thing `npm run lint:creatures` checks, which is what makes the shape
+trustworthy rather than plausible. Two of its numbers moved to get there, and
+both are the bonus spread doing its job rather than the page being edited.
+
+The level is two steps on the block's own chip, and an enemy moved off the level
+its page was written at says so in amber. **Changing it empties the pools**: a
+level 9 Blightgeist has six times the Health of a level 1 one, and "4 of 52" is
+not a reading of "it had taken four damage" that anybody wants. The name it was
+given and the wards already broken survive, because those are about the fight
+rather than the body. The shelf carries the level too, opening on the party's own
+average, and prints each creature's stat line **at the level it is about to go in
+at**.
+
+### The block, again
+
+- **Willpower moved to the first pane**, beside Health and Shield. It reads
+  better for it: the left pane is what an enemy *has* and the right is what it
+  can *do*, and Willpower is spent down over a fight the way Health is rather
+  than refilling every turn.
+- **Proficiencies, Sense and Language are gone.** They made no sense here.
+- **Every ability is previewable.** A chip is never disabled now: it opens the
+  use where a use is possible and **deals the card** where it is not. On the
+  Bestiary tab there had been no way to read a creature's card at all, and on a
+  live block a Game Master reading what a Blightbolt does should not have to
+  spend the Action Points to find out.
+
+That cost the pane its last heading. Measured, it came out 25px over its 636 with
+Willpower added, so "Resources" went the way the two stat headings went (all
+three bars name themselves inside their own track) and the row gap came down from
+0.5rem to 0.42rem, which is eleven rows' worth of the fifteen pixels that were
+left. **0 over on all nine creatures, with the real fonts and with them replaced
+by generic fallbacks.**
+
+### Running the fight
+
+`run` on the encounter row: `{ live, round, at, order, awaiting }`. The order is
+rolled once with `rollCheck`, the same 2d6 plus a flat every other check in the
+game is, and stored, so a Game Master who reloads mid-fight finds it on the row
+rather than in anybody's memory. Ties go to the higher Initiative and then to the
+order the encounter was built in, so two identical Blightgeists never swap places
+between renders.
+
+**The load-bearing constraint is one this site has kept since the campaign page
+was built: a sheet is the only writer of its own numbers.** RLS says so too, so a
+Game Master cannot write `turn_state` onto a player's character and must not be
+able to. So the runner does not push a turn. It **announces** one, on the table
+log every seated sheet is already reading:
+
+1. the Game Master advances the order
+2. the encounter row moves, and an event says whose turn it is
+3. **that player's own client** sees its own id, calls the sheet's own
+   `startTurn`, and covers the screen
+4. the player presses End Turn, which ends it there and says so back
+5. the Game Master's runner sees that and advances by itself
+
+The character is in `data` and never on the row, because the schema's
+`claim_event_actor` refuses a Game Master writing *as* somebody else's character,
+which is exactly right and exactly what this needed to work around rather than
+weaken.
+
+`startTurn` is the same function block 6's Turn button calls. An automatic turn
+and a hand-pressed one are the same turn, because a second quieter version of a
+turn start is the sort of thing that drifts.
+
+**The cover** is full screen, and it is the one thing on the site that covers a
+sheet. A player who has been watching the fight go round for ten minutes is not
+looking at their own Action Points, and a badge in a corner is something you find
+after somebody says your name out loud. It closes on End Turn, which is the real
+one, or on Keep Playing, which puts it away and leaves the turn running.
+
+**It never starts a turn twice.** The announcement's own row id is remembered, so
+a resync, a second tab or a doubled press cannot hand out two turns of Action
+Points. And it only listens when the sheet is yours.
+
+Three other things the runner does on each press, in this order and for a reason:
+the pointer moves, then **every Overlord is paid its 3 Reaction Points if the
+turn landed on a player** (before the announcement, or a boss gains its reactions
+after the player has already acted), then the turn is announced. An enemy's own
+turn gives it its Action Points back and ticks what is running on it, which is
+the half of a Start Turn an enemy has.
+
+Taking an enemy off the table mid-fight takes it out of the order in the same
+write, and whoever was up stays up.
+
+### The log reads as a fight
+
+"all actions under 1 turn are bundled under it in a X name turn 1 block."
+
+`bundleTurns` is a second gathering over the top of `groupEvents`: chains first
+(a use and its throws), then turns (a turn and everything done during it). The
+feed arrives newest first and a turn is opened by its own row, so everything
+newer than that row belongs to it.
+
+It draws as a **seam** rather than a panel: `TURN 4 · KAELEN ······ 3 entries`,
+the party in cyan and the enemies in copper, so the shape of a round is legible
+without reading a word. A panel would double the height of the block for what is
+really a heading. Rows that happened before any turn on the page get a bundle
+with no head, which is what a table that is not in a fight looks like.
+
+### Two bugs, both the same bug
+
+Four taps of `+` on the level chip moved it one level. The fix is the one the
+pool steps already had: **a step is a delta, not a destination.** Four
+destinations all worked out from the level on screen are four writes of "2".
+`setFoeLevel` takes `{ by: true }` now and resolves the step against the
+encounter it is handed. Found by pressing it, which is the only way either of
+these was ever going to be found.
+
+**schema.sql must be re-run**, and it now carries an `alter table ... add column
+if not exists run`, because the table is created `if not exists` and a campaign
+that already has encounters on it would not otherwise grow the column.
+
+### Open for the designer
+
+1. **Speed and Armor do not scale**, only the attributes and what is derived from
+   them. Neither breaks at level 12 the way Defense would have, but a level 12
+   Thornmother moves at the pace of a level 1 one.
+2. **XP is linear in the level** (a creature carries XP per level). The character
+   XP table is not linear, so a level 12 Overlord may be worth less than it
+   should be.
+3. **A Minion tops out at 9 or 10** in its best stat rather than 12, deliberately.
+   Say the word and it is a `bonus` field.
+4. **A player's End Turn from their own Turn block** does not move the table on;
+   only the one on the cover does. Both end the turn on the sheet. Wiring the
+   block's button to speak as well is a line, and it was left out because ending
+   a turn out of order should not be able to advance a fight.
+5. **Nothing checks that the fight is over.** Every enemy at 0 Health still gets
+   its turn announced until the Game Master presses End fight.

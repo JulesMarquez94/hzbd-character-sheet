@@ -14,6 +14,7 @@ import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
+import TurnCall from '../components/campaign/TurnCall.jsx';
 import DiceSheet from '../components/sheet/DiceSheet.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
 import InventoryTab from '../components/sheet/InventoryTab.jsx';
@@ -379,6 +380,11 @@ export default function CharacterSheet({ creating = false }) {
         yours: a reader on somebody else's public sheet must not be handed their
         Instinct to roll with. Renders nothing. See DiceTray.jsx. */}
     {canEdit && <DiceSheet character={shown} patch={patch} />}
+    {/* And the fight, when the Game Master is running one. Renders nothing until
+        the order reaches this sheet, and then it covers the screen. The turn is
+        started here by this sheet, off an announcement on the table log, because
+        nobody else may write to it. See TurnCall.jsx. */}
+    <TurnCall character={character} patch={patch} canEdit={canEdit} />
     <div className="sheet" style={{ '--sheet-cols': canvasColumns }} data-columns={canvasColumns}>
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">

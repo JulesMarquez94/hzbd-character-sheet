@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCardStack } from '../../context/card-stack.js';
 import { FEED_PAGE, eventStamp, eventWords, listEvents } from '../../lib/campaignLog.js';
-import { chainSummary, groupEvents } from '../../lib/logChain.js';
+import { bundleCount, bundleTurns, chainSummary, groupEvents } from '../../lib/logChain.js';
 import { verdictLabel } from '../../lib/dice.js';
 import { getCard } from '../../lib/weapons.js';
 import { subscribeToTable } from '../../lib/realtime.js';
@@ -159,11 +159,20 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
       });
   }
 
-  /* Oldest first, because that is the order a conversation happens in.
-     `groupEvents` works in the feed's own order and puts each block at its
-     newest row, so reversing it puts a chain that has just been given its damage
-     roll at the bottom, which is where the newest thing belongs. */
-  const entries = groupEvents(events).reverse();
+  /* Two gatherings, and then the whole thing turned round.
+     `groupEvents` puts a use and its throws together; `bundleTurns` puts a turn
+     and everything done during it together. Both work in the feed's own order,
+     newest first, so both are reversed here: a conversation happens oldest
+     first, and a chain that has just been given its damage roll belongs at the
+     bottom. */
+  const bundles = bundleTurns(groupEvents(events))
+    .reverse()
+    .map((bundle) => ({ ...bundle, groups: [...bundle.groups].reverse() }));
+
+  /* Which entry is open, still counted across the whole feed rather than per
+     bundle: "only the newest is open" is one rule and the bundles did not
+     change it. */
+  const entries = bundles.flatMap((bundle) => bundle.groups);
   const newest = entries[entries.length - 1]?.key ?? null;
 
   return (
@@ -198,28 +207,64 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
           </div>
         )}
 
-        <ul className="log-list">
-          {entries.map((group) => (
-            <LogEntry
-              key={group.key}
-              event={group.head}
-              rolls={group.rolls}
-              stack={stack}
-              actor={actorFor ? actorFor(group.head) : null}
-              open={
-                opened?.newest === newest ? opened.key === group.key : group.key === newest
-              }
-              onToggle={() =>
-                setOpened((was) => ({
-                  newest,
-                  // Tapping the open one shuts it, and shuts all of them.
-                  key: was?.newest === newest && was.key === group.key ? '' : group.key,
-                }))
-              }
-            />
-          ))}
-        </ul>
+        {/* One list per turn, headed by the turn. A bundle with no head is
+            everything that happened outside a fight, and it is drawn bare. */}
+        {bundles.map((bundle) => (
+          <div className="log-turn" key={bundle.key}>
+            {bundle.turn && <TurnHead event={bundle.turn} count={bundleCount(bundle)} />}
+
+            <ul className="log-list">
+              {bundle.groups.map((group) => (
+                <LogEntry
+                  key={group.key}
+                  event={group.head}
+                  rolls={group.rolls}
+                  stack={stack}
+                  actor={actorFor ? actorFor(group.head) : null}
+                  open={
+                    opened?.newest === newest ? opened.key === group.key : group.key === newest
+                  }
+                  onToggle={() =>
+                    setOpened((was) => ({
+                      newest,
+                      // Tapping the open one shuts it, and shuts all of them.
+                      key: was?.newest === newest && was.key === group.key ? '' : group.key,
+                    }))
+                  }
+                />
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The rule a turn draws across the feed, with whose turn it was on it.
+ *
+ * "all actions under 1 turn are bundled under it in a X name turn 1 block",
+ * Jules, 2026-08-31. A fight read flat is forty rows nobody can find anything
+ * in. A fight read like this is Turn 4, Kaelen, and the three things Kaelen did.
+ *
+ * A seam rather than a panel, because it appears every three or four rows and
+ * anything with a border on it would double the height of the block. The name
+ * wears the side it is on: the party in the site's own cyan, an enemy in
+ * copper, so a Game Master scanning the feed can see the shape of the round
+ * without reading a word of it.
+ */
+function TurnHead({ event, count }) {
+  const side = event?.data?.side ?? 'member';
+
+  return (
+    <div className={`log-turn-head log-turn-${side}`}>
+      <span className="log-turn-round">{event.title}</span>
+      <span className="log-turn-who">{event.actor}</span>
+      <span className="log-turn-rule" aria-hidden="true" />
+      <span className="log-turn-count">
+        {count === 0 ? 'nothing' : `${count} ${count === 1 ? 'entry' : 'entries'}`}
+      </span>
     </div>
   );
 }

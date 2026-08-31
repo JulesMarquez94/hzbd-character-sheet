@@ -902,9 +902,22 @@ create table if not exists public.encounters (
   -- normalizeFoes in src/lib/encounters.js.
   foes         jsonb not null default '[]'::jsonb,
 
+  -- The fight, once the pile is being played:
+  --   { live, round, at, order: [{ kind, ref, name, init }], awaiting }
+  -- The order is rolled once and stored, so a Game Master who reloads mid-fight
+  -- finds it here rather than in anybody's memory. `awaiting` is the character
+  -- whose turn has been announced and not yet ended. Empty until Roll
+  -- Initiative is pressed. See THE RUN in src/lib/encounters.js.
+  run          jsonb not null default '{}'::jsonb,
+
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+
+-- The table above is created "if not exists", so a campaign that already has
+-- encounters on it does not grow a column from the definition. This is what
+-- adds the fight to one that was made before there was a fight to have.
+alter table public.encounters add column if not exists run jsonb not null default '{}'::jsonb;
 
 create index if not exists encounters_campaign_id_idx on public.encounters (campaign_id);
 

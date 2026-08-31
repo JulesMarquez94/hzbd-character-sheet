@@ -5,13 +5,12 @@
  * somebody owns and edits; a minion is a body a talent set hands to a character
  * and stores on their sheet. A creature is neither. It is **codex data**, shipped
  * with the site the way spells and weapons are, and the thing the table actually
- * plays is an *instance* of one, laid down inside an encounter. See
- * encounters.js, which owns the instance and never the printed page.
+ * plays is an *instance* of one, laid down inside an encounter at a level of its
+ * own. See encounters.js, which owns the instance and never the printed page.
  *
  * ----------------------------------------------------------------- the source
  * The shape is transcribed from `data/Source Temp/Hazebound/Creatures/`, which
- * holds a blank template and one finished creature. Every field below is a line
- * on that page, in that page's own order:
+ * holds a blank template and one finished creature:
  *
  *   LONG CREATURE NAME                Difficulty:   Minion - Level 1 - 10 XP
  *   Creature Type Details             Speed 3m(10f) / INI +3
@@ -21,33 +20,51 @@
  *      AP: 6   RP: 3   WP: 8
  *   Blightbolt:                                                  ●●●●
  *     Ranged Attack. 10m(30f) + WIT - 1d4 + Half WIT Decay Damage
- *   Blight Surge:                                            ●●●●●●
- *     A creature you can see within 10m(30f) must make a WIT skill check 8 ...
  *   <the lore paragraph, in italic, at the foot>
  *
- * Two things about that page were superseded and both are noted where they bite:
- * it prints four attributes (STR/AGI/INT/WIT) where the live system runs on
- * three, and it gives its Minion 3 Reaction Points where a Minion now has none.
+ * ------------------------------------------------------------- a creature scales
+ * Jules, 2026-08-31: "All enemies should have a level scale option... most enemy
+ * should have a strong stat that reach 12 the max at the same time they hit
+ * level 12. Should have the same stat pattern as others. Just for the conversion
+ * to health or willpower is custom value. Then the rest get bonus set at the
+ * creation."
  *
- * ------------------------------------------------------- printed and derived
- * **What the page prints is printed here, and nothing recomputes it.** Health,
- * Defense, Speed, Willpower and the hit die are written per creature, because
- * the designer wrote them per creature: a Blightgeist has 8 Health at Level 1
- * where the character formula would hand it 30, and a bestiary that argued with
- * its own stat block would be worth nothing.
+ * So **almost nothing about a creature is a printed number any more.** It is a
+ * shape plus a handful of coefficients, and a level turns those into a stat
+ * block. Which means a Blightgeist can be dropped into a level 9 fight and still
+ * be a Blightgeist.
  *
- * What the page is silent about is derived exactly as a character's is, because
- * player cards roll against it and they must find the same numbers on both
- * sides of the table:
+ * The curve is **the character's own**, which is what "the same stat pattern as
+ * others" asks for. A character starts at 4 in each attribute, takes +2 and +1
+ * on two different attributes at level 1, and +1 on two different attributes at
+ * every odd level after (see levelPicks.js). Read against a creature's declared
+ * `primary` and `secondary`:
  *
- *   Initiative  Instinct + level, and the Blightgeist's printed +3 is that sum
- *   Reflex      Physique + Instinct
- *   Grit        Instinct + Mind
- *   Shield      half the printed Health, the site's own cap
+ *   primary    4 + 2 + one per odd level from 3
+ *   secondary  4 + 1 + one per odd level from 3
+ *   the third  4
  *
- * The hit die is the page's own arithmetic and is kept honest by hand: 3d4
- * averages 7.5 against a printed 8, so every die below averages what it sits
- * beside. `npm run lint:creatures` is what says so.
+ * plus the creature's own `bonus`, which is the "rest set at the creation" half:
+ * a flat spread that makes a Thornmother slow and enormous and a Blightgeist
+ * frail. **A `bonus` of +1 on the primary is what carries it to 12 at level 12**,
+ * where a character without a lineage tops out at 11.
+ *
+ * What stays custom per creature is exactly what Jules named, and no more:
+ *
+ *   health      `perLevel` and `perPhysique`, where a character is 10 and 10
+ *   willpower   `perLevel`, `perMind` and `flat`, where a character is 2, 2, 10
+ *
+ * And two things that are not attributes and have to come from somewhere:
+ *
+ *   avoid       Instinct + `avoid_bonus`, which is exactly how a character's
+ *               Defense works (their Instinct plus what they are wearing), so a
+ *               level 12 Minion is not hit automatically. Jules's ruling.
+ *   hit die     the creature's own `die` size, and the *count* is derived so it
+ *               always averages the Health beside it. The design sheet's own
+ *               arithmetic: 8 HP, 3d4, and 3d4 averages 7.5.
+ *
+ * Speed and Armor stay printed, because neither is an attribute and neither
+ * breaks at level 12 the way an unscaled Defense would.
  *
  * ---------------------------------------------------------------- three ranks
  * Jules, 2026-08-31: "There is 3 type of enemies." They are RANKS below, and
@@ -71,15 +88,23 @@
  *
  * That is a passive whose condition is a *thing on the table* rather than
  * anything a sheet can check, so the sheet does not try. A passive carrying
- * `ward` is drawn with a switch beside it, the instance remembers which of its
- * wards have been broken, and the Game Master flips it when the pillars come
- * down. `while` is the sentence that holds while it stands, printed on the row
- * so nobody has to open the card to be reminded what they are turning off.
+ * `ward` is drawn with a switch, the instance remembers which of its wards have
+ * been broken, and the Game Master flips it when the pillars come down. `while`
+ * is the sentence that holds while it stands, printed on the row so nobody has
+ * to open the card to be reminded what they are turning off.
  *
  * This file reads nothing and writes nothing. It is a leaf, like spells.js.
  */
 
 import { withArt } from './cardArt.js';
+
+/** The ceiling a creature climbs to, and the one characters climb to. Repeated
+    rather than imported: this file is a leaf and characterModel.js is not. */
+export const CREATURE_MAX_LEVEL = 12;
+
+/** What every body on the board starts each attribute at. ATTRIBUTE_BASE's twin,
+    repeated for the same reason. */
+const BASE = 4;
 
 /* ------------------------------------------------------------------ the ranks */
 
@@ -155,10 +180,6 @@ export function getRank(value) {
  * that is simply true of it, which is the split `isPassive` already makes and
  * the split the action block draws on: the first list is chips you tap, the
  * second is rows you read.
- *
- * The tags are the banner. `Creature` first so the card says what it is, then
- * the rank, then the type word off the creature's own type line, which is how
- * the printed page heads itself.
  */
 export const CREATURE_CARDS = withArt([
   /* ------------------------------------------------------------- Blightgeist
@@ -498,47 +519,50 @@ export function getCreatureCard(id) {
  * board proving it (Jules, 2026-08-31: "Imagine three of each for the test").
  *
  * The Blightgeist is not one of the nine invented: it is the finished creature
- * off the design sheet, transcribed line for line, and it is the one that fixes
- * what all the others are measured against.
+ * off the design sheet, and its `bonus` and coefficients are set so that **at
+ * its own printed level 1 it prints its own page**: STR 2, WIT 5, DEF 8, HP 8
+ * (3d4), WP 8. Everything above level 1 is the curve's.
  *
- * Ordered rank first and by level inside a rank, which is what every list of
- * these draws in and what `sortCreatures` hands back.
+ * `level` is the level the creature is *written* at, and it is only a default:
+ * an encounter sets its own (see `foeLevel` in encounters.js).
+ *
+ * `xp` is XP **per level**, so the Difficulty line reads its own arithmetic at
+ * whatever level it is standing at.
  */
 export const CREATURES = [
   /* ================================================================ MINIONS */
 
   {
     /* Transcribed from data/Source Temp/Hazebound/Creatures/Creature -
-       Blightgeist.jpg. Two readings are marked below and neither is a choice
+       Blightgeist.jpg. Two readings are marked here and neither is a choice
        about what this creature is:
 
          attributes  the page prints STR 2, AGI 2, INT 2, WIT 5. The live system
                      runs on three, and the page's own Blightbolt casts off WIT,
                      so WIT is the caster's attribute and lands on Mind. STR is
                      Physique and AGI is Instinct. INT has nowhere of its own to
-                     go and is the same 2 as the rest, so nothing is lost.
+                     go, and it printed the same 2 as STR, so nothing is lost.
          reactions   the page prints RP: 3, and a Minion now cannot take
                      reactions at all. The rule wins over the page: this is 0,
-                     and `creatureStats` is where it is forced. */
+                     and `creatureStats` is where it is forced.
+
+       At level 1 the numbers below reproduce the page exactly. Checked by
+       `npm run lint:creatures`, which is the only reason to trust that sentence. */
     id: 'blightgeist',
     name: 'Blightgeist',
     rank: 'minion',
     level: 1,
     xp: 10,
     type: 'Small Undead',
-    difficulty: '',
-    speed_m: 3,
-    avoid: 8,
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -2, instinct: -3, mind: -1 },
+    health: { perLevel: 4, perPhysique: 2 },
+    willpower: { perLevel: 1, perMind: 1, flat: 2 },
+    avoid_bonus: 6,
     armor: 0,
-    health_max: 8,
-    hit_die: '3d4',
-    physique: 2,
-    instinct: 2,
-    mind: 5,
-    willpower_max: 8,
-    proficiencies: 'none',
-    sense: 'Darkvision 10 meters (30 feet)',
-    language: 'none',
+    speed_m: 3,
+    die: 4,
     cards: ['blightbolt', 'blight-surge'],
     /* The foot of the page, with its one em dash restructured into a colon.
        Punctuation is the only edit allowed on the designer's prose. See
@@ -552,21 +576,17 @@ export const CREATURES = [
     name: 'Cinderling',
     rank: 'minion',
     level: 2,
-    xp: 15,
+    xp: 8,
     type: 'Small Elemental',
-    difficulty: '',
-    speed_m: 5,
-    avoid: 9,
+    primary: 'instinct',
+    secondary: 'physique',
+    bonus: { physique: -1, instinct: -2, mind: -3 },
+    health: { perLevel: 2, perPhysique: 1 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 4,
     armor: 0,
-    health_max: 5,
-    hit_die: '2d4',
-    physique: 2,
-    instinct: 4,
-    mind: 1,
-    willpower_max: 0,
-    proficiencies: 'none',
-    sense: 'Darkvision 10 meters (30 feet)',
-    language: 'none',
+    speed_m: 5,
+    die: 4,
     cards: ['ember-rake', 'death-throes'],
     lore:
       'A cinderling is what is left when a fire is put out badly. It has no interest in warmth and no memory of what it burned, only the certainty that it is going out soon and the will to take something with it.',
@@ -579,19 +599,15 @@ export const CREATURES = [
     level: 1,
     xp: 10,
     type: 'Small Beast',
-    difficulty: '',
-    speed_m: 6,
-    avoid: 9,
+    primary: 'instinct',
+    secondary: 'physique',
+    bonus: { physique: -1, instinct: -1, mind: -3 },
+    health: { perLevel: 1, perPhysique: 1.5 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 4,
     armor: 0,
-    health_max: 7,
-    hit_die: '2d6',
-    physique: 3,
-    instinct: 5,
-    mind: 1,
-    willpower_max: 0,
-    proficiencies: 'Stealth',
-    sense: 'Darkvision 15 meters (50 feet)',
-    language: 'none',
+    speed_m: 6,
+    die: 6,
     cards: ['gnashing-bite', 'pack-tactics'],
     lore:
       'Fenrats are the fen made ambulatory. One is a nuisance you kick away. Nine of them have already decided which of you is slowest, and they were counting long before you noticed them.',
@@ -604,21 +620,17 @@ export const CREATURES = [
     name: 'Hollowed Knight',
     rank: 'general',
     level: 4,
-    xp: 450,
+    xp: 110,
     type: 'Medium Undead',
-    difficulty: '',
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: -2, mind: -2 },
+    health: { perLevel: 8, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 6,
+    armor: 4,
     speed_m: 4,
-    avoid: 14,
-    armor: 3,
-    health_max: 91,
-    hit_die: '14d12',
-    physique: 6,
-    instinct: 3,
-    mind: 2,
-    willpower_max: 22,
-    proficiencies: 'Heavy Armor, Longsword',
-    sense: 'Darkvision 15 meters (50 feet)',
-    language: 'Common',
+    die: 12,
     cards: ['grave-cleave', 'oathbroken-guard', 'hollow-vigil'],
     lore:
       'The armor is still buckled the way its squire buckled it, the morning of a battle nobody now remembers the name of. Whatever is inside it has kept every habit of the knight and none of the reasons.',
@@ -629,21 +641,17 @@ export const CREATURES = [
     name: 'Mireborn Hexer',
     rank: 'general',
     level: 5,
-    xp: 800,
+    xp: 130,
     type: 'Medium Humanoid',
-    difficulty: '',
-    speed_m: 4,
-    avoid: 12,
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -1, instinct: -1, mind: 1 },
+    health: { perLevel: 6, perPhysique: 6 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 4,
     armor: 0,
-    health_max: 66,
-    hit_die: '12d10',
-    physique: 4,
-    instinct: 4,
-    mind: 7,
-    willpower_max: 34,
-    proficiencies: 'Herbalism',
-    sense: 'Darkvision 10 meters (30 feet)',
-    language: 'Common, Sylvan',
+    speed_m: 4,
+    die: 10,
     cards: ['mire-hex', 'drown-the-lungs', 'bog-born'],
     lore:
       'They were villagers once, on ground that went under and stayed under. What they learned down there they learned from the water, and the water has never once been asked to give something back.',
@@ -654,21 +662,17 @@ export const CREATURES = [
     name: 'Ashmaw Stalker',
     rank: 'general',
     level: 4,
-    xp: 450,
+    xp: 110,
     type: 'Large Beast',
-    difficulty: '',
-    speed_m: 8,
-    avoid: 13,
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: 1, mind: -2 },
+    health: { perLevel: 8, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 6 },
+    avoid_bonus: 4,
     armor: 1,
-    health_max: 104,
-    hit_die: '16d12',
-    physique: 7,
-    instinct: 6,
-    mind: 2,
-    willpower_max: 20,
-    proficiencies: 'Stealth, Tracking',
-    sense: 'Blindsight 12 meters (40 feet)',
-    language: 'none',
+    speed_m: 8,
+    die: 12,
     cards: ['pounce', 'ashmaw-rend', 'blood-scent'],
     lore:
       'It hunts the burn scars, where the ash holds a scent for weeks and nothing else is patient enough to read one. You will hear it once, behind you, and that will be the only warning it intends to give.',
@@ -684,21 +688,17 @@ export const CREATURES = [
     name: 'Vaultkeeper Lich',
     rank: 'overlord',
     level: 8,
-    xp: 4000,
+    xp: 500,
     type: 'Medium Undead',
-    difficulty: '',
-    speed_m: 4,
-    avoid: 17,
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -1, instinct: 0, mind: 1 },
+    health: { perLevel: 14, perPhysique: 14 },
+    willpower: { perLevel: 2, perMind: 3, flat: 10 },
+    avoid_bonus: 6,
     armor: 2,
-    health_max: 156,
-    hit_die: '24d12',
-    physique: 5,
-    instinct: 5,
-    mind: 10,
-    willpower_max: 46,
-    proficiencies: 'Arcana, Vault Lore',
-    sense: 'Truesight 20 meters (65 feet)',
-    language: 'Common, Draconic, Abyssal',
+    speed_m: 4,
+    die: 12,
     cards: ['withering-word', 'call-the-vault', 'ward-of-the-four-pillars'],
     lore:
       'It has not left the vault in four hundred years and does not consider this an imprisonment. Everything it ever wanted is shelved here, catalogued, and it will explain the filing system to you at length before it kills you.',
@@ -709,21 +709,19 @@ export const CREATURES = [
     name: 'Thornmother',
     rank: 'overlord',
     level: 9,
-    xp: 6000,
+    xp: 650,
     type: 'Huge Plant',
-    difficulty: '',
+    primary: 'physique',
+    secondary: 'mind',
+    /* Instinct 1 at every level: a grove does not dodge. What keeps her alive is
+       eight Armor and two hundred Health, which is the shape of the thing. */
+    bonus: { physique: 1, instinct: -3, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 9,
+    armor: 8,
     speed_m: 3,
-    avoid: 16,
-    armor: 4,
-    health_max: 208,
-    hit_die: '32d12',
-    physique: 9,
-    instinct: 3,
-    mind: 6,
-    willpower_max: 38,
-    proficiencies: 'none',
-    sense: 'Tremorsense 30 meters (100 feet)',
-    language: 'Sylvan',
+    die: 12,
     cards: ['thorn-volley', 'strangling-roots', 'rooted-in-the-grove'],
     lore:
       'The grove is not where she lives. The grove is her, out to the last seedling, and every axe taken to it these two hundred years is a wound she has counted and kept.',
@@ -734,21 +732,17 @@ export const CREATURES = [
     name: 'Emberthrone Tyrant',
     rank: 'overlord',
     level: 10,
-    xp: 9000,
+    xp: 900,
     type: 'Huge Dragon',
-    difficulty: '',
-    speed_m: 7,
-    avoid: 18,
+    primary: 'physique',
+    secondary: 'mind',
+    bonus: { physique: 1, instinct: 2, mind: 1 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 8,
     armor: 5,
-    health_max: 195,
-    hit_die: '30d12',
-    physique: 8,
-    instinct: 6,
-    mind: 7,
-    willpower_max: 44,
-    proficiencies: 'Intimidation',
-    sense: 'Darkvision 30 meters (100 feet)',
-    language: 'Common, Draconic',
+    speed_m: 7,
+    die: 12,
     cards: ['tyrants-breath', 'wing-buffet', 'throne-of-embers'],
     lore:
       'It sits its hoard the way a king sits a throne, which is to say badly and without ever getting up. The braziers around it have been kept lit by hands it no longer bothers to look at.',
@@ -762,10 +756,70 @@ export function getCreature(id) {
   return BY_ID.get(String(id ?? '')) ?? null;
 }
 
+/** Any level, held inside the twelve every body on the board climbs. */
+export function clampCreatureLevel(level) {
+  return Math.min(CREATURE_MAX_LEVEL, Math.max(1, Math.floor(Number(level) || 1)));
+}
+
+/* --------------------------------------------------------------- the curve */
+
+/**
+ * How many of the character's odd-level attribute grants a level has reached.
+ *
+ * Levels 3, 5, 7, 9 and 11, so five of them by level 12. Level 1 is not one:
+ * its grant is the +2 and the +1, which are counted separately below.
+ */
+function oddGrants(level) {
+  return Math.max(0, Math.floor((clampCreatureLevel(level) - 1) / 2));
+}
+
+/**
+ * A creature's three attributes at a level.
+ *
+ * The character's own growth, read against the creature's declared primary and
+ * secondary: base 4 everywhere, +2 on the primary and +1 on the secondary at
+ * level 1, and one more on each of those two at every odd level after. Then the
+ * creature's own `bonus`, which is the part set when it was written.
+ *
+ * Nothing is clamped at the top. A `bonus` of +1 on the primary puts it at 12 at
+ * level 12, which is what Jules asked for, and a creature written with +3 would
+ * reach 14 and be a deliberate monster rather than a bug.
+ */
+export function creatureAttributes(creature, level) {
+  const climbs = oddGrants(level);
+  const primary = creature?.primary ?? 'physique';
+  const secondary = creature?.secondary ?? 'instinct';
+  const bonus = creature?.bonus ?? {};
+
+  const values = { physique: BASE, instinct: BASE, mind: BASE };
+  values[primary] += 2 + climbs;
+  if (secondary !== primary) values[secondary] += 1 + climbs;
+
+  for (const key of ['physique', 'instinct', 'mind']) {
+    values[key] = Math.max(1, values[key] + Math.floor(Number(bonus[key]) || 0));
+  }
+
+  return values;
+}
+
+/**
+ * The hit die printed beside a Health: the creature's own die size, and the
+ * count that comes closest to averaging that Health.
+ *
+ * The design sheet's own arithmetic, kept honest at every level. 8 Health on a
+ * d4 creature is 3d4, because 3d4 averages 7.5 and 2d4 averages 5.
+ */
+export function hitDie(health, die) {
+  const faces = Math.max(2, Math.floor(Number(die) || 6));
+  const mean = (faces + 1) / 2;
+  const count = Math.max(1, Math.round(Math.max(1, Number(health) || 1) / mean));
+  return `${count}d${faces}`;
+}
+
 /* --------------------------------------------------------------- the numbers */
 
 /**
- * Everything a creature's page says about it, printed and derived together.
+ * Everything a creature is at a level, printed and derived together.
  *
  * The same shape `deriveStats` hands back for a character and `minionDerived`
  * for a creature on a leash, so the very same tiles draw all three. That is not
@@ -773,20 +827,42 @@ export function getCreature(id) {
  * enemy has to be drawn in the same box as a Grit on the party or nobody can
  * compare the two mid-fight.
  *
- * The printed numbers pass straight through. The four the page never printed
- * are the character's own arithmetic. The two point pools come off the rank
- * unless the creature overrode them, and a Minion's Reaction Points are forced
- * to zero last, after everything, because "cannot get reaction" is a rule about
- * the creature rather than a default about its rank.
+ * Four things are the creature's own and everything else is the character's own
+ * arithmetic run against the numbers above:
+ *
+ *   health      `perLevel` per level and `perPhysique` per Physique
+ *   willpower   `perLevel`, `perMind` and a `flat`
+ *   avoid       Instinct + `avoid_bonus`, exactly as a character's Defense is
+ *               Instinct plus what they wear
+ *   speed/armor printed, because neither is an attribute
+ *
+ * A Minion's Reaction Points are forced to zero last, after everything, because
+ * "cannot get reaction" is a rule about the creature rather than a default about
+ * its rank.
  */
-export function creatureStats(creature) {
+export function creatureStats(creature, level = null) {
   const rank = getRank(creature);
-  const p = Math.floor(Number(creature?.physique) || 0);
-  const i = Math.floor(Number(creature?.instinct) || 0);
-  const m = Math.floor(Number(creature?.mind) || 0);
-  const level = Math.max(1, Math.floor(Number(creature?.level) || 1));
+  const lvl = clampCreatureLevel(level ?? creature?.level);
+  const attributes = creatureAttributes(creature, lvl);
+  const { physique: p, instinct: i, mind: m } = attributes;
 
-  const health_max = Math.max(1, Math.floor(Number(creature?.health_max) || 1));
+  const health_max = Math.max(
+    1,
+    Math.floor(
+      (Number(creature?.health?.perLevel) || 0) * lvl +
+        (Number(creature?.health?.perPhysique) || 0) * p
+    )
+  );
+
+  const willpower_max = Math.max(
+    0,
+    Math.floor(
+      (Number(creature?.willpower?.perLevel) || 0) * lvl +
+        (Number(creature?.willpower?.perMind) || 0) * m +
+        (Number(creature?.willpower?.flat) || 0)
+    )
+  );
+
   const ap_max = Math.max(0, Math.floor(Number(creature?.ap_max ?? rank.ap) || 0));
   const printedReaction = Math.max(
     0,
@@ -794,12 +870,17 @@ export function creatureStats(creature) {
   );
 
   return {
+    level: lvl,
+    attributes,
     health_max,
     shield_cap: Math.floor(health_max / 2),
-    willpower_max: Math.max(0, Math.floor(Number(creature?.willpower_max) || 0)),
-    avoid: Math.floor(Number(creature?.avoid) || 0),
-    defense: Math.floor(Number(creature?.armor) || 0),
-    initiative: i + level,
+    willpower_max,
+    hit_die: hitDie(health_max, creature?.die),
+    // The DEF on the printed page: how hard it is to hit.
+    avoid: Math.max(0, i + Math.floor(Number(creature?.avoid_bonus) || 0)),
+    // And the Armor: flat reduction after a hit lands.
+    defense: Math.max(0, Math.floor(Number(creature?.armor) || 0)),
+    initiative: i + lvl,
     // The one value that keeps its half, exactly as a character's does.
     speed_m: Number(creature?.speed_m) || 0,
     ap_max,
@@ -807,6 +888,8 @@ export function creatureStats(creature) {
     reaction_max: rank.reacts ? printedReaction : 0,
     reflex: p + i,
     grit: i + m,
+    // What the whole party is worth for killing it, at this level.
+    xp: Math.max(0, Math.floor((Number(creature?.xp) || 0) * lvl)),
   };
 }
 
@@ -828,8 +911,8 @@ export function creaturePassives(creature) {
 /**
  * The passives whose condition is a thing on the table rather than anything the
  * sheet can check. Each is drawn with a switch, and the instance remembers which
- * ones have been broken. See `wardsOf` in encounters.js, which is what reads the
- * memory; this only says which passives have a switch at all.
+ * ones have been broken. See `breakWard` in encounters.js, which is what reads
+ * the memory; this only says which passives have a switch at all.
  */
 export function creatureWards(creature) {
   return creaturePassives(creature).filter((card) => Boolean(card.ward));
@@ -858,10 +941,12 @@ export function bestiary(rank = null) {
  * The line the printed page heads itself with: `Minion - Level 1 - 10 XP`.
  *
  * Hyphens rather than the site's own middot, because this one is the design
- * sheet's own punctuation and the block is a transcription of that sheet.
+ * sheet's own punctuation and the block is a transcription of that sheet. The
+ * level and the XP are both this creature's *at this level*, so the line stays
+ * true wherever it is standing.
  */
-export function difficultyLine(creature) {
+export function difficultyLine(creature, level = null) {
   const rank = getRank(creature);
-  const xp = Math.max(0, Math.floor(Number(creature?.xp) || 0));
-  return `${rank.label} - Level ${creature?.level ?? 1} - ${xp} XP`;
+  const stats = creatureStats(creature, level);
+  return `${rank.label} - Level ${stats.level} - ${stats.xp} XP`;
 }

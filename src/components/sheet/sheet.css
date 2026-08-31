@@ -11025,6 +11025,71 @@ body.sheet-fixed #root {
   list-style: none;
 }
 
+/* ---------- THE TURN SEAM ----------
+   "all actions under 1 turn are bundled under it in a X name turn 1 block",
+   Jules, 2026-08-31. A fight read flat is forty rows nobody can find anything
+   in; read like this it is Turn 4, Kaelen, and the three things Kaelen did.
+
+   A seam rather than a panel. It appears every three or four rows, and anything
+   with a border and a ground on it would double the height of the block for what
+   is really a heading. Same reasoning as the two hairlines that replaced three
+   headings on the party block. */
+.log-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.log-turn + .log-turn {
+  margin-top: 0.5rem;
+}
+
+.log-turn-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding-top: 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.log-turn-round {
+  color: var(--copper);
+  white-space: nowrap;
+}
+
+/* The side it was, as a colour rather than a word: the party wears the cyan a
+   character's own name wears in the feed, an enemy wears copper. A Game Master
+   scanning the log sees the shape of the round without reading it. */
+.log-turn-who {
+  color: color-mix(in srgb, var(--focus-cyan) 55%, var(--text-silver));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 16ch;
+}
+
+.log-turn-foe .log-turn-who {
+  color: color-mix(in srgb, var(--copper) 70%, var(--text-silver));
+}
+
+/* The rule itself, taking whatever width is left, so the two names sit on the
+   left and the count on the right whatever the block is. */
+.log-turn-rule {
+  flex: 1;
+  height: 1px;
+  min-width: 1rem;
+  background-color: var(--hairline);
+}
+
+.log-turn-count {
+  white-space: nowrap;
+  opacity: 0.65;
+}
+
 /* The colour is the kind. A cast, a rest and a turn are three different sorts of
    thing to a reader scanning for one of them, and the left edge is the only
    place an entry this thin has to say so. */

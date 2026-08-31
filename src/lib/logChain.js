@@ -369,3 +369,66 @@ export function groupEvents(events) {
 
   return out;
 }
+
+/* --------------------------------------------------------- reading a fight
+ *
+ * "In the log when we have turns all actions under 1 turn are bundled under it
+ * in a X name turn 1 block", Jules, 2026-08-31.
+ *
+ * A fight is a sequence of turns and every turn has a handful of things in it.
+ * Flat, that reads as forty rows nobody can find anything in; bundled, it reads
+ * as the fight: Turn 4, Kaelen, and the three things Kaelen did.
+ *
+ * This is the second gathering, over the top of `groupEvents`: chains first
+ * (a use and its throws), then turns (a turn and its uses).
+ */
+
+/** Whether a row opens a turn: the runner's own call, or the sheet's Turn
+    button. Ending one does not open the next, and neither does entering combat:
+    those are rows *inside* whatever turn is running. */
+function opensTurn(event) {
+  if (event?.kind !== 'turn') return false;
+  const move = event?.data?.move;
+  return move === 'your-turn' || move === 'turn';
+}
+
+/**
+ * The feed as `[{ key, turn, groups }]`, newest bundle first.
+ *
+ * `turn` is the row that opened it, or null for the bundle at the tail: rows
+ * that happened before any turn on this page, which is everything on a table
+ * that is not in a fight and the top of the very first page of one that is.
+ * A caller draws that bundle bare, with no head over it.
+ *
+ * The feed arrives newest first. A turn is opened by its row and everything
+ * *newer* than that row belongs to it, so walking the list forwards accumulates
+ * the contents and the turn row that closes a bundle is the one that heads it.
+ *
+ * Inside a bundle the groups keep the feed's own order, which the block reverses
+ * along with everything else: the block reads oldest at the top.
+ */
+export function bundleTurns(groups) {
+  const out = [];
+  let held = [];
+
+  for (const group of groups ?? []) {
+    if (opensTurn(group.head) && group.rolls.length === 0) {
+      out.push({ key: group.key, turn: group.head, groups: held });
+      held = [];
+      continue;
+    }
+    held.push(group);
+  }
+
+  /* Whatever is left happened before the oldest turn on this page. It gets a
+     bundle with no head rather than being dropped, because a table that is not
+     in a fight is *all* tail and must still read. */
+  if (held.length > 0) out.push({ key: 'loose', turn: null, groups: held });
+
+  return out;
+}
+
+/** How many rows a bundle holds, its own head included. What the fold prints. */
+export function bundleCount(bundle) {
+  return (bundle?.groups ?? []).reduce((sum, group) => sum + 1 + group.rolls.length, 0);
+}

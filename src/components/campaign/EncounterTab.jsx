@@ -2,21 +2,40 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '../Modal.jsx';
 import EnemyBlock from './EnemyBlock.jsx';
 import { CampaignLogContext } from '../../context/campaign-log.js';
-import { postEvent } from '../../lib/campaignLog.js';
+import {
+  fightOverEvent,
+  initiativeEvent,
+  postEvent,
+  turnCallEvent,
+} from '../../lib/campaignLog.js';
+import { levelForXp, liveCharacter } from '../../lib/characterModel.js';
 import { tickEffects } from '../../lib/combatTurn.js';
-import { RANKS, bestiary, difficultyLine } from '../../lib/creatures.js';
+import {
+  CREATURE_MAX_LEVEL,
+  RANKS,
+  bestiary,
+  clampCreatureLevel,
+  creatureStats,
+  difficultyLine,
+} from '../../lib/creatures.js';
 import {
   FOES_MAX,
   addFoes,
+  advanceRun,
   createEncounter,
   crossTurn,
   deleteEncounter,
   dropFoe,
+  dropFromOrder,
   encounterState,
   encounterTally,
+  endRun,
+  foeTurnStart,
   listEncounters,
   normalizeFoes,
+  normalizeRun,
   resetEncounter,
+  rollInitiative,
   updateEncounter,
 } from '../../lib/encounters.js';
 import { subscribeToTable } from '../../lib/realtime.js';
@@ -52,7 +71,7 @@ import { subscribeToTable } from '../../lib/realtime.js';
 /** The one press per player turn: the Overlord's own rule. */
 const TURN_LABEL = 'A player took a turn';
 
-export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
+export default function EncounterTab({ campaign, members = [], canEdit, unit = 'metric' }) {
   const campaignId = campaign?.id;
 
   const [encounters, setEncounters] = useState([]);
@@ -199,20 +218,25 @@ export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
   const foes = useMemo(() => (open ? encounterState(open) : []), [open]);
   const patch = useCallback((partial) => patchEncounter(open?.id, partial), [patchEncounter, open]);
 
-  /* The table's own voice. An enemy's use is written with no character on it,
-     which is what the schema calls the table speaking. `canEdit` is the guard:
-     only the Game Master may write one, and the trigger refuses anybody else
-     anyway. */
-  const logValue = useMemo(() => {
-    const tables = campaignId ? [{ id: campaignId, name: campaign?.name ?? '' }] : [];
-    return {
-      tables,
-      log: (event) => {
-        if (!canEdit || !event) return;
-        postEvent(tables, { ...event, characterId: null });
-      },
-    };
-  }, [campaignId, campaign?.name, canEdit]);
+  /* The table's own voice. An enemy's use and every announcement the runner
+     makes are written with no character on them, which is what the schema calls
+     the table speaking. `canEdit` is the guard: only the Game Master may write
+     one, and the trigger refuses anybody else anyway. */
+  const log = useCallback(
+    (event) => {
+      if (!canEdit || !event || !campaignId) return;
+      postEvent([{ id: campaignId, name: campaign?.name ?? '' }], { ...event, characterId: null });
+    },
+    [campaignId, campaign?.name, canEdit]
+  );
+
+  const logValue = useMemo(
+    () => ({
+      tables: campaignId ? [{ id: campaignId, name: campaign?.name ?? '' }] : [],
+      log,
+    }),
+    [campaignId, campaign?.name, log]
+  );
 
   const handleCreate = async () => {
     try {
@@ -250,6 +274,144 @@ export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
     });
     setGains(said ?? ['Nothing to give. No Overlord here, or every one of them is full.']);
   };
+
+  /* ------------------------------------------------------------- the fight */
+
+  const run = useMemo(() => normalizeRun(open?.run), [open?.run]);
+  const up = run.live ? (run.order[run.at] ?? null) : null;
+
+  /** Everybody at the table, as the order wants them: an id, a name and an
+      Initiative. Off `liveCharacter`, so a worn enchantment's Instinct counts. */
+  const seats = useMemo(
+    () =>
+      (members ?? [])
+        .filter((member) => member.characters)
+        .map((member) => {
+          const shown = liveCharacter(member.characters);
+          return {
+            character_id: member.character_id,
+            name: shown.name,
+            initiative: shown.initiative,
+            xp: shown.xp,
+          };
+        }),
+    [members]
+  );
+
+  /* What level the party is standing at, rounded down, so the shelf opens on the
+     level a Game Master almost certainly wants. Null for an empty table, which
+     the shelf reads as "each one as written". */
+  const partyLevel = useMemo(() => {
+    const levels = seats.map((seat) => levelForXp(seat.xp));
+    if (levels.length === 0) return null;
+    return clampCreatureLevel(Math.round(levels.reduce((a, b) => a + b, 0) / levels.length));
+  }, [seats]);
+
+  const handleRoll = () => {
+    let rolled = null;
+    patch((row) => {
+      rolled = rollInitiative(row, seats);
+      return rolled;
+    });
+    if (!rolled) {
+      setGains(['Nobody is in this fight. Add an enemy, or link a character to the campaign.']);
+      return;
+    }
+
+    /* The order goes on the log as well as on the row, so a player who has no
+       read on the encounter still knows what the order is and where they are in
+       it. Then the first turn is called at once: rolling initiative *is* the
+       start of the fight, and a Game Master should not have to press twice. */
+    log(initiativeEvent(rolled.run.order, { encounter: open.id }));
+    log(turnCallEvent(rolled.run.order[0], 1, { encounter: open.id }));
+  };
+
+  /**
+   * On to the next in the order.
+   *
+   * Three things happen and the order of them is the rule: the pointer moves,
+   * every Overlord is paid for a player's turn passing, and then the turn is
+   * announced. The Overlord's grant has to land *before* the announcement,
+   * because the announcement is what starts a player acting and a boss that
+   * gains its reactions afterwards has spent the turn unable to answer.
+   */
+  const handleNext = () => {
+    let called = null;
+    patch((row) => {
+      const moved = advanceRun(row);
+      if (!moved) return null;
+
+      let body = moved.patch;
+
+      /* "whenever a player take a turn they gain 3 rection points". The runner
+         is what knows a player's turn has come round, so it is the runner that
+         pays it: the button below stays for a table running the fight by hand. */
+      if (moved.entry.kind === 'member') {
+        const paid = crossTurn({ ...row, ...body }, { tick: tickEffects });
+        if (paid) body = { ...body, ...paid.patch };
+      } else {
+        /* And an enemy's own turn gives it its Action Points back and ticks what
+           is running on it, which is the half of a Start Turn an enemy has. */
+        const started = foeTurnStart({ ...row, ...body }, moved.entry.ref, { tick: tickEffects });
+        if (started) body = { ...body, ...started };
+      }
+
+      called = moved;
+      return body;
+    });
+
+    if (called) log(turnCallEvent(called.entry, called.round, { encounter: open.id }));
+  };
+
+  const handleEndFight = () => {
+    let rounds = 0;
+    patch((row) => {
+      const stopped = endRun(row);
+      if (!stopped) return null;
+      rounds = normalizeRun(row.run).round;
+      return stopped;
+    });
+    if (rounds > 0) log(fightOverEvent({ encounter: open.id, rounds }));
+  };
+
+  /**
+   * The other half of the loop: a player has ended their turn, so the order
+   * moves on by itself.
+   *
+   * This is what makes the fight run rather than being clicked round. The Game
+   * Master presses Next for an enemy, because an enemy's turn is theirs to play;
+   * a player's turn ends when the player says it does, and the table should not
+   * wait on somebody noticing.
+   *
+   * Read through a ref for the same reason TurnCall does: `handleNext` is a
+   * fresh function every render and re-subscribing on it would tear the channel
+   * down while the Game Master types a name.
+   */
+  const nextRef = useRef(handleNext);
+  useEffect(() => {
+    nextRef.current = handleNext;
+  });
+
+  const awaiting = run.live ? run.awaiting : null;
+
+  useEffect(() => {
+    if (!campaignId || !canEdit || !awaiting) return undefined;
+
+    return subscribeToTable({
+      table: 'campaign_events',
+      filter: `campaign_id=eq.${campaignId}`,
+      onChange: (payload) => {
+        if (payload.eventType !== 'INSERT') return;
+        const row = payload.new;
+        if (row?.kind !== 'turn' || row?.data?.move !== 'ended') return;
+        /* Only from whoever is actually up. A player pressing End Turn on their
+           own Turn block out of turn is allowed to do it on their own sheet; it
+           is not allowed to move the table on. */
+        if (row.character_id !== awaiting) return;
+        nextRef.current();
+      },
+    });
+  }, [campaignId, canEdit, awaiting]);
 
   if (!canEdit) {
     return (
@@ -351,17 +513,21 @@ export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
                 Add enemies
               </button>
 
-              {/* The Overlord's rule, as the one press that carries it out. It is
-                  a button and not anything automatic because a player's turn
-                  happens at the table and the encounter cannot see one. */}
-              <button
-                type="button"
-                className="btn btn-minimal btn-sm"
-                onClick={handleTurn}
-                title="Every Overlord here gains 3 Reaction Points, and what is running on it ticks"
-              >
-                {TURN_LABEL}
-              </button>
+              {/* The Overlord's rule, as the one press that carries it out. The
+                  runner fires it by itself the moment the order lands on a
+                  player; this is the button for a table running the fight by
+                  hand, and it is hidden while the runner is doing it so nobody
+                  pays the boss twice. */}
+              {!run.live && (
+                <button
+                  type="button"
+                  className="btn btn-minimal btn-sm"
+                  onClick={handleTurn}
+                  title="Every Overlord here gains 3 Reaction Points, and what is running on it ticks"
+                >
+                  {TURN_LABEL}
+                </button>
+              )}
 
               <button
                 type="button"
@@ -384,6 +550,18 @@ export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
             </div>
           </div>
 
+          {/* ---------- THE FIGHT ----------
+              Kept between the head and the blocks, at the same measure, because
+              it is the thing a Game Master looks at between every press. */}
+          <TurnStrip
+            run={run}
+            up={up}
+            ready={foes.length > 0 || seats.length > 0}
+            onRoll={handleRoll}
+            onNext={handleNext}
+            onEnd={handleEndFight}
+          />
+
           {foes.length === 0 ? (
             <div className="empty-state camp-empty">
               <h2>No Enemies Yet</h2>
@@ -398,7 +576,15 @@ export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
                     patch={patch}
                     unit={unit}
                     onRemove={() => {
-                      patch((row) => dropFoe(row, foe.key));
+                      /* Off the table and out of the order, in one write. An
+                         enemy taken off mid-fight that stayed in the order would
+                         be a turn the runner announced for a body that is not
+                         there, and `dropFromOrder` keeps whoever is up up. */
+                      patch((row) => {
+                        const gone = dropFoe(row, foe.key);
+                        if (!gone) return null;
+                        return { ...gone, ...(dropFromOrder(row, foe.key) ?? {}) };
+                      });
                     }}
                   />
                 </section>
@@ -411,7 +597,10 @@ export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
       {adding && open && (
         <AddFoes
           encounter={open}
-          onAdd={(creatureId, many) => patch((row) => addFoes(row, creatureId, many))}
+          partyLevel={partyLevel}
+          onAdd={(creatureId, many, level) =>
+            patch((row) => addFoes(row, creatureId, many, level))
+          }
           onClose={() => setAdding(false)}
         />
       )}
@@ -434,6 +623,90 @@ export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
 }
 
 /**
+ * The order, and the three presses that run a fight.
+ *
+ * One strip rather than a panel, because it is read between every press and a
+ * panel would push the enemy blocks off the screen. Every body in the fight is a
+ * chip with its roll on it, whoever is up is lit, and the two sides are told
+ * apart by colour rather than by a word: the party is cyan, which is the colour
+ * a player's own Defense tile wears, and the enemies wear their rank.
+ *
+ * **The Next button says what it is waiting for.** That is the whole difference
+ * between a runner that works at a table and one that does not: on an enemy's
+ * turn it is the Game Master's press, and on a player's turn it is a courtesy
+ * that they should not normally need, because the player ending their own turn
+ * moves the table on by itself.
+ */
+function TurnStrip({ run, up, ready, onRoll, onNext, onEnd }) {
+  if (!run.live) {
+    return (
+      <div className="enc-strip">
+        <button
+          type="button"
+          className="btn btn-primary btn-sm"
+          onClick={onRoll}
+          disabled={!ready}
+          title={
+            ready
+              ? 'Roll for everyone in the fight and call the first turn'
+              : 'Add an enemy, or link a character to this campaign'
+          }
+        >
+          Roll initiative
+        </button>
+
+        <span className="enc-strip-note">
+          {run.order.length > 0
+            ? 'The last fight is still here to read. Rolling again starts a new one.'
+            : 'Rolls for every enemy and every character at the table, then runs the order.'}
+        </span>
+      </div>
+    );
+  }
+
+  const waiting = up?.kind === 'member';
+
+  return (
+    <div className="enc-strip is-live">
+      <span className="enc-round">Round {run.round}</span>
+
+      <div className="enc-order">
+        {run.order.map((entry, at) => (
+          <span
+            key={`${entry.kind}:${entry.ref}`}
+            className={`enc-turn enc-turn-${entry.kind}${at === run.at ? ' is-up' : ''}`}
+            style={entry.rank ? { '--rank-tone': `var(--rank-${entry.rank})` } : undefined}
+            title={`${entry.name} rolled ${entry.init}`}
+          >
+            <span className="enc-turn-name">{entry.name}</span>
+            <span className="enc-turn-init">{entry.init}</span>
+          </span>
+        ))}
+      </div>
+
+      <span className="spacer" />
+
+      <button
+        type="button"
+        className={`btn btn-sm ${waiting ? 'btn-minimal' : 'btn-primary'}`}
+        onClick={onNext}
+        title={
+          waiting
+            ? `Waiting on ${up.name}. This moves on without them.`
+            : `${up?.name ?? 'This one'} is done, and the next is up`
+        }
+      >
+        {waiting ? `Skip ${up.name}` : 'Next turn'}
+      </button>
+
+      <button type="button" className="btn btn-minimal btn-sm" onClick={onEnd}>
+        End fight
+      </button>
+    </div>
+  );
+}
+
+/**
  * The shelf: the whole bestiary, with a count beside each one.
  *
  * A shelf rather than a chooser, which is the width rule Modal keeps: this is a
@@ -444,8 +717,15 @@ export default function EncounterTab({ campaign, canEdit, unit = 'metric' }) {
  * Blightgeists one tap at a time is not a thing anybody does twice, so the row
  * carries 1, 2 and 5 and the shelf stays open for the next creature.
  */
-function AddFoes({ encounter, onAdd, onClose }) {
+function AddFoes({ encounter, onAdd, onClose, partyLevel = null }) {
   const [rank, setRank] = useState(null);
+  /* Null means "the level each one was written at", which is the honest default
+     for a shelf holding creatures written across eleven levels. Choosing a level
+     applies to everything added from then on, because a Game Master filling a
+     fight is filling it *for* a party. It opens on the party's own level where
+     there is one, which is the answer nine times in ten. */
+  const [level, setLevel] = useState(partyLevel);
+
   const held = normalizeFoes(encounter?.foes);
   const room = Math.max(0, FOES_MAX - held.length);
 
@@ -489,11 +769,55 @@ function AddFoes({ encounter, onAdd, onClose }) {
             {entry.label}
           </button>
         ))}
+
+        <span className="spacer" />
+
+        {/* What level everything goes in at. Beside the filter rather than on
+            every row, because a Game Master picks a level for the fight and then
+            fills it: setting it nine times would be the same answer nine times. */}
+        <span className="foe-shelf-level">
+          <span className="foe-shelf-level-label">Add at</span>
+          <button
+            type="button"
+            className={`foe-filter-btn${level === null ? ' is-on' : ''}`}
+            onClick={() => setLevel(null)}
+            title="Each one at the level its own page was written at"
+          >
+            As written
+          </button>
+          <button
+            type="button"
+            className="foe-level-step"
+            onClick={() => setLevel(clampCreatureLevel((level ?? 1) - 1))}
+            disabled={level !== null && level <= 1}
+            aria-label="A level lower"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            className={`foe-filter-btn${level !== null ? ' is-on' : ''}`}
+            onClick={() => setLevel(level ?? partyLevel ?? 1)}
+          >
+            Lvl {level === null ? '—' : String(level).padStart(2, '0')}
+          </button>
+          <button
+            type="button"
+            className="foe-level-step"
+            onClick={() => setLevel(clampCreatureLevel((level ?? 0) + 1))}
+            disabled={level !== null && level >= CREATURE_MAX_LEVEL}
+            aria-label="A level higher"
+          >
+            +
+          </button>
+        </span>
       </div>
 
       <div className="foe-shelf">
         {list.map((creature) => {
           const have = counts.get(creature.id) ?? 0;
+          const at = level ?? creature.level;
+          const stats = creatureStats(creature, at);
 
           return (
             <div key={creature.id} className="foe-shelf-row">
@@ -503,11 +827,14 @@ function AddFoes({ encounter, onAdd, onClose }) {
                   {have > 0 && <span className="foe-shelf-have">×{have} in</span>}
                 </span>
                 <span className="foe-shelf-line">
-                  {creature.type} · {difficultyLine(creature)}
+                  {creature.type} · {difficultyLine(creature, at)}
                 </span>
+                {/* The stat line at the level it is about to go in at, so a Game
+                    Master sizing a fight is reading the numbers they will get
+                    rather than the ones on the page. */}
                 <span className="foe-shelf-line foe-shelf-stats">
-                  DEF {creature.avoid} · HP {creature.health_max} ({creature.hit_die}) · WP{' '}
-                  {creature.willpower_max}
+                  DEF {stats.avoid} · HP {stats.health_max} ({stats.hit_die}) · WP{' '}
+                  {stats.willpower_max}
                 </span>
               </span>
 
@@ -518,8 +845,8 @@ function AddFoes({ encounter, onAdd, onClose }) {
                     type="button"
                     className="minion-step is-up"
                     disabled={room < many}
-                    onClick={() => onAdd(creature.id, many)}
-                    title={`Add ${many} ${creature.name}`}
+                    onClick={() => onAdd(creature.id, many, level)}
+                    title={`Add ${many} ${creature.name} at level ${at}`}
                   >
                     +{many}
                   </button>
