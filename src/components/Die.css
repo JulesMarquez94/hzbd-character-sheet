@@ -28,13 +28,17 @@
   height: var(--die-size);
 }
 
+/* The stroke scales with the die rather than holding a constant pixel width.
+   `non-scaling-stroke` kept it at 4 real pixels whatever the size, which is
+   right at the roller's 66 and far too heavy at the log's 26: the frame was
+   thicker than the number inside it. Five units of a hundred-unit box is about
+   three pixels big and one and a bit small. */
 .die-shape polygon,
 .die-shape circle {
   fill: rgba(9, 17, 21, 0.92);
   stroke: var(--die-tone, var(--copper));
-  stroke-width: 4;
+  stroke-width: 5;
   stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
 }
 
 /* Over the middle of the shape rather than the middle of the box: a caption

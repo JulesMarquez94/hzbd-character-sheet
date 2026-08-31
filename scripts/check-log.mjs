@@ -246,70 +246,104 @@ section('what an entry came to, in one sentence');
     title: 'Attack Roll',
     data: { shape: 'check', step, total, verdict },
   });
+  /* The head is where the name and the verb come from. Jules, 2026-08-31: the
+     summary says what was played as well as what it came to, because "Dealt 25
+     damage" leaves out the half that makes it a story. */
+  const head = (title, verb) => ({ kind: 'use', title, data: { verb } });
 
   check(
-    'damage names its type',
-    chainSummary([checkRow('success'), throwRow('damage', 17, { damage: ['Necrotic'] })]),
-    'Dealt 17 Necrotic damage.'
+    'the card, the verb and the damage with its type',
+    chainSummary(
+      [checkRow('success'), throwRow('damage', 17, { damage: ['Necrotic'] })],
+      head('Flurry', 'attacked with')
+    ),
+    'Attacked with Flurry for 17 Necrotic damage.'
   );
   check(
-    'healing does not, because it is Health',
-    chainSummary([throwRow('healing', 12)]),
-    'Restored 12 Health.'
+    'a spell reads as a cast',
+    chainSummary([throwRow('healing', 12)], head('Renew', 'cast')),
+    'Cast Renew for 12 Health.'
   );
-  check('a Shield is gained', chainSummary([throwRow('shield', 8)]), 'Gained 8 Shield.');
+  check(
+    'and a Shield is what it is',
+    chainSummary([throwRow('shield', 8)], head('Ward', 'cast')),
+    'Cast Ward for 8 Shield.'
+  );
+
+  /* A critical rewrites the opening rather than adding a word to it. */
+  check(
+    'a critical says so first',
+    chainSummary(
+      [checkRow('critical-success'), throwRow('damage', 18, { damage: ['Sharp'] })],
+      head('Flurry', 'attacked with')
+    ),
+    'Critical attack with Flurry for 18 Sharp damage.'
+  );
 
   /* Three landings of a Flurry are one number at the table, even though they are
      three throws in the log. */
   check(
     'landings add up',
-    chainSummary([
-      checkRow('critical-success'),
-      throwRow('damage', 6, { damage: ['Sharp'] }),
-      throwRow('damage', 7, { damage: ['Sharp'] }),
-      throwRow('damage', 5, { damage: ['Sharp'] }),
-    ]),
-    'Dealt 18 Sharp damage.'
+    chainSummary(
+      [
+        checkRow('success'),
+        throwRow('damage', 6, { damage: ['Sharp'] }),
+        throwRow('damage', 7, { damage: ['Sharp'] }),
+        throwRow('damage', 5, { damage: ['Sharp'] }),
+      ],
+      head('Flurry', 'attacked with')
+    ),
+    'Attacked with Flurry for 18 Sharp damage.'
   );
 
   check(
     'a card that damages and heals says both',
-    chainSummary([throwRow('damage', 9, { damage: ['Fire'] }), throwRow('healing', 4)]),
-    'Dealt 9 Fire damage and Restored 4 Health.'
+    chainSummary(
+      [throwRow('damage', 9, { damage: ['Fire'] }), throwRow('healing', 4)],
+      head('Emberpact', 'cast')
+    ),
+    'Cast Emberpact for 9 Fire damage and 4 Health.'
+  );
+
+  /* A throw with no use above it: a roll off the tray. Nothing to open the
+     sentence with, so the numbers stand alone. */
+  check(
+    'a roll off the tray has no card to name',
+    chainSummary([throwRow('damage', 11)]),
+    'Rolled 11 damage.'
   );
 
   /* A miss ends a chain, so the check is the whole story. Jules asked for a line
      on every outcome, including this one. */
-  check('a miss says so', chainSummary([checkRow('failure', 7)]), 'Missed.');
-  check('and a bad one says that', chainSummary([checkRow('critical-failure', 3)]), 'Missed badly.');
+  check('a miss says so', chainSummary([checkRow('failure', 7)], head('Cleave', 'attacked with')), 'Missed.');
+  check(
+    'and a bad one says that',
+    chainSummary([checkRow('critical-failure', 3)], head('Cleave', 'attacked with')),
+    'Missed badly.'
+  );
 
-  /* A check that landed and asked for nothing else. Its own row already prints
-     the total and the verdict, so a summary would only repeat it. */
-  check('a check with nothing after it needs no summary', chainSummary([checkRow('success')]), null);
   /* Only an attack misses. "Missed." under a failed attempt to climb a cliff is
      the summary saying something the roll never said, and the entry's own band
      already reads FAILURE. */
   check(
     'a failed Skill Check did not miss anything',
-    chainSummary([checkRow('failure', 7, 'skill')]),
+    chainSummary([checkRow('failure', 7, 'skill')], head('Climb', 'used')),
     null
   );
+
+  /* A check that landed and asked for nothing else. Its own row already prints
+     the total and the verdict, so a summary would only repeat it. */
   check(
-    'nor did a failed Attribute Roll',
-    chainSummary([checkRow('critical-failure', 3, 'attribute')]),
+    'a check with nothing after it needs no summary',
+    chainSummary([checkRow('success')], head('Shove', 'used')),
     null
   );
   check('and an entry with no throws at all has none', chainSummary([]), null);
 
   check(
-    'a type nobody named is left unnamed',
-    chainSummary([throwRow('damage', 11)]),
-    'Dealt 11 damage.'
-  );
-  check(
-    'and two types read as the choice the card offers',
-    chainSummary([throwRow('damage', 11, { damage: ['Fire', 'Cold'] })]),
-    'Dealt 11 Fire or Cold damage.'
+    'two types read as the choice the card offers',
+    chainSummary([throwRow('damage', 11, { damage: ['Fire', 'Cold'] })], head('Bolt', 'cast')),
+    'Cast Bolt for 11 Fire or Cold damage.'
   );
 }
 

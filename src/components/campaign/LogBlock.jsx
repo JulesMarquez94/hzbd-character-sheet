@@ -245,7 +245,7 @@ function LogEntry({ event, rolls, stack, actor, open, onToggle }) {
      groupEvents, where a roll with no chain comes back as its own group. */
   const throws = rolls.length > 0 ? rolls : event.kind === 'roll' ? [event] : [];
   const alone = rolls.length === 0 && throws.length === 1;
-  const summary = chainSummary(throws);
+  const summary = chainSummary(throws, event);
 
   /* The result, on the head, so a closed entry still says how it went. The last
      verdict in the chain is the one that matters: a chain is a sequence and its
@@ -270,18 +270,26 @@ function LogEntry({ event, rolls, stack, actor, open, onToggle }) {
           <span className="log-did">
             {verb && <span className="log-verb">{verb} </span>}
             <span className="log-title">{event.title}</span>
-            {/* The cost, on the same line, in the same orbs the sheet and every
-                card print it in. `mode` is what decides whether the Action Points
-                were paid out of the other pool: the card never says. */}
+          </span>
+        </span>
+
+        {/* The corner: what it cost, and how it went. Out of the sentence and up
+            here because a cost is not part of what somebody did, it is the price
+            beside it, and a row of entries reads better with its numbers in a
+            column than scattered through the prose.
+
+            `mode` is what decides whether the Action Points came out of the
+            Reaction pool. The card never says: only the moment of spending does. */}
+        <span className="log-corner">
+          <span className="log-cost">
             {ap > 0 && <CostOrb kind={mode === 'reaction' ? 'rp' : 'ap'} value={ap} size={17} />}
             {wp > 0 && <CostOrb kind="wp" value={wp} size={17} />}
             {health > 0 && <CostOrb kind="hp" value={health} size={17} />}
           </span>
+          {verdict && (
+            <span className={`log-band is-${verdict}`}>{verdictLabel(verdict)}</span>
+          )}
         </span>
-
-        {verdict && (
-          <span className={`log-band is-${verdict}`}>{verdictLabel(verdict)}</span>
-        )}
       </button>
 
       {open && (

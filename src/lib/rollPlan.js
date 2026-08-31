@@ -1,4 +1,5 @@
 import { attributeOf, cardProse, castStat, resolveValue } from './cardText.js';
+import { isWeaponAttack } from './tricks.js';
 
 /**
  * What a card is going to make you roll, read off the card.
@@ -132,7 +133,16 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
 
         links.push({
           shape: 'check',
-          kind: sentenceAround(text, match.index).includes('attack') ? 'attack' : 'check',
+          /* What the row in the log will be called. A weapon's swing is a Weapon
+             Attack Roll, which is the codex's own tag for it, and everything else
+             is an Attack Roll or a plain Roll depending on what the sentence
+             says. Named after the *kind of roll* rather than after the card,
+             because the entry above it already says which card. */
+          kind: isWeaponAttack(card)
+            ? 'weapon'
+            : sentenceAround(text, match.index).includes('attack')
+              ? 'attack'
+              : 'check',
           flat: resolveValue(attribute.key, who, stat, sums).flat,
           advantage: Number(mods.advantage) || 0,
           disadvantage: Number(mods.disadvantage) || 0,

@@ -232,7 +232,14 @@ export function DiceTrayProvider({ children }) {
   function spend(offer) {
     if (!job?.result) return;
     sheet?.paySpend?.(offer.spends);
-    setJob({ ...job, result: applyIntervention(job.result, offer) });
+
+    const result = applyIntervention(job.result, offer);
+    setJob({ ...job, result });
+    /* Its own row under the same chain. The throw was written when it landed and
+       the log is insert only, so a Karma spent afterwards is a second thing that
+       happened rather than an edit to the first. The table reads "Attack Roll 15,
+       failure" and then "Karma 18, success", which is what actually occurred. */
+    tell(result, { ...job.spec, card: null, name: offer.source });
   }
 
   /** The head of the queue has landed. Let it be read, then move on. */
@@ -286,22 +293,70 @@ export function DiceTrayProvider({ children }) {
    * `spec.log` is what asks for the row, so a scratch roll in the corner of the
    * screen stays private and a named one does not.
    */
-  const finish = useCallback((result, spec) => {
+  /**
+   * Tell the table about a throw.
+   *
+   * Called the moment the dice land, not when the player closes the surface.
+   * Jules asked for it that way on 2026-08-31 and he is right: everyone else's
+   * screen should show the roll as it happens, and a roller who sits looking at
+   * their own result for twenty seconds should not be holding the table's view of
+   * it hostage. The surface stays up afterwards for as long as they like.
+   *
+   * It follows that an intervention spent after the fact is its own write. See
+   * `spend`: the first row is already out by then, and the log is insert only.
+   */
+  const tell = useCallback((result, spec) => {
+    if (!result || !spec?.log) return;
+    held.current?.logRoll?.(result, {
+      chain: spec.chain ?? null,
+      card: spec.card ?? null,
+      /* A roll raised by a card is named after the kind of roll it is: the entry
+         above it in the log already says which card, and repeating it there says
+         nothing twice. A roll off the tray has no entry above it, so it keeps the
+         name the player typed. */
+      name: spec.card ? '' : spec.shape === 'check' ? spec.name : '',
+      damage: spec.damage ?? [],
+    });
+  }, []);
+
+  /**
+   * Hand the caller what happened and clear the surface.
+   *
+   * No longer writes anything: the throw was told to the table when it landed.
+   * All this does is release the promise a chain is waiting on.
+   */
+  const finish = useCallback((result) => {
     const resolve = settle.current;
     settle.current = null;
     setJob(null);
-
-    if (result && spec?.log) {
-      held.current?.logRoll?.(result, {
-        chain: spec.chain ?? null,
-        card: spec.card ?? null,
-        name: spec.shape === 'check' ? spec.name : '',
-        damage: spec.damage ?? [],
-      });
-    }
-
     resolve?.(result ?? null);
   }, []);
+
+/**
+   * Whether a throw is still waiting on the table to say what it was.
+   *
+   * A roll with no DC is not finished news: the dice have stopped but nobody has
+   * said whether that was a success. So it is not told until the call comes,
+   * which is the difference between a log that reports and a log that speculates.
+   */
+  function awaitsCall(result, spec) {
+    return Boolean(result && result.shape === 'check' && spec?.askVerdict && !result.verdict);
+  }
+
+  /**
+   * The dice have come to rest.
+   *
+   * Guarded on the phase because there is more than one way to get here: the flat
+   * roller's own timer, a physics table saying it is finished, and a player
+   * tapping to skip. Two of those can fire for one throw when the physics table
+   * fails mid-roll and the flat one takes over, and the table must hear about a
+   * roll once.
+   */
+  function landed() {
+    if (!job || job.phase === 'done') return;
+    if (!awaitsCall(job.result, job.spec)) tell(job.result, job.spec);
+    setJob({ ...job, phase: 'done' });
+  }
 
   /**
    * The throw itself.
@@ -340,7 +395,12 @@ export function DiceTrayProvider({ children }) {
      waiting on, so pressing one is finishing it. */
   function call(verdict) {
     if (!job?.result) return;
-    finish({ ...job.result, verdict, calledByHand: true }, job.spec);
+    /* And now it is news. A blind throw was held back when it landed precisely
+       so that this row could carry the verdict rather than a second row having to
+       correct the first. */
+    const result = { ...job.result, verdict, calledByHand: true };
+    tell(result, job.spec);
+    finish(result);
   }
 
   function scratch() {
@@ -504,11 +564,11 @@ export function DiceTrayProvider({ children }) {
           Stage={stage}
           onThrow={throwIt}
           onCall={call}
-          onDone={() => setJob((held) => (held ? { ...held, phase: 'done' } : held))}
+          onDone={landed}
           onDc={setDc}
           offers={offers}
           onSpend={spend}
-          onClose={() => finish(job.result, job.spec)}
+          onClose={() => finish(job.result)}
         />
       )}
     </DiceTrayContext.Provider>

@@ -11052,7 +11052,7 @@ body.sheet-fixed #root {
 
 .log-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.4rem;
   width: 100%;
   padding: 0.32rem 0.4rem;
@@ -11127,12 +11127,29 @@ body.sheet-fixed #root {
   color: var(--log-accent);
 }
 
+/* The corner: the price, and how it went. Both are numbers about the entry
+   rather than part of the sentence, and a column of them down the right edge is
+   scannable in a way the same numbers scattered through the prose are not. */
+.log-corner {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.log-cost {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* How it went, on the head, so a closed entry still says. */
 .log-band {
-  flex: 0 0 auto;
   font-size: 0.56rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: var(--band-tone, var(--text-muted));
 }
 

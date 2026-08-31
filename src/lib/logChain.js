@@ -43,11 +43,14 @@ export function newChain() {
 
 /** What each link in a chain is called, when it is not called what the player typed. */
 const STEP_WORDS = {
+  weapon: 'Weapon Attack Roll',
   attack: 'Attack Roll',
   attribute: 'Attribute Roll',
   skill: 'Skill Check',
+  check: 'Roll',
   damage: 'Damage',
   healing: 'Healing',
+  shield: 'Shield',
 };
 
 /**
@@ -110,24 +113,47 @@ export function rollEvent(
  * leaves a reader wondering whether the block is still loading.
  */
 
-/** What each kind of value roll did, as a verb and a noun. */
-const DID = {
-  damage: { verb: 'Dealt', noun: 'damage' },
-  healing: { verb: 'Restored', noun: 'Health' },
-  shield: { verb: 'Gained', noun: 'Shield' },
-  roll: { verb: 'Rolled', noun: '' },
+/** What each kind of value roll was worth, as a noun. */
+const WORTH = {
+  damage: 'damage',
+  healing: 'Health',
+  shield: 'Shield',
+  roll: '',
 };
+
+/**
+ * How a critical reads, per verb.
+ *
+ * "Critical attack with Flurry" rather than "Critically attacked with Flurry",
+ * because the first is what somebody says out loud. The verbs are the three
+ * `verbFor` produces in campaignLog.js and no others.
+ */
+const CRIT_NOUN = {
+  'attacked with': 'attack',
+  cast: 'cast',
+  used: 'use',
+};
+
+/** "attacked with" as "Attacked with". */
+function opened(verb) {
+  return verb ? verb[0].toUpperCase() + verb.slice(1) : 'Played';
+}
 
 /**
  * The line under the rolls, or null when there is nothing to summarise.
  *
- * Read off the throws rather than off the use, because the use only knows what
- * was played and the throws know what came of it. A chain whose check failed is
- * a miss whatever the card was going to do; a chain that rolled nothing at all
- * gets no line, because a card that does not roll has already said everything it
- * does on its own row.
+ * One sentence naming what was played and what it came to: "Attacked with Flurry
+ * for 25 Necrotic damage." On Jules's instruction of 2026-08-31 it says the card
+ * as well as the number, because the summary is the line somebody reads out and
+ * "Dealt 25 damage" on its own leaves out the half that makes it a story.
+ *
+ * A critical rewrites the opening rather than adding a word to it: "Critical
+ * attack with Flurry for 25 Necrotic damage."
+ *
+ * Read off the throws for the numbers and off the head for the name, because the
+ * head knows what was played and only the throws know what came of it.
  */
-export function chainSummary(rolls = []) {
+export function chainSummary(rolls = [], head = null) {
   if (rolls.length === 0) return null;
 
   const checks = rolls.filter((row) => row.data?.shape === 'check');
@@ -169,14 +195,24 @@ export function chainSummary(rolls = []) {
   }
 
   const said = [...totals].map(([kind, sum]) => {
-    const { verb, noun } = DID[kind] ?? DID.damage;
     /* "Fire or Cold" the way the card prints a choice of types, and nothing at
        all where the card never named one. */
     const type = [...sum.types].join(' or ');
-    return [verb, sum.total, type, noun].filter(Boolean).join(' ');
+    return [sum.total, type, WORTH[kind] ?? WORTH.damage].filter(Boolean).join(' ');
   });
 
-  return `${listAnd(said)}.`;
+  const worth = `for ${listAnd(said)}`;
+  const verb = head?.data?.verb ?? '';
+  const what = head?.title ?? '';
+
+  /* A throw with no use above it: a roll off the tray. It has no card to name, so
+     the sentence has nothing to open with and the numbers stand alone. */
+  if (!what) return `Rolled ${listAnd(said)}.`;
+
+  const crit = checks.some((row) => row.data?.verdict === 'critical-success');
+  if (crit) return `Critical ${CRIT_NOUN[verb] ?? 'use'} with ${what} ${worth}.`;
+
+  return `${opened(verb)} ${what} ${worth}.`;
 }
 
 /** "a, b and c". No Oxford comma, the way every list on the sheet is written. */

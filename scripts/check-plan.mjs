@@ -50,7 +50,7 @@ section('a weapon attack is a check and then its damage');
 
   const plan = rollPlan(card, WHO);
   check('two links', plan.length, 2);
-  check('the check first, then the damage', shape(plan), ['check:attack+5', 'damage:1d6+5']);
+  check('the check first, then the damage', shape(plan), ['check:weapon+5', 'damage:1d6+5']);
   check('the check asks for a DC', plan[0].askDc, true);
   check('and can be judged', plan[0].askVerdict, true);
   check('the damage asks for neither', [plan[1].askDc, plan[1].askVerdict], [undefined, false]);
@@ -100,6 +100,9 @@ section('a value inside a menu is an option, not a throw');
      The only card in the codex shaped this way, which is why the rule is written
      rather than the card being named. */
   const steal = rollPlan(getCard('steal'), WHO);
+  /* An Attack Roll rather than a Weapon Attack Roll: STEAL is tagged Trickster
+     and Ability, not Weapon Attack, so it is not the codex's own weapon swing
+     even though it rides one. The tag is the tell, not the prose. */
   check('the attack is still rolled', shape(steal), ['check:attack+5']);
   check('and the menu is left to the window', steal.filter((l) => l.shape === 'value').length, 0);
 
@@ -135,7 +138,7 @@ section('a value the card lands more than once is thrown more than once');
      and gets its own chance to explode. Jules, 2026-08-30. */
   const flurry = rollPlan(getCard('finesse-flurry'), WHO);
   check('the check, then a landing each', shape(flurry), [
-    'check:attack+5',
+    'check:weapon+5',
     'damage:1d6+5',
     'damage:1d6+5',
     'damage:1d6+5',
@@ -197,11 +200,27 @@ section('a throw is named for what it is for');
   check('and a throw nobody can name', named('Roll [[2d6]] and consult the table.'), 'roll');
 }
 
-section('a check knows whether it was an attack');
+section('a check is named after the kind of roll it is');
 {
-  const kind = (body) => rollPlan({ stat: 'instinct', body }, WHO)[0]?.kind;
-  check('an Attack Roll', kind('Make a {stat} Melee Attack {roll} against an entity.'), 'attack');
-  check('a plain Roll', kind('Make a {stat} Roll {roll} against its Reflex.'), 'check');
+  /* Named after the roll and not after the card, on Jules's instruction of
+     2026-08-31: the entry above it in the log already says which card, so a row
+     reading "Flurry" under an entry reading "Flurry" says nothing twice. */
+  const kind = (card) => rollPlan({ stat: 'instinct', ...card }, WHO)[0]?.kind;
+  check(
+    'a weapon swing is a Weapon Attack Roll',
+    kind({ tags: ['Melee', 'Weapon Attack'], body: 'Make a {stat} Melee Attack {roll}.' }),
+    'weapon'
+  );
+  check(
+    'anything else that attacks is an Attack Roll',
+    kind({ body: 'Make a {stat} Attack {roll} against an entity.' }),
+    'attack'
+  );
+  check(
+    'and a contested roll is just a Roll',
+    kind({ body: 'Make a {stat} Roll {roll} against its Reflex.' }),
+    'check'
+  );
 }
 
 section('only the first check asks for a DC');
