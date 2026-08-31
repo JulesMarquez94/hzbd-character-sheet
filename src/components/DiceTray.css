@@ -278,33 +278,58 @@
 
 /* ---------------------------------------------------------------- one die */
 
+/* A die is its silhouette. The box is only a frame for the polygon inside it,
+   so it carries no border and no background of its own: the shape is the border
+   and the shape is the fill. See SHAPES in DiceSurface.jsx. */
+/* Laid out as a shape with a caption under it rather than a label tucked into a
+   corner. A narrowing silhouette has no corners to tuck anything into: the "d4"
+   sat on the triangle's own edge. */
 .die {
   position: relative;
-  width: 62px;
-  height: 62px;
-  display: grid;
-  place-items: center;
+  width: 66px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-  border: 2px solid var(--die-tone, var(--copper));
-  border-radius: 10px;
-  background: rgba(9, 17, 21, 0.92);
   color: var(--die-tone, var(--copper));
-
   animation: die-land 260ms ease-out both;
 }
 
+.die-shape {
+  width: 66px;
+  height: 66px;
+}
+
+.die-shape polygon,
+.die-shape circle {
+  fill: rgba(9, 17, 21, 0.92);
+  stroke: var(--die-tone, var(--copper));
+  stroke-width: 4;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Which die it is, small and out of the way. Bottom left rather than top, where
+   a narrowing shape has no room for it. */
 .die-sides {
-  position: absolute;
-  top: 4px;
-  left: 7px;
-  font-size: 0.6rem;
+  margin-top: -2px;
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
   opacity: 0.7;
 }
 
+/* The number is the point of the whole thing, so it is as large as the smallest
+   shape will hold. */
+/* Over the middle of the shape, not the middle of the box: the caption below
+   would otherwise drag the number off centre. */
 .die-face {
-  font-size: 1.7rem;
+  position: absolute;
+  top: 33px;
+  left: 50%;
+  font-family: var(--font-headings);
+  font-size: 1.55rem;
   line-height: 1;
-  color: var(--text-silver);
+  color: var(--text-bright);
 }
 
 .die.is-advantage {
@@ -321,9 +346,14 @@
 }
 
 .die.is-waiting {
-  opacity: 0.42;
-  border-style: dashed;
+  opacity: 0.5;
   animation: none;
+}
+
+.die.is-waiting .die-shape polygon,
+.die.is-waiting .die-shape circle {
+  fill: none;
+  stroke-dasharray: 7 5;
 }
 
 .die.is-rolling {
@@ -332,8 +362,11 @@
 
 /* A die on its own maximum is the reason the next one exists. It stays lit. */
 .die.is-hot {
-  box-shadow: 0 0 14px 2px rgba(255, 179, 0, 0.55);
-  border-color: var(--level-amber);
+  --die-tone: var(--level-amber);
+}
+
+.die.is-hot .die-shape {
+  filter: drop-shadow(0 0 6px rgba(255, 179, 0, 0.75));
 }
 
 @keyframes die-tumble {
@@ -582,12 +615,17 @@
     width: calc(100vw - 36px);
   }
 
-  .die {
-    width: 52px;
-    height: 52px;
+  .die,
+  .die-shape {
+    width: 56px;
+  }
+
+  .die-shape {
+    height: 56px;
   }
 
   .die-face {
-    font-size: 1.4rem;
+    top: 28px;
+    font-size: 1.3rem;
   }
 }

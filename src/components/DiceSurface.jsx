@@ -353,8 +353,36 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
 }
 
 /** One die, face up. `face` of null is a die that has not been thrown yet. */
+/**
+ * The outline each die is drawn as, so a d4 reads as a d4 without being labelled
+ * one.
+ *
+ * A physical die is recognised by its silhouette before anything else, which is
+ * the whole reason a table can be read at a glance. Drawn as a polygon rather
+ * than clipped out of a box, because a clip cuts the border off with the corners
+ * and the border is what carries the die's colour: green for advantage, red for
+ * disadvantage, amber for a burst.
+ *
+ * Points are in a 100 by 100 box. The `drop` beside each one is how far the
+ * number sits below centre, because a shape that narrows upward puts its visual
+ * middle lower than its geometric one: a numeral centred in a triangle looks
+ * like it is falling out of the top.
+ */
+const SHAPES = {
+  4: { points: '50,8 95,88 5,88', drop: 14 },
+  6: { points: '10,10 90,10 90,90 10,90', drop: 0 },
+  8: { points: '50,4 94,50 50,96 6,50', drop: 0 },
+  10: { points: '50,3 92,40 50,97 8,40', drop: 2 },
+  12: { points: '50,5 95,38 78,92 22,92 5,38', drop: 4 },
+  20: { points: '50,4 92,27 92,73 50,96 8,73 8,27', drop: 0 },
+};
+
 function Die({ die, face, rolling, hot }) {
   const role = die.role === 'explosion' ? 'burst' : die.role;
+  /* A d100 and anything else the tray grows later is a circle. Better an honest
+     round blank than a square pretending to be a shape it is not. */
+  const shape = SHAPES[die.sides] ?? null;
+
   return (
     <span
       className={`die is-${role}${rolling ? ' is-rolling' : ''}${hot ? ' is-hot' : ''}${
@@ -362,8 +390,23 @@ function Die({ die, face, rolling, hot }) {
       }`}
       title={dieTitle(die)}
     >
+      <svg className="die-shape" viewBox="0 0 100 100" aria-hidden="true">
+        {shape ? (
+          <polygon points={shape.points} />
+        ) : (
+          <circle cx="50" cy="50" r="45" />
+        )}
+      </svg>
       <span className="die-sides">d{die.sides}</span>
-      <span className="die-face">{face === null ? '' : face}</span>
+      <span
+        className="die-face"
+        /* Centred on the shape, then nudged down where the silhouette narrows
+           upward: see `drop` in SHAPES. The translate carries the -50% that puts
+           it on the middle in the first place. */
+        style={{ transform: `translate(-50%, calc(-50% + ${shape?.drop ?? 0}%))` }}
+      >
+        {face === null ? '' : face}
+      </span>
     </span>
   );
 }
