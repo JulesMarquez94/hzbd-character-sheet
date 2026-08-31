@@ -54,9 +54,12 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [more, setMore] = useState(false);
-  /* Which entry the reader opened by hand, if any. Null means "whichever is
-     newest", which is what makes the latest one open without anybody choosing
-     it and lets a new arrival take over. */
+  /* Which entry the reader opened by hand, and which entry was newest when they
+     did it. Both, because a manual choice is only good until the next action:
+     the rule is that the latest entry is the open one and a new one collapses the
+     last, so a choice made three actions ago must not still be holding an old
+     entry open. Scoping it to the newest at the time makes it lapse on its own,
+     without an effect writing state after a render. */
   const [opened, setOpened] = useState(null);
   const stack = useCardStack();
 
@@ -148,7 +151,12 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
         setEvents((prev) => [...prev, ...rows]);
         setMore(rows.length >= FEED_PAGE);
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => {
+        /* Released, or the next entry to arrive would be taken for a page of
+           history and the feed would stop following the newest. */
+        pinnedHeight.current = null;
+        setError(err.message);
+      });
   }
 
   /* Oldest first, because that is the order a conversation happens in.
@@ -198,9 +206,15 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
               rolls={group.rolls}
               stack={stack}
               actor={actorFor ? actorFor(group.head) : null}
-              open={opened === null ? group.key === newest : opened === group.key}
+              open={
+                opened?.newest === newest ? opened.key === group.key : group.key === newest
+              }
               onToggle={() =>
-                setOpened((was) => (was === group.key ? '' : group.key))
+                setOpened((was) => ({
+                  newest,
+                  // Tapping the open one shuts it, and shuts all of them.
+                  key: was?.newest === newest && was.key === group.key ? '' : group.key,
+                }))
               }
             />
           ))}

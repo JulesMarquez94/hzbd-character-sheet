@@ -10978,8 +10978,13 @@ body.sheet-fixed #root {
    unreadable: the head is one row that never wraps, and everything under it only
    exists while the entry is open. */
 
+/* The block itself does not scroll: the feed inside it does, so the heading and
+   the note stay put while a fight goes past. `.cell-scroll` gives every other
+   block on the tab its own scroll, and leaving that on put a scroller inside a
+   scroller, with two bars and a follow-the-bottom that fought the outer box. */
 .log-block {
   gap: 0.4rem;
+  overflow-y: hidden;
 }
 
 .log-note {
@@ -10999,7 +11004,10 @@ body.sheet-fixed #root {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  /* Chains, for the reason the note on `.cell-scroll` gives: this box is inside
+     the tab's own scroller, and `contain` would strand a finger that reached the
+     end of it. */
+  overscroll-behavior: auto;
 }
 
 .log-older {

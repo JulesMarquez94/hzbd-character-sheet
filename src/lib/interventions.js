@@ -41,32 +41,50 @@ import { CRIT_BAND, SWING_FACES, judge, rollDie, signOf } from './dice.js';
 const KARMA_REACH = SWING_FACES;
 
 /**
+ * Which column on a character row each thing is spent out of.
+ *
+ * Here rather than beside the sheet, because this is the file that says what an
+ * offer costs and the same map is what says whether it can be afforded. `wp` is
+ * the word every card and cost orb uses and `willpower` is the column: the two
+ * have never been the same string, which is exactly the sort of thing that goes
+ * wrong quietly.
+ */
+export const POOLS = { karma: 'karma', wp: 'willpower', ap: 'ap', health: 'health' };
+
+/** Whether this character actually holds what an offer would spend. */
+function affords(character, spends = {}) {
+  return Object.entries(spends).every(([what, amount]) => {
+    const column = POOLS[what];
+    // An unknown resource is refused rather than allowed, the same way an
+    // unknown capability is in tiers.js. A typo should close a door.
+    if (!column) return false;
+    return (Number(character?.[column]) || 0) >= amount;
+  });
+}
+
+/**
  * Karma, which every character has and most have some of.
  *
  * The glossary has said what it does since before the roller existed: "Spend 1
  * after seeing a die result to add 1d4 to it." So it is not a card and not a
- * talent, it is a pool, and the only question is whether spending it could
- * matter.
+ * talent, it is a pool.
+ *
+ * A plain description of itself, with no character in it: whether there is a
+ * Karma to spend is `affords`'s question, asked of every offer in one place.
  */
-function karmaOffer(character) {
-  const held = Math.max(0, Math.floor(Number(character?.karma) || 0));
-  if (held < 1) return null;
-
-  return {
-    id: 'karma',
-    label: 'Karma',
-    cost: '1 Karma',
-    source: 'Karma',
-    detail: 'Spend 1 Karma to add 1d4 to this roll. Once per roll.',
-    tone: 'var(--stat-karma)',
-    reach: KARMA_REACH,
-    /* A die rather than a number, so the d4 lands on the table with the rest of
-       the roll and every renderer, the log and the replay all get it for free. */
-    adds: { dice: [{ sides: SWING_FACES, role: 'karma' }] },
-    spends: { karma: 1 },
-    left: held,
-  };
-}
+const KARMA_OFFER = {
+  id: 'karma',
+  label: 'Karma',
+  cost: '1 Karma',
+  source: 'Karma',
+  detail: 'Spend 1 Karma to add 1d4 to this roll. Once per roll.',
+  tone: 'var(--stat-karma)',
+  reach: KARMA_REACH,
+  /* A die rather than a number, so the d4 lands on the table with the rest of the
+     roll and every renderer, the log and the replay all get it for free. */
+  adds: { dice: [{ sides: SWING_FACES, role: 'karma' }] },
+  spends: { karma: 1 },
+};
 
 /**
  * The cards that buy a second look.
@@ -142,9 +160,14 @@ export function interventionsFor({
   const blind = gap === null && result.dc === null;
   const ours = new Set(held);
 
-  return [karmaOffer(character), ...CARD_OFFERS.filter((offer) => ours.has(offer.card))]
+  return [KARMA_OFFER, ...CARD_OFFERS.filter((offer) => ours.has(offer.card))]
     .filter(Boolean)
     .filter((offer) => !spent.includes(offer.id))
+    /* And only what they can pay for. Karma checked its own pool before this
+       existed; DRAGON'S FAVOR did not, so it was offered to a character with no
+       Willpower left, and taking it would have charged them nothing and given
+       them the +1 anyway. */
+    .filter((offer) => affords(character, offer.spends))
     .filter((offer) => {
       /* No DC, so no arithmetic. The table has already said what the roll was,
          and whether a +1 helps is theirs to know. */

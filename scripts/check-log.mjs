@@ -241,10 +241,10 @@ section('what an entry came to, in one sentence');
     title: step,
     data: { shape: 'value', step, total, damage: [], ...over },
   });
-  const checkRow = (verdict, total = 12) => ({
+  const checkRow = (verdict, total = 12, step = 'attack') => ({
     kind: 'roll',
     title: 'Attack Roll',
-    data: { shape: 'check', step: 'attack', total, verdict },
+    data: { shape: 'check', step, total, verdict },
   });
 
   check(
@@ -286,6 +286,19 @@ section('what an entry came to, in one sentence');
   /* A check that landed and asked for nothing else. Its own row already prints
      the total and the verdict, so a summary would only repeat it. */
   check('a check with nothing after it needs no summary', chainSummary([checkRow('success')]), null);
+  /* Only an attack misses. "Missed." under a failed attempt to climb a cliff is
+     the summary saying something the roll never said, and the entry's own band
+     already reads FAILURE. */
+  check(
+    'a failed Skill Check did not miss anything',
+    chainSummary([checkRow('failure', 7, 'skill')]),
+    null
+  );
+  check(
+    'nor did a failed Attribute Roll',
+    chainSummary([checkRow('critical-failure', 3, 'attribute')]),
+    null
+  );
   check('and an entry with no throws at all has none', chainSummary([]), null);
 
   check(

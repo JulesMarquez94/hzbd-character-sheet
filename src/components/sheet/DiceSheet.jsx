@@ -4,16 +4,7 @@ import { useCampaignLog } from '../../context/campaign-log.js';
 import { rollEvent } from '../../lib/logChain.js';
 import DiceWatch from '../campaign/DiceWatch.jsx';
 import { abilitySources, allSourceCards } from '../../lib/abilitySources.js';
-
-/**
- * Which column each thing a roll can be rescued with is spent out of.
- *
- * Named here rather than in interventions.js, because that file is about the
- * rules of a roll and this one is the only place that knows what a character row
- * looks like. `wp` is the word every card and cost orb uses; `willpower` is the
- * column, and the two have never been the same string.
- */
-const POOLS = { karma: 'karma', wp: 'willpower', ap: 'ap', health: 'health' };
+import { POOLS } from '../../lib/interventions.js';
 
 /**
  * A sheet telling the tray who is holding it, and how to tell the table.

@@ -119,6 +119,31 @@ section("a card is only offered to whoever holds it");
   );
 }
 
+section('and only what the character can actually pay for');
+{
+  /* Karma checked its own pool from the start. A card did not, so DRAGON'S FAVOR
+     was offered to a character with no Willpower left, and taking it would have
+     charged nothing and granted the +1 anyway. Both go through one test now. */
+  const broke = { karma: 0, willpower: 0 };
+  const one = landed(11, 12);
+
+  check(
+    'no Karma and no Willpower is no offers',
+    ids(interventionsFor({ result: one, character: broke, held: ['dragons-favor'] })),
+    []
+  );
+  check(
+    'Willpower but no Karma offers only the card',
+    ids(interventionsFor({ result: one, character: { karma: 0, willpower: 2 }, held: ['dragons-favor'] })),
+    ['dragons-favor']
+  );
+  check(
+    'Karma but no Willpower offers only the Karma',
+    ids(interventionsFor({ result: one, character: { karma: 1, willpower: 0 }, held: ['dragons-favor'] })),
+    ['karma']
+  );
+}
+
 section('nothing is offered twice for one roll');
 {
   const spentAlready = landed(11, 12, { interventions: ['karma'] });

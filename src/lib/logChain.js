@@ -134,12 +134,18 @@ export function chainSummary(rolls = []) {
   const values = rolls.filter((row) => row.data?.shape === 'value');
 
   /* A miss ends a chain, so a check that failed and nothing after it is the
-     whole story. See usePlayCard: the damage was never rolled. */
-  const missed = checks.some(
+     whole story. See usePlayCard: the damage was never rolled.
+
+     Only an *attack* misses. A Skill Check that fell short did not miss anything,
+     and "Missed." under a failed attempt to climb a cliff is the summary saying
+     something the roll never said. The band on the entry already reads FAILURE,
+     so there is nothing left for a line to add and it stays quiet. */
+  const failed = checks.filter(
     (row) => row.data?.verdict === 'failure' || row.data?.verdict === 'critical-failure'
   );
-  if (missed && values.length === 0) {
-    return checks.some((row) => row.data?.verdict === 'critical-failure')
+  if (failed.length > 0 && values.length === 0) {
+    if (!failed.some((row) => (row.data?.step ?? 'attack') === 'attack')) return null;
+    return failed.some((row) => row.data?.verdict === 'critical-failure')
       ? 'Missed badly.'
       : 'Missed.';
   }
