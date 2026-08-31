@@ -9,6 +9,8 @@ import LogBlock from '../components/campaign/LogBlock.jsx';
 import DiceWatch from '../components/campaign/DiceWatch.jsx';
 import { CardStackProvider } from '../components/CardStack.jsx';
 import CampaignDetails from '../components/campaign/CampaignDetails.jsx';
+import BestiaryTab from '../components/campaign/BestiaryTab.jsx';
+import EncounterTab from '../components/campaign/EncounterTab.jsx';
 import {
   addMember,
   getCampaign,
@@ -28,7 +30,17 @@ import { subscribeToTable } from '../lib/realtime.js';
 import '../components/sheet/sheet.css';
 import './Campaigns.css';
 
+/**
+ * Four tabs, and two of them are the Game Master's alone.
+ *
+ * The Bestiary and the Encounters are not hidden out of tidiness: half of what
+ * is on an encounter is the answer to "how much has the boss got left", and
+ * Jules's ruling of 2026-08-31 is that the players do not get to read that yet.
+ * The schema keeps the same line (see the encounters policies), so this is a tab
+ * that is absent rather than a tab that is empty.
+ */
 const TABS = ['Overview', 'Details'];
+const DM_TABS = ['Bestiary', 'Encounters'];
 
 /** localStorage can throw where site data is blocked; a preference is not
     worth a white screen. Same key the sheet reads, so the two agree. */
@@ -61,7 +73,7 @@ export default function CampaignPage() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState('Overview');
+  const [chosenTab, setTab] = useState('Overview');
   const [arranging, setArranging] = useState(false);
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved | error
   const [unit] = useState(readStoredUnit);
@@ -105,6 +117,14 @@ export default function CampaignPage() {
   }, []);
 
   const canEdit = Boolean(campaign && userId && (userId === campaign.dm_user_id || isAdmin));
+
+  /* Which tabs this reader has, and which one they are actually on. Derived
+     rather than stored, because `canEdit` settles a beat after the page mounts
+     (the campaign row has to arrive first) and a Game Master who deep-linked
+     themselves onto a tab that did not exist yet must not be stranded on it. A
+     tab that is not on offer reads as the Overview. */
+  const tabs = canEdit ? [...TABS, ...DM_TABS] : TABS;
+  const tab = tabs.includes(chosenTab) ? chosenTab : 'Overview';
 
   const flush = useCallback(async () => {
     const patch = pendingRef.current;
@@ -386,8 +406,12 @@ export default function CampaignPage() {
   }[saveState];
 
   /* The Overview lays blocks on the campaign's own canvas; Details is prose
-     and keeps the three-column measure everything else is drawn against. */
-  const canvasColumns = tab === 'Overview' ? columns : 3;
+     and keeps the three-column measure everything else is drawn against.
+
+     The two Game Master tabs take four, because everything on them is a double
+     block: four tracks is two enemies side by side, which is the same measure
+     the Overview's three single blocks make. */
+  const canvasColumns = tab === 'Overview' ? columns : DM_TABS.includes(tab) ? 4 : 3;
 
   return (
     <div
@@ -405,7 +429,7 @@ export default function CampaignPage() {
           </span>
 
           <nav className="sheet-tabs">
-            {TABS.map((name) => (
+            {tabs.map((name) => (
               <button
                 key={name}
                 type="button"
@@ -535,6 +559,23 @@ export default function CampaignPage() {
             onAdd={handleAdd}
             onRemove={handleRemove}
           />
+        )}
+
+        {/* The two Game Master tabs. Both lay their blocks on the same canvas
+            the Overview does and both are drawn inside the card stack, because a
+            creature's card is dealt exactly like a player's: an enemy's Withering
+            Word opens against the *enemy*, which is what `modifiers.actor` on
+            each chip carries. See EnemyBlock.jsx. */}
+        {tab === 'Bestiary' && canEdit && (
+          <CardStackProvider character={null}>
+            <BestiaryTab unit={unit} />
+          </CardStackProvider>
+        )}
+
+        {tab === 'Encounters' && canEdit && (
+          <CardStackProvider character={null}>
+            <EncounterTab campaign={campaign} canEdit={canEdit} unit={unit} />
+          </CardStackProvider>
         )}
       </main>
     </div>

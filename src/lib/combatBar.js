@@ -716,6 +716,44 @@ export function minionBar(character, minion) {
   return [...own, basicGroup()];
 }
 
+/**
+ * An enemy's quick bar, on the other side of the table.
+ *
+ * The same shape `minionBar` hands back and for the same reason: a chip is a
+ * chip, so the Game Master's block behaves exactly like a player's and neither
+ * of them needed a second component. Two differences, and both are what an enemy
+ * is rather than what this file thinks of one:
+ *
+ *   its own numbers   `actor` is the enemy dressed as a character, so Withering
+ *                     Word prints the lich's Mind and is refused when the lich
+ *                     is out of Willpower. Nothing is borrowed from anybody.
+ *   its own damage    the card's own type, which is already on the card, so
+ *                     there is nothing for a holder to lend it.
+ *
+ * The basic actions ride along unchanged. A creature that could not Move or
+ * Shove was not on the board, which is the same argument that put them on a
+ * minion's bar.
+ */
+export function foeBar(foe) {
+  const modifiers = { actor: foe.actor };
+
+  const moves = (foe.moves ?? [])
+    .filter((card) => !isStanding(card))
+    .map((card) =>
+      move(`foe:${foe.key}:${card.id}`, card, {
+        source: `${card.name} · ${foe.title}`,
+        modifiers,
+      })
+    );
+
+  const own =
+    moves.length > 0
+      ? [{ id: `foe:${foe.key}`, label: foe.creature.name, note: foe.rank.label, moves }]
+      : [];
+
+  return [...own, basicGroup()];
+}
+
 /** What everybody has. Last, because it is the half nobody has to look up. */
 function basicGroup() {
   return {

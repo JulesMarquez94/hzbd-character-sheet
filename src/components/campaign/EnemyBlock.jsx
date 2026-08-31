@@ -1,0 +1,665 @@
+import { useMemo, useState } from 'react';
+import Modal from '../Modal.jsx';
+import UsePrompt from '../sheet/UsePrompt.jsx';
+import { BarChip } from '../sheet/ActiveBlock.jsx';
+import { EffectRow } from '../sheet/TurnBlock.jsx';
+import {
+  AttrTile,
+  GroupHead,
+  PointPool,
+  ResourceBar,
+  SkullIcon,
+  StatBox,
+} from '../sheet/parts.jsx';
+import useFoldedGroups from '../sheet/useFoldedGroups.js';
+import { usePlayCard } from '../sheet/usePlayCard.js';
+import { useCardStack } from '../../context/card-stack.js';
+import { ATTRIBUTES } from '../../lib/attributes.js';
+import { metersToFeet } from '../../lib/characterModel.js';
+import { foeBar } from '../../lib/combatBar.js';
+import { difficultyLine } from '../../lib/creatures.js';
+import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
+import {
+  breakWard,
+  foeActor,
+  foeSpend,
+  setFoeEffects,
+  setFoePool,
+  stepFoePool,
+} from '../../lib/encounters.js';
+
+/**
+ * One enemy, as the two blocks a creature gets, inside one block twice as wide.
+ *
+ * Jules, 2026-08-31: "They are just like the draconic ally, a two block but in
+ * this case nestled inside a main double block for redabelity."
+ *
+ * So the layout is the minion's and the framing is not. A bonded creature's two
+ * blocks are two cells with their own places in the arrangement, because they
+ * belong to a character who might want them apart. An enemy's two are one cell:
+ * a Game Master reads an enemy as one thing, and the pools they are moving have
+ * to be beside the Health they are moving them against. The panes inside are the
+ * same two panes, in the same order, drawn with the same tiles.
+ *
+ * ---------------------------------------------------------------- the i button
+ * "There have a i button that opens up lore about the creature." One button on
+ * the block head, and behind it the paragraph at the foot of the printed page.
+ * A dialog rather than a tooltip: the Blightgeist's is two lines and a
+ * Thornmother's is a paragraph, and neither belongs in a hover bubble that
+ * disappears when you move to read it.
+ *
+ * ------------------------------------------------------------- who pays what
+ * Everything, itself. An enemy has its own Willpower, which is the one line that
+ * separates it from a bonded minion: `foeActor` dresses it as a character so the
+ * prompt's affordability check reads its own three pools, and `foeSpend` writes
+ * the whole answer back to its own row on the encounter.
+ *
+ * ---------------------------------------------------------- and no scrolling
+ * The block itself never scrolls, the way every block on the site does not. The
+ * left pane is a fixed list of tiles and fits. The right pane holds three lists
+ * with no natural length, so those share the leftover height and scroll inside
+ * themselves: the pools, the heads and the buttons never move.
+ */
+
+/* The same three tiles block 2 draws, in block 2's own order. Same trap and same
+   note as everywhere else on the site: `avoid` prints as "Defense" (how hard it
+   is to hit) and `defense` prints as "Armor" (flat reduction), because the
+   columns predate the relabel. DEF on the printed creature page is the first of
+   the two. */
+const TOP_LINE = [
+  {
+    key: 'initiative',
+    label: 'Initiative',
+    color: 'var(--stat-init)',
+    info: 'Added to its roll when rolling for turn order. Its Instinct plus its level.',
+  },
+  {
+    key: 'speed_m',
+    label: 'Speed',
+    color: 'var(--stat-speed)',
+    info: 'How far it moves with the Move action. Printed on its page.',
+    kind: 'speed',
+  },
+  {
+    key: 'defense',
+    label: 'Armor',
+    color: 'var(--stat-armor)',
+    info: 'Flat damage reduction, applied after a hit lands.',
+  },
+];
+
+const DEFENSE_LINE = [
+  {
+    key: 'avoid',
+    label: 'Defense',
+    color: 'var(--focus-cyan)',
+    info: 'How difficult it is to hit. The DEF printed on its page.',
+  },
+  {
+    key: 'reflex',
+    label: 'Reflex',
+    color: 'var(--stat-rp)',
+    info: 'How reactive it is to danger. Physique + Instinct.',
+  },
+  {
+    key: 'grit',
+    label: 'Grit',
+    color: 'var(--stat-wp)',
+    info: 'How well it withstands afflictions. Instinct + Mind.',
+  },
+];
+
+/* The basic actions arrive folded, for the reason a creature's bar folds them:
+   an enemy plays the two or three cards its page printed and the eleven moves
+   every body on the board has, and the second set is the one nobody looks up. */
+const CLOSED_ON_ARRIVAL = ['basic'];
+
+/**
+ * `encounter` is deliberately not a prop. Every writer is handed the encounter
+ * by `patch` itself, as the row the write is about to be applied to, so a block
+ * holding its own copy could only ever be a stale second opinion. See the note
+ * on `rowsRef` in EncounterTab.jsx.
+ */
+export default function EnemyBlock({
+  foe,
+  patch,
+  readOnly = false,
+  unit = 'metric',
+  onRemove = null,
+}) {
+  const [lore, setLore] = useState(false);
+
+  return (
+    <div className="foe-block">
+      <FoeStats
+        foe={foe}
+        patch={patch}
+        readOnly={readOnly}
+        unit={unit}
+        onLore={() => setLore(true)}
+        onRemove={onRemove}
+      />
+      <FoeActions foe={foe} patch={patch} readOnly={readOnly} />
+
+      {lore && <LoreWindow foe={foe} onClose={() => setLore(false)} />}
+    </div>
+  );
+}
+
+/* ============================================================== THE LEFT PANE */
+
+/**
+ * Who it is and what it is made of: the name, the type line, the difficulty
+ * line off the printed page, the three attributes, the combat stats, the
+ * defenses, and the two pools it loses when it is hit.
+ */
+function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
+  const { creature, rank, stats } = foe;
+
+  /* Handed to `patch` as a function of the encounter rather than as a body,
+     because every writer in encounters.js rebuilds the whole `foes` list off
+     the encounter it is given. Two presses in one React batch would otherwise
+     both build from the render's copy and one of the two would be lost. And a
+     step is a delta rather than a destination, for the same reason: see
+     `stepFoePool`. */
+  const step = (pool, delta) => patch((row) => stepFoePool(row, foe, pool, delta));
+
+  return (
+    <div className="cell-scroll foe-pane foe-pane-stats">
+      <div className="block-head">
+        <span className="stat-category-label">{creature.type}</span>
+        <span className="spacer" />
+
+        {/* The lore button. Small, on the head, beside the one other thing the
+            head carries, because the block below it is a wall of numbers and
+            this is the only word in it. */}
+        <button
+          type="button"
+          className="foe-info"
+          onClick={onLore}
+          title={`What is a ${creature.name}?`}
+          aria-label={`Lore: ${creature.name}`}
+        >
+          i
+        </button>
+
+        {!readOnly && onRemove && (
+          <button
+            type="button"
+            className="foe-drop"
+            onClick={onRemove}
+            title={`Take ${foe.title} off the table`}
+          >
+            Remove
+          </button>
+        )}
+      </div>
+
+      <div className="foe-id">
+        <span className="foe-plate" style={{ '--rank-tone': rank.color }}>
+          {creature.portrait_url ? (
+            <img src={creature.portrait_url} alt="" />
+          ) : (
+            <span className="foe-plate-empty" aria-hidden="true" />
+          )}
+        </span>
+
+        <span className="foe-id-body">
+          <span className="foe-name">
+            {foe.down && (
+              <span className="dead-mark" title="Down" aria-label="Down">
+                <SkullIcon />
+              </span>
+            )}
+            {foe.title}
+          </span>
+
+          <span className="foe-tags">
+            <span className="foe-chip foe-chip-rank" style={{ '--rank-tone': rank.color }}>
+              {rank.label}
+            </span>
+            <span className="foe-chip" title={difficultyLine(creature)}>
+              Lvl {String(creature.level).padStart(2, '0')} · {creature.xp} XP
+            </span>
+            {foe.down && (
+              <span className="foe-chip is-down" title="At 0 Health. Nothing it knows can be played.">
+                Down
+              </span>
+            )}
+          </span>
+        </span>
+      </div>
+
+      {/* ---------- THE NINE TILES ----------
+          Attributes, then combat stats, then defenses, in the sheet's own order
+          and colours, and with none of the three headings that separate them on
+          the sheet. Measured: the pane came out 44px over its 636 with them,
+          which is the exact height of two heading lines, and every one of those
+          nine tiles already names itself. The party block on the Overview made
+          the same trade for the same reason and it is the precedent this
+          follows. See PartyBlock.jsx.
+
+          What the headings were doing structurally is done by the hairlines on
+          the three printed lines below and by the Resources heading under them,
+          which is kept because the two bars under it are a different kind of
+          thing from a tile. */}
+      <div className="attr-row">
+        {ATTRIBUTES.map(({ key, label, color }) => (
+          <AttrTile
+            key={key}
+            label={label}
+            color={color}
+            value={creature[key]}
+            info={`Its own ${label}, printed on its page.`}
+          />
+        ))}
+      </div>
+
+      <div className="attr-row">
+        {TOP_LINE.map(({ key, label, color, info, kind }) => {
+          const isSpeed = kind === 'speed';
+          const isImperial = unit === 'imperial';
+          const value = isSpeed
+            ? isImperial
+              ? metersToFeet(stats.speed_m)
+              : Math.round((Number(stats.speed_m) || 0) * 10) / 10
+            : Math.floor(Number(stats[key]) || 0);
+
+          return (
+            <StatBox
+              key={key}
+              label={label}
+              color={color}
+              info={info}
+              value={value}
+              suffix={isSpeed ? (isImperial ? 'ft' : 'm') : ''}
+            />
+          );
+        })}
+      </div>
+
+      <div className="attr-row">
+        {DEFENSE_LINE.map(({ key, label, color, info }) => (
+          <StatBox
+            key={key}
+            label={label}
+            color={color}
+            info={info}
+            value={Math.floor(Number(stats[key]) || 0)}
+          />
+        ))}
+      </div>
+
+      {/* ---------- THE THREE LINES THE PAGE PRINTS AND THE SHEET HAS NO TILE FOR
+          Proficiencies, Sense and Language. Words rather than numbers, so they
+          are a small list rather than three more boxes. */}
+      <div className="foe-lines">
+        <p>
+          <b>Proficiencies:</b> {creature.proficiencies || 'none'}
+        </p>
+        <p>
+          <b>Sense:</b> {creature.sense || 'none'}
+        </p>
+        <p>
+          <b>Language:</b> {creature.language || 'none'}
+        </p>
+      </div>
+
+      {/* ---------- HEALTH AND SHIELD ----------
+          The same bars the party's blocks draw, with the four steps under them
+          rather than a ledger. A creature's Health is moved several times a turn
+          and none of those movements is worth a reason. */}
+      <div className="stat-category-label">Resources</div>
+
+      <FoePool
+        label={foe.down ? 'Health · Down' : 'Health'}
+        title={`Printed ${stats.health_max}, hit die ${creature.hit_die}`}
+        current={foe.health}
+        max={stats.health_max}
+        color="var(--stat-health)"
+        readOnly={readOnly}
+        onStep={(delta) => step('health', delta)}
+      />
+
+      <FoePool
+        label="Shield"
+        current={foe.shield}
+        max={stats.shield_cap}
+        color="var(--stat-shield)"
+        readOnly={readOnly}
+        onStep={(delta) => step('shield', delta)}
+      />
+    </div>
+  );
+}
+
+/** A pool the enemy owns, with the four steps that move it. Not a ledger: see
+    the note on the same row in MinionBlock.jsx. The steps hand back a delta and
+    never a destination, because the number on screen may already be one press
+    out of date. */
+function FoePool({ label, title, current, max, color, readOnly, onStep }) {
+  return (
+    <div className="minion-pool">
+      <ResourceBar label={label} current={current} max={max} color={color} title={title ?? label} />
+
+      {!readOnly && (
+        <div className="minion-steps">
+          {[-5, -1, 1, 5].map((delta) => (
+            <button
+              type="button"
+              key={delta}
+              className={`minion-step${delta > 0 ? ' is-up' : ''}`}
+              onClick={() => onStep(delta)}
+              aria-label={`${delta > 0 ? 'Add' : 'Take'} ${Math.abs(delta)} ${label}`}
+            >
+              {delta > 0 ? `+${delta}` : delta}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================= THE RIGHT PANE */
+
+/**
+ * What it can do with its turn, what is simply true of it, and what is being
+ * done to it.
+ *
+ * Three pools rather than two, because an enemy spends its own Willpower. And
+ * the Reaction row is drawn even for a Minion, empty and out of nought, rather
+ * than left off: a row that is missing reads as an oversight, and a row that
+ * reads "0 / 0" beside a line saying why is the rule stated where it applies.
+ */
+function FoeActions({ foe, patch, readOnly }) {
+  const [request, setRequest] = useState(null);
+  const stack = useCardStack();
+  const { rank, stats } = foe;
+
+  const actor = useMemo(() => foeActor(foe), [foe]);
+
+  /**
+   * The spend, folded onto this enemy's row.
+   *
+   * `usePlayCard` builds a patch against a *character* and hands it here.
+   * Everything it wrote belongs to the enemy, and `foeSpend` is what puts it on
+   * the enemy's row rather than on the encounter as a whole. Wrapped as a
+   * function of the current encounter for the reason the pool steps are: the
+   * row on screen may be a press out of date.
+   */
+  const play = usePlayCard({
+    character: actor,
+    patch: (body) => patch((row) => foeSpend(row, foe, body)),
+  });
+
+  const groups = useMemo(() => foeBar({ ...foe, actor }), [foe, actor]);
+  const total = groups.reduce((sum, group) => sum + group.moves.length, 0);
+  const { isFolded, toggle } = useFoldedGroups('foe', foe.creature.id, CLOSED_ON_ARRIVAL);
+
+  const effects = useMemo(() => normalizeEffects(foe.effects), [foe.effects]);
+  const running = effects.filter((effect) => effect.turns !== 0).length;
+
+  /* The pip rows set a pool outright rather than stepping it, because a pip is
+     a place and not a movement: tapping the fourth pip means four. */
+  const pool = (key, value) => patch((row) => setFoePool(row, foe, key, value));
+  const step = (key, delta) => patch((row) => stepFoePool(row, foe, key, delta));
+  /* Curried, so `patch(writeEffects(list))` reads as one call: what the list
+     becomes is decided by combatTurn.js against the rows this block already
+     holds, and where it lands is decided against the newest encounter. */
+  const writeEffects = (list) => (row) => setFoeEffects(row, foe.key, list);
+
+  function confirmUse(mode, amount, options) {
+    /* Paid, logged and rolled under the enemy's own name, because that is who
+       acted. The whole spend lands on its own row: nothing is borrowed and
+       nothing crosses to a sheet. See foeSpend, and `play` above. */
+    play(request, mode, amount, options, { actor });
+    setRequest(null);
+  }
+
+  return (
+    <div className="cell-scroll active-block foe-pane foe-pane-actions">
+      <div className="block-head">
+        <span className="stat-category-label">Actions</span>
+        <span className="block-count">
+          {total} {total === 1 ? 'move' : 'moves'}
+        </span>
+      </div>
+
+      <PointPool
+        label="Action Points"
+        current={foe.ap}
+        max={stats.ap_max}
+        variant="ap"
+        readOnly={readOnly}
+        onChange={(value) => pool('ap', value)}
+      />
+
+      <PointPool
+        label="Reaction Points"
+        current={foe.reaction}
+        max={stats.reaction_max}
+        variant="reaction"
+        readOnly={readOnly || !rank.reacts}
+        onChange={(value) => pool('reaction', value)}
+      />
+
+      <ResourceBar
+        label="Willpower"
+        current={foe.willpower}
+        max={stats.willpower_max}
+        color="var(--stat-wp)"
+        title="Its own. An enemy borrows nothing from anybody."
+      />
+
+      {!readOnly && stats.willpower_max > 0 && (
+        <div className="minion-steps foe-wp-steps">
+          {[-5, -1, 1, 5].map((delta) => (
+            <button
+              type="button"
+              key={delta}
+              className={`minion-step${delta > 0 ? ' is-up' : ''}`}
+              onClick={() => step('willpower', delta)}
+              aria-label={`${delta > 0 ? 'Add' : 'Take'} ${Math.abs(delta)} Willpower`}
+            >
+              {delta > 0 ? `+${delta}` : delta}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* The rank's one rule, printed where it bites rather than left for
+          somebody to remember. Every rank has one and every one of them is about
+          these two pools. */}
+      <p className="foe-rule">{rank.blurb}</p>
+
+      {foe.down && (
+        <p className="minion-down">It is at 0 Health. Nothing it knows can be played.</p>
+      )}
+
+      <div className="foe-lists">
+        {/* ---------- WHAT IT CAN PLAY ---------- */}
+        {groups.map((group) => {
+          const folded = isFolded(group.id);
+
+          return (
+            <section className="bar-group" key={group.id}>
+              <GroupHead
+                label={group.label}
+                note={group.note}
+                count={group.moves.length}
+                folded={folded}
+                onToggle={() => toggle(group.id)}
+              />
+
+              {!folded && (
+                <div className="bar-chips">
+                  {group.moves.map((entry) => (
+                    <BarChip
+                      key={entry.key}
+                      move={entry}
+                      readOnly={readOnly || foe.down}
+                      onUse={() =>
+                        setRequest({
+                          name: entry.card?.name ?? entry.name,
+                          source: entry.source,
+                          ap: entry.ap,
+                          wp: entry.wp,
+                          variable: entry.variable,
+                          converts: entry.converts,
+                          opens: entry.opens,
+                          card: entry.card,
+                          modifiers: entry.modifiers,
+                          note: entry.note,
+                          extra: entry.extra,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+
+        {/* ---------- WHAT IS SIMPLY TRUE OF IT ----------
+            Its passives, and the switch on the ones whose condition is a thing
+            on the table. See the ward note in creatures.js. */}
+        {foe.passives.length > 0 && (
+          <section className="bar-group">
+            <GroupHead
+              label="Passives"
+              note="Always on"
+              count={foe.passives.length}
+              folded={isFolded('passives')}
+              onToggle={() => toggle('passives')}
+            />
+
+            {!isFolded('passives') && <div className="foe-passives">
+              {foe.passives.map((card) => (
+                <PassiveRow
+                  key={card.id}
+                  card={card}
+                  broken={foe.broken.has(card.id)}
+                  readOnly={readOnly}
+                  onOpen={() => stack?.openCard(card, { actor })}
+                  onToggle={(next) => patch((row) => breakWard(row, foe, card.id, next))}
+                />
+              ))}
+            </div>}
+          </section>
+        )}
+
+        {/* ---------- WHAT IS RUNNING ON IT ---------- */}
+        <section className="bar-group">
+          <GroupHead
+            label="Temporary Effects"
+            note={running > 0 ? `${running} running` : 'Nothing running'}
+            count={effects.length}
+            folded={isFolded('effects')}
+            onToggle={() => toggle('effects')}
+          />
+
+          {!isFolded('effects') &&
+            (effects.length === 0 ? (
+              <p className="pick-line fx-empty">
+                Nothing running on it. A card it plays that lasts will lay its own row here.
+              </p>
+            ) : (
+              <div className="fx-list">
+                {effects.map((effect) => (
+                  <EffectRow
+                    key={effect.id}
+                    effect={effect}
+                    readOnly={readOnly}
+                    onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
+                    onNudge={(delta) => patch(writeEffects(nudgeEffect(effects, effect.id, delta)))}
+                    onDrop={() => patch(writeEffects(dropEffect(effects, effect.id)))}
+                    /* An enemy's stats are printed and no rider reaches them, so
+                       a row here does not claim to have moved one. Same call as
+                       a creature's tracker. See riders.js. */
+                    bends={false}
+                  />
+                ))}
+              </div>
+            ))}
+        </section>
+      </div>
+
+      {request && (
+        <UsePrompt
+          request={request}
+          character={actor}
+          onCancel={() => setRequest(null)}
+          onConfirm={confirmUse}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * One passive, and the switch on the ones that answer to the room.
+ *
+ * An ordinary passive is a row you tap to read. A ward is the same row with a
+ * button on it, because "until a pillar is destroyed" is a thing the Game Master
+ * knows and the sheet never can. Broken, it is struck through and stays on the
+ * block: what the ward *was* is still worth reading, and the party may well put
+ * it back.
+ */
+function PassiveRow({ card, broken, readOnly, onOpen, onToggle }) {
+  const ward = Boolean(card.ward);
+
+  return (
+    <div className={`foe-passive${ward ? ' is-ward' : ''}${broken ? ' is-broken' : ''}`}>
+      <button type="button" className="foe-passive-name" onClick={onOpen} title="Read the card">
+        {card.name}
+      </button>
+
+      {ward && (
+        <>
+          <span className="foe-passive-while">{broken ? 'Broken' : card.ward}</span>
+          {!readOnly && (
+            <button
+              type="button"
+              className="foe-ward-btn"
+              onClick={() => onToggle(!broken)}
+              title={
+                broken
+                  ? `Put ${card.name} back up`
+                  : `${card.name} is broken: ${card.while ?? 'it no longer holds'}`
+              }
+            >
+              {broken ? 'Restore' : 'Break'}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================== THE LORE */
+
+/** The paragraph at the foot of the printed page, and the rest of its heading. */
+function LoreWindow({ foe, onClose }) {
+  const { creature, rank } = foe;
+
+  return (
+    <Modal title={creature.name} onClose={onClose} accent={rank.color}>
+      <p className="foe-lore-head">
+        {creature.type} · {difficultyLine(creature)}
+      </p>
+
+      {creature.lore ? (
+        <p className="foe-lore">{creature.lore}</p>
+      ) : (
+        <p className="pick-line">Nothing has been written about this one yet.</p>
+      )}
+
+      <p className="foe-lore-rank">
+        <b>{rank.label}.</b> {rank.blurb}
+      </p>
+    </Modal>
+  );
+}

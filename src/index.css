@@ -160,6 +160,17 @@
     --rarity-epic: #FF4FA3;
     --rarity-legendary: #FF7A1A;
 
+    /* The three kinds of enemy, as a danger ladder.
+       Teal, amber, crimson: three hues as far from each other as the palette
+       has room for, because these three chips are read at 0.58rem and the only
+       thing that has to survive that size is which of the three it is. Not a
+       school and not a family, so it is not in tagColors.js and never colours a
+       tag: it colours the rank chip on an enemy block and the filter that sorts
+       them. See RANKS in src/lib/creatures.js. */
+    --rank-minion: #4DB6AC;
+    --rank-general: #FFA726;
+    --rank-overlord: #EF4E5B;
+
     /* Talent rank pips */
     --rank-1-blue: #4A90E2;
     --rank-2-purple: #A040FF;

@@ -9611,3 +9611,222 @@ sees no log block at all: the memberships come back empty and the blocks are
 never grown. That is also what makes the tables list worth reading once for the
 whole page, in `LogProvider`, and handing down through context the way the card
 stack is.
+
+## The bestiary and the encounters, 2026-08-31
+
+Jules: "The next feature I want to add to the campaign is the a beastery of
+enemies that can be used and a feature that can be used to create encounter.
+Encounter are grouping of enemies we will use later for player to setup combat."
+
+This is the campaign plan's phase 2, minus the combat manager. The party could
+be watched and the table could be logged; there was nothing on the other side of
+it. Now there is a codex of creatures, and a way to put a pile of them on a
+table.
+
+### Four rulings first
+
+All four are Jules's, taken before a line was written, because each of them
+would have built a different feature.
+
+| Question | Ruling |
+| -------- | ------ |
+| Where the bestiary lives | **House codex in src/lib**, like spells and weapons. Not a table the Game Master fills. |
+| Creature attributes | **The sheet's own three.** The 2023 stat block prints STR/AGI/INT/WIT and predates the live system. |
+| Live pools | **Per instance.** Six goblins are six rows with their own Health. |
+| Who sees it | **The Game Master alone.** Both tabs, and both policies. |
+
+### The page is the design
+
+`data/Source Temp/Hazebound/Creatures/` holds a blank template and one finished
+creature, and the shape of `src/lib/creatures.js` is that page line for line:
+name, the Difficulty line (`Minion - Level 1 - 10 XP`), the type line, Speed and
+INI, DEF and HP with its hit die, four attributes, Proficiencies / Sense /
+Language, AP / RP / WP, the abilities with their cost pips, and the lore
+paragraph at the foot.
+
+**The Blightgeist is transcribed, not invented.** Both its cards, both its pip
+costs, its lore. Two lines of its page were superseded and both are marked where
+they bite:
+
+- it prints **STR 2, AGI 2, INT 2, WIT 5** and the live system runs on three.
+  Its own Blightbolt casts off WIT, so WIT is the caster's attribute and lands on
+  Mind; STR is Physique and AGI is Instinct.
+- it prints **RP: 3** on a Minion, and a Minion can no longer take reactions at
+  all. The rule wins over the page, and `creatureStats` is where it is forced.
+
+The one edit to Jules's own prose is punctuation: the lore's em dash became a
+colon, which is the only edit `docs/text-style.md` allows on codex text.
+
+**What the page prints is printed, and nothing recomputes it.** Health, DEF,
+Speed, Willpower and the hit die are per creature, because a Blightgeist has 8
+Health at Level 1 where the character formula would hand it 30. What the page is
+silent about is derived exactly as a character's is, because player cards roll
+against it: Initiative is Instinct + level (and the printed +3 *is* that sum),
+Reflex is Physique + Instinct, Grit is Instinct + Mind, Shield is half the
+Health.
+
+The hit die averages the Health beside it. 3d4 is 7.5 against a printed 8, so
+every die in the codex averages what it sits next to, and `npm run lint:creatures`
+is what says so rather than a promise in a comment.
+
+### Three ranks, as data
+
+| Rank | Points | The rule |
+| ---- | ------ | -------- |
+| Minion | AP 6, RP **0** | Cannot take reactions. It has none and can never be given any. |
+| General | AP 6, RP 6 | The clock a character runs on, and its own Willpower. |
+| Overlord | AP **12**, RP 12 | Gains **3 Reaction Points every time a player takes a turn**. |
+
+They are `RANKS` in creatures.js rather than three branches in a component. The
+Minion's rule is enforced in one place, `creatureStats`, so it cannot be got
+round by a rank default, a printed override, an Overlord's grant or a stray
+write: the ceiling is zero, every writer clamps to the ceiling, and the pips draw
+an empty row beside a line saying why.
+
+The Overlord's grant is a **button** on the encounter and not anything
+automatic, because a player's turn happens at the table and the encounter has no
+way to see one. It ticks whatever is running on the Overlord at the same time.
+
+### Nine creatures, three of each
+
+Blightgeist, Cinderling and Fenrat Skirmisher; Hollowed Knight, Mireborn Hexer
+and Ashmaw Stalker; Vaultkeeper Lich, Thornmother and Emberthrone Tyrant. Every
+one gets at least one move it can play, which is the only thing the Minion's
+"tend to only have no special move" is held to: they carry passives where the
+others carry spells.
+
+Their 24 cards are ordinary codex cards, in the codex's own shape, and they are
+in `CARDS`. That is the whole reason no new component was needed: hand one to
+AbilityCard and it prints, to UsePrompt and it prices itself, to rollPlan and it
+says what it rolls. `Withering Word` opens out of the log by id like anything
+else.
+
+**One engine change, and the printed page asked for it.** The Blightgeist deals
+"1d4 + Half WIT" and the Ghoul "1d6 + Half Power", and `resolveValue` could only
+multiply a stat by a whole number. It now takes `0.5*stat`, floors after the
+multiply rather than before (half of a Mind of 5 is 2, not 2.5) and prints "half
+your Mind (5)" in the breakdown. Every whole multiplier in the codex lands on the
+number it always did, and Speed keeps its half.
+
+### Environmental passives
+
+Jules: "All of them can have passive that are environmental based like a lich
+which has a shield that protects it until a pillar is destroyed."
+
+That is a passive whose condition is a thing in the room, so the sheet does not
+try to check it. A passive carrying `ward` is drawn with a switch: **Break** when
+the pillars come down, **Restore** if the party puts it back, and the row is
+struck through in between. The condition is printed on the row so nobody has to
+open the card to be reminded what they are switching off.
+
+Four creatures carry one, and deliberately not only Overlords: the Mireborn
+Hexer's is Bog Born. A ward is not a boss privilege, and the checker holds the
+codex to that so the lich's example is not read as the rule.
+
+### The block: two panes in one double block
+
+Jules: "just like the draconic ally, a two block but in this case nestled inside
+a main double block for redabelity."
+
+So the layout is the minion's and the framing is not. A bonded creature's two
+blocks are two cells, because they belong to a character who might want them
+apart. An enemy's are one cell two tracks wide: a Game Master reads an enemy as
+one thing, and the pools they are pressing have to sit beside the Health they are
+pressing them against. A hairline down the middle rather than a gap, because a
+gap reads as two cells touching.
+
+The left pane is who it is and what it is made of. The right is its three pools,
+what it can play, its passives and what is running on it. **Neither scrolls**:
+the left is a fixed list and the right holds three folding lists that share the
+leftover height. Measured at 636 of 636 on every one of the nine, with the real
+fonts and with them replaced by generic fallbacks.
+
+Getting there cost the two stat headings. The pane came out 44px over, which is
+exactly two heading lines, and the nine tiles under them each name themselves.
+The party block on the Overview made the same trade for the same reason, so this
+follows a precedent rather than setting one.
+
+**The i button** is on the block head, and behind it the paragraph from the foot
+of the printed page plus the rank's rule. A dialog and not a tooltip: a
+Thornmother's lore is a paragraph, and a bubble that vanishes when you move to
+read it is not where a paragraph goes.
+
+**Willpower is its own.** That is the one line that separates an enemy from a
+bonded minion, which spends its bonded's. `foeActor` dresses it as a character so
+the prompt's affordability check reads its own three pools, and the whole spend
+lands on its own row.
+
+### The encounter
+
+`encounters` is one row per encounter on a campaign, with the whole pile in one
+`foes` jsonb column. One column rather than a row per enemy: six goblins losing
+Health over a turn is one write instead of six, every reader gets the whole fight
+in one payload, and an enemy needs no policy of its own. Held to 60.
+
+**A pool that is absent reads as full**, the law minions.js already keeps, which
+is what lets an enemy dropped on the table a moment ago stand there at full
+Health with nothing written for it. Shield and Reaction Points start empty, as a
+character's do at the bell.
+
+Where a creature appears more than once its copies are numbered as they were laid
+down (Blightgeist 1 through 6) and a lone one keeps its plain name, because
+"Vaultkeeper Lich 1" is worse than "Vaultkeeper Lich". Any of them can be renamed
+by hand, and clearing the name gives the number back.
+
+The tab is a picker, a head (name, notes, the tally, four presses) and the
+blocks. **Add enemies** is a shelf with +1, +2 and +5 on every row, because
+adding six Blightgeists one tap at a time is not a thing anybody does twice.
+**A player took a turn** is the Overlord's rule. **Reset** puts every pool back
+and every ward up, which is how the same encounter is run at a second table.
+
+An enemy playing a card **writes to the campaign log**, and it writes as the
+table rather than as a character: `character_id` null, which the schema has
+allowed the Game Master alone since the log was built and which nothing has
+raised until now. That is the "later the gm" half of the log's own ask, arriving.
+
+**schema.sql must be re-run in the Supabase SQL editor** before any of the
+Encounters tab works. The Bestiary tab needs nothing: it is codex data.
+
+### One bug, found by pressing it
+
+Four taps of + in the shelf landed one enemy. Every writer in encounters.js takes
+an encounter and hands back a whole new `foes` list built from it, and four taps
+land in one React batch: read the encounter off the render and all four build
+their list from the same starting point, so three adds are lost silently.
+
+Two changes fix it, and both are worth keeping:
+
+- **`patch` takes a function of the current row**, not a body. The tab holds its
+  rows in a ref that moves on the write rather than on the render, so a writer is
+  always handed the answer to the press before this one.
+- **a pool step is a delta, not a destination.** Two presses of -5 in one batch
+  both saw the same 8 Health and both wrote 3. `stepFoePool` reads the stored
+  value off the encounter it is handed, so the second press sees the first.
+
+`EnemyBlock` therefore has no `encounter` prop at all any more: a block holding
+its own copy could only ever be a stale second opinion.
+
+### And one thing the checker found in a file nobody had touched
+
+`supabaseClient.js` promised in its own docstring that the app "degrades
+gracefully" without env vars. It did not: outside Vite there is no
+`import.meta.env` at all, and it threw on line 3. `check-creatures.mjs` walks
+encounters.js, which reaches that file, and plain node crashed at import. It is
+optional-chained now, which is the idiom weapons.js already uses, and the
+comment is true.
+
+### Open for the designer
+
+1. **Blight** is a condition the Blightgeist's own card inflicts and no keyword
+   in keywords.js defines. Transcribed as written and left as a plain word.
+2. **The Minion's printed RP: 3** is overridden to 0 by today's rule. If a Minion
+   should keep reactions after all, the change is one field in `RANKS`.
+3. **An Overlord's Reaction ceiling** is 12, which is a guess: it fills over a
+   round of four players at 3 each. The grant itself is yours; the ceiling is not.
+4. **The three rank colours** (teal, amber, crimson) were chosen for separation
+   at chip size rather than for meaning. They are three tokens in index.css.
+5. **The encounter is read by the Game Master alone**, at your ruling. Opening it
+   to the players is one policy in schema.sql and one condition on the tab.
+6. **General health** is printed near the character line (10 a level and 10 a
+   Physique) so a General takes about as long to bring down as a player. The
+   Overlords sit well above it. Both are numbers rather than a rule.

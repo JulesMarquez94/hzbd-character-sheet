@@ -51,6 +51,7 @@ import { TALENT_CARDS } from './talents.js';
 import { LINEAGE_CARDS } from './lineages.js';
 import { BACKGROUND_CARDS } from './backgrounds.js';
 import { BASIC_ACTIONS } from './actions.js';
+import { CREATURE_CARDS } from './creatures.js';
 
 /* ------------------------------------------------------------- enchantments */
 
@@ -2255,6 +2256,11 @@ export const CARDS = [
   ...BACKGROUND_CARDS,
   ...ACTION_CARDS,
   ...BASIC_ACTIONS,
+  /* What the other side of the table plays. Here for the same reason every card
+     above is: a row in the log opens by id, and a bestiary card opened out of
+     the feed has to find itself in the one registry `getCard` reads. See
+     creatures.js, which is a leaf and cannot reach back into this file. */
+  ...CREATURE_CARDS,
 ];
 
 /* A duplicate id does not throw, it *loses a card*: the Map keeps whichever came

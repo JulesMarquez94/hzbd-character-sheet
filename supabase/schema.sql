@@ -865,6 +865,86 @@ create trigger campaign_events_trim
   after insert on public.campaign_events
   for each row execute function public.trim_campaign_events();
 
+
+-- ----------------------------------------------------------------------------
+--  ENCOUNTERS
+--  A named pile of enemies, prepared by the Game Master for one campaign.
+--
+--  The bestiary itself is not here. A creature is codex data, shipped with the
+--  site the way spells and weapons are (src/lib/creatures.js), so this table
+--  holds only what a table actually did to one: which creatures are in tonight's
+--  fight, and how much Health each of them has left.
+--
+--  Everything about one encounter lives in `foes`, one jsonb array, rather than
+--  one row per enemy. Six goblins losing Health over one turn is then one write
+--  instead of six, every reader gets a consistent picture of the whole fight in
+--  one payload, and an enemy needs no policy of its own. The app holds it to 60
+--  enemies (FOES_MAX in src/lib/encounters.js).
+--
+--  Read and written by the Game Master alone, which is Jules's ruling of
+--  2026-08-31: half of what is on this row is the answer to "how much has the
+--  boss got left". Opening it to the players is one policy below and one tab
+--  condition in the app, and nothing else has to move.
+-- ----------------------------------------------------------------------------
+create table if not exists public.encounters (
+  id           uuid primary key default gen_random_uuid(),
+  campaign_id  uuid not null references public.campaigns on delete cascade,
+
+  name         text not null default 'Unnamed Encounter',
+  -- A line for the Game Master: where it happens, what sets it off.
+  notes        text not null default '',
+
+  -- The pile itself. One entry per enemy on the table:
+  --   { key, creature, name, health, shield, ap, reaction, willpower,
+  --     effects, broken }
+  -- A pool that is absent reads as full, which is what lets an enemy laid down
+  -- a moment ago stand there at full Health with nothing written for it. See
+  -- normalizeFoes in src/lib/encounters.js.
+  foes         jsonb not null default '[]'::jsonb,
+
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create index if not exists encounters_campaign_id_idx on public.encounters (campaign_id);
+
+alter table public.encounters enable row level security;
+
+-- The Game Master of the campaign, and an admin. Deliberately not the members:
+-- see the note above. All four verbs answer the same question, so they are one
+-- predicate written four times rather than four different reaches.
+drop policy if exists "encounters: dm read" on public.encounters;
+create policy "encounters: dm read" on public.encounters
+  for select using (
+    exists (select 1 from public.campaigns c
+            where c.id = encounters.campaign_id
+              and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+drop policy if exists "encounters: dm insert" on public.encounters;
+create policy "encounters: dm insert" on public.encounters
+  for insert with check (
+    exists (select 1 from public.campaigns c
+            where c.id = encounters.campaign_id
+              and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+drop policy if exists "encounters: dm update" on public.encounters;
+create policy "encounters: dm update" on public.encounters
+  for update using (
+    exists (select 1 from public.campaigns c
+            where c.id = encounters.campaign_id
+              and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
+drop policy if exists "encounters: dm delete" on public.encounters;
+create policy "encounters: dm delete" on public.encounters
+  for delete using (
+    exists (select 1 from public.campaigns c
+            where c.id = encounters.campaign_id
+              and (c.dm_user_id = auth.uid() or public.is_admin()))
+  );
+
 -- ----------------------------------------------------------------------------
 --  updated_at housekeeping
 -- ----------------------------------------------------------------------------
@@ -886,6 +966,11 @@ create trigger campaigns_touch_updated_at
   before update on public.campaigns
   for each row execute function public.touch_updated_at();
 
+drop trigger if exists encounters_touch_updated_at on public.encounters;
+create trigger encounters_touch_updated_at
+  before update on public.encounters
+  for each row execute function public.touch_updated_at();
+
 -- ----------------------------------------------------------------------------
 --  REALTIME
 --  Lets viewers see a sheet update without reloading. Realtime still honours
@@ -904,13 +989,17 @@ alter table public.campaign_members replica identity full;
 -- client cares about one. Full identity all the same, so it matches its
 -- neighbours and a filtered delete would carry its campaign if one ever mattered.
 alter table public.campaign_events  replica identity full;
+-- The pile of enemies, so a Game Master with the encounter open on a second
+-- screen sees the same Health the one they are pressing on does.
+alter table public.encounters       replica identity full;
 
 do $$
 declare
   t text;
 begin
   foreach t in array array['characters', 'abilities', 'inventory_items',
-                          'campaigns', 'campaign_members', 'campaign_events'] loop
+                          'campaigns', 'campaign_members', 'campaign_events',
+                          'encounters'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

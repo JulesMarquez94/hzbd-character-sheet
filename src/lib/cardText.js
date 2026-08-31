@@ -152,7 +152,16 @@ export function empowerCount(count, steps = 0) {
 }
 
 const DICE_TERM = /^(\d*)d(\d+)$/i;
-const STAT_TERM = /^(?:(\d+)\s*[x*×]\s*)?([a-z]+)$/i;
+/**
+ * `stat`, `2*stat`, and `0.5*stat`.
+ *
+ * The decimal is the creature codex's, and it is the printed stat block's own
+ * idiom rather than a new one: the Blightgeist deals "1d4 + Half WIT" and the
+ * Ghoul "1d6 + Half Power". A whole multiplier is what every player card in the
+ * codex uses and none of them moved; a half is written `0.5*stat` and floors,
+ * so half of a Mind of 5 is 2 and not 2.5. See the `mult` arithmetic below.
+ */
+const STAT_TERM = /^(?:(\d+(?:\.\d+)?)\s*[x*×]\s*)?([a-z]+)$/i;
 
 /**
  * "2d6 + 2*stat" against a character with Instinct 4 becomes:
@@ -229,7 +238,12 @@ export function resolveValue(expression, character, printedStat = 'instinct', op
         const mult = Number(statMatch[1] || 1);
         const raw = Number(character?.[attribute.key]) || 0;
         const value = attribute.exact ? raw : Math.floor(raw);
-        const total = mult * value;
+        /* Floored after the multiply rather than before it, which is the only
+           thing a fractional multiplier needed: half of a Mind of 5 is 2, not
+           2.5, and every whole multiplier lands on the same number it always
+           did. Speed is the one attribute that keeps its half, and it keeps it
+           here too. */
+        const total = attribute.exact ? mult * value : Math.floor(mult * value);
         flat += total;
         parts.push({
           kind: 'stat',
@@ -238,7 +252,9 @@ export function resolveValue(expression, character, printedStat = 'instinct', op
           detail:
             mult === 1
               ? `your ${attribute.label} (${value})`
-              : `${mult} × your ${attribute.label} (${value})`,
+              : mult === 0.5
+                ? `half your ${attribute.label} (${value})`
+                : `${mult} × your ${attribute.label} (${value})`,
         });
         continue;
       }
