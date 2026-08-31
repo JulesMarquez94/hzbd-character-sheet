@@ -340,6 +340,12 @@
   --die-tone: var(--stat-health);
 }
 
+/* A d4 bought after the dice had already stopped. Karma's own colour, so it is
+   plainly not one of the dice the roll was made with. */
+.die.is-karma {
+  --die-tone: var(--stat-karma);
+}
+
 .die.is-burst {
   --die-tone: var(--level-amber);
   animation: die-bloom 380ms ease-out both;
@@ -427,6 +433,58 @@
 .dice-verdict.is-failure { color: var(--text-muted); }
 .dice-verdict.is-critical-success { color: var(--level-amber); }
 .dice-verdict.is-critical-failure { color: var(--stat-health); }
+
+/* ------------------------------------------- what can still be done about it
+   Offers made after the dice have stopped: a Karma, a card that adds one. They
+   sit under the verdict because they are about the verdict, and each one names
+   what is paying for it, because "you own a thing that could fix this" is only
+   useful if it says which thing. */
+
+.dice-help {
+  margin-top: 14px;
+}
+
+.dice-help-ask {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-bottom: 7px;
+}
+
+.dice-help-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dice-help-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 12px;
+
+  border: 1px solid var(--dice-tone, var(--copper));
+  border-radius: 4px;
+  background: var(--inset-bg);
+  color: var(--dice-tone, var(--text-silver));
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dice-help-opt:hover {
+  background: rgba(234, 242, 248, 0.08);
+}
+
+/* Where it comes from, under the name of what it does. The tooltip carries the
+   whole rule; this is the half a reader needs without hovering. */
+.dice-help-from {
+  font-size: 0.6rem;
+  letter-spacing: 0.03em;
+  opacity: 0.72;
+  color: var(--text-muted);
+}
 
 .dice-call {
   margin-top: 16px;

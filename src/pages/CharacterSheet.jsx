@@ -378,7 +378,7 @@ export default function CharacterSheet({ creating = false }) {
         corner of the screen adds the right attribute. Only when the sheet is
         yours: a reader on somebody else's public sheet must not be handed their
         Instinct to roll with. Renders nothing. See DiceTray.jsx. */}
-    {canEdit && <DiceSheet character={shown} />}
+    {canEdit && <DiceSheet character={shown} patch={patch} />}
     <div className="sheet" style={{ '--sheet-cols': canvasColumns }} data-columns={canvasColumns}>
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">

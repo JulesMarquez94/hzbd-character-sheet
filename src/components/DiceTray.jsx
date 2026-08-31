@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DiceTrayContext } from '../context/dice-tray.js';
 import { useAuth } from '../context/auth-context.js';
 import { previewOf, rollCheck, rollValue } from '../lib/dice.js';
+import { applyIntervention, interventionsFor } from '../lib/interventions.js';
 import { REPLAY_DEPTH } from '../lib/logChain.js';
 import CustomRoll from './CustomRoll.jsx';
 import DiceSurface from './DiceSurface.jsx';
@@ -201,6 +202,38 @@ export function DiceTrayProvider({ children }) {
       ];
     });
   }, []);
+
+  /**
+   * What the holder could still spend on the roll that just landed.
+   *
+   * Read fresh on every render rather than held in state, because it depends on
+   * the sheet's own pools: a Karma spent is a Karma gone, and the second offer
+   * has to know that. `spent` comes off the result itself, which is what stops
+   * the same card being offered twice for one roll.
+   */
+  const offers = useMemo(() => {
+    if (!job?.result || job.phase !== 'done') return [];
+    return interventionsFor({
+      result: job.result,
+      character,
+      held: sheet?.cards ?? [],
+      spent: job.result.interventions ?? [],
+    });
+  }, [job, character, sheet]);
+
+  /**
+   * Spending one of them.
+   *
+   * The sheet is patched and the roll is re-judged in the same breath, and the
+   * roll is *not* finished: the surface stays up showing the new total, which is
+   * the whole point of an offer made after the dice have stopped. Whatever is
+   * still worth offering is offered again.
+   */
+  function spend(offer) {
+    if (!job?.result) return;
+    sheet?.paySpend?.(offer.spends);
+    setJob({ ...job, result: applyIntervention(job.result, offer) });
+  }
 
   /** The head of the queue has landed. Let it be read, then move on. */
   const dismissWatch = useCallback(() => setQueue((held) => held.slice(1)), []);
@@ -472,6 +505,8 @@ export function DiceTrayProvider({ children }) {
           onCall={call}
           onDone={() => setJob((held) => (held ? { ...held, phase: 'done' } : held))}
           onDc={setDc}
+          offers={offers}
+          onSpend={spend}
           onClose={() => finish(job.result, job.spec)}
         />
       )}

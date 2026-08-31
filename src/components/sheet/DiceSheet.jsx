@@ -1,8 +1,19 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useDiceTray } from '../../context/dice-tray.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { rollEvent } from '../../lib/logChain.js';
 import DiceWatch from '../campaign/DiceWatch.jsx';
+import { abilitySources, allSourceCards } from '../../lib/abilitySources.js';
+
+/**
+ * Which column each thing a roll can be rescued with is spent out of.
+ *
+ * Named here rather than in interventions.js, because that file is about the
+ * rules of a roll and this one is the only place that knows what a character row
+ * looks like. `wp` is the word every card and cost orb uses; `willpower` is the
+ * column, and the two have never been the same string.
+ */
+const POOLS = { karma: 'karma', wp: 'willpower', ap: 'ap', health: 'health' };
 
 /**
  * A sheet telling the tray who is holding it, and how to tell the table.
@@ -32,7 +43,7 @@ import DiceWatch from '../campaign/DiceWatch.jsx';
  * is the right answer rather than a gap: you roll your own character, and away
  * from its sheet there is no character to sign the row.
  */
-export default function DiceSheet({ character }) {
+export default function DiceSheet({ character, patch }) {
   /* Allowed to find nothing. `useDiceTray` reads a context that defaults to
      null, so a sheet mounted without a tray around it still renders. */
   const hold = useDiceTray()?.hold;
@@ -46,11 +57,41 @@ export default function DiceSheet({ character }) {
     [log, character]
   );
 
+  /* Every card this character holds, as ids. The tray needs it to know whether
+     an after-the-roll ability like DRAGON'S FAVOR is one of theirs, and this is
+     the same walk the Abilities tab does. */
+  const cards = useMemo(
+    () => allSourceCards(abilitySources(character)).map((card) => card.id),
+    [character]
+  );
+
+  /**
+   * Paying for a roll that has already landed.
+   *
+   * Its own function rather than part of `logRoll` because it happens at a
+   * different moment and to a different thing: the log is told what happened,
+   * and this changes what the character has. Floored at zero, because a pool is
+   * never negative and the offer was only made because there was one to spend.
+   */
+  const paySpend = useCallback(
+    (spends) => {
+      if (!spends || !patch) return;
+      const body = {};
+      for (const [what, amount] of Object.entries(spends)) {
+        const column = POOLS[what];
+        if (!column) continue;
+        body[column] = Math.max(0, (Number(character?.[column]) || 0) - amount);
+      }
+      if (Object.keys(body).length > 0) patch(body);
+    },
+    [patch, character]
+  );
+
   useEffect(() => {
     if (!hold) return undefined;
-    hold({ character, logRoll });
+    hold({ character, logRoll, cards, paySpend });
     return () => hold(null);
-  }, [hold, character, logRoll]);
+  }, [hold, character, logRoll, cards, paySpend]);
 
   return <DiceWatch tables={tables} mine={character?.id} />;
 }

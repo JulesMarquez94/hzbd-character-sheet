@@ -84,8 +84,14 @@ const EXPLOSION_LIMIT = 20;
 
 /* -------------------------------------------------------------- rolling one */
 
-/** One die, as a number from 1 to `faces`. */
-function rollDie(faces, random) {
+/**
+ * One die, as a number from 1 to `faces`.
+ *
+ * Exported because interventions.js throws one too: a Karma d4 added to a landed
+ * roll is still a die, and a second implementation of "roll a die" is a second
+ * thing that can disagree with this one.
+ */
+export function rollDie(faces, random = Math.random) {
   return 1 + Math.floor(random() * faces);
 }
 

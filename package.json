@@ -18,6 +18,7 @@
     "lint:dice": "node scripts/check-dice.mjs",
     "lint:log": "node scripts/check-log.mjs",
     "lint:plan": "node scripts/check-plan.mjs",
+    "lint:help": "node scripts/check-help.mjs",
     "preview": "vite preview",
     "art": "node scripts/pull-card-art.mjs && node scripts/pull-item-art.mjs",
     "art:cards": "node scripts/pull-card-art.mjs",

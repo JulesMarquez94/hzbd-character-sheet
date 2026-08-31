@@ -71,7 +71,17 @@ function prefersStill() {
   );
 }
 
-export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onDc, Stage = null }) {
+export default function DiceSurface({
+  job,
+  onThrow,
+  onCall,
+  onDone,
+  onClose,
+  onDc,
+  onSpend = null,
+  offers = [],
+  Stage = null,
+}) {
   const { spec, result, phase } = job;
 
   /* A physics table, when the tier and the machine both allow one. It replaces
@@ -297,6 +307,41 @@ export default function DiceSurface({ job, onThrow, onCall, onDone, onClose, onD
           <p className={`dice-verdict is-${result.verdict}`}>{verdictLabel(result.verdict)}</p>
         )}
 
+        {/* ---------- WHAT CAN STILL BE DONE ----------
+            A roll in this game is not over when the dice stop. Karma buys a
+            second look and so do some cards, and both are decisions made after
+            seeing the result. Only offered when they could change the band: an
+            offer to spend a Karma on a roll it cannot rescue is worse than no
+            offer. Each one names what is paying for it, on hover and in the
+            line under it. See interventions.js. */}
+        {landed && !needsCall && offers.length > 0 && onSpend && (
+          <div className="dice-help">
+            <span className="dice-help-ask">
+              {offers[0].gap === null
+                ? 'You can still spend something on this'
+                : `${offers[0].gap} short of the next band`}
+            </span>
+            <span className="dice-help-row">
+              {offers.map((offer) => (
+                <button
+                  type="button"
+                  key={offer.id}
+                  className="dice-help-opt"
+                  style={{ '--dice-tone': offer.tone }}
+                  title={`${offer.source} · ${offer.detail}`}
+                  onClick={() => onSpend(offer)}
+                >
+                  {offer.label}
+                  <span className="dice-help-from">
+                    {offer.cost}
+                    {offer.source !== offer.label && ` · ${offer.source}`}
+                  </span>
+                </button>
+              ))}
+            </span>
+          </div>
+        )}
+
         {needsCall && (
           <div className="dice-call">
             <span className="dice-call-ask">No DC was given. What was it?</span>
@@ -422,6 +467,9 @@ function Die({ die, face, rolling, hot }) {
 function dieTitle(die) {
   if (die.role === 'advantage') return 'Advantage: added to the roll';
   if (die.role === 'disadvantage') return 'Disadvantage: taken off the roll';
+  if (die.role === 'karma') {
+    return `${die.source ?? 'Karma'}: bought after the dice had stopped, and added to the roll`;
+  }
   if (die.role === 'explosion') {
     return (
       'Exploding Dice: the die before this one rolled its maximum, so it threw one of the ' +
