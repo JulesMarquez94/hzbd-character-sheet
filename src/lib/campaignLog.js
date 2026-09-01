@@ -127,6 +127,46 @@ export async function listFightWords(campaignId, { limit = 12 } = {}) {
 }
 
 /**
+ * Empty a table's log, and hand back how many rows went.
+ *
+ * The one deliberate hole in "insert only", and the Game Master's alone: see
+ * `clear_campaign_log` in the schema, where the check lives. A table that has
+ * played six sessions carries six sessions of arithmetic, and starting a new
+ * chapter should not mean scrolling past the last one forever.
+ *
+ * This one does *not* swallow its failure, unlike every write above it. A use
+ * whose log row is lost has still happened; a clear that quietly did nothing
+ * leaves somebody looking at a log they just asked to be rid of.
+ */
+export async function clearLog(campaignId) {
+  const sb = requireSupabase();
+  const { data, error } = await sb.rpc('clear_campaign_log', { campaign: campaignId });
+  if (error) throw error;
+  return Number(data) || 0;
+}
+
+/**
+ * The line the cleared log opens with, so an empty block says who emptied it.
+ *
+ * Written after the delete rather than by it, as an ordinary event: every open
+ * copy of the block hears the same insert everything else arrives on, and reads
+ * itself again on the strength of it. That is what clears the other screens at
+ * the table, since a delete sends no word of its own.
+ */
+export function logClearedEvent(by, gone = 0) {
+  return {
+    kind: 'turn',
+    actor: by || 'The table',
+    title: 'The log was cleared',
+    detail:
+      gone > 0
+        ? `${gone} ${gone === 1 ? 'entry' : 'entries'} went. Everything from here is new.`
+        : 'Everything from here is new.',
+    data: { move: 'log-cleared', gone },
+  };
+}
+
+/**
  * Write one event to every table a character sits at.
  *
  * Swallows its own failure on purpose. See the note at the top: the points have
@@ -136,18 +176,65 @@ export async function listFightWords(campaignId, { limit = 12 } = {}) {
 export async function postEvent(tables, event) {
   if (!supabase || !event || tables.length === 0) return;
 
-  const rows = tables.map((table) => ({
-    campaign_id: table.id,
+  const rows = tables.map((table) => eventRow(table.id, event));
+
+  const { error } = await supabase.from('campaign_events').insert(rows);
+  if (error) console.warn('The table log refused an event:', error.message);
+}
+
+/** One event as the row the table stores. The only place the shape is written. */
+function eventRow(campaignId, event) {
+  return {
+    campaign_id: campaignId,
     character_id: event.characterId ?? null,
     kind: event.kind,
     actor: event.actor ?? '',
     title: event.title ?? '',
     detail: event.detail ?? '',
     data: event.data ?? {},
-  }));
+  };
+}
 
-  const { error } = await supabase.from('campaign_events').insert(rows);
-  if (error) console.warn('The table log refused an event:', error.message);
+/**
+ * Take the one reaction slot an action has, or find it already taken.
+ *
+ * "Don't allow more than 1 reaction per action. As soon as someone reacts, that
+ * person takes his reaction" (Jules, 2026-09-01). Everybody else's banner clears
+ * the moment an open lands, which settles it whenever one person is a second
+ * ahead of another. This settles the other case, where two readers press at the
+ * same instant and neither has seen the other yet.
+ *
+ * The claim is the log's own count. The row goes in, and then the *oldest* open
+ * against this action is read back: the sequence the table already agrees on is
+ * the arbiter, so exactly one of the two pressers is told they have it and the
+ * other stands back. Nothing new is stored and nothing is locked.
+ *
+ * Comes back true for the reader who has the reaction, false for the one who
+ * lost it by a hair. A log that cannot be read at all answers true: a table
+ * whose network is failing should not be a table where nobody may react.
+ */
+export async function claimReaction(campaignId, event) {
+  if (!supabase || !campaignId || !event?.data?.to) return true;
+
+  const { error } = await supabase.from('campaign_events').insert([eventRow(campaignId, event)]);
+  if (error) {
+    console.warn('The table log refused a reaction:', error.message);
+    return true;
+  }
+
+  const { data, error: read } = await supabase
+    .from('campaign_events')
+    .select('data')
+    .eq('campaign_id', campaignId)
+    .eq('kind', 'react')
+    .eq('data->>to', event.data.to)
+    .eq('data->>move', 'open')
+    .order('seq', { ascending: true })
+    .limit(1);
+  if (read) return true;
+
+  const first = data?.[0]?.data?.key ?? null;
+  return first === null || first === event.data.key;
 }
 
 /* ------------------------------------------------------------ what happened */

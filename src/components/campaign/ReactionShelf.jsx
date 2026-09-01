@@ -5,7 +5,7 @@ import { BarChip } from '../sheet/ActiveBlock.jsx';
 import { usePlayCard } from '../sheet/usePlayCard.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { foeBar, castEffect } from '../../lib/combatBar.js';
-import { reactEvent } from '../../lib/campaignLog.js';
+import { claimReaction, reactEvent } from '../../lib/campaignLog.js';
 import { newChain } from '../../lib/logChain.js';
 import { rollPlan } from '../../lib/rollPlan.js';
 import { foeActor, foeSpend } from '../../lib/encounters.js';
@@ -31,6 +31,9 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
   const { log } = useCampaignLog();
   // { foe, actor, request } while the prompt is up.
   const [picked, setPicked] = useState(null);
+  /* A player at the table claimed the action's one reaction in the same breath.
+     The shelf says so and offers nothing. See claimReaction. */
+  const [lost, setLost] = useState(false);
 
   const ready = (foes ?? []).filter((foe) => !foe.down && foe.reaction > 0);
 
@@ -49,11 +52,23 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
     log(reactEvent(move, { chain: call.chain, key: keyRef.current, by: 'The enemies' }));
   };
 
+  /* The open is a claim on the action's one reaction: it goes in, and the
+     table's own count says whether this page has it or whether a player pressed
+     a breath earlier. See claimReaction. */
   useEffect(() => {
-    if (call?.chain) {
-      log(reactEvent('open', { chain: call.chain, key: keyRef.current, by: 'The enemies' }));
-    }
+    if (!call?.chain) return undefined;
+
+    let alive = true;
+    claimReaction(call.campaign, reactEvent('open', {
+      chain: call.chain,
+      key: keyRef.current,
+      by: 'The enemies',
+    }))
+      .then((won) => alive && !won && setLost(true))
+      .catch(() => {});
+
     return () => {
+      alive = false;
       if (!pendingRef.current) said('pass');
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,7 +154,9 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
       footer={
         <>
           <span className="pick-line">
-            The roll is held while this is open. Closing it releases the roll and takes nothing.
+            {lost
+              ? 'The reaction went to somebody at the table. Nothing here is holding anything.'
+              : 'The roll is held while this is open. Closing it releases the roll and takes nothing.'}
           </span>
           <span className="spacer" />
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
@@ -148,13 +165,20 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
         </>
       }
     >
-      <p className="react-window-lead">
-        <b>{call?.actor ?? 'Someone'}</b> is using <b>{call?.title ?? 'something'}</b>. Whatever
-        an enemy takes resolves first. A movement resolves last, and picking one releases the
-        roll at once.
-      </p>
+      {lost ? (
+        <p className="react-window-lead">
+          A player claimed it first. An action gets one reaction, and this one is already answered,
+          so there is nothing to take here and nothing has been spent.
+        </p>
+      ) : (
+        <p className="react-window-lead">
+          <b>{call?.actor ?? 'Someone'}</b> is using <b>{call?.title ?? 'something'}</b>. Whatever
+          an enemy takes resolves first, and it is the only reaction this action gets. A movement
+          resolves last, and picking one releases the roll at once.
+        </p>
+      )}
 
-      {ready.length === 0 ? (
+      {lost ? null : ready.length === 0 ? (
         <p className="pick-line">Nothing here has a Reaction Point left to spend.</p>
       ) : (
         <div className="react-window-bar">

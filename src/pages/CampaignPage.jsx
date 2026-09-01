@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import BlockArrange from '../components/sheet/BlockArrange.jsx';
+import BlockTrays from '../components/sheet/BlockTrays.jsx';
 import { MinionStatsBlock } from '../components/sheet/MinionBlock.jsx';
 import PartyBlock from '../components/campaign/PartyBlock.jsx';
 import LogBlock from '../components/campaign/LogBlock.jsx';
@@ -23,6 +24,8 @@ import {
   liveCharacter,
   normalizeGridColumns,
   normalizeSourceOrder,
+  normalizeTrays,
+  trayedIds,
 } from '../lib/characterModel.js';
 import { minionState } from '../lib/minions.js';
 import { statMath } from '../lib/statMath.js';
@@ -298,6 +301,18 @@ export default function CampaignPage() {
 
   const byId = useMemo(() => new Map(blocks.map((block) => [block.id, block])), [blocks]);
 
+  /* Which blocks the Game Master pinned to a tray rather than leaving on the
+     grid: the table log within reach of every row of the party, most likely.
+     See normalizeTrays and BlockTrays.jsx. */
+  const trays = useMemo(
+    () =>
+      normalizeTrays(
+        campaign?.overview_trays,
+        blocks.map((block) => block.id)
+      ),
+    [campaign?.overview_trays, blocks]
+  );
+
   /* The stored order is matched against the blocks that actually exist right
      now, the way the Abilities tab matches its sources: a character who leaves
      takes their blocks out, one who joins is appended, and nobody's
@@ -306,9 +321,10 @@ export default function CampaignPage() {
     () =>
       normalizeSourceOrder(
         campaign?.overview_order,
-        blocks.map((block) => block.id)
+        blocks.map((block) => block.id),
+        trayedIds(trays)
       ),
-    [campaign?.overview_order, blocks]
+    [campaign?.overview_order, blocks, trays]
   );
 
   const columns = normalizeGridColumns(campaign?.overview_columns);
@@ -330,6 +346,36 @@ export default function CampaignPage() {
   const actorFor = useCallback(
     (event) => byId.get(`member:${event?.character_id}`)?.shown ?? null,
     [byId]
+  );
+
+  /* One block's contents, wherever it is standing: in the grid, or pinned to a
+     tray down the side of the window. A block is the same block either way. */
+  const renderBlock = useCallback(
+    (blockId) => {
+      const block = byId.get(blockId);
+      if (!block) return null;
+      if (block.kind === 'log') {
+        /* The clear is the Game Master's alone, and only from this page: a
+           player reading the same block on their sheet is a guest at this
+           table, not its keeper. See clearLog in campaignLog.js. */
+        return (
+          <LogBlock campaignId={id} title="Table Log" actorFor={actorFor} canClear={canEdit} />
+        );
+      }
+      if (block.kind === 'minion') {
+        return (
+          <MinionStatsBlock
+            character={block.shown}
+            minion={block.minion}
+            patch={STILL}
+            readOnly
+            unit={unit}
+          />
+        );
+      }
+      return <PartyBlock character={block.shown} math={block.math} unit={unit} />;
+    },
+    [byId, id, actorFor, unit, canEdit]
   );
 
   const describeBlock = useCallback(
@@ -506,8 +552,15 @@ export default function CampaignPage() {
                  character of its own: which sheet a card is printed against is
                  decided per row by `actorFor`. See CardStack.jsx. */
               <CardStackProvider character={null}>
+                {/* Pinned to the window rather than laid on the grid: the log
+                    within reach of every row of the party. See BlockTrays. */}
+                <BlockTrays trays={trays} render={renderBlock} describe={describeBlock} />
+
                 <div className="sheet-grid-6">
-                  {order.map((blockId) => {
+                  {order.map((blockId, at) => {
+                    if (blockId === null) {
+                      return <div key={`gap-${at}`} className="cell-gap" aria-hidden="true" />;
+                    }
                     const block = byId.get(blockId);
                     if (!block) return null;
                     return (
@@ -515,21 +568,7 @@ export default function CampaignPage() {
                         key={blockId}
                         className={`sheet-cell${block.kind === 'minion' ? ' cell-minion' : ''}`}
                       >
-                        {block.kind === 'log' && (
-                          <LogBlock campaignId={id} title="Table Log" actorFor={actorFor} />
-                        )}
-                        {block.kind === 'minion' && (
-                          <MinionStatsBlock
-                            character={block.shown}
-                            minion={block.minion}
-                            patch={STILL}
-                            readOnly
-                            unit={unit}
-                          />
-                        )}
-                        {block.kind === 'member' && (
-                          <PartyBlock character={block.shown} math={block.math} unit={unit} />
-                        )}
+                        {renderBlock(blockId)}
                       </section>
                     );
                   })}
@@ -544,6 +583,8 @@ export default function CampaignPage() {
                 onChange={(next) => patch({ overview_order: next })}
                 columns={columns}
                 onColumns={(count) => patch({ overview_columns: count })}
+                trays={trays}
+                onTrays={(next) => patch({ overview_trays: next })}
                 onClose={() => setArranging(false)}
                 title="Arrange the overview"
               />

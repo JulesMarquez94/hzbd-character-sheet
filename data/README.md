@@ -10580,3 +10580,125 @@ on another.
 - **One reaction slot, for now.** The first open on an action clears everyone
   else's question banner. The gate itself still handles a photo-finish race by
   holding both, which is the honest fallback.
+
+## The trays, the blank space and the log's one clear, 2026-09-01
+
+Jules, the day's eighth pass: a button that clears the table log, with a
+question first; side trays for the blocks you reach for every turn; blank
+space as a real part of an arrangement; and the reaction rule cut down to one
+per action with no chains.
+
+### The log can be emptied, once asked
+
+`campaign_events` was insert-only by design, and it stays that way with one
+deliberate hole. `clear_campaign_log(campaign)` is SECURITY DEFINER with the
+check written where nobody can reach around it: the Game Master of that
+campaign, or an admin, and nobody else. Not a delete policy, because a policy
+is a standing permission and this is a single act.
+
+The button is on the log's own head, quiet until it is hovered and rose when
+it is, disabled with nothing to clear, and it opens a question naming what
+goes. The delete happens first and the line saying it happened is written
+after: written first, it would be the one row the delete took with it. That
+line is an ordinary event, which is how every other open copy of the block
+finds out — a delete sends no word down the realtime channel, so the insert is
+the word, and hearing it the block reads itself again and comes back with the
+line and nothing older.
+
+### Two trays down the sides
+
+A tab is a grid you scroll, which is right for eighteen blocks and wrong for
+the two or three you touch every turn: your quick bar is at the top and the
+fight you are in is somewhere near the bottom, and a turn spent scrolling
+between them is a turn spent scrolling.
+
+So either side of the window has a tray, two slots apiece. What is on one does
+not move when the tab does, because it is not on the tab. On a desktop a
+handle at the screen edge pulls the tray open and the canvas gives up the
+width to make room: a tray laid *over* the blocks would cover the one thing
+somebody is reading. On a phone there is no room beside anything, so the four
+slots become four handles at the corners of the screen edges — top left,
+bottom left, top right, bottom right — and one of them opens its block over
+the whole screen until you slide it off the side it came from. The slide is
+judged on a ref rather than on state, because a fast flick can be batched away
+before a render sees it, and `touch-action: pan-y` leaves the block its own
+vertical scroll.
+
+Stored per tab beside that tab's order and column count: `block_trays`,
+`ability_trays`, `inventory_trays` and a campaign's `overview_trays`, each
+`{"left": [id, id], "right": [id, id]}` with a null for an empty slot. The
+slot is positional and stays so, since on a phone the top and the bottom of a
+tray are two different handles. Re-run `supabase/schema.sql`.
+
+### Blank space is a thing you can arrange
+
+An empty cell used to be the leftover at the end of the last row, and dropping
+a block on one meant "send it to the end". Now a hole is a real part of a
+layout: move a block and it leaves one where it was, and the hole stays. A
+`null` in the stored order is what carries it, trailing nulls are trimmed
+(a hole after the last block is a row of nothing nobody chose), and there is
+always one spare cell past the last block so there is always somewhere to make
+a gap.
+
+Which turned the arranger's one move into one move for everything. A cell of
+the grid and a slot of a tray are the same kind of address, and every gesture
+is a *trade* between two of them where "nothing" is a legal thing to be at:
+block onto block swaps, block onto hole leaves a hole behind, block onto an
+empty tray slot takes it off the grid, and block onto a full one sends the
+sitting block back to the cell that was vacated. The drag stopped keeping a
+map of measured boxes and asks the document instead, off a `data-spot` on each
+target, so a canvas that redrew itself mid-drag is never measured against
+where its cells used to be.
+
+### The picture stopped scrolling
+
+The tile had a 100px floor under it and the floor won over the fit, so eight
+blocks three across at 720px of laptop scrolled — and you were arranging a
+layout you could only see half of, which is a list again with extra steps.
+
+The height is the budget now and the tiles are sized to fit inside it: the row
+height fixes the tile width through the block's own 360x640, and the tracks
+are `1fr` so a narrower dialog shrinks them again. A floor of 44px under the
+tile width stops one column of nine rows coming out as a 22px hairline; past
+it the tile keeps its width and gives up its height instead, going squat
+rather than pushing the canvas off the bottom. A one-column tab really is a
+tall thin strip, and a strip of squat rows is still a picture of it.
+
+The name comes off a tile below 56px of content box rather than 74px, which
+had been taking it off a three-column canvas on a laptop where there was room
+for it. And on a phone the two rails come out from beside the canvas and lie
+under it as two short rows: 72px of rail either side of a 375px screen left
+125px of canvas, which is three tiles of 35px, and the rails would have been
+more than half the picture.
+
+### One reaction to an action, and no chains
+
+"Don't allow more than 1 reaction per action. As soon as someone reacts, that
+person takes his reaction. Once his reaction is done, then we continue with
+the main action. Don't allow chains for reaction" (Jules).
+
+The gate held a map of reactors and now holds one slot. The first open takes
+it and every later one is ignored; the reaction resolving closes the window
+for good rather than handing back whatever was left of the six seconds, so the
+action carries on the moment its one answer is done rather than sitting out a
+countdown nobody can use. A `done` or a `pass` from a key the slot never gave
+out lifts nothing.
+
+Two people pressing in the same breath is settled by a claim. The open row
+goes in and the *oldest* open against that action is read back: the log's own
+sequence is the arbiter, one presser is told they have it and the other is
+told somebody got there first, before a Reaction Point is spent on an action
+that is already answered. Nothing new is stored and nothing is locked.
+
+And no chains: a use whose `mode` is `reaction` never raises a banner on
+anybody's screen, so there is no window on the window and nobody is ever asked
+to answer an answer. The mode is set at the moment of spending and never by
+the card, which is the whole guard.
+
+### The checker
+
+`npm run lint:layout` holds a layout to its four rules: every block is
+somewhere exactly once, a hole is kept and a trailing hole is not, a tray slot
+is positional, and a move is a trade with nothing as a legal end. It restates
+the arranger's arithmetic rather than importing it, so a drift between the two
+shows up as a finding.

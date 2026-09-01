@@ -21,6 +21,7 @@ import {
   StatBox,
 } from './parts.jsx';
 import BlockArrange from './BlockArrange.jsx';
+import BlockTrays from './BlockTrays.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
@@ -30,9 +31,12 @@ import {
   initialsOf,
   karmaCap,
   metersToFeet,
+  SHEET_BLOCK_IDS,
   normalizeBlockOrder,
   normalizeGridColumns,
+  normalizeTrays,
   shieldCapFor,
+  trayedIds,
   xpProgress,
 } from '../../lib/characterModel.js';
 import { feralBlockIds, feralState } from '../../lib/feral.js';
@@ -205,10 +209,20 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
     [character, tables]
   );
 
-  const order = useMemo(() => normalizeBlockOrder(character.block_order, grown), [
-    character.block_order,
-    grown,
-  ]);
+  /* And which of them were taken off the grid and pinned to a tray. Read first,
+     because the grid is every block this character has *minus* those: a block in
+     a tray is not in the flow, and the hole it left behind is kept where it was.
+     See normalizeTrays and BlockTrays.jsx. */
+  const trays = useMemo(
+    () => normalizeTrays(character.block_trays, [...SHEET_BLOCK_IDS, ...grown]),
+    [character.block_trays, grown]
+  );
+  const saveTrays = useCallback((next) => patch({ block_trays: next }), [patch]);
+
+  const order = useMemo(
+    () => normalizeBlockOrder(character.block_order, grown, trayedIds(trays)),
+    [character.block_order, grown, trays]
+  );
   const saveOrder = useCallback((next) => patch({ block_order: next }), [patch]);
 
   /* And how wide the grid they are laid out on is. Stored per tab rather than
@@ -647,19 +661,30 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         </div>
       )}
 
+      {/* The two side trays, pinned to the window rather than laid on the tab:
+          whatever is on one is a tap away whatever the tab is scrolled to. Only
+          drawn when something is actually on one. See BlockTrays.jsx. */}
+      <BlockTrays trays={trays} render={(id) => blocks[id]} describe={describeBlock} />
+
       <div className="sheet-grid-6">
-        {order.map((id) => (
-          <section
-            key={id}
-            className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}${
-              String(id).startsWith('minion:') ? ' cell-minion' : ''
-            }${String(id).startsWith('feral:') ? ' cell-feral' : ''}${
-              String(id).startsWith('pact:') ? ' cell-pact' : ''
-            }`}
-          >
-            {blocks[id]}
-          </section>
-        ))}
+        {order.map((id, at) =>
+          /* A hole somebody left on purpose. It keeps its track, because blank
+             space in the middle of an arrangement is the arrangement. */
+          id === null ? (
+            <div key={`gap-${at}`} className="cell-gap" aria-hidden="true" />
+          ) : (
+            <section
+              key={id}
+              className={`sheet-cell${PLACEHOLDERS.includes(id) ? ' cell-empty' : ''}${
+                String(id).startsWith('minion:') ? ' cell-minion' : ''
+              }${String(id).startsWith('feral:') ? ' cell-feral' : ''}${
+                String(id).startsWith('pact:') ? ' cell-pact' : ''
+              }`}
+            >
+              {blocks[id]}
+            </section>
+          )
+        )}
 
         {arranging && (
           <BlockArrange
@@ -668,6 +693,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             onChange={saveOrder}
             columns={columns}
             onColumns={saveColumns}
+            trays={trays}
+            onTrays={saveTrays}
             onClose={() => setArranging(false)}
           />
         )}

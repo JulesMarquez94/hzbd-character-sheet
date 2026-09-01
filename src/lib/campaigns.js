@@ -29,6 +29,7 @@ const CAMPAIGN_FIELDS = [
   'code',
   'overview_order',
   'overview_columns',
+  'overview_trays',
 ];
 
 function pickCampaignFields(patch) {

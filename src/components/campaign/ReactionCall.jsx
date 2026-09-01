@@ -21,6 +21,13 @@ const REACTION_WINDOW_MS = 6000;
  * no writes, no sounds, gone by itself when the window closes or on a tap.
  * `ignore` is how a reader skips their own side's casts — a player their own,
  * the Game Master the table's — because nobody reacts to themselves.
+ *
+ * ------------------------------------------------------------------ no chains
+ * A use *made as* a reaction never raises this. "Don't allow chains for
+ * reaction" (Jules, 2026-09-01): the one reaction an action gets resolves and
+ * then the action carries on, so there is no window on the window and nobody is
+ * ever asked to answer an answer. The row says which it was — `mode` is set at
+ * the moment of spending, never by the card — and that is the whole guard.
  */
 export default function ReactionCall({
   tables = null,
@@ -71,6 +78,9 @@ export default function ReactionCall({
           }
 
           if (row?.kind !== 'use') return;
+          /* No chains: a card played as a reaction is not something anybody
+             gets to react to. See the note at the top. */
+          if (row.data?.mode === 'reaction') return;
 
           const held = stateRef.current;
           if (!held.ready) return;
@@ -84,6 +94,10 @@ export default function ReactionCall({
                for a use that rolls nothing, which has no gate to hold — the
                reaction still plays, it just pauses nothing. */
             chain: row.data?.chain ?? null,
+            /* And which table it happened at, since a sheet may sit at several
+               and the one reaction slot is claimed on the table it belongs to.
+               See claimReaction. */
+            campaign: campaignId,
           });
         },
       })

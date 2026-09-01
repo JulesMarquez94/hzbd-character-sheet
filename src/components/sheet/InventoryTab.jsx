@@ -7,12 +7,15 @@ import PackBlock from './PackBlock.jsx';
 import TrinketBlock from './TrinketBlock.jsx';
 import WeaponBlock from './WeaponBlock.jsx';
 import BlockArrange from './BlockArrange.jsx';
+import BlockTrays from './BlockTrays.jsx';
 import { useEquipSlots } from './useEquipSlots.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
 import {
   formatWeight,
   normalizeGridColumns,
   normalizeSourceOrder,
+  normalizeTrays,
+  trayedIds,
 } from '../../lib/characterModel.js';
 import { inventoryOverview } from '../../lib/items.js';
 import { useUnit } from '../../context/units.js';
@@ -99,9 +102,17 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
 
   const overview = useMemo(() => inventoryOverview(character), [character]);
 
+  /* Which of the four were pinned to a tray instead of laid on the grid. See
+     normalizeTrays and BlockTrays.jsx. */
+  const trays = useMemo(
+    () => normalizeTrays(character?.inventory_trays, BLOCK_IDS),
+    [character?.inventory_trays]
+  );
+  const saveTrays = useCallback((next) => patch?.({ inventory_trays: next }), [patch]);
+
   const savedOrder = useMemo(
-    () => normalizeSourceOrder(character?.inventory_order, BLOCK_IDS),
-    [character?.inventory_order]
+    () => normalizeSourceOrder(character?.inventory_order, BLOCK_IDS, trayedIds(trays)),
+    [character?.inventory_order, trays]
   );
   const saveOrder = useCallback((next) => patch?.({ inventory_order: next }), [patch]);
 
@@ -209,18 +220,31 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
             order={order}
             columns={columns}
             onColumns={saveColumns}
+            trays={trays}
+            onTrays={patch ? saveTrays : null}
             describe={(id) => ({ name: labelOf(id), note: null })}
             onChange={saveOrder}
             onClose={() => setArranging(false)}
           />
         )}
 
+        {/* Pinned to the window rather than laid on the tab. See BlockTrays. */}
+        <BlockTrays
+          trays={trays}
+          render={(id) => blocks[id]}
+          describe={(id) => ({ name: labelOf(id), note: null })}
+        />
+
         <div className="sheet-grid-6">
-          {order.map((id) => (
-            <section key={id} className="sheet-cell">
-              {blocks[id]}
-            </section>
-          ))}
+          {order.map((id, at) =>
+            id === null ? (
+              <div key={`gap-${at}`} className="cell-gap" aria-hidden="true" />
+            ) : (
+              <section key={id} className="sheet-cell">
+                {blocks[id]}
+              </section>
+            )
+          )}
 
           {/* ==== THE INVENTORY, ACROSS THE WHOLE ROW ====
               Pinned under the others rather than ordered with them: it is

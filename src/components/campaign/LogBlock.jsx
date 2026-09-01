@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import Modal from '../Modal.jsx';
 import { useCardStack } from '../../context/card-stack.js';
-import { FEED_PAGE, eventStamp, eventWords, listEvents } from '../../lib/campaignLog.js';
+import {
+  FEED_PAGE,
+  clearLog,
+  eventStamp,
+  eventWords,
+  listEvents,
+  logClearedEvent,
+  postEvent,
+} from '../../lib/campaignLog.js';
 import { bundleCount, bundleTurns, chainSummary, groupEvents } from '../../lib/logChain.js';
 import { verdictLabel } from '../../lib/dice.js';
 import { getCard } from '../../lib/weapons.js';
@@ -47,9 +56,23 @@ import Die from '../Die.jsx';
  * for by the button at the *top* now, and the scroll is pinned across the load
  * so the page does not jump under a reader who was mid-sentence.
  *
- * Nothing here writes. See src/lib/campaignLog.js for what does.
+ * ------------------------------------------------------------------- the clear
+ * One thing here writes, and only for one reader. `canClear` is the Game
+ * Master on their own campaign page: a table six sessions deep carries six
+ * sessions of arithmetic, and beginning a new chapter should not mean scrolling
+ * past the last one forever. It asks first, because it cannot be undone and it
+ * is everybody's history rather than the presser's own. See `clearLog`, and the
+ * check that actually enforces it in the schema.
+ *
+ * Everything else here reads. See src/lib/campaignLog.js for what writes.
  */
-export default function LogBlock({ campaignId, title = 'Table Log', note = null, actorFor = null }) {
+export default function LogBlock({
+  campaignId,
+  title = 'Table Log',
+  note = null,
+  actorFor = null,
+  canClear = false,
+}) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -61,6 +84,12 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
      entry open. Scoping it to the newest at the time makes it lapse on its own,
      without an effect writing state after a render. */
   const [opened, setOpened] = useState(null);
+  /* Whether the clear is being asked about, and whether it is away being done.
+     Two states rather than one: the question is answered in a moment and the
+     delete takes a round trip, and the button must not look pressable while
+     that trip is in the air. */
+  const [asking, setAsking] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const stack = useCardStack();
 
   const scroller = useRef(null);
@@ -98,6 +127,16 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
       onChange: (payload) => {
         if (payload.eventType !== 'INSERT') return;
         const row = payload.new;
+
+        /* The word that the log was emptied. A delete sends nothing down the
+           channel, so this row is how every other copy of the block finds out:
+           it reads itself again, and what comes back is this line and nothing
+           older. See clearLog and logClearedEvent. */
+        if (row?.kind === 'turn' && row?.data?.move === 'log-cleared') {
+          read();
+          return;
+        }
+
         setEvents((prev) => {
           // A row can arrive twice: once down the channel and once in a refetch
           // that raced it. The id is what says which is which.
@@ -159,6 +198,33 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
       });
   }
 
+  /**
+   * Empty the table's log.
+   *
+   * The delete first, then the line saying it happened. In that order because
+   * the line has to survive: written first, it would be the one row the delete
+   * took with it.
+   *
+   * This block clears its own feed rather than waiting to be told, so the
+   * presser sees the answer to the button they pressed. Everybody else finds
+   * out the way they find out about anything, off the insert that follows.
+   */
+  async function clearIt() {
+    setClearing(true);
+    try {
+      const gone = await clearLog(campaignId);
+      setEvents([]);
+      setMore(false);
+      setError('');
+      setAsking(false);
+      await postEvent([{ id: campaignId }], logClearedEvent('The table', gone));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setClearing(false);
+    }
+  }
+
   /* Two gatherings, and then the whole thing turned round.
      `groupEvents` puts a use and its throws together; `bundleTurns` puts a turn
      and everything done during it together. Both work in the feed's own order,
@@ -179,10 +245,64 @@ export default function LogBlock({ campaignId, title = 'Table Log', note = null,
     <div className="cell-scroll log-block">
       <div className="block-head">
         <span className="stat-category-label">{title}</span>
-        <span className="block-count">
-          {events.length} {events.length === 1 ? 'entry' : 'entries'}
+        <span className="log-head-end">
+          <span className="block-count">
+            {events.length} {events.length === 1 ? 'entry' : 'entries'}
+          </span>
+          {canClear && (
+            <button
+              type="button"
+              className="log-clear"
+              onClick={() => setAsking(true)}
+              disabled={clearing || events.length === 0}
+              title={
+                events.length === 0
+                  ? 'There is nothing here to clear'
+                  : 'Empty this table log. It asks first.'
+              }
+            >
+              {clearing ? 'Clearing' : 'Clear'}
+            </button>
+          )}
         </span>
       </div>
+
+      {asking && (
+        <Modal
+          title="Clear the table log?"
+          onClose={() => (clearing ? null : setAsking(false))}
+          footer={
+            <>
+              <button
+                type="button"
+                className="btn btn-minimal btn-sm"
+                onClick={() => setAsking(false)}
+                disabled={clearing}
+              >
+                Keep it
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                onClick={clearIt}
+                disabled={clearing}
+              >
+                {clearing ? 'Clearing' : 'Clear the log'}
+              </button>
+            </>
+          }
+        >
+          <p className="pick-line">
+            Every entry at this table goes: {events.length}
+            {more ? ' or more' : ''} of them, and whatever is older than this page. Nobody at the
+            table gets them back, and the sheets themselves are untouched.
+          </p>
+          <p className="pick-line">
+            What happens after this is logged as it always was. A line saying the log was cleared
+            stays at the top, so the table knows why the history begins where it does.
+          </p>
+        </Modal>
+      )}
 
       {note && <p className="log-note">{note}</p>}
 

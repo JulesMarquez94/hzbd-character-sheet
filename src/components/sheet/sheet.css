@@ -41,6 +41,12 @@ body.sheet-fixed #root {
   --sheet-cap: min(var(--sheet-cols), var(--sheet-fit));
   --sheet-measure: calc(var(--sheet-cap) * (var(--block-w) + 16px) - 16px);
 
+  /* Where the side trays begin: under the bar of tabs, which they must never
+     cover. The trays are fixed to the window rather than laid on the canvas, so
+     this is the one number that tells them where the page starts. See
+     BlockTrays.jsx and THE TRAYS further down. */
+  --tray-top: 58px;
+
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -466,6 +472,17 @@ body.sheet-fixed #root {
   background-color: rgba(19, 34, 42, 0.45);
 }
 
+/* A hole in the arrangement: a track held open and nothing drawn in it. Not a
+   panel, not a dashed outline, nothing — blank space asked for on the arranger
+   is blank space on the tab, and a box saying "empty" is not blank. It keeps
+   the block's footprint so everything after it stays where it was put. */
+.cell-gap {
+  width: var(--block-w);
+  height: var(--block-h);
+  flex: none;
+  pointer-events: none;
+}
+
 .cell-blank {
   flex: 1;
   min-height: 0;
@@ -591,64 +608,225 @@ body.sheet-fixed #root {
   outline-offset: 1px;
 }
 
-/* The canvas. A tile is as wide as the dialog leaves it, up to a ceiling that is
-   whichever comes first: 180px, where it stops being small, or the width that
-   fits every row of it in the height this is allowed to take.
-
-   Under that ceiling is a floor of 100px, which is where a name stops fitting on
-   a tile. The floor wins: eight blocks stacked three across cannot be both
-   readable and entirely on screen at 720px of laptop, and a canvas of tiles too
-   small to read is not a picture of anything. So the canvas scrolls instead, and
-   nothing is lost when it does, because tap and then tap is a way in that a
-   scroll cannot interrupt.
-
-   A dialog narrow enough to be a phone drops the floor to 56px, where the name
-   comes off the tile: nine columns at 100px each would be three screens of
-   sideways scrolling, and the shape of the arrangement is the one thing that
-   should survive on a small screen. */
+/* The canvas, which never scrolls.
+ *
+ * It used to. A tile had a 100px floor under it, where a name stops fitting,
+ * and the floor won over the fit: eight blocks three across at 720px of laptop
+ * could not be both readable and entirely on screen, so the canvas scrolled and
+ * you arranged a layout you could only see half of. That is a list again with
+ * extra steps, and seeing the whole shape at once is the entire reason the list
+ * became a canvas.
+ *
+ * So the height is the budget and the tiles are sized to fit inside it. A tile
+ * keeps the block's own 360x640, so the height each row may take fixes the
+ * width the whole canvas may take:
+ *
+ *   tile height = (budget - the gaps between the rows) / rows
+ *   tile width  = tile height * 360 / 640
+ *   canvas      = the tiles across, plus the gaps between them
+ *
+ * The tracks are `1fr`, so a dialog narrower than that shrinks the tiles again
+ * and it still fits. Nine columns of nine rows come out tiny, and tiny is the
+ * honest picture of a nine-by-nine wall: the name comes off the tile below 74px
+ * (see the container query on .mini-name) and the shape survives, which is the
+ * thing being edited. */
 .mini-arrange {
   --mini-gap: 8px;
-  --mini-h: 46vh;
-  --tile-floor: 100px;
-  --tile-cap: min(
-    180px,
-    calc(
-      (var(--mini-h) - 8px - (var(--mini-rows) - 1) * var(--mini-gap)) / var(--mini-rows) * 0.5625
-    )
+  /* What the dialog can spare below its own header, the hint, the column chips
+     and the foot. A floor under it for a very short window, where the modal
+     body scrolls instead: the canvas holding its shape is worth more than the
+     dialog never moving. */
+  --mini-h: max(190px, calc(100dvh - 26rem));
+  --row-h: calc((var(--mini-h) - (var(--mini-rows) - 1) * var(--mini-gap)) / var(--mini-rows));
+  --tile-w: calc(var(--row-h) * 360 / 640);
+  --mini-w: calc(var(--mini-cols) * var(--tile-w) + (var(--mini-cols) - 1) * var(--mini-gap));
+  /* And a floor under the tile, because a shape you cannot hit is not a canvas
+     either. One column of nine rows comes to a 22px tile at 900px of laptop,
+     which is a hairline: the floor widens it to something a finger can land on
+     and the row height stays what it was, so the tile goes squat rather than
+     the canvas going off the bottom. A one-column tab really is a tall strip,
+     and a tall strip of squat rows is still a picture of it. */
+  --min-tile: 44px;
+  --min-w: calc(
+    var(--mini-cols) * var(--min-tile) + (var(--mini-cols) - 1) * var(--mini-gap)
   );
-  --mini-w: calc(
-    var(--mini-cols) * max(var(--tile-floor), var(--tile-cap)) + (var(--mini-cols) - 1) *
-      var(--mini-gap)
-  );
+  /* A tray slot is a block too, so the rail is a tile wide, held between the
+     narrowest a name will sit on and the width of a canvas tile. */
+  --rail-w: clamp(72px, var(--tile-w), 132px);
 
-  /* The dialog is the page measure whatever is in it, so the body is held to
-     the canvas rather than to the dialog: three columns come to 316px, and a
-     316px picture alone in the middle of 1163 reads as a mistake, where a
-     520px column of hint, chooser and canvas reads as a page. 520 is the width
-     the hint above wants; past that the column grows with the count. */
-  width: min(100%, max(520px, var(--mini-w)));
+  width: 100%;
   margin: 0 auto;
+}
+
+/* The canvas and the two rails, side by side, in the order they are on screen.
+   The rails are the trays drawn where the trays will be, which is the whole of
+   why they are here rather than in a list underneath. */
+.mini-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(0.5rem, 2vw, 1.1rem);
+}
+
+.mini-stage.is-dragging {
+  cursor: grabbing;
 }
 
 .mini-canvas {
   display: grid;
-  grid-template-columns: repeat(var(--mini-cols), minmax(var(--tile-floor), 1fr));
+  grid-template-columns: repeat(var(--mini-cols), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, var(--row-h));
   gap: var(--mini-gap);
-  width: min(100%, var(--mini-w));
-  margin: 0 auto;
-  max-height: var(--mini-h);
-  overflow: auto;
+  width: min(100%, max(var(--mini-w), var(--min-w)));
+  flex: 0 1 auto;
+  min-width: 0;
   padding: 2px;
 }
 
-@media (max-width: 700px) {
-  .mini-arrange {
-    --tile-floor: 56px;
-  }
+/* ---------- THE RAILS ----------
+   Two slots a side, and a word saying which side they are. Sized off the tile
+   so a tray slot reads as the same kind of thing a cell is: it holds the same
+   block, it is just pinned somewhere the tab cannot scroll it away. */
+.mini-rail {
+  flex: 0 0 auto;
+  width: var(--rail-w);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mini-gap);
+  padding: 2px;
 }
 
-.mini-canvas.is-dragging {
-  cursor: grabbing;
+.mini-rail-label {
+  font-family: var(--font-headings);
+  font-size: 0.58rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(148, 167, 176, 0.6);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.mini-tray-slot {
+  aspect-ratio: 360 / 640;
+  /* Half the canvas, less the gap between the two: a rail is two slots and it
+     must never stand taller than the canvas it flanks. */
+  max-height: calc((var(--mini-h) - var(--mini-gap)) / 2);
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(9, 17, 21, 0.35);
+  border: 1px dashed rgba(200, 138, 75, 0.35);
+  border-radius: 5px;
+  cursor: default;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+/* Something is being moved, so every empty slot is somewhere it could go. */
+.mini-tray-slot.is-open {
+  border-style: solid;
+  border-color: var(--copper);
+  background-color: rgba(200, 138, 75, 0.12);
+  cursor: pointer;
+}
+
+.mini-tray-slot:focus-visible {
+  outline: 1px solid var(--copper);
+  outline-offset: 2px;
+}
+
+.mini-tray-seat {
+  font-family: var(--font-headings);
+  font-size: 0.52rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(200, 138, 75, 0.7);
+}
+
+/* A block on a tray wears the tray's copper rather than the grid's violet, the
+   same way it will when it is actually in one. */
+.mini-tile.is-trayed {
+  border-top-color: var(--copper);
+  max-height: calc((var(--mini-h) - var(--mini-gap)) / 2);
+}
+
+/* ---------- THE ARRANGER ON A PHONE ----------
+   Two 72px rails either side of a 375px screen leave 125px of canvas, which is
+   three tiles of 35px: the rails would be more than half the picture and the
+   picture is the point. So they come out from beside the canvas and lie under
+   it, each as a short row of its own two slots.
+
+   That is also the truer drawing of what a phone actually gets. There is no
+   panel beside anything at this width: the four slots are four handles at the
+   corners of the screen, and four slots in a row read as four handles far
+   better than two columns pretending to be side panels. See BlockTrays.jsx. */
+@media (max-width: 700px) {
+  .mini-arrange {
+    /* Room for the rails underneath, which the canvas was taking all of. */
+    --mini-h: max(150px, calc(100dvh - 34rem));
+  }
+
+  .mini-stage {
+    flex-wrap: wrap;
+    row-gap: 0.9rem;
+  }
+
+  .mini-canvas {
+    order: -1;
+    flex: 1 1 100%;
+    margin: 0 auto;
+  }
+
+  /* Both rails on one row under the canvas, half the width each. Left to their
+     own content they came to 183px apiece and wrapped, which spent 115px of a
+     phone screen saying nothing. */
+  .mini-rail {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .mini-rail-label {
+    flex-basis: 100%;
+  }
+
+  .mini-rail .mini-tile,
+  .mini-rail .mini-tray-slot {
+    width: 52px;
+    max-height: 92px;
+  }
+
+  /* Which block is on the tray, kept even at 52px. The container query above
+     takes the name off a tile this narrow, which is right on the canvas, where
+     the number says where the block is and there are eight more tiles around it
+     to read. A tray slot has nothing else on it: without the name it says
+     "top", and "top" is not the answer to which block is up there. */
+  .mini-rail .mini-name {
+    display: -webkit-box;
+    font-size: 0.5rem;
+    line-height: 1.15;
+    -webkit-line-clamp: 3;
+  }
+
+  /* And the words around it, trimmed to what a phone can spare. The hint is
+     three sentences and the chooser is nine chips over two lines: together they
+     were most of the screen the picture was supposed to be on. */
+  .mini-arrange .frame-foot {
+    font-size: 0.66rem;
+    line-height: 1.35;
+  }
+
+  .mini-cols {
+    margin: 0.7rem 0 0.6rem;
+  }
+
+  .mini-foot {
+    margin-top: 0.6rem;
+  }
 }
 
 /* A block at about a third of its size. It keeps the block's shape, 360x640,
@@ -657,6 +835,12 @@ body.sheet-fixed #root {
 .mini-tile {
   container-type: inline-size;
   aspect-ratio: 360 / 640;
+  /* The row is the ceiling. Past the floor on the tile width the tile keeps its
+     width and gives up its height instead, which is what keeps a nine-row canvas
+     on screen without the tiles going to hairlines. */
+  max-height: var(--row-h);
+  /* Definite, so only the height is clamped. See the note on .mini-empty. */
+  width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -724,19 +908,48 @@ body.sheet-fixed #root {
 
 /* Nine columns on a phone leave a tile too narrow to write a name on. The
    number stays, because it is short and it is what moves, and the name is where
-   every other name on a tight row is: in the tooltip. */
-@container (max-width: 74px) {
+   every other name on a tight row is: in the tooltip.
+
+   Measured against the tile's content box, which is what an inline-size
+   container query reads: the 56px here is a tile of about 68px. It was 74,
+   which is a tile of 86, and that took the name off a three-column canvas on a
+   laptop, where there was room for it and it was the whole of what the tile
+   said. The name is the tile's reason to exist. It goes last and reluctantly. */
+@container (max-width: 56px) {
   .mini-name {
     display: none;
   }
 }
 
-/* The rest of the last row, so the canvas has the shape of the tab even when
-   the blocks do not fill it. Scenery, except as somewhere to drop. */
+/* A hole in the arrangement, and every cell past the last block. Blank space is
+   a real part of a layout now rather than the leftover at the end of the last
+   row, so this is a thing you can put a block into and take one out of, and the
+   gap it leaves behind is kept. Scenery until something is being moved, and lit
+   as a target once one is. */
 .mini-empty {
   aspect-ratio: 360 / 640;
+  max-height: var(--row-h);
+  /* Definite, so only the height is clamped. A stretched grid item with an
+     aspect ratio and a height ceiling resolves its *width* from the ceiling
+     instead, which put the floor above back below it. */
+  width: 100%;
+  min-width: 0;
+  background: none;
   border: 1px dashed rgba(148, 167, 176, 0.2);
   border-radius: 5px;
+  cursor: default;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.mini-empty.is-open {
+  border-color: rgba(157, 91, 255, 0.55);
+  background-color: rgba(157, 91, 255, 0.08);
+  cursor: pointer;
+}
+
+.mini-empty:focus-visible {
+  outline: 1px solid var(--haze-glow);
+  outline-offset: 2px;
 }
 
 /* What the canvas is doing, under it. It keeps its height while it has nothing
@@ -747,6 +960,282 @@ body.sheet-fixed #root {
   font-size: 0.7rem;
   text-align: center;
   color: rgba(148, 167, 176, 0.7);
+}
+
+/* =========================================================
+   THE TRAYS
+
+   Two side panels pinned to the window, two blocks apiece, holding whatever
+   somebody reaches for every turn. They are not on the tab: the tab scrolls
+   under them and they do not move. See BlockTrays.jsx, and the rails in the
+   arranger above, which are these drawn small.
+   ========================================================= */
+.tray-rail {
+  position: fixed;
+  top: var(--tray-top, 58px);
+  bottom: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.tray-rail-left {
+  left: 0;
+  flex-direction: row;
+}
+
+.tray-rail-right {
+  right: 0;
+  flex-direction: row-reverse;
+}
+
+/* The handle. Always there, closed or open: it is the only thing on screen that
+   says a tray exists, so it carries the names of what is in it, written down
+   the edge of the screen. */
+.tray-handle {
+  pointer-events: auto;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.9rem 0.32rem;
+  background-color: rgba(19, 34, 42, 0.94);
+  border: 1px solid var(--hairline);
+  color: var(--text-muted);
+  cursor: pointer;
+  writing-mode: vertical-rl;
+  font-family: var(--font-headings);
+  font-size: 0.62rem;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  max-height: 60vh;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tray-rail-left .tray-handle {
+  border-left: none;
+  border-radius: 0 5px 5px 0;
+}
+
+.tray-rail-right .tray-handle {
+  border-right: none;
+  border-radius: 5px 0 0 5px;
+  transform: rotate(180deg);
+}
+
+.tray-handle:hover {
+  color: var(--copper);
+  border-color: rgba(200, 138, 75, 0.5);
+  background-color: rgba(28, 46, 56, 0.96);
+}
+
+.tray-rail.is-open .tray-handle {
+  color: var(--copper);
+  border-color: rgba(200, 138, 75, 0.5);
+}
+
+.tray-handle-arrow {
+  writing-mode: horizontal-tb;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.tray-handle-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The tray itself: a column of up to two blocks, at the block's own size, which
+   never changes anywhere on this site. Its own scroller for the short window
+   where two 640px blocks do not both fit, and that scroll is the tray's, not
+   the tab's. */
+.tray-panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-color: rgba(9, 17, 21, 0.92);
+  border-right: 1px solid var(--hairline);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+.tray-rail-right .tray-panel {
+  border-right: none;
+  border-left: 1px solid var(--hairline);
+}
+
+/* A block in a tray wears copper along its top edge instead of violet: it is
+   the same block, pinned somewhere else, and the edge is what says so. */
+.tray-cell {
+  border-top-color: var(--copper);
+}
+
+/* ---------- THE PUSH ----------
+   An open tray takes its width off the canvas rather than lying over the top of
+   it. A tray laid over the blocks would cover the one thing somebody is reading,
+   which is the opposite of what a tray is for. The class is put on the body by
+   BlockTrays, because the canvas is two components above it. */
+body.tray-open-left .sheet-canvas {
+  padding-left: calc(var(--block-w) + 3.2rem);
+}
+
+body.tray-open-right .sheet-canvas {
+  padding-right: calc(var(--block-w) + 3.2rem);
+}
+
+/* ---------- THE PHONE ----------
+   No room beside anything at 360px, so the four slots become four handles at
+   the corners of the screen edges and one of them opens over the whole of it.
+   Quick access rather than a panel: you are two taps from the block and one
+   slide from being rid of it. */
+.tray-tabs {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sticky);
+  pointer-events: none;
+}
+
+.tray-tab {
+  position: absolute;
+  pointer-events: auto;
+  max-height: 34vh;
+  /* Wider than the text needs. A handle at the edge of a phone screen is hit
+     with the side of a thumb, and 22px of strip is a thing you miss. */
+  min-width: 30px;
+  padding: 0.7rem 0.42rem;
+  background-color: rgba(19, 34, 42, 0.94);
+  border: 1px solid var(--hairline);
+  color: var(--copper);
+  cursor: pointer;
+  writing-mode: vertical-rl;
+  font-family: var(--font-headings);
+  font-size: 0.6rem;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+}
+
+.tray-tab-name {
+  display: block;
+  max-height: 30vh;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tray-tab-left {
+  left: 0;
+  border-left: none;
+  border-radius: 0 5px 5px 0;
+}
+
+.tray-tab-right {
+  right: 0;
+  border-right: none;
+  border-radius: 5px 0 0 5px;
+  transform: rotate(180deg);
+}
+
+.tray-tab-top {
+  top: 18vh;
+}
+
+.tray-tab-bottom {
+  bottom: 14vh;
+}
+
+/* One block over the whole screen. It is the block at its own width, centred,
+   and as tall as the screen is: a tray on a phone is the block, nothing else. */
+.tray-sheet-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background-color: rgba(4, 8, 10, 0.82);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.tray-sheet {
+  width: 100%;
+  max-width: var(--block-w);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: var(--panel-teal);
+  border-left: 1px solid var(--hairline);
+  border-right: 1px solid var(--hairline);
+  /* The browser keeps the vertical gesture, which is the block's own scroll,
+     and the horizontal one is the slide that puts this away. */
+  touch-action: pan-y;
+  animation: tray-in 0.16s ease-out;
+  /* Damps the drag and springs it back when a slide is let go short of the
+     distance that would have put it away. */
+  transition: transform 0.16s ease;
+}
+
+@keyframes tray-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tray-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--hairline);
+  flex-shrink: 0;
+}
+
+.tray-sheet-grip {
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+  background-color: rgba(200, 138, 75, 0.55);
+  flex: none;
+}
+
+.tray-sheet-name {
+  font-family: var(--font-headings);
+  font-size: 0.72rem;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--copper);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The block itself, which is the only thing in here. It gives up the fixed
+   640px it holds everywhere else: this is the one place a block is as tall as
+   the screen it is on, because the screen is the frame. */
+.tray-sheet-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tray-sheet-body > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.tray-sheet-foot {
+  margin: 0;
+  padding: 0.4rem 0.9rem 0.55rem;
+  font-size: 0.62rem;
+  text-align: center;
+  color: rgba(148, 167, 176, 0.55);
+  border-top: 1px solid var(--hairline);
+  flex-shrink: 0;
 }
 
 /* ---------- BLOCK 1: IDENTITY ---------- */
@@ -11532,6 +12021,44 @@ button.tgt-chip:disabled {
   font-size: 0.66rem;
   line-height: 1.4;
   color: var(--text-muted);
+}
+
+/* The right-hand end of the log's head: how many entries there are, and the one
+   control that empties them. Grouped so the count keeps the end of the row it
+   has always had rather than being pushed into the middle by a second thing. */
+.log-head-end {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+/* The clear. Quiet until it is hovered, and rose when it is: it is the only
+   thing on this block that destroys anything, and the block is read a hundred
+   times for every once it is pressed. It asks before it does it. */
+.log-clear {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  font-family: var(--font-headings);
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(148, 167, 176, 0.6);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.log-clear:hover:not(:disabled) {
+  color: var(--danger-rose);
+  border-color: rgba(224, 90, 110, 0.4);
+  background-color: rgba(224, 90, 110, 0.1);
+}
+
+.log-clear:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .log-empty {

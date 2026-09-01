@@ -275,7 +275,8 @@ create table if not exists public.characters (
   -- Left-to-right order of the Character-tab blocks, e.g. [3,1,2,6,4,5]. The
   -- six numbered ones are every character's; a set that grants a creature adds
   -- "minion:<set>" and "minion:<set>:bar" to the list, so it is no longer a
-  -- fixed length. The app repairs anything malformed on read.
+  -- fixed length. A null in the list is a cell the player deliberately left
+  -- blank. The app repairs anything malformed on read.
   block_order  jsonb not null default '[1,2,3,4,5,6]'::jsonb,
 
   -- And how many columns that tab lays them out in, 1 to 9. A ceiling rather
@@ -283,17 +284,24 @@ create table if not exists public.characters (
   -- enough for, whichever is fewer.
   block_columns int not null default 3,
 
+  -- And which of those blocks were taken off the grid and pinned to a side
+  -- tray: {"left": [id, id], "right": [id, id]}, two slots a side, a null for
+  -- an empty slot. A tray does not scroll with the tab. See normalizeTrays.
+  block_trays  jsonb not null default '{}'::jsonb,
+
   -- Left-to-right order of the Abilities tab's blocks, by source id
   -- ("lineage", "talent:mycomancer", "gear"). No fixed length: a source
   -- appears when it is taken and goes when it is handed back.
   ability_order jsonb not null default '[]'::jsonb,
   ability_columns int not null default 3,
+  ability_trays jsonb not null default '{}'::jsonb,
 
   -- Left-to-right order of the Inventory tab's three fixed blocks, by block id
   -- ("armor", "weapons", "belt"). The inventory itself is not in the list: it
   -- is a row wide and always sits under the other three.
   inventory_order jsonb not null default '[]'::jsonb,
   inventory_columns int not null default 3,
+  inventory_trays jsonb not null default '{}'::jsonb,
 
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -310,6 +318,9 @@ alter table public.characters add column if not exists inventory_order jsonb not
 alter table public.characters add column if not exists block_columns int not null default 3;
 alter table public.characters add column if not exists ability_columns int not null default 3;
 alter table public.characters add column if not exists inventory_columns int not null default 3;
+alter table public.characters add column if not exists block_trays jsonb not null default '{}'::jsonb;
+alter table public.characters add column if not exists ability_trays jsonb not null default '{}'::jsonb;
+alter table public.characters add column if not exists inventory_trays jsonb not null default '{}'::jsonb;
 alter table public.characters add column if not exists equipment  jsonb not null default '{}'::jsonb;
 alter table public.characters add column if not exists pack       jsonb not null default '[]'::jsonb;
 alter table public.characters add column if not exists belt       jsonb not null default '[]'::jsonb;
@@ -514,10 +525,16 @@ create table if not exists public.campaigns (
   -- And how many columns that tab lays them out in, 1 to 9. A ceiling rather
   -- than a promise, exactly as on the character sheet.
   overview_columns int   not null default 3,
+  -- And which of those blocks are pinned to a side tray rather than laid on the
+  -- grid: {"left": [id, id], "right": [id, id]}. See normalizeTrays.
+  overview_trays   jsonb not null default '{}'::jsonb,
 
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
+
+-- For databases created before these columns existed.
+alter table public.campaigns add column if not exists overview_trays jsonb not null default '{}'::jsonb;
 
 create index if not exists campaigns_dm_user_id_idx on public.campaigns (dm_user_id);
 
@@ -835,7 +852,52 @@ create policy "campaign_events: table insert" on public.campaign_events
   );
 
 -- There is deliberately no update policy and no delete policy. A log nobody can
--- rewrite is the whole point, and the sweep below runs as its owner.
+-- rewrite is the whole point: the sweep below runs as its owner, and so does the
+-- one clear there is, which is the Game Master's alone.
+
+-- ----------------------------------------------------------------------------
+--  Clearing a table log.
+--
+--  The one deliberate hole in "insert only". A table that has played six
+--  sessions has six sessions of arithmetic behind it, and starting a new
+--  chapter should not mean scrolling past the last one forever. So the Game
+--  Master, and nobody else, may empty their own table's log.
+--
+--  Not a policy, because a delete policy is a standing permission and this is a
+--  single act: SECURITY DEFINER, with the one check written where nobody can
+--  reach around it. A player at the table cannot call it for a table they only
+--  sit at, and neither can a Game Master call it for somebody else's.
+--
+--  It hands back how many rows went, which is what the app says afterwards. The
+--  word that it happened is an ordinary event written by the client that asked
+--  for it, so every open copy of the block hears the same insert everything
+--  else arrives on and reads itself again.
+-- ----------------------------------------------------------------------------
+create or replace function public.clear_campaign_log(campaign uuid)
+returns integer
+language plpgsql security definer set search_path = public
+as $$
+declare
+  gone integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in to clear a table log.';
+  end if;
+
+  if not exists (select 1 from public.campaigns c
+                 where c.id = campaign
+                   and (c.dm_user_id = auth.uid() or public.is_admin())) then
+    raise exception 'Only the Game Master can clear this table log.';
+  end if;
+
+  delete from public.campaign_events e where e.campaign_id = campaign;
+  get diagnostics gone = row_count;
+  return gone;
+end;
+$$;
+
+revoke all on function public.clear_campaign_log(uuid) from public;
+grant execute on function public.clear_campaign_log(uuid) to authenticated;
 
 -- ----------------------------------------------------------------------------
 --  How long an event lives. Ninety days: long enough that a campaign meeting

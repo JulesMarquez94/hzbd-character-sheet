@@ -5,7 +5,7 @@ import { BarChip } from '../sheet/ActiveBlock.jsx';
 import { usePlayCard } from '../sheet/usePlayCard.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { quickBar } from '../../lib/combatBar.js';
-import { reactEvent } from '../../lib/campaignLog.js';
+import { claimReaction, reactEvent } from '../../lib/campaignLog.js';
 import { newChain } from '../../lib/logChain.js';
 
 /**
@@ -33,10 +33,21 @@ import { newChain } from '../../lib/logChain.js';
  * be is the table's question, and the prompt each chip opens still offers both
  * ways and still refuses what the pools cannot pay. Nothing here invents a
  * second way to play a card.
+ *
+ * ------------------------------------------------------------ one, and only one
+ * An action gets one reaction. Every other reader's banner clears the moment
+ * this window's open lands, which settles it whenever somebody is a second
+ * ahead. The other case is two people pressing in the same breath, and that is
+ * settled by the claim: the log's own sequence decides which of the two has it,
+ * and the one who lost is told so here rather than spending a Reaction Point on
+ * an action that has already been answered. See claimReaction.
  */
 export default function ReactionWindow({ call, character, patch, onClose }) {
   const { log } = useCampaignLog();
   const [request, setRequest] = useState(null);
+  /* Somebody else got the slot. The window stays up to say so and does nothing
+     else: no chips, no spend. */
+  const [lost, setLost] = useState(false);
 
   const play = usePlayCard({ character, patch });
 
@@ -57,12 +68,25 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
 
   /* The hold itself, once, on mount — and the release on the way out for a
      reader who leaves without acting. A confirmed use holds past the close:
-     its own settle is what speaks. */
+     its own settle is what speaks.
+
+     The open is a *claim*: it goes in and the table's own count says whether
+     this reader has the action's one reaction. Losing it holds nothing, and the
+     pass on the way out is a word about a slot the gate never gave us, which
+     the gate ignores by key. */
   useEffect(() => {
-    if (call?.chain) {
-      log(reactEvent('open', { chain: call.chain, key: keyRef.current, by: character?.name ?? '' }));
-    }
+    if (!call?.chain) return undefined;
+
+    let alive = true;
+    claimReaction(call.campaign, {
+      ...reactEvent('open', { chain: call.chain, key: keyRef.current, by: character?.name ?? '' }),
+      characterId: character?.id ?? null,
+    })
+      .then((won) => alive && !won && setLost(true))
+      .catch(() => {});
+
     return () => {
+      alive = false;
       if (!pendingRef.current) said('pass');
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -112,7 +136,9 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
       footer={
         <>
           <span className="pick-line">
-            The roll is held while this is open. Closing it releases the roll and takes nothing.
+            {lost
+              ? 'The reaction is somebody else’s. Nothing here is holding anything.'
+              : 'The roll is held while this is open. Closing it releases the roll and takes nothing.'}
           </span>
           <span className="spacer" />
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
@@ -121,27 +147,36 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
         </>
       }
     >
-      <p className="react-window-lead">
-        <b>{call?.actor ?? 'Someone'}</b> is using <b>{call?.title ?? 'something'}</b>. Whatever
-        you take resolves first. A movement resolves last, and picking one releases the roll at
-        once.
-      </p>
+      {lost ? (
+        <p className="react-window-lead">
+          Somebody else got there first. An action gets one reaction, and this one is already
+          answered, so there is nothing to take here and nothing has been spent.
+        </p>
+      ) : (
+        <p className="react-window-lead">
+          <b>{call?.actor ?? 'Someone'}</b> is using <b>{call?.title ?? 'something'}</b>. Whatever
+          you take resolves first, and it is the only reaction this action gets. A movement
+          resolves last, and picking one releases the roll at once.
+        </p>
+      )}
 
-      <div className="react-window-bar">
-        {groups.map((group) => (
-          <section className="bar-group" key={group.id}>
-            <div className="block-head">
-              <span className="stat-category-label">{group.label}</span>
-              {group.note && <span className="block-count">{group.note}</span>}
-            </div>
-            <div className="bar-chips">
-              {group.moves.map((entry) => (
-                <BarChip key={entry.key} move={entry} readOnly={false} onUse={() => pick(entry)} />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+      {!lost && (
+        <div className="react-window-bar">
+          {groups.map((group) => (
+            <section className="bar-group" key={group.id}>
+              <div className="block-head">
+                <span className="stat-category-label">{group.label}</span>
+                {group.note && <span className="block-count">{group.note}</span>}
+              </div>
+              <div className="bar-chips">
+                {group.moves.map((entry) => (
+                  <BarChip key={entry.key} move={entry} readOnly={false} onUse={() => pick(entry)} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
 
       {request && (
         <UsePrompt

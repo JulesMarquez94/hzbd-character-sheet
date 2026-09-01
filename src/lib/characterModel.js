@@ -154,23 +154,29 @@ export const BLANK_CHARACTER = {
   effects: [],
   // Append-only history of every XP, coin and supply movement. Newest first.
   ledger: [],
-  // Left-to-right order of the six blocks on the Character tab.
+  // Left-to-right order of the six blocks on the Character tab. A null in the
+  // list is a hole the player left on purpose: see normalizeBlockOrder.
   block_order: [1, 2, 3, 4, 5, 6],
   // And how many columns they are laid out in. Every tab with a grid carries
   // its own: three is the shape the site was drawn for, one is a phone and nine
   // is a wall. See normalizeGridColumns.
   block_columns: 3,
+  // And which of them were taken off the grid and pinned to the side trays:
+  // `{ left: [id, id], right: [id, id] }`, two slots a side. See normalizeTrays.
+  block_trays: {},
   // Left-to-right order of the Abilities tab's blocks, by source id
   // ("lineage", "talent:mycomancer", "gear"). Unlike block_order this has no
   // fixed length: a source arrives when it is taken and leaves when it is
   // handed back. Empty means nobody has arranged them yet.
   ability_order: [],
   ability_columns: 3,
+  ability_trays: {},
   // Left-to-right order of the Inventory tab's four fixed blocks, by block id
   // ("armor", "weapons", "trinkets", "belt"). Must be listed here: the save path
   // only writes columns named in this object (see pickCharacterFields in api.js).
   inventory_order: [],
   inventory_columns: 3,
+  inventory_trays: {},
 };
 
 /* -------------------------------------------------------------- block order */
@@ -194,8 +200,19 @@ export const SHEET_BLOCK_IDS = [1, 2, 3, 4, 5, 6];
  * normalizeSourceOrder matches an Abilities tab that grew a block: still
  * present keeps its place, gone is dropped, and new is appended rather than
  * pushed into the middle of an arrangement somebody has already made.
+ *
+ * `skip` is the blocks that are not on this grid at all because they are
+ * pinned to a tray. They are neither kept where they sit nor appended at the
+ * end: the grid does not hold them, so the order must not either.
+ *
+ * ------------------------------------------------------------------- the holes
+ * A `null` in the stored list is a cell the player deliberately left empty.
+ * Blank space is part of an arrangement — a block on its own at the top right,
+ * a gap where a second creature is going to go — so it survives the round trip
+ * exactly as an id does. Trailing holes are trimmed, because a hole after the
+ * last block is a row of nothing at the foot of the tab.
  */
-export function normalizeBlockOrder(value, extra = []) {
+export function normalizeBlockOrder(value, extra = [], skip = []) {
   let list = value;
   if (typeof list === 'string') {
     try {
@@ -206,22 +223,42 @@ export function normalizeBlockOrder(value, extra = []) {
   }
 
   const grown = new Set(extra.map(String));
+  const away = new Set(skip.map(String));
   const order = [];
 
   for (const raw of Array.isArray(list) ? list : []) {
+    if (raw === null || raw === undefined || raw === '') {
+      order.push(null);
+      continue;
+    }
     const id = Number(raw);
-    if (SHEET_BLOCK_IDS.includes(id)) {
+    if (SHEET_BLOCK_IDS.includes(id) && !away.has(String(id))) {
       if (!order.includes(id)) order.push(id);
       continue;
     }
     const named = String(raw);
-    if (grown.has(named) && !order.includes(named)) order.push(named);
+    if (grown.has(named) && !away.has(named) && !order.includes(named)) order.push(named);
   }
 
   for (const id of [...SHEET_BLOCK_IDS, ...grown]) {
-    if (!order.includes(id)) order.push(id);
+    if (!away.has(String(id)) && !order.includes(id)) order.push(id);
   }
-  return order;
+  return trimGaps(order);
+}
+
+/**
+ * An order with the empty cells at the end of it taken off.
+ *
+ * A hole between two blocks is a layout. A hole after the last one is a row of
+ * nothing at the foot of the tab, which nobody chose: it is what is left when a
+ * block is moved off the end, or when a filter takes the last block of a row
+ * away. Exported because a tab that narrows its own list has to trim what the
+ * narrowing exposed.
+ */
+export function trimGaps(order) {
+  let end = order.length;
+  while (end > 0 && order[end - 1] === null) end -= 1;
+  return end === order.length ? order : order.slice(0, end);
 }
 
 /**
@@ -234,8 +271,11 @@ export function normalizeBlockOrder(value, extra = []) {
  * keep the place they were given, ids that have gone are dropped, and anything
  * new is appended in its natural order rather than pushed into the middle of a
  * layout somebody has already arranged.
+ *
+ * `skip` is the ids pinned to a tray, and the holes work exactly as they do
+ * above: a null is blank space somebody chose, and trailing nulls are trimmed.
  */
-export function normalizeSourceOrder(value, ids) {
+export function normalizeSourceOrder(value, ids, skip = []) {
   let list = value;
   if (typeof list === 'string') {
     try {
@@ -245,16 +285,93 @@ export function normalizeSourceOrder(value, ids) {
     }
   }
 
-  const known = new Set(ids);
+  const known = new Set(ids.map(String));
+  const away = new Set(skip.map(String));
   const order = [];
   for (const raw of Array.isArray(list) ? list : []) {
+    if (raw === null || raw === undefined || raw === '') {
+      order.push(null);
+      continue;
+    }
     const id = String(raw);
-    if (known.has(id) && !order.includes(id)) order.push(id);
+    if (known.has(id) && !away.has(id) && !order.includes(id)) order.push(id);
   }
   for (const id of ids) {
-    if (!order.includes(id)) order.push(id);
+    if (!away.has(String(id)) && !order.includes(id)) order.push(id);
   }
-  return order;
+  return trimGaps(order);
+}
+
+/* ---------------------------------------------------------------- the trays */
+
+/**
+ * The two side trays, and how much each one holds.
+ *
+ * A tray is a panel pinned to the edge of the window that does not scroll with
+ * the tab. Two of them, left and right, two blocks apiece, which is the whole
+ * ceiling: a tray is a place for the two or three things you reach for every
+ * turn (your quick bar, the fight, the table's log) and not a second grid. Four
+ * slots is what fits down the side of a laptop at a block's own height without
+ * either of them shrinking.
+ */
+export const TRAY_SIDES = ['left', 'right'];
+export const TRAY_SLOTS = 2;
+
+/**
+ * A stored tray map, held to what actually exists.
+ *
+ * The same repair the orders get: `{ left: [...], right: [...] }`, only ids the
+ * tab really has, never the same block twice, never more than TRAY_SLOTS a
+ * side. Anything unreadable comes back as two empty trays, which is a tab that
+ * has never had one opened.
+ *
+ * A slot is positional, holes and all: `{ left: [null, 'fight:x'] }` is a
+ * bottom-left tray with nothing above it, and it has to stay that way, because
+ * on a phone the top and the bottom of a tray are two different handles.
+ */
+export function normalizeTrays(value, ids) {
+  let held = value;
+  if (typeof held === 'string') {
+    try {
+      held = JSON.parse(held);
+    } catch {
+      held = null;
+    }
+  }
+
+  const known = new Map(ids.map((id) => [String(id), id]));
+  const trays = {};
+  const taken = new Set();
+
+  for (const side of TRAY_SIDES) {
+    const list = Array.isArray(held?.[side]) ? held[side] : [];
+    const kept = [];
+    for (const raw of list.slice(0, TRAY_SLOTS)) {
+      const id = String(raw ?? '');
+      if (!known.has(id) || taken.has(id)) {
+        kept.push(null);
+        continue;
+      }
+      taken.add(id);
+      kept.push(known.get(id));
+    }
+    while (kept.length > 0 && kept[kept.length - 1] === null) kept.pop();
+    trays[side] = kept;
+  }
+  return trays;
+}
+
+/** Every block on either tray, ignoring the empty slots between them. */
+export function trayedIds(trays) {
+  return TRAY_SIDES.flatMap((side) => trays?.[side] ?? []).filter(
+    (id) => id !== null && id !== undefined
+  );
+}
+
+/** Whether a tray has anything on it. Named without a side means either. */
+export function traysHold(trays, side = null) {
+  if (side) return (trays?.[side] ?? []).some((id) => id !== null && id !== undefined);
+  return trayedIds(trays).length > 0;
 }
 
 /* ------------------------------------------------------------ grid columns */

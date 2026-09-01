@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import AbilityBlock from './AbilityBlock.jsx';
 import TagFilter from './TagFilter.jsx';
 import BlockArrange from './BlockArrange.jsx';
+import BlockTrays from './BlockTrays.jsx';
 import { useTagFilter } from './useTagFilter.js';
 import { CardStackProvider } from '../CardStack.jsx';
 import {
@@ -11,7 +12,13 @@ import {
   filterSources,
   heldCardTags,
 } from '../../lib/abilitySources.js';
-import { normalizeGridColumns, normalizeSourceOrder } from '../../lib/characterModel.js';
+import {
+  normalizeGridColumns,
+  normalizeSourceOrder,
+  normalizeTrays,
+  trayedIds,
+  trimGaps,
+} from '../../lib/characterModel.js';
 
 /**
  * The Abilities tab: everything this character can do, filed under whoever
@@ -59,12 +66,27 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
     [sources, filter]
   );
 
+  /* Which sources were pinned to a tray rather than left on the grid. Read
+     against every source the character has rather than against the filtered
+     ones: a tray is not the tab, so narrowing the page never empties it. See
+     BlockTrays.jsx. */
+  const trays = useMemo(
+    () => normalizeTrays(character?.ability_trays, sources.map((source) => source.id)),
+    [character?.ability_trays, sources]
+  );
+  const saveTrays = useCallback((next) => patch?.({ ability_trays: next }), [patch]);
+
   /* The stored arrangement covers every source the character has, whether the
      filter is showing it or not, so narrowing the page and then moving a block
      can never drop a source out of the order. */
   const savedOrder = useMemo(
-    () => normalizeSourceOrder(character?.ability_order, sources.map((source) => source.id)),
-    [character?.ability_order, sources]
+    () =>
+      normalizeSourceOrder(
+        character?.ability_order,
+        sources.map((source) => source.id),
+        trayedIds(trays)
+      ),
+    [character?.ability_order, sources, trays]
   );
   const saveOrder = useCallback((next) => patch?.({ ability_order: next }), [patch]);
 
@@ -81,7 +103,10 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
   const order = savedOrder;
 
   const shown = useMemo(() => new Map(visible.map((source) => [source.id, source])), [visible]);
-  const laidOut = order.filter((id) => shown.has(id));
+  /* Holes survive the filter, because a hole is a thing somebody arranged. What
+     does not survive is a hole the filter *made* at the end of the layout, which
+     nobody asked for. */
+  const laidOut = trimGaps(order.filter((id) => id === null || shown.has(id)));
 
   const hidden = sources.length - visible.length;
   const shownCards = visible.reduce(
@@ -98,6 +123,22 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
       readOnly={readOnly}
     />
   );
+
+  /* A block on a tray is drawn off every source rather than off the filtered
+     ones: the filter narrows the tab, and a tray is not the tab. */
+  const trayed = (id) => (
+    <AbilityBlock
+      source={sources.find((source) => source.id === id)}
+      character={character}
+      patch={patch}
+      readOnly={readOnly}
+    />
+  );
+
+  const describe = (id) => {
+    const source = sources.find((entry) => entry.id === id);
+    return source ? { name: source.title, note: source.note } : null;
+  };
 
   return (
     <CardStackProvider character={character}>
@@ -117,14 +158,16 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
             order={order}
             columns={columns}
             onColumns={saveColumns}
-            describe={(id) => {
-              const source = sources.find((entry) => entry.id === id);
-              return source ? { name: source.title, note: source.note } : null;
-            }}
+            trays={trays}
+            onTrays={patch ? saveTrays : null}
+            describe={describe}
             onChange={saveOrder}
             onClose={() => setArranging(false)}
           />
         )}
+
+        {/* Pinned to the window rather than laid on the tab. See BlockTrays. */}
+        <BlockTrays trays={trays} render={trayed} describe={describe} />
 
         {sources.length > 0 && (
           <TagFilter
@@ -155,11 +198,15 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
             )}
 
             <div className="sheet-grid-6">
-              {laidOut.map((id) => (
-                <section key={id} className={`sheet-cell src-${shown.get(id).kind}`}>
-                  {block(id)}
-                </section>
-              ))}
+              {laidOut.map((id, at) =>
+                id === null ? (
+                  <div key={`gap-${at}`} className="cell-gap" aria-hidden="true" />
+                ) : (
+                  <section key={id} className={`sheet-cell src-${shown.get(id).kind}`}>
+                    {block(id)}
+                  </section>
+                )
+              )}
             </div>
           </>
         )}

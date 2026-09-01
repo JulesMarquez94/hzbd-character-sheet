@@ -375,6 +375,14 @@
   animation: react-hold-pulse 1.6s ease-in-out infinite;
 }
 
+/* Why nobody else is coming: an action gets one reaction, and it has been
+   taken. Said under the hold rather than in the hint at the foot, because it is
+   news about this moment and the hint is the standing rule. */
+.react-gate-only {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
 @keyframes react-hold-pulse {
   0%, 100% { opacity: 0.65; }
   50% { opacity: 1; }

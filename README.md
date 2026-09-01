@@ -127,10 +127,25 @@ set. **Arrange blocks** opens a small drawing of the tab: choose a canvas of 1 t
 drag a block onto another to trade their places, or tap one and tap where it should go. The arrow
 keys move whichever block has focus. That count is a ceiling rather than a promise, since a block
 is a hard 360x640 everywhere: the tab takes as many columns as the window is wide enough for, so
-nine is nine on a wall and one on a phone. Both halves are saved on the character
-(`characters.block_order` and `characters.block_columns`), so they follow the sheet to any device
-and anyone viewing the sheet sees the same layout. The Abilities and Inventory tabs open the same
-dialog from their own button, each with a count of its own.
+nine is nine on a wall and one on a phone. The drawing never scrolls at any count: the tiles are
+sized to fit the height the dialog can give, so you are always looking at the whole shape.
+
+**Blank space is part of the arrangement.** Move a block and it leaves a hole where it was, and the
+hole stays: a tab can be two blocks, a gap and a third. There is always one spare cell past the
+last block, so there is always somewhere to make one.
+
+**And two side trays.** Down either edge of the drawing is a rail of two slots: the left tray and
+the right tray. A block moved onto one comes off the grid and is pinned to the edge of the window
+instead, where it does not scroll with the tab, so your quick bar and the fight you are in are one
+tap away wherever the tab is scrolled to. On a desktop a handle pulls the tray open and the canvas
+gives up the width to make room for it. On a phone there is no room beside anything, so the four
+slots become four handles at the corners of the screen edges, and one of them opens its block over
+the whole screen until you slide it off.
+
+All three halves are saved on the character (`characters.block_order`, `characters.block_columns`
+and `characters.block_trays`), so they follow the sheet to any device and anyone viewing the sheet
+sees the same layout. The Abilities and Inventory tabs open the same dialog from their own button,
+each with a count, an arrangement and trays of its own, and so does a campaign's Overview.
 
 ### Martial Moves
 
@@ -242,13 +257,23 @@ npm run preview  # serve the production build
 npm run lint     # eslint
 ```
 
-Six checkers prove things eslint cannot:
+Fifteen checkers prove things eslint cannot. Each takes `--list` to print every case it walked
+rather than only what it found:
 
 ```bash
-npm run lint:text    # no em dashes and no Oxford commas in anything a player reads
-npm run lint:math    # every stat tooltip adds up to the number above it
-npm run lint:halves  # every card's optional half is priced off its own prose
-npm run lint:riders  # every tracker rider reaches the sheet and comes back off
-npm run lint:weapons # every weapon's cards match the cost table it was built from
-npm run lint:order   # every school and family has a place in the printed order
+npm run lint:text      # no em dashes and no Oxford commas in anything a player reads
+npm run lint:math      # every stat tooltip adds up to the number above it
+npm run lint:halves    # every card's optional half is priced off its own prose
+npm run lint:riders    # every tracker rider reaches the sheet and comes back off
+npm run lint:weapons   # every weapon's cards match the cost table it was built from
+npm run lint:potions   # every potion's two prices come off its own Willpower column
+npm run lint:order     # every school and family has a place in the printed order
+npm run lint:cards     # every card's text is inside the ceiling and spelled one way
+npm run lint:dice      # every ruling the roller makes about a throw
+npm run lint:log       # a use and its throws gather back into one chain
+npm run lint:layout    # block orders, blank cells and trays all round-trip
+npm run lint:creatures # every creature scales along the character's own curve
+npm run lint:combat    # targets counted, landings soaked, boundaries rolled
+npm run lint:plan      # every card says what it rolls
+npm run lint:help      # every offer made after a roll is one that could help
 ```
