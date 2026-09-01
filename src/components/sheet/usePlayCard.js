@@ -4,18 +4,25 @@ import { useCampaignLog } from '../../context/campaign-log.js';
 import { aimHits, aimOutcomes, applyPlan, armCheck } from '../../lib/combatApply.js';
 import { isCriticalSuccess, isFailure } from '../../lib/dice.js';
 import { newChain } from '../../lib/logChain.js';
-import { appliedEvent, effectLaidEvent, playEvent, verdictEvent } from '../../lib/campaignLog.js';
+import {
+  appliedEvent,
+  effectLaidEvent,
+  playEvent,
+  reactionFailedEvent,
+  verdictEvent,
+} from '../../lib/campaignLog.js';
 import { rollPlan } from '../../lib/rollPlan.js';
+import { subscribeToTable } from '../../lib/realtime.js';
 import { castEffect, spendUse } from '../../lib/combatBar.js';
 
 /**
  * How long the table gets to react before the first dice can be thrown, in
  * seconds. "When an entity does an action there should be a 6 second time
  * before the dice roll happens, offering all entities with reaction to take a
- * reaction" (Jules, 2026-09-01). The window rides the chain's first roll as
- * `hold`, only for a use made with a fight standing (`options.react`, set by
- * the prompt), and the surface counts it down out loud. See DiceSurface.jsx,
- * and ReactionCall.jsx for the other side of it.
+ * reaction" (Jules, 2026-09-01). The window is the reaction gate's countdown —
+ * see ReactionGate.jsx — raised only for a use made with a fight standing
+ * (`options.react`, set by the prompt), and held open past it while anybody is
+ * mid-reaction: the stack resolves before the action does.
  */
 const REACTION_HOLD = 6;
 
@@ -78,7 +85,7 @@ const REACTION_HOLD = 6;
  */
 export function usePlayCard({ character, patch }) {
   const tray = useDiceTray();
-  const { log } = useCampaignLog();
+  const { tables, log } = useCampaignLog();
 
   return useCallback(
     (request, mode, amount, options = {}, extra = {}) => {
@@ -163,8 +170,21 @@ export function usePlayCard({ character, patch }) {
         card: request?.card ?? null,
       };
 
-      /* ---- the effect with nothing to pass, delivered now ---- */
-      if (cast && !checky) log(effectLaidEvent(speaker, cast, targets));
+      /* Whether the stack stands between this action and its dice: a use made
+         with a fight standing, that actually rolls something to hold. A use
+         made *as* a reaction is never gated itself — it is already the
+         interrupt, and a window on the window would stack the table into a
+         corridor of held rolls. */
+      const gating =
+        Boolean(options?.react) &&
+        mode !== 'reaction' &&
+        plan.length > 0 &&
+        Boolean(tray?.gate);
+
+      /* ---- the effect with nothing to pass, delivered now ----
+         Held back while the gate stands, though: an action the table then
+         fails must not have already laid its row on anybody. */
+      if (cast && !checky && !gating) log(effectLaidEvent(speaker, cast, targets));
 
       /* ---- and the rest, once the dice have spoken ----
          The chain hands back what landed and, for an aimed check, who it landed
@@ -172,23 +192,24 @@ export function usePlayCard({ character, patch }) {
          back above lays on whoever was hit; each kind of rolled value goes out
          as one delivery carrying the raw landings, hit targets only — Armor
          belongs to whoever is hit, so nothing is subtracted here. A page with
-         its own hands (the encounter view) takes over from the verdict row on. */
-      const settle = (thrown, meta = {}) => {
+         its own hands (the encounter view) takes over from the verdict row on,
+         handed the surviving targets in `meta.targets`. */
+      const settleWith = (live) => (thrown, meta = {}) => {
         if (meta.outcomes && meta.outcomes.length > 0) {
           log(verdictEvent(speaker, request?.name ?? '', meta.outcomes));
         }
 
         if (onSettled) {
-          onSettled(thrown, meta);
+          onSettled(thrown, { ...meta, targets: live });
           return;
         }
         if (!delivering) return;
 
         const landed = meta.outcomes
-          ? targets.filter((entry) =>
+          ? live.filter((entry) =>
               aimHits(meta.outcomes).some((outcome) => outcome.id === entry.id)
             )
-          : targets;
+          : live;
         if (landed.length === 0) return;
 
         if (cast && checky && meta.hit) log(effectLaidEvent(speaker, cast, landed));
@@ -204,25 +225,95 @@ export function usePlayCard({ character, patch }) {
         }
       };
 
-      /* ---- 3 to 6. the dice ----
+      /* ---- 3 to 6. the dice, behind the stack ----
          Deliberately not awaited by the caller. Everything above has already
-         happened; what follows is a conversation with the player that may take
-         as long as they like, and the block that started it has a prompt to
-         close in the meantime. */
+         happened; what follows is a conversation with the table that may take
+         as long as it likes, and the block that started it has a prompt to
+         close in the meantime.
+
+         The gate runs first when the fight is standing: six seconds for
+         reactions, held open while any are being taken, then the fail question
+         if any were. An action failed there never rolls — the price stayed
+         spent at the press — and one failed against *some* targets rolls
+         against the rest, its checks re-aimed at the numbers that survive. */
       if (plan.length > 0) {
-        void throwChain(tray, plan, {
-          request,
-          actor,
-          chain,
-          hold: options?.react ? REACTION_HOLD : 0,
-          onSettled: settle,
-        });
+        void (async () => {
+          let live = targets;
+          let armed = plan;
+
+          if (gating) {
+            const verdict = await tray.gate({
+              name: request?.name ?? 'An action',
+              note: actor?.name ?? '',
+              art: request?.card?.art_url ?? null,
+              hold: REACTION_HOLD,
+              targets,
+              subscribe: watchStack(tables, chain),
+            });
+
+            if (verdict?.failed) {
+              log(
+                reactionFailedEvent(actor, request?.name ?? 'The action', {
+                  failed: targets.map((entry) => entry.name),
+                })
+              );
+              settleWith([])([], { failed: true });
+              return;
+            }
+
+            if ((verdict?.dropped ?? []).length > 0) {
+              live = verdict.targets;
+              log(
+                reactionFailedEvent(actor, request?.name ?? 'The action', {
+                  failed: verdict.dropped.map((entry) => entry.name),
+                })
+              );
+              armed = (roll && tray
+                ? rollPlan(request?.card, actor, request?.modifiers, {
+                    half: Boolean(options.price),
+                  })
+                : []
+              ).map((link) => armCheck(link, live));
+            }
+
+            /* The held-back checkless effect, laid now that the action stands. */
+            if (cast && !checky) log(effectLaidEvent(speaker, cast, live));
+          }
+
+          await throwChain(tray, armed, { request, actor, chain, onSettled: settleWith(live) });
+        })();
       }
 
       return body;
     },
-    [tray, character, patch, log]
+    [tray, character, patch, tables, log]
   );
+}
+
+/**
+ * The table's word about one action's stack, wired for as long as its gate
+ * stands: who opened a reaction against it, and each hold lifted as a take or
+ * a pass. Matched on the action's own chain id, so two actions gated at once
+ * cannot hear each other's reactors.
+ */
+function watchStack(tables, chain) {
+  return (handlers) => {
+    const drops = (tables ?? []).map((table) =>
+      subscribeToTable({
+        table: 'campaign_events',
+        filter: `campaign_id=eq.${table.id}`,
+        onChange: (payload) => {
+          if (payload.eventType !== 'INSERT') return;
+          const row = payload.new;
+          if (row?.kind !== 'react' || row.data?.to !== chain) return;
+          if (row.data.move === 'open') handlers.onOpen(row.data.key ?? row.id, row.actor);
+          else if (row.data.move === 'done') handlers.onDone(row.data.key ?? null, true);
+          else if (row.data.move === 'pass') handlers.onDone(row.data.key ?? null, false);
+        },
+      })
+    );
+    return () => drops.forEach((off) => off());
+  };
 }
 
 /**
@@ -248,7 +339,7 @@ function stripCast(body, cast) {
  * nobody is holding must not be able to throw: a rejected float here would land
  * as an unhandled rejection in the console of a player whose dice worked fine.
  */
-async function throwChain(tray, plan, { request, actor, chain, hold = 0, onSettled = null }) {
+async function throwChain(tray, plan, { request, actor, chain, onSettled = null }) {
   /* Set by a critical success and held until the next check. Every landing of
      the damage maximises, not just the first: a Flurry's three landings are one
      attack's damage, and maximising only the first of them would be arbitrary.
@@ -268,7 +359,7 @@ async function throwChain(tray, plan, { request, actor, chain, hold = 0, onSettl
   };
 
   try {
-    for (const [at, link] of plan.entries()) {
+    for (const link of plan) {
       const result = await tray.present({
         ...link,
         name: request?.name ?? 'A roll',
@@ -277,9 +368,6 @@ async function throwChain(tray, plan, { request, actor, chain, hold = 0, onSettl
         /* The face on the surface's header: the card being played, so a roll
            reads as the action it is. */
         art: request?.card?.art_url ?? null,
-        /* The reaction window sits on the chain's first roll only: the table
-           reacts to the action, not to every landing of its damage. */
-        hold: at === 0 ? hold : 0,
         chain,
         log: true,
         maximize: maximize && link.kind === 'damage',

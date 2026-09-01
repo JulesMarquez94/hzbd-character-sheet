@@ -16,6 +16,7 @@ import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import FightProvider from '../components/campaign/FightProvider.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
 import ReactionCall from '../components/campaign/ReactionCall.jsx';
+import ReactionWindow from '../components/campaign/ReactionWindow.jsx';
 import TurnCall from '../components/campaign/TurnCall.jsx';
 import DiceSheet from '../components/sheet/DiceSheet.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
@@ -73,6 +74,9 @@ export default function CharacterSheet({ creating = false }) {
   const [unit, setUnit] = useState(readStoredUnit);
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved | error
   const [copied, setCopied] = useState(false);
+  /* The action being reacted to, while this sheet's reaction window is up.
+     Opening the window is the hold on the actor's roll: see ReactionWindow.jsx. */
+  const [reacting, setReacting] = useState(null);
   const [unitMenuOpen, setUnitMenuOpen] = useState(false);
   const tabMenuRef = useRef(null);
   const unitMenuRef = useRef(null);
@@ -392,17 +396,27 @@ export default function CharacterSheet({ creating = false }) {
         started here by this sheet, off an announcement on the table log, because
         nobody else may write to it. See TurnCall.jsx. */}
     <TurnCall character={character} patch={patch} canEdit={canEdit} />
-    {/* The reaction window's knock: somebody at the table acted, their dice are
-        held for six seconds, and this sheet has Reaction Points to answer with.
-        Renders nothing the rest of the time. See ReactionCall.jsx. */}
+    {/* The reaction window's knock: somebody at the table acted, their roll is
+        gated, and this sheet has Reaction Points to answer with. Tapping the
+        banner opens the window below, which is itself the hold on their roll.
+        See ReactionCall.jsx and ReactionWindow.jsx. */}
     <ReactionCall
       needFight
       ready={canEdit && (Number(shown.reaction) || 0) > 0}
       ignore={(row) => row.character_id === character.id}
+      onReact={setReacting}
       line={`You have ${Number(shown.reaction) || 0} Reaction ${
         (Number(shown.reaction) || 0) === 1 ? 'Point' : 'Points'
-      }. Play a card As a Reaction while the window holds.`}
+      }.`}
     />
+    {reacting && (
+      <ReactionWindow
+        call={reacting}
+        character={shown}
+        patch={patch}
+        onClose={() => setReacting(null)}
+      />
+    )}
     <div className="sheet" style={{ '--sheet-cols': canvasColumns }} data-columns={canvasColumns}>
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">

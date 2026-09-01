@@ -6,6 +6,7 @@ import { applyIntervention, interventionsFor } from '../lib/interventions.js';
 import { REPLAY_DEPTH } from '../lib/logChain.js';
 import CustomRoll from './CustomRoll.jsx';
 import DiceSurface from './DiceSurface.jsx';
+import ReactionGate from './ReactionGate.jsx';
 import './DiceTray.css';
 
 /**
@@ -253,6 +254,31 @@ export function DiceTrayProvider({ children }) {
     return () => clearTimeout(id);
   }, [watching, dismissWatch]);
 
+  /* The reaction gate's job and the promise it settles, kept exactly the way
+     the surface's are: one at a time, and a newer one closes the older out. */
+  const [gateJob, setGateJob] = useState(null);
+  const settleGate = useRef(null);
+
+  const gate = useCallback(
+    (spec) =>
+      new Promise((resolve) => {
+        /* A second action gated while the first still stands releases the
+           first as it was: the targets it opened with, nothing failed. The
+           table has plainly moved on. */
+        settleGate.current?.({ failed: false, targets: spec?.targets ?? [] });
+        settleGate.current = resolve;
+        setGateJob({ id: `gate-${Date.now()}`, spec: spec ?? {} });
+      }),
+    []
+  );
+
+  const resolveGate = useCallback((answer) => {
+    const resolve = settleGate.current;
+    settleGate.current = null;
+    setGateJob(null);
+    resolve?.(answer ?? { failed: false, targets: [] });
+  }, []);
+
   const present = useCallback(
     (spec) =>
       new Promise((resolve) => {
@@ -425,11 +451,12 @@ export function DiceTrayProvider({ children }) {
       character,
       hold,
       present,
+      gate,
       watch,
       open: () => setOpen(true),
       close: () => setOpen(false),
     }),
-    [character, hold, present, watch]
+    [character, hold, present, gate, watch]
   );
 
   return (
@@ -562,6 +589,10 @@ export function DiceTrayProvider({ children }) {
         />
       )}
 
+      {/* The stack, when an action is waiting on it: the reaction window and
+          the fail question, before any dice go up. See ReactionGate.jsx. */}
+      {gateJob && <ReactionGate key={gateJob.id} job={gateJob} onResolve={resolveGate} />}
+
       {job && (
         <DiceSurface
           key={job.id}
@@ -609,9 +640,6 @@ function normalize(spec) {
     /* The face on the surface's header: the card being played, as a plain URL
        so the tray never has to know the codex. Null draws the name alone. */
     art: spec.art ?? null,
-    /* The reaction window: seconds the throw is held before it can be made,
-       counted down on the surface. Zero for every roll outside a fight. */
-    hold: Math.max(0, Math.floor(Number(spec.hold) || 0)),
     /* Whether the table hears about it. A scratch roll does not: it has no name
        to head a block with, and a feed full of unnamed d6 is a feed nobody
        reads. See the two modes at the top. */

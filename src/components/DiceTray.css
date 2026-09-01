@@ -329,14 +329,140 @@
   }
 }
 
-/* The reaction window, counted out loud. Copper, because it is the fight
-   speaking: six seconds where the table may answer before the dice can land. */
-.dice-hold {
-  margin: 14px 0 0;
-  font-size: 0.78rem;
+/* =========================================================
+   THE REACTION GATE
+   The stack, standing between an action and its dice: the
+   countdown, who is holding it, and the fail question. Same
+   footing as the dice surface, because it is the beat before
+   it. See ReactionGate.jsx.
+   ========================================================= */
+.react-gate {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay-top);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 10, 13, 0.82);
+  backdrop-filter: blur(2px);
+}
+
+.react-gate-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: min(100%, 560px);
+  text-align: center;
+}
+
+.react-gate-line {
+  margin: 0;
+  font-size: 0.9rem;
   font-weight: 600;
-  letter-spacing: 0.5px;
   color: var(--copper-bright);
+}
+
+.react-gate-holds {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.react-gate-hold {
+  font-size: 0.82rem;
+  color: var(--text-silver);
+  animation: react-hold-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes react-hold-pulse {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-gate-hold {
+    animation: none;
+  }
+}
+
+.react-gate-override {
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.react-gate-ask {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.react-gate-targets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* One body and the table's word on it: Stands, or Fails. A failed one dims
+   and goes red, because it is about to be left out of the roll. */
+.react-gate-target {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 130px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  background-color: rgba(9, 17, 21, 0.7);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.react-gate-target-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.react-gate-target-said {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--def-healing);
+}
+
+.react-gate-target.is-failed {
+  border-color: rgba(224, 82, 82, 0.5);
+  opacity: 0.75;
+}
+
+.react-gate-target.is-failed .react-gate-target-said {
+  color: var(--stat-health);
+}
+
+.react-gate-verdicts {
+  display: flex;
+  gap: 10px;
+}
+
+.react-gate-hint {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
 
 /* ------------------------------------------------------------- the answer */

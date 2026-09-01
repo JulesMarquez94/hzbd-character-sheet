@@ -22,8 +22,15 @@ const REACTION_WINDOW_MS = 6000;
  * `ignore` is how a reader skips their own side's casts — a player their own,
  * the Game Master the table's — because nobody reacts to themselves.
  */
-export default function ReactionCall({ tables = null, ignore, ready, needFight = false, line = '' }) {
-  const [call, setCall] = useState(null); // { key, actor, title }
+export default function ReactionCall({
+  tables = null,
+  ignore,
+  ready,
+  needFight = false,
+  line = '',
+  onReact = null,
+}) {
+  const [call, setCall] = useState(null); // { key, actor, title, chain }
 
   /* The sheet's own tables where none are handed in, so the sheet mounts this
      with no plumbing; the encounter view hands its one campaign in directly. */
@@ -58,7 +65,15 @@ export default function ReactionCall({ tables = null, ignore, ready, needFight =
           if (!held.ready) return;
           if (held.ignore && held.ignore(row)) return;
 
-          setCall({ key: row.id, actor: row.actor || 'Someone', title: row.title || 'something' });
+          setCall({
+            key: row.id,
+            actor: row.actor || 'Someone',
+            title: row.title || 'something',
+            /* The reacted action's chain: what a hold is addressed to. Null
+               for a use that rolls nothing, which has no gate to hold — the
+               reaction still plays, it just pauses nothing. */
+            chain: row.data?.chain ?? null,
+          });
         },
       })
     );
@@ -80,14 +95,25 @@ export default function ReactionCall({ tables = null, ignore, ready, needFight =
     <button
       type="button"
       className="reaction-call"
-      onClick={() => setCall(null)}
-      title="A reaction is played like any card: As a Reaction. This puts the notice away."
+      onClick={() => {
+        /* The banner is the door now: clicking it opens the reaction window,
+           which is itself the hold on the actor's roll. With nobody to hand
+           the click to, it stays a notice that a tap puts away. */
+        if (onReact) onReact(call);
+        setCall(null);
+      }}
+      title={
+        onReact
+          ? 'Open the reaction window. Opening it holds their roll while you choose.'
+          : 'A reaction is played like any card: As a Reaction. This puts the notice away.'
+      }
     >
       <span className="reaction-call-head">Reaction window</span>
       <span className="reaction-call-what">
         <b>{call.actor}</b> uses <b>{call.title}</b>
       </span>
       {line && <span className="reaction-call-line">{line}</span>}
+      {onReact && <span className="reaction-call-line reaction-call-go">Tap to react &rarr;</span>}
     </button>
   );
 }

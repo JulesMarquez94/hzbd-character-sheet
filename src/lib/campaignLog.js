@@ -402,6 +402,60 @@ export function turnDoneEvent(character, round) {
   };
 }
 
+/* ---------------------------------------------------------------- the stack
+ *
+ * "If a reaction is clicked on, it opens a window to choose the action they
+ * want to take, and pauses the roll of the reacted action. Actions resolve in
+ * the order they are put on the stack; movement is the only exception, as it
+ * happens last." Jules, 2026-09-01.
+ *
+ * Three rows carry the whole of it, tied to the reacted action by its chain id
+ * — the same client-minted id its own throws hang under:
+ *
+ *   open    somebody stepped in. The actor's gate pauses its countdown and
+ *           says who. `key` names this one reaction, so two reactors can hold
+ *           one action and release it one at a time.
+ *   done    the reaction was taken (its price paid). One fewer hold; when the
+ *           last lifts, the actor's gate asks the fail question.
+ *   pass    the reactor stepped back out without acting, or picked a movement
+ *           — movement resolves after the action, so it never holds it. A
+ *           pass lifts the hold without earning a fail question.
+ *
+ * And the verdict the question can end in:
+ *
+ *   failed  the action is off. The cost stays spent — pressing use was the
+ *           decision, the reaction is what undid the consequence — and the
+ *           row says so for the whole table.
+ */
+
+export function reactEvent(move, { chain = null, key = null, by = '' } = {}) {
+  const said = {
+    open: { title: 'Reacting', detail: 'The roll holds while they choose' },
+    done: { title: 'Reaction taken', detail: 'The stack resolves it first' },
+    pass: { title: 'Stood back', detail: 'The roll is released' },
+  }[move];
+  if (!said) return null;
+
+  return {
+    kind: 'react',
+    actor: by || 'Someone',
+    title: said.title,
+    detail: said.detail,
+    data: { move, to: chain, key },
+  };
+}
+
+/** The fail question answered against the action: it fizzles, the cost stays. */
+export function reactionFailedEvent(character, name, { failed = [] } = {}) {
+  return {
+    kind: 'react',
+    actor: character?.name ?? '',
+    title: failed.length > 0 ? `${name} fails against ${listAnd(failed)}` : `${name} fails`,
+    detail: 'Undone by the reaction · the cost stays spent',
+    data: { move: 'failed', card: null, failed },
+  };
+}
+
 /**
  * The curtain moved: enemy health shown to the table, or hidden again.
  *
@@ -601,6 +655,9 @@ export function eventWords(event) {
   // Fire damage". The verb was decided when the row was written.
   if (event?.kind === 'effect') return 'laid';
   if (event?.kind === 'apply') return event.data?.verb ?? 'dealt';
+  // The stack's rows carry their whole sentence in the title: "Kaelen —
+  // Reacting", "Lark — Fireball fails".
+  if (event?.kind === 'react') return '';
   return '';
 }
 

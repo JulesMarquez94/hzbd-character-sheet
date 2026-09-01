@@ -8358,6 +8358,31 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
+.reaction-call-go {
+  color: var(--copper-bright);
+  font-weight: 700;
+}
+
+/* The reaction window: the shelf of everything the reader can take, over the
+   line naming what is being answered. The hold window on the Game Master's
+   side prints the lead alone. */
+.react-window-lead {
+  margin: 0 0 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.react-window-lead b {
+  color: var(--text-bright);
+}
+
+.react-window-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
 /* =========================================================
    TARGET CHIPS
    A body in the fight at chip size: the name in the side's

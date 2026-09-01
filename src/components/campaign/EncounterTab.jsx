@@ -6,6 +6,7 @@ import EnemyBlock from './EnemyBlock.jsx';
 import FoeTurnPrompt from './FoeTurnPrompt.jsx';
 import LogBlock from './LogBlock.jsx';
 import ReactionCall from './ReactionCall.jsx';
+import ReactionHold from './ReactionHold.jsx';
 import RunBlock from './RunBlock.jsx';
 import { CampaignLogContext } from '../../context/campaign-log.js';
 import { useDiceTray } from '../../context/dice-tray.js';
@@ -126,6 +127,9 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   const [boundary, setBoundary] = useState(null);
   /* A settled chain waiting to land on bodies. See handleResults. */
   const [apply, setApply] = useState(null);
+  /* A player's action being reacted to, while the hold window is up. Opening
+     it is the hold on their roll. See ReactionHold.jsx. */
+  const [reacting, setReacting] = useState(null);
 
   /* One pending patch per encounter id, because a Game Master can move between
      two of them faster than the debounce, and a patch that followed the
@@ -980,8 +984,11 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         tables={[{ id: campaignId }]}
         ready={run.live && foes.some((foe) => !foe.down && foe.reaction > 0)}
         ignore={(row) => !row.character_id}
-        line="An enemy with Reaction Points can answer: play it off its block As a Reaction."
+        onReact={setReacting}
+        line="An enemy with Reaction Points can answer."
       />
+
+      {reacting && <ReactionHold call={reacting} onClose={() => setReacting(null)} />}
 
       {error && <div className="form-error">{error}</div>}
 

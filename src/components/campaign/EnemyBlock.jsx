@@ -520,7 +520,9 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
               combat.onResults({
                 foe,
                 request,
-                targets,
+                /* The survivors, when the reaction gate dropped anybody: the
+                   window and the deliveries land on who is left. */
+                targets: meta.targets ?? targets,
                 thrown,
                 outcomes: meta.outcomes ?? null,
                 hit: meta.hit ?? null,

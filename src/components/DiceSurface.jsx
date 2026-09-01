@@ -103,22 +103,7 @@ export default function DiceSurface({
   /* How many of the bursts have bloomed. Bases are never staged: they land
      together, the way dice actually do. */
   const [bloomed, setBloomed] = useState(0);
-  /* The reaction window: seconds left before the throw unlocks. Counted from
-     the moment the surface opens, because the table reacts to the action being
-     declared, not to the player finding the button. See `hold` in
-     usePlayCard.js. */
-  const [wait, setWait] = useState(() => Math.max(0, Number(spec.hold) || 0));
   const timers = useRef([]);
-
-  useEffect(() => {
-    if (wait <= 0) return undefined;
-    const id = setInterval(() => setWait((left) => Math.max(0, left - 1)), 1000);
-    return () => clearInterval(id);
-  }, [wait]);
-
-  /* A replayed roll was already thrown on somebody else's screen; a window on
-     it here would be holding the audience, not the actor. */
-  const holding = wait > 0 && !spec.watching;
 
   const bursts = (result?.dice ?? []).filter((one) => one.role === 'explosion');
   const landed = phase === 'done';
@@ -225,12 +210,11 @@ export default function DiceSurface({
       onMouseDown={(event) => {
         if (event.target !== event.currentTarget) return;
         /* A roll waiting on its DC is waiting on an answer, so a stray tap does
-           nothing, and one held for reactions is waiting on the table.
-           Everything else on the surface is a tap away from its next beat. */
+           nothing. Everything else on the surface is a tap away from its next
+           beat. */
         if (phase === 'dc') return;
-        if (phase === 'ready') {
-          if (!holding) onThrow();
-        } else if (phase === 'rolling') skip();
+        if (phase === 'ready') onThrow();
+        else if (phase === 'rolling') skip();
         else if (!needsCall) onClose();
       }}
     >
@@ -416,23 +400,10 @@ export default function DiceSurface({
           </div>
         )}
 
-        {/* The reaction window, counted out loud: the table's six seconds to
-            answer the action before its dice can land. See usePlayCard.js. */}
-        {holding && (phase === 'ready' || phase === 'dc') && (
-          <p className="dice-hold">
-            Reactions are open · the roll unlocks in {wait}s
-          </p>
-        )}
-
         <div className="dice-tools">
           {!watching && phase === 'ready' && (
-            <button
-              type="button"
-              className="btn btn-copper"
-              onClick={onThrow}
-              disabled={holding}
-            >
-              {holding ? `Roll · ${wait}` : 'Roll'}
+            <button type="button" className="btn btn-copper" onClick={onThrow}>
+              Roll
             </button>
           )}
           {phase === 'rolling' && (

@@ -10457,3 +10457,63 @@ a filter; a narrower channel is one ask away if notes need to stay behind it.
 combat on the table's own bell now, and a player who could ring themselves out
 mid-fight would be a runner announcing turns to a sheet that left. Solo sheets
 keep the button.
+
+## The stack, 2026-09-01
+
+Jules, the day's sixth pass: "If a reaction is clicked on, it opens a window
+to choose the action they want to take, and pauses the roll of the reacted
+action. Actions resolve in the order they are put on the stack; movement is
+the only exception, as it happens last. When the reaction is over and we
+return to the player, he should see a popup that asks if the reaction made
+this action fail. If it does fail, the resources are spent but the action is
+not taken. If it targets multiple, the failed question is asked about all of
+them."
+
+### The gate
+
+The six-second countdown moved off the dice surface and became a thing of its
+own: `ReactionGate.jsx`, raised by the tray before any dice go up
+(`tray.gate`), for a use made with a fight standing that actually rolls
+something. It counts six, and the moment anybody opens a reaction it stops
+counting and says who. It stays held until every open reaction is taken or
+passed, which is the stack resolving before the action does, and a hung
+reactor can be carried past with one quiet link. Then, if any reaction was
+actually taken, the fail question: per picked target with Stands/Fails on
+each, or one plain "it fails / it stands" when nothing was picked.
+
+What the gate resolves is what the chain rolls. Failed everywhere: nothing
+rolls, the cost stays spent (pressing use was the decision), and a `failed`
+row tells the table. Failed against some: the chain re-aims at the survivors,
+checks re-armed against the numbers that are left, and the dropped names go on
+the log. The held-back effect of a checkless card also waits out the gate now,
+so an action the table fails has laid nothing on anybody.
+
+### The stack's own rows
+
+Three moves on kind `react`, addressed to the action by its chain id: `open`
+(the hold), `done` (taken; earns the fail question) and `pass` (stood back, or
+picked a movement). The gate subscribes for exactly its own action's rows, so
+two gated actions cannot hear each other's reactors.
+
+### The two windows
+
+The banner is a door now. On a player's sheet it opens `ReactionWindow`: their
+whole quick bar on a shelf, the hold posted the moment it opens, the pick
+walking into the ordinary UsePrompt. Confirming posts `done`; closing posts
+`pass`; **picking a movement posts `pass` immediately**, because movement
+resolves after the action and never holds it. On the Game Master's page it
+opens `ReactionHold`, which is only the hold itself: the enemies' cards are
+already on their blocks, so the window says the roll is held, the card is
+played off the block As a Reaction as ever, and the two buttons say how the
+hold lifts.
+
+A use made *as* a reaction is never gated itself: it is already the interrupt,
+and a window on the window would stack the table into a corridor of held
+rolls. Reactions to reactions stay the table's business.
+
+### Proved in the harness
+
+Open paused the countdown mid-word, done resumed it, the question offered
+Stands/Fails per target, and failing one resolved
+`{ targets: [1.Fenrat, 2.Fenrat], dropped: [Kaelen] }` into the chain, which
+is exactly the re-aim the survivors get.
