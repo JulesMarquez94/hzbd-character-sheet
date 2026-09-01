@@ -91,29 +91,41 @@ export default function ReactionCall({
 
   if (!call) return null;
 
+  /* The question, asked as one: "do you want to take a reaction to X doing X?"
+     Saying yes is what pauses their roll — the window it opens posts the hold
+     the moment it mounts — and the shelf it opens is where the reaction is
+     chosen, with all the time the hold buys. Letting it pass costs nothing and
+     the banner clears itself either way when the window closes. */
   return (
-    <button
-      type="button"
-      className="reaction-call"
-      onClick={() => {
-        /* The banner is the door now: clicking it opens the reaction window,
-           which is itself the hold on the actor's roll. With nobody to hand
-           the click to, it stays a notice that a tap puts away. */
-        if (onReact) onReact(call);
-        setCall(null);
-      }}
-      title={
-        onReact
-          ? 'Open the reaction window. Opening it holds their roll while you choose.'
-          : 'A reaction is played like any card: As a Reaction. This puts the notice away.'
-      }
-    >
+    <div className="reaction-call" role="alertdialog" aria-label="Reaction window">
       <span className="reaction-call-head">Reaction window</span>
       <span className="reaction-call-what">
-        <b>{call.actor}</b> uses <b>{call.title}</b>
+        Do you want to take a reaction to <b>{call.actor}</b> using <b>{call.title}</b>?
       </span>
       {line && <span className="reaction-call-line">{line}</span>}
-      {onReact && <span className="reaction-call-line reaction-call-go">Tap to react &rarr;</span>}
-    </button>
+
+      <span className="reaction-call-acts">
+        {onReact && (
+          <button
+            type="button"
+            className="btn btn-copper btn-sm"
+            onClick={() => {
+              onReact(call);
+              setCall(null);
+            }}
+            title="Holds their roll and opens everything you can take, so you have time to choose"
+          >
+            Take a reaction
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn btn-minimal btn-sm"
+          onClick={() => setCall(null)}
+        >
+          Let it pass
+        </button>
+      </span>
+    </div>
   );
 }

@@ -118,7 +118,7 @@ export default function ReactionGate({ job, onResolve }) {
           <>
             <p className="react-gate-line">
               {holding
-                ? 'The stack is held. It resolves before this action does.'
+                ? 'A reaction is declared: this action cannot resolve yet.'
                 : `Reactions are open · the roll unlocks in ${wait}s`}
             </p>
 
@@ -126,7 +126,7 @@ export default function ReactionGate({ job, onResolve }) {
               <div className="react-gate-holds">
                 {Object.entries(holds).map(([key, who]) => (
                   <span key={key} className="react-gate-hold">
-                    {who} is reacting…
+                    Waiting on {who} to react…
                   </span>
                 ))}
               </div>

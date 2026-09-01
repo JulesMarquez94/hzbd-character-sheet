@@ -10517,3 +10517,14 @@ Open paused the countdown mid-word, done resumed it, the question offered
 Stands/Fails per target, and failing one resolved
 `{ targets: [1.Fenrat, 2.Fenrat], dropped: [Kaelen] }` into the chain, which
 is exactly the re-aim the survivors get.
+
+### The question, asked as one (same day, seventh word)
+
+The banner stopped being a tap-away notice and became the question in Jules's
+own phrasing: "Do you want to take a reaction to X using X?" with the two
+answers under it. **Take a reaction** is the yes: it holds the actor's roll
+(the window it opens posts the hold on mount) and opens everything the
+character can take, with all the time the hold buys. **Let it pass** costs
+nothing. And on the held side the gate now says it in the words the ask used:
+"A reaction is declared: this action cannot resolve yet", with a "Waiting on X
+to react" line per open hold.
