@@ -6,7 +6,7 @@ import EnemyBlock from './EnemyBlock.jsx';
 import FoeTurnPrompt from './FoeTurnPrompt.jsx';
 import LogBlock from './LogBlock.jsx';
 import ReactionCall from './ReactionCall.jsx';
-import ReactionHold from './ReactionHold.jsx';
+import ReactionShelf from './ReactionShelf.jsx';
 import RunBlock from './RunBlock.jsx';
 import { CampaignLogContext } from '../../context/campaign-log.js';
 import { useDiceTray } from '../../context/dice-tray.js';
@@ -128,7 +128,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   /* A settled chain waiting to land on bodies. See handleResults. */
   const [apply, setApply] = useState(null);
   /* A player's action being reacted to, while the hold window is up. Opening
-     it is the hold on their roll. See ReactionHold.jsx. */
+     it is the hold on their roll. See ReactionShelf.jsx. */
   const [reacting, setReacting] = useState(null);
 
   /* One pending patch per encounter id, because a Game Master can move between
@@ -988,7 +988,15 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         line="An enemy with Reaction Points can answer."
       />
 
-      {reacting && <ReactionHold call={reacting} onClose={() => setReacting(null)} />}
+      {reacting && (
+        <ReactionShelf
+          call={reacting}
+          foes={foes}
+          patch={patch}
+          combat={combat}
+          onClose={() => setReacting(null)}
+        />
+      )}
 
       {error && <div className="form-error">{error}</div>}
 

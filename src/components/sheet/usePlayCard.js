@@ -107,6 +107,13 @@ export function usePlayCard({ character, patch }) {
            happened, and a missed check hands back nothing, because a miss has
            nothing to land. See ApplyWindow.jsx. */
         onSettled = null,
+        /* And the word that the whole use is over, dice and all, for a caller
+           that only needs the moment: a reaction window posts its `done` here,
+           so the actor it interrupted waits for the reaction to actually
+           resolve rather than merely be paid for. Called exactly once, after
+           everything else, whether the chain rolled, was abandoned or never
+           existed. */
+        afterSettled = null,
       } = extra;
 
       /* ---- who it was aimed at, and who is going to land it ----
@@ -195,33 +202,37 @@ export function usePlayCard({ character, patch }) {
          its own hands (the encounter view) takes over from the verdict row on,
          handed the surviving targets in `meta.targets`. */
       const settleWith = (live) => (thrown, meta = {}) => {
-        if (meta.outcomes && meta.outcomes.length > 0) {
-          log(verdictEvent(speaker, request?.name ?? '', meta.outcomes));
-        }
+        try {
+          if (meta.outcomes && meta.outcomes.length > 0) {
+            log(verdictEvent(speaker, request?.name ?? '', meta.outcomes));
+          }
 
-        if (onSettled) {
-          onSettled(thrown, { ...meta, targets: live });
-          return;
-        }
-        if (!delivering) return;
+          if (onSettled) {
+            onSettled(thrown, { ...meta, targets: live });
+            return;
+          }
+          if (!delivering) return;
 
-        const landed = meta.outcomes
-          ? live.filter((entry) =>
-              aimHits(meta.outcomes).some((outcome) => outcome.id === entry.id)
-            )
-          : live;
-        if (landed.length === 0) return;
+          const landed = meta.outcomes
+            ? live.filter((entry) =>
+                aimHits(meta.outcomes).some((outcome) => outcome.id === entry.id)
+              )
+            : live;
+          if (landed.length === 0) return;
 
-        if (cast && checky && meta.hit) log(effectLaidEvent(speaker, cast, landed));
+          if (cast && checky && meta.hit) log(effectLaidEvent(speaker, cast, landed));
 
-        for (const delta of applyPlan(thrown)) {
-          log(
-            appliedEvent(
-              speaker,
-              delta,
-              landed.map((entry) => ({ ...entry, landings: delta.landings }))
-            )
-          );
+          for (const delta of applyPlan(thrown)) {
+            log(
+              appliedEvent(
+                speaker,
+                delta,
+                landed.map((entry) => ({ ...entry, landings: delta.landings }))
+              )
+            );
+          }
+        } finally {
+          afterSettled?.(thrown, meta);
         }
       };
 
@@ -282,6 +293,10 @@ export function usePlayCard({ character, patch }) {
 
           await throwChain(tray, armed, { request, actor, chain, onSettled: settleWith(live) });
         })();
+      } else {
+        /* A use with no dice is over the moment it is paid, and the caller
+           waiting on that word gets it now. */
+        afterSettled?.([], {});
       }
 
       return body;

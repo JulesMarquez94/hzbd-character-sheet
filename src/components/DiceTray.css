@@ -412,19 +412,19 @@
   gap: 8px;
 }
 
-/* One body and the table's word on it: Stands, or Fails. A failed one dims
-   and goes red, because it is about to be left out of the roll. */
+/* One body and the table's word on it, asked as two choices rather than a
+   toggle: Stands, or Fails. Unanswered is its own honest state, and the
+   confirm below sleeps until every body has one. */
 .react-gate-target {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  min-width: 130px;
+  gap: 6px;
+  min-width: 150px;
   padding: 8px 12px;
   border-radius: 4px;
   border: 1px solid rgba(0, 229, 255, 0.3);
   background-color: rgba(9, 17, 21, 0.7);
-  cursor: pointer;
   text-align: left;
   font-family: var(--font-body);
 }
@@ -435,21 +435,40 @@
   color: var(--text-bright);
 }
 
-.react-gate-target-said {
+.react-gate-target-says {
+  display: flex;
+  gap: 6px;
+}
+
+.react-gate-say {
+  padding: 2px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.6);
+  cursor: pointer;
+  font-family: var(--font-body);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.6px;
   text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.react-gate-say.is-stands.is-on {
+  border-color: var(--def-healing);
   color: var(--def-healing);
+  background-color: rgba(80, 200, 120, 0.12);
+}
+
+.react-gate-say.is-fails.is-on {
+  border-color: var(--stat-health);
+  color: var(--stat-health);
+  background-color: rgba(224, 82, 82, 0.12);
 }
 
 .react-gate-target.is-failed {
   border-color: rgba(224, 82, 82, 0.5);
-  opacity: 0.75;
-}
-
-.react-gate-target.is-failed .react-gate-target-said {
-  color: var(--stat-health);
+  opacity: 0.85;
 }
 
 .react-gate-verdicts {

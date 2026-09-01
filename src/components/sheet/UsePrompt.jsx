@@ -174,7 +174,17 @@ const CONVERT = { ...WAYS[0], mode: 'convert', label: 'Hold Back' };
 /** Nothing owed, in the shape a price comes in. */
 const NOTHING = { ap: 0, wp: 0, health: 0 };
 
-export default function UsePrompt({ request, character, onCancel, onConfirm, combat = null }) {
+export default function UsePrompt({
+  request,
+  character,
+  onCancel,
+  onConfirm,
+  combat = null,
+  /* Raised from a reaction window: the one question this prompt normally asks
+     is already answered, so only the Reaction way is offered — a reaction paid
+     out of Action Points would not be a reaction. */
+  reaction = false,
+}) {
   /* The pile the printed card deals onto. This prompt is a dialog, and the pile
      sits above every dialog (see the z scale in index.css), so a number tapped
      here opens its working over the prompt and closes back onto it. Optional
@@ -293,7 +303,13 @@ export default function UsePrompt({ request, character, onCancel, onConfirm, com
   const apWas = !taken && Number(request.apWas) > 0 ? Number(request.apWas) : null;
   const cutFrom = request.apCutFrom ?? [];
 
-  const ways = converts ? [CONVERT] : price.ap > 0 ? WAYS : [CONFIRM_ONLY];
+  const ways = reaction
+    ? [price.ap > 0 ? WAYS[1] : { ...WAYS[1], label: 'Use It as a Reaction' }]
+    : converts
+      ? [CONVERT]
+      : price.ap > 0
+        ? WAYS
+        : [CONFIRM_ONLY];
 
   /* How many more steps the pools could actually pay for. An "instead of" half
      is not stacked on the printed cost, so nothing is committed against it. */
@@ -394,13 +410,15 @@ export default function UsePrompt({ request, character, onCancel, onConfirm, com
           )}
 
           <span className="use-question">
-            {converts
-              ? 'How many points do you want waiting on somebody else?'
-              : request.variable
-                ? 'How many Action Points is this worth? Your Game Master decides.'
-                : price.ap > 0
-                  ? 'Is this your action, or are you reacting to something?'
-                  : 'Nothing but the cost below leaves your sheet.'}
+            {reaction
+              ? 'A reaction is paid out of Reaction Points, so that is the one way offered.'
+              : converts
+                ? 'How many points do you want waiting on somebody else?'
+                : request.variable
+                  ? 'How many Action Points is this worth? Your Game Master decides.'
+                  : price.ap > 0
+                    ? 'Is this your action, or are you reacting to something?'
+                    : 'Nothing but the cost below leaves your sheet.'}
           </span>
 
           {/* The dial only appears for the two actions with no printed cost. */}

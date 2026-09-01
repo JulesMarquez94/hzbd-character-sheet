@@ -40,10 +40,14 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
 
   const play = usePlayCard({ character, patch });
 
-  /* This one reaction's name on the stack, and whether it was resolved with a
-     word already — so the unmount pass cannot double-speak. */
+  /* This one reaction's name on the stack, whether it has spoken its last word
+     already, and whether a confirmed use is still rolling — the window closes
+     at confirm, but the hold lifts only when the reaction actually resolves:
+     "it needs to wait for the reaction action to happen first" (Jules,
+     2026-09-01), so `done` is posted by the chain settling, not by the press. */
   const keyRef = useRef(newChain());
   const spokenRef = useRef(false);
+  const pendingRef = useRef(false);
 
   const said = (move) => {
     if (spokenRef.current || !call?.chain) return;
@@ -52,12 +56,15 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
   };
 
   /* The hold itself, once, on mount — and the release on the way out for a
-     reader who leaves without acting. `said` guards the double-speak. */
+     reader who leaves without acting. A confirmed use holds past the close:
+     its own settle is what speaks. */
   useEffect(() => {
     if (call?.chain) {
       log(reactEvent('open', { chain: call.chain, key: keyRef.current, by: character?.name ?? '' }));
     }
-    return () => said('pass');
+    return () => {
+      if (!pendingRef.current) said('pass');
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -90,8 +97,10 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
   }
 
   function confirm(mode, amount, options) {
-    play(request, mode, amount, options);
-    said('done');
+    /* The hold survives the window closing: it lifts when the reaction's own
+       dice settle, which is the stack resolving in order. */
+    pendingRef.current = true;
+    play(request, mode, amount, options, { afterSettled: () => said('done') });
     onClose();
   }
 
@@ -138,6 +147,7 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
         <UsePrompt
           request={request}
           character={character}
+          reaction
           onCancel={() => setRequest(null)}
           onConfirm={confirm}
         />

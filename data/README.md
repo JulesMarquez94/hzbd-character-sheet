@@ -10528,3 +10528,55 @@ character can take, with all the time the hold buys. **Let it pass** costs
 nothing. And on the held side the gate now says it in the words the ask used:
 "A reaction is declared: this action cannot resolve yet", with a "Waiting on X
 to react" line per open hold.
+
+## The bell's notice and the stack's manners, 2026-09-01
+
+Jules, the day's seventh pass, off playing the stack: an "Encounter start"
+notice with your roll and your place; a critical's cascade that lost its d10;
+the Game Master's reaction popup telling them to go click a block instead of
+showing the actions; the hold lifting at the reactor's press instead of at the
+reaction resolving; the fail question as a toggle; reactions paying Action
+Points; and one reaction slot for now.
+
+### The bell says your place
+
+When initiative is rolled, every named sheet gets the timed notice: "Encounter
+start · Initiative 14 · You play 2nd of 5." News, not a question — it clears
+itself in eight seconds, a tap puts it away sooner, and your own first turn
+outranks it. Same bell as before underneath: `startCombat` through the sheet's
+own patch.
+
+### The cascade's lost die
+
+Not the arithmetic — the engine's chain was right all along, proved by forcing
+a d6 into a d8 into a d10 into a d12 under a fixed die. The physics table was
+the thief: the library's force-to-value loop stalls on a d10 *added* as a
+burst (a plain d10 in the opening roll is fine), sometimes leaving the die on
+a wrong face and the landing promise unresolved, which ate the d10 of a
+critical's cascade and left the surface rolling forever. Every wave runs under
+a four-second watchdog now: a wave that never settles throws, and the flat
+floor — the reference renderer — stands up with the true faces. Flaky
+confirmed by reproduction: the same cascade landed clean on one run and hung
+on another.
+
+### The stack, finished to the letter
+
+- **The Game Master's window shows the actions.** ReactionHold (the
+  hold-with-instructions) became `ReactionShelf`: every enemy with a Reaction
+  Point left lays its own moves out as chips, the pick walks into the prompt,
+  the spend lands on that enemy's row, and an aimed reaction runs through the
+  same targeting and apply window an aimed use does.
+- **The hold lifts when the reaction resolves, not when it is paid.** `done`
+  is posted by the reaction's own chain settling (`afterSettled` in
+  usePlayCard, fired exactly once whether the chain rolled, was abandoned or
+  never existed), so the actor waits for the reaction action to actually
+  happen. The window may close meanwhile; the hold stands.
+- **Two choices, not a toggle.** The fail question puts Stands and Fails side
+  by side under every target and the confirm sleeps until each one has an
+  answer — an unanswered body is not a body that stands by default.
+- **A reaction pays Reaction Points.** The prompt raised from a reaction
+  window offers the one way, with the question line saying why. No Action
+  Point path.
+- **One reaction slot, for now.** The first open on an action clears everyone
+  else's question banner. The gate itself still handles a photo-finish race by
+  holding both, which is the honest fallback.

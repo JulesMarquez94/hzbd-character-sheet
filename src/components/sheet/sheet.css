@@ -8221,6 +8221,15 @@ body.sheet-fixed #root {
   }
 }
 
+/* The bell's notice wears the cover's clothes a shade lighter: it is news that
+   clears itself, not a question holding the sheet. */
+.turn-call.is-bell {
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(200, 138, 75, 0.1), transparent 55%),
+    rgba(9, 17, 21, 0.85);
+}
+
 .turn-call-body {
   width: min(100%, 560px);
   max-height: 92vh;

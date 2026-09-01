@@ -43,8 +43,10 @@ export default function ReactionGate({ job, onResolve }) {
   const [holds, setHolds] = useState({});
   // Whether any reaction was actually taken, which is what earns the question.
   const [acted, setActed] = useState(false);
-  // Target ids the table ruled failed against.
-  const [failed, setFailed] = useState([]);
+  /* The table's word per target: 'stands' or 'fails'. Two choices rather than
+     a toggle, and every target must be answered before the confirm wakes —
+     an unanswered body is not a body that stands by default. */
+  const [answers, setAnswers] = useState({});
 
   const holding = Object.keys(holds).length > 0;
   /* The window has closed with nobody holding it. With a taken reaction on the
@@ -90,16 +92,19 @@ export default function ReactionGate({ job, onResolve }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [closed, acted]);
 
-  function toggleFailed(id) {
-    setFailed((was) => (was.includes(id) ? was.filter((held) => held !== id) : [...was, id]));
+  function say(id, word) {
+    setAnswers((was) => ({ ...was, [id]: word }));
   }
 
+  const answered = targets.every((entry) => answers[entry.id]);
+
   function answer() {
-    const survivors = targets.filter((entry) => !failed.includes(entry.id));
+    if (!answered) return;
+    const survivors = targets.filter((entry) => answers[entry.id] !== 'fails');
     onResolve({
       failed: targets.length > 0 ? survivors.length === 0 : false,
       targets: survivors,
-      dropped: targets.filter((entry) => failed.includes(entry.id)),
+      dropped: targets.filter((entry) => answers[entry.id] === 'fails'),
     });
   }
 
@@ -155,28 +160,50 @@ export default function ReactionGate({ job, onResolve }) {
               <>
                 <div className="react-gate-targets">
                   {targets.map((entry) => {
-                    const off = failed.includes(entry.id);
+                    const word = answers[entry.id] ?? null;
                     return (
-                      <button
-                        type="button"
+                      <div
                         key={entry.id}
-                        className={`react-gate-target${off ? ' is-failed' : ''}`}
-                        onClick={() => toggleFailed(entry.id)}
-                        aria-pressed={off}
+                        className={`react-gate-target${word === 'fails' ? ' is-failed' : ''}`}
                       >
                         <span className="react-gate-target-name">{entry.name}</span>
-                        <span className="react-gate-target-said">{off ? 'Fails' : 'Stands'}</span>
-                      </button>
+                        <span className="react-gate-target-says">
+                          <button
+                            type="button"
+                            className={`react-gate-say is-stands${word === 'stands' ? ' is-on' : ''}`}
+                            onClick={() => say(entry.id, 'stands')}
+                            aria-pressed={word === 'stands'}
+                          >
+                            Stands
+                          </button>
+                          <button
+                            type="button"
+                            className={`react-gate-say is-fails${word === 'fails' ? ' is-on' : ''}`}
+                            onClick={() => say(entry.id, 'fails')}
+                            aria-pressed={word === 'fails'}
+                          >
+                            Fails
+                          </button>
+                        </span>
+                      </div>
                     );
                   })}
                 </div>
 
-                <button type="button" className="btn btn-copper btn-sm" onClick={answer} autoFocus>
-                  {failed.length === targets.length
-                    ? 'It fails everywhere · nothing rolls'
-                    : failed.length > 0
-                      ? 'Roll against the rest'
-                      : 'It stands · roll it'}
+                <button
+                  type="button"
+                  className="btn btn-copper btn-sm"
+                  onClick={answer}
+                  disabled={!answered}
+                  title={answered ? undefined : 'Answer for every target first'}
+                >
+                  {!answered
+                    ? 'Answer for every target'
+                    : targets.every((entry) => answers[entry.id] === 'fails')
+                      ? 'It fails everywhere · nothing rolls'
+                      : targets.some((entry) => answers[entry.id] === 'fails')
+                        ? 'Roll against the rest'
+                        : 'It stands · roll it'}
                 </button>
               </>
             ) : (

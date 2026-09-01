@@ -59,6 +59,17 @@ export default function ReactionCall({
         onChange: (payload) => {
           if (payload.eventType !== 'INSERT') return;
           const row = payload.new;
+
+          /* One reaction slot, for now: the first reader to say yes takes it,
+             and everybody else's question clears the moment their open lands.
+             Jules, 2026-09-01. */
+          if (row?.kind === 'react' && row.data?.move === 'open') {
+            setCall((held) =>
+              held && held.chain && held.chain === row.data?.to ? null : held
+            );
+            return;
+          }
+
           if (row?.kind !== 'use') return;
 
           const held = stateRef.current;

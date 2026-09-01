@@ -57,6 +57,19 @@ const SETS = {
 /** How long between one burst landing and the next being thrown. */
 const BURST_GAP_MS = 380;
 
+/** How long one wave of dice may take to settle before the table gives up. */
+const WAVE_TIMEOUT_MS = 4000;
+
+/** A wave, or the watchdog: whichever finishes first. */
+function settled(wave) {
+  return Promise.race([
+    wave,
+    new Promise((_, refuse) =>
+      setTimeout(() => refuse(new Error('a wave of dice never settled')), WAVE_TIMEOUT_MS)
+    ),
+  ]);
+}
+
 export default function DiceStage({ dice, onLanded, onFail }) {
   const mount = useRef(null);
   const box = useRef(null);
@@ -94,14 +107,22 @@ export default function DiceStage({ dice, onLanded, onFail }) {
         const bursts = dice.filter((die) => die.role === 'explosion');
 
         /* Wave one: the roll itself. `roll` rather than `add`, because it is the
-           one that clears whatever was on the table before. */
-        if (base.length > 0) await made.roll(notationFor(base));
+           one that clears whatever was on the table before.
+
+           Every wave runs under a watchdog. The library's promise resolves when
+           the dice settle *on the faces they were told*, and its force-to-value
+           loop can stall on some dice — a d10 added as a burst never settles,
+           which ate the d10 of a critical's cascade and left the surface
+           rolling forever. A wave that takes too long throws, the catch below
+           stands the flat floor up, and the flat floor is the reference
+           renderer: same faces, nothing lost but the tumble. */
+        if (base.length > 0) await settled(made.roll(notationFor(base)));
         if (!alive.current) return;
 
         if (swing.length > 0) {
           await made.updateConfig({ theme_customColorset: SETS[swing[0].role] });
           if (!alive.current) return;
-          await made.add(notationFor(swing));
+          await settled(made.add(notationFor(swing)));
           if (!alive.current) return;
         }
 
@@ -109,7 +130,7 @@ export default function DiceStage({ dice, onLanded, onFail }) {
           await made.updateConfig({ theme_customColorset: SETS.explosion });
           for (const burst of bursts) {
             if (!alive.current) return;
-            await made.add(notationFor([burst]));
+            await settled(made.add(notationFor([burst])));
             await new Promise((done) => setTimeout(done, BURST_GAP_MS));
           }
         }

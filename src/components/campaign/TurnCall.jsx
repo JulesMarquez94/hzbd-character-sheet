@@ -65,6 +65,9 @@ export default function TurnCall({ character, patch, canEdit = false }) {
   const { tables, log } = useCampaignLog();
   // { key, round, campaignId, triggers }
   const [call, setCall] = useState(null);
+  /* The bell's own notice: your roll and your place in the order, cleared by
+     time, a tap, or your first turn arriving. { key, init, place, count } */
+  const [bell, setBell] = useState(null);
 
   /* Every announcement this sheet has already acted on. A channel that
      reconnects replays nothing by design, but a resync, a second tab or a Game
@@ -97,14 +100,24 @@ export default function TurnCall({ character, patch, canEdit = false }) {
       if (row.kind === 'turn' && row.data?.move === 'initiative') {
         /* The bell, for everyone the order names. A sheet not in the order —
            linked after the roll, say — hears nothing and stays out. */
-        const mine = (row.data?.order ?? []).some(
+        const order = row.data?.order ?? [];
+        const at = order.findIndex(
           (entry) => entry.kind === 'member' && entry.ref === characterId
         );
-        if (!mine) return;
+        if (at < 0) return;
         if (actedRef.current.has(row.id)) return;
         actedRef.current.add(row.id);
 
         held.patch(startCombat(held.character));
+
+        /* And the notice: "Encounter start. Your initiative is X. You play
+           2nd." Timed, because it is news rather than a question. */
+        setBell({
+          key: row.id,
+          init: Math.floor(Number(order[at].init) || 0),
+          place: at + 1,
+          count: order.length,
+        });
         return;
       }
 
@@ -123,6 +136,9 @@ export default function TurnCall({ character, patch, canEdit = false }) {
         if (row.data?.character !== characterId) return;
         if (actedRef.current.has(row.id)) return;
         actedRef.current.add(row.id);
+
+        /* Your turn outranks the bell's notice. */
+        setBell(null);
 
         /* Nothing is started here. The cover says the order reached you and
            what the boundary sets off; the press is yours. */
@@ -193,6 +209,13 @@ export default function TurnCall({ character, patch, canEdit = false }) {
     return lockScroll();
   }, [call]);
 
+  /* The bell's notice clears itself: it is news, not a question. */
+  useEffect(() => {
+    if (!bell) return undefined;
+    const id = setTimeout(() => setBell(null), 8000);
+    return () => clearTimeout(id);
+  }, [bell]);
+
   /* The roll-and-take half of the rows on the cover, and the Upkeep's keep-or-
      drop, shared with the Turn block's own prompt so a boundary reads the same
      from both. */
@@ -230,7 +253,30 @@ export default function TurnCall({ character, patch, canEdit = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [call, busy]);
 
-  if (!call) return null;
+  if (!call) {
+    if (!bell) return null;
+
+    /* The bell's notice: timed, tappable, and outranked by the turn call. */
+    return (
+      <div
+        className="turn-call is-bell"
+        role="status"
+        onClick={() => setBell(null)}
+        title="This clears itself. Tap to put it away."
+      >
+        <div className="turn-call-body">
+          <span className="turn-call-round">Encounter start</span>
+          <h2 className="turn-call-title">Initiative {bell.init}</h2>
+          <p className="turn-call-line">
+            You play {ordinal(bell.place)} of {bell.count}. Your Action Points are up, whatever
+            your gear grants at the bell is on, and your turn will cover the screen when the
+            order reaches you.
+          </p>
+          <p className="turn-call-hint">This clears itself in a few seconds. Tap to put it away.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="turn-call" role="dialog" aria-modal="true" aria-label="Your turn">
@@ -288,4 +334,12 @@ export default function TurnCall({ character, patch, canEdit = false }) {
       </div>
     </div>
   );
+}
+
+/** "1st", "2nd", "3rd", "4th" and so on, for the place in the order. */
+function ordinal(n) {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  const word = { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th';
+  return `${n}${word}`;
 }
