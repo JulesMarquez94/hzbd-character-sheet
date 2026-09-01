@@ -10227,3 +10227,79 @@ drop closes with it.
 The Initiative & Turns block and the DM Log block dropped from double cells to
 singles: together they now take one enemy's footprint, and the bodies start
 one row down.
+
+## The fight found at the table, 2026-09-01
+
+Jules, testing: the player's prompt still offered no targets, End Turn on the
+sheet did not move the tracker, the tracker was nowhere on a linked sheet, and
+"there is no reason for the dice roller to ask for a DC as it should be known
+by the system. So I make an attack against a player, it knows it is DC 15 and
+just displays it and shows a roll button."
+
+### Two bugs, found by playing
+
+**The fight the sheet could not find.** FightProvider scanned one page of the
+feed for the initiative event, and a long evening of testing buries an
+initiative under sixty rows of casts and throws inside an hour: the sheet read
+"no fight", so the picker never appeared. The fight's own moves are asked for
+by name now — `listFightWords` filters the feed on `data->>move` for
+initiative, fight-over and the turn calls, newest first — so the fight is
+found however deep the table talk has grown.
+
+**The winner the runner was not waiting for.** `rollInitiative` started every
+fight with `awaiting` empty, so when a player won the roll — and Lark did —
+their own End Turn moved nothing until the Game Master pressed something. The
+roll now waits on whoever it put first. Pinned in the checker by a seat with
+Initiative 99 and a fixed die.
+
+Two structural holes closed with them: the ended-listener lived on the *open*
+encounter, so an End Turn arriving while the Game Master browsed the shelf
+moved nothing — it is tab-wide now, finds the fight by who it is awaiting and
+advances that one (`advanceEncounter` and `nextFor` take the encounter id, and
+the boundary prompt carries it too). And block 6's End Turn writes
+`turnDoneEvent` — the cover's own word — so the sheet's button ends the
+table's turn exactly as the cover does, with the runner still refusing an end
+from anybody it is not waiting on.
+
+### The tracker on the linked sheet
+
+`FightBlock.jsx`: one per campaign the sheet sits at, grown and arranged
+exactly like that campaign's log block (`fight:<campaign_id>` beside
+`log:<campaign_id>`), drawing the same order the Game Master's block draws —
+off the announcements, never off the encounter row. Plain chips with the
+rolled initiative on them, whoever the runner last called lit (the turn calls
+are read for who is up), and one line that says "It is your turn. Your End
+Turn is what moves the table on" when it is. With no fight running it says so
+and stays small, so the arrangement never reshuffles because one started.
+
+### The DC the system already knows
+
+A check aimed at a picked target carries its own number now:
+
+- `rollPlan`'s check link reads **which defense the sentence names** —
+  "against the Reflex of" is Reflex, "against the Grit of" is Grit, an attack
+  that names nothing is against Defense, and a check against the world (a
+  climb, a search) stays null and keeps asking.
+- The rolled order carries each body's **avoid, reflex and grit**, frozen at
+  the roll: onto the run row, into the initiative event, and from there to
+  every seated sheet. This is a ruling as much as a field — the three numbers
+  a roll is judged by cross to the players' clients; the pools still do not.
+- `armCheck` in usePlayCard folds the two together: every picked target
+  answers with the same number, the link goes out with `dc` set and `askDc`
+  off, and the surface opens reading "2d6 + 5 against 15" with the roll button
+  ready. The verdict lands off it — 13 against 15 read FAILURE with no
+  question asked, and the miss still ends the chain.
+
+Targets answering with *different* numbers keep the question: one throw judged
+three ways is three verdicts, and the tray has one to give. The common case —
+one target, or a volley into same-level copies of one creature — is armed.
+
+A fight rolled before this build carries no defenses in its order, so the DC
+stays asked until initiative is rolled again.
+
+### Moved while it was still cheap
+
+The target chips, the picker and the turn manager block styles moved from
+Campaigns.css to sheet.css, because all three render on the character sheet
+now and that page never loads Campaigns.css — the same cold-load trap the turn
+call cover had, caught this time before anybody saw it unstyled.

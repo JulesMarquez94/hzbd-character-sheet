@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import ActiveBlock from './ActiveBlock.jsx';
 import FeralBlock from './FeralBlock.jsx';
 import LedgerModal from './LedgerModal.jsx';
+import FightBlock from '../campaign/FightBlock.jsx';
 import LogBlock from '../campaign/LogBlock.jsx';
 import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
@@ -195,6 +196,11 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ...feralBlockIds(character),
       ...pactBlockIds(character),
       ...tables.map((table) => `log:${table.id}`),
+      /* And the fight at each of those tables, beside its log: the same order
+         the Game Master's runner draws, read off the announcements. There
+         whenever the membership is, so the arrangement never reshuffles
+         because a fight started. See FightBlock.jsx. */
+      ...tables.map((table) => `fight:${table.id}`),
     ],
     [character, tables]
   );
@@ -235,6 +241,14 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
         const camp = tables.find((row) => row.id === table[1]);
         return camp
           ? { name: camp.name, note: 'What has happened at this table' }
+          : { name: String(id), note: null };
+      }
+
+      const running = /^fight:(.+)$/.exec(String(id));
+      if (running) {
+        const camp = tables.find((row) => row.id === running[1]);
+        return camp
+          ? { name: `${camp.name} · the fight`, note: 'The order, and whose turn it is' }
           : { name: String(id), note: null };
       }
 
@@ -589,14 +603,21 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ])
     ),
 
-    /* ============ A TABLE'S ONE ============
-       Only there when this character is linked to a campaign, one per campaign.
-       The one block on the tab that is about somebody else: what the whole
-       party has been doing, as they do it. Nothing here writes. */
+    /* ============ A TABLE'S TWO ============
+       Only there when this character is linked to a campaign, one pair per
+       campaign: what the whole party has been doing, and the fight the runner
+       is running. Both are about somebody else, and nothing in either writes. */
     ...Object.fromEntries(
       tables.map((table) => [
         `log:${table.id}`,
         <LogBlock campaignId={table.id} title={table.name} />,
+      ])
+    ),
+
+    ...Object.fromEntries(
+      tables.map((table) => [
+        `fight:${table.id}`,
+        <FightBlock campaignId={table.id} title={table.name} characterName={character.name} />,
       ])
     ),
 

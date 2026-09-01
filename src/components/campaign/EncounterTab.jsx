@@ -339,6 +339,12 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             health_max: Math.max(0, Number(shown.health_max) || 0),
             shield: Math.max(0, Number(shown.shield) || 0),
             armor: Math.max(0, Number(shown.defense) || 0),
+            /* The three numbers a roll against them is judged by. They ride
+               into the rolled order, and from there to every seated sheet, so
+               an aimed check can carry its own DC. See rollInitiative. */
+            avoid: Math.max(0, Number(shown.avoid) || 0),
+            reflex: Math.max(0, Number(shown.reflex) || 0),
+            grit: Math.max(0, Number(shown.grit) || 0),
           };
         }),
     [members]
@@ -362,6 +368,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         down: foe.down,
         armor: foe.stats.defense,
         shieldNow: foe.shield,
+        defenses: { avoid: foe.stats.avoid, reflex: foe.stats.reflex, grit: foe.stats.grit },
       })),
       ...seats.map((seat) => ({
         id: seat.character_id,
@@ -373,6 +380,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         down: seat.health <= 0,
         armor: seat.armor,
         shieldNow: seat.shield,
+        defenses: { avoid: seat.avoid, reflex: seat.reflex, grit: seat.grit },
       })),
     ],
     [foes, seats]
@@ -420,41 +428,49 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   };
 
   /**
-   * On to the next in the order.
+   * On to the next in the order, on a named encounter.
    *
    * Three things happen and the order of them is the rule: the pointer moves,
    * every Overlord is paid for a player's turn passing, and then the turn is
    * announced. The Overlord's grant has to land *before* the announcement,
    * because the announcement is what starts a player acting and a boss that
    * gains its reactions afterwards has spent the turn unable to answer.
+   *
+   * Keyed by encounter id rather than bound to whichever one is open, because
+   * more than the Next button advances a fight now: a player's End Turn lands
+   * as an event whatever this screen is showing, and the runner must move the
+   * fight it belongs to — not the view.
    */
-  const advance = useCallback(() => {
-    let called = null;
-    patch((row) => {
-      const moved = advanceRun(row);
-      if (!moved) return null;
+  const advanceEncounter = useCallback(
+    (encounterId) => {
+      let called = null;
+      patchEncounter(encounterId, (row) => {
+        const moved = advanceRun(row);
+        if (!moved) return null;
 
-      let body = moved.patch;
+        let body = moved.patch;
 
-      /* "whenever a player take a turn they gain 3 rection points". The runner
-         is what knows a player's turn has come round, so it is the runner that
-         pays it: the button below stays for a table running the fight by hand. */
-      if (moved.entry.kind === 'member') {
-        const paid = crossTurn({ ...row, ...body }, { tick: tickEffects });
-        if (paid) body = { ...body, ...paid.patch };
-      } else {
-        /* And an enemy's own turn gives it its Action Points back and ticks what
-           is running on it, which is the half of a Start Turn an enemy has. */
-        const started = foeTurnStart({ ...row, ...body }, moved.entry.ref, { tick: tickEffects });
-        if (started) body = { ...body, ...started };
-      }
+        /* "whenever a player take a turn they gain 3 rection points". The runner
+           is what knows a player's turn has come round, so it is the runner that
+           pays it: the button below stays for a table running the fight by hand. */
+        if (moved.entry.kind === 'member') {
+          const paid = crossTurn({ ...row, ...body }, { tick: tickEffects });
+          if (paid) body = { ...body, ...paid.patch };
+        } else {
+          /* And an enemy's own turn gives it its Action Points back and ticks what
+             is running on it, which is the half of a Start Turn an enemy has. */
+          const started = foeTurnStart({ ...row, ...body }, moved.entry.ref, { tick: tickEffects });
+          if (started) body = { ...body, ...started };
+        }
 
-      called = moved;
-      return body;
-    });
+        called = moved;
+        return body;
+      });
 
-    if (called) log(turnCallEvent(called.entry, called.round, { encounter: open.id }));
-  }, [patch, log, open]);
+      if (called) log(turnCallEvent(called.entry, called.round, { encounter: encounterId }));
+    },
+    [patchEncounter, log]
+  );
 
   /**
    * Next, with the stop the sheet's own turn button has had all along: an
@@ -467,35 +483,44 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
    * A player's boundaries are deliberately not read here: their own sheet
    * stops for them, on their own screen, where their own dice are.
    */
+  const nextFor = useCallback(
+    (encounterId) => {
+      const row = rowsRef.current.find((entry) => entry.id === encounterId);
+      if (!row) return;
+      const now = normalizeRun(row.run);
+      if (!now.live || now.order.length === 0) return;
+
+      const state = encounterState(row);
+      const sideFor = (entry, when) => {
+        if (!entry || entry.kind !== 'foe') return null;
+        const foe = state.find((held) => held.key === entry.ref);
+        if (!foe || foe.down) return null;
+        const triggers = turnTriggers(foeActor(foe), when);
+        return triggers.any ? { foe, when, triggers } : null;
+      };
+
+      const at = (now.at + 1) % now.order.length;
+      const leaving = sideFor(now.order[now.at], 'end');
+      const coming = sideFor(now.order[at], 'start');
+
+      if (leaving || coming) {
+        setBoundary({
+          encounterId,
+          leaving,
+          coming,
+          entry: now.order[at],
+          round: at === 0 ? now.round + 1 : now.round,
+        });
+        return;
+      }
+
+      advanceEncounter(encounterId);
+    },
+    [advanceEncounter]
+  );
+
   const handleNext = () => {
-    const row = rowsRef.current.find((entry) => entry.id === open?.id) ?? open;
-    const now = normalizeRun(row?.run);
-    if (!now.live || now.order.length === 0) return;
-
-    const state = encounterState(row);
-    const sideFor = (entry, when) => {
-      if (!entry || entry.kind !== 'foe') return null;
-      const foe = state.find((held) => held.key === entry.ref);
-      if (!foe || foe.down) return null;
-      const triggers = turnTriggers(foeActor(foe), when);
-      return triggers.any ? { foe, when, triggers } : null;
-    };
-
-    const at = (now.at + 1) % now.order.length;
-    const leaving = sideFor(now.order[now.at], 'end');
-    const coming = sideFor(now.order[at], 'start');
-
-    if (leaving || coming) {
-      setBoundary({
-        leaving,
-        coming,
-        entry: now.order[at],
-        round: at === 0 ? now.round + 1 : now.round,
-      });
-      return;
-    }
-
-    advance();
+    if (open) nextFor(open.id);
   };
 
   const handleEndFight = () => {
@@ -694,19 +719,24 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
    * a player's turn ends when the player says it does, and the table should not
    * wait on somebody noticing.
    *
-   * Read through a ref for the same reason TurnCall does: `handleNext` is a
-   * fresh function every render and re-subscribing on it would tear the channel
-   * down while the Game Master types a name.
+   * Always on while this tab is up, whatever it is showing: the listener used
+   * to exist only while the *open* encounter was awaiting somebody, so an End
+   * Turn arriving while the Game Master browsed the shelf, or on a fight in
+   * some other encounter, moved nothing. The fight the row belongs to is found
+   * by who it is waiting on, and only that fight moves — an End Turn from a
+   * player nobody is waiting on still ends only their own sheet.
+   *
+   * Read through a ref for the same reason TurnCall does: `nextFor` is remade
+   * when its dependencies move, and re-subscribing on every render would tear
+   * the channel down while the Game Master types a name.
    */
-  const nextRef = useRef(handleNext);
+  const nextRef = useRef(nextFor);
   useEffect(() => {
-    nextRef.current = handleNext;
+    nextRef.current = nextFor;
   });
 
-  const awaiting = run.live ? run.awaiting : null;
-
   useEffect(() => {
-    if (!campaignId || !canEdit || !awaiting) return undefined;
+    if (!campaignId || !canEdit) return undefined;
 
     return subscribeToTable({
       table: 'campaign_events',
@@ -715,14 +745,16 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         if (payload.eventType !== 'INSERT') return;
         const row = payload.new;
         if (row?.kind !== 'turn' || row?.data?.move !== 'ended') return;
-        /* Only from whoever is actually up. A player pressing End Turn on their
-           own Turn block out of turn is allowed to do it on their own sheet; it
-           is not allowed to move the table on. */
-        if (row.character_id !== awaiting) return;
-        nextRef.current();
+        if (!row.character_id) return;
+
+        const home = rowsRef.current.find((enc) => {
+          const running = normalizeRun(enc.run);
+          return running.live && running.awaiting === row.character_id;
+        });
+        if (home) nextRef.current(home.id);
       },
     });
-  }, [campaignId, canEdit, awaiting]);
+  }, [campaignId, canEdit]);
 
   /**
    * The other direction of delivery: a player's aim, landing on enemies.
@@ -1035,7 +1067,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
           onThrow={throwBoundary}
           onConfirm={() => {
             setBoundary(null);
-            advance();
+            advanceEncounter(boundary.encounterId);
           }}
           onClose={() => setBoundary(null)}
         />

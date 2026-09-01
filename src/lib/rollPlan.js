@@ -131,6 +131,13 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
         const attribute = attributeOf(named ?? 'stat', stat);
         if (!attribute) continue;
 
+        const sentence = sentenceAround(text, match.index);
+        const kind = isWeaponAttack(card)
+          ? 'weapon'
+          : sentence.includes('attack')
+            ? 'attack'
+            : 'check';
+
         links.push({
           shape: 'check',
           /* What the row in the log will be called. A weapon's swing is a Weapon
@@ -138,14 +145,19 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
              is an Attack Roll or a plain Roll depending on what the sentence
              says. Named after the *kind of roll* rather than after the card,
              because the entry above it already says which card. */
-          kind: isWeaponAttack(card)
-            ? 'weapon'
-            : sentenceAround(text, match.index).includes('attack')
-              ? 'attack'
-              : 'check',
+          kind,
           flat: resolveValue(attribute.key, who, stat, sums).flat,
           advantage: Number(mods.advantage) || 0,
           disadvantage: Number(mods.disadvantage) || 0,
+          /* Which of the target's numbers this is judged by, when the card says.
+             "against the Reflex of" and "against the Grit of" name the defense
+             outright; an attack with no name rolls against Defense, which is
+             what an attack is. Null for the checks that are against the world
+             rather than a body — a Skill Check has no target to read a DC off.
+             What this buys: a check aimed at a picked target carries its own DC
+             instead of asking the table for a number the system knows. See
+             usePlayCard.js. */
+          against: againstOf(kind, sentence),
           /* The one question the sheet cannot answer for itself. A critical is 6
              over the DC, so without the number there is no verdict to give. */
           askDc: true,
@@ -205,6 +217,24 @@ export function rollsAnything(card, character, modifiers = null, options = {}) {
 function isMenuEntry(text, at) {
   const from = Math.max(text.lastIndexOf('.', at) + 1, text.lastIndexOf('\n', at) + 1);
   return /\b\d+\s*:\s*\S/.test(text.slice(from, at));
+}
+
+/**
+ * Which of a body's three numbers a check is rolled against, or null.
+ *
+ * The codex says it in the sentence: "against the Reflex of up to 3 entities",
+ * "against the Grit of all entities". An attack that names nothing is rolled
+ * against Defense, because that is the glossary's own definition of an attack
+ * ("rolled against the target's Defense"). A plain check that names nothing is
+ * against the world — a climb, a search — and hands back null, so the DC stays
+ * the table's question.
+ */
+function againstOf(kind, sentence) {
+  if (/against[^.]{0,60}?\breflex\b/.test(sentence)) return 'reflex';
+  if (/against[^.]{0,60}?\bgrit\b/.test(sentence)) return 'grit';
+  if (kind === 'weapon' || kind === 'attack') return 'avoid';
+  if (/against[^.]{0,60}?\bdefense\b/.test(sentence)) return 'avoid';
+  return null;
 }
 
 /** How many times the card lands this value. One unless its sentence says more. */

@@ -26,8 +26,16 @@ import {
   landHit,
   struck,
 } from '../src/lib/combatApply.js';
-import { applyToFoes, encounterState, foeActor, layOnFoes } from '../src/lib/encounters.js';
+import {
+  applyToFoes,
+  encounterState,
+  foeActor,
+  layOnFoes,
+  normalizeRun,
+  rollInitiative,
+} from '../src/lib/encounters.js';
 import { layEffect } from '../src/lib/combatTurn.js';
+import { rollPlan } from '../src/lib/rollPlan.js';
 import { turnTriggers } from '../src/lib/turnTriggers.js';
 import { CARDS, getCard } from '../src/lib/weapons.js';
 
@@ -222,6 +230,61 @@ section('an effect lays on targets, and lands once however often it arrives');
   check('both targets carry the row', [state[0].effects.length, state[1].effects.length], [1, 1]);
   check('relaid is refreshed, never doubled', state[0].effects.length, 1);
   check('and the row says who laid it', state[0].effects[0].from, '1.Blightgeist');
+}
+
+/* ================================================================== the order */
+
+section('the roll that starts a fight waits on whoever won it');
+{
+  const enc = { foes: [{ key: 'a', creature: 'blightgeist' }] };
+  const seat = {
+    character_id: 'kaelen-id',
+    name: 'Kaelen',
+    initiative: 99,
+    avoid: 15,
+    reflex: 12,
+    grit: 11,
+  };
+
+  /* A fixed die: everybody rolls the same faces, so the seat's Initiative of 99
+     is what puts the player first. */
+  const rolled = rollInitiative(enc, [seat], { random: () => 0.5 });
+
+  check('the player is first', rolled.run.order[0].ref, 'kaelen-id');
+  /* The bug this pins down: the fight used to start with `awaiting` empty, so
+     the winner's own End Turn moved nothing until the Game Master pressed
+     something. Found by Lark winning initiative. */
+  check('and the runner is already waiting on them', rolled.run.awaiting, 'kaelen-id');
+
+  check('a body in the order carries what a roll against it is judged by', rolled.run.order[0].defenses, {
+    avoid: 15,
+    reflex: 12,
+    grit: 11,
+  });
+  check(
+    'and the stored run keeps it through a reload',
+    normalizeRun(rolled.run).order[0].defenses,
+    { avoid: 15, reflex: 12, grit: 11 }
+  );
+  check(
+    'an enemy carries its own three',
+    normalizeRun(rolled.run).order[1].defenses.avoid > 0,
+    true
+  );
+}
+
+section('a check knows which of the target’s numbers it is against');
+{
+  const who = { instinct: 6, physique: 4, mind: 5 };
+  const checkOf = (id) => rollPlan(card(id), who).find((link) => link.shape === 'check');
+
+  check('an attack is against Defense', checkOf('bramble-whip')?.against, 'avoid');
+  check('“against the Reflex of” is against Reflex', checkOf('strangling-roots')?.against, 'reflex');
+  check(
+    '“against the Grit of” is against Grit',
+    checkOf('sleeping-spores')?.against,
+    'grit'
+  );
 }
 
 /* ============================================================== the boundaries */

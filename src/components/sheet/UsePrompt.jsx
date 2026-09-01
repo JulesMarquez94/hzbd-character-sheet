@@ -308,7 +308,14 @@ export default function UsePrompt({ request, character, onCancel, onConfirm, com
       options.targets = picked
         .map((id) => roster.find((body) => body.id === id))
         .filter(Boolean)
-        .map((body) => ({ id: body.id, kind: body.kind, name: body.name }));
+        .map((body) => ({
+          id: body.id,
+          kind: body.kind,
+          name: body.name,
+          /* What a roll against them is judged by, so an aimed check carries
+             its own DC instead of asking the table. See usePlayCard.js. */
+          defenses: body.defenses ?? null,
+        }));
     }
     return Object.keys(options).length > 0 ? options : undefined;
   }

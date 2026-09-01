@@ -101,6 +101,31 @@ export async function listEvents(campaignId, { before = null, limit = FEED_PAGE 
 }
 
 /**
+ * The newest words about the fight itself, however deep the feed has grown.
+ *
+ * A sheet reconstructing the running fight needs three moves and no others:
+ * the last initiative (the order), the last fight-over (whether it still
+ * stands) and the last turn call (who is up). Scanning the feed for them broke
+ * the moment a table had a long evening — sixty rows of casts and throws
+ * buried the initiative that was still live — so they are asked for by name,
+ * newest first, straight off the move the row carries. See FightProvider.jsx.
+ */
+export async function listFightWords(campaignId, { limit = 12 } = {}) {
+  const sb = requireSupabase();
+
+  const { data, error } = await sb
+    .from('campaign_events')
+    .select('*')
+    .eq('campaign_id', campaignId)
+    .eq('kind', 'turn')
+    .in('data->>move', ['initiative', 'fight-over', 'your-turn'])
+    .order('seq', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
  * Write one event to every table a character sits at.
  *
  * Swallows its own failure on purpose. See the note at the top: the points have
@@ -319,16 +344,20 @@ export function initiativeEvent(order = [], { encounter = null } = {}) {
       move: 'initiative',
       encounter,
       /* `ref` rides along so a later reader can point back at a body in this
-         fight — a foe's key, a character's id — not just say its name, and the
+         fight — a foe's key, a character's id — not just say its name, the
          rank is what colours its chip on a sheet that cannot read the
-         encounter row. Rows written before these were here simply have less to
-         point with. See FightProvider.jsx, which is the reader. */
+         encounter row, and `defenses` is what arms an aimed check with its own
+         DC. That last one is a ruling as much as a field: the three numbers a
+         roll is judged by cross to the players' clients, the pools still do
+         not. Rows written before these were here simply have less to point
+         with. See FightProvider.jsx, which is the reader. */
       order: order.map((entry) => ({
         kind: entry.kind,
         ref: entry.ref,
         name: entry.name,
         init: entry.init,
         ...(entry.rank ? { rank: entry.rank } : {}),
+        ...(entry.defenses ? { defenses: entry.defenses } : {}),
       })),
     },
   };

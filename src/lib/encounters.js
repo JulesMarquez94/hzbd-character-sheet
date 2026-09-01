@@ -759,6 +759,11 @@ export function normalizeRun(value) {
       name: String(entry.name ?? '').slice(0, 60),
       init: Math.floor(Number(entry.init) || 0),
       ...(entry.rank ? { rank: String(entry.rank) } : {}),
+      /* The three numbers a roll is judged against, frozen when the order was
+         rolled. They ride the order so a check aimed at this body can carry
+         its own DC instead of asking the table for a number the system knows.
+         See `against` in rollPlan.js. */
+      ...(entry.defenses ? { defenses: normalizeDefenses(entry.defenses) } : {}),
     }))
     .filter((entry) => entry.ref)
     .slice(0, ORDER_MAX);
@@ -781,6 +786,15 @@ export function normalizeRun(value) {
 export function currentTurn(encounter) {
   const run = normalizeRun(encounter?.run);
   return run.live ? (run.order[run.at] ?? null) : null;
+}
+
+/** The three defenses a check can be judged against, as whole numbers. */
+function normalizeDefenses(raw) {
+  return {
+    avoid: Math.floor(Number(raw?.avoid) || 0),
+    reflex: Math.floor(Number(raw?.reflex) || 0),
+    grit: Math.floor(Number(raw?.grit) || 0),
+  };
 }
 
 /**
@@ -807,6 +821,7 @@ export function rollInitiative(encounter, members = [], { random = Math.random }
       rank: foe.rank.id,
       init: result.total,
       tie: foe.stats.initiative,
+      defenses: normalizeDefenses(foe.stats),
     });
   }
 
@@ -820,6 +835,7 @@ export function rollInitiative(encounter, members = [], { random = Math.random }
       name: String(member.name ?? 'Someone'),
       init: result.total,
       tie: flat,
+      defenses: normalizeDefenses(member),
     });
   }
 
@@ -836,15 +852,21 @@ export function rollInitiative(encounter, members = [], { random = Math.random }
       round: 1,
       at: 0,
       /* `tie` was only ever the sort's business and is not stored: what the
-         order needs to remember is who, in what order, on what roll. */
+         order needs to remember is who, in what order, on what roll, and what a
+         roll against them is judged by. */
       order: entries.map((entry) => ({
         kind: entry.kind,
         ref: entry.ref,
         name: entry.name,
         init: entry.init,
         ...(entry.rank ? { rank: entry.rank } : {}),
+        defenses: entry.defenses,
       })),
-      awaiting: null,
+      /* Whoever won the roll is up *now*, and when that is a player the runner
+         is already waiting on them: the fight used to start with `awaiting`
+         empty, so the winner's own End Turn moved nothing until the Game
+         Master pressed something. Found by Lark winning initiative. */
+      awaiting: entries[0].kind === 'member' ? entries[0].ref : null,
     },
   };
 }

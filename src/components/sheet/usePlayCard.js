@@ -113,7 +113,7 @@ export function usePlayCard({ character, patch }) {
          the same one, and the log can draw them as a block. See newChain. */
       const chain = newChain();
 
-      const plan =
+      const plan = (
         roll && tray
           ? rollPlan(request?.card, actor, request?.modifiers, {
               /* A paid second half rolls too. Eleven halves in the codex carry
@@ -122,7 +122,8 @@ export function usePlayCard({ character, patch }) {
                  taken, exactly as in playEvent. */
               half: Boolean(options.price),
             })
-          : [];
+          : []
+      ).map((link) => armCheck(link, targets));
 
       /* ---- 1. the price ---- */
       const body = write(stripCast(spendUse(request, actor, mode, amount, options), cast));
@@ -187,6 +188,32 @@ export function usePlayCard({ character, patch }) {
     },
     [tray, character, patch, log]
   );
+}
+
+/**
+ * A check aimed at picked targets, carrying its own DC.
+ *
+ * "When selecting a target, there is no reason for the dice roller to ask for
+ * a DC, as it should be known by the system" (Jules, 2026-09-01). The card
+ * says which of the target's numbers the roll is judged by (`against`, read in
+ * rollPlan.js) and the target chip carries those numbers, so the surface opens
+ * saying "against 15" with the roll button ready and the question never asked.
+ *
+ * Only when every picked target answers with the same number. Three bodies
+ * with three different Defenses is one throw judged three ways, and the tray
+ * has one verdict to give — so the question stays the table's there, exactly
+ * as it stays for a Skill Check against the world.
+ */
+function armCheck(link, targets) {
+  if (link.shape !== 'check' || !link.against || targets.length === 0) return link;
+
+  const values = targets.map((entry) => Number(entry.defenses?.[link.against]));
+  if (values.length === 0 || values.some((value) => !Number.isFinite(value) || value <= 0)) {
+    return link;
+  }
+  if (new Set(values).size !== 1) return link;
+
+  return { ...link, dc: values[0], askDc: false };
 }
 
 /**
