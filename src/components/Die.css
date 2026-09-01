@@ -78,9 +78,17 @@
   --die-tone: var(--stat-karma);
 }
 
+/* A die that burst out of another wears its own colour, not the base white and
+   not the max-face amber: haze violet, glowing, so the extra dice read as the
+   extra they are at a glance. A burst showing its own maximum goes amber-hot
+   like any other, because it is about to burst again. */
 .die.is-burst {
-  --die-tone: var(--level-amber);
+  --die-tone: var(--haze-glow);
   animation: die-bloom 380ms ease-out both;
+}
+
+.die.is-burst .die-shape {
+  filter: drop-shadow(0 0 7px rgba(178, 102, 255, 0.65));
 }
 
 /* Not thrown yet: the outline of the shape it is going to land as. */

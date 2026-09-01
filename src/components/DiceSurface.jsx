@@ -103,7 +103,22 @@ export default function DiceSurface({
   /* How many of the bursts have bloomed. Bases are never staged: they land
      together, the way dice actually do. */
   const [bloomed, setBloomed] = useState(0);
+  /* The reaction window: seconds left before the throw unlocks. Counted from
+     the moment the surface opens, because the table reacts to the action being
+     declared, not to the player finding the button. See `hold` in
+     usePlayCard.js. */
+  const [wait, setWait] = useState(() => Math.max(0, Number(spec.hold) || 0));
   const timers = useRef([]);
+
+  useEffect(() => {
+    if (wait <= 0) return undefined;
+    const id = setInterval(() => setWait((left) => Math.max(0, left - 1)), 1000);
+    return () => clearInterval(id);
+  }, [wait]);
+
+  /* A replayed roll was already thrown on somebody else's screen; a window on
+     it here would be holding the audience, not the actor. */
+  const holding = wait > 0 && !spec.watching;
 
   const bursts = (result?.dice ?? []).filter((one) => one.role === 'explosion');
   const landed = phase === 'done';
@@ -210,20 +225,27 @@ export default function DiceSurface({
       onMouseDown={(event) => {
         if (event.target !== event.currentTarget) return;
         /* A roll waiting on its DC is waiting on an answer, so a stray tap does
-           nothing. Everything else on the surface is a tap away from its next
-           beat. */
+           nothing, and one held for reactions is waiting on the table.
+           Everything else on the surface is a tap away from its next beat. */
         if (phase === 'dc') return;
-        if (phase === 'ready') onThrow();
-        else if (phase === 'rolling') skip();
+        if (phase === 'ready') {
+          if (!holding) onThrow();
+        } else if (phase === 'rolling') skip();
         else if (!needsCall) onClose();
       }}
     >
       <div className="dice-stage">
-        <p className="dice-name">
-          {watching && <span className="dice-whose">{spec.note || 'Someone'} rolled</span>}
-          {spec.name || 'A roll'}
-          {!watching && spec.note && <span className="dice-note">{spec.note}</span>}
-        </p>
+        {/* The action, as a plate: the card's own face beside its name, so a
+            roll reads as the thing being done rather than as loose arithmetic.
+            A roll with no card behind it keeps the plate and drops the art. */}
+        <div className={`dice-head${spec.art ? ' has-art' : ''}`}>
+          {spec.art && <img className="dice-head-art" src={spec.art} alt="" loading="lazy" />}
+          <span className="dice-head-body">
+            {watching && <span className="dice-whose">{spec.note || 'Someone'} rolled</span>}
+            <span className="dice-head-name">{spec.name || 'A roll'}</span>
+            {!watching && spec.note && <span className="dice-note">{spec.note}</span>}
+          </span>
+        </div>
 
         <p className="dice-asked">
           {result ? rollNotation(result) : askedFor(spec)}
@@ -279,22 +301,54 @@ export default function DiceSurface({
               onFail={() => setStaged(false)}
             />
           )}
-          {!solid &&
-            visible.map((die) => (
-              <Die
-                key={die.id}
-                die={die}
-                face={phase === 'rolling' ? flickerFace(die, tick) : die.value}
-                rolling={phase === 'rolling'}
-                /* A die on its own maximum is why the next one exists, so it
-                   stays lit rather than glowing once and cooling. */
-                hot={phase !== 'rolling' && die.value === die.sides && result.shape === 'value'}
-              />
-            ))}
-          {(phase === 'ready' || phase === 'dc') &&
-            plannedDice(spec).map((die, i) => (
-              <Die key={`ready-${i}`} die={die} face={null} rolling={false} hot={false} />
-            ))}
+
+          {/* Two rows on the flat floor: the dice that were asked for, then a
+              thin seam, then whatever burst out of them. What was rolled and
+              what the roll *did* read as two different lines, because they are. */}
+          {!solid && (
+            <>
+              <div className="dice-row">
+                {visible
+                  .filter((die) => die.role !== 'explosion')
+                  .map((die) => (
+                    <Die
+                      key={die.id}
+                      die={die}
+                      face={phase === 'rolling' ? flickerFace(die, tick) : die.value}
+                      rolling={phase === 'rolling'}
+                      /* A die on its own maximum is why the next one exists, so
+                         it stays lit rather than glowing once and cooling. */
+                      hot={
+                        phase !== 'rolling' && die.value === die.sides && result.shape === 'value'
+                      }
+                    />
+                  ))}
+                {(phase === 'ready' || phase === 'dc') &&
+                  plannedDice(spec).map((die, i) => (
+                    <Die key={`ready-${i}`} die={die} face={null} rolling={false} hot={false} />
+                  ))}
+              </div>
+
+              {visible.some((die) => die.role === 'explosion') && (
+                <>
+                  <div className="dice-burst-seam" aria-hidden="true" />
+                  <div className="dice-row dice-row-burst">
+                    {visible
+                      .filter((die) => die.role === 'explosion')
+                      .map((die) => (
+                        <Die
+                          key={die.id}
+                          die={die}
+                          face={phase === 'rolling' ? flickerFace(die, tick) : die.value}
+                          rolling={phase === 'rolling'}
+                          hot={phase !== 'rolling' && die.value === die.sides}
+                        />
+                      ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
         </div>
 
         {landed && (
@@ -362,10 +416,23 @@ export default function DiceSurface({
           </div>
         )}
 
+        {/* The reaction window, counted out loud: the table's six seconds to
+            answer the action before its dice can land. See usePlayCard.js. */}
+        {holding && (phase === 'ready' || phase === 'dc') && (
+          <p className="dice-hold">
+            Reactions are open · the roll unlocks in {wait}s
+          </p>
+        )}
+
         <div className="dice-tools">
           {!watching && phase === 'ready' && (
-            <button type="button" className="btn btn-copper" onClick={onThrow}>
-              Roll
+            <button
+              type="button"
+              className="btn btn-copper"
+              onClick={onThrow}
+              disabled={holding}
+            >
+              {holding ? `Roll · ${wait}` : 'Roll'}
             </button>
           )}
           {phase === 'rolling' && (

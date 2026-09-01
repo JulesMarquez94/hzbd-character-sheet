@@ -15,6 +15,7 @@ import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import FightProvider from '../components/campaign/FightProvider.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
+import ReactionCall from '../components/campaign/ReactionCall.jsx';
 import TurnCall from '../components/campaign/TurnCall.jsx';
 import DiceSheet from '../components/sheet/DiceSheet.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
@@ -391,6 +392,17 @@ export default function CharacterSheet({ creating = false }) {
         started here by this sheet, off an announcement on the table log, because
         nobody else may write to it. See TurnCall.jsx. */}
     <TurnCall character={character} patch={patch} canEdit={canEdit} />
+    {/* The reaction window's knock: somebody at the table acted, their dice are
+        held for six seconds, and this sheet has Reaction Points to answer with.
+        Renders nothing the rest of the time. See ReactionCall.jsx. */}
+    <ReactionCall
+      needFight
+      ready={canEdit && (Number(shown.reaction) || 0) > 0}
+      ignore={(row) => row.character_id === character.id}
+      line={`You have ${Number(shown.reaction) || 0} Reaction ${
+        (Number(shown.reaction) || 0) === 1 ? 'Point' : 'Points'
+      }. Play a card As a Reaction while the window holds.`}
+    />
     <div className="sheet" style={{ '--sheet-cols': canvasColumns }} data-columns={canvasColumns}>
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">

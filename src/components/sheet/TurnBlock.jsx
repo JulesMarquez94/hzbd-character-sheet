@@ -258,7 +258,11 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
       {/* ---------- THE TURN ---------- */}
       <div className="block-head">
         <span className="stat-category-label">Turn</span>
-        {turn.started && (
+        {/* Leaving combat by hand is solo play's button alone. A seated sheet
+            enters and leaves the fight on the table's own bell — see
+            TurnCall.jsx — and a player who could ring themselves out mid-fight
+            would be a runner announcing turns to a sheet that left. */}
+        {turn.started && !seat && (
           <button
             type="button"
             className="turn-reset"

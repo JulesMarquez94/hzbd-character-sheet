@@ -919,19 +919,28 @@ create table if not exists public.encounters (
 -- adds the fight to one that was made before there was a fight to have.
 alter table public.encounters add column if not exists run jsonb not null default '{}'::jsonb;
 
+-- Whether the players at the table may see this encounter's enemy pools. Off
+-- by default, which is the ruling that built the table: "how much has the boss
+-- got left" is the Game Master's. The checkbox on the encounter view flips it
+-- per encounter, and the read policy below is where it takes effect. Note that
+-- sharing opens the whole row to seated members, the Game Master's notes
+-- included — the flag is a curtain, not a filter.
+alter table public.encounters add column if not exists share_health boolean not null default false;
+
 create index if not exists encounters_campaign_id_idx on public.encounters (campaign_id);
 
 alter table public.encounters enable row level security;
 
--- The Game Master of the campaign, and an admin. Deliberately not the members:
--- see the note above. All four verbs answer the same question, so they are one
--- predicate written four times rather than four different reaches.
+-- The Game Master of the campaign and an admin, always; the seated members
+-- too, for an encounter whose health has been shared. Writing stays the Game
+-- Master's alone in every case.
 drop policy if exists "encounters: dm read" on public.encounters;
 create policy "encounters: dm read" on public.encounters
   for select using (
     exists (select 1 from public.campaigns c
             where c.id = encounters.campaign_id
               and (c.dm_user_id = auth.uid() or public.is_admin()))
+    or (encounters.share_health and public.is_campaign_member(encounters.campaign_id))
   );
 
 drop policy if exists "encounters: dm insert" on public.encounters;

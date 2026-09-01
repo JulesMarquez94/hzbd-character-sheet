@@ -23,7 +23,11 @@ import { useFight } from '../../context/fight.js';
  * arrangement never reshuffles because a fight started.
  */
 export default function FightBlock({ campaignId, title = '', characterId = null }) {
-  const fight = useFight()?.fights?.find((entry) => entry.id === campaignId) ?? null;
+  const held = useFight();
+  const fight = held?.fights?.find((entry) => entry.id === campaignId) ?? null;
+  /* The pools the curtain lets through: with "show enemy health" on, an enemy
+     chip here carries its bar exactly as the Game Master's does. */
+  const pools = held?.pools ?? {};
   const mine = Boolean(characterId) && fight?.upCharacter === characterId;
 
   return (
@@ -59,6 +63,7 @@ export default function FightBlock({ campaignId, title = '', characterId = null 
                   health01: null,
                   shield01: 0,
                   down: false,
+                  ...(pools[entry.ref] ?? {}),
                 }}
                 up={
                   entry.kind === 'member' && fight.upCharacter

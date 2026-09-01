@@ -606,6 +606,12 @@ function normalize(spec) {
     parts: spec.parts ?? [],
     damage: spec.damage ?? [],
     askVerdict: spec.askVerdict ?? shape === 'check',
+    /* The face on the surface's header: the card being played, as a plain URL
+       so the tray never has to know the codex. Null draws the name alone. */
+    art: spec.art ?? null,
+    /* The reaction window: seconds the throw is held before it can be made,
+       counted down on the surface. Zero for every roll outside a fight. */
+    hold: Math.max(0, Math.floor(Number(spec.hold) || 0)),
     /* Whether the table hears about it. A scratch roll does not: it has no name
        to head a block with, and a feed full of unnamed d6 is a feed nobody
        reads. See the two modes at the top. */

@@ -402,6 +402,26 @@ export function turnDoneEvent(character, round) {
   };
 }
 
+/**
+ * The curtain moved: enemy health shown to the table, or hidden again.
+ *
+ * Written when the Game Master flips the encounter's checkbox, for two readers:
+ * the table, which deserves the announcement, and every seated sheet's
+ * FightProvider, which refetches what it may see on hearing it — a row that
+ * stops being readable sends no realtime word of its own, so this is the word.
+ */
+export function shareEvent(on, { encounter = null } = {}) {
+  return {
+    kind: 'turn',
+    actor: 'The table',
+    title: on ? 'Enemy health shown' : 'Enemy health hidden',
+    detail: on
+      ? 'The chips on every seated sheet carry the enemies’ bars now'
+      : 'The enemies’ bars are the Game Master’s again',
+    data: { move: 'share', encounter, on: Boolean(on) },
+  };
+}
+
 /** The run stopped, either because it is over or because it was called off. */
 export function fightOverEvent({ encounter = null, rounds = 0 } = {}) {
   return {

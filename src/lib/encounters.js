@@ -923,7 +923,7 @@ export function dropFromOrder(encounter, ref) {
 /* --------------------------------------------------------------- the table */
 
 /** Columns the app writes back. Keeps updates from ever touching id/campaign_id. */
-const ENCOUNTER_FIELDS = ['name', 'notes', 'foes', 'run'];
+const ENCOUNTER_FIELDS = ['name', 'notes', 'foes', 'run', 'share_health'];
 
 function pickEncounterFields(patch) {
   const clean = {};

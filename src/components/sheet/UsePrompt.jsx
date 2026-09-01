@@ -13,7 +13,7 @@ import { getKeyword } from '../../lib/keywords.js';
 import { normalizeEffects } from '../../lib/combatTurn.js';
 import { cardAccent } from '../../lib/tagColors.js';
 import { getCard } from '../../lib/weapons.js';
-import { effectAdvantage } from '../../lib/moves.js';
+import { effectAdvantage, moveRides, movesReachSpecial, pendingMoves } from '../../lib/moves.js';
 import { riderLine } from '../../lib/riders.js';
 import { sourceWords } from '../../lib/attribution.js';
 import { targetPlan } from '../../lib/targeting.js';
@@ -211,9 +211,19 @@ export default function UsePrompt({ request, character, onCancel, onConfirm, com
   const fight = useFight();
   const roster = combat?.roster ?? fight?.roster ?? [];
   const offered = roster.length > 0;
+
+  /* The Martial Moves waiting on this swing, read for targets too: a SWEEP
+     riding a Strike turns "an entity" into everything in reach, and the picker
+     has to know that before the pay button does. Which rows ride which attack
+     is moves.js's law, asked here the same way the folded numbers were. */
+  const riders = useMemo(() => {
+    if (!moveRides(request.card, movesReachSpecial(character?.talents))) return [];
+    return pendingMoves(character?.effects).map((entry) => entry.card);
+  }, [request.card, character]);
+
   const plan = useMemo(
-    () => (offered ? targetPlan(request.card, { times }) : { some: false, count: 0 }),
-    [offered, request.card, times]
+    () => (offered ? targetPlan(request.card, { times, riders }) : { some: false, count: 0 }),
+    [offered, request.card, times, riders]
   );
   const [chosen, setChosen] = useState([]);
   const reach = plan.count === null ? roster.length : Math.min(plan.count, roster.length);
@@ -304,6 +314,10 @@ export default function UsePrompt({ request, character, onCancel, onConfirm, com
   function decided(extra = {}) {
     const options = { ...extra };
     if (settled) options.price = settled;
+    /* An action taken with a fight standing invites reactions: the chain's
+       first roll waits the reaction window before it can be thrown. See
+       REACTION_HOLD in usePlayCard.js. */
+    if (offered) options.react = true;
     if (picked.length > 0) {
       options.targets = picked
         .map((id) => roster.find((body) => body.id === id))

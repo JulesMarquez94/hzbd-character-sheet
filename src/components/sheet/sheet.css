@@ -8290,6 +8290,75 @@ body.sheet-fixed #root {
 }
 
 /* =========================================================
+   THE REACTION WINDOW'S KNOCK
+   Somebody at the table acted, their dice are held for six
+   seconds, and this reader has Reaction Points to answer
+   with. A corner banner, gone by itself when the window
+   closes. See ReactionCall.jsx.
+   ========================================================= */
+.reaction-call {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  max-width: 300px;
+  padding: 10px 14px;
+  text-align: left;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 145, 60, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 145, 60, 0.12), rgba(9, 17, 21, 0.94));
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  font-family: var(--font-body);
+  animation: reaction-call-in 0.18s ease-out;
+}
+
+@keyframes reaction-call-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction-call {
+    animation: none;
+  }
+}
+
+.reaction-call-head {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--stat-rp);
+}
+
+.reaction-call-what {
+  font-size: 0.82rem;
+  color: var(--text-silver);
+}
+
+.reaction-call-what b {
+  color: var(--text-bright);
+}
+
+.reaction-call-line {
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* =========================================================
    TARGET CHIPS
    A body in the fight at chip size: the name in the side's
    colour, the background an actual reflection of its Health

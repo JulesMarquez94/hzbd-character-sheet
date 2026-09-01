@@ -10388,3 +10388,72 @@ leaves the row running, or **Let it go**, which drops the row, because missing
 the Upkeep is the spell ending in the card's own words. Paying is refused
 rather than clamped when the pools cannot cover it. An enemy's toll comes off
 its own Action Points and Willpower on the encounter row.
+
+## The window, the plate and the curtain, 2026-09-01
+
+Jules, the day's fifth pass: the roller's dice in rows with a seam and a
+different glow on the bursts, a styled plate with the action's image and name,
+Sweep failing to widen a Strike, a checkbox to show enemy health to the
+players, no leaving combat by hand on a seated sheet, and "when an entity does
+an action there should be a 6 second time before the dice roll happens,
+offering all entities with reaction to take a reaction."
+
+### The surface, redressed
+
+- **The plate.** The top of the roller is a framed rectangle now: the card's
+  own art beside the action's name and whose it is. The art travels as a plain
+  URL on the spec, so the tray still knows nothing about the codex; a roll
+  with no card keeps the plate and drops the picture.
+- **Rows and a seam.** The flat floor draws two lines: the dice that were
+  asked for, a thin amber seam, then everything that burst out of them. What
+  was rolled and what the roll did read as two different things, because they
+  are.
+- **The bursts wear their own colour.** Haze violet, glowing, where they used
+  to share the max-face amber. A burst showing its own maximum still goes
+  amber-hot, because it is about to burst again.
+
+### The reaction window
+
+An action taken with a fight standing invites reactions before its dice can
+land. The chain's first roll now carries a six-second `hold`: the surface
+opens saying "Reactions are open · the roll unlocks in 5s" with the Roll
+button counting down, and everyone who can answer gets the knock —
+`ReactionCall.jsx`, a corner banner naming who is doing what, shown only to a
+player with Reaction Points in a live fight or to the Game Master whose
+enemies have some, gone by itself when the window closes. Playing the reaction
+is the flow that always existed (any card, As a Reaction); the window is the
+moment to use it in. Replays are never held: the dice already landed on the
+thrower's screen.
+
+### Sweep widens the swing
+
+`targetPlan` reads the cards riding a use now. SWEEP's "your next Weapon
+Attack is made against every entity within your reach" waiting on the tracker
+turns a one-target Strike's picker into "0 of any", exactly as the prose says,
+and any future rider that names targets is read the same way. Which rows ride
+which attack stays moves.js's law; the prompt hands the riding cards in.
+Pinned in the checker with SWEEP by name.
+
+### The curtain
+
+A per-encounter checkbox on the view: **Show enemy health to players.** It is
+a read policy, not a broadcast — `share_health` on the encounter row, and the
+policy now reads: the Game Master always, the seated members when the box is
+ticked. With it on, every seated sheet's fight chips carry the enemies' bars
+live off the encounter row (FightProvider reads what the curtain lets
+through); with it off they are plain faces again. The flip is announced on the
+log, both because the table deserves the line and because a row that stops
+being readable sends no realtime word of its own — the announcement is what
+tells the sheets to look again and find nothing.
+
+**schema.sql must be re-run** for the column and the policy. And the honest
+caveat, printed on the checkbox's own tooltip: sharing opens the whole row to
+seated members, the Game Master's notes included. The flag is a curtain, not
+a filter; a narrower channel is one ask away if notes need to stay behind it.
+
+### And the door that closed
+
+"End the fight" left the seated Turn block. A linked sheet enters and leaves
+combat on the table's own bell now, and a player who could ring themselves out
+mid-fight would be a runner announcing turns to a sheet that left. Solo sheets
+keep the button.

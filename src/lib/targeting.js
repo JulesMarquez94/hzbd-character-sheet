@@ -99,8 +99,17 @@ function readTargets(text) {
  * moves the answer for the two halves that are about targets, and which half
  * this card carries is read off its own `sub_name`, exactly as overcast.js
  * reads the price off the same text.
+ *
+ * `riders` are the cards riding this use — the Martial Moves waiting on the
+ * next weapon attack — read for targets the same way the card itself is,
+ * because a rider rewrites the swing's reach in its own prose: SWEEP's "your
+ * next Weapon Attack is made against every entity within your reach" is what
+ * turns a one-target Strike into a room (Jules, 2026-09-01: "I had used the
+ * martial move Sweep that should allow my Strike to take multiple, but it did
+ * not let me"). Which rows actually ride which attack is moves.js's law, so
+ * the caller hands the cards in rather than this file guessing.
  */
-export function targetPlan(card, { times = 0 } = {}) {
+export function targetPlan(card, { times = 0, riders = [] } = {}) {
   if (!card) return { some: false, count: 0 };
 
   const base = readTargets(cardProse(card.body));
@@ -115,14 +124,24 @@ export function targetPlan(card, { times = 0 } = {}) {
   const taken = times > 0 && !multicast ? readTargets(cardProse(card.sub_body)) : null;
   const extra = multicast ? Math.max(0, Math.floor(Number(times) || 0)) : (taken?.count ?? 0);
 
-  if (!base && !taken) return { some: false, count: 0 };
+  const riding = (riders ?? [])
+    .map((rider) => readTargets(cardProse(rider?.body)))
+    .filter(Boolean);
 
-  // An uncounted answer on either half leaves the whole plan uncapped.
-  const open = (base && base.count === null) || (taken && taken.count === null);
+  if (!base && !taken && riding.length === 0) return { some: false, count: 0 };
+
+  // An uncounted answer anywhere leaves the whole plan uncapped: an area is an
+  // area whichever text drew it.
+  const open =
+    (base && base.count === null) ||
+    (taken && taken.count === null) ||
+    riding.some((entry) => entry.count === null);
 
   return {
     some: true,
-    count: open ? null : (base?.count ?? 0) + extra,
+    count: open
+      ? null
+      : (base?.count ?? 0) + extra + riding.reduce((sum, entry) => sum + entry.count, 0),
   };
 }
 

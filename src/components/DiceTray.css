@@ -196,10 +196,41 @@
   pointer-events: auto;
 }
 
-.dice-name {
-  margin: 0;
+/* The action, as a plate at the top of the surface: the card's own art beside
+   its name, framed, so a roll reads as the thing being done. Centered with or
+   without the picture, and never taller than the art. */
+.dice-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid var(--hairline);
+  background:
+    linear-gradient(180deg, rgba(200, 138, 75, 0.08), rgba(9, 17, 21, 0.6));
+  box-shadow: 0 0 0 1px rgba(9, 17, 21, 0.6);
+  text-align: left;
+}
+
+.dice-head-art {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 138, 75, 0.35);
+}
+
+.dice-head-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.dice-head-name {
   font-family: var(--font-headings);
   font-size: 1.15rem;
+  line-height: 1.2;
   color: var(--text-silver);
 }
 
@@ -239,13 +270,35 @@
   color: var(--text-muted);
 }
 
+/* The flat floor holds rows now: the dice that were asked for on the first,
+   then a thin seam, then whatever burst out of them on the second. What was
+   rolled and what the roll did are two different lines. */
 .dice-floor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  min-height: 76px;
+}
+
+.dice-row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   justify-content: center;
-  min-height: 76px;
   align-items: center;
+}
+
+.dice-burst-seam {
+  width: min(70%, 320px);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 179, 71, 0.55),
+    transparent
+  );
 }
 
 /* The physics table takes a real box to fall in, where the flat floor only needs
@@ -274,6 +327,16 @@
   .dice-floor.is-solid {
     height: 220px;
   }
+}
+
+/* The reaction window, counted out loud. Copper, because it is the fight
+   speaking: six seconds where the table may answer before the dice can land. */
+.dice-hold {
+  margin: 14px 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--copper-bright);
 }
 
 /* ------------------------------------------------------------- the answer */

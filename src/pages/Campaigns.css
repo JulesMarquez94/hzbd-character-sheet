@@ -1792,6 +1792,24 @@
   flex: none;
 }
 
+/* The curtain's checkbox: whether the seated sheets may see this encounter's
+   enemy pools. A label rather than a button, because it is a standing state
+   and not a press. */
+.enc-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--text-silver);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.enc-share input {
+  accent-color: var(--copper);
+  cursor: pointer;
+}
+
 /* =========================================================
    TARGET CHIPS, THE PICKER AND THE TURN MANAGER BLOCK moved
    to sheet.css. All three render on the character sheet now

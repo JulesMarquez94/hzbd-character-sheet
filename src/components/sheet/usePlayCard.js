@@ -9,6 +9,17 @@ import { rollPlan } from '../../lib/rollPlan.js';
 import { castEffect, spendUse } from '../../lib/combatBar.js';
 
 /**
+ * How long the table gets to react before the first dice can be thrown, in
+ * seconds. "When an entity does an action there should be a 6 second time
+ * before the dice roll happens, offering all entities with reaction to take a
+ * reaction" (Jules, 2026-09-01). The window rides the chain's first roll as
+ * `hold`, only for a use made with a fight standing (`options.react`, set by
+ * the prompt), and the surface counts it down out loud. See DiceSurface.jsx,
+ * and ReactionCall.jsx for the other side of it.
+ */
+const REACTION_HOLD = 6;
+
+/**
  * Playing a card: paying for it, telling the table, and rolling what it asks
  * for.
  *
@@ -198,7 +209,15 @@ export function usePlayCard({ character, patch }) {
          happened; what follows is a conversation with the player that may take
          as long as they like, and the block that started it has a prompt to
          close in the meantime. */
-      if (plan.length > 0) void throwChain(tray, plan, { request, actor, chain, onSettled: settle });
+      if (plan.length > 0) {
+        void throwChain(tray, plan, {
+          request,
+          actor,
+          chain,
+          hold: options?.react ? REACTION_HOLD : 0,
+          onSettled: settle,
+        });
+      }
 
       return body;
     },
@@ -229,7 +248,7 @@ function stripCast(body, cast) {
  * nobody is holding must not be able to throw: a rejected float here would land
  * as an unhandled rejection in the console of a player whose dice worked fine.
  */
-async function throwChain(tray, plan, { request, actor, chain, onSettled = null }) {
+async function throwChain(tray, plan, { request, actor, chain, hold = 0, onSettled = null }) {
   /* Set by a critical success and held until the next check. Every landing of
      the damage maximises, not just the first: a Flurry's three landings are one
      attack's damage, and maximising only the first of them would be arbitrary.
@@ -249,12 +268,18 @@ async function throwChain(tray, plan, { request, actor, chain, onSettled = null 
   };
 
   try {
-    for (const link of plan) {
+    for (const [at, link] of plan.entries()) {
       const result = await tray.present({
         ...link,
         name: request?.name ?? 'A roll',
         note: actor?.name ?? '',
         card: request?.card?.id ?? null,
+        /* The face on the surface's header: the card being played, so a roll
+           reads as the action it is. */
+        art: request?.card?.art_url ?? null,
+        /* The reaction window sits on the chain's first roll only: the table
+           reacts to the action, not to every landing of its damage. */
+        hold: at === 0 ? hold : 0,
         chain,
         log: true,
         maximize: maximize && link.kind === 'damage',

@@ -38,6 +38,7 @@ import {
   rollInitiative,
 } from '../src/lib/encounters.js';
 import { layEffect } from '../src/lib/combatTurn.js';
+import { getMartialMove } from '../src/lib/martial.js';
 import { rollPlan } from '../src/lib/rollPlan.js';
 import { turnTriggers } from '../src/lib/turnTriggers.js';
 import { CARDS, getCard } from '../src/lib/weapons.js';
@@ -98,6 +99,25 @@ section('the second half moves the count only once it is taken');
     'RENEW’s taken Overcast reaches every affected entity',
     targetPlan(card('renew'), { times: 1 }),
     { some: true, count: null }
+  );
+}
+
+section('a rider rewrites the swing’s reach');
+{
+  /* SWEEP waiting on the tracker turns a one-target weapon attack into
+     everything in reach: "made against every entity within your reach". Found
+     by Jules swinging one. */
+  const sweep = getMartialMove('sweep');
+  check('the codex still holds SWEEP', Boolean(sweep), true);
+  check(
+    'a swing with SWEEP riding is uncapped',
+    targetPlan(card('bramble-whip'), { riders: [sweep] }),
+    { some: true, count: null }
+  );
+  check(
+    'and with nothing riding it stays one',
+    targetPlan(card('bramble-whip'), { riders: [] }),
+    { some: true, count: 1 }
   );
 }
 

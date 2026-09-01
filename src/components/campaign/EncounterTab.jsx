@@ -5,6 +5,7 @@ import DiceTable from './DiceTable.jsx';
 import EnemyBlock from './EnemyBlock.jsx';
 import FoeTurnPrompt from './FoeTurnPrompt.jsx';
 import LogBlock from './LogBlock.jsx';
+import ReactionCall from './ReactionCall.jsx';
 import RunBlock from './RunBlock.jsx';
 import { CampaignLogContext } from '../../context/campaign-log.js';
 import { useDiceTray } from '../../context/dice-tray.js';
@@ -14,6 +15,7 @@ import {
   fightOverEvent,
   initiativeEvent,
   postEvent,
+  shareEvent,
   turnCallEvent,
 } from '../../lib/campaignLog.js';
 import { levelForXp, liveCharacter } from '../../lib/characterModel.js';
@@ -970,6 +972,17 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
           as the table, signed by whichever enemy threw. Renders nothing. */}
       <DiceTable campaignId={campaignId} campaignName={campaign?.name ?? ''} />
 
+      {/* And the reaction window's knock, for the enemies: a player acted,
+          their dice are held, and something on this page has Reaction Points
+          to answer with. The table's own rows are skipped — nobody reacts to
+          themselves. */}
+      <ReactionCall
+        tables={[{ id: campaignId }]}
+        ready={run.live && foes.some((foe) => !foe.down && foe.reaction > 0)}
+        ignore={(row) => !row.character_id}
+        line="An enemy with Reaction Points can answer: play it off its block As a Reaction."
+      />
+
       {error && <div className="form-error">{error}</div>}
 
       <div className="enc-head panel">
@@ -1028,6 +1041,27 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
           </span>
 
           <span className="spacer" />
+
+          {/* The curtain. Off, an enemy's pools are the Game Master's alone,
+              which is the ruling this table was built under; on, the seated
+              sheets read this encounter and their chips carry the bars. The
+              flip is announced, because a sheet that loses the read gets no
+              other word of it. */}
+          <label
+            className="enc-share"
+            title="On, every seated player's fight chips carry the enemies' Health bars. Off, the pools are yours alone. The Game Master's notes ride along with a shared encounter."
+          >
+            <input
+              type="checkbox"
+              checked={Boolean(open.share_health)}
+              onChange={(event) => {
+                const on = event.target.checked;
+                patch({ share_health: on });
+                log(shareEvent(on, { encounter: open.id }));
+              }}
+            />
+            Show enemy health to players
+          </label>
 
           <button type="button" className="btn btn-minimal btn-sm" onClick={() => setAdding(true)}>
             Add enemies

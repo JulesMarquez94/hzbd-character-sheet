@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FightContext } from '../../context/fight.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { listFightWords } from '../../lib/campaignLog.js';
+import { encounterState, listEncounters } from '../../lib/encounters.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 
 /**
@@ -39,8 +40,43 @@ export default function FightProvider({ characterId, children }) {
   const { tables } = useCampaignLog();
   // campaignId -> { seq, order, up: { name, round, seq } | null }
   const [fights, setFights] = useState({});
+  /* The pools a shared encounter lets this reader see:
+     campaignId -> encounterId -> foe key -> { health01, shield01, down }.
+     Empty for everything the Game Master has not opened — the read policy is
+     the curtain, and this only holds what came back. */
+  const [shared, setShared] = useState({});
 
   const ids = tables.map((table) => table.id).sort().join(',');
+
+  /** One encounter's foes as chip pools, off the same reading the blocks use. */
+  const poolsOf = (row) => {
+    const map = {};
+    for (const foe of encounterState(row)) {
+      map[foe.key] = {
+        health01: foe.stats.health_max > 0 ? foe.health / foe.stats.health_max : 0,
+        shield01: foe.stats.health_max > 0 ? foe.shield / foe.stats.health_max : 0,
+        down: foe.down,
+      };
+    }
+    return map;
+  };
+
+  /**
+   * Whatever encounters this reader may read, wholesale. For a player that is
+   * exactly the shared ones — the policy filters, not this — and refetching
+   * wholesale is what clears a curtain that just closed: a row that stops
+   * being readable sends no realtime word of its own.
+   */
+  const readShared = useCallback((campaignId) => {
+    listEncounters(campaignId)
+      .then((rows) => {
+        setShared((held) => ({
+          ...held,
+          [campaignId]: Object.fromEntries(rows.map((row) => [row.id, poolsOf(row)])),
+        }));
+      })
+      .catch(() => {});
+  }, []);
 
   /** One row's word about the fight, folded in wherever it belongs. */
   const settle = useCallback((campaignId, row) => {
@@ -109,27 +145,65 @@ export default function FightProvider({ characterId, children }) {
         .catch(() => {});
     }
 
-    const drop = ids.split(',').map((campaignId) =>
+    const drop = ids.split(',').flatMap((campaignId) => [
       subscribeToTable({
         table: 'campaign_events',
         filter: `campaign_id=eq.${campaignId}`,
         onChange: (payload) => {
           if (payload.eventType !== 'INSERT') return;
-          if (payload.new) settle(campaignId, payload.new);
+          const row = payload.new;
+          if (!row) return;
+          settle(campaignId, row);
+          /* The curtain moved. Opening arrives on the encounters channel by
+             itself; closing does not, so the announcement is what triggers the
+             refetch that comes back without the hidden row. */
+          if (row.kind === 'turn' && row.data?.move === 'share') readShared(campaignId);
         },
-      })
-    );
+      }),
+      /* A shared encounter's own row, live: every Health step the Game Master
+         makes lands on the chips as it lands on their block. Only rows this
+         reader may read ever arrive, which for a player is the shared ones. */
+      subscribeToTable({
+        table: 'encounters',
+        filter: `campaign_id=eq.${campaignId}`,
+        onChange: (payload) => {
+          if (payload.eventType === 'DELETE') {
+            readShared(campaignId);
+            return;
+          }
+          const row = payload.new;
+          if (!row?.id) return;
+          setShared((held) => ({
+            ...held,
+            [campaignId]: { ...(held[campaignId] ?? {}), [row.id]: poolsOf(row) },
+          }));
+        },
+        onResync: () => readShared(campaignId),
+      }),
+    ]);
+
+    /* And the first read of the curtain's state, beside the fight's. */
+    for (const campaignId of ids.split(',')) readShared(campaignId);
 
     return () => {
       alive = false;
       drop.forEach((off) => off());
     };
-  }, [ids, settle]);
+  }, [ids, settle, readShared]);
 
   const value = useMemo(() => {
     const roster = [];
     const seen = new Set();
     const running = [];
+
+    /* Every pool the curtain lets through, flattened: foe keys are minted
+       random per encounter, so one map serves every chip. */
+    const pools = {};
+    for (const perCampaign of Object.values(shared)) {
+      for (const perEncounter of Object.values(perCampaign)) {
+        Object.assign(pools, perEncounter);
+      }
+    }
 
     for (const [campaignId, fight] of Object.entries(fights)) {
       if (!fight.order || fight.order.length === 0) continue;
@@ -158,18 +232,21 @@ export default function FightProvider({ characterId, children }) {
                 ? `var(--rank-${entry.rank})`
                 : 'var(--copper)',
           /* What a player is not allowed to know is not invented: no pools, so
-             the chip draws a plain face rather than a bar. The defenses do
-             cross — they are what a roll against this body is judged by. */
+             the chip draws a plain face — unless the Game Master opened the
+             curtain, and then the bar is the encounter row's own. The defenses
+             cross either way; they are what a roll against this body is judged
+             by. */
           health01: null,
           shield01: 0,
           down: false,
+          ...(pools[entry.ref] ?? {}),
           defenses: entry.defenses ?? null,
         });
       }
     }
 
-    return running.length > 0 ? { live: true, roster, fights: running } : null;
-  }, [fights, tables, characterId]);
+    return running.length > 0 ? { live: true, roster, fights: running, pools } : null;
+  }, [fights, shared, tables, characterId]);
 
   return <FightContext.Provider value={value}>{children}</FightContext.Provider>;
 }
