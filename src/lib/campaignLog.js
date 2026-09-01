@@ -139,7 +139,7 @@ export function playEvent(
   character,
   mode,
   amount,
-  { free = false, price = null, chain = null } = {}
+  { free = false, price = null, chain = null, targets = [] } = {}
 ) {
   const ap = Number(price?.ap ?? amount ?? request?.ap) || 0;
   const wp = Number(price?.wp ?? request?.wp) || 0;
@@ -164,6 +164,9 @@ export function playEvent(
         : spent.length > 0
           ? `Spent ${listAnd(spent)}`
           : 'Spent nothing',
+    /* Who it was aimed at, when the prompt was told. The row is the table's
+       account of the act, and "at 2.Fenrat" is half of what happened. */
+    targets.length > 0 ? `at ${listAnd(targets.map((entry) => entry.name))}` : null,
     lasts ? `lasts ${lasts}` : null,
     request?.source ?? null,
   ]
@@ -192,6 +195,16 @@ export function playEvent(
       wp,
       health,
       free: Boolean(free),
+      ...(targets.length > 0
+        ? {
+            targets: targets.map((entry) => ({
+              kind: entry.kind,
+              ref: entry.kind === 'member' ? null : entry.id,
+              character: entry.kind === 'member' ? entry.id : null,
+              name: entry.name,
+            })),
+          }
+        : {}),
     },
   };
 }
@@ -306,13 +319,16 @@ export function initiativeEvent(order = [], { encounter = null } = {}) {
       move: 'initiative',
       encounter,
       /* `ref` rides along so a later reader can point back at a body in this
-         fight — a foe's key, a character's id — not just say its name. Rows
-         written before it was here simply have less to point with. */
+         fight — a foe's key, a character's id — not just say its name, and the
+         rank is what colours its chip on a sheet that cannot read the
+         encounter row. Rows written before these were here simply have less to
+         point with. See FightProvider.jsx, which is the reader. */
       order: order.map((entry) => ({
         kind: entry.kind,
         ref: entry.ref,
         name: entry.name,
         init: entry.init,
+        ...(entry.rank ? { rank: entry.rank } : {}),
       })),
     },
   };

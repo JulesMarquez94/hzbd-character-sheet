@@ -514,31 +514,29 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   /**
    * An effect a use aimed at bodies, laid on every one of them.
    *
-   * Enemies get theirs written straight onto the encounter row, in one patch.
-   * Players get theirs *delivered*: an event names them, and each one's own
-   * client lays the row through its own patch, because nothing else may write
-   * a sheet. The event is written either way — it is also the table's record
-   * that the thing was laid.
+   * `targets` arrive off the prompt as bodies (kind, id, name). Enemies get
+   * theirs written straight onto the encounter row, in one patch. Players get
+   * theirs *delivered*: an event names them, and each one's own client lays
+   * the row through its own patch, because nothing else may write a sheet. The
+   * event is written either way — it is also the table's record that the thing
+   * was laid.
    */
   const layTargets = useCallback(
     (foe, targets, cast) => {
-      const bodies = targets
-        .map((id) => roster.find((body) => body.id === id))
-        .filter(Boolean);
-      if (bodies.length === 0) return;
+      if (targets.length === 0) return;
 
-      const keys = bodies.filter((body) => body.kind === 'foe').map((body) => body.id);
+      const keys = targets.filter((body) => body.kind === 'foe').map((body) => body.id);
       if (keys.length > 0) patch((row) => layOnFoes(row, keys, cast, { lay: layEffect }));
 
       log(
         effectLaidEvent(
           { name: foe.title, portrait: foe.creature?.portrait_url ?? null },
           cast,
-          bodies
+          targets
         )
       );
     },
-    [roster, patch, log]
+    [patch, log]
   );
 
   /** A settled chain from an aimed use: the apply window, over whoever was
@@ -554,7 +552,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
       },
       title: request.name,
       deltas,
-      preselect: targets,
+      preselect: targets.map((entry) => entry.id),
     });
   }, []);
 
@@ -726,6 +724,72 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     });
   }, [campaignId, canEdit, awaiting]);
 
+  /**
+   * The other direction of delivery: a player's aim, landing on enemies.
+   *
+   * A player cannot write the encounter row, so their targeted cast posts what
+   * it laid and what it rolled to the table log (see usePlayCard.js), and this
+   * page — the only client with the pen — applies the enemy share. The
+   * players named in the same row apply their own share themselves, so nothing
+   * is written twice: this consumer reads only rows a *character* signed,
+   * because the table's own writes were applied directly before they were
+   * posted.
+   *
+   * Landed on whichever encounter actually holds the named bodies rather than
+   * on whichever one is open: the foe refs are the address, and the Game
+   * Master browsing the shelf mid-fight is not a reason for a Fireball to
+   * miss. Guarded by row id, exactly as the turn call guards, so a resync
+   * cannot land one twice.
+   */
+  const deliveredRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!campaignId || !canEdit) return undefined;
+
+    return subscribeToTable({
+      table: 'campaign_events',
+      filter: `campaign_id=eq.${campaignId}`,
+      onChange: (payload) => {
+        if (payload.eventType !== 'INSERT') return;
+        const row = payload.new;
+        if (!row?.character_id) return;
+        if (row.kind !== 'effect' && row.kind !== 'apply') return;
+
+        const named = (row.data?.targets ?? []).filter(
+          (entry) => entry?.kind === 'foe' && entry.ref
+        );
+        if (named.length === 0) return;
+        if (deliveredRef.current.has(row.id)) return;
+        deliveredRef.current.add(row.id);
+
+        const keys = named.map((entry) => entry.ref);
+        const home = rowsRef.current.find((enc) =>
+          normalizeFoes(enc.foes).some((held) => keys.includes(held.key))
+        );
+        if (!home) return;
+
+        if (row.kind === 'effect' && row.data?.effect) {
+          patchEncounter(home.id, (enc) =>
+            layOnFoes(enc, keys, row.data.effect, { lay: layEffect })
+          );
+        }
+
+        if (row.kind === 'apply') {
+          patchEncounter(home.id, (enc) =>
+            applyToFoes(
+              enc,
+              named.map((entry) => ({
+                key: entry.ref,
+                kind: row.data?.kind,
+                landings: entry.landings,
+              }))
+            )
+          );
+        }
+      },
+    });
+  }, [campaignId, canEdit, patchEncounter]);
+
   if (!canEdit) {
     return (
       <div className="empty-state camp-empty">
@@ -891,8 +955,10 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         {/* ---------- THE FIGHT AND THE FEED ----------
             The two blocks a Game Master reads between every press, side by
             side above the bodies: the order with its three presses, and the
-            table log with every roll and delivery as it lands. */}
-        <section className="sheet-cell sheet-cell-wide cell-run">
+            table log with every roll and delivery as it lands. Single cells,
+            not doubles (Jules, 2026-09-01: half the width): together they take
+            the footprint of one enemy, and the bodies start one row down. */}
+        <section className="sheet-cell cell-run">
           <RunBlock
             run={run}
             up={up}
@@ -904,7 +970,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
           />
         </section>
 
-        <section className="sheet-cell sheet-cell-wide cell-enc-log">
+        <section className="sheet-cell cell-enc-log">
           <LogBlock campaignId={campaignId} title="DM Log" actorFor={actorFor} />
         </section>
 

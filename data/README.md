@@ -10155,3 +10155,75 @@ coming back off a real enemy as a throwable 1d6 plus flat.
    realtime channel the way the turn call does: a sheet that was closed misses
    them, and the log row is the recovery. The plan's `applied_seq` cursor is
    the fuller answer if this bites at real tables.
+
+## The player's side of the table, 2026-09-01
+
+Jules, later the same day, off a screenshot of Strike on Lark's own sheet: "on
+this screen, in a combat encounter I should see all enemies I can target", the
+initiative and log blocks on the encounter view "should be half the width",
+and "the turn manager ... when Lark presses end turn it should end the turn."
+
+Two of the morning's open items closed before the day was out.
+
+### The fight reaches the sheet
+
+A player still cannot read the encounter row; that ruling stands. What they can
+read is the table log, and the initiative event already carried the whole
+order (the refs were added this morning "wired-ready and one ask away", plus
+the rank now, for the chip's colour). `FightProvider.jsx` sits inside the
+sheet's LogProvider and holds the fight per campaign: a fetch on mount so a
+reload mid-fight keeps its targets, the insert channel after it, newest word
+wins between initiative and fight-over, judged by `seq` so a late row cannot
+restart a finished fight.
+
+UsePrompt reads it through the new FightContext as the fallback behind the
+`combat` prop, so the same picker the Game Master gets appears on Lark's
+Strike the moment a fight is live and never otherwise. The chips are plain
+faces: `health01: null` draws no bar at all, because an empty bar would say
+"down" and a full one would say "untouched", and a player's client is allowed
+to know neither.
+
+### Their aim is delivered
+
+Targets now leave the prompt as bodies (kind, id, name) rather than ids,
+because everything downstream is building event rows and rows carry names. For
+every caller that has no page of its own — which is every sheet block —
+`usePlayCard` grew the generic half the encounter view does by hand:
+
+- the row the cast lays is stripped from the caster's spend (filtered by card,
+  never deleted wholesale, so a weapon swing's cleared AMBUSH is not
+  un-spent) and posted as an `effect` event naming the targets
+- when the chain settles, each kind of rolled value goes out as one `apply`
+  event carrying the raw landings
+- the use row itself says "at 2.Fenrat and Kaelen" in its detail
+
+The named players apply their own share exactly as before (TurnCall's ears,
+built this morning, needed no change). The enemies' share lands through a new
+consumer on the encounter tab: it reads only rows a *character* signed — the
+table's own writes were applied directly before posting, which is what keeps
+the Game Master's own applies from landing twice — finds whichever encounter
+actually holds the named foe keys (not whichever is open: the refs are the
+address), and writes `layOnFoes` / `applyToFoes` through the same pipeline,
+guarded by row id. The encounter view being on some other screen entirely is
+fine; the shelf consumes too.
+
+The morning's ruling number 4 is therefore closed: a player picks enemies, and
+their wall of fire's damage lands on the encounter row while their sheet never
+gains a write it should not have.
+
+### End Turn is End Turn
+
+Block 6's End Turn used to write a plain turn row and only the cover's button
+spoke the word the runner listens for. One act, one word now: ending a turn
+writes `turnDoneEvent` from the block and the cover alike, and the runner
+stays the judge of whether it moves anything — it advances only when the ender
+is the one it is awaiting, so an out-of-order end still cannot drag the fight
+forward, and on a sheet at no table the row is the same log line it always
+was. The morning entry's "open for the designer" number 4 from the *bestiary*
+drop closes with it.
+
+### And the blocks
+
+The Initiative & Turns block and the DM Log block dropped from double cells to
+singles: together they now take one enemy's footprint, and the bodies start
+one row down.

@@ -6,6 +6,7 @@ import TargetChip from '../TargetChip.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
 import { AmmoPips } from './itemParts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
+import { useFight } from '../../context/fight.js';
 import { VARIABLE_CAP } from '../../lib/actions.js';
 import { castLine } from '../../lib/combatBar.js';
 import { getKeyword } from '../../lib/keywords.js';
@@ -198,17 +199,23 @@ export default function UsePrompt({ request, character, onCancel, onConfirm, com
   const toll = half?.kind === 'toll' ? half : null;
   const [times, setTimes] = useState(0);
 
-  /* Who this lands on, when there is anybody to land it on. The plan is the
-     card's own text and it moves with the dial: a Multicast taken twice is two
-     more chips allowed. `chosen` is clamped on read rather than trimmed by an
-     effect, so dialling the Multicast back down quietly releases the extra
-     targets without a state write racing the render. */
+  /* Who this lands on, when there is anybody to land it on. The page hands the
+     roster in on the encounter view; on a player's own sheet it is the fight
+     the table log announced, which is how "in a combat encounter I should see
+     all enemies I can target" reaches a sheet that cannot read the encounter
+     row. See FightProvider.jsx. The plan is the card's own text and it moves
+     with the dial: a Multicast taken twice is two more chips allowed. `chosen`
+     is clamped on read rather than trimmed by an effect, so dialling the
+     Multicast back down quietly releases the extra targets without a state
+     write racing the render. */
+  const fight = useFight();
+  const roster = combat?.roster ?? fight?.roster ?? [];
+  const offered = roster.length > 0;
   const plan = useMemo(
-    () => (combat ? targetPlan(request.card, { times }) : { some: false, count: 0 }),
-    [combat, request.card, times]
+    () => (offered ? targetPlan(request.card, { times }) : { some: false, count: 0 }),
+    [offered, request.card, times]
   );
   const [chosen, setChosen] = useState([]);
-  const roster = combat?.roster ?? [];
   const reach = plan.count === null ? roster.length : Math.min(plan.count, roster.length);
   const picked = chosen.slice(0, reach);
 
@@ -289,12 +296,20 @@ export default function UsePrompt({ request, character, onCancel, onConfirm, com
     : null;
 
   /* Whatever the tap decided, in one place: the price the second half settled
-     on, and whoever was picked to catch it. Undefined when neither happened, so
-     every caller that never passes `combat` sees the calls it always saw. */
+     on, and whoever was picked to catch it. Targets go out as bodies rather
+     than ids — kind, id and name — because everything downstream of a confirm
+     is building events and event rows carry names, not lookups. Undefined when
+     neither happened, so every caller that never sees a fight sees the calls
+     it always saw. */
   function decided(extra = {}) {
     const options = { ...extra };
     if (settled) options.price = settled;
-    if (picked.length > 0) options.targets = picked;
+    if (picked.length > 0) {
+      options.targets = picked
+        .map((id) => roster.find((body) => body.id === id))
+        .filter(Boolean)
+        .map((body) => ({ id: body.id, kind: body.kind, name: body.name }));
+    }
     return Object.keys(options).length > 0 ? options : undefined;
   }
 
@@ -427,7 +442,7 @@ export default function UsePrompt({ request, character, onCancel, onConfirm, com
               <span className="use-targets-note">
                 {picked.length === 0
                   ? 'Nobody picked: the use goes through as it always has, and the numbers are landed by hand.'
-                  : 'What this lays and what it rolls will be offered to these once the dice settle.'}
+                  : 'What this lays lands on their trackers, and what it rolls lands on them once the dice settle.'}
               </span>
             </div>
           )}

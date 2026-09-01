@@ -51,8 +51,13 @@ export default function TargetChip({
     <>
       {/* The bar, behind the words. Width is the pool, colour is the pool's
           own, and the Shield lies over the same track the way it lies over the
-          same Health. */}
-      <span className="tgt-fill" style={{ width: pct(body.health01) }} aria-hidden="true" />
+          same Health. A null pool is a pool this reader is not allowed to know
+          — a player pointing at an enemy — and it is drawn as nothing rather
+          than invented: an empty bar would say "down" and a full one would say
+          "untouched", and both would be guesses. */}
+      {body.health01 !== null && body.health01 !== undefined && (
+        <span className="tgt-fill" style={{ width: pct(body.health01) }} aria-hidden="true" />
+      )}
       {body.shield01 > 0 && (
         <span className="tgt-shield" style={{ width: pct(body.shield01) }} aria-hidden="true" />
       )}

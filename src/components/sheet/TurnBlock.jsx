@@ -16,7 +16,7 @@ import { turnTriggers } from '../../lib/turnTriggers.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { useDiceTray } from '../../context/dice-tray.js';
-import { restEvent, turnEvent } from '../../lib/campaignLog.js';
+import { restEvent, turnDoneEvent, turnEvent } from '../../lib/campaignLog.js';
 import {
   combatReactionGrant,
   combatShieldGrant,
@@ -100,6 +100,22 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
    * is what keeps the reminder from becoming the thing you dismiss twice a round
    * without reading. See turnTriggers.js.
    */
+  /**
+   * The table told, in the word the runner listens for.
+   *
+   * Ending a turn writes `turnDoneEvent` — the same row the turn call's cover
+   * writes — rather than a plain turn row, because the two are one act: "when
+   * Lark presses End Turn it should end the turn" (Jules, 2026-09-01), off
+   * this block as readily as off the cover. The runner stays the judge of
+   * whether it *moves* anything: it advances only when the ender is the one it
+   * is waiting on, so an out-of-order end still cannot drag the fight forward,
+   * and on a sheet at no table the row is just the log line it always was.
+   */
+  function tellTurn(move) {
+    if (move === 'end') log(turnDoneEvent(character, turn.n));
+    else log(turnEvent(move, character, turn));
+  }
+
   function press() {
     const when = turn.move === 'turn' ? 'start' : turn.move === 'end' ? 'end' : null;
     const found = when ? turnTriggers(character, when) : null;
@@ -110,7 +126,7 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
     }
 
     patch(MOVES[turn.move](character));
-    log(turnEvent(turn.move, character, turn));
+    tellTurn(turn.move);
   }
 
   /**
@@ -308,7 +324,7 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
           onConfirm={() => {
             const move = reminder.when === 'start' ? 'turn' : 'end';
             patch(MOVES[move](character));
-            log(turnEvent(move, character, turn));
+            tellTurn(move);
             setReminder(null);
           }}
           onClose={() => setReminder(null)}

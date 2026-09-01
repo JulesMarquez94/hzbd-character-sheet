@@ -13,6 +13,7 @@ import { subscribeToTable } from '../lib/realtime.js';
 import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
+import FightProvider from '../components/campaign/FightProvider.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
 import TurnCall from '../components/campaign/TurnCall.jsx';
 import DiceSheet from '../components/sheet/DiceSheet.jsx';
@@ -375,6 +376,11 @@ export default function CharacterSheet({ creating = false }) {
         Character tab grows a log block per table, and everything that spends
         something posts what it did to all of them. See LogProvider.jsx. */}
     <LogProvider characterId={character.id} canWrite={canEdit}>
+    {/* And the fight this sheet is standing in, when the Game Master is running
+        one: who is in the order, as targets a use can be aimed at. Read off the
+        table log, because the encounter row itself is the Game Master's alone.
+        See FightProvider.jsx. */}
+    <FightProvider characterId={character.id}>
     {/* And who the dice tray is rolling for, so a Skill Check thrown from the
         corner of the screen adds the right attribute. Only when the sheet is
         yours: a reader on somebody else's public sheet must not be handed their
@@ -581,6 +587,7 @@ export default function CharacterSheet({ creating = false }) {
         )}
       </main>
     </div>
+    </FightProvider>
     </LogProvider>
     </UnitContext.Provider>
   );

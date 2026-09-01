@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 import { useDiceTray } from '../../context/dice-tray.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
+import { applyPlan } from '../../lib/combatApply.js';
 import { isCriticalSuccess, isFailure } from '../../lib/dice.js';
 import { newChain } from '../../lib/logChain.js';
-import { playEvent } from '../../lib/campaignLog.js';
+import { appliedEvent, effectLaidEvent, playEvent } from '../../lib/campaignLog.js';
 import { rollPlan } from '../../lib/rollPlan.js';
-import { spendUse } from '../../lib/combatBar.js';
+import { castEffect, spendUse } from '../../lib/combatBar.js';
 
 /**
  * Playing a card: paying for it, telling the table, and rolling what it asks
@@ -90,6 +91,24 @@ export function usePlayCard({ character, patch }) {
         onSettled = null,
       } = extra;
 
+      /* ---- who it was aimed at, and who is going to land it ----
+         Targets arrive off the prompt as bodies (kind, id, name). A page with
+         its own hands — the encounter view, which writes enemies directly and
+         opens its own apply window — passes `onSettled` and takes over. Every
+         other caller is a player's sheet, and a player's aim is *delivered*:
+         the effect their cast lays and the numbers their chain rolls go on the
+         table log, and each named body's own client applies its own share. The
+         Game Master's open encounter page is the client for the enemies. See
+         TurnCall.jsx and the delivery consumer in EncounterTab.jsx. */
+      const targets = options?.targets ?? [];
+      const delivering = targets.length > 0 && !onSettled;
+
+      /* The row this cast lays, headed for the targets' trackers instead of the
+         caster's. Never when the request already carries a deliberate effects
+         write of its own (a Martial Move or an AMBUSH is a rider on the caster,
+         not a thing aimed at anybody), which is the same guard spendUse keeps. */
+      const cast = delivering && !request?.extra?.effects ? castEffect(request) : null;
+
       /* Minted before the first write so the use and every throw under it carry
          the same one, and the log can draw them as a block. See newChain. */
       const chain = newChain();
@@ -106,7 +125,7 @@ export function usePlayCard({ character, patch }) {
           : [];
 
       /* ---- 1. the price ---- */
-      const body = write(spendUse(request, actor, mode, amount, options));
+      const body = write(stripCast(spendUse(request, actor, mode, amount, options), cast));
       if (Object.keys(body).length > 0) patch(body);
 
       /* ---- 2. the table ----
@@ -117,17 +136,73 @@ export function usePlayCard({ character, patch }) {
         log(playEvent(request, actor, mode, amount, { ...options, chain: plan.length > 0 ? chain : null }));
       }
 
+      /* ---- the effect, delivered ----
+         The row stripped from the spend above, posted for whoever it was aimed
+         at: a named player's client lays it through its own patch, and the Game
+         Master's page lays it on the enemies. Posted whether or not anything
+         rolls, because a cast that lays and misses nothing has still laid. */
+      if (cast) {
+        log(
+          effectLaidEvent(
+            { name: actor?.name ?? '', portrait: actor?.portrait_url ?? null },
+            cast,
+            targets
+          )
+        );
+      }
+
+      /* ---- and the numbers, once they exist ----
+         The chain hands back what actually landed, and each kind goes out as
+         one delivery carrying the raw landings: Armor belongs to whoever is
+         hit, so nothing is subtracted here. A missed check hands back nothing
+         and nothing is posted, which is what a miss is. */
+      const settle =
+        onSettled ??
+        (delivering
+          ? (thrown) => {
+              for (const delta of applyPlan(thrown)) {
+                log(
+                  appliedEvent(
+                    {
+                      name: actor?.name ?? '',
+                      portrait: actor?.portrait_url ?? null,
+                      card: request?.card ?? null,
+                    },
+                    delta,
+                    targets.map((entry) => ({ ...entry, landings: delta.landings }))
+                  )
+                );
+              }
+            }
+          : null);
+
       /* ---- 3 to 6. the dice ----
          Deliberately not awaited by the caller. Everything above has already
          happened; what follows is a conversation with the player that may take
          as long as they like, and the block that started it has a prompt to
          close in the meantime. */
-      if (plan.length > 0) void throwChain(tray, plan, { request, actor, chain, onSettled });
+      if (plan.length > 0) void throwChain(tray, plan, { request, actor, chain, onSettled: settle });
 
       return body;
     },
     [tray, character, patch, log]
   );
+}
+
+/**
+ * The spend, minus the row it laid on the caster.
+ *
+ * A cast aimed at bodies lays its row on them, so the copy `spendUse` put on
+ * the caster's own tracker comes back off before the patch: filtered by the
+ * card rather than deleted wholesale, because on a weapon swing `body.effects`
+ * is also where a spent AMBUSH was just cleared and a wholesale delete would
+ * un-spend it. A standing row of the same card goes with it — a redirected
+ * recast is the spell moving, and it must not run in two places off one
+ * source.
+ */
+function stripCast(body, cast) {
+  if (!cast || !Array.isArray(body.effects)) return body;
+  return { ...body, effects: body.effects.filter((row) => row.card !== cast.card) };
 }
 
 /**
