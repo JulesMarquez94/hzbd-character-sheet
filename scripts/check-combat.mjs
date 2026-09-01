@@ -18,7 +18,10 @@
 
 import { targetPlan } from '../src/lib/targeting.js';
 import {
+  aimHits,
+  aimOutcomes,
   applyPlan,
+  armCheck,
   characterDelta,
   clauseAim,
   clauseThrow,
@@ -284,6 +287,41 @@ section('a check knows which of the target’s numbers it is against');
     '“against the Grit of” is against Grit',
     checkOf('sleeping-spores')?.against,
     'grit'
+  );
+}
+
+section('an aimed check carries what it is judged by');
+{
+  const link = { shape: 'check', against: 'avoid', askDc: true, askVerdict: true };
+  const a = { id: 'a', kind: 'foe', name: 'A', defenses: { avoid: 15, reflex: 12, grit: 11 } };
+  const b = { id: 'b', kind: 'member', name: 'B', defenses: { avoid: 17, reflex: 14, grit: 15 } };
+
+  const one = armCheck(link, [a]);
+  check('one number arms the dc and never asks', [one.dc, one.askDc], [15, false]);
+
+  const many = armCheck(link, [a, b]);
+  check(
+    'differing numbers judge per body instead',
+    [many.dc, many.askDc, many.askVerdict, many.judged?.length],
+    [null, false, false, 2]
+  );
+
+  check(
+    'a target with no numbers keeps the question',
+    armCheck(link, [{ id: 'x', kind: 'foe', name: 'X', defenses: null }]).askDc,
+    true
+  );
+
+  const outcomes = aimOutcomes(16, many.judged);
+  check('one total, judged against each', outcomes.map((entry) => entry.verdict), [
+    'success',
+    'failure',
+  ]);
+  check('the hits are exactly who it caught', aimHits(outcomes).map((entry) => entry.id), ['a']);
+  check(
+    'six over somebody is a critical against them alone',
+    aimOutcomes(21, many.judged).map((entry) => entry.verdict),
+    ['critical-success', 'success']
   );
 }
 

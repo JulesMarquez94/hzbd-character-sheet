@@ -917,6 +917,16 @@
   border-top-color: var(--rank-tone, var(--copper));
 }
 
+/* Whose turn it is, on the block itself: the acting enemy is ringed in copper
+   and stands first in the grid, because the blocks follow the order while a
+   fight runs. See orderedFoes in EncounterTab.jsx. */
+.sheet-cell.cell-foe.is-up {
+  border-color: var(--copper);
+  box-shadow:
+    0 0 0 1px rgba(200, 138, 75, 0.5),
+    0 0 18px rgba(200, 138, 75, 0.22);
+}
+
 .foe-block {
   flex: 1;
   min-height: 0;
@@ -1851,6 +1861,29 @@
 .apply-delta-landings {
   font-size: 0.64rem;
   color: var(--text-muted);
+}
+
+/* The one roll judged per body: who it critically caught, who it caught and
+   who dodged, each band in the verdict's own colour. */
+.apply-verdicts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.apply-verdict {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-silver);
+}
+
+.apply-verdict b {
+  margin-right: 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--verdict-tone, var(--text-muted));
 }
 
 .apply-lines {

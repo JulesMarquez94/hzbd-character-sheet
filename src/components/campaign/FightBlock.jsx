@@ -22,8 +22,9 @@ import { useFight } from '../../context/fight.js';
  * the membership does, exactly like the log block beside it, so the
  * arrangement never reshuffles because a fight started.
  */
-export default function FightBlock({ campaignId, title = '', characterName = '' }) {
+export default function FightBlock({ campaignId, title = '', characterId = null }) {
   const fight = useFight()?.fights?.find((entry) => entry.id === campaignId) ?? null;
+  const mine = Boolean(characterId) && fight?.upCharacter === characterId;
 
   return (
     <div className="cell-scroll run-block">
@@ -59,7 +60,11 @@ export default function FightBlock({ campaignId, title = '', characterName = '' 
                   shield01: 0,
                   down: false,
                 }}
-                up={Boolean(fight.upName) && entry.name === fight.upName}
+                up={
+                  entry.kind === 'member' && fight.upCharacter
+                    ? entry.ref === fight.upCharacter
+                    : Boolean(fight.upName) && entry.name === fight.upName
+                }
                 init={entry.init}
                 title={`${entry.name} rolled ${entry.init}`}
               />
@@ -69,8 +74,8 @@ export default function FightBlock({ campaignId, title = '', characterName = '' 
           <p className="run-note">
             {!fight.upName
               ? 'The order is rolled. The first call is on its way.'
-              : fight.upName === characterName
-                ? 'It is your turn. Your End Turn is what moves the table on.'
+              : mine
+                ? 'It is your turn. Start it from the cover or your Turn block, and your End Turn moves the table on.'
                 : `${fight.upName} is up. Your turn will cover the screen when the order reaches you.`}
           </p>
         </>

@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { useDiceTray } from '../../context/dice-tray.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
-import { applyPlan } from '../../lib/combatApply.js';
+import { aimHits, aimOutcomes, applyPlan, armCheck } from '../../lib/combatApply.js';
 import { isCriticalSuccess, isFailure } from '../../lib/dice.js';
 import { newChain } from '../../lib/logChain.js';
-import { appliedEvent, effectLaidEvent, playEvent } from '../../lib/campaignLog.js';
+import { appliedEvent, effectLaidEvent, playEvent, verdictEvent } from '../../lib/campaignLog.js';
 import { rollPlan } from '../../lib/rollPlan.js';
 import { castEffect, spendUse } from '../../lib/combatBar.js';
 
@@ -113,6 +113,9 @@ export function usePlayCard({ character, patch }) {
          the same one, and the log can draw them as a block. See newChain. */
       const chain = newChain();
 
+      /* Every check aimed at the picked targets carries what it is judged by:
+         one shared number opens the surface saying "against 15", and differing
+         numbers are judged per body once the total lands. See combatApply.js. */
       const plan = (
         roll && tray
           ? rollPlan(request?.card, actor, request?.modifiers, {
@@ -124,6 +127,12 @@ export function usePlayCard({ character, patch }) {
             })
           : []
       ).map((link) => armCheck(link, targets));
+
+      /* Whether a check stands between the cast and its landing. "On a hit" is
+         most of the codex, so an aimed effect behind a check waits for the
+         verdict and lands on whoever was actually hit; one with no check to
+         pass lays the moment it is paid for, as it always has. */
+      const checky = plan.some((link) => link.shape === 'check');
 
       /* ---- 1. the price ---- */
       const body = write(stripCast(spendUse(request, actor, mode, amount, options), cast));
@@ -137,45 +146,52 @@ export function usePlayCard({ character, patch }) {
         log(playEvent(request, actor, mode, amount, { ...options, chain: plan.length > 0 ? chain : null }));
       }
 
-      /* ---- the effect, delivered ----
-         The row stripped from the spend above, posted for whoever it was aimed
-         at: a named player's client lays it through its own patch, and the Game
-         Master's page lays it on the enemies. Posted whether or not anything
-         rolls, because a cast that lays and misses nothing has still laid. */
-      if (cast) {
-        log(
-          effectLaidEvent(
-            { name: actor?.name ?? '', portrait: actor?.portrait_url ?? null },
-            cast,
-            targets
-          )
-        );
-      }
+      const speaker = {
+        name: actor?.name ?? '',
+        portrait: actor?.portrait_url ?? null,
+        card: request?.card ?? null,
+      };
 
-      /* ---- and the numbers, once they exist ----
-         The chain hands back what actually landed, and each kind goes out as
-         one delivery carrying the raw landings: Armor belongs to whoever is
-         hit, so nothing is subtracted here. A missed check hands back nothing
-         and nothing is posted, which is what a miss is. */
-      const settle =
-        onSettled ??
-        (delivering
-          ? (thrown) => {
-              for (const delta of applyPlan(thrown)) {
-                log(
-                  appliedEvent(
-                    {
-                      name: actor?.name ?? '',
-                      portrait: actor?.portrait_url ?? null,
-                      card: request?.card ?? null,
-                    },
-                    delta,
-                    targets.map((entry) => ({ ...entry, landings: delta.landings }))
-                  )
-                );
-              }
-            }
-          : null);
+      /* ---- the effect with nothing to pass, delivered now ---- */
+      if (cast && !checky) log(effectLaidEvent(speaker, cast, targets));
+
+      /* ---- and the rest, once the dice have spoken ----
+         The chain hands back what landed and, for an aimed check, who it landed
+         on. The verdicts go on the log for the whole table; the effect held
+         back above lays on whoever was hit; each kind of rolled value goes out
+         as one delivery carrying the raw landings, hit targets only — Armor
+         belongs to whoever is hit, so nothing is subtracted here. A page with
+         its own hands (the encounter view) takes over from the verdict row on. */
+      const settle = (thrown, meta = {}) => {
+        if (meta.outcomes && meta.outcomes.length > 0) {
+          log(verdictEvent(speaker, request?.name ?? '', meta.outcomes));
+        }
+
+        if (onSettled) {
+          onSettled(thrown, meta);
+          return;
+        }
+        if (!delivering) return;
+
+        const landed = meta.outcomes
+          ? targets.filter((entry) =>
+              aimHits(meta.outcomes).some((outcome) => outcome.id === entry.id)
+            )
+          : targets;
+        if (landed.length === 0) return;
+
+        if (cast && checky && meta.hit) log(effectLaidEvent(speaker, cast, landed));
+
+        for (const delta of applyPlan(thrown)) {
+          log(
+            appliedEvent(
+              speaker,
+              delta,
+              landed.map((entry) => ({ ...entry, landings: delta.landings }))
+            )
+          );
+        }
+      };
 
       /* ---- 3 to 6. the dice ----
          Deliberately not awaited by the caller. Everything above has already
@@ -188,32 +204,6 @@ export function usePlayCard({ character, patch }) {
     },
     [tray, character, patch, log]
   );
-}
-
-/**
- * A check aimed at picked targets, carrying its own DC.
- *
- * "When selecting a target, there is no reason for the dice roller to ask for
- * a DC, as it should be known by the system" (Jules, 2026-09-01). The card
- * says which of the target's numbers the roll is judged by (`against`, read in
- * rollPlan.js) and the target chip carries those numbers, so the surface opens
- * saying "against 15" with the roll button ready and the question never asked.
- *
- * Only when every picked target answers with the same number. Three bodies
- * with three different Defenses is one throw judged three ways, and the tray
- * has one verdict to give — so the question stays the table's there, exactly
- * as it stays for a Skill Check against the world.
- */
-function armCheck(link, targets) {
-  if (link.shape !== 'check' || !link.against || targets.length === 0) return link;
-
-  const values = targets.map((entry) => Number(entry.defenses?.[link.against]));
-  if (values.length === 0 || values.some((value) => !Number.isFinite(value) || value <= 0)) {
-    return link;
-  }
-  if (new Set(values).size !== 1) return link;
-
-  return { ...link, dc: values[0], askDc: false };
 }
 
 /**
@@ -247,12 +237,15 @@ async function throwChain(tray, plan, { request, actor, chain, onSettled = null 
      heals or shields on the same breath rolls those honestly. */
   let maximize = false;
 
-  /* Every value that actually landed, for the caller that asked to hear. Built
-     whatever happens to the chain, so a surface closed after the second of
-     three landings still hands back the two that were thrown. */
+  /* Every value that actually landed, for the caller that asked to hear, plus
+     the check's word: `outcomes` is the total judged per aimed body, `hit` is
+     whether anything connected at all. Built whatever happens to the chain, so
+     a surface closed after the second of three landings still hands back the
+     two that were thrown. */
   const thrown = [];
+  const meta = { outcomes: null, hit: null };
   const settle = () => {
-    if (onSettled) onSettled(thrown);
+    if (onSettled) onSettled(thrown, meta);
   };
 
   try {
@@ -276,12 +269,30 @@ async function throwChain(tray, plan, { request, actor, chain, onSettled = null 
 
       if (link.shape !== 'check') continue;
 
+      /* An aimed check: the one total, judged against each body it was thrown
+         at. Everybody dodging ends the chain exactly as a plain miss does, and
+         a critical against anybody maximises the damage that follows — the
+         single-target rule read across a volley, flagged as a ruling in
+         data/README.md. */
+      if (link.judged) {
+        meta.outcomes = aimOutcomes(result.total, link.judged);
+        const connected = aimHits(meta.outcomes);
+        meta.hit = connected.length > 0;
+        if (connected.length === 0) return settle();
+        maximize = meta.outcomes.some((outcome) => isCriticalSuccess(outcome.verdict));
+        continue;
+      }
+
       /* A miss ends it. Almost every card that rolls damage says "On a hit"
          before it, so there is nothing left to roll and a number put on the
          table here would be one the card never offered. Jules's call of
          2026-08-30. */
-      if (isFailure(result.verdict)) return settle();
+      if (isFailure(result.verdict)) {
+        meta.hit = false;
+        return settle();
+      }
 
+      meta.hit = true;
       maximize = isCriticalSuccess(result.verdict);
     }
   } catch (error) {

@@ -55,7 +55,8 @@ export default function FightProvider({ characterId, children }) {
       if (move === 'your-turn') {
         /* Who is up, on the fight that is actually running: a call older than
            the standing order belongs to some earlier fight and says nothing
-           about this one. */
+           about this one. The character id rides along for a player's turn, so
+           a sheet can know "this is me" without matching names. */
         if (!known?.order || seq <= Number(known.seq)) return held;
         if (known.up && Number(known.up.seq) >= seq) return held;
         return {
@@ -64,6 +65,7 @@ export default function FightProvider({ characterId, children }) {
             ...known,
             up: {
               name: String(row.actor ?? ''),
+              character: row.data?.character ?? null,
               round: Math.max(1, Math.floor(Number(row.data?.round) || 1)),
               seq,
             },
@@ -138,6 +140,7 @@ export default function FightProvider({ characterId, children }) {
         order: fight.order,
         round: fight.up?.round ?? 1,
         upName: fight.up?.name ?? null,
+        upCharacter: fight.up?.character ?? null,
       });
 
       for (const entry of fight.order) {

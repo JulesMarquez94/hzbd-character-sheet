@@ -484,10 +484,17 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
     /* The row this card would have laid on its caster, when it was aimed at
        somebody instead. "When an ability is cast that affects an entity with an
        effect, this effect needs to populate on the target trackers" — so the
-       self-laid row is stripped out of the spend (`write` below) and the page
-       lays the same row on every body that was picked, the caster included if
-       the caster picked itself. */
+       self-laid row is stripped out of the spend (`write` below) and laid on
+       every body that was picked, the caster included if the caster picked
+       itself. A cast standing behind a check waits for the verdict and lands on
+       whoever was actually hit, which is what "On a hit" means; one with no
+       check to pass lays now. */
     const cast = targets.length > 0 ? castEffect(request) : null;
+    const checky =
+      targets.length > 0 &&
+      rollPlan(request.card, actor, request.modifiers, { half: Boolean(options?.price) }).some(
+        (link) => link.shape === 'check'
+      );
 
     /* Paid, logged and rolled under the enemy's own name, because that is who
        acted. The whole spend lands on its own row: nothing is borrowed and
@@ -503,18 +510,27 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
             },
           }
         : {}),
-      /* And once the dice stop, the numbers are offered to the targets: the
-         page opens the apply window over whoever was picked. Only for an aimed
-         use — one with nobody picked rolls onto the table and is landed by
-         hand, exactly as it always was. */
+      /* And once the dice stop, the whole answer goes to the page: what landed,
+         who the check judged hit and missed, and the effect still waiting on
+         the verdict. Only for an aimed use — one with nobody picked rolls onto
+         the table and is landed by hand, exactly as it always was. */
       ...(targets.length > 0 && combat?.onResults
         ? {
-            onSettled: (thrown) => combat.onResults({ foe, request, targets, thrown }),
+            onSettled: (thrown, meta = {}) =>
+              combat.onResults({
+                foe,
+                request,
+                targets,
+                thrown,
+                outcomes: meta.outcomes ?? null,
+                hit: meta.hit ?? null,
+                cast: checky ? cast : null,
+              }),
           }
         : {}),
     });
 
-    if (cast) combat?.layEffect?.(foe, targets, cast);
+    if (cast && !checky) combat?.layEffect?.(foe, targets, cast);
     setRequest(null);
   }
 

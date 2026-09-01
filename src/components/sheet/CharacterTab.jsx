@@ -617,7 +617,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
     ...Object.fromEntries(
       tables.map((table) => [
         `fight:${table.id}`,
-        <FightBlock campaignId={table.id} title={table.name} characterName={character.name} />,
+        <FightBlock campaignId={table.id} title={table.name} characterId={character.id} />,
       ])
     ),
 

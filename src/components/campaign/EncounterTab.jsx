@@ -17,8 +17,8 @@ import {
   turnCallEvent,
 } from '../../lib/campaignLog.js';
 import { levelForXp, liveCharacter } from '../../lib/characterModel.js';
-import { applyPlan, clauseAim } from '../../lib/combatApply.js';
-import { layEffect, tickEffects } from '../../lib/combatTurn.js';
+import { aimHits, applyPlan, clauseAim } from '../../lib/combatApply.js';
+import { dropEffect, layEffect, tickEffects } from '../../lib/combatTurn.js';
 import {
   CREATURE_MAX_LEVEL,
   RANKS,
@@ -48,6 +48,8 @@ import {
   normalizeRun,
   resetEncounter,
   rollInitiative,
+  setFoeEffects,
+  stepFoePool,
   updateEncounter,
 } from '../../lib/encounters.js';
 import { turnTriggers } from '../../lib/turnTriggers.js';
@@ -564,22 +566,43 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     [patch, log]
   );
 
-  /** A settled chain from an aimed use: the apply window, over whoever was
-      picked, once there is anything to land. */
-  const handleResults = useCallback(({ foe, request, targets, thrown }) => {
-    const deltas = applyPlan(thrown);
-    if (deltas.length === 0) return;
-    setApply({
-      caster: {
-        name: foe.title,
-        portrait: foe.creature?.portrait_url ?? null,
-        card: request.card ?? null,
-      },
-      title: request.name,
-      deltas,
-      preselect: targets.map((entry) => entry.id),
-    });
-  }, []);
+  /**
+   * A settled chain from an aimed use: the verdicts read, the held-back effect
+   * laid on whoever was hit, and the apply window over them.
+   *
+   * `outcomes` is the check's total judged per body; with one in hand the
+   * window preselects the hits and lists the misses, so a volley against three
+   * different Defenses lands on exactly who it caught. Without one (no check,
+   * or a check judged by hand) everyone picked is offered, as before. The
+   * window still opens on outcomes alone — everybody dodging is an answer the
+   * Game Master should see, not a silence.
+   */
+  const handleResults = useCallback(
+    ({ foe, request, targets, thrown, outcomes = null, hit = null, cast = null }) => {
+      const landed = outcomes
+        ? targets.filter((entry) => aimHits(outcomes).some((won) => won.id === entry.id))
+        : targets;
+
+      /* The effect that waited on the verdict: "On a hit, the spore embeds" is
+         a row for whoever was hit and for nobody else. */
+      if (cast && hit && landed.length > 0) layTargets(foe, landed, cast);
+
+      const deltas = applyPlan(thrown);
+      if (deltas.length === 0 && !outcomes) return;
+      setApply({
+        caster: {
+          name: foe.title,
+          portrait: foe.creature?.portrait_url ?? null,
+          card: request.card ?? null,
+        },
+        title: request.name,
+        deltas,
+        outcomes,
+        preselect: landed.map((entry) => entry.id),
+      });
+    },
+    [layTargets]
+  );
 
   /**
    * A tracked effect rolled off its row: the wall of fire, clicked the moment
@@ -702,6 +725,43 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     [apply, roster, patch, log]
   );
 
+  /**
+   * An Upkeep answered from the boundary prompt: the toll paid out of the
+   * enemy's own pools, or the row let go. "Upkeep abilities should ask you if
+   * you want to keep it up or drop it" — asked where the toll comes due, and
+   * done with one press instead of two blocks of hand edits.
+   */
+  const payUpkeep = useCallback(
+    (foe, row) => {
+      patch((enc) => {
+        const toll = row.toll ?? {};
+        let body = null;
+        let held = enc;
+        if (toll.ap > 0) {
+          body = stepFoePool(held, foe, 'ap', -toll.ap);
+          if (body) held = { ...held, ...body };
+        }
+        if (toll.wp > 0) {
+          const more = stepFoePool(held, foe, 'willpower', -toll.wp);
+          if (more) body = { ...(body ?? {}), ...more };
+        }
+        return body;
+      });
+    },
+    [patch]
+  );
+
+  const dropUpkeep = useCallback(
+    (foe, row) => {
+      patch((enc) => {
+        const held = normalizeFoes(enc.foes).find((entry) => entry.key === foe.key);
+        if (!held) return null;
+        return setFoeEffects(enc, foe.key, dropEffect(held.effects ?? [], row.id));
+      });
+    },
+    [patch]
+  );
+
   /* What every enemy block reaches the fight through. Only on the encounter
      view, and only while this Game Master can edit: the Bestiary hands its
      blocks nothing and stays a reference page. */
@@ -709,6 +769,33 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     () => ({ roster, layEffect: layTargets, onResults: handleResults, rollEffect }),
     [roster, layTargets, handleResults, rollEffect]
   );
+
+  /**
+   * The bodies below, in the fight's own order.
+   *
+   * "The enemies there should be ordered by initiative, the current turn's
+   * block should be highlighted and the order should change as initiative
+   * moves" — so while a fight runs, the blocks stand in turn order *from
+   * whoever is up*: the acting enemy first, then everyone in the order the
+   * fight will reach them, wrapping. An enemy added mid-fight and not yet in
+   * the order keeps to the tail, and with no fight running the pile stays the
+   * order it was laid down in, which is the Game Master's own.
+   */
+  const orderedFoes = useMemo(() => {
+    if (!run.live) return foes;
+
+    const rank = new Map();
+    run.order.forEach((entry, at) => {
+      if (entry.kind !== 'foe') return;
+      rank.set(entry.ref, (at - run.at + run.order.length) % run.order.length);
+    });
+
+    return [...foes].sort(
+      (a, b) =>
+        (rank.get(a.key) ?? Number.MAX_SAFE_INTEGER) -
+        (rank.get(b.key) ?? Number.MAX_SAFE_INTEGER)
+    );
+  }, [foes, run]);
 
   /**
    * The other half of the loop: a player has ended their turn, so the order
@@ -1006,8 +1093,13 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
           <LogBlock campaignId={campaignId} title="DM Log" actorFor={actorFor} />
         </section>
 
-        {foes.map((foe) => (
-          <section key={foe.key} className="sheet-cell sheet-cell-wide cell-foe">
+        {orderedFoes.map((foe) => (
+          <section
+            key={foe.key}
+            className={`sheet-cell sheet-cell-wide cell-foe${
+              run.live && up?.kind === 'foe' && up.ref === foe.key ? ' is-up' : ''
+            }`}
+          >
             <EnemyBlock
               foe={foe}
               patch={patch}
@@ -1065,6 +1157,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         <FoeTurnPrompt
           boundary={boundary}
           onThrow={throwBoundary}
+          onUpkeep={(foe, row, act) => (act === 'pay' ? payUpkeep(foe, row) : dropUpkeep(foe, row))}
           onConfirm={() => {
             setBoundary(null);
             advanceEncounter(boundary.encounterId);

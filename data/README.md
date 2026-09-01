@@ -10303,3 +10303,88 @@ The target chips, the picker and the turn manager block styles moved from
 Campaigns.css to sheet.css, because all three render on the character sheet
 now and that page never loads Campaigns.css — the same cold-load trap the turn
 call cover had, caught this time before anybody saw it unstyled.
+
+## The turn belongs to the table, 2026-09-01
+
+Jules, still playing: the cover should say "Start My Turn" instead of offering
+keep-playing and end; a linked character cannot start combat himself; the turn
+buttons are dead outside your turn and read "Not in an Encounter" outside a
+fight; a targeted roll knows its DC everywhere and a volley "goes against all
+the different entities. So it should show a list of hit entities, critically
+hit entities and missed"; the enemy blocks follow the order with the acting
+one highlighted; the up-chip should be clearer; and an Upkeep "should ask you
+if you want to keep it up or drop it."
+
+### The bell and the cover
+
+Combat state on a linked sheet is the table's now, end to end. The initiative
+event is the bell: every sheet the order names enters combat through its own
+`startCombat` — Action Points full, PREPARED's reactions, the gear's Shield —
+and the fight-over event rings it back out through `endCombat`. Nothing was
+lost by taking the button away, because the button never granted the bell's
+gear either: it is the same write, made when the fight actually starts.
+
+The cover stopped starting the turn for you. It says the order reached you,
+prints what the boundary sets off (rolls to make, Upkeeps to answer) and waits
+on **Start my turn** — the same press, read, press the Turn block has always
+kept, now kept by the announced turn too. Ending happens from the Turn block
+when you are done, and the block's End Turn is the same word the runner
+listens for.
+
+### The seated Turn block
+
+For a character at a table the block's button is the fight's:
+
+| The fight | The button |
+| --------- | ---------- |
+| Your turn is running | End Turn, live |
+| The order stands on you | Start Turn, live |
+| Somebody else is up | Start Turn, dead, saying who |
+| No fight running | "Not in an Encounter", dead |
+
+Mid-turn End is deliberately always pressable: closing your own turn is yours,
+and the runner already refuses an end from anybody it is not waiting on. A
+sheet at no table keeps all three moves by hand, untouched.
+
+### One roll, judged per body
+
+`armCheck` moved into combatApply.js and grew the volley half. An aimed check
+now always carries `judged` — who, against which number — and arms itself two
+ways: one shared number opens the surface saying "against 15" as before, and
+differing numbers roll with no question and no verdict buttons at all, the
+total judged against each body once it lands (`aimOutcomes`, the same four
+bands, so 6 over somebody's Reflex is a critical against them alone).
+
+What follows the check follows the verdicts. Everybody dodging ends the chain.
+The held-back effect — "On a hit, the spore embeds" — lays only on who was
+hit, on both sides of the table: the generic delivery waits for the verdict
+now, and the encounter page does the same through `onResults`. Deliveries go
+to the hits alone. A **verdict row** goes on the log for the whole table
+("Critically hit 1.Fenrat, hit Lark, missed Kaelen"), and the apply window
+opens with the same list in colour, hits preselected, misses listed and still
+pickable because the table outranks the sheet. Everybody dodging opens the
+window too, saying so, because a silence is not an answer.
+
+One ruling inside it: **a critical against anybody maximises the shared damage
+roll**, which is the single-target rule read across a volley. If a lone crit
+in a group should split the damage instead, say the word: the landings are per
+target already.
+
+### The blocks follow the order
+
+While a fight runs the enemy blocks stand in turn order *from whoever is up*:
+the acting enemy first, ringed in copper, and the rest in the order the fight
+will reach them, wrapping as Next is pressed. An enemy not in the order keeps
+to the tail; no fight, no reordering. And the up-chip everywhere got louder:
+filled, double-ringed, glowing and wearing a pointer, because "whose turn is
+it" is read from across a table.
+
+### The Upkeep asks its own question
+
+A boundary row wearing a toll asks it where it comes due, on every surface
+that prints one — the sheet's turn prompt, the turn cover and the enemy
+boundary prompt: **Pay N**, which takes the toll off the pools it names and
+leaves the row running, or **Let it go**, which drops the row, because missing
+the Upkeep is the spell ending in the card's own words. Paying is refused
+rather than clamped when the pools cannot cover it. An enemy's toll comes off
+its own Action Points and Willpower on the encounter row.

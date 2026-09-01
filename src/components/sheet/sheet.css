@@ -8148,6 +8148,35 @@ body.sheet-fixed #root {
   color: var(--text-muted);
 }
 
+/* The Upkeep's other answer: let it go, and the effect ends. Red, because it
+   is the row coming off the tracker. */
+.turn-trigger-drop {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 3px;
+  border: 1px solid rgba(224, 82, 82, 0.4);
+  background-color: rgba(224, 82, 82, 0.08);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--stat-health);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.turn-trigger-drop:hover,
+.turn-trigger-drop:focus-visible {
+  border-color: var(--stat-health);
+  background-color: rgba(224, 82, 82, 0.16);
+}
+
+.turn-trigger-take:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 /* =========================================================
    THE TURN CALL
    The full-screen notice a player gets when the order
@@ -8355,7 +8384,9 @@ button.tgt-chip:disabled {
 }
 
 /* Picked, and up. A picked target wears its own tone as a ring; whoever the
-   order stands on is filled, the way the strip's chips were. */
+   order stands on is unmistakable — filled, ringed, glowing and wearing the
+   pointer, because "whose turn is it" is read from across a table (Jules,
+   2026-09-01: make the frame that says whose turn it is clearer). */
 .tgt-chip.is-on {
   border-color: var(--tgt-tone, var(--copper));
   box-shadow: 0 0 0 1px var(--tgt-tone, var(--copper));
@@ -8363,14 +8394,31 @@ button.tgt-chip:disabled {
 }
 
 .tgt-chip.is-up {
-  border-color: var(--copper);
-  box-shadow: 0 0 0 1px rgba(200, 138, 75, 0.45);
+  border-color: var(--copper-bright);
+  background-color: rgba(200, 138, 75, 0.22);
+  box-shadow:
+    0 0 0 2px rgba(200, 138, 75, 0.55),
+    0 0 14px rgba(200, 138, 75, 0.35);
   color: var(--text-bright);
+  font-weight: 700;
+}
+
+.tgt-chip.is-up .tgt-name::before {
+  content: '▶ ';
+  font-size: 0.5rem;
+  color: var(--copper-bright);
 }
 
 .tgt-member.is-up {
   border-color: var(--focus-cyan);
-  box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.35);
+  background-color: rgba(0, 229, 255, 0.16);
+  box-shadow:
+    0 0 0 2px rgba(0, 229, 255, 0.45),
+    0 0 14px rgba(0, 229, 255, 0.3);
+}
+
+.tgt-member.is-up .tgt-name::before {
+  color: var(--focus-cyan);
 }
 
 .tgt-chip.is-down {

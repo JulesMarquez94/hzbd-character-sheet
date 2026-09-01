@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import Modal from '../Modal.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { cardAccent } from '../../lib/tagColors.js';
 import { clauseThrow } from '../../lib/combatApply.js';
+import { costWords } from '../../lib/overcast.js';
 import { getCard } from '../../lib/weapons.js';
 
 /**
@@ -33,11 +35,22 @@ import { getCard } from '../../lib/weapons.js';
  * fight exactly where it stood, which matters at a Start more than anywhere,
  * because that press is the one that spends the counts.
  */
-export default function FoeTurnPrompt({ boundary, onConfirm, onThrow, onClose }) {
+export default function FoeTurnPrompt({ boundary, onConfirm, onThrow, onUpkeep = null, onClose }) {
   const stack = useCardStack();
   const sides = [boundary.leaving, boundary.coming].filter(
     (side) => side && side.triggers.any
   );
+
+  /* Which Upkeeps have been answered while this prompt is up, so the question
+     is asked once per press. Keyed on the row, exactly as the sheet's own
+     prompt keeps it. */
+  const [upkeep, setUpkeep] = useState({});
+
+  function answer(foe, row, act) {
+    if (!onUpkeep) return;
+    onUpkeep(foe, row, act);
+    setUpkeep((was) => ({ ...was, [row.id]: act === 'pay' ? 'paid' : 'dropped' }));
+  }
 
   return (
     <Modal
@@ -74,6 +87,9 @@ export default function FoeTurnPrompt({ boundary, onConfirm, onThrow, onClose })
               <BoundaryRow
                 key={row.id}
                 row={row}
+                foe={side.foe}
+                answered={upkeep[row.id] ?? null}
+                onUpkeep={onUpkeep ? (act) => answer(side.foe, row, act) : null}
                 onOpen={row.card ? () => stack?.openCard(row.card) : null}
                 onThrow={(clause, spec) => onThrow(side.foe, row, clause, spec)}
               />
@@ -111,8 +127,15 @@ export default function FoeTurnPrompt({ boundary, onConfirm, onThrow, onClose })
  * sheet's own prompt rows do, so the reminder and the tracker row it came from
  * read as one thing.
  */
-function BoundaryRow({ row, onOpen, onThrow }) {
+function BoundaryRow({ row, foe, answered = null, onUpkeep = null, onOpen, onThrow }) {
   const accent = cardAccent(getCard(row.card)?.tags);
+  /* Whether the enemy's own pools can cover the toll, read off the snapshot the
+     boundary was raised with. Refused rather than clamped when they cannot: a
+     toll paid into the negative would be the sheet inventing points. */
+  const affordable =
+    row.toll &&
+    (Number(foe?.ap) || 0) >= (row.toll.ap || 0) &&
+    (Number(foe?.willpower) || 0) >= (row.toll.wp || 0);
 
   return (
     <div className="turn-trigger" style={accent ? { '--fx-accent': accent } : undefined}>
@@ -131,6 +154,43 @@ function BoundaryRow({ row, onOpen, onThrow }) {
           {row.turns === null ? 'open' : `${row.turns} left`}
         </span>
       </div>
+
+      {/* The Upkeep's own question: keep it up out of the enemy's own pools, or
+          let it go and the row comes off its tracker. */}
+      {row.toll && onUpkeep && (
+        <div className="turn-trigger-line turn-trigger-upkeep">
+          {answered === 'paid' ? (
+            <span className="turn-trigger-taken">Paid · it holds</span>
+          ) : answered === 'dropped' ? (
+            <span className="turn-trigger-taken">Let go · it ends here</span>
+          ) : (
+            <>
+              <p className="turn-trigger-clause">Keep it up, or let it go?</p>
+              <button
+                type="button"
+                className="turn-trigger-take"
+                disabled={!affordable}
+                onClick={() => onUpkeep('pay')}
+                title={
+                  affordable
+                    ? `The toll comes off ${foe?.title ?? 'its'} own pools and the effect keeps running`
+                    : 'Its pools cannot cover it. Let it go, or hand it the points first.'
+                }
+              >
+                Pay {costWords(row.toll)}
+              </button>
+              <button
+                type="button"
+                className="turn-trigger-drop"
+                onClick={() => onUpkeep('drop')}
+                title="Miss the Upkeep and the effect ends: the row comes off the tracker"
+              >
+                Let it go
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {row.clauses.map((clause) => {
         const spec = clauseThrow(clause);

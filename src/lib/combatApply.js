@@ -44,6 +44,7 @@ import {
   newLedgerId,
   shieldCapFor,
 } from './characterModel.js';
+import { isFailure, judge } from './dice.js';
 
 /* ----------------------------------------------------------- the arithmetic */
 
@@ -199,6 +200,60 @@ function ledgerRow(character, { kind, delta, balance, note }) {
     note: String(note ?? '').slice(0, LEDGER_NOTE_MAX),
     balance,
   });
+}
+
+/* ---------------------------------------------------------- the aimed check */
+
+/**
+ * A check aimed at picked targets, carrying what it is judged by.
+ *
+ * "There is no reason for the dice roller to ask for a DC, as it should be
+ * known by the system" (Jules, 2026-09-01). The card says which of the
+ * target's numbers the roll is against (`against`, read in rollPlan.js) and
+ * the target chips carry those numbers, so the question is never asked:
+ *
+ *   one number     every picked target answers alike, so the link goes out
+ *                  with `dc` set and the surface opens saying "against 15",
+ *                  the verdict judged by the engine as always.
+ *   many numbers   one throw judged per body ("the roll goes against all the
+ *                  different entities"). The link goes out with no dc and no
+ *                  verdict buttons, and the total is judged against each
+ *                  target by `aimOutcomes` once it lands.
+ *
+ * Either way the link carries `judged` — who, against what — so the chain can
+ * say who was hit, who was critically hit and who dodged. A check against the
+ * world (no `against`, no targets, a target with no numbers) is handed back
+ * untouched and keeps asking the table.
+ */
+export function armCheck(link, targets = []) {
+  if (link.shape !== 'check' || !link.against || targets.length === 0) return link;
+
+  const judged = targets.map((entry) => ({
+    id: entry.id,
+    kind: entry.kind,
+    name: entry.name,
+    dc: Number(entry.defenses?.[link.against]),
+  }));
+  if (judged.some((entry) => !Number.isFinite(entry.dc) || entry.dc <= 0)) return link;
+
+  const one = new Set(judged.map((entry) => entry.dc));
+  return one.size === 1
+    ? { ...link, dc: judged[0].dc, askDc: false, judged }
+    : { ...link, dc: null, askDc: false, askVerdict: false, judged };
+}
+
+/**
+ * One landed total, judged per body: `[{ id, kind, name, dc, verdict }]`.
+ * The four bands are dice.js's own, so 6 over somebody's Reflex is a critical
+ * against them and 6 under is a critical miss, exactly as against a called DC.
+ */
+export function aimOutcomes(total, judged = []) {
+  return judged.map((entry) => ({ ...entry, verdict: judge(total, entry.dc) }));
+}
+
+/** The outcomes that connected: everything not a miss. */
+export function aimHits(outcomes = []) {
+  return outcomes.filter((entry) => !isFailure(entry.verdict));
 }
 
 /* ------------------------------------------------------------- the clauses */

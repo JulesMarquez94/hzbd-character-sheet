@@ -1,5 +1,6 @@
 import { requireSupabase, supabase } from './supabaseClient.js';
 import { castLine } from './combatBar.js';
+import { isFailure } from './dice.js';
 import { isWeaponAttack } from './tricks.js';
 
 /**
@@ -466,6 +467,47 @@ export function effectLaidEvent(caster, effect, targets = []) {
         ref: entry.kind === 'member' ? null : entry.id,
         character: entry.kind === 'member' ? entry.id : null,
         name: entry.name,
+      })),
+    },
+  };
+}
+
+/**
+ * One roll, judged per body: who was hit, who was critically hit, who dodged.
+ *
+ * "On multiple targets, the roll goes against all the different entities. So
+ * it should show a list of hit entities, critically hit entities and missed"
+ * (Jules, 2026-09-01). The roll row above this one carries the total; this row
+ * is the total read against everybody it was aimed at, which is the sentence
+ * somebody says out loud at the table.
+ */
+export function verdictEvent(caster, name, outcomes = []) {
+  const crits = outcomes.filter((entry) => entry.verdict === 'critical-success');
+  const hits = outcomes.filter((entry) => entry.verdict === 'success');
+  const missed = outcomes.filter((entry) => isFailure(entry.verdict));
+
+  const parts = [];
+  if (crits.length > 0) parts.push(`critically hit ${listAnd(crits.map((entry) => entry.name))}`);
+  if (hits.length > 0) parts.push(`hit ${listAnd(hits.map((entry) => entry.name))}`);
+  if (missed.length > 0) parts.push(`missed ${listAnd(missed.map((entry) => entry.name))}`);
+  const said = parts.join(', ') || 'landed on nobody';
+
+  return {
+    kind: 'verdict',
+    actor: caster?.name ?? '',
+    title: said[0].toUpperCase() + said.slice(1),
+    detail: [name, 'one roll, judged against each'].filter(Boolean).join(' · '),
+    data: {
+      move: 'verdict',
+      portrait: caster?.portrait ?? null,
+      card: caster?.card?.id ?? null,
+      outcomes: outcomes.map((entry) => ({
+        kind: entry.kind,
+        ref: entry.kind === 'member' ? null : entry.id,
+        character: entry.kind === 'member' ? entry.id : null,
+        name: entry.name,
+        dc: entry.dc,
+        verdict: entry.verdict,
       })),
     },
   };

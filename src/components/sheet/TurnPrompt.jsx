@@ -1,6 +1,6 @@
 import Modal from '../Modal.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
-import { useClauseRolls } from './useClauseRolls.js';
+import { useClauseRolls, useUpkeep } from './useClauseRolls.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { cardAccent } from '../../lib/tagColors.js';
 import { clauseThrow } from '../../lib/combatApply.js';
@@ -63,6 +63,7 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose, pa
   const owed = tollTotal(triggers.rows);
 
   const { tray, landed, throwClause, takeIt } = useClauseRolls(character, patch);
+  const { upkeep, canPay, pay, drop } = useUpkeep(character, patch);
 
   return (
     <Modal
@@ -97,6 +98,10 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose, pa
                 canApply={Boolean(patch)}
                 onThrow={tray ? (key, spec) => throwClause(row, key, spec) : null}
                 onTake={(key) => takeIt(row, key)}
+                upkeep={upkeep}
+                canPay={canPay}
+                onPay={patch ? pay : null}
+                onLetGo={patch ? drop : null}
                 onOpen={row.card ? () => stack?.openCard(row.card) : null}
               />
             ))}
@@ -111,8 +116,8 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose, pa
             <b>Upkeep owed:</b> {costWords(owed)}. You have{' '}
             {owed.wp > 0 ? `${Number(character?.willpower) || 0} Willpower` : ''}
             {owed.wp > 0 && owed.ap > 0 ? ' and ' : ''}
-            {owed.ap > 0 ? `${Number(character?.ap) || 0} Action Points` : ''}. Pay it on block 2,
-            or let the spell go and drop its row.
+            {owed.ap > 0 ? `${Number(character?.ap) || 0} Action Points` : ''}. Each row above
+            asks its own question: pay it and it holds, or let it go and it ends.
           </p>
         )}
 
@@ -171,8 +176,20 @@ function takeWords(hit) {
  * arrives from across the table: one row, one drawing, wherever a boundary
  * stops to speak.
  */
-export function TriggerRow({ row, landed, canApply, onThrow, onTake, onOpen }) {
+export function TriggerRow({
+  row,
+  landed,
+  canApply,
+  onThrow,
+  onTake,
+  onOpen,
+  upkeep = {},
+  canPay = null,
+  onPay = null,
+  onLetGo = null,
+}) {
   const accent = cardAccent(getCard(row.card)?.tags);
+  const answered = upkeep[row.id] ?? null;
 
   return (
     <div
@@ -195,6 +212,43 @@ export function TriggerRow({ row, landed, canApply, onThrow, onTake, onOpen }) {
           {row.turns === null ? 'open' : `${row.turns} left`}
         </span>
       </div>
+
+      {/* The Upkeep's own question, asked where the toll comes due: keep it up,
+          or let it go. Answered once per press, and the answer stays put. */}
+      {row.toll && onPay && onLetGo && (
+        <div className="turn-trigger-line turn-trigger-upkeep">
+          {answered === 'paid' ? (
+            <span className="turn-trigger-taken">Paid · it holds</span>
+          ) : answered === 'dropped' ? (
+            <span className="turn-trigger-taken">Let go · it ends here</span>
+          ) : (
+            <>
+              <p className="turn-trigger-clause">Keep it up, or let it go?</p>
+              <button
+                type="button"
+                className="turn-trigger-take"
+                disabled={canPay ? !canPay(row) : false}
+                onClick={() => onPay(row)}
+                title={
+                  canPay && !canPay(row)
+                    ? 'The pools cannot cover it. Let it go, or find the points first.'
+                    : 'The toll comes off the pools and the effect keeps running'
+                }
+              >
+                Pay {costWords(row.toll)}
+              </button>
+              <button
+                type="button"
+                className="turn-trigger-drop"
+                onClick={() => onLetGo(row)}
+                title="Miss the Upkeep and the effect ends: the row comes off the tracker"
+              >
+                Let it go
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {row.clauses.map((clause, at) => {
         const spec = clauseThrow(clause);

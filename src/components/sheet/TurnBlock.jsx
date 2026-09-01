@@ -16,6 +16,7 @@ import { turnTriggers } from '../../lib/turnTriggers.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { useDiceTray } from '../../context/dice-tray.js';
+import { useFight } from '../../context/fight.js';
 import { restEvent, turnDoneEvent, turnEvent } from '../../lib/campaignLog.js';
 import {
   combatReactionGrant,
@@ -69,10 +70,71 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
   /* The clock is the one thing on this block the whole table wants to see. A
      turn crossed between two casts is what makes a log read as a fight rather
      than as a list. See campaignLog.js. */
-  const { log } = useCampaignLog();
+  const { log, tables } = useCampaignLog();
+  const fight = useFight();
 
   const turn = turnState(character);
   const effects = useMemo(() => normalizeEffects(character.effects), [character.effects]);
+
+  /**
+   * What the button may be, for a character seated at a table.
+   *
+   * Jules, 2026-09-01: "when a character is connected to a campaign, he cannot
+   * start combat himself... the turn management buttons should be disabled
+   * when you are not in your turn. Outside of combat, replace it with 'Not in
+   * an Encounter'." So a linked sheet's turn is the table's to hand out:
+   *
+   *   mid-turn        End Turn, always pressable — closing your own turn is
+   *                   yours whatever the table is doing, and the runner already
+   *                   refuses an end from anybody it is not waiting on.
+   *   your turn       Start Turn, live: the order is standing on you.
+   *   somebody else   Start Turn, dead, saying whose turn it is.
+   *   no fight        one dead button reading "Not in an Encounter". The bell
+   *                   is the Game Master's: rolling initiative enters this
+   *                   sheet into the fight by itself (see TurnCall.jsx).
+   *
+   * Null for a sheet at no table, which keeps solo play exactly as it was:
+   * Start Combat, Start Turn, End Turn, all by hand.
+   */
+  const seat = useMemo(() => {
+    if ((tables ?? []).length === 0) return null;
+
+    if (turn.live) {
+      return {
+        move: 'end',
+        label: 'End Turn',
+        on: true,
+        note: 'Nothing is spent by ending a turn. It closes it, and your End Turn is what moves the table on.',
+      };
+    }
+
+    const mine = fight?.fights?.find((entry) => entry.upCharacter === character.id) ?? null;
+    if (mine) {
+      return {
+        move: 'turn',
+        label: 'Start Turn',
+        on: true,
+        note: `Starting brings your Action Points back to ${character.ap_max} and takes a turn off everything below.`,
+      };
+    }
+
+    const running = fight?.fights?.[0] ?? null;
+    if (running) {
+      return {
+        move: 'turn',
+        label: 'Start Turn',
+        on: false,
+        note: `${running.upName ?? 'Somebody'} is up. This wakes when the order reaches you, and your turn will cover the screen.`,
+      };
+    }
+
+    return {
+      move: null,
+      label: 'Not in an Encounter',
+      on: false,
+      note: 'Fights are started from the Game Master’s table. When initiative is rolled there, this sheet enters the fight by itself.',
+    };
+  }, [tables, fight, turn.live, character.id, character.ap_max]);
 
   const running = effects.filter((effect) => effect.turns !== 0).length;
   const ended = effects.length - running;
@@ -117,7 +179,13 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
   }
 
   function press() {
-    const when = turn.move === 'turn' ? 'start' : turn.move === 'end' ? 'end' : null;
+    /* The seated reading wins where there is one: a linked sheet's button is
+       Start Turn or End Turn and never Start Combat, whatever solo state the
+       column holds. */
+    const move = seat ? seat.move : turn.move;
+    if (!move) return;
+
+    const when = move === 'turn' ? 'start' : move === 'end' ? 'end' : null;
     const found = when ? turnTriggers(character, when) : null;
 
     if (found?.any) {
@@ -125,8 +193,8 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
       return;
     }
 
-    patch(MOVES[turn.move](character));
-    tellTurn(turn.move);
+    patch(MOVES[move](character));
+    tellTurn(move);
   }
 
   /**
@@ -213,14 +281,14 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
 
       <button
         type="button"
-        className={`turn-btn turn-btn-${turn.move}`}
+        className={`turn-btn turn-btn-${seat ? (seat.move ?? 'combat') : turn.move}`}
         onClick={press}
-        disabled={readOnly}
+        disabled={readOnly || (seat ? !seat.on : false)}
       >
-        {turn.label}
+        {seat ? seat.label : turn.label}
       </button>
 
-      <p className="turn-note">{turnNote(turn, character)}</p>
+      <p className="turn-note">{seat ? seat.note : turnNote(turn, character)}</p>
 
       {/* ---------- WHAT IS RUNNING ---------- */}
       <div className="block-head fx-head">

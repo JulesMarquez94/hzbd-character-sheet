@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from '../Modal.jsx';
 import TargetChip from '../TargetChip.jsx';
 import { deltaWords, landHit } from '../../lib/combatApply.js';
+import { isFailure } from '../../lib/dice.js';
 
 /**
  * The rolled numbers, landing.
@@ -38,6 +39,11 @@ export default function ApplyWindow({ apply, roster, onApply, onClose }) {
   );
 
   const deltas = apply?.deltas ?? [];
+  const outcomes = apply?.outcomes ?? null;
+  /* Nothing rolled past the check: everybody dodged, and the window is the
+     verdict alone. Worth a window rather than a silence, because "the whole
+     volley missed" is the thing the Game Master says next. */
+  const nothing = deltas.length === 0;
 
   function toggle(id) {
     setChosen((was) => (was.includes(id) ? was.filter((held) => held !== id) : [...was, id]));
@@ -50,86 +56,129 @@ export default function ApplyWindow({ apply, roster, onApply, onClose }) {
       footer={
         <>
           <span className="pick-line">
-            {chosen.length === 0
-              ? 'Nobody picked. Close this to land the numbers by hand instead.'
-              : `Lands on ${chosen.length} ${chosen.length === 1 ? 'body' : 'bodies'}.`}
+            {nothing
+              ? 'Nothing got through, so there is nothing to land.'
+              : chosen.length === 0
+                ? 'Nobody picked. Close this to land the numbers by hand instead.'
+                : `Lands on ${chosen.length} ${chosen.length === 1 ? 'body' : 'bodies'}.`}
           </span>
           <span className="spacer" />
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
-            Not now
+            {nothing ? 'Close' : 'Not now'}
           </button>
-          <button
-            type="button"
-            className="btn btn-copper btn-sm"
-            onClick={() => onApply(chosen)}
-            disabled={chosen.length === 0}
-            autoFocus
-          >
-            Land it
-          </button>
+          {!nothing && (
+            <button
+              type="button"
+              className="btn btn-copper btn-sm"
+              onClick={() => onApply(chosen)}
+              disabled={chosen.length === 0}
+              autoFocus
+            >
+              Land it
+            </button>
+          )}
         </>
       }
     >
       <div className="apply-window">
         <p className="apply-lead">
-          {apply?.caster?.name ? `${apply.caster.name} rolled` : 'Rolled'}{' '}
-          {deltas.map((delta) => deltaWords(delta)).join(' and ')}. Pick who it lands on.
+          {nothing
+            ? `${apply?.caster?.name ?? 'The roll'} caught nobody: every target dodged.`
+            : `${apply?.caster?.name ? `${apply.caster.name} rolled` : 'Rolled'} ${deltas
+                .map((delta) => deltaWords(delta))
+                .join(' and ')}. Pick who it lands on.`}
         </p>
 
-        {/* What was rolled, one row per kind, in the order it was thrown. */}
-        <div className="apply-deltas">
-          {deltas.map((delta) => (
-            <span key={delta.kind} className={`apply-delta is-${delta.kind}`}>
-              <b>{delta.total}</b>
-              <span className="apply-delta-what">
-                {delta.kind === 'damage'
-                  ? [delta.types?.join(' or '), 'damage'].filter(Boolean).join(' ')
-                  : delta.kind === 'healing'
-                    ? 'Health'
-                    : 'Shield'}
-              </span>
-              {delta.landings.length > 1 && (
-                <span className="apply-delta-landings">
-                  {delta.landings.length} landings · {delta.landings.join(', ')}
+        {/* The one roll, judged per body: who it critically caught, who it
+            caught and who dodged. The hits arrive already picked below; a miss
+            can still be picked back up, because the table outranks the sheet. */}
+        {outcomes && <VerdictStrip outcomes={outcomes} />}
+
+        {!nothing && (
+          <>
+            {/* What was rolled, one row per kind, in the order it was thrown. */}
+            <div className="apply-deltas">
+              {deltas.map((delta) => (
+                <span key={delta.kind} className={`apply-delta is-${delta.kind}`}>
+                  <b>{delta.total}</b>
+                  <span className="apply-delta-what">
+                    {delta.kind === 'damage'
+                      ? [delta.types?.join(' or '), 'damage'].filter(Boolean).join(' ')
+                      : delta.kind === 'healing'
+                        ? 'Health'
+                        : 'Shield'}
+                  </span>
+                  {delta.landings.length > 1 && (
+                    <span className="apply-delta-landings">
+                      {delta.landings.length} landings · {delta.landings.join(', ')}
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-          ))}
-        </div>
-
-        <div className="tgt-row apply-targets">
-          {bodies.map((body) => (
-            <TargetChip
-              key={body.id}
-              body={body}
-              on={chosen.includes(body.id)}
-              onToggle={() => toggle(body.id)}
-            />
-          ))}
-        </div>
-
-        {/* The working, per picked body. Said before it happens, because a
-            sheet that quietly moves numbers is a sheet you stop trusting. */}
-        {chosen.length > 0 && (
-          <div className="apply-lines">
-            {chosen
-              .map((id) => bodies.find((body) => body.id === id))
-              .filter(Boolean)
-              .map((body) => (
-                <div key={body.id} className="apply-line">
-                  <span className="apply-line-name" style={{ '--tgt-tone': body.kind === 'member' ? 'var(--focus-cyan)' : body.tone }}>
-                    {body.name}
-                  </span>
-                  <span className="apply-line-math">
-                    {deltas.map((delta) => landingLine(body, delta)).join(' · ')}
-                    {body.kind === 'member' ? ' · lands on their sheet' : ''}
-                  </span>
-                </div>
               ))}
-          </div>
+            </div>
+
+            <div className="tgt-row apply-targets">
+              {bodies.map((body) => (
+                <TargetChip
+                  key={body.id}
+                  body={body}
+                  on={chosen.includes(body.id)}
+                  onToggle={() => toggle(body.id)}
+                />
+              ))}
+            </div>
+
+            {/* The working, per picked body. Said before it happens, because a
+                sheet that quietly moves numbers is a sheet you stop trusting. */}
+            {chosen.length > 0 && (
+              <div className="apply-lines">
+                {chosen
+                  .map((id) => bodies.find((body) => body.id === id))
+                  .filter(Boolean)
+                  .map((body) => (
+                    <div key={body.id} className="apply-line">
+                      <span
+                        className="apply-line-name"
+                        style={{ '--tgt-tone': body.kind === 'member' ? 'var(--focus-cyan)' : body.tone }}
+                      >
+                        {body.name}
+                      </span>
+                      <span className="apply-line-math">
+                        {deltas.map((delta) => landingLine(body, delta)).join(' · ')}
+                        {body.kind === 'member' ? ' · lands on their sheet' : ''}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </Modal>
+  );
+}
+
+/**
+ * The one roll against everybody it was aimed at: critically hit, hit, missed,
+ * each with its names. The words the table says out loud, in the window that
+ * lands the consequences.
+ */
+function VerdictStrip({ outcomes }) {
+  const bands = [
+    { label: 'Critically hit', tone: 'var(--level-amber)', names: outcomes.filter((entry) => entry.verdict === 'critical-success') },
+    { label: 'Hit', tone: 'var(--def-healing)', names: outcomes.filter((entry) => entry.verdict === 'success') },
+    { label: 'Missed', tone: 'var(--stat-health)', names: outcomes.filter((entry) => isFailure(entry.verdict)) },
+  ].filter((band) => band.names.length > 0);
+
+  return (
+    <div className="apply-verdicts">
+      {bands.map((band) => (
+        <span key={band.label} className="apply-verdict" style={{ '--verdict-tone': band.tone }}>
+          <b>{band.label}</b>
+          {band.names.map((entry) => entry.name).join(', ')}
+        </span>
+      ))}
+    </div>
   );
 }
 

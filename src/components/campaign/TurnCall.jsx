@@ -1,24 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TriggerRow } from '../sheet/TurnPrompt.jsx';
-import { useClauseRolls } from '../sheet/useClauseRolls.js';
+import { useClauseRolls, useUpkeep } from '../sheet/useClauseRolls.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
-import { turnDoneEvent } from '../../lib/campaignLog.js';
+import { turnEvent } from '../../lib/campaignLog.js';
 import { characterDelta } from '../../lib/combatApply.js';
-import { endTurn, layEffect, normalizeTurn, startTurn } from '../../lib/combatTurn.js';
+import {
+  endCombat,
+  layEffect,
+  normalizeTurn,
+  startCombat,
+  startTurn,
+} from '../../lib/combatTurn.js';
 import { turnTriggers } from '../../lib/turnTriggers.js';
 import { getCard } from '../../lib/weapons.js';
 import { lockScroll } from '../../lib/scrollLock.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 
 /**
- * The table, reaching your sheet: your turn called, an effect laid on you, a
- * hit landing.
- *
- * Jules, 2026-08-31: "the turn start then become automatic with a pop up full
- * screen notification and the end turn is manual by player when done." And
- * 2026-09-01, the other two: an effect a Game Master aims at you "needs to
- * populate on the target trackers", and "Health, shield and other changes by
- * spells and abilities need to be auto applied based on the result."
+ * The table, reaching your sheet: the bell, your turn called, an effect laid
+ * on you, a hit landing.
  *
  * ------------------------------------------------------------- how it arrives
  * Not by anybody writing to this sheet. A Game Master cannot, and the whole
@@ -26,8 +26,19 @@ import { subscribeToTable } from '../../lib/realtime.js';
  * page is careful to say so. What crosses is an **announcement** on the table
  * log, and this is the component that hears its own name in one:
  *
- *   your-turn   the runner landed on you. Your own client starts your own turn
- *               through your own patch and covers the screen.
+ *   initiative  the bell. The runner rolled a fight this character is in, so
+ *               the sheet enters combat through its own `startCombat`: Action
+ *               Points full, reactions at nothing but what PREPARED grants,
+ *               the gear's Shield handed over. "When a character is connected
+ *               to a campaign, he cannot start combat himself" — because the
+ *               table starts it, here.
+ *   your-turn   the runner landed on you. The cover goes up saying so, with
+ *               whatever the boundary sets off printed on it, and **Start my
+ *               turn** is yours to press (Jules, 2026-09-01: the cover should
+ *               not offer "keep playing or end my turn... it should show
+ *               something like Start My Turn"). Nothing ticks until you do —
+ *               the same press, read, press the Turn block has always kept.
+ *               Ending comes later, from the Turn block, when you are done.
  *   effect      a use across the table was aimed at you and lays something.
  *               Your client lays the same row on your own tracker, through
  *               `layEffect`, so a delivery that somehow arrives twice
@@ -36,6 +47,8 @@ import { subscribeToTable } from '../../lib/realtime.js';
  *               your own Armor and Shield at the moment it lands — the pools
  *               as *you* hold them, not as the Game Master's copy held them a
  *               second ago — and the ledger says who did it.
+ *   fight-over  the fight ended, so the sheet leaves combat through its own
+ *               `endCombat`: the count back to nothing, the tracker untouched.
  *
  * The sheet is still the only writer of its own numbers. The turn arrives the
  * way a knock on the door arrives: somebody else made the noise, and you are
@@ -44,33 +57,20 @@ import { subscribeToTable } from '../../lib/realtime.js';
  * ------------------------------------------------------------------ the guard
  * Nothing is acted on twice: every row's id is remembered, so a reconnect that
  * replays the channel, or a second copy of the sheet open on a phone, cannot
- * hand out two turns' worth of Action Points or land one Fireball twice. And
- * nothing is acted on at all unless the sheet is yours: `canEdit` is false for
- * a viewer, so nothing is subscribed and nothing is written.
- *
- * ------------------------------------------------------------------ the cover
- * Full screen, on purpose, and it is the one thing on the site that covers the
- * sheet. It now says what the boundary sets off, exactly as the Turn block's
- * own prompt does — the same rows, with the same Roll beside a clause that
- * rolls and the same one labelled tap to put the number on your sheet ("when
- * an entity starts a turn, it should prompt needed rolls, same at end turn.
- * Like renew or wall of fire"). Ending from the cover walks through the end
- * boundary the same way when anything is waiting on it.
- *
- * It closes two ways: End Turn, which is the real one, and Keep playing, which
- * puts the cover away and leaves the turn running. The turn has already
- * started either way, because that is what the announcement did.
+ * hand out two bells or land one Fireball twice. And nothing is acted on at
+ * all unless the sheet is yours: `canEdit` is false for a viewer, so nothing
+ * is subscribed and nothing is written.
  */
 export default function TurnCall({ character, patch, canEdit = false }) {
   const { tables, log } = useCampaignLog();
-  // { key, round, name, campaignId, phase: 'start' | 'end', triggers }
+  // { key, round, campaignId, triggers }
   const [call, setCall] = useState(null);
 
   /* Every announcement this sheet has already acted on. A channel that
      reconnects replays nothing by design, but a resync, a second tab or a Game
-     Master pressing Next twice all can, and two Start Turns is two turns of
-     Action Points out of thin air. Deliveries are guarded by the same set for
-     the same reason. */
+     Master pressing Next twice all can, and two bells is two handfuls of
+     Shield out of thin air. Deliveries are guarded by the same set for the
+     same reason. */
   const actedRef = useRef(new Set());
 
   const characterId = character?.id;
@@ -94,28 +94,46 @@ export default function TurnCall({ character, patch, canEdit = false }) {
       const held = stateRef.current;
       if (!held.canEdit) return;
 
+      if (row.kind === 'turn' && row.data?.move === 'initiative') {
+        /* The bell, for everyone the order names. A sheet not in the order —
+           linked after the roll, say — hears nothing and stays out. */
+        const mine = (row.data?.order ?? []).some(
+          (entry) => entry.kind === 'member' && entry.ref === characterId
+        );
+        if (!mine) return;
+        if (actedRef.current.has(row.id)) return;
+        actedRef.current.add(row.id);
+
+        held.patch(startCombat(held.character));
+        return;
+      }
+
+      if (row.kind === 'turn' && row.data?.move === 'fight-over') {
+        /* And the bell's other end. Only a sheet that is actually in a fight
+           has anything to leave. */
+        if (!normalizeTurn(held.character?.turn_state).inCombat) return;
+        if (actedRef.current.has(row.id)) return;
+        actedRef.current.add(row.id);
+
+        held.patch(endCombat());
+        return;
+      }
+
       if (row.kind === 'turn' && row.data?.move === 'your-turn') {
         if (row.data?.character !== characterId) return;
         if (actedRef.current.has(row.id)) return;
         actedRef.current.add(row.id);
 
-        /* What this boundary sets off, read *before* the turn starts: starting
-           is what ticks the tracker, and a reminder computed afterwards would
-           be reading the rows a turn late. */
-        const triggers = turnTriggers(held.character, 'start');
-
-        /* The turn itself, through this sheet's own patch and the sheet's own
-           `startTurn`. Nothing about it is special because it was called from
-           across the table. */
-        held.patch(startTurn(held.character));
-
+        /* Nothing is started here. The cover says the order reached you and
+           what the boundary sets off; the press is yours. */
         setCall({
           key: row.id,
           round: Math.max(1, Math.floor(Number(row.data.round) || 1)),
           campaignId,
-          name: held.character?.name ?? '',
-          phase: 'start',
-          triggers: triggers.any ? triggers : null,
+          triggers: (() => {
+            const found = turnTriggers(held.character, 'start');
+            return found.any ? found : null;
+          })(),
         });
         return;
       }
@@ -175,67 +193,58 @@ export default function TurnCall({ character, patch, canEdit = false }) {
     return lockScroll();
   }, [call]);
 
-  /* The roll-and-take half of the rows on the cover, shared with the Turn
-     block's own prompt so a clause rolls and lands the same way from both. */
+  /* The roll-and-take half of the rows on the cover, and the Upkeep's keep-or-
+     drop, shared with the Turn block's own prompt so a boundary reads the same
+     from both. */
   const { tray, landed, busy, throwClause, takeIt } = useClauseRolls(
     character,
     canEdit ? patch : null
   );
+  const { upkeep, canPay, pay, drop: dropRow } = useUpkeep(character, canEdit ? patch : null);
 
-  const done = useCallback(() => {
+  /**
+   * The press. Your Action Points come back, everything running on you ticks,
+   * and the table is told — the same start the Turn block's own button makes,
+   * because an announced turn is not a different kind of turn.
+   */
+  function start() {
     const held = stateRef.current;
-
-    /* The end boundary gets its say first, when it has one: the cover swaps to
-       what the bottom of the turn sets off, and the next press is the real
-       end. Same walk the Turn block takes — press, read, press. */
-    if (call?.phase !== 'end') {
-      const triggers = turnTriggers(held.character, 'end');
-      if (triggers.any) {
-        setCall((was) => (was ? { ...was, phase: 'end', triggers } : was));
-        return;
-      }
-    }
-
-    const round = call?.round ?? normalizeTurn(held.character?.turn_state).n;
-
-    held.patch(endTurn(held.character));
-    log(turnDoneEvent(held.character, round));
+    const turn = normalizeTurn(held.character?.turn_state);
+    held.patch(startTurn(held.character));
+    log(turnEvent('turn', held.character, turn));
     setCall(null);
-  }, [call, log]);
+  }
 
-  /* Enter ends the turn and Escape puts the cover away. Caught while the cover
-     is up and nowhere else, so neither key means anything on an ordinary sheet.
-     And not while a throw from the cover has the dice up: Enter then belongs to
-     the dice, and a turn ended under them would be the cover mishearing. */
+  /* Enter starts the turn and Escape puts the cover away — the Turn block can
+     still start it, since the order is standing on you either way. Not while a
+     throw from the cover has the dice up: Enter then belongs to the dice. */
   useEffect(() => {
     if (!call || busy) return undefined;
 
     function onKeyDown(event) {
       if (event.key === 'Escape') setCall(null);
-      if (event.key === 'Enter') done();
+      if (event.key === 'Enter') start();
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [call, busy, done]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [call, busy]);
 
   if (!call) return null;
-
-  const ending = call.phase === 'end';
 
   return (
     <div className="turn-call" role="dialog" aria-modal="true" aria-label="Your turn">
       <div className="turn-call-body">
         <span className="turn-call-round">Round {call.round}</span>
-        <h2 className="turn-call-title">{ending ? 'Ending Your Turn' : 'Your Turn'}</h2>
+        <h2 className="turn-call-title">Your Turn</h2>
         <p className="turn-call-line">
-          {ending
-            ? 'Before it closes, here is what happens at the bottom of it.'
-            : 'Your Action Points are back and everything running on you has ticked. End it when you are done and the table moves on.'}
+          The order reached you. Starting brings your Action Points back and ticks everything
+          running on you; end it from your Turn block when you are done.
         </p>
 
         {/* What this boundary sets off: the same rows the Turn block's own
             prompt prints, on the cover, because the cover is where this turn
-            actually started. Only when there is anything to say. */}
+            is about to start. Only when there is anything to say. */}
         {call.triggers && (
           <div className="turn-call-triggers">
             {call.triggers.rows.map((row) => (
@@ -246,13 +255,17 @@ export default function TurnCall({ character, patch, canEdit = false }) {
                 canApply={canEdit}
                 onThrow={tray ? (key, spec) => throwClause(row, key, spec) : null}
                 onTake={(key) => takeIt(row, key)}
+                upkeep={upkeep}
+                canPay={canPay}
+                onPay={pay}
+                onLetGo={dropRow}
                 onOpen={null}
               />
             ))}
 
             {call.triggers.ending.length > 0 && (
               <p className="turn-prompt-note turn-prompt-ending">
-                <b>Runs out {ending ? 'soon' : 'on this turn'}:</b>{' '}
+                <b>Runs out on this turn:</b>{' '}
                 {call.triggers.ending.map((row) => row.name).join(', ')}.
               </p>
             )}
@@ -260,17 +273,17 @@ export default function TurnCall({ character, patch, canEdit = false }) {
         )}
 
         <div className="turn-call-acts">
-          <button type="button" className="btn btn-primary turn-call-end" onClick={done}>
-            {ending ? 'End it' : 'End my turn'}
+          <button type="button" className="btn btn-primary turn-call-end" onClick={start}>
+            Start my turn
           </button>
           <button type="button" className="btn btn-minimal" onClick={() => setCall(null)}>
-            Keep playing
+            Not yet
           </button>
         </div>
 
         <p className="turn-call-hint">
-          Keep playing puts this away and leaves your turn running. The End Turn button on your
-          Turn block does the same thing as the one above.
+          Not yet puts this away without starting anything. The Start Turn button on your Turn
+          block does the same thing as the one above.
         </p>
       </div>
     </div>
