@@ -69,6 +69,7 @@
 
 import { requireSupabase } from './supabaseClient.js';
 import { clamp } from './characterModel.js';
+import { struck } from './combatApply.js';
 import { rollCheck } from './dice.js';
 import {
   RANKS,
@@ -177,8 +178,10 @@ export function normalizeFoes(value) {
  * "Blightgeist" are six blocks nobody can tell apart, and "their number is the
  * danger" means six is a normal count. So where a creature appears more than
  * once and has not been named by hand, its copies are numbered in the order they
- * were laid down: Blightgeist 1 through 6. One on its own keeps its plain name,
- * because "Vaultkeeper Lich 1" is worse than "Vaultkeeper Lich".
+ * were laid down: 1.Blightgeist through 6.Blightgeist, the number in front where
+ * a scanning eye finds it (Jules, 2026-09-01: "they get named 1.Fenrat
+ * 2.Fenrat"). One on its own keeps its plain name, because "1.Vaultkeeper Lich"
+ * is worse than "Vaultkeeper Lich".
  */
 export function encounterState(encounter) {
   const foes = normalizeFoes(encounter?.foes);
@@ -197,7 +200,7 @@ export function encounterState(encounter) {
 
     const nth = (seen.get(row.creature) ?? 0) + 1;
     seen.set(row.creature, nth);
-    const numbered = total.get(row.creature) > 1 ? `${creature.name} ${nth}` : creature.name;
+    const numbered = total.get(row.creature) > 1 ? `${nth}.${creature.name}` : creature.name;
 
     /* Absent is full, and Health is clamped rather than repaired on the row: a
        stored number above a ceiling should read as the ceiling rather than sit
@@ -473,6 +476,96 @@ export function foeSpend(encounter, foe, body) {
     if (FOE_KEYS.has(key)) mine[key] = value;
   }
   return { foes: writeFoe(encounter, foe.key, mine) };
+}
+
+/**
+ * A rolled result landed on enemies, as one write.
+ *
+ * `rows` is `[{ key, kind, landings }]`: which enemy, what kind of change and
+ * the landings that make it up. The arithmetic is combatApply.js's — Armor per
+ * landing, Shield soaking, Health floored at nothing — worked out here against
+ * *stored* pools rather than against whatever block raised the window, for the
+ * same reason `stepFoePool` reads the stored value: the screen may be a press
+ * out of date.
+ *
+ * One write for however many enemies were hit, because five goblins catching
+ * one Fireball is one thing that happened and five writes racing each other
+ * rebuilt five different `foes` lists.
+ */
+export function applyToFoes(encounter, rows) {
+  const list = encounterState(encounter);
+  let foes = normalizeFoes(encounter?.foes);
+  let moved = false;
+
+  for (const { key, kind, landings } of rows ?? []) {
+    const foe = list.find((entry) => entry.key === key);
+    if (!foe) continue;
+    const held = foes.find((entry) => entry.key === key);
+    const shield = held?.shield ?? 0;
+    const health = held?.health ?? foe.stats.health_max;
+
+    const body = {};
+    if (kind === 'damage') {
+      const hit = struck({ shield, health, armor: foe.stats.defense }, landings, { floor: 0 });
+      if (hit.soaked > 0) body.shield = hit.shield;
+      if (hit.dealt > 0) body.health = hit.health;
+    } else if (kind === 'healing') {
+      const next = clamp(health + sumOf(landings), 0, foe.stats.health_max);
+      if (next !== health) body.health = next;
+    } else if (kind === 'shield') {
+      const next = clamp(shield + sumOf(landings), 0, foe.stats.shield_cap);
+      if (next !== shield) body.shield = next;
+    }
+
+    if (Object.keys(body).length === 0) continue;
+    foes = writeFoeOn(foes, key, body);
+    moved = true;
+  }
+
+  return moved ? { foes } : null;
+}
+
+function sumOf(landings) {
+  return (landings ?? []).reduce((sum, n) => sum + Math.max(0, Math.floor(Number(n) || 0)), 0);
+}
+
+/** `writeFoe` over a list already in hand, for the writers that hit several. */
+function writeFoeOn(foes, key, body) {
+  return foes.map((row) => {
+    if (row.key !== key) return row;
+    const next = { ...row };
+    for (const [field, value] of Object.entries(body)) {
+      if (value === undefined) continue;
+      if (value === null || value === '') delete next[field];
+      else next[field] = value;
+    }
+    return next;
+  });
+}
+
+/**
+ * One effect laid on several enemies at once, as one write.
+ *
+ * "When an ability is cast that affects an entity with an effect, this effect
+ * needs to populate on the target trackers." The row is the same row a use
+ * would have laid on the caster, relaid on each body it was aimed at.
+ *
+ * `lay` is combatTurn.js's own `layEffect`, handed in the way `tick` is handed
+ * to `crossTurn`, because what an effect *is* belongs to that file and this one
+ * may not import it. Laid rather than added, so the same card aimed at the same
+ * body twice refreshes one row: the same-source law, on somebody else's tracker.
+ */
+export function layOnFoes(encounter, keys, entry, { lay }) {
+  let foes = normalizeFoes(encounter?.foes);
+
+  for (const key of keys ?? []) {
+    const row = foes.find((held) => held.key === key);
+    if (!row) continue;
+    const effects = lay(row.effects ?? [], entry);
+    foes = writeFoeOn(foes, key, { effects: effects.length > 0 ? effects : null });
+  }
+
+  return { foes };
 }
 
 /* ------------------------------------------------------------ laying it out */

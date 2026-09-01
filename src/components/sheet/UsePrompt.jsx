@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import AbilityCard from '../AbilityCard.jsx';
 import RollArrow from '../RollArrow.jsx';
+import TargetChip from '../TargetChip.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
 import { AmmoPips } from './itemParts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
@@ -14,6 +15,7 @@ import { getCard } from '../../lib/weapons.js';
 import { effectAdvantage } from '../../lib/moves.js';
 import { riderLine } from '../../lib/riders.js';
 import { sourceWords } from '../../lib/attribution.js';
+import { targetPlan } from '../../lib/targeting.js';
 import { triggerLine } from '../../lib/onUse.js';
 import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.js';
 
@@ -127,6 +129,19 @@ import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.j
  *              into the Reaction pool one for one. There is no action-or-
  *              reaction to ask about, so it is offered as the one thing it is,
  *              and the dial cannot be turned past what the pools can hold.
+ *
+ * ---------------------------------------------------------------- the targets
+ * On the encounter page the prompt is handed `combat`: everybody in the fight,
+ * as chips. A card whose text lands on other bodies ("against an entity", "up
+ * to 3 targets") then offers them here, *before* the pay buttons, because who
+ * it hits is decided before what it costs is paid (Jules, 2026-09-01). How many
+ * may be picked is the card's own count, read off its prose by targetPlan, and
+ * a Multicast raises it as it is dialled — that is the whole of what "catch
+ * more targets" means. Picking is optional: a use with nobody picked pays and
+ * rolls exactly as it always did, and the Game Master lands the numbers by
+ * hand. What was picked rides out on the confirm as `options.targets`, and the
+ * encounter page is what does something with it — this prompt still spends
+ * points and nothing else.
  */
 
 /** The two pools a cost can come out of, and what each one is called. */
@@ -158,7 +173,7 @@ const CONVERT = { ...WAYS[0], mode: 'convert', label: 'Hold Back' };
 /** Nothing owed, in the shape a price comes in. */
 const NOTHING = { ap: 0, wp: 0, health: 0 };
 
-export default function UsePrompt({ request, character, onCancel, onConfirm }) {
+export default function UsePrompt({ request, character, onCancel, onConfirm, combat = null }) {
   /* The pile the printed card deals onto. This prompt is a dialog, and the pile
      sits above every dialog (see the z scale in index.css), so a number tapped
      here opens its working over the prompt and closes back onto it. Optional
@@ -182,6 +197,28 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
   const offer = half?.kind === 'option' ? half : null;
   const toll = half?.kind === 'toll' ? half : null;
   const [times, setTimes] = useState(0);
+
+  /* Who this lands on, when there is anybody to land it on. The plan is the
+     card's own text and it moves with the dial: a Multicast taken twice is two
+     more chips allowed. `chosen` is clamped on read rather than trimmed by an
+     effect, so dialling the Multicast back down quietly releases the extra
+     targets without a state write racing the render. */
+  const plan = useMemo(
+    () => (combat ? targetPlan(request.card, { times }) : { some: false, count: 0 }),
+    [combat, request.card, times]
+  );
+  const [chosen, setChosen] = useState([]);
+  const roster = combat?.roster ?? [];
+  const reach = plan.count === null ? roster.length : Math.min(plan.count, roster.length);
+  const picked = chosen.slice(0, reach);
+
+  function toggleTarget(id) {
+    setChosen((was) => {
+      const held = was.slice(0, reach);
+      if (held.includes(id)) return held.filter((entry) => entry !== id);
+      return held.length >= reach ? held : [...held, id];
+    });
+  }
 
   // What the card rolls with, for a tithe written off an attribute.
   const stat = request.modifiers?.stat ?? request.card?.stat ?? 'instinct';
@@ -251,13 +288,23 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
     ? { ...price, note: `${offer.name}: ${request.name}` }
     : null;
 
+  /* Whatever the tap decided, in one place: the price the second half settled
+     on, and whoever was picked to catch it. Undefined when neither happened, so
+     every caller that never passes `combat` sees the calls it always saw. */
+  function decided(extra = {}) {
+    const options = { ...extra };
+    if (settled) options.price = settled;
+    if (picked.length > 0) options.targets = picked;
+    return Object.keys(options).length > 0 ? options : undefined;
+  }
+
   function attempt(way) {
     const short = shortfalls(character, price, way);
     if (short.length > 0) {
       setDenied({ way, short });
       return;
     }
-    onConfirm(way.mode, price.ap, settled ? { price: settled } : undefined);
+    onConfirm(way.mode, price.ap, decided());
   }
 
   /* The table's override. Whatever came up short is left alone rather than
@@ -265,7 +312,7 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
      have: the charge, the effect, the window it opens. See `free` in
      combatBar.js, which is where a use has always been turned into a write. */
   function waveThrough() {
-    if (denied) onConfirm(denied.way.mode, price.ap, { free: true, price: settled ?? undefined });
+    if (denied) onConfirm(denied.way.mode, price.ap, decided({ free: true }));
   }
 
   function dial(next) {
@@ -342,6 +389,47 @@ export default function UsePrompt({ request, character, onCancel, onConfirm }) {
               base={base}
               onTake={take}
             />
+          )}
+
+          {/* Who it lands on, before what it costs. Only on a page that knows
+              who is in the fight, and only for a card whose own text reaches
+              other bodies. Optional on purpose: nobody picked is the old flow,
+              numbers landed by hand. */}
+          {plan.some && roster.length > 0 && (
+            <div className="use-targets">
+              <span className="use-targets-head">
+                Targets
+                <span className="use-targets-count">
+                  {picked.length} of {plan.count === null ? 'any' : reach}
+                </span>
+              </span>
+
+              <div className="tgt-row">
+                {roster.map((body) => {
+                  const on = picked.includes(body.id);
+                  return (
+                    <TargetChip
+                      key={body.id}
+                      body={body}
+                      on={on}
+                      disabled={!on && picked.length >= reach}
+                      onToggle={() => toggleTarget(body.id)}
+                      title={
+                        !on && picked.length >= reach
+                          ? `The card reaches ${reach} ${reach === 1 ? 'target' : 'targets'}. Unpick one first${offer?.name === 'Multicast' ? ', or take the Multicast again' : ''}.`
+                          : undefined
+                      }
+                    />
+                  );
+                })}
+              </div>
+
+              <span className="use-targets-note">
+                {picked.length === 0
+                  ? 'Nobody picked: the use goes through as it always has, and the numbers are landed by hand.'
+                  : 'What this lays and what it rolls will be offered to these once the dice settle.'}
+              </span>
+            </div>
           )}
 
           <div className="use-ways">

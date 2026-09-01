@@ -420,8 +420,10 @@ export default function CampaignPage() {
       data-columns={canvasColumns}
     >
       {/* Somebody else's dice, on the page a Game Master spends the evening on.
-          Renders nothing; it puts rolls on the tray as they are written. */}
-      <DiceWatch tables={[{ id }]} mine={mine} />
+          Renders nothing; it puts rolls on the tray as they are written. The
+          Game Master's own enemy rolls carry no character, so `table` is what
+          keeps them from replaying at the screen that threw them. */}
+      <DiceWatch tables={[{ id }]} mine={mine} table={canEdit} />
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">
           <span className="camp-title" title={campaign.name}>

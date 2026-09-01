@@ -1,7 +1,9 @@
 import Modal from '../Modal.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
+import { useClauseRolls } from './useClauseRolls.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { cardAccent } from '../../lib/tagColors.js';
+import { clauseThrow } from '../../lib/combatApply.js';
 import { costWords } from '../../lib/overcast.js';
 import { getCard } from '../../lib/weapons.js';
 
@@ -32,6 +34,18 @@ import { getCard } from '../../lib/weapons.js';
  * more at a Turn Start than anywhere else on the sheet: that press is the one
  * that spends the count.
  *
+ * ------------------------------------------------------------------- the rolls
+ * A clause that names dice wears a Roll button now (Jules, 2026-09-01: "when an
+ * entity starts a turn, it should prompt needed rolls, same at end turn — like
+ * renew or wall of fire"). The handful is read back off the resolved sentence,
+ * thrown on the tray over this window, and lands on the table log like any
+ * roll. What lands on *you* is then one labelled tap — "Regain 9 Health",
+ * "Take 7" — through your own patch with the ledger carrying the row's name,
+ * because a sheet that quietly moves its own Health is a sheet you stop
+ * trusting, and a clause's aim is a sentence the table reads better than a
+ * pattern does. A roll aimed at somebody else just stays on the log, where the
+ * Game Master lands it from their own page.
+ *
  * ------------------------------------------------------------------- the tolls
  * An Upkeep is the one reminder with a price on it, so it is drawn as one. What
  * it costs is read off the card's own second half rather than restated here, and
@@ -40,13 +54,15 @@ import { getCard } from '../../lib/weapons.js';
  * for the player. The row says what is owed. The player pays it with the pools on
  * block 2, or lets the spell go and drops the row.
  */
-export default function TurnPrompt({ triggers, character, onConfirm, onClose }) {
+export default function TurnPrompt({ triggers, character, onConfirm, onClose, patch = null }) {
   const stack = useCardStack();
   const start = triggers.when === 'start';
   /* Everything owed at this boundary, added up. The rows say what each spell
      wants; this says whether the night can pay for all of them, which is the
      question you actually have with three spells up. */
   const owed = tollTotal(triggers.rows);
+
+  const { tray, landed, throwClause, takeIt } = useClauseRolls(character, patch);
 
   return (
     <Modal
@@ -77,6 +93,10 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose }) 
               <TriggerRow
                 key={row.id}
                 row={row}
+                landed={landed}
+                canApply={Boolean(patch)}
+                onThrow={tray ? (key, spec) => throwClause(row, key, spec) : null}
+                onTake={(key) => takeIt(row, key)}
                 onOpen={row.card ? () => stack?.openCard(row.card) : null}
               />
             ))}
@@ -114,8 +134,9 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose }) 
         )}
 
         <p className="turn-prompt-foot">
-          Nothing here is paid or applied for you. The sheet counts the turns and
-          names what they set off. What lands, and on whom, is the table's.
+          The sheet counts the turns and names what they set off. A roll lands on the table log
+          for everyone; taking a number onto this sheet is the one tap beside it, and what lands
+          on anybody else is the table&rsquo;s.
         </p>
       </div>
     </Modal>
@@ -132,14 +153,25 @@ function tollTotal(rows) {
   return total.ap > 0 || total.wp > 0 ? total : null;
 }
 
+/** What the one tap will do, as the words on the button. */
+function takeWords(hit) {
+  if (hit.kind === 'healing') return `Regain ${hit.total} Health`;
+  if (hit.kind === 'shield') return `Gain ${hit.total} Shield`;
+  return `Take ${hit.total}`;
+}
+
 /**
  * One running thing and what it does at this boundary.
  *
  * It wears its card's own colour down the left edge, the same shade the row on
  * the block wears, so a reminder can be matched to the row that raised it
  * without reading either name. See cardAccent in tagColors.js.
+ *
+ * Exported for the turn call's cover, which prints the same rows when a turn
+ * arrives from across the table: one row, one drawing, wherever a boundary
+ * stops to speak.
  */
-function TriggerRow({ row, onOpen }) {
+export function TriggerRow({ row, landed, canApply, onThrow, onTake, onOpen }) {
   const accent = cardAccent(getCard(row.card)?.tags);
 
   return (
@@ -164,11 +196,47 @@ function TriggerRow({ row, onOpen }) {
         </span>
       </div>
 
-      {row.clauses.map((clause) => (
-        <p className="turn-trigger-clause" key={clause}>
-          {clause}
-        </p>
-      ))}
+      {row.clauses.map((clause, at) => {
+        const spec = clauseThrow(clause);
+        const key = `${row.id}:${at}`;
+        const hit = landed[key];
+
+        return (
+          <div className="turn-trigger-line" key={clause}>
+            <p className="turn-trigger-clause">{clause}</p>
+
+            {spec && onThrow && !hit && (
+              <button
+                type="button"
+                className="turn-trigger-roll"
+                onClick={() => onThrow(key, spec)}
+                title={`Roll ${spec.dice.join(' + ')}${spec.flat ? ` + ${spec.flat}` : ''}`}
+              >
+                Roll it
+              </button>
+            )}
+
+            {/* The number, once it has landed, and the one tap that puts it on
+                this sheet. Labelled with exactly what it will do, because the
+                clause's aim is the table's reading and not the sheet's. */}
+            {hit &&
+              (hit.taken ? (
+                <span className="turn-trigger-taken">{hit.total} · on the sheet</span>
+              ) : canApply && hit.kind !== 'roll' ? (
+                <button
+                  type="button"
+                  className="turn-trigger-take"
+                  onClick={() => onTake(key)}
+                  title="Through your own Shield and Armor, onto your own sheet, with the ledger saying why"
+                >
+                  {takeWords(hit)}
+                </button>
+              ) : (
+                <span className="turn-trigger-taken">{hit.total} · on the log</span>
+              ))}
+          </div>
+        );
+      })}
 
       {onOpen && (
         <button type="button" className="turn-trigger-read" onClick={onOpen}>

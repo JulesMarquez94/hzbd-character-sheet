@@ -289,7 +289,7 @@ export const REPLAY_DEPTH = 3;
  * Nothing here hides a roll. Every row still lands in the block underneath. This
  * only decides what is worth interrupting somebody to show them.
  */
-export function worthReplaying(row, { mine = null, now = Date.now() } = {}) {
+export function worthReplaying(row, { mine = null, table = false, now = Date.now() } = {}) {
   if (row?.kind !== 'roll') return false;
   if (!Array.isArray(row?.data?.dice) || row.data.dice.length === 0) return false;
 
@@ -298,6 +298,12 @@ export function worthReplaying(row, { mine = null, now = Date.now() } = {}) {
      shorthand for a list of one. */
   const ours = [].concat(mine ?? []).filter(Boolean);
   if (ours.includes(row.character_id)) return false;
+
+  /* A roll with no character on it is the table's own — an enemy's dice, thrown
+     by the Game Master. On the Game Master's screen those are *theirs*: they
+     just watched them land, and a replay a second later would be the tray
+     stuttering. Everyone else watches them like anybody's. */
+  if (table && !row.character_id) return false;
 
   const at = new Date(row?.created_at ?? '').getTime();
   // A row with no readable stamp is treated as live: it just arrived down a

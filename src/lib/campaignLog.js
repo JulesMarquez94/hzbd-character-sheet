@@ -305,7 +305,15 @@ export function initiativeEvent(order = [], { encounter = null } = {}) {
     data: {
       move: 'initiative',
       encounter,
-      order: order.map((entry) => ({ kind: entry.kind, name: entry.name, init: entry.init })),
+      /* `ref` rides along so a later reader can point back at a body in this
+         fight — a foe's key, a character's id — not just say its name. Rows
+         written before it was here simply have less to point with. */
+      order: order.map((entry) => ({
+        kind: entry.kind,
+        ref: entry.ref,
+        name: entry.name,
+        init: entry.init,
+      })),
     },
   };
 }
@@ -359,6 +367,104 @@ export function fightOverEvent({ encounter = null, rounds = 0 } = {}) {
   };
 }
 
+/* ------------------------------------------------------ the fight, delivered
+ *
+ * "When an ability is cast that affects an entity with an effect, this effect
+ * needs to populate on the target trackers", and "Health, shield and other
+ * changes by spells and abilities need to be auto applied based on the result."
+ * Jules, 2026-09-01.
+ *
+ * The same wall stands here that stood for the turn call: a Game Master cannot
+ * write a player's sheet. So what lands on a player is **delivered** the way a
+ * turn is — an event on the table log, with the characters it names in `data`,
+ * and each named player's own client applies it through its own patch. The
+ * schema planned for exactly this ("the channel the plan builds targeted
+ * casting on later"): an event is already the whole account of an action, so a
+ * delivery is a reader of these rows rather than a second table.
+ *
+ * A delivery names every body it landed on, players and enemies alike, because
+ * the row is also the table's record of what happened. Only the players in the
+ * list are *deliveries*; the enemies were written directly onto the encounter
+ * row by the Game Master's own page before this row was posted.
+ *
+ * Double delivery is harmless by construction. An effect lands through
+ * `layEffect`, which refreshes a row rather than doubling it, and a pool change
+ * is guarded by the row id the way a turn call is: a client that has seen this
+ * event id acts on it once.
+ */
+
+/**
+ * An effect laid on somebody's tracker.
+ *
+ * `effect` is the same entry `castEffect` would have laid on the caster —
+ * name, card, turns, until, from — relaid at the far end by whoever it names.
+ */
+export function effectLaidEvent(caster, effect, targets = []) {
+  const lasts = effect?.turns
+    ? `${effect.turns} ${effect.turns === 1 ? 'turn' : 'turns'}`
+    : effect?.until
+      ? `until a ${effect.until} rest`
+      : 'until it ends';
+
+  return {
+    kind: 'effect',
+    actor: caster?.name ?? '',
+    title: effect?.name ?? 'An effect',
+    detail: `On ${listAnd(targets.map((entry) => entry.name))} · ${lasts}`,
+    data: {
+      move: 'effect',
+      portrait: caster?.portrait ?? null,
+      card: effect?.card ?? null,
+      effect,
+      targets: targets.map((entry) => ({
+        kind: entry.kind,
+        ref: entry.kind === 'member' ? null : entry.id,
+        character: entry.kind === 'member' ? entry.id : null,
+        name: entry.name,
+      })),
+    },
+  };
+}
+
+/**
+ * A rolled result landed on bodies: the pools that moved, per body.
+ *
+ * `targets` is `[{ kind, id, name, landings }]` — the landings are the rolled
+ * numbers with the caster's arithmetic *not* done, because Armor belongs to
+ * whoever is hit and each client reads its own. What the row prints is the
+ * rolled total; what each body loses is that body's own business, worked out
+ * where its pools live.
+ */
+export function appliedEvent(caster, delta, targets = []) {
+  const verb = delta.kind === 'damage' ? 'dealt' : 'gave';
+  const words =
+    delta.kind === 'damage'
+      ? [delta.total, delta.types?.join(' or '), 'damage'].filter(Boolean).join(' ')
+      : `${delta.total} ${delta.kind === 'healing' ? 'Health' : 'Shield'}`;
+
+  return {
+    kind: 'apply',
+    actor: caster?.name ?? '',
+    title: words,
+    detail: `To ${listAnd(targets.map((entry) => entry.name))}${caster?.card ? ` · ${caster.card.name}` : ''}`,
+    data: {
+      move: 'apply',
+      portrait: caster?.portrait ?? null,
+      card: caster?.card?.id ?? null,
+      verb,
+      kind: delta.kind,
+      types: delta.types ?? [],
+      targets: targets.map((entry) => ({
+        kind: entry.kind,
+        ref: entry.kind === 'member' ? null : entry.id,
+        character: entry.kind === 'member' ? entry.id : null,
+        name: entry.name,
+        landings: entry.landings,
+      })),
+    },
+  };
+}
+
 /* ------------------------------------------------------------- reading it */
 
 /** "17:42" for today, "Aug 29, 17:42" for anything older. */
@@ -384,6 +490,10 @@ export function eventWords(event) {
   /* Only ever read for a row standing on its own: a throw nested under its use
      is drawn by the chain and takes the step's name rather than a sentence. */
   if (event?.kind === 'roll') return 'rolled';
+  // The two delivery rows: "2.Fenrat laid Withering Mark", "2.Fenrat dealt 14
+  // Fire damage". The verb was decided when the row was written.
+  if (event?.kind === 'effect') return 'laid';
+  if (event?.kind === 'apply') return event.data?.verb ?? 'dealt';
   return '';
 }
 

@@ -81,6 +81,13 @@ export function usePlayCard({ character, patch }) {
         write = (body) => body,
         roll = true,
         tell = true,
+        /* What the chain came to, handed back once the dice stop. The encounter
+           page is the caller that cares: a use aimed at targets wants the rolled
+           damage back so it can be landed on them. Called with every value that
+           actually settled — a chain closed halfway hands back the half that
+           happened, and a missed check hands back nothing, because a miss has
+           nothing to land. See ApplyWindow.jsx. */
+        onSettled = null,
       } = extra;
 
       /* Minted before the first write so the use and every throw under it carry
@@ -115,7 +122,7 @@ export function usePlayCard({ character, patch }) {
          happened; what follows is a conversation with the player that may take
          as long as they like, and the block that started it has a prompt to
          close in the meantime. */
-      if (plan.length > 0) void throwChain(tray, plan, { request, actor, chain });
+      if (plan.length > 0) void throwChain(tray, plan, { request, actor, chain, onSettled });
 
       return body;
     },
@@ -130,13 +137,21 @@ export function usePlayCard({ character, patch }) {
  * nobody is holding must not be able to throw: a rejected float here would land
  * as an unhandled rejection in the console of a player whose dice worked fine.
  */
-async function throwChain(tray, plan, { request, actor, chain }) {
+async function throwChain(tray, plan, { request, actor, chain, onSettled = null }) {
   /* Set by a critical success and held until the next check. Every landing of
      the damage maximises, not just the first: a Flurry's three landings are one
      attack's damage, and maximising only the first of them would be arbitrary.
      Damage only, because the ruling is about the damage dealt, so a card that
      heals or shields on the same breath rolls those honestly. */
   let maximize = false;
+
+  /* Every value that actually landed, for the caller that asked to hear. Built
+     whatever happens to the chain, so a surface closed after the second of
+     three landings still hands back the two that were thrown. */
+  const thrown = [];
+  const settle = () => {
+    if (onSettled) onSettled(thrown);
+  };
 
   try {
     for (const link of plan) {
@@ -151,7 +166,11 @@ async function throwChain(tray, plan, { request, actor, chain }) {
       });
 
       // Closed without throwing. The chain stops where the player stopped it.
-      if (!result) return;
+      if (!result) return settle();
+
+      if (link.shape === 'value') {
+        thrown.push({ kind: link.kind, total: result.total, damage: link.damage ?? [] });
+      }
 
       if (link.shape !== 'check') continue;
 
@@ -159,11 +178,13 @@ async function throwChain(tray, plan, { request, actor, chain }) {
          before it, so there is nothing left to roll and a number put on the
          table here would be one the card never offered. Jules's call of
          2026-08-30. */
-      if (isFailure(result.verdict)) return;
+      if (isFailure(result.verdict)) return settle();
 
       maximize = isCriticalSuccess(result.verdict);
     }
   } catch (error) {
     console.warn('The dice stopped mid-chain:', error);
   }
+
+  settle();
 }

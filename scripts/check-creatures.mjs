@@ -351,7 +351,9 @@ section('several of one creature are told apart, and one is not numbered');
       { key: 'c', creature: 'vaultkeeper-lich' },
     ],
   });
-  check('the pair are numbered', [many[0].title, many[1].title], ['Blightgeist 1', 'Blightgeist 2']);
+  /* The number rides in front, where a scanning eye finds it. Jules,
+     2026-09-01: "they get named 1.Fenrat 2.Fenrat". */
+  check('the pair are numbered', [many[0].title, many[1].title], ['1.Blightgeist', '2.Blightgeist']);
   check('the lone one is not', many[2].title, 'Vaultkeeper Lich');
 }
 

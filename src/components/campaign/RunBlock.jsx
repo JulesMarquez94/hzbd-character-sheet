@@ -1,0 +1,117 @@
+import TargetChip from '../TargetChip.jsx';
+
+/**
+ * The initiative and turn manager, as a block.
+ *
+ * Jules, 2026-09-01: "On the encounter page the user has the DM Log block
+ * there and an initiative and turn manager block." The fight used to run from
+ * a strip pinned over the enemy blocks; now that an encounter is its own page,
+ * the fight is a block like everything else on the site — arranged beside the
+ * log, the two things a Game Master reads between every press.
+ *
+ * The order is drawn in the target chips the rest of the fight uses, which is
+ * the strip grown honest: each body's chip *is* its Health bar (the Shield
+ * over it in blue, no numbers — see TargetChip.jsx), so the order now answers
+ * "who is next" and "how are they standing" in one glance. Whoever is up is
+ * lit, and the initiative each rolled sits in the chip's corner.
+ *
+ * **The Next button still says what it is waiting for.** On an enemy's turn it
+ * is the Game Master's press; on a player's it is a courtesy they should not
+ * normally need, because the player ending their own turn moves the table on
+ * by itself. Same rule the strip kept, same reason: that is the whole
+ * difference between a runner that works at a table and one that does not.
+ */
+export default function RunBlock({ run, up, ready, roster, onRoll, onNext, onEnd }) {
+  const live = run.live;
+  const waiting = up?.kind === 'member';
+
+  return (
+    <div className="cell-scroll run-block">
+      <div className="block-head">
+        <span className="stat-category-label">Initiative &amp; Turns</span>
+        <span className="block-count">
+          {live ? `Round ${run.round}` : run.order.length > 0 ? 'Fight over' : 'No fight yet'}
+        </span>
+      </div>
+
+      {run.order.length > 0 && (
+        <div className={`run-order${live ? '' : ' is-done'}`}>
+          {run.order.map((entry, at) => (
+            <TargetChip
+              key={`${entry.kind}:${entry.ref}`}
+              body={chipFor(entry, roster)}
+              up={live && at === run.at}
+              init={entry.init}
+              title={`${entry.name} rolled ${entry.init}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {!live ? (
+        <>
+          <button
+            type="button"
+            className="btn btn-primary run-roll"
+            onClick={onRoll}
+            disabled={!ready}
+          >
+            {run.order.length > 0 ? 'Roll a new fight' : 'Start combat: roll initiative'}
+          </button>
+          <p className="run-note">
+            {ready
+              ? 'Rolls 2d6 + Initiative for every enemy here and every character at the table, then runs the order. The first turn is called at once.'
+              : 'Add an enemy, or link a character to this campaign, and the fight can start.'}
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="run-acts">
+            <button
+              type="button"
+              className={`btn btn-sm ${waiting ? 'btn-minimal' : 'btn-primary'}`}
+              onClick={onNext}
+              title={
+                waiting
+                  ? `Waiting on ${up.name}. This moves on without them.`
+                  : `${up?.name ?? 'This one'} is done, and the next is up`
+              }
+            >
+              {waiting ? `Skip ${up.name}` : 'Next turn'}
+            </button>
+
+            <button type="button" className="btn btn-minimal btn-sm" onClick={onEnd}>
+              End fight
+            </button>
+          </div>
+
+          <p className="run-note">
+            {waiting
+              ? `Waiting on ${up.name}. Their turn started on their own sheet, and their End Turn moves the table on by itself.`
+              : `${up?.name ?? 'An enemy'} is up. Play its moves on its block below, then press Next.`}
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The chip for one order entry: the live body where it is still standing, and
+ * an honest husk where it is not — an enemy removed mid-fight, a character
+ * unlinked — drawn down, because a body the fight cannot find is not fighting.
+ */
+function chipFor(entry, roster) {
+  const body = (roster ?? []).find((held) => held.id === entry.ref);
+  if (body) return body;
+
+  return {
+    id: entry.ref,
+    kind: entry.kind,
+    name: entry.name,
+    tone: entry.rank ? `var(--rank-${entry.rank})` : undefined,
+    health01: 0,
+    shield01: 0,
+    down: true,
+  };
+}

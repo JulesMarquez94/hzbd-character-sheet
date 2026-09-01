@@ -312,10 +312,15 @@ export function DiceTrayProvider({ children }) {
       card: spec.card ?? null,
       /* A roll raised by a card is named after the kind of roll it is: the entry
          above it in the log already says which card, and repeating it there says
-         nothing twice. A roll off the tray has no entry above it, so it keeps the
-         name the player typed. */
-      name: spec.card ? '' : spec.shape === 'check' ? spec.name : '',
+         nothing twice. A roll with no card above it keeps the name it was raised
+         with — what the player typed, or the tracked effect that dealt it. */
+      name: spec.card ? '' : spec.name,
       damage: spec.damage ?? [],
+      /* Whose roll this was, for a holder that speaks for more than one body.
+         A sheet ignores it — its character signs everything — but the encounter
+         page rolls for every enemy in the fight, and the enemy that threw is
+         written on the spec as its note. See DiceTable.jsx. */
+      actor: spec.note ?? '',
     });
   }, []);
 

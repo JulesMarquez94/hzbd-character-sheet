@@ -1666,98 +1666,411 @@
 }
 
 /* =========================================================
-   THE TURN CALL
-   The full-screen notice a player gets when the order
-   reaches them. The one thing on the site that covers a
-   sheet, and it covers it on purpose: a player who has been
-   watching the fight go round is not looking at their own
-   Action Points, and a badge in a corner is a thing you find
-   after somebody says your name out loud.
+   THE TURN CALL moved to sheet.css. It renders on the
+   character sheet, and this file is only loaded with the two
+   campaign pages: a player whose first stop tonight was
+   their own sheet got the cover unstyled. sheet.css is the
+   file that page actually loads.
    ========================================================= */
-.turn-call {
-  position: fixed;
-  inset: 0;
-  z-index: 400;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background:
-    radial-gradient(circle at 50% 40%, rgba(0, 229, 255, 0.12), transparent 55%),
-    rgba(9, 17, 21, 0.92);
-  backdrop-filter: blur(3px);
-  animation: turn-call-in 0.22s ease-out;
+
+/* =========================================================
+   THE SHELF OF ENCOUNTERS
+   One block per prepared encounter: the name, the note, the
+   ranks in it and the bodies by name. The whole block is the
+   button, because the block is the way in.
+   ========================================================= */
+.enc-shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  width: min(100%, var(--sheet-measure));
+  margin: 0 auto;
 }
 
-@keyframes turn-call-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .turn-call {
-    animation: none;
-  }
-}
-
-.turn-call-body {
-  width: min(100%, 520px);
-  text-align: center;
+.enc-block {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.8rem;
+  align-items: stretch;
+  gap: 0.55rem;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: var(--inset-bg);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
-.turn-call-round {
-  font-size: 0.72rem;
+.enc-block:hover,
+.enc-block:focus-visible {
+  border-color: var(--copper);
+  transform: translateY(-2px);
+}
+
+.enc-block-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.enc-block-name {
+  font-family: var(--font-headings);
+  font-size: 1.02rem;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 0.5px;
+  color: var(--text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A fight running inside it is the one thing worth a badge on the shelf. */
+.enc-block-live {
+  margin-left: auto;
+  flex: none;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  color: var(--copper-bright);
+  border: 1px solid rgba(200, 138, 75, 0.45);
+  background-color: rgba(200, 138, 75, 0.12);
+}
+
+.enc-block-notes {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-silver);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.enc-block-foes {
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.enc-block-empty {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.enc-block-open {
+  margin-top: auto;
+  padding-top: 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--copper);
 }
 
-.turn-call-title {
-  margin: 0;
-  font-family: var(--font-headings);
-  font-size: clamp(2.2rem, 9vw, 3.4rem);
-  line-height: 1;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text-bright);
-  text-shadow: 0 0 30px rgba(0, 229, 255, 0.35);
+.enc-block-new {
+  border-style: dashed;
+  justify-content: center;
+  text-align: center;
+  min-height: 130px;
 }
 
-.turn-call-line {
-  margin: 0;
-  max-width: 40ch;
-  font-size: 0.9rem;
-  line-height: 1.55;
-  color: var(--text-silver);
+.enc-back {
+  align-self: flex-start;
+  flex: none;
 }
 
-.turn-call-acts {
+/* =========================================================
+   TARGET CHIPS
+   A body in the fight at chip size: the name in the side's
+   colour, the background an actual reflection of its Health
+   bar, the Shield over it in translucent blue, and not one
+   number on it. Fixed footprint, so a row of twelve reads as
+   a row. See TargetChip.jsx.
+   ========================================================= */
+.tgt-row {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  gap: 0.35rem;
+}
+
+.tgt-chip {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
+  width: 138px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--tgt-tone, var(--copper)) 35%, transparent);
+  background-color: rgba(9, 17, 21, 0.72);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--tgt-tone, var(--copper)) 70%, var(--text-silver));
+  text-align: left;
+}
+
+button.tgt-chip {
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+button.tgt-chip:hover:not(:disabled) {
+  border-color: var(--tgt-tone, var(--copper));
+}
+
+button.tgt-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* The Health bar the chip stands on, and the Shield lying over the same track.
+   Both from the left, both behind the name, neither with a number. */
+.tgt-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: color-mix(in srgb, var(--stat-health) 30%, transparent);
+  pointer-events: none;
+}
+
+.tgt-shield {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: color-mix(in srgb, var(--stat-shield) 38%, transparent);
+  pointer-events: none;
+}
+
+.tgt-name {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tgt-init {
+  position: relative;
+  flex: none;
+  font-size: 0.6rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.tgt-down {
+  display: inline-flex;
+  margin-right: 4px;
+  vertical-align: -2px;
+  color: var(--stat-health);
+}
+
+.tgt-down svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* Picked, and up. A picked target wears its own tone as a ring; whoever the
+   order stands on is filled, the way the strip's chips were. */
+.tgt-chip.is-on {
+  border-color: var(--tgt-tone, var(--copper));
+  box-shadow: 0 0 0 1px var(--tgt-tone, var(--copper));
+  color: var(--text-bright);
+}
+
+.tgt-chip.is-up {
+  border-color: var(--copper);
+  box-shadow: 0 0 0 1px rgba(200, 138, 75, 0.45);
+  color: var(--text-bright);
+}
+
+.tgt-member.is-up {
+  border-color: var(--focus-cyan);
+  box-shadow: 0 0 0 1px rgba(0, 229, 255, 0.35);
+}
+
+.tgt-chip.is-down {
+  opacity: 0.6;
+}
+
+/* The picker on the use prompt: a head with the count, the chips, and the one
+   line saying what picking does. */
+.use-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.4);
+}
+
+.use-targets-head {
+  display: flex;
+  align-items: baseline;
   gap: 0.6rem;
-  margin-top: 0.4rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.turn-call-end {
-  min-width: 190px;
+.use-targets-count {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--copper-bright);
 }
 
-.turn-call-hint {
+.use-targets-note {
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   THE TURN MANAGER BLOCK
+   The order as chips, the round, and the three presses that
+   run a fight. See RunBlock.jsx.
+   ========================================================= */
+.run-block {
+  gap: 0.7rem;
+}
+
+.run-order {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+/* A finished fight is still worth reading, greyed rather than gone. */
+.run-order.is-done {
+  opacity: 0.55;
+}
+
+.run-roll {
+  align-self: flex-start;
+}
+
+.run-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.run-note {
   margin: 0;
-  max-width: 44ch;
   font-size: 0.72rem;
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+/* =========================================================
+   LANDING IT
+   The apply window: what was rolled, who it lands on, and
+   the working per body. See ApplyWindow.jsx.
+   ========================================================= */
+.apply-window {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.apply-lead {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.apply-deltas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.apply-delta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.5);
+  font-size: 0.8rem;
+}
+
+.apply-delta b {
+  font-size: 1.05rem;
+  color: var(--text-bright);
+}
+
+.apply-delta.is-damage b {
+  color: var(--stat-health);
+}
+
+.apply-delta.is-healing b {
+  color: var(--def-healing);
+}
+
+.apply-delta.is-shield b {
+  color: var(--stat-shield);
+}
+
+.apply-delta-what {
+  font-size: 0.72rem;
+  color: var(--text-silver);
+}
+
+.apply-delta-landings {
+  font-size: 0.64rem;
+  color: var(--text-muted);
+}
+
+.apply-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.apply-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.apply-line-name {
+  flex: none;
+  min-width: 9ch;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--tgt-tone, var(--copper)) 70%, var(--text-silver));
+}
+
+.apply-line-math {
+  color: var(--text-muted);
+}
+
+/* One side of an enemy's turn boundary in the prompt: whose turn is ending or
+   starting, over the same trigger rows the sheet's own prompt draws. */
+.foe-boundary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.foe-boundary-head {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--copper);
 }
 
 /* The level everything added from the shelf goes in at. Beside the rank filter,

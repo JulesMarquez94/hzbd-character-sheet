@@ -11,9 +11,11 @@ import { isEnchanter } from '../../lib/enchanting.js';
 import { effectAdvantage } from '../../lib/moves.js';
 import { riderLine } from '../../lib/riders.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
+import { rollPlan } from '../../lib/rollPlan.js';
 import { turnTriggers } from '../../lib/turnTriggers.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
+import { useDiceTray } from '../../context/dice-tray.js';
 import { restEvent, turnEvent } from '../../lib/campaignLog.js';
 import {
   combatReactionGrant,
@@ -63,6 +65,7 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
      is up. Null the rest of the time, which is nearly all of it. */
   const [reminder, setReminder] = useState(null);
   const stack = useCardStack();
+  const tray = useDiceTray();
   /* The clock is the one thing on this block the whole table wants to see. A
      turn crossed between two casts is what makes a log read as a fight rather
      than as a list. See campaignLog.js. */
@@ -108,6 +111,40 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
 
     patch(MOVES[turn.move](character));
     log(turnEvent(turn.move, character, turn));
+  }
+
+  /**
+   * What a tracked row deals, rolled off the row itself.
+   *
+   * "You can click on the tracked effect like wall of fire to roll damage" —
+   * the wall stands on your tracker because you cast it, and the moment
+   * something walks into it is not a turn boundary, so the row is the only
+   * place the roll can live. The card's own value links are thrown in printed
+   * order, named after the row, onto the table log for everyone: landing the
+   * number on an enemy is the Game Master's, from their own page.
+   */
+  function rollEffect(effect, links) {
+    void (async () => {
+      for (const link of links) {
+        const result = await tray.present({
+          ...link,
+          name: effect.name,
+          note: character?.name ?? '',
+          log: true,
+        });
+        if (!result) return;
+      }
+    })();
+  }
+
+  /** The value links a row's card carries, or null for the rows that roll
+      nothing. What decides whether the row wears a Roll button. */
+  function throwable(effect) {
+    if (!tray || readOnly) return null;
+    const card = getCard(effect.card);
+    if (!card) return null;
+    const links = rollPlan(card, character).filter((link) => link.shape === 'value');
+    return links.length > 0 ? links : null;
   }
 
   return (
@@ -200,16 +237,20 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
             condition you are under, a blessing somebody laid on you.
           </p>
         ) : (
-          effects.map((effect) => (
-            <EffectRow
-              key={effect.id}
-              effect={effect}
-              readOnly={readOnly}
-              onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
-              onNudge={(delta) => patch({ effects: nudgeEffect(effects, effect.id, delta) })}
-              onDrop={() => patch({ effects: dropEffect(effects, effect.id) })}
-            />
-          ))
+          effects.map((effect) => {
+            const links = throwable(effect);
+            return (
+              <EffectRow
+                key={effect.id}
+                effect={effect}
+                readOnly={readOnly}
+                onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
+                onNudge={(delta) => patch({ effects: nudgeEffect(effects, effect.id, delta) })}
+                onDrop={() => patch({ effects: dropEffect(effects, effect.id) })}
+                onRoll={links ? () => rollEffect(effect, links) : null}
+              />
+            );
+          })
         )}
       </div>
 
@@ -263,6 +304,7 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
         <TurnPrompt
           triggers={reminder}
           character={character}
+          patch={readOnly ? null : patch}
           onConfirm={() => {
             const move = reminder.when === 'start' ? 'turn' : 'end';
             patch(MOVES[move](character));
@@ -336,7 +378,7 @@ function turnNote(turn, character) {
  * row there has to be this row: same count, same nudges, same card behind it.
  * See MinionBlock.jsx, which is where BarChip goes too.
  */
-export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, bends = true }) {
+export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, onRoll = null, bends = true }) {
   const over = effect.turns === 0;
   const open = effect.turns === null;
   /* What this row is doing to a roll, when it is doing anything: a Martial Move
@@ -380,6 +422,21 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, bends = t
         </span>
 
         {arrow && <RollArrow {...arrow} size={20} />}
+
+        {/* What the row deals, rolled off the row: a wall of fire clicked the
+            moment something walks into it. Only on a row whose card rolls a
+            value, and never on one that has ended. See rollPlan. */}
+        {onRoll && !over && !readOnly && (
+          <button
+            type="button"
+            className="fx-step fx-roll"
+            onClick={onRoll}
+            aria-label={`Roll what ${effect.name} deals`}
+            title="Roll what this deals"
+          >
+            Roll
+          </button>
+        )}
 
         {!readOnly && (
           <span className="fx-tools">

@@ -7861,6 +7861,25 @@ body.sheet-fixed #root {
   color: var(--stat-speed);
 }
 
+/* The roll a row deals, thrown off the row: a wall of fire clicked the moment
+   something walks into it. A step grown a word wide, copper because a throw is
+   an act rather than housekeeping. */
+.fx-roll {
+  width: auto;
+  padding: 0 7px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--copper);
+  border-color: rgba(200, 138, 75, 0.4);
+}
+
+.fx-roll:hover:not(:disabled),
+.fx-roll:focus-visible:not(:disabled) {
+  background-color: rgba(200, 138, 75, 0.12);
+}
+
 /* What it does, on the second line. Off a card it is a button that opens the
    card; written in by hand it is the note it was written with. */
 .fx-read,
@@ -8060,6 +8079,183 @@ body.sheet-fixed #root {
   padding-top: 0.4rem;
   border-top: 1px solid var(--hairline);
   font-size: 0.62rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* A clause and the roll beside it. The button sits with the sentence that
+   names the dice, because "the spore deals 2d6 + 8" and the way to throw it
+   are one thought. */
+.turn-trigger-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.turn-trigger-line .turn-trigger-clause {
+  flex: 1;
+}
+
+.turn-trigger-roll {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 3px;
+  border: 1px solid rgba(200, 138, 75, 0.45);
+  background-color: rgba(200, 138, 75, 0.1);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--copper-bright);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.turn-trigger-roll:hover,
+.turn-trigger-roll:focus-visible {
+  border-color: var(--copper);
+  background-color: rgba(200, 138, 75, 0.2);
+}
+
+/* The number once it has landed, and the one labelled tap that puts it on the
+   sheet: "Regain 9 Health", "Take 7". Green for the taking that gives. */
+.turn-trigger-take {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  background-color: rgba(0, 229, 255, 0.08);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--focus-cyan);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.turn-trigger-take:hover,
+.turn-trigger-take:focus-visible {
+  border-color: var(--focus-cyan);
+  background-color: rgba(0, 229, 255, 0.16);
+}
+
+.turn-trigger-taken {
+  flex: none;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   THE TURN CALL
+   The full-screen notice a player gets when the order
+   reaches them. The one thing on the site that covers a
+   sheet, and it covers it on purpose: a player who has been
+   watching the fight go round is not looking at their own
+   Action Points, and a badge in a corner is a thing you find
+   after somebody says your name out loud.
+
+   In this file rather than Campaigns.css because this is the
+   file the character sheet loads, and the sheet is the page
+   the cover lands on: styled in Campaigns.css it was only
+   dressed for players who had visited a campaign page first.
+   ========================================================= */
+.turn-call {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(0, 229, 255, 0.12), transparent 55%),
+    rgba(9, 17, 21, 0.92);
+  backdrop-filter: blur(3px);
+  animation: turn-call-in 0.22s ease-out;
+}
+
+@keyframes turn-call-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-call {
+    animation: none;
+  }
+}
+
+.turn-call-body {
+  width: min(100%, 560px);
+  max-height: 92vh;
+  overflow-y: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.turn-call-round {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+.turn-call-title {
+  margin: 0;
+  font-family: var(--font-headings);
+  font-size: clamp(2.2rem, 9vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-bright);
+  text-shadow: 0 0 30px rgba(0, 229, 255, 0.35);
+}
+
+.turn-call-line {
+  margin: 0;
+  max-width: 40ch;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-silver);
+}
+
+/* What the boundary sets off, on the cover: the sheet's own trigger rows, left
+   aligned inside the centred body because they are read, not glanced. */
+.turn-call-triggers {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.turn-call-acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.turn-call-end {
+  min-width: 190px;
+}
+
+.turn-call-hint {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 0.72rem;
   line-height: 1.5;
   color: var(--text-muted);
 }

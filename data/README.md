@@ -10009,3 +10009,149 @@ that already has encounters on it would not otherwise grow the column.
    a turn out of order should not be able to advance a fight.
 5. **Nothing checks that the fight is over.** Every enemy at 0 Health still gets
    its turn announced until the Game Master presses End fight.
+
+## The fight manages itself, 2026-09-01
+
+Jules: "the encounters page should show encounter blocks ... Clicking it should
+then open the encounter view and from there the DM should be able to start
+combat. On the encounter page the user has the DM Log block there and an
+initiative and turn manager block." And then the manager itself: targeting
+before a use, effects populating on the target trackers, roll prompts at turn
+boundaries, tracked effects like wall of fire rolled off their rows, and
+"Health, shield and other changes by spells and abilities need to be auto
+applied based on the result."
+
+This is the campaign plan's phase 3, and the load-bearing idea is the one the
+schema wrote down the day the log was built: **`campaign_events` is both the
+log and the post.** A Game Master still cannot write a player's sheet, so
+nothing here made them able to. What lands on a player is *delivered*: an event
+names them in `data.targets`, their own client applies it through their own
+patch, and the row is also the table's record of what happened.
+
+### The tab is two views now
+
+The Encounters tab opens on a **shelf of encounter blocks**: one block per
+prepared encounter with the name, the Game Master's note, the rank tally, the
+bodies by name and a Round badge when a fight is live inside it. The whole
+block is the button. Behind it, the **encounter view**: the head that edits it,
+then the **Initiative & Turns block** beside the **DM Log block** (the same
+LogBlock the Overview grows, titled for the seat it is in), then the double
+blocks. Start combat lives in the view, which is the old Roll initiative press
+unchanged.
+
+Repeat creatures renumbered from "Blightgeist 2" to **"2.Blightgeist"**, the
+number in front where a scanning eye finds it (Jules: "they get named 1.Fenrat
+2.Fenrat"). One on its own still keeps its plain name.
+
+### The target chip
+
+One component wherever a body is pointed at: the order, the picker, the apply
+window. Fixed footprint, the name in the side's colour (party cyan, an enemy
+its rank), and the background is an actual reflection of the Health bar with
+the Shield over it in translucent blue. **No numbers on it**, per the ask: the
+blocks are where numbers live. `TargetChip.jsx`, styled in Campaigns.css.
+
+### Targeting, read off the card
+
+`src/lib/targeting.js` answers one question the way rollPlan answers its own:
+does this card land on other bodies, and on how many? "an entity" is one, "up
+to 3 entities" is three, "each entity" is an area with no cap, "you gain" is
+nobody. No card grew a field. A **Multicast raises the ceiling by one per
+take** as the dial moves ("spend more to catch more targets" is the glossary's
+own definition), and a taken Overcast that names targets contributes whatever
+its own text counts, which is what makes RENEW's overcast reach "all entities
+currently affected". The picker sits in UsePrompt above the pay buttons, only
+when the page hands in a `combat` roster, and **picking is optional**: nobody
+picked is the old flow exactly.
+
+### What a use does to its targets
+
+- **An effect lays on them, not on the caster.** The row `castEffect` would
+  have laid is stripped from the spend and relaid on every picked body: an
+  enemy's tracker directly (`layOnFoes`, one write for all of them, through
+  `layEffect` so a double landing refreshes one row), a player's by an
+  `effect` event their own client hears (TurnCall grew the ear). The vague
+  duration law is untouched: a card whose clock cannot be read still lays
+  nothing anywhere.
+- **The rolled numbers come back.** `usePlayCard` takes `onSettled` and the
+  chain hands back every value that landed. The **apply window** then opens
+  over the picked targets with the working said per body: Armor off each
+  landing (Armor is per hit, so a Flurry's landings stay separate), the Shield
+  soaking, Health taking the rest. Enemies land in one `applyToFoes` patch.
+  Players land as an `apply` event carrying the raw landings, and their client
+  does the arithmetic against its own live pools, because the Game Master's
+  copy of a sheet is seconds old by definition. Health moves through the
+  ledger with the caster's name on it.
+
+### The boundaries prompt, both sides of the table
+
+Next stops at an enemy's turn boundary exactly the way the sheet's own Turn
+button stops: `FoeTurnPrompt` reads `turnTriggers` off the foe's tracker for
+the turn being left and the one being started, and a clause that names dice
+wears a **Roll it** button. The handful is read back off the resolved sentence
+(`clauseThrow`), thrown on the tray over the prompt, and handed to the apply
+window with the boundary's own body preselected when the clause is about its
+holder.
+
+On the player's side the cover finally says what it starts: TurnCall computes
+the start triggers *before* `startTurn` ticks them and prints the same
+TriggerRow the block's prompt prints, with the same Roll and a labelled
+one-tap **Take it** that lands the number on the sheet through `characterDelta`.
+Ending from the cover walks the end boundary the same way. The block's own
+TurnPrompt got the identical roll-and-take, shared through `useClauseRolls`.
+
+### Wall of fire, clicked
+
+A tracked effect whose card rolls a value wears a Roll button on its row: on a
+foe's tracker it rolls and opens the apply window with nobody preselected,
+because only the table knows who walked in; on a player's block 6 it rolls onto
+the table log and the Game Master lands it from their page. `rollPlan` is what
+decides which rows get the button, so a row that rolls nothing offers nothing.
+
+### The table found its dice voice
+
+An enemy's throws never reached the log at all: only DiceSheet held the tray,
+and it is mounted on character sheets. `DiceTable.jsx` holds it for the
+encounter view and writes every logged roll as the table, signed by whichever
+enemy threw (the tray hands the spec's note through as `actor`). Players now
+watch enemy dice replay; the Game Master does not watch their own back
+(`worthReplaying` grew a `table` flag). And a value roll with no card above it
+keeps its own name in the feed now, where it used to flatten to "Damage".
+
+### Also fixed in passing
+
+The turn call cover was styled in Campaigns.css, which the character sheet
+never loads: a player whose first stop was their own sheet got it unstyled.
+The styles moved to sheet.css, which is the file the page the cover lands on
+actually loads.
+
+### The checker
+
+`npm run lint:combat`: target counts read off named codex cards (BRAMBLE WHIP,
+STRANGLING ROOTS, ENTANGLING ROOTS, GIANT GROWTH, RENEW), the census (281 of
+489 cards reach other bodies), the landing arithmetic including the per-landing
+Armor rule and the character floor at negative max, one-write multi-enemy
+applies, the relaid-once law across bodies, and RENEW's Turn Start clause
+coming back off a real enemy as a throwable 1d6 plus flat.
+
+### Open for the designer
+
+1. **Armor reduces every landing of damage**, spell and swing alike. The
+   glossary says "flat damage reduction, applied after a hit lands" and carves
+   nothing out, so that is what the window and the deliveries do. If magic is
+   meant to ignore Armor, say so and it is one line in combatApply.js.
+2. **The apply window applies what was rolled.** A table that rules half
+   damage lands the ruling by hand on the block, as before. A per-target
+   adjuster was considered and left out until asked for.
+3. **A stated number is not auto-applied.** A card that deals a flat "5 damage"
+   with no dice raises no window, because only rolls come back off the tray.
+   Same line rollPlan has always drawn.
+4. **A player cannot pick foes as targets yet.** Their casts still resolve on
+   their own sheet and the Game Master lands the numbers from the encounter
+   view. The delivery channel now carries foe refs in the initiative event, so
+   the reverse direction (a player's wall of fire proposing damage the Game
+   Master's open page applies) is wired-ready and one ask away.
+5. **A delivery needs the player's tab open.** Effects and applies ride the
+   realtime channel the way the turn call does: a sheet that was closed misses
+   them, and the log row is the recovery. The plan's `applied_seq` cursor is
+   the fuller answer if this bites at real tables.

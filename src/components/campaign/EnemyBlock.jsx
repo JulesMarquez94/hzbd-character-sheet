@@ -16,9 +16,11 @@ import { usePlayCard } from '../sheet/usePlayCard.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import { metersToFeet } from '../../lib/characterModel.js';
-import { foeBar } from '../../lib/combatBar.js';
+import { castEffect, foeBar } from '../../lib/combatBar.js';
 import { CREATURE_MAX_LEVEL, difficultyLine } from '../../lib/creatures.js';
 import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
+import { rollPlan } from '../../lib/rollPlan.js';
+import { getCard } from '../../lib/weapons.js';
 import {
   breakWard,
   foeActor,
@@ -121,12 +123,21 @@ const CLOSED_ON_ARRIVAL = ['basic'];
  * holding its own copy could only ever be a stale second opinion. See the note
  * on `rowsRef` in EncounterTab.jsx.
  */
+/**
+ * `combat` is the fight around this enemy, when there is one: the roster of
+ * everybody standing (see combatRoster in EncounterTab.jsx) and the three ways
+ * a use reaches past this block — laying an effect on targets, landing rolled
+ * numbers on them, rolling what a tracked effect deals. Absent on the Bestiary
+ * tab, where a creature is a page and not a combatant, and every path below
+ * then behaves exactly as it did.
+ */
 export default function EnemyBlock({
   foe,
   patch,
   readOnly = false,
   unit = 'metric',
   onRemove = null,
+  combat = null,
 }) {
   const [lore, setLore] = useState(false);
 
@@ -140,7 +151,7 @@ export default function EnemyBlock({
         onLore={() => setLore(true)}
         onRemove={onRemove}
       />
-      <FoeActions foe={foe} patch={patch} readOnly={readOnly} />
+      <FoeActions foe={foe} patch={patch} readOnly={readOnly} combat={combat} />
 
       {lore && <LoreWindow foe={foe} onClose={() => setLore(false)} />}
     </div>
@@ -425,7 +436,7 @@ function FoePool({ label, title, current, max, color, readOnly, onStep }) {
  * than left off: a row that is missing reads as an oversight, and a row that
  * reads "0 / 0" beside a line saying why is the rule stated where it applies.
  */
-function FoeActions({ foe, patch, readOnly }) {
+function FoeActions({ foe, patch, readOnly, combat = null }) {
   const [request, setRequest] = useState(null);
   const stack = useCardStack();
   const { rank, stats } = foe;
@@ -467,12 +478,64 @@ function FoeActions({ foe, patch, readOnly }) {
      holds, and where it lands is decided against the newest encounter. */
   const writeEffects = (list) => (row) => setFoeEffects(row, foe.key, list);
 
-  function confirmUse(mode, amount, options) {
+  function confirmUse(mode, amount, options = {}) {
+    const targets = options?.targets ?? [];
+
+    /* The row this card would have laid on its caster, when it was aimed at
+       somebody instead. "When an ability is cast that affects an entity with an
+       effect, this effect needs to populate on the target trackers" — so the
+       self-laid row is stripped out of the spend (`write` below) and the page
+       lays the same row on every body that was picked, the caster included if
+       the caster picked itself. */
+    const cast = targets.length > 0 ? castEffect(request) : null;
+
     /* Paid, logged and rolled under the enemy's own name, because that is who
        acted. The whole spend lands on its own row: nothing is borrowed and
        nothing crosses to a sheet. See foeSpend, and `play` above. */
-    play(request, mode, amount, options, { actor });
+    play(request, mode, amount, options, {
+      actor,
+      ...(cast
+        ? {
+            write: (body) => {
+              const rest = { ...body };
+              delete rest.effects;
+              return rest;
+            },
+          }
+        : {}),
+      /* And once the dice stop, the numbers are offered to the targets: the
+         page opens the apply window over whoever was picked. Only for an aimed
+         use — one with nobody picked rolls onto the table and is landed by
+         hand, exactly as it always was. */
+      ...(targets.length > 0 && combat?.onResults
+        ? {
+            onSettled: (thrown) => combat.onResults({ foe, request, targets, thrown }),
+          }
+        : {}),
+    });
+
+    if (cast) combat?.layEffect?.(foe, targets, cast);
     setRequest(null);
+  }
+
+  /**
+   * What a tracked effect deals, rolled off its row.
+   *
+   * "In the case of effects that create elementals that last and need rolls,
+   * when the conditions are triggered you can click on the tracked effect like
+   * wall of fire to roll damage and select a target to apply it." The row's
+   * card says what it rolls — the same value links a use would have thrown —
+   * so the button appears exactly where the card carries dice and nowhere
+   * else. What happens after the throw is the page's (see rollEffect in
+   * EncounterTab.jsx): the apply window, with nobody preselected, because a
+   * wall burns whoever walked into it and only the table knows who that was.
+   */
+  function throwable(effect) {
+    if (!combat?.rollEffect || foe.down) return null;
+    const card = getCard(effect.card);
+    if (!card) return null;
+    const links = rollPlan(card, actor, { actor }).filter((link) => link.shape === 'value');
+    return links.length > 0 ? links : null;
   }
 
   return (
@@ -619,20 +682,26 @@ function FoeActions({ foe, patch, readOnly }) {
               </p>
             ) : (
               <div className="fx-list">
-                {effects.map((effect) => (
-                  <EffectRow
-                    key={effect.id}
-                    effect={effect}
-                    readOnly={readOnly}
-                    onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
-                    onNudge={(delta) => patch(writeEffects(nudgeEffect(effects, effect.id, delta)))}
-                    onDrop={() => patch(writeEffects(dropEffect(effects, effect.id)))}
-                    /* An enemy's stats are printed and no rider reaches them, so
-                       a row here does not claim to have moved one. Same call as
-                       a creature's tracker. See riders.js. */
-                    bends={false}
-                  />
-                ))}
+                {effects.map((effect) => {
+                  const links = throwable(effect);
+                  return (
+                    <EffectRow
+                      key={effect.id}
+                      effect={effect}
+                      readOnly={readOnly}
+                      onOpen={effect.card ? () => stack?.openCard(effect.card) : null}
+                      onNudge={(delta) => patch(writeEffects(nudgeEffect(effects, effect.id, delta)))}
+                      onDrop={() => patch(writeEffects(dropEffect(effects, effect.id)))}
+                      /* A wall of fire on the tracker rolls its own damage from
+                         its own row. See throwable above. */
+                      onRoll={links ? () => combat.rollEffect(foe, effect, links) : null}
+                      /* An enemy's stats are printed and no rider reaches them, so
+                         a row here does not claim to have moved one. Same call as
+                         a creature's tracker. See riders.js. */
+                      bends={false}
+                    />
+                  );
+                })}
               </div>
             ))}
         </section>
@@ -644,6 +713,10 @@ function FoeActions({ foe, patch, readOnly }) {
           character={actor}
           onCancel={() => setRequest(null)}
           onConfirm={confirmUse}
+          /* Everybody in the fight, so a card that reaches other bodies offers
+             them before the pay buttons. Absent on the Bestiary, where there is
+             nobody to reach. */
+          combat={combat ? { roster: combat.roster, self: foe.key } : null}
         />
       )}
     </div>

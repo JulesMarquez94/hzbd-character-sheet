@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '../Modal.jsx';
+import ApplyWindow from './ApplyWindow.jsx';
+import DiceTable from './DiceTable.jsx';
 import EnemyBlock from './EnemyBlock.jsx';
+import FoeTurnPrompt from './FoeTurnPrompt.jsx';
+import LogBlock from './LogBlock.jsx';
+import RunBlock from './RunBlock.jsx';
 import { CampaignLogContext } from '../../context/campaign-log.js';
+import { useDiceTray } from '../../context/dice-tray.js';
 import {
+  appliedEvent,
+  effectLaidEvent,
   fightOverEvent,
   initiativeEvent,
   postEvent,
   turnCallEvent,
 } from '../../lib/campaignLog.js';
 import { levelForXp, liveCharacter } from '../../lib/characterModel.js';
-import { tickEffects } from '../../lib/combatTurn.js';
+import { applyPlan, clauseAim } from '../../lib/combatApply.js';
+import { layEffect, tickEffects } from '../../lib/combatTurn.js';
 import {
   CREATURE_MAX_LEVEL,
   RANKS,
@@ -22,6 +31,7 @@ import {
   FOES_MAX,
   addFoes,
   advanceRun,
+  applyToFoes,
   createEncounter,
   crossTurn,
   deleteEncounter,
@@ -30,7 +40,9 @@ import {
   encounterState,
   encounterTally,
   endRun,
+  foeActor,
   foeTurnStart,
+  layOnFoes,
   listEncounters,
   normalizeFoes,
   normalizeRun,
@@ -38,22 +50,46 @@ import {
   rollInitiative,
   updateEncounter,
 } from '../../lib/encounters.js';
+import { turnTriggers } from '../../lib/turnTriggers.js';
+import { getCard } from '../../lib/weapons.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 
 /**
- * The encounters a Game Master has prepared for this campaign.
+ * The encounters a Game Master has prepared for this campaign, and the fights
+ * they become.
  *
- * Jules, 2026-08-31: "a feature that can be used to create encounter. Encounter
- * are grouping of enemies we will use later for player to setup combat."
+ * Jules, 2026-09-01: "the encounters page should show encounter blocks, which
+ * are a type of block that show the enemies in it and notes from the DM.
+ * Clicking it should then open the encounter view, and from there the DM
+ * should be able to start combat."
  *
- * A grouping, so this tab has no initiative order, no round counter and no turn
- * button of its own. What it has is the pile: pick an encounter, put creatures
- * in it, and every one of them gets the double block. The pools on those blocks
- * are live, because an enemy that could not lose Health is a reference card.
+ * So the tab is two views now. The **shelf**: one block per encounter, the
+ * name, the notes and the pile at a glance, and nothing on it is live. The
+ * **encounter view** behind a click: the head that edits it, the initiative
+ * and turn manager block beside the DM Log block, and the double blocks of
+ * everybody in the pile. Start combat lives in the view, because a fight is a
+ * thing you start looking at the bodies in it.
+ *
+ * ---------------------------------------------------------------- the manager
+ * Once a fight is live the view manages it rather than merely counting it:
+ *
+ *   targeting   a use that reaches other bodies offers the fight's roster in
+ *               the prompt, capped at what the card's own text counts, raised
+ *               by a Multicast as it is dialled. See targeting.js.
+ *   effects     a card that lays something lays it on whoever was picked — an
+ *               enemy's tracker directly, a player's by delivery over the log,
+ *               their own client writing their own sheet. See TurnCall.jsx.
+ *   the rolls   when the chain settles, the apply window opens over the picked
+ *               targets and lands the numbers: Armor per landing, Shield
+ *               soaking, Health taking the rest. Enemies in one patch, players
+ *               by delivery.
+ *   boundaries  Next stops at an enemy's turn boundary when anything running
+ *               on it names one, exactly as a player's own sheet stops, with a
+ *               Roll beside every clause that rolls. See FoeTurnPrompt.jsx.
  *
  * ---------------------------------------------------------------- the writing
- * The encounter row is this tab's to save and the campaign row is the page's, so
- * this keeps its own debounced pipeline rather than borrowing the page's: a
+ * The encounter row is this tab's to save and the campaign row is the page's,
+ * so this keeps its own debounced pipeline rather than borrowing the page's: a
  * Health step is one write per press and a typed name is one per pause, and
  * neither should ever be batched into the other row's patch.
  *
@@ -63,9 +99,9 @@ import { subscribeToTable } from '../../lib/realtime.js';
  * -------------------------------------------------------------- and the table
  * An enemy playing a card writes to the campaign log, and it writes as the
  * *table* rather than as a character: `character_id` null, which the schema
- * allows the Game Master alone and which nothing has raised until now. That is
- * the "later the gm" half of the log's own ask, arriving. The provider below is
- * what makes the enemy block's `usePlayCard` find a log at all.
+ * allows the Game Master alone. The provider below is what makes the enemy
+ * block's `usePlayCard` find a log at all, and DiceTable is what makes its
+ * dice land in the feed the way a player's do.
  */
 
 /** The one press per player turn: the Overlord's own rule. */
@@ -73,6 +109,7 @@ const TURN_LABEL = 'A player took a turn';
 
 export default function EncounterTab({ campaign, members = [], canEdit, unit = 'metric' }) {
   const campaignId = campaign?.id;
+  const tray = useDiceTray();
 
   const [encounters, setEncounters] = useState([]);
   const [openId, setOpenId] = useState(null);
@@ -80,6 +117,11 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
   const [gains, setGains] = useState(null);
+  /* An enemy's turn boundary with something waiting on it, held while the
+     prompt is up. See handleNext. */
+  const [boundary, setBoundary] = useState(null);
+  /* A settled chain waiting to land on bodies. See handleResults. */
+  const [apply, setApply] = useState(null);
 
   /* One pending patch per encounter id, because a Game Master can move between
      two of them faster than the debounce, and a patch that followed the
@@ -207,11 +249,10 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     [flush]
   );
 
-  /* Which encounter is open. The stored choice is matched against what actually
-     exists, so an encounter deleted on another screen does not leave this one
-     drawing nothing. */
+  /* Which encounter is open. The shelf when none is: an encounter deleted on
+     another screen closes this view rather than leaving it drawing nothing. */
   const open = useMemo(
-    () => encounters.find((row) => row.id === openId) ?? encounters[0] ?? null,
+    () => encounters.find((row) => row.id === openId) ?? null,
     [encounters, openId]
   );
 
@@ -280,8 +321,9 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   const run = useMemo(() => normalizeRun(open?.run), [open?.run]);
   const up = run.live ? (run.order[run.at] ?? null) : null;
 
-  /** Everybody at the table, as the order wants them: an id, a name and an
-      Initiative. Off `liveCharacter`, so a worn enchantment's Instinct counts. */
+  /** Everybody at the table, as the order and the roster want them. Off
+      `liveCharacter`, so a worn enchantment's Instinct counts — and the pools
+      too, because their chips are their Health bars now. */
   const seats = useMemo(
     () =>
       (members ?? [])
@@ -293,8 +335,59 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             name: shown.name,
             initiative: shown.initiative,
             xp: shown.xp,
+            health: Number(shown.health) || 0,
+            health_max: Math.max(0, Number(shown.health_max) || 0),
+            shield: Math.max(0, Number(shown.shield) || 0),
+            armor: Math.max(0, Number(shown.defense) || 0),
           };
         }),
+    [members]
+  );
+
+  /**
+   * Everybody in the fight, as chips and as targets: enemies wearing their
+   * rank, the party wearing its cyan, each one's Health as the chip's own
+   * background. This is the one list the prompt, the order, the apply window
+   * and the deliveries all read, so "which chip is Kaelen" has one answer.
+   */
+  const roster = useMemo(
+    () => [
+      ...foes.map((foe) => ({
+        id: foe.key,
+        kind: 'foe',
+        name: foe.title,
+        tone: foe.rank.color,
+        health01: foe.stats.health_max > 0 ? foe.health / foe.stats.health_max : 0,
+        shield01: foe.stats.health_max > 0 ? foe.shield / foe.stats.health_max : 0,
+        down: foe.down,
+        armor: foe.stats.defense,
+        shieldNow: foe.shield,
+      })),
+      ...seats.map((seat) => ({
+        id: seat.character_id,
+        kind: 'member',
+        name: seat.name,
+        tone: 'var(--focus-cyan)',
+        health01: seat.health_max > 0 ? Math.max(0, seat.health) / seat.health_max : 0,
+        shield01: seat.health_max > 0 ? seat.shield / seat.health_max : 0,
+        down: seat.health <= 0,
+        armor: seat.armor,
+        shieldNow: seat.shield,
+      })),
+    ],
+    [foes, seats]
+  );
+
+  /* Who played the card a log row names, so a spell opened out of the feed
+     prints the caster's numbers rather than nobody's. Same read the campaign
+     page's own log block gets. */
+  const actorFor = useCallback(
+    (event) => {
+      const member = (members ?? []).find(
+        (entry) => entry.character_id === event?.character_id
+      );
+      return member?.characters ? liveCharacter(member.characters) : null;
+    },
     [members]
   );
 
@@ -335,7 +428,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
    * because the announcement is what starts a player acting and a boss that
    * gains its reactions afterwards has spent the turn unable to answer.
    */
-  const handleNext = () => {
+  const advance = useCallback(() => {
     let called = null;
     patch((row) => {
       const moved = advanceRun(row);
@@ -361,6 +454,48 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     });
 
     if (called) log(turnCallEvent(called.entry, called.round, { encounter: open.id }));
+  }, [patch, log, open]);
+
+  /**
+   * Next, with the stop the sheet's own turn button has had all along: an
+   * enemy's boundary with something waiting on it opens the prompt first, and
+   * the confirm is the advance the press was always going to make.
+   *
+   * Both boundaries of one press are read — the enemy whose turn is ending and
+   * the one whose turn is about to start — because "when an entity starts a
+   * turn, it should prompt needed rolls, same at end turn" (Jules, 2026-09-01).
+   * A player's boundaries are deliberately not read here: their own sheet
+   * stops for them, on their own screen, where their own dice are.
+   */
+  const handleNext = () => {
+    const row = rowsRef.current.find((entry) => entry.id === open?.id) ?? open;
+    const now = normalizeRun(row?.run);
+    if (!now.live || now.order.length === 0) return;
+
+    const state = encounterState(row);
+    const sideFor = (entry, when) => {
+      if (!entry || entry.kind !== 'foe') return null;
+      const foe = state.find((held) => held.key === entry.ref);
+      if (!foe || foe.down) return null;
+      const triggers = turnTriggers(foeActor(foe), when);
+      return triggers.any ? { foe, when, triggers } : null;
+    };
+
+    const at = (now.at + 1) % now.order.length;
+    const leaving = sideFor(now.order[now.at], 'end');
+    const coming = sideFor(now.order[at], 'start');
+
+    if (leaving || coming) {
+      setBoundary({
+        leaving,
+        coming,
+        entry: now.order[at],
+        round: at === 0 ? now.round + 1 : now.round,
+      });
+      return;
+    }
+
+    advance();
   };
 
   const handleEndFight = () => {
@@ -373,6 +508,184 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     });
     if (rounds > 0) log(fightOverEvent({ encounter: open.id, rounds }));
   };
+
+  /* --------------------------------------------------- landing what was used */
+
+  /**
+   * An effect a use aimed at bodies, laid on every one of them.
+   *
+   * Enemies get theirs written straight onto the encounter row, in one patch.
+   * Players get theirs *delivered*: an event names them, and each one's own
+   * client lays the row through its own patch, because nothing else may write
+   * a sheet. The event is written either way — it is also the table's record
+   * that the thing was laid.
+   */
+  const layTargets = useCallback(
+    (foe, targets, cast) => {
+      const bodies = targets
+        .map((id) => roster.find((body) => body.id === id))
+        .filter(Boolean);
+      if (bodies.length === 0) return;
+
+      const keys = bodies.filter((body) => body.kind === 'foe').map((body) => body.id);
+      if (keys.length > 0) patch((row) => layOnFoes(row, keys, cast, { lay: layEffect }));
+
+      log(
+        effectLaidEvent(
+          { name: foe.title, portrait: foe.creature?.portrait_url ?? null },
+          cast,
+          bodies
+        )
+      );
+    },
+    [roster, patch, log]
+  );
+
+  /** A settled chain from an aimed use: the apply window, over whoever was
+      picked, once there is anything to land. */
+  const handleResults = useCallback(({ foe, request, targets, thrown }) => {
+    const deltas = applyPlan(thrown);
+    if (deltas.length === 0) return;
+    setApply({
+      caster: {
+        name: foe.title,
+        portrait: foe.creature?.portrait_url ?? null,
+        card: request.card ?? null,
+      },
+      title: request.name,
+      deltas,
+      preselect: targets,
+    });
+  }, []);
+
+  /**
+   * A tracked effect rolled off its row: the wall of fire, clicked the moment
+   * something walks into it. The card's value links are thrown in printed
+   * order, and whatever landed goes to the apply window with nobody picked,
+   * because only the table knows who walked in.
+   */
+  const rollEffect = useCallback(
+    (foe, effect, links) => {
+      if (!tray) return;
+      void (async () => {
+        const thrown = [];
+        for (const link of links) {
+          const result = await tray.present({
+            ...link,
+            name: effect.name,
+            note: foe.title,
+            log: true,
+          });
+          if (!result) break;
+          thrown.push({ kind: link.kind, total: result.total, damage: link.damage ?? [] });
+        }
+
+        const deltas = applyPlan(thrown);
+        if (deltas.length === 0) return;
+        setApply({
+          caster: {
+            name: foe.title,
+            portrait: foe.creature?.portrait_url ?? null,
+            card: getCard(effect.card) ?? null,
+          },
+          title: effect.name,
+          deltas,
+          preselect: [],
+        });
+      })();
+    },
+    [tray]
+  );
+
+  /**
+   * A boundary clause rolled from the turn prompt. The apply window opens with
+   * the boundary's own enemy picked when the clause is about the body holding
+   * the row — a burn burns its carrier — and with nobody picked when it points
+   * away, for the Game Master to say who.
+   */
+  const throwBoundary = useCallback(
+    (foe, row, clause, spec) => {
+      if (!tray) return;
+      void (async () => {
+        const kind = spec.kind === 'roll' ? 'damage' : spec.kind;
+        const result = await tray.present({
+          ...spec,
+          shape: 'value',
+          kind,
+          name: row.name,
+          note: foe.title,
+          log: true,
+        });
+        if (!result) return;
+
+        setApply({
+          caster: {
+            name: foe.title,
+            portrait: foe.creature?.portrait_url ?? null,
+            card: getCard(row.card) ?? null,
+          },
+          title: row.name,
+          deltas: applyPlan([{ kind, total: result.total, damage: [] }]),
+          preselect: clauseAim(clause) === 'self' ? [foe.key] : [],
+        });
+      })();
+    },
+    [tray]
+  );
+
+  /**
+   * Land it: the window's numbers onto the chosen bodies.
+   *
+   * Enemies land in one patch — five goblins catching one Fireball is one
+   * write. Players land by delivery, one event per kind, every landing still
+   * as rolled: Armor is the target's own and is read where the pools live. The
+   * event carries the enemies too, because it is also the record.
+   */
+  const handleApply = useCallback(
+    (chosen) => {
+      const current = apply;
+      setApply(null);
+      if (!current) return;
+
+      const bodies = chosen
+        .map((id) => roster.find((body) => body.id === id))
+        .filter(Boolean);
+      if (bodies.length === 0) return;
+
+      for (const delta of current.deltas) {
+        const keys = bodies
+          .filter((body) => body.kind === 'foe')
+          .map((body) => ({ key: body.id, kind: delta.kind, landings: delta.landings }));
+        if (keys.length > 0) patch((row) => applyToFoes(row, keys));
+
+        log(
+          appliedEvent(
+            {
+              name: current.caster.name,
+              portrait: current.caster.portrait,
+              card: current.caster.card,
+            },
+            delta,
+            bodies.map((body) => ({
+              kind: body.kind,
+              id: body.id,
+              name: body.name,
+              landings: delta.landings,
+            }))
+          )
+        );
+      }
+    },
+    [apply, roster, patch, log]
+  );
+
+  /* What every enemy block reaches the fight through. Only on the encounter
+     view, and only while this Game Master can edit: the Bestiary hands its
+     blocks nothing and stays a reference page. */
+  const combat = useMemo(
+    () => ({ roster, layEffect: layTargets, onResults: handleResults, rollEffect }),
+    [roster, layTargets, handleResults, rollEffect]
+  );
 
   /**
    * The other half of the loop: a player has ended their turn, so the order
@@ -424,177 +737,208 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
 
   if (loading) return <div className="loading-veil">Setting the table…</div>;
 
-  const count = open ? normalizeFoes(open.foes).length : 0;
-  const tally = open ? encounterTally(open) : [];
+  /* ------------------------------------------------------------- the shelf */
+
+  if (!open) {
+    return (
+      <CampaignLogContext.Provider value={logValue}>
+        {error && <div className="form-error">{error}</div>}
+
+        {encounters.length === 0 ? (
+          <div className="empty-state camp-empty">
+            <h2>Nothing Prepared</h2>
+            <p>
+              An encounter is a group of enemies you put together now and put on the table later.
+              Make one, then fill it out of the bestiary.
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              style={{ marginTop: '1.25rem' }}
+              onClick={handleCreate}
+            >
+              + New encounter
+            </button>
+          </div>
+        ) : (
+          <div className="enc-shelf-grid">
+            {encounters.map((row) => (
+              <EncounterBlock key={row.id} row={row} onOpen={() => setOpenId(row.id)} />
+            ))}
+
+            <button type="button" className="enc-block enc-block-new" onClick={handleCreate}>
+              <span className="enc-block-name">+ New encounter</span>
+              <span className="enc-block-notes">A named pile of enemies, filled from the bestiary.</span>
+            </button>
+          </div>
+        )}
+      </CampaignLogContext.Provider>
+    );
+  }
+
+  /* ---------------------------------------------------------------- the view */
+
+  const count = normalizeFoes(open.foes).length;
+  const tally = encounterTally(open);
 
   return (
     <CampaignLogContext.Provider value={logValue}>
+      {/* The table's dice voice: every logged roll made on this page is written
+          as the table, signed by whichever enemy threw. Renders nothing. */}
+      <DiceTable campaignId={campaignId} campaignName={campaign?.name ?? ''} />
+
       {error && <div className="form-error">{error}</div>}
 
-      <div className="camp-toolbar enc-bar">
-        <div className="enc-picker">
-          {encounters.map((row) => (
-            <button
-              key={row.id}
-              type="button"
-              className={`enc-chip${open?.id === row.id ? ' is-on' : ''}`}
-              onClick={() => setOpenId(row.id)}
-            >
-              {row.name || 'Unnamed Encounter'}
-              <span className="enc-chip-count">{normalizeFoes(row.foes).length}</span>
-            </button>
-          ))}
+      <div className="enc-head panel">
+        <div className="enc-head-fields">
+          <button
+            type="button"
+            className="btn btn-minimal btn-sm enc-back"
+            onClick={() => setOpenId(null)}
+            title="Back to the shelf of encounters"
+          >
+            &larr; Encounters
+          </button>
 
-          <button type="button" className="enc-chip enc-chip-new" onClick={handleCreate}>
-            + New encounter
+          <div className="form-group">
+            <label className="form-label" htmlFor="enc-name">
+              Name
+            </label>
+            <input
+              className="form-input"
+              id="enc-name"
+              value={open.name ?? ''}
+              maxLength={80}
+              onChange={(event) => patch({ name: event.target.value })}
+              placeholder="The Vault Door"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="enc-notes">
+              Notes
+            </label>
+            <input
+              className="form-input"
+              id="enc-notes"
+              value={open.notes ?? ''}
+              maxLength={300}
+              placeholder="Where it happens, and what sets it off"
+              onChange={(event) => patch({ notes: event.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="enc-head-foot">
+          <span className="enc-tally">
+            {count === 0 ? (
+              'Empty'
+            ) : (
+              <>
+                {tally.map(({ rank, count: many }) => (
+                  <span key={rank.id} className="enc-tally-chip" style={{ '--rank-tone': rank.color }}>
+                    {many} {many === 1 ? rank.label : `${rank.label}s`}
+                  </span>
+                ))}
+              </>
+            )}
+          </span>
+
+          <span className="spacer" />
+
+          <button type="button" className="btn btn-minimal btn-sm" onClick={() => setAdding(true)}>
+            Add enemies
+          </button>
+
+          {/* The Overlord's rule, as the one press that carries it out. The
+              runner fires it by itself the moment the order lands on a
+              player; this is the button for a table running the fight by
+              hand, and it is hidden while the runner is doing it so nobody
+              pays the boss twice. */}
+          {!run.live && (
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              onClick={handleTurn}
+              title="Every Overlord here gains 3 Reaction Points, and what is running on it ticks"
+            >
+              {TURN_LABEL}
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="btn btn-minimal btn-sm"
+            onClick={() => {
+              patch((row) => resetEncounter(row));
+            }}
+            title="Full pools, nothing running, every ward back up"
+          >
+            Reset
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-minimal btn-sm btn-danger"
+            onClick={() => handleDelete(open)}
+          >
+            Delete
           </button>
         </div>
       </div>
 
-      {!open ? (
-        <div className="empty-state camp-empty">
-          <h2>Nothing Prepared</h2>
-          <p>
-            An encounter is a group of enemies you put together now and put on the table later.
-            Make one, then fill it out of the bestiary.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="enc-head panel">
-            <div className="enc-head-fields">
-              <div className="form-group">
-                <label className="form-label" htmlFor="enc-name">
-                  Name
-                </label>
-                <input
-                  className="form-input"
-                  id="enc-name"
-                  value={open.name ?? ''}
-                  maxLength={80}
-                  onChange={(event) => patch({ name: event.target.value })}
-                  placeholder="The Vault Door"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="enc-notes">
-                  Notes
-                </label>
-                <input
-                  className="form-input"
-                  id="enc-notes"
-                  value={open.notes ?? ''}
-                  maxLength={300}
-                  placeholder="Where it happens, and what sets it off"
-                  onChange={(event) => patch({ notes: event.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="enc-head-foot">
-              <span className="enc-tally">
-                {count === 0 ? (
-                  'Empty'
-                ) : (
-                  <>
-                    {tally.map(({ rank, count: many }) => (
-                      <span key={rank.id} className="enc-tally-chip" style={{ '--rank-tone': rank.color }}>
-                        {many} {many === 1 ? rank.label : `${rank.label}s`}
-                      </span>
-                    ))}
-                  </>
-                )}
-              </span>
-
-              <span className="spacer" />
-
-              <button type="button" className="btn btn-minimal btn-sm" onClick={() => setAdding(true)}>
-                Add enemies
-              </button>
-
-              {/* The Overlord's rule, as the one press that carries it out. The
-                  runner fires it by itself the moment the order lands on a
-                  player; this is the button for a table running the fight by
-                  hand, and it is hidden while the runner is doing it so nobody
-                  pays the boss twice. */}
-              {!run.live && (
-                <button
-                  type="button"
-                  className="btn btn-minimal btn-sm"
-                  onClick={handleTurn}
-                  title="Every Overlord here gains 3 Reaction Points, and what is running on it ticks"
-                >
-                  {TURN_LABEL}
-                </button>
-              )}
-
-              <button
-                type="button"
-                className="btn btn-minimal btn-sm"
-                onClick={() => {
-                  patch((row) => resetEncounter(row));
-                }}
-                title="Full pools, nothing running, every ward back up"
-              >
-                Reset
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-minimal btn-sm btn-danger"
-                onClick={() => handleDelete(open)}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-
-          {/* ---------- THE FIGHT ----------
-              Kept between the head and the blocks, at the same measure, because
-              it is the thing a Game Master looks at between every press. */}
-          <TurnStrip
+      <div className="sheet-grid-6">
+        {/* ---------- THE FIGHT AND THE FEED ----------
+            The two blocks a Game Master reads between every press, side by
+            side above the bodies: the order with its three presses, and the
+            table log with every roll and delivery as it lands. */}
+        <section className="sheet-cell sheet-cell-wide cell-run">
+          <RunBlock
             run={run}
             up={up}
             ready={foes.length > 0 || seats.length > 0}
+            roster={roster}
             onRoll={handleRoll}
             onNext={handleNext}
             onEnd={handleEndFight}
           />
+        </section>
 
-          {foes.length === 0 ? (
-            <div className="empty-state camp-empty">
-              <h2>No Enemies Yet</h2>
-              <p>Add them out of the bestiary. The same creature can go in as many times as you like.</p>
-            </div>
-          ) : (
-            <div className="sheet-grid-6">
-              {foes.map((foe) => (
-                <section key={foe.key} className="sheet-cell sheet-cell-wide cell-foe">
-                  <EnemyBlock
-                    foe={foe}
-                    patch={patch}
-                    unit={unit}
-                    onRemove={() => {
-                      /* Off the table and out of the order, in one write. An
-                         enemy taken off mid-fight that stayed in the order would
-                         be a turn the runner announced for a body that is not
-                         there, and `dropFromOrder` keeps whoever is up up. */
-                      patch((row) => {
-                        const gone = dropFoe(row, foe.key);
-                        if (!gone) return null;
-                        return { ...gone, ...(dropFromOrder(row, foe.key) ?? {}) };
-                      });
-                    }}
-                  />
-                </section>
-              ))}
-            </div>
-          )}
-        </>
+        <section className="sheet-cell sheet-cell-wide cell-enc-log">
+          <LogBlock campaignId={campaignId} title="DM Log" actorFor={actorFor} />
+        </section>
+
+        {foes.map((foe) => (
+          <section key={foe.key} className="sheet-cell sheet-cell-wide cell-foe">
+            <EnemyBlock
+              foe={foe}
+              patch={patch}
+              unit={unit}
+              combat={combat}
+              onRemove={() => {
+                /* Off the table and out of the order, in one write. An
+                   enemy taken off mid-fight that stayed in the order would
+                   be a turn the runner announced for a body that is not
+                   there, and `dropFromOrder` keeps whoever is up up. */
+                patch((row) => {
+                  const gone = dropFoe(row, foe.key);
+                  if (!gone) return null;
+                  return { ...gone, ...(dropFromOrder(row, foe.key) ?? {}) };
+                });
+              }}
+            />
+          </section>
+        ))}
+      </div>
+
+      {foes.length === 0 && (
+        <div className="empty-state camp-empty">
+          <h2>No Enemies Yet</h2>
+          <p>Add them out of the bestiary. The same creature can go in as many times as you like.</p>
+        </div>
       )}
 
-      {adding && open && (
+      {adding && (
         <AddFoes
           encounter={open}
           partyLevel={partyLevel}
@@ -618,91 +962,82 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
           )}
         </Modal>
       )}
+
+      {boundary && (
+        <FoeTurnPrompt
+          boundary={boundary}
+          onThrow={throwBoundary}
+          onConfirm={() => {
+            setBoundary(null);
+            advance();
+          }}
+          onClose={() => setBoundary(null)}
+        />
+      )}
+
+      {apply && (
+        <ApplyWindow
+          apply={apply}
+          roster={roster}
+          onApply={handleApply}
+          onClose={() => setApply(null)}
+        />
+      )}
     </CampaignLogContext.Provider>
   );
 }
 
 /**
- * The order, and the three presses that run a fight.
+ * One prepared encounter, as a block on the shelf: the name, the Game Master's
+ * note, the ranks in it and the bodies by name.
  *
- * One strip rather than a panel, because it is read between every press and a
- * panel would push the enemy blocks off the screen. Every body in the fight is a
- * chip with its roll on it, whoever is up is lit, and the two sides are told
- * apart by colour rather than by a word: the party is cyan, which is the colour
- * a player's own Defense tile wears, and the enemies wear their rank.
- *
- * **The Next button says what it is waiting for.** That is the whole difference
- * between a runner that works at a table and one that does not: on an enemy's
- * turn it is the Game Master's press, and on a player's turn it is a courtesy
- * that they should not normally need, because the player ending their own turn
- * moves the table on by itself.
+ * Jules, 2026-09-01: "the encounters page should show encounter blocks, which
+ * are a type of block that show the enemies in it and notes from the DM." The
+ * whole block is the button, because the block *is* the way in: everything on
+ * it is a reading, and the one thing to do with a reading is open it.
  */
-function TurnStrip({ run, up, ready, onRoll, onNext, onEnd }) {
-  if (!run.live) {
-    return (
-      <div className="enc-strip">
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
-          onClick={onRoll}
-          disabled={!ready}
-          title={
-            ready
-              ? 'Roll for everyone in the fight and call the first turn'
-              : 'Add an enemy, or link a character to this campaign'
-          }
-        >
-          Roll initiative
-        </button>
+function EncounterBlock({ row, onOpen }) {
+  const foes = encounterState(row);
+  const run = normalizeRun(row.run);
+  const tally = encounterTally(row);
 
-        <span className="enc-strip-note">
-          {run.order.length > 0
-            ? 'The last fight is still here to read. Rolling again starts a new one.'
-            : 'Rolls for every enemy and every character at the table, then runs the order.'}
-        </span>
-      </div>
-    );
-  }
-
-  const waiting = up?.kind === 'member';
+  const names = foes.slice(0, 8).map((foe) => foe.title);
+  const rest = foes.length - names.length;
 
   return (
-    <div className="enc-strip is-live">
-      <span className="enc-round">Round {run.round}</span>
-
-      <div className="enc-order">
-        {run.order.map((entry, at) => (
-          <span
-            key={`${entry.kind}:${entry.ref}`}
-            className={`enc-turn enc-turn-${entry.kind}${at === run.at ? ' is-up' : ''}`}
-            style={entry.rank ? { '--rank-tone': `var(--rank-${entry.rank})` } : undefined}
-            title={`${entry.name} rolled ${entry.init}`}
-          >
-            <span className="enc-turn-name">{entry.name}</span>
-            <span className="enc-turn-init">{entry.init}</span>
+    <button type="button" className="enc-block" onClick={onOpen}>
+      <span className="enc-block-head">
+        <span className="enc-block-name">{row.name || 'Unnamed Encounter'}</span>
+        {run.live && (
+          <span className="enc-block-live" title="A fight is running in this one">
+            Round {run.round}
           </span>
-        ))}
-      </div>
+        )}
+      </span>
 
-      <span className="spacer" />
+      {row.notes && <span className="enc-block-notes">{row.notes}</span>}
 
-      <button
-        type="button"
-        className={`btn btn-sm ${waiting ? 'btn-minimal' : 'btn-primary'}`}
-        onClick={onNext}
-        title={
-          waiting
-            ? `Waiting on ${up.name}. This moves on without them.`
-            : `${up?.name ?? 'This one'} is done, and the next is up`
-        }
-      >
-        {waiting ? `Skip ${up.name}` : 'Next turn'}
-      </button>
+      <span className="enc-tally">
+        {tally.length === 0 ? (
+          <span className="enc-block-empty">Empty. Open it and add enemies.</span>
+        ) : (
+          tally.map(({ rank, count }) => (
+            <span key={rank.id} className="enc-tally-chip" style={{ '--rank-tone': rank.color }}>
+              {count} {count === 1 ? rank.label : `${rank.label}s`}
+            </span>
+          ))
+        )}
+      </span>
 
-      <button type="button" className="btn btn-minimal btn-sm" onClick={onEnd}>
-        End fight
-      </button>
-    </div>
+      {names.length > 0 && (
+        <span className="enc-block-foes">
+          {names.join(' · ')}
+          {rest > 0 ? ` and ${rest} more` : ''}
+        </span>
+      )}
+
+      <span className="enc-block-open">Open the encounter &rarr;</span>
+    </button>
   );
 }
 
@@ -792,7 +1127,7 @@ function AddFoes({ encounter, onAdd, onClose, partyLevel = null }) {
             disabled={level !== null && level <= 1}
             aria-label="A level lower"
           >
-            −
+            &minus;
           </button>
           <button
             type="button"

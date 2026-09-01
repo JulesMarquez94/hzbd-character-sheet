@@ -38,7 +38,7 @@ import { subscribeToTable } from '../../lib/realtime.js';
  * Renders nothing. A roll it declines to replay is not a roll it hides: every
  * row still lands in the block underneath.
  */
-export default function DiceWatch({ tables, mine = [] }) {
+export default function DiceWatch({ tables, mine = [], table = false }) {
   const watch = useDiceTray()?.watch;
 
   /* Joined rather than passed as an array, so a parent that rebuilds the list on
@@ -58,8 +58,10 @@ export default function DiceWatch({ tables, mine = [] }) {
           const row = payload.new;
           /* Whose it is and how old it is are the row's business and settled
              here. How many are already waiting is the queue's, and the queue is
-             the tray's, so the cap is applied there. */
-          if (!worthReplaying(row, { mine: ours ? ours.split(',') : [] })) return;
+             the tray's, so the cap is applied there. `table` says the reader is
+             the Game Master, whose own enemy rolls carry no character and must
+             not be replayed back at the screen that threw them. */
+          if (!worthReplaying(row, { mine: ours ? ours.split(',') : [], table })) return;
 
           const result = resultFromRow(row);
           if (result) watch({ key: row.id, name: row.title, actor: row.actor, result });
@@ -68,7 +70,7 @@ export default function DiceWatch({ tables, mine = [] }) {
     );
 
     return () => drop.forEach((off) => off());
-  }, [watch, ids, ours]);
+  }, [watch, ids, ours, table]);
 
   return null;
 }
