@@ -10702,3 +10702,33 @@ somewhere exactly once, a hole is kept and a trailing hole is not, a tray slot
 is positional, and a move is a trade with nothing as a legal end. It restates
 the arranger's arithmetic rather than importing it, so a drift between the two
 shows up as a finding.
+
+## The blocks feel the trays, 2026-09-02
+
+Jules, on the trays as built: "the blocks need to feel the space between the
+two tray, there is a lot of empty space right now."
+
+They did not feel them at all. The push was half a push: an open tray added
+padding to the canvas, and the canvas is a 1290px box centred on the *window*,
+so the padding moved the blocks inside a box that never moved. Measured at
+1920 with both trays open: the trays sat at 0-407 and 1513-1920, 1106px of
+room between them, and the grid was a single column 453px wide stranded at
+726-1179 with three hundred pixels of nothing either side of it.
+
+The canvas spans the window while a tray is open, so its content box *is* the
+space between them. At 1600 with one tray open that is three columns beginning
+23px past the tray instead of two beginning 218px past it; at 1920 with both
+open it is two columns centred between them instead of one; at 2560 with both
+open it is three instead of one. Everything else measured against the grid
+(the arrange bar, the overview lines, the filter) centres there with them,
+since they were already `min(100%, --sheet-measure)` and 100% is now the
+region.
+
+What is left over is geometry rather than layout. A block is a hard 360 and a
+tray reserves 411, so 1440 with both trays open holds exactly one block between
+them however it is arranged, and the slack either side of it belongs to nobody.
+
+And a window too narrow to hold both trays and a block between them now opens
+one at a time: under 1200px, pulling one tray open pushes the other in. Two
+trays with the blocks squeezed out from between them is not a tab. Read at the
+press rather than watched, so there is no listener to keep in step.

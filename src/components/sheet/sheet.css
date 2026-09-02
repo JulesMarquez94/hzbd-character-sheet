@@ -1080,7 +1080,22 @@ body.sheet-fixed #root {
    An open tray takes its width off the canvas rather than lying over the top of
    it. A tray laid over the blocks would cover the one thing somebody is reading,
    which is the opposite of what a tray is for. The class is put on the body by
-   BlockTrays, because the canvas is two components above it. */
+   BlockTrays, because the canvas is two components above it.
+
+   **And the canvas becomes the window while one is open**, which is the other
+   half of the push and the half that was missing. The canvas is normally a
+   1290px box centred on the window, and padding it from the inside moved the
+   blocks without moving the box: at 1920 with both trays open that left a
+   single column of blocks with 300px of nothing either side of it, while 1100px
+   of room sat between the trays doing nothing. Spanning the window instead
+   makes the canvas's *content box* exactly the space between the trays, so the
+   blocks fill it, and everything else measured against the grid (the arrange
+   bar, the overview lines, the filter) centres there with them. */
+body.tray-open-left .sheet-canvas,
+body.tray-open-right .sheet-canvas {
+  max-width: none;
+}
+
 body.tray-open-left .sheet-canvas {
   padding-left: calc(var(--block-w) + 3.2rem);
 }

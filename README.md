@@ -138,7 +138,9 @@ last block, so there is always somewhere to make one.
 the right tray. A block moved onto one comes off the grid and is pinned to the edge of the window
 instead, where it does not scroll with the tab, so your quick bar and the fight you are in are one
 tap away wherever the tab is scrolled to. On a desktop a handle pulls the tray open and the canvas
-gives up the width to make room for it. On a phone there is no room beside anything, so the four
+gives up the width to make room for it, so the blocks lay themselves out in the space that is left
+and take as many columns as fit between the trays. A window too narrow to hold both trays and a
+block between them opens one at a time. On a phone there is no room beside anything, so the four
 slots become four handles at the corners of the screen edges, and one of them opens its block over
 the whole screen until you slide it off.
 

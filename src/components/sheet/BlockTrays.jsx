@@ -41,9 +41,30 @@ const PHONE = '(max-width: 820px)';
 /** How far a slide has to travel before it counts as putting the block away. */
 const SLIDE_OFF = 90;
 
+/**
+ * The narrowest window that can hold both trays open with a block still between
+ * them: two trays and a block, which is what the push comes to. Under it,
+ * opening one tray puts the other away, because two trays with the blocks
+ * squeezed out from between them is not a tab any more.
+ *
+ * Read at the moment of the press rather than watched, so there is no listener
+ * to keep in step. A window shrunk below this with both already open keeps them
+ * both until the next press, which is a moment nobody is looking at the width.
+ */
+const BOTH_TRAYS = 1200;
+
 /** Whether this is the phone layout, read off the same query the stylesheet
     asks. Subscribed rather than held in state: the media query is the outside
     world, and this is the hook for reading the outside world. */
+/** One tray pulled or pushed, and the other put away when there is no room for
+    both. See BOTH_TRAYS. */
+function pull(was, side) {
+  const other = side === 'left' ? 'right' : 'left';
+  const next = { ...was, [side]: !was[side] };
+  if (next[side] && window.innerWidth < BOTH_TRAYS) next[other] = false;
+  return next;
+}
+
 function usePhone() {
   return useSyncExternalStore(
     (wake) => {
@@ -147,7 +168,7 @@ export default function BlockTrays({ trays, render, describe }) {
             type="button"
             className="tray-handle"
             aria-expanded={open[side]}
-            onClick={() => setOpen((was) => ({ ...was, [side]: !was[side] }))}
+            onClick={() => setOpen((was) => pull(was, side))}
             title={open[side] ? 'Push the tray back in' : 'Pull the tray open'}
           >
             <span className="tray-handle-arrow" aria-hidden="true">
