@@ -10948,3 +10948,349 @@ words, which is what keeps both out.
   for 14 Fire damage" sits above "14 Fire damage · To 2.Fenrat" now. They are not the
   same sentence (one is the total, the other is who caught it) and they are close enough
   to be worth a look.
+
+## The space that belonged to nobody, 2026-09-02
+
+Jules, on the trays a commit later: "still to much empty space between the block and they
+tray. and abnormal spacing bettwen the to row in the argange block screen."
+
+Two boxes, both sized from one axis while the thing inside them was sized from the other.
+
+### The tab claimed a column it was not drawing
+
+`--sheet-measure` is the width the blocks come to, and every row above them is measured
+against it so they all begin and end on a block edge. It is built from `--sheet-fit`,
+which is a media query, so it is read off the **window**. An open tray takes 422px of that
+window off the canvas and the query never hears about it.
+
+The grid then fills what is left with `auto-fill`, which rounds down to whole blocks, and
+the box stayed the measure: at 1920 with one tray open the canvas had 1458px of room, drew
+three blocks in it, and kept a box measured for four. `margin: 0 auto` split the 373px
+left over into two gaps, and one of them was between the blocks and the tray you are
+reading them beside: **175px there and 210px past the last block**. The Arrange blocks
+button, measured against the same box, floated 175px right of the last block's edge.
+
+So the measure got a companion. `--sheet-span` rounds the room down to whole columns
+itself, `round(down, 100% + 16px, --sheet-step)`, and is never wider than the measure, so
+the box is the blocks in it. With nothing open the two are the same number, because the
+media queries were tuned for exactly that case. And `--sheet-pull` decides where the
+leftover goes: centred with no tray open, which is a page; against the open tray while one
+is, which is a sidebar and its content; centred again with both open, where the leftover
+is genuinely shared between them. All eight rows measured against the grid take the span
+and the pull together, so the arrange bar, the overview lines and the filter land back on
+the block edges.
+
+1920 with the left tray open: **16px to the tray and 346px at the far edge**, where a
+closed handle is the only thing in it. 2560 with five columns: 117 either side becomes 234
+at the far edge. 1440 with both trays open is unchanged, because two trays and one block
+is all 1440 holds however you arrange it.
+
+### And the push was a guess
+
+`calc(var(--block-w) + 3.2rem)` is 411.2px. A rail is 422.2: a block, 12px of panel
+padding either side of it, a border, the 22px handle down its edge and the 15px scrollbar
+the panel grows on any window too short to stand two blocks in. So the handle lay 11px
+over the canvas, which nobody could see with 175px of slack beside it and everybody would
+see with the blocks pulled up against it.
+
+BlockTrays measures the rail and writes `--tray-left` and `--tray-right`, with a
+ResizeObserver for the scrollbar coming and going under a resize, and the canvas gives up
+exactly that plus one block's gap. The same arithmetic moved `BOTH_TRAYS` from 1200 to
+1240: at 1200 exactly, both trays would open and leave 324px between them for a 360px
+block, so 36px of that block sat under the right-hand tray.
+
+### The arranger's rows were the height it was allowed
+
+The canvas never scrolls, so the dialog's spare height is a budget and the tiles are sized
+to fit inside it: `--row-h` is the budget divided by the rows, and a tile keeps the
+block's 360x640, so the row's height fixes the tile's width. The rows were then `minmax(0,
+var(--row-h))`.
+
+Those two numbers are only the same while the **height** is what binds. The tracks are
+`1fr`, so a dialog narrower than the tiles want shrinks them by their width instead, and
+the row stayed the height the budget would have allowed. Five columns of two rows at
+1280x1200: tiles 156px wide and 277px tall, in rows of 388. **A 111px band of nothing
+under every row**, 226px of the budget spent on nothing at all and the foot of the dialog
+that far below the last row.
+
+The rows are content-sized now, and the ceiling stays where it belongs, on the tile's
+`max-height`. So a row is the tile standing in it, and the canvas can only ever come out
+shorter than its budget and never taller. Checked at 9x1, 9x3, 3x3, 2x4 and the squat case
+the floor was written for, one column of nine rows, where the tile keeps its width and
+gives up its height: no bands, nothing over the budget, nothing scrolling.
+
+### Measured rather than looked at
+
+The sheet needs a login, so all of this was read off a probe page served by Vite with the
+real stylesheet linked and the real markup copied: `.sheet` with an open rail beside it,
+and the arranger inside a page-width modal. Every number above is a
+`getBoundingClientRect`, at 400, 1200, 1440, 1920 and 2560, with no tray open, each tray
+alone and both. The page is gone; the numbers are here.
+
+## A Martial Move is not an action, 2026-09-02
+
+The whole system, redesigned in one message, and eighteen cards rewritten under it.
+
+> We are going to change how martial move works:
+>
+> - Now they are not their own action you need to do before, instead whenever you make a
+>   weapon attack, you can choose to add 1 Martial move to the attack.
+> - All talent set that use martial move need to be updated to have a talent that give you
+>   the possibility to use 2 martail move on 1 Weapon attack at Master level. A talent that
+>   allow you to use martial move on weapon special attack.
+> - When you hav emarital moves and you makea weapon attack (or later special weapon
+>   attack). Then you should see list of your martial move on the action preview before you
+>   pay the cost so you can add one, or two later on.
+> - So they are not long their own action but something you can add on top to modify them.
+
+Then the eighteen, six a tier, and two statuses at the foot of the message.
+
+### What the old system was, and what it cost
+
+A move used to be its own use. You tapped it on the quick bar, paid for it, and it laid a
+pending rider on the Temporary Effects tracker where it sat until a weapon attack came
+along and spent it. That was built off the Duelist's own Developpement Notes ("martial move
+are activate before the attack so they show in tracker until the atakc is made") and it was
+a faithful reading of them.
+
+It also had four costs, and all four are gone now:
+
+- **You could pay for a swing you never took.** The Willpower left the sheet at the tap and
+  the attack was a separate decision made afterwards.
+- **You decided blind.** The move was chosen on the quick bar, where nothing tells you what
+  the swing was going to be worth. The card that shows the damage was two taps away.
+- **It could be forgotten.** A rider with no turn count sat on the tracker indefinitely, and
+  a player who moved on had a move waiting on a swing they were no longer planning.
+- **It was an Action Point on top of an Action Point.** Half the codex charged one for being
+  its own action, and that is the half the redesign deletes.
+
+### The new one, in three functions
+
+`src/lib/moves.js` lost `pendingMoves`, `pendingCount`, `canLayMove`, `moveEffect` and
+`spendMoves`, and the tracker row they wrote and read. What replaced them:
+
+    heldMoves       every move this character holds, from every source
+    offeredMoves    which of those may ride *this* card, right now
+    moveCost        what the ticked ones add to the price
+    withMoves       what the ticked ones do to the swing's numbers
+
+`offeredMoves` is where four rules meet, and each one was already written down somewhere:
+whether a move rides this card at all (`moveRides`, the plain attack unless a rank widened
+it), whether this is the reaction RIPOSTE needs, whether a reaction may carry one at all
+(`onReaction`), and whether the shape you are in allows it (a Feral Form's locks, asked per
+move because the answer is about the *set* that taught it).
+
+`withMoves` runs on top of `attackModifiers` rather than inside it, and that split is
+load-bearing: everything `attackModifiers` folds was true before the dialog opened, so a
+tick of a checkbox re-folds the moves without re-deriving the weapon, the form, the pact
+and the tracker behind them. PERFECT TECHNIQUE's die *per move* had to move with them,
+since its number is a count of moves and nothing knows that count until they are picked. It
+rides out on the modifiers as `perMove` for `withMoves` to multiply.
+
+**A pact was a hole the old flow had and nobody noticed.** A Pact of Ordenance hands over
+Martial Moves as boons, and they reached the quick bar as ordinary chips, which is where you
+laid one. Now that the offer is built in one place, `heldMoves` reads the boons as well as
+the four loadouts, or a wielder would have paid a rank for a card they could never use.
+
+### The offer, in the prompt
+
+A new panel in `UsePrompt`, above the targets because a move can change who a swing reaches
+and above the pay buttons because the Willpower it costs is on their orbs. Each row is the
+move, what it costs *this holder*, which set taught it, its own one-line summary and an ⓘ
+that deals the whole plate onto the same pile every other card on that dialog deals onto.
+
+The count in the heading is the allowance ("1 of 1", "2 of 2"), a row past it goes quiet
+wearing the rule in its tooltip, and the line under the list is the sentence the Duelist's
+notes asked for: *"This attack will Wing Clip and Reckless."* That sentence used to live on
+the Loadout block's attack row, where it said what was waiting; it moved in here, next to
+the choice that earns it.
+
+Amber throughout, which is what a talent and a Martial Move both wear on their own plates.
+
+**And a move is no longer a chip.** `combatBar` filters them off the quick bar entirely: a
+chip that spent Willpower and laid nothing would be a trap. The Abilities tab is still where
+the hand is read and re-chosen.
+
+### The price is Willpower
+
+Every move in the codex now prints `ap: null`. Jules priced four of the eighteen outright
+and all four were Willpower ("cost 1 Willpower", "cost 3 willpower", "for 1 willpower",
+"cost 6 Willpower"), and the two transcribed plates that never charged an Action Point
+(CONCUSS, MOMENTUM) were the two that were never really their own action. So the rule is one
+sentence: **a move costs Willpower, and the Action Points belong to the attack it rides.**
+
+That is also what keeps the economy where it was. Under the old flow a WOUND cost 1 Action
+Point plus 1 Willpower, then the Strike cost its own Action Points. Now the Strike costs its
+own and the Wound costs the Willpower. The change is when you decide, not what you pay.
+
+Three cards were discounting a pool a move no longer spends, and none of the three could be
+left standing:
+
+- **MARTIAL SWIFTNESS** (Colossus, Rank 3) read "Your Martial Moves no longer cost Action
+  Points", which is now true of everybody. It cuts a Willpower per move instead, and it is
+  **wired**: the reason the old version stayed prose was that there was nowhere honest to
+  take the number off, and now the prompt prices the moves it offers. `martial.discount` on
+  the spec, read by `moveAllowance`, applied by `moveCost`, and the row strikes the printed
+  number through the way an Arcanist's cut cast does.
+- **PRACTICED MOVES** (Colossus, Rank 2) lost its clause. What it buys is the permission
+  above it, and the permission is the whole card now.
+- **BASTION'S FURY** (Guardian, Rank 3) keeps its shape and changes its pool: a move added
+  to an attack SHIELD EXPERTISE has already cut costs 1 less Willpower. Still printed prose,
+  because the sheet has never known that SHIELD EXPERTISE's own reduction applied.
+
+### Eighteen cards
+
+Jules gave the mechanics as one line each and the sentences are this file's, which is the
+reverse of the six Novice plates of 2026-08-20. Nothing is marked `house: true` any more:
+that flag meant "an extrapolation nobody asked for" and there are none left.
+
+Five of the six Novice names survive, because the effect asked for is the effect the plate
+already had. Three cards moved tier: CONCUSS from Novice to Master (Jules's Master list asks
+for a stun and the name fits it), REND from Adept to Master, RIPOSTE from Master to Adept.
+Four ids left the codex: `feint`, `sweep`, `perfect-form`, `bleed`. A stored pick pointing at
+one of those is dropped by `loadoutState` the way any illegal pick is, so a hand that held
+one simply comes back one card short.
+
+    Novice, 1 Willpower each
+      Momentum      move your Movement Speed before or after the attack
+      Wound         on a hit, a Wound
+      Wing Clip     the target's Move costs double until its next Turn End
+      Reckless      advantage, and advantage on the next attack against you
+      Taunting      on a hit, disadvantage against anybody but you
+      Drive Back    on a hit, push 3 meters or knock prone
+
+    Adept
+      Riposte    1 wp   only on a reaction attack, and that attack costs 1 less
+      Disarm     2 wp   on a hit, what it held is on the floor
+      Lunge      2 wp   3 more meters of reach
+      Disengage  2 wp   cannot be reacted to, and you leave
+      Guarded    3 wp   Defense, Grit and Reflex each +1
+      Piercing   3 wp   the damage ignores Armor
+
+    Master
+      Breach              3 wp   on a hit, Defense down 2 until its next Turn End
+      Execute             4 wp   Empowered and Elevated below half Health
+      Coordinated Attack  4 wp   an ally in reach swings free
+      Rend                5 wp   a stack of Bleed per Damage Die
+      Concuss             6 wp   on a hit, stunned
+      Sunder              7 wp   the target is treated as vulnerable
+
+Only two carry `rides`, and the restraint is the point. RECKLESS is advantage on every swing
+so the sheet prints it; RIPOSTE's `-1` is a cost the prompt is already computing. EXECUTE is
+Empowered *and* Elevated and carries neither, because both halves hang on the target's
+Health and the sheet does not hold it. A printed number that might be wrong is worse than a
+printed sentence the table reads.
+
+### Bleed and Wound swapped jobs
+
+Both definitions are Jules's own sentences, in `keywords.js`.
+
+**Bleed** is new and took the old Wound's job: stackable, 1d6 at every one of the entity's
+Turn Starts, and **healing removes one stack** rather than the whole thing. That last part is
+the difference that matters: the old Wound came off entirely at the first point of Health, so
+any healing at all was a full cure. CAUTERIZE has named Bleed since the Fire family was
+written, with nothing behind the word, and it is lit now.
+
+**Wound** is no longer damage over time, it is an opening: weapon attacks made against the
+entity are Empowered, and it is **singular**, so a second one buys nothing.
+
+One card was reworded on the way in. HIBERNATION read "It does not breathe or bleed", where
+that "bleed" would now light as the status, so it reads "It neither breathes nor bleeds" and
+the ordinary verb stays ordinary. Same trade GORE ARMOR and VAMPIRIC TOUCH made.
+
+### The talents, on all four sets
+
+Jules asked for two cards on every set that teaches moves. Both are at the rank the ask
+names: the second move at Master, the special attack at Adept, since it was asked for
+separately from the Master card.
+
+|  | Rank 2, special attack | Rank 3, two on one swing |
+| --- | --- | --- |
+| Guardian | Bulwark Form *(new)* | Perfect Guard *(new)* |
+| Duelist | Flourish *(new)* | Sharp |
+| Feral Curse | Bestial Grace *(new)* | Bestial Frenzy |
+| Colossus | Broad Practice *(new)* | Perfect Technique |
+
+All four Rank 2 cards print the same sentence word for word, which is the law BESTIAL FRENZY
+already keeps against SHARP: two cards that move the same allowance have to say it the same
+way, or a table reading one will think the other does something else.
+
+**Guardian had no `martial` spec at all** until today. It taught the moves and moved nothing
+about them, so a Master Guardian added one to a swing exactly as a Rank 1 did. It has the
+whole block now.
+
+**`martial.special` was built on 2026-08-28 and nothing had ever set it.** It went in off
+Jules's own ruling ("reckless is only for weapon attacks, then gets updated to also special
+weapon attack if you have the rank 3 talent") and stayed false for everybody, because a rank
+that widened a move with no card saying so would have been the sheet inventing a talent.
+Four cards say it now.
+
+Two Master cards were reworded where the old flow's grammar had gone stale. SHARP and
+BESTIAL FRENZY both offered "one Martial Move just before a Weapon Attack reaction", which
+was a thing you did because laying one was an action of its own; both now read "or add one to
+a Weapon Attack you make as a reaction". `onReaction` did not change value, only meaning.
+
+### SWEEP is gone and its reading is not
+
+SWEEP turned a one-target Strike into a room, and on 2026-09-01 the target picker learned to
+read a riding move's prose so it would. Jules's new Adept list has no sweep in it, so the
+card left the codex and the reading stayed: `aims` on a move card says its own text names who
+the swing lands on, and `aimingMoves` is the filter every caller passes its chosen moves
+through.
+
+**That flag is data rather than a prose reading on purpose**, and COORDINATED ATTACK is why.
+Its "an ally within reach of the target" reads to `readTargets` as exactly one target, and a
+target chip picked there would deliver the swing's damage to a friend. A reader with only the
+sentence cannot tell an ally who *acts* from an entity that is *hit*. Nothing in the codex
+carries `aims` today, and `check-combat.mjs` proves all three halves of that: an aiming rider
+uncaps the plan, COORDINATED ATTACK does not claim to aim, and a swing carrying it still
+reaches one body.
+
+### A row left over from the old flow
+
+Nothing reads a `move` payload on the effects tracker any more, so a rider left there by the
+old system lends no advantage, blocks no swing and draws no arrow. It is an ordinary row and
+it can be dropped. A player mid-campaign will find one there.
+
+### Left open
+
+Nine rulings, and the first six are numbers Jules did not state and the cards had to choose.
+
+- **WOUND's clock.** Jules gave the effect and no duration. The old card's clause is kept
+  ("until it receives healing or takes a rest"), because it is the only clock this term has
+  ever had and the tracker already understands both halves of it. A vulnerability with no end
+  is a different card.
+- **GUARDED's clock.** "Until your next Turn Start", chosen so the stance covers the round
+  you spent it in. Jules named none, and a stance with no clock is either permanent or
+  nothing.
+- **CONCUSS's stun and BREACH's Defense.** "Until its next Turn End" for both, which is the
+  clock WING CLIP keeps: it costs the target the turn you interrupted and no more. A stun with
+  no clock ends the fight.
+- **BREACH's 2 points**, which is a Defense Draught's grant doubled and nothing more
+  principled than that.
+- **LUNGE's 3 meters**, one step of the grid, the same distance DRIVE BACK pushes.
+- **SUNDER at 7 Willpower.** "Very expensive" is a direction rather than a number. It is one
+  more than the stun Jules priced at 6, because doubling the damage is worth more than any
+  other single line in the file.
+- **Bleed's damage has no type.** "Deal 1d6 damage" is the designer's own wording and the old
+  Wound's was Decay. A bleed is not decay, untyped damage is not new in this codex, and a type
+  nobody stated would be this file inventing one.
+- **RIPOSTE names Reaction Points.** Jules wrote "action point cost by -1", and a reaction is
+  paid out of Reaction Points on this sheet, so the card names the pool that will actually be
+  charged.
+- **DRIVE BACK is not called Shove.** That id belongs to the basic action and a card id is
+  unique across the registry.
+
+And three things that are wiring rather than rulings:
+
+- **GUARDED is not wired.** `EFFECT_RIDERS` can move a Defense and cannot move a Grit or a
+  Reflex, and two of three numbers moving is worse than none: the player would trust the tile
+  and be wrong about two. Grit and Reflex riders are the change it needs.
+- **Nothing a move applies is delivered.** A WOUND, a Bleed, a stun and a push are all played
+  at the table, exactly as they were under the old flow. The delivery path lays what the
+  *card being used* prints, and a move is not that card. Worth doing and worth asking about
+  first, since it means a move growing its own effect payload.
+- **The Colossus's weapon clause still enforces nothing.** MARTIAL TRAINING says its moves
+  are used "with Heavy and Great Melee Weapons", and `offeredMoves` asks what card is being
+  paid for rather than what is in your hand. It is a permission on the old reading and it is
+  now checkable, since the swing is known at the moment the move is added.

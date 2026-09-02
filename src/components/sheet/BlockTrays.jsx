@@ -43,15 +43,22 @@ const SLIDE_OFF = 90;
 
 /**
  * The narrowest window that can hold both trays open with a block still between
- * them: two trays and a block, which is what the push comes to. Under it,
- * opening one tray puts the other away, because two trays with the blocks
- * squeezed out from between them is not a tab any more.
+ * them: two trays, the gap either side of them, and a block. Under it, opening
+ * one tray puts the other away, because two trays with the blocks squeezed out
+ * from between them is not a tab any more.
+ *
+ * 1236 is the sum: a rail is 422 at its widest, which is a block, the panel's
+ * padding, its border and the handle, plus the 15px scrollbar the panel grows
+ * on a window too short for two blocks; the canvas keeps 16px past each of
+ * them; and a block is 360. It was 1200, taken as a round number, and at 1200
+ * exactly both trays would open and leave 324px between them for a 360px block,
+ * which put 36px of that block under the right-hand tray.
  *
  * Read at the moment of the press rather than watched, so there is no listener
  * to keep in step. A window shrunk below this with both already open keeps them
  * both until the next press, which is a moment nobody is looking at the width.
  */
-const BOTH_TRAYS = 1200;
+const BOTH_TRAYS = 1240;
 
 /** Whether this is the phone layout, read off the same query the stylesheet
     asks. Subscribed rather than held in state: the media query is the outside
@@ -84,6 +91,8 @@ function usePhone() {
  */
 export default function BlockTrays({ trays, render, describe }) {
   const phone = usePhone();
+  /* The rail elements, for measuring the push against. See the effect below. */
+  const rails = useRef({});
   /* Which side is pushed open on a desktop. Both may be, one each side. */
   const [open, setOpen] = useState({ left: false, right: false });
   /* And which single block is over the whole screen on a phone: `{ side, at }`.
@@ -98,15 +107,42 @@ export default function BlockTrays({ trays, render, describe }) {
   /* The push. A tray laid over the blocks would cover the one thing somebody is
      reading, so the canvas gives up the width instead: see `.tray-open-left` in
      sheet.css. The class goes on the body because the canvas is two components
-     up from here and this is the only thing that needs to say so. */
+     up from here and this is the only thing that needs to say so.
+
+     And how much width, measured off the rail rather than written down twice.
+     A rail is a block, the panel's padding either side of it, a border and the
+     handle down its edge, and it grows another 15px the moment the panel has to
+     scroll, which it does on any window too short for two blocks. The
+     stylesheet's arithmetic came to 11px less than that, so the handle lay over
+     the first block; now the blocks are pulled up against the tray, being right
+     is the difference between a gap and an overlap. The observer is for the
+     scrollbar coming and going under a window resize, which changes the rail
+     without changing anything React knows about. */
   useEffect(() => {
     const held = [];
+    const watching = [];
     for (const side of TRAY_SIDES) {
       const on = !phone && open[side] && traysHold(trays, side);
-      if (on) held.push(`tray-open-${side}`);
+      if (!on) continue;
+      held.push(`tray-open-${side}`);
+
+      const rail = rails.current[side];
+      if (!rail) continue;
+      const measure = () =>
+        document.body.style.setProperty(`--tray-${side}`, `${rail.getBoundingClientRect().width}px`);
+      measure();
+      const watch = new ResizeObserver(measure);
+      watch.observe(rail);
+      watching.push(watch);
     }
     document.body.classList.add(...held);
-    return () => document.body.classList.remove(`tray-open-left`, `tray-open-right`);
+
+    return () => {
+      for (const watch of watching) watch.disconnect();
+      document.body.classList.remove(`tray-open-left`, `tray-open-right`);
+      document.body.style.removeProperty('--tray-left');
+      document.body.style.removeProperty('--tray-right');
+    };
   }, [open, phone, trays]);
 
   /* A phone that grows into a desktop, or the other way, puts away whatever was
@@ -163,7 +199,13 @@ export default function BlockTrays({ trays, render, describe }) {
   return (
     <>
       {sides.map((side) => (
-        <div key={side} className={`tray-rail tray-rail-${side}${open[side] ? ' is-open' : ''}`}>
+        <div
+          key={side}
+          ref={(node) => {
+            rails.current[side] = node;
+          }}
+          className={`tray-rail tray-rail-${side}${open[side] ? ' is-open' : ''}`}
+        >
           <button
             type="button"
             className="tray-handle"

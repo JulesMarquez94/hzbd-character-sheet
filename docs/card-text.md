@@ -186,7 +186,7 @@ opening paragraph of the half carries the whole price in these words:
   Point, Reaction Point, Willpower, Health, Shield, Supplies, Karma, Magic
   Burden, Long Rest, Short Rest, Long Rest action, Turn Start, Turn End,
   Attack Roll, Critical Hit, Martial Move, Weapon Attack, Special Weapon
-  Attack, Empowered, Elevated, Burn, Wound, Difficult Terrain, Game Master,
+  Attack, Empowered, Elevated, Burn, Bleed, Wound, Difficult Terrain, Game Master,
   and every attribute and damage type.
 - Lowercase, because they read as prose: advantage, disadvantage, reaction,
   skill check, reach, touch, line of sight, and every state written as an

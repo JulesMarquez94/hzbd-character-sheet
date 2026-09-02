@@ -190,6 +190,20 @@ const TALENT_SETS = [
 
        No `cast` either: nothing on this set names an attribute for its moves, so
        they print the codex's own default. */
+    /* What this set does to the move system. Numbers here, behaviour in
+       moves.js, indexed by rank the way every other set's is. Guardian had none of
+       this until 2026-09-02: it taught the moves and moved nothing about them, so
+       a Master Guardian added one to a swing the way a Rank 1 did. */
+    martial: {
+      /* BULWARK FORM at Rank 2 and PERFECT GUARD at Rank 3. No `weapon` and no
+         `grants`: SHIELD EXPERTISE's own advantage and Defense hang on wielding a
+         shield, and that is gear rather than a move-system rule, so it lands
+         through `equipmentEffects` in items.js where the other shielded weapons'
+         numbers land. */
+      special: [null, false, true, true],
+      perAttack: [null, 1, 1, 2],
+      onReaction: [null, false, false, true],
+    },
     loadout: {
       id: 'guardian-martial-moves',
       label: 'Martial Moves',
@@ -198,7 +212,7 @@ const TALENT_SETS = [
       group: 'tier',
       known: [null, 2, 3, 4],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
-      note: 'A move waits on the tracker once you pay for it, and rides the next weapon attack you make.',
+      note: 'You add a move to a weapon attack when you make one, inside the prompt that pays for it.',
     },
     blurb:
       'The Guardian is a master of defense, a steadfast bulwark on the battlefield. Through rigorous training, they have perfected the art of using their shield not just to deflect blows but to turn an enemy’s strength against them.\n\n' +
@@ -276,6 +290,45 @@ const TALENT_SETS = [
           'After you use {{Intercept}}, you can use this ability to allow the entity for which you intercepted to make a free reaction weapon attack.',
       },
       {
+        id: 'bulwark-form',
+        rank: 2,
+        name: 'Bulwark Form',
+        house: true,
+        summary: 'Your moves reach the special attack as well as the plain one.',
+        kind: 'talent',
+        tags: ['Guardian', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* House-written, and asked for by name on 2026-09-02: "A talent that
+           allow you to use martial move on weapon special attack", on every set
+           that teaches them. Mechanics as data: `martial.special` below.
+
+           The sentence is the one all four sets print, unchanged. See the note on
+           BESTIAL FRENZY, which keeps the same law about SHARP. */
+        body: 'Your Martial Moves can now be added to a Special Weapon Attack as well as to a Weapon Attack.',
+      },
+      {
+        id: 'perfect-guard',
+        rank: 3,
+        name: 'Perfect Guard',
+        house: true,
+        summary: 'Two Martial Moves on one swing, or one on a reaction attack.',
+        kind: 'talent',
+        tags: ['Guardian', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* House-written, and asked for by name on 2026-09-02: "All talent set
+           that use martial move need to be updated to have a talent that give you
+           the possibility to use 2 martial move on 1 Weapon attack at Master
+           level." Guardian was the one of the four that had no such card.
+
+           Mechanics as data: `martial.perAttack` and `martial.onReaction` below,
+           the same pair SHARP raises. The text is SHARP's, unchanged. */
+        body: 'You can now add two Martial Moves to the same Weapon Attack, or add one to a Weapon Attack you make as a reaction.',
+      },
+      {
         id: 'bastions-fury',
         rank: 3,
         name: 'Bastion’s Fury',
@@ -288,7 +341,7 @@ const TALENT_SETS = [
         body:
           'Whenever you {{Intercept}} a hit, you gain 1 Reaction Point.\n\n' +
           'Whenever you block an attack, the damage of your next weapon attack is increased by the amount of damage you blocked.\n\n' +
-          'Finally, your Martial Moves cost 1 less Action Point if they are used with a weapon attack whose cost has been reduced by {{Shield Expertise}}.',
+          'Finally, a Martial Move added to a weapon attack whose cost has been reduced by {{Shield Expertise}} costs 1 less Willpower.',
       },
     ],
   },
@@ -1204,7 +1257,7 @@ const TALENT_SETS = [
       known: [null, 3, 4, 5],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       swap: ['long'],
-      note: 'Your Long Rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
+      note: 'Your Long Rest action can change any number of them, and you add one to a weapon attack as you make it.',
     },
     /* A seventh shape of what a set can hand over, beside a fixed hand, a
        `loadout`, a `brewing` spec, an `enchanting` one, a `minion` and the
@@ -1265,6 +1318,8 @@ const TALENT_SETS = [
          the game that moves it. */
       perAttack: [null, 1, 1, 2],
       onReaction: [null, false, false, true],
+      /* FLOURISH at Rank 2, and the same field on all four sets. */
+      special: [null, false, true, true],
     },
     blurb:
       'A Duelist fights with one hand and keeps the other free, and the free hand is the point. Everything they have is bought with the room a single blade leaves them: the footwork to be somewhere else when the answer comes, the balance to swing again after a swing that missed and the trained manoeuvres nobody with two hands on a haft has the time for.\n\n' +
@@ -1330,10 +1385,33 @@ const TALENT_SETS = [
           'While you have a Finesse, Whip, Fist or Polearm weapon in hand, your first attack with one each turn that misses can be rerolled once.',
       },
       {
+        id: 'flourish',
+        rank: 2,
+        name: 'Flourish',
+        house: true,
+        summary: 'Your moves reach the special attack as well as the plain one.',
+        kind: 'talent',
+        tags: ['Duelist', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* House-written, and asked for by name on 2026-09-02, on every set that
+           teaches moves. Mechanics as data: `martial.special` above.
+
+           This is the card the `special` field was built for and never had. It was
+           added to moves.js on 2026-08-28 off Jules's own ruling ("reckless is only
+           for weapon attacks, then gets updated to also special weapon attack if
+           you have the rank 3 talent") and nothing set it, because a rank that
+           widened a move with no card saying so would have been the sheet inventing
+           a talent. Rank 2 rather than Rank 3, since Jules asked for it separately
+           from the two-on-one-swing card that sits at Master. See data/README.md. */
+        body: 'Your Martial Moves can now be added to a Special Weapon Attack as well as to a Weapon Attack.',
+      },
+      {
         id: 'sharp',
         rank: 3,
         name: 'Sharp',
-        summary: 'Two Martial Moves on one swing, or one laid just before a reaction attack.',
+        summary: 'Two Martial Moves on one swing, or one on a reaction attack.',
         kind: 'talent',
         tags: ['Duelist', 'Master Talent', 'Passive'],
         ap: null,
@@ -1349,8 +1427,7 @@ const TALENT_SETS = [
            MARTIAL MOVE NAME". It is built, in moves.js and on the three places the
            sheet prints an attack, and it is not printed here: it describes how the
            sheet works, not what this card does. */
-        body:
-          'You can now use two Martial Moves on the same Weapon Attack, or use one Martial Move just before a Weapon Attack reaction.',
+        body: 'You can now add two Martial Moves to the same Weapon Attack, or add one to a Weapon Attack you make as a reaction.',
       },
     ],
   },
@@ -1417,7 +1494,7 @@ const TALENT_SETS = [
       known: [null, 3, 4, 5],
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       swap: ['long'],
-      note: 'Used with Claws & Teeth. Your Long Rest action can change any number of them, and a move you pay for waits on the tracker until you swing.',
+      note: 'Used with Claws & Teeth. Your Long Rest action can change any number of them, and you add one to a weapon attack as you make it.',
     },
     /* What this set does to the Martial Move *system*, read by moves.js. The same
        spec the Duelist carries, and deliberately so: the rule was parsed out of a
@@ -1440,6 +1517,8 @@ const TALENT_SETS = [
       weapon: 'Natural',
       perAttack: [null, 1, 1, 2],
       onReaction: [null, false, false, true],
+      /* BESTIAL GRACE at Rank 2, and the same field on all four sets. */
+      special: [null, false, true, true],
     },
     /* A seventh shape of what a set can hand over, beside a fixed hand, a
        `loadout`, a `brewing` spec, an `enchanting` one, a `minion`, the
@@ -1714,11 +1793,28 @@ const TALENT_SETS = [
           'You lose half your current Health and gain twice as much Shield, as {{Feral Form}} says.',
       },
       {
+        id: 'bestial-grace',
+        rank: 2,
+        name: 'Bestial Grace',
+        house: true,
+        summary: 'Your moves reach the special attack as well as the plain one.',
+        kind: 'talent',
+        tags: ['Feral Curse', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'instinct',
+        /* House-written, and asked for by name on 2026-09-02, on every set that
+           teaches moves. Mechanics as data: `martial.special` above. The sentence
+           is the one all four sets print, unchanged, for the reason BESTIAL FRENZY
+           below spells out. */
+        body: 'Your Martial Moves can now be added to a Special Weapon Attack as well as to a Weapon Attack.',
+      },
+      {
         id: 'bestial-frenzy',
         rank: 3,
         name: 'Bestial Frenzy',
         house: true,
-        summary: 'Two Martial Moves on one swing, or one laid just before a reaction attack.',
+        summary: 'Two Martial Moves on one swing, or one on a reaction attack.',
         kind: 'talent',
         tags: ['Feral Curse', 'Master Talent', 'Passive'],
         ap: null,
@@ -1732,8 +1828,7 @@ const TALENT_SETS = [
            two clauses deliberately unchanged — two cards that move the same
            allowance must say it the same way, or a table reading one of them will
            think the other does something else. */
-        body:
-          'You can now use two Martial Moves on the same Weapon Attack, or use one Martial Move just before a Weapon Attack reaction.',
+        body: 'You can now add two Martial Moves to the same Weapon Attack, or add one to a Weapon Attack you make as a reaction.',
       },
       {
         id: 'beast-and-drifter',
@@ -2075,9 +2170,9 @@ const TALENT_SETS = [
          Read as a **permission** rather than a restriction, which is the reading
          the overview takes: a Martial Move is "the trained manoeuvres nobody with
          two hands on a haft has the time for", and this is the set that buys the
-         time. Nothing enforces it either way, because `canLayMove` has never asked
-         what is in your hand: a move is laid before the swing and the weapon can
-         still be swapped. Flagged in data/README.md. */
+         time. Nothing enforces it either way, because `offeredMoves` has never
+         asked what is in your hand: it asks what the *card being paid for* is, and
+         one weapon's Strike is another's. Flagged in data/README.md. */
       weapon: ['Heavy Melee', 'Great Melee'],
       grants: [
         /* GIANT SLAYER, at Rank 1: "When you attack with a Colosal Weapon, the
@@ -2096,6 +2191,15 @@ const TALENT_SETS = [
            move rather than per attack. */
         { from: 'Perfect Technique', perMove: [null, 0, 0, 1] },
       ],
+      /* BROAD PRACTICE at Rank 2, and the same field on all four sets. */
+      special: [null, false, true, true],
+      /* MARTIAL SWIFTNESS at Rank 3, rewritten on 2026-09-02: a move costs no
+         Action Points on anybody's sheet now, so the card was granting the thing
+         everybody already had. It cuts a Willpower instead, per move, and it is
+         **wired**: the prompt is the one place a move's price is worked out, so
+         there is somewhere honest to take it off. That was the whole reason the
+         old Action Point version stayed prose. See moveCost in moves.js. */
+      discount: [null, 0, 0, 1],
       /* PERFECT TECHNIQUE's first sentence: "You can now use two Martial Moves on
          the same Heavy or Great Melee Weapon Attack." Not gated on the weapon, the same way
          SHARP is not, because a move is laid before the swing and refusing the
@@ -2181,18 +2285,37 @@ const TALENT_SETS = [
         ap: null,
         wp: null,
         stat: 'physique',
-        /* Half of this is data and half is not, and the half that is not is the
-           first of three Action Point discounts on this set. `martial.onReaction`
-           carries the permission, which is the same field SHARP raises at Rank 3.
+        /* All data now. `martial.onReaction` carries the permission, which is the
+           same field SHARP raises at Rank 3.
 
-           "That Martial Move costs no Action Points" is not wired, and the reason
-           is the moment it would have to be charged: a move is laid *before* the
-           swing, so the sheet does not yet know whether the attack it rides will
-           be a reaction. Nothing can honestly discount it at the only moment it is
-           paid for. See data/README.md, where all three discounts stand together
-           as rules the table keeps. */
-        body:
-          'When you make a Weapon Attack as a reaction, you can use a Martial Move with it, and that Martial Move costs no Action Points.', // text-style-ok: joins two clauses
+           **It used to carry a discount as well and no longer does.** "That
+           Martial Move costs no Action Points" was the first of three Action Point
+           cuts on this set, and none of the three has anything left to cut: a
+           Martial Move costs Willpower alone since 2026-09-02, because the Action
+           Points belong to the attack it rides. So the clause is gone rather than
+           translated: what it bought is the permission above it, and the
+           permission is the whole card. See data/README.md. */
+        body: 'When you make a Weapon Attack as a reaction, you can add a Martial Move to it.',
+      },
+      {
+        id: 'broad-practice',
+        rank: 2,
+        name: 'Broad Practice',
+        summary: 'Your moves reach the special attack as well as the plain one.',
+        kind: 'talent',
+        tags: ['Colossus', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* House-written, and asked for by name on 2026-09-02, on every set that
+           teaches moves. Mechanics as data: `martial.special` above. The sentence
+           is the one all four sets print, unchanged, for the reason BESTIAL FRENZY
+           spells out.
+
+           Not gated on the haft, the same way PERFECT TECHNIQUE's first sentence
+           is not: what widens is the character's moves rather than one weapon's
+           attacks, and a Colossus with a bow in their hands still learned it. */
+        body: 'Your Martial Moves can now be added to a Special Weapon Attack as well as to a Weapon Attack.',
       },
       {
         id: 'perfect-technique',
@@ -2210,32 +2333,38 @@ const TALENT_SETS = [
            second is per move, so a Colossus who laid one gets one die and a
            Colossus who laid two gets two.
 
-           SHARP's other half is not here. A Duelist may "use one Martial Move just
-           before a Weapon Attack reaction" at Rank 3; a Colossus bought that at
-           Rank 2 with PRACTICED MOVES and this card only raises the count. */
+           SHARP's other half is not here. A Duelist may add a move to a reaction
+           attack at Rank 3; a Colossus bought that at Rank 2 with PRACTICED MOVES
+           and this card only raises the count. */
         body:
-          'You can now use two Martial Moves on the same Heavy or Great Melee Weapon Attack.\n\n' +
+          'You can now add two Martial Moves to the same Heavy or Great Melee Weapon Attack.\n\n' +
           'Each Martial Move on the attack Empowers its damage by 1.',
       },
       {
         id: 'martial-swiftness',
         rank: 3,
         name: 'Martial Swiftness',
-        summary: 'Your Martial Moves cost no Action Points at all.',
+        summary: 'Every Martial Move you add to a swing costs a Willpower less.',
         kind: 'talent',
         tags: ['Colossus', 'Master Talent', 'Passive'],
         ap: null,
         wp: null,
         stat: 'physique',
-        /* The second of the three discounts, and the cleanest of them: it is not
-           conditional on anything. It is still a printed rule, because the sheet
-           has nowhere to print a discounted cost. The chip on the quick bar can be
-           told to charge 0, but the use prompt deals the card beside the button
-           and the card prints what the codex says it costs, so the two would
-           disagree at the moment somebody is deciding whether to pay. A card
-           printing 1 beside a button charging 0 is worse than a rule the table
-           reads once. See data/README.md. */
-        body: 'Your Martial Moves no longer cost Action Points.',
+        /* **Rewritten on 2026-09-02.** It read "Your Martial Moves no longer cost
+           Action Points", which was the second of three Action Point discounts on
+           this set and is now true of everybody: a move costs Willpower alone,
+           because the Action Points belong to the attack it rides. A Master card
+           granting what a Rank 1 already has is a dead card, so it cuts the pool a
+           move actually spends.
+
+           And it is **wired**, which the old one could not be. The reason the old
+           version stayed prose was that a card printing 1 beside a button charging
+           0 is worse than a rule the table reads once, and there was nowhere else
+           to take the number off. Now there is: the prompt prices the moves it
+           offers, so the cut lands on the row and on the pay button together and
+           the card beside them is not the thing being contradicted. See
+           `discount` above and moveCost in moves.js. */
+        body: 'Every Martial Move you add to an attack costs 1 less Willpower.',
       },
       {
         id: 'colossal-grip',

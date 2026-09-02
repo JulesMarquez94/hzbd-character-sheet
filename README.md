@@ -139,8 +139,10 @@ the right tray. A block moved onto one comes off the grid and is pinned to the e
 instead, where it does not scroll with the tab, so your quick bar and the fight you are in are one
 tap away wherever the tab is scrolled to. On a desktop a handle pulls the tray open and the canvas
 gives up the width to make room for it, so the blocks lay themselves out in the space that is left
-and take as many columns as fit between the trays. A window too narrow to hold both trays and a
-block between them opens one at a time. On a phone there is no room beside anything, so the four
+and take as many columns as fit between the trays. They sit against the open tray rather than
+floating in the middle of what is left: the space between your quick bar and the blocks beside it is
+the same gap there is between two blocks, and whatever room is over goes to the far edge of the
+window. A window too narrow to hold both trays and a block between them opens one at a time. On a phone there is no room beside anything, so the four
 slots become four handles at the corners of the screen edges, and one of them opens its block over
 the whole screen until you slide it off.
 
@@ -152,23 +154,28 @@ each with a count, an arrangement and trays of its own, and so does a campaign's
 ### Martial Moves
 
 A **Martial Move** is a third kind of card, beside a spell and a talent card: a trained manoeuvre
-you buy *before* an attack, which then rides the next weapon attack you make.
+you **add to a weapon attack** rather than take instead of one.
 
 Four sets teach them: a Guardian's Shield Expertise, a Duelist's Dexterous, a Colossus's Martial
 Training and a Feral Cursed's Beast Within, and each hands over a hand to choose out of the pool in
 `src/lib/martial.js`, the same way a Mycomancer chooses spells. How many you know grows with your
-rank, and Rank 2 opens the Adept moves while Rank 3 opens Master.
+rank, and Rank 2 opens the Adept moves while Rank 3 opens Master. The Pact of Ordenance hands them
+over too, as boons rather than as a hand.
 
 What the weapon in your hand is worth is read off the same set. A Duelist has advantage and a point
-of Defense with a one-handed weapon; a Colossus has advantage with a Colossal Weapon, a die size on
-every two-handed swing from Rank 2, and another die *per move riding it* from Rank 3.
+of Defense with a one-handed weapon; a Colossus has advantage with a Great Weapon, a die size on
+every Heavy or Great Melee swing from Rank 2, and another die *per move on the attack* from Rank 3.
 
-Paying for one lays it on the **Temporary Effects** tracker, where it sits until you swing. While
-it is there, every place the sheet prints that attack says what it is carrying: *"This attack
-will Wing Clip and Reckless"*, and the card prints the advantage as a green arrow with the number
-of d4 in it. Making the attack spends the move, hit or miss. One move rides a swing; a Master
-Duelist's Sharp, a Master Colossus's Perfect Technique and a Master Feral Cursed's Bestial Frenzy
-each allow two, and a chip with nowhere to ride says so rather than taking your Willpower.
+**You add one inside the attack's own use prompt**, before the cost is paid. The moves you hold are
+listed there with what each costs and ticking one folds it into the swing on the spot. The price
+lands on the same pay button as the attack's Action Points: the card beside the buttons shows the
+advantage as a green arrow with the number of d4 in it, the extra damage die appears in the damage,
+and a line under the list says what the swing will do ("This attack will Wing Clip and Reckless").
+A move costs **Willpower alone** for that reason: the Action Points belong to the attack it rides.
+
+One move rides a swing. A Master Duelist's Sharp, a Master Colossus's Perfect Technique, a Master
+Feral Cursed's Bestial Frenzy and a Master Guardian's Perfect Guard each allow two, and at Rank 2
+each set has a card that lets its moves reach a *Special* Weapon Attack as well as the plain one.
 
 ### The Temporary Effects tracker
 

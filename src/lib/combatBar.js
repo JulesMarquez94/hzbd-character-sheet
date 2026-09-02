@@ -84,16 +84,7 @@ import {
   newLedgerId,
   shieldCapFor,
 } from './characterModel.js';
-import {
-  attackModifiers,
-  canLayMove,
-  isMartialMove,
-  moveEffect,
-  moveSetFor,
-  movesReachSpecial,
-  ridingLine,
-  spendMoves,
-} from './moves.js';
+import { attackModifiers, isMartialMove } from './moves.js';
 
 /* ------------------------------------------------------------------- parts */
 
@@ -190,18 +181,17 @@ function handGroup(character) {
     .map(getCard)
     .filter(Boolean)
     .map((card) => {
-      /* Whatever is waiting on the next swing: an AMBUSH already paid for, a
-         Martial Move riding, and the advantage a Duelist has for holding this kind
-         of weapon at all. All of it has to show on the chip and on the card
-         *before* the attack is made — which is the whole of what both sets'
-         Developpement Notes asked for. See attackModifiers in moves.js. */
+      /* Whatever is already standing on the next swing: an AMBUSH paid for, and
+         the advantage a Duelist has for holding this kind of weapon at all. It
+         has to show on the chip and on the card *before* the attack is made,
+         which is the whole of what both sets' Developpement Notes asked for. The
+         Martial Moves are not in it: those are chosen inside the prompt, priced
+         there and folded there. See attackModifiers and withMoves in moves.js. */
       const riders = attackModifiers(character, card, modifiers);
 
       const base = {
         source: `${primary.name} · in hand`,
         modifiers: riders,
-        /* And named, so the prompt that is about to spend them says which. */
-        note: ridingLine(riders),
       };
 
       /* And what is left in it. A firearm and a crossbow count rounds, and the
@@ -276,12 +266,6 @@ function chargeNote(remaining, consumable, item) {
 
 /** One group per source that holds something playable, in the codex's order. */
 function knownGroups(character, locks) {
-  /* Whether there is room for another Martial Move on the next swing. Asked once
-     for the whole bar rather than once per chip: the answer is about the
-     character, not the card, and working it out means reading every set that
-     teaches moves. */
-  const room = canLayMove(character);
-
   return abilitySources(character)
     /* A source can hold cards that are neither played nor standing. A Cauldron
        Keeper's Ingredients are the case: you never use one, you put it in a Brew,
@@ -299,15 +283,20 @@ function knownGroups(character, locks) {
         /* And a card somebody else on your sheet plays is not on your bar. A
            draconic ally's Wyrm Bolt costs *its* Action Points, so offering it
            here would pay for it out of the wrong pool. It is on the creature's
-           own bar instead — see minionBar below. */
+           own bar instead: see minionBar below. */
         .filter(({ card }) => !isStanding(card) && !isMinionCard(card))
+        /* **And a Martial Move is not something you play.** Since 2026-09-02 it is
+           an add-on to a weapon attack, chosen inside that attack's own prompt
+           (see "added, not laid" in moves.js), so a chip here would be a way to
+           spend Willpower on nothing. The Abilities tab is where the hand is read
+           and the prompt is where it is used. */
+        .filter(({ card }) => !isMartialMove(card))
         .map(({ card, modifiers }) => {
           /* Composed rather than spread straight into the row, because the last
              of these has to *read* the ones before it: a card that lays a rider
              and counts its own uses has to write both in one call, and one that
              is already refused keeps the refusal it earned. */
           const riders = {
-            ...martialUse(character, card, room),
             ...ambushUse(character, card),
             ...feralUse(character, card, set),
             ...formRefusal(card, locks, { set }),
@@ -340,57 +329,16 @@ function knownGroups(character, locks) {
 }
 
 /**
- * The extra a Martial Move carries, or nothing at all for every other card.
- *
- * A move is not resolved when it is used: paying for it lays a rider on the
- * tracker and the next weapon attack carries it. So the whole of what using one
- * does is an `extra` on the row, and it is written here rather than in the block
- * for the same reason a flask's spent charge is — the block spends points and
- * applies what it was handed.
- *
- * The allowance rides in rather than being asked for per card. One move rides a
- * swing, or two for a Master Duelist, and a chip offered when there is no room is
- * a chip that takes your Willpower and lays nothing. It is shown refused instead,
- * which is what the belt already does for a flask with no charges left. The label
- * is the count against the allowance — "1/1 active", or "2/2 active" for the
- * Duelist — because this refusal *is* arithmetic ("when you cannot have more
- * martial move at once it should say 1/1 active", 2026-08-29). The tooltip
- * behind it still says the rule in words.
- */
-function martialUse(character, card, room) {
-  if (!isMartialMove(card)) return {};
-
-  /* Which attacks this character's moves reach, so the row written onto the
-     tracker says the true one. Off the same `moveAllowance` the printing and the
-     spending both read. See "which attack" in moves.js. */
-  const special = movesReachSpecial(character?.talents);
-
-  return {
-    note: special
-      ? 'It waits on the tracker until you swing, and is spent the moment you do.'
-      : 'It waits on the tracker until your next plain Weapon Attack, and a special one leaves it there.',
-    extra: room.ok
-      ? {
-          effects: addEffect(
-            character?.effects,
-            moveEffect(card, moveSetFor(character?.talents, card.id), special)
-          ),
-        }
-      : null,
-    spent: !room.ok,
-    spentLabel: `${room.waiting}/${room.perAttack} active`,
-    spentNote: room.reason,
-  };
-}
-
-/**
  * What AMBUSH costs and what it lays, or nothing at all for every other card.
  *
- * Like a Martial Move, nothing is resolved when it is used: the Willpower lays a
- * rider on the tracker and the next weapon attack carries it. Unlike one, the
- * price is not printed on the card — "the cost of this ability is equal to the
- * weapon number of base damage dice before enchant or boost" — so it is worked
- * out here off the weapon in hand and handed to the chip as an ordinary number.
+ * Nothing is resolved when it is used: the Willpower lays a rider on the tracker
+ * and the next weapon attack carries it. It is the last rider on the sheet that
+ * works that way, since the Martial Moves stopped on 2026-09-02, and it stays
+ * that way because an ambush is a thing you set up rather than a thing you add to
+ * a swing you are already taking. Its price is not printed on the card either
+ * ("the cost of this ability is equal to the weapon number of base damage dice
+ * before enchant or boost"), so it is worked out here off the weapon in hand and
+ * handed to the chip as an ordinary number.
  *
  * That number is knowable at all because of the ruling that narrowed the card:
  * "Ambush only apply on Weapon Attack, not special attack", so there is one attack
@@ -399,8 +347,8 @@ function martialUse(character, card, room) {
  * nothing to choose there is nothing to confirm, and this is the whole of what
  * replaced it.
  *
- * Refused, wearing the reason, when there is nothing in hand to ride. Same shape a
- * Martial Move with no room and an empty flask both wear.
+ * Refused, wearing the reason, when there is nothing in hand to ride. Same shape
+ * an empty flask wears.
  */
 function ambushUse(character, card) {
   if (card?.opens !== 'ambush') return {};
@@ -431,11 +379,9 @@ function ambushUse(character, card) {
  * What a Feral Form does to a chip it will not let you play, or nothing at all
  * for everybody who is not in one.
  *
- * Refused and not hidden, which is the same call the belt and the Martial Move
- * allowance both make: a card that has quietly vanished reads as a bug, while one
- * wearing the reason reads as a rule. It is spread *after* `martialUse`, so a
- * move the form forbids says so rather than saying there is no room for it —
- * being unable to hold the card at all is the truer refusal of the two.
+ * Refused and not hidden, which is the same call the belt makes for an empty
+ * flask: a card that has quietly vanished reads as a bug, while one wearing the
+ * reason reads as a rule.
  *
  * `extra` is cleared with it. Nothing here is ever confirmed, since the chip is
  * dead, but a refused row carrying a written-out effects list is a loaded gun.
@@ -962,47 +908,28 @@ export function spendUse(request, character, mode, amount, { free = false, price
   const health = Math.max(0, Number(price?.health) || 0);
   const body = { ...(request.extra ?? {}) };
 
-  /* A weapon attack is what both kinds of rider were waiting for, and paying for
+  /* A weapon attack is what a Trickster's rider was waiting for, and paying for
      one is the moment the sheet can be sure the swing happened. "Lost on use",
-     from the Trickster's Developpement Notes, and "remove on the tracker on the
-     attack" from the Duelist's.
+     from the Trickster's Developpement Notes. Nothing here asks about the
+     outcome, so nothing here can be wrong about it: what an ambush buys is the
+     attempt, and the roll has happened.
 
-     Both are cleared off the same list in turn, so a Duelist who ambushed and
-     then laid a Wound loses both to one swing rather than whichever ran last.
      Started from whatever the request already put there, on the off chance a card
      ever carries an effects patch of its own.
 
-     **Both are told which attack it was now.** They used to differ: an ambush was
-     bought against the plain attack alone, while a Martial Move "just apply to
-     both and the first one of the two action used remove the effect". Jules
-     narrowed the second on 2026-08-28, so both rider systems read the attack they
-     were bought for, and a Triple Strike now leaves a RECKLESS waiting exactly as
-     it always left an ambush. See "which attack" in moves.js.
+     **A Martial Move used to be cleared here too and no longer is.** Since
+     2026-09-02 a move is chosen inside the attack's own prompt and never lands on
+     the tracker at all, so there is nothing to take off: the Willpower is on the
+     pay button beside the swing's Action Points, and both leave together. That is
+     the same instant this used to fire in, with the round trip through a tracker
+     row taken out of the middle. See "added, not laid" in moves.js.
 
      Guarded on the card rather than on the character, because a creature's block
      pays through here too and hands its own row in as `character`. No minion
      card is tagged Weapon Attack, so nothing there is touched. */
   if (isWeaponAttack(request.card)) {
-    let effects = body.effects ?? character?.effects;
-    let cleared = false;
-
-    const withoutTricks = spendTricks(effects, request.card);
-    if (withoutTricks) {
-      effects = withoutTricks;
-      cleared = true;
-    }
-
-    const withoutMoves = spendMoves(
-      effects,
-      request.card,
-      movesReachSpecial(character?.talents)
-    );
-    if (withoutMoves) {
-      effects = withoutMoves;
-      cleared = true;
-    }
-
-    if (cleared) body.effects = effects;
+    const withoutTricks = spendTricks(body.effects ?? character?.effects, request.card);
+    if (withoutTricks) body.effects = withoutTricks;
   }
 
   /* ---- and what the use leaves running ----
@@ -1021,9 +948,9 @@ export function spendUse(request, character, mode, amount, { free = false, price
      rows of the same card. See `layEffect`, and the same-source law it quotes.
 
      `request.extra` carrying an effects list of its own is the one thing that
-     stops it: a Martial Move and an AMBUSH both *are* a row on the tracker, laid
-     deliberately with a rider in it, and a second row read off the same card's
-     prose would be the sheet tracking one use twice. */
+     stops it: an AMBUSH *is* a row on the tracker, laid deliberately with a rider
+     in it, and a second row read off the same card's prose would be the sheet
+     tracking one use twice. */
   const cast = request.extra?.effects ? null : castEffect(request);
   if (cast) body.effects = layEffect(body.effects ?? character?.effects, cast);
 

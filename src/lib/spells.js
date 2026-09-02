@@ -856,7 +856,11 @@ export const SPELLS = withArt([
     stat: 'mind',
     body:
       'You put **an entity** you touch below 10% of its maximum Health into a deathlike sleep for **24 hours**.\n\n' +
-      'Make a {stat} Roll {roll} against its Grit. On a success it sleeps, incapacitated and immune to all damage. It does not breathe or bleed, and cannot be brought down.', // text-style-ok: joins two clauses
+      /* "It does not breathe or bleed" until 2026-09-02, when Bleed became a
+         defined term and that "bleed" would have lit as the status. Reworded so
+         the ordinary verb stays ordinary, which is the same trade GORE ARMOR and
+         VAMPIRIC TOUCH made. See the writing rule at the top of keywords.js. */
+      'Make a {stat} Roll {roll} against its Grit. On a success it sleeps, incapacitated and immune to all damage. It neither breathes nor bleeds, and cannot be brought down.', // text-style-ok: joins two clauses
     sub_name: 'Upkeep',
     sub_body:
       'At each Long Rest, pay 10 Willpower to keep the sleeper under. Miss the Upkeep and the spell ends.',

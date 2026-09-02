@@ -18,7 +18,7 @@ import { cardCost } from '../../lib/cardText.js';
 import { characterSkillGrantSources } from '../../lib/levelPicks.js';
 import { shortName } from '../../lib/combatBar.js';
 import { usePlayCard } from './usePlayCard.js';
-import { attackModifiers, ridingLine } from '../../lib/moves.js';
+import { attackModifiers } from '../../lib/moves.js';
 import { magazineUse } from '../../lib/uses.js';
 
 /**
@@ -133,13 +133,12 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
       wp: card.wp,
       card,
       /* The attack is printed with this weapon's damage type and Empowering,
-         exactly as it reads on the block behind the prompt — plus whatever is
-         waiting on it, which is the point of paying for an AMBUSH or a Martial
-         Move before the swing rather than after. */
+         exactly as it reads on the block behind the prompt, plus whatever is
+         already standing on it: an AMBUSH paid for, the bargain, the form. The
+         Martial Moves are added inside the prompt itself, which is why nothing
+         here names any. See UsePrompt.jsx. */
       modifiers: riders,
-      /* And named, since the prompt is the last thing between the player and the
-         swing that spends them. */
-      note: [ridingLine(riders), magazine?.note].filter(Boolean).join(' ') || null,
+      note: magazine?.note ?? null,
       /* And drawn, because a round is the one cost a printed card cannot show: the
          prompt is where the player last gets to change their mind about firing the
          only shot they have. */
@@ -321,18 +320,16 @@ export default function LoadoutBlock({ character, patch, readOnly = false }) {
 }
 
 /**
- * One of the weapon's attacks, on one line, plus a second line when something is
- * riding it.
+ * One of the weapon's attacks, on one line.
  *
- * That second line is the Duelist's Developpement Notes, honoured where they
- * asked for it: "when possible updating the attack text to say (not on the card)
- * that this attack will MARTIAL MOVE NAME". Not on the card — the card is the
- * codex's and says what the attack always does. This row is the sheet's and says
- * what *this* swing will do, which is the only place the distinction can live.
+ * It carried a second line until 2026-09-02, naming the Martial Moves waiting on
+ * the swing: "updating the attack text to say (not on the card) that this attack
+ * will MARTIAL MOVE NAME", off the Duelist's Developpement Notes. Nothing waits
+ * any more, because a move is added inside the prompt this row opens, so the
+ * sentence moved in there with the choice that earns it. See UsePrompt.jsx.
  */
 function AttackRow({ card, character, modifiers, stack, readOnly, onUse }) {
   const riders = attackModifiers(character, card, modifiers);
-  const riding = ridingLine(riders);
 
   /* And how much of it is loaded. Jules asked for it here, beside the attack:
      "on the action next to shoot you see bullet shaped indicator that empty as you
@@ -343,7 +340,7 @@ function AttackRow({ card, character, modifiers, stack, readOnly, onUse }) {
   const spent = Boolean(magazine?.spent);
 
   return (
-    <div className={`use-row${riding ? ' use-row-riding' : ''}${spent ? ' use-row-spent' : ''}`}>
+    <div className={`use-row${spent ? ' use-row-spent' : ''}`}>
       <button
         type="button"
         className="use-row-main"
@@ -365,8 +362,6 @@ function AttackRow({ card, character, modifiers, stack, readOnly, onUse }) {
       </button>
 
       <InfoButton onClick={() => stack?.openCard(card, riders)} label={`${card.name} card`} />
-
-      {riding && <span className="use-row-rider">{riding}</span>}
     </div>
   );
 }

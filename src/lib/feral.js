@@ -567,8 +567,9 @@ export function feralLocks(character) {
 /**
  * Whether one card survives the locks, as `{ ok, reason }`.
  *
- * Called once per chip on the quick bar with the locks worked out once for the
- * whole bar, the way `canLayMove` rides in rather than being asked per card.
+ * Called once per chip on the quick bar, with the locks worked out once for the
+ * whole bar rather than per card. `offeredMoves` in moves.js calls it the same
+ * way, per Martial Move on offer, and hands it the set that taught each one.
  *
  * A card is the form's own if the *set* holding it is the one that granted the
  * form, or failing that if it carries a tag the form claims. Both, because the

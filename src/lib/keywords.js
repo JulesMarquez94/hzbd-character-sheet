@@ -549,23 +549,72 @@ export const KEYWORDS = [
       'Below 0 Health and going. Stabilize stops it, and a second full bar of damage ends it.',
   },
   {
+    /* **New on 2026-09-02, and it took Wound's old job.** Jules, redesigning the
+       Martial Move system: "Bleed: stackable status that deal 1d6 damage at the
+       start turn of entities. Remove 1 stack when receive 1 heal." That is the
+       designer's own sentence, tidied for grammar and nothing else, the same
+       trade every term on this shelf has made.
+
+       Two things in it are worth reading twice. It is **stackable**, which the
+       old Wound was, and each stack is its own 1d6 — REND lays one per Damage
+       Die the swing rolled, so a big hit bleeds badly. And healing takes **one
+       stack**, not the whole effect: the old Wound came off entirely at the
+       first point of Health, which made any healing at all a full cure.
+
+       The damage has no type, which is the designer's word for it: "deal 1d6
+       damage". The old Wound's was Decay, and a bleed is not decay. Untyped
+       damage is not new in this codex (four Primal Masters deal it) and a type
+       nobody stated would be this file inventing one. Flagged in
+       data/README.md. Coloured with Health rather than with a damage type for
+       the same reason.
+
+       CAUTERIZE has named this status since the Fire family was written ("this
+       removes any Bleed or Poison effect") with nothing behind the word. It is
+       lit now, which is the same thing that happened to Constrained when SHADOW
+       BIND finally defined it. */
+    id: 'bleed',
+    terms: ['Bleed'],
+    color: 'var(--stat-health)',
+    detail:
+      'Stackable effect. The entity takes 1d6 damage at every one of its Turn Starts. ' +
+      'It loses one stack whenever it receives healing.',
+  },
+  {
     id: 'wound',
     terms: ['Wounds', 'Wound'],
     color: 'var(--dmg-decay)',
-    /* Not on the Status & Terms tab. The WOUND plate defines it outright at the
-       foot of its own card, in a parenthesis, and that sentence is quoted here
-       word for word rather than paraphrased — the same trade BLIND and FRIGHTFUL
-       ROAR made. The gloss then came off the card body, because a term that
-       carries its own explanation must never be spelled out in prose as well.
+    /* **Redefined on 2026-09-02**, in the same breath as the Martial Move
+       redesign: "Wound: singular status that make weapon and speacial weapon
+       attack again the target empowred." So a Wound is no longer damage over
+       time, it is an opening: everything that comes at the target with a weapon
+       in its hands hits harder. Bleed above is what took over the old job, and
+       the pair of them swapped roles rather than one being added.
 
-       Unlike those two, the card's own name *is* the term, and that is fine:
-       "will inflict a Wound on the target" is the word being used for what it
-       means. Gore Armor and Vampiric Touch were reworded because their titles
-       collided with an unrelated stat and an unrelated range, which is a
+       The old sentence was the WOUND plate's own, quoted word for word off the
+       foot of the card. This one is the designer's own too, and the plate it
+       came off is a line in chat rather than a cell in a sheet.
+
+       **The clock is the old card's and the ruling is open.** Jules gave the
+       effect and no duration, and the sentence it replaced ended "until they
+       receive healing or they take a rest". That clause is kept rather than
+       reinvented: it is the only clock this term has ever had, the tracker
+       already understands both halves of it, and a status with no end is a
+       status that never comes off. Flagged in data/README.md.
+
+       **Singular** is the word Jules used and it is the difference that matters
+       at a table: two Wounds are one Wound, so WOUND laid twice on the same
+       target buys nothing the second time. It is also the stacking law this
+       codex already keeps — an effect does not stack with itself from the same
+       source — said on the term instead of on the card.
+
+       Unlike BLIND and FRIGHTFUL ROAR, the card's own name *is* the term, and
+       that is fine: "inflicts a Wound on the target" is the word being used for
+       what it means. Gore Armor and Vampiric Touch were reworded because their
+       titles collided with an unrelated stat and an unrelated range, which is a
        different fault from a card named after the thing it does. */
     detail:
-      'Stackable effect that cause the entity to take 1d6 decay damage at every one of its ' +
-      'turn starts until they receive healing or they take a rest.',
+      'Singular effect. Weapon attacks made against the entity are Empowered. It lasts until ' +
+      'the entity receives healing or takes a rest.',
   },
   {
     /* GORE BLAST's own foot on the Death sheet (pulled 2026-08-26), and the same

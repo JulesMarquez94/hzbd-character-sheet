@@ -194,10 +194,11 @@ function WeaponFace({ item, slot, bound = false, character, stack, readOnly, onB
             type="button"
             className="ability-box"
             key={card.id}
-            /* Per card, not per weapon: a Trickster's pending AMBUSH and a
-               Duelist's Martial Move both ride the two attacks and not the shield
-               block beside them, and so does the advantage a one-handed weapon is
-               worth. See attackModifiers in moves.js. */
+            /* Per card, not per weapon: a Trickster's pending AMBUSH rides
+               the two attacks and not the shield block beside them, and so does
+               the advantage a one-handed weapon is worth. See attackModifiers in
+               moves.js. A Martial Move is not in it, because one is added to a
+               swing being paid for rather than to a card being read. */
             onClick={() => stack?.openCard(card, attackModifiers(character, card, modifiers))}
             title={`Open the ${card.name} card`}
           >

@@ -38,7 +38,8 @@ import {
   rollInitiative,
 } from '../src/lib/encounters.js';
 import { layEffect } from '../src/lib/combatTurn.js';
-import { getMartialMove } from '../src/lib/martial.js';
+import { MARTIAL_MOVES, getMartialMove } from '../src/lib/martial.js';
+import { aimingMoves } from '../src/lib/moves.js';
 import { rollPlan } from '../src/lib/rollPlan.js';
 import { turnTriggers } from '../src/lib/turnTriggers.js';
 import { CARDS, getCard } from '../src/lib/weapons.js';
@@ -104,21 +105,44 @@ section('the second half moves the count only once it is taken');
 
 section('a rider rewrites the swing’s reach');
 {
-  /* SWEEP waiting on the tracker turns a one-target weapon attack into
-     everything in reach: "made against every entity within your reach". Found
-     by Jules swinging one. */
-  const sweep = getMartialMove('sweep');
-  check('the codex still holds SWEEP', Boolean(sweep), true);
+  /* A Martial Move added to a swing can rewrite who it lands on: SWEEP's "made
+     against every entity within your reach" turned a one-target Strike into a
+     room, found by Jules swinging one on 2026-09-01. SWEEP left the codex in the
+     redesign of 2026-09-02 and the reading did not, because the day one comes
+     back the picker has to know.
+
+     **Which riders are read is data, not prose.** `aims` on the card says so, and
+     `aimingMoves` is the filter every caller passes its chosen moves through. That
+     is the whole guard against COORDINATED ATTACK, whose "an ally within reach of
+     the target" names somebody who *acts*: a prose reader counts it as a target,
+     and a target chip picked there would deliver the swing's damage to a friend. */
+  const aiming = { id: 'test-sweep', name: 'Sweep', aims: true, body: 'Your next Weapon Attack is made against **every entity** within your reach.' };
   check(
-    'a swing with SWEEP riding is uncapped',
-    targetPlan(card('bramble-whip'), { riders: [sweep] }),
+    'a swing with an aiming move on it is uncapped',
+    targetPlan(card('bramble-whip'), { riders: aimingMoves([aiming]) }),
     { some: true, count: null }
   );
   check(
-    'and with nothing riding it stays one',
+    'and with nothing added it stays one',
     targetPlan(card('bramble-whip'), { riders: [] }),
     { some: true, count: 1 }
   );
+
+  /* COORDINATED ATTACK is the card the flag exists for. Its own text reads as one
+     target and it is not one, so the filter must drop it and the plan must not
+     move. */
+  const ally = getMartialMove('coordinated-attack');
+  check('the codex still holds COORDINATED ATTACK', Boolean(ally), true);
+  check('and it does not claim to aim', aimingMoves([ally]).length, 0);
+  check(
+    'so a swing carrying it reaches exactly one body',
+    targetPlan(card('bramble-whip'), { riders: aimingMoves([ally]) }),
+    { some: true, count: 1 }
+  );
+
+  /* And nothing in the codex aims today, which is the state the flag was
+     introduced in. A move that grows one has to be a deliberate act. */
+  check('no move in the codex aims yet', aimingMoves(MARTIAL_MOVES).length, 0);
 }
 
 section('the census: how much of the codex reaches other bodies');

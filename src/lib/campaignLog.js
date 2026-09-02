@@ -246,13 +246,18 @@ export async function claimReaction(campaignId, event) {
  * `spendUse` charged, so the log cannot say a different thing happened than the
  * one the sheet paid for. `price` is what the card's second half settled on
  * where there was one, exactly as in combatBar.js.
+ *
+ * `moves` is the Martial Moves added to a weapon attack, by name. They are part
+ * of what was done rather than a separate act: since 2026-09-02 a move is not its
+ * own use, so it writes no row of its own and "Strike" alone would be the log
+ * losing the half of the swing the player chose. See UsePrompt.jsx.
  */
 export function playEvent(
   request,
   character,
   mode,
   amount,
-  { free = false, price = null, chain = null, targets = [] } = {}
+  { free = false, price = null, chain = null, targets = [], moves = [] } = {}
 ) {
   const ap = Number(price?.ap ?? amount ?? request?.ap) || 0;
   const wp = Number(price?.wp ?? request?.wp) || 0;
@@ -270,6 +275,9 @@ export function playEvent(
 
   const lasts = castLine(request);
   const detail = [
+    /* What rode the swing, first, because it is the only part of this line that
+       is about *what happened* rather than about what it cost. */
+    moves.length > 0 ? `with ${listAnd(moves)}` : null,
     free
       ? 'Waved through by the table'
       : moved
