@@ -17,6 +17,12 @@ dist-ssr
 .env.*
 !.env.example
 
+# The rulebook. Jules's own working document: it carries rulings that are still
+# being argued with, and numbers marked as proposals rather than settled. It is
+# not the app and it is not shipped with it, so it stays out of the repository
+# until it is a thing rather than a draft.
+docs/rulebook.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

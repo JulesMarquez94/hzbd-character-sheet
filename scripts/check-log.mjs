@@ -16,6 +16,11 @@
  *   sequence, and "Damage 17" above "Attack Roll 12, success" is the story told
  *   back to front.
  *
+ *   **One action is one entry.** A chain gathers every row addressed to it and
+ *   not only its throws: the verdicts, what landed, the row it laid and the
+ *   whole reaction stack. None of those kinds may ever head a block, whatever
+ *   order the page happens to hold them in.
+ *
  * Everything else here is about rows that do not fit the happy shape, because
  * the log is allowed to lose writes (see postEvent) and is read a page at a
  * time. A throw whose head is one page down, a head whose throws never arrived
@@ -30,6 +35,7 @@ import {
   chainSummary,
   groupEvents,
   newChain,
+  noticeOf,
   resultFromRow,
   rollEvent,
   worthReplaying,
@@ -61,10 +67,13 @@ function feed(...rows) {
 
 const use = (chain, title) => ({ kind: 'use', title, data: { chain, card: null } });
 const throw_ = (chain, title) => ({ kind: 'roll', title, data: { chain } });
+/** A row written about an action rather than by it: a verdict, a delivery, a
+    reaction. Never a head, whatever order it arrives in. See UNDER. */
+const about = (kind, chain, title, data = {}) => ({ kind, title, data: { chain, ...data } });
 
 /** What a group came out as, flattened for comparison. */
 const shape = (groups) =>
-  groups.map((g) => [g.head.title, ...g.rolls.map((r) => `> ${r.title}`)].join(' '));
+  groups.map((g) => [g.head.title, ...g.trail.map((r) => `> ${r.title}`)].join(' '));
 
 /* ------------------------------------------------------------- the happy shape */
 
@@ -101,6 +110,80 @@ section('a head whose throws have not arrived');
   const got = groupEvents(feed(use(c, 'Cleave')));
   check('draws as a plain row', shape(got), ['Cleave']);
   check('with nothing under it', got[0].rolls.length, 0);
+  check('and no trail either', got[0].trail.length, 0);
+}
+
+/* ------------------------------------------------------- one action, one entry
+ * "Same an attack should not be 3 entries in the log", Jules, 2026-09-02. An
+ * aimed swing writes the use, its throws, the verdict read against each body,
+ * the damage delivered and whatever the reaction stack said. All of it is one
+ * thing that happened, so all of it hangs on the one chain.
+ */
+
+section('an aimed attack, whole');
+{
+  const c = 'chain-1';
+  const got = groupEvents(
+    feed(
+      use(c, 'Flurry'),
+      throw_(c, 'Attack Roll'),
+      about('verdict', c, 'Hit 2.Fenrat, missed 3.Fenrat'),
+      throw_(c, 'Damage'),
+      about('apply', c, '14 Fire damage'),
+      about('effect', c, 'Withering Mark')
+    )
+  );
+
+  check('is one entry and not five', got.length, 1);
+  check('headed by the use', got[0].head.title, 'Flurry');
+  check('everything it set off reads forwards under it', shape(got), [
+    'Flurry > Attack Roll > Hit 2.Fenrat, missed 3.Fenrat > Damage > 14 Fire damage > Withering Mark',
+  ]);
+  /* The summary and the verdict band only ever ask about dice, so the throws are
+     handed back on their own as well. */
+  check('the throws are still their own list', got[0].rolls.map((r) => r.title), [
+    'Attack Roll',
+    'Damage',
+  ]);
+}
+
+section('reacting is part of the action it answered');
+{
+  /* "In the log reacting should be part of the action block not its own",
+     2026-09-02. Kaelen steps into Lark's cast: the hold, the take, and the
+     action failing all ride Lark's chain. */
+  const c = 'chain-1';
+  const got = groupEvents(
+    feed(
+      use(c, 'Fireball'),
+      about('react', c, 'Reacting', { move: 'open', key: 'k1' }),
+      about('react', c, 'Reaction taken', { move: 'done', key: 'k1' }),
+      about('react', c, 'Fireball fails against 2.Fenrat', { move: 'failed' })
+    )
+  );
+
+  check('one entry, the reaction inside it', got.length, 1);
+  /* The open is dropped once its own outcome is in: "took a reaction" says
+     everything "is reacting" was going to. See settled. */
+  check('and the announcement gives way to the outcome', shape(got), [
+    'Fireball > Reaction taken > Fireball fails against 2.Fenrat',
+  ]);
+}
+
+section('a reaction still being chosen');
+{
+  const c = 'chain-1';
+  const got = groupEvents(feed(use(c, 'Fireball'), about('react', c, 'Reacting', { move: 'open', key: 'k1' })));
+  check('is the row a held action most needs to show', shape(got), ['Fireball > Reacting']);
+}
+
+section('a delivery with no use above it');
+{
+  /* A wall of fire rolled off its own tracker row on the encounter page. There
+     is no use to file it under and it carries no chain, so it is the entry. */
+  const got = groupEvents(feed(about('apply', null, '9 Fire damage')));
+  check('stands on its own', shape(got), ['9 Fire damage']);
+  check('and heads its own group', got[0].head.kind, 'apply');
 }
 
 /* ----------------------------------------------------------- the awkward shapes */
@@ -123,6 +206,19 @@ section('a throw whose head is a page further down');
   const got = groupEvents(feed(throw_(c, 'Attack Roll'), throw_(c, 'Damage')));
   check('every orphan draws', shape(got), ['Damage', 'Attack Roll']);
   check('newest first, like the feed it came from', got.length, 2);
+}
+
+section('and a reaction whose action is a page further down');
+{
+  /* The same cut, through a chain's other kind of row. It must not promote
+     itself to head of a block and swallow the throws of the half that is on
+     this page: nothing under a chain is ever a head. */
+  const c = 'chain-1';
+  const got = groupEvents(
+    feed(about('react', c, 'Reaction taken', { move: 'done', key: 'k1' }), throw_(c, 'Damage'))
+  );
+  check('both draw, neither heads the other', shape(got), ['Damage', 'Reaction taken']);
+  check('and neither carries a trail', got.every((g) => g.trail.length === 0), true);
 }
 
 section('two chains at once');
@@ -166,6 +262,72 @@ section('nothing at all');
 {
   check('an empty feed groups to nothing', groupEvents([]), []);
   check('and so does a missing one', groupEvents(undefined), []);
+}
+
+/* ------------------------------------------------------------------ the knock
+ * What the pop-up over the page says, and what it stays quiet about. See
+ * noticeOf, and LogCall.jsx which holds one notice per key.
+ */
+
+section('a row as the line a pop-up shows');
+{
+  const say = (row) => noticeOf({ id: 'e1', actor: 'Kaelen', ...row });
+
+  check(
+    'a cast says the verb the row was written with',
+    say({ kind: 'use', title: 'Fireball', data: { verb: 'cast', chain: 'c1' } })?.line,
+    'cast Fireball'
+  );
+  check(
+    'a swing says it swung',
+    say({ kind: 'use', title: 'Cleave', data: { verb: 'attacked with' } })?.line,
+    'attacked with Cleave'
+  );
+  check('a rest reads as one', say({ kind: 'rest', title: 'Long Rest', data: {} })?.line, 'took a Long Rest');
+  check(
+    'a delivery says what it dealt',
+    say({ kind: 'apply', title: '14 Fire damage', data: { verb: 'dealt' } })?.line,
+    'dealt 14 Fire damage'
+  );
+  check(
+    'the stack speaks for itself',
+    say({ kind: 'react', title: 'Reaction taken', data: { move: 'done', chain: 'c1' } })?.line,
+    'Reaction taken'
+  );
+
+  /* One notice per action, not one per row: the key is the chain wherever the
+     row has one, so four rows off one swing land in one pop-up. */
+  check(
+    'every row of an action shares its key',
+    [
+      say({ kind: 'use', title: 'Flurry', data: { chain: 'c1', verb: 'attacked with' } })?.key,
+      say({ kind: 'verdict', title: 'Hit 2.Fenrat', data: { chain: 'c1' } })?.key,
+      say({ kind: 'apply', title: '14 Fire damage', data: { chain: 'c1' } })?.key,
+    ],
+    ['c1', 'c1', 'c1']
+  );
+  check(
+    'and a row with no action of its own is keyed on itself',
+    say({ kind: 'rest', title: 'Long Rest', data: {} })?.key,
+    'e1'
+  );
+
+  /* Two kinds stay quiet, and both because the reader is already being shown
+     the thing: the dice are landing on their own table, and the sheet's own
+     covers take the whole screen. */
+  check('a throw is not announced twice', say({ kind: 'roll', title: 'Damage', data: { chain: 'c1' } }), null);
+  check(
+    'nor is the turn call that covers the screen',
+    say({ kind: 'turn', title: 'Turn 3', data: { move: 'your-turn' } }),
+    null
+  );
+  check(
+    'nor the bell',
+    say({ kind: 'turn', title: 'Initiative', data: { move: 'initiative' } }),
+    null
+  );
+  check('a turn ending is worth saying', say({ kind: 'turn', title: 'Ended turn 3', data: { move: 'ended' } })?.line, 'Ended turn 3');
+  check('and nothing at all is nothing', noticeOf(null), null);
 }
 
 /* ------------------------------------------------------------------ the row */

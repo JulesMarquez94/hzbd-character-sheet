@@ -555,7 +555,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
    * was laid.
    */
   const layTargets = useCallback(
-    (foe, targets, cast) => {
+    (foe, targets, cast, chain = null) => {
       if (targets.length === 0) return;
 
       const keys = targets.filter((body) => body.kind === 'foe').map((body) => body.id);
@@ -565,7 +565,11 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         effectLaidEvent(
           { name: foe.title, portrait: foe.creature?.portrait_url ?? null },
           cast,
-          targets
+          targets,
+          /* The use that laid it, so the row reads inside that use's block
+             rather than as an action of its own. Null for a row laid by
+             something other than a use. See UNDER in logChain.js. */
+          { chain }
         )
       );
     },
@@ -584,14 +588,14 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
    * Game Master should see, not a silence.
    */
   const handleResults = useCallback(
-    ({ foe, request, targets, thrown, outcomes = null, hit = null, cast = null }) => {
+    ({ foe, request, targets, thrown, outcomes = null, hit = null, cast = null, chain = null }) => {
       const landed = outcomes
         ? targets.filter((entry) => aimHits(outcomes).some((won) => won.id === entry.id))
         : targets;
 
       /* The effect that waited on the verdict: "On a hit, the spore embeds" is
          a row for whoever was hit and for nobody else. */
-      if (cast && hit && landed.length > 0) layTargets(foe, landed, cast);
+      if (cast && hit && landed.length > 0) layTargets(foe, landed, cast, chain);
 
       const deltas = applyPlan(thrown);
       if (deltas.length === 0 && !outcomes) return;
@@ -605,6 +609,10 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         deltas,
         outcomes,
         preselect: landed.map((entry) => entry.id),
+        /* Carried through the window so that what it lands is filed under the
+           use that rolled it. A window opened by a tracked effect or a boundary
+           clause has no use above it and carries none. */
+        chain,
       });
     },
     [layTargets]
@@ -723,7 +731,8 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
               id: body.id,
               name: body.name,
               landings: delta.landings,
-            }))
+            })),
+            { chain: current.chain ?? null }
           )
         );
       }

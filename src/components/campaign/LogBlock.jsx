@@ -339,6 +339,7 @@ export default function LogBlock({
                   key={group.key}
                   event={group.head}
                   rolls={group.rolls}
+                  trail={group.trail}
                   stack={stack}
                   actor={actorFor ? actorFor(group.head) : null}
                   open={
@@ -399,8 +400,16 @@ function TurnHead({ event, count }) {
  * `open` is decided by the block above rather than held here, so that "only the
  * newest is open" is one rule in one place and not forty components each with an
  * opinion.
+ *
+ * ------------------------------------------------------------------ the trail
+ * `trail` is every row the action set off, in the order the table saw it, and
+ * it holds two sorts of thing: throws, which are drawn as their dice, and rows
+ * *about* the action, which are drawn as one line each. They are interleaved on
+ * purpose. "missed 3.Fenrat" belongs between the attack roll and the damage,
+ * and a reaction belongs above the roll it held, so the block reads down the
+ * way the moment happened. See groupEvents.
  */
-function LogEntry({ event, rolls, stack, actor, open, onToggle }) {
+function LogEntry({ event, rolls, trail = [], stack, actor, open, onToggle }) {
   const card = event.data?.card ? getCard(event.data.card) : null;
   const verb = eventWords(event);
   const { ap = 0, wp = 0, health = 0, mode, portrait } = event.data ?? {};
@@ -409,6 +418,7 @@ function LogEntry({ event, rolls, stack, actor, open, onToggle }) {
      both shapes without the block above having to know which it is holding. See
      groupEvents, where a roll with no chain comes back as its own group. */
   const throws = rolls.length > 0 ? rolls : event.kind === 'roll' ? [event] : [];
+  const under = trail.length > 0 ? trail : event.kind === 'roll' ? [event] : [];
   const alone = rolls.length === 0 && throws.length === 1;
   const summary = chainSummary(throws, event);
 
@@ -459,11 +469,16 @@ function LogEntry({ event, rolls, stack, actor, open, onToggle }) {
 
       {open && (
         <div className="log-body">
-          {/* A block per throw, in the order they were thrown. A standalone roll
-              is drawn without its name repeated: the head above already said it. */}
-          {throws.map((roll) => (
-            <Throw key={roll.id} roll={roll} named={!alone} />
-          ))}
+          {/* The trail, in the order it happened: a block per throw, a line per
+              row about the action. A standalone roll is drawn without its name
+              repeated, since the head above already said it. */}
+          {under.map((row) =>
+            row.kind === 'roll' ? (
+              <Throw key={row.id} roll={row} named={!alone} />
+            ) : (
+              <Aside key={row.id} row={row} who={event.actor} />
+            )
+          )}
 
           {summary && <p className="log-summary">{summary}</p>}
 
@@ -488,6 +503,33 @@ function LogEntry({ event, rolls, stack, actor, open, onToggle }) {
         </div>
       )}
     </li>
+  );
+}
+
+/**
+ * One row about the action, as a line inside its block.
+ *
+ * The verdicts, the deliveries, the effect it laid and everything the reaction
+ * stack said. Each of these was its own entry in the feed until 2026-09-02, and
+ * each of them is a sentence the row already carries: "Critically hit
+ * 2.Fenrat", "14 Fire damage", "Reaction taken". So nothing is reworded here.
+ * It is drawn small, in the kind's own colour, under the dice that caused it.
+ *
+ * The name is printed only when it is somebody other than whoever heads the
+ * block. On an attack's own verdict that is nobody, and a line repeating the
+ * actor four times would be four names nobody reads. On a reaction it is the
+ * whole point: the row in the middle of Lark's Fireball saying *Kaelen* is the
+ * one thing a reader needs off it.
+ */
+function Aside({ row, who }) {
+  const said = row.actor && row.actor !== who ? row.actor : null;
+
+  return (
+    <p className={`log-aside is-${row.kind}`}>
+      {said && <span className="log-aside-who">{said}</span>}
+      <span className="log-aside-what">{row.title}</span>
+      {row.detail && <span className="log-aside-why">{row.detail}</span>}
+    </p>
   );
 }
 

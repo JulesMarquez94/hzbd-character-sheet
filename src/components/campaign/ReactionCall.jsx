@@ -72,7 +72,7 @@ export default function ReactionCall({
              Jules, 2026-09-01. */
           if (row?.kind === 'react' && row.data?.move === 'open') {
             setCall((held) =>
-              held && held.chain && held.chain === row.data?.to ? null : held
+              held && held.chain && held.chain === row.data?.chain ? null : held
             );
             return;
           }

@@ -249,11 +249,11 @@ export const INGREDIENTS = withArt([
     ap: 2,
     wp: 2,
     stat: 'instinct',
-    damage: ['Poison'],
-    summary: 'Poison damage, and leaves them poisoned.',
+    damage: ['Decay'],
+    summary: 'Decay damage, and leaves them poisoned.',
     body:
       'You drop a bloated, neon-colored frog into the brew.\n\n' +
-      '**An entity** affected by the Brew takes [[2d6 + 2*stat]] {damage:Poison} damage.\n\n' +
+      '**An entity** affected by the Brew takes [[2d6 + 2*stat]] {damage} damage.\n\n' +
       'The entity is also poisoned.',
   },
 

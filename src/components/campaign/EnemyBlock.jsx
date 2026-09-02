@@ -19,6 +19,7 @@ import { metersToFeet } from '../../lib/characterModel.js';
 import { castEffect, foeBar } from '../../lib/combatBar.js';
 import { CREATURE_MAX_LEVEL, difficultyLine } from '../../lib/creatures.js';
 import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
+import { newChain } from '../../lib/logChain.js';
 import { rollPlan } from '../../lib/rollPlan.js';
 import { getCard } from '../../lib/weapons.js';
 import {
@@ -481,6 +482,12 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
   function confirmUse(mode, amount, options = {}) {
     const targets = options?.targets ?? [];
 
+    /* This use's own id, minted here rather than inside `play` because this
+       block writes rows against it too: the effect it lays and the numbers the
+       apply window lands both belong in the action's block and not beside it.
+       See UNDER in logChain.js. */
+    const chain = newChain();
+
     /* The row this card would have laid on its caster, when it was aimed at
        somebody instead. "When an ability is cast that affects an entity with an
        effect, this effect needs to populate on the target trackers" — so the
@@ -501,6 +508,7 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
        nothing crosses to a sheet. See foeSpend, and `play` above. */
     play(request, mode, amount, options, {
       actor,
+      chain,
       ...(cast
         ? {
             write: (body) => {
@@ -527,12 +535,13 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
                 outcomes: meta.outcomes ?? null,
                 hit: meta.hit ?? null,
                 cast: checky ? cast : null,
+                chain,
               }),
           }
         : {}),
     });
 
-    if (cast && !checky) combat?.layEffect?.(foe, targets, cast);
+    if (cast && !checky) combat?.layEffect?.(foe, targets, cast, chain);
     setRequest(null);
   }
 

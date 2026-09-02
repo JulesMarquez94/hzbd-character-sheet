@@ -49,6 +49,7 @@ import { compareTags } from './cardOrder.js';
 import {
   BACKGROUND_CARDS,
   backgroundState,
+  checkSkills,
   getBackground,
   getBackgroundSkill,
   normalizeBackgroundSkills,
@@ -376,6 +377,18 @@ export function heldSkillIds(character) {
  */
 export function characterSkillGrantSources(character) {
   return skillGrantSources(heldSkillIds(character));
+}
+
+/**
+ * And the skills this character can bring to a Skill Check, composed the same
+ * way and for the same reason.
+ *
+ * What the SKILL CHECK basic action's prompt offers. A creature has none of the
+ * three sources, so its own bar raises the same action and offers the attribute
+ * alone, which is right: a wolf has no background. See CheckPick.jsx.
+ */
+export function characterCheckSkills(character) {
+  return checkSkills(heldSkillIds(character));
 }
 
 /**

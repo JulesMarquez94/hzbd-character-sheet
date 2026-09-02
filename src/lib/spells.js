@@ -973,13 +973,13 @@ export const SPELLS = withArt([
   {
     id: 'vampiric-touch',
     name: 'Vampiric Touch',
-    summary: 'Drain a creature you touch for Necrotic damage and take back half as Health.',
+    summary: 'Drain a creature you touch for Decay damage and take back half as Health.',
     kind: 'spell',
     tags: ['Novice Spell', 'Primal', 'Blood'],
     ap: 4,
     wp: 4,
     stat: 'mind',
-    damage: ['Necrotic'],
+    damage: ['Decay'],
     body:
       'You attempt to drain the life force of **an entity** you can touch.\n\n' +
       'Make a {stat} Melee Attack {roll} against the target. On a hit, you deal [[3d6 + 3*stat]] {damage} damage and regain Health equal to half the damage dealt.',
@@ -1638,13 +1638,13 @@ export const SPELLS = withArt([
   {
     id: 'drain-fluids',
     name: 'Drain Fluids',
-    summary: 'Siphon a body’s fluids for Necrotic damage every turn you keep paying.',
+    summary: 'Siphon a body’s fluids for Decay damage every turn you keep paying.',
     kind: 'spell',
     tags: ['Adept Spell', 'Elemental', 'Water'],
     ap: 4,
     wp: 2,
     stat: 'mind',
-    damage: ['Necrotic'],
+    damage: ['Decay'],
     /* The card rolled "against the target's Physique". Physique is not a roll
        target — holding your insides where they belong is Grit, the same save
        FORCE INEBRIATION already asks for. */

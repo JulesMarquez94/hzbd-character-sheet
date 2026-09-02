@@ -228,6 +228,19 @@ const SKILL = { kind: 'skill', ap: null, wp: null };
  * Written once because the sentence is identical in all thirteen cells and the
  * only thing that moves is the domain. A skill that says anything else is
  * written out in full below.
+ *
+ * ------------------------------------------------------- and it is now wired
+ * `grants.checkWp` and `grants.checkAdvantage` are the same rider FRUGAL and
+ * QUICK DRAW carry, declared for the thirteen at once because the sentence is
+ * the same thirteen times. What reads it is the SKILL CHECK basic action: its
+ * prompt offers every one of these the holder actually has, and bringing one
+ * charges the Willpower and adds the advantage die. See CheckPick.jsx.
+ *
+ * **Whether it applies is the player's answer and not the sheet's.** No column
+ * anywhere says that this attempt is about a map, so ARCANE MARSHAL is offered
+ * with its own domain printed under it and the player is the one who decides
+ * whether they are reading one. That is the same judgement the table was making
+ * out loud before any of this was wired.
  */
 function insight({ id, name, tags = [], domain, summary }) {
   return {
@@ -236,6 +249,7 @@ function insight({ id, name, tags = [], domain, summary }) {
     name,
     tags: ['Skill', 'Passive', ...tags],
     summary,
+    grants: { checkWp: 1, checkAdvantage: 1 },
     body:
       `Whenever you make a skill check ${domain}, you can spend 1 Willpower ` +
       'to make it with advantage.',
@@ -349,12 +363,16 @@ const TROUBADOUR = insight({
 /* Streetwise is the thirteenth and the only one whose sentence does not start
    "to": its cell reads "a skill check that have to do with", so it is written
    out rather than forced through the builder above. */
+/* The fourteenth domain, written out rather than through `insight` because its
+   sentence is the one that differs ("that has to do with"). The mechanic is the
+   same to the letter, so it carries the same rider. */
 const STREETWISE = {
   ...SKILL,
   id: 'streetwise',
   name: 'Streetwise',
   tags: ['Skill', 'Passive', 'Stealth', 'Social'],
   summary: 'Advantage on the criminal world, tracking people down or intimidating.',
+  grants: { checkWp: 1, checkAdvantage: 1 },
   body:
     'Whenever you make a skill check that has to do with the criminal world, tracking down ' +
     'people or intimidating, you can spend 1 Willpower to make it with advantage.',
@@ -1196,6 +1214,49 @@ export function skillGrantSources(ids) {
     .map(getBackgroundSkill)
     .filter((skill) => skill?.grants)
     .map((skill) => ({ name: skill.name, ...skill.grants }));
+}
+
+/**
+ * Whether a skill speaks about a skill check the holder is the one making.
+ *
+ * Read off the prose, because the prose is where the codex says it: fourteen
+ * cells say "whenever you make a skill check", and a fifteenth arriving in a
+ * drop should turn up in the prompt without anybody remembering a list here.
+ *
+ * The two exclusions are the point of matching a phrase rather than the words:
+ * HELPFUL is "whenever **an ally** makes a skill check", which is not this
+ * check, and TAILOR reads a stranger's clothes "without doing a skill check",
+ * which is the absence of one. Neither belongs in a picker of what to bring.
+ */
+const MAKES_A_CHECK = /\byou make a skill check\b|\btreat a skill check\b/i;
+
+/**
+ * The held skills that have something to say about a skill check.
+ *
+ * What the SKILL CHECK basic action offers when it is played: every one of these
+ * is a card the holder can *bring* to the attempt.
+ *
+ * `wp` and `advantage` come off `grants`, so a row that says it and is not
+ * wired yet comes back with both at zero. The prompt shows those as what they
+ * are: a named line saying the card speaks to this and the sheet cannot spend
+ * it for you. Two do today, and both because their mechanic is not a die added
+ * to the roll: SKILLED swaps the check's own 2d6 for 2d8, and MASTERMIND
+ * maximises them once a Long Rest. Both are flagged in data/README.md.
+ * Offering them as dead toggles would be worse than naming them.
+ */
+export function checkSkills(ids) {
+  return dedupeIds(ids)
+    .map(getBackgroundSkill)
+    .filter((skill) => skill && MAKES_A_CHECK.test(skill.body ?? ''))
+    .map((skill) => ({
+      id: skill.id,
+      name: skill.name,
+      /* The domain, in the card's own words. Which is the whole question the
+         player is answering by ticking it. */
+      summary: skill.summary ?? '',
+      wp: Math.max(0, Math.floor(Number(skill.grants?.checkWp) || 0)),
+      advantage: Math.max(0, Math.floor(Number(skill.grants?.checkAdvantage) || 0)),
+    }));
 }
 
 /* --------------------------------------------------------- reading the row */

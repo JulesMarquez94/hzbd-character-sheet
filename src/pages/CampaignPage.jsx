@@ -7,6 +7,7 @@ import BlockTrays from '../components/sheet/BlockTrays.jsx';
 import { MinionStatsBlock } from '../components/sheet/MinionBlock.jsx';
 import PartyBlock from '../components/campaign/PartyBlock.jsx';
 import LogBlock from '../components/campaign/LogBlock.jsx';
+import LogCall from '../components/campaign/LogCall.jsx';
 import DiceWatch from '../components/campaign/DiceWatch.jsx';
 import { CardStackProvider } from '../components/CardStack.jsx';
 import CampaignDetails from '../components/campaign/CampaignDetails.jsx';
@@ -470,6 +471,10 @@ export default function CampaignPage() {
           Game Master's own enemy rolls carry no character, so `table` is what
           keeps them from replaying at the screen that threw them. */}
       <DiceWatch tables={[{ id }]} mine={mine} table={canEdit} />
+      {/* And what the table did, said in the corner: the log block is on one tab
+          and a Game Master running a fight is usually on another. Same skips as
+          the dice above, for the same reason. See LogCall.jsx. */}
+      <LogCall tables={[{ id }]} mine={mine} table={canEdit} />
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">
           <span className="camp-title" title={campaign.name}>

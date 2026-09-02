@@ -8803,6 +8803,129 @@ body.tray-open-right .sheet-canvas {
 }
 
 /* =========================================================
+   THE TABLE'S KNOCK
+   A row landed on the log, so it is said over whatever the
+   reader is looking at. Top right, because the dice tray
+   holds the bottom left and the reaction banner the bottom
+   right, and a notice must never sit on the two things you
+   answer with. One card per action, growing a line as the
+   action does. See LogCall.jsx.
+   ========================================================= */
+.log-call {
+  position: fixed;
+  top: 74px;
+  right: 18px;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 300px;
+  pointer-events: none;
+}
+
+.log-call-card {
+  --call-tone: var(--haze-glow);
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+
+  text-align: left;
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--call-tone);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(18, 30, 36, 0.96), rgba(9, 17, 21, 0.96));
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  animation: log-call-in 0.16s ease-out;
+}
+
+.log-call-card.is-react { --call-tone: var(--stat-rp); }
+.log-call-card.is-apply { --call-tone: var(--stat-health); }
+.log-call-card.is-rest { --call-tone: var(--vital-green); }
+.log-call-card.is-turn { --call-tone: var(--copper); }
+
+@keyframes log-call-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .log-call-card {
+    animation: none;
+  }
+}
+
+.log-call-face {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, var(--call-tone) 60%, transparent);
+  background-color: var(--bg-black);
+}
+
+.log-call-face.is-blank {
+  display: grid;
+  place-items: center;
+  font-size: 0.58rem;
+  color: var(--text-muted);
+}
+
+.log-call-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.log-call-who {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--focus-cyan);
+}
+
+.log-call-did {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--text-silver);
+}
+
+/* And what came of it, as it arrives. Smaller, because the first line is the
+   thing that happened and these are its consequences. */
+.log-call-then {
+  font-size: 0.62rem;
+  line-height: 1.3;
+  color: var(--text-muted);
+}
+
+.log-call-then::before {
+  content: '· ';
+}
+
+/* Under the folded header, and no wider: a notice that stretched across a phone
+   would be a banner, and this is a corner. */
+@media (max-width: 860px) {
+  .log-call {
+    top: 60px;
+    right: 10px;
+    max-width: min(300px, calc(100vw - 20px));
+  }
+}
+
+/* =========================================================
    THE REACTION WINDOW'S KNOCK
    Somebody at the table acted, their dice are held for six
    seconds, and this reader has Reaction Points to answer
@@ -9067,6 +9190,160 @@ button.tgt-chip:disabled {
   font-size: 0.68rem;
   line-height: 1.45;
   color: var(--text-muted);
+}
+
+/* ---------- WHAT A SKILL CHECK IS ROLLED WITH ----------
+   The one card in the codex whose attribute is a decision, so the three are
+   offered with what this character is worth on each, and the skills that speak
+   to a check are under them as things to bring. Same panel the targets wear,
+   because both are the same kind of question: answered before the price is
+   paid, and part of what the price is. See CheckPick.jsx. */
+.use-check {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.4);
+}
+
+.use-check-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.use-check-count {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--copper-bright);
+}
+
+/* The three, side by side and equal, because the choice is between peers. */
+.use-check-stats {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.use-check-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.4rem 0.3rem;
+
+  cursor: pointer;
+  font-family: var(--font-body);
+  border-radius: 3px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.55);
+}
+
+.use-check-stat:hover {
+  border-color: color-mix(in srgb, var(--stat-tone) 55%, transparent);
+}
+
+/* The picked one wears its own attribute's colour, the way every attribute on
+   the sheet does. */
+.use-check-stat.is-on {
+  border-color: var(--stat-tone);
+  background-color: color-mix(in srgb, var(--stat-tone) 14%, rgba(9, 17, 21, 0.55));
+}
+
+.use-check-stat-name {
+  font-size: 0.62rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.use-check-stat.is-on .use-check-stat-name {
+  color: var(--stat-tone);
+}
+
+.use-check-stat-value {
+  font-family: var(--font-headings);
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-bright);
+}
+
+/* One row per skill, its price and its domain under its name: the domain is the
+   whole question the player is answering by ticking it. */
+.use-check-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.use-check-skill {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 0.5rem;
+  padding: 0.35rem 0.45rem;
+
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+  border-radius: 3px;
+  border: 1px solid var(--hairline);
+  background-color: rgba(9, 17, 21, 0.55);
+}
+
+.use-check-skill:hover {
+  border-color: color-mix(in srgb, var(--stat-wp) 45%, transparent);
+}
+
+.use-check-skill.is-on {
+  border-color: var(--stat-wp);
+  background-color: color-mix(in srgb, var(--stat-wp) 12%, rgba(9, 17, 21, 0.55));
+}
+
+.use-check-skill-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
+.use-check-skill.is-on .use-check-skill-name {
+  color: var(--text-bright);
+}
+
+.use-check-skill-gives {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--stat-wp);
+}
+
+.use-check-skill-when {
+  grid-column: 1 / -1;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.use-check-note {
+  margin: 0;
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.use-check-note b {
+  color: var(--text-silver);
 }
 
 /* =========================================================
@@ -12186,6 +12463,12 @@ button.tgt-chip:disabled {
 .log-entry.log-rest { --log-accent: var(--vital-green); }
 .log-entry.log-turn { --log-accent: var(--copper); }
 .log-entry.log-roll { --log-accent: var(--focus-cyan); }
+/* The four kinds that are normally rows inside a use's block, standing on their
+   own because their use is a page further down. Same colours they wear there. */
+.log-entry.log-verdict { --log-accent: var(--focus-cyan); }
+.log-entry.log-apply { --log-accent: var(--stat-health); }
+.log-entry.log-effect { --log-accent: var(--haze-glow); }
+.log-entry.log-react { --log-accent: var(--stat-rp); }
 
 .log-entry.is-open {
   background-color: rgba(9, 17, 21, 0.55);
@@ -12391,6 +12674,51 @@ button.tgt-chip:disabled {
 }
 
 .log-throw-called::before {
+  content: '· ';
+}
+
+/* ---------- A LINE ABOUT THE ACTION ----------
+   The verdicts, what landed, the row it laid and everything the reaction stack
+   said. All of these were entries of their own until one action became one
+   entry, so they are drawn as the small type between the dice: a bar down the
+   left in the kind's own colour, the sentence the row already carried, and the
+   name only when it is somebody other than whoever is acting. See Aside. */
+.log-aside {
+  --aside-tone: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.35rem;
+  margin: 0;
+  padding: 0.15rem 0.4rem;
+  border-left: 2px solid color-mix(in srgb, var(--aside-tone) 55%, transparent);
+  font-size: 0.66rem;
+  line-height: 1.35;
+}
+
+.log-aside.is-verdict { --aside-tone: var(--focus-cyan); }
+.log-aside.is-apply { --aside-tone: var(--stat-health); }
+.log-aside.is-effect { --aside-tone: var(--haze-glow); }
+.log-aside.is-react { --aside-tone: var(--stat-rp); }
+
+/* Whoever it was, when it was not the actor. A reaction in the middle of
+   somebody else's cast is the one row here that has to say a name. */
+.log-aside-who {
+  font-weight: 700;
+  color: var(--aside-tone);
+}
+
+.log-aside-what {
+  color: var(--text-silver);
+}
+
+.log-aside-why {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.log-aside-why::before {
   content: '· ';
 }
 

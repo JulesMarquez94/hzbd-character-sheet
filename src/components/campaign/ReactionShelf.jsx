@@ -101,6 +101,11 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
     const { foe, actor, request } = picked;
     const targets = options?.targets ?? [];
 
+    /* The reaction's own id, minted here for the same reason an enemy's block
+       mints one: this page writes the effect and the landing itself, and both
+       belong in the reaction's block. See EnemyBlock.jsx. */
+    const chain = newChain();
+
     /* The same landing an enemy's block gives an aimed use: the effect rides to
        whoever was picked and the rolled numbers go to the apply window. See
        EnemyBlock.jsx, whose confirm this mirrors. */
@@ -116,6 +121,7 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
 
     play(request, mode, amount, options, {
       actor,
+      chain,
       afterSettled: () => said('done'),
       ...(cast
         ? {
@@ -137,12 +143,13 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
                 outcomes: meta.outcomes ?? null,
                 hit: meta.hit ?? null,
                 cast: checky ? cast : null,
+                chain,
               }),
           }
         : {}),
     });
 
-    if (cast && !checky) combat?.layEffect?.(foe, targets, cast);
+    if (cast && !checky) combat?.layEffect?.(foe, targets, cast, chain);
     onClose();
   }
 

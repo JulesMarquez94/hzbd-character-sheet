@@ -214,7 +214,7 @@ function eventRow(campaignId, event) {
  * whose network is failing should not be a table where nobody may react.
  */
 export async function claimReaction(campaignId, event) {
-  if (!supabase || !campaignId || !event?.data?.to) return true;
+  if (!supabase || !campaignId || !event?.data?.chain) return true;
 
   const { error } = await supabase.from('campaign_events').insert([eventRow(campaignId, event)]);
   if (error) {
@@ -227,7 +227,7 @@ export async function claimReaction(campaignId, event) {
     .select('data')
     .eq('campaign_id', campaignId)
     .eq('kind', 'react')
-    .eq('data->>to', event.data.to)
+    .eq('data->>chain', event.data.chain)
     .eq('data->>move', 'open')
     .order('seq', { ascending: true })
     .limit(1);
@@ -513,6 +513,15 @@ export function turnDoneEvent(character, round) {
  *   failed  the action is off. The cost stays spent — pressing use was the
  *           decision, the reaction is what undid the consequence — and the
  *           row says so for the whole table.
+ *
+ * ------------------------------------------------- the chain is the address
+ * All four ride in `data.chain`, which is the reacted action's own id and not
+ * this row's. That is the field the gate matches on (see watchStack), the field
+ * the one-reaction claim counts on (see claimReaction), and the field the log
+ * groups on — so "reacting" is part of the action's block rather than three
+ * loose rows beside it, which is what Jules asked for on 2026-09-02. One id,
+ * one meaning: it used to be `data.to` here and `data.chain` everywhere else,
+ * and rows written before the rename are the one thing that will not gather.
  */
 
 export function reactEvent(move, { chain = null, key = null, by = '' } = {}) {
@@ -528,18 +537,18 @@ export function reactEvent(move, { chain = null, key = null, by = '' } = {}) {
     actor: by || 'Someone',
     title: said.title,
     detail: said.detail,
-    data: { move, to: chain, key },
+    data: { move, chain, key },
   };
 }
 
 /** The fail question answered against the action: it fizzles, the cost stays. */
-export function reactionFailedEvent(character, name, { failed = [] } = {}) {
+export function reactionFailedEvent(character, name, { failed = [], chain = null } = {}) {
   return {
     kind: 'react',
     actor: character?.name ?? '',
     title: failed.length > 0 ? `${name} fails against ${listAnd(failed)}` : `${name} fails`,
     detail: 'Undone by the reaction · the cost stays spent',
-    data: { move: 'failed', card: null, failed },
+    data: { move: 'failed', chain, card: null, failed },
   };
 }
 
@@ -600,13 +609,27 @@ export function fightOverEvent({ encounter = null, rounds = 0 } = {}) {
  * event id acts on it once.
  */
 
+/* ------------------------------------------------------- and where they sit
+ *
+ * Every row below takes the `chain` of the use that caused it, and every one of
+ * them used to take none. That was the whole of "an attack should not be 3
+ * entries in the log" (Jules, 2026-09-02): the verdicts, the deliveries and the
+ * effect are all rows *about* one action, and a row with no chain on it is a row
+ * the log has to draw as an action of its own. With the id on them they gather
+ * into the block the use already heads. See UNDER in logChain.js.
+ *
+ * Null is still allowed and still means what it says: a tracked effect rolled
+ * off its own row on the encounter page has no use above it, so its delivery is
+ * genuinely its own entry.
+ */
+
 /**
  * An effect laid on somebody's tracker.
  *
  * `effect` is the same entry `castEffect` would have laid on the caster —
  * name, card, turns, until, from — relaid at the far end by whoever it names.
  */
-export function effectLaidEvent(caster, effect, targets = []) {
+export function effectLaidEvent(caster, effect, targets = [], { chain = null } = {}) {
   const lasts = effect?.turns
     ? `${effect.turns} ${effect.turns === 1 ? 'turn' : 'turns'}`
     : effect?.until
@@ -620,6 +643,7 @@ export function effectLaidEvent(caster, effect, targets = []) {
     detail: `On ${listAnd(targets.map((entry) => entry.name))} · ${lasts}`,
     data: {
       move: 'effect',
+      chain,
       portrait: caster?.portrait ?? null,
       card: effect?.card ?? null,
       effect,
@@ -642,7 +666,7 @@ export function effectLaidEvent(caster, effect, targets = []) {
  * is the total read against everybody it was aimed at, which is the sentence
  * somebody says out loud at the table.
  */
-export function verdictEvent(caster, name, outcomes = []) {
+export function verdictEvent(caster, name, outcomes = [], { chain = null } = {}) {
   const crits = outcomes.filter((entry) => entry.verdict === 'critical-success');
   const hits = outcomes.filter((entry) => entry.verdict === 'success');
   const missed = outcomes.filter((entry) => isFailure(entry.verdict));
@@ -660,6 +684,7 @@ export function verdictEvent(caster, name, outcomes = []) {
     detail: [name, 'one roll, judged against each'].filter(Boolean).join(' · '),
     data: {
       move: 'verdict',
+      chain,
       portrait: caster?.portrait ?? null,
       card: caster?.card?.id ?? null,
       outcomes: outcomes.map((entry) => ({
@@ -683,7 +708,7 @@ export function verdictEvent(caster, name, outcomes = []) {
  * rolled total; what each body loses is that body's own business, worked out
  * where its pools live.
  */
-export function appliedEvent(caster, delta, targets = []) {
+export function appliedEvent(caster, delta, targets = [], { chain = null } = {}) {
   const verb = delta.kind === 'damage' ? 'dealt' : 'gave';
   const words =
     delta.kind === 'damage'
@@ -697,6 +722,7 @@ export function appliedEvent(caster, delta, targets = []) {
     detail: `To ${listAnd(targets.map((entry) => entry.name))}${caster?.card ? ` · ${caster.card.name}` : ''}`,
     data: {
       move: 'apply',
+      chain,
       portrait: caster?.portrait ?? null,
       card: caster?.card?.id ?? null,
       verb,

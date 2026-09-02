@@ -132,11 +132,18 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
         if (!attribute) continue;
 
         const sentence = sentenceAround(text, match.index);
+        /* A Skill Check is the card's own words, exactly as an Attack Roll is.
+           The log names a throw after the kind of roll it was (see STEP_WORDS in
+           logChain.js), and "Skill Check" is the name the game gives this one:
+           it is what the thirteen domain skills say they apply to, and it is
+           what the tray's own custom roll has offered since it was written. */
         const kind = isWeaponAttack(card)
           ? 'weapon'
-          : sentence.includes('attack')
-            ? 'attack'
-            : 'check';
+          : sentence.includes('skill check')
+            ? 'skill'
+            : sentence.includes('attack')
+              ? 'attack'
+              : 'check';
 
         links.push({
           shape: 'check',

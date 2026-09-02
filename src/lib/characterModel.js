@@ -512,8 +512,8 @@ export function deriveStats(character, extra = null, running = null) {
   /* Armor is worn pieces plus whatever has been laid on the wielder. Resilience
      grants "3 armor" and Armor is a stat, so it is one number: the meter reads it,
      and Heavy Armor's "half of Armor" rider reads the same one rather than a
-     smaller Armor of its own. Flagged in data/README.md as an interaction the
-     designer has not ruled on.
+     smaller Armor of its own. **Ruled by Jules on 2026-09-02**: all Armor counts
+     toward that half, wherever it came from. See docs/rulebook.md 7.2.
 
      And the hide, for a Feral Cursed who is wearing one. FERAL HIDE grants "half
      your Instinct" while the form is running, which is a share of an attribute

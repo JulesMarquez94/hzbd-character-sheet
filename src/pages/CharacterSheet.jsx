@@ -14,6 +14,7 @@ import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import FightProvider from '../components/campaign/FightProvider.jsx';
+import LogCall from '../components/campaign/LogCall.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
 import ReactionCall from '../components/campaign/ReactionCall.jsx';
 import ReactionWindow from '../components/campaign/ReactionWindow.jsx';
@@ -396,6 +397,11 @@ export default function CharacterSheet({ creating = false }) {
         started here by this sheet, off an announcement on the table log, because
         nobody else may write to it. See TurnCall.jsx. */}
     <TurnCall character={character} patch={patch} canEdit={canEdit} />
+    {/* And everything else the table did, said in the corner of whatever tab
+        you are on: the log block is on the Character tab and a fight is not
+        somewhere you can afford to have missed a reaction. Only on your own
+        sheet, and never about your own rows. See LogCall.jsx. */}
+    {canEdit && <LogCall mine={character.id} />}
     {/* The reaction window's knock: somebody at the table acted, their roll is
         gated, and this sheet has Reaction Points to answer with. Tapping the
         banner opens the window below, which is itself the hold on their roll.

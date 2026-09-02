@@ -116,6 +116,38 @@ export const BASIC_ACTIONS = withArt([
     sub_body: null,
   },
   {
+    /* Not on the sheet either, and asked for outright: "Add a new basic action
+       which is to do a skill check that let you select an attribute and then add
+       any skill that could be relevant (like arcane marshal ect). Skill check
+       are modular action cost and can cost nothing." Jules, 2026-09-02.
+
+       Every other card in the codex names its own attribute. This one cannot:
+       the whole of a skill check is that the table decides what it is being
+       attempted with, so the attribute is a question asked at the moment of use
+       and `picks: 'check'` is what raises it. The card's printed `stat` is only
+       where the picker opens.
+
+       `ap: 0` with `variable: true`, which is the pair that says "modular, and
+       nothing is a real answer": the dial opens on what the card printed, and it
+       printed nothing. See the note on `variable` above, and `ap: 0` on RAGING
+       BLOW in talents.js for the same argument about saying the nothing out
+       loud. */
+    id: 'skill-check',
+    name: 'Skill Check',
+    kind: 'ability',
+    tags: ['Basic Action'],
+    ap: 0,
+    wp: null,
+    variable: true,
+    picks: 'check',
+    stat: 'mind',
+    summary: 'Attempt something the world might refuse you, with whatever you know.',
+    body:
+      'You attempt something that is not an attack and is not certain: a wall to climb, a lock to pick, a guard to talk past.\n\n' + // text-style-ok: a list after a colon
+      'Choose the attribute it is made with and roll a {stat} Skill Check {roll} against a difficulty your Game Master sets.\n\n' +
+      'What it costs in Action Points is the Game Master’s to set, and most attempts cost nothing. Any skill you hold that applies is brought with it and pays its own price.',
+  },
+  {
     id: 'interact',
     name: 'Interact',
     kind: 'ability',
@@ -169,7 +201,13 @@ export const BASIC_ACTIONS = withArt([
     body:
       'You use force to push **an entity** you can touch away from you.\n\n' +
       'Make a {physique} Attack Roll {roll:physique} against the target.\n\n' +
-      'On a hit, you push the target back **1.5 meters (3 feet)** or knock it prone.',
+      /* The sheet writes "(3 feet)" here. Every other conversion in the codex
+         reads 1.5 meters as 5 feet, and so does the app's own unit switch,
+         which snaps to 5ft steps because a battle map is drawn in them. Jules
+         confirmed the conversion on 2026-09-02 (1.5 m = 5 ft = 1 space) and
+         called this one a slip, so it is corrected here with the sheet's other
+         typos rather than carried. See docs/rulebook.md. */
+      'On a hit, you push the target back **1.5 meters (5 feet)** or knock it prone.',
   },
   {
     id: 'anticipate',

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import AbilityCard from '../AbilityCard.jsx';
+import CheckPick from './CheckPick.jsx';
 import RollArrow from '../RollArrow.jsx';
 import TargetChip from '../TargetChip.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
@@ -10,6 +11,7 @@ import { useFight } from '../../context/fight.js';
 import { VARIABLE_CAP } from '../../lib/actions.js';
 import { castLine } from '../../lib/combatBar.js';
 import { getKeyword } from '../../lib/keywords.js';
+import { characterCheckSkills } from '../../lib/levelPicks.js';
 import { normalizeEffects } from '../../lib/combatTurn.js';
 import { cardAccent } from '../../lib/tagColors.js';
 import { getCard } from '../../lib/weapons.js';
@@ -199,7 +201,14 @@ export default function UsePrompt({
   // How far the dial goes. A conversion is capped by both pools, since moving
   // a point that neither can hold is not a choice, it is a mistake.
   const ceiling = converts ? convertRoom(character) : VARIABLE_CAP;
-  const [dialled, setDialled] = useState(() => Math.min(1, ceiling));
+  /* And where it opens: on what the card printed. Every variable action but one
+     prints no cost at all and opens on 1, which is the smallest thing the Game
+     Master is likely to charge. A SKILL CHECK prints 0, because "most attempts
+     cost nothing" is the rule rather than the exception, and a dial that opened
+     on 1 would charge an Action Point for asking a barman a question. */
+  const [dialled, setDialled] = useState(() =>
+    Math.max(0, Math.min(request.ap == null ? 1 : Number(request.ap) || 0, ceiling))
+  );
 
   /* The card's second half, and how many times it has been taken. Zero is not
      taken at all, which is where every use starts: the printed cost is the cost
@@ -247,8 +256,54 @@ export default function UsePrompt({
     });
   }
 
+  /* ---- what this one asks before it can be priced ----
+     A SKILL CHECK is rolled off an attribute the player picks, with whatever
+     skill they say applies. Both are questions the codex cannot answer: there is
+     no column anywhere saying that this attempt is about a map. So the card
+     carries `picks: 'check'` and the two answers are collected here, above the
+     ways, because what a skill costs in Willpower is part of what the button
+     below is about to charge. See CheckPick.jsx and actions.js. */
+  const picks = request.card?.picks === 'check';
+
+  /* Whose numbers and whose skills. A creature plays the same basic actions off
+     its own attributes and holds no background at all, so its picker offers the
+     three attributes and says so. */
+  const who = request.modifiers?.actor ?? character;
+
+  const [attribute, setAttribute] = useState(() => request.card?.stat ?? 'instinct');
+  const [brought, setBrought] = useState([]);
+
+  const checkable = useMemo(
+    () => (picks ? characterCheckSkills(who) : []),
+    [picks, who]
+  );
+  /* What is actually riding: ticked, and wired. Read on render rather than
+     trimmed by an effect, exactly as the target list is. */
+  const riding = useMemo(
+    () => checkable.filter((skill) => skill.advantage > 0 && brought.includes(skill.id)),
+    [checkable, brought]
+  );
+  const bringWp = riding.reduce((sum, skill) => sum + skill.wp, 0);
+  const bringSwing = riding.reduce((sum, skill) => sum + skill.advantage, 0);
+
   // What the card rolls with, for a tithe written off an attribute.
-  const stat = request.modifiers?.stat ?? request.card?.stat ?? 'instinct';
+  const stat = picks ? attribute : request.modifiers?.stat ?? request.card?.stat ?? 'instinct';
+
+  /* The card as it stands with those answers on it, so the printed card beside
+     the ways shows the attribute that is about to be rolled and the advantage
+     the skills are lending. The same object goes out on the confirm, which is
+     what makes the dice agree with the card the player was looking at. */
+  const modifiers = useMemo(
+    () =>
+      picks
+        ? {
+            ...request.modifiers,
+            stat: attribute,
+            advantage: (Number(request.modifiers?.advantage) || 0) + bringSwing,
+          }
+        : request.modifiers,
+    [picks, request.modifiers, attribute, bringSwing]
+  );
 
   /* What is on this character right now, for the list under the ways, and how
      long this use will itself be on them. Both read off the request and the
@@ -279,7 +334,10 @@ export default function UsePrompt({
 
   const base = {
     ap: request.variable ? dialled : Number(request.ap) || 0,
-    wp: Number(request.wp) || 0,
+    /* Plus whatever the skills brought to a check cost. A skill has no printed
+       price of its own (see the note in backgrounds.js): it spends Willpower
+       conditionally, inside its own sentence, and this is the condition. */
+    wp: (Number(request.wp) || 0) + bringWp,
     health: 0,
   };
   const taken = Boolean(offer) && times > 0;
@@ -316,10 +374,16 @@ export default function UsePrompt({
   const room = halfRoom(offer, character, offer?.instead ? NOTHING : base, stat);
 
   /* Whole numbers rather than a card and a count: the number printed beside the
-     way you tap is the number that leaves the sheet. See spendUse. */
+     way you tap is the number that leaves the sheet. See spendUse.
+
+     A skill brought to a check settles a price the same way a second half does,
+     and for the same reason: the card printed neither number, so the only
+     honest account of the cost is the one the prompt just added up. */
   const settled = taken
     ? { ...price, note: `${offer.name}: ${request.name}` }
-    : null;
+    : bringWp > 0
+      ? { ...price, note: `${request.name}: ${listAnd(riding.map((skill) => skill.name))}` }
+      : null;
 
   /* Whatever the tap decided, in one place: the price the second half settled
      on, and whoever was picked to catch it. Targets go out as bodies rather
@@ -330,6 +394,12 @@ export default function UsePrompt({
   function decided(extra = {}) {
     const options = { ...extra };
     if (settled) options.price = settled;
+    /* The attribute this check is rolled off and the advantage the skills
+       brought to it. Out as modifiers rather than as two loose fields, because
+       that is the shape everything downstream already reads a card with: the
+       roll plan, the printed card and the log all take one `modifiers`. See
+       usePlayCard.js, which folds it onto the request once. */
+    if (picks) options.modifiers = modifiers;
     /* An action taken with a fight standing invites reactions: the chain's
        first roll waits the reaction window before it can be thrown. See
        REACTION_HOLD in usePlayCard.js. */
@@ -379,6 +449,13 @@ export default function UsePrompt({
     setDenied(null);
   }
 
+  /* A skill brought to the check, or put back down. Every one of them is its
+     own Willpower, so this moves the price and clears the refusal with it. */
+  function bring(id) {
+    setBrought((was) => (was.includes(id) ? was.filter((held) => held !== id) : [...was, id]));
+    setDenied(null);
+  }
+
   return (
     <Modal
       title={`Use: ${request.name}`}
@@ -414,21 +491,45 @@ export default function UsePrompt({
               ? 'A reaction is paid out of Reaction Points, so that is the one way offered.'
               : converts
                 ? 'How many points do you want waiting on somebody else?'
-                : request.variable
-                  ? 'How many Action Points is this worth? Your Game Master decides.'
-                  : price.ap > 0
-                    ? 'Is this your action, or are you reacting to something?'
-                    : 'Nothing but the cost below leaves your sheet.'}
+                : picks
+                  ? 'What are you rolling, and what are you bringing to it?'
+                  : request.variable
+                    ? 'How many Action Points is this worth? Your Game Master decides.'
+                    : price.ap > 0
+                      ? 'Is this your action, or are you reacting to something?'
+                      : 'Nothing but the cost below leaves your sheet.'}
           </span>
 
-          {/* The dial only appears for the two actions with no printed cost. */}
+          {/* The attribute and the skills, above everything, because they are
+              what this roll *is* and one of them changes what it costs. */}
+          {picks && (
+            <CheckPick
+              who={who}
+              stat={attribute}
+              onStat={(key) => {
+                setAttribute(key);
+                setDenied(null);
+              }}
+              skills={checkable}
+              brought={brought}
+              onBring={bring}
+            />
+          )}
+
+          {/* The dial only appears for the actions with no fixed cost. */}
           {request.variable && (
             <Dial
               value={dialled}
               ceiling={ceiling}
               onChange={dial}
               label={converts ? 'Points held back' : 'Action Points'}
-              hint={converts ? convertHint(character, ceiling) : null}
+              hint={
+                converts
+                  ? convertHint(character, ceiling)
+                  : picks
+                    ? 'Most attempts cost nothing. Your Game Master says when one does.'
+                    : null
+              }
             />
           )}
 
@@ -673,7 +774,7 @@ export default function UsePrompt({
             <AbilityCard
               ability={request.card}
               character={character}
-              modifiers={request.modifiers}
+              modifiers={modifiers}
               onValue={cards?.openValue}
               /* A linked card is cast as written, so it is dealt without this
                  one's modifiers — the same as a link on any other card. */

@@ -315,7 +315,8 @@ export function worthReplaying(row, { mine = null, table = false, now = Date.now
 /* ------------------------------------------------------------ reading a chain
  *
  * The feed is flat, insert only and newest first. A chain has to read as one
- * block with its throws under it, so the rows are gathered back up here.
+ * block with everything it set off under it, so the rows are gathered back up
+ * here.
  *
  * Two rules, both of which look odd written down and are obvious on screen:
  *
@@ -328,52 +329,119 @@ export function worthReplaying(row, { mine = null, table = false, now = Date.now
  *   because you want the last thing first; a chain runs forwards because it is
  *   a sequence, and "damage 17" above "attack 12, success" is the story told
  *   back to front.
+ *
+ * ------------------------------------------------------- one action, one entry
+ * "Same an attack should not be 3 entries in the log", and "reacting should be
+ * part of the action block not its own" (Jules, 2026-09-02). Both were the same
+ * bug: a throw was the only row a chain gathered, so every *other* row an
+ * action writes stood on its own. One swing at two goblins was the use, then
+ * the verdicts, then the damage delivered, then whatever the reaction stack had
+ * to say: five entries for one thing somebody did.
+ *
+ * So a chain gathers every row addressed to it, whatever kind it is, and the
+ * kinds below are the ones that are never a head. They are all rows written
+ * *about* an action that is already in the log:
+ *
+ *   roll     a throw the use raised
+ *   verdict  the one total, judged per body it was aimed at
+ *   apply    what landed on them
+ *   effect   the row it laid on their trackers
+ *   react    the stack: who stepped in, what came of it, and the action failing
+ *
+ * A row of one of these kinds whose head is not on the page still draws on its
+ * own, exactly as an orphan throw always has. See the note on `groupEvents`.
  */
+const UNDER = new Set(['roll', 'verdict', 'apply', 'effect', 'react']);
 
 /**
- * The feed as `[{ key, head, rolls }]`, newest group first.
+ * The feed as `[{ key, head, trail, rolls }]`, newest group first.
  *
- * A row that is not part of a chain comes back as its own group with no rolls,
- * so the caller renders one list and never asks which sort of row it is holding.
- * A throw whose head is not on this page comes back the same way: the head is
- * older, so it is one page down, and a roll that refused to draw until you
- * pressed Older would be a worse answer than a roll standing on its own.
+ * `trail` is everything the action set off, oldest first, in the order the
+ * table saw it: throws and the rows about them interleaved, because "missed
+ * 3.Fenrat" belongs between the attack roll and the damage and nowhere else.
+ * `rolls` is the throws out of that trail, for the summary and the verdict band,
+ * which only ever ask about dice.
+ *
+ * A row that is not part of a chain comes back as its own group with an empty
+ * trail, so the caller renders one list and never asks which sort of row it is
+ * holding. A row whose head is not on this page comes back the same way: the
+ * head is older, so it is one page down, and a roll that refused to draw until
+ * you pressed Older would be a worse answer than a roll standing on its own.
  */
 export function groupEvents(events) {
   const list = events ?? [];
 
-  /* A head is any row that carries a chain and is not itself a throw. Today that
-     is the use; a rest or a turn could grow one without changing this. */
+  /* A head is any row that carries a chain and is not one of the kinds written
+     under one. Today that is the use; a rest or a turn could grow a chain
+     without changing this. */
   const heads = new Map();
   for (const row of list) {
     const chain = row?.data?.chain;
-    if (chain && row.kind !== 'roll' && !heads.has(chain)) heads.set(chain, row);
+    if (chain && !UNDER.has(row.kind) && !heads.has(chain)) heads.set(chain, row);
   }
 
-  const throws = new Map();
+  const trails = new Map();
   for (const row of list) {
     const chain = row?.data?.chain;
-    if (!chain || row.kind !== 'roll' || !heads.has(chain)) continue;
-    if (!throws.has(chain)) throws.set(chain, []);
-    throws.get(chain).push(row);
+    if (!chain || !UNDER.has(row.kind) || !heads.has(chain)) continue;
+    if (!trails.has(chain)) trails.set(chain, []);
+    trails.get(chain).push(row);
   }
   // The feed handed them over newest first. A chain reads the other way.
-  for (const rows of throws.values()) rows.reverse();
+  for (const rows of trails.values()) rows.reverse();
 
   const out = [];
   const seen = new Set();
   for (const row of list) {
     const chain = row?.data?.chain;
     if (!chain || !heads.has(chain)) {
-      out.push({ key: row.id, head: row, rolls: [] });
+      out.push({ key: row.id, head: row, trail: [], rolls: [] });
       continue;
     }
     if (seen.has(chain)) continue;
     seen.add(chain);
-    out.push({ key: chain, head: heads.get(chain), rolls: throws.get(chain) ?? [] });
+
+    const trail = settled(trails.get(chain) ?? []);
+    out.push({
+      key: chain,
+      head: heads.get(chain),
+      trail,
+      rolls: trail.filter((entry) => entry.kind === 'roll'),
+    });
   }
 
   return out;
+}
+
+/**
+ * A trail with the announcements its own outcomes have already answered
+ * dropped.
+ *
+ * One case so far, and it is the reaction stack: a reader stepping in writes
+ * `open` the moment their window mounts, and then `done` or `pass` when it
+ * settles. Both are real events at different moments and both stay in the
+ * table's history. Inside one block they are one thing said twice, and the
+ * second one says it better: "Kaelen took a reaction" needs no "Kaelen is
+ * reacting" above it.
+ *
+ * Only the resolved ones are dropped. A reaction still being chosen is exactly
+ * the row a reader watching a held action wants to see.
+ */
+function settled(trail) {
+  const answered = new Set(
+    trail
+      .filter(
+        (row) =>
+          row.kind === 'react' && (row.data?.move === 'done' || row.data?.move === 'pass')
+      )
+      .map((row) => row.data?.key ?? '')
+  );
+  if (answered.size === 0) return trail;
+
+  return trail.filter(
+    (row) =>
+      !(row.kind === 'react' && row.data?.move === 'open' && answered.has(row.data?.key ?? ''))
+  );
 }
 
 /* --------------------------------------------------------- reading a fight
@@ -436,5 +504,69 @@ export function bundleTurns(groups) {
 
 /** How many rows a bundle holds, its own head included. What the fold prints. */
 export function bundleCount(bundle) {
-  return (bundle?.groups ?? []).reduce((sum, group) => sum + 1 + group.rolls.length, 0);
+  return (bundle?.groups ?? []).reduce((sum, group) => sum + 1 + (group.trail?.length ?? 0), 0);
+}
+
+/* ------------------------------------------------------------- the knock
+ *
+ * "When a new entry happen, like with the reaction, there should be a pop up
+ * showing." Jules, 2026-09-02.
+ *
+ * The log block is a block: it is on one tab of one page, and a player reading
+ * their Inventory while somebody counterspells them finds out about it later.
+ * So a row that lands is also announced over whatever you are looking at.
+ *
+ * What the pop-up says is decided here rather than in the component, for the
+ * two reasons everything in this file is here: it is a pure reading of a row,
+ * so the checker can hold it to its wording under Node, and the component that
+ * draws it then imports nothing that reaches the codex.
+ *
+ * ------------------------------------------------------------- one per action
+ * A notice is keyed on the **chain**, not the row. An attack writes a use, its
+ * throws, a verdict and a delivery, and four pop-ups for one swing would be the
+ * noise this whole day's work is about removing. The caller holds one notice
+ * per key and lets the later lines land in it, which is the same law the block
+ * underneath obeys: one action, one entry. See groupEvents.
+ */
+
+/** What each kind of row is worth saying, as the verb in front of the title. */
+const KNOCK = {
+  use: (row) => row.data?.verb ?? 'used',
+  rest: () => 'took a',
+  effect: () => 'laid',
+  apply: (row) => row.data?.verb ?? 'dealt',
+};
+
+/**
+ * One row as the line a pop-up shows, or null for a row not worth interrupting
+ * anybody with.
+ *
+ * `{ key, actor, portrait, line, kind }`. Two kinds are silent:
+ *
+ *   a throw    the dice are already coming: `worthReplaying` puts somebody
+ *              else's roll on your own table, faces and all, and a banner
+ *              saying so over the top of it is the same news twice.
+ *   the sheet's own covers   an initiative bell and a turn call already take
+ *              the whole screen on the sheet they name. See TurnCall.jsx.
+ *
+ * Everything else speaks, because everything else is somebody at the table
+ * doing something to somebody.
+ */
+export function noticeOf(row) {
+  if (!row?.kind || row.kind === 'roll') return null;
+  if (row.kind === 'turn' && (row.data?.move === 'your-turn' || row.data?.move === 'initiative')) {
+    return null;
+  }
+
+  const verb = KNOCK[row.kind]?.(row) ?? '';
+
+  return {
+    /* The action it belongs to where it has one, so the reaction to a Fireball
+       lands in the Fireball's own notice rather than beside it. */
+    key: row.data?.chain ?? row.id ?? row.title ?? '',
+    actor: row.actor ?? '',
+    portrait: row.data?.portrait ?? null,
+    kind: row.kind,
+    line: [verb, row.title ?? ''].filter(Boolean).join(' '),
+  };
 }

@@ -88,7 +88,7 @@ export function usePlayCard({ character, patch }) {
   const { tables, log } = useCampaignLog();
 
   return useCallback(
-    (request, mode, amount, options = {}, extra = {}) => {
+    (asked, mode, amount, options = {}, extra = {}) => {
       const {
         /* Who acted. A creature plays its own cards off its own attributes and
            signs the log with its own name, so its block hands one in. See
@@ -114,7 +114,25 @@ export function usePlayCard({ character, patch }) {
            everything else, whether the chain rolled, was abandoned or never
            existed. */
         afterSettled = null,
+        /* The id this whole use is filed under: the use, every throw beneath it
+           and every row written about it, which is what lets the log draw them
+           as one block. Minted here, before the first write, unless the caller
+           has rows of its own to write against it and hands one in. The
+           encounter page is that caller. See `newChain` in logChain.js. */
+        chain = newChain(),
       } = extra;
+
+      /* ---- what the prompt decided about the card itself ----
+         A Skill Check is rolled off an attribute the player picks and with
+         whatever skill they brought to it, and both of those are answers to a
+         question asked inside the prompt rather than anything the codex printed.
+         They arrive as modifiers and are folded onto the request here, once, so
+         that every reader below — the roll plan, the spend and the log line —
+         sees one request and cannot disagree about which attribute was rolled.
+         See CheckPick.jsx. */
+      const request = options?.modifiers
+        ? { ...asked, modifiers: { ...asked?.modifiers, ...options.modifiers } }
+        : asked;
 
       /* ---- who it was aimed at, and who is going to land it ----
          Targets arrive off the prompt as bodies (kind, id, name). A page with
@@ -133,10 +151,6 @@ export function usePlayCard({ character, patch }) {
          write of its own (a Martial Move or an AMBUSH is a rider on the caster,
          not a thing aimed at anybody), which is the same guard spendUse keeps. */
       const cast = delivering && !request?.extra?.effects ? castEffect(request) : null;
-
-      /* Minted before the first write so the use and every throw under it carry
-         the same one, and the log can draw them as a block. See newChain. */
-      const chain = newChain();
 
       /* Every check aimed at the picked targets carries what it is judged by:
          one shared number opens the surface saying "against 15", and differing
@@ -164,11 +178,22 @@ export function usePlayCard({ character, patch }) {
       if (Object.keys(body).length > 0) patch(body);
 
       /* ---- 2. the table ----
-         Chained only when there is something to hang under it. A use that rolls
-         nothing is a plain row, and a chain id nothing ever joins would leave a
-         block waiting forever for a throw that was never coming. */
+         Chained when there is something to hang under it: dice to throw, bodies
+         to land on, or a row to lay on them. A use with none of the three is a
+         plain line — a Move, an Interact — and an id nothing ever joins would
+         leave a block waiting forever for a throw that was never coming.
+
+         Aim counts as well as dice, which it did not until 2026-09-02. An aimed
+         cast that rolls nothing still writes a delivery, and a delivery whose
+         head carried no chain was the second of the two entries Jules asked to
+         see folded into one. */
       if (tell) {
-        log(playEvent(request, actor, mode, amount, { ...options, chain: plan.length > 0 ? chain : null }));
+        log(
+          playEvent(request, actor, mode, amount, {
+            ...options,
+            chain: plan.length > 0 || cast || targets.length > 0 ? chain : null,
+          })
+        );
       }
 
       const speaker = {
@@ -191,7 +216,7 @@ export function usePlayCard({ character, patch }) {
       /* ---- the effect with nothing to pass, delivered now ----
          Held back while the gate stands, though: an action the table then
          fails must not have already laid its row on anybody. */
-      if (cast && !checky && !gating) log(effectLaidEvent(speaker, cast, targets));
+      if (cast && !checky && !gating) log(effectLaidEvent(speaker, cast, targets, { chain }));
 
       /* ---- and the rest, once the dice have spoken ----
          The chain hands back what landed and, for an aimed check, who it landed
@@ -200,15 +225,16 @@ export function usePlayCard({ character, patch }) {
          as one delivery carrying the raw landings, hit targets only — Armor
          belongs to whoever is hit, so nothing is subtracted here. A page with
          its own hands (the encounter view) takes over from the verdict row on,
-         handed the surviving targets in `meta.targets`. */
+         handed the surviving targets in `meta.targets` and the action's own id
+         in `meta.chain`, so the rows it writes land in this block too. */
       const settleWith = (live) => (thrown, meta = {}) => {
         try {
           if (meta.outcomes && meta.outcomes.length > 0) {
-            log(verdictEvent(speaker, request?.name ?? '', meta.outcomes));
+            log(verdictEvent(speaker, request?.name ?? '', meta.outcomes, { chain }));
           }
 
           if (onSettled) {
-            onSettled(thrown, { ...meta, targets: live });
+            onSettled(thrown, { ...meta, targets: live, chain });
             return;
           }
           if (!delivering) return;
@@ -220,14 +246,15 @@ export function usePlayCard({ character, patch }) {
             : live;
           if (landed.length === 0) return;
 
-          if (cast && checky && meta.hit) log(effectLaidEvent(speaker, cast, landed));
+          if (cast && checky && meta.hit) log(effectLaidEvent(speaker, cast, landed, { chain }));
 
           for (const delta of applyPlan(thrown)) {
             log(
               appliedEvent(
                 speaker,
                 delta,
-                landed.map((entry) => ({ ...entry, landings: delta.landings }))
+                landed.map((entry) => ({ ...entry, landings: delta.landings })),
+                { chain }
               )
             );
           }
@@ -266,6 +293,7 @@ export function usePlayCard({ character, patch }) {
               log(
                 reactionFailedEvent(actor, request?.name ?? 'The action', {
                   failed: targets.map((entry) => entry.name),
+                  chain,
                 })
               );
               settleWith([])([], { failed: true });
@@ -277,6 +305,7 @@ export function usePlayCard({ character, patch }) {
               log(
                 reactionFailedEvent(actor, request?.name ?? 'The action', {
                   failed: verdict.dropped.map((entry) => entry.name),
+                  chain,
                 })
               );
               armed = (roll && tray
@@ -288,7 +317,7 @@ export function usePlayCard({ character, patch }) {
             }
 
             /* The held-back checkless effect, laid now that the action stands. */
-            if (cast && !checky) log(effectLaidEvent(speaker, cast, live));
+            if (cast && !checky) log(effectLaidEvent(speaker, cast, live, { chain }));
           }
 
           await throwChain(tray, armed, { request, actor, chain, onSettled: settleWith(live) });
@@ -320,7 +349,7 @@ function watchStack(tables, chain) {
         onChange: (payload) => {
           if (payload.eventType !== 'INSERT') return;
           const row = payload.new;
-          if (row?.kind !== 'react' || row.data?.to !== chain) return;
+          if (row?.kind !== 'react' || row.data?.chain !== chain) return;
           if (row.data.move === 'open') handlers.onOpen(row.data.key ?? row.id, row.actor);
           else if (row.data.move === 'done') handlers.onDone(row.data.key ?? null, true);
           else if (row.data.move === 'pass') handlers.onDone(row.data.key ?? null, false);

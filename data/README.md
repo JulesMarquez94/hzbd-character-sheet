@@ -10732,3 +10732,219 @@ And a window too narrow to hold both trays and a block between them now opens
 one at a time: under 1200px, pulling one tray open pushes the other in. Two
 trays with the blocks squeezed out from between them is not a tab. Read at the
 press rather than watched, so there is no listener to keep in step.
+
+## The rulebook, and sixteen rulings, 2026-09-02
+
+Jules: "a document that is the system rule book based on what you see right now. then
+once you have collected the data prompt me with questions to know what is missing."
+
+### The book
+
+`docs/rulebook.md`, twelve sections and the whole 78-term glossary, transcribed rather
+than remembered: the formulas off characterModel, the glossary off keywords.js, the
+prices off the codex, the rulings off this file. It is the first document on the project
+that is about the *game* rather than about the app.
+
+What the transcription turned up is worth as much as the book. The app had to know a
+great deal to run, and everything it did not have to know was simply missing: no
+experience rate, no round, no difficulty ladder, no damage type list, no cover, no
+surprise, no environmental damage, no economy below the price of a breastplate, and
+nothing at all about what happens when you die.
+
+### Sixteen answers
+
+Asked in four rounds of four and all answered the same day.
+
+- **Experience is the Game Master's.** Creature XP is a suggestion, milestones are the
+  other way, and a table may count nothing at all.
+- **Magic Burden is a hard ceiling.** You cannot equip past it. There is no overburdened
+  state, which is the exact opposite of carry weight, and deliberately so: weight catches
+  you out, worked magic is a thing you decide to put on.
+- **1.5 m = 5 ft = 1 space**, and the table plays on a map or in the head as it likes.
+- **The dead are raised for 5,000 coins and 100 Supplies a level**, by an ability that
+  says it can. Primal Life is where that spell belongs and nobody has written it.
+- **A round is one pass through the order.**
+- **The ladder runs 9 to 30**, three points a rung, which is half the critical band. The
+  top three rungs are unreachable by a bare roll at any level: 2d6 and an attribute of 11
+  top out at 23, so Formidable and above need Advantage, Karma or a working.
+- **Surprise is Disadvantage on Initiative.** Everyone still acts in the first round.
+- **Cover is Disadvantage** on attacks against whoever is in it. Total cover already
+  broke line of sight and still does.
+- **Environmental damage is flat and scales with level**: 5, 10 and 20 times level for
+  minor, serious and deadly. A cliff takes a third of a level 1 and the whole of a level
+  12, which inverts how a monster works and is meant to.
+- **Nothing heals on its own.** Rests, cards, potions and field care, and that is the
+  list. A party out of Supplies and out of flasks stops getting better.
+- **Skills are never rolled.** There is no skill value. A Skill Check is an attribute Roll
+  and the card changes it.
+- **There is no retraining.** The sheet's hand-back is for correcting a mistake at the
+  keyboard, not rebuilding a character.
+- **A lineage costs nothing and forbids nothing.**
+- **Anyone may forge, anywhere, if they can pay**, and **Burden is the only limit on
+  enchanting**: lay as many as you like, you can only wear so many.
+- **A potion costs Willpower and anyone can drink one.** That is the whole of what a
+  potion is for: access without a caster.
+- **Ten coins is a euro**, and lodging has tiers that pay: a good house gives back a
+  Karma, a fine one adds a Shield.
+
+### The nine damage types
+
+Sharp, Blunt and Force. Fire, Cold and Lightning. Sacred, Decay and Psychic. Vulnerable
+doubles and Resistant halves, neither stacks with itself, and the two cancel each other.
+
+The codex printed eleven. **Vampiric Touch** and **Drain Fluids** dealt Necrotic and
+**Toxic Toad** dealt Poison; all three were retyped to Decay, so the nine are now the
+nine. Poison survives as a condition, which is a different thing, and the Toad still
+inflicts it.
+
+### And a Supply is ten coins, which was already true
+
+Not a ruling and not a proposal: a derivation. Every one of the eight Novice potions in
+the codex costs exactly ten times in coin what it costs in Supplies to brew, and laying
+an enchantment is 70 Supplies against the 750 coins the same working costs to buy. The
+rate was sitting in the price columns the whole time. Above Novice the market charges 20
+to 60 coins a Supply, which is the whole argument for having an Alchemist rather than a
+purse.
+
+### The Shove card
+
+The design sheet reads "1.5 meters (3 feet)". Ten other cards convert 1.5 m to 5 feet,
+so does every range in the codex, and so does the app's own unit switch, which snaps to
+5 ft steps because a battle map is drawn in them. Jules confirmed the conversion and
+called it a slip, so it joins "hieight" and "losoe" in the list of the sheet's typos that
+are corrected rather than carried.
+
+### What is left
+
+Four things, and none of them is a rules question. There is no resurrection spell written
+yet; twenty-one talent sets are still names, which Jules is filling in directly; Life Tree
+Tea is the one potion charging no Willpower and nobody has said whether that is
+deliberate; and the setting is deliberately out of scope, because this is a rules book and
+the world gets its own.
+
+## One action, one entry, and a knock at the door, 2026-09-02
+
+Four lines from Jules, and the first three are one bug:
+
+> In the log reacting should be part of the action block not its own.
+>
+> Same an attack should not be 3 entries in the log.
+>
+> When a new entry happen, like with the reaction, there should be a pop up showing.
+>
+> Add a new basic action which is to do a skill check that let you select an attribute
+> and then add any skill that could be relevant (like arcane marshal ect). Skill check
+> are modular action cost and can cost nothing.
+
+### The bug was one field
+
+A chain gathered throws and only throws. `groupEvents` looked for `kind === 'roll'`,
+so every *other* row an action writes had no way home and drew as an action of its own.
+One aimed swing writes five: the use, the attack roll, the verdict read against each
+body, the damage, the delivery that lands it. Three entries was the count Jules
+happened to see; with an effect and a reaction it was six.
+
+Now there is a set of kinds that are **never a head** because every one of them is a row
+written *about* an action that is already in the log: `roll`, `verdict`, `apply`,
+`effect` and `react`. Each of them carries the chain of the use that caused it, and each
+of them lands in that use's block, in the order the table saw it. `groupEvents` hands
+back a `trail` alongside `rolls`, interleaved, because "missed 3.Fenrat" belongs between
+the attack roll and the damage and a reaction belongs above the roll it held.
+
+Three rows had to learn the chain: `verdictEvent`, `appliedEvent` and `effectLaidEvent`
+all take it now. So does the whole reaction stack, and that one was a rename: a react row
+addressed its action in `data.to` while every other row in the system used `data.chain`.
+One id with two names is one name too many, so `to` is gone. The gate matches on `chain`,
+the one-reaction claim counts on `chain`, and the log groups on `chain`. Rows written
+before today are the only thing that will not gather.
+
+One thing to know at a live table: a page still open from before this change writes `to`
+and looks for `to`, so a reaction between an old tab and a new one would not hold
+anybody's roll. Everyone reloads once, which is the same thing a schema change asks for.
+
+The head learned something too. It used to carry a chain only when there were dice
+coming; an aimed cast that rolls nothing still writes a delivery, so aim counts as well
+as dice now.
+
+And the encounter page mints its own. An enemy's block and the enemies' reaction shelf
+both write rows themselves (the effect they lay, the numbers the apply window lands), so
+they mint the id and hand it to `play` rather than being handed one back too late to use.
+
+### Reacting reads as one line
+
+Inside a block the stack's two rows are one thing said twice: `open` when a reader steps
+in, `done` or `pass` when it settles. The announcement gives way to the outcome, so
+"Kaelen took a reaction" stands alone and "Kaelen is reacting" only shows while it is
+still true, which is exactly when a held action wants to show it.
+
+A line about an action prints the name only when it is somebody other than whoever is
+acting. On an attack's own verdict that is nobody. On a reaction in the middle of a
+Fireball it is the whole point.
+
+**Open ruling.** A reaction's own card is still its own entry. It is an action with its
+own cost and its own dice, and the line inside the reacted block points at it. Folding
+one player's action into another player's block is a bigger claim than the one Jules
+asked for, so it is asked rather than assumed.
+
+### The knock
+
+`LogCall`, in both places the log lives, in the shape `DiceWatch` already had. A row
+lands, and it is said in the corner over whatever tab you happen to be on, because the
+log is a block on one tab and a fight is not somewhere you can afford to have missed a
+reaction.
+
+**One notice per action, not one per row.** It is keyed on the chain, so the four rows of
+one swing land in one card and grow it a line at a time. Which is the same law the block
+underneath spent this same day learning.
+
+It stays quiet about three things and hides none of them. Your own rows, because you are
+the one who pressed the button. Throws, because somebody else's dice already land on your
+own table with their real faces on. And the initiative bell and the turn call, because
+both of those already take the whole screen on the sheet they name.
+
+Top right, since the dice tray holds the bottom left and the reaction banner the bottom
+right, and a notice must never sit on the two things you answer with.
+
+### The Skill Check
+
+A basic action, and the first card in the codex whose attribute is a **decision**. Every
+other one names its own: Grapple is Physique for everybody. So the card carries
+`picks: 'check'` and the prompt asks, with all three offered and what this character is
+worth on each printed on them, and the answer rides out as a `stat` modifier, which is
+the rider a Mycomancer's loadout already imposed. The card beside the buttons prints the
+attribute that is about to be rolled.
+
+`ap: 0` with `variable: true`, which is the pair that means "modular, and nothing is a
+real answer". A variable action's dial now **opens on what the card printed**: nothing
+for this one, 1 for Interact and Anticipate, which print no cost at all. It reads as a
+Skill Check in the log, off the sentence rather than off a flag, exactly as an Attack
+Roll does.
+
+And it offers the skills. Fourteen cells in the codex say "whenever you make a skill
+check, you can spend 1 Willpower to make it with advantage", and all fourteen now carry
+`grants: { checkWp: 1, checkAdvantage: 1 }` beside the sentence. Ticking one adds its
+Willpower to the button below and its die to the roll. **Whether it applies is the
+player's answer and never the sheet's**: no column anywhere says that this attempt is
+about a map, so ARCANE MARSHAL is offered with its own domain printed under it and the
+player is the one reading the map.
+
+Two more speak to a check and are **named rather than offered**, because neither is a die
+added to a roll: SKILLED swaps the check's own 2d6 for 2d8, and MASTERMIND maximises them
+once a Long Rest. The prompt says so in a line. A dead toggle would be worse.
+
+Two are deliberately not in the list. HELPFUL is "whenever **an ally** makes a skill
+check", which is not this check, and TAILOR reads a stranger's clothes "without doing a
+skill check", which is the absence of one. The reader matches the phrase and not the
+words, which is what keeps both out.
+
+### Left open
+
+- **A reaction's own action block.** See above.
+- **SKILLED and MASTERMIND.** The first needs `rollCheck` to take a die size, which is a
+  change to the dice core and to the tray's spec, and the second needs a use spent off a
+  card at the moment of rolling. Both are wiring, not rulings, and both are worth asking
+  about first: a check that is not 2d6 is a new shape of check.
+- **Whether the summary and the delivery line say the same thing twice.** "Cast Fireball
+  for 14 Fire damage" sits above "14 Fire damage · To 2.Fenrat" now. They are not the
+  same sentence (one is the total, the other is who caught it) and they are close enough
+  to be worth a look.
