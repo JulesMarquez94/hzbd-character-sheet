@@ -12912,12 +12912,22 @@ button.tgt-chip:disabled {
   cursor: pointer;
 }
 
+/*
+ * A rectangle, like every other portrait on the sheet: the 4px corner of the
+ * identity frame and the minion plate rather than a circle of its own. 32px is
+ * the head body's two lines exactly, the name plus the sentence plus the gap
+ * between them, so the picture is as tall as the row it belongs to and nothing
+ * under it moves. Cropped from the top for the reason `.id-portrait` gives: a
+ * face is at the top of a picture of a person, so what a portrait that is not
+ * the frame's shape loses is the boots.
+ */
 .log-face {
   flex: 0 0 auto;
   width: 26px;
-  height: 26px;
-  border-radius: 50%;
+  height: 32px;
+  border-radius: 4px;
   object-fit: cover;
+  object-position: 50% 0;
   border: 1px solid color-mix(in srgb, var(--log-accent) 60%, transparent);
   background-color: var(--bg-black);
 }
