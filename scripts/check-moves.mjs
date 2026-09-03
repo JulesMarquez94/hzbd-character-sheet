@@ -7,13 +7,14 @@
  *   node scripts/check-moves.mjs --list print every move and price, then exit 0
  *
  * ------------------------------------------------------------ what it covers
- * The risk is not arithmetic, it is *shape*. A move is a plain object and five
- * of its keys are read by name somewhere else: `scales` decides which rate
- * prices it, `plain` and `melee` narrow which swing it rides, and two of the
- * `rides` keys can hold a word instead of a number (`elevate: 'paid'`, `ap:
- * 'free'`). Every one of those is a silent failure when it is misspelled — a
- * `scale: 'ap'` prices at the plate forever, a `rides: { elevates: 1 }` prints
- * nothing, and neither shows up as an error anywhere.
+ * The risk is not arithmetic, it is *shape*. A move is a plain object and six of
+ * its keys are read by name somewhere else: `scales` decides which rate prices it,
+ * `plain` and `melee` narrow which swing it rides, `uncounted` takes it out of the
+ * allowance, and `rides.ap` can hold the word `'free'` instead of a number. Every
+ * one of those is a silent failure when it is misspelled — a `scale: 'ap'` prices
+ * at the plate forever, a `rides: { elevates: 1 }` prints nothing, an
+ * `uncounted` spelled any other way quietly eats a slot, and none of them shows
+ * up as an error anywhere.
  *
  * So the shape of every move is checked against what the readers actually read,
  * the granted three are walked from the set that grants them through to the
@@ -31,7 +32,14 @@
  */
 
 import { MARTIAL_MOVES, moveTier, moveWillpower, swingDice } from '../src/lib/martial.js';
-import { grantedMoves, moveCost, moveSetFor, offeredMoves, withMoves } from '../src/lib/moves.js';
+import {
+  clampMoves,
+  grantedMoves,
+  moveCost,
+  moveSetFor,
+  offeredMoves,
+  withMoves,
+} from '../src/lib/moves.js';
 import { loadoutOf, loadoutPool } from '../src/lib/loadouts.js';
 import { TALENTS } from '../src/lib/talents.js';
 import { WEAPON_ABILITIES, getCard } from '../src/lib/weapons.js';
@@ -94,8 +102,8 @@ for (const { card, whose } of all) {
   }
 
   const elevate = card.rides?.elevate;
-  if (elevate !== undefined && elevate !== 'paid' && !Number.isInteger(elevate)) {
-    note(where, `rides.elevate is ${JSON.stringify(elevate)}, and it is a count or 'paid'`);
+  if (elevate !== undefined && !Number.isInteger(elevate)) {
+    note(where, `rides.elevate is ${JSON.stringify(elevate)}, and it is a count`);
   }
 
   const ap = card.rides?.ap;
@@ -280,18 +288,24 @@ for (const card of WEAPON_ABILITIES) {
 /* ------------------------------------------------------ the two words in `rides` */
 
 {
-  /* `elevate: 'paid'` has to come out as the price on the swing, not as zero and
-     not as one. Walked on two rungs, because a constant would pass on one. */
-  const paid = all.filter(({ card }) => card.rides?.elevate === 'paid');
-  if (paid.length === 0) note("rides.elevate 'paid'", 'nothing carries it, and AMBUSH should');
+  /* What a move rides has to be what the swing gets, whatever the swing is. Walked
+     on two rungs of the wall, because a rider read off the weapon by accident
+     would pass on one of them and not on both — which is exactly what AMBUSH did
+     until 2026-09-03, when it Elevated as many times as the weapon rolled dice.
+     Jules flattened it that day ("it is elevated once, no matter what") and this
+     is the assertion that keeps every `rides` count flat. */
+  for (const { card, whose } of all) {
+    const want = Math.max(0, Number(card.rides?.elevate) || 0);
+    if (want === 0) continue;
 
-  for (const { card, whose } of paid) {
     for (const id of ['finesse-strike', 'melee-great-strike']) {
       const swing = getCard(id);
       const folded = withMoves({}, [card], swing);
-      const want = moveWillpower(card, swing);
       if (folded.elevate !== want) {
-        note(`${card.name} (${whose}) on ${swing.name}`, `Elevates ${folded.elevate}, and it paid ${want}`);
+        note(
+          `${card.name} (${whose}) on ${swing.name}`,
+          `Elevates ${folded.elevate}, and its card says ${want}`
+        );
       }
     }
   }
@@ -305,6 +319,44 @@ for (const card of WEAPON_ABILITIES) {
     const cost = moveCost([card], 0, getCard('melee-great-strike'));
     if (!cost.free) note(`${card.name} (${whose})`, 'says the swing is free and moveCost does not flag it');
     if (cost.ap !== 0) note(`${card.name} (${whose})`, `also moves the Action Points by ${cost.ap}`);
+  }
+}
+
+/* ------------------------------------------------- a move besides the allowance */
+
+{
+  /* `uncounted` is the one flag that changes what the *dialog* does rather than
+     what the card prints, and `clampMoves` is the rule: every uncounted tick
+     survives, and the counted ones fill the allowance in the order they were
+     made. The real function, not a restatement of it — it was lifted out of
+     UsePrompt.jsx into moves.js so this file could reach it, because an allowance
+     rule asserted against a copy of itself is asserted against nothing. */
+  const clamp = clampMoves;
+
+  const loose = all.filter(({ card }) => card.uncounted);
+  if (loose.length === 0) note('uncounted', 'nothing carries it, and AMBUSH should');
+
+  for (const { card, whose } of loose) {
+    /* One counted move and this one, on an allowance of one: both have to fit. */
+    const counted = all.find((row) => !row.card.uncounted && !row.card.reaction);
+    const offered = [{ card }, counted];
+    const kept = clamp([0, 1], offered, 1);
+    if (kept.length !== 2) {
+      note(`${card.name} (${whose})`, `fills a slot: one allowance held ${kept.length} of the two`);
+    }
+
+    /* And it must not be the thing that gets dropped when the allowance is full,
+       whichever order the ticks were made in. */
+    if (!clamp([1, 0], offered, 1).includes(0)) {
+      note(`${card.name} (${whose})`, 'is dropped when a counted move was ticked first');
+    }
+  }
+
+  /* Two counted moves on an allowance of one is still one, or the clamp is not
+     clamping at all and the assertions above prove nothing. */
+  const two = all.filter(({ card }) => !card.uncounted && !card.reaction).slice(0, 2);
+  if (two.length === 2 && clamp([0, 1], two, 1).length !== 1) {
+    note('the allowance', 'holds two counted moves where it allows one');
   }
 }
 

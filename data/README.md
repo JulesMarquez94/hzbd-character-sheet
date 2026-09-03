@@ -11818,7 +11818,9 @@ Two of the `rides` keys can now hold a word:
   what it paid is the swing's own dice count. Resolved at the moment of the tick rather than
   stored, because the answer changes with what is in your hands and the plate the player is
   looking at has to be the plate the dice are thrown for. One die and 1 Willpower on a dagger,
-  three and 3 on a Great Weapon.
+  three and 3 on a Great Weapon. **Superseded hours later**, when Jules flattened the card to a
+  single Elevate; the word and its branch are gone. See "Ambush Elevates once" at the foot of this
+  file.
 - **`ap: 'free'`** is RECKLESS VIOLENCE: the attack costs no Action Points, which is a price being
   *replaced* rather than reduced. RIPOSTE's `-1` is a delta and works everywhere; minus six would
   be wrong on a dagger and right on a Great Weapon, so this is a flag and the prompt zeroes the
@@ -11937,3 +11939,75 @@ above. The pool assertion was then re-tested against the broken version to be su
   finding is a dead assertion in `check-weapons.mjs` — its Reload regex holds two literal backspace
   characters where `\b` was meant, so it has never fired — and it is left where it is rather than
   bundled in here, because repairing it may surface weapon findings that want judging on their own.
+
+## Ambush Elevates once and costs no slot, 2026-09-03
+
+> adjust ambush,, it is leveatd once. o matter what. However it should statethat it does not count
+> toward the martial move limit.
+
+Two adjustments to the card, hours after it became a move.
+
+### One Elevate, whatever the weapon
+
+`rides: { advantage: 1, elevate: 1 }`, and the card reads "the attack is made with advantage, and
+on a hit its damage is Elevated once."
+
+It Elevated as many times as the Willpower paid, which meant as many times as the weapon rolled
+dice, so a Great Weapon's ambush was three steps up the die ladder for three Willpower. One step
+now, at every rung.
+
+**`elevate: 'paid'` is gone with it.** That word existed for one card for one day, so the branch in
+`withMoves` went too — and with it the `swing` argument, which nothing else there needed. `elevate`
+is a count again and `check-moves.mjs` asserts it: every `rides` count has to come out the same on
+a dagger and on a Great Weapon, walked on both rungs, because a rider read off the weapon by
+accident would pass on one of them and not both. That is exactly what this card did yesterday.
+
+### Besides the allowance, not inside it
+
+`uncounted: true`, and the card says so in its last line: "it does not count toward how many
+Martial Moves you can add."
+
+It is the only card in the game that carries it. A Duelist 1 who ambushes still has their one move
+to add, which is the trade for the Elevate being flat: the card got smaller and stopped taking the
+slot with it. Verified — a Duelist 1 / Trickster 1 ticks WOUND and AMBUSH on one swing and has
+spent 1 of their 1.
+
+On the card rather than in the system, for the reason `plain` is: an allowance is what a set
+bought, and being outside one is what a card says about itself.
+
+### The allowance is counted rather than measured
+
+`clampMoves` is new and is the one place the rule lives. It was `added.slice(0, allowed)` — the
+count was the length — and it cannot be a slice any more:
+
+    every uncounted tick survives
+    the counted ones fill the allowance in the order they were made
+    a tick past the end of the list is dropped
+
+The third is unchanged and is what the slice was also for: a rank lost while the dialog is open has
+to release the *newest* move rather than an arbitrary one, and it has to do it on read rather than
+in an effect racing the render. `toggleMove` asks the clamp rather than counting for itself — a tick
+is legal exactly when it survives being run through it — so there is one rule and not two that can
+disagree.
+
+**It lives in `moves.js` rather than in `UsePrompt.jsx`, which is its only caller.** The node
+checkers do not load JSX, and the first version of the assertion tested a copy of the rule
+restated inside `check-moves.mjs`, which is asserting against nothing. Moved, so the checker holds
+the real function. Both of its properties were then re-tested against a deliberately broken clamp:
+an uncounted move must never fill a slot, and it must never be the tick that gets dropped when the
+allowance is full, whichever order the boxes were checked in.
+
+The prompt's count reads `1 of 1 + 1 beside` when one of the ticks is besides the limit, and the
+row wears a **No slot** chip next to its orb. That chip is the one thing about the row a reader
+cannot get from the price: it is the only row that stays tickable when the rest have gone quiet,
+and a live button among dead ones reads as a bug.
+
+### Left open
+
+- **The price is still per Damage Die.** `scales: 'dice'` is untouched, because it is the
+  designer's own printed line: "Willpower equal to the weapon's printed number of damage dice". With
+  the Elevate flat, that line no longer has the Elevate to justify it — **a Staff pays 3 Willpower
+  for exactly what a dagger pays 1 for**, advantage and one die size, and it is the only card in
+  the codex where the same effect has three prices. Left as transcribed rather than quietly
+  flattened, since the Elevate was the thing asked about and the cost is a cell on a sheet. Worth a
+  ruling.

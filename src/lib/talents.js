@@ -1163,7 +1163,7 @@ const TALENT_SETS = [
         id: 'ambush',
         rank: 1,
         name: 'Ambush',
-        summary: 'Added to a swing at somebody who cannot see you: advantage, and the damage Elevated.',
+        summary: 'Advantage and a die size on a swing at somebody who cannot see you, for no Martial Move.',
         /* **The first of the granted three.** See "the granted three" above.
            AMBUSH was an Ability that laid a rider on the effects tracker and
            waited there for a weapon attack, which is exactly what every Martial
@@ -1198,17 +1198,37 @@ const TALENT_SETS = [
            letting it reach here would quietly undo a ruling nobody revisited. See
            `moveTakesSwing` in moves.js. */
         plain: true,
+        /* And it is besides the allowance rather than inside it. Jules,
+           2026-09-03: "it should state that it does not count toward the martial
+           move limit." So a Duelist 1 who ambushes still has their one move to
+           add, which is the trade for the Elevate below being flat — the card got
+           smaller and stopped taking the slot with it.
+
+           It is the only card in the game that carries this, and it is on the card
+           rather than in the system for the reason `plain` is: an allowance is
+           what a set bought, and being outside one is what a card says about
+           itself. See `clampMoves` in UsePrompt.jsx, which is the one place the
+           allowance is actually counted. */
+        uncounted: true,
         stat: 'instinct',
-        /* Both halves wired, which is what the tracker row already carried:
-           advantage on the roll, and Elevated as many times as the Willpower paid.
-           `'paid'` rather than a number because the number *is* the price, and the
-           price is the swing's dice — the same reading the rider stored, resolved
-           at the moment of the tick instead of at the moment of the purchase. */
-        rides: { advantage: 1, elevate: 'paid' },
+        /* **Elevated once, whatever the swing.** Jules, 2026-09-03: "it is
+           elevated once, no matter what." It used to be Elevated as many times as
+           the Willpower paid, which meant as many times as the weapon rolled dice,
+           and a Great Weapon's ambush was three steps up the die ladder for three
+           Willpower. One step for the same price now, and the slot it no longer
+           takes is what it is paid in instead.
+
+           The price is untouched and is still the designer's own printed line:
+           "Willpower equal to the weapon's printed number of damage dice". With
+           the Elevate flat, that line no longer has the Elevate to justify it — a
+           Staff pays 3 for exactly what a dagger pays 1 for — and it is flagged in
+           data/README.md rather than quietly flattened, because the cost is a
+           transcription and the Elevate was the thing asked about. */
+        rides: { advantage: 1, elevate: 1 },
         body:
           'Ambush can only be added to a Weapon Attack against **an entity** that cannot see you, or one that is stunned, grappled or constrained.\n\n' +
-          'The attack is made with advantage, and on a hit its damage is Elevated a number of times equal to the Willpower paid.\n\n' +
-          'It costs 1 Willpower for every Damage Die the attack prints, before any enchantment or boost.',
+          'The attack is made with advantage, and on a hit its damage is Elevated once.\n\n' +
+          'It costs 1 Willpower for every Damage Die the attack prints, before any enchantment or boost, and it does not count toward how many Martial Moves you can add.',
       },
       {
         id: 'skulk',

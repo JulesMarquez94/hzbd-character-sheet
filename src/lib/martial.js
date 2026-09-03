@@ -66,18 +66,17 @@
  *
  *   advantage  extra d4s on the attack roll. A count, because Advantage stacks.
  *   empower    another damage die of the same kind (2d6 -> 3d6).
- *   elevate    the same dice, one size up (2d6 -> 2d8), capped at d12. A count,
- *              or the word `'paid'` for a move Elevated as many times as the
- *              Willpower it cost — AMBUSH, and nothing else, because the number
- *              *is* the price and the price is the swing's own dice.
+ *   elevate    the same dice, one size up (2d6 -> 2d8), capped at d12. A count.
  *   ap         a signed change to what the attack itself costs. RIPOSTE's -1, and
  *              the word `'free'` for a swing that costs nothing at all: RECKLESS
  *              VIOLENCE, where the price is replaced rather than nudged, since
  *              minus six is wrong on a dagger and right on a Great Weapon.
  *
- * The two words are the two riders no number could hold, and both belong to
- * granted moves rather than to the eighteen here. See `moveCost` and `withMoves`
- * in moves.js, which are the only places either is read.
+ * `'free'` is the one rider no number could hold, and it belongs to a granted
+ * move rather than to any of the eighteen here. See `moveCost` in moves.js, which
+ * is the only place it is read. `elevate` could hold a word too for one day —
+ * `'paid'`, on AMBUSH — and Jules flattened that card to a single Elevate on
+ * 2026-09-03, so the branch is gone and a count is a count again.
  *
  * A move with no `rides` still rides: WOUND, WING CLIP, DISARM, REND and most of
  * the rest change what the attack *does* without changing a number the sheet

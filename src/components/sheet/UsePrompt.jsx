@@ -20,6 +20,7 @@ import {
   aimingMoves,
   effectAdvantage,
   moveAllowance,
+  clampMoves,
   moveCost,
   moveWillpower,
   offeredMoves,
@@ -292,20 +293,25 @@ export default function UsePrompt({
      without a state write racing the render. */
   const [added, setAdded] = useState([]);
   const allowed = Math.max(1, Math.floor(Number(allowance.perAttack) || 1));
-  const takenMoves = useMemo(
-    () => added.slice(0, allowed).filter((at) => at < martial.length),
-    [added, allowed, martial.length]
-  );
+  const takenMoves = useMemo(() => clampMoves(added, martial, allowed), [added, allowed, martial]);
   const moveCards = useMemo(
     () => takenMoves.map((at) => martial[at].card),
     [takenMoves, martial]
   );
+  /* What the allowance has actually spent, which is not how many boxes are
+     ticked: AMBUSH is besides the limit, so a Duelist 1 with an ambush and a
+     wound on one swing has ticked two and spent one. */
+  const spentMoves = takenMoves.filter((at) => !martial[at]?.card?.uncounted).length;
+  const besideMoves = takenMoves.length - spentMoves;
 
   function toggleMove(at) {
     setAdded((was) => {
-      const held = was.slice(0, allowed).filter((one) => one < martial.length);
+      const held = clampMoves(was, martial, allowed);
       if (held.includes(at)) return held.filter((one) => one !== at);
-      return held.length >= allowed ? held : [...held, at];
+      /* Asked rather than counted: the clamp is the one rule about what fits, so
+         a tick is legal exactly when it survives being run through it. */
+      const next = clampMoves([...held, at], martial, allowed);
+      return next.includes(at) ? next : held;
     });
     setDenied(null);
   }
@@ -688,7 +694,8 @@ export default function UsePrompt({
               <span className="use-targets-head">
                 Martial Moves
                 <span className="use-targets-count">
-                  {takenMoves.length} of {allowed}
+                  {spentMoves} of {allowed}
+                  {besideMoves > 0 && ` + ${besideMoves} beside`}
                 </span>
               </span>
 
@@ -698,7 +705,7 @@ export default function UsePrompt({
                   card={card}
                   talent={talent}
                   on={takenMoves.includes(at)}
-                  full={!takenMoves.includes(at) && takenMoves.length >= allowed}
+                  full={!takenMoves.includes(at) && !card.uncounted && spentMoves >= allowed}
                   allowance={allowance}
                   cut={cutBy}
                   swing={swing}
@@ -1112,6 +1119,12 @@ function MoveRow({ card, talent, on, full, allowance, cut, swing, onToggle, stac
             />
           )}
           {owed === 0 && <span className="use-move-cut">Free</span>}
+          {/* And a move that is besides the allowance rather than inside it, which
+              is the one thing about this row a reader cannot get from the price:
+              it is the only row that stays tickable when the rest have gone quiet,
+              and an unexplained live button among dead ones reads as a bug. The
+              card says it in full; this is the two words beside the orb. */}
+          {card.uncounted && <span className="use-move-cut">No slot</span>}
           {/* RIPOSTE, and nothing else: the one move that gives a point back
               rather than taking one. Drawn as what it does to the swing, since an
               orb saying 1 beside a cut would read as a cost. */}

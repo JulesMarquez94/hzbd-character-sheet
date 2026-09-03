@@ -262,6 +262,52 @@ export function moveAllowance(talents) {
 }
 
 /**
+ * Which of the ticked Martial Moves actually fit, given what the allowance holds.
+ *
+ * **The one place the allowance is counted**, and it is a function rather than a
+ * `slice` because the count is no longer the length. `uncounted` on a card means
+ * it is besides the limit rather than inside it — AMBUSH carries it, on Jules's
+ * instruction of 2026-09-03 — so a Duelist 1 can tick an ambush *and* a wound on
+ * one swing, having spent one of their one.
+ *
+ * Every uncounted tick survives, and the counted ones are kept in the order they
+ * were made until the allowance runs out. That order matters for the same reason
+ * the old `slice` did: a rank lost while the dialog is open has to release the
+ * newest move rather than an arbitrary one, and it has to do it on read rather
+ * than in an effect racing the render.
+ *
+ * A tick past the end of the list is dropped, which is the other thing a rank
+ * lost can do: the offer is rebuilt shorter and an index into the old one is
+ * pointing at nothing.
+ *
+ * By position and not by card id, because two sets can teach the same move and
+ * both copies were paid for — so two rows can wear one id, and ticking either has
+ * to tick exactly one.
+ *
+ * Here rather than in UsePrompt.jsx, which is its only caller, so that
+ * scripts/check-moves.mjs can hold the real rule instead of a copy of it: the
+ * node checkers do not load JSX, and an allowance rule asserted against a
+ * restatement of itself is asserted against nothing.
+ */
+export function clampMoves(list, offered, allowed) {
+  const kept = [];
+  let spent = 0;
+
+  for (const at of list ?? []) {
+    if (at >= (offered?.length ?? 0)) continue;
+    if (offered[at]?.card?.uncounted) {
+      kept.push(at);
+      continue;
+    }
+    if (spent >= allowed) continue;
+    spent += 1;
+    kept.push(at);
+  }
+
+  return kept;
+}
+
+/**
  * Whether this character's Martial Moves reach a Special Weapon Attack.
  *
  * Its own name because three places ask it and none of them wants the rest of the
@@ -597,7 +643,7 @@ export function effectAdvantage(effect) {
  * the moves were picked, so `attackModifiers` leaves its `perMove` on the object
  * for this to multiply out.
  */
-export function withMoves(modifiers, cards = [], swing = null) {
+export function withMoves(modifiers, cards = []) {
   if (cards.length === 0) return modifiers;
 
   let advantage = 0;
@@ -610,16 +656,11 @@ export function withMoves(modifiers, cards = [], swing = null) {
   for (const move of cards) {
     const gain = Math.max(0, Number(move.rides?.advantage) || 0);
     const die = Math.max(0, Number(move.rides?.empower) || 0);
-    /* `elevate: 'paid'` is AMBUSH and nothing else: "Elevated a number of times
-       equal to the Willpower paid", and what it paid is the swing's own dice
-       count. Resolved here rather than stored, because the answer changes with
-       what is in your hands and the card is printed before the swing is made —
-       the plate the player is looking at when they tick the box has to be the
-       plate the dice are thrown for. See moveWillpower in martial.js. */
-    const step =
-      move.rides?.elevate === 'paid'
-        ? moveWillpower(move, swing)
-        : Math.max(0, Number(move.rides?.elevate) || 0);
+    /* A count, and only ever a count. AMBUSH carried the word `'paid'` here for
+       one day — Elevated as many times as the Willpower it cost, resolved against
+       the swing — and Jules flattened it to once on 2026-09-03. Nothing else ever
+       wanted it, so the branch went with it and `withMoves` needs no swing again. */
+    const step = Math.max(0, Number(move.rides?.elevate) || 0);
 
     advantage += gain;
     empower += die;
