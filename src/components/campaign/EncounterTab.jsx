@@ -1408,6 +1408,16 @@ function AddFoes({ encounter, onAdd, onClose, partyLevel = null }) {
               <span className="foe-shelf-body">
                 <span className="foe-shelf-name">
                   {creature.name}
+                  {/* Which half of the bestiary it came off. A Game Master with
+                      six creatures of their own needs to tell them from the
+                      printed nine while filling a fight, and the name alone does
+                      not say. See BestiaryTab, where the same two words are a
+                      chip on the block. */}
+                  {creature.forged && (
+                    <span className="foe-shelf-forged">
+                      {creature.scope === 'codex' ? 'published' : 'forged'}
+                    </span>
+                  )}
                   {have > 0 && <span className="foe-shelf-have">×{have} in</span>}
                 </span>
                 <span className="foe-shelf-line">

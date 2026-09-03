@@ -28,6 +28,7 @@ import {
   normalizeTrays,
   trayedIds,
 } from '../lib/characterModel.js';
+import { loadForgedCreatures } from '../lib/customCreatures.js';
 import { minionState } from '../lib/minions.js';
 import { statMath } from '../lib/statMath.js';
 import { subscribeToTable } from '../lib/realtime.js';
@@ -71,10 +72,15 @@ const STILL = () => {};
 export default function CampaignPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, isAdmin, tier, can, loading: authLoading } = useAuth();
 
   const [campaign, setCampaign] = useState(null);
   const [members, setMembers] = useState([]);
+  /* The creatures this account can read that were forged rather than printed.
+     Held here rather than in the Bestiary tab because both Game Master tabs read
+     them: the shelf on the Encounters tab offers whatever `bestiary()` holds, and
+     what it holds is filled by the load below. */
+  const [forged, setForged] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [chosenTab, setTab] = useState('Overview');
@@ -98,11 +104,17 @@ export default function CampaignPage() {
 
     let active = true;
 
-    Promise.all([getCampaign(id), listMembers(id)])
-      .then(([camp, roster]) => {
+    /* The forged creatures are part of the same gate rather than a load of their
+       own, and that is a correctness point rather than tidiness: `normalizeFoes`
+       drops an enemy whose creature it cannot find, and the next write to the
+       encounter would persist the drop. So nothing that could name a creature is
+       allowed to render until the registry is filled. See loadForgedCreatures. */
+    Promise.all([getCampaign(id), listMembers(id), loadForgedCreatures(userId ?? null)])
+      .then(([camp, roster, made]) => {
         if (!active) return;
         setCampaign(camp);
         setMembers(roster);
+        setForged(made);
         setError('');
       })
       .catch((err) => active && setError(err.message))
@@ -111,7 +123,20 @@ export default function CampaignPage() {
     return () => {
       active = false;
     };
-  }, [id, authLoading]);
+  }, [id, authLoading, userId]);
+
+  /**
+   * Read the forged shelf again, and put it back in the registry.
+   *
+   * What the forge calls after a save, a publish or a removal. It reloads rather
+   * than patching the list it already has, because the row that came back is not
+   * the only thing that changed: the registry every other reader resolves ids
+   * against is module state, and the honest way to keep the two in step is one
+   * read that fills both.
+   */
+  const loadForged = useCallback(async () => {
+    setForged(await loadForgedCreatures(userId ?? null));
+  }, [userId]);
 
   // The campaign page owns the whole viewport the way the sheet does, so its
   // blocks hold their size and the canvas is the thing that scrolls.
@@ -616,7 +641,14 @@ export default function CampaignPage() {
             each chip carries. See EnemyBlock.jsx. */}
         {tab === 'Bestiary' && canEdit && (
           <CardStackProvider character={null}>
-            <BestiaryTab unit={unit} />
+            <BestiaryTab
+              unit={unit}
+              forged={forged}
+              tier={tier}
+              userId={userId}
+              canPublish={can('forgeCodex')}
+              onChanged={loadForged}
+            />
           </CardStackProvider>
         )}
 

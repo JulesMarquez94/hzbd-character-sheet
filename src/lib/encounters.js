@@ -194,58 +194,75 @@ export function encounterState(encounter) {
 
   return foes.map((row) => {
     const creature = getCreature(row.creature);
-    const rank = getRank(creature);
-    const level = clampCreatureLevel(row.level ?? creature.level);
-    const stats = creatureStats(creature, level);
-
     const nth = (seen.get(row.creature) ?? 0) + 1;
     seen.set(row.creature, nth);
-    const numbered = total.get(row.creature) > 1 ? `${nth}.${creature.name}` : creature.name;
-
-    /* Absent is full, and Health is clamped rather than repaired on the row: a
-       stored number above a ceiling should read as the ceiling rather than sit
-       there being impossible. */
-    const health = clamp(row.health ?? stats.health_max, 0, stats.health_max);
-    const shield = clamp(row.shield ?? 0, 0, stats.shield_cap);
-    const ap = clamp(row.ap ?? stats.ap_max, 0, stats.ap_max);
-    const reaction = clamp(row.reaction ?? 0, 0, stats.reaction_max);
-    const willpower = clamp(row.willpower ?? stats.willpower_max, 0, stats.willpower_max);
-
-    const broken = new Set(row.broken ?? []);
-
-    return {
-      key: row.key,
-      creature,
-      rank,
-      stats,
-      level,
-      // Whether this one has been moved off the level its page was written at.
-      scaled: level !== creature.level,
-      /* Its three attributes at *this* level. Read off the stats rather than the
-         creature, because a creature no longer carries any. */
-      attributes: stats.attributes,
-      /* What it is called on the block. The hand-typed name wins, then the
-         numbered one, and `title` is what the log and the tracker sign. */
-      name: row.name ?? '',
-      named: Boolean(row.name),
-      title: row.name || numbered,
-      nth,
-      health,
-      shield,
-      ap,
-      reaction,
-      willpower,
-      effects: row.effects ?? [],
-      broken,
-      /* Down at zero, and it stays on the board: a body the party can still see
-         is a body worth drawing, and clearing it away is the Game Master
-         pressing Remove. Nothing goes negative. */
-      down: health <= 0,
-      moves: creatureMoves(creature),
-      passives: creaturePassives(creature),
-      wards: creatureWards(creature),
-    };
+    return dressFoe(creature, row, { nth, many: total.get(row.creature) > 1 });
   });
+}
+
+/**
+ * One enemy, dressed: the creature, its numbers at the level this one stands at,
+ * and whatever the encounter has written on it.
+ *
+ * Split out of `encounterState` so a creature that is not in the registry at all
+ * can still be drawn — which is what the forge needs. A creature being tuned has
+ * no id yet, no encounter behind it and nothing stored for it, and it has to be
+ * previewable at every keystroke. Going through a row-and-id round trip would
+ * have meant registering a half-finished creature to look at it.
+ *
+ * `row` is the stored entry, and every field on it is optional: absent means
+ * full, unnamed, unscaled, nothing running.
+ */
+function dressFoe(creature, row = {}, { nth = 1, many = false } = {}) {
+  const rank = getRank(creature);
+  const level = clampCreatureLevel(row.level ?? creature.level);
+  const stats = creatureStats(creature, level);
+
+  const numbered = many ? `${nth}.${creature.name}` : creature.name;
+
+  /* Absent is full, and Health is clamped rather than repaired on the row: a
+     stored number above a ceiling should read as the ceiling rather than sit
+     there being impossible. */
+  const health = clamp(row.health ?? stats.health_max, 0, stats.health_max);
+  const shield = clamp(row.shield ?? 0, 0, stats.shield_cap);
+  const ap = clamp(row.ap ?? stats.ap_max, 0, stats.ap_max);
+  const reaction = clamp(row.reaction ?? 0, 0, stats.reaction_max);
+  const willpower = clamp(row.willpower ?? stats.willpower_max, 0, stats.willpower_max);
+
+  const broken = new Set(row.broken ?? []);
+
+  return {
+    key: row.key ?? '',
+    creature,
+    rank,
+    stats,
+    level,
+    // Whether this one has been moved off the level its page was written at.
+    scaled: level !== creature.level,
+    /* Its three attributes at *this* level. Read off the stats rather than the
+       creature, because a creature no longer carries any. */
+    attributes: stats.attributes,
+    /* What it is called on the block. The hand-typed name wins, then the
+       numbered one, and `title` is what the log and the tracker sign. */
+    name: row.name ?? '',
+    named: Boolean(row.name),
+    title: row.name || numbered,
+    nth,
+    health,
+    shield,
+    ap,
+    reaction,
+    willpower,
+    effects: row.effects ?? [],
+    broken,
+    /* Down at zero, and it stays on the board: a body the party can still see
+       is a body worth drawing, and clearing it away is the Game Master
+       pressing Remove. Nothing goes negative. */
+    down: health <= 0,
+    moves: creatureMoves(creature),
+    passives: creaturePassives(creature),
+    wards: creatureWards(creature),
+  };
 }
 
 /**
@@ -257,12 +274,16 @@ export function encounterState(encounter) {
  * has happened to yet: full pools, nothing running, every ward standing. It has
  * no encounter behind it and the block is handed `readOnly`, so none of the
  * writers can be reached from there.
+ *
+ * It takes the creature itself rather than an id, so a creature being forged can
+ * be drawn before it exists anywhere. See `dressFoe`.
  */
 export function previewFoe(creature, level = null) {
   if (!creature) return null;
-  return encounterState({
-    foes: [{ key: `codex-${creature.id}`, creature: creature.id, level: level ?? creature.level }],
-  })[0];
+  return dressFoe(creature, {
+    key: `codex-${creature.id ?? 'draft'}`,
+    level: level ?? creature.level,
+  });
 }
 
 /**

@@ -17,6 +17,7 @@
  * the only ground truth in the whole file, and the curve has to hand it back.
  */
 
+import { readFileSync } from 'node:fs';
 import {
   CREATURES,
   CREATURE_CARDS,
@@ -24,6 +25,7 @@ import {
   RANKS,
   bestiary,
   clampCreatureLevel,
+  clearForged,
   creatureAttributes,
   creatureCards,
   creatureMoves,
@@ -34,8 +36,18 @@ import {
   getCreature,
   getRank,
   hitDie,
+  isForgedId,
+  registerForged,
 } from '../src/lib/creatures.js';
-import { encounterState, foeActor, previewFoe, setFoeLevel } from '../src/lib/encounters.js';
+import { addFoes, encounterState, foeActor, previewFoe, setFoeLevel } from '../src/lib/encounters.js';
+import {
+  FORGED_LORE_MAX,
+  FORGED_NAME_MAX,
+  blankBody,
+  hydrateCreature,
+  normalizeBody,
+} from '../src/lib/customCreatures.js';
+import { CREATURE_SLOTS, can, canForgeCreature } from '../src/lib/tiers.js';
 import { getCard } from '../src/lib/weapons.js';
 
 const LIST = process.argv.includes('--list');
@@ -402,6 +414,190 @@ section('three of each');
       }
     }
   }
+}
+
+/* ------------------------------------------------------------ forged creatures
+
+   The forge's own promises. A forged creature is a row in the database rather
+   than a page in creatures.js, and the whole design rests on nothing downstream
+   being able to tell: `getCreature` finds it, `creatureStats` gives it numbers,
+   `previewFoe` draws it, the shelf lists it. Each of those is one line here.
+
+   The riskiest of them is the last section. `normalizeBody` is a trust boundary
+   sitting in front of jsonb a client wrote, so it is handed rubbish on purpose.
+*/
+
+section('a forged creature answers like a printed one');
+{
+  /* One built the way the forge builds it: a blank body, named, taught two
+     cards, and hydrated as if it had come back off a row. */
+  const row = {
+    id: '11111111-2222-3333-4444-555555555555',
+    user_id: 'nobody',
+    scope: 'personal',
+    body: {
+      ...blankBody('general'),
+      name: 'Bogwood Revenant',
+      type: 'Large Plant',
+      level: 4,
+      primary: 'physique',
+      secondary: 'mind',
+      bonus: { physique: 1, instinct: -2, mind: 0 },
+      /* One off a creature's page and one a character plays, which is the whole
+         of "it should be able to learn any ability the player can use". */
+      cards: ['grave-cleave', 'blightbolt'],
+    },
+  };
+
+  const made = hydrateCreature(row);
+  registerForged([made]);
+
+  check('its id is prefixed', made.id, 'custom:11111111-2222-3333-4444-555555555555');
+  check('and reads as forged', isForgedId(made.id), true);
+  check('getCreature finds it', getCreature(made.id)?.name, 'Bogwood Revenant');
+  check('the shelf holds it beside the printed ones', bestiary().length, CREATURES.length + 1);
+  check('and its rank filter finds it', bestiary('general').some((c) => c.forged), true);
+
+  /* The cards are resolved on the way in, because creatures.js cannot reach the
+     registry that holds them. Both halves have to come back as cards. */
+  check('it plays what it was taught', creatureMoves(made).map((card) => card.name), [
+    'Grave Cleave',
+    'Blightbolt',
+  ]);
+
+  /* And the same arithmetic. Physique is the main with +1 of its own, so it is
+     4 + 2 + 1 at level 4 (one odd-level climb) and 12 at level 12: the ceiling
+     the whole curve is built around. */
+  check('its attributes come off the curve', creatureAttributes(made, 4), {
+    physique: 8,
+    instinct: 2,
+    mind: 6,
+  });
+  check('and its main reaches 12 at level 12', creatureAttributes(made, 12).physique, 12);
+
+  const stats = creatureStats(made, 4);
+  check('Health is its own conversion', stats.health_max, 6 * 4 + 6 * 8);
+  check('the hit die averages that Health', hitDie(stats.health_max, made.die), stats.hit_die);
+
+  /* The bestiary draws it with the block an encounter draws, off a creature
+     object rather than an id, so a creature that is not registered at all still
+     previews. That is what the forge's live readout needs. */
+  const draft = { ...made, id: undefined, name: 'Unregistered' };
+  check('an unregistered draft still previews', previewFoe(draft, 6)?.title, 'Unregistered');
+  check('and a registered one previews at its own level', previewFoe(made)?.level, 4);
+
+  /* An encounter names it by id, and the id survives the round trip that would
+     drop a creature this build has never heard of. */
+  const enc = addFoes({ foes: [] }, made.id, 2, 5);
+  const laid = encounterState(enc);
+  check('an encounter can hold two of it', laid.length, 2);
+  check('and numbers them', laid.map((foe) => foe.title), ['1.Bogwood Revenant', '2.Bogwood Revenant']);
+  check('at the level it was added at', laid[0].level, 5);
+
+  clearForged();
+  check('and it is gone when the registry is emptied', getCreature(made.id), null);
+  check('leaving the printed shelf alone', bestiary().length, CREATURES.length);
+}
+
+section('a Minion forged with reactions still cannot take one');
+{
+  const row = {
+    id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    user_id: 'nobody',
+    scope: 'codex',
+    /* Six Reaction Points typed into the form on purpose. The rule is the
+       creature's rather than the rank's default, so it has to win over a stored
+       number as well as over a rank. */
+    body: { ...blankBody('minion'), name: 'Fen Wisp', reaction_max: 6 },
+  };
+  const made = hydrateCreature(row);
+  registerForged([made]);
+
+  check('the body keeps what was typed', made.reaction_max, 6);
+  check('and the creature still has none', creatureStats(made, 3).reaction_max, 0);
+  check('a published one reads as codex', made.scope, 'codex');
+  clearForged();
+}
+
+section('the body is cleaned before anything reads it');
+{
+  /* Everything a client could send that a creature must not become. */
+  const dirty = normalizeBody({
+    name: '   ' + 'x'.repeat(200),
+    type: '',
+    rank: 'archfiend',
+    level: 99,
+    xp: -40,
+    primary: 'charisma',
+    secondary: 'charisma',
+    bonus: { physique: 500, instinct: 'nope', mind: -500 },
+    health: { perLevel: 1e6, perPhysique: 1.55 },
+    willpower: { perLevel: -3, perMind: null, flat: 1e9 },
+    avoid_bonus: -7,
+    armor: 'lots',
+    speed_m: 999,
+    die: 7,
+    ap_max: 900,
+    reaction_max: 900,
+    cards: ['grave-cleave', 'grave-cleave', 'move', 'no-such-card', 42, null],
+    lore: 'y'.repeat(5000),
+    portrait_url: 'z'.repeat(900),
+  });
+
+  check('the name is cut to length', dirty.name.length, FORGED_NAME_MAX);
+  check('an unknown rank reads as Minion', dirty.rank, 'minion');
+  check('the level is held inside twelve', dirty.level, CREATURE_MAX_LEVEL);
+  check('a negative XP is floored', dirty.xp, 0);
+  check('an unknown attribute falls back', [dirty.primary, dirty.secondary], ['physique', 'instinct']);
+  check('a bonus is held either way', dirty.bonus, { physique: 10, instinct: 0, mind: -10 });
+  check('a coefficient keeps one decimal', dirty.health.perPhysique, 1.6);
+  check('and is capped', dirty.health.perLevel, 40);
+  check('an unknown die reads as d8', dirty.die, 8);
+  check('the pools are capped', [dirty.ap_max, dirty.reaction_max], [30, 30]);
+  check('the lore is cut', dirty.lore.length, FORGED_LORE_MAX);
+
+  /* A card list holds real cards, once each, and never a basic action: those are
+     on every bar already and a stored one would print twice. */
+  check('only real cards survive', dirty.cards, ['grave-cleave']);
+
+  /* And a body that says nothing at all is still a creature that can be drawn,
+     which is what keeps a row written by an older build from white-screening a
+     shelf. */
+  const empty = normalizeBody(null);
+  check('an empty body is still drawable', Boolean(creatureStats(empty, 1).health_max >= 1), true);
+  check('and it has a name', empty.name, 'Unnamed Creature');
+
+  /* The form starts blank on the name and only on the name, so nobody has to
+     delete "Unnamed Creature" before typing. */
+  check('a blank body has no name yet', blankBody().name, '');
+}
+
+section('the slot ladder says the same thing in both places');
+{
+  /* tiers.js is what the interface offers and public.creature_slots is what
+     enforces it. Two tables that can disagree, so this reads the SQL and
+     compares. The same trick would catch a campaign slot drifting, and this is
+     the first time it has been worth writing. */
+  const sql = readFileSync(new URL('../supabase/schema.sql', import.meta.url), 'utf8');
+  const body = /create or replace function public\.creature_slots[\s\S]*?\$\$;/.exec(sql)?.[0] ?? '';
+
+  for (const [tier, slots] of Object.entries(CREATURE_SLOTS)) {
+    const said = new RegExp(`when '${tier}'\\s+then (\\d+)`).exec(body);
+    /* Free and friend are the `else 0` branch rather than a case of their own,
+       which is the honest way to write two zeros. */
+    const want = said ? Number(said[1]) : 0;
+    check(`${tier} has the same cap in the schema`, want, slots);
+  }
+
+  check('and nothing but premium and admin may forge at all', Object.entries(CREATURE_SLOTS)
+    .filter(([, slots]) => slots > 0)
+    .map(([tier]) => tier), ['premium', 'admin']);
+  check('a free account cannot', canForgeCreature('free'), false);
+  check('a premium one can', canForgeCreature('premium'), true);
+  /* The one place on tiers.js where the ladder does not hold, kept honest here
+     so nobody "fixes" it without reading why. See CREATURE_SLOTS. */
+  check('and a friend, deliberately, cannot', canForgeCreature('friend'), false);
+  check('publishing to the shared shelf is an admin', [can('premium', 'forgeCodex'), can('admin', 'forgeCodex')], [false, true]);
 }
 
 /* ------------------------------------------------------------------ report */

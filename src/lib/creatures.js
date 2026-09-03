@@ -93,6 +93,15 @@
  * is the sentence that holds while it stands, printed on the row so nobody has
  * to open the card to be reminded what they are turning off.
  *
+ * ------------------------------------------------------- and forged creatures
+ * Everything above is the codex's. A table can also forge a creature of its own,
+ * which is a row in the database rather than a page in this file, and it has to
+ * answer to `getCreature` like any other because every reader of a creature goes
+ * through that. So there is one mutable map beside the frozen list, filled from
+ * above by src/lib/customCreatures.js. See the note on FORGED for the two rules
+ * that make it safe, one of which is why `creatureCards` takes card objects as
+ * well as ids.
+ *
  * This file reads nothing and writes nothing. It is a leaf, like spells.js.
  */
 
@@ -751,9 +760,76 @@ export const CREATURES = [
 
 const BY_ID = new Map(CREATURES.map((creature) => [creature.id, creature]));
 
-/** One creature by id, or null for a link into nothing. */
+/* ----------------------------------------------------------- forged creatures
+
+   Everything above is codex data, frozen at build time. This is the other half:
+   creatures a table forged for itself, which arrive from the database and have
+   to answer to `getCreature` like any other, because *every* reader of a
+   creature goes through it. An encounter row names a creature by id; the block,
+   the runner, the log and the shelf all resolve that id here. A forged creature
+   that could not be found by id would be a creature nothing could draw.
+
+   So there is one mutable map beside the frozen one, and it is filled from
+   above: see src/lib/customCreatures.js, which is the only writer. This file
+   stays a leaf — it reads nothing, fetches nothing and imports nothing new.
+
+   Two rules about what goes in it:
+
+     the id is prefixed. A forged creature's id is `custom:<row uuid>`, so it can
+     never collide with a printed one and any reader can tell at a glance which
+     half of the bestiary a stored encounter is pointing at.
+
+     the cards are already resolved. A printed creature names its cards by id and
+     `getCreatureCard` finds them, because they are in this file. A forged one can
+     learn *anything a character can play*, which lives in the registry in
+     weapons.js — and weapons.js imports this file, so this file can never import
+     it back. The loader is above both, so it resolves the cards on the way in and
+     what lands here carries card objects rather than ids. `creatureCards` below
+     takes either.
+
+   The map is per session and holds whatever the signed-in account could read. It
+   is emptied and refilled on load rather than merged, so signing in as somebody
+   else cannot leave another account's shelf behind. */
+
+const FORGED = new Map();
+
+/** The prefix every forged creature's id carries. */
+export const FORGED_PREFIX = 'custom:';
+
+/** Whether an id names a forged creature rather than a printed one. */
+export function isForgedId(id) {
+  return String(id ?? '').startsWith(FORGED_PREFIX);
+}
+
+/**
+ * Put the forged creatures this account can read into the registry, replacing
+ * whatever was there. Each one must already carry a prefixed `id` and resolved
+ * `cards`; see `hydrateCreature` in customCreatures.js, which is what builds
+ * them and the only place that should call this.
+ */
+export function registerForged(list = []) {
+  FORGED.clear();
+  for (const creature of list) {
+    if (!creature || !isForgedId(creature.id)) continue;
+    FORGED.set(creature.id, creature);
+  }
+}
+
+/** Empty the forged half. Signing out, and the checkers between cases. */
+export function clearForged() {
+  FORGED.clear();
+}
+
+/** Every forged creature in the registry, in the bestiary's own order. */
+export function forgedCreatures() {
+  return sortCreatures([...FORGED.values()]);
+}
+
+/** One creature by id, or null for a link into nothing. Forged or printed: an
+    id is an id, and every reader of one comes through here. */
 export function getCreature(id) {
-  return BY_ID.get(String(id ?? '')) ?? null;
+  const key = String(id ?? '');
+  return BY_ID.get(key) ?? FORGED.get(key) ?? null;
 }
 
 /** Any level, held inside the twelve every body on the board climbs. */
@@ -893,9 +969,20 @@ export function creatureStats(creature, level = null) {
   };
 }
 
-/** The cards it plays and the cards it simply is, split the codex's own way. */
+/**
+ * The cards it plays and the cards it simply is, split the codex's own way.
+ *
+ * A printed creature names its cards by id and they are found in this file. A
+ * forged one arrives with the card objects already on it, because what it may
+ * learn is *anything a character can play* and that registry is above this file
+ * (see the note on FORGED). So an entry is taken as it is when it is already a
+ * card, and looked up when it is a string. Nothing else in the codex needs the
+ * second case, and nothing outside customCreatures.js should produce one.
+ */
 export function creatureCards(creature) {
-  return (creature?.cards ?? []).map(getCreatureCard).filter(Boolean);
+  return (creature?.cards ?? [])
+    .map((entry) => (entry && typeof entry === 'object' ? entry : getCreatureCard(entry)))
+    .filter(Boolean);
 }
 
 /** What it plays: everything with a price on it. */
@@ -931,9 +1018,18 @@ export function sortCreatures(list) {
   );
 }
 
-/** The bestiary in its printed order, or one rank of it. */
+/**
+ * The bestiary in its printed order, or one rank of it.
+ *
+ * Both halves: the printed creatures and whatever this account's forged ones are
+ * (see FORGED). One list rather than two, because every caller of this — the
+ * Bestiary tab, the encounter shelf — is asking "what can I put on the table",
+ * and a creature a Game Master made an hour ago is as much of an answer as the
+ * Blightgeist. `forged: true` on the row is how a caller tells them apart.
+ */
 export function bestiary(rank = null) {
-  const list = rank ? CREATURES.filter((creature) => creature.rank === rank) : CREATURES;
+  const all = [...CREATURES, ...FORGED.values()];
+  const list = rank ? all.filter((creature) => creature.rank === rank) : all;
   return sortCreatures(list);
 }
 

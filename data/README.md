@@ -11294,3 +11294,170 @@ And three things that are wiring rather than rulings:
   are used "with Heavy and Great Melee Weapons", and `offeredMoves` asks what card is being
   paid for rather than what is in your hand. It is a permission on the old reading and it is
   now checkable, since the swing is known at the moment the move is added.
+
+## A creature you built yourself, 2026-09-02
+
+> I want you to create a tool in the bestiary that allow the user to add a custom made entity.
+> Note that it should be able to learn any ability the player can use. For premium user they can
+> create personal one with a cap. They have to edit or remove existing one if they want to do new
+> one. Admins can create one that are added for everyone. Free and Friends for now cannot. Make
+> sure all the need field as adjustable, that you can see the which stat get increase as main ect.
+> do not that tereh is an error everyone starts at 4 in all stats.
+
+The Bestiary tab now has a forge on it. What comes out of one is a row in a new
+`custom_creatures` table, and from the moment it lands **it is a creature**: the same block draws
+it, the encounter shelf offers it, `creatureStats` gives it its numbers, and the log signs it the
+same way. Nothing downstream of `getCreature` can tell a forged creature from a printed one, which
+is the whole design rather than a shortcut.
+
+### The registry grew a second half
+
+`creatures.js` held one frozen list and one `Map` built from it at import. It now holds a second,
+mutable map beside the first, and `getCreature` reads both. That is the only way a forged creature
+could work at all: **every** reader of a creature goes through that one function, so a creature it
+cannot find is a creature nothing can draw, add to a fight, or roll for.
+
+Two rules keep the mutable half safe, and both are written on `FORGED` where anybody changing it
+will read them.
+
+- **The id is prefixed.** A forged creature is `custom:<row uuid>`, so it can never collide with a
+  printed id and a stored encounter says out loud which half of the bestiary it points at.
+- **The cards arrive resolved.** A printed creature names its cards by id and `getCreatureCard`
+  finds them, because they are in the same file. A forged one can learn anything a character can
+  play, and that registry is in `weapons.js`, which imports `creatures.js` and so can never be
+  imported back. `customCreatures.js` sits above both and resolves them on the way in;
+  `creatureCards` takes an entry that is already a card as well as one that is an id.
+
+`creatures.js` is still a leaf. It reads nothing, fetches nothing and imports nothing new.
+
+### The forge is the codex's own shape, with every field a control
+
+Nothing about a forged creature is a second, simpler kind of enemy, so the form has one control per
+field a printed page has: name, size and kind, rank, written level, XP a level, the two Health
+coefficients, the three Willpower ones, Defense over Instinct, Armor, Speed, the hit die, both point
+pools, a picture, the lore paragraph, and the cards.
+
+Two of those needed a decision rather than a box.
+
+**The rank carries its pools with it.** A rank is not a label: it sets the clock and whether
+reactions are possible at all. Switching rank moves the two pools *only if they were still the old
+rank's own numbers*, so nobody loses a typed twelve by changing their mind about Overlord, and
+nobody has to know that a General runs on six. A Minion's Reaction Points field goes quiet with the
+rule printed under it, because `creatureStats` forces that pool to zero whatever is stored, and a
+live-looking field that will be ignored is worse than a dead one.
+
+**The three attributes are printed as a sum.** This is the answer to "you can see which stat get
+increase as main", and to the note about 4.
+
+A creature does not store its attributes. It stores which one is its main, which its second, and one
+flat bonus each, and the curve does the rest: base 4, the +2 and +1 at level 1, one more on each at
+every odd level after. Type an 8 into a plain box and the honest question is *8 at what level*. So
+the panel prints the whole arithmetic, a column at a time:
+
+```
+  ATTRIBUTE      BASE   GRANT   CLIMB   ITS OWN   AT 4   AT 12
+  Physique main   4      +2      +1       +2        9      13
+  Instinct second 4      +1      +1        —        6      10
+  Mind            4       —       —        —        4       4
+```
+
+The editable cell is **At 4**: the total at the level the creature is written at. Typing there solves
+back for the bonus, which is the only number that is really the creature's own. Nobody is stuck at 4,
+nobody has to work out what a -3 means, the main is marked on its own row, its climb is a column of
+its own, and the number it reaches at 12 is printed beside it. The panel spans both columns of the
+dialog because seven columns will not squeeze into half of one, and it scrolls inside its own box on
+a phone rather than pushing the dialog sideways.
+
+Beside it, the whole page it will print, at the written level and at 12 together: Defense, Armor,
+Health with its hit die, Shield cap, Willpower, both pools, Initiative, Reflex, Grit, Speed, XP.
+Every one of them moves as you type. A creature built at level 3 that turns out to be a 14 Physique
+at the top is a thing to find out in the forge.
+
+### It can learn anything
+
+The picker is the whole card registry, 487 of them, less the twelve basic actions every body on the
+board already has (offering one would print it twice: see `basicGroup`). Nothing else is filtered.
+A creature holding a lineage trait as a passive or an Alchemist's ingredient as a move is the
+table's call, and a codex pruned by taste here would be a second, quieter set of rules.
+
+It is a shelf rather than a wall of card faces, for the reason the encounter shelf is one: 487 cards
+at their real 360px footprint is a scroll nobody finishes. Rows are searchable by what a card says
+and chippable by what it is, the row opens the card itself on the stack, and only the first sixty
+matches are drawn, because a picker that takes a second to answer a keystroke is one people stop
+typing into. Twelve cards is the ceiling for one creature.
+
+### Who may forge, and the ladder that does not hold
+
+`CREATURE_SLOTS` in `tiers.js` is a count per tier, the shape `CAMPAIGN_SLOTS` already had, and a
+zero is how a tier is refused outright. That is why there is no `forgePersonal` capability beside
+`forgeCodex`: there would be two answers to one question and they could disagree.
+
+```
+  free 0    premium 6    friend 0    admin 60
+```
+
+**This is the first table on that file where a higher tier gets less than a lower one.** `friend`
+sits above `premium` on the ladder and gets nothing, on the instruction above, and both the file and
+this entry say so out loud so nobody "fixes" it without reading why. The word to hold onto is "for
+now": it is one number to change, and `public.creature_slots` in the schema has to change with it.
+`check-creatures.mjs` reads the SQL and compares the two tables, so a drift between them is a failed
+check rather than a bug found by a Game Master.
+
+The cap of **six** is this build's choice and not Jules's number. It is enough to forge a whole
+encounter's worth of one-off enemies and still feel the ceiling the instruction asks for.
+
+Publishing is separate and it is the keys: `forgeCodex` is admin, a published row is `scope =
+'codex'`, and the policy checks `scope <> 'codex' or is_admin()` on the insert **and** on the update,
+so a personal creature cannot be promoted by editing it.
+
+### What the database enforces
+
+The client decides what to offer and the schema decides what is allowed, which is the line
+`tiers.js` has always drawn. `public.creature_slots` and `guard_creature_slots` are the cap, counted
+per account on insert and counting only personal rows. The four policies are the rest.
+
+The read policy is the one worth reading twice. A published creature is readable by everybody signed
+in. A personal one is readable by its author, by an admin, **and by anybody who can already read an
+encounter that names it** — because an encounter whose Health has been shared is readable by the
+players at that table, and a player who could read the encounter but not the creature would be shown
+an enemy the app then silently dropped.
+
+Which is the same hazard, from the other side, that decided where the load goes. `normalizeFoes`
+drops a foe whose creature it cannot find and the next write persists the drop, so the forged shelf
+is fetched **in the campaign page's own gate**, beside the campaign and the roster, and nothing that
+could name a creature renders until it has landed. The one exception is a table that does not exist
+yet: `missingTable` catches exactly that (Postgres 42P01, PostgREST's PGRST205) and reads as an empty
+shelf, because with no table there are no forged creatures and nothing can be lost. Every other read
+failure is thrown, since a read that failed against a table that does exist is precisely the case
+where carrying on would cost somebody their enemies. A forge pressed before the SQL has been run
+says so: "The forge has no table to write to yet. Run supabase/schema.sql against this project and
+try again."
+
+### Two things moved that were not new
+
+`previewFoe` used to dress a creature by round-tripping through its id and `encounterState`. A
+creature being tuned has no id, no encounter and nothing stored, and it has to redraw on every
+keystroke, so the body of that map is now `dressFoe` and `previewFoe` calls it with the creature
+itself. Nothing else changed about what it hands back.
+
+The Bestiary tab stopped memoising its shelf. `bestiary()` now reads mutable module state, so a memo
+keyed on anything a component can see would be keyed on the wrong thing. Sorting a few dozen
+creatures on a render costs nothing and a stale shelf costs a Game Master their new creature.
+
+### Left open
+
+- **Jules's note about 4 is read as a warning rather than a bug.** The curve is right: the checker
+  has always proved that the Blightgeist reproduces its printed page from base 4, and it still does.
+  What the forge does about it is make the base a *column* rather than a floor, so the resulting
+  value is what you type and the bonus follows. If the note meant something else, this is the place
+  to say so.
+- **The cap is six and the friend tier gets none.** Both are one number in two files.
+- **Nothing versions a forged creature.** Editing one changes every encounter already holding it,
+  which is right for a stat block being tuned and wrong the day somebody wants last session's
+  version. The codex has the same property and has never needed the other.
+- **A removed creature takes its enemies with it.** An encounter holding one loses that foe the next
+  time it is opened, because `normalizeFoes` drops what it cannot resolve. The forge says so before
+  it removes one. Keeping a tombstone row so an old fight still draws is the alternative and it is a
+  bigger change than it looks.
+- **The published shelf has no author line.** A creature an admin published shows "Published" and not
+  who published it. The row knows; the block does not print it.

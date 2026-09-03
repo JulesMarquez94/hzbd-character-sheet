@@ -1030,6 +1030,167 @@ create policy "encounters: dm delete" on public.encounters
   );
 
 -- ----------------------------------------------------------------------------
+--  FORGED CREATURES
+--  Creatures a table made for itself, as opposed to the ones shipped with the
+--  site in src/lib/creatures.js.
+--
+--  Jules, 2026-09-02: "For premium user they can create personal one with a cap.
+--  They have to edit or remove existing one if they want to do new one. Admins
+--  can create one that are added for everyone. Free and Friends for now cannot."
+--
+--  Two scopes, and the whole of the difference between them is who reads the
+--  row:
+--    'personal'  its author's, counted against their slots below.
+--    'codex'     an admin's, published into the bestiary everybody browses.
+--
+--  The whole creature is one jsonb `body` rather than twenty columns. It is a
+--  shape plus a handful of coefficients (see the header of creatures.js), the
+--  app already has one function that cleans it (normalizeBody in
+--  src/lib/customCreatures.js), and a stat block gains nothing from being
+--  queryable field by field: the only queries there are are "mine" and
+--  "published". A new coefficient is then a deploy of the app rather than a
+--  migration, which is the same trade `foes` and `run` make on encounters.
+-- ----------------------------------------------------------------------------
+create table if not exists public.custom_creatures (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users on delete cascade,
+
+  -- 'personal' | 'codex'. Checked here as well as in the policy below, so a row
+  -- can never hold a third value whatever writes it.
+  scope      text not null default 'personal'
+             check (scope in ('personal', 'codex')),
+
+  -- The creature itself: name, type, rank, level, xp, primary/secondary, bonus,
+  -- the Health and Willpower conversions, Defense, Armor, Speed, hit die, the
+  -- card ids it has learned, and its lore. See normalizeBody, which is the one
+  -- reader that decides what any of it means.
+  body       jsonb not null default '{}'::jsonb,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists custom_creatures_user_id_idx on public.custom_creatures (user_id);
+-- The one query the whole site makes of the published half.
+create index if not exists custom_creatures_scope_idx on public.custom_creatures (scope);
+
+alter table public.custom_creatures enable row level security;
+
+-- ----------------------------------------------------------------------------
+--  How many creatures of their own each tier may keep. CREATURE_SLOTS in
+--  src/lib/tiers.js is the same table again, and that one is only what the
+--  interface offers: this pair is what enforces it. Change one and change the
+--  other.
+--
+--  Note that this ladder is not monotonic and that is deliberate: 'friend' sits
+--  above 'premium' on the tier ladder and gets no slots, on the instruction
+--  quoted above. "For now" is Jules's word. Only 'codex' rows escape the count,
+--  because those are an admin's publications rather than their own shelf.
+-- ----------------------------------------------------------------------------
+create or replace function public.creature_slots(tier text)
+returns int
+language sql immutable
+as $$
+  select case tier
+           when 'admin'   then 60
+           when 'premium' then 6
+           else 0
+         end;
+$$;
+
+create or replace function public.guard_creature_slots()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  -- The SQL editor and the service role pass, the way every other guard here
+  -- lets them: that is how a creature gets seeded by hand.
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  -- A publication is not a slot. It is gated by the policy below instead, which
+  -- is the one that asks whether the caller is an admin at all.
+  if new.scope = 'codex' then
+    return new;
+  end if;
+
+  if (select count(*) from public.custom_creatures c
+      where c.user_id = new.user_id and c.scope = 'personal')
+     >= public.creature_slots(public.account_tier()) then
+    raise exception 'Every creature slot on this account is full.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists custom_creatures_guard_slots on public.custom_creatures;
+create trigger custom_creatures_guard_slots
+  before insert on public.custom_creatures
+  for each row execute function public.guard_creature_slots();
+
+-- ----------------------------------------------------------------------------
+--  Who reads a forged creature.
+--
+--  A published one is read by everybody signed in, which is the point of
+--  publishing it.
+--
+--  A personal one is read by its author, by an admin, and by anybody signed in
+--  who is looking at a row that names it. That last clause is the one worth
+--  explaining: an encounter stores its enemies by creature id, and an encounter
+--  whose Health has been shared is readable by the players at that table (see
+--  the encounters policies). A player who could read the encounter but not the
+--  creature would be shown an enemy the app then silently dropped, and the next
+--  write would persist the loss. So the read follows the encounter.
+--
+--  The `exists` walks encounters the caller can already read and asks whether
+--  this creature's id appears in the pile. It is bounded by the encounters that
+--  caller sits at, which is a handful of rows, and only ever runs for a
+--  personal creature somebody else made.
+-- ----------------------------------------------------------------------------
+drop policy if exists "custom_creatures: read" on public.custom_creatures;
+create policy "custom_creatures: read" on public.custom_creatures
+  for select using (
+    scope = 'codex'
+    or user_id = auth.uid()
+    or public.is_admin()
+    or exists (
+      select 1
+      from public.encounters e
+      join public.campaigns c on c.id = e.campaign_id
+      where (c.dm_user_id = auth.uid()
+             or (e.share_health and public.is_campaign_member(e.campaign_id)))
+        and e.foes @> jsonb_build_array(
+              jsonb_build_object('creature', 'custom:' || custom_creatures.id::text))
+    )
+  );
+
+-- Written by its author, and only an admin may publish. A policy cannot
+-- restrict a single column on its own, but it can read one: `scope <> 'codex' or
+-- is_admin()` is the whole of "Admins can create one that are added for
+-- everyone", said on the insert and again on the update so a personal creature
+-- cannot be promoted by editing it.
+drop policy if exists "custom_creatures: owner insert" on public.custom_creatures;
+create policy "custom_creatures: owner insert" on public.custom_creatures
+  for insert with check (
+    user_id = auth.uid()
+    and (scope <> 'codex' or public.is_admin())
+  );
+
+drop policy if exists "custom_creatures: owner update" on public.custom_creatures;
+create policy "custom_creatures: owner update" on public.custom_creatures
+  for update using (user_id = auth.uid() or public.is_admin())
+  with check (
+    (user_id = auth.uid() or public.is_admin())
+    and (scope <> 'codex' or public.is_admin())
+  );
+
+drop policy if exists "custom_creatures: owner delete" on public.custom_creatures;
+create policy "custom_creatures: owner delete" on public.custom_creatures
+  for delete using (user_id = auth.uid() or public.is_admin());
+
+-- ----------------------------------------------------------------------------
 --  updated_at housekeeping
 -- ----------------------------------------------------------------------------
 create or replace function public.touch_updated_at()
@@ -1055,6 +1216,11 @@ create trigger encounters_touch_updated_at
   before update on public.encounters
   for each row execute function public.touch_updated_at();
 
+drop trigger if exists custom_creatures_touch_updated_at on public.custom_creatures;
+create trigger custom_creatures_touch_updated_at
+  before update on public.custom_creatures
+  for each row execute function public.touch_updated_at();
+
 -- ----------------------------------------------------------------------------
 --  REALTIME
 --  Lets viewers see a sheet update without reloading. Realtime still honours
@@ -1076,6 +1242,9 @@ alter table public.campaign_events  replica identity full;
 -- The pile of enemies, so a Game Master with the encounter open on a second
 -- screen sees the same Health the one they are pressing on does.
 alter table public.encounters       replica identity full;
+-- And the creatures a table forged, so an edit to one reaches a bestiary open
+-- elsewhere rather than waiting for a reload.
+alter table public.custom_creatures replica identity full;
 
 do $$
 declare
@@ -1083,7 +1252,7 @@ declare
 begin
   foreach t in array array['characters', 'abilities', 'inventory_items',
                           'campaigns', 'campaign_members', 'campaign_events',
-                          'encounters'] loop
+                          'encounters', 'custom_creatures'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

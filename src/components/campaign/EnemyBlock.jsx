@@ -138,6 +138,7 @@ export default function EnemyBlock({
   readOnly = false,
   unit = 'metric',
   onRemove = null,
+  onEdit = null,
   combat = null,
 }) {
   const [lore, setLore] = useState(false);
@@ -151,6 +152,7 @@ export default function EnemyBlock({
         unit={unit}
         onLore={() => setLore(true)}
         onRemove={onRemove}
+        onEdit={onEdit}
       />
       <FoeActions foe={foe} patch={patch} readOnly={readOnly} combat={combat} />
 
@@ -166,7 +168,7 @@ export default function EnemyBlock({
  * line off the printed page, the three attributes, the combat stats, the
  * defenses, and the two pools it loses when it is hit.
  */
-function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
+function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove, onEdit }) {
   const { creature, rank, stats } = foe;
 
   /* Handed to `patch` as a function of the encounter rather than as a body,
@@ -196,6 +198,23 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
         >
           i
         </button>
+
+        {/* Rewriting the *page*, which is a different act from touching this
+            instance of it and so is not gated on `readOnly`. The bestiary draws
+            every block read only and still offers this on a creature the reader
+            forged: nothing on the block can be pressed, and the creature behind
+            it can be rebuilt. Only a forged creature is ever handed one; a
+            printed page is the codex's. See BestiaryTab. */}
+        {onEdit && (
+          <button
+            type="button"
+            className="foe-drop"
+            onClick={onEdit}
+            title={`Rebuild ${creature.name}`}
+          >
+            Edit
+          </button>
+        )}
 
         {!readOnly && onRemove && (
           <button
@@ -232,6 +251,23 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove }) {
             <span className="foe-chip foe-chip-rank" style={{ '--rank-tone': rank.color }}>
               {rank.label}
             </span>
+
+            {/* Where it came from, when it did not come from the codex. Two
+                words rather than one, because "forged" alone would not say
+                whether the reader is looking at their own page or at one an
+                admin published to everybody. */}
+            {creature.forged && (
+              <span
+                className="foe-chip foe-chip-forged"
+                title={
+                  creature.scope === 'codex'
+                    ? 'Forged and published to the shared bestiary.'
+                    : 'Forged on this account. It is on nobody else\u2019s shelf.'
+                }
+              >
+                {creature.scope === 'codex' ? 'Published' : 'Forged'}
+              </span>
+            )}
 
             {/* The level, and the way to change it. "All enemies should have a
                 level scale option", 2026-08-31: the same Blightgeist is level 1

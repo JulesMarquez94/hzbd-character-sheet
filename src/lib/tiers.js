@@ -14,6 +14,11 @@
  *   admin     the keys. Edits anybody's sheet, and is the only tier that can
  *             set somebody else's.
  *
+ * The ladder holds for every *capability*. It does not hold for every ceiling:
+ * CREATURE_SLOTS gives `friend` less than `premium`, on Jules's instruction, and
+ * says so where it does it. A ceiling is a number per tier and can be shaped
+ * however the table wants; `can()` is the part that must stay monotonic.
+ *
  * The tier lives in `profiles.role` in the database, which is the column that
  * already existed and already backs `public.is_admin()`. Rows written before
  * tiers say `'user'`, and that reads as `free` here so nothing has to be
@@ -109,6 +114,15 @@ export const CAPABILITIES = {
   editAny: 'admin',
   /** Set another account's tier. */
   setTier: 'admin',
+  /**
+   * Publish a forged creature into the bestiary everybody reads.
+   *
+   * The admin half of the creature forge. Anyone with a slot below may forge a
+   * creature onto their own shelf; this is the one that writes into the shelf
+   * every account sees, which is why it is the keys and not a slot count.
+   * See CREATURE_SLOTS for the other half.
+   */
+  forgeCodex: 'admin',
 };
 
 export function can(tier, capability) {
@@ -138,6 +152,45 @@ export const CAMPAIGN_SLOTS = {
 
 export function campaignSlots(tier) {
   return CAMPAIGN_SLOTS[normalizeTier(tier)] ?? CAMPAIGN_SLOTS.free;
+}
+
+/**
+ * How many creatures of their own each tier may keep on their bestiary shelf.
+ *
+ * A count rather than a capability, for the reason CAMPAIGN_SLOTS is one: the
+ * question is "how many". A zero is how a tier is refused outright, which is
+ * why no `forgePersonal` capability exists beside `forgeCodex` — there would be
+ * two answers to one question and they could disagree.
+ *
+ * Jules, 2026-09-02: "For premium user they can create personal one with a cap.
+ * They have to edit or remove existing one if they want to do new one. Admins
+ * can create one that are added for everyone. Free and Friends for now cannot."
+ *
+ * ------------------------------------------------------- the ladder does not hold here
+ * **This is the first table on this file where a higher tier has less than a
+ * lower one**, and it is deliberate rather than a slip: `friend` sits above
+ * `premium` on the ladder and gets no slots, on the instruction above. The word
+ * to hold onto is "for now". It is one number to change, and the guard in
+ * supabase/schema.sql is the same table again and has to change with it.
+ *
+ * The cap itself is a choice this file made, not one Jules stated: six, so a
+ * Game Master can forge a whole encounter's worth of one-off enemies and still
+ * feel the ceiling the instruction asks them to feel.
+ */
+export const CREATURE_SLOTS = {
+  free: 0,
+  premium: 6,
+  friend: 0,
+  admin: 60,
+};
+
+export function creatureSlots(tier) {
+  return CREATURE_SLOTS[normalizeTier(tier)] ?? CREATURE_SLOTS.free;
+}
+
+/** Whether this tier may forge a creature of its own at all. */
+export function canForgeCreature(tier) {
+  return creatureSlots(tier) > 0;
 }
 
 /* ----------------------------------------------------------------- the art */

@@ -1973,3 +1973,388 @@
   margin: 0.15rem 0;
   background-color: var(--hairline);
 }
+
+/* =========================================================
+   THE CREATURE FORGE
+   One creature, built by hand, inside a page-width dialog.
+
+   Two columns on a desktop and one on a phone. The panels
+   are the Details tab's own, because this is the same kind
+   of thing: a form that edits a record, in a stack of named
+   sections. What is different is the width, and the width is
+   what earns the second column: a form of this many fields in
+   one 560px stripe is a scroll nobody reaches the end of.
+   ========================================================= */
+.forge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+/* The attribute panel spans both, because its table has seven
+   columns and cannot be squeezed into half a dialog. */
+.forge-panel-wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .forge-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.forge-panel {
+  border-top-color: var(--copper);
+}
+
+/* A row of fields that belong together: two coefficients, or a
+   size and a kind. They share the width evenly and stack on a
+   narrow screen rather than shrinking into unusable boxes. */
+.forge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.forge-row > .form-group {
+  flex: 1 1 120px;
+  min-width: 110px;
+  margin-bottom: 0;
+}
+
+.forge-panel .form-group {
+  margin-bottom: 0.9rem;
+}
+
+/* The line under a control that says what the number means, or
+   what it will do. Muted, small, and the one place in the forge
+   where a sentence is allowed. */
+.forge-hint {
+  display: block;
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.forge-hint b {
+  color: var(--text-silver);
+}
+
+.forge-empty {
+  margin: 0.4rem 0 0.8rem;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.forge-error {
+  color: var(--danger-rose);
+}
+
+/* ---------- a number with two steps ----------
+   The same two steps the level chip on an enemy block carries,
+   for the same reason: a coefficient is nudged while building
+   and typed when it is known. */
+.forge-nudge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.forge-nudge.is-off {
+  opacity: 0.45;
+}
+
+.forge-cell {
+  width: 100%;
+  max-width: 84px;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--font-headings);
+  font-size: 0.85rem;
+  padding: 0.35rem 0.2rem;
+}
+
+/* The spinner arrows are dead weight beside two steps of our own
+   that know the field's range. */
+.forge-cell::-webkit-outer-spin-button,
+.forge-cell::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.forge-cell {
+  appearance: textfield;
+}
+
+/* ---------- the attribute sum ----------
+   The whole arithmetic, column by column, because a creature does
+   not store its attributes: it stores which one is its main, which
+   its second, and one flat bonus each. Printing only the total
+   would leave the reader to work out why an 8 is an 8.
+   ========================================================= */
+/* A table wide enough that a phone cannot hold it. It scrolls inside its own
+   box rather than pushing the dialog sideways: the attribute sum is seven
+   columns and none of them can be dropped without hiding a step of the
+   arithmetic the panel exists to show. */
+.forge-scroll {
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+
+.forge-attrs,
+.forge-numbers {
+  width: 100%;
+  min-width: 380px;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.forge-attrs th,
+.forge-attrs td,
+.forge-numbers th,
+.forge-numbers td {
+  padding: 0.35rem 0.45rem;
+  text-align: center;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.forge-attrs thead th,
+.forge-numbers thead th {
+  font-family: var(--font-headings);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.forge-attrs tbody th,
+.forge-numbers tbody th {
+  text-align: left;
+  font-family: var(--font-headings);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.forge-attrs tbody td,
+.forge-numbers tbody td {
+  color: var(--text-muted);
+}
+
+/* The number at level 12, which is the one every creature is really
+   built for: the ceiling it reaches, not the level it was written
+   at. Silver rather than muted, so a column can be read straight
+   down. */
+.forge-top {
+  color: var(--text-silver) !important;
+  font-family: var(--font-headings);
+  font-weight: 700;
+}
+
+.forge-attrs tr.is-main {
+  background-color: rgba(200, 138, 75, 0.06);
+}
+
+/* Which one is the main and which the second, said in a word on the
+   row rather than only in the two dropdowns under the table. This is
+   the ask: you can see which stat gets increased as main. */
+.forge-mark {
+  margin-left: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(200, 138, 75, 0.45);
+  color: var(--copper-bright);
+}
+
+.forge-mark.is-second {
+  border-color: rgba(148, 167, 176, 0.3);
+  color: var(--text-muted);
+}
+
+/* The creature's own bonus, which is the only number under the table
+   that is really its. Up, down or flat, coloured so a spread reads at
+   a glance. */
+.forge-attrs td.is-up {
+  color: var(--stat-health);
+}
+
+.forge-attrs td.is-down {
+  color: var(--danger-rose);
+}
+
+.forge-attrs td.is-flat {
+  opacity: 0.6;
+}
+
+.forge-attrs td .forge-cell {
+  max-width: 70px;
+  margin: 0 auto;
+}
+
+/* ---------- the readout ----------
+   What the page will print, at the level it is written at and at the
+   twelve every creature climbs to. */
+.forge-readout {
+  border-top-color: var(--focus-cyan);
+}
+
+.forge-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.8rem;
+}
+
+.forge-sheet-name {
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
+.forge-sheet-line {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* ---------- what it knows ---------- */
+.forge-cards {
+  list-style: none;
+  margin: 0 0 0.8rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.forge-card-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+.forge-card-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.forge-card-open:hover .forge-card-name {
+  color: var(--copper-bright);
+}
+
+.forge-card-name {
+  font-family: var(--font-headings);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
+.forge-card-line {
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.forge-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+}
+
+/* A card the creature already holds, on the shelf it was taken from. */
+.foe-shelf-row.is-held {
+  border-color: color-mix(in srgb, var(--copper) 35%, transparent);
+  background-color: rgba(200, 138, 75, 0.06);
+}
+
+.forge-lore {
+  width: 100%;
+  resize: vertical;
+  min-height: 90px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* ---------- whose shelf ----------
+   Two answers to one question, so a pair of radios rather than a
+   checkbox that would leave the other answer unnamed. */
+.forge-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.forge-scope-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+  cursor: pointer;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.forge-scope-row.is-on {
+  border-color: rgba(200, 138, 75, 0.45);
+  background-color: rgba(200, 138, 75, 0.08);
+}
+
+.forge-scope-row b {
+  display: block;
+  color: var(--text-silver);
+}
+
+.forge-scope-row .forge-hint {
+  margin-top: 0.15rem;
+}
+
+/* A creature that was forged rather than printed, said on its own
+   block so nobody reads one as codex. */
+.foe-chip-forged {
+  border-color: rgba(200, 138, 75, 0.45);
+  background-color: rgba(200, 138, 75, 0.1);
+  color: var(--copper-bright);
+}
+
+/* And the same fact on the encounter shelf, where the row is one line and a
+   chip would be too loud. It reads like the "x2 in" beside it. */
+.foe-shelf-forged {
+  margin-left: 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--copper);
+}
