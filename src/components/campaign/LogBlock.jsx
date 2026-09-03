@@ -595,6 +595,10 @@ function Throw({ roll, named = true }) {
  * the name was: a character can be redrawn or deleted and the log still has to
  * read. With no portrait it falls back to initials, which is also what every row
  * written before the log carried one will show.
+ *
+ * The picture is wrapped rather than being the frame itself, because the frame
+ * has to crop harder than `object-fit` can on its own: see `.log-face` for
+ * what the two boxes do.
  */
 function Face({ name, src }) {
   const initials = String(name || '?')
@@ -605,7 +609,11 @@ function Face({ name, src }) {
     .toUpperCase();
 
   if (src) {
-    return <img className="log-face" src={src} alt="" loading="lazy" />;
+    return (
+      <span className="log-face">
+        <img src={src} alt="" loading="lazy" />
+      </span>
+    );
   }
   return (
     <span className="log-face is-blank" aria-hidden="true">
