@@ -1234,15 +1234,21 @@ const TALENT_SETS = [
         id: 'skulk',
         rank: 1,
         name: 'Skulk',
-        summary: 'Hide in plain sight at 9 meters, and Hide or palm anything with advantage.',
+        summary: 'Hide in plain sight at 9 meters, with advantage and for nothing after a crit.',
         kind: 'talent',
         tags: ['Trickster', 'Novice Talent', 'Passive'],
         ap: null,
         wp: null,
         stat: 'instinct',
+        /* The last line is Jules's, 2026-09-03: "Add to skulk the[n] it remove[s]
+           the cost of hide whenever you land a critical hit." Wired rather than
+           printed: the crit lays a row on the tracker and the Hide chip prints
+           its price as nothing with the 2 struck out beside it. See "the
+           opening" in tricks.js, which is where both halves live. */
         body:
           'You can use the {{Hide}} action even if entities can see you, as long as you are at least **9 meters (30 feet)** away from them.\n\n' +
-          'Additionally, when you or **an ally** within **3 meters (10 feet)** use the {{Hide}} action or make a skill check related to sleight of hand or stealth, they do so with advantage.',
+          'When you or **an ally** within **3 meters (10 feet)** use the {{Hide}} action or make a skill check related to sleight of hand or stealth, they do so with advantage.\n\n' +
+          'When you land a Critical Hit, your next {{Hide}} costs no Action Points.',
       },
       {
         id: 'dodge',

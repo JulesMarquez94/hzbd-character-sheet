@@ -10,7 +10,13 @@ import {
   logClearedEvent,
   postEvent,
 } from '../../lib/campaignLog.js';
-import { bundleCount, bundleTurns, chainSummary, groupEvents } from '../../lib/logChain.js';
+import {
+  bundleCount,
+  bundleTurns,
+  chainSummary,
+  drawnEvents,
+  groupEvents,
+} from '../../lib/logChain.js';
 import { verdictLabel } from '../../lib/dice.js';
 import { getCard } from '../../lib/weapons.js';
 import { subscribeToTable } from '../../lib/realtime.js';
@@ -57,12 +63,18 @@ import Die from '../Die.jsx';
  * so the page does not jump under a reader who was mid-sentence.
  *
  * ------------------------------------------------------------------- the clear
- * One thing here writes, and only for one reader. `canClear` is the Game
- * Master on their own campaign page: a table six sessions deep carries six
- * sessions of arithmetic, and beginning a new chapter should not mean scrolling
- * past the last one forever. It asks first, because it cannot be undone and it
- * is everybody's history rather than the presser's own. See `clearLog`, and the
- * check that actually enforces it in the schema.
+ * One thing here writes, and only for two readers. `canClear` is the Game Master
+ * on their own campaign page, and an admin anywhere the block is drawn — the
+ * campaign page and every log block a sheet carries for a table it sits at
+ * ("As an Admin I should be able to clean the log of any character or campaign
+ * i view", Jules, 2026-09-03). A table six sessions deep carries six sessions of
+ * arithmetic, and beginning a new chapter should not mean scrolling past the
+ * last one forever. It asks first, because it cannot be undone and it is
+ * everybody's history rather than the presser's own.
+ *
+ * This prop only decides whether a button is drawn. `clear_campaign_log` in the
+ * schema is what settles it, and it names the same two: the campaign's own Game
+ * Master, or `is_admin()`. See `clearLog`.
  *
  * Everything else here reads. See src/lib/campaignLog.js for what writes.
  */
@@ -225,13 +237,15 @@ export default function LogBlock({
     }
   }
 
-  /* Two gatherings, and then the whole thing turned round.
-     `groupEvents` puts a use and its throws together; `bundleTurns` puts a turn
-     and everything done during it together. Both work in the feed's own order,
-     newest first, so both are reversed here: a conversation happens oldest
-     first, and a chain that has just been given its damage roll belongs at the
+  /* Two gatherings over what the feed actually draws, and then the whole thing
+     turned round. `drawnEvents` drops the rows a seam already says — a turn
+     ending; `groupEvents` puts a use and its throws together; `bundleTurns` puts
+     a turn and everything done during it together, and folds a turn that was
+     opened twice into one seam. All three work in the feed's own order, newest
+     first, so both lists are reversed here: a conversation happens oldest first,
+     and a chain that has just been given its damage roll belongs at the
      bottom. */
-  const bundles = bundleTurns(groupEvents(events))
+  const bundles = bundleTurns(groupEvents(drawnEvents(events)))
     .reverse()
     .map((bundle) => ({ ...bundle, groups: [...bundle.groups].reverse() }));
 

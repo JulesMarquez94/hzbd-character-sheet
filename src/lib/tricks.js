@@ -338,6 +338,93 @@ export function spendTricks(effects, card) {
   return kept.length === list.length ? null : kept;
 }
 
+/* -------------------------------------------------------------- the opening
+ *
+ * "Add to skulk the[n] it remove[s] the cost of hide whenever you land a
+ * critical hit." Jules, 2026-09-03.
+ *
+ * The second pending thing a Trickster carries, and it is a rider on a *price*
+ * rather than on a swing: land a Critical Hit and the next {{Hide}} is free.
+ * Everything else about it is the same shape as an ambush was. It is a row on
+ * the tracker, laid at the moment the crit is judged and taken off at the moment
+ * the Hide is paid for, because a discount you cannot see is a discount you will
+ * forget you have.
+ *
+ * **No payload on the row.** An ambush stored three numbers because they were
+ * history — what a particular Willpower actually bought. This buys one thing and
+ * the card is the receipt, so the row *is* the opening: a standing SKULK row
+ * means the next Hide is free, and there is nothing else to remember. The card
+ * says how much comes off and `hideModifiers` in combatBar.js reads it there.
+ *
+ * The row is open-ended on purpose. Nothing in the sentence puts a clock on it,
+ * so nothing here invents one: it stands until the Hide spends it, a rest sweeps
+ * it or somebody takes it off by hand. Flagged as a ruling in data/README.md.
+ */
+
+/** The Rank 1 card that gives the opening, and the action it discounts. */
+export const SKULK = 'skulk';
+const HIDE = 'hide';
+
+/**
+ * Whether this character has SKULK: the Trickster set, at a rank that has
+ * reached the card.
+ *
+ * Read off the set's own cards rather than against the number 1, so a codex that
+ * moves the card up a rung moves this with it.
+ */
+export function hasSkulk(talents) {
+  const trickster = tricksterOf(talents);
+  if (!trickster) return false;
+
+  const card = (trickster.talent.cards ?? []).find((entry) => entry.id === SKULK);
+  return Boolean(card) && card.rank <= trickster.rank;
+}
+
+/** Whether a free Hide is standing on this character right now. */
+export function hideOpening(effects) {
+  return rows(effects).some(
+    (row) => row && typeof row === 'object' && row.card === SKULK && row.turns !== 0
+  );
+}
+
+/**
+ * The row a landed Critical Hit lays, or null when this character has no SKULK
+ * or is already carrying the opening.
+ *
+ * Null for the second crit in a chain as well as for the second in a fight: one
+ * free Hide is one free Hide, and a row laid twice would still only ever pay for
+ * one. That is `layEffect`'s same-source law, answered here rather than relied on
+ * so the caller writes nothing at all when there is nothing to write.
+ */
+export function openingEffect(character) {
+  if (!hasSkulk(character?.talents) || hideOpening(character?.effects)) return null;
+
+  return {
+    name: 'Skulk',
+    card: SKULK,
+    turns: null,
+    from: 'A critical hit',
+  };
+}
+
+/**
+ * The effects list with the opening spent, or null when this use did not spend
+ * one.
+ *
+ * Only HIDE spends it, and it spends it whether or not the roll beats anybody's
+ * Grit: what the card takes off is the *cost*, and the cost has been paid the
+ * moment the action is taken. Same argument `spendTricks` makes one screen up.
+ */
+export function spendOpening(effects, card) {
+  if (card?.id !== HIDE) return null;
+
+  const list = rows(effects);
+  const kept = list.filter(
+    (row) => !(row && typeof row === 'object' && row.card === SKULK && row.turns !== 0)
+  );
+  return kept.length === list.length ? null : kept;
+}
+
 /* -------------------------------------------------------------------- gone
  *
  * `ambushCost`, `ambushOption`, `ambushLine` and `ambushEffect` stood here until

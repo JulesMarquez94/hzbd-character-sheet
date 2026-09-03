@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useDiceTray } from '../../context/dice-tray.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { aimHits, aimOutcomes, applyPlan, armCheck } from '../../lib/combatApply.js';
@@ -14,6 +14,8 @@ import {
 import { rollPlan } from '../../lib/rollPlan.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 import { castEffect, spendUse } from '../../lib/combatBar.js';
+import { addEffect } from '../../lib/combatTurn.js';
+import { openingEffect } from '../../lib/tricks.js';
 
 /**
  * How long the table gets to react before the first dice can be thrown, in
@@ -86,6 +88,17 @@ const REACTION_HOLD = 6;
 export function usePlayCard({ character, patch }) {
   const tray = useDiceTray();
   const { tables, log } = useCampaignLog();
+
+  /* The freshest character this component has been rendered with, for the one
+     write that happens after the dice rather than before them. A chain takes as
+     long as the table takes, and the character the press captured may have been
+     handed a delivered effect since: a patch built on that stale list would
+     write the tracker back to how it looked a minute ago. See TurnCall.jsx,
+     which holds the same ref for the same reason. */
+  const liveRef = useRef(character);
+  useEffect(() => {
+    liveRef.current = character;
+  });
 
   return useCallback(
     (asked, mode, amount, options = {}, extra = {}) => {
@@ -229,6 +242,22 @@ export function usePlayCard({ character, patch }) {
          in `meta.chain`, so the rows it writes land in this block too. */
       const settleWith = (live) => (thrown, meta = {}) => {
         try {
+          /* ---- what a critical hit opened ----
+             A Trickster's SKULK: land one and the next Hide costs nothing. Here
+             rather than at the moment the die stopped, because landing one is a
+             verdict and the verdict is what this callback is handed.
+
+             Only for a player playing their own card on their own sheet. A
+             minion and an enemy both come through here with an `actor` that is
+             not the sheet `patch` writes to, and neither of them has a talent
+             set. See `openingEffect` in tricks.js, which refuses a second row
+             while one is standing. */
+          if (meta.crit && actor === character) {
+            const held = liveRef.current;
+            const opened = openingEffect(held);
+            if (opened) patch({ effects: addEffect(held?.effects, opened) });
+          }
+
           if (meta.outcomes && meta.outcomes.length > 0) {
             log(verdictEvent(speaker, request?.name ?? '', meta.outcomes, { chain }));
           }
@@ -397,7 +426,10 @@ async function throwChain(tray, plan, { request, actor, chain, onSettled = null 
      a surface closed after the second of three landings still hands back the
      two that were thrown. */
   const thrown = [];
-  const meta = { outcomes: null, hit: null };
+  /* `crit` is the one of these that is about the *kind* of roll as well as its
+     verdict: a critical hit is an attack landing six over, and a Skill Check
+     rolled that high is a critical success at picking a lock. See `isAttack`. */
+  const meta = { outcomes: null, hit: null, crit: false };
   const settle = () => {
     if (onSettled) onSettled(thrown, meta);
   };
@@ -437,6 +469,7 @@ async function throwChain(tray, plan, { request, actor, chain, onSettled = null 
         meta.hit = connected.length > 0;
         if (connected.length === 0) return settle();
         maximize = meta.outcomes.some((outcome) => isCriticalSuccess(outcome.verdict));
+        if (maximize && isAttack(link)) meta.crit = true;
         continue;
       }
 
@@ -451,10 +484,24 @@ async function throwChain(tray, plan, { request, actor, chain, onSettled = null 
 
       meta.hit = true;
       maximize = isCriticalSuccess(result.verdict);
+      if (maximize && isAttack(link)) meta.crit = true;
     }
   } catch (error) {
     console.warn('The dice stopped mid-chain:', error);
   }
 
   settle();
+}
+
+/**
+ * Whether a check is an attack, which is what makes a critical success a
+ * critical *hit*.
+ *
+ * The two kinds `rollPlan` gives an attacking check: `weapon` for either of the
+ * attacks a weapon teaches, `attack` for a card whose own sentence says it makes
+ * one. A `skill` or a plain `check` is neither, so a lock picked six over the DC
+ * is not a hit and opens nothing.
+ */
+function isAttack(link) {
+  return link?.kind === 'weapon' || link?.kind === 'attack';
 }

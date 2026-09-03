@@ -23,6 +23,7 @@ import {
 import BlockArrange from './BlockArrange.jsx';
 import BlockTrays from './BlockTrays.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
+import { useAuth } from '../../context/auth-context.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import {
@@ -148,6 +149,15 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
   // Which ledger is open: 'xp', 'wealth', 'supplies', 'health', 'shield',
   // 'willpower', or null.
   const [ledgerKind, setLedgerKind] = useState(null);
+
+  /* "As an Admin I should be able to clean the log of any character or campaign
+     i view", Jules, 2026-09-03. The campaign page has always offered its Game
+     Master the clear and offers it to an admin with them; this is the other half
+     of the sentence, on the log blocks a sheet carries for the tables it sits
+     at. Nobody else sees the button, and `clear_campaign_log` in the schema is
+     what actually settles it: the check for the Game Master or an admin lives
+     there, where nobody can reach around it. */
+  const { isAdmin } = useAuth();
 
   // XP is the lifetime total; the table decides what level that buys.
   const xp = xpProgress(character.xp);
@@ -620,11 +630,14 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
     /* ============ A TABLE'S TWO ============
        Only there when this character is linked to a campaign, one pair per
        campaign: what the whole party has been doing, and the fight the runner
-       is running. Both are about somebody else, and nothing in either writes. */
+       is running. Both are about somebody else, and nothing in either writes.
+
+       One exception, and it is an admin's: the log's own Clear. See `isAdmin`
+       above. */
     ...Object.fromEntries(
       tables.map((table) => [
         `log:${table.id}`,
-        <LogBlock campaignId={table.id} title={table.name} />,
+        <LogBlock campaignId={table.id} title={table.name} canClear={isAdmin} />,
       ])
     ),
 

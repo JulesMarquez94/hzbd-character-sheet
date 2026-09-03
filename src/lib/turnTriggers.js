@@ -43,7 +43,7 @@
 
 import { cardGist } from './cardText.js';
 import { getCard } from './weapons.js';
-import { normalizeEffects } from './combatTurn.js';
+import { brokenRows, normalizeEffects } from './combatTurn.js';
 import { secondHalf } from './overcast.js';
 
 /**
@@ -115,12 +115,20 @@ export function turnTriggers(character, when) {
   const ending = when === 'start' ? effects.filter((effect) => effect.turns === 1) : [];
   const clearing = when === 'start' ? effects.filter((effect) => effect.turns === 0) : [];
 
+  /* And the one thing the *end* of a turn does. A row its card says acting
+     breaks, that has been acted through, comes off on this press. Same argument
+     as the two above: it is not printed on any card as a thing that happens now,
+     and being told you are about to be found is worth more than finding the row
+     gone afterwards. See `brokenRows` in combatTurn.js. */
+  const breaking = when === 'end' ? brokenRows(effects) : [];
+
   return {
     when,
     rows,
     ending,
     clearing,
-    any: rows.length > 0 || ending.length > 0 || clearing.length > 0,
+    breaking,
+    any: rows.length > 0 || ending.length > 0 || clearing.length > 0 || breaking.length > 0,
   };
 }
 

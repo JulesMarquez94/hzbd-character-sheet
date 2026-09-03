@@ -32,7 +32,9 @@
 
 import {
   REPLAY_WINDOW,
+  bundleTurns,
   chainSummary,
+  drawnEvents,
   groupEvents,
   newChain,
   noticeOf,
@@ -262,6 +264,118 @@ section('nothing at all');
 {
   check('an empty feed groups to nothing', groupEvents([]), []);
   check('and so does a missing one', groupEvents(undefined), []);
+}
+
+/* ------------------------------------------------------------- reading a fight
+ * A turn and the things done during it are one bundle, and the two rules added
+ * on 2026-09-03: a turn ending is not drawn, and a turn opened twice by two
+ * different people is one seam. See drawnEvents and bundleTurns.
+ */
+
+/** A bundle list flattened: the seam's title and actor, then what is under it. */
+const seams = (bundles) =>
+  bundles.map((b) => ({
+    turn: b.turn ? `${b.turn.title} · ${b.turn.actor}` : null,
+    under: b.groups.map((g) => g.head.title),
+  }));
+
+/** The block's own reading, in one call: drawn, chained, bundled, turned round. */
+const readFeed = (rows) =>
+  seams(
+    bundleTurns(groupEvents(drawnEvents(rows)))
+      .reverse()
+      .map((b) => ({ ...b, groups: [...b.groups].reverse() }))
+  );
+
+const opens = (move, title, actor, data = {}) => ({
+  kind: 'turn',
+  actor,
+  title,
+  data: { move, ...data },
+});
+
+section('a turn ending is a seam and not a block');
+{
+  const got = readFeed(
+    feed(
+      opens('turn', 'Turn 1', 'Kaelen'),
+      use(null, 'Strike'),
+      { kind: 'turn', actor: 'Kaelen', title: 'Ended turn 1', data: { move: 'end' } },
+      opens('turn', 'Turn 2', 'Kaelen'),
+      use(null, 'Hide'),
+      { kind: 'turn', actor: 'Kaelen', title: 'Ended turn 2', data: { move: 'ended' } }
+    )
+  );
+
+  check('neither spelling is drawn', got, [
+    { turn: 'Turn 1 · Kaelen', under: ['Strike'] },
+    { turn: 'Turn 2 · Kaelen', under: ['Hide'] },
+  ]);
+  check(
+    'and the rows are still in the feed',
+    drawnEvents([{ kind: 'use', title: 'Strike', data: {} }]).length,
+    1
+  );
+}
+
+section('a turn opened twice is one seam');
+{
+  /* The runner calls it, the player's own client starts it. Both open a turn,
+     and until this they drew two: an empty one and the one with the entries. */
+  const got = readFeed(
+    feed(
+      opens('your-turn', 'Turn 3', 'Kaelen', { round: 3, side: 'member' }),
+      opens('turn', 'Turn 3', 'Kaelen', { count: 3 }),
+      use(null, 'Strike'),
+      use(null, 'Hide')
+    )
+  );
+
+  check('one seam, and the call heads it', got, [
+    { turn: 'Turn 3 · Kaelen', under: ['Strike', 'Hide'] },
+  ]);
+}
+
+section('what happened between the call and the press');
+{
+  const got = readFeed(
+    feed(
+      opens('your-turn', 'Turn 3', 'Kaelen', { round: 3 }),
+      { kind: 'roll', actor: 'Kaelen', title: 'Save', data: { chain: null } },
+      opens('turn', 'Turn 3', 'Kaelen', { count: 3 }),
+      use(null, 'Strike')
+    )
+  );
+
+  check('joins the entries, oldest first', got, [
+    { turn: 'Turn 3 · Kaelen', under: ['Save', 'Strike'] },
+  ]);
+}
+
+section('turns that are not the same turn');
+{
+  const two = readFeed(
+    feed(
+      opens('your-turn', 'Turn 3', 'Kaelen', { round: 3 }),
+      opens('your-turn', 'Turn 3', 'Fenrat', { round: 3 })
+    )
+  );
+  check('two calls in a row stay two seams', two.length, 2);
+
+  const presses = readFeed(
+    feed(opens('turn', 'Turn 1', 'Kaelen'), opens('turn', 'Turn 2', 'Kaelen'))
+  );
+  check('and so do two presses', presses.length, 2);
+
+  const other = readFeed(
+    feed(opens('turn', 'Turn 3', 'Kaelen'), opens('your-turn', 'Turn 4', 'Fenrat', { round: 4 }))
+  );
+  check('a call naming somebody else absorbs nothing', other.length, 2);
+
+  const solo = readFeed(feed(opens('turn', 'Turn 1', 'Kaelen'), use(null, 'Strike')));
+  check('a sheet at no table still gets its seam', solo, [
+    { turn: 'Turn 1 · Kaelen', under: ['Strike'] },
+  ]);
 }
 
 /* ------------------------------------------------------------------ the knock

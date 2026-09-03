@@ -467,6 +467,61 @@ function opensTurn(event) {
 }
 
 /**
+ * The two moves that say a turn is over, which the block does not draw.
+ *
+ * "there should be no End turn block, instead just the [separation] line between
+ * turn[s]", Jules, 2026-09-03. The seam over the next turn already says the last
+ * one finished, and a block saying "Ended turn 3" above it was the same fact a
+ * second time, at the size of an entry, in the middle of a fight.
+ *
+ * Two spellings because two things write one: `end` off the Turn block on a
+ * sheet at no table, `ended` off the same button on a seated one, which is the
+ * row the runner listens for to advance the fight. **Both keep being written.**
+ * The log is an account of what happened and one of these rows is load-bearing
+ * to the encounter runner (see EncounterTab.jsx); what changed is only that the
+ * feed stops drawing them.
+ */
+const OVER = new Set(['end', 'ended']);
+
+/**
+ * The feed as the block draws it: every row that says something a reader cannot
+ * get from the seams.
+ *
+ * Applied before either gathering, so nothing downstream has to know about it
+ * and `bundleCount` counts what is actually on the screen.
+ */
+export function drawnEvents(events) {
+  return (events ?? []).filter((row) => !(row?.kind === 'turn' && OVER.has(row?.data?.move)));
+}
+
+/**
+ * Whether this opener is the same turn as the bundle below it, already opened.
+ *
+ * "there is [a bug] were turn x name appear ta[w]ice in a row", Jules,
+ * 2026-09-03. An announced turn is written twice by design and by two different
+ * people: the Game Master's runner calls it (`your-turn`, on the table's own
+ * name), and then the player's client starts its own turn through its own patch
+ * and writes that (`turn`, on the player's). Both open a turn, so the feed drew
+ * two seams for one turn — an empty one and the one holding the entries.
+ *
+ * They are one turn, so they get one seam. The signature is exact: the newer row
+ * is the *sheet's* press, the older is the *runner's* call, and they name the
+ * same actor. Two calls in a row stay two seams, and so do two presses.
+ *
+ * The call is what survives as the head. It carries the run's own round and the
+ * side the actor is on, which is what colours the seam, and the press carries
+ * neither.
+ */
+function opensTheSame(bundle, head) {
+  return (
+    head?.data?.move === 'your-turn' &&
+    bundle?.turn?.data?.move === 'turn' &&
+    Boolean(head.actor) &&
+    bundle.turn.actor === head.actor
+  );
+}
+
+/**
  * The feed as `[{ key, turn, groups }]`, newest bundle first.
  *
  * `turn` is the row that opened it, or null for the bundle at the tail: rows
@@ -487,7 +542,20 @@ export function bundleTurns(groups) {
 
   for (const group of groups ?? []) {
     if (opensTurn(group.head) && group.rolls.length === 0) {
-      out.push({ key: group.key, turn: group.head, groups: held });
+      /* One turn opened twice is one bundle. The call takes over the head of the
+         bundle the press already opened, and whatever sat between the two — a
+         throw made off the turn call's own cover — joins the entries under it,
+         older than them, which is where it happened. See `opensTheSame`. */
+      const last = out.at(-1);
+      if (opensTheSame(last, group.head)) {
+        out[out.length - 1] = {
+          key: group.key,
+          turn: group.head,
+          groups: [...last.groups, ...held],
+        };
+      } else {
+        out.push({ key: group.key, turn: group.head, groups: held });
+      }
       held = [];
       continue;
     }

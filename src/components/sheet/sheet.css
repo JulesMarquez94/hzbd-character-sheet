@@ -8498,6 +8498,17 @@ body.tray-open-left.tray-open-right .sheet {
   color: var(--text-muted);
 }
 
+/* Broken by acting, and acted through. The ended row's shape, because "Ends" is
+   a word rather than a count, and the block's own colour, because it has not
+   ended yet: it ends when the turn does. */
+.fx-turns.is-breaking {
+  font-family: var(--font-body);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
 .fx-name-box {
   flex: 1;
   min-width: 0;
@@ -12825,12 +12836,19 @@ button.tgt-chip:disabled {
    Always drawn, and the way in and out. A closed entry is this row and nothing
    else, which is what keeps forty of them scannable. */
 
+/* A little more room than the text strictly needs. The two lines were set at
+   1.2 and a 1px gap, which on a closed entry put the name's descenders into the
+   top of the sentence under it — and `.log-title` clips its own line box to make
+   room for the ellipsis, so a "g" lost its tail as well. A closed entry is the
+   thing this block is read as, forty at a time, so it is the one that has to
+   breathe. Nothing else on the tab moves: a block is a hard 640px everywhere,
+   and what grew is the row inside it. */
 .log-head {
   display: flex;
   align-items: flex-start;
   gap: 0.4rem;
   width: 100%;
-  padding: 0.32rem 0.4rem;
+  padding: 0.42rem 0.4rem;
 
   border: none;
   background: none;
@@ -12863,14 +12881,14 @@ button.tgt-chip:disabled {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
 /* The name, in the site's own teal. */
 .log-who {
   font-size: 0.72rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.35;
   color: var(--focus-cyan);
 }
 
@@ -12880,7 +12898,7 @@ button.tgt-chip:disabled {
   gap: 0.25rem;
   min-width: 0;
   font-size: 0.68rem;
-  line-height: 1.25;
+  line-height: 1.35;
 }
 
 .log-verb {

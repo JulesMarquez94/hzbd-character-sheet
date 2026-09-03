@@ -59,7 +59,9 @@ import {
 } from './items.js';
 import { getCard, itemEnchantments } from './weapons.js';
 import {
+  hideOpening,
   isWeaponAttack,
+  spendOpening,
   spendTricks,
 } from './tricks.js';
 import {
@@ -71,7 +73,7 @@ import {
   passesForm,
   sourceSet,
 } from './feral.js';
-import { layEffect, trackedDuration } from './combatTurn.js';
+import { layEffect, stirEffects, trackedDuration } from './combatTurn.js';
 import { fireTrigger } from './onUse.js';
 import { cardCost, cardTitle } from './cardText.js';
 import { cardUse, magazineUse, spendCardUse, spentNote, usageNote } from './uses.js';
@@ -667,15 +669,39 @@ export function foeBar(foe) {
 }
 
 /** What everybody has. Last, because it is the half nobody has to look up. */
-function basicGroup() {
+function basicGroup(character = null) {
   return {
     id: 'basic',
     label: 'Basic Actions',
     note: 'Everyone, always',
     moves: BASIC_ACTIONS.map((card) =>
-      move(`basic:${card.id}`, card, { source: `${card.name} · a basic action` })
+      move(`basic:${card.id}`, card, {
+        source: `${card.name} · a basic action`,
+        modifiers: hideModifiers(character, card),
+      })
     ),
   };
+}
+
+/**
+ * What a standing SKULK opening does to HIDE, or null for everybody else.
+ *
+ * "it remove[s] the cost of hide whenever you land a critical hit", so the whole
+ * printed cost comes off and not a point of it: `apCut` is whatever the card
+ * printed, which is how the cut survives HIDE ever being repriced. `apCutFrom`
+ * is what the chip and the pay button credit, so the orb shows 0 with the 2
+ * struck out beside it and says which card did it. Same shape `swapModifiers` in
+ * LoadoutBlock.jsx hands QUICK DRAW's cut over in, and read the same way by
+ * `cardCost`.
+ *
+ * `character` is null on a creature's bar and on an enemy's. Neither has a
+ * Trickster set, and both get the basic actions at their printed price.
+ */
+function hideModifiers(character, card) {
+  if (card.id !== 'hide' || !character || !hideOpening(character.effects)) return null;
+
+  const cut = Math.max(0, Math.floor(Number(card.ap) || 0));
+  return cut > 0 ? { apCut: cut, apCutFrom: ['Skulk'] } : null;
 }
 
 /**
@@ -701,8 +727,12 @@ export function quickBar(character) {
     imbuedGroup(character, locks),
     ...knownGroups(character, locks),
     /* And the basic actions, never refused. A wolf still moves, hides and shoves,
-       and a form that could not walk would be a bug rather than a rule. */
-    basicGroup(),
+       and a form that could not walk would be a bug rather than a rule.
+
+       Handed the character now, for the one basic action a card can reprice: a
+       Trickster with a crit standing behind them hides for nothing. See
+       `hideModifiers`. */
+    basicGroup(character),
   ].filter(Boolean);
 }
 
@@ -897,6 +927,28 @@ export function spendUse(request, character, mode, amount, { free = false, price
     const withoutTricks = spendTricks(body.effects ?? character?.effects, request.card);
     if (withoutTricks) body.effects = withoutTricks;
   }
+
+  /* ---- and the free Hide, spent ----
+     A Trickster's SKULK opening is a row on the tracker and this is the moment
+     it is taken off: HIDE has been paid for, at whatever the chip said, and the
+     opening bought exactly that. Before the stir below, because the row it
+     spends is not a row acting breaks and the two never touch the same one. See
+     "the opening" in tricks.js. */
+  const spent = spendOpening(body.effects ?? character?.effects, request.card);
+  if (spent) body.effects = spent;
+
+  /* ---- and what moving cost you ----
+     A row its card says acting breaks is marked here, at the one moment the
+     sheet can be sure an action happened: when one is paid for. Nothing comes
+     off yet. The mark is read at your Turn End, which is the boundary the rule
+     is written about. See `stirEffects` in combatTurn.js.
+
+     **Before the cast below, and that ordering is the rule.** A Hide made while
+     already hidden marks the row that is standing and then lays a fresh one over
+     it, so hiding again is hiding again. Were it after, the Hide would stir the
+     row it had just written and reveal you at the end of your own turn. */
+  const stirred = stirEffects(body.effects ?? character?.effects);
+  if (stirred) body.effects = stirred;
 
   /* ---- and what the use leaves running ----
      "anytime an action is used that should tracker turn duration of something it

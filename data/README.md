@@ -12011,3 +12011,149 @@ and a live button among dead ones reads as a bug.
   the codex where the same effect has three prices. Left as transcribed rather than quietly
   flattened, since the Elevate was the thing asked about and the cost is a cell on a sheet. Worth a
   ruling.
+
+
+## Hiding, and what breaks it, 2026-09-03
+
+> When using hi[de] it should set an effect that is removed: at the end of the tru[n], if the
+> player [does] anny action during this turn. Otherwise it stay [until] manual[ly] removed.
+>
+> Add to skulk the[n] it remove the cost of hide whenever you land a critical hit.
+>
+> In the logs, there should be no End turn block, instead just teh sepration line between turn.
+> Also there is [a bug] were turn x name appear ta[w]ice in a row.
+>
+> As an Admin I should be able to clean the log of any character or campaign i view.
+
+Four asks, and the first two are one card each: HIDE finally leaves something behind, and SKULK
+pays for the next one.
+
+### A row with no clock on it
+
+HIDE used to be the only action on the bar that plainly changed the state of the world and wrote
+nothing down. You paid two Action Points, the enemies lost sight of you, and whether you were still
+hidden four turns later was a thing the table remembered or did not.
+
+It lays a row now, and the row has a rule the tracker has never held before. Every other row ends
+one of two ways: a count reaches nothing, or a rest sweeps it. This one is **broken by acting**.
+
+    turns: null      nothing is counting it. It stays
+    stirred: true    you have paid for something while it stood
+    endTurn          a stirred row comes off. An unstirred one does not
+
+`stirred` is the only new field on an effect row, and it is the only thing stored. **Whether the
+rule applies at all is read off the card**, which is the law `effectDuration` has always kept for a
+clock: the card says "You stay out of sight until you act", `readDuration` matches the phrase and
+hands back `breaks: 'act'`, and `breaksOnAction` is what asks. A second card written that way
+tomorrow behaves the same with nothing added here. It is ranked with the *precise* durations rather
+than the vague ones, and that ranking is load-bearing: the `ends` clause underneath reads the same
+sentence as "Until it ends", and a vague duration is offered in the picker and never written, so
+without the rank HIDE would have laid no row at all.
+
+The mark goes on in `spendUse`, at the one moment the sheet can be sure an action happened: when
+one is paid for. **Before the cast, and that ordering is the rule.** Hiding while already hidden
+marks the standing row and then lays a fresh one over it, so hiding again is hiding again. The
+other way round, a Hide would stir the row it had just written and reveal you at the end of your
+own turn.
+
+### Three readings that had to be made
+
+- **The Hide that lays the row does not break it.** The stir is read before the cast writes, so the
+  action cannot reach the row it is about to create. Anything after it can.
+- **A reaction stirs it.** It is still you doing something. Nothing comes off until the end of your
+  own turn either way, so the sheet is never the thing that reveals you early — it is the
+  conservative reading, and the table can always take the row off by hand.
+- **The turn is yours.** `endTurn` is the only place this happens, and it is the sheet's own End
+  Turn press. Somebody else's turn ending has never touched your tracker and does not start now.
+
+The press says so first. `turnTriggers` grew a `breaking` list for the `end` boundary, beside the
+`ending` and `clearing` the `start` boundary already had, and the prompt prints **Broken by
+acting** before the button does it. On the block the row's pill reads `∞` until you move and
+`ENDS` after, in the block's own colour rather than the ended grey: it has not ended, it ends when
+the turn does.
+
+### Skulk buys the next one
+
+> it remove the cost of hide whenever you land a critical hit
+
+A row again, and for the reason an ambush was one: a discount you cannot see is a discount you will
+forget you have. Land a Critical Hit and a `skulk` row goes on the tracker; the Hide chip then
+prints **0** with the 2 struck out beside it and the word **Skulk** under it, through the same
+`apCut` / `apCutFrom` pair QUICK DRAW cuts a weapon swap with. Paying for the Hide takes the row
+off.
+
+**The row carries no payload.** An ambush stored three numbers because they were history — what a
+particular Willpower actually bought. This buys one thing, so the row *is* the opening: a standing
+`skulk` row means the next Hide is free, and the card is the receipt. `hideModifiers` takes the
+whole printed cost off rather than a number of its own, so the cut survives HIDE ever being
+repriced.
+
+A critical hit is an attack landing six over, which is `kind` `weapon` or `attack` on the check
+`rollPlan` built. A Skill Check rolled six over is a critical success at picking a lock and opens
+nothing. The row is laid from the *verdict* rather than from the throw, in `usePlayCard`'s settle,
+which is also the first write on this sheet that happens after the dice rather than before them —
+so it reads the character through a ref rather than through the one the press captured. A chain
+takes as long as the table takes, and a delivered effect that arrived in the meantime must not be
+written back out.
+
+Only a player playing their own card on their own sheet. A minion and an enemy both come through
+`usePlayCard` with an `actor` that is not the sheet the patch writes to, and neither has a talent
+set.
+
+### The log stops saying it twice
+
+Two rules, both in `logChain.js` where `check-log.mjs` can hold them under Node.
+
+**A turn ending is a seam, not a block.** `drawnEvents` drops `move: 'end'` and `move: 'ended'`
+before either gathering. The seam over the next turn already says the last one finished, and
+"Ended turn 3" above it was the same fact again at the size of an entry. **Both rows keep being
+written**: one of them is what the encounter runner listens for to advance the fight.
+
+**A turn opened twice is one seam.** This was the reported bug and it was built in: an announced
+turn is written by two different people. The runner calls it (`your-turn`, by the table) and then
+the player's own client starts its own turn and writes that (`turn`, by the player). Both open a
+turn, so the feed drew two — an empty seam and the one holding the entries. `bundleTurns` now
+absorbs the pair when the newer row is the sheet's press, the older is the runner's call and they
+name the same actor. The call survives as the head, because it carries the run's round and the side
+that colours the seam. Two calls in a row stay two seams and so do two presses, and a throw made
+off the turn call's own cover joins the entries under the one seam, oldest first, which is where it
+happened.
+
+Four new sections in `check-log.mjs` walk all of it, including the four shapes that must *not*
+merge.
+
+### And the admin's clear
+
+The campaign page has offered its Game Master the Clear since 2026-09-01, and `canEdit` there has
+always included an admin. The other half of the sentence is the log block a *sheet* carries, one
+per table it sits at, which had no clear at all. It has one now for an admin and for nobody else.
+
+Nothing was needed in the schema: `clear_campaign_log` already reads
+`c.dm_user_id = auth.uid() or public.is_admin()`, which is what actually settles it. The prop only
+decides whether a button is drawn.
+
+### The entry got taller
+
+> make the log block a little bi taller as when collapsed text overlap a bit
+
+A closed entry is two lines set at `line-height` 1.2 and 1.25 with a 1px gap between them, which at
+0.72rem and 0.68rem gives line boxes of 13.8px and 13.6px for text whose glyphs want about 14.7px
+and 13.9px. So the name's descenders reached into the sentence under it, and `.log-title` clips its
+own box to make room for an ellipsis, which took the tail off a "g". Both lines are 1.35 now, the
+gap is 2px and the head's padding is 0.42rem: an entry went from 38.6px to 45.6px, measured.
+
+Nothing else on the tab moved. A block is a hard 640px everywhere, so what grew is the row inside
+it and not the block.
+
+### Left open
+
+- **How long the free Hide stands.** Nothing in the sentence puts a clock on the SKULK opening, so
+  nothing invents one: it stands until a Hide spends it, a rest sweeps it or a hand takes it off.
+  A crit landed in the last fight is still good in this one. Worth a ruling.
+- **One opening at a time.** A second critical hit while one is standing lays nothing, on the
+  same-source law. Two crits do not buy two free Hides.
+- **HIDDEN is not a keyword.** The row is named after the card and the card explains itself. The
+  word is in ordinary prose elsewhere in the codex ("extract hidden secrets"), and lighting it
+  there would be lighting a word that means the ordinary thing.
+- **A tracked HIDE on an enemy behaves the same.** A Game Master who picks the card onto a foe's
+  tracker gets a row the foe's own actions break, which reads right and was not designed for.

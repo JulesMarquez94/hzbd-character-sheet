@@ -138,6 +138,15 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose, pa
           </p>
         )}
 
+        {/* And the one thing the end of a turn takes off: what you moved
+            through. A row nobody stirred is not here and does not end. */}
+        {(triggers.breaking ?? []).length > 0 && (
+          <p className="turn-prompt-note turn-prompt-ending">
+            <b>Broken by acting:</b> {triggers.breaking.map((row) => row.name).join(', ')}. You did
+            something this turn, so it ends here.
+          </p>
+        )}
+
         <p className="turn-prompt-foot">
           The sheet counts the turns and names what they set off. A roll lands on the table log
           for everyone; taking a number onto this sheet is the one tap beside it, and what lands

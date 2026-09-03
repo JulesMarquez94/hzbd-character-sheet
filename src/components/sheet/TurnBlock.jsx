@@ -19,6 +19,7 @@ import { useDiceTray } from '../../context/dice-tray.js';
 import { useFight } from '../../context/fight.js';
 import { restEvent, turnDoneEvent, turnEvent } from '../../lib/campaignLog.js';
 import {
+  breaksOnAction,
   combatReactionGrant,
   combatShieldGrant,
   dropEffect,
@@ -493,6 +494,12 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, onRoll = 
      visibly the same thing. A row with no school keeps the block's own cyan.
      See cardAccent in tagColors.js. */
   const accent = cardAccent(getCard(effect.card)?.tags);
+  /* A row acting breaks, and whether you have moved since it went down. HIDE is
+     the one so far. The count says nothing because nothing is counting it, and
+     the moment you do anything the pill says the row is on its way out rather
+     than letting it vanish at the end of the turn. See combatTurn.js. */
+  const breaks = !over && breaksOnAction(getCard(effect.card));
+  const acted = breaks && Boolean(effect.stirred);
 
   return (
     <div
@@ -500,8 +507,19 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, onRoll = 
       style={accent ? { '--fx-accent': accent } : undefined}
     >
       <div className="fx-row-top">
-        <span className={`fx-turns${open ? ' is-open' : ''}${over ? ' is-over' : ''}`}>
-          {over ? 'Ended' : open ? '∞' : effect.turns}
+        <span
+          className={`fx-turns${open && !acted ? ' is-open' : ''}${over ? ' is-over' : ''}${
+            acted ? ' is-breaking' : ''
+          }`}
+          title={
+            breaks
+              ? acted
+                ? 'You acted this turn. This ends when the turn does.'
+                : 'Acting breaks this. Until then it stays.'
+              : undefined
+          }
+        >
+          {over ? 'Ended' : acted ? 'Ends' : open ? '∞' : effect.turns}
         </span>
 
         <span className="fx-name-box">

@@ -170,10 +170,19 @@ export const BASIC_ACTIONS = withArt([
     wp: null,
     stat: 'instinct',
     summary: 'Break line of sight and stay unfound until someone goes looking.',
+    /* The last line is Jules's, 2026-09-03: "it should set an effect that is
+       removed at the end of the turn, if the player [does] any action during
+       this turn. Otherwise it stay[s] until manual[ly] removed."
+
+       Written on the card rather than wired behind it, because it is a rule a
+       player has to know before they spend two Action Points on it. "until you
+       act" is the phrase the sheet reads the clock off — see `readDuration` in
+       combatTurn.js — so the sentence and the row it lays cannot come apart. */
     body:
       'If no enemy has line of sight on you, you may attempt to hide with an {instinct} Roll {roll:instinct} against the Grit of **every enemy**.\n\n' +
       '**Every enemy** whose Grit you beat loses sight of you.\n\n' +
-      'On their turn they use {{Investigate}} to attempt to find you.',
+      'On their turn they use {{Investigate}} to attempt to find you.\n\n' +
+      'You stay out of sight until you act. At the end of any turn in which you did anything at all, you are found.',
   },
   {
     id: 'grapple',

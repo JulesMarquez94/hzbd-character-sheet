@@ -57,6 +57,23 @@
  *   turns: null  until something ends it. Conditions live here: being grappled
  *                does not expire, it is broken
  *
+ * ------------------------------------------------------------ broken by acting
+ * One row is ended by neither of those. HIDE lays it: you are out of sight, and
+ * you stay out of sight until you do something. "at the end of the turn, if the
+ * player [does] any action during this turn. Otherwise it stay[s] until manual[ly]
+ * removed" (Jules, 2026-09-03).
+ *
+ * So the row is open-ended like a condition, and `stirred` is the one thing
+ * stored on it: whether anything has been paid for while it stood. `spendUse`
+ * sets it, at the one moment the sheet can be sure an action happened, and
+ * `endTurn` is where it costs you the row. The Hide that lays the row cannot
+ * stir the row it lays, because the stir is read before the cast writes it, and
+ * hiding again is a fresh row that has not moved yet.
+ *
+ * **Whether the rule applies at all is read off the card and never stored**, the
+ * same law `effectDuration` keeps for every other clock: the codex says "until
+ * you act" and `breaksOnAction` is what hears it.
+ *
  * `card` is the id of the card it came from, so an effect you got from Renew
  * opens the Renew card. An effect with no card carries its own `note` instead,
  * which is how a condition the codex has never heard of still says what it
@@ -240,10 +257,24 @@ export function startTurn(character) {
   };
 }
 
-/** The bottom of your turn. Nothing is spent and nothing moves. */
+/**
+ * The bottom of your turn. Nothing is spent, and one kind of row comes off.
+ *
+ * A row its card says acting breaks, that has been acted through, ends here.
+ * That is the whole of what this press moves, and it is the only boundary that
+ * can move it: the question the rule asks is about a turn, so it is answered at
+ * the end of one. A row nobody stirred is left exactly where it is, however many
+ * turns go by, because "otherwise it stays until manually removed" is the other
+ * half of the same sentence. See the note on the effects above.
+ */
 export function endTurn(character) {
   const { n } = normalizeTurn(character?.turn_state);
-  return { turn_state: { n, live: false, inCombat: true } };
+  const patch = { turn_state: { n, live: false, inCombat: true } };
+
+  const effects = normalizeEffects(character?.effects);
+  if (effects.some(isBroken)) patch.effects = effects.filter((effect) => !isBroken(effect));
+
+  return patch;
 }
 
 /**
@@ -365,6 +396,10 @@ export function normalizeEffects(value) {
       // And the fourth: a Martial Move, waiting on the same swing. Same law and
       // the same reason — see moves.js.
       move: normalizeMove(raw.move),
+      // Whether anything has been paid for while this row stood. Only ever true
+      // on a row whose card says acting breaks it, and read at one boundary:
+      // your Turn End, where `endTurn` takes it off. See `stirEffects`.
+      stirred: Boolean(raw.stirred),
     });
   }
 
@@ -436,6 +471,9 @@ export function addEffect(effects, entry) {
       // Move waiting on the same swing.
       trick: normalizeTrick(entry?.trick),
       move: normalizeMove(entry?.move),
+      // Never on a row being laid: whatever you did a moment ago, you have not
+      // moved since this went down. See the note on the effects above.
+      stirred: false,
     },
     ...normalizeEffects(effects),
   ];
@@ -493,6 +531,65 @@ export function nudgeEffect(effects, id, delta) {
     if (effect.turns === null) return delta > 0 ? { ...effect, turns: 1 } : effect;
     return { ...effect, turns: clampTurns(effect.turns + delta) };
   });
+}
+
+/* ------------------------------------------------------ broken by acting */
+
+/**
+ * Whether what this card leaves running is broken by acting rather than run
+ * down by a clock.
+ *
+ * Read off the printed text, where the codex says it, exactly as its duration
+ * is: HIDE reads "until you act" and that is the whole of the rule. A card that
+ * says it tomorrow gets the same behaviour without anybody remembering a list
+ * here. See `readDuration` below, which is where the phrase is matched.
+ */
+export function breaksOnAction(card) {
+  return effectDuration(card)?.breaks === 'act';
+}
+
+/**
+ * Whether this row is one acting breaks, asked of the row.
+ *
+ * The card is what answers, never the row: a build that changed HIDE's text
+ * changes what is standing on everybody's tracker with it. A row that has run
+ * out is doing nothing and is not breakable either, the same guard
+ * `pendingTricks` keeps.
+ */
+function breakable(effect) {
+  return effect.turns !== 0 && breaksOnAction(getCard(effect.card));
+}
+
+/** A row that has been acted through, and so ends at this turn's end. */
+function isBroken(effect) {
+  return Boolean(effect.stirred) && breakable(effect);
+}
+
+/**
+ * The effects list with every breakable row marked as moved through, or null
+ * when there was nothing to mark.
+ *
+ * Called from `spendUse` at the one moment the sheet can be sure an action
+ * happened: when one is paid for. Null rather than an unchanged copy so the
+ * caller writes nothing for the nearly every use that is not being made from
+ * cover, which is the same shape `spendTricks` hands back.
+ *
+ * A reaction stirs a row too. It is still you doing something, and the row does
+ * not come off until the end of your own turn either way, so the sheet is never
+ * the thing that reveals you early.
+ */
+export function stirEffects(effects) {
+  const list = normalizeEffects(effects);
+  if (!list.some((effect) => !effect.stirred && breakable(effect))) return null;
+
+  return list.map((effect) =>
+    !effect.stirred && breakable(effect) ? { ...effect, stirred: true } : effect
+  );
+}
+
+/** The rows this turn's end is about to take off, for the prompt that says so. */
+export function brokenRows(effects) {
+  return normalizeEffects(effects).filter(isBroken);
 }
 
 /* ------------------------------------------------------- what to track from */
@@ -596,6 +693,18 @@ function readDuration(text, { upkeep = false } = {}) {
     const whose = turnEnd[1].toLowerCase() === 'your' ? 'your' : 'their';
     at(turnEnd, { turns: 1, label: `Until ${whose} next turn`, until: null });
   }
+
+  /* Broken by acting. HIDE is the card and so far the only one: you are out of
+     sight, and you stay out of sight until you do something.
+
+     Ranked with the precise answers for all that it names no number, because the
+     card has said exactly what ends it. That ranking is the whole reason the
+     clause is here: without it the `ends` pattern below reads "You stay out of
+     sight until you act" as a vague "Until it ends", and a vague duration is
+     offered in the picker and never written to anybody's tracker, so HIDE would
+     have laid no row at all. `breaks` is what `breaksOnAction` reads back. */
+  const acting = /until\s+(?:you|it|they)\s+acts?\b/i.exec(text);
+  if (acting) at(acting, { turns: null, label: 'Until you act', until: null, breaks: 'act' });
 
   /* A count of turns, unless it is a *threshold* rather than a clock. The
      DRAUGHT OF CLEANSING is the one that proved it: "removes every status effect
