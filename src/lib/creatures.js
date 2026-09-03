@@ -54,17 +54,24 @@
  *   health      `perLevel` and `perPhysique`, where a character is 10 and 10
  *   willpower   `perLevel`, `perMind` and `flat`, where a character is 2, 2, 10
  *
- * And two things that are not attributes and have to come from somewhere:
+ * And one thing that is not an attribute and has to come from somewhere:
  *
  *   avoid       Instinct + `avoid_bonus`, which is exactly how a character's
  *               Defense works (their Instinct plus what they are wearing), so a
- *               level 12 Minion is not hit automatically. Jules's ruling.
- *   hit die     the creature's own `die` size, and the *count* is derived so it
- *               always averages the Health beside it. The design sheet's own
- *               arithmetic: 8 HP, 3d4, and 3d4 averages 7.5.
+ *               level 12 Minion is not hit automatically. Jules's ruling. A
+ *               creature wearing a full armor family changes what that base is
+ *               made of, exactly as a character's set does: see CREATURE_ARMOR.
  *
  * Speed and Armor stay printed, because neither is an attribute and neither
  * breaks at level 12 the way an unscaled Defense would.
+ *
+ * ------------------------------------------------------- Health is not rolled
+ * Jules, 2026-09-02: "Health is not rolled." A creature's Health is the number
+ * the conversions produce and nothing else. The design sheet printed a hit die
+ * beside it ("HP: 8 (3d4)") and this file used to derive one, so that the count
+ * always averaged the Health; the ruling supersedes the page the way the Minion
+ * reaction rule supersedes its printed RP: 3, and both supersedes are marked
+ * where they happen.
  *
  * ---------------------------------------------------------------- three ranks
  * Jules, 2026-08-31: "There is 3 type of enemies." They are RANKS below, and
@@ -168,6 +175,82 @@ export const RANKS = [
 ];
 
 const RANK_BY_ID = new Map(RANKS.map((rank) => [rank.id, rank]));
+
+/* ------------------------------------------------------------------ the armor */
+
+/**
+ * What a creature is wearing, as one of the three armor families a character
+ * can wear a full set of.
+ *
+ * Jules, 2026-09-02: "Instead of adding a value to armor let the creator choose
+ * light, heavy or spelled. Let them give a bonus." A creature has no armor
+ * slots to fill, so what it has is the *family*, and the family means exactly
+ * what a full set means for a character: it changes what Defense is built from.
+ * See docs/rulebook.md 7.2, and ARMOR_SETS in items.js, which is the same three
+ * rules for the sheet's own gear.
+ *
+ * Repeated here rather than imported, for the reason CREATURE_MAX_LEVEL and
+ * BASE are repeated: this file is a leaf, and items.js reaches weapons.js, which
+ * reaches back here.
+ *
+ * `base` is which of the creature's numbers Defense starts from, and `half` is
+ * Heavy's rider on top of it. The bonus a Game Master types is `avoid_bonus`,
+ * which is added whatever the family: "flat Defense from gear stacks on top of a
+ * set bonus" is the rulebook's own second ruling, and it is the reason a family
+ * is a choice about the *base* rather than a replacement for the whole number.
+ *
+ * A creature wearing nothing at all is the first entry, and it is what every
+ * printed page in this file is: Defense off Instinct, which is what it always
+ * was, so nothing had to be rewritten when the families arrived.
+ */
+export const CREATURE_ARMOR = [
+  {
+    id: 'none',
+    label: 'None',
+    note: 'Hide, scales, or nothing at all.',
+    base: 'instinct',
+    half: false,
+    active: 'Defense is its Instinct.',
+  },
+  {
+    id: 'light',
+    label: 'Light',
+    note: 'Leather and quickness.',
+    base: 'reflex',
+    half: false,
+    active: 'Defense is equal to its Reflex.',
+  },
+  {
+    id: 'heavy',
+    label: 'Heavy',
+    note: 'Plate. What it wears is what saves it.',
+    base: 'instinct',
+    half: true,
+    active: 'Defense is increased by half its Armor.',
+  },
+  {
+    /* The rulebook and items.js both call this family **Magic Armor**; Jules
+       named it "spelled", which is what backgrounds.js calls it on SPELLED ARMOR
+       MASTERY. The codex's own word wins here so that a creature and a character
+       are read against one table, and the disagreement between those two files
+       is left where it is rather than doubled. */
+    id: 'magic',
+    label: 'Magic',
+    note: 'Worked cloth and wards.',
+    base: 'grit',
+    half: false,
+    active: 'Defense is based on its Grit.',
+  },
+];
+
+const ARMOR_BY_ID = new Map(CREATURE_ARMOR.map((armor) => [armor.id, armor]));
+
+/** The armor family a creature (or a family id) wears. None for anything
+    unknown, which is what every printed page in this file wears. */
+export function getCreatureArmor(value) {
+  const id = typeof value === 'string' ? value : value?.armor_set;
+  return ARMOR_BY_ID.get(id) ?? CREATURE_ARMOR[0];
+}
 
 /** The rank a creature (or a rank id) belongs to. Minion for anything unknown. */
 export function getRank(value) {
@@ -571,7 +654,6 @@ export const CREATURES = [
     avoid_bonus: 6,
     armor: 0,
     speed_m: 3,
-    die: 4,
     cards: ['blightbolt', 'blight-surge'],
     /* The foot of the page, with its one em dash restructured into a colon.
        Punctuation is the only edit allowed on the designer's prose. See
@@ -595,7 +677,6 @@ export const CREATURES = [
     avoid_bonus: 4,
     armor: 0,
     speed_m: 5,
-    die: 4,
     cards: ['ember-rake', 'death-throes'],
     lore:
       'A cinderling is what is left when a fire is put out badly. It has no interest in warmth and no memory of what it burned, only the certainty that it is going out soon and the will to take something with it.',
@@ -616,7 +697,6 @@ export const CREATURES = [
     avoid_bonus: 4,
     armor: 0,
     speed_m: 6,
-    die: 6,
     cards: ['gnashing-bite', 'pack-tactics'],
     lore:
       'Fenrats are the fen made ambulatory. One is a nuisance you kick away. Nine of them have already decided which of you is slowest, and they were counting long before you noticed them.',
@@ -639,7 +719,6 @@ export const CREATURES = [
     avoid_bonus: 6,
     armor: 4,
     speed_m: 4,
-    die: 12,
     cards: ['grave-cleave', 'oathbroken-guard', 'hollow-vigil'],
     lore:
       'The armor is still buckled the way its squire buckled it, the morning of a battle nobody now remembers the name of. Whatever is inside it has kept every habit of the knight and none of the reasons.',
@@ -660,7 +739,6 @@ export const CREATURES = [
     avoid_bonus: 4,
     armor: 0,
     speed_m: 4,
-    die: 10,
     cards: ['mire-hex', 'drown-the-lungs', 'bog-born'],
     lore:
       'They were villagers once, on ground that went under and stayed under. What they learned down there they learned from the water, and the water has never once been asked to give something back.',
@@ -681,7 +759,6 @@ export const CREATURES = [
     avoid_bonus: 4,
     armor: 1,
     speed_m: 8,
-    die: 12,
     cards: ['pounce', 'ashmaw-rend', 'blood-scent'],
     lore:
       'It hunts the burn scars, where the ash holds a scent for weeks and nothing else is patient enough to read one. You will hear it once, behind you, and that will be the only warning it intends to give.',
@@ -707,7 +784,6 @@ export const CREATURES = [
     avoid_bonus: 6,
     armor: 2,
     speed_m: 4,
-    die: 12,
     cards: ['withering-word', 'call-the-vault', 'ward-of-the-four-pillars'],
     lore:
       'It has not left the vault in four hundred years and does not consider this an imprisonment. Everything it ever wanted is shelved here, catalogued, and it will explain the filing system to you at length before it kills you.',
@@ -730,7 +806,6 @@ export const CREATURES = [
     avoid_bonus: 9,
     armor: 8,
     speed_m: 3,
-    die: 12,
     cards: ['thorn-volley', 'strangling-roots', 'rooted-in-the-grove'],
     lore:
       'The grove is not where she lives. The grove is her, out to the last seedling, and every axe taken to it these two hundred years is a wound she has counted and kept.',
@@ -751,7 +826,6 @@ export const CREATURES = [
     avoid_bonus: 8,
     armor: 5,
     speed_m: 7,
-    die: 12,
     cards: ['tyrants-breath', 'wing-buffet', 'throne-of-embers'],
     lore:
       'It sits its hoard the way a king sits a throne, which is to say badly and without ever getting up. The braziers around it have been kept lit by hands it no longer bothers to look at.',
@@ -878,20 +952,6 @@ export function creatureAttributes(creature, level) {
   return values;
 }
 
-/**
- * The hit die printed beside a Health: the creature's own die size, and the
- * count that comes closest to averaging that Health.
- *
- * The design sheet's own arithmetic, kept honest at every level. 8 Health on a
- * d4 creature is 3d4, because 3d4 averages 7.5 and 2d4 averages 5.
- */
-export function hitDie(health, die) {
-  const faces = Math.max(2, Math.floor(Number(die) || 6));
-  const mean = (faces + 1) / 2;
-  const count = Math.max(1, Math.round(Math.max(1, Number(health) || 1) / mean));
-  return `${count}d${faces}`;
-}
-
 /* --------------------------------------------------------------- the numbers */
 
 /**
@@ -908,8 +968,10 @@ export function hitDie(health, die) {
  *
  *   health      `perLevel` per level and `perPhysique` per Physique
  *   willpower   `perLevel`, `perMind` and a `flat`
- *   avoid       Instinct + `avoid_bonus`, exactly as a character's Defense is
- *               Instinct plus what they wear
+ *   avoid       the armor family's base plus `avoid_bonus`, exactly as a
+ *               character's Defense is a set's base plus what they wear. With no
+ *               family that base is Instinct, which is what it has always been,
+ *               and Heavy adds half the Armor on top. See CREATURE_ARMOR.
  *   speed/armor printed, because neither is an attribute
  *
  * A Minion's Reaction Points are forced to zero last, after everything, because
@@ -945,25 +1007,41 @@ export function creatureStats(creature, level = null) {
     Math.floor(Number(creature?.reaction_max ?? rank.reaction) || 0)
   );
 
+  /* What it is wearing, and the two numbers that come out of it. Armor is read
+     first because Heavy's rider is taken from the whole of it, which is the
+     rulebook's own ruling for a character and the same one here. */
+  const armor = getCreatureArmor(creature);
+  const defense = Math.max(0, Math.floor(Number(creature?.armor) || 0));
+  const reflex = p + i;
+  const grit = i + m;
+  const avoidBase = armor.base === 'reflex' ? reflex : armor.base === 'grit' ? grit : i;
+  const avoid = Math.max(
+    0,
+    avoidBase +
+      Math.floor(Number(creature?.avoid_bonus) || 0) +
+      (armor.half ? Math.floor(defense / 2) : 0)
+  );
+
   return {
     level: lvl,
     attributes,
     health_max,
     shield_cap: Math.floor(health_max / 2),
     willpower_max,
-    hit_die: hitDie(health_max, creature?.die),
     // The DEF on the printed page: how hard it is to hit.
-    avoid: Math.max(0, i + Math.floor(Number(creature?.avoid_bonus) || 0)),
+    avoid,
     // And the Armor: flat reduction after a hit lands.
-    defense: Math.max(0, Math.floor(Number(creature?.armor) || 0)),
+    defense,
+    // Which family it is wearing, so a block can say what its Defense is made of.
+    armor,
     initiative: i + lvl,
     // The one value that keeps its half, exactly as a character's does.
     speed_m: Number(creature?.speed_m) || 0,
     ap_max,
     // A Minion has none and can never be given any. The one place that is true.
     reaction_max: rank.reacts ? printedReaction : 0,
-    reflex: p + i,
-    grit: i + m,
+    reflex,
+    grit,
     // What the whole party is worth for killing it, at this level.
     xp: Math.max(0, Math.floor((Number(creature?.xp) || 0) * lvl)),
   };

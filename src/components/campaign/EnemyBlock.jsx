@@ -88,7 +88,12 @@ const TOP_LINE = [
     key: 'defense',
     label: 'Armor',
     color: 'var(--stat-armor)',
-    info: 'Flat damage reduction, applied after a hit lands.',
+    /* And which family it is, when it is wearing one. Heavy is the family whose
+       Armor is also Defense, so the two tiles have to be readable together. */
+    info: (stats) =>
+      stats.armor && stats.armor.id !== 'none'
+        ? `Flat damage reduction, applied after a hit lands. ${stats.armor.label} armor: ${stats.armor.active}`
+        : 'Flat damage reduction, applied after a hit lands.',
   },
 ];
 
@@ -97,7 +102,12 @@ const DEFENSE_LINE = [
     key: 'avoid',
     label: 'Defense',
     color: 'var(--focus-cyan)',
-    info: 'How difficult it is to hit. The DEF printed on its page.',
+    /* What Defense is made of depends on what the creature is wearing, so this
+       one tile asks the stats rather than printing a fixed sentence. A Light
+       armored creature reads off its Reflex and a Magic one off its Grit, the
+       same three rules a character's full set keeps: see CREATURE_ARMOR. */
+    info: (stats) =>
+      `How difficult it is to hit. ${stats.armor?.active ?? 'Defense is its Instinct.'}`,
   },
   {
     key: 'reflex',
@@ -362,7 +372,7 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove, onEdit }) {
               key={key}
               label={label}
               color={color}
-              info={info}
+              info={typeof info === 'function' ? info(stats) : info}
               value={value}
               suffix={isSpeed ? (isImperial ? 'ft' : 'm') : ''}
             />
@@ -376,7 +386,7 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove, onEdit }) {
             key={key}
             label={label}
             color={color}
-            info={info}
+            info={typeof info === 'function' ? info(stats) : info}
             value={Math.floor(Number(stats[key]) || 0)}
           />
         ))}
@@ -402,7 +412,7 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove, onEdit }) {
 
       <FoePool
         label={foe.down ? 'Health · Down' : 'Health'}
-        title={`${stats.health_max} at level ${foe.level}, hit die ${stats.hit_die}`}
+        title={`${stats.health_max} at level ${foe.level}. Health is not rolled.`}
         current={foe.health}
         max={stats.health_max}
         color="var(--stat-health)"

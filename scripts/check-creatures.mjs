@@ -34,8 +34,8 @@ import {
   creatureWards,
   difficultyLine,
   getCreature,
+  getCreatureArmor,
   getRank,
-  hitDie,
   isForgedId,
   registerForged,
 } from '../src/lib/creatures.js';
@@ -79,7 +79,9 @@ section('the Blightgeist reproduces its own printed page at level 1');
     mind: 5,
     avoid: 8,
     health_max: 8,
-    hit_die: '3d4',
+    /* The page also printed "(3d4)" beside that Health. Health is not rolled
+       any more (Jules, 2026-09-02), so the die is not part of the page and its
+       own section below is what proves it is gone. */
     willpower_max: 8,
     ap_max: 6,
     // The page prints 3. A Minion cannot take reactions, and the rule wins.
@@ -154,44 +156,66 @@ section('most of the bestiary reaches 12 at level 12');
   }
 }
 
-/* ------------------------------------------- the hit die averages the Health */
+/* ---------------------------------------------------- Health is not rolled */
 
-section('every hit die averages the Health beside it, at every level');
-
-/** The mean of NdM, which is what "HP: 8 (3d4)" claims about itself. */
-function dieAverage(text) {
-  const match = /^(\d+)d(\d+)$/.exec(String(text ?? ''));
-  if (!match) return null;
-  return Number(match[1]) * ((Number(match[2]) + 1) / 2);
+section('nothing rolls a creature Health');
+{
+  /* Jules, 2026-09-02: "Health is not rolled." There used to be a whole section
+     here proving that a derived hit die averaged the Health beside it at every
+     level, for every creature. The ruling deleted the die rather than the
+     arithmetic, so what is left to check is that it is really gone: a stat block
+     that grew one back would print a roll on every enemy block on the site. */
+  const stats = creatureStats(getCreature('blightgeist'), 1);
+  check('no stat block carries a die', 'hit_die' in stats, false);
+  check('and no creature carries one to derive from', CREATURES.some((c) => 'die' in c), false);
+  check('Health is the conversion and nothing else', stats.health_max, 8);
 }
 
-for (const creature of CREATURES) {
-  for (let level = 1; level <= CREATURE_MAX_LEVEL; level += 1) {
-    const stats = creatureStats(creature, level);
-    const mean = dieAverage(stats.hit_die);
+/* ------------------------------------------------------------ the armor family */
 
-    if (mean === null) {
-      note(creature.id, `hit die "${stats.hit_die}" at level ${level} is not NdM`);
-      break;
-    }
+section('an armor family changes what Defense is made of');
+{
+  /* The three families are the character's own full-set rules (docs/rulebook.md
+     7.2), which is why they are checked against the creature's own Reflex and
+     Grit rather than against numbers typed in here. */
+  const base = {
+    ...blankBody('general'),
+    name: 'Test Dummy',
+    level: 4,
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 0, instinct: 0, mind: 0 },
+    avoid_bonus: 2,
+    armor: 6,
+  };
 
-    /* Not a fixed tolerance: a d12 creature cannot land closer than six and a
-       half of anything. What is actually promised is that the *count* is the
-       closest one there is, so both neighbours are checked. */
-    const step = (Number(creature.die) + 1) / 2;
-    const off = Math.abs(mean - stats.health_max);
-    if (off > step / 2 + 0.001) {
-      note(
-        creature.id,
-        `${stats.hit_die} averages ${mean} against ${stats.health_max} Health at level ${level}, and a nearer count exists`
-      );
-      break;
-    }
-  }
+  const bare = creatureStats({ ...base, armor_set: 'none' }, 4);
+  check('with no family, Defense is Instinct plus the bonus', bare.avoid, bare.attributes.instinct + 2);
+
+  const light = creatureStats({ ...base, armor_set: 'light' }, 4);
+  check('Light reads off Reflex', light.avoid, light.reflex + 2);
+
+  const magic = creatureStats({ ...base, armor_set: 'magic' }, 4);
+  check('Magic reads off Grit', magic.avoid, magic.grit + 2);
+
+  /* Heavy is the one that stacks rather than replaces: Instinct, the bonus, and
+     half of the whole Armor. Six Armor is three points of Defense. */
+  const heavy = creatureStats({ ...base, armor_set: 'heavy' }, 4);
+  check('Heavy adds half its Armor', heavy.avoid, heavy.attributes.instinct + 2 + 3);
+  check('and the Armor itself is untouched', heavy.defense, 6);
+
+  /* The bonus is added whatever the family, which is the rulebook's second
+     ruling: a set bonus changes what Defense is built from and does not close
+     the door on everything else. */
+  check(
+    'the bonus lands on every family',
+    [bare, light, magic, heavy].map((s) => s.avoid - creatureStats({ ...base, avoid_bonus: 0, armor_set: s.armor.id }, 4).avoid),
+    [2, 2, 2, 2]
+  );
+
+  check('an unknown family reads as none', getCreatureArmor('plate').id, 'none');
+  check('and every printed page wears none', CREATURES.map((c) => getCreatureArmor(c).id), Array(CREATURES.length).fill('none'));
 }
-
-check('a d4 creature with 8 Health prints 3d4', hitDie(8, 4), '3d4');
-check('and one with 1 Health still prints a die', hitDie(1, 12), '1d12');
 
 /* ------------------------------------------------------ the three rank rules */
 
@@ -296,7 +320,7 @@ section('nothing that scales is stored as a number on a creature');
     for (const field of banned) {
       if (field in creature) note(creature.id, `still carries a hard \`${field}\`, which no longer scales`);
     }
-    for (const field of ['primary', 'secondary', 'die', 'health', 'willpower']) {
+    for (const field of ['primary', 'secondary', 'health', 'willpower']) {
       if (creature[field] === undefined) note(creature.id, `has no \`${field}\``);
     }
     if (!['physique', 'instinct', 'mind'].includes(creature.primary)) {
@@ -408,7 +432,7 @@ section('three of each');
             `L${String(level).padStart(2)} ` +
             `P${String(a.physique).padStart(2)} I${String(a.instinct).padStart(2)} M${String(a.mind).padStart(2)} · ` +
             `DEF ${String(s.avoid).padStart(2)} · AR ${String(s.defense).padStart(2)} · ` +
-            `HP ${String(s.health_max).padStart(3)} (${s.hit_die.padEnd(6)}) · ` +
+            `HP ${String(s.health_max).padStart(3)} · ` +
             `WP ${String(s.willpower_max).padStart(2)} · AP ${s.ap_max} RP ${String(s.reaction_max).padStart(2)}`
         );
       }
@@ -477,7 +501,6 @@ section('a forged creature answers like a printed one');
 
   const stats = creatureStats(made, 4);
   check('Health is its own conversion', stats.health_max, 6 * 4 + 6 * 8);
-  check('the hit die averages that Health', hitDie(stats.health_max, made.die), stats.hit_die);
 
   /* The bestiary draws it with the block an encounter draws, off a creature
      object rather than an id, so a creature that is not registered at all still
@@ -535,7 +558,10 @@ section('the body is cleaned before anything reads it');
     willpower: { perLevel: -3, perMind: null, flat: 1e9 },
     avoid_bonus: -7,
     armor: 'lots',
+    armor_set: 'plate',
     speed_m: 999,
+    /* A die a stored body might still carry from before the ruling. It must come
+       back off rather than through. */
     die: 7,
     ap_max: 900,
     reaction_max: 900,
@@ -545,6 +571,7 @@ section('the body is cleaned before anything reads it');
   });
 
   check('the name is cut to length', dirty.name.length, FORGED_NAME_MAX);
+  check('an empty type line falls back', dirty.type, 'Beast');
   check('an unknown rank reads as Minion', dirty.rank, 'minion');
   check('the level is held inside twelve', dirty.level, CREATURE_MAX_LEVEL);
   check('a negative XP is floored', dirty.xp, 0);
@@ -552,7 +579,8 @@ section('the body is cleaned before anything reads it');
   check('a bonus is held either way', dirty.bonus, { physique: 10, instinct: 0, mind: -10 });
   check('a coefficient keeps one decimal', dirty.health.perPhysique, 1.6);
   check('and is capped', dirty.health.perLevel, 40);
-  check('an unknown die reads as d8', dirty.die, 8);
+  check('an unknown armor family reads as none', dirty.armor_set, 'none');
+  check('and no die comes back at all', 'die' in dirty, false);
   check('the pools are capped', [dirty.ap_max, dirty.reaction_max], [30, 30]);
   check('the lore is cut', dirty.lore.length, FORGED_LORE_MAX);
 

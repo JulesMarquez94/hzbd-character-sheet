@@ -11461,3 +11461,73 @@ creatures on a render costs nothing and a stale shelf costs a Game Master their 
   bigger change than it looks.
 - **The published shelf has no author line.** A creature an admin published shows "Published" and not
   who published it. The row knows; the block does not print it.
+
+### Three corrections, 2026-09-02
+
+> remove the size on creature forge
+>
+> The tach it something screen should be better organize, let show ability by type, so you
+> choose between, spells, weapons ect.
+>
+> Health is not rolled. Insed of adding a value to armr lethte creator choose light, heavy or
+> spelled. Let them give a bonus.
+
+**The size is gone.** It was a dropdown and a Kind box composed into "Medium Humanoid"; it is
+one typed field now, with the codex's own words on the datalist. Nothing else read the halves,
+so `splitType` and `FORGED_SIZES` went with it and the default type line is "Beast".
+
+**Health is not rolled**, and that ruling reaches further than the forge. A creature carried a
+`die` and `creatureStats` derived a count that always averaged the Health beside it, printed as
+`HP 78 (14d10)` on the block, in the encounter shelf and in the forge's readout. All of it is
+gone: `hitDie`, `hit_die`, the nine `die:` fields, the picker, and every place that printed one.
+The design sheet did print a die (`HP: 8 (3d4)`), so this is the second supersede on that page
+and it is marked beside the first, which is the Minion's printed `RP: 3`. Health is what the two
+conversions produce and nothing else.
+
+The checker had a whole section proving the die averaged the Health at every level for every
+creature. It has a shorter one now proving the die is **gone**, which is the promise that matters
+once the arithmetic no longer exists: a stat block that grew one back would print a roll on every
+enemy block on the site.
+
+**Armor is a family plus a bonus.** Instead of typing an Armor number into the void, the forge
+picks what the creature is wearing, and a family means for a creature exactly what a full set
+means for a character (docs/rulebook.md 7.2):
+
+| Family | What it does |
+| --- | --- |
+| **None** | Defense is its Instinct. What every printed page in the codex wears |
+| **Light** | Defense is equal to its Reflex |
+| **Heavy** | Defense is increased by half its Armor |
+| **Magic** | Defense is based on its Grit |
+
+`CREATURE_ARMOR` in creatures.js is that table, repeated rather than imported for the reason
+`BASE` and `CREATURE_MAX_LEVEL` are repeated: this file is a leaf, and items.js reaches weapons.js,
+which reaches back here. The bonus is `avoid_bonus`, and it is added **whatever the family**,
+which is the rulebook's own second ruling: a set changes what Defense is built from and does not
+close the door on everything else. So the Defense field is labelled "Defense bonus" now rather
+than "Defense over Instinct", and the form says what it is being added to, because with a family
+on the base is no longer Instinct.
+
+Nothing had to be migrated. A creature with no `armor_set` wears None, which is Instinct plus the
+bonus, which is what every creature in the file has always been. The Blightgeist still prints its
+own page. And the two armor tiles on the block now say what the family does rather than a fixed
+sentence, because "Defense 10" on a Heavy creature with 6 Armor is unreadable without it.
+
+**"Spelled" is the codex's "Magic Armor."** Jules named the third family "spelled", which is what
+`backgrounds.js` calls it on SPELLED ARMOR MASTERY. `items.js` and the rulebook both call that
+family **Magic Armor**, in nine items and a table. The codex's own word is used here so a creature
+and a character read against one table, and the disagreement between those two files is left where
+it is rather than doubled. Worth settling one way or the other.
+
+**The picker is organised by kind.** Twelve buttons over the shelf, Everything first, then the
+eleven groups: Weapons, Spells, Martial Moves, Talents, Creature Cards, Lineage, Skills, Utility,
+Enchantments, Ingredients, Actions. Choosing one narrows the rows, the tag chips and the search
+box, so the box says "Search spells" and offers Ethereal rather than Two-Handed. Each button
+carries how many of that kind the creature already holds.
+
+The groups are **the registry's own arrays** and nothing here reads a card's `kind`. That is the
+one design point in it: `kind` mixes the sources up, because a talent, a lineage trait and a
+creature card all call themselves `passive`, so a grouping keyed on it would file a Blightgeist's
+Blight Surge next to a Berserker's rank 2. Where a card comes *from* is the question, and the
+arrays answer it with nothing in between. The last group is a catch-all, empty today, so a card
+group spread into `CARDS` later shows up in the picker rather than vanishing from it.

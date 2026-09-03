@@ -1427,7 +1427,7 @@ function AddFoes({ encounter, onAdd, onClose, partyLevel = null }) {
                     Master sizing a fight is reading the numbers they will get
                     rather than the ones on the page. */}
                 <span className="foe-shelf-line foe-shelf-stats">
-                  DEF {stats.avoid} · HP {stats.health_max} ({stats.hit_die}) · WP{' '}
+                  DEF {stats.avoid} · HP {stats.health_max} · WP{' '}
                   {stats.willpower_max}
                 </span>
               </span>

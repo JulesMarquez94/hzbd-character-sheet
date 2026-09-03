@@ -7,26 +7,27 @@ import { ATTRIBUTES } from '../../lib/attributes.js';
 import { compareTags } from '../../lib/cardOrder.js';
 import { getCard } from '../../lib/weapons.js';
 import {
+  CREATURE_ARMOR,
   CREATURE_MAX_LEVEL,
   RANKS,
   clampCreatureLevel,
   creatureAttributes,
   creatureStats,
   difficultyLine,
+  getCreatureArmor,
   getRank,
 } from '../../lib/creatures.js';
 import {
   FORGED_CARDS_MAX,
-  FORGED_DICE,
   FORGED_FIELDS,
   FORGED_KINDS,
   FORGED_LORE_MAX,
   FORGED_NAME_MAX,
-  FORGED_SIZES,
+  FORGED_TYPE_MAX,
+  FORGE_GROUPS,
   blankBody,
   createForgedCreature,
   deleteForgedCreature,
-  forgeableCards,
   normalizeBody,
   updateForgedCreature,
 } from '../../lib/customCreatures.js';
@@ -104,13 +105,6 @@ function bodyOf(creature) {
   });
 }
 
-/** A type line cut into its two halves, for the two controls that write it. */
-function splitType(type) {
-  const words = String(type ?? '').trim().split(' ');
-  const size = FORGED_SIZES.includes(words[0]) ? words[0] : 'Medium';
-  const kind = (FORGED_SIZES.includes(words[0]) ? words.slice(1) : words).join(' ');
-  return { size, kind: kind || 'Beast' };
-}
 
 export default function CreatureForge({
   creature = null,
@@ -128,7 +122,11 @@ export default function CreatureForge({
   const [note, setNote] = useState(null);
 
   const rank = getRank(body.rank);
-  const type = splitType(body.type);
+  const armor = getCreatureArmor(body.armor_set);
+  /* Which of its own numbers Defense starts from, said in the word the tiles
+     use. `creatureStats` is what actually applies it; this is only how the form
+     names it. */
+  const baseWord = armor.base === 'reflex' ? 'Reflex' : armor.base === 'grit' ? 'Grit' : 'Instinct';
 
   /* Both readouts, worked out on every keystroke. The written level is what the
      page says it is; level 12 is where the curve puts it, and it is printed
@@ -297,42 +295,28 @@ export default function CreatureForge({
             />
           </div>
 
-          <div className="forge-row">
-            <div className="form-group">
-              <label className="form-label" htmlFor="forge-size">
-                Size
-              </label>
-              <select
-                className="form-input"
-                id="forge-size"
-                value={type.size}
-                onChange={(event) => set({ type: `${event.target.value} ${type.kind}` })}
-              >
-                {FORGED_SIZES.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="forge-kind">
-                Kind
-              </label>
-              <input
-                className="form-input"
-                id="forge-kind"
-                list="forge-kinds"
-                value={type.kind}
-                onChange={(event) => set({ type: `${type.size} ${event.target.value}` })}
-              />
-              <datalist id="forge-kinds">
-                {FORGED_KINDS.map((kind) => (
-                  <option key={kind} value={kind} />
-                ))}
-              </datalist>
-            </div>
+          {/* One field, not a size and a kind. Jules had the size dropdown taken
+              off on 2026-09-02, so the whole type line is typed and the codex's
+              own words are what the list suggests. */}
+          <div className="form-group">
+            <label className="form-label" htmlFor="forge-type">
+              Type
+            </label>
+            <input
+              className="form-input"
+              id="forge-type"
+              list="forge-kinds"
+              value={body.type}
+              maxLength={FORGED_TYPE_MAX}
+              placeholder="Undead"
+              onChange={(event) => set({ type: event.target.value })}
+            />
+            <datalist id="forge-kinds">
+              {FORGED_KINDS.map((kind) => (
+                <option key={kind} value={kind} />
+              ))}
+            </datalist>
+            <p className="forge-hint">The line over its name on the block.</p>
           </div>
 
           {/* The rank, as the three it is. A rank is what sets the two point
@@ -412,9 +396,9 @@ export default function CreatureForge({
                 </tr>
               </thead>
               <tbody>
-                <Line label="Defense" a={now.avoid} b={top.avoid} />
-                <Line label="Armor" a={now.defense} b={top.defense} />
-                <Line label="Health" a={`${now.health_max} (${now.hit_die})`} b={`${top.health_max} (${top.hit_die})`} />
+                <Line label={`Defense · ${baseWord}`} a={now.avoid} b={top.avoid} />
+                <Line label={armor.id === 'none' ? 'Armor' : `Armor · ${armor.label}`} a={now.defense} b={top.defense} />
+                <Line label="Health" a={now.health_max} b={top.health_max} />
                 <Line label="Shield cap" a={now.shield_cap} b={top.shield_cap} />
                 <Line label="Willpower" a={now.willpower_max} b={top.willpower_max} />
                 <Line label="Action Points" a={now.ap_max} b={top.ap_max} />
@@ -586,29 +570,11 @@ export default function CreatureForge({
               onChange={(value) => setIn('health', 'perPhysique', value)}
             />
           </div>
+          {/* No hit die beside it. Jules, 2026-09-02: "Health is not rolled." */}
           <p className="forge-hint">
-            <b>
-              {now.health_max} Health ({now.hit_die})
-            </b>{' '}
-            at level {body.level}, and <b>{top.health_max}</b> at 12. A character is 10 a level and
-            10 a Physique. The hit die count is worked out to average the Health beside it.
+            <b>{now.health_max} Health</b> at level {body.level}, and <b>{top.health_max}</b> at 12.
+            A character is 10 a level and 10 a Physique.
           </p>
-
-          <div className="form-group">
-            <span className="form-label">Hit die</span>
-            <div className="foe-filter">
-              {FORGED_DICE.map((faces) => (
-                <button
-                  key={faces}
-                  type="button"
-                  className={`foe-filter-btn${body.die === faces ? ' is-on' : ''}`}
-                  onClick={() => set({ die: faces })}
-                >
-                  d{faces}
-                </button>
-              ))}
-            </div>
-          </div>
 
           <div className="forge-row">
             <Nudge
@@ -635,20 +601,53 @@ export default function CreatureForge({
             at 12. A character is 2, 2 and a flat 10. Nothing it knows can be cast at zero.
           </p>
 
+          {/* What it is wearing. Jules, 2026-09-02: "Instead of adding a value to
+              armor let the creator choose light, heavy or spelled. Let them give
+              a bonus." A creature has no armor slots to fill, so what it has is
+              the family, and a family means for a creature exactly what a full
+              set means for a character: it changes what Defense is built from.
+              See CREATURE_ARMOR and docs/rulebook.md 7.2. */}
+          <div className="form-group">
+            <span className="form-label">Armor family</span>
+            <div className="foe-filter">
+              {CREATURE_ARMOR.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  className={`foe-filter-btn${armor.id === entry.id ? ' is-on' : ''}`}
+                  onClick={() => set({ armor_set: entry.id })}
+                  title={entry.note}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+            <p className="forge-hint">
+              <b>{armor.active}</b> {armor.note}
+            </p>
+          </div>
+
           <div className="forge-row">
-            <Nudge
-              label={FORGED_FIELDS.avoid_bonus.label}
-              value={body.avoid_bonus}
-              {...FORGED_FIELDS.avoid_bonus}
-              onChange={(value) => set({ avoid_bonus: value })}
-              hint={`Defense ${now.avoid}: how hard it is to hit.`}
-            />
             <Nudge
               label={FORGED_FIELDS.armor.label}
               value={body.armor}
               {...FORGED_FIELDS.armor}
               onChange={(value) => set({ armor: value })}
-              hint="Flat reduction, after a hit lands."
+              hint={
+                armor.half
+                  ? `Flat reduction after a hit lands, and half of it (${Math.floor(body.armor / 2)}) is Defense.`
+                  : 'Flat reduction, after a hit lands.'
+              }
+            />
+            <Nudge
+              label={FORGED_FIELDS.avoid_bonus.label}
+              value={body.avoid_bonus}
+              {...FORGED_FIELDS.avoid_bonus}
+              onChange={(value) => set({ avoid_bonus: value })}
+              /* Named rather than implied: with a family on, the base is no
+                 longer Instinct, and a bonus whose base you cannot see is a
+                 number nobody can size. */
+              hint={`On top of its ${baseWord}, for Defense ${now.avoid}.`}
             />
             <Nudge
               label={FORGED_FIELDS.speed_m.label}
@@ -863,24 +862,46 @@ function ForgeCardRow({ id, onDrop }) {
 }
 
 /**
- * The whole registry, as a shelf you browse.
+ * The whole registry, as a shelf you browse, one kind at a time.
  *
  * A shelf rather than a wall of card faces, and the width rule says so: nearly
- * five hundred cards at their real footprint is a scroll nobody finishes. The
- * rows are searchable by what a card says and chippable by what it is, which is
- * the same filter the Abilities tab uses, and a row opens the card itself on the
- * stack for anybody who wants to read one before teaching it.
+ * five hundred cards at their real footprint is a scroll nobody finishes.
+ *
+ * ------------------------------------------------------------------ by kind
+ * Jules, 2026-09-02: "let show ability by type, so you choose between spells,
+ * weapons ect." So the first question the shelf asks is which kind, and it is
+ * asked as a row of buttons rather than as a dropdown: eleven kinds with a count
+ * on each is also the census a Game Master wants before they pick one.
+ *
+ * The kinds are `FORGE_GROUPS`, which are the registry's own arrays. Nothing
+ * here reads a card's `kind` field, and the note on that constant says why: a
+ * talent, a lineage trait and a creature card all call themselves `passive`.
+ *
+ * **Everything** is a kind too, and it is first. That is not a hedge: it is the
+ * only way to search by name across the whole codex, which is what somebody who
+ * half remembers a card is doing. The search box narrows whichever kind is open,
+ * so picking a kind and then typing narrows twice.
  *
  * Only the first `SHELF_PAGE` matches are drawn. The honest alternative is
  * rendering all of them, and a picker that takes a second to answer a keystroke
- * is a picker people stop typing into.
+ * is a picker people stop typing into. With a kind chosen that ceiling is
+ * reached far less often, which is half the point of choosing one.
  */
 const SHELF_PAGE = 60;
 
 function CardShelf({ held, room, onTake, onDrop, onClose }) {
   const stack = useCardStack();
-  const cards = useMemo(() => forgeableCards(), []);
+  /** Which kind is open, by group id, or null for everything at once. */
+  const [group, setGroup] = useState(null);
 
+  const open = FORGE_GROUPS.find((entry) => entry.id === group) ?? null;
+  const cards = useMemo(
+    () => (open ? open.cards : FORGE_GROUPS.flatMap((entry) => entry.cards)),
+    [open]
+  );
+
+  /* The tags of whatever kind is open, so the chip row offers Ethereal inside
+     Spells and Two-Handed inside Weapons rather than all two hundred at once. */
   const tags = useMemo(() => {
     const seen = new Map();
     for (const card of cards) {
@@ -900,6 +921,14 @@ function CardShelf({ held, room, onTake, onDrop, onClose }) {
   );
   const shown = found.slice(0, SHELF_PAGE);
 
+  /* How many of each kind this creature already holds, for the count on the
+     button. A Game Master who has taught it three spells should see that on the
+     Spells button without opening it. */
+  const mine = new Map();
+  for (const entry of FORGE_GROUPS) {
+    mine.set(entry.id, entry.cards.filter((card) => held.includes(card.id)).length);
+  }
+
   return (
     <Modal
       title="Teach it something"
@@ -911,7 +940,52 @@ function CardShelf({ held, room, onTake, onDrop, onClose }) {
         </span>
       }
     >
-      <TagFilter filter={filter} count={found.length} noun="card" placeholder="Search every card" />
+      {/* Which kind. The counts are what it holds of each, not how many exist:
+          the second number is on the row under the button and the first is the
+          one being decided. */}
+      <div className="foe-filter foe-filter-shelf">
+        <button
+          type="button"
+          className={`foe-filter-btn${group === null ? ' is-on' : ''}`}
+          onClick={() => {
+            setGroup(null);
+            filter.clear();
+          }}
+          title="Every card in the codex, searchable by name"
+        >
+          Everything
+          {held.length > 0 && <span className="foe-filter-count">{held.length}</span>}
+        </button>
+
+        {FORGE_GROUPS.map((entry) => (
+          <button
+            key={entry.id}
+            type="button"
+            className={`foe-filter-btn${group === entry.id ? ' is-on' : ''}`}
+            onClick={() => {
+              setGroup(entry.id);
+              filter.clear();
+            }}
+            title={`${entry.note} ${entry.cards.length} of them.`}
+          >
+            {entry.label}
+            {mine.get(entry.id) > 0 && (
+              <span className="foe-filter-count">{mine.get(entry.id)}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <p className="forge-hint forge-shelf-note">
+        {open ? open.note : 'Every card in the codex, less the basic actions every body already has.'}
+      </p>
+
+      <TagFilter
+        filter={filter}
+        count={found.length}
+        noun="card"
+        placeholder={open ? `Search ${open.label.toLowerCase()}` : 'Search every card'}
+      />
 
       <div className="foe-shelf">
         {shown.map((card) => {
@@ -962,10 +1036,10 @@ function CardShelf({ held, room, onTake, onDrop, onClose }) {
 
       {found.length > shown.length && (
         <p className="forge-hint">
-          {found.length - shown.length} more match. Narrow the search to reach them.
+          {found.length - shown.length} more match. Narrow the search, or pick a kind above.
         </p>
       )}
-      {found.length === 0 && <p className="forge-empty">Nothing in the codex answers that.</p>}
+      {found.length === 0 && <p className="forge-empty">Nothing here answers that.</p>}
     </Modal>
   );
 }

@@ -45,15 +45,26 @@
 
 import { requireSupabase } from './supabaseClient.js';
 import {
+  CREATURE_ARMOR,
+  CREATURE_CARDS,
   CREATURE_MAX_LEVEL,
   FORGED_PREFIX,
   RANKS,
   clampCreatureLevel,
+  getCreatureArmor,
   getRank,
   registerForged,
 } from './creatures.js';
 import { BASIC_ACTIONS } from './actions.js';
-import { CARDS, getCard } from './weapons.js';
+import { BACKGROUND_CARDS } from './backgrounds.js';
+import { ENCHANTMENTS } from './enchantments.js';
+import { INGREDIENTS } from './ingredients.js';
+import { LINEAGE_CARDS } from './lineages.js';
+import { MARTIAL_MOVES } from './martial.js';
+import { SPELLS } from './spells.js';
+import { TALENT_CARDS } from './talents.js';
+import { UTILITY_CARDS } from './utility.js';
+import { ACTION_CARDS, CARDS, WEAPON_ABILITIES, getCard } from './weapons.js';
 
 /* ------------------------------------------------------------------ the shape */
 
@@ -68,16 +79,14 @@ const URL_MAX = 500;
     keeps one row from becoming a spellbook. */
 export const FORGED_CARDS_MAX = 12;
 
-/** The hit dice a creature may be built on, which are the ones the codex uses. */
-export const FORGED_DICE = [4, 6, 8, 10, 12, 20];
-
-/** The sizes the printed type lines are written from. A type is `<size> <kind>`:
-    "Small Undead", "Huge Dragon". Free text for the kind, because the codex has
-    nine kinds today and a table will want the tenth. */
-export const FORGED_SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
-
-/** The kinds the codex has used so far, offered as suggestions rather than as a
-    closed list. */
+/**
+ * The type line, offered as suggestions rather than as a closed list.
+ *
+ * One field, not two. It used to be a Size dropdown and a Kind box, composed
+ * into "Medium Humanoid"; Jules had the size taken off on 2026-09-02, so the
+ * whole line is typed and the codex's own words are what the datalist offers.
+ * A table that wants "Huge Dragon" or "Swarm of Fenrats" writes either.
+ */
 export const FORGED_KINDS = [
   'Aberration',
   'Beast',
@@ -88,6 +97,9 @@ export const FORGED_KINDS = [
   'Humanoid',
   'Plant',
   'Undead',
+  'Large Beast',
+  'Huge Dragon',
+  'Small Undead',
 ];
 
 /**
@@ -106,7 +118,10 @@ export const FORGED_FIELDS = {
   'willpower.perLevel': { label: 'Willpower a level', min: 0, max: 20, step: 1, dp: 1 },
   'willpower.perMind': { label: 'Willpower a Mind', min: 0, max: 20, step: 1, dp: 1 },
   'willpower.flat': { label: 'Willpower, flat', min: 0, max: 100, step: 1, dp: 0 },
-  avoid_bonus: { label: 'Defense over Instinct', min: 0, max: 30, step: 1, dp: 0 },
+  /* Not "Defense over Instinct" any more: with an armor family on, the base may
+     be Reflex or Grit instead, so the label says what the number is and the form
+     says what it is being added to. */
+  avoid_bonus: { label: 'Defense bonus', min: 0, max: 30, step: 1, dp: 0 },
   armor: { label: 'Armor', min: 0, max: 30, step: 1, dp: 0 },
   speed_m: { label: 'Speed, meters', min: 0, max: 60, step: 1, dp: 1 },
   ap_max: { label: 'Action Points', min: 0, max: 30, step: 1, dp: 0 },
@@ -174,11 +189,9 @@ export function normalizeBody(raw) {
     if (cards.length >= FORGED_CARDS_MAX) break;
   }
 
-  const die = FORGED_DICE.includes(Number(body.die)) ? Number(body.die) : 8;
-
   return {
     name: text(body.name, FORGED_NAME_MAX) || 'Unnamed Creature',
-    type: text(body.type, FORGED_TYPE_MAX) || 'Medium Beast',
+    type: text(body.type, FORGED_TYPE_MAX) || 'Beast',
     rank: rank.id,
     level: clampCreatureLevel(body.level),
     xp: held(body.xp, FORGED_FIELDS.xp, 10),
@@ -197,10 +210,13 @@ export function normalizeBody(raw) {
       flat: held(body.willpower?.flat, FORGED_FIELDS['willpower.flat']),
     },
 
+    /* What it is wearing, and the two numbers that ride on it. The family is
+       resolved rather than trusted, so a body naming a family this build has
+       never heard of wears none and still draws. See CREATURE_ARMOR. */
+    armor_set: getCreatureArmor(String(body.armor_set ?? '')).id,
     avoid_bonus: held(body.avoid_bonus, FORGED_FIELDS.avoid_bonus),
     armor: held(body.armor, FORGED_FIELDS.armor),
     speed_m: held(body.speed_m, FORGED_FIELDS.speed_m),
-    die,
 
     /* Both point pools default to the rank's, exactly as a printed creature's do
        (see `creatureStats`), so a body that says nothing about them gets the
@@ -232,7 +248,7 @@ export function blankBody(rank = 'general') {
   return {
     ...normalizeBody({
       name: '',
-    type: 'Medium Humanoid',
+    type: 'Humanoid',
     rank,
     level: 4,
     xp: 25,
@@ -255,7 +271,86 @@ export function blankBody(rank = 'general') {
 /* ------------------------------------------------------------- what it learns */
 
 /**
- * Every card a forged creature may be taught.
+ * Every card a forged creature may be taught, sorted into the kinds a Game
+ * Master actually asks for.
+ *
+ * Jules, 2026-09-02: "The teach it something screen should be better organized,
+ * let show ability by type, so you choose between spells, weapons etc."
+ *
+ * The groups are **the registry's own arrays**, not a reading of each card's
+ * `kind`. That matters: `kind` mixes the sources up, because `passive` is what a
+ * talent, a lineage trait and a creature card all say about themselves, so a
+ * grouping keyed on it would put a Blightgeist's Blight Surge in the same box as
+ * a Berserker's rank 2. Where a card comes *from* is the question being asked,
+ * and the arrays are the answer with no interpretation in between.
+ *
+ * The order is the reaching order, which is what the quick bar uses: what a
+ * weapon gives you, then what you cast, then what you learned, then the odds and
+ * ends. Nothing is filtered but the basic actions, which every body on the board
+ * already has, and the last group is a catch-all so a group added to `CARDS`
+ * later can never become unreachable in the picker.
+ */
+const FORGE_SOURCES = [
+  {
+    id: 'weapon',
+    label: 'Weapons',
+    note: 'What a weapon teaches while it is held.',
+    cards: WEAPON_ABILITIES,
+  },
+  { id: 'spell', label: 'Spells', note: 'The four schools.', cards: SPELLS },
+  {
+    id: 'martial',
+    label: 'Martial Moves',
+    note: 'Added to a swing rather than played on their own.',
+    cards: MARTIAL_MOVES,
+  },
+  { id: 'talent', label: 'Talents', note: 'Everything a talent set hands over.', cards: TALENT_CARDS },
+  { id: 'creature', label: 'Creature Cards', note: 'Off the printed pages.', cards: CREATURE_CARDS },
+  { id: 'lineage', label: 'Lineage', note: 'What a bloodline is born with.', cards: LINEAGE_CARDS },
+  { id: 'background', label: 'Skills', note: 'What a background trained.', cards: BACKGROUND_CARDS },
+  { id: 'utility', label: 'Utility', note: 'What a piece of kit does.', cards: UTILITY_CARDS },
+  { id: 'enchant', label: 'Enchantments', note: 'Workings laid on gear.', cards: ENCHANTMENTS },
+  { id: 'ingredient', label: 'Ingredients', note: 'What a brew is made of.', cards: INGREDIENTS },
+  { id: 'action', label: 'Actions', note: 'The rest of what anybody can do.', cards: ACTION_CARDS },
+];
+
+/**
+ * The groups, built once, each holding only what it may offer.
+ *
+ * A group that ends up empty is dropped, so the picker never draws a button that
+ * answers nothing.
+ */
+export const FORGE_GROUPS = (() => {
+  const taken = new Set();
+  const groups = [];
+
+  for (const source of FORGE_SOURCES) {
+    const cards = source.cards.filter((card) => {
+      if (ALREADY_EVERYONE.has(card.id) || taken.has(card.id)) return false;
+      taken.add(card.id);
+      return true;
+    });
+    if (cards.length > 0) groups.push({ ...source, cards });
+  }
+
+  /* Anything in the registry that no group above claimed. Empty today, and the
+     reason it can stay empty: a new card group spread into `CARDS` shows up here
+     rather than vanishing from the picker. */
+  const rest = CARDS.filter((card) => !ALREADY_EVERYONE.has(card.id) && !taken.has(card.id));
+  if (rest.length > 0) {
+    groups.push({
+      id: 'rest',
+      label: 'Everything Else',
+      note: 'Cards no group above claims.',
+      cards: rest,
+    });
+  }
+
+  return groups;
+})();
+
+/**
+ * Every card a forged creature may be taught, flat.
  *
  * The whole registry, which is the literal reading of "any ability the player
  * can use", less the basic actions every body on the board already has. Nothing
@@ -264,7 +359,7 @@ export function blankBody(rank = 'general') {
  * this file pruned by taste would be a second, quieter set of rules.
  */
 export function forgeableCards() {
-  return CARDS.filter((card) => !ALREADY_EVERYONE.has(card.id));
+  return FORGE_GROUPS.flatMap((group) => group.cards);
 }
 
 /* ---------------------------------------------------------------- the row */
@@ -453,6 +548,6 @@ function forgeError(error) {
 
 /* --------------------------------------------------------------- the ranks */
 
-/** The three ranks and the level ceiling, re-exported so the forge reaches past
-    this file for nothing it needs. */
-export { CREATURE_MAX_LEVEL, RANKS };
+/** The ranks, the armor families and the level ceiling, re-exported so the forge
+    reaches past this file for nothing it needs. */
+export { CREATURE_ARMOR, CREATURE_MAX_LEVEL, RANKS };

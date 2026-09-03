@@ -2340,6 +2340,13 @@
   margin-top: 0.15rem;
 }
 
+/* The line under the kind row in the card picker: what the kind that is open
+   actually is. Tighter than a panel hint, because it sits between two controls
+   rather than under one. */
+.forge-shelf-note {
+  margin: -0.4rem 0 0.7rem;
+}
+
 /* A creature that was forged rather than printed, said on its own
    block so nobody reads one as codex. */
 .foe-chip-forged {
