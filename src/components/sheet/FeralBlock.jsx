@@ -43,10 +43,15 @@ import { statMath } from '../../lib/statMath.js';
  *
  * -------------------------------------------------------- and the difficulty
  * "On a failure the difficulty increases by 1 for your next roll. It resets to 8
- * on a transformation." The roll itself is never asked for here, for the reason
- * every other die on this sheet is the table's: the sheet is told that Health
- * moved and never what moved it, so a sheet that asked for a Feral Rage roll
- * would ask on every scratch. It holds the number and offers the presses.
+ * on a transformation." This block holds the number and offers the two presses
+ * that move it by hand.
+ *
+ * The roll itself used to be nobody's but the table's, because the sheet was told
+ * that Health moved and never what moved it. It is asked for now, and it is asked
+ * for where it happens rather than here: losing Health and spending Willpower both
+ * write a ledger row naming what did it, so the prompt goes up the moment one
+ * lands. See FeralCall.jsx. The presses below stay, for a roll made at the table
+ * and for a difficulty that needs correcting.
  *
  * The note asks for a button that increments the difficulty "as you succed your
  * roll", and the card says the increase is on a *failure*. The card wins, and the
@@ -154,7 +159,7 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
           <span className="feral-dc-note">
             {form.difficulty > form.base
               ? `${form.difficulty - form.base} above the ${form.base} it starts at.`
-              : `Lose Health or spend Willpower, and roll ${rolls} against it.`}
+              : `Lose Health or spend Willpower and the sheet asks for the ${rolls} roll.`}
           </span>
         </span>
       </div>

@@ -57,6 +57,7 @@ import {
   normalizeBelt,
   normalizeEquipment,
 } from './items.js';
+import { foeModifiers } from './encounters.js';
 import { getCard, itemEnchantments } from './weapons.js';
 import {
   hideOpening,
@@ -519,6 +520,27 @@ export function leaveFormBody(character, form) {
   };
 }
 
+/**
+ * What the ledger says a spend was for: the card, and where the card came from.
+ *
+ * "the source and effect" (Jules, 2026-09-03). The effect is the card's own name
+ * — what the Willpower bought — and the source is the line the chip already
+ * carries under it, which is the one thing a card name alone does not say: two
+ * sets can teach the same spell, and a flask is not a spellbook.
+ *
+ * Most chips print the card's own name at the head of their source ("Fireball ·
+ * Arcanist"), and a note that said it twice would be the ledger stuttering. The
+ * hand group is the one that does not: its source names the weapon ("Longsword ·
+ * in hand"), which is exactly the half a swing's note would otherwise be
+ * missing. Capped where every other note is, in `ledgerRows`.
+ */
+function spendNote(request) {
+  const name = String(request?.name ?? '').trim() || 'Something';
+  const source = String(request?.source ?? '').trim();
+  if (!source) return name;
+  return source.startsWith(name) ? source : `${name} · ${source}`;
+}
+
 /** Several movements, one write, in the order they happened. */
 function ledgerRows(character, rows) {
   let ledger = character?.ledger;
@@ -639,8 +661,12 @@ export function minionBar(character, minion) {
  * is rather than what this file thinks of one:
  *
  *   its own numbers   `actor` is the enemy dressed as a character, so Withering
- *                     Word prints the lich's Mind and is refused when the lich
- *                     is out of Willpower. Nothing is borrowed from anybody.
+ *                     Word prints its own attributes and is refused when it is
+ *                     out of Willpower. Nothing is borrowed from anybody. And
+ *                     since 2026-09-03 the attribute it rolls is its *best* one
+ *                     rather than the one the page printed — see
+ *                     `foeModifiers` in encounters.js, which is where that rule
+ *                     and the argument for it live.
  *   its own damage    the card's own type, which is already on the card, so
  *                     there is nothing for a holder to lend it.
  *
@@ -649,7 +675,10 @@ export function minionBar(character, minion) {
  * minion's bar.
  */
 export function foeBar(foe) {
-  const modifiers = { actor: foe.actor };
+  /* Its own cards only. The basic actions below ride at their printed attribute
+     like everybody else's: a Shove is a Physique roll for a goblin the same as
+     for a knight, and it is nobody's ability. */
+  const modifiers = foeModifiers(foe.actor);
 
   const moves = (foe.moves ?? [])
     .filter((card) => !isStanding(card))
@@ -889,7 +918,14 @@ export function recapCount(groups) {
  * and is charged its printed cost exactly as it always was.
  *
  * Health goes through the ledger, because every other movement of Health on this
- * sheet is logged and a tithe is one a player chose to pay.
+ * sheet is logged and a tithe is one a player chose to pay. **And Willpower does
+ * now too**, on Jules's ask of 2026-09-03: "the cost in willpower need to be
+ * logged with the source and effect. Same when healed or damaged." A Health
+ * ledger has always answered "why am I on 12"; the Willpower column was the one
+ * pool that moved without leaving a word behind, so a player who cast four
+ * things and came back to a bar at 3 had nothing to read. The row names the card
+ * and where the card came from — see `spendNote` — and the two pools are written
+ * in one call so a use that costs both is one write.
  *
  * `free` is the one way past that refusal: the prompt's own "Use it anyway",
  * for a table that rules a use through regardless. The use happens exactly as it
@@ -989,22 +1025,44 @@ export function spendUse(request, character, mode, amount, { free = false, price
       if (wp > 0) body.willpower = character.willpower - wp;
     }
 
+    /* ---- and what moved, written down ----
+       One ledger row per pool that has one, in one write. Willpower first
+       because it is the common half: nearly every card that charges Willpower
+       charges nothing else, and a tithe is the rare one.
+
+       Floored at nothing for the reading rather than for the column: the prompt
+       has already refused a spend the pools cannot cover, so this only ever
+       agrees with the number written above it.
+
+       Action Points are deliberately not here. They are not a balance, they are
+       a turn's worth of points that come back at the bell, and a ledger of them
+       would be a hundred rows a session that nobody reads. */
+    const rows = [];
+
+    if (wp > 0) {
+      rows.push({
+        kind: 'willpower',
+        delta: -wp,
+        balance: Math.max(0, (Number(character?.willpower) || 0) - wp),
+        note: spendNote(request),
+      });
+    }
+
     /* And the tithe, if one was taken. Written through the ledger rather than
        straight onto the column, so "why am I on 12 Health" has an answer with the
-       spell's name in it. Floored at nothing for the same reason the pools are:
-       the prompt has already refused a tithe bigger than the body can pay. */
+       spell's name in it. */
     if (health > 0) {
       const left = Math.max(0, (Number(character?.health) || 0) - health);
       body.health = left;
-      body.ledger = ledgerRows(character, [
-        {
-          kind: 'health',
-          delta: -health,
-          balance: left,
-          note: price?.note ?? `${request.name}: the tithe`,
-        },
-      ]);
+      rows.push({
+        kind: 'health',
+        delta: -health,
+        balance: left,
+        note: price?.note ?? `${request.name}: the tithe`,
+      });
     }
+
+    if (rows.length > 0) body.ledger = ledgerRows(character, rows);
   }
 
   /* ---- and what the card writes on its own ----

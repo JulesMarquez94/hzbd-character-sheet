@@ -184,6 +184,10 @@ export default function TurnCall({ character, patch, canEdit = false }) {
           kind: row.data?.kind,
           landings: target.landings,
           note: `${row.actor || 'The table'}: ${getCard(row.data?.card)?.name ?? row.title}`,
+          /* And what it was made of, so the ledger row names the effect as well
+             as its source. The delivery already carries the types; nothing here
+             works them out. See `deltaNote` in combatApply.js. */
+          types: row.data?.types ?? [],
         });
         if (body) held.patch(body);
       }

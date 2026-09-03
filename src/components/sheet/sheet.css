@@ -9138,45 +9138,72 @@ body.tray-open-left.tray-open-right .sheet {
    THE REACTION WINDOW'S KNOCK
    Somebody at the table acted, their dice are held for six
    seconds, and this reader has Reaction Points to answer
-   with. A corner banner, gone by itself when the window
-   closes. See ReactionCall.jsx.
+   with. Gone by itself when the window closes. See
+   ReactionCall.jsx.
+
+   It was a 320px corner banner until 2026-09-03, when Jules
+   asked for it large — "make it large like 50% so". It is
+   half the viewport wide now and centred along the bottom,
+   which is the right size for what it actually is: a
+   question with six seconds on it. A notice you can miss in
+   the corner of a sheet is a reaction nobody takes.
+
+   Wide enough to read as a row rather than a stack, so the
+   question sits on the left and the two answers on the
+   right, and the whole thing is one line tall on a desktop.
    ========================================================= */
 .reaction-call {
   position: fixed;
-  right: 18px;
-  bottom: 18px;
+  left: 50%;
+  bottom: 5vh;
+  /* The centring, held in a variable because the keyframe below sets
+     `transform` too and an animation that dropped the -50% would slide the
+     panel off centre for the length of its own fade. The phone rule at the foot
+     sets it to nothing, and the keyframe follows it there. */
+  --call-shift: -50%;
+  transform: translate(var(--call-shift), 0);
   z-index: var(--z-drawer);
+  width: 50vw;
+  max-width: calc(100vw - 32px);
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  max-width: 320px;
-  padding: 12px 14px;
+  align-items: center;
+  gap: 22px;
+  padding: 18px 22px;
   text-align: left;
-  border-radius: 5px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 145, 60, 0.5);
   background:
-    linear-gradient(180deg, rgba(255, 145, 60, 0.12), rgba(9, 17, 21, 0.94));
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+    linear-gradient(180deg, rgba(255, 145, 60, 0.14), rgba(9, 17, 21, 0.96));
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.55);
   font-family: var(--font-body);
   animation: reaction-call-in 0.18s ease-out;
 }
 
-/* The two answers, side by side under the question. */
-.reaction-call-acts {
+/* The words down the left, however many of them there are: the line about your
+   Reaction Points is drawn only where there is one to name. */
+.reaction-call-body {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  gap: 8px;
-  margin-top: 4px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* And the two answers down the right, beside all of it rather than under it. */
+.reaction-call-acts {
+  flex: none;
+  display: flex;
+  gap: 10px;
 }
 
 @keyframes reaction-call-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translate(var(--call-shift, 0px), 8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate(var(--call-shift, 0px), 0);
   }
 }
 
@@ -9187,7 +9214,7 @@ body.tray-open-left.tray-open-right .sheet {
 }
 
 .reaction-call-head {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -9195,7 +9222,8 @@ body.tray-open-left.tray-open-right .sheet {
 }
 
 .reaction-call-what {
-  font-size: 0.82rem;
+  font-size: 1rem;
+  line-height: 1.35;
   color: var(--text-silver);
 }
 
@@ -9204,9 +9232,36 @@ body.tray-open-left.tray-open-right .sheet {
 }
 
 .reaction-call-line {
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   line-height: 1.4;
   color: var(--text-muted);
+}
+
+/* On a phone half the width is not a width. It takes what there is, and the
+   answers go back under the question because two buttons and a sentence do not
+   fit a 360px row. */
+@media (max-width: 720px) {
+  .reaction-call {
+    left: 10px;
+    right: 10px;
+    bottom: 12px;
+    width: auto;
+    max-width: none;
+    /* Nothing to centre against: the panel is pinned to both edges. */
+    --call-shift: 0px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 14px 16px;
+  }
+
+  .reaction-call-acts {
+    margin-top: 8px;
+  }
+
+  .reaction-call-what {
+    font-size: 0.92rem;
+  }
 }
 
 /* The reaction window: the shelf of everything the reader can take, over the

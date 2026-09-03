@@ -37,6 +37,7 @@ import {
   normalizeRun,
   rollInitiative,
 } from '../src/lib/encounters.js';
+import { spendUse } from '../src/lib/combatBar.js';
 import { layEffect } from '../src/lib/combatTurn.js';
 import { MARTIAL_MOVES, getMartialMove } from '../src/lib/martial.js';
 import { aimingMoves } from '../src/lib/moves.js';
@@ -228,15 +229,102 @@ section('a delivery applied to a character goes through its own pools');
     kind: 'damage',
     landings: [7],
     note: '2.Fenrat: Blightbolt',
+    types: ['Necrotic'],
   });
   check('the Shield takes its share', body.shield, 0);
   check('Health takes the rest', body.health, 18);
-  check('and the ledger says who', body.ledger[0].note, '2.Fenrat: Blightbolt');
+  /* The source *and* the effect, which is the whole of what Jules asked the row
+     to carry on 2026-09-03. The number is the row's own delta. */
+  check(
+    'and the ledger says who and what',
+    body.ledger[0].note,
+    '2.Fenrat: Blightbolt · Necrotic damage'
+  );
+  check(
+    'healing says so too, so a sign is not the only clue',
+    characterDelta(before, { kind: 'healing', amount: 6, note: 'Nyx: Mending Word' }).ledger[0].note,
+    'Nyx: Mending Word · healing'
+  );
   check('healing caps at the ceiling', characterDelta(before, { kind: 'healing', amount: 99, note: '' }).health, 50);
   check(
     'a change that moves nothing writes nothing',
     characterDelta({ ...before, health: 50 }, { kind: 'healing', amount: 5, note: '' }),
     null
+  );
+}
+
+/* ============================================== what a spend writes down */
+
+/**
+ * A Willpower spend leaves a word behind, and it names the card and where the
+ * card came from. Jules, 2026-09-03: "the cost in willpower need to be logged
+ * with the source and effect."
+ *
+ * The two shapes of source are both here, because they read differently: a chip
+ * whose source already opens with the card's name must not say it twice, and the
+ * hand group's source names the *weapon* and so has to keep both halves.
+ */
+section('a Willpower spend writes its own ledger row');
+{
+  const holder = { ap: 6, willpower: 12, health: 40, health_max: 40, ledger: [] };
+
+  const cast = spendUse(
+    { name: 'Fireball', source: 'Fireball · Arcanist', ap: 2, wp: 4, card: null },
+    holder,
+    'action',
+    2
+  );
+  check('the pool moves', cast.willpower, 8);
+  check('one row, on the Willpower ledger', cast.ledger.length, 1);
+  check('signed by the card and its source', cast.ledger[0].note, 'Fireball · Arcanist');
+  check('as a spend', [cast.ledger[0].kind, cast.ledger[0].delta, cast.ledger[0].balance], [
+    'willpower',
+    -4,
+    8,
+  ]);
+
+  const swing = spendUse(
+    { name: 'Cleave', source: 'Longsword · in hand', ap: 2, wp: 2, card: null },
+    holder,
+    'action',
+    2
+  );
+  check('a swing keeps both halves', swing.ledger[0].note, 'Cleave · Longsword · in hand');
+
+  check(
+    'a use that costs no Willpower writes nothing',
+    spendUse({ name: 'Move', source: 'Move · a basic action', ap: 1, wp: 0, card: null }, holder, 'action', 1)
+      .ledger,
+    undefined
+  );
+
+  /* Waved through means waved through: not a point, and not a row saying a point
+     went. See `free` in spendUse. */
+  check(
+    'and a waved-through use writes nothing either',
+    spendUse(
+      { name: 'Fireball', source: 'Fireball · Arcanist', ap: 2, wp: 4, card: null },
+      holder,
+      'action',
+      2,
+      { free: true }
+    ).ledger,
+    undefined
+  );
+
+  /* Both pools in one write, because a use that costs both is one use. */
+  const tithed = spendUse(
+    { name: 'Blood Spear', source: 'Blood Spear · Arcanist', ap: 1, wp: 3, card: null },
+    holder,
+    'action',
+    1,
+    { price: { ap: 1, wp: 3, health: 5 } }
+  );
+  check('two rows, one write', tithed.ledger.length, 2);
+  check(
+    'Willpower first, then the tithe',
+    tithed.ledger.map((row) => row.kind),
+    ['health', 'willpower']
   );
 }
 

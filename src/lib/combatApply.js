@@ -137,8 +137,17 @@ export function deltaWords(row) {
  * Damage arrives with this body's Armor *not* yet taken off — Armor is the
  * target's own and is read here — and lands one landing at a time, for the
  * same reason `struck` takes a list.
+ *
+ * `types` is what the damage was made of, so the row says what hit as well as
+ * who threw it: "the source and effect" (Jules, 2026-09-03). It is the caller's
+ * because only the caller has it — the delivery carries the types and this
+ * function is handed the numbers.
  */
-export function characterDelta(character, { kind, landings = null, amount = 0, note = '' }) {
+export function characterDelta(
+  character,
+  { kind, landings = null, amount = 0, note = '', types = [] }
+) {
+  const why = deltaNote(note, kind, types);
   const list = (landings && landings.length > 0 ? landings : [amount]).map((n) =>
     Math.max(0, Math.floor(Number(n) || 0))
   );
@@ -159,7 +168,7 @@ export function characterDelta(character, { kind, landings = null, amount = 0, n
         kind: 'health',
         delta: -result.dealt,
         balance: result.health,
-        note,
+        note: why,
       });
     }
     return Object.keys(body).length > 0 ? body : null;
@@ -172,7 +181,7 @@ export function characterDelta(character, { kind, landings = null, amount = 0, n
     if (next === held) return null;
     return {
       health: next,
-      ledger: ledgerRow(character, { kind: 'health', delta: next - held, balance: next, note }),
+      ledger: ledgerRow(character, { kind: 'health', delta: next - held, balance: next, note: why }),
     };
   }
 
@@ -188,6 +197,29 @@ export function characterDelta(character, { kind, landings = null, amount = 0, n
 
 function sum(list) {
   return list.reduce((held, n) => held + n, 0);
+}
+
+/**
+ * The whole sentence a ledger row carries: what did it, and what it did.
+ *
+ * The number is the row's own `delta`, so this is the other half — "2.Fenrat:
+ * Blightbolt · Necrotic damage". The kind is said even when the types are not,
+ * because a row reading "Nyx: Mending Word" alone leaves the reader counting
+ * signs to work out whether it healed or hurt.
+ *
+ * Nothing is said twice: a caller with no note at all gets the effect on its
+ * own rather than a leading separator.
+ */
+function deltaNote(note, kind, types = []) {
+  const what =
+    kind === 'damage'
+      ? [(types ?? []).filter(Boolean).join(' or '), 'damage'].filter(Boolean).join(' ')
+      : kind === 'healing'
+        ? 'healing'
+        : '';
+  const said = String(note ?? '').trim();
+  if (!what) return said;
+  return said ? `${said} · ${what}` : what;
 }
 
 /** One ledger line, appended the way every other writer appends one. */

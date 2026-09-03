@@ -68,6 +68,7 @@
  */
 
 import { requireSupabase } from './supabaseClient.js';
+import { HIGHEST } from './attributes.js';
 import { clamp } from './characterModel.js';
 import { struck } from './combatApply.js';
 import { rollCheck } from './dice.js';
@@ -338,6 +339,47 @@ export function foeActor(foe) {
   };
 }
 
+/**
+ * The rider every ability a creature *owns* is read and rolled with: its own
+ * numbers, and its best attribute.
+ *
+ * "Bestiary abilities for entities always use their best attribute" (Jules,
+ * 2026-09-03). A creature page prints one attribute per card, and those were
+ * transcribed from the sheet the creature arrived on — a Blightgeist's Withering
+ * Word says Mind because a Blightgeist is a Mind creature. Read literally it
+ * meant a creature could hold a card written for an attribute it happens to be
+ * bad at and roll the bad one, which is not what a stat block is for: a
+ * creature's numbers are generated off its rank and its level, so the one
+ * attribute worth rolling is the one the generator gave it.
+ *
+ * `HIGHEST` is the rule written as a word rather than as a key, resolved against
+ * whoever is holding the card. It is the same mechanism a lineage's "cast with
+ * your highest Attribute" uses, so nothing downstream needed to learn anything:
+ * see `castStat` in cardText.js.
+ *
+ * **The card is not rewritten.** Its printed `stat` stays exactly as the codex
+ * has it, and a card read anywhere without a creature behind it — the forge's
+ * shelf, the codex — still prints what it was written with. This is a rider on
+ * the holder, which is the same shape every other override on this site takes.
+ */
+export function foeModifiers(actor) {
+  return { actor, stat: HIGHEST };
+}
+
+/**
+ * Whether a card is one of this creature's own, rather than one laid on it.
+ *
+ * The tracker is the reason this exists: a row on an enemy may be its own spell
+ * still burning or it may be a *player's*, delivered by a cast. The best
+ * attribute is the creature's rule about the creature's own abilities, and
+ * applying it to somebody else's card would be reading their spell off this
+ * body's numbers.
+ */
+export function foeOwns(foe, id) {
+  if (!id) return false;
+  return [...(foe?.moves ?? []), ...(foe?.passives ?? [])].some((card) => card.id === id);
+}
+
 /* -------------------------------------------------------------- the writers */
 
 /** One enemy's row with `body` written over it, as a whole new `foes` list.
@@ -485,9 +527,15 @@ export function breakWard(encounter, foe, cardId, broken = true) {
  * Filtered rather than written wholesale, which is the one thing `minionSpend`
  * did not have to do. `spendUse` builds its patch against a *character*, and a
  * character has columns an enemy has never heard of: a Blood Tithe writes a
- * `ledger`, an on-use trigger can write a rest's worth of them. No creature card
- * carries either today, and a row on this table must not be able to grow a
- * column because one is written tomorrow.
+ * `ledger`, an on-use trigger can write a rest's worth of them. A row on this
+ * table must not be able to grow a column because one is written tomorrow.
+ *
+ * The `ledger` half of that stopped being hypothetical on 2026-09-03: a
+ * Willpower spend now writes a row saying what it was for, nine creature cards
+ * charge Willpower, and an enemy has no ledger to write it on. It is built and
+ * dropped here, which is the right outcome — a lich's Withering Word is on the
+ * table log under the lich's own name, and the sheet's ledger is the *player's*
+ * account of their own pools.
  */
 const FOE_KEYS = new Set(['health', 'shield', 'ap', 'reaction', 'willpower', 'effects']);
 

@@ -11997,10 +11997,10 @@ the real function. Both of its properties were then re-tested against a delibera
 an uncounted move must never fill a slot, and it must never be the tick that gets dropped when the
 allowance is full, whichever order the boxes were checked in.
 
-The prompt's count reads `1 of 1 + 1 beside` when one of the ticks is besides the limit, and the
-row wears a **No slot** chip next to its orb. That chip is the one thing about the row a reader
-cannot get from the price: it is the only row that stays tickable when the rest have gone quiet,
-and a live button among dead ones reads as a bug.
+The prompt's count reads `1 of 1 + 1 beside` when one of the ticks is besides the limit, and that
+count is now the whole of what says so. The row used to wear a **No slot** chip next to its orb as
+well; Jules asked for it gone on 2026-09-03, and the count above the list already says the same
+thing once for the whole hand rather than once per row.
 
 ### Left open
 
@@ -12157,3 +12157,164 @@ it and not the block.
   there would be lighting a word that means the ordinary thing.
 - **A tracked HIDE on an enemy behaves the same.** A Game Master who picks the card onto a foe's
   tracker gets a row the foe's own actions break, which reads right and was not designed for.
+
+## The Willpower ledger, and the curse that finally asks, 2026-09-03
+
+> rempve the no slot text in the martial move seelction
+>
+> When using teh quick bar actions. The cost in willpower need to be logged withthe source and
+> effect. Same when healed or damaged.
+>
+> For the bestial cusre whenever the character spend willpower or take health damage he should be
+> prompt the control roll. He can choose to fail those if he wants.
+>
+> For the reaction pop up make it large like 50% so.
+>
+> Bestiary aiblities for entites alway use their best attribute
+
+Five asks, and the middle three are one chain: a Willpower spend leaves a word behind, so the sheet
+finally knows what happened to it, so the Feral Curse can ask.
+
+### The pool that moved without saying why
+
+Health has always gone through the ledger. Take a delivered hit and the row says
+`2.Fenrat: Blightbolt`; pay a Blood Tithe and it says which spell took it. Willpower went nowhere:
+the column dropped and that was the whole record. Cast four things in a fight, come back to a bar
+at 3, and there was nothing to read.
+
+So `spendUse` writes one now, and what it writes is the ask's own two words:
+
+    the effect    the card. What the Willpower bought
+    the source    where the card came from: the line the chip already carries
+
+`spendNote` is those two joined, and it has one rule worth stating: most chips already open their
+source with the card's own name ("Fireball · Arcanist"), so saying it twice would be the ledger
+stuttering. The hand group is the one that does not — its source names the *weapon* ("Longsword ·
+in hand") — and that is exactly the half a swing's note would otherwise be missing, so a swing
+keeps both: `Cleave · Longsword · in hand`.
+
+Both pools are written in one call, so a card charging Willpower and a tithe is one write and two
+rows. **Action Points are deliberately not in it.** They are not a balance, they are a turn's worth
+of points that come back at the bell, and a ledger of them would be a hundred rows a session that
+nobody reads.
+
+And the other half of the ask: a Health row now names the effect as well as its source. The delta
+already says how much, so what was missing was *what hit* — `2.Fenrat: Blightbolt · Necrotic
+damage`, and `Nyx: Mending Word · healing`, because a row reading a name alone leaves the reader
+counting signs to work out whether it healed or hurt.
+
+### Two things that had to move out of the way
+
+**A minion borrows its bonded's ledger now, not just their Willpower.** `appendLedger` appends to
+whatever it is handed, and a creature's actor had no ledger at all: its cast would have handed back
+a list of one, and `minionSpend` sends `ledger` the bonded's way along with the Willpower. One cast
+from an ally would have wiped its bonded's whole history. The pool and the record of it move
+together or not at all.
+
+**The ledger is pruned per kind.** One column holds seven ledgers moving at wildly different
+speeds: a table books XP once a session and Willpower forty times a fight. Sliced on the total
+alone, one evening of casting would have pushed every XP line a character ever earned off the end
+of the array, so the pools would have quietly eaten the history. `LEDGER_KIND_LIMIT` is 40 and each
+kind is now counted against its own limit and never against anybody else's. The 200 total stays as
+a second fence and is no longer the one that trips.
+
+### The curse asks
+
+FERAL RAGE has said "whenever you lose Health or spend Willpower" since the day it was transcribed,
+and the sheet has never once asked. The reason was honest and is written into three comments: the
+sheet saw its Health column change and never learned what changed it, so a sheet that asked for
+this roll would have asked on every scratch and every repair. So it held the difficulty, offered
+the two presses that move it, and in practice the curse fired when somebody at the table remembered
+it existed.
+
+The ledger is what changed. **Both of the card's triggers now write a row naming what did it**, so
+the trigger is a row and nothing else — `FeralCall` watches for rows it has not seen and asks about
+the ones that spent something.
+
+Watching the two *columns* was the obvious alternative and it is the wrong one. A pool column moves
+for reasons that are not events: a recomputed ceiling clamps it, a realtime refresh from another
+tab rewrites it, a rest fills it. A ledger only ever grows a row because something happened.
+
+Three answers, and the card is the reason for each:
+
+    roll it          the Instinct Roll against the difficulty the block holds, with the DC
+                     handed in rather than asked for. Pass and you give in, through the same
+                     `enterFormBody` the block's Transform button uses, so the difficulty
+                     resets to 8 exactly as the card says. Fail and you held it in, +1
+    willingly fail   the card's own last sentence. It is a failure, so it climbs the same step
+    not yet          the way out, and it moves nothing
+
+Worth noticing what the card does not offer: there is no way to choose to *pass*. At Rank 1 the
+beast can only be refused, never called, and CALL THE BEAST is the card written to fill that hole.
+
+It stays quiet wherever the answer could not be acted on: while you are already in the form, while
+a spent one is still flagged and waiting to be shaken off, and at 1 Health or less, where
+`canEnterForm` refuses because half of what is left rounds to nothing. Which also settles the one
+case that looked circular: the transformation's own Health row is written in the same patch that
+sets the flag, so it never asks about the price of giving in.
+
+Giving in clears the whole queue. You cannot transform into what you already are, the difficulty is
+back at 8, and every occasion still waiting was a question about a change that has now happened.
+
+### A creature rolls what it is good at
+
+> Bestiary aiblities for entites alway use their best attribute
+
+A creature page prints one attribute per card and those were transcribed from the sheet the
+creature arrived on: a Blightgeist's Withering Word says Mind because a Blightgeist is a Mind
+creature. Read literally that let a creature hold a card written for an attribute it happens to be
+bad at and roll the bad one, which is not what a generated stat block is for.
+
+`foeModifiers` is the rider, and it is `HIGHEST` — the rule written as a word rather than as a key,
+the same mechanism a lineage's "cast with your highest Attribute" already used, resolved against
+whoever holds the card. **The card is not rewritten.** Its printed `stat` stays as the codex has
+it, and a card read with no creature behind it still prints what it was written with.
+
+Two boundaries on it, and both are about what an ability *is*:
+
+- **A basic action is nobody's.** A Shove is a Physique roll for a goblin the same as for a knight,
+  so `basicGroup` hands out no rider. Only the creature's own cards ride.
+- **A tracker row may be somebody else's spell.** A player's Wall of Fire burning on an enemy is
+  the player's spell however long it burns there, so `foeOwns` gates the rider on the card actually
+  belonging to the creature.
+
+And then the grammar. The article is baked into a card's body against the stat it was written with
+— "an {stat}" is Instinct's, "a {stat}" is everyone else's — and scripts/lint-cards.mjs holds the
+codex to that. Swapping the stat under it printed "Make a Instinct Melee Attack". So `castArticles`
+settles the article at the same moment `castStat` settles the stat, in both renderers. Instinct is
+the only one of the three that takes "an", which is the whole of the rule, and the case of what was
+written is kept because an article opens a sentence as often as it sits inside one. This fixes
+every `cast: HIGHEST` card in lineages and backgrounds too, which had the same reading and nobody
+had noticed.
+
+### The two small ones
+
+**The No slot chip is gone.** The count above the list already reads `1 of 1 + 1 beside`, which
+says the same thing once for the whole hand rather than once per row.
+
+**The reaction knock is half the screen.** It was a 320px corner banner, which is the wrong size
+for a question with six seconds on it: a notice you can miss in the corner of a sheet is a reaction
+nobody takes. It is 50vw now, centred along the bottom, wide enough to read as a row — the question
+on the left, the two answers on the right, one line tall on a desktop. On a phone half a width is
+not a width, so it takes what there is and the answers go back under the question.
+
+### Left open
+
+- **A minion's Willpower spend writes on its bonded's ledger, signed by the creature.** The row
+  reads `Wyrm Bolt · Kaelen's Wyrmling`, which is right — it is the bonded's Willpower — but it
+  sits in the same list as their own casts with nothing but the source to tell them apart.
+- **A minion's own abilities still ride their printed attribute.** The ask named the bestiary, and
+  a bonded creature's cards come off a talent set rather than a creature page. Worth a ruling on
+  whether the same rule should reach them.
+- **An enemy's Willpower spend writes no ledger row at all.** It is built and dropped by
+  `FOE_KEYS`, which is the right outcome as far as it goes: the lich's cast is on the table log
+  under the lich's own name, and the sheet's ledger is the player's account of their own pools. An
+  encounter row has nowhere to keep one.
+- **Nothing asks a creature the control roll.** FERAL RAGE is a character's card and `FeralCall`
+  is mounted on a sheet. A Game Master running a Feral Cursed enemy moves its difficulty by hand.
+- **The queue drops the oldest past four.** A fight that lands five triggers before any of them is
+  answered loses the first, and the difficulty it would have moved is still movable on the block.
+  A modal per row of a long fight is a sheet nobody can use.
+- **A hand-typed ledger entry triggers the roll.** Write "-9, took a hit from the boiler golem" in
+  the Health ledger and the curse asks. That is the card working as written rather than a leak, but
+  it is worth knowing before somebody corrects a balance downward and gets a prompt for it.

@@ -2,7 +2,9 @@
  * The bestiary, proved. Covers the promises src/lib/creatures.js makes:
  * **the Blightgeist reproduces its own printed page from the curve, a primary
  * attribute reaches 12 at level 12, a hit die averages the Health beside it at
- * every level, and a Minion cannot be handed a Reaction Point.**
+ * every level, a Minion cannot be handed a Reaction Point, and every ability a
+ * creature holds rides the creature's best attribute with the article to
+ * match.**
  *
  *   node scripts/check-creatures.mjs         report and exit 1 on any finding
  *   node scripts/check-creatures.mjs --list  print the bestiary and the census
@@ -39,7 +41,19 @@ import {
   isForgedId,
   registerForged,
 } from '../src/lib/creatures.js';
-import { addFoes, encounterState, foeActor, previewFoe, setFoeLevel } from '../src/lib/encounters.js';
+import {
+  addFoes,
+  encounterState,
+  foeActor,
+  foeModifiers,
+  foeOwns,
+  previewFoe,
+  setFoeLevel,
+} from '../src/lib/encounters.js';
+import { HIGHEST, highestAttribute } from '../src/lib/attributes.js';
+import { cardGist, castArticles } from '../src/lib/cardText.js';
+import { foeBar } from '../src/lib/combatBar.js';
+import { rollPlan } from '../src/lib/rollPlan.js';
 import {
   FORGED_LORE_MAX,
   FORGED_NAME_MAX,
@@ -355,6 +369,64 @@ for (const creature of CREATURES) {
       note(creature.id, `plays its cards off the wrong ${key}`);
     }
   }
+}
+
+/* ------------------------------------------ the best attribute, and the article
+ *
+ * "Bestiary abilities for entities always use their best attribute" (Jules,
+ * 2026-09-03). Two things have to be true for that to be a rule and not a
+ * rewrite: the card keeps its printed stat, and what is *read* off it is the
+ * creature's best one. And then the article has to follow, because the codex
+ * bakes "a" or "an" into the body against the stat the card was written with.
+ */
+section('a creature rolls its best attribute, whatever its card printed');
+{
+  const foe = previewFoe(getCreature('fenrat-skirmisher'));
+  const actor = foeActor(foe);
+  const best = highestAttribute(actor);
+  const mods = foeModifiers(actor);
+
+  check('the rider is the rule and not a key', mods.stat, HIGHEST);
+  check('Instinct is the Skirmisher\u2019s best', best, 'instinct');
+
+  const bite = foe.moves.find((card) => card.id === 'gnashing-bite');
+  check('and the card still prints what it was written with', bite.stat, 'physique');
+
+  const rolled = rollPlan(bite, actor, mods).find((link) => link.shape === 'check');
+  const printed = rollPlan(bite, actor).find((link) => link.shape === 'check');
+  check('the swing rides the best one', rolled.flat, actor[best]);
+  check('and would have ridden the printed one', printed.flat, actor.physique);
+
+  /* The article, which is the one thing a stat swap can leave ungrammatical. */
+  const said = cardGist(bite, { modifiers: mods });
+  check('the article agrees with what is printed', said.startsWith('Make an Instinct'), true);
+  check(
+    'and it is left alone where nothing moved',
+    cardGist(bite, { character: actor }).startsWith('Make a Physique'),
+    true
+  );
+  check(
+    'the article opens a sentence in its own case',
+    castArticles('A {stat} Roll follows. Make a {stat} check', 'instinct'),
+    'An {stat} Roll follows. Make an {stat} check'
+  );
+  check(
+    'and comes back down for the other two',
+    castArticles('Make an {stat} Roll', 'mind'),
+    'Make a {stat} Roll'
+  );
+
+  /* A basic action is nobody's ability: a Shove is a Physique roll for a goblin
+     the same as for a knight, so the bar hands it no rider. */
+  const bar = foeBar({ ...foe, actor });
+  const basics = bar.find((group) => group.id === 'basic');
+  check('the basic actions ride at their printed attribute', basics.moves.every((move) => !move.modifiers?.stat), true);
+  check('and its own cards all ride the rider', bar[0].moves.every((move) => move.modifiers?.stat === HIGHEST), true);
+
+  /* And a row on its tracker may be somebody else's spell, which the rider must
+     not reach. See foeOwns. */
+  check('it owns the card it was printed with', foeOwns(foe, 'gnashing-bite'), true);
+  check('and owns nothing a caster laid on it', foeOwns(foe, 'fireball'), false);
 }
 
 section('an enemy scales where it stands');

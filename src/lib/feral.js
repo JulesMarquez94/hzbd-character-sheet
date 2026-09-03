@@ -271,9 +271,14 @@ export function setFeralIdentity(character, id, { name, beast, portrait_url }) {
  * Where the Feral Rage difficulty stands, moved by one step or set outright.
  *
  * "On a failure the difficulty increases by 1 for your next roll. It resets to 8
- * on a transformation." Both presses are on the block, because the roll itself is
- * the table's: the sheet is told about a Health change and never about what
- * caused it, so a sheet that asked for this roll would ask on every scratch.
+ * on a transformation."
+ *
+ * Written from three places now. The two presses on the block move it by hand,
+ * and since 2026-09-03 the prompt that raises the roll writes a step through here
+ * whenever the roll is failed or willingly failed. The roll used to be the
+ * table's alone, because the sheet was told about a Health change and never about
+ * what caused it; both of the card's triggers write a ledger row naming what did
+ * it, which is what made the asking possible. See FeralCall.jsx.
  */
 export function setFeralDifficulty(character, form, value) {
   const dc = Math.max(form.base, Math.min(99, Math.floor(Number(value) || 0)));

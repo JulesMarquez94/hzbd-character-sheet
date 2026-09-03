@@ -20,6 +20,7 @@ import ReactionCall from '../components/campaign/ReactionCall.jsx';
 import ReactionWindow from '../components/campaign/ReactionWindow.jsx';
 import TurnCall from '../components/campaign/TurnCall.jsx';
 import DiceSheet from '../components/sheet/DiceSheet.jsx';
+import FeralCall from '../components/sheet/FeralCall.jsx';
 import AbilitiesTab from '../components/sheet/AbilitiesTab.jsx';
 import InventoryTab from '../components/sheet/InventoryTab.jsx';
 import LoreTab from '../components/sheet/LoreTab.jsx';
@@ -407,6 +408,12 @@ export default function CharacterSheet({ creating = false }) {
         started here by this sheet, off an announcement on the table log, because
         nobody else may write to it. See TurnCall.jsx. */}
     <TurnCall character={character} patch={patch} canEdit={canEdit} />
+    {/* And the Feral Curse's own question, whenever this sheet loses Health or
+        spends Willpower. Renders nothing for everybody who holds no set that
+        turns them into anything, which is nearly everybody. Handed the sheet as
+        it is *read*, because the roll is an Instinct roll and an Enchanter's
+        worked attributes are the ones they actually roll. See FeralCall.jsx. */}
+    {canEdit && <FeralCall character={shown} patch={patch} />}
     {/* And everything else the table did, said in the corner of whatever tab
         you are on: the log block is on the Character tab and a fight is not
         somewhere you can afford to have missed a reaction. Only on your own

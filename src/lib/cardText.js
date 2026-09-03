@@ -91,6 +91,38 @@ export function castStat(stat, character) {
   return stat === HIGHEST ? highestAttribute(character) : stat;
 }
 
+/**
+ * "a {stat}" and "an {stat}", made to agree with the attribute actually being
+ * printed.
+ *
+ * The article is baked into a card's body and has to match the card's own stat:
+ * "an {stat}" is Instinct's and "a {stat}" is everyone else's, a rule that
+ * scripts/lint-cards.mjs holds the whole codex to. It works for as long as the
+ * attribute a card prints is the one it was written with, and three things break
+ * that: a set that casts its hand off another attribute, a card taught with
+ * "cast with your highest Attribute", and since 2026-09-03 every ability a
+ * bestiary creature holds, which rides the creature's best attribute rather than
+ * the one its page printed. See `foeModifiers` in encounters.js.
+ *
+ * So the article is settled here, at the same moment the stat is, rather than
+ * left as a baked-in guess about a value that may since have changed. Instinct
+ * is the only one of the three that takes "an", which is the whole of the rule.
+ * The case of what was written is kept, because the article opens a sentence as
+ * often as it sits inside one.
+ *
+ * The codex still writes the right article for the card's own stat and the lint
+ * rule still holds it to that: a card read with no rider on it has to read
+ * correctly from its source, and this is a repair rather than a licence.
+ */
+export function castArticles(text, stat) {
+  const want = stat === 'instinct' ? 'an' : 'a';
+  return String(text ?? '').replace(/\b(an?)(\s+\{stat\})/gi, (whole, article, rest) =>
+    article[0] === article[0].toUpperCase()
+      ? `${want[0].toUpperCase()}${want.slice(1)}${rest}`
+      : `${want}${rest}`
+  );
+}
+
 /* ------------------------------------------------------------ damage types */
 
 /**
@@ -433,7 +465,7 @@ export function cardGist(card, { character = null, modifiers = null, part = 'bod
   const stat = castStat(printedStat, who);
   const context = { character: who, stat, damage, choice };
 
-  return cardProse(part === 'sub' ? card?.sub_body : card?.body)
+  return castArticles(cardProse(part === 'sub' ? card?.sub_body : card?.body), stat)
     .replace(/\{\{([^}]+)\}\}/g, '$1')
     .replace(/\[\[([^\]]+)\]\]/g, (_, expression) =>
       resolveValue(expression, who, stat, { empower, elevate, bonus }).text

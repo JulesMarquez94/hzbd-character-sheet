@@ -25,6 +25,8 @@ import { getCard } from '../../lib/weapons.js';
 import {
   breakWard,
   foeActor,
+  foeModifiers,
+  foeOwns,
   foeSpend,
   setFoeEffects,
   setFoeLevel,
@@ -607,7 +609,11 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
     if (!combat?.rollEffect || foe.down) return null;
     const card = getCard(effect.card);
     if (!card) return null;
-    const links = rollPlan(card, actor, { actor }).filter((link) => link.shape === 'value');
+    /* Its best attribute only when the row is its *own* card. A tracker on an
+       enemy holds delivered rows too, and a player's Wall of Fire is the
+       player's spell however long it burns here. See foeOwns in encounters.js. */
+    const modifiers = foeOwns(foe, card.id) ? foeModifiers(actor) : { actor };
+    const links = rollPlan(card, actor, modifiers).filter((link) => link.shape === 'value');
     return links.length > 0 ? links : null;
   }
 
@@ -730,7 +736,10 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
                   card={card}
                   broken={foe.broken.has(card.id)}
                   readOnly={readOnly}
-                  onOpen={() => stack?.openCard(card, { actor })}
+                  /* Read with the same rider its action chips carry, so a
+                     passive prints the attribute the creature would actually
+                     roll. See foeModifiers in encounters.js. */
+                  onOpen={() => stack?.openCard(card, foeModifiers(actor))}
                   onToggle={(next) => patch((row) => breakWard(row, foe, card.id, next))}
                 />
               ))}

@@ -123,11 +123,17 @@ export default function ReactionCall({
      the banner clears itself either way when the window closes. */
   return (
     <div className="reaction-call" role="alertdialog" aria-label="Reaction window">
-      <span className="reaction-call-head">Reaction window</span>
-      <span className="reaction-call-what">
-        Do you want to take a reaction to <b>{call.actor}</b> using <b>{call.title}</b>?
+      {/* The words in their own column, because the panel is half the screen
+          wide since 2026-09-03 and at that width the two answers belong beside
+          the question rather than under it. The wrapper is what makes that one
+          rule of CSS instead of three. */}
+      <span className="reaction-call-body">
+        <span className="reaction-call-head">Reaction window</span>
+        <span className="reaction-call-what">
+          Do you want to take a reaction to <b>{call.actor}</b> using <b>{call.title}</b>?
+        </span>
+        {line && <span className="reaction-call-line">{line}</span>}
       </span>
-      {line && <span className="reaction-call-line">{line}</span>}
 
       <span className="reaction-call-acts">
         {onReact && (

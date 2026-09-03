@@ -1,6 +1,6 @@
 import { Fragment, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { attributeOf, castStat, damageStyle, resolveValue } from '../lib/cardText.js';
+import { attributeOf, castArticles, castStat, damageStyle, resolveValue } from '../lib/cardText.js';
 import { getKeyword, keywordPattern } from '../lib/keywords.js';
 
 /**
@@ -292,9 +292,12 @@ export default function CardText({
      against the character before a single token is rendered: the name printed by
      {stat} and the number printed by [[…]] are then the same attribute by
      construction. See castStat in cardText.js. */
-  const ctx = { character, stat: castStat(stat, character), damage, empower, elevate, bonus, choice, choicePrompt, onValue, onLink };
+  const cast = castStat(stat, character);
+  const ctx = { character, stat: cast, damage, empower, elevate, bonus, choice, choicePrompt, onValue, onLink };
 
-  return text.split(/\n\s*\n/).map((paragraph, index) => (
+  /* And the article before every {stat} made to agree with it, at the same
+     moment and for the same reason. See castArticles in cardText.js. */
+  return castArticles(text, cast).split(/\n\s*\n/).map((paragraph, index) => (
     <p key={index}>{renderInline(paragraph, ctx, `p${index}`)}</p>
   ));
 }
@@ -302,11 +305,12 @@ export default function CardText({
 /** The same renderer without the paragraph wrapper — for one-line item text. */
 export function CardLine({ text, character, stat = 'instinct', damage = [], empower = 0, elevate = 0, bonus = 0, choice = null, onValue, onLink }) {
   if (!text) return null;
+  const cast = castStat(stat, character);
   return (
     <>
       {renderInline(
-        text,
-        { character, stat: castStat(stat, character), damage, empower, elevate, bonus, choice, onValue, onLink },
+        castArticles(text, cast),
+        { character, stat: cast, damage, empower, elevate, bonus, choice, onValue, onLink },
         'line'
       )}
     </>

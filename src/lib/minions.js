@@ -327,6 +327,14 @@ export function minionCards(talent, rank, spec = null) {
  * Willpower is the one borrowed field: "the minion always uses his own action
  * point and reaction point but uses the character willpower", so the pool the
  * prompt checks and the pool the spend comes out of are both the bonded's.
+ *
+ * And the bonded's ledger rides along with it, for one reason: since 2026-09-03
+ * a Willpower spend writes a row saying what it was for (see `spendNote` in
+ * combatBar.js), and `appendLedger` appends to whatever it is handed. Handed an
+ * actor with no ledger it would hand back a list of one, and `minionSpend` sends
+ * `ledger` the bonded's way along with the Willpower — so the creature's cast
+ * would have wiped its bonded's history down to its own last row. The pool and
+ * the record of it move together or not at all.
  */
 export function minionActor(character, minion) {
   return {
@@ -340,6 +348,8 @@ export function minionActor(character, minion) {
     reaction: minion.reaction,
     willpower: Number(character?.willpower) || 0,
     willpower_max: Number(character?.willpower_max) || 0,
+    // Borrowed with the pool it belongs to. See the note above.
+    ledger: Array.isArray(character?.ledger) ? character.ledger : [],
     /* And its own tracker, because a use can now lay a row on it: a creature
        casting something that lasts is a creature with something running on it,
        and the block beside its bar is where that shows. Read off the creature's

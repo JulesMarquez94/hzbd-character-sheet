@@ -924,6 +924,23 @@ export const LEDGER_NOTE_MAX = 60;
 /** Oldest entries fall off the end so a long campaign can't bloat the row. */
 export const LEDGER_LIMIT = 200;
 
+/**
+ * And how many of any one kind, which is the cap that actually binds.
+ *
+ * One column holds seven ledgers, and they move at wildly different speeds: a
+ * table books XP once a session and Willpower forty times a fight. Sliced on
+ * the total alone, a single evening of casting would push every XP line a
+ * character ever earned off the end of the array — so the pools would quietly
+ * eat the history. Since 2026-09-03 a Willpower spend writes a row of its own
+ * (see `spendNote` in combatBar.js), which is what made that a real loss rather
+ * than a theoretical one.
+ *
+ * So each kind is pruned against its own count and never against anybody
+ * else's. The total cap stays as a second fence, and with seven kinds it is no
+ * longer the one that trips.
+ */
+export const LEDGER_KIND_LIMIT = 40;
+
 export function readLedger(character, kind) {
   const all = Array.isArray(character?.ledger) ? character.ledger : [];
   return all.filter((entry) => entry && entry.kind === kind);
@@ -931,7 +948,21 @@ export function readLedger(character, kind) {
 
 export function appendLedger(character, entry) {
   const all = Array.isArray(character?.ledger) ? character.ledger : [];
-  return [entry, ...all].slice(0, LEDGER_LIMIT);
+  const list = [entry, ...all];
+
+  /* Newest first, so a running count per kind drops the *oldest* of whichever
+     ledger is over its own limit and leaves every other one alone. Rows with no
+     kind at all are counted together, which is what an older build's row is. */
+  const seen = new Map();
+  const kept = [];
+  for (const row of list) {
+    const kind = row?.kind ?? '';
+    const count = (seen.get(kind) ?? 0) + 1;
+    seen.set(kind, count);
+    if (count <= LEDGER_KIND_LIMIT) kept.push(row);
+  }
+
+  return kept.slice(0, LEDGER_LIMIT);
 }
 
 export function newLedgerId() {

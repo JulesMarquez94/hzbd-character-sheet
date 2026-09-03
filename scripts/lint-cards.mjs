@@ -86,7 +86,11 @@ for (const { card, where } of rows) {
     }
 
     /* The article is baked into the body, so it has to match the card's own
-       stat: "an {stat}" is Instinct's, "a {stat}" is everyone else's. */
+       stat: "an {stat}" is Instinct's, "a {stat}" is everyone else's.
+
+       Still checked even though `castArticles` repairs the article at render
+       time (see cardText.js): the repair is for a card read with a rider on it,
+       and a card read with none has to be right from its source. */
     const stat = card.stat;
     if (stat === 'instinct' && /\ba \{stat\}/.test(text)) {
       note(name, `${field} says "a {stat}" and the card casts off Instinct: "an {stat}"`);

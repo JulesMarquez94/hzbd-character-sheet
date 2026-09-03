@@ -1119,12 +1119,6 @@ function MoveRow({ card, talent, on, full, allowance, cut, swing, onToggle, stac
             />
           )}
           {owed === 0 && <span className="use-move-cut">Free</span>}
-          {/* And a move that is besides the allowance rather than inside it, which
-              is the one thing about this row a reader cannot get from the price:
-              it is the only row that stays tickable when the rest have gone quiet,
-              and an unexplained live button among dead ones reads as a bug. The
-              card says it in full; this is the two words beside the orb. */}
-          {card.uncounted && <span className="use-move-cut">No slot</span>}
           {/* RIPOSTE, and nothing else: the one move that gives a point back
               rather than taking one. Drawn as what it does to the swing, since an
               orb saying 1 beside a cut would read as a cost. */}

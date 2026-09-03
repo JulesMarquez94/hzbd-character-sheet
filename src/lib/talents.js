@@ -1656,12 +1656,16 @@ const TALENT_SETS = [
       ends: 'short',
       /* FERAL RAGE: "make an Instinct roll with a difficulty of 8. On a failure
          the difficulty increases by 1 for your next roll. It resets to 8 on a
-         transformation." The trigger — losing Health or spending Willpower — is
-         printed on the card and played at the table: the sheet is told about a
-         Health change and never about the reason for it, so asking for the roll
-         would mean asking on every scratch. The block holds the difficulty and
-         the two presses that move it. */
-      rage: { base: 8, step: 1 },
+         transformation."
+
+         The trigger — losing Health or spending Willpower — used to be printed
+         on the card and played at the table, because the sheet saw its Health
+         column change and never learned what changed it, so asking for the roll
+         would have meant asking on every scratch. Since 2026-09-03 it asks: both
+         triggers write a ledger row naming what did it, and `card` is the id the
+         prompt deals. See FeralCall.jsx. The block still holds the difficulty and
+         the two presses that move it by hand. */
+      rage: { base: 8, step: 1, card: 'feral-rage' },
       /* "While in this form you have advantage on all attack rolls and your
          Claws & Teeth attacks are Empowered by 1." The advantage is on every
          attack; the Empowered is the natural weapon's alone, so it is gated on

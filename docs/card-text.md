@@ -98,6 +98,10 @@ where it says the same thing it says it the same way.
 
 - `a {stat}` for a Physique or Mind card, `an {stat}` for an Instinct card.
   The article is baked into the body, so it must match the card's own stat.
+  A card *read* with a rider on it has the article repaired at the same moment
+  the stat is settled, so a creature rolling its best attribute and a lineage's
+  "cast with your highest Attribute" both read correctly. That is a repair and
+  not a licence: write the right article for the card's own stat.
 - Damage is `deal X {damage} damage`. Never "as", never "in": those were both
   in the codex and both said nothing.
 - A spell that targets at range adds sight: `**an entity** you can see within
@@ -220,7 +224,9 @@ plus the starter deck and fails on:
 - `long rest` or `short rest` in lowercase
 - a single `\n` used where a paragraph break was meant
 - `a {stat}` on an Instinct card or `an {stat}` on a Physique or Mind card:
-  the article is baked into the body, so it has to match the card's own stat
+  the article is baked into the body, so it has to match the card's own stat.
+  `castArticles` repairs it for a card read with a rider; this rule still holds
+  the source to what the card itself prints
 
 It measures a static approximation of the fit. The renderer's own word is
 taken card by card in the browser (the harness lives in this file's history);
