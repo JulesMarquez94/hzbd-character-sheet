@@ -144,8 +144,23 @@ section('a value the card lands more than once is thrown more than once');
     'damage:1d6+5',
   ]);
 
+  /* "twice" is read the same way and no card in the codex says it any more. The
+     four Paired weapons did until 2026-09-03, when Jules ruled the pair is the
+     die count rather than the landing — a Paired Heavy rolls 4d4 once instead of
+     2d4 twice — so the reader is held against a card written here. Losing the
+     assertion with the last card that tripped it would leave the branch live and
+     untested for whichever card says it next. */
+  const twice = rollPlan(
+    { stat: 'instinct', body: 'On a hit, you deal [[1d4 + stat]] damage twice.' },
+    WHO
+  );
+  check('"damage twice" is two throws', shape(twice), ['damage:1d4+5', 'damage:1d4+5']);
+
   const paired = rollPlan(getCard('paired-finesse-strike'), WHO);
-  check('"damage twice" is two throws', paired.filter((l) => l.shape === 'value').length, 2);
+  check('and a Paired weapon is now one throw of twice the dice', shape(paired), [
+    'check:weapon+5',
+    'damage:2d4+5',
+  ]);
 
   const once = rollPlan(getCard('finesse-strike'), WHO);
   check('and a card that says nothing lands once', once.filter((l) => l.shape === 'value').length, 1);

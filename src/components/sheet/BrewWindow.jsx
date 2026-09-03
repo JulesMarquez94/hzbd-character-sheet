@@ -2,6 +2,7 @@ import { useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import UsePrompt from './UsePrompt.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { usePlayCard } from './usePlayCard.js';
@@ -435,15 +436,13 @@ function IngredientRow({ option, character, onAdd, onOpen }) {
         </span>
       )}
 
-      <button
-        type="button"
+      <Gated
         className={`btn btn-sm card-brief-btn ${ok ? 'btn-take' : 'btn-minimal'}`}
-        disabled={!ok}
-        title={ok ? undefined : reason}
+        why={ok ? null : reason}
         onClick={onAdd}
       >
         {ok ? 'Add' : reason}
-      </button>
+      </Gated>
     </CardBrief>
   );
 }

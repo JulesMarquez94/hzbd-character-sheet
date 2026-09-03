@@ -78,6 +78,10 @@ export default function TalentPick({
       title="Talent Set"
       done={slot.filled}
       state={slot.filled ? 'Chosen' : isOpen ? 'Waiting on you' : `After level ${openAt}`}
+      foldable
+      summary={
+        slot.filled ? `${slot.entry.name} · Rank ${slot.rank}` : 'No set chosen yet.'
+      }
     >
       {slot.level === 1 && (
         <p className="pick-lead">

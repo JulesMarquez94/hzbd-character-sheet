@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from '../Modal.jsx';
 import { ClaimBoonWindow, PactWindow } from './PactPick.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { appendLedger, formatNumber, newLedgerId } from '../../lib/characterModel.js';
@@ -512,17 +513,16 @@ function MissionForm({ character, state, patch, onClose }) {
               : 'Needs a title and a reward'}
           </span>
           <span className="spacer" />
-          <button
-            type="button"
+          <Gated
             className="btn btn-take btn-sm"
-            disabled={!ready}
+            why={ready ? null : 'A mission needs a title and a reward before it can be written down.'}
             onClick={() => {
               patch(createMission(character, state, { title, body, value: worth }));
               onClose();
             }}
           >
             Write it down
-          </button>
+          </Gated>
         </>
       }
     >

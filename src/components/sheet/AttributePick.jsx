@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from '../Modal.jsx';
 import PickBlock from './PickBlock.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import {
   ATTRIBUTES,
@@ -66,7 +67,7 @@ export default function AttributeSpreadPick({
   );
 
   return (
-    <PickBlock kind="attribute" step={step} title="Attributes" done={spreadDone}>
+    <PickBlock kind="attribute" step={step} title="Attributes" done={spreadDone} foldable>
       <p className="pick-lead">
         Your three <b>attributes</b> are the numbers everything else on this sheet is built from.
         Each one starts at <b>{ATTRIBUTE_BASE}</b>. Level 1 hands you two boosts, a <b>+2</b> and a{' '}
@@ -180,7 +181,7 @@ export function AttributePointPick({
   const taken = raised.map((key) => ATTRIBUTES.find((a) => a.key === key)).filter(Boolean);
 
   return (
-    <PickBlock kind="attribute" step={step} title="Attribute Points" done={done}>
+    <PickBlock kind="attribute" step={step} title="Attribute Points" done={done} foldable>
       <p className="pick-lead">
         Level {level} hardens two things about you. Put <b>+1</b> on one attribute and <b>+1</b> on
         another, so no level ever pours both into the same number.
@@ -347,10 +348,9 @@ function AttributeChooser({ title, lead, slots, start, character, preview, onTak
       footer={
         <>
           <span className="spacer" />
-          <button
-            type="button"
+          <Gated
             className="btn btn-take btn-sm"
-            disabled={!ready}
+            why={ready ? null : `Nothing to take yet: choose where ${short.label.toLowerCase()} goes.`}
             onClick={() => onTake(pick)}
           >
             {ready
@@ -358,7 +358,7 @@ function AttributeChooser({ title, lead, slots, start, character, preview, onTak
                 ? 'Take this spread'
                 : 'Take the point'
               : `Choose where ${short.label.toLowerCase()} goes`}
-          </button>
+          </Gated>
         </>
       }
     >

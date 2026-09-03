@@ -61,7 +61,14 @@ export default function SkillPick({
   const open = Boolean(skill?.choice && !picked);
 
   return (
-    <PickBlock kind="skill" step={step} title="New Skill" done={Boolean(chosenId) && !open}>
+    <PickBlock
+      kind="skill"
+      step={step}
+      title="New Skill"
+      done={Boolean(chosenId) && !open}
+      foldable
+      summary={skill ? skill.name : 'No skill chosen yet.'}
+    >
       <p className="pick-lead">
         Level {level} also teaches you something. One <b>skill</b>, and unlike the ones your
         background gave you it may come from anywhere in the codex. Every trade&rsquo;s pool is open

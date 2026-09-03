@@ -332,8 +332,33 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateY(-2px);
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled='true'] {
     opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ---------- A GATED BUTTON ----------
+ * What `:disabled` used to look like, on a button that is not disabled.
+ *
+ * A `disabled` button is out of the tab order and its `title` is the platform's to
+ * draw or not, so a reason written into one has never reached a reader. Every
+ * button on the sheet that has something to say about why it is shut is
+ * `aria-disabled` instead, and this is the greying that used to come free. See
+ * `Gated` in src/components/sheet/parts.jsx.
+ *
+ * Only opacity and the cursor, which is all every `:disabled` rule in this
+ * codebase ever set. A button's own hover tint can still land under the opacity,
+ * and that is wanted: something has to say the bubble is there to be opened.
+ *
+ * `!important` on the opacity because these buttons wear a dozen different
+ * classes, several of which set their own — this has to win from one rule
+ * wherever it is used, and a utility that loses to its host is worse than none.
+ */
+.is-gated,
+[aria-disabled='true'] {
+    opacity: 0.45 !important;
     cursor: not-allowed;
     transform: none;
 }
@@ -806,7 +831,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-pick:disabled,
 .btn-sub:disabled,
-.btn-take:disabled {
+.btn-take:disabled,
+.btn-pick[aria-disabled='true'],
+.btn-sub[aria-disabled='true'],
+.btn-take[aria-disabled='true'] {
     opacity: 0.45;
     cursor: not-allowed;
 }

@@ -1,6 +1,8 @@
+import { useState } from 'react';
+import LedgerModal from './LedgerModal.jsx';
 import LevelLedger from './LevelLedger.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
-import { xpProgress } from '../../lib/characterModel.js';
+import { formatNumber, xpProgress } from '../../lib/characterModel.js';
 
 /**
  * What a character *chose*, level by level.
@@ -11,11 +13,23 @@ import { xpProgress } from '../../lib/characterModel.js';
  * point and a new skill on the odd ones, and all of level 1 at once.
  *
  * Nothing here is spent or tracked. Pools, the running attribute totals and the
- * experience curve all belong to the Character tab, and the ledger that moves
- * XP is opened from the level badge there.
+ * experience curve all belong to the Character tab.
+ *
+ * ------------------------------------------------------------ the level badge
+ * The one exception, and it is the ledger rather than a pool. Jules, 2026-09-03:
+ * "Allow use to access XP and level change on clicking on the level number."
+ *
+ * The Experience ledger has moved both since it was written — a signed entry for
+ * XP, and "set the level directly" under it — and until now the only door to it
+ * was the badge on the Character tab. That is the wrong tab to have to go to: the
+ * blocks below are what a level *buys*, so the number that says how many you have
+ * belongs at the top of them, and the thing you do after changing it is answer
+ * the block that just appeared. Same button, same ledger, second door.
  */
 export default function AdvancementTab({ character, patch, readOnly = false, unit = 'metric' }) {
   const xp = xpProgress(character.xp);
+  // Whether the Experience ledger is up. The only modal this tab raises.
+  const [ledger, setLedger] = useState(false);
 
   return (
     <CardStackProvider character={character}>
@@ -23,7 +37,30 @@ export default function AdvancementTab({ character, patch, readOnly = false, uni
         <div className="panel">
           {/* ------------------------------------------------------- identity */}
           <div className="frame">
-            <h3 className="frame-heading">Identity</h3>
+            <div className="frame-head-row">
+              <h3 className="frame-heading">Identity</h3>
+
+              {/* The level, and the ledger behind it. It reads the same as the
+                  badge on the Character tab and opens the same window, with the
+                  experience under it because this is the tab where the number
+                  matters rather than the pool it feeds. */}
+              <button
+                type="button"
+                className="adv-level"
+                onClick={() => setLedger(true)}
+                title={readOnly ? 'View the Experience log' : 'Open the Experience ledger'}
+              >
+                <span className="adv-level-num">
+                  Lvl {String(xp.level).padStart(2, '0')}
+                  {xp.isMax && <span className="id-level-cap">MAX</span>}
+                </span>
+                <span className="adv-level-xp">
+                  {xp.isMax
+                    ? `${formatNumber(xp.total)} XP`
+                    : `${formatNumber(xp.into)} / ${formatNumber(xp.span)} XP`}
+                </span>
+              </button>
+            </div>
 
             <div className="form-row">
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -56,7 +93,8 @@ export default function AdvancementTab({ character, patch, readOnly = false, uni
 
             <p className="frame-foot">
               Lineage, background and your attribute spread all have their own choosers, in the
-              level-1 block below. All three show on the Character tab.
+              level-1 block below. All three show on the Character tab. Tap the level to move
+              experience or set the level outright.
             </p>
           </div>
 
@@ -71,6 +109,15 @@ export default function AdvancementTab({ character, patch, readOnly = false, uni
         </div>
       </div>
 
+      {ledger && (
+        <LedgerModal
+          kind="xp"
+          character={character}
+          patch={patch}
+          readOnly={readOnly}
+          onClose={() => setLedger(false)}
+        />
+      )}
     </CardStackProvider>
   );
 }

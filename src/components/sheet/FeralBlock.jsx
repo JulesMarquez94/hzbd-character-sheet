@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FeralWindow } from './FeralPick.jsx';
-import { ResourceBar } from './parts.jsx';
+import { Gated, ResourceBar } from './parts.jsx';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import { shieldCapFor } from '../../lib/characterModel.js';
 import { enterFormBody, leaveFormBody } from '../../lib/combatBar.js';
@@ -243,15 +243,14 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
                 Shake it off
               </button>
             ) : (
-              <button
-                type="button"
+              <Gated
                 className="btn btn-sub btn-sm feral-wide feral-transform"
-                disabled={!can.ok}
+                why={can.ok ? null : can.reason ?? 'You cannot turn right now.'}
                 title="The Feral Rage roll passed. Apply it."
                 onClick={() => patch(enterFormBody(character, form, 'Feral Rage'))}
               >
                 Transform
-              </button>
+              </Gated>
             ))}
 
           {/* At Rank 1 the beast cannot be *called*, only rolled for: FERAL RAGE

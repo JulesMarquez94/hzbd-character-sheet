@@ -3,6 +3,7 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import ShareCode from './ShareCode.jsx';
 import TagFilter from './TagFilter.jsx';
+import { Gated } from './parts.jsx';
 import { ItemCarry, ItemIcon, ItemStats, ItemTags } from './itemParts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useTagFilter } from './useTagFilter.js';
@@ -177,18 +178,20 @@ export default function ForgeWindow({ character, onForge, onClose }) {
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
             Close
           </button>
-          <button
-            type="button"
+          <Gated
             className="btn btn-take btn-sm"
-            disabled={!base}
-            title={base ? undefined : 'Choose the piece it is made from first.'}
+            why={
+              base
+                ? null
+                : 'Nothing to make it out of yet. Choose the piece it is based on, at the top of this window.'
+            }
             onClick={() => {
               onForge(forgeRecord(record));
               onClose();
             }}
           >
             Make it
-          </button>
+          </Gated>
         </>
       }
     >

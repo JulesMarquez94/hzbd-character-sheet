@@ -11140,6 +11140,12 @@ left standing:
 
 ### Eighteen cards
 
+**Five rows of the table below were superseded on 2026-09-03.** MOMENTUM left the codex, CONCUSS
+became a Novice reaction and the Master stun that held the name is STUNNING STRIKE, and RECKLESS,
+WOUND, REND and SUNDER are priced off the swing rather than off a flat number. See "A move you can
+only answer with" at the foot of this file; the table here is what the tier list was on the day it
+was written.
+
 Jules gave the mechanics as one line each and the sentences are this file's, which is the
 reverse of the six Novice plates of 2026-08-20. Nothing is marked `house: true` any more:
 that flag meant "an extrapolation nobody asked for" and there are none left.
@@ -11531,3 +11537,213 @@ creature card all call themselves `passive`, so a grouping keyed on it would fil
 Blight Surge next to a Berserker's rank 2. Where a card comes *from* is the question, and the
 arrays answer it with nothing in between. The last group is a catch-all, empty today, so a card
 group spread into `CARDS` later shows up in the picker rather than vanishing from it.
+
+## A move you can only answer with, and eleven readings, 2026-09-03
+
+> Remove momentum - replace it with one that you can only takea s reaction that allow you to
+> interrupt the action you react to granted that you landthe attack and success at a rol lwith
+> the weapon stat against hte target grit. Name this concuss, then name concuss stunig strike
+
+One list, eleven items. Four of them are game design and all four are in the Martial Moves; the
+other seven are the sheet.
+
+### CONCUSS is a Novice reaction and STUNNING STRIKE is what it used to be
+
+MOMENTUM is gone. In its place is a card with two gates and a name that has moved down two tiers:
+
+    CONCUSS  ·  Martial Move · Novice · 1 Willpower · reaction only
+      Concuss can only be added to a Weapon Attack you make as a reaction.
+      On a hit, make an {stat} Roll {roll} against the Grit of the target.
+      On a success, the Action you reacted to is Interrupted.
+
+It is the second card in the codex that may only ride a reaction (RIPOSTE is the first) and the
+first that asks for anything past the hit. **Interrupted** is the Time family's own keyword and
+its definition is Jules's: the Action does not happen and its cost is spent anyway. That word was
+in the old CONCUSS's summary meaning the ordinary English thing, and it is the mechanical thing
+now, so the note in `keywords.js` saying it was never lit is retired.
+
+The Master stun that held the name is **STUNNING STRIKE**, same 6 Willpower, and it gained the
+same gate against the other number: *"Do the same for stunning blow[,] i require reflex."* Grit is
+what shrugs off a blow to the head and Reflex is what rides it out, so the two cards differ only
+in which of the target's numbers answers.
+
+**`concuss` is still the id, and it is a different card now.** A stored pick pointing at it comes
+back as the Novice reaction rather than the Master stun. That is the honest outcome — the name is
+what was chosen and the name is what moved — but a player mid-campaign will see it, and it is the
+one migration in the drop.
+
+### Four moves are priced off the swing
+
+> I want you to make it so Reckless, Wound, Rend, Sunder to scale of the weapon base action point
+> cost. being for example Rckelss is 1 work 2 action point cost or 2 for 4 ones. Rend is 2 for 2
+
+`scales: true` turns `wp` from a cost into a **rate**: what the move costs for every 2 Action
+Points the attack costs, rounded up. A cost-2 weapon pays exactly the printed number either way,
+which is what keeps the orb on the plate honest.
+
+| Move | rate | Finesse (2 AP) | Heavy (4 AP) | Great (6 AP) |
+| --- | --- | --- | --- | --- |
+| RECKLESS | 1 | 1 | 2 | 3 |
+| WOUND | 1 | 1 | 2 | 3 |
+| REND | 2 | 2 | 4 | 6 |
+| SUNDER | 3 | 3 | 6 | 9 |
+
+Jules priced RECKLESS and REND outright. WOUND takes RECKLESS's rate, which is the number it
+already printed. **SUNDER's 3 is chosen and the ruling is open**: it is a rung above the REND Jules
+priced, and it replaces the flat 7 that "very expensive" had been read as.
+
+Why these four and not the other fourteen: what a move is worth is not always what the swing is
+worth. DISARM knocks a weapon out of a hand and the hand does not care what hit it; LUNGE is three
+meters whatever you are holding. These four are the ones whose value *is* the swing's — RECKLESS
+doubles the chance of landing it, WOUND opens the next one, REND counts the dice it rolled, SUNDER
+doubles what it dealt — and a Great Weapon bought all four for a dagger's price until now.
+
+The arithmetic is `moveWillpower` in `martial.js`, one function, and `moveCost` in `moves.js` is
+the only place the swing is handed to it. It is the attack's **printed** cost and not what the
+holder pays: an Arcanist's discount and a Quick Draw are things you bought, and a move getting
+cheaper because the swing did would be paying you twice. The Colossus's MARTIAL SWIFTNESS cut comes
+off *after* the scaling, so it is worth one point of the price and not one point of the rate.
+
+The row in the use prompt prints the scaled number with the plate's rate struck through beside it
+and "the swing" named as what did it, which is the account every other revised number on that
+dialog already gives.
+
+### A Paired weapon rolls twice the dice once
+
+> Paired weapon are incorrectly doing half the number of d4 they should Paired heavy should be 4d4
+
+"Their attack use twice d4 instead of d6" was read as the **landing** and it is the **die count**:
+
+| | was | is |
+| --- | --- | --- |
+| Paired Finesse | 1d4 + stat, twice | 2d4 + stat |
+| Paired Light | 2d4 + stat, twice | 4d4 + stat |
+| Paired Heavy | 2d4 + 2*stat, twice | 4d4 + 2*stat |
+| Paired Great | 3d4 + 2*stat, twice | 6d4 + 2*stat |
+
+The dice come out the same and the attribute is counted once, which is what the rest of the wall
+does. Under the old reading a Paired Heavy was worth 10 + 4x Physique for 5 Action Points against a
+Great Weapon's 10.5 + 2x for the same 5, and a cost column that sets the damage cannot also have a
+family that doubles the attribute. It fixes an Empowered pair for free as well: a die added to 4d4
+is one die, where a die added to "2d4, twice" was quietly two.
+
+`paired()` in `scripts/check-weapons.mjs` is the rule and the eight cards are measured against it.
+No card in the codex says "twice" any more, so `REPEATS` in `rollPlan.js` is held against a card
+written in `check-plan.mjs` instead: losing the assertion with the last card that tripped it would
+have left the branch live and untested.
+
+### The eighteen plates
+
+`data/Martial Move/` is claimed. Eighteen 2400x1792 plates for eighteen cards, against an Image
+column that does not exist, because the moves have never had a sheet, only chat. It behaves the way
+a school folder behaves — claimed by name, resolved against its own map (`moveNames`) and **not
+cut**, since these are plates rather than whole card renders.
+
+Its own claim rather than a spell folder's: a Martial Move has no school, no family and no rung,
+and adding it to `SCHOOL_FOLDERS` would put it on the shelf order's wall as a school with no cards.
+The scoped map is worth having even though nothing collides today — REND is printed by the move
+*and* by the Ashmaw's attack in `creatures.js`, and the day somebody spreads the bestiary into
+`cardIds` a codex-wide lookup would land `Rend.jpg` on a monster. That is the BARRIER lesson taken
+before it costs anything. `MARTIAL_MOVES` is in `cardIds` too, so a move named in a sheet's Image
+column is placed by the link pass like anything else.
+
+Two filenames are aliased: `Coordinated.jpg` is a word short of COORDINATED ATTACK and
+`WingClip.jpg` is WING CLIP with the space closed up, which `flatten` cannot bridge. `Momentum.jpg`
+is absent rather than orphaned — Jules took it out of the folder in the same pass.
+
+### Seven readings on the sheet
+
+**The level number is a door on two tabs now.** *"Allow use to access XP and level change on
+clicking on the level number."* The Experience ledger moves XP by signed entry and sets the level
+outright, and the only way into it was the badge on the Character tab. The Advancement tab's
+Identity frame has its own badge now, reading the level with the experience under it. That is the
+tab where the number is the thing you came to change, and the thing you do after changing it is
+answer the block that just appeared.
+
+**A finished level folds itself.** *"In the adveancment, after the player finish filling a section
+collapse it."* That reverses the call `LevelBlock` was written with. The worry then was shutting a
+panel under somebody's cursor; the worry turns out to be the wrong way round, because level 1 asks
+four things and answering the fourth left all four panels standing open under a heading that said
+"Complete". `shut` follows `complete` in both directions now, derived on the render that sees the
+change rather than in an effect — an effect would paint the finished block open for a frame first,
+and that flash is the thing being fixed.
+
+**And so does each panel inside it.** *"For redability make talent selection, lienage selection
+block collapsible as well when filled."* `PickBlock` takes `foldable` and `summary`: the head
+becomes a button with the same chevron a level block wears, and a folded panel says what it holds
+rather than the word "Chosen". All five of the level's panels ask for it; the Lore tab's two and
+the journal do not, because a journal with one entry is not a journal you have finished.
+
+**The two weapons stopped overlapping.** *"There is a small over lap between the two weapons in the
+inventory weapon block."* `.weapon-panel` was `flex: 1 1 0` with `min-height: 0`, which gave each
+panel half the block whatever was in it — so a panel with more than half a block of content drew
+past its own bottom edge and over the row below, and the second weapon's name sat under the first
+weapon's workings. `flex: 1 1 auto` with a `min-content` floor: an ordinary pair still splits the
+block down the middle, and a pair with too much between them overflows into the block's own
+scroller instead of into each other.
+
+**The bar of tabs is one width per sheet.** *"Nav bar should stay consistenct between screen, right
+now it keeps resizing base on block layout."* It was measured against `--sheet-measure`, the column
+count of the tab on screen, and the three tabs each keep their own — so a Character tab set to 3
+and an Abilities tab set to 5 gave the bar two widths, and switching slid the tab row left and the
+save light right by a block and a half. `--sheet-bars` is the largest of the three counts, written
+inline beside `--sheet-cols`, so the bar is one width for the whole sheet and still never narrower
+than the canvas under it. Capped by `--sheet-fit` the same way, so a nine-column Abilities tab does
+not stretch the bar on a laptop that can draw three.
+
+**A quick bar chip wears its school.** *"in the quick bar give the block the color of their spell
+like wild, fire ect. Give a color to other effect so they can be [read] better at a glance."* A
+Fire spell is the Fire family's orange and a Wild spell is Wild's green, which is what their chips
+already take on the effects tracker and in the codex's filter row. The bar was the last place on
+the sheet printing every spell one violet.
+
+Everything with no school takes `KIND_COLORS`, new in `tagColors.js`, and none of the colours are
+new: each is what that thing already wears elsewhere. The change that matters is that **a basic
+action is no longer a weapon attack.** The codex gives both `kind: 'ability'`, correctly, and on a
+block where they stand in one column that left the row you reach for in a fight looking exactly
+like the row that says you can climb a wall. So a basic action is slate and a weapon attack keeps
+copper, decided off the `Basic Action` tag, which is the codex's own answer. `barAccent` is the one
+place either question is asked, and the stylesheet's `ac-kind-*` stays the fallback.
+
+**A greyed button says why.** *"When there is an error or something blocks you allow user to mouth
+over the greyoud button to get a tooltip that tells them what the issue is."*
+
+Almost every greyed button on the sheet already knew its reason and several already carried it in a
+`title`. Not one of those reasons has ever reached a reader, because a `disabled` button is not a
+control any more: it is out of the tab order, the platform is under no obligation to draw its
+tooltip, and the browsers that suppress mouse events on disabled form controls suppress the hover
+with them. It is a button that has stopped being able to explain itself, which is the wrong shape
+for the one button with something to explain.
+
+`Gated` in `parts.jsx` is `aria-disabled` instead. Screen readers say what `disabled` said, the
+pointer reaches it so the sheet's own hover bubble opens with the reason in it, it is back in the
+tab order so the reason is reachable without a mouse at all, and the press is swallowed in the
+component by mouse and by keyboard both. `[aria-disabled='true']` in `index.css` carries the
+greying that used to come free, and the bubble is wrapped `aria-hidden` because text inside a
+button is part of its accessible name: an open bubble would otherwise rename the control at exactly
+the moment a screen reader is on it.
+
+Measured in Chromium on the day: a real pointer over a `disabled` button *does* still deliver
+`mouseover` and `mouseenter`, so hover alone would have worked there. That is a browser being
+generous rather than a rule to build on, and it was never the whole of what was missing.
+
+Thirteen buttons are gated so far and all of them are the press that stops you: the rest and its
+labour chips, the Martial Move row whose refusal has been written and unreadable since the day it
+was written, a spent quick bar chip, the brew and the enchantment, the forge, the transformation,
+the steal, the attribute spread and point, the starting kit, the lineage's open questions and the
+pact mission. The rest of the sheet's disabled buttons are untouched: a button greyed because the
+sheet is read-only has nothing to say that forty of its neighbours are not already saying.
+
+### Left open
+
+- **SUNDER's rate.** 3 Willpower per 2 Action Points is chosen. "Very expensive" was a direction
+  and this is a rung above the REND Jules priced.
+- **Neither contest is rolled.** CONCUSS's roll against Grit and STUNNING STRIKE's against Reflex
+  are printed sentences the table resolves. A chain asks for its DC once (see `rollPlan.js`), the
+  attack has already spent that question, and a second check would either ask twice or borrow the
+  first one's number. Wiring it means the plan reading a move's body as well as the card's, and
+  deciding what a second DC is.
+- **STUNNING STRIKE's clock** is still "until its next Turn End", chosen when the card was CONCUSS.
+- **`concuss` means a different card.** Said above. Nothing migrates a stored pick.
+- **The old CONCUSS art is still on disk** as `data/Martial Move/Concuss.jpg`, redrawn for the new
+  card. `Stunning Strike.jpg` is the Master stun's. Both resolve and neither needs an alias.

@@ -100,21 +100,35 @@ function LevelBlock({ level, character, talents, picks, patch, readOnly, unit })
   const complete = done === asked.length;
 
   /* A level nobody has anything left to do at folds itself away. Twelve open
-     blocks is a scroll; twelve headings is a ledger you can read. Opened by
-     hand it stays open, so this is a starting position and not a rule: a block
-     does *not* fold itself the moment you answer its last question, which would
-     shut the panel under your own cursor.
+     blocks is a scroll; twelve headings is a ledger you can read.
 
-     It does unfold itself when it stops being finished, though, because that
-     can happen from another block entirely. Handing back the talent set at
-     level 2 hands back level 4 and level 6 too, and a folded block there would
-     have gone on reading like a level with nothing left to do. */
+     **It folds at the moment the last question is answered**, on Jules's
+     instruction of 2026-09-03: "In the adveancment, after the player finish
+     filling a section collapse it." That reverses the call this hook was written
+     with — the worry then was shutting the panel under somebody's cursor — and
+     the worry turns out to be the wrong way round. Level 1 asks four things, and
+     answering the fourth left all four panels standing open under a heading that
+     said "Complete", so the block you had just finished was still the tallest
+     thing on the tab and the one you had to scroll past to reach the next. Now
+     finishing a level moves you to the next one, which is what finishing it is
+     for. The heading is still one tap to open it again.
+
+     It unfolds itself when it stops being finished, for the reason it always
+     did: that can happen from another block entirely. Handing back the talent
+     set at level 2 hands back level 4 and level 6 too, and a folded block there
+     would have gone on reading like a level with nothing left to do.
+
+     Both halves are the same one rule now — `shut` follows `complete` whenever
+     `complete` changes — which is why the fold is derived on the render that sees
+     the change rather than in an effect. An effect would paint the finished
+     block open for a frame first, and the flash is exactly the thing being
+     fixed. Reopening by hand still sticks, because nothing changed. */
   const [shut, setShut] = useState(complete);
   const [wasComplete, setWasComplete] = useState(complete);
 
   if (wasComplete !== complete) {
     setWasComplete(complete);
-    if (!complete) setShut(false);
+    setShut(complete);
   }
 
   const numbered = asked.length > 1;

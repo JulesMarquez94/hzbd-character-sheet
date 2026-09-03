@@ -3,6 +3,7 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
+import { Gated } from './parts.jsx';
 import { useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { castModifier } from '../../lib/cardText.js';
@@ -132,6 +133,12 @@ export default function LineagePick({ value, character, patch, step = null, read
       title="Lineage"
       done={Boolean(written) && unanswered === 0}
       state={!written ? 'Waiting on you' : unanswered > 0 ? 'Half done' : 'Chosen'}
+      foldable
+      summary={
+        lineage
+          ? `${lineage.name} · ${held.length} ${held.length === 1 ? 'trait' : 'traits'}`
+          : 'No lineage chosen yet.'
+      }
     >
       <p className="pick-lead">
         Your <b>lineage</b> is your ancestry: the blood your character comes from, and what it left
@@ -332,19 +339,17 @@ function LineageChooser({
             {/* Shut until the blood has been settled, the same way the skill
                 windows are: a lineage with a spell it has not named is a card
                 promising something the sheet cannot print yet. */}
-            <button
-              type="button"
+            <Gated
               className="btn btn-take btn-sm"
-              disabled={answered < wanted}
-              title={
+              why={
                 answered < wanted
-                  ? `${wanted - answered} still open on ${shown.name}`
-                  : undefined
+                  ? `${wanted - answered} of what ${shown.name} asks is still open. Answer it above and this closes.`
+                  : null
               }
               onClick={onClose}
             >
               {answered < wanted ? `${wanted - answered} still open` : 'Done'}
-            </button>
+            </Gated>
           </>
         ) : shown ? (
           <>

@@ -373,6 +373,11 @@ async function cardIds() {
      lives in public/talents/ and this script does not own it. */
   const { INGREDIENTS } = await load('src/lib/ingredients.js');
   const { TALENT_CARDS } = await load('src/lib/talents.js');
+  /* The Martial Moves, so a move named in a sheet's Image column is placed by the
+     link pass like anything else. A file in `data/Martial Move/` does not need this
+     — it resolves against `moveNames`, scoped to the folder — but the two are for
+     two different arrivals and the moves had neither until 2026-09-03. */
+  const { MARTIAL_MOVES } = await load('src/lib/martial.js');
 
   /* Not the whole of `CARDS`, and the two that are missing are missing for two
      different reasons now.
@@ -395,6 +400,7 @@ async function cardIds() {
       ...BASIC_ACTIONS,
       ...INGREDIENTS,
       ...TALENT_CARDS,
+      ...MARTIAL_MOVES,
       ...WEAPON_ABILITIES,
       ...ACTION_CARDS,
       ...ENCHANTMENTS,
@@ -454,6 +460,24 @@ async function lineageNames() {
  * Consulted after the sheet's own Image column and before the codex-wide map, so
  * nothing that already resolved resolves differently: a school drop that names
  * its files in the sheet is still placed by the sheet.
+ */
+async function moveNames() {
+  const { MARTIAL_MOVES } = await import(
+    path.join(ROOT, 'src/lib/martial.js').replace(/\\/g, '/').replace(/^/, 'file:///')
+  );
+  return new Map(MARTIAL_MOVES.map((move) => [flatten(move.name), move.id]));
+}
+
+/**
+ * The moves alone, for the reason `spellNames` exists: a folder that holds one
+ * kind of card looks a name up against that kind and never codex-wide.
+ *
+ * REND is the case that makes it worth writing rather than skipping. The Martial
+ * Move prints that name and so does the Ashmaw's own attack in creatures.js, and
+ * `cardIds` is one flat map where the last registry spread into it wins. The
+ * bestiary is not in that map today, so the collision is not live — which is
+ * exactly when to scope it, rather than the day somebody adds the creatures and
+ * `Rend.jpg` quietly lands on a monster. Same lesson BARRIER taught above.
  */
 async function spellNames() {
   const { SPELLS } = await import(
@@ -798,6 +822,48 @@ const ITEM_FOLDERS = new Set(['potions']);
 const isItemFolder = (name) => ITEM_FOLDERS.has(flatten(name));
 
 /**
+ * The Martial Moves, which arrive as a folder of their own.
+ *
+ * `data/Martial Move/` landed over 2026-09-02 and 2026-09-03: eighteen 2400x1792
+ * plates, one for each card in `src/lib/martial.js`, against an Image column that
+ * does not exist — the moves have never had a sheet, only chat.
+ *
+ * It behaves the way a school folder behaves and for the same reason: a folder
+ * whose files are all one kind of card. So it is claimed by name, resolved
+ * against its own map (`moveNames`) rather than codex-wide, and **not cut** —
+ * these are plates, the way the lineage and Ethereal drops are, and the crop only
+ * ever fires for a whole card render.
+ *
+ * Its own claim rather than a spell folder's, because a Martial Move is not a
+ * spell: it has no school, no family and no rung, and adding "martial move" to
+ * SCHOOL_FOLDERS would put it on the shelf order's wall as a school with no
+ * cards. The one thing the two share is the shape of the drop.
+ */
+const MOVE_FOLDER = 'martial move';
+
+/** A folder whose files are Martial Move art. */
+const isMoveFolder = (name) => flatten(name) === MOVE_FOLDER;
+
+/**
+ * Move files whose name is not the name the codex prints, flattened on both
+ * sides. The same record LINEAGE_ALIASES is, for this folder's own map.
+ *
+ * Two, and both are the plainest kind. `Coordinated.jpg` is a word short of
+ * COORDINATED ATTACK, and `WingClip.jpg` is WING CLIP with the space closed up,
+ * which `flatten` cannot bridge: it turns a space into a space and has nothing to
+ * do about a name that never had one. Renaming a file retires its entry.
+ *
+ * Nothing else in the drop needs help. `Drive Back.jpg` and `Stunning Strike.jpg`
+ * both land as they are, and `Momentum.jpg` is *absent* rather than orphaned:
+ * Jules replaced that card with CONCUSS on 2026-09-03 and took its picture out of
+ * the folder in the same pass, so the eighteen files are the eighteen cards.
+ */
+const MOVE_ALIASES = {
+  coordinated: 'coordinated attack',
+  wingclip: 'wing clip',
+};
+
+/**
  * A duplicate Windows made rather than a picture somebody drew.
  *
  * `Heavy Armor Mastery - Copy.jpg` sits beside `Heavy Armor Mastery.jpg` in the
@@ -845,6 +911,7 @@ function pictures(setIds) {
           spells(entry.name) ||
           lineage(entry.name) ||
           isItemFolder(entry.name) ||
+          isMoveFolder(entry.name) ||
           isBackgroundFamily(entry.name))
     )
     .flatMap((dir) =>
@@ -864,6 +931,9 @@ function pictures(setIds) {
  * and `Shadow` to "shadow".
  */
 const inSpellFolder = (picture) => SPELL_FOLDERS.has(flatten(picture.set).split(' ')[0]);
+
+/** A file in `data/Martial Move/`: art for one of the eighteen moves. */
+const inMoveFolder = (picture) => flatten(picture.set) === MOVE_FOLDER;
 
 /** A file at the top of `data/Lineage/`: one of the thirteen ancestry plates. */
 const isLineagePlate = (picture) => flatten(picture.set) === LINEAGE_FOLDER;
@@ -1003,6 +1073,7 @@ const items = await itemNames();
 const lineages = await lineageNames();
 const backgrounds = await backgroundNames();
 const spells = await spellNames();
+const moves = await moveNames();
 mkdirSync(OUT, { recursive: true });
 mkdirSync(TALENT_OUT, { recursive: true });
 mkdirSync(LINEAGE_OUT, { recursive: true });
@@ -1074,6 +1145,13 @@ const folder = pictures(setIdByFolder).flatMap((picture) => {
     return [spellId ? { ...picture, spellId } : picture];
   }
 
+  /* And the Martial Move folder holds moves, for the same reason and against its
+     own map. See moveNames: two cards print REND. */
+  if (inMoveFolder(picture)) {
+    const moveId = moves.get(MOVE_ALIASES[flat] ?? flat);
+    return [moveId ? { ...picture, moveId } : picture];
+  }
+
   if (!isLineageCard(picture)) return [picture];
   const found =
     LINEAGE_MODULAR[flat] ??
@@ -1092,6 +1170,7 @@ function cardIdFor(picture) {
     picture.skillId ??
     idBySheetFile.get(flat) ??
     picture.spellId ??
+    picture.moveId ??
     idByFlatName.get(flat) ??
     idByAliasFile.get(flat) ??
     null

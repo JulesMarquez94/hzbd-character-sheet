@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import UsePrompt from './UsePrompt.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { sortCards } from '../../lib/cardOrder.js';
@@ -302,15 +303,14 @@ function EnchantRow({ option, character, chosen, readOnly, onChoose, onOpen }) {
         {enchantment.burden} Burden · {enchantment.burden} WP
       </span>
 
-      <button
-        type="button"
+      <Gated
         className={`btn btn-sm card-brief-btn ${ok && !chosen ? 'btn-take' : 'btn-minimal'}`}
-        disabled={!ok || readOnly}
-        title={ok ? undefined : reason}
+        why={ok ? null : reason}
+        disabled={readOnly && ok}
         onClick={onChoose}
       >
         {chosen ? 'Chosen' : ok ? 'Lay this one' : reason}
-      </button>
+      </Gated>
     </CardBrief>
   );
 }

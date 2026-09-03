@@ -58,18 +58,24 @@ const AFTER = [
 /**
  * A value the card lands more than once, and how many times.
  *
- * Eleven cards in the codex do this and they say it two ways, both of them in
- * the sentence the dice are in:
+ * Two cards in the codex do this — the two Flurries — and they say it the way
+ * every such card has, in the sentence the dice are in:
  *
  *   "the blade lands three times, each landing dealing [[1d6 + stat]] damage"
- *   "you deal [[1d4 + stat]] damage twice"
  *
  * Each landing is its own throw, per Jules on 2026-08-30, which matters for more
  * than tidiness: three separate d6 are not one d6 counted three times, and each
  * of them gets its own chance to explode.
  *
- * `twice` is guarded against "twice the number of Damage Dice rolled", which is
- * a multiplier on a count rather than a repeat. That phrasing is on the Poison
+ * `twice` reads the same way and **no card says it any more.** The four Paired
+ * weapons did until 2026-09-03, when Jules ruled the pair is the die count and
+ * not the landing: a Paired Heavy rolls 4d4 once where it used to roll 2d4
+ * twice. The pattern stays, because the next card to say the word will mean it
+ * and because the guard under it has to stay either way. Held against a card
+ * written in scripts/check-plan.mjs rather than one in the codex.
+ *
+ * That guard is against "twice the number of Damage Dice rolled", which is a
+ * multiplier on a count rather than a repeat. That phrasing is on the Poison
  * potion, in a different paragraph from its dice, so the sentence scope already
  * keeps it out. The guard is here because the sentence scope is the only thing
  * keeping it out, and a card drop could put the two in one sentence.

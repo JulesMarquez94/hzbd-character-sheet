@@ -32,7 +32,8 @@
  *
  *   heldMoves       every move this character actually holds, from every source
  *   offeredMoves    which of those may be added to *this* card, right now
- *   moveCost        what the chosen ones add to the price of the swing
+ *   moveCost        what the chosen ones add to the price of the swing, which
+ *                   for four of them is read off what the swing itself costs
  *   withMoves       what the chosen ones do to the swing's numbers
  *
  * The last one is what the old `moveRider` was, and the only difference is where
@@ -85,8 +86,9 @@
  * in the instant before a reaction attack", which was a thing you did because
  * laying one was an action of its own. Now that a move is added to the attack it
  * means the plainer thing: **your moves may ride a weapon attack you make as a
- * reaction.** RIPOSTE is the one card in the codex that can only be used that
- * way, and `offeredMoves` is where both halves of the rule meet.
+ * reaction.** RIPOSTE and CONCUSS are the two cards in the codex that can only be
+ * used that way — the second since 2026-09-03, when MOMENTUM was replaced by an
+ * interrupt — and `offeredMoves` is where both halves of the rule meet.
  *
  * ---------------------------------------------------------- the weapon in hand
  * And the cards that hang on it, which are now two sets' worth. DEXTEROUS grants
@@ -109,7 +111,7 @@
  */
 
 import { getTalent, normalizeTalents } from './talents.js';
-import { isMartialMove } from './martial.js';
+import { isMartialMove, moveWillpower } from './martial.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
 import { heldItem, normalizeEquipment } from './items.js';
 import { isPlainAttack, isWeaponAttack, trickArrow, trickRider } from './tricks.js';
@@ -363,9 +365,16 @@ export function offeredMoves(character, card, { reaction = false } = {}) {
 /**
  * What the chosen moves add to the price of the swing, as `{ wp, ap }`.
  *
- * `wp` is the sum of what they print, and it is the whole of what a move costs:
+ * `wp` is the sum of what they cost, and it is the whole of what a move costs:
  * the Action Points belong to the attack, which is the change of 2026-09-02. See
  * the head of martial.js.
+ *
+ * `swing` is what that attack costs before anything the holder carries cut it,
+ * and four of the eighteen read their price off it: `moveWillpower` turns a
+ * RECKLESS into 1 Willpower on a dagger and 3 on a Great Weapon. It defaults to
+ * 2, the cheapest rung on the wall, so a caller that has no swing to hand gets
+ * the number the card prints. The arithmetic is martial.js's, because it is the
+ * codex's rule about its own cards; this is only the place the swing meets it.
  *
  * `discount` is what the holder takes off each one, off `moveAllowance`. A Master
  * Colossus's MARTIAL SWIFTNESS is the only thing in the codex that grants it, and
@@ -373,18 +382,32 @@ export function offeredMoves(character, card, { reaction = false } = {}) {
  * Martial Move you add to an attack costs 1 less Willpower". Floored per move as
  * well as in total, so a 1 Willpower RIPOSTE becomes free and never a credit.
  *
+ * The cut comes off *after* the scaling, so it is worth one point of the price
+ * and not one point of the rate — MARTIAL SWIFTNESS says "costs 1 less
+ * Willpower" and a rate cut would have made it 3 less on a Great Weapon.
+ *
  * `ap` is signed and is almost always zero. RIPOSTE is the one card that touches
  * it, and it *gives* a point back, so the sum is floored where it is applied
  * rather than here: a card that printed 1 Action Point with two Ripostes riding
  * it must not come out at minus one.
  */
-export function moveCost(cards = [], discount = 0) {
+/**
+ * The codex's own price arithmetic, handed on.
+ *
+ * A caller that has to print what one move costs — the row in the use prompt is
+ * the only one — needs the same sum `moveCost` uses, and reaching past this file
+ * to martial.js for it would give the prompt two places to ask about a price. Same
+ * trade weapons.js makes re-exporting MARTIAL_MOVES.
+ */
+export { moveWillpower };
+
+export function moveCost(cards = [], discount = 0, swing = 2) {
   const cut = Math.max(0, Math.floor(Number(discount) || 0));
   let wp = 0;
   let ap = 0;
 
   for (const card of cards) {
-    wp += Math.max(0, Math.floor(Number(card?.wp) || 0) - cut);
+    wp += Math.max(0, moveWillpower(card, swing) - cut);
     ap += Math.floor(Number(card?.rides?.ap) || 0);
   }
 

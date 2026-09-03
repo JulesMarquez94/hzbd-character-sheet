@@ -4,6 +4,7 @@ import AbilityCard from '../AbilityCard.jsx';
 import CheckPick from './CheckPick.jsx';
 import RollArrow from '../RollArrow.jsx';
 import TargetChip from '../TargetChip.jsx';
+import { Gated } from './parts.jsx';
 import { CostOrb } from '../CostOrbs.jsx';
 import { AmmoPips } from './itemParts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
@@ -20,6 +21,7 @@ import {
   effectAdvantage,
   moveAllowance,
   moveCost,
+  moveWillpower,
   offeredMoves,
   ridingLine,
   withMoves,
@@ -154,6 +156,10 @@ import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.j
  *
  *   priced here     the Willpower joins the orbs on both ways, and the one move
  *                   that cuts the swing's cost (RIPOSTE) takes a point off them.
+ *                   Four of them are priced off *this* swing rather than off
+ *                   their own plate, so the row is also where a RECKLESS first
+ *                   says it costs 3 on the Great Weapon you happen to be
+ *                   holding. See moveWillpower in martial.js.
  *   folded here     the card in the right-hand column shows the swing with the
  *                   moves on it, so a RECKLESS ticked on is a d4 that appears in
  *                   the corner and a die that appears in the damage.
@@ -162,7 +168,7 @@ import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.j
  *
  * The list is the character's own hand, off `offeredMoves`, which is also where
  * the two narrowings live: whether this character's moves reach a Special Weapon
- * Attack at all, and whether this swing is the reaction RIPOSTE needs. A prompt
+ * Attack at all, and whether this swing is the reaction RIPOSTE and CONCUSS need. A prompt
  * for anything that is not a weapon attack is handed an empty list and draws
  * nothing, which is almost every prompt.
  *
@@ -407,9 +413,16 @@ export default function UsePrompt({
 
   /* What the Martial Moves add: Willpower, and the one point RIPOSTE takes back
      off the swing. Floored at nothing where it lands, because a 1 Action Point
-     attack with a Riposte on it is free rather than owed. See moveCost. */
+     attack with a Riposte on it is free rather than owed. See moveCost.
+
+     `swingAp` is what four of the eighteen are priced off: the attack's own
+     printed cost, off the card rather than off the request, so a discount the
+     holder carries does not quietly make their moves cheaper too. The request's
+     numbers are the fallback for a card the request arrived without. */
   const cutBy = Math.max(0, Math.floor(Number(allowance.discount) || 0));
-  const paid = moveCost(moveCards, cutBy);
+  const swingAp =
+    Number(request.card?.ap) || Number(request.apWas) || Number(request.ap) || 0;
+  const paid = moveCost(moveCards, cutBy, swingAp);
 
   const base = {
     ap: Math.max(0, (request.variable ? dialled : Number(request.ap) || 0) + paid.ap),
@@ -673,6 +686,7 @@ export default function UsePrompt({
                   full={!takenMoves.includes(at) && takenMoves.length >= allowed}
                   allowance={allowance}
                   cut={cutBy}
+                  swing={swingAp}
                   onToggle={() => toggleMove(at)}
                   stack={cards}
                 />
@@ -1030,26 +1044,43 @@ function RunningRow({ effect }) {
  * quiet rather than vanishing, which is the same call the belt makes for a flask
  * with no charges left.
  */
-function MoveRow({ card, talent, on, full, allowance, cut, onToggle, stack }) {
-  const printed = Math.max(0, Math.floor(Number(card.wp) || 0));
+function MoveRow({ card, talent, on, full, allowance, cut, swing, onToggle, stack }) {
+  /* What it costs on *this* swing, which for RECKLESS, WOUND, REND and SUNDER is
+     not what the plate prints: the plate quotes a rate per 2 Action Points and
+     this is that rate against the attack in front of you. See moveWillpower in
+     martial.js.
+
+     The orb strikes the plate's number through whenever the two differ, which is
+     the same account it already gave for a set that cut the price — a row
+     charging 6 beside a card printing 2 is exactly the kind of number the sheet
+     is not allowed to leave unexplained. The swing is named as what did it,
+     because it is: a Great Weapon is why. */
+  const rate = Math.max(0, Math.floor(Number(card.wp) || 0));
+  const printed = moveWillpower(card, swing);
   const owed = Math.max(0, printed - cut);
   const ap = Math.floor(Number(card.rides?.ap) || 0);
+  const from = [
+    ...(printed !== rate ? ['the swing'] : []),
+    ...(cut > 0 ? [allowance.from?.name ?? 'Your set'] : []),
+  ];
 
   return (
     <div className="use-move">
-      <button
-        type="button"
+      <Gated
         className={`use-move-take${on ? ' is-on' : ''}`}
         onClick={onToggle}
-        disabled={full}
         aria-pressed={on}
-        title={
+        /* The refusal has been written since the row was and has never been
+           readable: a disabled button gets no mouse events, so its title never
+           opens. Gated is why it does now. See parts.jsx. */
+        why={
           full
             ? allowance.perAttack === 1
               ? 'One Martial Move rides a swing. Untick the one you have added first.'
-              : `${allowance.from?.name ?? 'Your set'} allows ${allowance.perAttack} on one swing, and ${allowance.perAttack} are added.`
-            : card.summary
+              : `${allowance.from?.name ?? 'Your set'} allows ${allowance.perAttack} on one swing, and ${allowance.perAttack} are added. Untick one first.`
+            : null
         }
+        title={card.summary}
       >
         <span className="use-move-costs">
           {/* What it costs *this* holder, with the printed number struck through
@@ -1061,8 +1092,8 @@ function MoveRow({ card, talent, on, full, allowance, cut, onToggle, stack }) {
               kind="wp"
               value={owed}
               size={26}
-              was={cut > 0 && printed > owed ? printed : null}
-              from={cut > 0 ? [allowance.from?.name ?? 'Your set'] : []}
+              was={owed !== rate ? rate : null}
+              from={from}
             />
           )}
           {owed === 0 && <span className="use-move-cut">Free</span>}
@@ -1084,7 +1115,7 @@ function MoveRow({ card, talent, on, full, allowance, cut, onToggle, stack }) {
           </span>
           <span className="use-move-note">{card.summary}</span>
         </span>
-      </button>
+      </Gated>
 
       <button
         type="button"

@@ -57,9 +57,14 @@ body.sheet-fixed #root {
   --sheet-cols: 3;
   --sheet-fit: 1;
   --sheet-cap: min(var(--sheet-cols), var(--sheet-fit));
+  /* THE BAR'S MEASURE is the widest any tab on this sheet gets, rather than the
+     width of the tab you happen to be on. See the note on .sheet-tabbar-inner. */
+  --sheet-bars: 3;
+  --sheet-bar-cap: min(var(--sheet-bars), var(--sheet-fit));
   /* A block and the gap after it: what one more column costs. */
   --sheet-step: calc(var(--block-w) + 16px);
   --sheet-measure: calc(var(--sheet-cap) * var(--sheet-step) - 16px);
+  --sheet-bar-measure: calc(var(--sheet-bar-cap) * var(--sheet-step) - 16px);
   --sheet-span: min(
     var(--sheet-measure),
     max(var(--block-w), calc(round(down, 100% + 16px, var(--sheet-step)) - 16px))
@@ -86,10 +91,25 @@ body.sheet-fixed #root {
 }
 
 .sheet-tabbar-inner {
-  /* 1290 while the canvas below is three columns, and as wide as the canvas
-     once it is more than that. A bar narrower than the page it heads reads as a
-     different page. */
-  max-width: max(1290px, calc(var(--sheet-measure) + 4rem));
+  /* 1290 while the widest tab on this sheet is three columns, and as wide as
+     that tab once it is more than three. A bar narrower than the page it heads
+     reads as a different page.
+
+     **The widest tab, not the tab you are on.** Jules, 2026-09-03: "Nav bar
+     should stay consistenct between screen, right now it keeps resizing base on
+     block layout." It was measured against `--sheet-measure`, which is this
+     tab's own column count, and the three tabs each keep their own — so a
+     Character tab set to 3 and an Abilities tab set to 5 gave the bar two
+     different widths, and switching between them slid the tab row left and the
+     save light right by a block and a half. Nothing about the bar had changed.
+
+     `--sheet-bars` is the largest of the three counts, written inline by
+     CharacterSheet.jsx beside `--sheet-cols`, so the bar is one width for the
+     whole sheet and still never narrower than the canvas under it: no tab can
+     be wider than the widest tab. It is capped by `--sheet-fit` the same way,
+     so a nine-column Abilities tab does not stretch the bar on a laptop that
+     can only draw three. */
+  max-width: max(1290px, calc(var(--sheet-bar-measure) + 4rem));
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -2371,6 +2391,61 @@ body.tray-open-left.tray-open-right .sheet {
    panel in its own right rather than a row in a list, because each one is a
    decision the player made and should read like a record of it.
    ========================================================= */
+/* ---------- THE ADVANCEMENT TAB'S LEVEL BADGE ----------
+ * A heading with a button on the end of it, which is what the Identity frame
+ * needed to grow a second door into the Experience ledger. It reuses
+ * `.frame-head-row` up in STAT TILES, because that class is already a heading
+ * with something on the end of it: a `.frame` is a column with a gap, so
+ * anything added to one is a new row unless it is wrapped.
+ */
+
+/* Reads the same as `.id-level` on the Character tab, with the experience under
+   the number: this is the tab where the level is the thing you came to change, so
+   it is worth the second line the block up there has no room for. */
+.adv-level {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.adv-level:hover,
+.adv-level:focus-visible {
+  border-color: rgba(200, 138, 75, 0.35);
+  background-color: rgba(200, 138, 75, 0.06);
+}
+
+.adv-level-num {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--copper);
+  white-space: nowrap;
+}
+
+.adv-level:hover .adv-level-num,
+.adv-level:focus-visible .adv-level-num {
+  color: var(--level-amber);
+}
+
+.adv-level-xp {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--haze-glow);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .level-block {
   border: 1px solid rgba(148, 167, 176, 0.12);
   border-left: 2px solid rgba(148, 167, 176, 0.2);
@@ -4501,13 +4576,33 @@ body.tray-open-left.tray-open-right .sheet {
   gap: 0.45rem;
 }
 
+/* Two panels sharing the block, each no shorter than what is in it.
+ *
+ * `flex: 1 1 auto` with a min-content floor, and both halves matter. The floor is
+ * the fix Jules asked for on 2026-09-03 — "There is a small over lap between the
+ * two weapons in the inventory weapon block" — and the overlap was this box
+ * being told it could be any height at all: `flex-basis: 0` with `min-height: 0`
+ * gave each panel exactly half the block whatever was in it, and a panel with
+ * more than half a block of content simply drew past its own bottom edge and
+ * over the row below. Nothing was clipping it, so the second weapon's name sat
+ * under the first weapon's workings.
+ *
+ * A min-content floor means a panel is never squeezed under its contents, and
+ * `auto` means it starts at what it holds rather than at nothing — so an ordinary
+ * pair still splits the block down the middle (the leftover is shared by
+ * `flex-grow`), and a pair with too much between them overflows into the block's
+ * own scroller instead of into each other. This is one of the two blocks allowed
+ * to scroll for exactly that reason.
+ *
+ * The `gap` is still measured rather than chosen: two Grave-Lantern Blades is four
+ * ability boxes and six workings, and 0.4rem between the parts was already
+ * enough to run the pair past 640.
+ */
 .weapon-panel {
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: min-content;
   display: flex;
   flex-direction: column;
-  /* Measured: two Grave-Lantern Blades is four ability boxes and six workings,
-     and at 0.4rem between the parts the second panel starts inside the first. */
   gap: 0.3rem;
 }
 
@@ -6764,9 +6859,58 @@ body.tray-open-left.tray-open-right .sheet {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  width: 100%;
   padding: 0.55rem 0.8rem;
+  border: 0;
   border-bottom: 1px solid rgba(148, 167, 176, 0.1);
   background-color: rgba(9, 17, 21, 0.4);
+  font-family: var(--font-body);
+  text-align: left;
+}
+
+/* A foldable panel's head is a <button>. Only the cursor and the hover say so —
+   it must go on reading as the heading it is. */
+.pick-block-head.is-tap {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.pick-block-head.is-tap:hover,
+.pick-block-head.is-tap:focus-visible {
+  background-color: rgba(9, 17, 21, 0.62);
+}
+
+/* The same chevron a level block wears, so the two folds read as one gesture. */
+.pick-block-chevron {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.15s ease;
+}
+
+.pick-block.is-shut .pick-block-chevron {
+  transform: rotate(-45deg) translate(-1px, 1px);
+}
+
+.pick-block-head.is-tap:hover .pick-block-chevron {
+  border-color: var(--text-silver);
+}
+
+/* What a folded panel holds, in one line. The panel's own accent, because that
+   line is the only thing left of a choice that had a wall of cards under it. */
+.pick-block-shut {
+  margin: 0;
+  padding: 0.5rem 0.8rem 0.6rem;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.pick-block.is-done .pick-block-shut {
+  color: color-mix(in srgb, var(--pick-accent, var(--copper)) 55%, var(--text-silver));
 }
 
 /* The step number is what makes three panels read as one sequence. */
@@ -7814,14 +7958,20 @@ body.tray-open-left.tray-open-right .sheet {
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.bar-chip:hover:not(:disabled),
-.bar-chip:focus-visible:not(:disabled) {
+.bar-chip:hover:not(:disabled):not([aria-disabled='true']),
+.bar-chip:focus-visible:not(:disabled):not([aria-disabled='true']) {
   background-color: color-mix(in srgb, var(--ac-accent) 18%, var(--inset-bg));
   border-color: color-mix(in srgb, var(--ac-accent) 55%, transparent);
 }
 
 .bar-chip:disabled {
   cursor: default;
+}
+
+/* A spent chip is gated rather than disabled now, so that it can say what spent
+   it. See Gated in parts.jsx. */
+.bar-chip[aria-disabled='true'] {
+  cursor: not-allowed;
 }
 
 .bar-chip-name {
@@ -9288,8 +9438,8 @@ button.tgt-chip:disabled {
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.use-move-take:hover:not(:disabled),
-.use-move-take:focus-visible:not(:disabled) {
+.use-move-take:hover:not(:disabled):not([aria-disabled='true']),
+.use-move-take:focus-visible:not(:disabled):not([aria-disabled='true']) {
   border-color: var(--level-amber);
 }
 
@@ -9301,7 +9451,8 @@ button.tgt-chip:disabled {
 
 /* The allowance is full and this one is not in it. Quiet rather than gone: a row
    that vanished would read as a bug, and the tooltip says whose rule it is. */
-.use-move-take:disabled {
+.use-move-take:disabled,
+.use-move-take[aria-disabled='true'] {
   cursor: not-allowed;
   opacity: 0.45;
 }
@@ -10070,8 +10221,8 @@ button.tgt-chip:disabled {
   color: var(--def-healing);
 }
 
-.rest-opt:hover,
-.rest-opt:focus-visible {
+.rest-opt:hover:not([aria-disabled='true']),
+.rest-opt:focus-visible:not([aria-disabled='true']) {
   border-color: currentColor;
 }
 
@@ -10183,9 +10334,10 @@ button.tgt-chip:disabled {
   color: var(--stat-speed);
 }
 
-.rest-opt:disabled {
-  opacity: 0.3;
-  cursor: default;
+.rest-opt:disabled,
+.rest-opt[aria-disabled='true'] {
+  opacity: 0.3 !important;
+  cursor: not-allowed;
 }
 
 /* Entering a fight is the move that hands things over, so it is the loud one.
@@ -11457,8 +11609,8 @@ button.tgt-chip:disabled {
   color: var(--danger-rose);
 }
 
-.feral-transform:hover:not(:disabled),
-.feral-transform:focus-visible:not(:disabled) {
+.feral-transform:hover:not(:disabled):not([aria-disabled='true']),
+.feral-transform:focus-visible:not(:disabled):not([aria-disabled='true']) {
   border-color: var(--danger-rose);
   background-color: color-mix(in srgb, var(--stat-health) 14%, transparent);
 }

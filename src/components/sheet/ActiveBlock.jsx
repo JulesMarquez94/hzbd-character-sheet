@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import UsePrompt from './UsePrompt.jsx';
 import useFoldedGroups from './useFoldedGroups.js';
-import { GroupHead } from './parts.jsx';
+import { Gated, GroupHead } from './parts.jsx';
 import { AmmoPips } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
 import StealWindow from './StealWindow.jsx';
 import { moveCount, quickBar } from '../../lib/combatBar.js';
+import { barAccent } from '../../lib/tagColors.js';
 import { usePlayCard } from './usePlayCard.js';
 import { brewSetFor } from '../../lib/brews.js';
 import { trickSetFor } from '../../lib/tricks.js';
@@ -203,9 +204,25 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
  * One move, in the width half a block has: what it is called and what it
  * costs, in the colour of what it is.
  *
- * The accent is the card's own `ac-kind-*`, the same class the printed card
- * wears, so a spell reads violet here, a talent amber and a belt item green.
- * A column of chips can then be read by colour before it is read by name.
+ * **The colour is the card's school, and what kind of thing it is when it has
+ * none.** Jules, 2026-09-03: "in the quick bar give the block the color of their
+ * spell like wild, fire ect. Give a color to other effect so they can be [read]
+ * better at a glance." So a Fire spell is the orange the Fire family wears
+ * everywhere else and a Wild spell is Wild's green, which is the same colour
+ * their chips already take on the effects tracker and in the codex's own filter
+ * row — the bar was the last place on the sheet still printing every spell the
+ * one violet.
+ *
+ * Everything with no school takes `KIND_COLORS`, and the change there is that a
+ * basic action is no longer a weapon attack. The codex gives both `kind:
+ * 'ability'`, correctly, and on a block where they stand in one column that
+ * left the row you reach for in a fight looking exactly like the row that says
+ * you can climb a wall. See barAccent in tagColors.js, which is the one place
+ * either question is answered.
+ *
+ * The class stays and stays first: `ac-kind-*` is what the printed card wears, it
+ * is what every other chip on the sheet reads, and it is the fallback for a card
+ * `barAccent` has nothing to say about. The inline accent only overrides it.
  *
  * A charged item shows what is left of it as a small number rather than as
  * dots. Five dots at this size are five grey pixels; a 2 is a 2. It sits with
@@ -220,28 +237,37 @@ export function BarChip({ move, readOnly, onUse }) {
   const { card, variable, spent, charges, used } = move;
   const remaining = charges > 0 ? charges - used : null;
 
+  const accent = barAccent(card);
+
   return (
-    <button
-      type="button"
+    <Gated
       className={`bar-chip ac-kind-${card?.kind ?? 'ability'}${spent ? ' is-spent' : ''}`}
+      style={accent ? { '--ac-accent': accent } : undefined}
       onClick={onUse}
-      disabled={readOnly || spent}
-      /* A chip can be refused for more than one reason now, and they do not read
-         the same: a flask is spent, while a Martial Move has nowhere to ride
-         because one is already waiting. So the row says which, in its own words,
-         and falls back to the flask's wording for everything that has none. */
+      /* A chip can be refused for more than one reason, and they do not read the
+         same: a flask is spent, while a Martial Move has nowhere to ride because
+         one is already waiting. So the chip says which, in its own words, and
+         falls back to the flask's wording for everything that has none.
+
+         `why` rather than `disabled` + `title`, which is what this was: the reason
+         has been written since the day the chip was, and a disabled button
+         receives no mouse events, so no reader has ever been able to see it. See
+         Gated in parts.jsx. A read-only sheet is not gated with a sentence —
+         nothing on it can be pressed and saying so forty times is noise. */
+      why={
+        spent ? move.spentNote ?? `${move.name} is spent.` : null
+      }
+      disabled={readOnly && !spent}
       title={
-        spent
-          ? move.spentNote ?? `${move.name} is spent`
-          : [
-              `${move.name} · ${move.source}`,
-              /* A chip is 16 pixels of orb and has no room to strike a number
-                 through, so the one place it has left says what came off. The
-                 prompt behind the tap prints it properly. */
-              move.apWas ? `${move.apWas} Action Points cut to ${move.ap}` : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')
+        [
+          `${move.name} · ${move.source}`,
+          /* A chip is 16 pixels of orb and has no room to strike a number
+             through, so the one place it has left says what came off. The prompt
+             behind the tap prints it properly. */
+          move.apWas ? `${move.apWas} Action Points cut to ${move.ap}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')
       }
     >
       <span className="bar-chip-name">{move.name}</span>
@@ -273,6 +299,6 @@ export function BarChip({ move, readOnly, onUse }) {
           )}
         </span>
       )}
-    </button>
+    </Gated>
   );
 }

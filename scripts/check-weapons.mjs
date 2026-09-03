@@ -19,7 +19,7 @@
  * Four families read the grid sideways and each is the designer's own rule:
  *
  *   shield     the base weapon's damage, one rung down, at 1 more Action Point
- *   paired     the same rung down with its dice as d4, rolled twice, +1 point
+ *   paired     the same rung down with twice as many dice, at d4, +1 point
  *   crossbow   its own rung's damage for 1 Action Point less, and a Reload
  *   firearm    its own rung's damage for 1 Action Point flat, and a magazine
  *
@@ -114,9 +114,28 @@ const note = (what, said) => findings.push(`  ${what}\n    ${said}`);
 function wants(cost, how) {
   if (how === 'shield' || how === 'paired') {
     const under = LADDER[cost - 1];
-    return how === 'paired' ? under.replace('d6', 'd4') : under;
+    return how === 'paired' ? paired(under) : under;
   }
   return LADDER[cost];
+}
+
+/**
+ * A rung read as a pair: **twice as many dice, each one size smaller.**
+ *
+ * Jules on 2026-09-03: "Paired weapon are incorrectly doing half the number of d4
+ * they should[.] Paired heavy should be 4d4." So a Paired Heavy reads the cost-4
+ * rung, 2d6, and rolls 4d4 for it — one expression, not one rolled twice.
+ *
+ * This is the second reading of "Their attack use twice d4 instead of d6" and it
+ * supersedes the first. Until this day the pair was the *landing* — 2d4 dealt
+ * twice — which put the attribute on the card twice as well, and made a Paired
+ * Heavy at 5 Action Points worth 10 + 4x its attribute against a Great Weapon's
+ * 10.5 + 2x for the same points. Folded into one throw the dice come out the same
+ * and the attribute is counted once, which is what the rest of the wall does. See
+ * the Paired Finesse note in src/lib/weapons.js.
+ */
+function paired(rung) {
+  return rung.replace(/(\d+)d6/, (whole, count) => `${Number(count) * 2}d4`);
 }
 
 /** What the plain attack costs, after its sideways rule. */

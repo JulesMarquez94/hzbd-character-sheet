@@ -376,6 +376,16 @@ export default function CharacterSheet({ creating = false }) {
      is a single column. */
   const canvasColumns = normalizeGridColumns(character[GRID_COLUMNS[tab]]);
 
+  /* And the widest any tab on this sheet is set to, which is what the bar of tabs
+     above the canvas is measured against rather than the tab on screen. Three
+     tabs keep three separate counts, so a bar measured against the current one
+     changed width every time you switched — see .sheet-tabbar-inner in sheet.css.
+     A tab with no grid counts as the three all of them were before any of it was
+     a choice. */
+  const barColumns = Math.max(
+    ...Object.values(GRID_COLUMNS).map((column) => normalizeGridColumns(character[column]))
+  );
+
   return (
     <UnitContext.Provider value={unit}>
     {/* Which campaigns this sheet sits at, read once for the whole page: the
@@ -423,7 +433,11 @@ export default function CharacterSheet({ creating = false }) {
         onClose={() => setReacting(null)}
       />
     )}
-    <div className="sheet" style={{ '--sheet-cols': canvasColumns }} data-columns={canvasColumns}>
+    <div
+      className="sheet"
+      style={{ '--sheet-cols': canvasColumns, '--sheet-bars': barColumns }}
+      data-columns={canvasColumns}
+    >
       <div className="sheet-tabbar">
         <div className="sheet-tabbar-inner">
           <nav className="sheet-tabs">

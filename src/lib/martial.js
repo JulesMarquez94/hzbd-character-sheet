@@ -30,6 +30,13 @@
  * back (RIPOSTE). Jules priced four of them outright and the rest are read off
  * those four, tier by tier.
  *
+ * Four of them are priced off the swing rather than off the tier. `scales: true`
+ * turns `wp` from a cost into a rate — what the move costs for every 2 Action
+ * Points the attack costs — and RECKLESS, WOUND, REND and SUNDER are the four,
+ * on Jules's instruction of 2026-09-03. See `moveWillpower` below, which is the
+ * one place the arithmetic is written, and `moveCost` in moves.js, which is the
+ * one place the swing's own cost is handed to it.
+ *
  * ----------------------------------------------------------------- the banner
  * Two tags, in the order the printed cards read them: what it is, then the tier
  * it is learned at.
@@ -65,7 +72,7 @@
  *
  * ------------------------------------------------------------------- two flags
  *   reaction   the move may only be added to a weapon attack made *as* a
- *              reaction. RIPOSTE, and nothing else. The prompt hides it on an
+ *              reaction. RIPOSTE and CONCUSS. The prompt hides both on an
  *              ordinary swing rather than offering a move that cannot be taken.
  *   aims       the move's own text says who the swing lands on, so the target
  *              picker has to read it. Nothing carries it today: SWEEP did, and
@@ -94,9 +101,13 @@
  *
  * Nothing is marked `house: true` any more for that reason: the flag meant "an
  * extrapolation nobody asked for", and there are none left. What is here instead
- * is a list of four durations and one distance that Jules did not state and this
- * file had to choose. They are all flagged in data/README.md and each one is
- * commented where it sits.
+ * is a list of four durations, one distance and one rate that Jules did not state
+ * and this file had to choose. They are all flagged in data/README.md and each one
+ * is commented where it sits.
+ *
+ * The eighteen are not the same eighteen. MOMENTUM left on 2026-09-03 and CONCUSS
+ * replaced it as a reaction that interrupts; the Master stun that held that name
+ * is STUNNING STRIKE, and it gained a contest of its own. See both cards.
  *
  * Two statuses carry the weight of six of these cards, and both were given
  * outright the same day:
@@ -124,21 +135,40 @@ export const MARTIAL_MOVES = withArt([
    * and it is the price of the whole tier: a Novice move costs 1 Willpower.
    */
   {
-    id: 'momentum',
-    name: 'Momentum',
-    summary: 'Your whole speed, before or after the swing, inside the same action.',
+    id: 'concuss',
+    name: 'Concuss',
+    summary: 'The answer that stops what it was answering, if it lands and if it tells.',
     kind: 'martial-move',
     tags: ['Martial Move', 'Novice'],
     ap: null,
     wp: 1,
     stat: 'instinct',
-    /* The plate's second paragraph, kept: a move made *before* the swing can
-       take the announced target out of range, and the plate ruled that the
-       attack fails rather than finding another. Now that targets are announced
-       in the prompt this is a rule the prompt's own picker sets up. */
+    /* "replace it with one that you can only take as a reaction that allow you
+       to interrupt the action you react to granted that you land the attack and
+       success at a roll with the weapon stat against the target grit", Jules on
+       2026-09-03, and it replaces MOMENTUM outright.
+
+       The second of the two moves that may only ride a reaction, and the first
+       that asks for anything past the hit: two gates in the order they resolve,
+       and the swing has to clear both. Interrupted is the Time family's keyword
+       and its definition is the designer's own — the Action does not happen and
+       its cost is spent anyway — which is what reacting into somebody's turn is
+       worth.
+
+       **The contest is printed rather than rolled.** A chain asks for its DC
+       once (see rollPlan.js), the attack has already spent that question, and a
+       second check would either ask twice or borrow the first one's number.
+       Neither is right, so the sentence is the table's to resolve. Flagged in
+       data/README.md.
+
+       This is the id CONCUSS already had, and the Master stun that used to hold
+       it is STUNNING STRIKE now. A stored pick of `concuss` therefore comes back
+       as this card and not that one, which is the honest outcome: the name is
+       what was chosen and the name is what moved. Said in data/README.md. */
+    reaction: true,
     body:
-      'Before or after the attack, you can move a distance equal to your Movement Speed as part of the same action.\n\n' +
-      'If you move first, the target must be in range when you stop or the attack fails.',
+      'Concuss can only be added to a Weapon Attack you make as a reaction.\n\n' +
+      'On a hit, make an {stat} Roll {roll} against the Grit of the target. On a success, the Action you reacted to is Interrupted.',
   },
   {
     id: 'wound',
@@ -148,13 +178,20 @@ export const MARTIAL_MOVES = withArt([
     tags: ['Martial Move', 'Novice'],
     ap: null,
     wp: 1,
+    scales: true,
     stat: 'instinct',
     /* Wound is a defined term and its definition is Jules's own sentence, in
        keywords.js. The card uses the word and never explains it, which is the
        law every term on every card keeps. The card's own name being the term is
        allowed here in a way it was not for Gore Armor: "inflicts a Wound on the
-       target" is the term being *used*, not a title colliding with a stat. */
-    body: 'On a hit, this attack inflicts a Wound on the target.',
+       target" is the term being *used*, not a title colliding with a stat.
+
+       It `scales` at RECKLESS's rate, which is the price it already printed. An
+       opening in a Great Weapon's swing is worth more than one in a dagger's for
+       the same reason the swing is: the next attack through it is bigger. */
+    body:
+      'On a hit, this attack inflicts a Wound on the target.\n\n' +
+      'Its cost is 1 Willpower for every 2 Action Points the attack costs.',
   },
   {
     id: 'wing-clip',
@@ -182,15 +219,22 @@ export const MARTIAL_MOVES = withArt([
     tags: ['Martial Move', 'Novice'],
     ap: null,
     wp: 1,
+    scales: true,
     stat: 'instinct',
     rides: { advantage: 1 },
     /* The plate's Empowered half is gone. "A martial move that cost 1 Willpower
        and give you advantage on your attack but the next attack against you is
        also with advantage" is the whole card, and a die of Empowered on top of
-       it for the same 1 Willpower was the old card being its own action. */
+       it for the same 1 Willpower was the old card being its own action.
+
+       One of the four that `scales`: 1 Willpower on a Finesse Weapon's swing and
+       3 on a Great one. Jules priced this one outright — "Rckelss is 1 [for a] 2
+       action point cost or 2 for 4 ones" — and it is the rate the other three
+       are read against. See `moveWillpower` below. */
     body:
       'The attack is made with advantage.\n\n' +
-      'The next Attack Roll made against you is also made with advantage.',
+      'The next Attack Roll made against you is also made with advantage.\n\n' +
+      'Its cost is 1 Willpower for every 2 Action Points the attack costs.',
   },
   {
     id: 'taunting',
@@ -349,8 +393,8 @@ export const MARTIAL_MOVES = withArt([
    * rest of the tier is read between them.
    */
   {
-    id: 'concuss',
-    name: 'Concuss',
+    id: 'stunning-strike',
+    name: 'Stunning Strike',
     summary: 'A blow that takes the fight out of them for the rest of the round.',
     kind: 'martial-move',
     tags: ['Martial Move', 'Master'],
@@ -358,15 +402,24 @@ export const MARTIAL_MOVES = withArt([
     wp: 6,
     stat: 'instinct',
     /* "A martial move that cost 6 Willpower and if the attack land it stuns the
-       target." The Novice plate of the same name did something else entirely
-       (Reaction Points off the target, and the cancelling of what you
-       interrupted); Jules's Master list asks for a stun and the name is the one
-       that fits it, so the card moved up a tier and changed hands.
+       target", 2026-09-02, and this card was called CONCUSS until 2026-09-03,
+       when that name went back to a Novice reaction move and this one was
+       renamed: "then name concuss stunig strike".
+
+       It kept the price and gained the gate the new CONCUSS is built on. Jules,
+       the same day: "Do the same for stunning blow[,] i require reflex." So the
+       hit is no longer the whole of it — a stun is contested, the way an
+       interrupt is, and the two differ only in which of the target's numbers
+       answers. Grit is what shrugs off a blow to the head; Reflex is what rides
+       it out. The contest is printed rather than rolled for the reason it is on
+       CONCUSS: see there, and data/README.md.
 
        **The duration is chosen and the ruling is open.** A stun with no clock
        ends the fight. Until its next Turn End is the reading that costs the
-       target the turn you interrupted and no more. Flagged in data/README.md. */
-    body: 'On a hit, the target is stunned until its next Turn End.',
+       target the turn you took from it and no more. Flagged in data/README.md. */
+    body:
+      'On a hit, make an {stat} Roll {roll} against the Reflex of the target.\n\n' +
+      'On a success, the target is stunned until its next Turn End.',
   },
   {
     id: 'execute',
@@ -416,7 +469,8 @@ export const MARTIAL_MOVES = withArt([
     kind: 'martial-move',
     tags: ['Martial Move', 'Master'],
     ap: null,
-    wp: 5,
+    wp: 2,
+    scales: true,
     stat: 'instinct',
     /* "rend a martial move that applies a bleed per dice roll." Per die the
        attack rolls, so a swing that has been Empowered bleeds for more: the
@@ -424,9 +478,16 @@ export const MARTIAL_MOVES = withArt([
        makes "per dice roll" a thing the player can count before they pay.
 
        Bleed is a defined term and its definition is Jules's own sentence, in
-       keywords.js. */
+       keywords.js.
+
+       It printed a flat 5 until 2026-09-03, when Jules priced the rate outright:
+       "Rend is 2 for 2", so 2 Willpower on a Finesse Weapon's swing and 6 on a
+       Great one. That is the card pricing itself honestly for the first time —
+       the stacks it lays are counted off the swing's own dice, so a swing worth
+       more dice was always worth more Bleed for the same 5. */
     body:
-      'On a hit, the target gains one stack of Bleed for each Damage Die this attack rolls.',
+      'On a hit, the target gains one stack of Bleed for each Damage Die this attack rolls.\n\n' +
+      'Its cost is 2 Willpower for every 2 Action Points the attack costs.',
   },
   {
     id: 'sunder',
@@ -435,14 +496,25 @@ export const MARTIAL_MOVES = withArt([
     kind: 'martial-move',
     tags: ['Martial Move', 'Master'],
     ap: null,
-    wp: 7,
+    wp: 3,
+    scales: true,
     stat: 'instinct',
     /* "very expensive martial move that treat the target as vulnerable to the
        attack." Vulnerable is double damage from that damage type, which is worth
        more than any other single line in this file, so it is the dearest card
-       here: one more than the stun Jules priced at 6. Flagged in data/README.md,
-       since "very expensive" is a direction rather than a number. */
-    body: 'The target is treated as vulnerable to this attack’s damage.',
+       here.
+
+       It printed a flat 7 until 2026-09-03, when it became one of the four that
+       `scales`. **The rate is chosen and the ruling is open**: 3 Willpower for
+       every 2 Action Points, a rung above the REND Jules priced, which comes out
+       at 3 on a Finesse Weapon's swing and 9 on a Great one. Doubling the damage
+       is worth the most of anything in this file, and it is worth most of all on
+       the swing that had the most to double — which is why this card of all of
+       them should never have had one number. Flagged in data/README.md, since
+       "very expensive" is a direction rather than a rate. */
+    body:
+      'The target is treated as vulnerable to this attack’s damage.\n\n' +
+      'Its cost is 3 Willpower for every 2 Action Points the attack costs.',
   },
   {
     id: 'breach',
@@ -460,6 +532,47 @@ export const MARTIAL_MOVES = withArt([
     body: 'On a hit, the target’s Defense is reduced by 2 until its next Turn End.',
   },
 ]);
+
+/* ---------------------------------------------------------------- the price
+ * What one move costs the swing it is added to.
+ *
+ * Sixteen of the eighteen print one number and that number is the whole answer.
+ * The other four print a **rate**, and Jules asked for it on 2026-09-03:
+ *
+ *   "I want you to make it so Reckless, Wound, Rend, Sunder to scale of the
+ *    weapon base action point cost. being for example Rckelss is 1 [for] 2
+ *    action point cost or 2 for 4 ones. Rend is 2 for 2"
+ *
+ * So `wp` on a card that `scales` is what it costs for every 2 Action Points of
+ * the attack, and `wp` on every other card is what it costs. A cost-2 weapon pays
+ * exactly the printed number either way, which is what keeps the orb on the card
+ * honest: the plate shows the rate and the cheapest swing in the game is the one
+ * the rate is quoted against.
+ *
+ * **Why these four and not the other fourteen.** What a move is worth is not
+ * always what the swing is worth. DISARM knocks a weapon out of a hand and the
+ * hand does not care what hit it; LUNGE is three meters whatever you are
+ * holding. These four are the ones whose value is the swing's own: RECKLESS
+ * doubles the chance of landing it, WOUND opens the next one, REND counts the
+ * dice it rolled, SUNDER doubles what it dealt. A Great Weapon bought all four
+ * of those for a dagger's price until the day this was written.
+ *
+ * Rounded **up**, so the rung is what matters and not the parity: a 3-point swing
+ * pays what a 4-point one pays, and the crossbow and the firearms, which are off
+ * the cost column at 1 Action Point, pay the same as the 2s. Nothing costs less
+ * than the printed rate.
+ *
+ * The base cost and not what the holder pays: an Arcanist's discount, a Quick
+ * Draw, a Colossus's own Action Point cuts are all things you bought, and a move
+ * getting cheaper because the swing did would be paying you twice.
+ */
+export function moveWillpower(card, ap = 2) {
+  const printed = Math.max(0, Math.floor(Number(card?.wp) || 0));
+  if (!card?.scales) return printed;
+
+  const cost = Math.max(1, Math.floor(Number(ap) || 0));
+  return printed * Math.ceil(cost / 2);
+}
 
 /* -------------------------------------------------------------------- lookups
  * A move by id or by printed name, and the tier a card sits at. weapons.js folds

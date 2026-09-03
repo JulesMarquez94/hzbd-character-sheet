@@ -4,6 +4,7 @@ import { LoadoutChooser } from './LoadoutPick.jsx';
 import BrewRest from './BrewRest.jsx';
 import EnchantAction from './EnchantRest.jsx';
 import { PactFormWall } from './PactPick.jsx';
+import { Gated } from './parts.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { brewSummary } from '../../lib/alchemy.js';
@@ -161,8 +162,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
             <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
               Cancel
             </button>
-            <button
-              type="button"
+            <Gated
               className="btn btn-copper btn-sm"
               onClick={() => {
                 /* The write, and beside it what this rest was spent on. Only
@@ -171,15 +171,14 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
                 onRest(plan.patch, { action: action?.label ?? null });
                 onClose();
               }}
-              disabled={!plan.affordable}
-              title={
+              why={
                 plan.affordable
-                  ? undefined
-                  : `${plan.short} more Supplies than the crate holds. Nothing about this rest happens.`
+                  ? null
+                  : `This rest needs ${plan.short} more Supplies than the crate holds. Restock, or take a labour off above. Nothing about the rest happens until you do.`
               }
             >
               Yes, rest
-            </button>
+            </Gated>
           </>
         )
       }
@@ -450,21 +449,20 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
                         const affordable = labourAffordable(character, kind, option);
 
                         return (
-                          <button
-                            type="button"
+                          <Gated
                             key={`${option.amount}-${option.gain}`}
                             className={`rest-opt${option.gain ? ' is-gain' : ''}`}
-                            disabled={!affordable}
                             onClick={() => onTake(row, option)}
-                            title={
+                            title={`${row.label} for ${option.amount} Supplies`}
+                            why={
                               affordable
-                                ? `${row.label} for ${option.amount} Supplies`
-                                : `${option.amount} Supplies is more than the crate holds once the rest is paid for`
+                                ? null
+                                : `${option.amount} Supplies is more than the crate holds once the rest itself is paid for.`
                             }
                           >
                             {option.gain ? '+' : '−'}
                             {option.amount}
-                          </button>
+                          </Gated>
                         );
                       })
                     )

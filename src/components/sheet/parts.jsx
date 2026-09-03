@@ -4,6 +4,93 @@ import { formatWeight } from '../../lib/characterModel.js';
 import { useUnit } from '../../context/units.js';
 
 /**
+ * A button that says why it cannot be pressed.
+ *
+ * Jules, 2026-09-03: "When there is an error or something blocks you allow user
+ * to mouth over the greyoud button to get a tooltip that tells them what the
+ * issue is."
+ *
+ * A greyed button is the commonest thing on this sheet. Almost every one of them
+ * already knew its reason — `!plan.affordable`, `room === 0`, `!can.ok` — and
+ * several already carried it in a `title`. **Not one of those reasons has ever
+ * reached a reader**, because a `disabled` button is not a control any more: it is
+ * out of the tab order, the platform is under no obligation to draw its tooltip,
+ * and the browsers that do suppress mouse events on disabled form controls
+ * suppress the hover with them. It is a button that has stopped being able to
+ * explain itself, which is exactly the wrong shape for the one button that has
+ * something to explain.
+ *
+ * So a gated button is not disabled. It is `aria-disabled`:
+ *
+ *   - screen readers say the same thing `disabled` said
+ *   - it is still a control, so the pointer reaches it and the sheet's own hover
+ *     bubble opens with the reason in it (`useHoverTip`, the same bubble every
+ *     stat tile uses)
+ *   - it is still in the tab order, which `disabled` took it out of, so the reason
+ *     is reachable without a mouse at all — the half no tooltip could have fixed
+ *   - the press is swallowed here, by mouse and by keyboard both, so nothing
+ *     downstream has to know the difference
+ *
+ * Measured in this Chromium, 2026-09-03: a real pointer over a `disabled` button
+ * does still deliver `mouseover` and `mouseenter`, so hover alone would have worked
+ * here. That is a browser being generous rather than a rule to build on, and it
+ * was never the whole of what was missing.
+ *
+ * It goes on looking greyed out: `[aria-disabled='true']` carries the same
+ * `opacity` and `not-allowed` cursor the `:disabled` rules do, in index.css beside
+ * them. A hover tint from the button's own rules can still land under that
+ * opacity, and that is wanted rather than tolerated: something has to say the
+ * bubble is there to be opened.
+ *
+ * `why` is the reason, and passing nothing is what makes the button ordinary —
+ * so a caller writes `why={short ? 'You have 1 Willpower and this costs 3.' : null}`
+ * and stops thinking about it. Write a reason that says what is wrong and what
+ * would fix it; "Not allowed" is the old silence with extra steps.
+ */
+export function Gated({ why = null, className = '', onClick, title = null, children, ...rest }) {
+  const shut = Boolean(why);
+  const { ref, tipProps, tip } = useHoverTip(shut ? why : '');
+
+  return (
+    <button
+      type="button"
+      ref={ref}
+      className={`${className}${shut ? ' is-gated' : ''}`}
+      aria-disabled={shut || undefined}
+      /* The native tooltip as well, for the reader who has the pointer still and
+         no JavaScript yet. It costs a word and it is the same word. */
+      title={shut ? why : title}
+      onClick={(e) => {
+        if (shut) {
+          e.preventDefault();
+          return;
+        }
+        onClick?.(e);
+      }}
+      /* Space and Enter are a button's other press, and `aria-disabled` stops
+         neither. Swallowed before the browser turns them into a click. */
+      onKeyDown={(e) => {
+        if (shut && (e.key === 'Enter' || e.key === ' ')) e.preventDefault();
+      }}
+      {...tipProps}
+      {...rest}
+    >
+      {children}
+      {/* The bubble is drawn but not named. Text inside a button is part of its
+          accessible name, so an open bubble would rename the control to "Yes,
+          restThis rest needs 3 more Supplies…" — and it is open at exactly the
+          moment a screen reader is on it, because focus is one of the two things
+          that opens it. Measured, 2026-09-03.
+
+          Hidden here rather than in useHoverTip, whose other callers are tiles
+          rather than controls and have no name to spoil. The reason still
+          reaches assistive tech: `title` carries it, as the description. */}
+      <span aria-hidden="true">{tip}</span>
+    </button>
+  );
+}
+
+/**
  * Block 1's larger, read-only Physique/Instinct/Mind tile.
  *
  * `math` is the sum behind the number, printed under `info` on hover: the 4

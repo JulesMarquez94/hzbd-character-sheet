@@ -142,12 +142,12 @@ export const ACTION_CARDS = withArt([
  *
  *   X + Shield   the base weapon's damage at 1 more Action Point, and the shield
  *                is worth 3 Armor and 1 Defense while it is in your hand
- *   Paired X     the base weapon's dice as d4 rolled twice, at 1 more Action
+ *   Paired X     the base weapon's dice as twice as many d4, at 1 more Action
  *                Point, and every roll it makes is at disadvantage
  *   Crossbow     its own rung's damage for 1 Action Point less, and a Reload
  *
  * So Finesse + Shield deals what a Finesse Weapon deals and costs 3 rather than
- * 2, and Paired Finesse deals 1d4 + stat twice for the same 3.
+ * 2, and Paired Finesse deals 2d4 + stat for the same 3.
  *
  * **The firearms are off the cost column entirely.** "All shoot ability should
  * cost 1 for firearms", 2026-08-24, so all three fire for 1 Action Point and keep
@@ -754,11 +754,24 @@ export const WEAPON_ABILITIES = withArt([
    * default disadvantage on attack rolls. Whirlwind is against the reflex of
    * entity in weapon range."
    *
-   * So every Paired weapon is the melee weapon one rung down with its dice
-   * halved in size and rolled twice, at one more Action Point, and it never
-   * rolls without disadvantage. The live value prints once and the card says
-   * twice, which keeps an Empowered pair honest: a die added to 1d4 is added to
-   * both halves because it is one expression.
+   * So every Paired weapon is the melee weapon one rung down with **twice as many
+   * dice, each one size smaller**, at one more Action Point, and it never rolls
+   * without disadvantage. A cost-4 rung of 2d6 comes out as 4d4.
+   *
+   * **"Twice d4" is the die count and not the landing, and that was read the
+   * other way until 2026-09-03.** Jules: "Paired weapon are incorrectly doing
+   * half the number of d4 they should[.] Paired heavy should be 4d4." Until that
+   * day these cards printed the rung's own count at d4 and dealt it *twice* —
+   * "2x 1d4 + Stat" read as two landings — which came to the same dice and put
+   * the attribute on the card a second time with them. A Paired Heavy was then
+   * worth 10 + 4x Physique for 5 Action Points against a Great Weapon's 10.5 +
+   * 2x for the same 5, which is not a wall where the cost column sets the damage.
+   *
+   * Folded into one expression the dice are the designer's number and the
+   * attribute is counted once, like every other card on the wall. It also keeps
+   * an Empowered pair honest for free: a die added to 4d4 is one die, where a die
+   * added to "2d4, twice" was quietly two. See `paired` in
+   * scripts/check-weapons.mjs, which is the rule the whole wall is measured by.
    */
   {
     id: 'paired-finesse-strike',
@@ -772,7 +785,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp'],
     body:
       'Make an {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 meter (3 feet)** of you.\n\n' +
-      'On a hit, both blades land and you deal [[1d4 + stat]] {damage} damage twice.',
+      'On a hit, both blades land and you deal [[2d4 + stat]] {damage} damage.',
   },
   {
     id: 'paired-finesse-whirlwind',
@@ -786,7 +799,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp'],
     body:
       'You turn once with both blades out. Make an {stat} Roll {roll} with disadvantage against the Reflex of **all entities** within **1 meter (3 feet)** of you.\n\n' +
-      'On a success, you deal [[1d4 + stat]] {damage} damage twice.',
+      'On a success, you deal [[2d4 + stat]] {damage} damage.',
   },
 
   /* ----- Enchanted Instrument -----
@@ -1175,7 +1188,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp', 'Blunt'],
     body:
       'Make a {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 meter (3 feet)** of you.\n\n' +
-      'On a hit, both weapons land and you deal [[2d4 + stat]] {damage} damage twice.',
+      'On a hit, both weapons land and you deal [[4d4 + stat]] {damage} damage.',
   },
   {
     id: 'paired-light-whirlwind',
@@ -1189,7 +1202,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp', 'Blunt'],
     body:
       'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of **all entities** within **1 meter (3 feet)** of you.\n\n' +
-      'On a success, you deal [[2d4 + stat]] {damage} damage twice.',
+      'On a success, you deal [[4d4 + stat]] {damage} damage.',
   },
 
   /* ----- Melee Light + Shield ----- */
@@ -1447,7 +1460,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp', 'Blunt'],
     body:
       'Make a {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 meter (3 feet)** of you.\n\n' +
-      'On a hit, both weapons land and you deal [[2d4 + 2*stat]] {damage} damage twice.',
+      'On a hit, both weapons land and you deal [[4d4 + 2*stat]] {damage} damage.',
   },
   {
     id: 'paired-heavy-whirlwind',
@@ -1461,7 +1474,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp', 'Blunt'],
     body:
       'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of **all entities** within **1 meter (3 feet)** of you.\n\n' +
-      'On a success, you deal [[2d4 + 2*stat]] {damage} damage twice.',
+      'On a success, you deal [[4d4 + 2*stat]] {damage} damage.',
   },
 
   /* ----- Melee Heavy + Shield ----- */
@@ -1537,7 +1550,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp', 'Blunt'],
     body:
       'Make a {stat} Melee Attack {roll} with disadvantage against **an entity** within **1 meter (3 feet)** of you.\n\n' +
-      'On a hit, both weapons land and you deal [[3d4 + 2*stat]] {damage} damage twice.',
+      'On a hit, both weapons land and you deal [[6d4 + 2*stat]] {damage} damage.',
   },
   {
     id: 'paired-great-whirlwind',
@@ -1551,7 +1564,7 @@ export const WEAPON_ABILITIES = withArt([
     damage: ['Sharp', 'Blunt'],
     body:
       'You turn once with both weapons out. Make a {stat} Roll {roll} with disadvantage against the Reflex of **all entities** within **1 meter (3 feet)** of you.\n\n' +
-      'On a success, you deal [[3d4 + 2*stat]] {damage} damage twice.',
+      'On a success, you deal [[6d4 + 2*stat]] {damage} damage.',
   },
 
   /* ----- Claws & Teeth (natural) -----

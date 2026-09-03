@@ -3,6 +3,7 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
+import { Gated } from './parts.jsx';
 import { useTagFilter } from './useTagFilter.js';
 import PickBlock from './PickBlock.jsx';
 import { LearnSection } from './LineagePick.jsx';
@@ -126,6 +127,12 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
           : state.complete && taken
             ? 'Chosen'
             : 'Half done'
+      }
+      foldable
+      summary={
+        background
+          ? `${background.name} · ${state.skills.map((skill) => skill.name).join(', ') || 'no skills'}`
+          : 'No background chosen yet.'
       }
     >
       <p className="pick-lead">
@@ -759,18 +766,16 @@ function KitOutfitter({ background, character, patch, onClose }) {
       footer={
         <>
           <span className="spacer" />
-          <button
-            type="button"
+          <Gated
             className="btn btn-take btn-sm"
-            disabled={!ready}
-            title={ready ? undefined : reason}
+            why={ready ? null : reason}
             onClick={() => {
               patch(buildKitPatch({ character, background, armorSet, weapons }));
               onClose();
             }}
           >
             {ready ? 'Take the kit' : reason}
-          </button>
+          </Gated>
         </>
       }
     >

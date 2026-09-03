@@ -519,9 +519,12 @@ export const KEYWORDS = [
        takes no Actions at all; an interrupted one loses the Action it was taking
        and has already paid for it.
 
-       The word appears once elsewhere in the codex, in CONCUSS's summary, where it
-       means the ordinary English thing. A summary is printed as plain text and
-       never through CardText, so it is not lit and needed no rewording. */
+       It is printed on a card body as of 2026-09-03: CONCUSS was rewritten that
+       day into a reaction that stops what it answered, and this is the word for
+       what it does. Until then the term appeared once outside the Time family, in
+       the old CONCUSS's *summary*, where it meant the ordinary English thing — a
+       summary is plain text and never goes through CardText, so it was never lit
+       and never needed rewording. Now the term and the card agree. */
     id: 'interrupted',
     terms: ['interrupted'],
     color: 'var(--stat-ap)',

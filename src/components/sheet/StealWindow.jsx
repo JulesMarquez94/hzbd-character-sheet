@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from '../Modal.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { addEffect } from '../../lib/combatTurn.js';
 import {
@@ -109,21 +110,19 @@ export default function StealWindow({ talent, card, character, patch, onClose })
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
             Nothing worth taking
           </button>
-          <button
-            type="button"
+          <Gated
             className="btn btn-take btn-sm"
-            disabled={!taken || (needsRoll && rolled <= 0)}
-            title={
+            why={
               !taken
-                ? 'Roll the d4, then choose what you lifted'
+                ? 'Nothing chosen yet. Roll the d4, then tap what you lifted.'
                 : needsRoll && rolled <= 0
-                  ? `Say what the ${taken.dice} came to first`
-                  : undefined
+                  ? `Say what the ${taken.dice} came to first: that number is what you got.`
+                  : null
             }
             onClick={take}
           >
             Take it
-          </button>
+          </Gated>
         </>
       }
     >
