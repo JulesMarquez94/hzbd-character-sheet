@@ -2611,13 +2611,18 @@ attack roll and a die on your teeth, and you lose your items, your spells and
 every ability that is not this set's.
 
 **FERAL RAGE** is the one nobody expects. It fires on losing Health or spending
-Willpower, and it lets a Feral Cursed **choose to fail** the roll — with nothing
-anywhere on the card letting them choose to pass it. At Rank 1 the beast can only
-be refused, never called. And refusing it makes it *harder* to reach next time:
-"on a failure the difficulty increase by 1 for your enxt roll", resetting to 8
-only when a transformation happens. So restraint is rewarded with a quieter beast
-and a worse chance of having it when it is wanted. That hole is what CALL THE
-BEAST was written to fill, and it is the single most interesting thing on the tab.
+Willpower, and the roll it asks for is a **control** roll: you throw it to hold
+the beast in, and a *failure* is the transformation. That is Jules's ruling of
+2026-09-03 and it is what makes the rest of the card read — see "The roll you are
+trying to make" below for the fortnight it spent the other way round.
+
+It lets a Feral Cursed **choose to fail**, with nothing anywhere on the card
+letting them choose to pass, so the beast can always be let out and never
+reliably held in. And holding it in makes it *harder* to hold next time: the
+difficulty climbs a step on every success and resets to 8 only when a
+transformation happens. So restraint buys a louder beast rather than a quieter
+one, the pressure comes off only by giving in, and that is the single most
+interesting thing on the tab.
 
 **BEAST WITHIN** is a Martial Move pool with a mouth. Same count and same ladder
 the Duelist's DEXTEROUS prints, off a different set's card, so it hangs on the
@@ -2738,14 +2743,16 @@ a hand differently.
 through the ledger; this block's claim on it is only the sentence about what
 emptying it does, so it has no click.
 
-### The difficulty button says the opposite of the note
+### The difficulty button said the opposite of the note
 
 The note asks for a button that increments the difficulty **"as you succed your
-roll"**. FERAL RAGE says the increase is on a **failure**. The card wins, and the
-button is labelled in the card's own terms — *"Held it in, +1"* — because that is
-what a failed roll means here: you did not transform. If the note is right and the
-roll is a *resistance* roll, the label is one string and the reading flips.
-**Worth a ruling.**
+roll"**. FERAL RAGE, as transcribed, says the increase is on a **failure**. This
+section shipped saying the card wins and the reading flips if the note is right.
+
+**Ruled on 2026-09-03: the note is right.** The roll is a resistance roll, the
+failure is the transformation, and the card's sentence moved instead. The button
+never had to: *"Held it in, +1"* was already the note's label and is now the
+card's too. See "The roll you are trying to make" below.
 
 The roll itself is never asked for. Same law every other die on this sheet keeps:
 the sheet is told that Health moved and never what moved it, so a sheet that asked
@@ -12238,14 +12245,17 @@ tab rewrites it, a rest fills it. A ledger only ever grows a row because somethi
 Three answers, and the card is the reason for each:
 
     roll it          the Instinct Roll against the difficulty the block holds, with the DC
-                     handed in rather than asked for. Pass and you give in, through the same
-                     `enterFormBody` the block's Transform button uses, so the difficulty
-                     resets to 8 exactly as the card says. Fail and you held it in, +1
-    willingly fail   the card's own last sentence. It is a failure, so it climbs the same step
+                     handed in rather than asked for. Fail and the beast is out, through the
+                     same `enterFormBody` the block's Transform button uses, so the difficulty
+                     resets to 8 exactly as the card says. Pass and you held it in, +1
+    willingly fail   the card's own last sentence, and the way to give in on purpose
     not yet          the way out, and it moves nothing
 
-Worth noticing what the card does not offer: there is no way to choose to *pass*. At Rank 1 the
-beast can only be refused, never called, and CALL THE BEAST is the card written to fill that hole.
+Which way round that goes was ruled a few hours after this shipped, and it shipped the other way:
+pass to give in, fail to hold it in. See "The roll you are trying to make" below.
+
+Worth noticing what the card does not offer: there is no way to choose to *pass*. The beast can
+always be let out and never reliably held in.
 
 It stays quiet wherever the answer could not be acted on: while you are already in the form, while
 a spent one is still flagged and waiting to be shaken off, and at 1 Health or less, where
@@ -12318,3 +12328,75 @@ not a width, so it takes what there is and the answers go back under the questio
 - **A hand-typed ledger entry triggers the roll.** Write "-9, took a hit from the boiler golem" in
   the Health ledger and the curse asks. That is the card working as written rather than a leak, but
   it is worth knowing before somebody corrects a balance downward and gets a prompt for it.
+
+## The roll you are trying to make, 2026-09-03
+
+> with the feral curse yo utransform whenyou fail not when you succed
+
+One sentence, and it settles the oldest open question on the Feral Curse tab.
+
+### What was open
+
+FERAL RAGE was transcribed off the sheet with two clauses that only agree if the roll goes one
+particular way:
+
+    On a failure the difficulty increases by 1 for your next roll.
+    It resets to 8 on a transformation.
+
+Read with a **pass** as the transformation, those are consistent and the card is a roll you are
+hoping to make. Read with a **failure** as the transformation, they are the same event written
+twice and they cancel: one failure would both raise the difficulty and reset it.
+
+The Developpement Notes had already asked for the second reading — a button that increments the
+difficulty **"as you succed your roll"** — and the block was built the card's way with the
+disagreement written down as *"Worth a ruling"*. It stood for a fortnight, and the prompt built
+earlier the same day inherited it: pass and you gave in, fail and you held it in.
+
+The ruling is the note's. **It is a control roll.** You throw it to hold the beast in, the failure
+is the transformation, and the sentence that moves the difficulty flipped with it.
+
+### What moved
+
+| Where | Was | Is |
+| ----- | --- | -- |
+| `FeralCall`'s verdict | `isFailure` held it in | `isFailure` lets the beast out |
+| **Willingly fail** | a failure, so the difficulty climbed | the way to give in on purpose |
+| FERAL RAGE, second paragraph | "On a failure the difficulty increases by 1" | "On a failure you transform. On a success the difficulty increases by 1" |
+| The block's step button | titled "On a failure…" | titled "On a success…". The label *"Held it in, +1"* was already right |
+| The block's Transform | "The Feral Rage roll passed. Apply it." | "…failed, or you chose to fail it." |
+
+Two of those are worth a sentence each.
+
+**The card now says which way the roll goes.** "On a failure you transform" is not on the tab, so
+it is an addition rather than a read — the same kind BESTIAL SENSE's second sentence is, and marked
+as one in `talents.js`. It is there because the direction was *inferable* rather than stated, and a
+fortnight of the sheet inferring it backwards is the evidence that inferable was not enough.
+
+**The transcription file is untouched.** `data/templates/feral-cursed-ability.csv` is the record of
+the sheet as it arrived, so it still reads "on a failure", exactly as it still carries BESTIAL SENSE
+without the sentence that was added to it in chat. A ruling lands in the codex; the CSV is where the
+sheet stays.
+
+### The shape of the curse, now
+
+Restraint costs. Every roll you hold is a roll you will have to make again harder, and the pressure
+comes off only by giving in, so a Feral Cursed who keeps holding it in is one the beast is getting
+closer to. That is the opposite of what this file said last week, where holding it in bought a
+quieter beast, and it is a much better curse.
+
+And the beast can always be called: "you can choose to willingly fail the roll" is now the sentence
+that calls it, so the prompt's middle button transforms rather than climbing the difficulty. Nothing
+anywhere on the card lets a Feral Cursed choose to *pass*.
+
+### Left open
+
+- **CALL THE BEAST is narrower than it was written to be.** It was house-written to fill the hole
+  where a Rank 1 Feral Cursed could not call the beast at all. Willingly failing calls it now, so
+  what the card still buys is the form **on demand** — no trigger needed first — for 1 AP and 2 WP.
+  But its own 2 WP is itself a trigger, and any other Willpower spend provokes a roll a Feral Cursed
+  may simply choose to fail, which is the same transformation for less. Worth a ruling on whether it
+  should do something the free route cannot.
+- **Nothing re-asks after a willing failure.** Giving in clears the whole queue, which is right,
+  but it means a player who meant to press **Not yet** and pressed the middle button has spent half
+  their Health with no confirmation. The block's own Transform button prints the price first; this
+  one prints it in the paragraph above and not on the button.

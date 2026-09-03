@@ -1654,9 +1654,14 @@ const TALENT_SETS = [
          the character, since a form whose clock is a pool is a form the sheet can
          simply look at. */
       ends: 'short',
-      /* FERAL RAGE: "make an Instinct roll with a difficulty of 8. On a failure
+      /* FERAL RAGE: "make an Instinct roll with a difficulty of 8. On a success
          the difficulty increases by 1 for your next roll. It resets to 8 on a
          transformation."
+
+         It is a *control* roll, ruled by Jules on 2026-09-03: "with the feral
+         curse you transform when you fail not when you succeed." So `base` is
+         what you are trying to beat to keep the beast in, and `step` is what
+         holding it in costs you next time. See the card's own reads below.
 
          The trigger — losing Health or spending Willpower — used to be printed
          on the card and played at the table, because the sheet saw its Health
@@ -1784,13 +1789,26 @@ const TALENT_SETS = [
            transformation you can choose to willingly fail the roll" is two
            sentences run together and is set as two.
 
-           Worth noticing what the last one says: a Feral Cursed may choose to
-           *fail*, and nothing on this card lets them choose to succeed. At Rank 1
-           the beast can only be refused, never called, which is the hole CALL THE
-           BEAST was written to fill. */
+           And one *amendment*, ruled by Jules on 2026-09-03: "with the feral
+           curse you transform when you fail not when you succeed." The roll is
+           the one you make to hold the beast in, so the sentence that moves the
+           difficulty had to flip with it — the tab reads "on a failure the
+           difficulty increase by 1", which under this reading fires on the same
+           event as "it resets to 8 on a transformation" and cancels it. It is
+           set as **on a success**, which is also what the Developpement Notes
+           asked for in the first place: a button that increments the difficulty
+           "as you succed your roll". And the direction is said out loud — "on a
+           failure you transform" — because leaving it to be inferred is what
+           made the sheet read it backwards for a fortnight. Flagged in
+           data/README.md.
+
+           Which turns the last sentence into the only way to *call* the beast at
+           Rank 1: choosing to fail is choosing to transform. Nothing here lets a
+           Feral Cursed choose to hold it in, so restraint is never guaranteed
+           and giving in always is. */
         body:
           'Whenever you lose Health or spend Willpower, you have a chance to transform into your Feral Form.\n\n' +
-          'Each time, make an {stat} Roll {roll} with a difficulty of 8. On a failure the difficulty increases by 1 for your next roll. It resets to 8 on a transformation.\n\n' +
+          'Each time, make an {stat} Roll {roll} with a difficulty of 8. On a failure you transform. On a success the difficulty increases by 1 for your next roll, and it resets to 8 on a transformation.\n\n' +
           'You can choose to willingly fail the roll.',
       },
       {
@@ -1889,9 +1907,18 @@ const TALENT_SETS = [
         ap: 1,
         wp: 2,
         stat: 'instinct',
-        /* House-written, and the hole it fills is FERAL RAGE's: that card lets a
-           Feral Cursed choose to *fail* the roll and never to pass it, so at Rank
-           1 the beast can only be refused.
+        /* House-written, and the hole it fills is FERAL RAGE's: that card only
+           ever offers the beast when something has already triggered the roll, so
+           at Rank 1 the form is never a thing you simply decide to enter. This is
+           the trigger you carry with you.
+
+           Worth a ruling since 2026-09-03, when the roll became a control roll:
+           willingly failing is now a transformation, so a Feral Cursed who wants
+           the form can spend Willpower on anything at all and choose to fail the
+           roll it provokes. That is cheaper than this card, which asks 1 AP and 2
+           WP on top. It still buys the one thing the other route cannot — the
+           form on demand, with nothing spent first — but the gap it was written
+           to fill is narrower than it was. Flagged in data/README.md.
 
            The Willpower is not decoration. "Whenever you lose Health or spend
            Willpower, you have a chance to transform" is the set's own trigger, so

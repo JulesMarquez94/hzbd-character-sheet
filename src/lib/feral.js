@@ -23,9 +23,11 @@
  *                 your Claws & Teeth attacks are Empowered by 1."
  *                "In this form you are unable to use items, non-Feral Curse
  *                 abilities or spells."
- *   FERAL RAGE   "make an Instinct roll with a difficulty of 8. On a failure the
+ *   FERAL RAGE   "make an Instinct roll with a difficulty of 8. On a success the
  *                 difficulty increases by 1 for your next roll. It resets to 8 on
- *                 a transformation."
+ *                 a transformation." A control roll: you throw it to *hold the
+ *                 beast in*, and a failure is the transformation. Ruled by Jules
+ *                 on 2026-09-03, and the card's "on a failure" flipped with it.
  *   BEAST WITHIN "you choose a Carnivore Mammal. This beast represents how your
  *                 ability manifests."
  *   BESTIAL SENSE  "Your maximum Shield is now equal to your Health instead of
@@ -270,15 +272,20 @@ export function setFeralIdentity(character, id, { name, beast, portrait_url }) {
 /**
  * Where the Feral Rage difficulty stands, moved by one step or set outright.
  *
- * "On a failure the difficulty increases by 1 for your next roll. It resets to 8
+ * "On a success the difficulty increases by 1 for your next roll. It resets to 8
  * on a transformation."
+ *
+ * The step is the price of *restraint*, not of failure: the roll is thrown to
+ * hold the beast in, so passing it is what makes the next one harder. Every way
+ * into the form resets the number instead, and that reset lives in `enterForm`
+ * rather than here.
  *
  * Written from three places now. The two presses on the block move it by hand,
  * and since 2026-09-03 the prompt that raises the roll writes a step through here
- * whenever the roll is failed or willingly failed. The roll used to be the
- * table's alone, because the sheet was told about a Health change and never about
- * what caused it; both of the card's triggers write a ledger row naming what did
- * it, which is what made the asking possible. See FeralCall.jsx.
+ * whenever the roll is passed. The roll used to be the table's alone, because the
+ * sheet was told about a Health change and never about what caused it; both of
+ * the card's triggers write a ledger row naming what did it, which is what made
+ * the asking possible. See FeralCall.jsx.
  */
 export function setFeralDifficulty(character, form, value) {
   const dc = Math.max(form.base, Math.min(99, Math.floor(Number(value) || 0)));

@@ -36,9 +36,9 @@ function whyWords(row) {
  *
  * FERAL RAGE: "Whenever you lose Health or spend Willpower, you have a chance
  * to transform into your Feral Form. Each time, make an Instinct Roll with a
- * difficulty of 8. On a failure the difficulty increases by 1 for your next
- * roll. It resets to 8 on a transformation. You can choose to willingly fail
- * the roll."
+ * difficulty of 8. On a failure you transform. On a success the difficulty
+ * increases by 1 for your next roll, and it resets to 8 on a transformation.
+ * You can choose to willingly fail the roll."
  *
  * That was a card nobody played. The block on the Character tab held the
  * difficulty and offered the two presses that move it, and the roll itself was
@@ -51,6 +51,18 @@ function whyWords(row) {
  * Jules, 2026-09-03: "whenever the character spend willpower or take health
  * damage he should be prompt the control roll. He can choose to fail those if he
  * wants." So it asks now, and what made that possible is the ledger.
+ *
+ * ------------------------------------------------------------- which way it goes
+ * **It is a control roll.** Jules, 2026-09-03: "with the feral curse you
+ * transform when you fail not when you succeed." You throw it to hold the beast
+ * in, and the beast comes out when you cannot.
+ *
+ * This prompt shipped the other way round earlier the same day, off the card as
+ * transcribed, and the card is what had to move: its own two sentences read
+ * "on a failure the difficulty increases" and "it resets to 8 on a
+ * transformation", which under this reading are the same event twice and cancel.
+ * The increase is on a *success*, which is also what the Developpement Notes
+ * asked for before any of this was built. See talents.js and data/README.md.
  *
  * ------------------------------------------------------------------- the trigger
  * **A ledger row, and nothing else.** Every movement of Health on this sheet
@@ -74,17 +86,18 @@ function whyWords(row) {
  * Three, and the card is the reason for each:
  *
  *   roll it          the Instinct Roll against the difficulty the block holds.
- *                    Pass and you give in: the transformation runs through
+ *                    Fail and the beast is out: the transformation runs through
  *                    `enterFormBody`, the same write the block's own Transform
  *                    button makes, so a form entered this way is identical to
- *                    one entered by hand and the difficulty resets to 8. Fail
- *                    and you held it in, and the difficulty climbs a step.
- *   willingly fail   the card's own last sentence. It is a *failure*, so the
- *                    difficulty climbs exactly as a rolled one does. Worth
+ *                    one entered by hand and the difficulty resets to 8. Pass
+ *                    and you held it in, and the difficulty climbs a step, so
+ *                    the next one is harder to hold.
+ *   willingly fail   the card's own last sentence, and under this reading it is
+ *                    the way to give in on purpose: a failure is a
+ *                    transformation whether it was thrown or chosen. Worth
  *                    noticing what the card does not offer: there is no way to
- *                    choose to *pass*. At Rank 1 the beast can only be refused,
- *                    never called, and CALL THE BEAST is the card that fills
- *                    that hole.
+ *                    choose to *pass*. The beast can always be let out and never
+ *                    reliably held in, which is the whole shape of the curse.
  *   not yet          the way out, and it moves nothing. A prompt that raised
  *                    the difficulty on an Escape keypress would be the sheet
  *                    making the choice the card gives the player.
@@ -181,14 +194,15 @@ export default function FeralCall({ character, patch }) {
 
   const next = () => setQueue((queued) => queued.slice(at + 1));
 
-  /** Held it in: a failure, rolled or chosen, and the difficulty climbs a step. */
+  /** Held it in: the roll passed, and holding it in makes the next one harder. */
   function held() {
     patch(setFeralDifficulty(liveRef.current, form, form.difficulty + form.step));
     next();
   }
 
   /**
-   * Gave in. The same write the block's Transform button makes.
+   * Gave in: the roll failed, or was failed on purpose. The same write the
+   * block's Transform button makes.
    *
    * And the queue goes with it, all of it: you cannot transform into what you
    * already are, the difficulty is back at the 8 the card resets it to, and
@@ -227,8 +241,9 @@ export default function FeralCall({ character, patch }) {
 
     // Closed without throwing. The question stands, and nothing has moved.
     if (!result) return;
-    if (isFailure(result.verdict)) held();
-    else gaveIn();
+    /* A control roll: the failure is the transformation. See the header. */
+    if (isFailure(result.verdict)) gaveIn();
+    else held();
   }
 
   return (
@@ -248,9 +263,9 @@ export default function FeralCall({ character, patch }) {
           </button>
           <button
             type="button"
-            className="btn btn-minimal btn-sm"
-            onClick={held}
-            title={`A failure either way, so the difficulty climbs to ${form.difficulty + form.step}`}
+            className="btn btn-sub btn-sm"
+            onClick={gaveIn}
+            title={`The card's own last sentence: give in without throwing, and the difficulty goes back to ${form.base}`}
           >
             Willingly fail
           </button>
@@ -273,9 +288,9 @@ export default function FeralCall({ character, patch }) {
     >
       <p className="pick-line" style={{ marginTop: 0 }}>
         <b>{head.why}</b>, and the {form.chosen ? form.beast : 'beast'} in you felt it. Pass the
-        roll and you give in: half the Health you have left buys twice as much Shield, and you are
-        in your {form.spec.label} until it runs out. Fail it and you held it in, and it is harder to
-        hold the next time.
+        roll and you held it in, and it is harder to hold the next time. Fail it and the beast is
+        out: half the Health you have left buys twice as much Shield, and you are in your{' '}
+        {form.spec.label} until it runs out.
       </p>
 
       <div className="feral-dc">

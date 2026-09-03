@@ -42,9 +42,12 @@ import { statMath } from '../../lib/statMath.js';
  * it is drawn without the click that opens the ledger.
  *
  * -------------------------------------------------------- and the difficulty
- * "On a failure the difficulty increases by 1 for your next roll. It resets to 8
+ * "On a success the difficulty increases by 1 for your next roll. It resets to 8
  * on a transformation." This block holds the number and offers the two presses
  * that move it by hand.
+ *
+ * The roll is thrown to *hold the beast in*, so the number is what restraint
+ * costs: pass and it climbs, fail and you are the beast and it is back at 8.
  *
  * The roll itself used to be nobody's but the table's, because the sheet was told
  * that Health moved and never what moved it. It is asked for now, and it is asked
@@ -54,8 +57,11 @@ import { statMath } from '../../lib/statMath.js';
  * and for a difficulty that needs correcting.
  *
  * The note asks for a button that increments the difficulty "as you succed your
- * roll", and the card says the increase is on a *failure*. The card wins, and the
- * button is labelled in the card's own terms. Flagged in data/README.md.
+ * roll", and the card as transcribed says the increase is on a *failure*. That
+ * stood open for a fortnight and Jules ruled it on 2026-09-03: "with the feral
+ * curse you transform when you fail not when you succeed." The note was right,
+ * the card's sentence flipped to match, and the button had been labelled in the
+ * note's terms all along — "Held it in" is what a passed roll means here.
  */
 export default function FeralBlock({ character, form, patch, readOnly = false }) {
   const [editing, setEditing] = useState(false);
@@ -170,7 +176,7 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
             type="button"
             className="btn btn-sub btn-sm"
             onClick={() => patch(setFeralDifficulty(character, form, form.difficulty + form.step))}
-            title="On a failure the difficulty increases by 1 for your next roll"
+            title="On a success the difficulty increases by 1 for your next roll"
           >
             Held it in, +{form.step}
           </button>
@@ -251,17 +257,18 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
               <Gated
                 className="btn btn-sub btn-sm feral-wide feral-transform"
                 why={can.ok ? null : can.reason ?? 'You cannot turn right now.'}
-                title="The Feral Rage roll passed. Apply it."
+                title="The Feral Rage roll failed, or you chose to fail it. Apply it."
                 onClick={() => patch(enterFormBody(character, form, 'Feral Rage'))}
               >
                 Transform
               </Gated>
             ))}
 
-          {/* At Rank 1 the beast cannot be *called*, only rolled for: FERAL RAGE
-              lets a Feral Cursed choose to fail and never to pass. So a rank that
-              has CALL THE BEAST is told where to find it rather than given a
-              second button here that charges nothing. */}
+          {/* At Rank 1 the beast can be called, since choosing to fail the roll
+              is choosing to transform, but only once something has provoked the
+              roll. CALL THE BEAST is the one that needs no trigger, so a rank
+              that has it is told where to find it rather than given a second
+              button here that charges nothing. */}
           {form.willing && !form.over && (
             <p className="feral-line feral-line-quiet">
               Or play Call the Beast off your Quick Bar to force it with no roll.
