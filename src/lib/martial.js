@@ -30,12 +30,21 @@
  * back (RIPOSTE). Jules priced four of them outright and the rest are read off
  * those four, tier by tier.
  *
- * Four of them are priced off the swing rather than off the tier. `scales: true`
- * turns `wp` from a cost into a rate — what the move costs for every 2 Action
- * Points the attack costs — and RECKLESS, WOUND, REND and SUNDER are the four,
- * on Jules's instruction of 2026-09-03. See `moveWillpower` below, which is the
- * one place the arithmetic is written, and `moveCost` in moves.js, which is the
- * one place the swing's own cost is handed to it.
+ * Five of them are priced off the swing rather than off the tier. `scales` turns
+ * `wp` from a cost into a rate: `'ap'` is what the move costs for every 2 Action
+ * Points the attack costs, and `'dice'` is what it costs per Damage Die the
+ * attack prints. RECKLESS, WOUND, REND and SUNDER are the four Jules asked for on
+ * 2026-09-03, and AMBUSH is the fifth and the one that always read that way. See
+ * `moveWillpower` below, which is the one place either sum is written, and
+ * `moveCost` in moves.js, which is the one place the swing is handed to it.
+ *
+ * ------------------------------------------------------------- granted moves
+ * **Not every Martial Move is in this file.** A talent set can hand one over
+ * outright, as one of its own cards, and three do — see "the granted three" in
+ * talents.js. Those are not learned from a pool, cannot be picked in a chooser
+ * and are printed under their set on the Abilities tab; everything else about
+ * them is a move, including this file's price rules. `heldMoves` in moves.js is
+ * where the two kinds meet.
  *
  * ----------------------------------------------------------------- the banner
  * Two tags, in the order the printed cards read them: what it is, then the tier
@@ -57,9 +66,18 @@
  *
  *   advantage  extra d4s on the attack roll. A count, because Advantage stacks.
  *   empower    another damage die of the same kind (2d6 -> 3d6).
- *   elevate    the same dice, one size up (2d6 -> 2d8), capped at d12.
- *   ap         a signed change to what the attack itself costs. RIPOSTE and
- *              nothing else: -1, and the prompt prices the swing with it.
+ *   elevate    the same dice, one size up (2d6 -> 2d8), capped at d12. A count,
+ *              or the word `'paid'` for a move Elevated as many times as the
+ *              Willpower it cost — AMBUSH, and nothing else, because the number
+ *              *is* the price and the price is the swing's own dice.
+ *   ap         a signed change to what the attack itself costs. RIPOSTE's -1, and
+ *              the word `'free'` for a swing that costs nothing at all: RECKLESS
+ *              VIOLENCE, where the price is replaced rather than nudged, since
+ *              minus six is wrong on a dagger and right on a Great Weapon.
+ *
+ * The two words are the two riders no number could hold, and both belong to
+ * granted moves rather than to the eighteen here. See `moveCost` and `withMoves`
+ * in moves.js, which are the only places either is read.
  *
  * A move with no `rides` still rides: WOUND, WING CLIP, DISARM, REND and most of
  * the rest change what the attack *does* without changing a number the sheet
@@ -178,7 +196,7 @@ export const MARTIAL_MOVES = withArt([
     tags: ['Martial Move', 'Novice'],
     ap: null,
     wp: 1,
-    scales: true,
+    scales: 'ap',
     stat: 'instinct',
     /* Wound is a defined term and its definition is Jules's own sentence, in
        keywords.js. The card uses the word and never explains it, which is the
@@ -219,20 +237,28 @@ export const MARTIAL_MOVES = withArt([
     tags: ['Martial Move', 'Novice'],
     ap: null,
     wp: 1,
-    scales: true,
+    scales: 'ap',
     stat: 'instinct',
-    rides: { advantage: 1 },
-    /* The plate's Empowered half is gone. "A martial move that cost 1 Willpower
-       and give you advantage on your attack but the next attack against you is
-       also with advantage" is the whole card, and a die of Empowered on top of
-       it for the same 1 Willpower was the old card being its own action.
-
-       One of the four that `scales`: 1 Willpower on a Finesse Weapon's swing and
+    rides: { advantage: 1, elevate: 1 },
+    /* One of the four that `scales`: 1 Willpower on a Finesse Weapon's swing and
        3 on a Great one. Jules priced this one outright — "Rckelss is 1 [for a] 2
        action point cost or 2 for 4 ones" — and it is the rate the other three
-       are read against. See `moveWillpower` below. */
+       are read against. See `moveWillpower` below.
+
+       **The Elevate came back on 2026-09-03**, on Jules's instruction: "update
+       reckless to give elevated to the attack". The plate had an Empowered half
+       and it was cut on 2026-09-02, when every move cost one flat Willpower and a
+       die on top of advantage for the same 1 was the old card being its own
+       action. The price is read off the swing now — 3 Willpower on a Great Weapon
+       — so the card can carry both halves and still be paid for.
+
+       Elevated rather than Empowered, which is what Jules asked for and is the
+       better half of the two here: it is the same dice one size up, so it scales
+       with whatever is in your hands instead of adding one die of whatever the
+       weapon happens to roll. Wired, because both halves ride every swing — the
+       line RECKLESS has always been on the right side of. */
     body:
-      'The attack is made with advantage.\n\n' +
+      'The attack is made with advantage and its damage is Elevated once.\n\n' +
       'The next Attack Roll made against you is also made with advantage.\n\n' +
       'Its cost is 1 Willpower for every 2 Action Points the attack costs.',
   },
@@ -470,7 +496,7 @@ export const MARTIAL_MOVES = withArt([
     tags: ['Martial Move', 'Master'],
     ap: null,
     wp: 2,
-    scales: true,
+    scales: 'ap',
     stat: 'instinct',
     /* "rend a martial move that applies a bleed per dice roll." Per die the
        attack rolls, so a swing that has been Empowered bleeds for more: the
@@ -497,7 +523,7 @@ export const MARTIAL_MOVES = withArt([
     tags: ['Martial Move', 'Master'],
     ap: null,
     wp: 3,
-    scales: true,
+    scales: 'ap',
     stat: 'instinct',
     /* "very expensive martial move that treat the target as vulnerable to the
        attack." Vulnerable is double damage from that damage type, which is worth
@@ -536,42 +562,85 @@ export const MARTIAL_MOVES = withArt([
 /* ---------------------------------------------------------------- the price
  * What one move costs the swing it is added to.
  *
- * Sixteen of the eighteen print one number and that number is the whole answer.
- * The other four print a **rate**, and Jules asked for it on 2026-09-03:
+ * Thirteen of the eighteen print one number and that number is the whole answer.
+ * The other five print a **rate**, read off the attack in front of you, and
+ * `scales` says which of the two rates it is:
+ *
+ *   'ap'    per 2 Action Points the attack costs, rounded up
+ *   'dice'  per Damage Die the attack prints
+ *
+ * The first is Jules's instruction of 2026-09-03:
  *
  *   "I want you to make it so Reckless, Wound, Rend, Sunder to scale of the
  *    weapon base action point cost. being for example Rckelss is 1 [for] 2
  *    action point cost or 2 for 4 ones. Rend is 2 for 2"
  *
- * So `wp` on a card that `scales` is what it costs for every 2 Action Points of
- * the attack, and `wp` on every other card is what it costs. A cost-2 weapon pays
- * exactly the printed number either way, which is what keeps the orb on the card
- * honest: the plate shows the rate and the cheapest swing in the game is the one
- * the rate is quoted against.
+ * The second is AMBUSH's own printed cost, which has read that way since the
+ * Trickster arrived: "Willpower equal to the weapon's printed number of damage
+ * dice, before any enchantment or boost". It became a Martial Move the same day
+ * and brought its rate with it. See the granted moves in talents.js.
  *
- * **Why these four and not the other fourteen.** What a move is worth is not
+ * A cost-2 weapon pays exactly the printed number under `'ap'`, and a 1d6 weapon
+ * under `'dice'`, which is what keeps the orb on the plate honest either way: the
+ * plate shows the rate and the cheapest swing in the game is the one it is quoted
+ * against. **No swing at all pays the plate too**, both rates alike, which is
+ * what a codex list and a presentation page are handed — the alternative is
+ * AMBUSH printing 0 Willpower everywhere it is read outside a prompt, since
+ * nothing has told it how many dice to count.
+ *
+ * **Why these five and not the other thirteen.** What a move is worth is not
  * always what the swing is worth. DISARM knocks a weapon out of a hand and the
- * hand does not care what hit it; LUNGE is three meters whatever you are
- * holding. These four are the ones whose value is the swing's own: RECKLESS
- * doubles the chance of landing it, WOUND opens the next one, REND counts the
- * dice it rolled, SUNDER doubles what it dealt. A Great Weapon bought all four
- * of those for a dagger's price until the day this was written.
+ * hand does not care what hit it; LUNGE is three meters whatever you are holding.
+ * These five are the ones whose value is the swing's own: RECKLESS doubles the
+ * chance of landing it and raises its dice, WOUND opens the next one, REND counts
+ * the dice it rolled, SUNDER doubles what it dealt, AMBUSH raises the dice by
+ * however many there were. A Great Weapon bought the first four for a dagger's
+ * price until the day this was written.
  *
- * Rounded **up**, so the rung is what matters and not the parity: a 3-point swing
- * pays what a 4-point one pays, and the crossbow and the firearms, which are off
- * the cost column at 1 Action Point, pay the same as the 2s. Nothing costs less
- * than the printed rate.
+ * `'ap'` rounds **up**, so the rung is what matters and not the parity: a 3-point
+ * swing pays what a 4-point one pays, and the crossbow and the firearms, which
+ * are off the cost column at 1 Action Point, pay the same as the 2s. Nothing
+ * costs less than the printed rate.
  *
- * The base cost and not what the holder pays: an Arcanist's discount, a Quick
- * Draw, a Colossus's own Action Point cuts are all things you bought, and a move
- * getting cheaper because the swing did would be paying you twice.
+ * The attack's **base** cost and dice, not what the holder pays or rolls: an
+ * Arcanist's discount, a Quick Draw and an Empowering enchantment are all things
+ * you bought, and a move getting dearer or cheaper because of one would be
+ * charging you twice. "Before any enchantment or boost" is AMBUSH's own words for
+ * the same rule.
  */
-export function moveWillpower(card, ap = 2) {
+export function moveWillpower(card, swing = null) {
   const printed = Math.max(0, Math.floor(Number(card?.wp) || 0));
-  if (!card?.scales) return printed;
+  if (!card?.scales || !swing) return printed;
 
-  const cost = Math.max(1, Math.floor(Number(ap) || 0));
+  /* Floored at one die, so nothing is ever free by accident. Every plain weapon
+     attack in the codex rolls at least one — scripts/check-moves.mjs asserts it,
+     because a `'dice'` rate has no meaning without it — and the floor is what
+     keeps a swing that somehow rolled none charging the plate instead of nothing. */
+  if (card.scales === 'dice') return printed * Math.max(1, swingDice(swing));
+
+  const cost = Math.max(1, Math.floor(Number(swing.ap) || 2));
   return printed * Math.ceil(cost / 2);
+}
+
+/**
+ * How many Damage Dice an attack prints, off its own text.
+ *
+ * The most any one of its live values rolls, rather than the sum: a card that
+ * deals `[[2d6 + stat]]` and heals `[[1d6]]` prints two Damage Dice and not
+ * three. Read off `body` and not off a field, because the codex has never had a
+ * field for it — the printed expression *is* the number, which is also what
+ * "before any enchantment or boost" asks for.
+ *
+ * Zero for a card with no dice at all, which is how a swing that cannot be
+ * ambushed prices an AMBUSH at nothing and the prompt refuses it.
+ */
+export function swingDice(card) {
+  let most = 0;
+  for (const [, expression] of String(card?.body ?? '').matchAll(/\[\[([^\]]+)\]\]/g)) {
+    const found = /(\d*)d\d+/i.exec(expression);
+    if (found) most = Math.max(most, Number(found[1] || 1));
+  }
+  return most;
 }
 
 /* -------------------------------------------------------------------- lookups

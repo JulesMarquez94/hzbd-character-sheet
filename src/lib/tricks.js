@@ -14,9 +14,17 @@
  *    increase ,return ect."
  *
  * ------------------------------------------------------------------ the rider
- * So AMBUSH is not a thing you do to a target, it is a thing you do to your own
+ * So a rider is not a thing you do to a target, it is a thing you do to your own
  * next swing, and the swing has to *show* it before it is made. That is a
  * pending rider, and this file is where one lives.
+ *
+ * **AMBUSH was the reason this half exists and it is not here any more.** On
+ * 2026-09-03 it became a granted Martial Move, chosen and paid for inside the
+ * swing's own prompt, which is a strictly better answer to the sentence quoted
+ * above: the attack does not merely reflect the increase, the increase is bought
+ * as part of it. See "the granted three" in talents.js. What is left riding is
+ * STEAL's Poison row, which is a menu outcome rather than an ability and has no
+ * moment of its own to be chosen in.
  *
  * A rider is stored on the effects tracker, as an ordinary row carrying a
  * `trick` object. Nothing new was added to the schema for it, because the
@@ -164,6 +172,14 @@ export function isPlainAttack(card) {
  * that carries a rider is always the swing that takes it off. An ambush laid and
  * then followed by a Triple Strike is still waiting afterwards, because it was
  * never riding that swing.
+ *
+ * **Only STEAL's Poison row lays one of these now.** AMBUSH became a granted
+ * Martial Move on 2026-09-03 and nothing writes an `ambush` payload any more, so
+ * the narrowing on that id is here for the rows already sitting on people's
+ * trackers: somebody mid-session has one they paid Willpower for, and it goes on
+ * behaving exactly as it did until the swing spends it. Deleting the branch would
+ * have quietly widened it onto a Special Weapon Attack, which is the one thing
+ * the ruling it came from forbids.
  */
 export function trickRides(trick, card) {
   if (!trick) return false;
@@ -322,111 +338,27 @@ export function spendTricks(effects, card) {
   return kept.length === list.length ? null : kept;
 }
 
-/* ------------------------------------------------------------------ ambush */
-
-/** The dice count in an expression: 2 out of "2d6 + 2*stat", 0 out of "stat". */
-function diceCount(expression) {
-  const match = /(\d*)d\d+/i.exec(String(expression || ''));
-  if (!match) return 0;
-  return Number(match[1] || 1);
-}
-
-/**
- * What AMBUSH costs to ride one attack: "the weapon number of base damage dice
- * before enchant or boost".
+/* -------------------------------------------------------------------- gone
  *
- * The card's own printed expression, which is what "before enchant or boost"
- * asks for — an Empowering enchantment adds dice at the moment of printing and
- * has no business raising the price of an ambush. A card with no dice at all
- * cannot be ambushed with and comes back 0, which is how the chip refuses it.
+ * `ambushCost`, `ambushOption`, `ambushLine` and `ambushEffect` stood here until
+ * 2026-09-03. AMBUSH became a granted Martial Move that day — see "the granted
+ * three" in talents.js — so nothing prices it off the weapon in hand any more,
+ * nothing writes it onto the tracker, and nothing has a sentence to print about
+ * what it will do when the swing comes: it is added inside the swing's own prompt
+ * and paid for there, and the printed card shows both halves before a point is
+ * spent. `moveWillpower` in martial.js is what the price arithmetic became, one
+ * line of it, because "1 Willpower per Damage Die" is now a rate a move can
+ * carry rather than a function of its own.
  *
- * The number moves with the weapon rather than with the ability: Daggers strike
- * for 1d6, a Longbow shoots for 2d6 and a Staff blasts for 3d6, so the same card
- * costs 1, 2 or 3 depending on what is in your hands and Elevates to match. A
- * Longbow's *aimed* shot rolls 3d6 and used to price an ambush of its own, and
- * that is exactly what the ruling takes away: the special attack cannot be
- * ambushed at all now, so there is one price and nothing to ask.
+ * `diceCount` went with them, and that is the whole reason this note is here
+ * rather than a silent deletion: `swingDice` in martial.js is the same reading,
+ * moved to the file that now needs it.
+ *
+ * What stayed is everything above and everything below — the reading side of a
+ * rider, and STEAL. See the note over `trickRides`.
  */
-export function ambushCost(card) {
-  const body = String(card?.body ?? '');
-  let most = 0;
-  for (const [, expression] of body.matchAll(/\[\[([^\]]+)\]\]/g)) {
-    most = Math.max(most, diceCount(expression));
-  }
-  return most;
-}
-
-/**
- * The attack in hand that AMBUSH would ride and what it costs, as
- * `{ card, wp }`, or null.
- *
- * `cards` is handed in rather than read, because the weapon in a character's
- * hands is items.js's business and this file is a leaf. One attack rather than a
- * list of them: a weapon teaches one plain attack and the special one is no
- * longer a candidate, so there is nothing to choose and the chip can pay for an
- * ambush the way it pays for everything else.
- *
- * A card with no damage dice comes back null. It has no price, so there is
- * nothing to pay and nothing to Elevate.
- */
-export function ambushOption(cards) {
-  for (const card of cards ?? []) {
-    if (!isPlainAttack(card)) continue;
-    const wp = ambushCost(card);
-    if (wp > 0) return { card, wp };
-  }
-  return null;
-}
-
-/**
- * What paying for an ambush will do, in this weapon's own numbers, so the prompt
- * can say it before a point is spent.
- *
- * Here rather than in the block for the same reason `stealLine` is: the sentence
- * is about what the rider does, and this file is what knows.
- */
-export function ambushLine(option) {
-  return (
-    `Rides ${option.card.name}: Advantage on the roll, and the damage Elevated ` +
-    `${times(option.wp)}. It waits on the tracker until you swing.`
-  );
-}
-
-/**
- * The rider AMBUSH lays, as an effect row for the tracker.
- *
- * Both halves of the card, because both of them are what the Willpower bought:
- * "The Weapon Attack is made with Advantage" and "On a hit, the Weapon Attack is
- * Elevated a number of times equal to the Willpower paid". The Advantage rides as
- * a number rather than as a flag so the arrow on the attack can simply add it to
- * everything else bending the same roll.
- *
- * The name carries the attack it was bought against, which is the receipt for the
- * price, and the note carries the ruling: a Triple Strike is an attack and is not
- * this one. A rider a player cannot read the limits of is a rider they will spend
- * on the wrong swing.
- */
-export function ambushEffect(option) {
-  return {
-    name: `Ambush · ${option.card.name}`,
-    note:
-      `Made with Advantage, and Elevated ${times(option.wp)} on a hit. ` +
-      'Rides your Weapon Attack and not the special one. Lost the moment you swing.',
-    turns: null,
-    until: null,
-    from: 'Trickster',
-    trick: { id: AMBUSH, elevate: option.wp, advantage: 1 },
-  };
-}
 
 /* ------------------------------------------------------------------- steal */
-
-/** "once", "twice", and then plainly. */
-function times(n) {
-  if (n === 1) return 'once';
-  if (n === 2) return 'twice';
-  return `${n} times`;
-}
 
 /** A character's Instinct, floored, which is what every row on the table reads. */
 function instinctOf(character) {

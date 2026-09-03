@@ -11581,6 +11581,10 @@ one migration in the drop.
 Points the attack costs, rounded up. A cost-2 weapon pays exactly the printed number either way,
 which is what keeps the orb on the plate honest.
 
+**The flag became a word later the same day**, when AMBUSH joined these four with a rate of its
+own: `scales: 'ap'` is the rule described here and `scales: 'dice'` is the other. The table below
+is unchanged. See "Three abilities became moves" at the foot of this file.
+
 | Move | rate | Finesse (2 AP) | Heavy (4 AP) | Great (6 AP) |
 | --- | --- | --- | --- | --- |
 | RECKLESS | 1 | 1 | 2 | 3 |
@@ -11747,3 +11751,189 @@ sheet is read-only has nothing to say that forty of its neighbours are not alrea
 - **`concuss` means a different card.** Said above. Nothing migrates a stored pick.
 - **The old CONCUSS art is still on disk** as `data/Martial Move/Concuss.jpg`, redrawn for the new
   card. `Stunning Strike.jpg` is the Master stun's. Both resolve and neither needs an alias.
+
+## Three abilities became moves, and Reckless got its die back, 2026-09-03
+
+> update reckelss to give elevated to the attack. Make sure thall ability liek ambush are reshape
+> to work like marital move. Actualy, make them special martail mvoe that are given by the talnet.
+> look for other similar cases and adjust them.
+
+### RECKLESS is advantage and a die size
+
+`rides: { advantage: 1, elevate: 1 }`, and the card reads "The attack is made with advantage and
+its damage is Elevated once."
+
+The plate had an Empowered half and it was cut the day before, when every move cost one flat
+Willpower: a die on top of advantage for the same 1 was the old card being its own action. The
+price is read off the swing now — 3 Willpower on a Great Weapon — so the card can carry both
+halves and still be paid for.
+
+**Elevated rather than Empowered**, which is what Jules asked for and is the better of the two
+here: it is the same dice one size up, so it scales with whatever is in your hands instead of
+adding one die of whatever the weapon happens to roll. A Great Weapon's swing goes from
+`3d6 + 2*stat` to `3d8 + 2*stat`. Both halves ride every swing, so both are wired.
+
+### The granted three
+
+**A talent set can hand over a Martial Move outright, as one of its own cards.**
+
+| | set | rank | what it was |
+| --- | --- | --- | --- |
+| AMBUSH | Trickster | 1 | an Ability that laid a rider on the effects tracker |
+| RAGING BLOW | Berserker | 1 | an Ability whose "your next" clause nothing read |
+| RECKLESS VIOLENCE | Berserker | 3 | the same again, at Master |
+
+All three did nothing to the world and everything to your own next swing, and all three had to be
+paid for on one turn to be spent on another. AMBUSH was the wired one — bought at the quick bar,
+a row on the tracker, spent by the next weapon attack — and was the last thing on the sheet still
+working the way every Martial Move worked before 2026-09-02. The other two were prose: "your next
+melee Weapon Attack is made with advantage" was a sentence the advantage never came out of, and
+the table had to remember it a turn after the Willpower had gone.
+
+As moves they are one tick inside the attack they were always for. Priced into the same pay
+button, folded into the same printed card, credited in the same arrow, spent by the same press,
+and impossible to buy for a swing that never happens.
+
+A granted move differs from a learned one in exactly two ways, and both follow from it being the
+set's own card: no chooser offers it and no rest re-picks it, and it is printed under its set on
+the Abilities tab rather than under a hand. `grantedMoves` in `moves.js` reads them off `kind`
+rather than off a list, so a fourth is one word on one card.
+
+### Two rates, and two words no number could hold
+
+`scales` was a boolean for one day. It is now `'ap'` or `'dice'`:
+
+    'ap'    per 2 Action Points the attack costs, rounded up   RECKLESS WOUND REND SUNDER
+    'dice'  per Damage Die the attack prints                   AMBUSH
+
+The second is not new design. AMBUSH has been priced "Willpower equal to the weapon's printed
+number of damage dice, before any enchantment or boost" since the Trickster arrived; what changed
+is that the rate is now a word on the card instead of `ambushCost` in `tricks.js`. So
+`moveWillpower(move, swing)` takes the **attack card** rather than a number, because the two rates
+read different things off it, and `moveCost` and the row in the prompt hand it the card.
+
+Two of the `rides` keys can now hold a word:
+
+- **`elevate: 'paid'`** is AMBUSH: "Elevated a number of times equal to the Willpower paid", and
+  what it paid is the swing's own dice count. Resolved at the moment of the tick rather than
+  stored, because the answer changes with what is in your hands and the plate the player is
+  looking at has to be the plate the dice are thrown for. One die and 1 Willpower on a dagger,
+  three and 3 on a Great Weapon.
+- **`ap: 'free'`** is RECKLESS VIOLENCE: the attack costs no Action Points, which is a price being
+  *replaced* rather than reduced. RIPOSTE's `-1` is a delta and works everywhere; minus six would
+  be wrong on a dagger and right on a Great Weapon, so this is a flag and the prompt zeroes the
+  swing. The orb strikes the printed cost through and names the move, which needed its own branch:
+  `Number('free')` is NaN and NaN is not less than zero, so the old credit line would have struck
+  a 4 through and named nobody for it.
+
+### Two narrowings, on the card rather than the system
+
+Neither is on any of the eighteen in `martial.js`: those are written to ride whatever their
+holder's set allows, and it is a set's *own* move that comes with a sentence about which swing.
+
+**`plain`** means the plain attack whatever a set has bought. AMBUSH carries it because of the
+ruling of 2026-08-21 — "Ambush only apply on Weapon Attack, not special attack" — and that ruling
+has to survive the card becoming a move: a Trickster who also holds a Rank 2 Duelist bought the
+Special widening for the Duelist's hand, and reading it onto AMBUSH would quietly undo a ruling
+nobody revisited.
+
+**`melee`** means the swing has to be one. RAGING BLOW carries it and the card has always said it;
+what is new is somewhere to enforce it, because a weapon attack carries `Melee` or `Ranged` in its
+own tags. Transcription rather than invention: the alternative is a Berserker with a bow being
+offered a card that says it cannot be used.
+
+### What was looked at and left alone
+
+The sweep found four more cards with "your next attack" in them and none of them is this shape.
+
+- **SHIELD EXPERTISE** and **BASTION'S FURY** are Passives whose clause fires when you *block*.
+  Nothing is activated and nothing is paid, so there is no moment at which to tick a box: a Martial
+  Move is chosen and priced, and these are conditions.
+- **SPORADIC INFUSION** empowers **an ally's** next attack. A move rides the swing being paid for
+  on this sheet, and that swing is somebody else's.
+- **STEAL's Poison row** rides "your next Weapon Attacks", plural and unnumbered, and is a menu
+  outcome rather than an ability. It stays a tracker rider and is now the only one.
+
+QUICK DRAW and STICKY RESIN are the same two reasons again from outside the talent sets: a passive
+condition on a swap, and a coating that rides the next attack made with a weapon by whoever holds
+it.
+
+### What came out
+
+`ambushCost`, `ambushOption`, `ambushLine` and `ambushEffect` are gone from `tricks.js`, along with
+`diceCount` (which is `swingDice` in `martial.js` now, moved to the file that needs it) and the
+`times` helper only they used. `ambushUse` is gone from `combatBar.js`, and with it the last of the
+pay-now-spend-later machinery on that file — AmbushWindow.jsx went the same way on 2026-08-28 and
+this is the rest of it. Nothing replaced any of it: the price is a rate on the card, the refusal is
+`offeredMoves`, and the sentence about what it will do is the printed plate the prompt already
+draws.
+
+**The reading side of a rider stayed.** `trickRides` still narrows an `ambush` payload to the plain
+attack, for the rows already sitting on people's trackers: somebody mid-session has one they paid
+Willpower for, and it goes on behaving exactly as it did until a swing spends it. Deleting the
+branch would have quietly widened it onto a Special Weapon Attack, which is the one thing the
+ruling it came from forbids.
+
+### A pool was drawing from another set's grants
+
+`loadoutPool` filtered the whole registry by `kind`, which separated the codex from the sets only
+for as long as no set granted a card of a pool's kind. Three now do, and **a Duelist's chooser duly
+offered AMBUSH** — a Trickster card, pickable at a rest by somebody who had never paid a rank for
+the set, on all four of the sets that teach moves.
+
+The filter says the rule outright now: a card any set hands over is not in anybody's pool.
+`TALENT_CARDS` is exactly that list, it costs one lookup per card at module load, and it is right
+for every kind rather than this one — a set that granted a spell tomorrow would not want it turning
+up in a spellbook chooser either.
+
+### The checker
+
+`npm run lint:moves`, and `scripts/check-moves.mjs` is new. The risk it covers is not arithmetic,
+it is *shape*: five keys on a move are read by name somewhere else, and every one of them fails
+silently when it is misspelled. A `scale: 'ap'` prices at the plate for ever, a
+`rides: { elevates: 1 }` prints nothing, and neither is an error anywhere.
+
+So it asserts, across all 21 moves in the game:
+
+- `ap` is null, `wp` is a whole number, `scales` is one of the two rates, every `rides` key is one
+  something reads, and the two word-valued keys hold either a number or their own word
+- the plate is honest: what the orb prints is what the cheapest swing in the game charges, and a
+  move with no swing to price against falls back to its plate
+- every granted move is disjoint from the pool, carries `Martial Move` in its tags, carries no
+  tier, is handed over by the rank that grants it and **not** by the rank below, names the set that
+  granted it, and is actually offered on a swing it allows
+- no loadout pool draws from the grants
+- `plain` is not offered on a Special Weapon Attack even with every widening bought, and `melee` is
+  not offered on a Short Bow
+- the five rates climb the whole cost column and match their own rate at every rung
+- `elevate: 'paid'` comes out as the price on two different rungs, and `ap: 'free'` raises the flag
+  rather than being summed as a number
+- no Martial Move appears on the quick bar, asserted against `quickBar` itself rather than against
+  the filter that drops them
+
+Two of those caught real problems on the first run: AMBUSH priced at 0 Willpower with no weapon in
+hand, which is what a codex list and a presentation page would have printed, and the pool leak
+above. The pool assertion was then re-tested against the broken version to be sure it can fail.
+
+### Left open
+
+- **`plain` is a ruling the widening can now see.** Every set that teaches moves reaches a Special
+  Weapon Attack at Rank 2, and AMBUSH is the one card in the codex that visibly does not. The 2026-08-21
+  ruling is kept as written; it is worth asking whether it survives the card being a move.
+- **"Your next attack" is read as a Weapon Attack** on RECKLESS VIOLENCE, which is a narrowing: a
+  Martial Move rides one of the two attacks a weapon teaches and nothing else, so a free spell is
+  off the table. Almost certainly what a Rampage card in a rage meant, but it is a reading.
+- **A turn of the rage is still nobody's to spend.** RAGING BLOW takes 1 and RECKLESS VIOLENCE
+  takes 2, and nothing on the sheet has ever counted one: `Rampage` is a tag and every card says
+  its own price in prose. Exactly as wired as it was, which is to say the Willpower is charged and
+  the turn is announced.
+- **"Once per round" is still unenforced** on RECKLESS VIOLENCE, for the reason it always was: a
+  round is neither of the two rests a use limit refills on.
+- **A stored `ambush` tracker row is still honoured.** Said above, and it is the kind reading rather
+  than the tidy one.
+- **The scripts are not rule-linted.** `eslint.config.js` scopes `files` to `**/*.{js,jsx}`, so
+  every `.mjs` under `scripts/` is parsed and never checked. Probed with a Node-globals block: the
+  whole directory is clean apart from one pre-existing finding, so it is a cheap addition. That
+  finding is a dead assertion in `check-weapons.mjs` — its Reload regex holds two literal backspace
+  characters where `\b` was meant, so it has never fired — and it is left where it is rather than
+  bundled in here, because repairing it may surface weapon findings that want judging on their own.

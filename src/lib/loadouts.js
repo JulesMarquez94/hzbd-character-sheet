@@ -47,7 +47,7 @@ import { sourceRow } from './attribution.js';
 import { compareCards } from './cardOrder.js';
 import { castModifier } from './cardText.js';
 import { CARDS } from './weapons.js';
-import { getTalent, normalizeTalents, setTalentPicks } from './talents.js';
+import { TALENT_CARDS, getTalent, normalizeTalents, setTalentPicks } from './talents.js';
 
 /** The tier word a card's tags carry: "Novice Spell" -> "Novice". */
 function tierOf(card) {
@@ -101,10 +101,26 @@ function subSchoolOf(card) {
    loadout stays in one file. */
 export { castModifier };
 
-/** Everything in the codex the spec could ever draw from, tier or no tier. */
+/**
+ * Everything in the codex the spec could ever draw from, tier or no tier.
+ *
+ * **A card a set hands over outright is not in anybody's pool.** That was true by
+ * accident until 2026-09-03, when three talent cards became Martial Moves — see
+ * "the granted three" in talents.js — and `kind` alone stopped separating the
+ * codex from the sets: a Duelist's chooser duly offered AMBUSH, and a Duelist who
+ * picked it held a Trickster card nobody had paid a rank for.
+ *
+ * So the filter says the rule outright rather than leaning on the kinds happening
+ * not to overlap. `TALENT_CARDS` is every card every set grants, which is exactly
+ * the thing a pool must not contain, and it costs one lookup per card at module
+ * load. It is right for every kind and not just this one: a set that granted a
+ * spell tomorrow would not want it appearing in a spellbook chooser either.
+ */
+const GRANTED = new Set(TALENT_CARDS.map((card) => card.id));
+
 export function loadoutPool(spec) {
   if (!spec) return [];
-  return CARDS.filter((card) => card.kind === spec.kind);
+  return CARDS.filter((card) => card.kind === spec.kind && !GRANTED.has(card.id));
 }
 
 /** Whether a spec keeps a library rather than a prepared hand. */

@@ -158,6 +158,58 @@ const OTHER_CATEGORY = TALENT_CATEGORIES[TALENT_CATEGORIES.length - 1];
 
 /* ------------------------------------------------------------- the codex */
 
+/* --------------------------------------------------------- the granted three
+ *
+ * **A set can hand over a Martial Move outright**, as one of its own cards, and
+ * three do. Jules, 2026-09-03:
+ *
+ *   "Make sure that all ability like ambush are reshaped to work like marital
+ *    move. Actualy, make them special martail mvoe that are given by the talnet.
+ *    look for other similar cases and adjust them."
+ *
+ *   AMBUSH             Trickster, Rank 1
+ *   RAGING BLOW        Berserker, Rank 1
+ *   RECKLESS VIOLENCE  Berserker, Rank 3
+ *
+ * All three were Abilities that did nothing to the world and everything to your
+ * own next swing, and all three had to be paid for on one turn to be spent on
+ * another. AMBUSH was wired that way — bought at the quick bar, a rider on the
+ * effects tracker, spent by the next weapon attack — and was the last thing on
+ * the sheet still working the way every Martial Move worked before 2026-09-02.
+ * The other two were not wired at all: "your next melee Weapon Attack is made
+ * with advantage" was prose nothing read, and the advantage was the table's to
+ * remember a turn after the Willpower had gone.
+ *
+ * As moves they are one tick inside the attack they were always for. Priced into
+ * the same pay button, folded into the same printed card, credited in the same
+ * arrow, spent by the same press, and impossible to buy for a swing that never
+ * happens.
+ *
+ * A granted move differs from one out of a pool in exactly two ways: no chooser
+ * offers it and no rest re-picks it, and it is printed under its set on the
+ * Abilities tab rather than under a hand. Both follow from it being the set's own
+ * card. `grantedMoves` in moves.js is what reads them, off `kind` rather than off
+ * a list, so a fourth is one word on one card.
+ *
+ * **What was looked at and left alone.** The sweep found four more cards with
+ * "your next attack" in them and none of them is this shape:
+ *
+ *   SHIELD EXPERTISE and BASTION'S FURY are Passives whose clause fires when you
+ *   *block*. Nothing is activated and nothing is paid, so there is no moment at
+ *   which to tick a box: a Martial Move is chosen and priced, and these are
+ *   conditions.
+ *
+ *   SPORADIC INFUSION empowers **an ally's** next attack. A move rides the swing
+ *   being paid for on this sheet, and that swing is somebody else's.
+ *
+ *   STEAL's Poison row rides "your next Weapon Attacks", plural and unnumbered,
+ *   and is a menu outcome rather than an ability. It stays a tracker rider and is
+ *   now the only one — see tricks.js.
+ *
+ * QUICK DRAW and STICKY RESIN are the same two reasons again from outside the
+ * talent sets: a passive condition on a swap, and a coating that rides the next
+ * attack made with a weapon by whoever is holding it.
+ */
 const TALENT_SETS = [
   {
     id: 'guardian',
@@ -1035,9 +1087,15 @@ const TALENT_SETS = [
     stat: 'instinct',
     /* A sixth shape of what a set can hand over, beside a fixed hand, a
        `loadout` of picked cards, a `brewing` spec, an `enchanting` one and a
-       `minion`: this set hands over things that wait on your *next* weapon
-       attack, and a table to steal from. Everything here is the Ability tab and
-       the Developpement Notes said as data, and tricks.js is what resolves it.
+       `minion`: a table to steal from, and the point ceilings THRILLED raises.
+       Everything here is the Ability tab and the Developpement Notes said as
+       data, and tricks.js is what resolves it.
+
+       **It used to be two things and AMBUSH was the other.** That card waited on
+       your next weapon attack, which is what this spec was first written for, and
+       it became a granted Martial Move on 2026-09-03 — see "the granted three"
+       above. What is left waiting is STEAL's Poison row, which is a menu outcome
+       rather than an ability and stays where it is.
 
        Numbers only. What a row does to the sheet is tricks.js's business, which
        is the same split minions.js keeps. */
@@ -1105,26 +1163,52 @@ const TALENT_SETS = [
         id: 'ambush',
         rank: 1,
         name: 'Ambush',
-        summary: 'Ride a weapon attack on somebody who cannot see you: advantage, and the damage Elevated.',
-        kind: 'talent',
-        tags: ['Trickster', 'Novice Talent', 'Ability'],
+        summary: 'Added to a swing at somebody who cannot see you: advantage, and the damage Elevated.',
+        /* **The first of the granted three.** See "the granted three" above.
+           AMBUSH was an Ability that laid a rider on the effects tracker and
+           waited there for a weapon attack, which is exactly what every Martial
+           Move did before 2026-09-02 and what none of them did after — it was the
+           last one left working the old way, and its own card says so in the
+           first line ("Use this when making a Weapon Attack"). It is a move now.
+
+           What that cost: the chip on the quick bar, `ambushUse` in combatBar.js,
+           the pending rider, and `ambushCost`, `ambushOption`, `ambushLine` and
+           `ambushEffect` in tricks.js. What it bought: the Willpower is paid inside
+           the swing it was always for, the printed card shows the advantage and
+           the Elevate before a point is spent, and nothing can be bought for an
+           attack that never happens. */
+        kind: 'martial-move',
+        /* `Martial Move` where `Ability` was, and the set and the rung stay: this
+           is not a card out of the move pool, it is the Trickster's own, and the
+           banner has to say both. */
+        tags: ['Trickster', 'Novice Talent', 'Martial Move'],
         ap: null,
-        /* The sheet's own "x". What this costs is the base damage dice of the
-           attack it rides, so the number belongs to the weapon rather than to this
-           card: `ambushUse` in combatBar.js reads it off whatever is in hand and
-           the chip prints it. There is only one attack it can ride, which is what
-           lets it be paid for at the chip like every other card rather than inside
-           a window of its own. See src/lib/tricks.js. */
-        wp: 'X',
+        /* The rate, where the sheet's own "x" used to be. "Willpower equal to the
+           weapon's printed number of damage dice, before any enchantment or
+           boost" is 1 per Damage Die, which is what `scales: 'dice'` says — so a
+           dagger's swing costs 1 and a Staff's blast costs 3, and the row in the
+           prompt prints whichever it is. The plate prints the rate. See
+           `moveWillpower` in martial.js. */
+        wp: 1,
+        scales: 'dice',
+        /* And the ruling that has narrowed this card since 2026-08-21 — "Ambush
+           only apply on Weapon Attack, not special attack" — which has to be the
+           card's own now rather than the system's: a Trickster who also holds a
+           Rank 2 Duelist has bought the widening for the Duelist's hand, and
+           letting it reach here would quietly undo a ruling nobody revisited. See
+           `moveTakesSwing` in moves.js. */
+        plain: true,
         stat: 'instinct',
-        /* Mechanics as data, never read out of the prose. `opens` names what
-           paying for this *does* rather than a window it raises, the same as CALL
-           THE BEAST's own. */
-        opens: 'ambush',
+        /* Both halves wired, which is what the tracker row already carried:
+           advantage on the roll, and Elevated as many times as the Willpower paid.
+           `'paid'` rather than a number because the number *is* the price, and the
+           price is the swing's dice — the same reading the rider stored, resolved
+           at the moment of the tick instead of at the moment of the purchase. */
+        rides: { advantage: 1, elevate: 'paid' },
         body:
-          'Use this when making a Weapon Attack against **an entity** that cannot see you, or one that is stunned, grappled or constrained. It costs Willpower equal to the weapon’s printed number of damage dice, before any enchantment or boost.\n\n' +
-          'The Weapon Attack is made with advantage.\n\n' +
-          'On a hit, the Weapon Attack is Elevated a number of times equal to the Willpower paid.',
+          'Ambush can only be added to a Weapon Attack against **an entity** that cannot see you, or one that is stunned, grappled or constrained.\n\n' +
+          'The attack is made with advantage, and on a hit its damage is Elevated a number of times equal to the Willpower paid.\n\n' +
+          'It costs 1 Willpower for every Damage Die the attack prints, before any enchantment or boost.',
       },
       {
         id: 'skulk',
@@ -1939,22 +2023,41 @@ const TALENT_SETS = [
         id: 'raging-blow',
         rank: 1,
         name: 'Raging Blow',
-        summary: 'One turn off the rage buys advantage and a Critical Hit at Defense by 4.',
-        kind: 'talent',
-        tags: ['Berserker', 'Novice Talent', 'Ability', 'Rampage'],
-        ap: 0,
-        wp: 1,
-        stat: 'physique',
-        /* `ap: 0` rather than null, and the sheet prints the 0 for the same
-           reason: a blank AP on that tab is what a passive has, so a card that
-           genuinely costs no Action Points has to say the nothing out loud.
+        summary: 'One turn off the rage, ticked onto a melee swing for advantage and a Critical Hit at Defense by 4.',
+        /* **The second of the granted three.** See "the granted three" above.
+           "Your next melee Weapon Attack" is a Martial Move's sentence written
+           before there was anywhere to put it, and it was never wired: the card
+           cost 1 Willpower on one turn and the advantage was the table's to
+           remember on the next. Added to the swing it is one tick and the arrow
+           on the roll says where the d4 came from.
+
+           The Rage is untouched and is still the table's to count. Nothing on the
+           sheet has ever spent a turn of {{Berserker's Rage}} — every Rampage card
+           says its own price in prose and `Rampage` is a tag and nothing more — so
+           this is exactly as wired as it was, which is to say the Willpower is
+           charged and the turn is announced.
 
            "Critical Hit" is the glossary's term. The sheet said critical strike,
            which the glossary has never had. The clause that earns it, exceeding
-           Defense by 4 or more, is untouched. */
+           Defense by 4 or more, is untouched — and it stays printed rather than
+           wired for the reason EXECUTE's halves do: the sheet does not hold the
+           target's Defense at the moment the card is drawn. */
+        kind: 'martial-move',
+        tags: ['Berserker', 'Novice Talent', 'Martial Move', 'Rampage'],
+        /* `ap: null` where the card printed a deliberate 0. A Martial Move costs
+           no Action Points by definition — they belong to the attack it rides —
+           so the nothing no longer has to be said out loud. */
+        ap: null,
+        wp: 1,
+        /* The one narrowing the sheet can actually check, and the card's own word:
+           a weapon attack carries `Melee` or `Ranged` in its tags, so a Berserker
+           with a bow in hand is not offered this. See `moveTakesSwing` in moves.js. */
+        melee: true,
+        stat: 'physique',
+        rides: { advantage: 1 },
         body:
-          'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 1.\n\n' +
-          'Your next melee Weapon Attack is made with advantage, and it becomes a Critical Hit if the Attack Roll exceeds the target’s Defense by 4 or more.', // text-style-ok: joins two clauses
+          'Raging Blow can only be added to a melee Weapon Attack, and adding it reduces the remaining turns of your {{Berserker’s Rage}} by 1.\n\n' +
+          'The attack is made with advantage, and it becomes a Critical Hit if the Attack Roll exceeds the target’s Defense by 4 or more.', // text-style-ok: joins two clauses
       },
       {
         id: 'master-of-pain',
@@ -2072,19 +2175,37 @@ const TALENT_SETS = [
         id: 'reckless-violence',
         rank: 3,
         name: 'Reckless Violence',
-        summary: 'Two turns off the rage for a free attack, and a free action for them if it deals nothing.',
-        kind: 'talent',
-        tags: ['Berserker', 'Master Talent', 'Ability', 'Rampage'],
-        ap: 0,
+        summary: 'Two turns off the rage and the swing is free, but dealing nothing buys them an action.',
+        /* **The third of the granted three.** See "the granted three" above, and
+           RAGING BLOW, which this is the Master version of in every way including
+           what it was wrong about: "your next attack costs no Action Points" was
+           prose nothing read, and the free swing was the table's to remember a
+           turn after the Willpower was spent.
+
+           `rides: { ap: 'free' }` is the one place in the move system where the
+           Action Points are *replaced* rather than nudged. RIPOSTE's `-1` is a
+           delta and works everywhere; "costs no Action Points" cannot be a delta,
+           because minus six is wrong on a dagger and right on a Great Weapon. See
+           `moveCost` in moves.js.
+
+           **"Your next attack" is read as a Weapon Attack**, which is a narrowing:
+           a Martial Move rides one of the two attacks a weapon teaches and nothing
+           else, so a free spell is off the table. That is almost certainly what a
+           Rampage card in a rage meant, and it is flagged in data/README.md
+           because it is a reading rather than a transcription.
+
+           "Once per round" is unchanged and still unenforced, for the reason it
+           always was: a round is neither of the two rests a use limit refills on. */
+        kind: 'martial-move',
+        tags: ['Berserker', 'Master Talent', 'Martial Move', 'Rampage'],
+        ap: null,
         wp: 1,
         stat: 'physique',
-        /* "Once per round" is the third open question and stands as written, for
-           the reason AVATAR OF CARNAGE's does: a round is neither of the two rests
-           a use limit can be refilled on. */
+        rides: { ap: 'free' },
         body:
-          'Using this ability reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
-          'Your next attack costs no Action Points. However, if the attack fails to deal damage, the target may take a free action of its choice.\n\n' +
-          'This ability can only be used once per round.',
+          'Reckless Violence can only be added to a Weapon Attack, and adding it reduces the remaining turns of your {{Berserker’s Rage}} by 2.\n\n' +
+          'The attack costs no Action Points. If it fails to deal damage, the target may take a free action of its choice.\n\n' +
+          'It can only be added once per round.',
       },
     ],
   },

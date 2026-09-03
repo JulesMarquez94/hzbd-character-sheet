@@ -59,9 +59,6 @@ import {
 } from './items.js';
 import { getCard, itemEnchantments } from './weapons.js';
 import {
-  ambushEffect,
-  ambushLine,
-  ambushOption,
   isWeaponAttack,
   spendTricks,
 } from './tricks.js';
@@ -74,7 +71,7 @@ import {
   passesForm,
   sourceSet,
 } from './feral.js';
-import { addEffect, layEffect, trackedDuration } from './combatTurn.js';
+import { layEffect, trackedDuration } from './combatTurn.js';
 import { fireTrigger } from './onUse.js';
 import { cardCost, cardTitle } from './cardText.js';
 import { cardUse, magazineUse, spendCardUse, spentNote, usageNote } from './uses.js';
@@ -297,7 +294,6 @@ function knownGroups(character, locks) {
              and counts its own uses has to write both in one call, and one that
              is already refused keeps the refusal it earned. */
           const riders = {
-            ...ambushUse(character, card),
             ...feralUse(character, card, set),
             ...formRefusal(card, locks, { set }),
           };
@@ -328,52 +324,22 @@ function knownGroups(character, locks) {
     .filter(Boolean);
 }
 
-/**
- * What AMBUSH costs and what it lays, or nothing at all for every other card.
+/* ------------------------------------------------------------------- gone
  *
- * Nothing is resolved when it is used: the Willpower lays a rider on the tracker
- * and the next weapon attack carries it. It is the last rider on the sheet that
- * works that way, since the Martial Moves stopped on 2026-09-02, and it stays
- * that way because an ambush is a thing you set up rather than a thing you add to
- * a swing you are already taking. Its price is not printed on the card either
- * ("the cost of this ability is equal to the weapon number of base damage dice
- * before enchant or boost"), so it is worked out here off the weapon in hand and
- * handed to the chip as an ordinary number.
+ * `ambushUse` stood here until 2026-09-03. It priced AMBUSH off the weapon in
+ * hand, wrote the rider onto the tracker and refused the chip when there was
+ * nothing to swing with, and it was the last of the pay-now-spend-later
+ * machinery on this file. AMBUSH is a granted Martial Move now — see "the
+ * granted three" in talents.js — so it has no chip at all: the filter two
+ * screens up already drops every Martial Move, and the offer is in the swing's
+ * own prompt.
  *
- * That number is knowable at all because of the ruling that narrowed the card:
- * "Ambush only apply on Weapon Attack, not special attack", so there is one attack
- * it can ride and its dice are the price. AmbushWindow.jsx used to list the two
- * attacks, price each one and take the payment itself, and it is gone: with
- * nothing to choose there is nothing to confirm, and this is the whole of what
- * replaced it.
- *
- * Refused, wearing the reason, when there is nothing in hand to ride. Same shape
- * an empty flask wears.
+ * Nothing replaced it. The price moved to `moveWillpower` in martial.js as a
+ * rate on the card, the refusal moved to `offeredMoves`, and the sentence about
+ * what it would do moved to the printed plate the prompt draws beside the pay
+ * button. AmbushWindow.jsx went the same way on 2026-08-28 and this is the rest
+ * of it.
  */
-function ambushUse(character, card) {
-  if (card?.opens !== 'ambush') return {};
-
-  const equipment = normalizeEquipment(character?.equipment);
-  const primary = heldItem(character, equipment.main_hand);
-  const option = ambushOption((primary?.abilities ?? []).map(getCard).filter(Boolean));
-
-  if (!option) {
-    return {
-      extra: null,
-      spent: true,
-      spentLabel: 'No blade',
-      spentNote: primary
-        ? `${primary.name} rolls no damage dice, so an ambush has no price to pay.`
-        : 'An ambush is a weapon attack, and you have nothing in your hands.',
-    };
-  }
-
-  return {
-    wp: option.wp,
-    note: ambushLine(option),
-    extra: { effects: addEffect(character?.effects, ambushEffect(option)) },
-  };
-}
 
 /**
  * What a Feral Form does to a chip it will not let you play, or nothing at all

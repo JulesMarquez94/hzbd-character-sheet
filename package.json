@@ -20,6 +20,7 @@
     "lint:layout": "node scripts/check-layout.mjs",
     "lint:creatures": "node scripts/check-creatures.mjs",
     "lint:combat": "node scripts/check-combat.mjs",
+    "lint:moves": "node scripts/check-moves.mjs",
     "lint:plan": "node scripts/check-plan.mjs",
     "lint:help": "node scripts/check-help.mjs",
     "preview": "vite preview",

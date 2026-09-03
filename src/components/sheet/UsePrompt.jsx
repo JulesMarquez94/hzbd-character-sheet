@@ -379,8 +379,8 @@ export default function UsePrompt({
           advantage: (Number(request.modifiers?.advantage) || 0) + bringSwing,
         }
       : request.modifiers;
-    return withMoves(asked, moveCards);
-  }, [picks, request.modifiers, attribute, bringSwing, moveCards]);
+    return withMoves(asked, moveCards, request.card ?? null);
+  }, [picks, request.modifiers, attribute, bringSwing, moveCards, request.card]);
 
   /* What is on this character right now, for the list under the ways, and how
      long this use will itself be on them. Both read off the request and the
@@ -411,21 +411,29 @@ export default function UsePrompt({
      something has to say so first. */
   const writes = useMemo(() => triggerLine(request.card, character), [request.card, character]);
 
-  /* What the Martial Moves add: Willpower, and the one point RIPOSTE takes back
-     off the swing. Floored at nothing where it lands, because a 1 Action Point
-     attack with a Riposte on it is free rather than owed. See moveCost.
+  /* What the Martial Moves add: Willpower, the one point RIPOSTE takes back off
+     the swing, and whether one of them makes the swing free outright. Floored at
+     nothing where it lands, because a 1 Action Point attack with a Riposte on it
+     is free rather than owed. See moveCost.
 
-     `swingAp` is what four of the eighteen are priced off: the attack's own
-     printed cost, off the card rather than off the request, so a discount the
-     holder carries does not quietly make their moves cheaper too. The request's
-     numbers are the fallback for a card the request arrived without. */
+     `swing` is the attack card itself, because five of the moves are priced off
+     it and the two rates read different things off it: RECKLESS wants its printed
+     Action Points and AMBUSH wants how many Damage Dice it rolls. The card rather
+     than the request, so a discount the holder carries does not quietly make
+     their moves cheaper too — and null when the request arrived without one,
+     which prices every move at what its plate prints. */
   const cutBy = Math.max(0, Math.floor(Number(allowance.discount) || 0));
-  const swingAp =
-    Number(request.card?.ap) || Number(request.apWas) || Number(request.ap) || 0;
-  const paid = moveCost(moveCards, cutBy, swingAp);
+  const swing = request.card ?? null;
+  const paid = moveCost(moveCards, cutBy, swing);
 
   const base = {
-    ap: Math.max(0, (request.variable ? dialled : Number(request.ap) || 0) + paid.ap),
+    /* RECKLESS VIOLENCE, and nothing else: a move can say the attack costs no
+       Action Points, and that replaces the price rather than reducing it. It wins
+       over the dial and over RIPOSTE both, because there is nothing left for
+       either to move. See `free` in moveCost. */
+    ap: paid.free
+      ? 0
+      : Math.max(0, (request.variable ? dialled : Number(request.ap) || 0) + paid.ap),
     /* Plus whatever the skills brought to a check cost, and whatever the moves
        cost. A skill has no printed price of its own (see the note in
        backgrounds.js): it spends Willpower conditionally, inside its own sentence,
@@ -446,11 +454,12 @@ export default function UsePrompt({
       ? extra
       : { ap: base.ap + extra.ap, wp: base.wp + extra.wp, health: extra.health };
 
-  /* What the card printed, when something has already cut it. Two things can:
+  /* What the card printed, when something has already cut it. Three things can:
      an Arcanist at Rank 3 casts everything in their spellbook for one Action Point
-     less, and a RIPOSTE added to a reaction attack gives a point back. Both are
-     named on the one line, because an orb that quietly reads 1 where the card says
-     2 is the only number on this dialog with no account of itself.
+     less, a RIPOSTE added to a reaction attack gives a point back, and a RECKLESS
+     VIOLENCE takes the whole price away. All are named on the one line, because an
+     orb that quietly reads 1 where the card says 2 is the only number on this
+     dialog with no account of itself.
 
      Shown only while nothing else is being added on top, because an Overcast moves
      the same number for its own reasons and two revisions on one orb is a sum
@@ -464,7 +473,13 @@ export default function UsePrompt({
   const apWas = !taken && apPrinted > price.ap ? apPrinted : null;
   const cutFrom = [
     ...(request.apCutFrom ?? []),
-    ...moveCards.filter((card) => Number(card.rides?.ap) < 0).map((card) => card.name),
+    /* A move that moved the Action Points, either way it can: a signed delta, or
+       the word that zeroes them. `Number('free')` is NaN and NaN is not less than
+       zero, so the flag has to be tested for itself — without this the orb would
+       strike a 4 through and name nobody for it. */
+    ...moveCards
+      .filter((card) => card.rides?.ap === 'free' || Number(card.rides?.ap) < 0)
+      .map((card) => card.name),
   ];
 
   const ways = reaction
@@ -686,7 +701,7 @@ export default function UsePrompt({
                   full={!takenMoves.includes(at) && takenMoves.length >= allowed}
                   allowance={allowance}
                   cut={cutBy}
-                  swing={swingAp}
+                  swing={swing}
                   onToggle={() => toggleMove(at)}
                   stack={cards}
                 />
@@ -1045,16 +1060,16 @@ function RunningRow({ effect }) {
  * with no charges left.
  */
 function MoveRow({ card, talent, on, full, allowance, cut, swing, onToggle, stack }) {
-  /* What it costs on *this* swing, which for RECKLESS, WOUND, REND and SUNDER is
-     not what the plate prints: the plate quotes a rate per 2 Action Points and
-     this is that rate against the attack in front of you. See moveWillpower in
-     martial.js.
+  /* What it costs on *this* swing, which for the five that `scale` is not what
+     the plate prints: the plate quotes a rate — per 2 Action Points for four of
+     them, per Damage Die for AMBUSH — and this is that rate against the attack in
+     front of you. See moveWillpower in martial.js.
 
      The orb strikes the plate's number through whenever the two differ, which is
-     the same account it already gave for a set that cut the price — a row
-     charging 6 beside a card printing 2 is exactly the kind of number the sheet
-     is not allowed to leave unexplained. The swing is named as what did it,
-     because it is: a Great Weapon is why. */
+     the same account it already gave for a set that cut the price: a row charging
+     6 beside a card printing 2 is exactly the kind of number the sheet is not
+     allowed to leave unexplained. The swing is named as what did it, because it
+     is — a Great Weapon is why. */
   const rate = Math.max(0, Math.floor(Number(card.wp) || 0));
   const printed = moveWillpower(card, swing);
   const owed = Math.max(0, printed - cut);

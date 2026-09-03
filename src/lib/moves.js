@@ -110,7 +110,7 @@
  * nothing: every function hands back a value for somebody else to store.
  */
 
-import { getTalent, normalizeTalents } from './talents.js';
+import { cardsThroughRank, getTalent, normalizeTalents } from './talents.js';
 import { isMartialMove, moveWillpower } from './martial.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
 import { heldItem, normalizeEquipment } from './items.js';
@@ -204,6 +204,11 @@ export function moveSetFor(talents, cardId) {
   for (const { talent, state } of withPicks(talents)) {
     if ((state?.picks ?? []).some((pick) => pick.id === cardId && pick.ok)) return talent;
   }
+  /* And a granted move belongs to the set that granted it, which is the plainer
+     half of the same question: it was never picked, so there is no pick to find. */
+  for (const row of grantedMoves(talents)) {
+    if (row.card.id === cardId) return row.talent;
+  }
   return null;
 }
 
@@ -278,19 +283,49 @@ export function moveRides(card, special = false) {
   return special ? isWeaponAttack(card) : isPlainAttack(card);
 }
 
+/**
+ * Whether one move may ride this swing, which is the same question narrowed by
+ * the move's own text.
+ *
+ * Two flags, and both arrived with the granted three on 2026-09-03. Neither is on
+ * a card in martial.js: the eighteen in the codex are written to ride whatever
+ * their holder's set allows, and it is a set's *own* move that comes with a
+ * sentence about which swing.
+ *
+ * `plain` means it rides the plain attack whatever a set has bought. AMBUSH
+ * carries it, on Jules's ruling of 2026-08-21 — "Ambush only apply on Weapon
+ * Attack, not special attack" — and that ruling has to survive the card becoming
+ * a move: a Trickster who also holds a Rank 2 Duelist has bought the widening for
+ * the Duelist's hand, and reading it onto AMBUSH would quietly undo a ruling
+ * nobody revisited. Worth asking about, since the widening now has a card in the
+ * codex it visibly does not reach.
+ *
+ * `melee` means the swing has to be one. RAGING BLOW carries it and the card has
+ * always said it ("your next melee Weapon Attack"); what is new is that there is
+ * somewhere to enforce it, because a weapon attack carries `Melee` or `Ranged` in
+ * its own tags. Transcription rather than invention — the alternative is a
+ * Berserker with a bow being offered a card that says it cannot be used.
+ */
+function moveTakesSwing(move, card, special) {
+  if (!moveRides(card, special && !move?.plain)) return false;
+  if (move?.melee && !(card?.tags ?? []).includes('Melee')) return false;
+  return true;
+}
+
 /* ---------------------------------------------------------- what is offered */
 
 /**
  * Every Martial Move this character actually holds, from every source that hands
  * one over, as `{ card, talent, modifiers }`.
  *
- * Two places hand them out and both are read here, because a move you own is a
- * move you can add whichever door it came through:
+ * Three places hand them out and all three are read here, because a move you own
+ * is a move you can add whichever door it came through:
  *
  *   a loadout   the hand a set prepares, re-chosen at a rest. Four sets.
  *   a pact      a boon of the Pact of Ordenance. FIRST BOON seals one with the
  *               bargain, three rungs of the ladder are moves, and an endless
  *               bargain keeps handing them over forever.
+ *   a grant     a set's own card that *is* a move. See `grantedMoves`.
  *
  * The pact was a gap the old flow had and nobody noticed, because a pact move
  * arrived on the quick bar as a chip like anything else and the bar was where you
@@ -311,7 +346,53 @@ export function heldMoves(character) {
     }
   }
 
-  return held;
+  return [...held, ...grantedMoves(character?.talents)];
+}
+
+/**
+ * The moves a set hands over outright, as one of its own cards.
+ *
+ * Jules, 2026-09-03: *"Make sure that all ability like ambush are reshaped to
+ * work like marital move. Actualy, make them special martail mvoe that are given
+ * by the talnet."*
+ *
+ * Three cards were abilities that did nothing to the world and everything to your
+ * own next swing — AMBUSH, RAGING BLOW and RECKLESS VIOLENCE — and each of them
+ * had to be paid for on one turn to be spent on another. AMBUSH was the last
+ * rider on the sheet still working the way every move worked before 2026-09-02:
+ * you bought it at the quick bar, it sat on the effects tracker, and the next
+ * weapon attack carried it. The other two were never wired at all and said
+ * "your next attack" in prose that nothing read.
+ *
+ * They are Martial Moves now, and a granted one differs from a learned one in
+ * exactly two ways:
+ *
+ *   - it is not in a pool, so no chooser offers it and no rest re-picks it. The
+ *     set hands it over at a rank and it is yours.
+ *   - it is printed under its set on the Abilities tab rather than under a hand,
+ *     which is where its holder already reads it.
+ *
+ * Everything else is a move: offered in the swing's own prompt, priced into the
+ * same pay button, folded into the same printed card, spent by the same press.
+ * That is the whole point of the reshape — the ability that was three taps and a
+ * tracker row is one tick inside the attack it was always for.
+ *
+ * Read off the set's cards rather than off a list here, so a fourth is a `kind`
+ * on a card and no change to this file. Rank-gated by `cardsThroughRank`, the
+ * same function the Abilities tab reads, so a move arrives when its rank does.
+ */
+export function grantedMoves(talents) {
+  const rows = [];
+
+  for (const entry of normalizeTalents(talents)) {
+    const talent = getTalent(entry.id);
+    if (!talent) continue;
+    for (const card of cardsThroughRank(talent, entry.rank)) {
+      if (isMartialMove(card)) rows.push({ card, talent, modifiers: null });
+    }
+  }
+
+  return rows;
 }
 
 /**
@@ -355,26 +436,43 @@ export function offeredMoves(character, card, { reaction = false } = {}) {
 
   const locks = feralLocks(character);
 
+  const special = movesReachSpecial(talents);
+
   return heldMoves(character).filter(
     ({ card: move, talent }) =>
       (reaction || !move.reaction) &&
+      /* And the move's own narrowing, on top of the set's. See moveTakesSwing. */
+      moveTakesSwing(move, card, special) &&
       passesForm(move, locks, { set: talent?.id ?? null }).ok
   );
 }
 
 /**
- * What the chosen moves add to the price of the swing, as `{ wp, ap }`.
+ * The codex's own price arithmetic, handed on.
+ *
+ * A caller that has to print what one move costs — the row in the use prompt is
+ * the only one — needs the same sum `moveCost` uses, and reaching past this file
+ * to martial.js for it would give the prompt two places to ask about a price. Same
+ * trade weapons.js makes re-exporting MARTIAL_MOVES.
+ */
+export { moveWillpower };
+
+/**
+ * What the chosen moves add to the price of the swing, as `{ wp, ap, free }`.
  *
  * `wp` is the sum of what they cost, and it is the whole of what a move costs:
  * the Action Points belong to the attack, which is the change of 2026-09-02. See
  * the head of martial.js.
  *
- * `swing` is what that attack costs before anything the holder carries cut it,
- * and four of the eighteen read their price off it: `moveWillpower` turns a
- * RECKLESS into 1 Willpower on a dagger and 3 on a Great Weapon. It defaults to
- * 2, the cheapest rung on the wall, so a caller that has no swing to hand gets
- * the number the card prints. The arithmetic is martial.js's, because it is the
- * codex's rule about its own cards; this is only the place the swing meets it.
+ * `swing` is **the attack card itself**, not a number, because five of the moves
+ * read their price off it and the two rates read different things: `'ap'` wants
+ * its printed cost and `'dice'` wants how many Damage Dice it rolls. Handed the
+ * card, `moveWillpower` turns a RECKLESS into 1 Willpower on a dagger and 3 on a
+ * Great Weapon, and an AMBUSH into 1 on a dagger and 3 on a Staff. Null is
+ * allowed and gives the printed number, so a caller with no swing to hand — a
+ * presentation page, a codex list — sees the plate. The arithmetic is
+ * martial.js's, because it is the codex's rule about its own cards; this is only
+ * where the swing meets it.
  *
  * `discount` is what the holder takes off each one, off `moveAllowance`. A Master
  * Colossus's MARTIAL SWIFTNESS is the only thing in the codex that grants it, and
@@ -390,28 +488,28 @@ export function offeredMoves(character, card, { reaction = false } = {}) {
  * it, and it *gives* a point back, so the sum is floored where it is applied
  * rather than here: a card that printed 1 Action Point with two Ripostes riding
  * it must not come out at minus one.
- */
-/**
- * The codex's own price arithmetic, handed on.
  *
- * A caller that has to print what one move costs — the row in the use prompt is
- * the only one — needs the same sum `moveCost` uses, and reaching past this file
- * to martial.js for it would give the prompt two places to ask about a price. Same
- * trade weapons.js makes re-exporting MARTIAL_MOVES.
+ * `free` is the other thing that can happen to the Action Points and it is not a
+ * number: RECKLESS VIOLENCE says the attack costs none, which is a price being
+ * *replaced* rather than reduced. A delta cannot say that — minus six would be
+ * wrong on a dagger and right on a Great Weapon — so it is a flag, and the prompt
+ * zeroes the swing when it is set. `ap` is still summed alongside it, because a
+ * Riposte on a free attack has nothing left to give back and the two must not
+ * fight over one number.
  */
-export { moveWillpower };
-
-export function moveCost(cards = [], discount = 0, swing = 2) {
+export function moveCost(cards = [], discount = 0, swing = null) {
   const cut = Math.max(0, Math.floor(Number(discount) || 0));
   let wp = 0;
   let ap = 0;
+  let free = false;
 
   for (const card of cards) {
     wp += Math.max(0, moveWillpower(card, swing) - cut);
-    ap += Math.floor(Number(card?.rides?.ap) || 0);
+    if (card?.rides?.ap === 'free') free = true;
+    else ap += Math.floor(Number(card?.rides?.ap) || 0);
   }
 
-  return { wp, ap };
+  return { wp, ap, free };
 }
 
 /**
@@ -499,7 +597,7 @@ export function effectAdvantage(effect) {
  * the moves were picked, so `attackModifiers` leaves its `perMove` on the object
  * for this to multiply out.
  */
-export function withMoves(modifiers, cards = []) {
+export function withMoves(modifiers, cards = [], swing = null) {
   if (cards.length === 0) return modifiers;
 
   let advantage = 0;
@@ -512,7 +610,16 @@ export function withMoves(modifiers, cards = []) {
   for (const move of cards) {
     const gain = Math.max(0, Number(move.rides?.advantage) || 0);
     const die = Math.max(0, Number(move.rides?.empower) || 0);
-    const step = Math.max(0, Number(move.rides?.elevate) || 0);
+    /* `elevate: 'paid'` is AMBUSH and nothing else: "Elevated a number of times
+       equal to the Willpower paid", and what it paid is the swing's own dice
+       count. Resolved here rather than stored, because the answer changes with
+       what is in your hands and the card is printed before the swing is made —
+       the plate the player is looking at when they tick the box has to be the
+       plate the dice are thrown for. See moveWillpower in martial.js. */
+    const step =
+      move.rides?.elevate === 'paid'
+        ? moveWillpower(move, swing)
+        : Math.max(0, Number(move.rides?.elevate) || 0);
 
     advantage += gain;
     empower += die;
