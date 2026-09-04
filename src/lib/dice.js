@@ -319,10 +319,17 @@ export function isFailure(verdict) {
  * The four bands, in the order they are offered when the table has to call it
  * by hand. Worst first, the way a result reads when you are looking for the bad
  * news.
+ *
+ * The tone is the colour the word wears wherever it is said: the tray verdict,
+ * the log band, the log throw and the buttons that call one by hand. Green and
+ * amber on the good news, two reds on the bad, and nothing on this list is
+ * muted, because a verdict is a result rather than an absence. The reds are the
+ * danger pair rather than --stat-health, which is a bar colour and goes to mud
+ * at the size these words are set.
  */
 export const VERDICTS = [
-  { id: 'critical-failure', label: 'Critical failure', tone: 'var(--stat-health)' },
-  { id: 'failure', label: 'Failure', tone: 'var(--stat-health)' },
+  { id: 'critical-failure', label: 'Critical failure', tone: 'var(--danger-red)' },
+  { id: 'failure', label: 'Failure', tone: 'var(--danger-rose)' },
   { id: 'success', label: 'Success', tone: 'var(--def-healing)' },
   { id: 'critical-success', label: 'Critical success', tone: 'var(--level-amber)' },
 ];

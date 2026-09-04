@@ -42,6 +42,12 @@
  * The `times` option is how many times the half has been taken, straight off
  * the prompt's own dial, and 0 reads the main text alone.
  *
+ * ------------------------------------------------------- and the things held
+ * A card that reaches for a *thing* rather than a body lands on whoever is
+ * holding the thing: "a weapon you can touch" is somebody's weapon. That is
+ * read last, only for a card that named no body at all, and `heldThing` is what
+ * names it. See the block above the reader.
+ *
  * This file reads cards. It writes nothing and changes no character.
  */
 
@@ -76,6 +82,36 @@ function asCount(word) {
   return COUNTS[String(word).toLowerCase()] ?? 1;
 }
 
+/* --------------------------------------------------- a thing somebody holds
+ *
+ * Jules, 2026-09-04: "spells like kindle say weapon you can touch so it should
+ * allow you to target the weapon someone at the table."
+ *
+ * KINDLE WEAPON imbues "a weapon you can touch" and names no entity anywhere on
+ * the card, so every pattern above came up empty, the picker never opened, and
+ * the only blade the spell could light was the caster's own. But a weapon you
+ * can touch is a weapon in somebody's hand, and whose hand is exactly the
+ * question a row of chips answers. So a card that names no body still lands on
+ * one when what it reaches for is a thing somebody is holding, and the body it
+ * lands on is the one holding it. EPHEMERAL ENCHANTMENT says as much in its own
+ * next sentence: "applying its effect to the wielder of the item".
+ *
+ * Two guards keep the reading to the cards that mean it:
+ *
+ *   touch, not sight   "a non-magical object you can see" (TEMPORAL MEND) is a
+ *                      broken cart and "a simple stone object" (SHAPE EARTH) is
+ *                      a rock. Reach out and touch a thing and somebody is
+ *                      holding it; see one across the room and nobody need be.
+ *   last resort        read only once every body pattern above has come up
+ *                      empty, so no card that already counts entities has its
+ *                      answer moved by a weapon named further down its text.
+ *
+ * And picking is still optional, which is what makes the reading safe: a sword
+ * on the ground is a use with nobody picked, exactly as it was before.
+ */
+const THING = '(?:weapons?|items?|objects?|armor|shields?)';
+const HELD = new RegExp(`\\b(?:an?|another|the|one)\\s+(?:\\w+\\s+){0,3}?(${THING})\\s+(?:that\\s+)?you can touch`, 'i');
+
 /** What one block of text says: lands on nobody, on a count, or on an area. */
 function readTargets(text) {
   if (!text) return null;
@@ -89,7 +125,24 @@ function readTargets(text) {
      entities you touch". Rare, and honest as an uncounted answer. */
   if (new RegExp(`\\b${BODY}\\b`, 'i').test(text)) return { some: true, count: null };
 
+  /* And last, the thing in somebody's hand: one thing is one body. See HELD. */
+  if (HELD.test(text)) return { some: true, count: 1 };
+
   return null;
+}
+
+/**
+ * The thing a card reaches for, named ("weapon", "item"), or null for the rest
+ * of the codex.
+ *
+ * The picker's own head reads off this, because "Targets" over a row of chips is
+ * the wrong question when what is being picked is whose blade catches fire.
+ * `landing` in combatBar.js reads it too: a card with no body in its text still
+ * lays its row on whoever holds what it lit.
+ */
+export function heldThing(card) {
+  const hit = HELD.exec(cardProse(card?.body));
+  return hit ? hit[1].toLowerCase().replace(/s$/, '') : null;
 }
 
 /**

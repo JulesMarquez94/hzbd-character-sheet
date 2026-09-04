@@ -31,7 +31,7 @@ import {
 } from '../../lib/moves.js';
 import { effectLine } from '../../lib/riders.js';
 import { mergeSources, sourceRow, sourceWords } from '../../lib/attribution.js';
-import { targetPlan } from '../../lib/targeting.js';
+import { heldThing, targetPlan } from '../../lib/targeting.js';
 import { triggerLine } from '../../lib/onUse.js';
 import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.js';
 
@@ -187,6 +187,11 @@ import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.j
  * hand. What was picked rides out on the confirm as `options.targets`, and the
  * encounter page is what does something with it — this prompt still spends
  * points and nothing else.
+ *
+ * A card that reaches for a thing rather than a body offers the same chips and
+ * asks a different question in the head: KINDLE WEAPON's "a weapon you can
+ * touch" is somebody's weapon, so the head reads "Whose weapon" and picking an
+ * ally lights theirs (Jules, 2026-09-04). See heldThing in targeting.js.
  */
 
 /** The two pools a cost can come out of, and what each one is called. */
@@ -328,6 +333,11 @@ export default function UsePrompt({
   const [chosen, setChosen] = useState([]);
   const reach = plan.count === null ? roster.length : Math.min(plan.count, roster.length);
   const picked = chosen.slice(0, reach);
+
+  /* What this one reaches for, when it is a thing rather than a body: a KINDLE
+     WEAPON picks whose blade catches fire, so the head asks for that instead of
+     for "Targets". See heldThing in targeting.js. */
+  const thing = useMemo(() => heldThing(request.card), [request.card]);
 
   function toggleTarget(id) {
     setChosen((was) => {
@@ -799,7 +809,7 @@ export default function UsePrompt({
           {plan.some && roster.length > 0 && (
             <div className="use-targets">
               <span className="use-targets-head">
-                Targets
+                {thing ? `Whose ${thing}` : 'Targets'}
                 <span className="use-targets-count">
                   {picked.length} of {plan.count === null ? 'any' : reach}
                 </span>
@@ -827,7 +837,9 @@ export default function UsePrompt({
 
               <span className="use-targets-note">
                 {picked.length === 0
-                  ? 'Nobody picked: the use goes through as written, and the numbers are landed by hand.'
+                  ? thing
+                    ? `Nobody picked: the ${thing} is your own, and the spell rides your sheet.`
+                    : 'Nobody picked: the use goes through as written, and the numbers are landed by hand.'
                   : 'What this lays goes on their trackers, and what it rolls lands on them once the dice settle.'}
               </span>
             </div>

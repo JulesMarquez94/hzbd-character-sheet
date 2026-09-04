@@ -536,8 +536,8 @@
 }
 
 .react-gate-say.is-fails.is-on {
-  border-color: var(--stat-health);
-  color: var(--stat-health);
+  border-color: var(--danger-red);
+  color: var(--danger-rose);
   background-color: rgba(224, 82, 82, 0.12);
 }
 
@@ -588,10 +588,12 @@
   text-transform: uppercase;
 }
 
+/* The four bands, in the tones VERDICTS gives them in lib/dice.js. A failure is
+   red rather than muted, because this word is what the whole roll was for. */
 .dice-verdict.is-success { color: var(--def-healing); }
-.dice-verdict.is-failure { color: var(--text-muted); }
+.dice-verdict.is-failure { color: var(--danger-rose); }
 .dice-verdict.is-critical-success { color: var(--level-amber); }
-.dice-verdict.is-critical-failure { color: var(--stat-health); }
+.dice-verdict.is-critical-failure { color: var(--danger-red); }
 
 /* ------------------------------------------- what can still be done about it
    Offers made after the dice have stopped: a Karma, a card that adds one. They

@@ -480,10 +480,18 @@ export default function CampaignPage() {
   /* The Overview lays blocks on the campaign's own canvas; Details is prose
      and keeps the three-column measure everything else is drawn against.
 
-     The two Game Master tabs take four, because everything on them is a double
-     block: four tracks is two enemies side by side, which is the same measure
-     the Overview's three single blocks make. */
-  const canvasColumns = tab === 'Overview' ? columns : DM_TABS.includes(tab) ? 4 : 3;
+     Encounters takes four, because everything on it is a double block: four
+     tracks is two enemies side by side, which is the same measure the
+     Overview's three single blocks make.
+
+     The Bestiary used to take four for the same reason and does not any more
+     (2026-09-04). It is a wall of summaries now, and a wall of summaries is
+     three columns wide everywhere else on the site, because everywhere else it
+     is drawn inside a page-width dialog. Three tracks here comes to the same
+     column and the same brief, which is the whole of what "the same size as a
+     spell summary" asks for. It is also the width the block itself opens at,
+     so the dialog lands about where the shelf edges are. See BestiaryTab. */
+  const canvasColumns = tab === 'Overview' ? columns : tab === 'Encounters' ? 4 : 3;
 
   return (
     <div

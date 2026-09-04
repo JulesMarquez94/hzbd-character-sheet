@@ -16,7 +16,7 @@
  * fails here by name rather than quietly unwiring a fight.
  */
 
-import { targetPlan } from '../src/lib/targeting.js';
+import { heldThing, targetPlan } from '../src/lib/targeting.js';
 import {
   aimHits,
   aimOutcomes,
@@ -95,6 +95,50 @@ section('a target count is the card’s own text');
     count: null,
   });
   check('MOVE reaches nobody', targetPlan(card('move')), { some: false, count: 0 });
+}
+
+section('a thing somebody holds is read as the body holding it');
+{
+  /* KINDLE WEAPON names no entity anywhere on the card: "a weapon you can touch"
+     is the whole of its reach, and until 2026-09-04 that read as nobody, so the
+     only blade it could light was the caster's own (Jules: "spells like kindle
+     say weapon you can touch so it should allow you to target the weapon someone
+     at the table"). */
+  check('KINDLE WEAPON reaches whoever holds the weapon', targetPlan(card('kindle-weapon')), {
+    some: true,
+    count: 1,
+  });
+  check('and the picker knows to ask whose', heldThing(card('kindle-weapon')), 'weapon');
+  check(
+    'EPHEMERAL ENCHANTMENT reaches the item’s wielder, as its own line says',
+    heldThing(card('ephemeral-enchantment')),
+    'item'
+  );
+
+  /* Touch, not sight. A thing seen across the room need not be in anybody's
+     hand, and these two are a broken cart and a rock. */
+  check('TEMPORAL MEND mends an object and lands on nobody', targetPlan(card('temporal-mend')), {
+    some: false,
+    count: 0,
+  });
+  check('SHAPE EARTH shapes a stone and lands on nobody', targetPlan(card('shape-earth')), {
+    some: false,
+    count: 0,
+  });
+  check(
+    'and neither names a held thing',
+    [heldThing(card('temporal-mend')), heldThing(card('shape-earth'))],
+    [null, null]
+  );
+
+  /* And the reading is a last resort: a card whose text names a body is answered
+     by the body, however many weapons the rest of it mentions. */
+  const both = {
+    id: 'test-held',
+    name: 'Test',
+    body: 'You imbue a weapon you can touch with flames.\n\n**Every entity** within **3 meters** is Burned.',
+  };
+  check('a body in the text still answers first', targetPlan(both), { some: true, count: null });
 }
 
 section('the second half moves the count only once it is taken');
@@ -686,6 +730,13 @@ section('a condition lands with its clock, and where the card says');
   check('THORN RAMPART stays with its caster', plan('thorn-rampart').landsOn, 'caster');
   check('HIDE stays on the hider', plan('hide').landsOn, 'caster');
   check('a potion stays on the drinker', plan('titansbane-poison').landsOn, 'caster');
+
+  /* A held thing lands on the holder, and an Upkeep on the caster besides: the
+     ally's weapon comes out Fire off their own sheet, and the Willpower that
+     keeps it lit is paid on the sheet that lit it. */
+  const kindled = plan('kindle-weapon');
+  check('KINDLE WEAPON lays a row at all', Boolean(kindled.own), true);
+  check('on the holder and on the caster who feeds it', kindled.landsOn, 'both');
 
   /* An optional condition lands only when the prompt ticks it. */
   check('SHOVE lays nothing unticked', plan('shove').laid.length, 0);

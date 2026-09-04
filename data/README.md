@@ -12851,3 +12851,273 @@ in the browser: ticking BESTIAL SENSE and SHARP SENSE read "2 of 4", the orb cha
 Willpower rather than 2, the arrow read 2, the list under the ways itemised both by name, and
 the confirm carried `advantage 2`, both source rows and `price { ap 0, wp 1 }` with the note
 naming only Sharp Sense.
+
+## Shield does not keep, 2026-09-04
+
+Jules: "Shield should be removed on a long rest."
+
+A long rest filled Health and Willpower and left the Shield pool exactly where the last fight
+put it. A ward laid at dusk was still up at dawn, and a character could bank soak across
+sessions by never spending it.
+
+### The rule
+
+A **Long Rest takes all of it**. A **Short Rest leaves it standing**: an hour off your feet
+binds a wound, the ward is still there when you stand. That is the same asymmetry every other
+line of the rest already reads, so it went in beside Willpower, which is also the long one
+only.
+
+### Where it sits
+
+`restPlan` in `rest.js`, after `feralRest` and before the Willpower block, guarded on
+`patch.shield === undefined`. The order is the whole point. FERAL FORM's Shield *is* the form,
+`feralRest` already empties the pool when the hide comes off and already says so in its own
+line, so a second line reading "Shield 9 to 0" underneath "The hide comes off, and 9 Shield
+with it" is the same sentence twice. The guard is what keeps it to one.
+
+A rest nobody can pay for still takes nothing: the whole block sits below the affordability
+return, like everything else the night does.
+
+### What it changed on the sheet
+
+Nothing in the window's shape. One more `tone: 'end'` line among the rest's lines, printed
+between Health and Willpower, so a player sees the pool leave before they press.
+
+### Said in four more places
+
+The keyword tooltips for **Shield** and **Long Rest** in `keywords.js`, and the rulebook's 2.4,
+its Chapter Eight table, its glossary and its quick reference. The tooltips and the glossary are
+the same sentence, which is how they were before.
+
+### Proved
+
+A scratchpad harness over `restPlan`: a plain sheet holding 9 Shield takes a long rest and the
+patch carries `shield 0` with the line printed, takes a short rest and the pool is untouched,
+holds no Shield and no line is printed at all, cannot pay and nothing moves. Then the same with
+FERAL FORM: in form on a long rest, one line and one `shield 0`; in form on a short rest, the
+same; in form with the Shield already run out, the "hide was already off" line and no shield in
+the patch; and the set held with the form off, where the Shield came from somewhere else and
+this block is the one that takes it.
+
+### Open
+
+- **A conjured body's Shield.** `minions.js` gives a creature its own `shield` and its own
+  `shield_cap`, and `minionRest` fills its Health and Action Points without touching it. The
+  same argument says a ward on an ally should not last the night either. Left alone rather than
+  widened without a ruling.
+- **Life Tree Tea.** It fires `restPlan(character, 'long')`, so the cup now takes your Shield
+  along with everything else it gives. That follows the card, which says it "gives you the
+  benefit of a Long Rest", but a Legendary potion drunk mid-delve to top up now strips the ward
+  the party just laid. Wanted or not is Jules's call.
+
+## A weapon you can touch is somebody's weapon, 2026-09-04
+
+Jules: "spells like kindle say weapon you can touch so it should allow you to target the
+weapon someone at the table."
+
+KINDLE WEAPON imbues "a weapon you can touch" and names no entity anywhere on the card. Every
+pattern in `targeting.js` reads bodies, so the card came back `{ some: false, count: 0 }`, the
+picker never opened, and the only blade the spell could ever light was the caster's own.
+
+### The reading
+
+**A card that names no body still lands on one when what it reaches for is a thing somebody is
+holding, and the body it lands on is the one holding it.** A weapon you can touch is a weapon
+in somebody's hand, and whose hand is exactly the question a row of chips answers. EPHEMERAL
+ENCHANTMENT says as much in its own next sentence: "applying its effect to the wielder of the
+item".
+
+Two guards keep the reading to the cards that mean it.
+
+- **Touch, not sight.** "a non-magical object you can see" (TEMPORAL MEND) is a broken cart and
+  "a simple stone object" (SHAPE EARTH) is a rock. Reach out and touch a thing and somebody is
+  holding it. See one across the room and nobody need be.
+- **Last resort.** It is read only once every body pattern has come up empty, so no card that
+  already counts entities has its answer moved by a weapon named further down its text.
+
+Picking is still optional, which is what makes the reading safe: a sword on the ground is a use
+with nobody picked, exactly as it was before.
+
+### Whose tracker
+
+`landing` in `combatBar.js` read the same silence the same way and kept the row on the caster.
+It reads the held thing now, which puts KINDLE WEAPON on the **both** rung it always belonged
+on: the row lands on the holder, because that is the sheet whose swing has to come out Fire and
+Empowered by 1 through `riders.js`, and it lands on the caster too, because the caster is who
+pays the Upkeep Willpower to keep it lit. Miss the Upkeep and the fire goes out on both sheets.
+
+Nothing new was needed to get the row across the table. A member target has been delivered as
+an `effect` event their own client applies since the combat manager was built.
+
+### The picker asks a different question
+
+"Targets" over a row of chips is the wrong question when what is being picked is whose blade
+catches fire, so `heldThing` names the thing and the head reads **Whose weapon**. With nobody
+picked the note says so: "Nobody picked: the weapon is your own, and the spell rides your
+sheet."
+
+### Two cards moved, and only two
+
+The census went from 284 to **286 of 499 cards reaching other bodies**. The two are KINDLE
+WEAPON and EPHEMERAL ENCHANTMENT. STICKY RESIN already read as one target off its own "the
+target on a hit", and the other 56 card halves that name a weapon or an item say nothing about
+touching one: an Infusion is about the weapon you already hold, an Imbuement about the item on
+your own sheet, a Martial Move about the Weapon in your own hand.
+
+### Proved
+
+`npm run lint:combat`, seven new checks: KINDLE WEAPON reaches one and names its weapon,
+EPHEMERAL ENCHANTMENT names its item, TEMPORAL MEND and SHAPE EARTH reach nobody and name no
+held thing, a synthetic card carrying both a held weapon and an "every entity" is answered by
+the entity, and a cast of KINDLE WEAPON lays a row that lands on **both**. The whole existing
+suite is untouched and green, `npm run lint` and `npm run lint:text` are clean, and the build
+passes.
+
+### Open
+
+- **The picker only exists inside a fight.** `offered` is `roster.length > 0`, and
+  `FightProvider` hands back no roster at all until Initiative has been rolled. So an ally's
+  blade can be lit in combat and not in the ten seconds before it, which is when a party would
+  actually want it lit. That is the law for all 286 targetable cards rather than anything this
+  reading introduced, and widening it means handing the seated party down as chips outside an
+  encounter. Jules's call.
+- **The weapon is not named.** The chip picks a body, and which of that body's two hands is
+  left to the table. Naming the weapon would mean reading somebody else's equipment off their
+  sheet, which is a read policy question rather than a targeting one.
+- **EPHEMERAL ENCHANTMENT still opens its own window.** It carries `pays: 'window'`, so
+  `ActiveBlock` sends it to `EnchantWindow` and it never reaches this prompt. The reading is
+  right and inert there: the window lays `ephemeralEffect` on the caster's own sheet. Wiring an
+  ephemeral enchantment onto an ally's item is its own piece of work.
+
+## The bestiary is a menu, 2026-09-04
+
+Jules: "the bestiary should be a menu with summary version of the enemies. THe lbock should show
+when you clock on it. Summary should be teh same size as like spell summary"
+
+The tab was nine enemy blocks laid on the canvas. It is now a wall of summaries with the block
+one tap behind, which is the same two steps a school of spells is: a brief you scan, and the
+whole of one when you ask for it. The shelf was nine when it was written and it grows every time
+a stat block is drawn; at 736x640 apiece thirty creatures are a wall you scroll past, and none of
+the questions you scroll for (what rank, how big, how much Health) needs the block to answer.
+
+### The brief *is* a card brief
+
+`CreatureBrief.jsx` is new and its class names are `card-brief-*`. That is the whole of how the
+sizes stay the same: "the same size as like spell summary" is a measurement, and two components
+that each carry their own numbers match on the day they are written and drift the first time one
+is tuned. So the plate is 92px because CardBrief's is, the summary clamps at two lines because
+CardBrief's does, and the wall flows at 275px because `.card-brief-wall` says so. Tuning a spell
+brief now tunes this one.
+
+Four things a creature has and a card does not, and those are `foe-brief-*` in Campaigns.css:
+
+- **the level**, in the corner the cost orbs hold. A card's cost and a creature's level are the
+  same question — how big is this — and CardBrief puts the cost there so a column of them reads
+  straight down without reading the names.
+- **the rank tone**, set as `--ac-accent` off the rank, so the top edge, the empty plate's haze,
+  the kind chip and the open label all read Minion teal, General amber or Overlord red. It is the
+  rule `.cell-foe` already keeps: the top edge is the danger.
+- **the portrait**, a plain URL off the creature drawn as the plate's background rather than an
+  `<img>`, because the plate has to stay the window CardBrief cut.
+- **the numbers**, below.
+
+### What it prints is the top of the printed page
+
+In the page's own order, and nothing else:
+
+```
+LONG CREATURE NAME     Difficulty: Minion - Level 1 - 10 XP
+Creature Type Details  Speed 3m(10f) / INI +3
+   DEF: 8   HP: 8 (3d4)
+```
+
+which comes out as the rank and the type as chips, the level in the corner, and DEF, HP, WP,
+Speed and the XP on the summary line. The one addition is a count of what it plays on the open
+label ("2 to play"), because that is what says whether opening this one is worth the tap. The
+rest of the page is the block behind it.
+
+The numbers are the creature **at the level its own page was written at**, which is the level
+`previewFoe` opens the block at, so the brief and the block never disagree. A creature scales and
+an encounter picks its own level; a shelf asked "what is a Blightgeist" has to answer with the
+Blightgeist.
+
+### The block, opened
+
+The same `EnemyBlock` an encounter draws, still `readOnly`, still dressed by `previewFoe`. It
+opens in a `size="page"` dialog, which is the first of the three kinds Modal keeps that width
+for: a thing drawn at its real footprint. `.foe-page` holds it at `var(--block-w) * 2 + 16px`,
+the 736px the grid used to give it, and centres it.
+
+Deliberately **not** `.sheet-cell-wide`. That class is a grid instruction (`span 2`), and both
+the 820px query and the one-column canvas rule take the span away and hand back a 360px block —
+correct in a grid, wrong in a dialog, where there is no grid and the width is the box's to give.
+
+The creature is held **by id**, not as an object. A forge save behind the open dialog rewrites
+the page, so reading it back off the shelf on every render means the block redraws as the
+creature it now is, and closes by itself if the creature was removed. Reading it off the whole
+shelf rather than the filtered list is also what keeps switching the rank filter from shutting an
+open block.
+
+`--rank-tone` is set on the cell here, which is what `.sheet-cell.cell-foe` has always been
+written to take and nothing had ever handed it. The brief that opened the dialog wore the rank as
+its whole accent, so the block has to. The Encounters tab still leaves it to the copper fallback,
+untouched.
+
+### The measure
+
+The Bestiary canvas went from four columns to three (`canvasColumns` in CampaignPage.jsx).
+Encounters keeps four, because everything on it is still a double block. A wall of summaries is
+three columns wide everywhere else on the site, because everywhere else it is inside a
+page-width dialog, and three tracks here comes to the same column and the same brief. It is also
+the width the block opens at, so the dialog lands about where the shelf edges are.
+
+The Edit button moved off the block head and under the brief, where the spell chooser puts its
+Learn button. It is on both now: either one is a place you have just decided this creature is the
+wrong shape. Editing the *page* is still not gated on `readOnly`, which is why the block in the
+dialog can be pressed there and nowhere else.
+
+### Proved
+
+In the browser, on a throwaway harness over `BestiaryTab` (auth is the only thing between this
+tab and a browser, so the tab was mounted directly with fixture props):
+
+- **the block keeps its footprint.** 736x640 in the dialog, two panes of 367px, and
+  `scrollHeight === clientHeight === 636` on both: nothing inside the block scrolls, which is the
+  law it was measured to. The dialog itself is 1180 and does not scroll at 820px of window.
+- **the brief and the block agree.** Vaultkeeper Lich, both read from the DOM: `DEF 14 · HP 154 ·
+  WP 56 · 4m · 4000 XP` on the brief, `DEFENSE 14 / HEALTH 154 / WILLPOWER 56 / SPEED 4m /
+  LVL 08 · 4000 XP` on the block.
+- **the rank lands.** Overlord opens with `rgb(239, 78, 91)` on the cell's top edge, Minion with
+  `rgb(77, 182, 172)`.
+- **the wall is measured to the toolbar.** Both 84 to 1196 at a 1280 window, three columns of
+  363px.
+- **a card still deals over the dialog.** WITHERING WORD opened from a chip inside the block and
+  printed against the lich (Mind +10, 4d6 + 20). One Escape closed the card, the second the
+  dialog, the wall behind it untouched.
+- **the filter does not shut an open block.** Blightgeist open, Overlord pressed: the wall behind
+  narrowed to three and the Blightgeist stayed.
+- **provenance and the cap.** With one personal and one published creature forged: the Forged
+  filter appeared reading 2, the personal brief wore FORGED and the published one PUBLISHED, and
+  Edit was offered on the account's own and not on the published one.
+- **units and the phone.** Imperial read 15ft and 25ft. At 375px the wall is one 360px column
+  with no horizontal overflow, and the block becomes one column of two panes and scrolls inside
+  itself, which is the rule at the foot of Campaigns.css.
+- **one column on a desktop.** `data-columns='1'` gives a one-column wall and still opens the
+  block at 736: the preference is about the canvas, the window is about the dialog.
+
+`npm run lint`, `lint:text`, `lint:creatures`, `lint:layout`, `lint:combat` and `lint:cards` are
+all clean.
+
+### Open
+
+- **No name box.** Nine creatures filter by rank and that is enough. Thirty will want the codex
+  browser's search, and the brief already carries everything it would search on (name, rank,
+  type). Left until the shelf earns it.
+- **The plate is haze on every printed creature.** None of the nine carries a `portrait_url`, so
+  the whole shelf draws the same empty window an unpainted card brief draws. The window is the
+  right shape for the day art arrives, which is the most that can be said for it.
+- **The encounter shelf is still its own row.** `AddFoes` keeps `.foe-shelf-row` rather than
+  becoming a wall of briefs, because its row carries the +1/+2/+5 counters and reads its numbers
+  at the level the fight is being *filled at*, neither of which a brief has anywhere to put. Two
+  shelves with two shapes is the thing this repo usually refuses; they are allowed here because
+  they answer different questions. Worth revisiting if the counters ever move.

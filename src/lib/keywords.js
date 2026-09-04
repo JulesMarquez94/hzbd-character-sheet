@@ -157,7 +157,7 @@ export const KEYWORDS = [
     terms: ['Shield'],
     color: 'var(--stat-shield)',
     detail:
-      'Damage soaked before it reaches Health, and whatever it cannot absorb carries straight through. Caps at half your maximum Health, or all of it for a Feral Cursed.',
+      'Damage soaked before it reaches Health, and whatever it cannot absorb carries straight through. Caps at half your maximum Health, or all of it for a Feral Cursed. A Long Rest takes whatever is left of it.',
   },
   {
     id: 'bleeding-out',
@@ -323,7 +323,8 @@ export const KEYWORDS = [
     color: 'var(--copper)',
     detail:
       'An 8-hour break that consumes 10 Supplies. Successfully completing a Long Rest fully ' +
-      'restores your Health and Willpower, and allows you to perform 1 Long Rest Action.',
+      'restores your Health and Willpower, takes whatever Shield is left and allows you to ' +
+      'perform 1 Long Rest Action.',
   },
   {
     id: 'short-rest',

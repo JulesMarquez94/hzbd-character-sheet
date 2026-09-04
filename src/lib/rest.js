@@ -10,9 +10,9 @@
  * ------------------------------------------------------------------ the two
  *   Short Rest   5 Supplies. Half your Health back. Ends what lasts "until a
  *                short rest".
- *   Long Rest    10 Supplies. All your Health and all your Willpower back.
- *                Ends everything a short rest ends, and everything that lasts
- *                until a long one.
+ *   Long Rest    10 Supplies. All your Health and all your Willpower back, and
+ *                whatever Shield you were still carrying gone. Ends everything a
+ *                short rest ends, and everything that lasts until a long one.
  *
  * A long rest ends what a short rest ends, and never the other way round: an
  * effect written "until your next Long Rest" survives a nap.
@@ -762,6 +762,32 @@ export function restPlan(
   if (shapes) {
     Object.assign(patch, shapes.patch);
     lines.push(...shapes.lines);
+  }
+
+  /* ---- shield: gone by morning ----
+     Shield is not a pool you own, it is soak somebody put on you: a working, a
+     ward, a hide, a lodging you paid for at the start of the day. None of that
+     is still standing eight hours later, so a long rest takes whatever is left
+     of it down to nothing.
+
+     A short rest leaves it. An hour off your feet binds a wound, and the ward is
+     still up when you stand.
+
+     Read after the hide comes off above, and only when that did not already
+     empty the pool: FERAL FORM's Shield *was* the form, `feralRest` says so in
+     its own line, and "the hide comes off, and 9 Shield with it" followed by
+     "Shield 9 to 0" is the same sentence twice. */
+  if (kind === 'long' && patch.shield === undefined) {
+    const shield = Math.max(0, Math.floor(Number(character?.shield) || 0));
+    if (shield > 0) {
+      patch.shield = 0;
+      lines.push({
+        key: 'shield',
+        label: `Shield ${shield} to 0`,
+        detail: 'Nothing you were soaking with lasts the night.',
+        tone: 'end',
+      });
+    }
   }
 
   /* ---- willpower: a long rest only, which is what the glossary says ---- */

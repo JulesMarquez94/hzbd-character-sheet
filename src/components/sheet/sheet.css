@@ -13250,10 +13250,15 @@ button.tgt-chip:disabled {
   color: var(--band-tone, var(--text-muted));
 }
 
+/* The four bands wear the tones VERDICTS gives them in lib/dice.js. A failure
+   is red rather than muted: it is a result and not an absence, and on a closed
+   entry this band is the only word about how it went. The reds are the danger
+   pair rather than --stat-health, which at 0.56rem on this panel measures
+   2.3:1 and reads as a smudge. */
 .log-band.is-success { --band-tone: var(--def-healing); }
-.log-band.is-failure { --band-tone: var(--text-muted); }
+.log-band.is-failure { --band-tone: var(--danger-rose); }
 .log-band.is-critical-success { --band-tone: var(--level-amber); }
-.log-band.is-critical-failure { --band-tone: var(--stat-health); }
+.log-band.is-critical-failure { --band-tone: var(--danger-red); }
 
 /* ---------- WHAT CAME OF IT ----------
    Only while the entry is open. */
@@ -13279,10 +13284,12 @@ button.tgt-chip:disabled {
   border-radius: 2px;
 }
 
+/* The same four tones the band above wears, because they are the same four
+   words said twice: once on the closed head, once on the throw itself. */
 .log-throw.is-success { --throw-tone: var(--def-healing); }
-.log-throw.is-failure { --throw-tone: var(--text-muted); }
+.log-throw.is-failure { --throw-tone: var(--danger-rose); }
 .log-throw.is-critical-success { --throw-tone: var(--level-amber); }
-.log-throw.is-critical-failure { --throw-tone: var(--stat-health); }
+.log-throw.is-critical-failure { --throw-tone: var(--danger-red); }
 
 .log-throw-name {
   flex: 1 0 100%;

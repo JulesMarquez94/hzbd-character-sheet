@@ -86,6 +86,7 @@ import {
   shieldCapFor,
 } from './characterModel.js';
 import { attackModifiers, isMartialMove } from './moves.js';
+import { heldThing } from './targeting.js';
 
 /* ------------------------------------------------------------------- parts */
 
@@ -1192,6 +1193,13 @@ export function castLine(request) {
  *             caster or a place: "around you", "at a point you can see"
  *   both      a card the caster keeps paying for. An Upkeep is the caster's
  *             toll and the target's affliction at once
+ *
+ * A card that names no body at all is the caster's, with one exception, and it
+ * is the same exception the picker makes: a card that reaches for a thing
+ * somebody is holding lands on the one holding it. KINDLE WEAPON aimed at an
+ * ally is a row on the ally's sheet, which is what makes *their* swing come out
+ * Fire, and an Upkeep on the caster's, which is who pays the Willpower to keep
+ * it lit. See `heldThing` in targeting.js.
  */
 
 /** The nouns a card lands on, as targeting.js reads them. */
@@ -1287,7 +1295,11 @@ function landing(card, own, laid, conjured) {
   const prose = cardProse(card?.body);
   const upkeep = card?.sub_name === 'Upkeep';
 
-  if (!BODY_WORD.test(prose) || ANCHORED.test(prose)) return 'caster';
+  /* A card with no body in its text keeps its row, unless what it reached for
+     was a thing in somebody's hand. Then the hand is the target and the row is
+     theirs, an Upkeep the caster's as well. See the note above. */
+  if (!BODY_WORD.test(prose) && !heldThing(card)) return 'caster';
+  if (ANCHORED.test(prose)) return 'caster';
   if (upkeep || SHARED.test(prose)) return 'both';
   return 'targets';
 }

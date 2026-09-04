@@ -167,7 +167,7 @@ function VerdictStrip({ outcomes }) {
   const bands = [
     { label: 'Critically hit', tone: 'var(--level-amber)', names: outcomes.filter((entry) => entry.verdict === 'critical-success') },
     { label: 'Hit', tone: 'var(--def-healing)', names: outcomes.filter((entry) => entry.verdict === 'success') },
-    { label: 'Missed', tone: 'var(--stat-health)', names: outcomes.filter((entry) => isFailure(entry.verdict)) },
+    { label: 'Missed', tone: 'var(--danger-rose)', names: outcomes.filter((entry) => isFailure(entry.verdict)) },
   ].filter((band) => band.names.length > 0);
 
   return (

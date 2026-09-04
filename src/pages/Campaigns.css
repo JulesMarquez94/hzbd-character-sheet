@@ -1345,6 +1345,107 @@
 }
 
 /* =========================================================
+   THE SHELF OF CREATURES
+   The Bestiary tab itself: a wall of summaries, and the
+   block behind one of them.
+
+   Jules, 2026-09-04: "the bestiary should be a menu with
+   summary version of the enemies. The block should show when
+   you click on it. Summary should be the same size as like
+   spell summary."
+
+   So the wall IS the spell wall — `.card-brief-wall` and
+   `.card-brief-*` in sheet.css, unchanged and unforked. What
+   is here is only the four things a creature has that a card
+   does not, plus the box the block opens in. See
+   CreatureBrief.jsx for why the two share one measure rather
+   than two that match today.
+   ========================================================= */
+
+/* Measured against the toolbar above it, the way every row on
+   these two tabs is measured against the grid: the filter and
+   the wall begin and end on the same edge. `.card-brief-wall`
+   brings the columns (auto-fill at 275px), so the count falls
+   out of the measure rather than being set here. */
+.foe-brief-wall {
+  width: min(100%, var(--sheet-measure));
+  margin-inline: auto;
+  /* `.card-brief-wall` leads with 0.8rem, which is right under a dialog's own
+     heading and is a second gap under the toolbar: the toolbar already spends
+     0.9rem below itself, exactly as it did over the grid this wall replaced. */
+  margin-top: 0;
+}
+
+/* The level, in the corner a card brief keeps its cost orbs.
+   Same question, same place, same reason: a column of them is
+   read straight down without reading the names. Tabular, so
+   Lvl 01 and Lvl 12 are the same width. */
+.foe-brief-level {
+  flex: none;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--ac-accent, var(--copper)) 35%, transparent);
+  background-color: rgba(9, 17, 21, 0.6);
+  color: color-mix(in srgb, var(--ac-accent, var(--copper)) 70%, var(--text-silver));
+}
+
+/* The page's own head numbers, in the summary's own slot. Only
+   the figures are tuned: five of them read as a stat line
+   rather than a sentence, which is what they are. */
+.foe-brief-stats {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+}
+
+/* What it plays, counted, on the far end of the open label. It
+   rides that line rather than the chip row because it is not
+   what the creature *is*, it is what opening the block gets
+   you. The label holds the two ends apart here and nowhere
+   else, so the row is opened up on `.foe-brief` rather than on
+   the label every card brief on the site shares. */
+.foe-brief .card-brief-open {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.foe-brief-moves {
+  color: var(--text-muted);
+}
+
+/* ---------- the block, opened ----------
+   The enemy block at its real footprint inside the dialog:
+   two block tracks and the gap between them, which is the
+   736px the tab used to give it in the grid. Centred, because
+   the page measure is 1180 and a 736px block pinned left
+   would read as a column of a wider thing.
+
+   Deliberately NOT `.sheet-cell-wide`. That class is a grid
+   instruction (`span 2`) and both the phone query and the
+   one-column canvas rule take the span away and hand back a
+   360px block — correct in a grid, wrong in a dialog, where
+   there is no grid and the width is this box's to give. So the
+   cell keeps its own height and takes the width it is given.
+
+   Below 820px the block becomes one column of two panes and
+   scrolls inside itself, which is the rule at the foot of this
+   file and needs nothing added here. */
+.foe-page {
+  width: min(100%, calc(var(--block-w) * 2 + 16px));
+  margin-inline: auto;
+}
+
+.foe-page > .sheet-cell {
+  width: 100%;
+}
+
+/* =========================================================
    THE ENCOUNTERS TAB
    ========================================================= */
 .enc-bar {
