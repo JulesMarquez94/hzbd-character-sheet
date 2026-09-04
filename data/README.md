@@ -13121,3 +13121,47 @@ all clean.
   at the level the fight is being *filled at*, neither of which a brief has anywhere to put. Two
   shelves with two shapes is the thing this repo usually refuses; they are allowed here because
   they answer different questions. Worth revisiting if the counters ever move.
+
+### The summary text, 2026-09-04 (same day, after the drop above)
+
+Jules, on the wall as it landed: "when you are in the bestiary you dont see the full block, you
+see a reduce view with name, image and summary text."
+
+The wall was right and the line in it was wrong. A brief carried the printed page's whole head
+line — `DEF 8 · HP 8 · WP 8 · 3m · 10 XP` — in the slot a card brief gives its summary, so the
+shelf read as a table of numbers rather than as a menu you read. "Summary text" is prose, and the
+reference was a spell summary, which is one sentence of what the card gives you.
+
+**The summary text is the creature's lore.** The paragraph at the foot of its printed page, the
+same one the block's `i` button opens, cut off at the same two lines every card summary is cut
+off at, with the whole of it on the title. Every one of the nine printed creatures carries one
+(164 to 222 characters, so all nine clamp), and it is the only sentence about a creature that is
+not a number.
+
+**The numbers are the fallback, not the line.** A forged creature is allowed to carry no lore at
+all (`lore: ''` is where a blank body starts), and a brief with an empty slot reads as broken
+rather than as terse. So the head numbers stay in the file and print only there, keeping the
+tabular figures they had. Nothing was lost by demoting them: they are on the block one click
+behind, and the encounter shelf prints them at the level the fight is being *filled* at, which is
+where a Game Master is actually sizing anything.
+
+What is left of the Difficulty line on the brief is `Lvl 04` in the corner and the rank chip, and
+between them they still answer the one question the name does not: how big is this.
+
+The toolbar note followed the change. It used to send you to the block for "its lore", which is
+now the line you are already reading.
+
+### Proved
+
+Harness again, over the same tab:
+
+- **Blightgeist** prints its lore, clamped to two lines (`scrollHeight > clientHeight`), with the
+  full 209 characters on the title.
+- **a forged creature with lore** prints it; **a forged creature with none** falls back to
+  `DEF 8 · HP 72 · WP 0 · 7m · 540 XP` and keeps `foe-brief-stats`, so the figures stay tabular.
+- the brief is 145px where the numbers were 128px, and the wall's rows stretch together exactly
+  as the spell chooser's do.
+- the block still opens whole: Thornmother at 736x640, both panes 636/636, the Overlord edge, and
+  the `i` still opens the full paragraph as a second dialog over the first.
+- at 375px the wall is one 360px column, the summary still clamps at two lines, and nothing
+  overflows sideways.

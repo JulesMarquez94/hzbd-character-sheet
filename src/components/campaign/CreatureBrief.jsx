@@ -38,21 +38,28 @@ import { creatureMoves, creatureStats, getRank } from '../../lib/creatures.js';
  *   the numbers   see below.
  *
  * ------------------------------------------------------------ what it prints
- * The printed page's own head line, in the page's own order:
+ * Jules, 2026-09-04: "you see a reduce view with name, image and summary text."
  *
- *   LONG CREATURE NAME     Difficulty: Minion - Level 1 - 10 XP
- *   Creature Type Details  Speed 3m(10f) / INI +3
- *      DEF: 8   HP: 8 (3d4)
+ * So four things, and they are the four a card brief carries: the plate, the
+ * name, what it is in chips, and **one line of summary text**. The summary text
+ * is the creature's own lore, which is the prose at the foot of its printed page
+ * and the paragraph the block's `i` button opens. It is the same slot a card
+ * gives its summary and it is cut off at the same two lines, with the whole of
+ * it on the title, so a wall of them is a wall you read.
  *
- * which comes out as the rank and the type as chips, the level in the corner,
- * and DEF, HP, WP, Speed and the XP on the summary line. Nothing is invented and
- * nothing is chosen: a brief is a transcription of the top of the page, and the
- * rest of the page is the block behind it.
+ * `Lvl 04` in the corner and the rank chip are what is left of the page's own
+ * Difficulty line, and between them they answer the one question a name does
+ * not: how big is this. The rest of that line (DEF, HP, WP, Speed, the XP) came
+ * off the brief on 2026-09-04 and is **the fallback**, printed only where a
+ * creature has no prose of its own, so a brief is never blank. Two places
+ * already carry those numbers where they are actually used: the block, one click
+ * behind this, and the encounter shelf, which prints them at the level the fight
+ * is being *filled* at rather than the level the page was written at.
  *
- * The numbers are the creature **at the level its own page was written at**, the
- * same level `previewFoe` opens the block at. A creature scales (see
- * creatures.js) and an encounter picks its own level, but a shelf that is asked
- * "what is a Blightgeist" has to answer with the Blightgeist.
+ * Whichever line it is, it is the creature **at the level its own page was
+ * written at**, the same level `previewFoe` opens the block at. A creature scales
+ * (see creatures.js) and an encounter picks its own level, but a shelf that is
+ * asked "what is a Blightgeist" has to answer with the Blightgeist.
  *
  * `children` is hung under the brief for whatever the shelf wants, which here is
  * the Edit button on a creature the reader forged. The face is a button, so an
@@ -73,6 +80,15 @@ export default function CreatureBrief({ creature, unit = 'metric', onOpen, child
      cards and the chips for them are on the block; the count is what says
      whether opening this one is worth the tap. */
   const moves = creatureMoves(creature).length;
+
+  /* The summary text, and what stands in for it. Every printed creature carries
+     a lore paragraph; a forged one is allowed to carry none (`lore: ''` is what
+     a blank body starts at), and a brief with an empty line in it would read as
+     broken rather than as terse. So the page's own head numbers are the
+     fallback, built as a string so the same value can be handed to `title`. */
+  const numbers = `DEF ${stats.avoid} · HP ${stats.health_max} · WP ${stats.willpower_max} · ${speed} · ${stats.xp} XP`;
+  const lore = String(creature.lore ?? '').trim();
+  const line = lore || numbers;
 
   return (
     <div className="card-brief foe-brief" style={{ '--ac-accent': rank.color }}>
@@ -126,9 +142,8 @@ export default function CreatureBrief({ creature, unit = 'metric', onOpen, child
           </span>
         </span>
 
-        <span className="card-brief-summary foe-brief-stats">
-          DEF {stats.avoid} · HP {stats.health_max} · WP {stats.willpower_max} · {speed} ·{' '}
-          {stats.xp} XP
+        <span className={`card-brief-summary${lore ? '' : ' foe-brief-stats'}`} title={line}>
+          {line}
         </span>
 
         <span className="card-brief-open">

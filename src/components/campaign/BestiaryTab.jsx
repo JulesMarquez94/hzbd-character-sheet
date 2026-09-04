@@ -188,8 +188,8 @@ export default function BestiaryTab({
           </p>
         ) : (
           <p className="camp-toolbar-note">
-            The top of the printed page for each one. Open one for its <b>block</b>, its lore and
-            its cards.
+            A line each, and the whole of one behind it. Open one for its <b>block</b>, its
+            numbers and its cards.
           </p>
         )}
       </div>
