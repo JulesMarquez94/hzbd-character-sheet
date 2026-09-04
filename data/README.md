@@ -13165,3 +13165,139 @@ Harness again, over the same tab:
   the `i` still opens the full paragraph as a second dialog over the first.
 - at 375px the wall is one 360px column, the summary still clamps at two lines, and nothing
   overflows sideways.
+
+## The codex became the rules, 2026-09-04
+
+Jules: "turn the codex into what is called rules, which is the how to play section of the
+website, based on the doc that was created here. Not only does it need to be a hub for all the
+rules of the game but also where you can browse cards, items etc. Make sure it is appropriately
+styled and that it has a how to play section that is short and sweet."
+
+`/codex` was a colour-token registry: three panels of swatches, a paragraph of sample prose and a
+list of what the badges on a card mean. Useful once, and never the page a link called "Codex" in
+the site bar promises. It is now `/rules`, and it is six shelves under one head.
+
+| shelf | what it is |
+| --- | --- |
+| `/rules` | how to play, in a screen, with the Game Master's one page under it |
+| `/rules/rulebook` | the whole book, rendered from `docs/rulebook.md` |
+| `/rules/cards` | 499 cards, filterable, with the card itself a tap behind |
+| `/rules/items` | 125 items, the same rows the sheet's own codex browser draws |
+| `/rules/bestiary` | the bestiary tab, read only |
+| `/rules/glossary` | 79 terms, searchable, and the colour key the old page was |
+
+The shelf is in the URL, so a link into one is a link into the thing being argued about rather
+than into the top of a page. `/codex` redirects, because links to it are out in the world.
+
+### The book is the book
+
+`src/lib/rulebook.js` imports `docs/rulebook.md?raw` and parses it. **Nothing on the rules page
+retypes a rule.** That is the same law the codex keeps for a design sheet: what the designer
+wrote is what is shown, and a transcription living in two places is a transcription that is wrong
+in one of them. Edit the markdown and the site changes with it.
+
+The parser handles the subset the book actually uses and nothing else: `##` sections, `###`
+rules, tables with or without a header row, lists with their wrapped continuation lines folded
+back in, `>` asides, `---`, and bold, code and italic. There are no links, no code fences, no
+nested lists and no images in the book, so there is no parser for any of those. It grows when the
+book does.
+
+Three things the parse has to get right, and each was a real row in the file:
+
+- **the 90-character wrap.** The book is wrapped for reading a file, not a page. Every hard wrap
+  comes out or the page prints the file's line breaks.
+- **`| | |`.** Several tables open with a blank header: two columns of a thing and its price,
+  where naming them would say less than the rows do. The separator row is still there, so the
+  header is found and then dropped when every cell in it is blank. `| | Price |` keeps its
+  header, blank first cell and all, because one of the two cells says something.
+- **the indented continuation.** "3. Choose a background." runs onto a second line indented three
+  spaces, and that is the same item rather than a new paragraph.
+
+Plain runs of prose go through `StatText`, which is what colours Willpower violet and Physique
+orange on every card and every row of the sheet. A rulebook that spelled Shield in a different
+colour from the sheet's Shield would be two games.
+
+The Contents chapter is the one thing not drawn: it is a table of the same seventeen rows the
+rail already is. Everything else in the book is on the page.
+
+### One page, and the browser's own find
+
+The rulebook is all seventeen sections at once rather than a chapter at a time, which is the
+deliberate half. A table mid-argument searches for a word, and the browser's own find is the best
+search there is as long as everything is on the page. The rail marks whichever chapter you are in
+and opens its own numbered rules under it, so `5.6.1 Martial Moves` is one click from anywhere.
+
+**The scroll spy is a scroll listener and not an IntersectionObserver, and that is a bug fixed
+rather than a preference.** An observer reports a *change* of state, and a jump to
+`#chapter-five` from Chapter Two is not one: with the top margin pulled in to clear the two
+sticky bars, the heading is outside the observed box before the jump (below the window) and
+outside it after (above the line), so nothing fires and the rail keeps marking the chapter you
+left. Caught in the browser, jumping between six chapters and watching the rail refuse to move.
+It is now a passive scroll listener coalesced onto one animation frame, plus `hashchange` for the
+jump itself. Seventeen rectangles a frame are read in one batch with nothing written between
+them, so the page lays out once and answers all seventeen off it.
+
+### Two sticky bars
+
+The site bar is sticky and the shelf row under it is sticky too, and the second one parked behind
+the first: `top: 0` on both, and the shelf row was drawn at y=0 under a 70px header, never to be
+seen. `--site-bar` and `--shelf-bar` are the two heights, written once on `.rules`, and
+everything that has to clear them reads them: the shelf row's `top`, the rail's `top` and
+`max-height`, and the `scroll-margin-top` on every heading a link can land on. The reading line
+the spy measures against sits a shade below the sum, so a heading a link jumped to lands *under*
+the line and the rail marks the chapter you were sent to.
+
+On a phone the six shelves wrapped to three lines, and three sticky lines is a third of the
+screen given to getting somewhere else. Below 860 the row is one line that slides sideways.
+
+### Everything is read off the registries
+
+`CARDS`, `ITEMS`, `KEYWORDS`, `bestiary()` and the rulebook markdown. Nothing on the page is a
+copy of anything, which is the only way a rules page and a game stay the same game. The reused
+components are the sheet's own: `CardBrief`, `TagFilter`, `useTagFilter`, `ItemIcon`,
+`ItemStats`, `ItemFoot`, `StatText`, `CardStackProvider` and `BestiaryTab` whole. A card opened
+here is the same object as a card opened on a sheet, dealt onto the same pile.
+
+Cards are shelved by kind first and then narrowed by chip or word, because five hundred briefs is
+not a wall anybody scrolls. "Everything" is offered for the times the question really is "what is
+called Bramble anything", and it is capped at 150 with the rest behind a button rather than
+refused. `kind: 'item'` is labelled **Gear Cards**: the fallback called them "Items" beside a tab
+of the same name.
+
+### Printed for somebody
+
+A card held by nobody prints a flat zero where its attribute goes, and the live numbers are most
+of what a card is. So the whole page is printed for one reader: level 3, Physique 4, Instinct 5,
+Mind 7, which is the +2 and the +1 from creation plus the point level 3 grants. It is said on the
+page rather than hidden, since every number on every card here is that character's.
+
+The one card in "Reading a card" is `artSource="promo"`, the same exception the landing page
+takes: that section explains what an art plate is, and drawing it empty to everybody who has not
+paid would explain nothing. **Every other plate on the page is behind the usual tier gate**, so a
+signed-out reader browses 499 cards with the haze plates. Whether the shop window should be that
+much wider is Jules's to rule, and it is one `artSource` either way.
+
+### Kept from the old page
+
+The colour key (nine damage types in Chapter 5.8's three families, the three attributes, the
+thirteen pools) is the top of the Glossary shelf. The card anatomy is the "Reading a card"
+section of the primer, with one repair: it quoted a banner as "Novice Spell - Nature - Blood" and
+the school had since been renamed Primal. It reads the banner off the card now, so it cannot go
+stale again.
+
+### Proved
+
+`npm run lint`, `lint:text` and all fifteen codex checkers clean. In the browser, at 1280 and at
+375:
+
+- all six shelves render, no console errors, no horizontal overflow at either width.
+- the rulebook parses to 12 asides (5 of them designer's notes), 27 lists, 4 numbered, 23 code
+  spans and every table, with no stray markup left anywhere on the page.
+- section 1.7's probability table keeps its blank first header cell; 2.3.1's price table drops
+  its blank header entirely.
+- `#5-6-1-martial-moves` lands the heading at 158px, exactly clear of the two bars, and the rail
+  marks The Fight.
+- Bramble Whip opens on the stack printed for the reader: `Mind Ranged Attack (+7)`,
+  `1d6 + 14 Sharp`.
+- at 375 the rail is a row of chips, the shelf row is one sliding line, and the sample card is
+  360px inside a 375px window.

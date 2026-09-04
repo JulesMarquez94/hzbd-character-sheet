@@ -88,8 +88,8 @@ export default function Header() {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/codex" className="nav-link">
-                Codex
+              <NavLink to="/rules" className="nav-link">
+                Rules
               </NavLink>
             </li>
             {user ? (

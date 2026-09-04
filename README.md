@@ -50,7 +50,12 @@ Open http://localhost:5173.
 | --- | --- |
 | `/` | Landing page with a live ability-card showcase |
 | `/register`, `/login` | Signup with email confirmation, login, password recovery |
-| `/codex` | Colour-token registry: damage types, attributes, resources, card anatomy |
+| `/rules` | How to play, in a screen, with the Game Master's one page under it |
+| `/rules/rulebook` | The whole rulebook, rendered from `docs/rulebook.md` and never retyped |
+| `/rules/cards` | Every card in the game, filterable, with the card itself a tap behind |
+| `/rules/items` | Every item: what it does, what it weighs, what it costs |
+| `/rules/bestiary` | The creatures, a line each, with the block behind them |
+| `/rules/glossary` | Every defined term, searchable, plus the colour key |
 | `/dashboard` | Your characters · dossier cards, create, delete |
 | `/characters/:id` | The character sheet · **public**, editable only by owner or admin |
 | `/account` | Display name and password |

@@ -71,8 +71,8 @@ export default function SiteMenu() {
           <NavLink to="/" className="dropdown-link" end>
             Home
           </NavLink>
-          <NavLink to="/codex" className="dropdown-link">
-            Codex
+          <NavLink to="/rules" className="dropdown-link">
+            Rules
           </NavLink>
 
           {user ? (

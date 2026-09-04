@@ -60,8 +60,8 @@ export default function Landing() {
           <Link to={user ? '/dashboard' : '/register'} className="btn btn-copper">
             {user ? 'Open My Vault' : 'Create A Character'}
           </Link>
-          <Link to="/codex" className="btn btn-purple-outline">
-            Explore System Rules
+          <Link to="/rules" className="btn btn-purple-outline">
+            Learn How To Play
           </Link>
           {!user && (
             <Link to="/login" className="btn btn-minimal">

@@ -9,9 +9,11 @@ import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 
-// The sheet and its codex are most of the bundle. Loading them on demand keeps
+// The sheet and the rules are most of the bundle. Loading them on demand keeps
 // the public pages light: a visitor on the landing page never downloads them.
-const Codex = lazy(() => import('./pages/Codex.jsx'));
+// The rules page is public and reads the whole codex, so it is the one lazy
+// route a signed-out visitor is most likely to take.
+const Rules = lazy(() => import('./pages/Rules.jsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const CharacterSheet = lazy(() => import('./pages/CharacterSheet.jsx'));
 const Account = lazy(() => import('./pages/Account.jsx'));
@@ -52,7 +54,14 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Signup />} />
-            <Route path="/codex" element={<Codex />} />
+            {/* The rules, and the shelf you are on in the URL: `/rules/cards`
+                is a link into the card codex rather than into the top of a
+                page. */}
+            <Route path="/rules" element={<Rules />} />
+            <Route path="/rules/:section" element={<Rules />} />
+            {/* Where the rules used to live. Links to it are out in the world
+                and there is nothing at the old address any more. */}
+            <Route path="/codex" element={<Navigate to="/rules" replace />} />
 
             <Route
               path="/dashboard"
