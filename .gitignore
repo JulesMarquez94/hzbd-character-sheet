@@ -17,11 +17,10 @@ dist-ssr
 .env.*
 !.env.example
 
-# The rulebook. Jules's own working document: it carries rulings that are still
-# being argued with, and numbers marked as proposals rather than settled. It is
-# not the app and it is not shipped with it, so it stays out of the repository
-# until it is a thing rather than a draft.
-docs/rulebook.md
+# docs/rulebook.md was ignored here until 2026-09-04, on the grounds that it was
+# a working document and "not the app". It is the app now: src/lib/rulebook.js
+# imports it and /rules renders it, so a checkout without it cannot build. It is
+# tracked, and this line is kept as the note of why it stopped being ignored.
 
 # Editor directories and files
 .vscode/*
