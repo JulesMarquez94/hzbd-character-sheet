@@ -31,12 +31,17 @@ import {
 } from '../src/lib/combatApply.js';
 import {
   applyToFoes,
+  askInitiative,
+  closeInitiative,
   encounterState,
   foeActor,
+  foldInitiative,
+  initiativeAsk,
   layOnFoes,
   normalizeRun,
   rollInitiative,
 } from '../src/lib/encounters.js';
+import { initiativeCallEvent } from '../src/lib/campaignLog.js';
 import { castPlan, conjuredBody, spendUse } from '../src/lib/combatBar.js';
 import { layEffect, normalizeEffects } from '../src/lib/combatTurn.js';
 import { MARTIAL_MOVES, getMartialMove } from '../src/lib/martial.js';
@@ -416,6 +421,104 @@ section('the roll that starts a fight waits on whoever won it');
     normalizeRun(rolled.run).order[1].defenses.avoid > 0,
     true
   );
+}
+
+/* --------------------------------------------------------- the players' dice
+ * "Make it so it prompt a roll for player with initiative and not just
+ * automatic" (Jules, 2026-09-04). The press asks, each player answers with
+ * their own throw off the table log, and the last answer starts the fight.
+ * Everything below is about the ask being impossible to get stuck in.
+ */
+
+section('initiative is asked for, not taken');
+{
+  const enc = { foes: [{ key: 'a', creature: 'blightgeist' }] };
+  const seat = {
+    character_id: 'kaelen-id',
+    name: 'Kaelen',
+    initiative: 9,
+    avoid: 15,
+    reflex: 12,
+    grit: 11,
+  };
+  const half = { random: () => 0.5 };
+
+  const asked = { ...enc, ...askInitiative(enc, [seat], { ...half, call: 'call-1' }) };
+  const run = normalizeRun(asked.run);
+
+  check('the fight is not live yet', [run.live, run.order.length], [false, 0]);
+  check('the enemies have rolled all the same', run.pending.foes.length, 1);
+  check('and the player is being waited on', initiativeAsk(asked).waiting[0].name, 'Kaelen');
+  check('with nothing to start on', initiativeAsk(asked).ready, false);
+
+  /* The event that carries the ask. Its `chain` is the call, which is what
+     makes a player's throw land in this entry and in this fight. */
+  const said = initiativeCallEvent(initiativeAsk(asked).waiting, {
+    encounter: 'enc-1',
+    call: 'call-1',
+  });
+  check('the ask is addressed with its own call', [said.data.move, said.data.chain], [
+    'init-call',
+    'call-1',
+  ]);
+  check('and names who is rolling', said.detail, 'Kaelen to roll');
+
+  /* The answer: a total this file did not decide, off the player's own row. */
+  const folded = { ...asked, ...foldInitiative(asked, { call: 'call-1', ref: 'kaelen-id', init: 21, tie: 9 }) };
+  check('their own total is what is kept', initiativeAsk(folded).answered[0].init, 21);
+  check('and the ask is ready to close', initiativeAsk(folded).ready, true);
+
+  check(
+    'an answer to some other call is refused',
+    foldInitiative(folded, { call: 'call-2', ref: 'kaelen-id', init: 30 }),
+    null
+  );
+  /* A panel that came back after a reload must not be a re-roll. The first
+     answer stands and both throws are still in the log. */
+  check(
+    'and a second answer for one body is refused',
+    foldInitiative(folded, { call: 'call-1', ref: 'kaelen-id', init: 30 }),
+    null
+  );
+
+  const started = closeInitiative(folded, half);
+  check('the order is the player first on 21', started.run.order[0].init, 21);
+  check('the runner waits on them at once', started.run.awaiting, 'kaelen-id');
+  check('their defenses came through the ask', started.run.order[0].defenses, {
+    avoid: 15,
+    reflex: 12,
+    grit: 11,
+  });
+  check('and nothing is left pending', normalizeRun(started.run).pending, null);
+}
+
+section('an ask nobody answers still starts a fight');
+{
+  const enc = { foes: [{ key: 'a', creature: 'blightgeist' }] };
+  const seat = { character_id: 'lark-id', name: 'Lark', initiative: 99 };
+  const half = { random: () => 0.5 };
+
+  const asked = { ...enc, ...askInitiative(enc, [seat], { ...half, call: 'call-1' }) };
+  /* The escape hatch: a shut laptop, a player in the kitchen. Whoever never
+     threw is rolled for, on the Initiative their sheet had when the ask went
+     out, which is why 99 still wins. */
+  const started = closeInitiative(asked, half);
+  check('whoever is missing is rolled for', started.run.order[0].ref, 'lark-id');
+  check('on the number their sheet had', started.run.order[0].init > 99, true);
+
+  /* And the ask survives a write: the whole block has to come back off the
+     stored row, or a Game Master who reloads mid-ask loses the fight. */
+  const reloaded = { ...enc, run: JSON.parse(JSON.stringify(asked.run)) };
+  check('an ask read back off the row is the same ask', initiativeAsk(reloaded).waiting[0].ref, 'lark-id');
+  check('and holds the enemies it already rolled', normalizeRun(reloaded.run).pending.foes.length, 1);
+}
+
+section('a table with nobody seated is not kept waiting');
+{
+  const enc = { foes: [{ key: 'a', creature: 'blightgeist' }] };
+  const rolled = askInitiative(enc, [], { random: () => 0.5, call: 'call-1' });
+  check('the press rolls the enemies and starts', rolled.run.live, true);
+  check('with nothing pending', rolled.run.pending, null);
 }
 
 section('a check knows which of the target’s numbers it is against');

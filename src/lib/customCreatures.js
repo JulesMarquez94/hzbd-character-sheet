@@ -426,8 +426,23 @@ function missingTable(error) {
  * Every forged creature this account can read: its own, plus every published
  * one. Two queries rather than one `or`, so a failure to read somebody's own
  * shelf can never be mistaken for an empty codex.
+ *
+ * ------------------------------------------------------------------- guests
+ * `guests` drops the owner from the second query and lets the *policy* decide
+ * which personal creatures come back. That is not a loophole, it is the other
+ * half of a rule already written: `custom_creatures: read` in schema.sql opens
+ * a personal creature to anybody sitting at a table whose shared encounter
+ * names it, precisely so a player cannot be shown an enemy the app then
+ * silently drops. The query with no owner on it is how a seated sheet collects
+ * exactly those, and the caller's own still come back with them because the
+ * same policy names them too.
+ *
+ * Off by default, because a shelf is what you may *edit*: a creature somebody
+ * else forged has no business on the Bestiary tab's own list. On for the
+ * seated sheet, which has to draw them and writes nothing. See
+ * FightProvider.jsx.
  */
-export async function listForgedCreatures(userId) {
+export async function listForgedCreatures(userId, { guests = false } = {}) {
   const sb = requireSupabase();
 
   const { data: published, error } = await sb
@@ -439,13 +454,10 @@ export async function listForgedCreatures(userId) {
   if (error) throw error;
 
   let own = [];
-  if (userId) {
-    const { data, error: ownError } = await sb
-      .from('custom_creatures')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('scope', 'personal')
-      .order('created_at', { ascending: true });
+  if (userId || guests) {
+    let ask = sb.from('custom_creatures').select('*').eq('scope', 'personal');
+    if (!guests) ask = ask.eq('user_id', userId);
+    const { data, error: ownError } = await ask.order('created_at', { ascending: true });
     if (missingTable(ownError)) return [];
     if (ownError) throw ownError;
     own = data ?? [];
@@ -461,12 +473,13 @@ export async function listForgedCreatures(userId) {
  * order matters more than it looks: `normalizeFoes` drops a foe whose creature
  * it cannot find, and the next write would persist the drop, so an encounter
  * holding a forged enemy must never be drawn before this has landed. See
- * CampaignPage, which waits on it with the campaign itself.
+ * CampaignPage, which waits on it with the campaign itself, and
+ * FightProvider, which waits on it before it reads a shared encounter.
  *
  * Hands back the hydrated list, so a caller can count what it got.
  */
-export async function loadForgedCreatures(userId) {
-  const rows = await listForgedCreatures(userId);
+export async function loadForgedCreatures(userId, options = {}) {
+  const rows = await listForgedCreatures(userId, options);
   const creatures = rows.map(hydrateCreature).filter(Boolean);
   registerForged(creatures);
   return creatures;

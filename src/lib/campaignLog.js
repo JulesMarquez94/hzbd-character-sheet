@@ -104,9 +104,10 @@ export async function listEvents(campaignId, { before = null, limit = FEED_PAGE 
 /**
  * The newest words about the fight itself, however deep the feed has grown.
  *
- * A sheet reconstructing the running fight needs three moves and no others:
- * the last initiative (the order), the last fight-over (whether it still
- * stands) and the last turn call (who is up). Scanning the feed for them broke
+ * A sheet reconstructing the running fight needs four moves and no others: the
+ * last init-call (whether it is being asked for its own Initiative roll), the
+ * last initiative (the order), the last fight-over (whether it still stands)
+ * and the last turn call (who is up). Scanning the feed for them broke
  * the moment a table had a long evening — sixty rows of casts and throws
  * buried the initiative that was still live — so they are asked for by name,
  * newest first, straight off the move the row carries. See FightProvider.jsx.
@@ -121,9 +122,45 @@ export async function listFightWords(campaignId, { limit = 30 } = {}) {
     .in('kind', ['turn', 'summon'])
     /* The summons ride along, so a reload mid-fight still knows the wall is
        standing: what was conjured and what was taken off again. */
-    .in('data->>move', ['initiative', 'fight-over', 'your-turn', 'conjure', 'gone'])
+    .in('data->>move', [
+      'init-call',
+      'initiative',
+      'fight-over',
+      'your-turn',
+      'conjure',
+      'gone',
+    ])
     .order('seq', { ascending: false })
     .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Every throw written under one call, oldest first.
+ *
+ * The one read on this page that is about catching up rather than listening.
+ * An Initiative roll answers the ask by landing in the log under its call (see
+ * initiativeCallEvent), and the runner hears it on the channel — but only
+ * while the Game Master has the encounters tab open. Press the button, wander
+ * off to the bestiary, come back: the answers happened and nobody was
+ * listening.
+ *
+ * Acting off a fetch is safe here in a way it is not for a delivery, because
+ * folding an answer is idempotent by construction: `foldInitiative` refuses a
+ * second answer for one body, so a row read twice lands once.
+ */
+export async function listCallAnswers(campaignId, call) {
+  if (!campaignId || !call) return [];
+  const sb = requireSupabase();
+
+  const { data, error } = await sb
+    .from('campaign_events')
+    .select('*')
+    .eq('campaign_id', campaignId)
+    .eq('kind', 'roll')
+    .eq('data->>chain', call)
+    .order('seq', { ascending: true });
   if (error) throw error;
   return data ?? [];
 }
@@ -408,8 +445,14 @@ export function turnEvent(move, character, turn) {
  * its own id go by, starts its own turn through its own patch, and puts the call
  * on the screen.
  *
- * Four rows, and the order they appear in is the fight:
+ * Five rows, and the order they appear in is the fight:
  *
+ *   init-call   roll for initiative. The enemies have rolled and every seated
+ *               character is being asked for their own, which is what chapter
+ *               five has always said happens. Each answer is a throw written
+ *               under this row's chain, on the player's own sheet with their
+ *               own dice, and the Game Master's runner folds them in as they
+ *               land. See askInitiative in encounters.js.
  *   initiative  the order, rolled. Written by the Game Master as the table.
  *   your-turn   whose turn it is now. Also the table's, with the character it
  *               names in `data` rather than on the row: a Game Master may not
@@ -424,6 +467,40 @@ export function turnEvent(move, character, turn) {
  * that happened during one of them underneath it. See bundleTurns in
  * logChain.js.
  */
+
+/**
+ * Roll for initiative.
+ *
+ * `asked` is `[{ ref, name }]`, the seats being waited on. The refs are what
+ * each sheet finds itself in, and `call` is the address every answer comes back
+ * under: it is the row's own chain, so the throws it sets off gather into this
+ * block the way a card's throws gather into its use. One press, one entry, five
+ * players' dice underneath it.
+ */
+export function initiativeCallEvent(asked = [], { encounter = null, call = null } = {}) {
+  const names = asked.slice(0, 4).map((entry) => entry.name);
+  const rest = asked.length - names.length;
+
+  return {
+    kind: 'turn',
+    actor: 'The table',
+    title: 'Roll for initiative',
+    detail:
+      asked.length === 0
+        ? 'The enemies have rolled'
+        : `${listAnd(names)}${rest > 0 ? ` and ${rest} more` : ''} to roll`,
+    data: {
+      move: 'init-call',
+      encounter,
+      call,
+      /* The same string twice, and both are load bearing: `call` is what the
+         encounter row holds its ask under, and `chain` is what makes the log
+         gather the answers into this entry. See groupEvents in logChain.js. */
+      chain: call,
+      asked: asked.map((entry) => ({ ref: entry.ref, name: entry.name })),
+    },
+  };
+}
 
 /** The order, rolled. `order` is the run's own, already sorted. */
 export function initiativeEvent(order = [], { encounter = null } = {}) {

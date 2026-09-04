@@ -1240,6 +1240,18 @@ const TALENT_SETS = [
         ap: null,
         wp: null,
         stat: 'instinct',
+        /* The middle clause, wired: a stealth or sleight of hand check made with
+           advantage, for nothing, because the card prints no price. Only the
+           holder's half of it is on the sheet. The ally standing within 3 metres
+           has their own sheet and their own prompt, and no card anywhere reaches
+           across two of those yet.
+
+           `checkWhen` says the domain because this card's summary is about the
+           other clause, which is the hiding. See checks.js. */
+        grants: {
+          checkAdvantage: 1,
+          checkWhen: 'Advantage on a stealth or sleight of hand check.',
+        },
         /* The last line is Jules's, 2026-09-03: "Add to skulk the[n] it remove[s]
            the cost of hide whenever you land a critical hit." Wired rather than
            printed: the crit lays a row on the tracker and the Hide chip prints
@@ -1854,6 +1866,20 @@ const TALENT_SETS = [
         ap: null,
         wp: null,
         stat: 'instinct',
+        /* The first `grants` on a talent card, and the reason the SKILL CHECK
+           prompt can see this one: `checkAdvantage` is the die it lends and the
+           absent `checkWp` is what it charges, which is nothing, because the card
+           prints no price at all. Same rider a skill carries and read by the same
+           file. See checks.js, and note that `grants` on a *spec* above is a
+           different thing entirely: that is a list of what a rank hands over.
+
+           `checkWhen` because this card does two things and its summary carries
+           the other one: a player about to tick it needs the domain, not the
+           Shield pool. */
+        grants: {
+          checkAdvantage: 1,
+          checkWhen: 'Advantage on any check that runs through your five senses.',
+        },
         /* Two reads. The card's own *name* is misspelled on the tab — "BEATIAL
            SENSE" — and is set as Bestial Sense, which is the only name correction
            in the set and carries no risk, because the id `bestial-sense` is new

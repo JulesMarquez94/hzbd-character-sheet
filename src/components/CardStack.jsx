@@ -25,9 +25,28 @@ import useCodexArt from './useCodexArt.js';
  *
  * A card opened from a weapon is dealt with that weapon's `modifiers`, so the
  * one shared card prints this weapon's damage type and empowered dice.
+ *
+ * The working behind a number is the one thing that never piles up. See
+ * `dropValue`.
  */
 
 let nextKey = 0;
+
+/**
+ * The pile with any working-behind-a-number panel taken off it.
+ *
+ * A value card is a leaf: it explains one number on the card under it and has
+ * nothing on it to open, so it is a panel rather than another card in the
+ * pile. Every number on a card stays tappable while it is out — the pile only
+ * steps 18px a card, so most of the card below is still there under the
+ * pointer — and tapping one thirteen times used to deal thirteen identical
+ * panels, each with its own × to clear. So dealing anything at all clears the
+ * panel already out: a second number replaces it, and a card opened from the
+ * sheet below takes its place rather than burying it mid-pile.
+ */
+function dropValue(entries) {
+  return entries.at(-1)?.type === 'value' ? entries.slice(0, -1) : entries;
+}
 
 export function CardStackProvider({ character, children }) {
   const [stack, setStack] = useState([]);
@@ -40,7 +59,10 @@ export function CardStackProvider({ character, children }) {
 
   const push = useCallback((entry) => {
     nextKey += 1;
-    setStack((entries) => [...entries, { ...entry, key: nextKey }]);
+    /* Held here rather than read inside the updater: two cards dealt in one
+       batch would both see the number the second one landed on, and collide. */
+    const key = nextKey;
+    setStack((entries) => [...dropValue(entries), { ...entry, key }]);
   }, []);
 
   const openCard = useCallback(

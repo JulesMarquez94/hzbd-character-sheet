@@ -58,8 +58,15 @@ import {
   skillGrantSources,
   skillLevel,
 } from './backgrounds.js';
+import { checkCards } from './checks.js';
 import { getLineage, lineageCards, openPicks } from './lineages.js';
-import { advancementState, normalizeTalents, pruneTalents } from './talents.js';
+import {
+  advancementState,
+  cardsThroughRank,
+  getTalent,
+  normalizeTalents,
+  pruneTalents,
+} from './talents.js';
 import { minionOf, minionSettled } from './minions.js';
 import { feralOf, feralSettled } from './feral.js';
 import { pactOf, pactSettled, pactSkillIds } from './pact.js';
@@ -380,15 +387,47 @@ export function characterSkillGrantSources(character) {
 }
 
 /**
- * And the skills this character can bring to a Skill Check, composed the same
+ * And every card this character can bring to a Skill Check, composed the same
  * way and for the same reason.
  *
- * What the SKILL CHECK basic action's prompt offers. A creature has none of the
- * three sources, so its own bar raises the same action and offers the attribute
- * alone, which is right: a wolf has no background. See CheckPick.jsx.
+ * What the SKILL CHECK basic action's prompt offers. **Three kinds of card, not
+ * one.** It was skills alone until 2026-09-04, which left a Feral Cursed looking
+ * at a prompt that had never heard of BESTIAL SENSE, and a Wildkin at one that
+ * had never heard of SHARP SENSE. A card that says it lends advantage on a check
+ * is a card you can bring, wherever it came from, so the trade, every talent set
+ * and the blood are all read.
+ *
+ * A talent's cards are read *through* the rank held rather than at it, because a
+ * Rank 3 Trickster still has SKULK. Whether a card speaks and what it is worth
+ * are both checks.js's, and the order is the order of the sources: what you
+ * learned, then what you trained, then what you were born with.
+ *
+ * One row per card even when two sources offer the same id, which no pair does
+ * today and which a pact's skill boon came within one step of doing. A creature
+ * has none of the three, so its own bar raises the same action and offers the
+ * attribute alone, which is right: a wolf has no background. See CheckPick.jsx.
  */
-export function characterCheckSkills(character) {
-  return checkSkills(heldSkillIds(character));
+export function characterCheckCards(character) {
+  const lineage = getLineage(character?.lineage);
+
+  const rows = [
+    ...checkSkills(heldSkillIds(character)),
+    ...normalizeTalents(character?.talents).flatMap((held) => {
+      const talent = getTalent(held.id);
+      return talent ? checkCards(cardsThroughRank(talent, held.rank), talent.name) : [];
+    }),
+    ...checkCards(
+      lineageCards(lineage, character?.choices).map((row) => row.card),
+      lineage?.name ?? ''
+    ),
+  ];
+
+  const seen = new Set();
+  return rows.filter((row) => {
+    if (seen.has(row.id)) return false;
+    seen.add(row.id);
+    return true;
+  });
 }
 
 /**

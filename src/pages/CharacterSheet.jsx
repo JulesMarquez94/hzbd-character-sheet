@@ -407,7 +407,16 @@ export default function CharacterSheet({ creating = false }) {
         the order reaches this sheet, and then a panel stands at the side of the
         screen. The turn is started here by this sheet, off an announcement on
         the table log, because nobody else may write to it. See TurnCall.jsx. */}
-    <TurnCall character={character} patch={patch} canEdit={canEdit} />
+    {/* The Initiative rides in beside the sheet because the panel rolls with
+        it and the stored column is a bake of the same number: an Enchanter
+        wearing 1 Instinct for the hour rolls the Initiative they are actually
+        wearing. Everything else the panel does reads the stored row. */}
+    <TurnCall
+      character={character}
+      patch={patch}
+      canEdit={canEdit}
+      initiative={shown.initiative}
+    />
     {/* And the Feral Curse's own question, whenever this sheet loses Health or
         spends Willpower. Renders nothing for everybody who holds no set that
         turns them into anything, which is nearly everybody. Handed the sheet as

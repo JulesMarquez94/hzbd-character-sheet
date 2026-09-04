@@ -367,6 +367,11 @@ const COLD_BLOODED = own('Wildkin', {
   kind: 'ability',
   wp: 1,
   summary: 'Advantage on a stealth or sleight of hand check.',
+  /* The card's own printed Willpower, said again as the rider the SKILL CHECK
+     prompt spends. Both halves are the same 1, and they are written twice
+     because the prompt charges its price where the card only prints one. See
+     checks.js. */
+  grants: { checkWp: 1, checkAdvantage: 1 },
   body:
     'Whenever you make a skill check related to stealth, or a sleight of hand, ' +
     'you can use this to give yourself advantage.',
@@ -378,6 +383,10 @@ const SHARP_SENSE = own('Wildkin', {
   kind: 'ability',
   wp: 1,
   summary: 'Advantage on a check that uses one of your five senses.',
+  /* As COLD BLOODED above. The five senses at 1 Willpower, which is the same
+     ground a Feral Cursed's BESTIAL SENSE covers for nothing: two sources, two
+     prices, and the prompt names both so the player can see which is which. */
+  grants: { checkWp: 1, checkAdvantage: 1 },
   body:
     'Whenever you make a skill check that uses one of your five senses, ' +
     'you can use this to give yourself advantage.',

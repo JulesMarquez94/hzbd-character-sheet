@@ -179,6 +179,32 @@ section('a reaction still being chosen');
   check('is the row a held action most needs to show', shape(got), ['Fireball > Reacting']);
 }
 
+section('the call for initiative gathers the rolls it asked for');
+{
+  /* "Make it so it prompt a roll for player with initiative and not just
+     automatic" (Jules, 2026-09-04). The Game Master's press is one row and
+     every player's throw hangs on it, so a fight starting is one entry in the
+     feed with the whole table's dice inside it rather than five loose rolls. */
+  const call = 'call-1';
+  /* Written out rather than built by `initiativeCallEvent`, because this file
+     imports nothing that reaches the network. Its own shape is pinned in
+     check-combat.mjs; what is pinned here is that a `turn` row carrying a
+     chain heads a block. */
+  const head = {
+    kind: 'turn',
+    actor: 'The table',
+    title: 'Roll for initiative',
+    data: { move: 'init-call', call, chain: call },
+  };
+
+  const got = groupEvents(feed(head, throw_(call, 'Initiative'), throw_(call, 'Initiative')));
+  check('one entry, both throws under it', shape(got), [
+    'Roll for initiative > Initiative > Initiative',
+  ]);
+  check('and the throws are its own list', got[0].rolls.length, 2);
+  check('a turn row with a chain may head a block', got[0].head.kind, 'turn');
+}
+
 section('a body conjured by a cast is part of the cast');
 {
   /* "If something is created like with hard light ... it should appear" (Jules,
@@ -468,6 +494,11 @@ section('a row as the line a pop-up shows');
   check(
     'nor the bell',
     say({ kind: 'turn', title: 'Initiative', data: { move: 'initiative' } }),
+    null
+  );
+  check(
+    'nor the call for an Initiative roll, which is its own panel',
+    say({ kind: 'turn', title: 'Roll for initiative', data: { move: 'init-call' } }),
     null
   );
   check('a turn ending is worth saying', say({ kind: 'turn', title: 'Ended turn 3', data: { move: 'ended' } })?.line, 'Ended turn 3');

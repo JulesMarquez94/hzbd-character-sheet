@@ -45,9 +45,11 @@ export default function ReactionCall({
   const ids = (tables ?? seated ?? []).map((table) => table.id).sort().join(',');
 
   /* A player's window only exists inside a live fight; the Game Master's page
-     gates on the run itself and passes `ready` accordingly. */
+     gates on the run itself and passes `ready` accordingly. A *running* fight:
+     the context also stands up for an Initiative roll being asked for, and
+     nobody reacts to a fight that has not started. */
   const fight = useFight();
-  const open = ready && (!needFight || Boolean(fight));
+  const open = ready && (!needFight || Boolean(fight?.live));
 
   /* Read through a ref so the channel stays on the ids alone: `ready` moves
      with every pool change and `ignore` is a fresh arrow per render. */

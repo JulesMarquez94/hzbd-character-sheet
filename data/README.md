@@ -12602,3 +12602,252 @@ cast and the knock's two verbs.
     standing in it, that is the `landsOn` table above growing a fourth line.
 11. **The physics table is 240 pixels tall in the panel**, down from 300, and was verified on the
     flat floor only: the harness has no Premium account.
+
+## The players roll their own initiative, 2026-09-04
+
+Jules: "make it so it prompt a roll for player with initiative and not just automatic."
+
+Chapter 5.1 has always said "everybody rolls Initiative", and the tool did not let them. One
+press on the Game Master's screen rolled the whole table's dice, and the players read the
+number they had been given. The press is an **ask** now, and the dice are back where the
+rulebook put them.
+
+### The three moves
+
+`encounters.js` grew a pending block on `run`, so the whole of an ask lives on the encounter row
+and survives a reload on either side:
+
+| Move | What it does |
+| ---- | ------------ |
+| `askInitiative` | the enemies roll here, because they are the Game Master's own bodies. Every seat is written down as asked, with the Initiative on its sheet and its three defenses frozen. The fight is not live yet. |
+| `foldInitiative` | one player's own throw folded in, off the table log. A second answer for the same body is refused. |
+| `closeInitiative` | the order, sorted and live. Whoever never answered is rolled for here. |
+
+`initiativeAsk(encounter)` is the reading the screens use: who has answered, on what, and who
+is still out. `dropInitiative` calls the whole thing off.
+
+### The call is the address
+
+The ask goes out as one event, `initiativeCallEvent`, whose `data.chain` **is** the call id.
+That single field does three jobs: the encounter row holds its pending block under it, a
+player's throw is written under it, and the log gathers those throws into the ask's own entry.
+A fight starting is one block in the feed with the whole table's dice inside it, which is the
+"one action, one entry" law of 2026-09-02 doing exactly what it was built for.
+
+Nothing new is written by the player. The throw *is* the answer: `kind: 'roll'`, its total
+decided by their own client, folded by the runner and never recomputed. No second event, no
+sheet written by anybody but its owner.
+
+### The panel
+
+`TurnCall.jsx` grew a third face, amber where the bell is copper and the turn call cyan, because
+it is the one of the three that is a question: **Roll Initiative**, `2d6 + Initiative` with the
+number the sheet is actually wearing, an advantage stepper and a "put it away". It is read off
+the fight context rather than the channel, unlike everything else that panel hears, so a player
+who reloads between the press and their throw is still being asked. A question survives a
+fetch; an act does not.
+
+The stepper is the first surface in the app that can obey 5.1's other sentence: "a side caught
+out rolls Initiative with Disadvantage."
+
+### The wait, and the way out of it
+
+The Initiative block on the encounter view lists who has thrown and what they got, and the
+fight starts **by itself** the moment the last answer lands. Nobody presses anything. Two
+presses hold the wait open all the same, because a fight must never be stuck behind a laptop
+somebody shut: **Roll the rest and start**, which rolls for whoever is missing, and **Call it
+off**.
+
+The listener that folds answers only lives while the encounters tab is mounted, so an ask also
+asks the log what it missed: `listCallAnswers` reads every throw under the call, once per call.
+Acting off a fetch is safe here in a way it is not for a delivery, because folding is idempotent
+by construction.
+
+### In passing
+
+- `listFightWords` asks for `init-call` by name, so a player's panel comes back after a reload
+  however deep the feed has grown. The fight context now hands down `asking` beside `fights`,
+  and `live` means a *running* fight: an ask standing on its own is not one, which is why
+  `ReactionCall` reads `fight?.live` now and not `Boolean(fight)`.
+- `FightBlock` on a linked sheet says "Rolling" and points at the panel, instead of saying no
+  fight is running.
+- `noticeOf` keeps the ask out of the pop-up: the panel is already saying it. The three
+  panelled moves are one set in `logChain.js` now.
+- `rollInitiative` stays as the primitive, and is what a table with nobody seated still gets: a
+  Game Master alone with a pile of goblins starts a fight on one press exactly as before.
+
+### The checker
+
+`npm run lint:combat` grew three sections: an ask leaves the fight not live with the enemies
+already rolled, a player's own total is what is kept, a second answer and an answer to another
+call are both refused, the closed order sorts on what came back and carries the frozen
+defenses, an ask read back off the stored row is the same ask, whoever never answered is rolled
+for on the number their sheet had, and a table with nobody seated is never kept waiting.
+`npm run lint:log` holds the ask's throws under it and keeps the ask out of the knock.
+
+### Left open
+
+1. **The enemies are still rolled for.** A Game Master with eight bodies would be pressing eight
+   times, so their dice stay silent and automatic. If the table wants to see the boss roll, that
+   is the same three moves pointed the other way.
+2. **A player can put the panel away and never roll.** That is deliberate: the ask is a question
+   and the escape hatch is the Game Master's press. A player who is asked twice for one fight
+   (a reload between the ask and their throw) is refused by `foldInitiative`, and both throws
+   stay in the log.
+3. **The order is not re-asked when somebody joins mid-ask.** A sheet linked after the press is
+   not in `asked`, so it is not in the order either. Ending the fight and rolling again is the
+   answer, as it was before.
+4. **Surprise is a stepper and not a state.** Nothing on the sheet knows a side was caught out,
+   so the Disadvantage is the player's own honest press.
+
+## The curtain had nothing behind it, 2026-09-04
+
+Jules: "there seems to be an issue with health does not show in initiative tracker for player
+when the check is toggled."
+
+Show enemy health to players was ticked and the chips on every seated sheet stayed plain faces.
+The read policy was right, the announcement was written, the refetch happened. What came back
+was a list with the enemies missing from it.
+
+### Why
+
+`getCreature` resolves an id against two halves of a bestiary: the printed one, frozen into
+`creatures.js` at build time, and the forged one, a map filled from the database.
+`normalizeFoes` drops a foe whose creature it cannot find, silently and on purpose, because a
+build that has never heard of a creature must not draw a broken one.
+
+Exactly one screen was filling the forged half, and it was `CampaignPage`, which is the Game
+Master's. A seated character sheet never called `loadForgedCreatures` at all, so it resolved
+every printed creature and not one forged one. `poolsOf` in `FightProvider` walked
+`encounterState` and handed back a map with no entry for a forged enemy, the chip fell through
+to its default `health01: null`, and `null` is the value that means "this reader is not allowed
+to know". The curtain was open. There was nothing behind it.
+
+A table fighting nine codex creatures never saw this. A table fighting what it built in the
+forge saw nothing else.
+
+### The three parts
+
+**The query.** `listForgedCreatures` learned a `guests` option that drops the owner from its
+personal query and lets the policy decide what comes back. That is not a new permission:
+`custom_creatures: read` already opens a personal creature to anybody sitting at a table whose
+shared encounter names it, written for precisely this case. The shelf still asks without it,
+because a shelf is what you may edit.
+
+**The reader.** `FightProvider` fills the registry before it reads a single encounter, in the
+order `CampaignPage` already reads them in, and fills it again every time the curtain moves.
+That second half matters: while the box was unticked the encounter was unreadable, so the
+creature it names was unreadable too, and the only read that can find it is the one after the
+flip. The encounters channel carries a guard of its own. A row naming a forged creature the
+registry cannot resolve is a row this reader is too early for, so it fills the registry and
+reads the campaign again rather than pooling what is left. Whichever of the flip, the
+announcement and the row reaches a sheet first, the one that arrives too early repairs itself.
+Each unfound id is asked for once and then let go, so a forged creature deleted out from under
+a stale encounter cannot send the sheet back to the database on every Health step of a fight.
+
+**The order.** The checkbox wrote through the same 500 millisecond debounce every other press
+on that screen uses, and announced at once. So the announcement beat its own write by half a
+second, every seated sheet read a row that was still shut and found nothing, and the curtain
+only appeared to open when the next Health step happened to arrive. The flip is flushed now and
+announced when it lands, and a write that failed says nothing at all.
+
+### The checker
+
+`npm run lint:creatures` pins the finding rather than the fix: with the registry emptied, an
+encounter holding two forged enemies reads back as none. Nothing throws and nothing says so.
+Any reader that draws an encounter before it has filled the registry draws fewer enemies than
+are on the table.
+
+### Unchanged
+
+A player's own tracker still paints no bar on a party chip, their own included. The curtain is
+about the enemies. What the Game Master sees of the party comes off the seated sheets, which
+they may read and the players may not.
+
+## What you can bring to a check, 2026-09-04
+
+Jules: "Feral sense is no visible as possible option to check when doing skill check."
+
+BESTIAL SENSE reads "you have advantage on skill checks related to using your 5 senses", and
+the SKILL CHECK prompt had never heard of it. Neither had it heard of SHARP SENSE, COLD BLOODED
+or SKULK, which say the same kind of thing from the other two places a card can come from.
+
+### Why
+
+The prompt's list was built by `checkSkills`, which walks the *background* tab and nothing
+else. That was the whole of the answer on 2026-09-02, when fourteen domain skills were the only
+cards in the codex that spoke to a check. A talent set's card and a lineage's were never read,
+so a Feral Cursed and a Wildkin both looked at a picker that was missing the card they wanted.
+
+### The law moved
+
+`src/lib/checks.js` is new and owns the reading. It asks about a card and knows nothing about
+where the card came from:
+
+- **whether a card speaks is read off its prose**, as phrases and never as the words "skill
+  check". That is what keeps HELPFUL out, which is an ally's check, and TAILOR out, which reads
+  a stranger's clothes without one. Five phrases now instead of two, and each is named beside
+  the card that is written that way.
+- **what it is worth is read off `grants`**, exactly as a skill's has been since 2026-09-02.
+  `checkWp` is what ticking it costs and `checkAdvantage` is the die it lends.
+
+`checkSkills` in backgrounds.js is two lines over the top of it, and `characterCheckCards` in
+levelPicks.js is the composed reading: the trade you came up in, every talent set you have
+taken, and the blood you were born with. A talent's cards are read *through* the rank held, so a
+Rank 3 Trickster still has SKULK.
+
+### Four cards wired, and a fifth named
+
+| Card | From | Price | What it covers |
+| --- | --- | --- | --- |
+| BESTIAL SENSE | Feral Curse, Rank 1 | nothing | the five senses |
+| SKULK | Trickster, Rank 1 | nothing | stealth and sleight of hand |
+| SHARP SENSE | Wildkin | 1 Willpower | the five senses |
+| COLD BLOODED | Wildkin | 1 Willpower | stealth and sleight of hand |
+
+Two of them print no price at all, which is the first time a card brought to a check has been
+free. DISTRACT is the fifth and is **named rather than offered**, beside SKILLED and MASTERMIND:
+it buys a retry once the roll has already failed, and none of those three is a die added to this
+roll.
+
+Two of the four needed a sixth field. `grants.checkWhen` says the domain in the row, because
+SKULK's own summary is about hiding in plain sight and BESTIAL SENSE's carries a Shield pool,
+and a player about to tick one needs to know what it is for.
+
+### The receipt
+
+A brought card now keeps one. It was the settled price that named these, which said nothing
+at all about the ones that are free: ticking BESTIAL SENSE bent the roll and left no account of
+itself anywhere. It rides as `advantageFrom` and as a `sources` row like every other fold, so
+the arrow names it, the list under the ways itemises it and the row opens the card. "Everything
+that is modified need to be seen but only what modifies it."
+
+The price note now names only the cards that charged something, which is what it always meant
+to say.
+
+### Flags
+
+- **A form does not shut this list.** FERAL FORM says "in this form you are unable to use
+  items, non-Feral Curse abilities or spells", and `feralLocks` is applied to the quick bar, the
+  belt and the Martial Moves on offer. It is not applied here, and was not applied to the
+  fourteen skills either. The rules question underneath it is Jules's: a skill card is passive
+  and spends its Willpower inside its own sentence, so it is not obvious that it is an "ability"
+  the form forbids. BESTIAL SENSE passes whatever the answer is, being the form's own set.
+- **A spell is not offered, on purpose.** SHARPEN SENSES speaks by the law above and is out of
+  reach: the gatherer walks a set's printed cards and never the spells it prepared, because an
+  hour-long spell is cast with its own action rather than brought to a roll. When it is running
+  it belongs on the tracker, which is where a rider already bends a roll.
+- **SKULK's ally half is still prose.** "When you or an ally within 3 meters make a skill check
+  related to sleight of hand or stealth, they do so with advantage." Only the holder's half is
+  wired. The ally has their own sheet and their own prompt, and no card anywhere reaches across
+  two of those yet.
+
+### Proved
+
+A scratchpad harness over `characterCheckCards`, 27 checks: the reported case, each source on
+its own, the two exclusions, a rank that is too low, a Wildkin who kept neither trait, a talent
+set the codex has never heard of, and a creature holding none of the three. Then the real prompt
+in the browser: ticking BESTIAL SENSE and SHARP SENSE read "2 of 4", the orb charged 1
+Willpower rather than 2, the arrow read 2, the list under the ways itemised both by name, and
+the confirm carried `advantage 2`, both source rows and `price { ap 0, wp 1 }` with the note
+naming only Sharp Sense.

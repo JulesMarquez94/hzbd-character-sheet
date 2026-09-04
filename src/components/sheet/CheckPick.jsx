@@ -17,25 +17,30 @@ import { ATTRIBUTES } from '../../lib/attributes.js';
  * Mycomancer's loadout imposes, so the card beside this prints the picked
  * attribute's numbers and the dice roll them. See castModifier in cardText.js.
  *
- * ------------------------------------------------------------------- the skills
- * Under it, the skills this character holds that say something about a skill
- * check: fourteen domains in the codex, each 1 Willpower for advantage. Which
- * of them applies is the player's answer and never the sheet's, because no
- * column anywhere says that this attempt is about a map. So each is offered
- * with its own domain printed under it, and ticking one adds its price to the
- * buttons below and its die to the roll.
+ * -------------------------------------------------------------------- the cards
+ * Under it, the cards this character holds that say something about a skill
+ * check. Fourteen of them are the codex's domain skills, each 1 Willpower for
+ * advantage, and the rest come from anywhere a card can: a Feral Cursed's
+ * BESTIAL SENSE lends the five senses for nothing, a Wildkin's SHARP SENSE lends
+ * the same for 1 Willpower. Which of them applies is the player's answer and
+ * never the sheet's, because no column anywhere says that this attempt is about
+ * a map. So each is offered with its own domain printed under it and its source
+ * beside that, and ticking one adds its price to the buttons below and its die
+ * to the roll.
  *
- * A skill that speaks to a check and is not wired is *named* rather than
- * offered: SKILLED swaps the check's own dice and MASTERMIND maximises them,
- * and neither is a die added to a roll. A dead toggle would be worse than a
- * line saying the card is yours to apply. See checkSkills in backgrounds.js.
+ * A card that speaks to a check and is not wired is *named* rather than
+ * offered: SKILLED swaps the check's own dice, MASTERMIND maximises them and
+ * DISTRACT buys a retry once the roll has already failed. None of the three is
+ * a die added to this roll. A dead toggle would be worse than a line saying the
+ * card is yours to apply. See checks.js, which is where a card is read, and
+ * `characterCheckCards` in levelPicks.js, which is where they are gathered.
  *
  * Nothing here spends anything. The prompt below it charges what this adds up
  * to, once, on the button that was actually pressed.
  */
-export default function CheckPick({ who, stat, onStat, skills = [], brought = [], onBring }) {
-  const offered = skills.filter((skill) => skill.advantage > 0);
-  const named = skills.filter((skill) => skill.advantage === 0);
+export default function CheckPick({ who, stat, onStat, cards = [], brought = [], onBring }) {
+  const offered = cards.filter((card) => card.advantage > 0);
+  const named = cards.filter((card) => card.advantage === 0);
 
   return (
     <div className="use-check">
@@ -68,29 +73,36 @@ export default function CheckPick({ who, stat, onStat, skills = [], brought = []
       {offered.length > 0 && (
         <>
           <span className="use-check-head">
-            Bringing a skill
+            Bringing a card
             <span className="use-check-count">
               {brought.length} of {offered.length}
             </span>
           </span>
 
           <div className="use-check-skills">
-            {offered.map((skill) => {
-              const on = brought.includes(skill.id);
+            {offered.map((card) => {
+              const on = brought.includes(card.id);
 
               return (
                 <button
                   type="button"
-                  key={skill.id}
+                  key={card.id}
                   className={`use-check-skill${on ? ' is-on' : ''}`}
-                  onClick={() => onBring(skill.id)}
+                  onClick={() => onBring(card.id)}
                   aria-pressed={on}
                 >
-                  <span className="use-check-skill-name">{skill.name}</span>
+                  <span className="use-check-skill-name">{card.name}</span>
                   <span className="use-check-skill-gives">
-                    {skill.wp > 0 ? `${skill.wp} Willpower · advantage` : 'advantage'}
+                    {card.wp > 0 ? `${card.wp} Willpower · advantage` : 'advantage'}
                   </span>
-                  <span className="use-check-skill-when">{skill.summary}</span>
+                  {/* Where it came from, in front of what it covers. Two cards
+                      can cover the same ground at two different prices, and the
+                      source is how a reader tells them apart. */}
+                  <span className="use-check-skill-when">
+                    {card.from && <b className="use-check-skill-from">{card.from}</b>}
+                    {card.from ? ' · ' : ''}
+                    {card.summary}
+                  </span>
                 </button>
               );
             })}
@@ -100,7 +112,7 @@ export default function CheckPick({ who, stat, onStat, skills = [], brought = []
 
       {named.length > 0 && (
         <p className="use-check-note">
-          <b>Yours to apply</b> · {listAnd(named.map((skill) => skill.name))}
+          <b>Yours to apply</b> · {listAnd(named.map((card) => card.name))}
           {named.length === 1 ? ' says' : ' say'} something about a skill check that is not a die
           added to the roll, so the table applies it.
         </p>
@@ -108,7 +120,7 @@ export default function CheckPick({ who, stat, onStat, skills = [], brought = []
 
       {offered.length === 0 && named.length === 0 && (
         <p className="use-check-note">
-          No skill you hold speaks to a skill check. The roll is the attribute alone.
+          Nothing you hold speaks to a skill check. The roll is the attribute alone.
         </p>
       )}
     </div>

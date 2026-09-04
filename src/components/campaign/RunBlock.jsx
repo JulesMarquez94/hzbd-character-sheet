@@ -20,10 +20,31 @@ import TargetChip from '../TargetChip.jsx';
  * normally need, because the player ending their own turn moves the table on
  * by itself. Same rule the strip kept, same reason: that is the whole
  * difference between a runner that works at a table and one that does not.
+ *
+ * ------------------------------------------------------------------ the ask
+ * The roll button no longer rolls the players' dice. It asks them for their
+ * own (Jules, 2026-09-04) and the block waits: the enemies have rolled, and
+ * this is the list of who has answered and who has not. Two presses hold the
+ * whole of that wait open — **start it** rolls for whoever is missing and
+ * begins, and **call it off** drops the ask — because a fight must never be
+ * stuck behind a laptop somebody shut. See askInitiative in encounters.js.
  */
-export default function RunBlock({ run, up, ready, roster, onRoll, onNext, onEnd }) {
+export default function RunBlock({
+  run,
+  up,
+  ready,
+  roster,
+  ask = null,
+  onRoll,
+  onStart,
+  onUnroll,
+  onNext,
+  onEnd,
+}) {
   const live = run.live;
   const waiting = up?.kind === 'member';
+
+  if (!live && ask) return <AskBlock ask={ask} onStart={onStart} onUnroll={onUnroll} />;
 
   return (
     <div className="cell-scroll run-block">
@@ -60,7 +81,7 @@ export default function RunBlock({ run, up, ready, roster, onRoll, onNext, onEnd
           </button>
           <p className="run-note">
             {ready
-              ? 'Everyone here rolls 2d6 + Initiative. The order is set and the first turn is called at once.'
+              ? 'The enemies roll here. Every player is asked for their own 2d6 + Initiative on their own sheet, and the fight starts the moment the last one lands.'
               : 'Add an enemy or link a character first.'}
           </p>
         </>
@@ -92,6 +113,65 @@ export default function RunBlock({ run, up, ready, roster, onRoll, onNext, onEnd
           </p>
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * The wait, as the block reads while it is on.
+ *
+ * The enemies are rolled and out of sight — their numbers are the Game
+ * Master's until the order lands — so what is on screen is the one thing this
+ * moment is about: which players have thrown, and what they got.
+ */
+function AskBlock({ ask, onStart, onUnroll }) {
+  const answered = ask.answered.length;
+  const many = answered + ask.waiting.length;
+
+  return (
+    <div className="cell-scroll run-block">
+      <div className="block-head">
+        <span className="stat-category-label">Initiative &amp; Turns</span>
+        <span className="block-count">
+          {answered} of {many} rolled
+        </span>
+      </div>
+
+      <ul className="run-wait">
+        {ask.answered.map((seat) => (
+          <li key={seat.ref} className="run-wait-row is-in">
+            <span className="run-wait-name">{seat.name}</span>
+            <span className="run-wait-init">{seat.init}</span>
+          </li>
+        ))}
+        {ask.waiting.map((seat) => (
+          <li key={seat.ref} className="run-wait-row">
+            <span className="run-wait-name">{seat.name}</span>
+            <span className="run-wait-init">rolling</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="run-acts">
+        <button
+          type="button"
+          className="btn btn-primary btn-sm"
+          onClick={onStart}
+          title="Whoever has not rolled is rolled for here, and the fight starts"
+        >
+          Roll the rest and start
+        </button>
+
+        <button type="button" className="btn btn-minimal btn-sm" onClick={onUnroll}>
+          Call it off
+        </button>
+      </div>
+
+      <p className="run-note">
+        {ask.waiting.length === 0
+          ? 'Everybody has rolled. The order is on its way.'
+          : `${ask.foes} ${ask.foes === 1 ? 'enemy has' : 'enemies have'} rolled. A panel on each sheet is asking for the rest, and the fight starts by itself when the last one lands.`}
+      </p>
     </div>
   );
 }

@@ -25,6 +25,11 @@ import { useFight } from '../../context/fight.js';
 export default function FightBlock({ campaignId, title = '', characterId = null }) {
   const held = useFight();
   const fight = held?.fights?.find((entry) => entry.id === campaignId) ?? null;
+  /* And the moment before the order exists: the table has asked for an
+     Initiative roll and the panel is standing somewhere on this screen. The
+     block says so rather than saying no fight is running, which is true and
+     useless. */
+  const ask = held?.asking?.find((entry) => entry.id === campaignId) ?? null;
   /* The pools the curtain lets through: with "show enemy health" on, an enemy
      chip here carries its bar exactly as the Game Master's does. And what is
      running on each seated character, off their own public sheet, so a hidden
@@ -37,15 +42,18 @@ export default function FightBlock({ campaignId, title = '', characterId = null 
     <div className="cell-scroll run-block">
       <div className="block-head">
         <span className="stat-category-label">Initiative &amp; Turns</span>
-        <span className="block-count">{fight ? `Round ${fight.round}` : 'No fight'}</span>
+        <span className="block-count">
+          {fight ? `Round ${fight.round}` : ask ? 'Rolling' : 'No fight'}
+        </span>
       </div>
 
       {title && <p className="log-note">{title}</p>}
 
       {!fight ? (
         <p className="pick-line fx-empty">
-          No fight running. When the Game Master rolls initiative, the order lands here as it
-          lands on theirs.
+          {ask
+            ? 'A fight is starting and the table has asked for your Initiative. Roll it from the panel at the side of the screen, and the order lands here.'
+            : 'No fight running. When the Game Master rolls initiative, the order lands here as it lands on theirs.'}
         </p>
       ) : (
         <>

@@ -12,7 +12,7 @@ import { useFight } from '../../context/fight.js';
 import { VARIABLE_CAP } from '../../lib/actions.js';
 import { castLine, castPlan } from '../../lib/combatBar.js';
 import { getKeyword } from '../../lib/keywords.js';
-import { characterCheckSkills } from '../../lib/levelPicks.js';
+import { characterCheckCards } from '../../lib/levelPicks.js';
 import { normalizeEffects } from '../../lib/combatTurn.js';
 import { rollPlan } from '../../lib/rollPlan.js';
 import { statusOf } from '../../lib/statuses.js';
@@ -30,7 +30,7 @@ import {
   withMoves,
 } from '../../lib/moves.js';
 import { effectLine } from '../../lib/riders.js';
-import { sourceWords } from '../../lib/attribution.js';
+import { mergeSources, sourceRow, sourceWords } from '../../lib/attribution.js';
 import { targetPlan } from '../../lib/targeting.js';
 import { triggerLine } from '../../lib/onUse.js';
 import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.js';
@@ -338,43 +338,45 @@ export default function UsePrompt({
   }
 
   /* ---- what this one asks before it can be priced ----
-     A SKILL CHECK is rolled off an attribute the player picks, with whatever
-     skill they say applies. Both are questions the codex cannot answer: there is
-     no column anywhere saying that this attempt is about a map. So the card
-     carries `picks: 'check'` and the two answers are collected here, above the
-     ways, because what a skill costs in Willpower is part of what the button
+     A SKILL CHECK is rolled off an attribute the player picks, with whatever card
+     they say applies. Both are questions the codex cannot answer: there is no
+     column anywhere saying that this attempt is about a map. So the card carries
+     `picks: 'check'` and the two answers are collected here, above the ways,
+     because what a brought card costs in Willpower is part of what the button
      below is about to charge. See CheckPick.jsx and actions.js. */
   const picks = request.card?.picks === 'check';
 
-  /* Whose numbers and whose skills. A creature plays the same basic actions off
-     its own attributes and holds no background at all, so its picker offers the
-     three attributes and says so. */
+  /* Whose numbers and whose cards. A creature plays the same basic actions off
+     its own attributes and holds no background, no talent set and no ancestry at
+     all, so its picker offers the three attributes and says so. */
   const who = request.modifiers?.actor ?? character;
 
   const [attribute, setAttribute] = useState(() => request.card?.stat ?? 'instinct');
   const [brought, setBrought] = useState([]);
 
+  /* A skill, a talent set's card or a lineage's, all read the same way and
+     offered together. See characterCheckCards in levelPicks.js. */
   const checkable = useMemo(
-    () => (picks ? characterCheckSkills(who) : []),
+    () => (picks ? characterCheckCards(who) : []),
     [picks, who]
   );
   /* What is actually riding: ticked, and wired. Read on render rather than
      trimmed by an effect, exactly as the target list is. */
   const riding = useMemo(
-    () => checkable.filter((skill) => skill.advantage > 0 && brought.includes(skill.id)),
+    () => checkable.filter((card) => card.advantage > 0 && brought.includes(card.id)),
     [checkable, brought]
   );
-  const bringWp = riding.reduce((sum, skill) => sum + skill.wp, 0);
-  const bringSwing = riding.reduce((sum, skill) => sum + skill.advantage, 0);
+  const bringWp = riding.reduce((sum, card) => sum + card.wp, 0);
+  const bringSwing = riding.reduce((sum, card) => sum + card.advantage, 0);
 
   // What the card rolls with, for a tithe written off an attribute.
   const stat = picks ? attribute : request.modifiers?.stat ?? request.card?.stat ?? 'instinct';
 
   /* The card as it stands with every answer this dialog has collected on it, so
      the printed card beside the ways shows the attribute that is about to be
-     rolled, the advantage the skills are lending and the Martial Moves that have
-     been ticked. The same object goes out on the confirm, which is what makes the
-     dice agree with the card the player was looking at.
+     rolled, the advantage the brought cards are lending and the Martial Moves
+     that have been ticked. The same object goes out on the confirm, which is what
+     makes the dice agree with the card the player was looking at.
 
      The moves are folded last and on top of what the caller handed in, because
      everything else on the swing was known before this dialog opened and they are
@@ -385,10 +387,24 @@ export default function UsePrompt({
           ...request.modifiers,
           stat: attribute,
           advantage: (Number(request.modifiers?.advantage) || 0) + bringSwing,
+          /* And its receipt. "Everything that is modified need to be seen but
+             only what modifies it": a card brought to a check lends a die exactly
+             as a Martial Move does, so it is named on the arrow and itemised in
+             the list under the ways rather than being an unexplained d4. It was
+             the settled price that named these until 2026-09-04, which said
+             nothing at all about the ones that are free. See attribution.js. */
+          advantageFrom: [
+            ...(request.modifiers?.advantageFrom ?? []),
+            ...riding.map((card) => card.name),
+          ],
+          sources: mergeSources(
+            request.modifiers?.sources ?? [],
+            riding.map((card) => sourceRow(card.name, { advantage: card.advantage }, card.id))
+          ),
         }
       : request.modifiers;
     return withMoves(asked, moveCards, request.card ?? null);
-  }, [picks, request.modifiers, attribute, bringSwing, moveCards, request.card]);
+  }, [picks, request.modifiers, attribute, bringSwing, riding, moveCards, request.card]);
 
   /* What is on this character right now, for the list under the ways, and how
      long this use will itself be on them. Both read off the request and the
@@ -477,10 +493,12 @@ export default function UsePrompt({
     ap: paid.free
       ? 0
       : Math.max(0, (request.variable ? dialled : Number(request.ap) || 0) + paid.ap),
-    /* Plus whatever the skills brought to a check cost, and whatever the moves
+    /* Plus whatever the cards brought to a check cost, and whatever the moves
        cost. A skill has no printed price of its own (see the note in
        backgrounds.js): it spends Willpower conditionally, inside its own sentence,
-       and this is the condition. */
+       and this is the condition. A Wildkin's SHARP SENSE prints its 1 Willpower
+       and spends it here for the same reason, and a Feral Cursed's BESTIAL SENSE
+       prints nothing and costs nothing. */
     wp: (Number(request.wp) || 0) + bringWp + paid.wp,
     health: 0,
   };
@@ -540,15 +558,20 @@ export default function UsePrompt({
   /* Whole numbers rather than a card and a count: the number printed beside the
      way you tap is the number that leaves the sheet. See spendUse.
 
-     A skill brought to a check settles a price the same way a second half does,
+     A card brought to a check settles a price the same way a second half does,
      and for the same reason: the card printed neither number, so the only
-     honest account of the cost is the one the prompt just added up. */
+     honest account of the cost is the one the prompt just added up. Only when
+     one of them charged something: a brought card that is free changes the roll
+     and not the price, and is named on the arrow instead. */
   const settled = taken
     ? { ...price, note: `${offer.name}: ${request.name}` }
     : moveCards.length > 0
       ? { ...price, note: `${request.name}: ${listAnd(moveCards.map((card) => card.name))}` }
       : bringWp > 0
-        ? { ...price, note: `${request.name}: ${listAnd(riding.map((skill) => skill.name))}` }
+        ? {
+            ...price,
+            note: `${request.name}: ${listAnd(riding.filter((card) => card.wp > 0).map((card) => card.name))}`,
+          }
         : null;
 
   /* Whatever the tap decided, in one place: the price the second half settled
@@ -631,8 +654,8 @@ export default function UsePrompt({
     setDenied(null);
   }
 
-  /* A skill brought to the check, or put back down. Every one of them is its
-     own Willpower, so this moves the price and clears the refusal with it. */
+  /* A card brought to the check, or put back down. Some of them cost their own
+     Willpower, so this moves the price and clears the refusal with it. */
   function bring(id) {
     setBrought((was) => (was.includes(id) ? was.filter((held) => held !== id) : [...was, id]));
     setDenied(null);
@@ -692,7 +715,7 @@ export default function UsePrompt({
                 setAttribute(key);
                 setDenied(null);
               }}
-              skills={checkable}
+              cards={checkable}
               brought={brought}
               onBring={bring}
             />

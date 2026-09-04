@@ -905,11 +905,36 @@ export function foeTurnStart(encounter, key, { tick = null } = {}) {
  * finds the whole order on the log rather than in anybody's memory.
  *
  * ---------------------------------------------------------------- the order
- * Rolled here, once, with the dice engine everything else rolls with: 2d6 plus
- * the Initiative on the sheet, which is the grammar of every other check in the
+ * Rolled with the dice engine everything else rolls with: 2d6 plus the
+ * Initiative on the sheet, which is the grammar of every other check in the
  * game. Ties go to the higher Initiative and then to the roll's own order, so
  * two identical Blightgeists always resolve the same way rather than swapping
  * places on every render.
+ *
+ * ------------------------------------------------------------- who rolls it
+ * Not this file, for a player. "Everybody rolls Initiative" is what chapter
+ * five has always said, and a Game Master pressing one button and being handed
+ * everybody's number is the tool quietly taking the dice off the table. Jules,
+ * 2026-09-04: "make it so it prompt a roll for player with initiative and not
+ * just automatic."
+ *
+ * So the press is an **ask**, and it happens in three moves:
+ *
+ *   askInitiative    the enemies roll here, because they are the Game
+ *                    Master's own bodies, and every seated character is
+ *                    written down as asked. The fight is not live yet.
+ *   foldInitiative   one player's own throw, folded in. It arrives as a roll
+ *                    on the table log, thrown on their own sheet with their
+ *                    own dice, and the answer is theirs alone: a second one
+ *                    for the same body is refused rather than allowed to
+ *                    replace the first.
+ *   closeInitiative  the order, sorted and live. Whoever never answered is
+ *                    rolled for here, which is what keeps a shut laptop from
+ *                    stopping a fight.
+ *
+ * The pending ask lives on the encounter row, under `run.pending`, for the same
+ * reason the order does: a Game Master who reloads mid-ask is still waiting on
+ * the same two players, and the enemies do not roll twice.
  */
 
 /** As many entries as one order will carry: every foe plus every seat. */
@@ -956,6 +981,67 @@ export function normalizeRun(value) {
        Game Master who reloads still knows they are waiting on somebody, and so
        an End Turn from a player who is not up cannot advance the fight. */
     awaiting: typeof state.awaiting === 'string' && state.awaiting ? state.awaiting : null,
+    /* The ask that has gone out and not been answered yet. Null for every run
+       that is not waiting on anybody, which is every run once the fight has
+       started. See askInitiative. */
+    pending: normalizePending(state.pending),
+  };
+}
+
+/**
+ * A stored ask, read back.
+ *
+ * `call` is the whole address: it is minted per press, it rides the event that
+ * asks and it is the chain every answering throw is written under, so a roll
+ * lands on the fight that asked for it and on no other. A pending block with no
+ * call is not an ask.
+ */
+function normalizePending(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const call = String(value.call ?? '');
+  if (!call) return null;
+
+  const asked = (Array.isArray(value.asked) ? value.asked : [])
+    .filter((entry) => entry && typeof entry === 'object' && entry.ref)
+    .map((entry) => ({
+      ref: String(entry.ref),
+      name: String(entry.name ?? 'Someone').slice(0, 60),
+      /* The Initiative on their sheet when the ask went out. It breaks a tie,
+         and it is what they are rolled with if they never answer. */
+      flat: Math.floor(Number(entry.flat) || 0),
+      defenses: normalizeDefenses(entry.defenses),
+    }))
+    .slice(0, ORDER_MAX);
+
+  const got = {};
+  for (const [ref, answer] of Object.entries(value.got ?? {})) {
+    if (!asked.some((entry) => entry.ref === ref)) continue;
+    got[ref] = {
+      init: Math.floor(Number(answer?.init) || 0),
+      tie: Math.floor(Number(answer?.tie) || 0),
+    };
+  }
+
+  return {
+    call,
+    asked,
+    got,
+    /* The enemies, rolled the moment the ask went out. Held rather than rolled
+       again at the end so that waiting on a player cannot change what the
+       Blightgeist got. */
+    foes: (Array.isArray(value.foes) ? value.foes : [])
+      .filter((entry) => entry && entry.ref)
+      .map((entry) => ({
+        kind: 'foe',
+        ref: String(entry.ref),
+        name: String(entry.name ?? '').slice(0, 60),
+        init: Math.floor(Number(entry.init) || 0),
+        tie: Math.floor(Number(entry.tie) || 0),
+        ...(entry.rank ? { rank: String(entry.rank) } : {}),
+        defenses: normalizeDefenses(entry.defenses),
+      }))
+      .slice(0, ORDER_MAX),
   };
 }
 
@@ -975,7 +1061,7 @@ function normalizeDefenses(raw) {
 }
 
 /**
- * The order, rolled.
+ * The order, every die of it rolled here.
  *
  * `members` is `[{ character_id, name, initiative }]`, which the campaign page
  * already has in hand off `liveCharacter`. Every enemy that is still standing
@@ -984,46 +1070,58 @@ function normalizeDefenses(raw) {
  *
  * The roll itself is `rollCheck`, the same 2d6 plus a flat every other check in
  * the game is, so an Initiative roll is a roll and not a private formula.
+ *
+ * **This is no longer how a fight with players in it starts.** It is what a
+ * table with nobody seated gets — a Game Master alone with a pile of
+ * goblins — and it is the primitive the three moves above are built out of.
+ * A seated player rolls their own: see askInitiative.
  */
 export function rollInitiative(encounter, members = [], { random = Math.random } = {}) {
-  const entries = [];
+  return runFrom([
+    ...foeRolls(encounter, random),
+    ...(members ?? [])
+      .filter((member) => member?.character_id)
+      .map((member) => {
+        const flat = Math.floor(Number(member.initiative) || 0);
+        return {
+          kind: 'member',
+          ref: String(member.character_id),
+          name: String(member.name ?? 'Someone'),
+          init: rollCheck({ flat, kind: 'check', random }).total,
+          tie: flat,
+          defenses: normalizeDefenses(member),
+        };
+      }),
+  ]);
+}
 
-  for (const foe of encounterState(encounter)) {
-    if (foe.down) continue;
-    // A wall takes no turn. What a conjured thing does, it does on its caster's.
-    if (foe.conjured) continue;
-    const result = rollCheck({ flat: foe.stats.initiative, kind: 'check', random });
-    entries.push({
+/** Every enemy that is still standing, rolled. A wall takes no turn: what a
+    conjured thing does, it does on its caster's. */
+function foeRolls(encounter, random) {
+  return encounterState(encounter)
+    .filter((foe) => !foe.down && !foe.conjured)
+    .map((foe) => ({
       kind: 'foe',
       ref: foe.key,
       name: foe.title,
       rank: foe.rank.id,
-      init: result.total,
+      init: rollCheck({ flat: foe.stats.initiative, kind: 'check', random }).total,
       tie: foe.stats.initiative,
       defenses: normalizeDefenses(foe.stats),
-    });
-  }
+    }));
+}
 
-  for (const member of members ?? []) {
-    if (!member?.character_id) continue;
-    const flat = Math.floor(Number(member.initiative) || 0);
-    const result = rollCheck({ flat, kind: 'check', random });
-    entries.push({
-      kind: 'member',
-      ref: String(member.character_id),
-      name: String(member.name ?? 'Someone'),
-      init: result.total,
-      tie: flat,
-      defenses: normalizeDefenses(member),
-    });
-  }
-
+/**
+ * A pile of rolled entries as the run they make: sorted, live, round one.
+ *
+ * Highest first. A tie goes to the higher Initiative on the sheet, and a tie
+ * there keeps the order they were built in, which is the encounter's own order:
+ * two identical Blightgeists must not swap places between renders.
+ */
+function runFrom(entries) {
   if (entries.length === 0) return null;
 
-  /* Highest first. A tie goes to the higher Initiative on the sheet, and a tie
-     there keeps the order they were built in, which is the encounter's own
-     order: two identical Blightgeists must not swap places between renders. */
-  entries.sort((a, b) => b.init - a.init || b.tie - a.tie);
+  const sorted = [...entries].sort((a, b) => b.init - a.init || b.tie - a.tie);
 
   return {
     run: {
@@ -1033,7 +1131,7 @@ export function rollInitiative(encounter, members = [], { random = Math.random }
       /* `tie` was only ever the sort's business and is not stored: what the
          order needs to remember is who, in what order, on what roll, and what a
          roll against them is judged by. */
-      order: entries.map((entry) => ({
+      order: sorted.map((entry) => ({
         kind: entry.kind,
         ref: entry.ref,
         name: entry.name,
@@ -1045,9 +1143,158 @@ export function rollInitiative(encounter, members = [], { random = Math.random }
          is already waiting on them: the fight used to start with `awaiting`
          empty, so the winner's own End Turn moved nothing until the Game
          Master pressed something. Found by Lark winning initiative. */
-      awaiting: entries[0].kind === 'member' ? entries[0].ref : null,
+      awaiting: sorted[0].kind === 'member' ? sorted[0].ref : null,
+      /* Nothing is waiting on anybody any more. A run that starts still
+         holding its ask would ask again on the next reload. */
+      pending: null,
     },
   };
+}
+
+/**
+ * The press: the enemies roll, and every player is asked to roll their own.
+ *
+ * `call` is minted by the caller rather than here, because the same string has
+ * to reach the event that does the asking and this file writes no events. See
+ * `newChain` in logChain.js, which is where every other client-minted address
+ * on this site comes from.
+ *
+ * A table with nobody seated has nobody to ask, so the fight simply starts:
+ * a Game Master testing a pile of goblins alone should not be handed a screen
+ * waiting on players who do not exist.
+ */
+export function askInitiative(encounter, members = [], { random = Math.random, call } = {}) {
+  const seats = (members ?? []).filter((member) => member?.character_id);
+  if (!call || seats.length === 0) return rollInitiative(encounter, seats, { random });
+
+  const foes = foeRolls(encounter, random);
+  const asked = seats.map((member) => ({
+    ref: String(member.character_id),
+    name: String(member.name ?? 'Someone'),
+    flat: Math.floor(Number(member.initiative) || 0),
+    defenses: normalizeDefenses(member),
+  }));
+
+  /* The order is cleared as the ask goes out. Whatever the last fight ended
+     on is history, and leaving it standing would have the block drawing an
+     order nobody is in while it waits for the dice that make the new one. */
+  return {
+    run: {
+      live: false,
+      round: 1,
+      at: 0,
+      order: [],
+      awaiting: null,
+      pending: { call, asked, got: {}, foes },
+    },
+  };
+}
+
+/**
+ * One player's own throw, folded into the ask.
+ *
+ * The answer arrives as a roll on the table log, thrown on their own sheet
+ * under the call's own chain, so `init` is a number this file never decided and
+ * `tie` is the Initiative their sheet actually rolled with.
+ *
+ * **A second answer for the same body is refused.** The first one stands: a
+ * player whose panel came back after a reload, or who found the call in the log
+ * an hour later, must not be able to roll until they like the number. Both
+ * throws are still in the log, which is where an argument about it belongs.
+ */
+export function foldInitiative(encounter, { call, ref, init, tie = null } = {}) {
+  const run = normalizeRun(encounter?.run);
+  const pending = run.pending;
+  if (!pending || !call || pending.call !== call) return null;
+
+  const seat = pending.asked.find((entry) => entry.ref === ref);
+  if (!seat || pending.got[ref]) return null;
+
+  return {
+    run: {
+      ...run,
+      pending: {
+        ...pending,
+        got: {
+          ...pending.got,
+          [ref]: {
+            init: Math.floor(Number(init) || 0),
+            tie: Math.floor(Number(tie ?? seat.flat) || 0),
+          },
+        },
+      },
+    },
+  };
+}
+
+/**
+ * The ask, as the screen waiting on it reads: who has answered and who has not.
+ *
+ * Null when nothing is pending, which is the state every other press is in.
+ * `ready` is what the runner watches for: the last answer landing is what
+ * starts the fight, with nobody having to press anything.
+ */
+export function initiativeAsk(encounter) {
+  const pending = normalizeRun(encounter?.run).pending;
+  if (!pending) return null;
+
+  const answered = pending.asked.filter((seat) => pending.got[seat.ref]);
+  const waiting = pending.asked.filter((seat) => !pending.got[seat.ref]);
+
+  return {
+    call: pending.call,
+    answered: answered.map((seat) => ({ ...seat, init: pending.got[seat.ref].init })),
+    waiting: waiting.map((seat) => ({ ...seat })),
+    foes: pending.foes.length,
+    ready: waiting.length === 0,
+  };
+}
+
+/**
+ * The ask closed: the order, sorted and live.
+ *
+ * Whoever never answered is rolled for here. That is not the tool taking the
+ * dice back: it is the one press that keeps a shut laptop, a player at the
+ * kitchen, or a sheet nobody has open from stopping a fight the rest of the
+ * table is ready for.
+ *
+ * An enemy that went down between the ask and this — a trap, a readied
+ * arrow — leaves the order with it, because a body at 0 Health is not taking
+ * turns.
+ */
+export function closeInitiative(encounter, { random = Math.random } = {}) {
+  const run = normalizeRun(encounter?.run);
+  const pending = run.pending;
+  if (!pending) return null;
+
+  const standing = new Set(
+    encounterState(encounter)
+      .filter((foe) => !foe.down && !foe.conjured)
+      .map((foe) => foe.key)
+  );
+
+  return runFrom([
+    ...pending.foes.filter((entry) => standing.has(entry.ref)),
+    ...pending.asked.map((seat) => {
+      const answer = pending.got[seat.ref];
+      return {
+        kind: 'member',
+        ref: seat.ref,
+        name: seat.name,
+        init: answer ? answer.init : rollCheck({ flat: seat.flat, kind: 'check', random }).total,
+        tie: answer ? answer.tie : seat.flat,
+        defenses: seat.defenses,
+      };
+    }),
+  ]);
+}
+
+/** The ask called off. The order it cleared stays cleared: a fight that was
+    never rolled is not a fight to go back to. */
+export function dropInitiative(encounter) {
+  const run = normalizeRun(encounter?.run);
+  if (!run.pending) return null;
+  return { run: { ...run, pending: null } };
 }
 
 /**

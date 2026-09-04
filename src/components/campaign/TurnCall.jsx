@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { TriggerRow } from '../sheet/TurnPrompt.jsx';
 import { useClauseRolls, useUpkeep } from '../sheet/useClauseRolls.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
+import { useDiceTray } from '../../context/dice-tray.js';
+import { useFight } from '../../context/fight.js';
 import { turnEvent } from '../../lib/campaignLog.js';
 import { characterDelta } from '../../lib/combatApply.js';
 import {
@@ -25,6 +27,13 @@ import { subscribeToTable } from '../../lib/realtime.js';
  * page is careful to say so. What crosses is an **announcement** on the table
  * log, and this is the component that hears its own name in one:
  *
+ *   init-call   roll for initiative. The enemies have rolled on the Game
+ *               Master's screen and this sheet is being asked for its own
+ *               number, on its own dice: "make it so it prompt a roll for
+ *               player with initiative and not just automatic" (Jules,
+ *               2026-09-04). The panel throws `2d6 + Initiative` on the tray,
+ *               the throw lands in the log under the call's own chain, and the
+ *               runner folds it into the order. Nothing on this sheet moves.
  *   initiative  the bell. The runner rolled a fight this character is in, so
  *               the sheet enters combat through its own `startCombat`: Action
  *               Points full, reactions at nothing but what PREPARED grants,
@@ -62,13 +71,21 @@ import { subscribeToTable } from '../../lib/realtime.js';
  * all unless the sheet is yours: `canEdit` is false for a viewer, so nothing
  * is subscribed and nothing is written.
  */
-export default function TurnCall({ character, patch, canEdit = false }) {
+export default function TurnCall({ character, patch, canEdit = false, initiative = null }) {
   const { tables, log } = useCampaignLog();
+  const tray = useDiceTray();
   // { key, round, campaignId, triggers }
   const [call, setCall] = useState(null);
   /* The bell's own notice: your roll and your place in the order, cleared by
      time, a tap, or your first turn arriving. { key, init, place, count } */
   const [bell, setBell] = useState(null);
+  /* The Initiative rolls this sheet has already answered or put away, by call
+     id. Held here rather than read back off the log: the throw is in the feed
+     either way, and what this remembers is only whether the panel is still
+     worth standing. A reload forgets, so the panel comes back — which is why
+     it keeps a way to put it down, and why the runner refuses a second answer
+     for one body. See foldInitiative. */
+  const [answered, setAnswered] = useState([]);
 
   /* Every announcement this sheet has already acted on. A channel that
      reconnects replays nothing by design, but a resync, a second tab or a Game
@@ -219,13 +236,33 @@ export default function TurnCall({ character, patch, canEdit = false }) {
     return () => clearTimeout(id);
   }, [bell]);
 
+  /* -------------------------------------------------- roll for initiative */
+
+  /**
+   * The ask standing on this sheet, if one is.
+   *
+   * Off the fight reader rather than off the channel, unlike everything above:
+   * a question has to survive a reload, and reading one off a fetch is safe
+   * where acting off one is not. Nothing here writes to the sheet. See
+   * FightProvider.jsx.
+   */
+  const fight = useFight();
+  const ask = useMemo(() => {
+    if (!canEdit) return null;
+    return (fight?.asking ?? []).find((entry) => !answered.includes(entry.call)) ?? null;
+  }, [fight, answered, canEdit]);
+
+  /* What the roll adds: the Initiative the sheet is actually wearing, worked
+     attributes and all, handed in by the page. The stored column is the
+     fallback for a caller that hands nothing. */
+  const initFlat = Math.floor(Number(initiative ?? character?.initiative) || 0);
+
   /* The roll-and-take half of the rows on the cover, and the Upkeep's keep-or-
      drop, shared with the Turn block's own prompt so a boundary reads the same
      from both. */
-  const { tray, landed, busy, throwClause, takeIt } = useClauseRolls(
-    character,
-    canEdit ? patch : null
-  );
+  /* Its own `tray` is the same one this component already holds, so it is left
+     where it is: one surface, read from one place. */
+  const { landed, busy, throwClause, takeIt } = useClauseRolls(character, canEdit ? patch : null);
   const { upkeep, canPay, pay, drop: dropRow } = useUpkeep(character, canEdit ? patch : null);
 
   /**
@@ -257,6 +294,23 @@ export default function TurnCall({ character, patch, canEdit = false }) {
   }, [call, busy]);
 
   if (!call) {
+    /* The ask, which is a question and so waits: it outranks the bell's notice
+       and is outranked by a turn actually reaching you. Keyed on the call, so
+       a second fight opens the panel fresh rather than wearing what the last
+       one was thrown with. */
+    if (ask) {
+      return (
+        <InitPrompt
+          key={ask.call}
+          ask={ask}
+          characterId={characterId}
+          flat={initFlat}
+          tray={tray}
+          onDone={() => setAnswered((was) => [...was, ask.call])}
+        />
+      );
+    }
+
     if (!bell) return null;
 
     /* The bell's notice: timed, tappable, and outranked by the turn call. */
@@ -333,6 +387,133 @@ export default function TurnCall({ character, patch, canEdit = false }) {
         <p className="turn-call-hint">
           Not yet puts this away without starting anything. Start Turn on your Turn block does
           the same as the button above.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Roll for initiative, as the panel that asks.
+ *
+ * Its own component so that a second fight is a second panel: the advantage it
+ * is thrown with is state, and state that outlived the ask it belonged to
+ * would have somebody rolling their next fight at Disadvantage because they
+ * were ambushed in the last one. Keyed on the call above.
+ *
+ * The throw is `2d6 + Initiative`, the same check as everything else in the
+ * game, on this player's own tray. Its chain is the call, which is the whole
+ * of how it gets back: the runner watches the log for a throw under the id it
+ * asked with and folds the total into the order. No DC and no verdict — an
+ * Initiative roll is a number, not a success — so the row reads as the total
+ * it is, and nothing on this sheet moves.
+ */
+function InitPrompt({ ask, characterId, flat, tray, onDone }) {
+  /* A d4 up for a readied ambush, a d4 down for being caught out: "a side
+     caught out rolls Initiative with Disadvantage" is chapter five's own rule,
+     and a prompt is the first surface that has ever been able to obey it. */
+  const [swing, setSwing] = useState(0);
+  const [rolling, setRolling] = useState(false);
+
+  const others = ask.asked.filter((entry) => entry.ref !== characterId);
+
+  async function roll() {
+    if (!tray || rolling) return;
+    setRolling(true);
+    try {
+      const result = await tray.present({
+        shape: 'check',
+        kind: 'check',
+        name: 'Initiative',
+        flat,
+        advantage: Math.max(0, swing),
+        disadvantage: Math.max(0, -swing),
+        dc: null,
+        askDc: false,
+        askVerdict: false,
+        log: true,
+        chain: ask.call,
+      });
+      /* A surface closed without a throw is not an answer: the panel stays up
+         and the table stays waiting, which is the honest picture. */
+      if (result) onDone();
+    } finally {
+      setRolling(false);
+    }
+  }
+
+  return (
+    <div className="turn-call is-init" role="dialog" aria-label="Roll for initiative">
+      <div className="turn-call-body">
+        <span className="turn-call-round">A fight is starting</span>
+        <h2 className="turn-call-title">Roll Initiative</h2>
+        <p className="turn-call-line">
+          The enemies have rolled. Yours is <b>2d6 + {flat}</b>, thrown on your own dice, and
+          the order is built out of what you get.
+          {others.length > 0
+            ? ` ${others.map((entry) => entry.name).join(', ')} ${
+                others.length === 1 ? 'is' : 'are'
+              } rolling too.`
+            : ''}
+        </p>
+
+        {/* Advantage, because the rulebook gives it a reason to be here: a side
+            caught out rolls with Disadvantage, and an ambush is the other way
+            round. The same stepper the custom roll window wears. */}
+        <div className="turn-init-swing">
+          <span className="dice-label">Advantage on this roll</span>
+          <div
+            className="dice-swing"
+            style={{
+              '--dice-tone':
+                swing === 0 ? undefined : swing > 0 ? 'var(--def-healing)' : 'var(--stat-health)',
+            }}
+          >
+            <button
+              type="button"
+              className="dice-step"
+              onClick={() => setSwing((was) => was - 1)}
+              aria-label="One less"
+            >
+              &minus;
+            </button>
+            <span className="dice-swing-value">
+              <span className="dice-swing-n">
+                {swing === 0 ? '0' : swing > 0 ? `+${swing}` : String(swing)}
+              </span>
+              <span className="dice-swing-label">
+                {swing === 0 ? 'Neither' : swing > 0 ? 'Green d4s' : 'Red d4s'}
+              </span>
+            </span>
+            <button
+              type="button"
+              className="dice-step"
+              onClick={() => setSwing((was) => was + 1)}
+              aria-label="One more"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <div className="turn-call-acts">
+          <button
+            type="button"
+            className="btn btn-primary turn-call-end"
+            onClick={roll}
+            disabled={!tray || rolling}
+          >
+            {rolling ? 'On the table…' : 'Roll initiative'}
+          </button>
+          <button type="button" className="btn btn-minimal" onClick={onDone}>
+            Put it away
+          </button>
+        </div>
+
+        <p className="turn-call-hint">
+          Your throw goes to the table log and the order is built from it. Put it away if you
+          have already rolled: the table can roll for whoever is missing and start without
+          them.
         </p>
       </div>
     </div>

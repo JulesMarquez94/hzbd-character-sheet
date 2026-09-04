@@ -14,7 +14,9 @@ import {
   appliedEvent,
   effectLaidEvent,
   fightOverEvent,
+  initiativeCallEvent,
   initiativeEvent,
+  listCallAnswers,
   postEvent,
   shareEvent,
   summonEvent,
@@ -22,6 +24,7 @@ import {
   unsummonEvent,
 } from '../../lib/campaignLog.js';
 import { levelForXp, liveCharacter } from '../../lib/characterModel.js';
+import { newChain } from '../../lib/logChain.js';
 import { aimHits, applyPlan, clauseAim } from '../../lib/combatApply.js';
 import { dropEffect, layEffect, tickEffects } from '../../lib/combatTurn.js';
 import { runningNames } from '../../lib/statuses.js';
@@ -39,23 +42,27 @@ import {
   addFoes,
   advanceRun,
   applyToFoes,
+  askInitiative,
+  closeInitiative,
   createEncounter,
   crossTurn,
   deleteEncounter,
   dropFoe,
   dropFromOrder,
+  dropInitiative,
   encounterState,
   encounterTally,
   endRun,
   foeActor,
   foeKey,
   foeTurnStart,
+  foldInitiative,
+  initiativeAsk,
   layOnFoes,
   listEncounters,
   normalizeFoes,
   normalizeRun,
   resetEncounter,
-  rollInitiative,
   setFoeEffects,
   stepFoePool,
   updateEncounter,
@@ -96,6 +103,10 @@ import { subscribeToTable } from '../../lib/realtime.js';
  *   boundaries  Next stops at an enemy's turn boundary when anything running
  *               on it names one, exactly as a player's own sheet stops, with a
  *               Roll beside every clause that rolls. See FoeTurnPrompt.jsx.
+ *   the order   the press rolls the enemies and *asks* the players for their
+ *               own Initiative. Each answer arrives as a throw on the log
+ *               under the call's own id, the runner folds it, and the last one
+ *               starts the fight. See askInitiative in encounters.js.
  *
  * ---------------------------------------------------------------- the writing
  * The encounter row is this tab's to save and the campaign row is the page's,
@@ -204,11 +215,14 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     });
   }, [campaignId, read]);
 
+  /** Hands back whether everything it was holding actually landed, for the one
+      caller that has to know before it says so out loud. See the curtain. */
   const flush = useCallback(async () => {
     const pending = pendingRef.current;
     pendingRef.current = new Map();
-    if (pending.size === 0) return;
+    if (pending.size === 0) return true;
 
+    let landed = true;
     for (const [id, patch] of pending) {
       const write = flightRef.current.then(() => updateEncounter(id, patch));
       flightRef.current = write.catch(() => {});
@@ -220,9 +234,18 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         const held = pendingRef.current.get(id) ?? {};
         pendingRef.current.set(id, { ...patch, ...held });
         setError(err.message);
+        landed = false;
       }
     }
+    return landed;
   }, []);
+
+  /** The debounce, cut short. What a press uses when the write has to be on the
+      table before the next thing this handler does. */
+  const flushNow = useCallback(() => {
+    clearTimeout(timerRef.current);
+    return flush();
+  }, [flush]);
 
   /**
    * Optimistic local update plus a debounced write, keyed on the encounter.
@@ -333,6 +356,9 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
 
   const run = useMemo(() => normalizeRun(open?.run), [open?.run]);
   const up = run.live ? (run.order[run.at] ?? null) : null;
+  /* The ask this encounter is waiting on, when it is waiting on one: who has
+     thrown their Initiative and who has not. Null every other moment. */
+  const ask = useMemo(() => initiativeAsk(open), [open]);
 
   /** Everybody at the table, as the order and the roster want them. Off
       `liveCharacter`, so a worn enchantment's Instinct counts — and the pools
@@ -428,10 +454,55 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     return clampCreatureLevel(Math.round(levels.reduce((a, b) => a + b, 0) / levels.length));
   }, [seats]);
 
+  /**
+   * The fight starts: the ask closed, the order announced and the first turn
+   * called.
+   *
+   * Called two ways and they are the same act, which is why they are one
+   * function: the last player's throw landing (nobody presses anything), and
+   * the Game Master pressing "Roll the rest and start" on a table that is not
+   * waiting any longer. Whoever never answered is rolled for by
+   * `closeInitiative`.
+   */
+  const startFight = useCallback(
+    (encounterId) => {
+      let rolled = null;
+      patchEncounter(encounterId, (row) => {
+        rolled = closeInitiative(row);
+        return rolled;
+      });
+      if (!rolled) return;
+
+      /* The order goes on the log as well as on the row, so a player who has
+         no read on the encounter still knows what the order is and where they
+         are in it. Then the first turn is called at once: the order landing
+         *is* the start of the fight, and a Game Master should not have to
+         press twice. */
+      log(initiativeEvent(rolled.run.order, { encounter: encounterId }));
+      log(turnCallEvent(rolled.run.order[0], 1, { encounter: encounterId }));
+    },
+    [patchEncounter, log]
+  );
+
+  /**
+   * The press: the enemies roll here and every seated player is asked for
+   * their own.
+   *
+   * "Make it so it prompt a roll for player with initiative and not just
+   * automatic" (Jules, 2026-09-04). So this button no longer rolls anybody
+   * else's dice. The enemies are the Game Master's own bodies and roll on this
+   * screen; the ask goes out on the log, each sheet throws `2d6 + Initiative`
+   * on its own tray, and the fight starts the moment the last one lands.
+   *
+   * A table with nobody seated has nobody to wait for, and `askInitiative`
+   * hands back a finished order instead: a pile of goblins fought alone starts
+   * on one press exactly as it always has.
+   */
   const handleRoll = () => {
+    const call = newChain();
     let rolled = null;
     patch((row) => {
-      rolled = rollInitiative(row, seats);
+      rolled = askInitiative(row, seats, { call });
       return rolled;
     });
     if (!rolled) {
@@ -439,12 +510,25 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
       return;
     }
 
-    /* The order goes on the log as well as on the row, so a player who has no
-       read on the encounter still knows what the order is and where they are in
-       it. Then the first turn is called at once: rolling initiative *is* the
-       start of the fight, and a Game Master should not have to press twice. */
-    log(initiativeEvent(rolled.run.order, { encounter: open.id }));
-    log(turnCallEvent(rolled.run.order[0], 1, { encounter: open.id }));
+    const asked = initiativeAsk({ ...open, ...rolled });
+    if (!asked) {
+      log(initiativeEvent(rolled.run.order, { encounter: open.id }));
+      log(turnCallEvent(rolled.run.order[0], 1, { encounter: open.id }));
+      return;
+    }
+
+    log(initiativeCallEvent(asked.waiting, { encounter: open.id, call }));
+  };
+
+  /** The ask called off: the pending block dropped, and the table told the
+      fight is not happening after all. */
+  const handleUnroll = () => {
+    let dropped = null;
+    patch((row) => {
+      dropped = dropInitiative(row);
+      return dropped;
+    });
+    if (dropped) log(fightOverEvent({ encounter: open.id, rounds: 0 }));
   };
 
   /**
@@ -865,6 +949,11 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     nextRef.current = nextFor;
   });
 
+  /* Every row this page has already acted on: an Initiative roll folded, an
+     effect laid, a body conjured. A channel that resyncs, or a second screen
+     the Game Master left open, must not land one of them twice. */
+  const deliveredRef = useRef(new Set());
+
   useEffect(() => {
     if (!campaignId || !canEdit) return undefined;
 
@@ -887,6 +976,94 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   }, [campaignId, canEdit]);
 
   /**
+   * And the same loop one step earlier: a player's Initiative roll, landing.
+   *
+   * The ask went out with a call id and the throw comes back under it as its
+   * chain (see initiativeCallEvent), so the fight is found by the address
+   * rather than by whichever encounter is on screen. The total is read off the
+   * row and never recomputed — the player's own client threw those dice, and
+   * two clients disagreeing about a number is the one thing dice.js exists to
+   * prevent.
+   *
+   * **The last answer starts the fight.** Nobody presses anything: the runner
+   * has what it was waiting for. `rowsRef` is read straight after the fold
+   * because `patchEncounter` moves the ref before it debounces the write, so
+   * the answer just folded is already in what is read back.
+   */
+  const foldAnswer = useCallback(
+    (row) => {
+      if (row?.kind !== 'roll' || !row.character_id) return;
+
+      const call = row.data?.chain;
+      if (!call) return;
+
+      const home = rowsRef.current.find((enc) => normalizeRun(enc.run).pending?.call === call);
+      if (!home) return;
+      if (deliveredRef.current.has(row.id)) return;
+      deliveredRef.current.add(row.id);
+
+      patchEncounter(home.id, (enc) =>
+        foldInitiative(enc, {
+          call,
+          ref: row.character_id,
+          init: Number(row.data?.total) || 0,
+          tie: Number(row.data?.flat) || 0,
+        })
+      );
+
+      const after = rowsRef.current.find((enc) => enc.id === home.id);
+      if (initiativeAsk(after)?.ready) startFight(home.id);
+    },
+    [patchEncounter, startFight]
+  );
+
+  const foldRef = useRef(foldAnswer);
+  useEffect(() => {
+    foldRef.current = foldAnswer;
+  });
+
+  useEffect(() => {
+    if (!campaignId || !canEdit) return undefined;
+
+    return subscribeToTable({
+      table: 'campaign_events',
+      filter: `campaign_id=eq.${campaignId}`,
+      onChange: (payload) => {
+        if (payload.eventType !== 'INSERT') return;
+        if (payload.new) foldRef.current(payload.new);
+      },
+    });
+  }, [campaignId, canEdit]);
+
+  /**
+   * And the answers that landed while this tab was not looking.
+   *
+   * The listener above is only alive while the encounters tab is mounted, so a
+   * Game Master who presses the button and then goes to read the bestiary
+   * would come back to an ask that had been answered by everybody and folded
+   * for nobody — and would then roll for players who had already thrown.
+   *
+   * So an ask asks the log what it missed, once per call. Reading it back is
+   * safe because folding is idempotent: `foldInitiative` refuses a second
+   * answer for one body and every row id is remembered besides.
+   */
+  useEffect(() => {
+    if (!campaignId || !canEdit || !ask?.call) return undefined;
+
+    let alive = true;
+    listCallAnswers(campaignId, ask.call)
+      .then((rows) => {
+        if (!alive) return;
+        for (const row of rows) foldRef.current(row);
+      })
+      .catch(() => {});
+
+    return () => {
+      alive = false;
+    };
+  }, [campaignId, canEdit, ask?.call]);
+
+  /**
    * The other direction of delivery: a player's aim, landing on enemies.
    *
    * A player cannot write the encounter row, so their targeted cast posts what
@@ -903,8 +1080,6 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
    * miss. Guarded by row id, exactly as the turn call guards, so a resync
    * cannot land one twice.
    */
-  const deliveredRef = useRef(new Set());
-
   useEffect(() => {
     if (!campaignId || !canEdit) return undefined;
 
@@ -1134,7 +1309,16 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
               onChange={(event) => {
                 const on = event.target.checked;
                 patch({ share_health: on });
-                log(shareEvent(on, { encounter: open.id }));
+                /* Written, and only then announced. Every other press here can
+                   sit in the debounce for half a second because nothing is
+                   waiting on it; this one is the read policy itself, and the
+                   announcement is what sends every seated sheet to read the row
+                   again. Announced first, they all read a row that is still
+                   shut and find nothing, and the curtain only appears to open
+                   when the next Health step happens to arrive. */
+                flushNow().then((landed) => {
+                  if (landed) log(shareEvent(on, { encounter: open.id }));
+                });
               }}
             />
             Show enemy health to players
@@ -1194,7 +1378,10 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             up={up}
             ready={foes.length > 0 || seats.length > 0}
             roster={roster}
+            ask={ask}
             onRoll={handleRoll}
+            onStart={() => startFight(open.id)}
+            onUnroll={handleUnroll}
             onNext={handleNext}
             onEnd={handleEndFight}
           />

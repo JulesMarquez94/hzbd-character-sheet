@@ -8942,6 +8942,34 @@ body.tray-open-left.tray-open-right .sheet {
   }
 }
 
+/* The call for an Initiative roll wears the same panel in amber: it is the one
+   of the three that is a question, and it waits until it is answered or put
+   away. See the init-call branch in TurnCall.jsx. */
+.turn-call.is-init {
+  border-color: rgba(255, 179, 0, 0.35);
+  border-top-color: var(--level-amber);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 179, 0, 0.1), transparent 60%),
+    var(--panel-teal);
+}
+
+.turn-call.is-init .turn-call-round {
+  color: var(--level-amber);
+}
+
+.turn-call.is-init .turn-call-title {
+  text-shadow: 0 0 24px rgba(255, 179, 0, 0.35);
+}
+
+/* The advantage stepper, in the panel rather than in the roll window: the same
+   control the custom roll wears, centred with everything else on it. */
+.turn-init-swing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 /* The bell's notice wears the panel's clothes in copper: it is news that clears
    itself, not a question holding the sheet. */
 .turn-call.is-bell {
@@ -9871,6 +9899,14 @@ button.tgt-chip:disabled {
   color: var(--text-muted);
 }
 
+/* Where the card came from, in front of what it covers. A skill, a talent set or
+   an ancestry: three sources feed this list, and two of them can cover the same
+   ground at different prices. */
+.use-check-skill-from {
+  font-weight: 700;
+  color: var(--text-silver);
+}
+
 .use-check-note {
   margin: 0;
   font-size: 0.66rem;
@@ -9919,6 +9955,55 @@ button.tgt-chip:disabled {
   font-size: 0.72rem;
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+/* The wait: who has thrown their Initiative and who has not. A row lights
+   copper the moment its number lands, so the list is read at a glance rather
+   than counted. See AskBlock in RunBlock.jsx. */
+.run-wait {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.run-wait-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--hairline);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.run-wait-row.is-in {
+  border-left-color: var(--copper);
+}
+
+.run-wait-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--text-silver);
+}
+
+.run-wait-init {
+  font-family: var(--font-headings);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.run-wait-row.is-in .run-wait-init {
+  font-size: 1.05rem;
+  color: var(--copper);
 }
 
 /* =========================================

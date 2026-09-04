@@ -598,6 +598,10 @@ export function bundleCount(bundle) {
  * underneath obeys: one action, one entry. See groupEvents.
  */
 
+/** The fight's moves that already speak for themselves on a player's sheet, in
+    a panel of their own. A pop-up beside one is the same news twice. */
+const PANELLED = new Set(['init-call', 'initiative', 'your-turn']);
+
 /** What each kind of row is worth saying, as the verb in front of the title. */
 const KNOCK = {
   use: (row) => row.data?.verb ?? 'used',
@@ -616,17 +620,16 @@ const KNOCK = {
  *   a throw    the dice are already coming: `worthReplaying` puts somebody
  *              else's roll on your own table, faces and all, and a banner
  *              saying so over the top of it is the same news twice.
- *   the sheet's own covers   an initiative bell and a turn call already take
- *              the whole screen on the sheet they name. See TurnCall.jsx.
+ *   the sheet's own panels   the call for an Initiative roll, the bell that
+ *              follows it and a turn call each stand in a panel at the side of
+ *              the sheet they name. See TurnCall.jsx.
  *
  * Everything else speaks, because everything else is somebody at the table
  * doing something to somebody.
  */
 export function noticeOf(row) {
   if (!row?.kind || row.kind === 'roll') return null;
-  if (row.kind === 'turn' && (row.data?.move === 'your-turn' || row.data?.move === 'initiative')) {
-    return null;
-  }
+  if (row.kind === 'turn' && PANELLED.has(row.data?.move)) return null;
 
   const verb = KNOCK[row.kind]?.(row) ?? '';
 

@@ -151,6 +151,7 @@ import { HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
 import { sortCards } from './cardOrder.js';
 import { castModifier } from './cardText.js';
+import { checkCards } from './checks.js';
 import { SPELLS } from './spells.js';
 
 /** How many skills a background may hand out. Nothing outside this range. */
@@ -1217,46 +1218,19 @@ export function skillGrantSources(ids) {
 }
 
 /**
- * Whether a skill speaks about a skill check the holder is the one making.
- *
- * Read off the prose, because the prose is where the codex says it: fourteen
- * cells say "whenever you make a skill check", and a fifteenth arriving in a
- * drop should turn up in the prompt without anybody remembering a list here.
- *
- * The two exclusions are the point of matching a phrase rather than the words:
- * HELPFUL is "whenever **an ally** makes a skill check", which is not this
- * check, and TAILOR reads a stranger's clothes "without doing a skill check",
- * which is the absence of one. Neither belongs in a picker of what to bring.
- */
-const MAKES_A_CHECK = /\byou make a skill check\b|\btreat a skill check\b/i;
-
-/**
  * The held skills that have something to say about a skill check.
  *
  * What the SKILL CHECK basic action offers when it is played: every one of these
  * is a card the holder can *bring* to the attempt.
  *
- * `wp` and `advantage` come off `grants`, so a row that says it and is not
- * wired yet comes back with both at zero. The prompt shows those as what they
- * are: a named line saying the card speaks to this and the sheet cannot spend
- * it for you. Two do today, and both because their mechanic is not a die added
- * to the roll: SKILLED swaps the check's own 2d6 for 2d8, and MASTERMIND
- * maximises them once a Long Rest. Both are flagged in data/README.md.
- * Offering them as dead toggles would be worse than naming them.
+ * The reading itself is checks.js's, because a skill is no longer the only card
+ * that speaks to one: a talent set's card and a lineage's do too, and all three
+ * are the same question asked of a card. This file is the one that knows which
+ * cards are skills, which is the whole of what it contributes. See
+ * `characterCheckCards` in levelPicks.js for the composed reading.
  */
 export function checkSkills(ids) {
-  return dedupeIds(ids)
-    .map(getBackgroundSkill)
-    .filter((skill) => skill && MAKES_A_CHECK.test(skill.body ?? ''))
-    .map((skill) => ({
-      id: skill.id,
-      name: skill.name,
-      /* The domain, in the card's own words. Which is the whole question the
-         player is answering by ticking it. */
-      summary: skill.summary ?? '',
-      wp: Math.max(0, Math.floor(Number(skill.grants?.checkWp) || 0)),
-      advantage: Math.max(0, Math.floor(Number(skill.grants?.checkAdvantage) || 0)),
-    }));
+  return checkCards(dedupeIds(ids).map(getBackgroundSkill).filter(Boolean), 'Skill');
 }
 
 /* --------------------------------------------------------- reading the row */

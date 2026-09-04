@@ -145,7 +145,7 @@ export const BASIC_ACTIONS = withArt([
     body:
       'You attempt something that is not an attack and is not certain: a wall to climb, a lock to pick, a guard to talk past.\n\n' + // text-style-ok: a list after a colon
       'Choose the attribute it is made with and roll a {stat} Skill Check {roll} against a difficulty your Game Master sets.\n\n' +
-      'What it costs in Action Points is the Game Master’s to set, and most attempts cost nothing. Any skill you hold that applies is brought with it and pays its own price.',
+      'What it costs in Action Points is the Game Master’s to set, and most attempts cost nothing. Any card you hold that applies is brought with it and pays its own price.',
   },
   {
     id: 'interact',

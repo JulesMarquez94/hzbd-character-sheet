@@ -592,6 +592,15 @@ section('a forged creature answers like a printed one');
   clearForged();
   check('and it is gone when the registry is emptied', getCreature(made.id), null);
   check('leaving the printed shelf alone', bestiary().length, CREATURES.length);
+
+  /* And the finding this pins, which cost a curtain that looked stuck open: with
+     the registry empty the *encounter* reads back short. Nothing throws and
+     nothing says so, the two Revenants are simply not in the list, so a reader
+     that draws an encounter before it has filled the registry draws fewer
+     enemies than are on the table. It is why FightProvider fills the registry
+     before it reads a shared encounter, and again every time the curtain
+     moves. */
+  check('an unfilled registry reads the encounter short', encounterState(enc).length, 0);
 }
 
 section('a Minion forged with reactions still cannot take one');
