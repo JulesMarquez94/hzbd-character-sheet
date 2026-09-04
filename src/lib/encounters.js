@@ -73,6 +73,9 @@ import { clamp } from './characterModel.js';
 import { struck } from './combatApply.js';
 import { rollCheck } from './dice.js';
 import {
+  CONJURED_ID,
+  CONJURED_RANK,
+  CREATURE_ARMOR,
   RANKS,
   clampCreatureLevel,
   creatureMoves,
@@ -82,6 +85,7 @@ import {
   getCreature,
   getRank,
 } from './creatures.js';
+import { healedEffects } from './statuses.js';
 
 /** As many enemies as one encounter's column will carry. */
 export const FOES_MAX = 60;
@@ -142,6 +146,15 @@ export function normalizeFoes(value) {
     const row = { key, creature: String(raw.creature) };
     if (typeof raw.name === 'string' && raw.name.trim()) row.name = raw.name.trim().slice(0, 60);
 
+    /* A conjured body carries its numbers with it, because no page prints
+       them: a Hard Light wall has the Health its caster's Mind gave it. A
+       conjured row with no body is a row that says nothing, and is dropped. */
+    if (row.creature === CONJURED_ID) {
+      const body = normalizeConjured(raw.body);
+      if (!body) continue;
+      row.body = body;
+    }
+
     // Absent is "the level it was written at", which encounterState resolves.
     if (Number.isFinite(Number(raw.level))) row.level = clampCreatureLevel(raw.level);
 
@@ -187,18 +200,100 @@ export function normalizeFoes(value) {
 export function encounterState(encounter) {
   const foes = normalizeFoes(encounter?.foes);
 
-  // How many of each creature are here, so a lone one is not numbered.
+  /* How many of each creature are here, so a lone one is not numbered. A
+     conjured body counts under its own name rather than under "conjured", so
+     a wall and a flower on the same table are not 1.Conjured and 2.Conjured. */
+  const kindOf = (row) => (row.body ? `${row.creature}:${row.body.name}` : row.creature);
   const total = new Map();
-  for (const row of foes) total.set(row.creature, (total.get(row.creature) ?? 0) + 1);
+  for (const row of foes) total.set(kindOf(row), (total.get(kindOf(row)) ?? 0) + 1);
 
   const seen = new Map();
 
   return foes.map((row) => {
     const creature = getCreature(row.creature);
-    const nth = (seen.get(row.creature) ?? 0) + 1;
-    seen.set(row.creature, nth);
-    return dressFoe(creature, row, { nth, many: total.get(row.creature) > 1 });
+    const nth = (seen.get(kindOf(row)) ?? 0) + 1;
+    seen.set(kindOf(row), nth);
+    return dressFoe(creature, row, { nth, many: total.get(kindOf(row)) > 1 });
   });
+}
+
+/* ------------------------------------------------------------ the conjured
+ *
+ * Jules, 2026-09-04: "If something is created like with hard light in the
+ * target it should appear, become a target with proper health." A HARD LIGHT
+ * wall, a DEVOURING BLOSSOM, a GUARDIAN ANGEL: each is a thing on the table
+ * with Health and Defense the card works out off its caster, and until now
+ * each was a sentence the Game Master kept in their head. Now it is a body in
+ * the pile, drawn as one, aimed at as one and struck as one.
+ *
+ * It is not a creature. No page prints it, it has no attributes, it takes no
+ * turn and it knows no cards. So it is a row whose `creature` is the one
+ * registry stub creatures.js keeps for exactly this, and whose numbers ride on
+ * the row itself as `body`. `dressFoe` reads them there instead of running the
+ * curve. See castPlan in combatBar.js for where the numbers are read off the
+ * card, and FightProvider.jsx for how the players' sheets hear of it.
+ */
+
+/** A conjured body's numbers, as stored: what the card said and who made it. */
+function normalizeConjured(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const name = String(raw.name ?? '').trim().slice(0, 60);
+  const health_max = Math.max(1, Math.floor(Number(raw.health_max) || 0));
+  if (!name) return null;
+
+  const avoid = Math.max(0, Math.floor(Number(raw.avoid) || 0));
+  return {
+    name,
+    health_max,
+    avoid,
+    // A roll "against its Reflex" at a wall is judged by the one number it has.
+    reflex: Math.max(0, Math.floor(Number(raw.reflex ?? avoid) || 0)),
+    grit: Math.max(0, Math.floor(Number(raw.grit ?? avoid) || 0)),
+    armor: Math.max(0, Math.floor(Number(raw.armor) || 0)),
+    ...(raw.card ? { card: String(raw.card).slice(0, 60) } : {}),
+    ...(raw.owner ? { owner: String(raw.owner).slice(0, 60) } : {}),
+    ...(raw.ownerId ? { ownerId: String(raw.ownerId).slice(0, 60) } : {}),
+  };
+}
+
+/** The stats shape every tile draws, filled from a conjured body's numbers. */
+function conjuredStats(body) {
+  return {
+    level: 1,
+    attributes: { physique: 0, instinct: 0, mind: 0 },
+    health_max: body.health_max,
+    shield_cap: 0,
+    willpower_max: 0,
+    avoid: body.avoid,
+    defense: body.armor,
+    armor: CREATURE_ARMOR[0],
+    initiative: 0,
+    speed_m: 0,
+    ap_max: 0,
+    reaction_max: 0,
+    reflex: body.reflex,
+    grit: body.grit,
+    xp: 0,
+  };
+}
+
+/**
+ * A conjured body put on the table, under the key the caster minted for it.
+ *
+ * The key arrives from the cast rather than being minted here, because two
+ * clients have to agree on it: the Game Master's page writes the row and every
+ * player's sheet hears the same key off the log and points its chips at it.
+ * A key already in the pile is the same summon heard twice, and lands once.
+ */
+export function addConjured(encounter, body, key) {
+  const clean = normalizeConjured(body);
+  if (!clean || typeof key !== 'string' || !key.trim()) return null;
+
+  const foes = normalizeFoes(encounter?.foes);
+  if (foes.some((row) => row.key === key)) return null;
+  if (foes.length >= FOES_MAX) return null;
+
+  return { foes: [...foes, { key: key.trim().slice(0, 16), creature: CONJURED_ID, body: clean }] };
 }
 
 /**
@@ -215,11 +310,16 @@ export function encounterState(encounter) {
  * full, unnamed, unscaled, nothing running.
  */
 function dressFoe(creature, row = {}, { nth = 1, many = false } = {}) {
-  const rank = getRank(creature);
+  /* A conjured body wears the rank of nothing and the numbers it was made
+     with. Everything else about the dressing is the same, so one block draws
+     both. See the note on the conjured above. */
+  const conjured = row.creature === CONJURED_ID && row.body ? row.body : null;
+  const rank = conjured ? CONJURED_RANK : getRank(creature);
   const level = clampCreatureLevel(row.level ?? creature.level);
-  const stats = creatureStats(creature, level);
+  const stats = conjured ? conjuredStats(conjured) : creatureStats(creature, level);
 
-  const numbered = many ? `${nth}.${creature.name}` : creature.name;
+  const plain = conjured ? conjured.name : creature.name;
+  const numbered = many ? `${nth}.${plain}` : plain;
 
   /* Absent is full, and Health is clamped rather than repaired on the row: a
      stored number above a ceiling should read as the ceiling rather than sit
@@ -260,9 +360,11 @@ function dressFoe(creature, row = {}, { nth = 1, many = false } = {}) {
        is a body worth drawing, and clearing it away is the Game Master
        pressing Remove. Nothing goes negative. */
     down: health <= 0,
-    moves: creatureMoves(creature),
-    passives: creaturePassives(creature),
-    wards: creatureWards(creature),
+    moves: conjured ? [] : creatureMoves(creature),
+    passives: conjured ? [] : creaturePassives(creature),
+    wards: conjured ? [] : creatureWards(creature),
+    // The body a spell made, when this is one: who made it and off which card.
+    conjured,
   };
 }
 
@@ -580,7 +682,13 @@ export function applyToFoes(encounter, rows) {
       if (hit.dealt > 0) body.health = hit.health;
     } else if (kind === 'healing') {
       const next = clamp(health + sumOf(landings), 0, foe.stats.health_max);
-      if (next !== health) body.health = next;
+      if (next !== health) {
+        body.health = next;
+        /* Health coming back washes Poisoned off and takes a stack of Bleed,
+           on an enemy exactly as on a sheet. See statuses.js. */
+        const washed = healedEffects(held?.effects ?? []);
+        if (washed) body.effects = washed.length > 0 ? washed : null;
+      }
     } else if (kind === 'shield') {
       const next = clamp(shield + sumOf(landings), 0, foe.stats.shield_cap);
       if (next !== shield) body.shield = next;
@@ -882,6 +990,8 @@ export function rollInitiative(encounter, members = [], { random = Math.random }
 
   for (const foe of encounterState(encounter)) {
     if (foe.down) continue;
+    // A wall takes no turn. What a conjured thing does, it does on its caster's.
+    if (foe.conjured) continue;
     const result = rollCheck({ flat: foe.stats.initiative, kind: 'check', random });
     entries.push({
       kind: 'foe',

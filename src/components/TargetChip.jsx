@@ -21,7 +21,13 @@ import { SkullIcon } from './sheet/parts.jsx';
  * have the same answer everywhere.
  *
  * `body` is a combatant row (see combatRoster in EncounterTab.jsx):
- *   { id, kind: 'member' | 'foe', name, tone, health01, shield01, down }
+ *   { id, kind: 'member' | 'foe', name, tone, health01, shield01, down, effects }
+ *
+ * `effects` is what is running on them, by name, and it is the one thing the
+ * chip says in words: "If someone has skulk then everyone on the table should
+ * see it" (Jules, 2026-09-04). A body carrying something grows a second line
+ * naming it, two names and a count, with every name in the tooltip. A body
+ * carrying nothing is the one-line chip it always was.
  *
  * Everything else is the moment: `on` for a picked target, `up` for whoever the
  * order is standing on, `init` for the strip that shows the roll. With no
@@ -37,15 +43,22 @@ export default function TargetChip({
   title = null,
 }) {
   const tone = body.kind === 'member' ? 'var(--focus-cyan)' : (body.tone ?? 'var(--copper)');
+  const running = (body.effects ?? []).filter(Boolean);
   const className = [
     'tgt-chip',
     `tgt-${body.kind}`,
     on ? 'is-on' : '',
     up ? 'is-up' : '',
     body.down ? 'is-down' : '',
+    body.conjured ? 'is-conjured' : '',
+    running.length > 0 ? 'has-fx' : '',
   ]
     .filter(Boolean)
     .join(' ');
+
+  /* The names, two and a count, so a chip stays a chip. The tooltip has all of them. */
+  const shown = running.slice(0, 2).join(' · ') + (running.length > 2 ? ` +${running.length - 2}` : '');
+  const said = running.length > 0 ? `${body.name} · ${running.join(', ')}` : body.name;
 
   const inside = (
     <>
@@ -72,12 +85,15 @@ export default function TargetChip({
       </span>
 
       {init !== null && <span className="tgt-init">{init}</span>}
+
+      {/* What is running on them, in words, under the name. */}
+      {running.length > 0 && <span className="tgt-fx">{shown}</span>}
     </>
   );
 
   if (!onToggle) {
     return (
-      <span className={className} style={{ '--tgt-tone': tone }} title={title ?? body.name}>
+      <span className={className} style={{ '--tgt-tone': tone }} title={title ?? said}>
         {inside}
       </span>
     );
@@ -91,7 +107,7 @@ export default function TargetChip({
       onClick={onToggle}
       disabled={disabled}
       aria-pressed={on}
-      title={title ?? (on ? `${body.name} · picked` : body.name)}
+      title={title ?? (on ? `${said} · picked` : said)}
     >
       {inside}
     </button>

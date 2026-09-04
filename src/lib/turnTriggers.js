@@ -45,6 +45,7 @@ import { cardGist } from './cardText.js';
 import { getCard } from './weapons.js';
 import { brokenRows, normalizeEffects } from './combatTurn.js';
 import { secondHalf } from './overcast.js';
+import { statusOf } from './statuses.js';
 
 /**
  * The boundary, as the codex writes it.
@@ -81,6 +82,9 @@ const WRITTEN = {
 
 /** A duration wearing a boundary's clothes. See the note above. */
 const DURATION = /\b(?:until|through)\b[\w' ]*$/i;
+
+/** A boundary that is the caster's and not the holder's: "At your Turn End". */
+const CASTERS = /\byour\s+Turn\s+(?:Start|End)s?\b/i;
 
 /** How far back a boundary looks for the word that would disqualify it. */
 const LOOKBACK = 30;
@@ -143,13 +147,24 @@ export function turnTriggers(character, when) {
  */
 function effectTriggers(effect, character, when) {
   const card = getCard(effect.card);
-  const body = card ? matches(cardGist(card, { character }), when) : [];
+  /* A condition row sits on the body the card was aimed at, so the card's
+     "your" is somebody else: "At your Turn End, it snaps" is the caster's
+     boundary and not the swallowed one's. The clauses about the holder ("at
+     its Turn Start", "at each of their Turn Starts") are the ones kept, and the
+     Upkeep half is dropped outright, because a toll is only ever the caster's
+     to pay. See statuses.js. */
+  const status = statusOf(effect.status);
+  const theirs = (lines) => (status ? lines.filter((line) => !CASTERS.test(line)) : lines);
+  const body = card ? theirs(matches(cardGist(card, { character }), when)) : [];
   /* The second half, which is where every Upkeep lives. Resolved the same way
      the main body is, so a toll written as a live number reads as one. */
-  const half = card ? matches(cardGist(card, { character, part: 'sub' }), when) : [];
+  const half = card && !status ? matches(cardGist(card, { character, part: 'sub' }), when) : [];
+  /* And what the condition itself does at a boundary, in the glossary's words:
+     a stack of Bleed has no card sentence of its own to read. */
+  const said = status?.at ? matches(status.at, when) : [];
   const written = matches(effect.note, when, WRITTEN);
 
-  const clauses = [...body, ...half, ...written];
+  const clauses = [...body, ...half, ...said, ...written];
   if (clauses.length === 0) return null;
 
   return {
@@ -157,6 +172,7 @@ function effectTriggers(effect, character, when) {
     name: effect.name,
     from: effect.from,
     card: effect.card,
+    status: effect.status ?? null,
     turns: effect.turns,
     clauses,
     /* The price rides along only when the half is what matched. Every Upkeep in

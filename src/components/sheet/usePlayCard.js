@@ -9,12 +9,14 @@ import {
   effectLaidEvent,
   playEvent,
   reactionFailedEvent,
+  summonEvent,
   verdictEvent,
 } from '../../lib/campaignLog.js';
 import { rollPlan } from '../../lib/rollPlan.js';
 import { subscribeToTable } from '../../lib/realtime.js';
-import { castEffect, spendUse } from '../../lib/combatBar.js';
+import { castPlan, spendUse, withoutCast } from '../../lib/combatBar.js';
 import { addEffect } from '../../lib/combatTurn.js';
+import { foeKey } from '../../lib/encounters.js';
 import { openingEffect } from '../../lib/tricks.js';
 
 /**
@@ -157,28 +159,20 @@ export function usePlayCard({ character, patch }) {
          Game Master's open encounter page is the client for the enemies. See
          TurnCall.jsx and the delivery consumer in EncounterTab.jsx. */
       const targets = options?.targets ?? [];
-      const delivering = targets.length > 0 && !onSettled;
+      const aimed = targets.length > 0;
+      const delivering = aimed && !onSettled;
 
-      /* The row this cast lays, headed for the targets' trackers instead of the
-         caster's. Never when the request already carries a deliberate effects
-         write of its own (a Martial Move or an AMBUSH is a rider on the caster,
-         not a thing aimed at anybody), which is the same guard spendUse keeps. */
-      const cast = delivering && !request?.extra?.effects ? castEffect(request) : null;
+      /* A paid second half rolls too, and inflicts too. Eleven halves in the
+         codex carry dice and none of them repeats the base card's, so the half
+         adds links rather than replacing them. `price` is what says it was
+         taken, exactly as in playEvent. */
+      const half = Boolean(options.price);
+      const links = rollPlan(request?.card, actor, request?.modifiers, { half });
 
       /* Every check aimed at the picked targets carries what it is judged by:
          one shared number opens the surface saying "against 15", and differing
          numbers are judged per body once the total lands. See combatApply.js. */
-      const plan = (
-        roll && tray
-          ? rollPlan(request?.card, actor, request?.modifiers, {
-              /* A paid second half rolls too. Eleven halves in the codex carry
-                 dice and none of them repeats the base card's, so the half adds
-                 links rather than replacing them. `price` is what says it was
-                 taken, exactly as in playEvent. */
-              half: Boolean(options.price),
-            })
-          : []
-      ).map((link) => armCheck(link, targets));
+      const plan = (roll && tray ? links : []).map((link) => armCheck(link, targets));
 
       /* Whether a check stands between the cast and its landing. "On a hit" is
          most of the codex, so an aimed effect behind a check waits for the
@@ -186,33 +180,79 @@ export function usePlayCard({ character, patch }) {
          pass lays the moment it is paid for, as it always has. */
       const checky = plan.some((link) => link.shape === 'check');
 
+      /* ---- what this cast leaves behind, and where ----
+         The card's own row, the conditions it inflicts and the body it puts on
+         the table, read once off the card (see castPlan in combatBar.js). With
+         bodies picked, what is headed for *their* trackers is the card's row
+         when the plan says it lands on them, plus every condition, each signed
+         with the caster's name so a Poisoned on a goblin says who did it. With
+         nobody picked the card lays its own row on the caster as it always has
+         and inflicts nothing on anybody, because there is nobody to inflict it
+         on. The Martial Moves riding a swing inflict theirs too (WOUND, REND),
+         and the optional ones the prompt ticked ride in `options.statuses`. */
+      const casting = castPlan(request, actor, {
+        half,
+        riders: options.riders ?? [],
+        statuses: options.statuses ?? [],
+        plan: links,
+      });
+      const toTargets = aimed
+        ? [...(casting.landsOn !== 'caster' && casting.own ? [casting.own] : []), ...casting.laid]
+        : [];
+      const laid = toTargets.map((row) => ({ ...row, from: actor?.name ?? row.from }));
+
+      /* Whether the caster keeps the card's own row: always when nobody was
+         picked, and otherwise only when the plan says the row is theirs (an
+         Upkeep they pay, a wall they raised, a condition whose spell they keep
+         while the target carries the condition). */
+      const keepOwn = !aimed || casting.landsOn !== 'targets';
+
       /* ---- 1. the price ---- */
-      const body = write(stripCast(spendUse(request, actor, mode, amount, options), cast));
+      const spent = spendUse(request, actor, mode, amount, options);
+      const body = write(keepOwn ? spent : withoutCast(spent, casting.own));
       if (Object.keys(body).length > 0) patch(body);
 
       /* ---- 2. the table ----
          Chained when there is something to hang under it: dice to throw, bodies
-         to land on, or a row to lay on them. A use with none of the three is a
-         plain line — a Move, an Interact — and an id nothing ever joins would
-         leave a block waiting forever for a throw that was never coming.
+         to land on, a row to lay on them or a body to put on the table. A use
+         with none of those is a plain line — a Move, an Interact — and an id
+         nothing ever joins would leave a block waiting forever for a throw that
+         was never coming.
 
          Aim counts as well as dice, which it did not until 2026-09-02. An aimed
          cast that rolls nothing still writes a delivery, and a delivery whose
          head carried no chain was the second of the two entries Jules asked to
          see folded into one. */
+      const chained = plan.length > 0 || laid.length > 0 || aimed || Boolean(casting.conjured);
       if (tell) {
-        log(
-          playEvent(request, actor, mode, amount, {
-            ...options,
-            chain: plan.length > 0 || cast || targets.length > 0 ? chain : null,
-          })
-        );
+        log(playEvent(request, actor, mode, amount, { ...options, chain: chained ? chain : null }));
       }
 
       const speaker = {
         name: actor?.name ?? '',
         portrait: actor?.portrait_url ?? null,
         card: request?.card ?? null,
+      };
+
+      /* ---- the body it put on the table ----
+         Announced, never written: a sheet cannot write the encounter row, so the
+         summon goes on the log under a key minted here, the Game Master's page
+         turns it into a foe and every seated sheet turns it into a chip (see
+         EncounterTab.jsx and FightProvider.jsx). A page with hands of its own
+         conjures by hand and posts its own word, so it is skipped here. */
+      if (casting.conjured && !onSettled && (tables ?? []).length > 0) {
+        log(
+          summonEvent(
+            speaker,
+            { ...casting.conjured, key: foeKey(), ownerId: character?.id ?? null },
+            { chain }
+          )
+        );
+      }
+
+      /* Every row headed for the targets, laid on `bodies`. */
+      const layOn = (bodies) => {
+        for (const row of laid) log(effectLaidEvent(speaker, row, bodies, { chain }));
       };
 
       /* Whether the stack stands between this action and its dice: a use made
@@ -229,7 +269,7 @@ export function usePlayCard({ character, patch }) {
       /* ---- the effect with nothing to pass, delivered now ----
          Held back while the gate stands, though: an action the table then
          fails must not have already laid its row on anybody. */
-      if (cast && !checky && !gating) log(effectLaidEvent(speaker, cast, targets, { chain }));
+      if (delivering && laid.length > 0 && !checky && !gating) layOn(targets);
 
       /* ---- and the rest, once the dice have spoken ----
          The chain hands back what landed and, for an aimed check, who it landed
@@ -275,7 +315,7 @@ export function usePlayCard({ character, patch }) {
             : live;
           if (landed.length === 0) return;
 
-          if (cast && checky && meta.hit) log(effectLaidEvent(speaker, cast, landed, { chain }));
+          if (laid.length > 0 && checky && meta.hit) layOn(landed);
 
           for (const delta of applyPlan(thrown)) {
             log(
@@ -337,16 +377,11 @@ export function usePlayCard({ character, patch }) {
                   chain,
                 })
               );
-              armed = (roll && tray
-                ? rollPlan(request?.card, actor, request?.modifiers, {
-                    half: Boolean(options.price),
-                  })
-                : []
-              ).map((link) => armCheck(link, live));
+              armed = (roll && tray ? links : []).map((link) => armCheck(link, live));
             }
 
             /* The held-back checkless effect, laid now that the action stands. */
-            if (cast && !checky) log(effectLaidEvent(speaker, cast, live, { chain }));
+            if (delivering && laid.length > 0 && !checky) layOn(live);
           }
 
           await throwChain(tray, armed, { request, actor, chain, onSettled: settleWith(live) });
@@ -387,22 +422,6 @@ function watchStack(tables, chain) {
     );
     return () => drops.forEach((off) => off());
   };
-}
-
-/**
- * The spend, minus the row it laid on the caster.
- *
- * A cast aimed at bodies lays its row on them, so the copy `spendUse` put on
- * the caster's own tracker comes back off before the patch: filtered by the
- * card rather than deleted wholesale, because on a weapon swing `body.effects`
- * is also where a spent AMBUSH was just cleared and a wholesale delete would
- * un-spend it. A standing row of the same card goes with it — a redirected
- * recast is the spell moving, and it must not run in two places off one
- * source.
- */
-function stripCast(body, cast) {
-  if (!cast || !Array.isArray(body.effects)) return body;
-  return { ...body, effects: body.effects.filter((row) => row.card !== cast.card) };
 }
 
 /**

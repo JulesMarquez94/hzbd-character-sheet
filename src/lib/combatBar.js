@@ -74,9 +74,10 @@ import {
   passesForm,
   sourceSet,
 } from './feral.js';
-import { layEffect, stirEffects, trackedDuration } from './combatTurn.js';
+import { clauseClock, layEffect, stirEffects, trackedDuration } from './combatTurn.js';
 import { fireTrigger } from './onUse.js';
-import { cardCost, cardTitle } from './cardText.js';
+import { cardCost, cardProse, cardTitle, castStat, resolveValue } from './cardText.js';
+import { inflictedStatuses, movedEffects, statusOf } from './statuses.js';
 import { cardUse, magazineUse, spendCardUse, spentNote, usageNote } from './uses.js';
 import {
   LEDGER_NOTE_MAX,
@@ -986,6 +987,16 @@ export function spendUse(request, character, mode, amount, { free = false, price
   const stirred = stirEffects(body.effects ?? character?.effects);
   if (stirred) body.effects = stirred;
 
+  /* ---- and what moving shakes off ----
+     "When the entity uses a move action the prone condition ends." A Move paid
+     for is a Move taken, so Prone comes off here, at the same moment the Hide
+     row is stirred and for the same reason. Read off the glossary in
+     statuses.js, so a second condition a Move ends is one line there. */
+  if (request.card?.id === 'move') {
+    const stood = movedEffects(body.effects ?? character?.effects);
+    if (stood) body.effects = stood;
+  }
+
   /* ---- and what the use leaves running ----
      "anytime an action is used that should tracker turn duration of something it
      is auto added to the trackers", 2026-08-28. Until now the tracker was
@@ -1147,4 +1158,195 @@ export function castLine(request) {
   // The same test the write is made on, so the promise and the row cannot come
   // apart: a vague duration is offered in the picker and never written here.
   return duration && !duration.vague ? duration.label : null;
+}
+
+/* ------------------------------------------------------------ what a cast lays
+ *
+ * Jules, 2026-09-04: "if I use renew it applies the effect to the target. Or
+ * snake it create the poison status ... If something is created like with hard
+ * light in the target it should appear, become a target with proper health."
+ *
+ * Three things a cast can leave behind, and until now only the first was read:
+ *
+ *   its own row     what `castEffect` lays: the card, for as long as it says
+ *   conditions      what the card inflicts on the body it lands on, read off
+ *                   its prose by statuses.js: Poisoned, Rooted, a stack of
+ *                   Bleed. Each is a row of its own, with the glossary's clock
+ *                   where the card states none
+ *   a body          what it puts on the table with Health of its own
+ *
+ * `castPlan` reads all three at once, so the prompt that says what is about to
+ * happen and the chain that makes it happen read the same answer.
+ *
+ * --------------------------------------------------------------- whose tracker
+ * The card's own row used to go to the targets whenever any were picked, and
+ * that was right for RENEW and wrong for a wall: THORN RAMPART aimed at the
+ * one it roots would have moved the wall's ten turns onto the goblin. So the
+ * plan says where the row lands:
+ *
+ *   targets   a card whose whole effect is on the body it touches, with no
+ *             condition to carry it: RENEW, GIANT GROWTH, CELESTIAL EDICT
+ *   caster    a card that inflicts a condition (the target gets the condition
+ *             and the caster keeps the spell), one that puts a thing on the
+ *             table (the row is the thing's clock), and one anchored on the
+ *             caster or a place: "around you", "at a point you can see"
+ *   both      a card the caster keeps paying for. An Upkeep is the caster's
+ *             toll and the target's affliction at once
+ */
+
+/** The nouns a card lands on, as targeting.js reads them. */
+const BODY_WORD = /\b(?:entit(?:y|ies)|targets?|creatures?|enem(?:y|ies)|all(?:y|ies)|beings?)\b/i;
+
+/** A card anchored on its caster or on a place, so its row is the caster's. */
+const ANCHORED =
+  /\b(?:(?:at|on) a (?:location|point|spot)|around (?:you|yourself|a point)|centered on (?:a point|yourself)|drinking this|create a trail|you (?:conjure|create|raise|manifest|summon|call up|envelop yourself|enter|gain|sense|extend your senses|embody|feel|fold|propel yourself|turn yourself|may attempt to hide|attempt to hide|stay out of sight))\b/i;
+
+/** "binding you together": the caster is in it too. */
+const SHARED = /\b(?:you and|binding you|you together|yourself and)\b/i;
+
+/**
+ * Everything a confirmed use lays, and where.
+ *
+ *   own        the card's own row, or null (see castEffect)
+ *   laid       the condition rows for the targets, stacks already counted
+ *   offered    every condition the card names, certain and optional alike,
+ *              for the prompt to print and let the player tick
+ *   landsOn    'targets' | 'caster' | 'both', for `own`
+ *   conjured   the body the card puts on the table, or null
+ *
+ * `half` is whether the second half was paid for (its conditions count then),
+ * `riders` are the Martial Moves added to a swing (WOUND and REND inflict
+ * theirs), `statuses` are the optional condition ids the prompt ticked on, and
+ * `plan` is the roll plan, which is where a Bleed counts its stacks from.
+ */
+export function castPlan(request, actor, { half = false, riders = [], statuses = [], plan = [] } = {}) {
+  const card = request?.card ?? null;
+  const own = request?.extra?.effects ? null : castEffect(request);
+
+  /* Every condition named, deduplicated with a certain reading winning over an
+     optional one, off the card and off whatever rides the swing. */
+  const named = new Map();
+  for (const source of [card, ...(riders ?? [])]) {
+    for (const hit of inflictedStatuses(source, { half })) {
+      const held = named.get(hit.id);
+      if (!held || (held.optional && !hit.optional)) named.set(hit.id, hit);
+    }
+  }
+  const offered = [...named.values()];
+  const ticked = new Set(statuses ?? []);
+  const laid = offered
+    .filter((hit) => !hit.optional || ticked.has(hit.id))
+    .flatMap((hit) => statusRows(hit, request, plan));
+
+  const conjured = conjuredBody(card, actor, request?.modifiers);
+
+  return { own, laid, offered, landsOn: landing(card, own, laid, conjured), conjured };
+}
+
+/**
+ * The rows one inflicted condition becomes: the glossary's clock unless the
+ * card's own sentence states one, and one row per stack for the condition
+ * that stacks.
+ *
+ * "the target gains one stack of Bleed for each Damage Die this attack rolls"
+ * counts the dice the swing actually throws, Empowered and all, off the plan's
+ * first damage link. Any other stacking clause is one stack.
+ */
+function statusRows(hit, request, plan) {
+  const status = statusOf(hit.id);
+  if (!status) return [];
+
+  const clock = clauseClock(hit.clause);
+  const said = clock && !clock.vague ? clock : null;
+  const row = {
+    name: status.name,
+    card: request?.card?.id ?? null,
+    status: status.id,
+    turns: said ? said.turns : null,
+    until: said ? said.until : (status.until ?? null),
+    from: request?.source ?? '',
+  };
+
+  if (!status.stacks) return [row];
+
+  let count = 1;
+  if (/for each Damage Die/i.test(hit.clause)) {
+    const damage = (plan ?? []).find((link) => link.shape === 'value' && link.kind === 'damage');
+    const dice = (damage?.dice ?? []).reduce((sum, term) => sum + (Number(String(term).split('d')[0]) || 1), 0);
+    count = Math.max(1, dice);
+  }
+  return Array.from({ length: count }, () => ({ ...row }));
+}
+
+/** Where the card's own row goes when bodies were picked. See the note above. */
+function landing(card, own, laid, conjured) {
+  if (!own) return 'caster';
+  if (conjured) return 'caster';
+  if (laid.length > 0) return 'caster';
+
+  const prose = cardProse(card?.body);
+  const upkeep = card?.sub_name === 'Upkeep';
+
+  if (!BODY_WORD.test(prose) || ANCHORED.test(prose)) return 'caster';
+  if (upkeep || SHARED.test(prose)) return 'both';
+  return 'targets';
+}
+
+/**
+ * The body a card puts on the table, with its numbers worked out for the
+ * caster, or null for the nearly every card that puts nothing there.
+ *
+ * Read off the card's own sentence: "has Health equal to [[10*stat]] and
+ * Defense equal to [[2*stat]]". A sentence that says *sacrifice* is a cost and
+ * not a body (GORE ARMOR, BLIGHT POLLEN's tithe), so it is skipped. Reflex and
+ * Grit fall back to the Defense, because a roll "against its Reflex" at a wall
+ * is judged by the one number it has.
+ */
+const HEALTH_OF = /\bHealth equal to \[\[([^\]]+)\]\]/i;
+const DEFENSE_OF = /\bDefense equal to \[\[([^\]]+)\]\]/i;
+
+export function conjuredBody(card, actor, modifiers = null) {
+  if (!card?.body) return null;
+
+  const stat = castStat(modifiers?.stat ?? card.stat ?? 'instinct', actor);
+  const worth = (expression) => resolveValue(expression, actor, stat, {}).flat;
+
+  for (const sentence of cardProse(card.body).split(/(?<=[.!?])\s+/)) {
+    if (/\bsacrific/i.test(sentence)) continue;
+    const health = HEALTH_OF.exec(sentence);
+    if (!health) continue;
+
+    const defense = DEFENSE_OF.exec(sentence);
+    const avoid = defense ? Math.max(0, Math.floor(worth(defense[1]))) : 0;
+    return {
+      name: card.name,
+      card: card.id,
+      health_max: Math.max(1, Math.floor(worth(health[1]))),
+      avoid,
+      reflex: avoid,
+      grit: avoid,
+      armor: 0,
+      owner: actor?.name ?? '',
+    };
+  }
+
+  return null;
+}
+
+/**
+ * The spend, minus the row it laid on the caster.
+ *
+ * A cast whose row goes to the bodies it was aimed at comes back off the
+ * caster's own tracker before the patch: filtered by the card rather than
+ * deleted wholesale, because on a weapon swing `body.effects` is also where a
+ * spent AMBUSH was just cleared and a wholesale delete would un-spend it. A
+ * standing row of the same card goes with it, since a redirected recast is the
+ * spell moving, and it must not run in two places off one source.
+ */
+export function withoutCast(body, own) {
+  if (!own || !Array.isArray(body?.effects)) return body;
+  return {
+    ...body,
+    effects: body.effects.filter((row) => !(row.card === own.card && !row.status)),
+  };
 }

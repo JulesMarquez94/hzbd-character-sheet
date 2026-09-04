@@ -179,6 +179,26 @@ section('a reaction still being chosen');
   check('is the row a held action most needs to show', shape(got), ['Fireball > Reacting']);
 }
 
+section('a body conjured by a cast is part of the cast');
+{
+  /* "If something is created like with hard light ... it should appear" (Jules,
+     2026-09-04). The summon row rides the cast's chain, so the wall is a line
+     in the Hard Light entry and not an entry beside it; the row that takes it
+     off the table again has no cast above it and stands alone. */
+  const c = 'chain-1';
+  const got = groupEvents(
+    feed(
+      use(c, 'Hard Light'),
+      about('summon', c, 'Hard Light', { move: 'conjure', key: 'w1' }),
+      { kind: 'summon', title: 'Hard Light', data: { chain: null, move: 'gone', key: 'w1' } }
+    )
+  );
+  check('the summon rides its cast, and the removal stands alone', shape(got), [
+    'Hard Light',
+    'Hard Light > Hard Light',
+  ]);
+}
+
 section('a delivery with no use above it');
 {
   /* A wall of fire rolled off its own tracker row on the encounter page. There
@@ -398,6 +418,16 @@ section('a row as the line a pop-up shows');
     'attacked with Cleave'
   );
   check('a rest reads as one', say({ kind: 'rest', title: 'Long Rest', data: {} })?.line, 'took a Long Rest');
+  check(
+    'a body put on the table says it was conjured',
+    say({ kind: 'summon', title: 'Hard Light', data: { move: 'conjure', chain: 'c1' } })?.line,
+    'conjured Hard Light'
+  );
+  check(
+    'and taken off it says so',
+    say({ kind: 'summon', title: 'Hard Light', data: { move: 'gone' } })?.line,
+    'took off the table Hard Light'
+  );
   check(
     'a delivery says what it dealt',
     say({ kind: 'apply', title: '14 Fire damage', data: { verb: 'dealt' } })?.line,

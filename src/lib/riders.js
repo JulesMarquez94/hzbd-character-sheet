@@ -73,6 +73,8 @@
  * import it without either of them pulling the other in.
  */
 
+import { statusOf } from './statuses.js';
+
 /* ------------------------------------------------------------- the shape */
 
 /** A rider with nothing in it, so every caller reads the same fields. */
@@ -389,6 +391,41 @@ export function riderLine(cardId) {
 }
 
 /**
+ * What one tracker row is doing, in words, or null.
+ *
+ * A row is one of two things that speak: a card with a rider in the table
+ * above, or a condition. Poisoned says "Disadvantage on every roll" whatever
+ * card poisoned you, so the condition is asked first and the card second, and
+ * every row on every tracker is read through this one door. See statuses.js.
+ */
+export function effectLine(row) {
+  if (!row) return null;
+  const status = statusOf(row.status);
+  if (status) return status.line;
+  return riderLine(row.card);
+}
+
+/**
+ * The rider a row lays, and the key it is counted under, or null for a row
+ * that bends nothing.
+ *
+ * A condition's rider is the glossary's and is keyed on the condition, so two
+ * Poisoned rows from two snakes are one Disadvantage. A card's rider is the
+ * table's and is keyed on the card. A condition row that names a card still
+ * reads as the condition: Rooted lays what Rooted lays, not what ENTANGLING
+ * ROOTS would lay on its caster.
+ */
+function riderFor(row) {
+  const status = statusOf(row.status);
+  if (status) {
+    return status.rider ? { key: `status:${status.id}`, rider: { ...status.rider, line: status.line } } : null;
+  }
+  const id = row.card ? String(row.card) : '';
+  const rider = riderOf(id);
+  return rider ? { key: id, rider } : null;
+}
+
+/**
  * A stored effects list, as rows, without trusting it.
  *
  * The same defensive read `runningEnchants` does in enchanting.js, and for the
@@ -426,9 +463,9 @@ export function runningRiders(effects, { weapon = true } = {}) {
   for (const row of rows(effects)) {
     if (row.turns === 0) continue;
 
-    const id = row.card ? String(row.card) : '';
-    const rider = riderOf(id);
-    if (!rider || seen.has(id)) continue;
+    const found = riderFor(row);
+    if (!found || seen.has(found.key)) continue;
+    const { key: id, rider } = found;
     /* A rider whose printed clause names a weapon has nothing to say about a
        spell. `weapon: false` is a caller asking about something that is not a
        weapon attack, and KINDLE WEAPON is the one entry it drops: "when the

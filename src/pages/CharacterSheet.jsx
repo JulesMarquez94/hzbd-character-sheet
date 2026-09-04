@@ -404,9 +404,9 @@ export default function CharacterSheet({ creating = false }) {
         Instinct to roll with. Renders nothing. See DiceTray.jsx. */}
     {canEdit && <DiceSheet character={shown} patch={patch} />}
     {/* And the fight, when the Game Master is running one. Renders nothing until
-        the order reaches this sheet, and then it covers the screen. The turn is
-        started here by this sheet, off an announcement on the table log, because
-        nobody else may write to it. See TurnCall.jsx. */}
+        the order reaches this sheet, and then a panel stands at the side of the
+        screen. The turn is started here by this sheet, off an announcement on
+        the table log, because nobody else may write to it. See TurnCall.jsx. */}
     <TurnCall character={character} patch={patch} canEdit={canEdit} />
     {/* And the Feral Curse's own question, whenever this sheet loses Health or
         spends Willpower. Renders nothing for everybody who holds no set that

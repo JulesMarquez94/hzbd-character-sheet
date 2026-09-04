@@ -57,9 +57,9 @@ export default function ApplyWindow({ apply, roster, onApply, onClose }) {
         <>
           <span className="pick-line">
             {nothing
-              ? 'Nothing got through, so there is nothing to land.'
+              ? 'Nothing to land.'
               : chosen.length === 0
-                ? 'Nobody picked. Close this to land the numbers by hand instead.'
+                ? 'Pick who it lands on, or close this and land it by hand.'
                 : `Lands on ${chosen.length} ${chosen.length === 1 ? 'body' : 'bodies'}.`}
           </span>
           <span className="spacer" />
@@ -83,10 +83,10 @@ export default function ApplyWindow({ apply, roster, onApply, onClose }) {
       <div className="apply-window">
         <p className="apply-lead">
           {nothing
-            ? `${apply?.caster?.name ?? 'The roll'} caught nobody: every target dodged.`
+            ? `Every target dodged ${apply?.caster?.name ?? 'the roll'}.`
             : `${apply?.caster?.name ? `${apply.caster.name} rolled` : 'Rolled'} ${deltas
                 .map((delta) => deltaWords(delta))
-                .join(' and ')}. Pick who it lands on.`}
+                .join(' and ')}. Armor and Shield are taken off on landing.`}
         </p>
 
         {/* The one roll, judged per body: who it critically caught, who it
@@ -145,7 +145,7 @@ export default function ApplyWindow({ apply, roster, onApply, onClose }) {
                       </span>
                       <span className="apply-line-math">
                         {deltas.map((delta) => landingLine(body, delta)).join(' · ')}
-                        {body.kind === 'member' ? ' · lands on their sheet' : ''}
+                        {body.kind === 'member' ? ' · their sheet has the final word' : ''}
                       </span>
                     </div>
                   ))}

@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FightContext } from '../../context/fight.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { listFightWords } from '../../lib/campaignLog.js';
+import { listMembers } from '../../lib/campaigns.js';
 import { encounterState, listEncounters } from '../../lib/encounters.js';
 import { subscribeToTable } from '../../lib/realtime.js';
+import { runningNames } from '../../lib/statuses.js';
 
 /**
  * The fight, as this sheet is allowed to know it.
@@ -41,10 +43,23 @@ export default function FightProvider({ characterId, children }) {
   // campaignId -> { seq, order, up: { name, round, seq } | null }
   const [fights, setFights] = useState({});
   /* The pools a shared encounter lets this reader see:
-     campaignId -> encounterId -> foe key -> { health01, shield01, down }.
+     campaignId -> encounterId -> foe key -> { health01, shield01, down, effects }.
      Empty for everything the Game Master has not opened — the read policy is
      the curtain, and this only holds what came back. */
   const [shared, setShared] = useState({});
+
+  /* The bodies spells have put on the table, heard off the log:
+     campaignId -> foe key -> body. A wall a player raised is a target for the
+     whole table the moment the Game Master's page has it, and this is how the
+     other sheets learn its name and its Defense. Cleared with the fight. */
+  const [summons, setSummons] = useState({});
+
+  /* What is running on every seated character, by name:
+     characterId -> [names]. A sheet is public to read, so what is on a
+     tracker is not a secret the way an enemy's pools are: a Trickster out of
+     sight is out of sight for the whole table, and a Poisoned ally is a
+     Poisoned ally. Read once and kept live off the characters channel. */
+  const [worn, setWorn] = useState({});
 
   const ids = tables.map((table) => table.id).sort().join(',');
 
@@ -56,6 +71,7 @@ export default function FightProvider({ characterId, children }) {
         health01: foe.stats.health_max > 0 ? foe.health / foe.stats.health_max : 0,
         shield01: foe.stats.health_max > 0 ? foe.shield / foe.stats.health_max : 0,
         down: foe.down,
+        effects: runningNames(foe.effects),
       };
     }
     return map;
@@ -80,9 +96,41 @@ export default function FightProvider({ characterId, children }) {
 
   /** One row's word about the fight, folded in wherever it belongs. */
   const settle = useCallback((campaignId, row) => {
-    if (!row || row.kind !== 'turn') return;
+    if (!row) return;
+
+    /* A body conjured or taken off the table. Kept per campaign under the key
+       the caster minted, which is the same key the Game Master's pile holds
+       it under, so a chip here and the row there are one thing. */
+    if (row.kind === 'summon') {
+      const key = row.data?.key;
+      if (!key) return;
+      setSummons((held) => {
+        const mine = { ...(held[campaignId] ?? {}) };
+        if (row.data?.move === 'conjure' && row.data?.body) {
+          mine[key] = { ...row.data.body, seq: Number(row.seq) || 0 };
+        } else if (row.data?.move === 'gone') {
+          delete mine[key];
+        }
+        return { ...held, [campaignId]: mine };
+      });
+      return;
+    }
+
+    if (row.kind !== 'turn') return;
     const move = row.data?.move;
     if (move !== 'initiative' && move !== 'fight-over' && move !== 'your-turn') return;
+
+    /* A fight ending, or a new one rolled, takes every summon before it with
+       it: a wall does not outlast the fight it was raised in on anybody's chips. */
+    if (move === 'initiative' || move === 'fight-over') {
+      const seq = Number(row.seq) || 0;
+      setSummons((held) => {
+        const mine = Object.fromEntries(
+          Object.entries(held[campaignId] ?? {}).filter(([, body]) => Number(body.seq) > seq)
+        );
+        return { ...held, [campaignId]: mine };
+      });
+    }
 
     setFights((held) => {
       const seq = Number(row.seq) || 0;
@@ -191,6 +239,69 @@ export default function FightProvider({ characterId, children }) {
     };
   }, [ids, settle, readShared]);
 
+  /**
+   * What is running on everybody seated at these tables, and kept live.
+   *
+   * The members are read for their characters, and the characters channel is
+   * then watched for exactly those ids, so a row landing on Kaelen's tracker
+   * reaches every chip that shows Kaelen. A membership changing (somebody
+   * joining mid-session) is caught on the members channel and re-read.
+   */
+  useEffect(() => {
+    if (!ids) return undefined;
+    let alive = true;
+    const drops = [];
+
+    const fold = (rows) => {
+      if (!alive) return;
+      setWorn((held) => {
+        const next = { ...held };
+        for (const member of rows ?? []) {
+          if (member?.characters?.id) next[member.characters.id] = runningNames(member.characters.effects);
+        }
+        return next;
+      });
+    };
+
+    const watch = (campaignId) => {
+      listMembers(campaignId)
+        .then((rows) => {
+          fold(rows);
+          const seated = (rows ?? []).map((member) => member.characters?.id).filter(Boolean);
+          if (seated.length === 0 || !alive) return;
+          drops.push(
+            subscribeToTable({
+              table: 'characters',
+              filter: `id=in.(${seated.join(',')})`,
+              onChange: (payload) => {
+                const row = payload.new;
+                if (!row?.id) return;
+                setWorn((held) => ({ ...held, [row.id]: runningNames(row.effects) }));
+              },
+              onResync: () => listMembers(campaignId).then(fold).catch(() => {}),
+            })
+          );
+        })
+        .catch(() => {});
+    };
+
+    for (const campaignId of ids.split(',')) {
+      watch(campaignId);
+      drops.push(
+        subscribeToTable({
+          table: 'campaign_members',
+          filter: `campaign_id=eq.${campaignId}`,
+          onChange: () => listMembers(campaignId).then(fold).catch(() => {}),
+        })
+      );
+    }
+
+    return () => {
+      alive = false;
+      drops.forEach((off) => off());
+    };
+  }, [ids]);
+
   const value = useMemo(() => {
     const roster = [];
     const seen = new Set();
@@ -235,18 +346,42 @@ export default function FightProvider({ characterId, children }) {
              the chip draws a plain face — unless the Game Master opened the
              curtain, and then the bar is the encounter row's own. The defenses
              cross either way; they are what a roll against this body is judged
-             by. */
+             by. What is *running* on a body crosses too: an enemy's through
+             the curtain, a character's off their own public sheet. */
           health01: null,
           shield01: 0,
           down: false,
+          effects: entry.kind === 'member' ? (worn[entry.ref] ?? []) : [],
           ...(pools[entry.ref] ?? {}),
           defenses: entry.defenses ?? null,
         });
       }
+
+      /* And what spells have put on the table since the roll: a body with no
+         turn of its own, so it is never in the order, and a target all the
+         same. Its numbers came with the announcement. */
+      for (const [key, body] of Object.entries(summons[campaignId] ?? {})) {
+        if (seen.has(key)) continue;
+        seen.add(key);
+        roster.push({
+          id: key,
+          kind: 'foe',
+          name: body.name,
+          self: false,
+          tone: 'var(--haze-glow)',
+          conjured: true,
+          health01: null,
+          shield01: 0,
+          down: false,
+          effects: [],
+          ...(pools[key] ?? {}),
+          defenses: { avoid: body.avoid ?? 0, reflex: body.reflex ?? body.avoid ?? 0, grit: body.grit ?? body.avoid ?? 0 },
+        });
+      }
     }
 
-    return running.length > 0 ? { live: true, roster, fights: running, pools } : null;
-  }, [fights, shared, tables, characterId]);
+    return running.length > 0 ? { live: true, roster, fights: running, pools, worn } : null;
+  }, [fights, shared, summons, worn, tables, characterId]);
 
   return <FightContext.Provider value={value}>{children}</FightContext.Provider>;
 }

@@ -17,11 +17,14 @@ import {
   initiativeEvent,
   postEvent,
   shareEvent,
+  summonEvent,
   turnCallEvent,
+  unsummonEvent,
 } from '../../lib/campaignLog.js';
 import { levelForXp, liveCharacter } from '../../lib/characterModel.js';
 import { aimHits, applyPlan, clauseAim } from '../../lib/combatApply.js';
 import { dropEffect, layEffect, tickEffects } from '../../lib/combatTurn.js';
+import { runningNames } from '../../lib/statuses.js';
 import {
   CREATURE_MAX_LEVEL,
   RANKS,
@@ -32,6 +35,7 @@ import {
 } from '../../lib/creatures.js';
 import {
   FOES_MAX,
+  addConjured,
   addFoes,
   advanceRun,
   applyToFoes,
@@ -44,6 +48,7 @@ import {
   encounterTally,
   endRun,
   foeActor,
+  foeKey,
   foeTurnStart,
   layOnFoes,
   listEncounters,
@@ -321,7 +326,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
       said = rolled?.gains ?? null;
       return rolled?.patch ?? null;
     });
-    setGains(said ?? ['Nothing to give. No Overlord here, or every one of them is full.']);
+    setGains(said ?? ['Nothing moved. No Overlord here, or every one is already full.']);
   };
 
   /* ------------------------------------------------------------- the fight */
@@ -353,6 +358,9 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             avoid: Math.max(0, Number(shown.avoid) || 0),
             reflex: Math.max(0, Number(shown.reflex) || 0),
             grit: Math.max(0, Number(shown.grit) || 0),
+            /* What is running on them, by name, so their chip says so. A
+               Trickster out of sight is out of sight for the whole table. */
+            effects: runningNames(shown.effects),
           };
         }),
     [members]
@@ -361,8 +369,9 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   /**
    * Everybody in the fight, as chips and as targets: enemies wearing their
    * rank, the party wearing its cyan, each one's Health as the chip's own
-   * background. This is the one list the prompt, the order, the apply window
-   * and the deliveries all read, so "which chip is Kaelen" has one answer.
+   * background and the conditions running on each under its name. This is the
+   * one list the prompt, the order, the apply window and the deliveries all
+   * read, so "which chip is Kaelen" has one answer.
    */
   const roster = useMemo(
     () => [
@@ -377,6 +386,8 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         armor: foe.stats.defense,
         shieldNow: foe.shield,
         defenses: { avoid: foe.stats.avoid, reflex: foe.stats.reflex, grit: foe.stats.grit },
+        effects: runningNames(foe.effects),
+        conjured: Boolean(foe.conjured),
       })),
       ...seats.map((seat) => ({
         id: seat.character_id,
@@ -389,6 +400,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         armor: seat.armor,
         shieldNow: seat.shield,
         defenses: { avoid: seat.avoid, reflex: seat.reflex, grit: seat.grit },
+        effects: seat.effects,
       })),
     ],
     [foes, seats]
@@ -423,7 +435,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
       return rolled;
     });
     if (!rolled) {
-      setGains(['Nobody is in this fight. Add an enemy, or link a character to the campaign.']);
+      setGains(['Nobody to roll for. Add an enemy or link a character first.']);
       return;
     }
 
@@ -588,14 +600,15 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
    * Game Master should see, not a silence.
    */
   const handleResults = useCallback(
-    ({ foe, request, targets, thrown, outcomes = null, hit = null, cast = null, chain = null }) => {
+    ({ foe, request, targets, thrown, outcomes = null, hit = null, casts = [], chain = null }) => {
       const landed = outcomes
         ? targets.filter((entry) => aimHits(outcomes).some((won) => won.id === entry.id))
         : targets;
 
-      /* The effect that waited on the verdict: "On a hit, the spore embeds" is
-         a row for whoever was hit and for nobody else. */
-      if (cast && hit && landed.length > 0) layTargets(foe, landed, cast, chain);
+      /* The rows that waited on the verdict: "On a hit, the spore embeds" is a
+         row for whoever was hit and for nobody else, and so is the Poisoned
+         behind "On a hit, the target is poisoned". */
+      if (hit && landed.length > 0) for (const row of casts) layTargets(foe, landed, row, chain);
 
       const deltas = applyPlan(thrown);
       if (deltas.length === 0 && !outcomes) return;
@@ -780,9 +793,24 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   /* What every enemy block reaches the fight through. Only on the encounter
      view, and only while this Game Master can edit: the Bestiary hands its
      blocks nothing and stays a reference page. */
+  /**
+   * A body an enemy's spell put on the table, written straight into the pile
+   * and announced, so every seated sheet can point at it. The key is minted
+   * here and rides the announcement, so the chips and the row agree.
+   */
+  const conjure = useCallback(
+    (foe, body, chain = null) => {
+      const key = foeKey();
+      const made = { ...body, key, owner: foe.title };
+      patch((row) => addConjured(row, made, key));
+      log(summonEvent({ name: foe.title, portrait: foe.creature?.portrait_url ?? null }, made, { chain }));
+    },
+    [patch, log]
+  );
+
   const combat = useMemo(
-    () => ({ roster, layEffect: layTargets, onResults: handleResults, rollEffect }),
-    [roster, layTargets, handleResults, rollEffect]
+    () => ({ roster, layEffect: layTargets, onResults: handleResults, rollEffect, conjure }),
+    [roster, layTargets, handleResults, rollEffect, conjure]
   );
 
   /**
@@ -887,6 +915,34 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         if (payload.eventType !== 'INSERT') return;
         const row = payload.new;
         if (!row?.character_id) return;
+
+        /* A body a player's spell made: onto the fight that is running here,
+           under the key the caster minted, so their chips and this pile agree.
+           And off again when the table takes it away. The table's own summons
+           were written directly before they were posted, which is why only a
+           character's rows are read. */
+        if (row.kind === 'summon') {
+          if (deliveredRef.current.has(row.id)) return;
+          deliveredRef.current.add(row.id);
+          const key = row.data?.key;
+          if (!key) return;
+
+          if (row.data?.move === 'conjure' && row.data?.body) {
+            const live = rowsRef.current.find((enc) => normalizeRun(enc.run).live);
+            const home = live ?? rowsRef.current.find((enc) => enc.id === openId) ?? null;
+            if (!home) return;
+            patchEncounter(home.id, (enc) => addConjured(enc, row.data.body, key));
+          }
+          if (row.data?.move === 'gone') {
+            const home = rowsRef.current.find((enc) =>
+              normalizeFoes(enc.foes).some((held) => held.key === key)
+            );
+            if (!home) return;
+            patchEncounter(home.id, (enc) => dropFoe(enc, key));
+          }
+          return;
+        }
+
         if (row.kind !== 'effect' && row.kind !== 'apply') return;
 
         const named = (row.data?.targets ?? []).filter(
@@ -922,7 +978,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         }
       },
     });
-  }, [campaignId, canEdit, patchEncounter]);
+  }, [campaignId, canEdit, patchEncounter, openId]);
 
   if (!canEdit) {
     return (
@@ -945,10 +1001,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         {encounters.length === 0 ? (
           <div className="empty-state camp-empty">
             <h2>Nothing Prepared</h2>
-            <p>
-              An encounter is a group of enemies you put together now and put on the table later.
-              Make one, then fill it out of the bestiary.
-            </p>
+            <p>An encounter is a group of enemies you build now and fight later. Make one, then fill it from the bestiary.</p>
             <button
               type="button"
               className="btn btn-primary btn-sm"
@@ -966,7 +1019,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
 
             <button type="button" className="enc-block enc-block-new" onClick={handleCreate}>
               <span className="enc-block-name">+ New encounter</span>
-              <span className="enc-block-notes">A named pile of enemies, filled from the bestiary.</span>
+              <span className="enc-block-notes">A named group of enemies, filled from the bestiary.</span>
             </button>
           </div>
         )}
@@ -994,7 +1047,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         ready={run.live && foes.some((foe) => !foe.down && foe.reaction > 0)}
         ignore={(row) => !row.character_id}
         onReact={setReacting}
-        line="An enemy with Reaction Points can answer."
+        line="An enemy with Reaction Points can answer it."
       />
 
       {reacting && (
@@ -1073,7 +1126,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
               other word of it. */}
           <label
             className="enc-share"
-            title="On, every seated player's fight chips carry the enemies' Health bars. Off, the pools are yours alone. The Game Master's notes ride along with a shared encounter."
+            title="On, the players' chips show enemy Health and Shield bars and what is running on each enemy. Off, the pools are yours alone. Your notes on this encounter are shared with it."
           >
             <input
               type="checkbox"
@@ -1101,7 +1154,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
               type="button"
               className="btn btn-minimal btn-sm"
               onClick={handleTurn}
-              title="Every Overlord here gains 3 Reaction Points, and what is running on it ticks"
+              title="Every Overlord gains 3 Reaction Points and its effects tick. The runner does this by itself in a live fight."
             >
               {TURN_LABEL}
             </button>
@@ -1113,7 +1166,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             onClick={() => {
               patch((row) => resetEncounter(row));
             }}
-            title="Full pools, nothing running, every ward back up"
+            title="Every enemy back to full, nothing running, every ward up"
           >
             Reset
           </button>
@@ -1167,12 +1220,15 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
                 /* Off the table and out of the order, in one write. An
                    enemy taken off mid-fight that stayed in the order would
                    be a turn the runner announced for a body that is not
-                   there, and `dropFromOrder` keeps whoever is up up. */
+                   there, and `dropFromOrder` keeps whoever is up up. A
+                   conjured body going is said on the log, so the sheets
+                   pointing chips at it take them down too. */
                 patch((row) => {
                   const gone = dropFoe(row, foe.key);
                   if (!gone) return null;
                   return { ...gone, ...(dropFromOrder(row, foe.key) ?? {}) };
                 });
+                if (foe.conjured) log(unsummonEvent({ key: foe.key, name: foe.title }));
               }}
             />
           </section>
@@ -1182,7 +1238,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
       {foes.length === 0 && (
         <div className="empty-state camp-empty">
           <h2>No Enemies Yet</h2>
-          <p>Add them out of the bestiary. The same creature can go in as many times as you like.</p>
+          <p>Add them from the bestiary. The same creature can go in as many times as you like.</p>
         </div>
       )}
 
@@ -1328,9 +1384,7 @@ function AddFoes({ encounter, onAdd, onClose, partyLevel = null }) {
       size="page"
       footer={
         <span className="pick-line">
-          {room === 0
-            ? `This encounter is full at ${FOES_MAX} enemies.`
-            : `Room for ${room} more.`}
+          {room === 0 ? `Full at ${FOES_MAX} enemies.` : `Room for ${room} more.`}
         </span>
       }
     >

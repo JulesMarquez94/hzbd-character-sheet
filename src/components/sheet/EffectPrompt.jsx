@@ -8,6 +8,10 @@ const PICK_LIMIT = 8;
 import { cardHaystack } from '../../lib/abilitySources.js';
 import { cardGist } from '../../lib/cardText.js';
 import { riderLine } from '../../lib/riders.js';
+import { trackableStatuses } from '../../lib/statuses.js';
+
+/** Every condition the glossary defines, once, for the row of chips. */
+const CONDITIONS = trackableStatuses();
 
 /** The rows whose card answers the search, or all of them when nothing is typed. */
 function hunt(list, needle) {
@@ -85,6 +89,11 @@ export default function EffectPrompt({
   // Which rest ends it, when a rest is what ends it: '' | 'short' | 'long'.
   const [until, setUntil] = useState('');
   const [picked, setPicked] = useState(null);
+  /* A condition picked off the glossary's own row rather than off a card:
+     Poisoned, Prone, a stack of Bleed. It lands carrying the glossary's clock
+     and whatever the condition does to the numbers, exactly as it would have
+     had a Snake put it there. See statuses.js. */
+  const [condition, setCondition] = useState(null);
   const [search, setSearch] = useState('');
 
   const [all, setAll] = useState(false);
@@ -137,6 +146,7 @@ export default function EffectPrompt({
    */
   function choose(row) {
     setPicked(row);
+    setCondition(null);
     setName(row.card.name);
     setNote('');
     if (row.turns !== null) {
@@ -149,8 +159,19 @@ export default function EffectPrompt({
     }
   }
 
+  /** A condition picked: the glossary's name, open-ended, ended by the rest it names. */
+  function chooseCondition(entry) {
+    setCondition(entry);
+    setPicked(null);
+    setName(entry.name);
+    setNote('');
+    setOpen(true);
+    setUntil(entry.until ?? '');
+  }
+
   function clear() {
     setPicked(null);
+    setCondition(null);
     setName('');
   }
 
@@ -161,12 +182,13 @@ export default function EffectPrompt({
     const list = addEffect(holder ? holder.effects : character.effects, {
       name: trimmed,
       card: picked?.card.id ?? null,
+      status: condition?.status ?? null,
       note: note.trim(),
       turns: open ? null : turns,
       // Only an open-ended effect can be ended by a rest; one counted in
       // turns runs out on its own before a rest is ever taken.
       until: open ? until || null : null,
-      from: picked?.from ?? '',
+      from: picked?.from ?? (condition ? 'By hand' : ''),
     });
 
     // The holder decides what the patch looks like; the window only builds the
@@ -228,6 +250,28 @@ export default function EffectPrompt({
               </button>
             </div>
           )}
+
+          {/* ---------- A CONDITION ----------
+              The glossary's own row: Poisoned, Prone, Grappled and the rest,
+              each landing with its own clock and its own effect on the numbers.
+              Above the cards because a condition is what a Game Master is
+              reaching for nine times in ten, and it used to have to be typed. */}
+          <div className="fx-field">
+            <span className="fx-label">A condition</span>
+            <div className="fx-conditions">
+              {CONDITIONS.map((entry) => (
+                <button
+                  type="button"
+                  key={entry.status}
+                  className={`fx-until-opt${condition?.status === entry.status ? ' is-on' : ''}`}
+                  onClick={() => chooseCondition(entry)}
+                  title={`${entry.line} ${entry.label}.`}
+                >
+                  {entry.name}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* ---------- OFF A CARD ----------
               Only what actually lasts. A sword swing resolves and is over, and a
@@ -378,12 +422,20 @@ export default function EffectPrompt({
                 // Typing over a picked card means it is no longer that card, and
                 // the row should not open a card that does not match its name.
                 if (picked) setPicked(null);
+                if (condition) setCondition(null);
               }}
               placeholder="Grappled, Renew, Blessed by the Warden"
             />
           </label>
 
-          {picked ? (
+          {condition ? (
+            <p className="fx-picked-note">
+              The glossary&rsquo;s <b>{condition.name}</b>: {condition.line}{' '}
+              <button type="button" className="fx-unpick" onClick={clear}>
+                Write it in by hand instead
+              </button>
+            </p>
+          ) : picked ? (
             <p className="fx-picked-note">
               Reads the <b>{picked.card.name}</b> card on the block.
               {/* And what it will do to the numbers, promised before it is tracked.

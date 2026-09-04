@@ -168,23 +168,60 @@
   color: var(--text-muted);
 }
 
-/* ------------------------------------------------------------ the surface */
+/* ------------------------------------------------------------ the surface
+
+   A panel on the right, standing at the middle of the screen's height, and not
+   a cover. Jules, 2026-09-04: "Instead of doing a full screen lets do a
+   rectangle that pop on the right side center vertically. So it does not take
+   over everything as it happens." The dice, the DC question, the verdict and the
+   four buttons are all still here; what went is the backdrop, so the sheet
+   behind stays readable and pressable while a roll is up. Tapping the panel is
+   what tapping anywhere used to be.
+
+   Below the header's rung would put it under the sticky tab bar, so it keeps
+   the overlay-top rung: a dealt card and a modal are still what it has to win
+   against. The tray's own button holds the bottom left, the knocks the top and
+   bottom right, and this stands between them at mid-height. */
 
 .dice-surface {
   position: fixed;
-  inset: 0;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
   z-index: var(--z-overlay-top);
 
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  width: min(400px, calc(100vw - 36px));
+  max-height: min(88vh, 720px);
+  overflow-y: auto;
+  padding: 18px 18px 16px;
 
-  background: rgba(4, 8, 10, 0.82);
-  backdrop-filter: blur(3px);
+  border: 1px solid rgba(200, 138, 75, 0.35);
+  border-top: 3px solid var(--copper);
+  border-radius: 6px;
+  background: var(--panel-teal);
+  box-shadow: 0 18px 48px rgba(4, 8, 10, 0.7);
+  animation: dice-surface-in 0.18s ease-out;
+}
+
+@keyframes dice-surface-in {
+  from {
+    opacity: 0;
+    transform: translate(12px, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dice-surface {
+    animation: none;
+  }
 }
 
 .dice-stage {
-  width: min(560px, 100%);
+  width: 100%;
   text-align: center;
   pointer-events: none;
 }
@@ -302,12 +339,12 @@
 }
 
 /* The physics table takes a real box to fall in, where the flat floor only needs
-   room for the dice it draws. Wider than the stage so the throw has somewhere to
-   go, and clipped so a die that gets away does not push the page out. */
+   room for the dice it draws. As wide as the panel, and clipped so a die that
+   gets away does not push the page out. */
 .dice-floor.is-solid {
   display: block;
   width: 100%;
-  height: 300px;
+  height: 240px;
   min-height: 0;
   overflow: hidden;
 }
@@ -323,9 +360,23 @@
   height: 100%;
 }
 
+/* On a phone there is no right side to stand at. The panel takes the width
+   and sits at the foot, above the tray's own button. */
 @media (max-width: 560px) {
+  .dice-surface,
+  .react-gate {
+    top: auto;
+    right: 10px;
+    left: 10px;
+    bottom: 84px;
+    transform: none;
+    width: auto;
+    max-height: 70vh;
+    animation: none;
+  }
+
   .dice-floor.is-solid {
-    height: 220px;
+    height: 200px;
   }
 }
 
@@ -334,25 +385,41 @@
    The stack, standing between an action and its dice: the
    countdown, who is holding it, and the fail question. Same
    footing as the dice surface, because it is the beat before
-   it. See ReactionGate.jsx.
+   it: the same panel, at the same place on the right. See
+   ReactionGate.jsx.
    ========================================================= */
 .react-gate {
   position: fixed;
-  inset: 0;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
   z-index: var(--z-overlay-top);
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(5, 10, 13, 0.82);
-  backdrop-filter: blur(2px);
+
+  width: min(400px, calc(100vw - 36px));
+  max-height: min(88vh, 720px);
+  overflow-y: auto;
+  padding: 18px 18px 16px;
+
+  border: 1px solid rgba(255, 145, 60, 0.4);
+  border-top: 3px solid var(--stat-rp);
+  border-radius: 6px;
+  background: var(--panel-teal);
+  box-shadow: 0 18px 48px rgba(4, 8, 10, 0.7);
+  animation: dice-surface-in 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-gate {
+    animation: none;
+  }
 }
 
 .react-gate-body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  width: min(100%, 560px);
+  gap: 14px;
+  width: 100%;
   text-align: center;
 }
 

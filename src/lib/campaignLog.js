@@ -111,15 +111,17 @@ export async function listEvents(campaignId, { before = null, limit = FEED_PAGE 
  * buried the initiative that was still live — so they are asked for by name,
  * newest first, straight off the move the row carries. See FightProvider.jsx.
  */
-export async function listFightWords(campaignId, { limit = 12 } = {}) {
+export async function listFightWords(campaignId, { limit = 30 } = {}) {
   const sb = requireSupabase();
 
   const { data, error } = await sb
     .from('campaign_events')
     .select('*')
     .eq('campaign_id', campaignId)
-    .eq('kind', 'turn')
-    .in('data->>move', ['initiative', 'fight-over', 'your-turn'])
+    .in('kind', ['turn', 'summon'])
+    /* The summons ride along, so a reload mid-fight still knows the wall is
+       standing: what was conjured and what was taken off again. */
+    .in('data->>move', ['initiative', 'fight-over', 'your-turn', 'conjure', 'gone'])
     .order('seq', { ascending: false })
     .limit(limit);
   if (error) throw error;
@@ -747,6 +749,46 @@ export function appliedEvent(caster, delta, targets = [], { chain = null } = {})
   };
 }
 
+/* ------------------------------------------------------------ the conjured
+ *
+ * "If something is created like with hard light in the target it should
+ * appear, become a target with proper health" (Jules, 2026-09-04). A player
+ * cannot write the encounter row, so a body their spell made is announced the
+ * way everything else that crosses the table is: a row the Game Master's page
+ * turns into a foe (see the consumer in EncounterTab.jsx) and every seated
+ * sheet turns into a chip (see FightProvider.jsx). The key is minted by the
+ * caster so that both ends agree on which body is which.
+ */
+
+/** A body a spell made, put on the table. `body` is what encounters.js stores. */
+export function summonEvent(caster, body, { chain = null } = {}) {
+  return {
+    kind: 'summon',
+    actor: caster?.name ?? '',
+    title: body?.name ?? 'Something',
+    detail: `${body?.health_max ?? 0} Health · Defense ${body?.avoid ?? 0}`,
+    data: {
+      move: 'conjure',
+      chain,
+      portrait: caster?.portrait ?? null,
+      card: body?.card ?? null,
+      key: body?.key ?? null,
+      body,
+    },
+  };
+}
+
+/** And taken off it again: destroyed, dismissed or run out. */
+export function unsummonEvent(body, { by = 'The table' } = {}) {
+  return {
+    kind: 'summon',
+    actor: by,
+    title: body?.name ?? 'Something',
+    detail: 'Off the table',
+    data: { move: 'gone', chain: null, key: body?.key ?? null, name: body?.name ?? '' },
+  };
+}
+
 /* ------------------------------------------------------------- reading it */
 
 /** "17:42" for today, "Aug 29, 17:42" for anything older. */
@@ -776,6 +818,8 @@ export function eventWords(event) {
   // Fire damage". The verb was decided when the row was written.
   if (event?.kind === 'effect') return 'laid';
   if (event?.kind === 'apply') return event.data?.verb ?? 'dealt';
+  // "Lark conjured Hard Light", "The table took Hard Light off the table".
+  if (event?.kind === 'summon') return event.data?.move === 'gone' ? 'took off the table' : 'conjured';
   // The stack's rows carry their whole sentence in the title: "Kaelen —
   // Reacting", "Lark — Fireball fails".
   if (event?.kind === 'react') return '';

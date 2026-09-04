@@ -176,6 +176,53 @@ export const RANKS = [
 
 const RANK_BY_ID = new Map(RANKS.map((rank) => [rank.id, rank]));
 
+/* ---------------------------------------------------------------- conjured */
+
+/**
+ * The one body on the table that is not a creature: a thing a spell made.
+ *
+ * HARD LIGHT's wall, DEVOURING BLOSSOM's flower, GUARDIAN ANGEL's angel and
+ * SHAPE EARTH's pillar all have Health and Defense the card works out off the
+ * caster, and nothing else: no attributes, no turn, no cards. They are put in
+ * an encounter's pile as rows whose `creature` is this stub, so that every
+ * writer keyed on a creature id still resolves, and whose numbers ride on the
+ * row itself. See `addConjured` in encounters.js.
+ *
+ * Deliberately not in RANKS and not in CREATURES: it is not on the bestiary
+ * shelf, it is never added by hand, and no rank rule is about it.
+ */
+export const CONJURED_ID = 'conjured';
+
+export const CONJURED_RANK = {
+  id: 'conjured',
+  label: 'Conjured',
+  note: 'Made by a spell, and gone when it is.',
+  color: 'var(--haze-glow)',
+  ap: 0,
+  reaction: 0,
+  reacts: false,
+  perPlayerTurn: 0,
+  blurb:
+    'A thing a spell made: a wall, a flower, a guardian. It has Health and Defense and nothing else. It takes no turn of its own. It is gone when its Health is, when its caster rests or when its card says so.',
+};
+
+const CONJURED_CREATURE = {
+  id: CONJURED_ID,
+  name: 'Conjured',
+  type: 'Conjured',
+  rank: 'minion',
+  level: 1,
+  primary: 'physique',
+  secondary: 'instinct',
+  health: { perLevel: 0, perPhysique: 0 },
+  willpower: {},
+  speed_m: 0,
+  armor: 0,
+  xp: 0,
+  cards: [],
+  lore: 'Something a spell put on the table. Read the card that made it for what it does.',
+};
+
 /* ------------------------------------------------------------------ the armor */
 
 /**
@@ -903,6 +950,7 @@ export function forgedCreatures() {
     id is an id, and every reader of one comes through here. */
 export function getCreature(id) {
   const key = String(id ?? '');
+  if (key === CONJURED_ID) return CONJURED_CREATURE;
   return BY_ID.get(key) ?? FORGED.get(key) ?? null;
 }
 

@@ -99,6 +99,7 @@ import { CARDS, getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
 import { getMartialMove } from './martial.js';
 import { riderOf } from './riders.js';
+import { statusOf } from './statuses.js';
 import { trickAdvantage } from './tricks.js';
 
 /** A long fight should not be able to bloat one row past reading. */
@@ -396,6 +397,11 @@ export function normalizeEffects(value) {
       // And the fourth: a Martial Move, waiting on the same swing. Same law and
       // the same reason — see moves.js.
       move: normalizeMove(raw.move),
+      // And the condition this row *is*, when a card inflicted one: Poisoned,
+      // Rooted, a stack of Bleed. Kept only while the glossary knows the word,
+      // the same guard `card` gets, because a condition is what riders.js reads
+      // its Disadvantage off and what healing washes away. See statuses.js.
+      status: statusOf(raw.status) ? String(raw.status) : null,
       // Whether anything has been paid for while this row stood. Only ever true
       // on a row whose card says acting breaks it, and read at one boundary:
       // your Turn End, where `endTurn` takes it off. See `stirEffects`.
@@ -471,6 +477,8 @@ export function addEffect(effects, entry) {
       // Move waiting on the same swing.
       trick: normalizeTrick(entry?.trick),
       move: normalizeMove(entry?.move),
+      // See normalizeEffects: the condition a card inflicted.
+      status: statusOf(entry?.status) ? String(entry.status) : null,
       // Never on a row being laid: whatever you did a moment ago, you have not
       // moved since this went down. See the note on the effects above.
       stirred: false,
@@ -502,13 +510,33 @@ export function dropEffect(effects, id) {
  *
  * A row with no card behind it never matches: two hand-written "Grappled" rows
  * are two grapples, and nothing here can tell otherwise.
+ *
+ * **A condition is matched on the condition and not on the card.** Poisoned is
+ * Poisoned whether a Snake or a Toxic Toad did it, so a second poisoning
+ * refreshes the row that is standing, and a card that lays both its own row
+ * and a condition (ENTANGLING ROOTS: the vines, and Rooted) is two rows and not
+ * one row overwriting the other. Bleed is the one condition the glossary calls
+ * stackable, and every stack of it is its own row. See statuses.js.
  */
 export function layEffect(effects, entry) {
   const list = normalizeEffects(effects);
+
+  const status = statusOf(entry?.status);
+  if (status) {
+    if (status.stacks) return addEffect(list, entry);
+    const same = list.find((effect) => effect.status === status.id);
+    if (!same) return addEffect(list, entry);
+    const refreshed = addEffect(
+      list.filter((effect) => effect.id !== same.id),
+      entry
+    );
+    return refreshed.map((effect, at) => (at === 0 ? { ...effect, id: same.id } : effect));
+  }
+
   const card = getCard(entry?.card) ? String(entry.card) : null;
   if (!card) return addEffect(list, entry);
 
-  const standing = list.find((effect) => effect.card === card);
+  const standing = list.find((effect) => effect.card === card && !effect.status);
   if (!standing) return addEffect(list, entry);
 
   const refreshed = addEffect(
@@ -648,6 +676,16 @@ export function effectDuration(card) {
     readDuration(cardProse(card.body)) ??
     readDuration(cardProse(card.sub_body), { upkeep: card.sub_name === 'Upkeep' })
   );
+}
+
+/**
+ * The clock one sentence states, or null. For a condition read off a card:
+ * "they are rooted for 10 turns" is a ten-turn Rooted, "stunned until its next
+ * Turn End" is one turn of Stunned, and "the target is poisoned" states none
+ * and falls back to the glossary's own. See castPlan in combatBar.js.
+ */
+export function clauseClock(text) {
+  return readDuration(cardProse(text));
 }
 
 /** A lasting word, so a number of hours is a duration and not a measurement. */

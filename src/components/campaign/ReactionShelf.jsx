@@ -4,7 +4,7 @@ import UsePrompt from '../sheet/UsePrompt.jsx';
 import { BarChip } from '../sheet/ActiveBlock.jsx';
 import { usePlayCard } from '../sheet/usePlayCard.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
-import { foeBar, castEffect } from '../../lib/combatBar.js';
+import { castPlan, foeBar } from '../../lib/combatBar.js';
 import { claimReaction, reactEvent } from '../../lib/campaignLog.js';
 import { newChain } from '../../lib/logChain.js';
 import { rollPlan } from '../../lib/rollPlan.js';
@@ -106,15 +106,25 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
        belong in the reaction's block. See EnemyBlock.jsx. */
     const chain = newChain();
 
-    /* The same landing an enemy's block gives an aimed use: the effect rides to
-       whoever was picked and the rolled numbers go to the apply window. See
-       EnemyBlock.jsx, whose confirm this mirrors. */
-    const cast = targets.length > 0 ? castEffect(request) : null;
-    const checky =
-      targets.length > 0 &&
-      rollPlan(request.card, actor, request.modifiers, { half: Boolean(options?.price) }).some(
-        (link) => link.shape === 'check'
-      );
+    /* The same landing an enemy's block gives an aimed use: the card's row and
+       the conditions it inflicts ride to whoever was picked and the rolled
+       numbers go to the apply window. See EnemyBlock.jsx, whose confirm this
+       mirrors, and castPlan in combatBar.js. */
+    const half = Boolean(options?.price);
+    const links = rollPlan(request.card, actor, request.modifiers, { half });
+    const casting = castPlan(request, actor, {
+      half,
+      riders: options?.riders ?? [],
+      statuses: options?.statuses ?? [],
+      plan: links,
+    });
+    const aimed = targets.length > 0;
+    const toLay = aimed
+      ? [...(casting.landsOn !== 'caster' && casting.own ? [casting.own] : []), ...casting.laid].map(
+          (row) => ({ ...row, from: foe.title })
+        )
+      : [];
+    const checky = aimed && links.some((link) => link.shape === 'check');
 
     writeRef.current = (body) => patch((row) => foeSpend(row, foe, body));
     pendingRef.current = true;
@@ -123,16 +133,7 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
       actor,
       chain,
       afterSettled: () => said('done'),
-      ...(cast
-        ? {
-            write: (body) => {
-              const rest = { ...body };
-              delete rest.effects;
-              return rest;
-            },
-          }
-        : {}),
-      ...(targets.length > 0 && combat?.onResults
+      ...(aimed && combat?.onResults
         ? {
             onSettled: (thrown, meta = {}) =>
               combat.onResults({
@@ -142,14 +143,15 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
                 thrown,
                 outcomes: meta.outcomes ?? null,
                 hit: meta.hit ?? null,
-                cast: checky ? cast : null,
+                casts: checky ? toLay : [],
                 chain,
               }),
           }
         : {}),
     });
 
-    if (cast && !checky) combat?.layEffect?.(foe, targets, cast, chain);
+    if (!checky) for (const row of toLay) combat?.layEffect?.(foe, targets, row, chain);
+    if (casting.conjured) combat?.conjure?.(foe, casting.conjured, chain);
     onClose();
   }
 
@@ -162,8 +164,8 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
         <>
           <span className="pick-line">
             {lost
-              ? 'The reaction went to somebody at the table. Nothing here is holding anything.'
-              : 'The roll is held while this is open. Closing it releases the roll and takes nothing.'}
+              ? 'A player took the reaction. Nothing here is holding the roll.'
+              : 'Their roll waits while this is open. Close it to let the roll go.'}
           </span>
           <span className="spacer" />
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
@@ -174,19 +176,19 @@ export default function ReactionShelf({ call, foes, patch, combat = null, onClos
     >
       {lost ? (
         <p className="react-window-lead">
-          A player claimed it first. An action gets one reaction, and this one is already answered,
-          so there is nothing to take here and nothing has been spent.
+          A player got there first. An action gets one reaction, so there is nothing to take and
+          nothing was spent.
         </p>
       ) : (
         <p className="react-window-lead">
-          <b>{call?.actor ?? 'Someone'}</b> is using <b>{call?.title ?? 'something'}</b>. Whatever
-          an enemy takes resolves first, and it is the only reaction this action gets. A movement
-          resolves last, and picking one releases the roll at once.
+          <b>{call?.actor ?? 'Someone'}</b> is using <b>{call?.title ?? 'something'}</b>. Pick an
+          enemy&rsquo;s move: it resolves before the action does, and it is the only reaction the
+          action gets. A movement resolves after, so picking one lets the roll go at once.
         </p>
       )}
 
       {lost ? null : ready.length === 0 ? (
-        <p className="pick-line">Nothing here has a Reaction Point left to spend.</p>
+        <p className="pick-line">No enemy has a Reaction Point left.</p>
       ) : (
         <div className="react-window-bar">
           {ready.map((foe) => {

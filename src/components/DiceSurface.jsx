@@ -24,8 +24,13 @@ import Die from './Die.jsx';
  *             once per chain. The dice are already on the table behind the
  *             question, so it is asked about a roll you can see.
  *   ready     the dice are on the surface and have not been thrown. Press the
- *             button or tap anywhere. Jules asked for this beat by name, and it
- *             is the one that makes the roll *yours*.
+ *             button or tap the panel. Jules asked for this beat by name, and
+ *             it is the one that makes the roll *yours*.
+ *
+ * The surface is a panel standing at the right of the screen since 2026-09-04,
+ * not a cover ("a rectangle that pop on the right side center vertically. So
+ * it does not take over everything"). The sheet behind it stays readable and
+ * pressable while a roll is up; see the note in DiceTray.css.
  *   rolling   they tumble. The faces flicker through values that mean nothing.
  *   settling  they land. Then every die that exploded blooms out of the die that
  *             threw it, one at a time, so the cascade is legible rather than
@@ -424,12 +429,12 @@ export default function DiceSurface({
             : phase === 'dc'
             ? 'Leave it blank and the table calls the result · Escape to walk away'
             : phase === 'ready'
-              ? 'Tap anywhere to roll · Escape to walk away'
+              ? 'Tap the panel to roll · Escape to walk away'
               : phase === 'rolling'
                 ? 'Tap to skip'
                 : needsCall
                   ? 'Pick the one the table called'
-                  : 'Tap anywhere to clear'}
+                  : 'Tap the panel to clear it'}
         </p>
       </div>
     </div>

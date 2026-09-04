@@ -56,12 +56,12 @@ export default function RunBlock({ run, up, ready, roster, onRoll, onNext, onEnd
             onClick={onRoll}
             disabled={!ready}
           >
-            {run.order.length > 0 ? 'Roll a new fight' : 'Start combat: roll initiative'}
+            {run.order.length > 0 ? 'Roll a new fight' : 'Roll initiative'}
           </button>
           <p className="run-note">
             {ready
-              ? 'Rolls 2d6 + Initiative for every enemy here and every character at the table, then runs the order. The first turn is called at once.'
-              : 'Add an enemy, or link a character to this campaign, and the fight can start.'}
+              ? 'Everyone here rolls 2d6 + Initiative. The order is set and the first turn is called at once.'
+              : 'Add an enemy or link a character first.'}
           </p>
         </>
       ) : (
@@ -73,8 +73,8 @@ export default function RunBlock({ run, up, ready, roster, onRoll, onNext, onEnd
               onClick={onNext}
               title={
                 waiting
-                  ? `Waiting on ${up.name}. This moves on without them.`
-                  : `${up?.name ?? 'This one'} is done, and the next is up`
+                  ? `${up.name} has not ended their turn. This moves on without them.`
+                  : `${up?.name ?? 'This one'} is done. The next is up.`
               }
             >
               {waiting ? `Skip ${up.name}` : 'Next turn'}
@@ -87,8 +87,8 @@ export default function RunBlock({ run, up, ready, roster, onRoll, onNext, onEnd
 
           <p className="run-note">
             {waiting
-              ? `Waiting on ${up.name}. Their turn started on their own sheet, and their End Turn moves the table on by itself.`
-              : `${up?.name ?? 'An enemy'} is up. Play its moves on its block below, then press Next.`}
+              ? `${up.name}'s turn. Their End Turn moves the table on.`
+              : `${up?.name ?? 'An enemy'}'s turn. Play its moves on its block, then press Next.`}
           </p>
         </>
       )}

@@ -137,8 +137,8 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
         <>
           <span className="pick-line">
             {lost
-              ? 'The reaction is somebody else’s. Nothing here is holding anything.'
-              : 'The roll is held while this is open. Closing it releases the roll and takes nothing.'}
+              ? 'Somebody else took the reaction. Nothing here is holding the roll.'
+              : 'Their roll waits while this is open. Close it to let the roll go.'}
           </span>
           <span className="spacer" />
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
@@ -149,14 +149,14 @@ export default function ReactionWindow({ call, character, patch, onClose }) {
     >
       {lost ? (
         <p className="react-window-lead">
-          Somebody else got there first. An action gets one reaction, and this one is already
-          answered, so there is nothing to take here and nothing has been spent.
+          Somebody else got there first. An action gets one reaction, so there is nothing to take
+          and nothing was spent.
         </p>
       ) : (
         <p className="react-window-lead">
-          <b>{call?.actor ?? 'Someone'}</b> is using <b>{call?.title ?? 'something'}</b>. Whatever
-          you take resolves first, and it is the only reaction this action gets. A movement
-          resolves last, and picking one releases the roll at once.
+          <b>{call?.actor ?? 'Someone'}</b> is using <b>{call?.title ?? 'something'}</b>. Pick a
+          card: it resolves before their action does, and it is the only reaction the action gets.
+          A movement resolves after, so picking one lets the roll go at once.
         </p>
       )}
 

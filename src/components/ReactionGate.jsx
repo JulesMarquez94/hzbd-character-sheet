@@ -150,16 +150,14 @@ export default function ReactionGate({ job, onResolve }) {
           <>
             <p className="react-gate-line">
               {holding
-                ? 'A reaction is declared: this action cannot resolve yet.'
-                : `Reactions are open · the roll unlocks in ${wait}s`}
+                ? 'A reaction is being taken. Your roll waits for it.'
+                : `Reactions open · your roll unlocks in ${wait}s`}
             </p>
 
             {holding && (
               <div className="react-gate-holds">
-                <span className="react-gate-hold">Waiting on {hold.who} to react…</span>
-                <span className="react-gate-only">
-                  One reaction to an action. Nobody else can step in now.
-                </span>
+                <span className="react-gate-hold">Waiting on {hold.who}…</span>
+                <span className="react-gate-only">One reaction per action. Nobody else can step in.</span>
               </div>
             )}
 
@@ -171,7 +169,7 @@ export default function ReactionGate({ job, onResolve }) {
                   heldRef.current = null;
                   setHold(null);
                 }}
-                title="For a reactor who walked away mid-hold. Whatever they already took still counts."
+                title="For a reactor who walked away. Whatever they already took still counts."
               >
                 The table released it · carry on
               </button>
@@ -181,8 +179,8 @@ export default function ReactionGate({ job, onResolve }) {
           <div className="react-gate-ask">
             <p className="react-gate-line">
               {targets.length > 0
-                ? 'A reaction resolved first. Did it make this action fail, and against whom?'
-                : 'A reaction resolved first. Did it make this action fail?'}
+                ? 'A reaction resolved first. Did it stop this action, and against whom?'
+                : 'A reaction resolved first. Did it stop this action?'}
             </p>
 
             {targets.length > 0 ? (
@@ -258,9 +256,8 @@ export default function ReactionGate({ job, onResolve }) {
         )}
 
         <p className="react-gate-hint">
-          One reaction to an action, and it resolves before the action does. The price is already
-          paid either way. A movement reaction never holds this: it resolves after the action, which
-          is its own rule.
+          One reaction per action, resolved before it. The cost of this action is already paid
+          either way. A movement reaction resolves after the action and never holds it.
         </p>
       </div>
     </div>

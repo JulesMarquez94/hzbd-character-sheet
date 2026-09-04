@@ -16,7 +16,7 @@ import { usePlayCard } from '../sheet/usePlayCard.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import { metersToFeet } from '../../lib/characterModel.js';
-import { castEffect, foeBar } from '../../lib/combatBar.js';
+import { castPlan, foeBar } from '../../lib/combatBar.js';
 import { CREATURE_MAX_LEVEL, difficultyLine } from '../../lib/creatures.js';
 import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
 import { newChain } from '../../lib/logChain.js';
@@ -320,7 +320,7 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove, onEdit }) {
             </span>
 
             {foe.down && (
-              <span className="foe-chip is-down" title="At 0 Health. Nothing it knows can be played.">
+              <span className="foe-chip is-down" title="At 0 Health. It cannot play anything.">
                 Down
               </span>
             )}
@@ -536,20 +536,29 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
        See UNDER in logChain.js. */
     const chain = newChain();
 
-    /* The row this card would have laid on its caster, when it was aimed at
-       somebody instead. "When an ability is cast that affects an entity with an
-       effect, this effect needs to populate on the target trackers" — so the
-       self-laid row is stripped out of the spend (`write` below) and laid on
-       every body that was picked, the caster included if the caster picked
-       itself. A cast standing behind a check waits for the verdict and lands on
-       whoever was actually hit, which is what "On a hit" means; one with no
-       check to pass lays now. */
-    const cast = targets.length > 0 ? castEffect(request) : null;
-    const checky =
-      targets.length > 0 &&
-      rollPlan(request.card, actor, request.modifiers, { half: Boolean(options?.price) }).some(
-        (link) => link.shape === 'check'
-      );
+    /* What this cast leaves on the bodies it was aimed at: the card's own row
+       when the plan says it lands on them, and every condition it inflicts,
+       signed by this enemy. "When an ability is cast that affects an entity
+       with an effect, this effect needs to populate on the target trackers." A
+       cast standing behind a check waits for the verdict and lands on whoever
+       was actually hit, which is what "On a hit" means; one with no check to
+       pass lays now. The caster's own copy is kept or stripped by the hook,
+       off the same plan. See castPlan in combatBar.js. */
+    const half = Boolean(options?.price);
+    const links = rollPlan(request.card, actor, request.modifiers, { half });
+    const casting = castPlan(request, actor, {
+      half,
+      riders: options?.riders ?? [],
+      statuses: options?.statuses ?? [],
+      plan: links,
+    });
+    const aimed = targets.length > 0;
+    const toLay = aimed
+      ? [...(casting.landsOn !== 'caster' && casting.own ? [casting.own] : []), ...casting.laid].map(
+          (row) => ({ ...row, from: foe.title })
+        )
+      : [];
+    const checky = aimed && links.some((link) => link.shape === 'check');
 
     /* Paid, logged and rolled under the enemy's own name, because that is who
        acted. The whole spend lands on its own row: nothing is borrowed and
@@ -557,20 +566,11 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
     play(request, mode, amount, options, {
       actor,
       chain,
-      ...(cast
-        ? {
-            write: (body) => {
-              const rest = { ...body };
-              delete rest.effects;
-              return rest;
-            },
-          }
-        : {}),
       /* And once the dice stop, the whole answer goes to the page: what landed,
-         who the check judged hit and missed, and the effect still waiting on
-         the verdict. Only for an aimed use — one with nobody picked rolls onto
-         the table and is landed by hand, exactly as it always was. */
-      ...(targets.length > 0 && combat?.onResults
+         who the check judged hit and missed, and the rows still waiting on the
+         verdict. Only for an aimed use — one with nobody picked rolls onto the
+         table and is landed by hand, exactly as it always was. */
+      ...(aimed && combat?.onResults
         ? {
             onSettled: (thrown, meta = {}) =>
               combat.onResults({
@@ -582,14 +582,16 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
                 thrown,
                 outcomes: meta.outcomes ?? null,
                 hit: meta.hit ?? null,
-                cast: checky ? cast : null,
+                casts: checky ? toLay : [],
                 chain,
               }),
           }
         : {}),
     });
 
-    if (cast && !checky) combat?.layEffect?.(foe, targets, cast, chain);
+    if (!checky) for (const row of toLay) combat?.layEffect?.(foe, targets, row, chain);
+    /* And the body it put on the table, written by the page that has the pen. */
+    if (casting.conjured) combat?.conjure?.(foe, casting.conjured, chain);
     setRequest(null);
   }
 
@@ -654,7 +656,21 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
       <p className="foe-rule">{rank.blurb}</p>
 
       {foe.down && (
-        <p className="minion-down">It is at 0 Health. Nothing it knows can be played.</p>
+        <p className="minion-down">
+          {foe.conjured
+            ? 'Destroyed. Remove it when the table is done with it.'
+            : 'Down at 0 Health. It cannot play anything.'}
+        </p>
+      )}
+
+      {/* A body a spell made has no moves of its own: what it does is on the
+          card that made it, and its caster does it on their turn. */}
+      {foe.conjured && !foe.down && (
+        <p className="foe-rule">
+          Made by {foe.conjured.owner || 'a spell'}
+          {foe.conjured.card ? ` with ${getCard(foe.conjured.card)?.name ?? 'a card'}` : ''}. What
+          it does is on that card. Aim at it like any body; it falls at 0 Health.
+        </p>
       )}
 
       <div className="foe-lists">
@@ -760,7 +776,8 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
           {!isFolded('effects') &&
             (effects.length === 0 ? (
               <p className="pick-line fx-empty">
-                Nothing running on it. A card it plays that lasts will lay its own row here.
+                Nothing running on it. A card that lasts lays its row here, and a condition it is
+                hit with lands here too.
               </p>
             ) : (
               <div className="fx-list">

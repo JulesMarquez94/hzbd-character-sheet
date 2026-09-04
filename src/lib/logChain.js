@@ -347,11 +347,12 @@ export function worthReplaying(row, { mine = null, table = false, now = Date.now
  *   apply    what landed on them
  *   effect   the row it laid on their trackers
  *   react    the stack: who stepped in, what came of it, and the action failing
+ *   summon   the body it put on the table
  *
  * A row of one of these kinds whose head is not on the page still draws on its
  * own, exactly as an orphan throw always has. See the note on `groupEvents`.
  */
-const UNDER = new Set(['roll', 'verdict', 'apply', 'effect', 'react']);
+const UNDER = new Set(['roll', 'verdict', 'apply', 'effect', 'react', 'summon']);
 
 /**
  * The feed as `[{ key, head, trail, rolls }]`, newest group first.
@@ -603,6 +604,7 @@ const KNOCK = {
   rest: () => 'took a',
   effect: () => 'laid',
   apply: (row) => row.data?.verb ?? 'dealt',
+  summon: (row) => (row.data?.move === 'gone' ? 'took off the table' : 'conjured'),
 };
 
 /**

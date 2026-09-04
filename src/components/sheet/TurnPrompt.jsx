@@ -83,9 +83,7 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose, pa
     >
       <div className="turn-prompt">
         <p className="turn-prompt-lead">
-          {start
-            ? 'Before the count moves, here is what is waiting on it.'
-            : 'Before you close the turn, here is what happens at the bottom of it.'}
+          {start ? 'What happens as your turn starts.' : 'What happens as your turn ends.'}
         </p>
 
         {triggers.rows.length > 0 && (
@@ -126,15 +124,14 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose, pa
             Turn Start people notice only once it has already happened. */}
         {triggers.ending.length > 0 && (
           <p className="turn-prompt-note turn-prompt-ending">
-            <b>Runs out on this press:</b> {triggers.ending.map((row) => row.name).join(', ')}. Each
-            one stays on the block wearing "Ended" until the turn after.
+            <b>Ends now:</b> {triggers.ending.map((row) => row.name).join(', ')}. Each stays on the
+            block marked Ended until next turn.
           </p>
         )}
 
         {triggers.clearing.length > 0 && (
           <p className="turn-prompt-note">
-            <b>Swept off the block:</b> {triggers.clearing.map((row) => row.name).join(', ')}. Those
-            ended last turn and have been read.
+            <b>Cleared:</b> {triggers.clearing.map((row) => row.name).join(', ')}. Ended last turn.
           </p>
         )}
 
@@ -142,15 +139,14 @@ export default function TurnPrompt({ triggers, character, onConfirm, onClose, pa
             through. A row nobody stirred is not here and does not end. */}
         {(triggers.breaking ?? []).length > 0 && (
           <p className="turn-prompt-note turn-prompt-ending">
-            <b>Broken by acting:</b> {triggers.breaking.map((row) => row.name).join(', ')}. You did
-            something this turn, so it ends here.
+            <b>Broken by acting:</b> {triggers.breaking.map((row) => row.name).join(', ')}. You
+            acted this turn, so it ends here.
           </p>
         )}
 
         <p className="turn-prompt-foot">
-          The sheet counts the turns and names what they set off. A roll lands on the table log
-          for everyone; taking a number onto this sheet is the one tap beside it, and what lands
-          on anybody else is the table&rsquo;s.
+          Roll it puts the dice on the log for everyone. The button beside the number takes it onto
+          this sheet. What lands on anybody else is the table&rsquo;s.
         </p>
       </div>
     </Modal>

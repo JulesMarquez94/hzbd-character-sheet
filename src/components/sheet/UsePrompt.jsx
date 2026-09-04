@@ -10,10 +10,12 @@ import { AmmoPips } from './itemParts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { useFight } from '../../context/fight.js';
 import { VARIABLE_CAP } from '../../lib/actions.js';
-import { castLine } from '../../lib/combatBar.js';
+import { castLine, castPlan } from '../../lib/combatBar.js';
 import { getKeyword } from '../../lib/keywords.js';
 import { characterCheckSkills } from '../../lib/levelPicks.js';
 import { normalizeEffects } from '../../lib/combatTurn.js';
+import { rollPlan } from '../../lib/rollPlan.js';
+import { statusOf } from '../../lib/statuses.js';
 import { cardAccent } from '../../lib/tagColors.js';
 import { getCard } from '../../lib/weapons.js';
 import {
@@ -27,7 +29,7 @@ import {
   ridingLine,
   withMoves,
 } from '../../lib/moves.js';
-import { riderLine } from '../../lib/riders.js';
+import { effectLine } from '../../lib/riders.js';
 import { sourceWords } from '../../lib/attribution.js';
 import { targetPlan } from '../../lib/targeting.js';
 import { triggerLine } from '../../lib/onUse.js';
@@ -412,6 +414,41 @@ export default function UsePrompt({
     return running.filter((effect) => !credited.has(effect.name));
   }, [running, sources]);
   const lasts = useMemo(() => castLine(request), [request]);
+
+  /* ---- what this cast leaves behind, and where ----
+     The card's own row, the conditions it inflicts and the body it puts on the
+     table, read once off the card and the ticked moves (see castPlan in
+     combatBar.js) and said here before the tap. A condition the card leaves to
+     a choice ("push it back or knock it prone") is a box, off until ticked;
+     the certain ones are lines. What was ticked rides out on the confirm as
+     `statuses`, and the moves as `riders`, so the chain lays exactly what this
+     dialog said it would. */
+  const [ticked, setTicked] = useState([]);
+  const casting = useMemo(
+    () =>
+      castPlan(request, who, {
+        half: times > 0,
+        riders: moveCards,
+        statuses: ticked,
+        plan: rollPlan(request.card, who, modifiers, { half: times > 0 }),
+      }),
+    [request, who, times, moveCards, ticked, modifiers]
+  );
+  const certain = casting.offered.filter((hit) => !hit.optional);
+  const choices = casting.offered.filter((hit) => hit.optional);
+
+  function tick(id) {
+    setTicked((was) => (was.includes(id) ? was.filter((held) => held !== id) : [...was, id]));
+  }
+
+  /* Where the card's own row goes, in words. "Their" only once bodies are
+     picked; a cast at nobody has always laid its row on the caster. */
+  const rowHome =
+    picked.length === 0 || casting.landsOn === 'caster'
+      ? 'your tracker'
+      : casting.landsOn === 'both'
+        ? 'your tracker and theirs'
+        : 'their tracker';
   /* And what the card writes on its own, for the two that write anything. See
      useTriggers.js: a sheet that quietly rewrites six columns because you drank
      something has to say so first. */
@@ -538,7 +575,13 @@ export default function UsePrompt({
     if (moveCards.length > 0) {
       options.modifiers = modifiers;
       options.moves = moveCards.map((card) => card.name);
+      /* The cards themselves too, because two of them inflict something on
+         the body they land on (WOUND, REND) and the chain reads that off the
+         card rather than off a name. See castPlan in combatBar.js. */
+      options.riders = moveCards;
     }
+    /* And the conditions the card left to a choice, as ticked here. */
+    if (ticked.length > 0) options.statuses = ticked;
     /* An action taken with a fight standing invites reactions: the chain's
        first roll waits the reaction window before it can be thrown. See
        REACTION_HOLD in usePlayCard.js. */
@@ -761,9 +804,68 @@ export default function UsePrompt({
 
               <span className="use-targets-note">
                 {picked.length === 0
-                  ? 'Nobody picked: the use goes through as it always has, and the numbers are landed by hand.'
-                  : 'What this lays lands on their trackers, and what it rolls lands on them once the dice settle.'}
+                  ? 'Nobody picked: the use goes through as written, and the numbers are landed by hand.'
+                  : 'What this lays goes on their trackers, and what it rolls lands on them once the dice settle.'}
               </span>
+            </div>
+          )}
+
+          {/* What the cast leaves on whoever it lands on, and what it puts on
+              the table. Under the targets because it is about them, and shown
+              whether or not anybody is picked: a Snake poisons whoever it bites
+              whether the sheet knew who that was or not. */}
+          {(casting.offered.length > 0 || casting.conjured) && (
+            <div className="use-lays">
+              <span className="use-targets-head">
+                {casting.conjured && casting.offered.length === 0 ? 'Puts on the table' : 'Leaves on the target'}
+              </span>
+
+              {certain.map((hit) => {
+                const status = statusOf(hit.id);
+                return (
+                  <span className="use-lay" key={hit.id}>
+                    <b>{status?.name ?? hit.id}</b>
+                    <span className="use-lay-line">{status?.line}</span>
+                  </span>
+                );
+              })}
+
+              {choices.map((hit) => {
+                const status = statusOf(hit.id);
+                const on = ticked.includes(hit.id);
+                return (
+                  <button
+                    type="button"
+                    key={hit.id}
+                    className={`use-lay use-lay-take${on ? ' is-on' : ''}`}
+                    onClick={() => tick(hit.id)}
+                    aria-pressed={on}
+                    title="The card leaves this to you. Tick it to lay it."
+                  >
+                    <b>{status?.name ?? hit.id}</b>
+                    <span className="use-lay-line">
+                      {on ? status?.line : 'Your call. Tick it to lay it on them.'}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {casting.conjured && (
+                <span className="use-lay">
+                  <b>{casting.conjured.name}</b>
+                  <span className="use-lay-line">
+                    {casting.conjured.health_max} Health, Defense {casting.conjured.avoid}. It appears
+                    in the fight as a body anyone can aim at.
+                  </span>
+                </span>
+              )}
+
+              {picked.length === 0 && certain.length + choices.length > 0 && (
+                <span className="use-targets-note">
+                  Pick a target above and the condition goes on their tracker. With nobody picked it
+                  is yours to place by hand.
+                </span>
+              )}
             </div>
           )}
 
@@ -897,11 +999,12 @@ export default function UsePrompt({
             </p>
           )}
 
-          {/* And what this use starts counting. Said here rather than discovered
-              on block 6 afterwards. See the note at the top. */}
+          {/* And what this use starts counting, and on whose block. Said here
+              rather than discovered on block 6 afterwards. See the note at the
+              top, and castPlan in combatBar.js for where the row lands. */}
           {lasts && (
             <p className="use-lasts">
-              <b>Goes on the tracker</b> · {lasts}. Recasting it refreshes the same row.
+              <b>Goes on {rowHome}</b> · {lasts}. Recasting it refreshes the same row.
             </p>
           )}
 
@@ -1021,7 +1124,7 @@ function RunningRow({ effect }) {
   const open = effect.turns === null;
   const accent = cardAccent(getCard(effect.card)?.tags);
   const arrow = effectAdvantage(effect);
-  const does = riderLine(effect.card);
+  const does = effectLine(effect);
 
   return (
     <div

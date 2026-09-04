@@ -37,13 +37,23 @@ import {
   normalizeRun,
   rollInitiative,
 } from '../src/lib/encounters.js';
-import { spendUse } from '../src/lib/combatBar.js';
-import { layEffect } from '../src/lib/combatTurn.js';
+import { castPlan, conjuredBody, spendUse } from '../src/lib/combatBar.js';
+import { layEffect, normalizeEffects } from '../src/lib/combatTurn.js';
 import { MARTIAL_MOVES, getMartialMove } from '../src/lib/martial.js';
 import { aimingMoves } from '../src/lib/moves.js';
+import { effectLine, runningRiders } from '../src/lib/riders.js';
 import { rollPlan } from '../src/lib/rollPlan.js';
+import {
+  STATUSES,
+  healedEffects,
+  inflictedStatuses,
+  movedEffects,
+  runningNames,
+} from '../src/lib/statuses.js';
 import { turnTriggers } from '../src/lib/turnTriggers.js';
 import { CARDS, getCard } from '../src/lib/weapons.js';
+import { getKeyword } from '../src/lib/keywords.js';
+import { addConjured } from '../src/lib/encounters.js';
 
 const LIST = process.argv.includes('--list');
 const findings = [];
@@ -495,6 +505,211 @@ section('a boundary clause hands its dice back, resolved');
     clauseAim('At your Turn End, the spore deals 2d6 + 8 damage to the target.'),
     'other'
   );
+}
+
+/* ============================================================ the conditions
+ *
+ * Jules, 2026-09-04: "if I use renew it applies the effect to the target. Or
+ * snake it create the poison status." What a card inflicts is read off its
+ * prose by statuses.js, and every reading below is a real card picked because
+ * it is the canonical printing of one shape: SNAKE! is "the target is
+ * poisoned", ENTANGLING ROOTS is a condition with the card's own clock, SHOVE
+ * leaves the knock-down to a choice, SEEDLING SPIRITS *removes* three and
+ * inflicts none, and STONEFLESH refuses one. A card rewritten in the codex
+ * fails here by name.
+ */
+
+section('every condition is a glossary word');
+{
+  for (const [id, status] of Object.entries(STATUSES)) {
+    check(`${id} is lit in the glossary`, Boolean(getKeyword(id)), true);
+    check(`${id} says what it does`, Boolean(status.line), true);
+  }
+}
+
+section('a card inflicts what its own sentence says');
+{
+  const ids = (card, options) => inflictedStatuses(card, options).map((hit) => `${hit.id}${hit.optional ? '?' : ''}`);
+
+  check('SNAKE! poisons', ids(card('snake')), ['poisoned']);
+  check('FORCE INEBRIATION poisons on a success', ids(card('force-inebriation')), ['poisoned']);
+  check('ENTANGLING ROOTS roots', ids(card('entangling-roots')), ['rooted']);
+  check('IMPALING GROVE roots and knocks prone, both certain', ids(card('impaling-grove')), ['rooted', 'prone']);
+  check('SHOVE leaves the knock-down to a choice', ids(card('shove')), ['prone?']);
+  check('DRIVE BACK does too', ids(card('drive-back')), ['prone?']);
+  check('MAGMA CHAINS stuns now and roots later', ids(card('magma-chains')), ['stunned', 'rooted?']);
+  check('DROWNING EARTH sinks one stage at a time', ids(card('drowning-earth')), ['rooted', 'constrained?']);
+  check('REND bleeds and WOUND wounds', [ids(card('rend')), ids(card('wound'))], [['bleed'], ['wound']]);
+  check('GRAPPLE grapples', ids(card('grapple')), ['grappled']);
+  check('DEVOURING BLOSSOM swallows into a grapple', ids(card('devouring-blossom')), ['grappled']);
+
+  /* The half inflicts only once it is taken. */
+  check('BLIGHT POLLEN diseases only with the tithe', [ids(card('blight-pollen')), ids(card('blight-pollen'), { half: true })], [[], ['diseased']]);
+  check('CLOAK OF FLAMES burns only when it flares', [ids(card('cloak-of-flames')), ids(card('cloak-of-flames'), { half: true })], [[], ['burn']]);
+
+  /* And the word used any other way inflicts nothing. */
+  check('SEEDLING SPIRITS sheds and inflicts nothing', ids(card('seedling-spirits')), []);
+  check('CAUTERIZE removes and inflicts nothing', ids(card('cauterize')), []);
+  check('STONEFLESH refuses to be knocked prone', ids(card('stoneflesh')), []);
+  check('TREMOR SENSE ignores blinded', ids(card('tremor-sense')), []);
+  check('BIRD VIEW incapacitates its caster, not a target', ids(card('bird-view')), []);
+  check('AMBUSH names conditions as preconditions', ids(card('ambush')), []);
+  check('NIGHTMARE’S CURSE cannot fall asleep', ids(card('nightmares-curse')), []);
+}
+
+section('a condition lands with its clock, and where the card says');
+{
+  const who = { name: 'Lark', instinct: 6, physique: 4, mind: 5 };
+  const plan = (id, options = {}) => {
+    const c = card(id);
+    return castPlan({ name: c.name, card: c, source: 'test' }, who, { plan: rollPlan(c, who), ...options });
+  };
+
+  const snake = plan('snake');
+  check('SNAKE! lays Poisoned until a Long Rest, off the glossary', snake.laid.map((row) => [row.status, row.turns, row.until]), [['poisoned', null, 'long']]);
+  check('and names the card that did it', snake.laid[0].card, 'snake');
+
+  const roots = plan('entangling-roots');
+  check('ENTANGLING ROOTS roots for the ten turns its sentence says', roots.laid.map((row) => [row.status, row.turns]), [['rooted', 10]]);
+  check('and keeps the vines on the caster', roots.landsOn, 'caster');
+
+  check('CHRONO LOCK stuns until the next turn', plan('chrono-lock').laid.map((row) => [row.status, row.turns]), [['stunned', 1]]);
+  check('SLAG SHOT burns until a Short Rest', plan('slag-shot').laid.map((row) => [row.status, row.until]), [['burn', 'short']]);
+
+  /* Where the card's own row goes when bodies are picked. */
+  check('RENEW rides to the target', plan('renew').landsOn, 'targets');
+  check('GIANT GROWTH rides to the target', plan('giant-growth').landsOn, 'targets');
+  check('PARASITIC SPORE is the caster’s toll and the target’s affliction', plan('parasitic-spore').landsOn, 'both');
+  check('THORN RAMPART stays with its caster', plan('thorn-rampart').landsOn, 'caster');
+  check('HIDE stays on the hider', plan('hide').landsOn, 'caster');
+  check('a potion stays on the drinker', plan('titansbane-poison').landsOn, 'caster');
+
+  /* An optional condition lands only when the prompt ticks it. */
+  check('SHOVE lays nothing unticked', plan('shove').laid.length, 0);
+  check('and Prone when ticked', plan('shove', { statuses: ['prone'] }).laid.map((row) => row.status), ['prone']);
+
+  /* A Bleed counts its stacks off the dice the swing throws. */
+  const strike = card('finesse-strike');
+  const swing = castPlan({ name: 'Strike', card: strike, source: 'test' }, who, {
+    riders: [card('rend')],
+    plan: rollPlan(strike, who, { empower: 1 }),
+  });
+  check('REND on an Empowered Strike is two stacks of Bleed', swing.laid.map((row) => row.status), ['bleed', 'bleed']);
+}
+
+section('a condition is one row, and Bleed is many');
+{
+  const poison = { name: 'Poisoned', card: 'snake', status: 'poisoned', turns: null, until: 'long', from: 'Lark' };
+  const again = { ...poison, card: 'toxic-toad', from: 'Nyx' };
+  const bleed = { name: 'Bleed', card: 'rend', status: 'bleed', turns: null, until: null, from: 'Lark' };
+
+  const list = layEffect(layEffect(layEffect(layEffect([], poison), again), bleed), bleed);
+  check('two poisonings are one Poisoned', list.filter((row) => row.status === 'poisoned').length, 1);
+  check('refreshed by the second', list.find((row) => row.status === 'poisoned').from, 'Nyx');
+  check('two Bleeds are two stacks', list.filter((row) => row.status === 'bleed').length, 2);
+  check('the status survives the store', normalizeEffects(JSON.stringify(list)).map((row) => row.status), ['bleed', 'bleed', 'poisoned']);
+
+  /* A card that lays its own row and a condition is two rows. */
+  const vines = layEffect(layEffect([], { name: 'Entangling Roots', card: 'entangling-roots', turns: 10 }), { name: 'Rooted', card: 'entangling-roots', status: 'rooted', turns: 10 });
+  check('a card row and its condition do not collapse', vines.length, 2);
+}
+
+section('a condition moves the numbers and says so');
+{
+  const list = [
+    { id: 'a', name: 'Poisoned', status: 'poisoned', turns: null },
+    { id: 'b', name: 'Diseased', status: 'diseased', turns: null },
+    { id: 'c', name: 'Poisoned', status: 'poisoned', turns: null },
+  ];
+  const total = runningRiders(list);
+  check('Poisoned is Disadvantage, once however often', total.disadvantage, 1);
+  check('Diseased is a point off each attribute', total.attributes, { physique: -1, instinct: -1, mind: -1 });
+  check('and each row says what it does', effectLine(list[0]), STATUSES.poisoned.line);
+  check('a card row still reads its rider', effectLine({ card: 'giant-growth' }), 'Movement Speed doubled, and your damage Empowered by 1');
+  check('a body wears its running names', runningNames([...list, { name: 'Ended', status: 'prone', turns: 0 }]), ['Poisoned', 'Diseased', 'Poisoned']);
+}
+
+section('healing and moving clear what the glossary says they clear');
+{
+  const list = [
+    { id: 'a', name: 'Poisoned', status: 'poisoned', turns: null },
+    { id: 'b', name: 'Bleed', status: 'bleed', turns: null },
+    { id: 'c', name: 'Bleed', status: 'bleed', turns: null },
+    { id: 'd', name: 'Prone', status: 'prone', turns: null },
+    { id: 'e', name: 'Renew', card: 'renew', turns: 2 },
+  ];
+  check('a heal washes Poisoned and one stack of Bleed', healedEffects(list).map((row) => row.name), ['Bleed', 'Prone', 'Renew']);
+  check('a Move stands you up', movedEffects(list).map((row) => row.name), ['Poisoned', 'Bleed', 'Bleed', 'Renew']);
+  check('and neither touches a list with nothing to clear', [healedEffects([list[4]]), movedEffects([list[4]])], [null, null]);
+
+  /* Through the delivery arithmetic, on a sheet. */
+  const healed = characterDelta(
+    { shield: 0, health: 10, health_max: 40, defense: 0, ledger: [], effects: list },
+    { kind: 'healing', amount: 5, note: 'Nyx: Mending Word' }
+  );
+  check('a delivered heal clears them on the sheet', healed.effects.map((row) => row.name), ['Bleed', 'Prone', 'Renew']);
+
+  /* And the Move, through the spend. */
+  const stood = spendUse(
+    { name: 'Move', source: 'Move · a basic action', ap: 1, wp: 0, card: card('move') },
+    { ap: 6, willpower: 4, health: 10, health_max: 40, effects: [list[3]], ledger: [] },
+    'action',
+    1
+  );
+  check('paying for a Move takes Prone off', stood.effects, []);
+}
+
+section('a condition row reads the target’s boundary and not the caster’s');
+{
+  const who = { name: 'Goblin', instinct: 4, physique: 4, mind: 3 };
+  const swallowed = turnTriggers(
+    { ...who, effects: [{ id: 'g', name: 'Grappled', card: 'devouring-blossom', status: 'grappled', turns: null }] },
+    'start'
+  );
+  check('the swallowed one takes its damage at its own Turn Start', swallowed.rows.length, 1);
+  check('and only that clause', swallowed.rows[0].clauses.length, 1);
+
+  const snapping = turnTriggers(
+    { ...who, effects: [{ id: 'g', name: 'Grappled', card: 'devouring-blossom', status: 'grappled', turns: null }] },
+    'end'
+  );
+  check('the flower snapping is the caster’s Turn End, not the goblin’s', snapping.any, false);
+
+  const bleeding = turnTriggers({ ...who, effects: [{ id: 'b', name: 'Bleed', status: 'bleed', turns: null }] }, 'start');
+  check('a stack of Bleed says what it does at a Turn Start', bleeding.rows[0]?.clauses, ['Takes 1d6 damage at its Turn Start.']);
+  check('and hands back dice to roll', clauseThrow(bleeding.rows[0]?.clauses[0])?.dice, ['1d6']);
+}
+
+/* ================================================================ the conjured
+ *
+ * "If something is created like with hard light in the target it should
+ * appear, become a target with proper health." The body is read off the card
+ * for the caster, put in the pile under the caster's key and struck like any
+ * enemy.
+ */
+
+section('a spell that makes a body says how much Health it has');
+{
+  const who = { name: 'Lark', instinct: 6, physique: 4, mind: 5 };
+  const wall = conjuredBody(card('hard-light'), who);
+  check('HARD LIGHT is ten times the caster’s Mind', [wall?.health_max, wall?.avoid], [50, 10]);
+  check('and is named after the card', [wall?.name, wall?.card], ['Hard Light', 'hard-light']);
+  check('DEVOURING BLOSSOM is a body too', conjuredBody(card('devouring-blossom'), who)?.health_max, 50);
+  check('GUARDIAN ANGEL has Health and no Defense', [conjuredBody(card('guardian-angel'), who)?.health_max, conjuredBody(card('guardian-angel'), who)?.avoid], [100, 0]);
+  check('a sacrifice is a cost and not a body', conjuredBody(card('gore-armor'), who), null);
+  check('and a spell with no body makes none', conjuredBody(card('renew'), who), null);
+
+  const enc = addConjured({ foes: [{ key: 'a', creature: 'blightgeist' }] }, wall, 'wall0001');
+  const made = encounterState(enc).find((foe) => foe.key === 'wall0001');
+  check('it stands in the pile under its own name', [made?.title, made?.stats.health_max, made?.stats.avoid], ['Hard Light', 50, 10]);
+  check('wearing the Conjured rank and knowing no moves', [made?.rank.id, made?.moves.length], ['conjured', 0]);
+  check('twice under one key lands once', addConjured(enc, wall, 'wall0001'), null);
+
+  const struckWall = encounterState({ ...enc, ...applyToFoes(enc, [{ key: 'wall0001', kind: 'damage', landings: [30] }]) }).find((foe) => foe.key === 'wall0001');
+  check('and it takes damage like any body', struckWall?.health, 20);
+
+  const rolled = rollInitiative(enc, [], { random: () => 0.5 });
+  check('but takes no turn of its own', rolled.run.order.map((entry) => entry.ref), ['a']);
 }
 
 /* ------------------------------------------------------------------ the exit */

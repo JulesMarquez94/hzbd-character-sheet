@@ -12400,3 +12400,205 @@ anywhere on the card lets a Feral Cursed choose to *pass*.
   but it means a player who meant to press **Not yet** and pressed the middle button has spent half
   their Health with no confirmation. The block's own Transform button prints the price first; this
   one prints it in the paragraph above and not on the button.
+
+## Every effect lands, and the roll stands aside, 2026-09-04
+
+Jules: "make sure that all the ability, spell, effect etc. when used can properly apply an
+effect, so if I use renew it applies the effect to the target. Or snake it create the poison
+status. That the targeting is always correct, spell and effect that applies from aura, as well.
+If someone has skulk then everyone on the table should see it. If something is created like with
+hard light in the target it should appear, become a target with proper health." Then the roll
+and its kin as "a rectangle that pop on the right side center vertically. So it does not take
+over everything as it happens", and a pass on the encounter manager's text.
+
+### What was already true, and what was not
+
+RENEW worked. Its text says how long it runs ("again at the Turn Start of the target's next 2
+turns"), `castEffect` lays a row for anything that does, and an aimed cast delivers that row to
+the target. SNAKE! did not, and the reason is the whole of the first half of this entry: "the
+target is poisoned" names no clock. The clock is in the glossary, under poisoned ("until they
+complete a Long Rest or regain any amount of Health"), and nothing read the glossary as a rule.
+A spell that inflicted a condition landed its damage and left the condition to memory. Thirty
+eight cards in the codex inflict one.
+
+### Conditions are rows now
+
+`src/lib/statuses.js` is the glossary read as rules. Seventeen status keywords, each with what
+a tracker row needs: which rest ends it, what it does to the numbers where the sheet holds the
+number, whether healing clears it, whether a Move clears it, and whether it stacks.
+
+| Condition | Clock | Bends | Cleared by |
+| --------- | ----- | ----- | ---------- |
+| Poisoned | until a Long Rest | Disadvantage on every roll | any healing |
+| Diseased | until a Long Rest | -1 to all three attributes | a Long Rest |
+| Burn | until a Short Rest | nothing the sheet holds | a Short Rest |
+| Prone | open | Disadvantage | a Move action |
+| Grappled | open | Disadvantage | breaking free, by hand |
+| Bleed | open, stacks | nothing, deals 1d6 at its Turn Start | one stack per healing |
+| Rooted, Stunned, Constrained, Incapacitated, Unconscious, Asleep, Blinded, Frightened, Marked, Vulnerable, Wound | open, or the card's own clock | notes only | by hand |
+
+A tracker row carries `status` beside `card`, and everything downstream reads it:
+
+- **`layEffect` matches a condition on the condition.** Two snakes are one Poisoned, and a card
+  that lays its own row and a condition (ENTANGLING ROOTS: the vines and Rooted) is two rows.
+  Bleed is the one the glossary calls stackable, and every stack is its own row.
+- **`runningRiders` folds a condition's rider** beside a card's, keyed on the condition so two
+  Poisoned rows are one Disadvantage. Diseased is the first rider in the table to take an
+  attribute *away*, and statMath's terms already carried a sign. `effectLine(row)` is the one
+  door every tracker row's "what it does" is read through now, condition first and card second.
+- **Healing washes.** `characterDelta` and `applyToFoes` both run the list through
+  `healedEffects` when Health comes back: Poisoned goes, a Bleed loses a stack. **Moving stands
+  you up**: `spendUse` runs a Move through `movedEffects`, at the moment it stirs the Hide row.
+- **A condition row reads the target's boundary.** `turnTriggers` drops the card's "At your Turn
+  End" clauses on a condition row (that is the caster's boundary) and never reads the Upkeep
+  half for one (a toll is the caster's to pay). A stack of Bleed carries the glossary's own
+  Turn Start clause, so the prompt offers its 1d6 to roll.
+- **The picker grew a Conditions row.** Every glossary condition is one chip on Track something,
+  landing with its own clock and rider, so a Game Master who used to type "Poisoned" gets the
+  poison.
+
+### What a card inflicts is read off the card
+
+`inflictedStatuses(card, { half })` reads the codex's own phrasing: "the target is poisoned",
+"they are rooted for 10 turns", "knocked prone", "inflicted with Burn", "inflicts a Wound",
+"gains one stack of Bleed". Everything the same word does *otherwise* is refused, and every
+refusal is a real card: a removal ("shed poisoned", SEEDLING SPIRITS), a precondition ("one that
+is stunned", AMBUSH), a refusal ("cannot be knocked prone", STONEFLESH), the caster ("your
+physical body is incapacitated", BIRD VIEW), a condition inside an "if" (HEALER). The half
+inflicts only once it is taken (BLIGHT POLLEN's tithe diseases, CLOAK OF FLAMES's flare burns).
+
+Two shapes come back **optional**, and the prompt offers them as a box rather than laying them:
+a choice ("push the target back or knock it prone", SHOVE and DRIVE BACK) and a progression
+("rooted, constrained, then buried", DROWNING EARTH sinks a stage at a time). MAGMA CHAINS
+stuns now and roots later, so Stunned is laid and Rooted is offered.
+
+A condition's clock is its own sentence's where it states one (Rooted for 10 turns, Stunned
+until its next Turn End, Asleep for 1 hour) and the glossary's where it does not (Poisoned until
+a Long Rest). REND counts its stacks off the swing's damage dice, Empowered and all. Forty four
+cards inflict something; the census is in `npm run lint:combat --list`.
+
+### Where a cast's own row lands
+
+The card's own row used to go to the targets whenever any were picked. That was right for RENEW
+and wrong for a wall: THORN RAMPART aimed at the one it roots would have moved the wall's ten
+turns onto the goblin. `castPlan` in combatBar.js reads the card once and says where the row
+goes:
+
+| The card | The row goes to |
+| -------- | --------------- |
+| inflicts a condition | the caster. The target gets the condition, the caster keeps the spell |
+| puts a body on the table | the caster. The row is the body's clock |
+| is anchored on the caster or a place ("around you", "at a point you can see", "you conjure", HIDE's "you stay out of sight", a potion's "drinking this") | the caster |
+| carries an Upkeep | both. The toll is the caster's and the affliction is the target's |
+| is on the body it touches, with none of the above (RENEW, GIANT GROWTH, CELESTIAL EDICT, BOLSTER, SCOURGE) | the targets |
+
+Every row delivered to a target is signed with the caster's name, so a Poisoned on a goblin
+says who did it. With nobody picked, a cast lays its own row on the caster as it always has and
+inflicts nothing on anybody, because there is nobody to inflict it on: the prompt says so, and
+the Conditions row on the tracker is the by-hand route.
+
+The use prompt prints all of it before the tap: **Leaves on the target** with one line per
+certain condition and a box per optional one, **Goes on your tracker** or **their tracker**
+under the duration line, and **Puts on the table** for a body. The ticked boxes ride out as
+`options.statuses` and the Martial Moves as `options.riders`, because WOUND and REND inflict
+theirs, and the chain lays exactly what the dialog said.
+
+### A body a spell makes is a body in the fight
+
+HARD LIGHT, DEVOURING BLOSSOM, GUARDIAN ANGEL and SHAPE EARTH each say what they make has
+("Health equal to [[10*stat]] and Defense equal to [[2*stat]]"), and `conjuredBody` reads that
+sentence for the caster. A sentence that says *sacrifice* is a cost and not a body, so GORE
+ARMOR makes nothing.
+
+The body is a row in the encounter's pile whose `creature` is the one registry stub
+creatures.js keeps for it (`CONJURED_ID`, never on the bestiary shelf) and whose numbers ride on
+the row as `body`. It wears a rank of its own (`CONJURED_RANK`, haze violet, a dashed chip), has
+no attributes, no moves and no Willpower, takes no turn (`rollInitiative` skips it) and is
+struck like any enemy through `applyToFoes`. A Game Master's enemy conjures straight into the
+pile; a player's cast **announces** a `summon` row on the log under a key the caster minted, the
+encounter tab's consumer turns it into a foe on the live encounter, every seated sheet's
+FightProvider turns it into a chip with the body's defenses, and the Remove button on a
+conjured block posts the `gone` row that takes the chips down. `listFightWords` asks for the
+summons by name, so a reload keeps the wall standing.
+
+What a body does is on the card that made it, and its clock is its caster's own row: the flower
+snaps at the caster's Turn End, off the caster's tracker. Reaching 0 Health draws it down; the
+Game Master removes it.
+
+### Everyone sees what is running
+
+Every chip carries the conditions on its body as a second line, two names and a count, all of
+them in the tooltip. The Game Master's roster reads a foe's tracker and a seated character's
+sheet directly. A player's FightProvider reads an enemy's through the curtain, exactly as it
+reads the pools, and every seated character's off their own row: a sheet is public to read, so
+what is on a tracker is not the secret an enemy's pools are. It watches the characters channel
+for the seated ids and the members channel for a seat changing, so a hidden Trickster is hidden
+on every chip that shows them the moment the row lands.
+
+### The roll stands aside
+
+The dice surface, the reaction gate and the turn call were three full-screen covers with a blurred
+backdrop each. All three are one panel now: 400 pixels wide, standing at the right edge at the
+middle of the screen's height, the same copper-topped box the tray and every modal wear, with no
+backdrop at all. The sheet behind stays readable and pressable while a roll is up, which is what
+"does not take over everything" asks for. Tapping the panel is what tapping anywhere was. The
+turn call no longer locks the page scroll. On a phone the panel takes the width and sits above
+the tray's button. Verified in a real browser: a check thrown behind a pressable page, the gate
+counting down, the call standing.
+
+### The encounter manager, shorter
+
+Every sentence a player or Game Master reads on the encounter view was cut to what it decides:
+the Initiative block's two notes ("Roll initiative", "Kaelen's turn. Their End Turn moves the
+table on."), the boundary prompt ("What happens before the order moves.", "Ends now", "Cleared"),
+the apply window ("Armor and Shield are taken off on landing", "their sheet has the final word"),
+both reaction windows ("Their roll waits while this is open. Close it to let the roll go."), the
+reaction gate ("Reactions open · your roll unlocks in 3s", "Did it stop this action?"), the
+share checkbox, the empty states and the Down chip. The sheet's own turn prompt and the turn
+call got the same cut.
+
+### The checker
+
+`npm run lint:combat` grew seven sections: every condition is a lit glossary word; nineteen named
+cards read as they should, refusals included; a condition lands with its clock and the row lands
+where the table above says; two poisonings are one row and two Bleeds are two; a condition moves
+the numbers and says so; healing and moving clear what the glossary says; a condition row reads
+the target's boundary and not the caster's; HARD LIGHT is a body with the caster's numbers that
+stands in the pile, takes damage and takes no turn. `npm run lint:log` holds a summon under its
+cast and the knock's two verbs.
+
+### Left open
+
+1. **Frightened lays no rider.** Its Disadvantage is "against the one frightening them", which
+   the sheet cannot see. It is a row with the glossary's sentence. Say the word and it becomes a
+   flat Disadvantage.
+2. **Burn and Vulnerable do not double incoming damage.** The sheet holds no vulnerabilities, so
+   both are rows that say what they mean and the doubling is the table's. Wiring it is a field on
+   the body and a line in `landHit`.
+3. **Stunned, Constrained, Incapacitated and Asleep refuse nothing.** The quick bar still offers
+   every card to a stunned character. Refusing is one guard in combatBar.js, if the sheet should
+   be the one to say no.
+4. **Wound and Marked bend the attacker, not the holder.** "Weapon attacks against them are
+   Empowered" is a rider on whoever swings at the Wounded body, and QUARRY's Empowered and
+   Elevated are the caster's against the quarry. Neither is wired: the swing's plan does not
+   read the target's tracker. The roster now carries every body's conditions by name, so it
+   could.
+5. **A condition with nobody picked goes nowhere.** A Snake! at no target poisons no one; the
+   prompt says so and the Conditions row on the tracker is the by-hand route. The alternative,
+   asking who it hit after the fact, was left out.
+6. **A delivered row prints the holder's numbers.** RENEW on a goblin reads "1d6 + the goblin's
+   Mind" at its Turn Start, because the clause is resolved for the body holding the row. Rows
+   have never remembered the caster's numbers; one field on the row would fix it.
+7. **A conjured body is removed by hand.** Reaching 0 Health draws it down and says so; its clock
+   is on the caster's tracker; the caster's Long Rest does not take it off the table.
+8. **SHOVE and DRIVE BACK offer Prone as a box.** The card leaves the knock-down to the player,
+   so the prompt does too. MAGMA CHAINS' Rooted and DROWNING EARTH's Constrained are boxes for
+   the same reason.
+9. **Stated numbers still land by hand.** "Shield equal to your Instinct" is not a roll and
+   raises no delivery, which is the ruling of 2026-09-01 unchanged.
+10. **An aura lays its row on the caster.** VERDANT FIELD, EYE OF THE STORM and CLOAK OF FLAMES
+    are anchored on the caster, so the caster tracks them and the bodies inside get only what
+    the card inflicts (Burn, off the flare). If an aura should also put its own row on every body
+    standing in it, that is the `landsOn` table above growing a fourth line.
+11. **The physics table is 240 pixels tall in the panel**, down from 300, and was verified on the
+    flat floor only: the harness has no Premium account.

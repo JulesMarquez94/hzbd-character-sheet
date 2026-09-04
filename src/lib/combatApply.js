@@ -45,6 +45,7 @@ import {
   shieldCapFor,
 } from './characterModel.js';
 import { isFailure, judge } from './dice.js';
+import { healedEffects } from './statuses.js';
 
 /* ----------------------------------------------------------- the arithmetic */
 
@@ -179,10 +180,17 @@ export function characterDelta(
     const held = Math.floor(Number(character?.health) || 0);
     const next = clamp(held + sum(list), -cap, cap);
     if (next === held) return null;
-    return {
+    const body = {
       health: next,
       ledger: ledgerRow(character, { kind: 'health', delta: next - held, balance: next, note: why }),
     };
+    /* And what Health coming back washes off: Poisoned ends "the moment any
+       Health is regained", and a Bleed loses a stack. Read off the glossary in
+       one place, so a heal off a boundary prompt and one delivered across the
+       table clear the same rows. See statuses.js. */
+    const washed = healedEffects(character?.effects);
+    if (washed) body.effects = washed;
+    return body;
   }
 
   if (kind === 'shield') {

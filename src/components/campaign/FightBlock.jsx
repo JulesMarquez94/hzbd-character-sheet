@@ -26,8 +26,11 @@ export default function FightBlock({ campaignId, title = '', characterId = null 
   const held = useFight();
   const fight = held?.fights?.find((entry) => entry.id === campaignId) ?? null;
   /* The pools the curtain lets through: with "show enemy health" on, an enemy
-     chip here carries its bar exactly as the Game Master's does. */
+     chip here carries its bar exactly as the Game Master's does. And what is
+     running on each seated character, off their own public sheet, so a hidden
+     Trickster reads as hidden on every chip that shows them. */
   const pools = held?.pools ?? {};
+  const worn = held?.worn ?? {};
   const mine = Boolean(characterId) && fight?.upCharacter === characterId;
 
   return (
@@ -41,8 +44,8 @@ export default function FightBlock({ campaignId, title = '', characterId = null 
 
       {!fight ? (
         <p className="pick-line fx-empty">
-          Nothing is being fought here right now. When the Game Master rolls initiative, the
-          order lands on this block as it lands on theirs.
+          No fight running. When the Game Master rolls initiative, the order lands here as it
+          lands on theirs.
         </p>
       ) : (
         <>
@@ -63,6 +66,7 @@ export default function FightBlock({ campaignId, title = '', characterId = null 
                   health01: null,
                   shield01: 0,
                   down: false,
+                  effects: entry.kind === 'member' ? (worn[entry.ref] ?? []) : [],
                   ...(pools[entry.ref] ?? {}),
                 }}
                 up={
@@ -80,8 +84,8 @@ export default function FightBlock({ campaignId, title = '', characterId = null 
             {!fight.upName
               ? 'The order is rolled. The first call is on its way.'
               : mine
-                ? 'It is your turn. Start it from the cover or your Turn block, and your End Turn moves the table on.'
-                : `${fight.upName} is up. Your turn will cover the screen when the order reaches you.`}
+                ? 'It is your turn. Start it from the panel or your Turn block. Your End Turn moves the table on.'
+                : `${fight.upName} is up. A panel at the side of the screen calls your turn when the order reaches you.`}
           </p>
         </>
       )}

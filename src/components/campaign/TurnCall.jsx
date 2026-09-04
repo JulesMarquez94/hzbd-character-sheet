@@ -13,7 +13,6 @@ import {
 } from '../../lib/combatTurn.js';
 import { turnTriggers } from '../../lib/turnTriggers.js';
 import { getCard } from '../../lib/weapons.js';
-import { lockScroll } from '../../lib/scrollLock.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 
 /**
@@ -32,13 +31,15 @@ import { subscribeToTable } from '../../lib/realtime.js';
  *               the gear's Shield handed over. "When a character is connected
  *               to a campaign, he cannot start combat himself" — because the
  *               table starts it, here.
- *   your-turn   the runner landed on you. The cover goes up saying so, with
- *               whatever the boundary sets off printed on it, and **Start my
- *               turn** is yours to press (Jules, 2026-09-01: the cover should
- *               not offer "keep playing or end my turn... it should show
- *               something like Start My Turn"). Nothing ticks until you do —
- *               the same press, read, press the Turn block has always kept.
- *               Ending comes later, from the Turn block, when you are done.
+ *   your-turn   the runner landed on you. The panel goes up at the side of
+ *               the screen saying so, with whatever the boundary sets off
+ *               printed on it, and **Start my turn** is yours to press (Jules,
+ *               2026-09-01: the cover should not offer "keep playing or end my
+ *               turn... it should show something like Start My Turn"). Nothing
+ *               ticks until you do — the same press, read, press the Turn
+ *               block has always kept. Ending comes later, from the Turn
+ *               block, when you are done. A cover until 2026-09-04; a panel on
+ *               the right since, so the sheet stays readable under it.
  *   effect      a use across the table was aimed at you and lays something.
  *               Your client lays the same row on your own tracker, through
  *               `layEffect`, so a delivery that somehow arrives twice
@@ -207,11 +208,9 @@ export default function TurnCall({ character, patch, canEdit = false }) {
     return () => drop.forEach((off) => off());
   }, [canEdit, characterId, ids]);
 
-  /* The cover holds the page still while it is up, the way a dialog does. */
-  useEffect(() => {
-    if (!call) return undefined;
-    return lockScroll();
-  }, [call]);
+  /* The panel does not hold the page still the way the cover did: a player
+     reading their sheet while the call stands is the whole point of it standing
+     at the side. */
 
   /* The bell's notice clears itself: it is news, not a question. */
   useEffect(() => {
@@ -272,11 +271,11 @@ export default function TurnCall({ character, patch, canEdit = false }) {
           <span className="turn-call-round">Encounter start</span>
           <h2 className="turn-call-title">Initiative {bell.init}</h2>
           <p className="turn-call-line">
-            You play {ordinal(bell.place)} of {bell.count}. Your Action Points are up, whatever
-            your gear grants at the bell is on, and your turn will cover the screen when the
-            order reaches you.
+            You play {ordinal(bell.place)} of {bell.count}. Your Action Points are full and
+            whatever your gear grants at the bell is on. This panel calls you when the order
+            reaches you.
           </p>
-          <p className="turn-call-hint">This clears itself in a few seconds. Tap to put it away.</p>
+          <p className="turn-call-hint">Clears itself in a few seconds. Tap to put it away.</p>
         </div>
       </div>
     );
@@ -288,8 +287,8 @@ export default function TurnCall({ character, patch, canEdit = false }) {
         <span className="turn-call-round">Round {call.round}</span>
         <h2 className="turn-call-title">Your Turn</h2>
         <p className="turn-call-line">
-          The order reached you. Starting brings your Action Points back and ticks everything
-          running on you; end it from your Turn block when you are done.
+          The order reached you. Start brings your Action Points back and ticks everything
+          running on you. End it from your Turn block when you are done.
         </p>
 
         {/* What this boundary sets off: the same rows the Turn block's own
@@ -332,8 +331,8 @@ export default function TurnCall({ character, patch, canEdit = false }) {
         </div>
 
         <p className="turn-call-hint">
-          Not yet puts this away without starting anything. The Start Turn button on your Turn
-          block does the same thing as the one above.
+          Not yet puts this away without starting anything. Start Turn on your Turn block does
+          the same as the button above.
         </p>
       </div>
     </div>

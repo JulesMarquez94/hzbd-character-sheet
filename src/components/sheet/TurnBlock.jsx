@@ -9,7 +9,8 @@ import { liveShift } from '../../lib/characterModel.js';
 import { getCard } from '../../lib/weapons.js';
 import { isEnchanter } from '../../lib/enchanting.js';
 import { effectAdvantage } from '../../lib/moves.js';
-import { riderLine } from '../../lib/riders.js';
+import { effectLine, riderLine } from '../../lib/riders.js';
+import { statusOf } from '../../lib/statuses.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
 import { rollPlan } from '../../lib/rollPlan.js';
 import { turnTriggers } from '../../lib/turnTriggers.js';
@@ -125,7 +126,7 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
         move: 'turn',
         label: 'Start Turn',
         on: false,
-        note: `${running.upName ?? 'Somebody'} is up. This wakes when the order reaches you, and your turn will cover the screen.`,
+        note: `${running.upName ?? 'Somebody'} is up. This wakes when the order reaches you, and a panel at the side of the screen calls your turn.`,
       };
     }
 
@@ -483,8 +484,10 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, onRoll = 
 
      `bends` is false on a creature's tracker: a rider is read off the character's
      own effects column, so a line here promising a doubled Speed would be
-     describing something that did not happen. See MinionBlock.jsx. */
-  const does = over || !bends ? null : riderLine(effect.card);
+     describing something that did not happen. See MinionBlock.jsx. A condition
+     says what it does wherever it sits, because "no Actions while it lasts" is
+     true of a stunned goblin whether or not any tile moved for it. */
+  const does = over ? null : statusOf(effect.status) ? effectLine(effect) : bends ? riderLine(effect.card) : null;
   /* And what school it came out of, as a colour. "tracker should use tag
      coloring like spell school", 2026-08-28: a block with six things running on
      it is read by scanning, and until now every row on it was the same cyan
@@ -582,7 +585,7 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, onRoll = 
 
       {onOpen ? (
         <button type="button" className="fx-read" onClick={onOpen}>
-          {effect.note || 'Read the card'}
+          {effect.note || (effect.status ? 'Read the card that did it' : 'Read the card')}
         </button>
       ) : (
         effect.note && <span className="fx-note">{effect.note}</span>

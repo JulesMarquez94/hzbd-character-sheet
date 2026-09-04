@@ -71,9 +71,7 @@ export default function FoeTurnPrompt({ boundary, onConfirm, onThrow, onUpkeep =
       }
     >
       <div className="turn-prompt">
-        <p className="turn-prompt-lead">
-          Before the order moves, here is what is waiting on the boundary.
-        </p>
+        <p className="turn-prompt-lead">What happens before the order moves.</p>
 
         {sides.map((side) => (
           <div key={side.when === 'end' ? 'leaving' : 'coming'} className="foe-boundary">
@@ -97,24 +95,22 @@ export default function FoeTurnPrompt({ boundary, onConfirm, onThrow, onUpkeep =
 
             {side.triggers.ending.length > 0 && (
               <p className="turn-prompt-note turn-prompt-ending">
-                <b>Runs out on this press:</b>{' '}
-                {side.triggers.ending.map((row) => row.name).join(', ')}.
+                <b>Ends now:</b> {side.triggers.ending.map((row) => row.name).join(', ')}.
               </p>
             )}
 
             {side.triggers.clearing.length > 0 && (
               <p className="turn-prompt-note">
-                <b>Swept off the block:</b>{' '}
-                {side.triggers.clearing.map((row) => row.name).join(', ')}. Those ended last turn
-                and have been read.
+                <b>Cleared:</b> {side.triggers.clearing.map((row) => row.name).join(', ')}. Ended
+                last turn.
               </p>
             )}
           </div>
         ))}
 
         <p className="turn-prompt-foot">
-          A roll lands on the log for the whole table, and the window that follows it is where
-          the numbers land on bodies. The counts tick when the turn is called, not before.
+          Roll it puts the dice on the log for the whole table and opens the window that lands the
+          number. Nothing ticks until you confirm.
         </p>
       </div>
     </Modal>
@@ -173,8 +169,8 @@ function BoundaryRow({ row, foe, answered = null, onUpkeep = null, onOpen, onThr
                 onClick={() => onUpkeep('pay')}
                 title={
                   affordable
-                    ? `The toll comes off ${foe?.title ?? 'its'} own pools and the effect keeps running`
-                    : 'Its pools cannot cover it. Let it go, or hand it the points first.'
+                    ? `Paid out of ${foe?.title ?? 'its'} own pools. The effect keeps running.`
+                    : 'Its pools cannot cover it. Let it go, or give it the points first.'
                 }
               >
                 Pay {costWords(row.toll)}
@@ -183,7 +179,7 @@ function BoundaryRow({ row, foe, answered = null, onUpkeep = null, onOpen, onThr
                 type="button"
                 className="turn-trigger-drop"
                 onClick={() => onUpkeep('drop')}
-                title="Miss the Upkeep and the effect ends: the row comes off the tracker"
+                title="The effect ends and its row comes off"
               >
                 Let it go
               </button>
@@ -202,7 +198,7 @@ function BoundaryRow({ row, foe, answered = null, onUpkeep = null, onOpen, onThr
                 type="button"
                 className="turn-trigger-roll"
                 onClick={() => onThrow(clause, spec)}
-                title={`Roll ${spec.dice.join(' + ')}${spec.flat ? ` + ${spec.flat}` : ''} and land it`}
+                title={`Roll ${spec.dice.join(' + ')}${spec.flat ? ` + ${spec.flat}` : ''}, then pick who it lands on`}
               >
                 Roll it
               </button>

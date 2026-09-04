@@ -144,7 +144,7 @@ export default function ReactionCall({
               onReact(call);
               setCall(null);
             }}
-            title="Holds their roll and opens everything you can take, so you have time to choose"
+            title="Holds their roll while you choose what to take"
           >
             Take a reaction
           </button>
