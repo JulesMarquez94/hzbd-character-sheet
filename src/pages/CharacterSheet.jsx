@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import { getCharacter, updateCharacter } from '../lib/api.js';
 import {
@@ -59,13 +59,19 @@ function readStoredUnit() {
 
 /**
  * `creating` is the same sheet with the tabs taken off: a row made a moment ago
- * on the dashboard, walked through its level-1 choices and then its lore. It is
- * this component rather than a page of its own so that loading, autosave and
- * the permission rules are the ones already written here.
+ * on the dashboard, being walked through its level-1 choices by whichever of
+ * the four ways in it was started on. It is this component rather than a page
+ * of its own so that loading, autosave and the permission rules are the ones
+ * already written here. See CreationWizard.jsx for the ways in.
  */
 export default function CharacterSheet({ creating = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  /* Which of the four ways in this creation screen is. It rides in the URL
+     rather than on the row because it is how you got here and not something the
+     character is, and because a path swapped part-way through must not be a
+     write. See src/lib/creationPaths.js. */
+  const [searchParams] = useSearchParams();
   const { user, isAdmin, loading: authLoading } = useAuth();
 
   const [character, setCharacter] = useState(null);
@@ -346,6 +352,7 @@ export default function CharacterSheet({ creating = false }) {
         <main className="sheet-canvas">
           {error && <div className="form-error">{error}</div>}
           <CreationWizard
+            path={searchParams.get('path')}
             character={character}
             patch={patch}
             unit={unit}

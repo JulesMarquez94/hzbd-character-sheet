@@ -58,6 +58,7 @@ Open http://localhost:5173.
 | `/rules/glossary` | Every defined term, searchable, plus the colour key |
 | `/dashboard` | Your characters · dossier cards, create, delete |
 | `/characters/:id` | The character sheet · **public**, editable only by owner or admin |
+| `/characters/:id/new` | Making a character · four ways in, and `?path=` says which one |
 | `/account` | Display name and password |
 
 ### Who can do what

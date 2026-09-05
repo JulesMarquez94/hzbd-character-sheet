@@ -1,118 +1,30 @@
-import { useState } from 'react';
-import LevelLedger from './LevelLedger.jsx';
-import LoreTab from './LoreTab.jsx';
-import { CardStackProvider } from '../CardStack.jsx';
+import { DEFAULT_PATH, creationPath } from '../../lib/creationPaths.js';
+import FreeHand from './paths/FreeHand.jsx';
+import PathSoon from './paths/PathSoon.jsx';
 
 /**
- * Making a character, in two pages.
+ * Making a character, whichever way you chose to.
  *
- * The dashboard box asks for a name and a campaign, because those are the only
- * two things about a character that are not a choice with its own chooser.
- * Everything else is one, and every one of them already exists on the
- * Advancement tab, so this page is the level-1 block and nothing else: the same
- * panels, in the same order, writing to the same row.
+ * There are four ways in and this is the switch between them. Each one owns its
+ * whole screen rather than filling in a shared shell: a wall of choosers, a
+ * roster to browse and a run of questions have almost nothing in common to
+ * share, and a shell built around the first would only be in the way of the
+ * other three. What they do share is the row. Every path writes straight to the
+ * one the dashboard made, so a character begun on any of them can be finished
+ * on any other.
  *
- * The second page is the lore, which is the part nobody can do for you and the
- * part most people want to do last.
- *
- * There is no draft and no submit. The row exists from the moment the dashboard
- * made it, every panel writes straight to it, and walking away halfway leaves a
- * half-made character rather than nothing at all. Finishing only means opening
- * the sheet.
+ * Adding a path is three edits: its screen in `paths/`, a line in the table
+ * below and `ready: true` in src/lib/creationPaths.js. A path marked ready with
+ * no screen behind it falls to the "not built yet" one rather than to a blank
+ * page, so the two can never disagree into nothing.
  */
-const STEPS = [
-  { key: 'level1', title: 'The character', line: 'Everything level 1 hands you.' },
-  { key: 'lore', title: 'Their story', line: 'The part the rules cannot roll for.' },
-];
+const PATH_VIEWS = {
+  freeform: FreeHand,
+};
 
-export default function CreationWizard({ character, patch, onDone, unit = 'metric' }) {
-  const [step, setStep] = useState(0);
-  const current = STEPS[step];
+export default function CreationWizard({ path = DEFAULT_PATH, ...props }) {
+  const chosen = creationPath(path);
+  const View = PATH_VIEWS[chosen.key];
 
-  return (
-    <div className="tab-narrow creation">
-      <div className="panel">
-        <header className="creation-head">
-          <span className="creation-eyebrow">New character</span>
-          <h2 className="creation-title">{character.name || 'Unnamed Drifter'}</h2>
-          <p className="creation-line">{current.line}</p>
-
-          <ol className="creation-steps">
-            {STEPS.map((entry, index) => (
-              <li key={entry.key} className={`creation-step${index === step ? ' is-here' : ''}${index < step ? ' is-done' : ''}`}>
-                <button type="button" onClick={() => setStep(index)}>
-                  <span className="creation-step-n">{index + 1}</span>
-                  <span className="creation-step-name">{entry.title}</span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </header>
-
-        {step === 0 && (
-          <>
-            <div className="frame">
-              <h3 className="frame-heading">Identity</h3>
-
-              <div className="form-row">
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" htmlFor="new-character-name">
-                    Name
-                  </label>
-                  <input
-                    className="form-input"
-                    id="new-character-name"
-                    value={character.name || ''}
-                    onChange={(e) => patch({ name: e.target.value })}
-                    onBlur={(e) => !e.target.value.trim() && patch({ name: 'Unnamed Drifter' })}
-                  />
-                </div>
-
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" htmlFor="new-character-campaign">
-                    Campaign
-                  </label>
-                  <input
-                    className="form-input"
-                    id="new-character-campaign"
-                    value={character.campaign || ''}
-                    placeholder="The Drowned Season"
-                    onChange={(e) => patch({ campaign: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <p className="frame-foot">
-                Both can be changed later, from the Advancement tab.
-              </p>
-            </div>
-
-            <CardStackProvider character={character}>
-              <LevelLedger character={character} level={1} patch={patch} unit={unit} />
-            </CardStackProvider>
-          </>
-        )}
-      </div>
-
-      {step === 1 && <LoreTab character={character} patch={patch} />}
-
-      <div className="creation-foot">
-        {step > 0 && (
-          <button type="button" className="btn btn-minimal btn-sm" onClick={() => setStep(step - 1)}>
-            Back
-          </button>
-        )}
-        <span className="spacer" />
-        {step < STEPS.length - 1 ? (
-          <button type="button" className="btn btn-copper btn-sm" onClick={() => setStep(step + 1)}>
-            Next: {STEPS[step + 1].title}
-          </button>
-        ) : (
-          <button type="button" className="btn btn-copper btn-sm" onClick={onDone}>
-            Open the sheet
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  return View ? <View {...props} /> : <PathSoon path={chosen} {...props} />;
 }

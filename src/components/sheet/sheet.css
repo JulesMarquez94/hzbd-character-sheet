@@ -7402,6 +7402,47 @@ body.tray-open-left.tray-open-right .sheet {
 }
 
 
+/* ---------- A WAY IN THAT IS NOT BUILT YET ----------
+   Only a URL reaches this: the chooser on the dashboard will not hand out an
+   unbuilt path. The panel wears the path's own accent, which is the one thing
+   about it that is already decided. See paths/PathSoon.jsx. */
+.path-soon {
+  --path-accent: var(--copper);
+  margin-top: 1rem;
+  padding: 1rem 1.1rem 1.15rem;
+  border: 1px solid rgba(148, 167, 176, 0.14);
+  border-top: 2px solid color-mix(in srgb, var(--path-accent) 60%, transparent);
+  border-radius: 6px;
+  background-color: rgba(9, 17, 21, 0.32);
+}
+
+.path-soon-title {
+  margin: 0;
+  font-family: var(--font-headings);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--path-accent);
+}
+
+.path-soon-blurb {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-silver);
+}
+
+.path-soon-note {
+  margin: 0.7rem 0 0;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+
 /* An attribute tag wears its attribute's colour. Physique, Instinct and Mind
    are the three colours the whole sheet is keyed to, and a row of identical
    copper chips threw that away. */

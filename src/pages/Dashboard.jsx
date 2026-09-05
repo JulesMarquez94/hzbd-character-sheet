@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
+import CreationPathPick from '../components/CreationPathPick.jsx';
 import Modal from '../components/Modal.jsx';
 import { SkullIcon } from '../components/sheet/parts.jsx';
 import { createCharacter, deleteCharacter, listCharacters } from '../lib/api.js';
+import { creationPath } from '../lib/creationPaths.js';
 import {
   compactNumber,
   formatNumber,
@@ -132,6 +134,13 @@ export default function Dashboard() {
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [draft, setDraft] = useState({ name: '', campaign: '' });
+  /* Which way in they took, and the enlist box's two panes in one value: null
+     is the pane that asks, a key is the pane that asks for a name. Nothing is
+     written until a path has been taken, so reading what the unbuilt three will
+     be and backing out costs nothing and leaves no half-made row behind. */
+  const [pathKey, setPathKey] = useState(null);
+
+  const path = pathKey ? creationPath(pathKey) : null;
 
   useEffect(() => {
     let active = true;
@@ -167,7 +176,9 @@ export default function Dashboard() {
       });
 
       setCreating(false);
-      navigate(`/characters/${created.id}/new`);
+      /* The path rides in the URL rather than on the row: it is how you got
+         here, not something the character is. See src/lib/creationPaths.js. */
+      navigate(`/characters/${created.id}/new?path=${path.key}`);
     } catch (err) {
       setError(err.message);
     }
@@ -207,7 +218,14 @@ export default function Dashboard() {
           ))}
 
           {!atLimit && (
-            <button type="button" className="create-card" onClick={() => setCreating(true)}>
+            <button
+              type="button"
+              className="create-card"
+              onClick={() => {
+                setPathKey(null);
+                setCreating(true);
+              }}
+            >
               <span className="create-icon">+</span>
               <span className="create-text">Create Character</span>
             </button>
@@ -221,55 +239,99 @@ export default function Dashboard() {
         </p>
       )}
 
+      {/* Two panes, and `path` is which one you are on: choose a way in, then
+          name them. The cards are first because three of the four are not built
+          yet, and finding that out after filling in a form would be worse than
+          finding it out before. */}
       {creating && (
         <Modal
-          title="Enlist a Character"
+          title={path ? 'Enlist a Character' : 'Make a Character'}
           onClose={() => setCreating(false)}
+          /* Four cards want the roomy measure. A two-field form does not: the
+             same form spread over 900px reads worse than it does at 560. */
+          wide={!path}
           footer={
-            <>
+            path ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-minimal btn-sm"
+                  onClick={() => setPathKey(null)}
+                >
+                  Back
+                </button>
+                <button type="submit" form="create-character" className="btn btn-copper btn-sm">
+                  Create
+                </button>
+              </>
+            ) : (
               <button type="button" className="btn btn-minimal btn-sm" onClick={() => setCreating(false)}>
                 Cancel
               </button>
-              <button type="submit" form="create-character" className="btn btn-copper btn-sm">
-                Create
-              </button>
-            </>
+            )
           }
         >
-          <form id="create-character" onSubmit={handleCreate}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="new-name">
-                Character Name
-              </label>
-              <input
-                className="form-input"
-                id="new-name"
-                value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                placeholder="Thalira Vane"
-                autoFocus
-                required
-              />
-            </div>
+          {path ? (
+            <form id="create-character" onSubmit={handleCreate}>
+              <div className="path-taken" style={{ '--path-accent': path.accent }}>
+                <span className="path-taken-label">Path</span>
+                <span className="path-taken-name">{path.title}</span>
+                <button
+                  type="button"
+                  className="btn btn-minimal btn-sm"
+                  onClick={() => setPathKey(null)}
+                >
+                  Change
+                </button>
+              </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="new-campaign">
-                Campaign
-              </label>
-              <input
-                className="form-input"
-                id="new-campaign"
-                value={draft.campaign}
-                onChange={(e) => setDraft({ ...draft, campaign: e.target.value })}
-                placeholder="The Glass Spires"
-              />
-            </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="new-name">
+                  Character Name
+                </label>
+                <input
+                  className="form-input"
+                  id="new-name"
+                  value={draft.name}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  placeholder="Thalira Vane"
+                  autoFocus
+                  required
+                />
+              </div>
 
-            <p className="form-hint">
-              That is all this box needs. Your lineage, background, talent set and attributes are
-              level-1 choices with their own choosers, and the next two pages walk you through them.
-            </p>
-          </form>
+              <div className="form-group">
+                <label className="form-label" htmlFor="new-campaign">
+                  Campaign
+                </label>
+                <input
+                  className="form-input"
+                  id="new-campaign"
+                  value={draft.campaign}
+                  onChange={(e) => setDraft({ ...draft, campaign: e.target.value })}
+                  placeholder="The Glass Spires"
+                />
+              </div>
+
+              <p className="form-hint">
+                That is all this box needs. Your lineage, background, talent set and attributes are
+                level-1 choices with their own choosers, and {path.title} is where you make them.
+              </p>
+            </form>
+          ) : (
+            <>
+              <p className="form-hint path-lead">
+                Four ways in, all of them ending on the same sheet. Take whichever suits how you
+                like to make a character.
+              </p>
+
+              <CreationPathPick onPick={setPathKey} />
+
+              <p className="form-hint path-foot">
+                Only the free hand is built today. The other three are on their way.
+              </p>
+            </>
+          )}
         </Modal>
       )}
 
