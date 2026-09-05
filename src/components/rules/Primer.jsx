@@ -36,21 +36,27 @@ const SHOWCASE = SPELLS.find((spell) => spell.id === 'bramble-whip');
 const KINDS = rule('chapter-one', '1-2-the-three-kinds-of-roll').find((block) => block.type === 'table') ?? null;
 const LADDER = rule('chapter-one', '1-10-setting-a-difficulty').find((block) => block.type === 'table') ?? null;
 
+/* The three ideas the book opens with, each as a one-line lead and a short
+   body. The lead is the rule and the body is the little it needs explaining;
+   anything longer belongs in the blocks below, which is where it already is. */
 const LAWS = [
   {
     title: 'The roll',
+    lead: '`2d6 + one attribute`, against a difficulty number.',
     body:
-      'When the outcome of something is in doubt, you roll **2d6 and add one of your three attributes**, then compare the total to a difficulty number. Every roll in the game is this one. It goes by three names that say what it is for: a **Skill Check**, an **Attack Roll** or an **Attribute Roll**.',
+      'Every roll in the game is this one. It goes by three names that say what it is for: a **Skill Check**, an **Attack Roll** or an **Attribute Roll**.',
   },
   {
     title: 'Everything is a card',
+    lead: 'Spells, attacks, moves and basic actions are all cards.',
     body:
-      'Your spells, the two attacks your weapon gives you, the moves your training taught you and the basic actions everyone can take are all cards. **A card states what it costs, how far it reaches and what happens**, with your own numbers already filled in.',
+      'A card states what it costs, how far it reaches and what happens, with your own numbers already filled in.',
   },
   {
     title: 'Everything has a price',
+    lead: 'Acting spends **Action Points**. Casting spends **Willpower**. Resting spends **Supplies**.',
     body:
-      'Acting on your turn spends **Action Points**, and you get six back every turn. Casting spends **Willpower**, which only comes back when you rest. Resting spends **Supplies**. Deciding what to spend now and what to keep for later is most of the game.',
+      'Action Points come back every turn, six of them. Willpower only comes back when you rest, and a rest is paid for in Supplies.',
   },
 ];
 
@@ -139,6 +145,9 @@ export default function Primer({ character, onGo }) {
         {LAWS.map((law) => (
           <article className="primer-law" key={law.title}>
             <h3>{law.title}</h3>
+            <p className="primer-law-lead">
+              <Line text={law.lead} />
+            </p>
             <p>
               <Line text={law.body} />
             </p>
@@ -205,7 +214,7 @@ export default function Primer({ character, onGo }) {
         </ul>
 
         <p className="rule-text">
-          <Line text="**The Game Master sets the DC of a Skill Check from the ladder.** The same task can sit on any rung, and each of the last three columns follows one task up it." />
+          <Line text="**The Game Master sets the DC of a Skill Check from the ladder.** The same task can sit on any rung, and the last two columns each follow one task up it." />
         </p>
 
         {LADDER && <Block block={LADDER} />}

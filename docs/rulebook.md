@@ -266,17 +266,17 @@ Master sets the DC from this ladder.
 
 The ladder has six rungs, from 10 to 30 in steps of 4. The same task can sit on any rung.
 A lock is Easy or Mythic depending on the lock, and the rung is the Game Master's answer
-to how hard this particular one is. Each of the last three columns follows one task up
-the ladder.
+to how hard this particular one is. The last two columns each follow one task up the
+ladder.
 
-| Difficulty | DC | Who manages it | A lock | A climb | Talking someone round |
-| --- | --- | --- | --- | --- | --- |
-| **Easy** | 10 | Most people | A latch you push up from the other side | A rope, or a wall with good holds | A friendly innkeeper |
-| **Moderate** | 14 | Anyone with a little skill | A plain household lock | A rough stone wall | A dock warden on a slow night |
-| **Hard** | 18 | Trained people, and not every time | A good lock on a strongroom door | A wet wall in the rain | A mob that wants blood |
-| **Demanding** | 22 | A specialist | A locksmith's own lock, with pins made to seize the pick | A sheer cliff face | A guard captain holding your description |
-| **Formidable** | 26 | Nobody unaided. It takes Advantage, Karma or magic | A vault lock nobody outside the guild has seen inside | An overhang of smooth ice | A fanatic, out of their faith |
-| **Mythic** | 30 | The stuff of stories | A door sealed by a spell, where the slightest slip sets the spell off | A glass tower in a storm | A king, out of his crown |
+| Difficulty | DC | Who manages it | A lock | A climb |
+| --- | --- | --- | --- | --- |
+| **Easy** | 10 | Most people | A latch you push up from the other side | A rope, or a wall with good holds |
+| **Moderate** | 14 | Anyone with a little skill | A plain household lock | A rough stone wall |
+| **Hard** | 18 | Trained people, and not every time | A good lock on a strongroom door | A wet wall in the rain |
+| **Demanding** | 22 | A specialist | A locksmith's own lock, with pins made to seize the pick | A sheer cliff face |
+| **Formidable** | 26 | Nobody unaided. It takes Advantage, Karma or magic | A vault lock nobody outside the guild has seen inside | An overhang of smooth ice |
+| **Mythic** | 30 | The stuff of stories | A door sealed by a spell, where the slightest slip sets the spell off | A glass tower in a storm |
 
 The table below shows the chance of success for a character rolling their best attribute
 with nothing else helping. Attributes start at 4 and the best one reaches 6 at level 1,

@@ -482,12 +482,18 @@
   margin-bottom: 3rem;
 }
 
+/* A card is three short things stacked with air between them: the heading,
+   the rule in one bright line, and a muted line or two of explanation. The
+   explanation is deliberately the quietest of the three. */
 .primer-law {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   background-color: var(--panel-teal);
   border: 1px solid var(--hairline);
   border-top: 2px solid var(--copper);
   border-radius: 5px;
-  padding: 1.35rem 1.4rem;
+  padding: 1.5rem 1.6rem 1.65rem;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
@@ -495,17 +501,28 @@
   font-size: 1.02rem;
   color: var(--copper);
   letter-spacing: 1px;
-  margin-bottom: 0.6rem;
+  margin: 0;
 }
 
 .primer-law p {
-  color: var(--text-silver);
-  font-size: 0.95rem;
-  line-height: 1.75;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.primer-law .primer-law-lead {
+  color: var(--text-bright);
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 .primer-law strong {
-  color: var(--text-bright);
+  color: var(--text-silver);
+}
+
+.primer-law .rule-code {
+  font-size: 0.9em;
 }
 
 .primer-block {
