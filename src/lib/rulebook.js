@@ -17,7 +17,7 @@
  * book being written around a limitation.
  *
  *   ##      a section: a chapter, an appendix or a front-matter heading
- *   ###     a rule inside it, numbered (`1.4 Exploding dice`)
+ *   ###     a rule inside it, numbered (`1.7 Exploding dice`)
  *   ---     a rule off between sections
  *   |       a table, with or without a header row
  *   -  1.   a list, with wrapped continuation lines folded back in
@@ -253,7 +253,23 @@ export function chapter(id) {
 }
 
 /**
- * The rules a section names, for the contents rail: `1.4 Exploding dice` and
+ * The blocks under one rule of a section: everything after its `###` heading
+ * and before the next one. The primer draws its tables from the book this way
+ * rather than retyping them, so the page and the book cannot disagree about a
+ * rung or a name. Empty when the section or the rule is not there, which is
+ * what a renamed heading looks like from here.
+ */
+export function rule(sectionId, ruleId) {
+  const blocks = chapter(sectionId)?.blocks ?? [];
+  const start = blocks.findIndex((block) => block.type === 'heading' && block.id === ruleId);
+  if (start === -1) return [];
+  const rest = blocks.slice(start + 1);
+  const end = rest.findIndex((block) => block.type === 'heading');
+  return end === -1 ? rest : rest.slice(0, end);
+}
+
+/**
+ * The rules a section names, for the contents rail: `1.7 Exploding dice` and
  * the rest of the `###` headings under it, so a chapter can be opened at the
  * rule somebody is arguing about rather than at its top.
  */

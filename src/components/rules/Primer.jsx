@@ -1,9 +1,9 @@
 import AbilityCard from '../AbilityCard.jsx';
-import Prose, { Line } from './Prose.jsx';
+import Prose, { Block, Line } from './Prose.jsx';
 import { cardBanner } from '../../lib/cardText.js';
 import { CRIT_BAND, VERDICTS } from '../../lib/dice.js';
 import { SPELLS } from '../../lib/spells.js';
-import { chapter } from '../../lib/rulebook.js';
+import { chapter, rule } from '../../lib/rulebook.js';
 
 /**
  * How to play, in one screen.
@@ -23,17 +23,24 @@ import { chapter } from '../../lib/rulebook.js';
  * wrong about one number.
  */
 
-/* The rulebook's own worked example (1.4), so the card being explained is the
+/* The rulebook's own worked example (1.7), so the card being explained is the
    card the book walks through. `promo` for the same reason the landing page
    uses it: this is the section that explains what an art plate is, and drawing
    it empty to everybody who has not paid would explain nothing. */
 const SHOWCASE = SPELLS.find((spell) => spell.id === 'bramble-whip');
 
+/* Two tables drawn from Chapter One rather than typed here: the three kinds of
+   roll and the difficulty ladder. The ladder used to be a line of prose on this
+   page, which was one more place to change when a rung moved. Null when the book
+   renames the rule, and the block is then left out rather than drawn wrong. */
+const KINDS = rule('chapter-one', '1-2-the-three-kinds-of-roll').find((block) => block.type === 'table') ?? null;
+const LADDER = rule('chapter-one', '1-10-setting-a-difficulty').find((block) => block.type === 'table') ?? null;
+
 const LAWS = [
   {
-    title: 'One kind of roll',
+    title: 'The roll',
     body:
-      'When the outcome of something is in doubt, you roll **2d6 and add one of your three attributes**, then compare the total to a difficulty number. Attacking, climbing, lying to a guard and casting a spell are all this same roll.',
+      'When the outcome of something is in doubt, you roll **2d6 and add one of your three attributes**, then compare the total to a difficulty number. Every roll in the game is this one. It goes by three names that say what it is for: a **Skill Check**, an **Attack Roll** or an **Attribute Roll**.',
   },
   {
     title: 'Everything is a card',
@@ -147,8 +154,14 @@ export default function Primer({ character, onGo }) {
 
         <p className="rule-text">
           Roll <code className="rule-code">2d6 + an attribute</code> and compare the total to the
-          difficulty, which the rules call the DC. What matters is how far your total lands from
-          that number, not what the dice show.
+          difficulty, which the rules call the DC. Reach it and you succeed. Every roll in the
+          game is this one, and it goes by three names that say what it is for.
+        </p>
+
+        {KINDS && <Block block={KINDS} />}
+
+        <p className="rule-text">
+          What matters is how far your total lands from the DC, not what the dice show.
         </p>
 
         <div className="rule-table-wrap">
@@ -178,9 +191,6 @@ export default function Primer({ character, onGo }) {
 
         <ul className="rule-list">
           <li>
-            <Line text="**The Game Master sets the DC** from a ladder: Easy 10, Moderate 14, Hard 18, Demanding 22, Formidable 26 and Mythic 30. An attack is rolled against the target's Defense instead, and a spell that is not an attack against its Reflex or Grit." />
-          </li>
-          <li>
             <Line text="**Advantage** adds a d4 to your total and **Disadvantage** subtracts one. Several of either add several dice, and one of each cancels out." />
           </li>
           <li>
@@ -189,7 +199,16 @@ export default function Primer({ character, onGo }) {
           <li>
             <Line text="**Damage dice explode.** A die that shows its highest face adds one die of the next size up, and keeps going if that one does too. The two dice of a roll never explode." />
           </li>
+          <li>
+            <Line text="**Some rolls are made against you.** The Game Master rolls a trap against your Reflex, a poison against your Grit and an attack against your Defense. You do not roll to dodge or to resist." />
+          </li>
         </ul>
+
+        <p className="rule-text">
+          <Line text="**The Game Master sets the DC of a Skill Check from the ladder.** The same task can sit on any rung, and each of the last three columns follows one task up it." />
+        </p>
+
+        {LADDER && <Block block={LADDER} />}
       </section>
 
       <section className="primer-block">

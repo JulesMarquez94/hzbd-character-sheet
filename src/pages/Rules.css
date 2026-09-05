@@ -499,13 +499,13 @@
 }
 
 .primer-law p {
-  color: var(--text-muted);
-  font-size: 0.89rem;
-  line-height: 1.7;
+  color: var(--text-silver);
+  font-size: 0.95rem;
+  line-height: 1.75;
 }
 
 .primer-law strong {
-  color: var(--text-silver);
+  color: var(--text-bright);
 }
 
 .primer-block {

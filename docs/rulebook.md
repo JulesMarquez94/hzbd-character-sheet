@@ -16,11 +16,11 @@ what a character tries could fail, the dice decide.
 
 Three ideas run through the whole game.
 
-**One kind of roll.** Whenever the outcome of something is in doubt, you roll two
-six-sided dice and add one of your three attributes. The Game Master sets a difficulty
-number, or the rules name one, and your total is compared to it. Attacking, climbing,
-lying to a guard and casting a spell are all this same roll. There is no other kind of
-roll to learn.
+**One roll.** Whenever the outcome of something is in doubt, you roll two six-sided dice
+and add one of your three attributes. Your total is compared to a difficulty number, which
+the Game Master sets or the rules name, and you succeed if you reach it. The roll goes by
+three names depending on what it is for: a Skill Check, an Attack Roll or an Attribute
+Roll. The dice and the arithmetic are the same for all three.
 
 **Everything you can do is written on a card.** Your spells, the two attacks your weapon
 gives you, the moves your training taught you and the basic actions every character can
@@ -59,7 +59,7 @@ The chapters are in the order you will need them.
 **If you are new**, read Chapters One, Four and Five and start playing. Everything else is
 reference you can look up when it comes up.
 
-**If you are running the game**, read Chapter Eleven, keep the difficulty ladder in 1.7
+**If you are running the game**, read Chapter Eleven, keep the difficulty ladder in 1.10
 open and use the quick reference in Appendix A.
 
 Two kinds of aside are set apart from the rules:
@@ -79,7 +79,7 @@ same thing everywhere.
 
 | | |
 | --- | --- |
-| **One** | **The Dice** · the roll, the four results, Advantage, exploding dice, the difficulty ladder |
+| **One** | **The Dice** · the roll and its three kinds, choosing the attribute, rolls made against you, the four results, Advantage, exploding dice, the difficulty ladder |
 | **Two** | **The Character** · the three attributes, everything they buy, dying, the pools |
 | **Three** | **Advancement** · experience, what a level grants, talent ranks |
 | **Four** | **Making a Character** · step by step, as the website walks you through it |
@@ -98,20 +98,93 @@ same thing everywhere.
 
 ## Chapter One · The Dice
 
-### 1.1 The two kinds of roll
+### 1.1 The roll
 
-There are two things you can be asked to roll, and they behave differently.
+Whenever what your character tries could fail, you make a Roll. A Roll is always the same
+thing: roll two six-sided dice, add one of your three attributes and compare the total to
+a difficulty number. The difficulty number is called the **DC**.
 
-**A Roll** is `2d6 + an attribute`, compared to a difficulty number. The difficulty is
-called the **DC**. An Attack Roll, an Attribute Roll, a Skill Check and an Initiative roll
-are all the same Roll: the name only says what the roll is for. Advantage and
-Disadvantage apply to Rolls and to nothing else.
+- **Reach the DC and you succeed.** A total equal to the DC or over it is a success. A
+  total under it is a failure. How far you land from the DC decides whether the result is
+  also a critical one (see 1.5).
+- **The attribute is Physique, Instinct or Mind.** Which one depends on the roll. A card
+  that asks for a Roll names its attribute. A Skill Check leaves the choice to you and the
+  Game Master (see 1.3).
+- **The DC comes from one of three places.** A card prints it, the target's own numbers
+  supply it, or the Game Master sets it from the ladder in 1.10.
 
-**A value** is the dice a card tells you to roll for damage or for healing, such as
-`2d6 + Mind`. There is no difficulty and no success or failure. You roll the dice, add
-the number and that is the result. Dice can explode here (see 1.4) and nowhere else.
+On the sheet, using a card that asks for a Roll rolls it for you and shows the total and
+the result. Any Roll can also be made by hand from the dice tray.
 
-### 1.2 The four results
+**Damage and healing dice are not a Roll.** When a card tells you to roll dice for damage
+or for healing, such as `2d6 + Mind`, there is no DC and no success or failure. You roll
+the dice, add the number and that is the result. Those dice can explode (see 1.7). The two
+dice of a Roll never do.
+
+### 1.2 The three kinds of roll
+
+Every Roll is one of three kinds. The kind says what the roll is for and what number it is
+compared to. Nothing else changes: the dice, the attribute and the four results are the
+same for all three.
+
+| Kind of roll | When you make it | Rolled against |
+| --- | --- | --- |
+| **Skill Check** | You try something that is not an attack and could fail: picking a lock, climbing a wall, talking a guard round, reading an inscription in a dead language. You choose the attribute the task calls for, and a skill you hold that applies can help | A DC the Game Master sets from the ladder in 1.10 |
+| **Attack Roll** | You attack with a weapon, or with a spell or ability whose card says it is an attack | The target's **Defense** |
+| **Attribute Roll** | A card asks for a Roll and names the attribute: a Physique Roll to grapple, a Mind Roll to stop a friend dying, a spell the target resists rather than dodges | The target's **Reflex** or **Grit**, or a DC the card or the Game Master sets |
+
+**Initiative is a Roll with no DC.** When a fight starts, everyone rolls `2d6 + Initiative`
+and turns are taken from the highest total down (see 5.1). Nobody fails it.
+
+When the sheet rolls for you, the table log names the kind of roll it was. When you roll
+from the dice tray, you pick the kind yourself and give the roll a name, and that name is
+what the rest of the table reads in the log.
+
+### 1.3 Choosing the attribute
+
+An Attack Roll and an Attribute Roll name their attribute on the card. A Skill Check does
+not. You say how your character goes about the task, and that says which attribute is
+rolled. Two characters can attempt the same task with different attributes, and the table
+settles which one applies before the dice are thrown.
+
+| Attribute | What it represents | What it covers |
+| --- | --- | --- |
+| **Physique** | Strength and fitness | Force, endurance and a body that is hard to ignore |
+| **Instinct** | Awareness and reflexes | Quick hands, sharp senses, reading people and presence |
+| **Mind** | Intelligence and will | Learning, reasoning, memory and knowing what to say |
+
+Two examples of one task rolled in different ways:
+
+- **Picking a lock.** A character who learned locks from a locksmith rolls **Mind**: they
+  know the mechanism and work it out. A character who grew up on the street rolls
+  **Instinct**: they feel the pins give and have done this a hundred times.
+- **Intimidating somebody.** A character who looms over them rolls **Physique**. A
+  character who knows exactly which threat will land rolls **Mind**. A character who
+  carries it on presence and nerve rolls **Instinct**.
+
+On the sheet, the Skill Check card asks which attribute you are rolling and shows what you
+are worth on each. Any skill, talent card or lineage card of yours that speaks to the task
+is offered beside the choice. Ticking one adds what it grants to the roll and pays what it
+costs.
+
+### 1.4 Rolls made against you
+
+Not every Roll is yours. When the world acts on your character, the Game Master rolls and
+one of your own numbers is the DC. You do not roll to dodge or to resist. If the roll made
+against you falls short, you were quick enough or tough enough.
+
+| Your number | What it represents | What is rolled against it |
+| --- | --- | --- |
+| **Defense** | How hard you are to hit | Every Attack Roll made at you: a sword, an arrow, a spell that is an attack |
+| **Reflex** | How fast you answer sudden danger. `Physique + Instinct` | A trap's blade, a boulder coming down the passage, a blast you have to dive clear of. The Game Master rolls for the trap against your Reflex |
+| **Grit** | How well you withstand what gets inside you. `Instinct + Mind` | Poison in the air, fear, a spell that clouds the mind. The Game Master rolls for the poison against your Grit |
+
+A creature's card says which of the three it is rolled against, exactly as your cards do.
+A trap, a poison or anything else without a card has no number of its own, so the Game
+Master gives it one (see 11.2.1). If the roll succeeds, the danger lands. Its damage comes
+from the bands in 5.11.
+
+### 1.5 The four results
 
 A Roll is judged by how far your total lands from the DC, not by what the dice show.
 
@@ -123,7 +196,7 @@ A Roll is judged by how far your total lands from the DC, not by what the dice s
 | 6 or more over | **Critical Success** | You do it exceptionally well. On an attack this is a Critical Hit |
 
 A **Critical Hit** always hits, and every damage die rolled for it lands on its maximum
-value. A die showing its maximum explodes (see 1.4), so a Critical Hit is usually a very
+value. A die showing its maximum explodes (see 1.7), so a Critical Hit is usually a very
 large hit.
 
 The dice themselves never make a result critical. Rolling two sixes is a total of twelve
@@ -133,7 +206,7 @@ When there is no DC, because the Game Master has not set one, the Game Master de
 which of the four results happened. On the sheet the dice roller shows four buttons for
 this, and the result chosen is recorded exactly as a calculated one would be.
 
-### 1.3 Advantage and Disadvantage
+### 1.6 Advantage and Disadvantage
 
 **Advantage** means you roll a four-sided die with your Roll and add it to the total.
 **Disadvantage** means you roll one and subtract it.
@@ -145,7 +218,7 @@ this, and the result chosen is recorded exactly as a calculated one would be.
 - The sheet shows how many d4 you are rolling as an arrow on the card: green and pointing
   up for Advantage, red and pointing down for Disadvantage.
 
-### 1.4 Exploding dice
+### 1.7 Exploding dice
 
 When a damage die or a healing die shows its highest face, it **explodes**: you roll one
 more die of the next size up and add it to the total.
@@ -168,7 +241,7 @@ more die of the next size up and add it to the total.
 > highest face, so it explodes. She rolls a d8 and gets 3. Nine on the dice plus twelve
 > from her Mind is **21 Sharp damage**.
 
-### 1.5 After the dice stop
+### 1.8 After the dice stop
 
 A Roll can still be changed after you have seen the result.
 
@@ -180,26 +253,30 @@ A Roll can still be changed after you have seen the result.
   Willpower. The card says what it adds, and it is offered on the same terms: a card that
   adds 1 is offered when you are exactly 1 short.
 
-### 1.6 Contested rolls
+### 1.9 Contested rolls
 
 When two characters compete directly, both make a Roll and the higher total wins.
 
-### 1.7 Setting a difficulty
+### 1.10 Setting a difficulty
 
 Most Rolls in a fight have their DC written on the card. An attack is rolled against the
 target's Defense. A spell that is not an attack is rolled against the target's Reflex or
-Grit. For everything else, the Game Master sets the DC from this ladder.
+Grit. For a Skill Check, and for anything else without a number of its own, the Game
+Master sets the DC from this ladder.
 
-| Difficulty | DC | What it is |
-| --- | --- | --- |
-| Easy | 10 | Something most people manage. Climbing a rope, spotting an obvious clue |
-| Moderate | 14 | Something that takes a little skill. Picking a plain lock, calming a horse |
-| Hard | 18 | Something trained people fail at. Scaling a wet wall, talking down a mob |
-| Demanding | 22 | Something only a specialist should attempt |
-| Formidable | 26 | Beyond anyone's bare ability. It needs Advantage, Karma or magic |
-| Mythic | 30 | The stuff of stories. Do not attempt it without a plan |
+The ladder has six rungs, from 10 to 30 in steps of 4. The same task can sit on any rung.
+A lock is Easy or Mythic depending on the lock, and the rung is the Game Master's answer
+to how hard this particular one is. Each of the last three columns follows one task up
+the ladder.
 
-The ladder runs from 10 to 30 in steps of 4.
+| Difficulty | DC | Who manages it | A lock | A climb | Talking someone round |
+| --- | --- | --- | --- | --- | --- |
+| **Easy** | 10 | Most people | A latch you push up from the other side | A rope, or a wall with good holds | A friendly innkeeper |
+| **Moderate** | 14 | Anyone with a little skill | A plain household lock | A rough stone wall | A dock warden on a slow night |
+| **Hard** | 18 | Trained people, and not every time | A good lock on a strongroom door | A wet wall in the rain | A mob that wants blood |
+| **Demanding** | 22 | A specialist | A locksmith's own lock, with pins made to seize the pick | A sheer cliff face | A guard captain holding your description |
+| **Formidable** | 26 | Nobody unaided. It takes Advantage, Karma or magic | A vault lock nobody outside the guild has seen inside | An overhang of smooth ice | A fanatic, out of their faith |
+| **Mythic** | 30 | The stuff of stories | A door sealed by a spell, where the slightest slip sets the spell off | A glass tower in a storm | A king, out of his crown |
 
 The table below shows the chance of success for a character rolling their best attribute
 with nothing else helping. Attributes start at 4 and the best one reaches 6 at level 1,
@@ -714,8 +791,8 @@ is no third.
 
 - **An Attack Roll** is rolled against the target's **Defense**. Weapon attacks and spells
   that say "Attack" work this way.
-- **A plain Roll** is rolled against the target's **Reflex** or **Grit**, whichever the
-  card names. Spells and effects that are resisted rather than dodged work this way.
+- **An Attribute Roll** is rolled against the target's **Reflex** or **Grit**, whichever
+  the card names. Spells and effects that are resisted rather than dodged work this way.
 
 Either way, you succeed if your total equals or exceeds the number.
 
@@ -803,8 +880,13 @@ that fits. Each band is a flat amount scaled to the level of the character it ha
 | **Serious** | 10 x level | A long fall, standing in a fire, a ceiling coming down |
 | **Deadly** | 20 x level | A cliff, a furnace, the bottom of a lift shaft |
 
-Nothing is rolled, nothing explodes and criticals play no part. Armor and Shield still
-apply in the usual order (see 5.7).
+The damage is a flat amount. No dice are rolled for it, nothing explodes and criticals
+play no part. Armor and Shield still apply in the usual order (see 5.7).
+
+Whether the damage lands at all is a separate question. A fall lands. A hazard a character
+might get clear of, such as a trap or a rockfall, is first rolled against their Reflex, and
+one they might hold out against, such as poison in the air, against their Grit (see 1.4 and
+11.2.1). The damage is dealt only if that roll succeeds.
 
 Against the Health a character of that level actually has, using their best attribute for
 Physique:
@@ -1235,18 +1317,20 @@ website.
 - **Decide when a roll is needed.** If something is certain, or its failure would not be
   interesting, it just happens. Ask for a Roll when the outcome is in doubt and both
   outcomes lead somewhere.
-- **Set the difficulty** from the ladder in 1.7, and the Action Point cost of Skill Checks
-  and Interact actions.
+- **Set the difficulty** from the ladder in 1.10, agree which attribute a Skill Check is
+  rolled with, and set the Action Point cost of Skill Checks and Interact actions.
 - **Call results** when there was no DC, and answer the reaction question: did the
   reaction make the action fail?
 - **Run the creatures**: their turns, their reactions and their damage.
+- **Roll for the world** when it acts on a character: a trap against their Reflex, a poison
+  against their Grit (see 11.2.1).
 - **Hand out experience, Karma and loot.**
 - **Rule on anything the rules do not cover.** When you do, say so and write it down so it
   is the same next time.
 
 ### 11.2 Setting a difficulty
 
-Use the ladder in 1.7. Pick the word first and read the number off it: is this Easy,
+Use the ladder in 1.10. Pick the word first and read the number off it: is this Easy,
 Moderate or Hard for a competent person? Only then look at the table of odds. A level 1
 character rolling their best attribute succeeds at Moderate less than half the time, and
 almost never at Hard without help.
@@ -1257,11 +1341,37 @@ Some guidance:
   moments the whole table remembers.
 - **Set the DC before the roll**, and say it out loud. The sheet asks for it when the player
   rolls, and a number given after the dice land is not a difficulty.
+- **Agree the attribute with the player.** The task does not fix it. How the character
+  goes about the task does. Ask what they are doing, and the answer names the attribute: a
+  lock opened by understanding the mechanism is Mind, and the same lock opened by feel is
+  Instinct. A threat is Physique when it is made with size, Mind when it is made with
+  exactly the right words and Instinct when it is made with nerve. The table in 1.3 says
+  what each attribute stands for. If the player's answer is a stretch, say so and settle
+  on one before the dice are thrown.
 - **A skill is not a bonus you add.** A player who holds a relevant skill ticks it on their
   own sheet, and the sheet applies what the skill grants. Your job is to say whether the
   skill applies.
 - **If you cannot decide on a DC**, let the roll go without one. The sheet shows four
   buttons and you call the result.
+
+### 11.2.1 When the world rolls
+
+A trap, a poison, a rockfall a character might get clear of: these are Rolls you make
+against the character's Reflex or Grit (see 1.4). A creature's card already says what it
+adds to its roll. A danger without a card needs a number from you.
+
+- **Give the danger a level.** Usually that is the level of the characters it is meant
+  for. Add what a creature's main attribute is at that level (see 10.2): 6 at level 1, and
+  one more at every odd level from 3. A trap set for a level 5 party rolls `2d6 + 8`.
+- **Roll it from the dice tray** as an Attribute Roll, with that number typed into the
+  modifier box and the character's Reflex or Grit as the DC. The result is written to the
+  table log like any other Roll, so the player sees what they were up against.
+- **On a success the danger lands.** Deal its damage from the bands in 5.11, or apply its
+  condition. On a failure the character got clear, or held.
+
+> **Designer's note.** Rolling a danger as a creature of its level is a proposal. It lands
+> about as often as a creature's own spell does against the same number. A danger that
+> should be harder to escape can be given a higher level than the party.
 
 ### 11.3 Action Point costs you set
 
@@ -1287,8 +1397,9 @@ At the table a fight runs like this:
 4. Apply damage in the order in 5.7: Armor, Shield, Health.
 5. End the fight when it is over. Award experience if you count it.
 
-Hazards use the bands in 5.11. Pick Minor, Serious or Deadly and multiply by the
-character's level. Nothing is rolled.
+Hazards deal damage from the bands in 5.11. Pick Minor, Serious or Deadly and multiply by
+the character's level. No dice are rolled for the damage. Whether a hazard can be avoided
+at all is a Roll against the character's Reflex or Grit (see 11.2.1).
 
 ### 11.5 The campaign on the website
 
@@ -1541,7 +1652,8 @@ the website you can point at any of them on a card to read this text.
 
 The quick reference, in the order things come up at the table.
 
-**The roll.** 2d6 + attribute, against a DC.
+**The roll.** 2d6 + attribute, against a DC. A Skill Check, an Attack Roll and an Attribute
+Roll are all this roll.
 
 | Your total, compared to the DC | Result |
 | --- | --- |
@@ -1554,7 +1666,8 @@ The quick reference, in the order things come up at the table.
 30. Nothing above 22 can be reached by a bare roll.
 
 **What to roll against.** An attack goes against **Defense**. A spell that is not an attack
-goes against **Reflex** or **Grit**. There is no third number.
+goes against **Reflex** or **Grit**, and so does a trap or a poison. A Skill Check goes
+against a DC from the ladder.
 
 **Advantage** adds 1d4. **Disadvantage** subtracts 1d4. They stack and they cancel one for
 one. **Karma** adds 1d4 after the roll, once per roll.
@@ -1590,7 +1703,7 @@ your Health and Willpower, all Shield removed, one Long Rest action.
 ### What is a proposal
 
 Every rule in this book is either how the game is played on the website or a ruling by its
-designer. Four sets of numbers are proposals, written where a rule was settled and its
+designer. Five sets of numbers are proposals, written where a rule was settled and its
 arithmetic was not. Each carries a Designer's note where it appears, and each can be
 changed without contradicting anything else.
 
@@ -1600,6 +1713,7 @@ changed without contradicting anything else.
 | Lodging | 8.2 | 100 / 400 / 1,200 coins and Shield equal to Mind at the top |
 | Downtime | 8.3 | A week, one activity, 500 coins for a week's work |
 | Everyday prices | 11.9 | Six rows off the ten-coins-to-a-euro anchor |
+| Dangers without a card | 11.2.1 | A trap or a poison rolls as a creature of its level: 2d6 plus that level's main attribute |
 
 One glossary term is marked *(provisional)*: **unconscious**. Its wording is a best
 reading of what the cards using it imply.
