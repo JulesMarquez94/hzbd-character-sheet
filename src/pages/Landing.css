@@ -53,6 +53,118 @@
   flex-wrap: wrap;
 }
 
+/* ---------- THE THREE LAWS ---------- */
+/* The same three ideas the rulebook and the primer open with, as a strip
+   between the hero and the card: the system in three sentences, before a word
+   about the software. */
+.laws {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 1.5rem 2rem;
+  padding-top: 0;
+  padding-bottom: 2rem;
+}
+
+.law {
+  border-left: 2px solid var(--copper);
+  padding: 0.2rem 0 0.2rem 1.1rem;
+}
+
+.law h3 {
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  color: var(--text-silver);
+  letter-spacing: 1px;
+  margin-bottom: 0.45rem;
+}
+
+.law p {
+  color: var(--text-muted);
+  font-size: 0.93rem;
+  line-height: 1.65;
+}
+
+/* ---------- THE INVITE ---------- */
+.invite {
+  text-align: center;
+  padding-top: 1rem;
+  padding-bottom: 6rem;
+}
+
+.invite .heading-section {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.invite-lede {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  max-width: 620px;
+  margin: 0 auto 2.5rem;
+}
+
+.invite-steps {
+  list-style: none;
+  margin: 0 auto 2.75rem;
+  padding: 0;
+  max-width: 960px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.invite-step {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--panel-teal);
+  border: 1px solid var(--hairline);
+  border-top: 2px solid var(--copper);
+  border-radius: 4px;
+  padding: 1.5rem 1.6rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.invite-num {
+  font-family: var(--font-headings);
+  font-size: 1.5rem;
+  color: var(--copper);
+  line-height: 1;
+  margin-bottom: 0.7rem;
+}
+
+.invite-step b {
+  color: var(--text-silver);
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.invite-step p {
+  color: var(--text-muted);
+  font-size: 0.93rem;
+  line-height: 1.65;
+  margin-bottom: 1.1rem;
+  flex: 1;
+}
+
+.invite-link {
+  align-self: flex-start;
+  color: var(--copper);
+  font-family: var(--font-headings);
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(200, 138, 75, 0.4);
+  padding-bottom: 2px;
+}
+
+.invite-link:hover {
+  color: var(--copper-bright, var(--text-bright));
+  border-bottom-color: currentColor;
+}
+
 /* ---------- CARD SHOWCASE ---------- */
 .showcase {
   display: grid;

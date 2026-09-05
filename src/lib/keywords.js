@@ -157,7 +157,7 @@ export const KEYWORDS = [
     terms: ['Shield'],
     color: 'var(--stat-shield)',
     detail:
-      'Damage soaked before it reaches Health, and whatever it cannot absorb carries straight through. Caps at half your maximum Health, or all of it for a Feral Cursed. A Long Rest takes whatever is left of it.',
+      'Damage soaked before it reaches Health, and whatever it cannot absorb carries straight through. Caps at half your maximum Health unless an effect says otherwise. A Long Rest takes whatever is left of it.',
   },
   {
     id: 'bleeding-out',

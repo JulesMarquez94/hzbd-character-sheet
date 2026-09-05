@@ -13301,3 +13301,110 @@ stale again.
   `1d6 + 14 Sharp`.
 - at 375 the rail is a row of chips, the shelf row is one sliding line, and the sample card is
   360px inside a 375px window.
+
+## The rulebook, second pass, 2026-09-05
+
+Jules, reading the book on the site: "do a pass on the text first ... Make all the text more
+explanatory less catchy bs. Make a clearer section about creating character. The rule how to play
+should guide properly the player on a turn. There should be a new how to dm section. Make the
+ladder 10 to 30 with a step every 4 instead of 3. The Ladder for rolls should be on a table, the
+explanation for the hit and crit and losses should use color. There is no starter store to buy
+from. Review all of it and make sure it matches how the website works. Not some other version.
+Don't mention exceptions like 'Six of each, and seven for a Master Trickster' ... in those cases
+it is just 'some effect might increase it'. It is a ttrpg system."
+
+### The book
+
+Every chapter was rewritten in plain explanatory prose. The book now says what a rule is and how
+to use it, and never why it is clever. The two worked examples ("At the table") stay, because
+they explain; the development history asides (the tenth damage type, the Life Tree Tea exception)
+are gone, because they do not.
+
+- **Chapter Four is the website's own creation flow**: the dashboard's Create Character box, the
+  creation page's two steps, the level 1 block's four panels in the order it draws them, the
+  outfitter (one Common armor set, one Common weapon, two for Military and Mercenary), the purse
+  landing in the ledgers, the lore page. **"Spend the purse" is gone as a step.** There is no
+  store on the site, and 7.8 says how buying works: agree the price, take the coins off in the
+  ledger, add the item from the codex browser.
+- **5.3 is a turn step by step**: Turn Start (what the sheet does on the press), the turn (every
+  kind of card and what it costs, and the action-or-reaction question), Turn End.
+- **Chapter Eleven · Running the Game is new**: what the Game Master decides, setting a DC, the
+  two costs they set, running a fight at the table, the campaign on the website (create, join
+  code, Overview, Table Log), building an encounter (Add at, numbering, the difficulty line, the
+  forge), running a fight with the tool step by step (ask for initiative, the order, enemy turns,
+  Land it, boundary prompts, the six-second reaction window, Next, End the fight, the share
+  switch), how rewards reach a sheet the Game Master cannot write, pricing. The Glossary became
+  Chapter Twelve; Contents, "How to read this book" and every cross-reference moved with it.
+- **The ladder is 10 to 30 in steps of 4**: Easy 10, Moderate 14, Hard 18, Demanding 22,
+  Formidable 26, Mythic 30. **This supersedes the 9-to-30-by-3 ruling of 2026-09-02**, on
+  Jules's instruction. The odds table was recomputed (a scratchpad script over 2d6): a level 1
+  best attribute makes Moderate 42% of the time and Hard 3%; nothing above 22 is reachable by a
+  bare roll (2d6 + 11 tops out at 23). Every derived sentence around it was rewritten (a rung is
+  now eight levels of climb, an Advantage die is a little over half a rung). The six rung names
+  are mine, kept from the old eight with Severe and Legendary dropped.
+- **The results are a table with a colour per result.** `Prose.jsx` sets a bold run that is
+  exactly one of the four verdict names in the tone `VERDICTS` gives it in `lib/dice.js`, so the
+  book's 1.2 table and Appendix A read in the colours of the tray and the log, and nothing else
+  in the book can ask for that colour by accident. The primer's own table is built from
+  `VERDICTS` and `CRIT_BAND` rather than typed.
+- **Exceptions are generalised**, per the instruction: "Six of each. Some effects can raise either
+  ceiling." "Shield caps at half your maximum Health. Some effects raise that cap." "Some gear
+  grants Reaction Points when a fight starts." "Some skills and enchantments make rests cheaper."
+  The Shield keyword in `keywords.js` lost its Feral Cursed clause the same way, so the glossary
+  shelf and the book still say the same sentence.
+- **Everyday prices moved to 11.9**, the Game Master's chapter, still marked as a proposal.
+
+### Corrected against the code
+
+- **3.2 said an odd level grants "an attribute point and a skill".** `levelGrants` in levelPicks.js
+  grants +1 on **two different attributes** and a skill (Jules, 2026-08-21). The table and the
+  sentence under it now say so.
+- **The rules page's reader was 4 / 5 / 7.** Under the rule above a level 3 character cannot have
+  that spread: the +2 and +1 plus level 3's two points make 7 / 6 / 4 or 7 / 5 / 5 or 6 / 6 / 5.
+  `READER` in Rules.jsx is now Physique 4, Instinct 6, Mind 7, and the footer says so. Every
+  Instinct-based card on the shelves prints one higher than before.
+- **The first edition said every background starts with 6,000 coins.** `startingCoins` in
+  backgrounds.js is Jules's rule of 2026-08-21: (4 minus the skills taught) x 2,000, so a
+  three-skill background walks in with 2,000 coins and a one-skill one with 6,000. Only the 70
+  Supplies are the same for everyone. 4.4, 4.8, 7.6, 2.3.1 and the primer's step four now say so.
+- Twelve basic actions, not eleven: Skill Check joined the list on 2026-09-02.
+- Hide's "you stay hidden until the end of a turn in which you do anything" (2026-09-03) is in
+  the 5.5 table and in 5.3's Turn End.
+- The two weapon slots are primary and secondary, as the block labels them, not main hand and off
+  hand. Only the primary's cards are usable, and the swap is 2 Action Points.
+- The glossary is all **79** keywords, verbatim, proved by a round-trip script (curly and straight
+  apostrophes normalised). Only `unconscious` carries `provisional: true` in the code, so only it
+  is marked in the book; the old book marked three.
+
+### Around the book
+
+- `scripts/lint-text.mjs` now walks `docs/rulebook.md` too. The memory said the book had to pass
+  `lint:text`; it was never in the checker's roots. Nine serial commas in the new draft were
+  caught by running it.
+- `Book.jsx` scrolls to the URL fragment once it has drawn, so `/rules/rulebook#chapter-eleven`
+  lands on a client-side navigation and not only on a full load. `go()` in Rules.jsx takes a hash
+  for it, and the primer's new "Running the game" block sends a Game Master there.
+- The primer was rewritten in the same voice: six creation steps in the website's order, a
+  five-step turn, a rest table and a Game Master block. The page ledes in Rules.jsx too.
+
+### Mine, worth Jules's eye
+
+- The six rung names and the third column of the ladder table (what each rung feels like).
+- 11.3's guidance on charging 1 or 2 Action Points for a Skill Check mid-fight.
+- The book says Karma is "the Game Master's to hand out". The sheet has no other source for it
+  (the pool is edited by hand, capped at one per level), and the only rule that grants any is the
+  lodging proposal in 8.2.
+- The order of the four level 1 panels in 4.2 is the one LevelLedger draws: talent, lineage,
+  background, attributes.
+
+### Proved
+
+- The site's own parser, run under Node over the new markdown: 17 sections, 87 headings, 35
+  tables (34 drawn, Contents skipped), 38 lists, 11 asides of which 5 are designer's notes, no
+  pipe or list marker left in a paragraph, no ragged table, no unclosed bold.
+- Glossary round trip: 79 of 79 keywords match the book's 79 rows.
+- `npm run lint`, `lint:text` (now including the book), `lint:help`, `lint:dice`,
+  `lint:creatures` and `npm run build` clean.
+- In the browser: `/rules` and `/rules/rulebook` render with no console errors, eight coloured
+  verdict cells (1.2 and Appendix A) in the tray's four tones, the rail lists Eleven · Running the
+  Game and Twelve · The Glossary, and no stray markdown anywhere on the page.

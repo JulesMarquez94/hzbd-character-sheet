@@ -44,10 +44,11 @@ import './Rules.css';
  */
 
 /* Level 3, and the spread a level 3 character actually has: the +2 and the +1
-   from creation, plus the one attribute point level 3 grants. See 3.2 and 4.1.
-   It is stated on the page rather than hidden, because every number a card
-   prints here is this character's and not the reader's. */
-const READER = { physique: 4, instinct: 5, mind: 7, level: 3, name: 'the reader' };
+   from creation, plus the two points level 3 grants on two different
+   attributes. See 3.2 and 4.6. It is stated on the page rather than hidden,
+   because every number a card prints here is this character's and not the
+   reader's. */
+const READER = { physique: 4, instinct: 6, mind: 7, level: 3, name: 'the reader' };
 
 const SHELVES = [
   { id: 'play', label: 'How to Play' },
@@ -70,12 +71,12 @@ function readStoredUnit() {
 }
 
 const LEDES = {
-  play: 'Two dice, a handful of cards and a set of pools you are always deciding which to empty.',
-  rulebook: 'The whole book. Every rule, in the order it is written, with its contents down the side.',
-  cards: 'Every card in the game. Pick one to read the card itself, with its numbers already worked out.',
+  play: 'How the game works in one screen: the roll, making a character, a turn in a fight and a rest.',
+  rulebook: 'The whole rulebook, every rule in the order it is written, with its contents down the side.',
+  cards: 'Every card in the game. Pick one to read it with its numbers already worked out.',
   items: 'Everything a character can own: what it does, what it weighs and what it costs.',
-  bestiary: 'What the other side of the table plays. A line each, and the whole block behind it.',
-  glossary: 'Every word in the game that means something exact, and the colour it is written in.',
+  bestiary: 'The creatures of the game. A line each, with the full stat block behind it.',
+  glossary: 'Every word in the game that has an exact meaning, and the colour it is written in.',
 };
 
 export default function Rules() {
@@ -99,9 +100,12 @@ export default function Rules() {
     if (section && section !== here) navigate('/rules', { replace: true });
   }, [section, here, navigate]);
 
-  function go(id) {
-    navigate(id === 'play' ? '/rules' : `/rules/${id}`);
-    window.scrollTo({ top: 0 });
+  /* A shelf, and optionally a heading on it: the primer sends a Game Master to
+     `#chapter-eleven` of the rulebook. Book.jsx scrolls to the fragment once it
+     has drawn, so the page is only sent to the top when no heading was named. */
+  function go(id, hash = null) {
+    navigate(`${id === 'play' ? '/rules' : `/rules/${id}`}${hash ? `#${hash}` : ''}`);
+    if (!hash) window.scrollTo({ top: 0 });
   }
 
   return (
@@ -153,7 +157,7 @@ export default function Rules() {
 
           {here !== 'play' && (
             <p className="rules-foot container">
-              Printed for a level 3 character with Physique 4, Instinct 5 and Mind 7, so every
+              Printed for a level 3 character with Physique 4, Instinct 6 and Mind 7, so every
               number on a card reads true. Your own sheet prints its own.
             </p>
           )}

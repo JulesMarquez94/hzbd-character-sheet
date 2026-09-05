@@ -1,4 +1,5 @@
 import { StatText } from '../sheet/itemParts.jsx';
+import { VERDICTS } from '../../lib/dice.js';
 
 /**
  * The rulebook, set on a page.
@@ -11,11 +12,25 @@ import { StatText } from '../sheet/itemParts.jsx';
  * violet and Physique orange everywhere else on the site. A rulebook that
  * spells Shield in a different colour from the sheet's Shield is two games, so
  * the prose reads in the app's own palette rather than in a document's.
+ *
+ * The four results of a Roll get the same treatment from `VERDICTS`: a bold run
+ * that is exactly one of the four names (`**Critical Success**`) is set in the
+ * tone the dice tray and the log give that word, so the book's table of results
+ * reads in the colours a player has already seen on the roller. The rule is
+ * deliberately that narrow. "success" inside a sentence stays prose, and only
+ * the book's own emphasis can ask for the colour.
  */
 
 /* Bold, code and italic, in that order. Bold has to be tried before italic or
    `**a**` is read as an empty italic wrapping a bold. */
 const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g;
+
+const VERDICT_TONES = new Map(VERDICTS.map((verdict) => [verdict.label.toLowerCase(), verdict.tone]));
+
+/** The tone a result name wears, or null when the text is not one of the four. */
+function verdictTone(text) {
+  return VERDICT_TONES.get(String(text).trim().toLowerCase()) ?? null;
+}
 
 /** One run of markdown text, with its emphasis and its stat colours. */
 export function Line({ text }) {
@@ -28,9 +43,18 @@ export function Line({ text }) {
         .filter((part) => part !== '')
         .map((part, index) => {
           if (part.startsWith('**') && part.endsWith('**')) {
+            const inner = part.slice(2, -2);
+            const tone = verdictTone(inner);
+            if (tone) {
+              return (
+                <strong key={index} className="rule-verdict" style={{ color: tone }}>
+                  {inner}
+                </strong>
+              );
+            }
             return (
               <strong key={index}>
-                <StatText text={part.slice(2, -2)} />
+                <StatText text={inner} />
               </strong>
             );
           }

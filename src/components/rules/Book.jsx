@@ -87,6 +87,17 @@ export default function Book() {
     };
   }, []);
 
+  /* A link that arrives with a fragment (`/rules/rulebook#chapter-eleven`, from
+     the primer or pasted from elsewhere) is honoured by the browser only on a
+     full page load. On a client-side navigation nothing scrolls, so the jump is
+     made here once the whole book is on the page. A second jump after a real
+     load lands on the same heading and costs nothing. */
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    document.getElementById(id)?.scrollIntoView();
+  }, []);
+
   return (
     <div className="book">
       <nav className="book-rail" aria-label="Rulebook contents">

@@ -13,7 +13,7 @@ const BS = String.fromCharCode(92);
 const TICK = String.fromCharCode(96);
 const SQ = String.fromCharCode(39);
 const DQ = String.fromCharCode(34);
-const ROOTS = ['src', 'README.md', 'index.html'];
+const ROOTS = ['src', 'README.md', 'index.html', 'docs/rulebook.md'];
 const EXT = /\.(jsx?|css|md|html)$/;
 
 /**

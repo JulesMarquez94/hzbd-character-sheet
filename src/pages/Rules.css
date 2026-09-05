@@ -291,6 +291,15 @@
   color: var(--text-bright);
 }
 
+/* The four results of a Roll, in the tones VERDICTS gives them in lib/dice.js.
+   The colour itself arrives inline from Prose.jsx so it can never drift from
+   the tray's; this only sets the weight the word is carried at. */
+.rule-verdict {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
 /* ---------- ASIDES ---------- */
 /* Two kinds, and they must not be mistaken for each other or for a rule. "At
    the table" walks an example through in copper. A designer's note says which

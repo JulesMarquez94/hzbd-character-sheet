@@ -1,21 +1,26 @@
 import AbilityCard from '../AbilityCard.jsx';
 import Prose, { Line } from './Prose.jsx';
 import { cardBanner } from '../../lib/cardText.js';
+import { CRIT_BAND, VERDICTS } from '../../lib/dice.js';
 import { SPELLS } from '../../lib/spells.js';
 import { chapter } from '../../lib/rulebook.js';
 
 /**
  * How to play, in one screen.
  *
- * Everything here is in the rulebook and most of it is Chapter One and Chapter
+ * Everything here is in the rulebook, and most of it is Chapter One, Four and
  * Five. This is the short version somebody reads before their first session,
- * and every block says which chapter owns it, so nothing on this page is the
- * last word on anything.
+ * written to be understood on the first pass: what you roll, how a character is
+ * made, what you do on your turn and what a rest gives back. Every block says
+ * which chapter owns it, so nothing on this page is the last word on anything.
  *
- * Under it, Appendix A verbatim: the page a Game Master keeps open. That one is
- * not summarised, it is the book's own blocks drawn from the parsed markdown,
- * because a quick reference that had been retyped is a quick reference that is
- * quietly wrong about one number.
+ * Two things on it are read off the game rather than typed. The table of results
+ * is built from the dice engine's own four verdicts and the width of the
+ * critical band, so it can never disagree with the roller about a name or a
+ * number, and it is coloured the way the roller colours a verdict. Under it all,
+ * Appendix A is the book's own blocks drawn from the parsed markdown, because a
+ * quick reference that had been retyped is a quick reference that is quietly
+ * wrong about one number.
  */
 
 /* The rulebook's own worked example (1.4), so the card being explained is the
@@ -26,45 +31,75 @@ const SHOWCASE = SPELLS.find((spell) => spell.id === 'bramble-whip');
 
 const LAWS = [
   {
-    title: 'You roll two dice',
+    title: 'One kind of roll',
     body:
-      'Everything you roll is **2d6 and an attribute**, thrown against a number. An attack, a leap, a lie and a working of magic are the same throw judged against a different number. There is no second system underneath.',
+      'When the outcome of something is in doubt, you roll **2d6 and add one of your three attributes**, then compare the total to a difficulty number. Attacking, climbing, lying to a guard and casting a spell are all this same roll.',
   },
   {
-    title: 'You play cards',
+    title: 'Everything is a card',
     body:
-      'Everything you can do is on a card: your spells, your weapon’s two swings, the manoeuvre you trained for and the eleven things anyone can do. Each one says what it costs, what it hits and what happens. **Nobody stops the table to look something up.**',
+      'Your spells, the two attacks your weapon gives you, the moves your training taught you and the basic actions everyone can take are all cards. **A card states what it costs, how far it reaches and what happens**, with your own numbers already filled in.',
   },
   {
-    title: 'Everything costs',
+    title: 'Everything has a price',
     body:
-      'A turn is **six Action Points**. Magic is **Willpower**. The road is **Supplies**. A character is a set of pools, and the interesting question is always which one you are willing to empty.',
+      'Acting on your turn spends **Action Points**, and you get six back every turn. Casting spends **Willpower**, which only comes back when you rest. Resting spends **Supplies**. Deciding what to spend now and what to keep for later is most of the game.',
   },
 ];
 
+/* The four results, off the engine. The label is the roller's own word for the
+   band, in the book's capitalisation, and the tone is the colour the tray and
+   the log already give it. See VERDICTS in lib/dice.js. */
+const RESULTS = [
+  ['critical-failure', `${CRIT_BAND} or more under`, 'You fail badly. The Game Master may add a complication'],
+  ['failure', 'Under', 'You do not do it. An attack misses'],
+  ['success', 'Equal or over', 'You do it. An attack hits'],
+  ['critical-success', `${CRIT_BAND} or more over`, 'You do it exceptionally well. An attack hits and every damage die is maximized'],
+].map(([id, distance, means]) => {
+  const verdict = VERDICTS.find((entry) => entry.id === id);
+  return {
+    id,
+    distance,
+    means,
+    tone: verdict.tone,
+    label: verdict.label.replace(/\b[a-z]/g, (letter) => letter.toUpperCase()),
+  };
+});
+
+/* Making a character, in the order the website asks. See Chapter Four. */
 const STEPS = [
-  ['Spread your attributes', 'A +2 and a +1, on two different attributes. Everything starts at 4, so you finish on 6 / 5 / 4.'],
-  ['Choose a lineage', 'What you are, and the cards your blood gives you. It costs nothing and forbids nothing.'],
-  ['Choose a background', 'What you did before this. It gives you skills, a kit that really lands in your pack and your purse.'],
-  ['Choose a talent set', 'What you trained at, and where every level after this one goes.'],
-  ['Spend the purse', '6,000 coins and 70 Supplies, against the gear tables.'],
+  ['Create the character', 'On your dashboard, press Create Character and give it a name and a campaign. The creation page opens, and every choice on it saves as you make it.'],
+  ['Choose a talent set', 'What your character has trained at. It gives you cards now, and every even level from here will raise a set or add a new one.'],
+  ['Choose a lineage', 'What your character is. A few cards, sometimes an attribute bonus. It costs nothing and forbids nothing.'],
+  ['Choose a background', 'What your character did before. Pick its skills, then choose a Common armor set and a weapon from the outfitter. You start with 70 Supplies and 2,000 to 6,000 coins: the fewer skills a background teaches, the more coin it gives.'],
+  ['Place your attributes', 'All three start at 4. Put +2 on one and +1 on another, so you finish on 6, 5 and 4.'],
+  ['Write their story', 'A portrait, a description and a journal. Nothing here has rules attached, and you can fill it in later.'],
+];
+
+/* A turn, in the order it happens. See 5.3. */
+const TURN = [
+  'When a fight starts, everyone rolls Initiative: **2d6 + Initiative**, the same roll as everything else. You begin with six Action Points and no Reaction Points.',
+  '**Start your turn.** Your six Action Points come back. Every effect running on you loses a turn, and anything you are keeping up with an Upkeep is paid now or ends.',
+  '**Spend your Action Points**, in any order. Move costs 1. Your weapon’s attacks cost 2 to 6. Spells and items cost what their card prints. Basic actions like Hide, Grapple and Shove cost 2. Tap a card and choose action. The sheet spends the points and rolls for you.',
+  '**Hold some back** with Anticipate. Action Points you do not spend become Reaction Points, which you spend on other people’s turns. One reaction per action, and it resolves before the action does.',
+  '**End your turn.** Nothing is spent by ending it, and your Reaction Points stay with you.',
 ];
 
 const ANATOMY = [
   {
     color: 'var(--stat-ap)',
     title: 'The gold orb',
-    body: 'What it costs in Action Points. Absent when the card is free or is simply true of you.',
+    body: 'The cost in Action Points. A card without one is free, or is simply something that is true of you.',
   },
   {
     color: 'var(--haze-glow)',
     title: 'The violet orb',
-    body: 'What it costs in Willpower. Only spells and empowered techniques carry one.',
+    body: 'The cost in Willpower. Only spells and abilities that draw on your will carry one.',
   },
   {
     color: '#8b8e93',
     title: 'The banner',
-    body: 'What the card is, in the order its own family reads it.',
+    body: 'What kind of card this is: its rung, its school and its family.',
     /* Read off the card rather than typed here. The banner used to be quoted as
        "Novice Spell - Nature - Blood" and the school had since been renamed
        Primal, which is exactly what a quoted example does. */
@@ -73,14 +108,12 @@ const ANATOMY = [
   {
     color: 'var(--def-healing)',
     title: 'The arrow',
-    body:
-      'How many d4 of Advantage you have on this roll. Red and pointing down for Disadvantage, and gone when the two cancel out.',
+    body: 'How many d4 of Advantage you have on this roll. Red and pointing down for Disadvantage, and gone when the two cancel out.',
   },
   {
     color: 'var(--text-bright)',
     title: 'The second heading',
-    body:
-      'An optional half: Overcast, Multicast, Blood Tithe or Upkeep. Spend more than the card asks and it does more.',
+    body: 'An optional second half: Overcast, Multicast, Blood Tithe or Upkeep. Spend more than the card asks and it does more.',
   },
 ];
 
@@ -108,65 +141,66 @@ export default function Primer({ character, onGo }) {
 
       <section className="primer-block">
         <h2 className="primer-head">
-          The throw
+          The roll
           <span className="primer-ref">Chapter One</span>
         </h2>
 
         <p className="rule-text">
-          Roll <code className="rule-code">2d6 + an attribute</code> and compare it to the
-          difficulty. What matters is how far you land from that number, not what the faces say.
+          Roll <code className="rule-code">2d6 + an attribute</code> and compare the total to the
+          difficulty, which the rules call the DC. What matters is how far your total lands from
+          that number, not what the dice show.
         </p>
 
         <div className="rule-table-wrap">
           <table className="rule-table">
             <thead>
               <tr>
-                <th>Distance from the DC</th>
+                <th>Your total, compared to the DC</th>
                 <th>Result</th>
+                <th>What it means</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="rule-cell-lead">6 or more under</td>
-                <td>Critical Failure</td>
-              </tr>
-              <tr>
-                <td className="rule-cell-lead">under</td>
-                <td>Failure</td>
-              </tr>
-              <tr>
-                <td className="rule-cell-lead">equal or over</td>
-                <td>Success</td>
-              </tr>
-              <tr>
-                <td className="rule-cell-lead">6 or more over</td>
-                <td>Critical Success. It hits, and the damage is maximized</td>
-              </tr>
+              {RESULTS.map((result) => (
+                <tr key={result.id}>
+                  <td className="rule-cell-lead">{result.distance}</td>
+                  <td>
+                    <strong className="rule-verdict" style={{ color: result.tone }}>
+                      {result.label}
+                    </strong>
+                  </td>
+                  <td>{result.means}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
         <ul className="rule-list">
           <li>
-            <Line text="**Advantage** adds 1d4 and **Disadvantage** subtracts one. Both stack, and they cancel each other one for one." />
+            <Line text="**The Game Master sets the DC** from a ladder: Easy 10, Moderate 14, Hard 18, Demanding 22, Formidable 26 and Mythic 30. An attack is rolled against the target's Defense instead, and a spell that is not an attack against its Reflex or Grit." />
           </li>
           <li>
-            <Line text="**Karma** is spent after you have seen the result: 1 Karma adds 1d4, and it is only offered when it could still change the band." />
+            <Line text="**Advantage** adds a d4 to your total and **Disadvantage** subtracts one. Several of either add several dice, and one of each cancels out." />
           </li>
           <li>
-            <Line text="Damage dice **explode**. A die that rolls its own maximum throws the next die up and adds it. A Roll never explodes: boxcars are just twelve." />
+            <Line text="**Karma** is spent after you have seen the result. One Karma adds a d4, and the sheet only offers it when the extra die could still change the result." />
+          </li>
+          <li>
+            <Line text="**Damage dice explode.** A die that shows its highest face adds one die of the next size up, and keeps going if that one does too. The two dice of a roll never explode." />
           </li>
         </ul>
       </section>
 
       <section className="primer-block">
         <h2 className="primer-head">
-          Make somebody
+          Making a character
           <span className="primer-ref">Chapter Four</span>
         </h2>
 
         <p className="rule-text">
-          Five steps, and there is no points buy, no hit die and nothing to roll.
+          Six steps on the website. There are no points to buy, no dice to roll and no arithmetic
+          to do: the sheet works every number out for you.
         </p>
 
         <ol className="primer-steps">
@@ -183,41 +217,40 @@ export default function Primer({ character, onGo }) {
 
       <section className="primer-block">
         <h2 className="primer-head">
-          A turn, and a fight
+          Your turn in a fight
           <span className="primer-ref">Chapter Five</span>
         </h2>
 
+        <ol className="rule-list rule-list-numbered">
+          {TURN.map((step) => (
+            <li key={step}>
+              <Line text={step} />
+            </li>
+          ))}
+        </ol>
+
         <ul className="rule-list">
           <li>
-            <Line text="Everyone rolls Initiative: **2d6 + Initiative**, the same throw as everything else." />
+            <Line text="An attack is rolled against the target's **Defense**. A spell that is not an attack is rolled against its **Reflex** or **Grit**. There is no third number." />
           </li>
           <li>
-            <Line text="Your **six Action Points** come back at the start of every one of your turns. Move costs 1, most things cost 2 and getting into your pack costs 4." />
+            <Line text="Damage lands in one order: **Armor** comes off each hit, then **Shield** absorbs what it can, then **Health** takes the rest." />
           </li>
           <li>
-            <Line text="An attack is rolled against the target's **Defense**. A spell that is not swung names **Reflex** or **Grit** instead. There is no third number." />
-          </li>
-          <li>
-            <Line text="**Reaction Points** are earned during the round and spent on somebody else's turn. One reaction per action, and it resolves before the action does." />
-          </li>
-          <li>
-            <Line text="Damage lands in one order: **Armor** comes off each hit, then **Shield** soaks what it can, then **Health** takes the rest." />
-          </li>
-          <li>
-            <Line text="At 0 Health you are bleeding out and still on the table. A second full bar of damage past that is death." />
+            <Line text="At 0 Health you are bleeding out: unconscious, but alive and still on the table. Another full bar of damage past zero is death. Stabilize stops the bleeding." />
           </li>
         </ul>
       </section>
 
       <section className="primer-block">
         <h2 className="primer-head">
-          Stopping for the night
+          Resting
           <span className="primer-ref">Chapter Eight</span>
         </h2>
 
         <p className="rule-text">
-          Nothing heals on its own. Health comes back from a rest, a card or a flask, and both
-          rests are paid for in Supplies.
+          Nothing heals on its own. Health comes back from a rest, a healing card or a potion, and
+          both rests are paid for in Supplies.
         </p>
 
         <div className="rule-table-wrap">
@@ -242,23 +275,23 @@ export default function Primer({ character, onGo }) {
               </tr>
               <tr>
                 <td className="rule-cell-lead">Health</td>
-                <td>half your maximum</td>
-                <td>all of it</td>
+                <td>Half your maximum back</td>
+                <td>All of it</td>
               </tr>
               <tr>
                 <td className="rule-cell-lead">Willpower</td>
-                <td>nothing</td>
-                <td>all of it</td>
+                <td>Nothing</td>
+                <td>All of it</td>
               </tr>
               <tr>
                 <td className="rule-cell-lead">Shield</td>
-                <td>left standing</td>
-                <td>all of it gone</td>
+                <td>Left in place</td>
+                <td>All of it removed</td>
               </tr>
               <tr>
                 <td className="rule-cell-lead">Actions</td>
-                <td>none</td>
-                <td>one</td>
+                <td>None</td>
+                <td>One</td>
               </tr>
             </tbody>
           </table>
@@ -273,9 +306,9 @@ export default function Primer({ character, onGo }) {
           </h2>
 
           <p className="rule-text">
-            A card says what it costs, what it reaches and what happens, and the numbers on it
-            are already worked out. This one is printed for a level {character.level} character
-            with a Mind of {character.mind}.
+            A card says what it costs, what it reaches and what happens, and the numbers on it are
+            already worked out for the character holding it. This one is printed for a level{' '}
+            {character.level} character with a Mind of {character.mind}.
           </p>
 
           <ul className="anatomy">
@@ -299,6 +332,27 @@ export default function Primer({ character, onGo }) {
         </div>
       </section>
 
+      <section className="primer-block">
+        <h2 className="primer-head">
+          Running the game
+          <span className="primer-ref">Chapter Eleven</span>
+        </h2>
+
+        <p className="rule-text">
+          The Game Master describes the world, sets difficulties from the ladder, plays the
+          creatures and hands out experience. On the website, a campaign seats the players at one
+          table: their sheets stream to a shared overview, every roll and every card played is
+          written to the table log, and the Encounters tab builds fights from the bestiary, rolls
+          initiative, runs the turn order and lands the damage. Chapter Eleven walks through all of
+          it.
+        </p>
+        <div className="primer-next-buttons" style={{ justifyContent: 'flex-start' }}>
+          <button type="button" className="btn btn-purple-outline" onClick={() => onGo('rulebook', 'chapter-eleven')}>
+            Read Chapter Eleven
+          </button>
+        </div>
+      </section>
+
       {onePage && (
         <section className="primer-block one-page">
           <h2 className="primer-head">
@@ -306,15 +360,15 @@ export default function Primer({ character, onGo }) {
             <span className="primer-ref">Appendix A</span>
           </h2>
           <p className="rule-text">
-            The reference a Game Master keeps beside them, and the one part of this page that is
-            the book itself rather than a summary of it.
+            The quick reference a Game Master keeps beside them. This is the book itself, not a
+            summary of it.
           </p>
           <Prose blocks={onePage.blocks} />
         </section>
       )}
 
       <section className="primer-next">
-        <p>That is enough to sit down and play. The rest is reference.</p>
+        <p>That is enough to play a first session. The rulebook has everything else.</p>
         <div className="primer-next-buttons">
           <button type="button" className="btn btn-copper" onClick={() => onGo('rulebook')}>
             Read the rulebook
