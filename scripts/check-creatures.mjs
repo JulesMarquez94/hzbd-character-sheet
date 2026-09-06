@@ -692,20 +692,25 @@ section('the slot ladder says the same thing in both places');
 
   for (const [tier, slots] of Object.entries(CREATURE_SLOTS)) {
     const said = new RegExp(`when '${tier}'\\s+then (\\d+)`).exec(body);
-    /* Free and friend are the `else 0` branch rather than a case of their own,
-       which is the honest way to write two zeros. */
+    /* Free is the `else 0` branch rather than a case of its own, which is the
+       honest way to write the one zero left. */
     const want = said ? Number(said[1]) : 0;
     check(`${tier} has the same cap in the schema`, want, slots);
   }
 
-  check('and nothing but premium and admin may forge at all', Object.entries(CREATURE_SLOTS)
+  check('and nothing below premium may forge at all', Object.entries(CREATURE_SLOTS)
     .filter(([, slots]) => slots > 0)
-    .map(([tier]) => tier), ['premium', 'admin']);
+    .map(([tier]) => tier), ['premium', 'friend', 'admin']);
   check('a free account cannot', canForgeCreature('free'), false);
   check('a premium one can', canForgeCreature('premium'), true);
-  /* The one place on tiers.js where the ladder does not hold, kept honest here
-     so nobody "fixes" it without reading why. See CREATURE_SLOTS. */
-  check('and a friend, deliberately, cannot', canForgeCreature('friend'), false);
+  /* Until 2026-09-06 this asserted the opposite, because `friend` was a rung
+     above `premium` that got fewer slots than it: the one place on tiers.js
+     where the ladder did not hold. Jules's ruling that a friend account is a
+     premium account given rather than bought retired the exception, so the
+     assertion is now that the two are identical rather than that one is
+     deliberately worse. */
+  check('and a friend gets exactly what premium gets', CREATURE_SLOTS.friend, CREATURE_SLOTS.premium);
+  check('so a friend can forge too', canForgeCreature('friend'), true);
   check('publishing to the shared shelf is an admin', [can('premium', 'forgeCodex'), can('admin', 'forgeCodex')], [false, true]);
 }
 

@@ -75,7 +75,7 @@ export default function CharacterSheet({ creating = false }) {
      write. See src/lib/creationPaths.js. */
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, isAdmin, tier, loading: authLoading } = useAuth();
 
   /* A character kept in this browser rather than in an account. The id says so,
      and it changes three things here: whoever holds the device may edit it, it
@@ -353,7 +353,7 @@ export default function CharacterSheet({ creating = false }) {
   async function keepToAccount() {
     clearTimeout(timerRef.current);
     await flush();
-    const kept = await adoptCharacter(id, user?.id);
+    const kept = await adoptCharacter(id, user?.id, tier);
     navigate(`/characters/${kept.id}`, { replace: true });
   }
 

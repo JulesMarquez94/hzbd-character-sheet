@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
 import { AuthContext } from './auth-context.js';
+import { subscribeToTable } from '../lib/realtime.js';
 import { can, getTier, normalizeTier, showsArt } from '../lib/tiers.js';
 
 export function AuthProvider({ children }) {
@@ -33,6 +34,23 @@ export function AuthProvider({ children }) {
 
   const userId = session?.user?.id;
 
+  /**
+   * The profile row: the display name, and the tier.
+   *
+   * Exposed as well as called, because the return page from a checkout wants to
+   * ask again the moment it is told the payment landed.
+   */
+  const refreshProfile = useCallback(async () => {
+    if (!isSupabaseConfigured || !userId) return null;
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, username, role')
+      .eq('id', userId)
+      .maybeSingle();
+    setProfile(data ?? null);
+    return data ?? null;
+  }, [userId]);
+
   // Pull the display name once we know who is signed in.
   useEffect(() => {
     if (!isSupabaseConfigured || !userId) return;
@@ -51,6 +69,33 @@ export function AuthProvider({ children }) {
       active = false;
     };
   }, [userId]);
+
+  /**
+   * And then watch it.
+   *
+   * A tier is not written by anything this browser did: the Stripe webhook
+   * writes it, as the service role, a second or two after the checkout page
+   * redirects (see supabase/functions/stripe-webhook). Without this the badge
+   * would say Free until the next reload, and the campaign the payment just
+   * bought would still refuse to be created.
+   *
+   * One row, this account's, and RLS is what makes that true rather than the
+   * filter: "profiles: read own" means the socket would not deliver anybody
+   * else's even if the filter were wrong. A reconnect refetches, because
+   * messages sent while a laptop was asleep are simply gone.
+   */
+  useEffect(() => {
+    if (!isSupabaseConfigured || !userId) return undefined;
+
+    return subscribeToTable({
+      table: 'profiles',
+      filter: `id=eq.${userId}`,
+      onChange: (payload) => {
+        if (payload.new?.id === userId) setProfile(payload.new);
+      },
+      onResync: refreshProfile,
+    });
+  }, [userId, refreshProfile]);
 
   const value = useMemo(() => {
     const user = session?.user ?? null;
@@ -72,6 +117,10 @@ export function AuthProvider({ children }) {
 
       tier,
       tierInfo: getTier(tier),
+      /* Ask the database for the tier again. The checkout return page calls it
+         once the payment is confirmed, so the page is right even if the
+         Realtime message was the one that got away. */
+      refreshProfile,
       /* What this account may do. UI only: every capability that guards
          something real has a policy behind it, and the policy is what
          enforces it. */
@@ -121,7 +170,7 @@ export function AuthProvider({ children }) {
         });
       },
     };
-  }, [session, profile, loading]);
+  }, [session, profile, loading, refreshProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

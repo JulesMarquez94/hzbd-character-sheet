@@ -1,5 +1,6 @@
 import { requireSupabase } from './supabaseClient.js';
 import { BLANK_CHARACTER } from './characterModel.js';
+import { characterSlots } from './tiers.js';
 import {
   createLocalCharacter,
   deleteLocalCharacter,
@@ -70,12 +71,17 @@ async function withMissingColumnRetry(run, row) {
  */
 
 /**
- * How many characters an account holds. Interface only: nothing in the schema
- * enforces it, so the dashboard's create card and adoptCharacter below are the
- * two places it is checked, and they check the same number. The device's own
- * ceiling is LOCAL_CHARACTER_SLOTS in localCharacters.js.
+ * How many characters an account holds, which is a number per tier rather than
+ * one number: three free and twenty-five paid. `characterSlots` in
+ * src/lib/tiers.js is the table, `character_slots` in supabase/schema.sql is
+ * the same table again behind a trigger, and the trigger is what enforces it.
+ *
+ * This used to be a bare 6 checked by the interface alone, which was honest
+ * while the number was the same for everybody and stopped being honest the
+ * moment one tier bought a bigger vault. The device's own ceiling is
+ * LOCAL_CHARACTER_SLOTS in localCharacters.js and has nothing to do with a tier.
  */
-export const CHARACTER_SLOTS = 6;
+export { characterSlots };
 
 export async function listCharacters(userId) {
   const sb = requireSupabase();
@@ -147,17 +153,22 @@ export async function deleteCharacter(id) {
  *
  * The vault's ceiling is checked here rather than by each caller, because the
  * sheet offers this too and has no list of the account's characters to count.
+ * `tier` is the account's rung, because the ceiling is no longer one number.
+ * It defaults to the smallest vault there is: a caller that forgets to pass one
+ * gets a refusal it can read rather than an overfilled vault, and the trigger in
+ * the database would have refused it anyway.
  */
-export async function adoptCharacter(localId, userId) {
+export async function adoptCharacter(localId, userId, tier = 'free') {
   if (!isLocalId(localId)) throw new Error('That character is already saved to an account.');
   if (!userId) throw new Error('Sign in first, so there is an account to save the character to.');
 
   const local = getLocalCharacter(localId);
 
+  const slots = characterSlots(tier);
   const held = await listCharacters(userId);
-  if (held.length >= CHARACTER_SLOTS) {
+  if (held.length >= slots) {
     throw new Error(
-      `Your vault is full at ${CHARACTER_SLOTS} characters. Delete one there before saving this one.`
+      `Your vault is full at ${slots} characters. Delete one there before saving this one.`
     );
   }
 

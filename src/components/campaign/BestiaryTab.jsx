@@ -5,7 +5,8 @@ import EnemyBlock from './EnemyBlock.jsx';
 import CreatureForge from './CreatureForge.jsx';
 import { RANKS, bestiary, getRank } from '../../lib/creatures.js';
 import { previewFoe } from '../../lib/encounters.js';
-import { creatureSlots } from '../../lib/tiers.js';
+import { CREATURE_SLOTS, creatureSlots } from '../../lib/tiers.js';
+import PremiumNote from '../PremiumNote.jsx';
 
 const STILL = () => {};
 
@@ -193,6 +194,17 @@ export default function BestiaryTab({
           </p>
         )}
       </div>
+
+      {/* The forge is the one thing on this tab a free account cannot reach at
+          all, so it is the one place worth saying why the button is missing.
+          At any other tier this renders nothing. */}
+      {slots === 0 && (
+        <PremiumNote>
+          Creatures of your own are a Premium thing. Build an enemy out of the same numbers the
+          printed ones use, keep up to {CREATURE_SLOTS.premium} of them and lay them in your own
+          encounters.
+        </PremiumNote>
+      )}
 
       <div className="card-brief-wall foe-brief-wall">
         {creatures.map((creature) => (

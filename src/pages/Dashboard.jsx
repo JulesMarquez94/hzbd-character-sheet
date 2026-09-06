@@ -4,10 +4,12 @@ import { useAuth } from '../context/auth-context.js';
 import CreationPathPick from '../components/CreationPathPick.jsx';
 import KeepCharacter from '../components/KeepCharacter.jsx';
 import Modal from '../components/Modal.jsx';
+import PremiumNote from '../components/PremiumNote.jsx';
+import { CHARACTER_SLOTS } from '../lib/tiers.js';
 import { SkullIcon } from '../components/sheet/parts.jsx';
 import {
-  CHARACTER_SLOTS,
   adoptCharacter,
+  characterSlots,
   createCharacter,
   deleteCharacter,
   listCharacters,
@@ -184,7 +186,7 @@ function DeviceNotice() {
 }
 
 export default function Dashboard() {
-  const { user, displayName, loading: authLoading } = useAuth();
+  const { user, displayName, tier, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   /* The account's shelf, as `{ userId, rows }`: a fetch for one account can
@@ -289,7 +291,7 @@ export default function Dashboard() {
 
   /** The move across, from the card's button. KeepCharacter shows the failure. */
   async function handleKeep() {
-    const kept = await adoptCharacter(keeping.id, userId);
+    const kept = await adoptCharacter(keeping.id, userId, tier);
     setLocal((prev) => prev.filter((c) => c.id !== keeping.id));
     setVault((prev) => (prev ? { ...prev, rows: [...prev.rows, kept] } : prev));
     setKeeping(null);
@@ -298,9 +300,12 @@ export default function Dashboard() {
   /* Whose shelf the grid shows: the account's when there is one, the device's
      when there is not. Signed in, the device's is a second section below. */
   const mine = user ? characters : local;
-  const slots = user ? CHARACTER_SLOTS : LOCAL_CHARACTER_SLOTS;
+  /* The account's ceiling is its tier's; the device's is its own and has
+     nothing to do with a tier. See characterSlots in src/lib/tiers.js. */
+  const vaultSlots = characterSlots(tier);
+  const slots = user ? vaultSlots : LOCAL_CHARACTER_SLOTS;
   const atLimit = mine.length >= slots;
-  const vaultFull = characters.length >= CHARACTER_SLOTS;
+  const vaultFull = characters.length >= vaultSlots;
 
   return (
     <main className="container container-wide page">
@@ -338,6 +343,13 @@ export default function Dashboard() {
             </button>
           )}
         </div>
+      )}
+
+      {!loading && user && atLimit && (
+        <PremiumNote>
+          Your vault is full at {slots} characters. Delete one to make room, or keep{' '}
+          {CHARACTER_SLOTS.premium} at once.
+        </PremiumNote>
       )}
 
       {!loading && mine.length === 0 && (

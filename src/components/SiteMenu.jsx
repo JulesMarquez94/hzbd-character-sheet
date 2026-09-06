@@ -86,6 +86,9 @@ export default function SiteMenu() {
               <NavLink to="/account" className="dropdown-link">
                 Account Settings
               </NavLink>
+              <NavLink to="/premium" className="dropdown-link">
+                Premium
+              </NavLink>
               <div className="dropdown-divider" />
               <button type="button" className="dropdown-link logout" onClick={handleSignOut}>
                 Log Out
@@ -95,6 +98,9 @@ export default function SiteMenu() {
             <>
               <NavLink to="/dashboard" className="dropdown-link">
                 Characters
+              </NavLink>
+              <NavLink to="/premium" className="dropdown-link">
+                Premium
               </NavLink>
               <div className="dropdown-divider" />
               <Link to="/login" className="dropdown-link">

@@ -18,6 +18,7 @@ const Rules = lazy(() => import('./pages/Rules.jsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const CharacterSheet = lazy(() => import('./pages/CharacterSheet.jsx'));
 const Account = lazy(() => import('./pages/Account.jsx'));
+const Premium = lazy(() => import('./pages/Premium.jsx'));
 const Campaigns = lazy(() => import('./pages/Campaigns.jsx'));
 const CampaignPage = lazy(() => import('./pages/CampaignPage.jsx'));
 
@@ -79,6 +80,12 @@ export default function App() {
             {/* Where the rules used to live. Links to it are out in the world
                 and there is nothing at the old address any more. */}
             <Route path="/codex" element={<Navigate to="/rules" replace />} />
+
+            {/* The shop window, and open to everybody on purpose: somebody has
+                to be able to read what a subscription buys before deciding
+                whether to make an account. Stripe sends the player back here
+                after a checkout, with the session on the query string. */}
+            <Route path="/premium" element={<Premium />} />
 
             {/* Open to everybody. Signed in it is your account's characters;
                 signed out it is the ones kept on this device, and the way to

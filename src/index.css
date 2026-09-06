@@ -838,3 +838,22 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0.45;
     cursor: not-allowed;
 }
+
+/* ---------- THE ONE LINE THAT MENTIONS MONEY ----------
+   Rendered by src/components/PremiumNote.jsx, and only where a ceiling has just
+   been reached. Global rather than in Premium.css because that file is lazy
+   with the Premium page, and this line appears on pages that never load it. */
+.premium-note {
+  margin: 0.85rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  border-left: 2px solid var(--level-amber);
+  padding-left: 0.7rem;
+  max-width: 62ch;
+}
+
+.premium-note a {
+  color: var(--level-amber);
+  white-space: nowrap;
+}

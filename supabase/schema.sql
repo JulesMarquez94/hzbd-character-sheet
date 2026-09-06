@@ -392,6 +392,58 @@ create policy "characters: owner or admin delete" on public.characters
   for delete using (auth.uid() = user_id or public.is_admin());
 
 -- ----------------------------------------------------------------------------
+--  How many characters each tier may keep in its vault.
+--
+--  The third ceiling, and the last of the three to get a guard. It was a bare
+--  constant in src/lib/api.js until 2026-09-06 and the interface was the only
+--  thing that counted, which was fine while the number was the same for
+--  everybody and stopped being fine the moment one tier bought a bigger vault.
+--  characterSlots in src/lib/tiers.js is the twin; this is what enforces it.
+--
+--  Jules, 2026-09-06: three free, twenty-five paid.
+--
+--  The device shelf is not in here and never will be: a character kept in a
+--  browser has no row and no account, and LOCAL_CHARACTER_SLOTS in
+--  src/lib/localCharacters.js is its own ceiling.
+-- ----------------------------------------------------------------------------
+create or replace function public.character_slots(tier text)
+returns int
+language sql immutable
+as $$
+  select case tier
+           when 'admin'   then 50
+           when 'friend'  then 25
+           when 'premium' then 25
+           else 3
+         end;
+$$;
+
+create or replace function public.guard_character_slots()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  -- The SQL editor and the service role pass, the way every other guard here
+  -- lets them.
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  if (select count(*) from public.characters c where c.user_id = new.user_id)
+     >= public.character_slots(public.account_tier()) then
+    raise exception 'Every character slot on this account is full.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists characters_guard_slots on public.characters;
+create trigger characters_guard_slots
+  before insert on public.characters
+  for each row execute function public.guard_character_slots();
+
+-- ----------------------------------------------------------------------------
 --  ABILITIES  (the cards)
 -- ----------------------------------------------------------------------------
 create table if not exists public.abilities (
@@ -575,6 +627,8 @@ $$;
 --  src/lib/tiers.js (campaignSlots), which is what the interface offers;
 --  this pair is what actually enforces it, because the client is not trusted
 --  with a ceiling. Counted per DM on insert.
+--
+--  Jules, 2026-09-06: one campaign free, five paid.
 -- ----------------------------------------------------------------------------
 create or replace function public.campaign_slots(tier text)
 returns int
@@ -582,8 +636,8 @@ language sql immutable
 as $$
   select case tier
            when 'admin'   then 20
-           when 'friend'  then 10
-           when 'premium' then 10
+           when 'friend'  then 5
+           when 'premium' then 5
            else 1
          end;
 $$;
@@ -1080,12 +1134,13 @@ alter table public.custom_creatures enable row level security;
 --  How many creatures of their own each tier may keep. CREATURE_SLOTS in
 --  src/lib/tiers.js is the same table again, and that one is only what the
 --  interface offers: this pair is what enforces it. Change one and change the
---  other.
+--  other. Only 'codex' rows escape the count, because those are an admin's
+--  publications rather than their own shelf.
 --
---  Note that this ladder is not monotonic and that is deliberate: 'friend' sits
---  above 'premium' on the tier ladder and gets no slots, on the instruction
---  quoted above. "For now" is Jules's word. Only 'codex' rows escape the count,
---  because those are an admin's publications rather than their own shelf.
+--  Jules, 2026-09-06: "For enemies and other creation have like 50", and a
+--  friend account is a premium account that was given rather than bought. So
+--  the exception that used to sit here is gone: 'friend' now matches 'premium'
+--  on every ceiling, and the ladder is monotonic again.
 -- ----------------------------------------------------------------------------
 create or replace function public.creature_slots(tier text)
 returns int
@@ -1093,7 +1148,8 @@ language sql immutable
 as $$
   select case tier
            when 'admin'   then 60
-           when 'premium' then 6
+           when 'friend'  then 50
+           when 'premium' then 50
            else 0
          end;
 $$;
@@ -1190,6 +1246,211 @@ drop policy if exists "custom_creatures: owner delete" on public.custom_creature
 create policy "custom_creatures: owner delete" on public.custom_creatures
   for delete using (user_id = auth.uid() or public.is_admin());
 
+-- ============================================================================
+--  BILLING
+--
+--  What Stripe knows, mirrored here, and nothing else.
+--
+--  Three tables and one function, and the shape of it is one rule: **the
+--  browser never writes any of this and never decides its own tier.** A tier is
+--  derived from a subscription, a subscription is written only by the webhook
+--  handler running as the service role, and the webhook only believes what it
+--  re-fetched from Stripe's own API. Every table below is readable by its owner
+--  and writable by nobody, which in RLS is said by giving it a select policy
+--  and no others.
+--
+--  The hook this plugs into already existed: guard_account_tier() above refuses
+--  any change to profiles.role unless the caller is an admin or has no
+--  auth.uid() at all, which is exactly the service role. So the whole payment
+--  system is the handler plus these tables, and not one line of the tier ladder
+--  had to move to make room for it.
+--
+--  See supabase/functions/stripe-webhook/index.ts for the other half.
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+--  Which Stripe customer is which account.
+--
+--  One row per account that has ever reached the checkout, written the first
+--  time they do. It is the join between two id spaces, and it is what lets an
+--  event that names only a customer (an invoice, a card that expired) find the
+--  account it belongs to.
+-- ----------------------------------------------------------------------------
+create table if not exists public.billing_customers (
+  user_id              uuid primary key references auth.users on delete cascade,
+  -- 'stripe' today. Here so that a second processor is a value rather than a
+  -- migration, the same trade campaign_events.kind makes.
+  provider             text not null default 'stripe',
+  provider_customer_id text not null unique,
+  created_at           timestamptz not null default now()
+);
+
+alter table public.billing_customers enable row level security;
+
+-- ----------------------------------------------------------------------------
+--  The subscriptions themselves.
+--
+--  A mirror, not a ledger: one row per Stripe subscription, overwritten in
+--  place every time Stripe says something about it. Nothing here is arithmetic
+--  and nothing here is the truth. The truth is in Stripe, and this is the copy
+--  the sheet can read without a network call.
+--
+--  `status` is Stripe's own word, kept as text rather than an enum so that a
+--  status Stripe invents later is a deploy of the app rather than a migration.
+--  The ones that mean "you have paid for this" are listed once, in
+--  apply_entitlements below, and nowhere else.
+-- ----------------------------------------------------------------------------
+create table if not exists public.subscriptions (
+  id                   text primary key,            -- sub_... , Stripe's id
+  user_id              uuid not null references auth.users on delete cascade,
+  provider             text not null default 'stripe',
+
+  status               text not null,               -- active | trialing | past_due | canceled | unpaid | incomplete | ...
+  price_id             text,
+  -- Whether it is set to stop at the end of the paid period. A subscription
+  -- can be `active` and already cancelled, and the account page has to be able
+  -- to say so rather than promising a renewal that is not coming.
+  cancel_at_period_end boolean not null default false,
+  current_period_end   timestamptz,
+  canceled_at          timestamptz,
+  ended_at             timestamptz,
+
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+
+create index if not exists subscriptions_user_id_idx on public.subscriptions (user_id);
+
+alter table public.subscriptions enable row level security;
+
+-- ----------------------------------------------------------------------------
+--  Every webhook event this database has already acted on.
+--
+--  The idempotency key, and the whole of the defence against a webhook that
+--  arrives twice. Stripe retries for up to three days and makes no promise
+--  about order or uniqueness, so the handler inserts the event id here *before*
+--  it does anything, and a unique violation means "already done" rather than an
+--  error worth reporting.
+--
+--  Read by nobody. It has no policy at all, which under RLS means the anon and
+--  authenticated roles cannot see a row of it.
+-- ----------------------------------------------------------------------------
+create table if not exists public.billing_events (
+  id          text primary key,                     -- evt_... , Stripe's id
+  provider    text not null default 'stripe',
+  type        text not null,
+  received_at timestamptz not null default now()
+);
+
+create index if not exists billing_events_age_idx on public.billing_events (received_at);
+
+alter table public.billing_events enable row level security;
+
+-- Your own row, and only ever to read it. There is deliberately no insert,
+-- update or delete policy on any of the three: RLS denies what it does not
+-- allow, so this is how "the browser cannot write its own billing" is said.
+drop policy if exists "billing_customers: read own" on public.billing_customers;
+create policy "billing_customers: read own" on public.billing_customers
+  for select using ((select auth.uid()) = user_id);
+
+drop policy if exists "subscriptions: read own" on public.subscriptions;
+create policy "subscriptions: read own" on public.subscriptions
+  for select using ((select auth.uid()) = user_id);
+
+-- ----------------------------------------------------------------------------
+--  Ninety days of events is plenty: Stripe stops retrying after three, and the
+--  rest is for reading back when something looked wrong. Swept on insert on the
+--  same one-in-fifty sample the campaign log uses, because there is still no
+--  scheduler here.
+-- ----------------------------------------------------------------------------
+create or replace function public.trim_billing_events()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if random() < 0.02 then
+    delete from public.billing_events e where e.received_at < now() - interval '90 days';
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists billing_events_trim on public.billing_events;
+create trigger billing_events_trim
+  after insert on public.billing_events
+  for each row execute function public.trim_billing_events();
+
+-- ----------------------------------------------------------------------------
+--  THE TIER, DERIVED
+--
+--  The one place a subscription becomes an account tier. Called by the webhook
+--  handler after every write, as the service role, and callable by nothing
+--  else.
+--
+--  Three rules, and each of them is a decision rather than a detail:
+--
+--  1. **A hand-given tier is never touched.** 'friend' and 'admin' are given by
+--     a person, in the SQL editor, and a lapsed card must not take them away.
+--     A friend who also subscribes stays a friend, which is the right way round:
+--     friend is the higher rung.
+--  2. **past_due still counts as paid.** A card that failed is a card that
+--     Stripe is still retrying, for up to two weeks. Locking somebody out of
+--     their campaigns on the first failed retry would be a worse bug than a
+--     fortnight of unpaid access. Stripe cancels or marks the subscription
+--     unpaid when the retries run out, and that arrives here as an event.
+--  3. **Anything else is free.** Including no subscription at all, which is
+--     what a first-time visitor and a cancelled account have in common.
+--
+--  It reads the *best* subscription rather than the newest, so somebody who
+--  resubscribed while an old cancelled row was still on the table gets the
+--  answer they paid for.
+-- ----------------------------------------------------------------------------
+create or replace function public.apply_entitlements(p_user uuid)
+returns text
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_status text;
+  v_role   text;
+  v_next   text;
+begin
+  select role into v_role from public.profiles where id = p_user;
+  if v_role is null then
+    raise exception 'No profile exists for that account.';
+  end if;
+
+  -- Given rather than bought. Nothing about a card changes it.
+  if v_role in ('friend', 'admin') then
+    return v_role;
+  end if;
+
+  select s.status into v_status
+    from public.subscriptions s
+   where s.user_id = p_user
+   order by (s.status in ('active', 'trialing', 'past_due')) desc, s.updated_at desc
+   limit 1;
+
+  v_next := case
+              when v_status in ('active', 'trialing', 'past_due') then 'premium'
+              else 'free'
+            end;
+
+  update public.profiles set role = v_next where id = p_user;
+  return v_next;
+end;
+$$;
+
+-- Reachable from the service role and from the SQL editor, and from nowhere a
+-- browser can get to. Without this revoke it would be one supabase.rpc() call
+-- away from being a self-service upgrade button.
+revoke all on function public.apply_entitlements(uuid) from public, anon, authenticated;
+grant execute on function public.apply_entitlements(uuid) to service_role;
+
+-- The ceilings are the same: nothing that can be reached with an anon key
+-- should be able to answer "what may I do" with a number the client chose.
+-- These are read by policies and triggers, which run as their definer.
+revoke all on function public.character_slots(text) from anon, authenticated;
+revoke all on function public.campaign_slots(text)  from anon, authenticated;
+revoke all on function public.creature_slots(text)  from anon, authenticated;
+
 -- ----------------------------------------------------------------------------
 --  updated_at housekeeping
 -- ----------------------------------------------------------------------------
@@ -1221,6 +1482,14 @@ create trigger custom_creatures_touch_updated_at
   before update on public.custom_creatures
   for each row execute function public.touch_updated_at();
 
+-- apply_entitlements orders on this one, so a subscription that is rewritten
+-- without changing a single column still has to move it. It does: the webhook
+-- upserts the whole row every time.
+drop trigger if exists subscriptions_touch_updated_at on public.subscriptions;
+create trigger subscriptions_touch_updated_at
+  before update on public.subscriptions
+  for each row execute function public.touch_updated_at();
+
 -- ----------------------------------------------------------------------------
 --  REALTIME
 --  Lets viewers see a sheet update without reloading. Realtime still honours
@@ -1245,6 +1514,12 @@ alter table public.encounters       replica identity full;
 -- And the creatures a table forged, so an edit to one reaches a bestiary open
 -- elsewhere rather than waiting for a reload.
 alter table public.custom_creatures replica identity full;
+-- And your own profile row, which is how a tier bought on Stripe's page reaches
+-- the tab you left open. The webhook writes profiles.role a second or two after
+-- the checkout redirects; without this the badge would say Free until a reload.
+-- "profiles: read own" is what keeps it yours: Realtime honours RLS, so nobody
+-- is subscribed to anybody else's tier.
+alter table public.profiles         replica identity full;
 
 do $$
 declare
@@ -1252,7 +1527,7 @@ declare
 begin
   foreach t in array array['characters', 'abilities', 'inventory_items',
                           'campaigns', 'campaign_members', 'campaign_events',
-                          'encounters', 'custom_creatures'] loop
+                          'encounters', 'custom_creatures', 'profiles'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

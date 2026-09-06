@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import Modal from '../components/Modal.jsx';
+import PremiumNote from '../components/PremiumNote.jsx';
 import {
   characterIdFromLink,
   createCampaign,
@@ -12,7 +13,7 @@ import {
 } from '../lib/campaigns.js';
 import { getCharacter, listCharacters } from '../lib/api.js';
 import { initialsOf, levelForXp } from '../lib/characterModel.js';
-import { campaignSlots } from '../lib/tiers.js';
+import { CAMPAIGN_SLOTS, campaignSlots } from '../lib/tiers.js';
 import './Campaigns.css';
 
 /**
@@ -165,6 +166,14 @@ export default function Campaigns() {
               </button>
             )}
           </div>
+
+          {atLimit && (
+            <PremiumNote>
+              Every campaign slot is full at {slots}. Premium runs{' '}
+              {CAMPAIGN_SLOTS.premium} tables at once, and sitting at somebody else&rsquo;s is free
+              either way.
+            </PremiumNote>
+          )}
 
           <h2 className="section-title camp-section-gap">
             <span>Campaigns You Play In</span>

@@ -21,3 +21,40 @@
 # and the old one can be kept forever.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# ---------------------------------------------------------------------------
+# Security headers, on every response.
+#
+# Added when the site started taking money. None of it is about payments
+# directly: no card field is ever served from this origin (Stripe's hosted
+# checkout is a redirect, not an iframe), so the job here is to make the pages
+# around it harder to turn against a signed-in player.
+#
+# The Content Security Policy is the load-bearing one, and it is written as a
+# list of the only four places this site legitimately talks to:
+#
+#   'self'                     the app itself, fingerprinted by Vite
+#   fonts.googleapis.com       the stylesheet loaded in index.html
+#   fonts.gstatic.com          the font files that stylesheet pulls
+#   the Supabase project       REST, Auth, Edge Functions and the Realtime
+#                              socket, which is why wss: is listed too
+#
+# REPLACE <your-project-ref> BELOW with the ref from VITE_SUPABASE_URL, in both
+# places. A wrong ref here does not fail loudly: it fails as a site that cannot
+# reach its own database, with the reason only in the browser console.
+#
+# `img-src` stays open to any https host on purpose. Portraits, campaign
+# thumbnails and card art are pasted links to wherever the player keeps them,
+# and narrowing this would break every sheet that has a picture on it.
+#
+# 'unsafe-inline' in style-src is what React's inline `style` attributes need,
+# and the sheet uses them heavily for the block grid. It is the one concession
+# in here.
+/*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), payment=()
+  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://<your-project-ref>.supabase.co wss://<your-project-ref>.supabase.co; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests

@@ -108,6 +108,15 @@ export default function Header() {
                 </NavLink>
               </li>
             )}
+            {/* Shown to everybody, including accounts that already have it:
+                the page is where a subscription is managed as well as where it
+                is bought, and a link that disappears once you pay is a link
+                people write in asking about. */}
+            <li>
+              <NavLink to="/premium" className="nav-link">
+                Premium
+              </NavLink>
+            </li>
           </ul>
 
           {user ? (
@@ -134,6 +143,9 @@ export default function Header() {
                   </Link>
                   <Link to="/account" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                     Account Settings
+                  </Link>
+                  <Link to="/premium" className="dropdown-link" onClick={() => setMenuOpen(false)}>
+                    Premium
                   </Link>
                   <div className="dropdown-divider" />
                   <button type="button" className="dropdown-link logout" onClick={handleSignOut}>

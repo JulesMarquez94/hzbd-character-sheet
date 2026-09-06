@@ -59,7 +59,8 @@ Open http://localhost:5173.
 | `/dashboard` | Your characters · dossier cards, create, delete. Signed out, the characters kept on this device |
 | `/characters/:id` | The character sheet · **public**, editable only by owner or admin |
 | `/characters/:id/new` | Making a character · four ways in, and `?path=` says which one |
-| `/account` | Display name and password |
+| `/account` | Display name, password and the subscription |
+| `/premium` | What Premium adds, and where it is bought. Open signed out |
 
 ### Who can do what
 
@@ -85,6 +86,91 @@ There is deliberately no way to grant admin from inside the app.
 
 Your **dashboard** still lists only your own characters. Public read doesn't mean discoverable,
 it means shareable by link.
+
+### What an account is worth
+
+Four tiers, on a ladder, in `profiles.role`. Every tier has everything the one below it has.
+
+| | Characters | Campaigns you run | Creatures you forge | Physics dice | Card art |
+| --- | --- | --- | --- | --- | --- |
+| **Free** | 3 | 1 | none | flat table | empty plates |
+| **Premium** | 25 | 5 | 50 | ✅ | empty plates |
+| **Friend** | 25 | 5 | 50 | ✅ | ✅ |
+| **Admin** | 50 | 20 | 60 | ✅ | ✅ |
+
+Premium is two euros a month through Stripe. **Friend** is the same thing given rather than sold,
+with the card art switched on as well, and it is handed out by hand from the SQL editor:
+
+```sql
+update public.profiles set role = 'friend'
+where id = (select id from auth.users where email = 'they@example.com');
+```
+
+Card art sits at `friend` rather than at `premium` on purpose. What is sold has to be something
+that will still be there next month, and the codex is still being drawn. Move
+`CAPABILITIES.art` in `src/lib/tiers.js` to `'premium'` when it is finished.
+
+Three of those numbers are ceilings rather than capabilities, and all three are enforced twice:
+`src/lib/tiers.js` is what the interface offers, and a trigger in `supabase/schema.sql` is what
+actually refuses the insert. **Change one and change the other.** The checkers catch it for
+creatures; nothing catches it for the other two.
+
+Every ceiling is checked on insert only, so a lapsed subscription takes nothing away. An account
+that held five campaigns keeps all five, open and editable, and simply cannot start a sixth until
+it is back under the free ceiling. Nothing anybody made is ever deleted for not paying.
+
+### Taking money
+
+The app is a static build with no server of its own, so billing is four Supabase Edge Functions in
+`supabase/functions/` and nothing else. The shape of it is one rule: **the browser never writes a
+tier and never decides one.**
+
+1. The player presses Go Premium. `create-checkout-session` reads who they are from their verified
+   token, looks the plan up in an allowlist and hands back a Stripe-hosted checkout URL.
+2. They pay on Stripe's own domain. No card field is ever served from this origin.
+3. Stripe posts events to `stripe-webhook`, which verifies the signature, records the event id so a
+   retry cannot double-count, re-reads the customer's subscriptions from Stripe and writes them to
+   `public.subscriptions`.
+4. `public.apply_entitlements` derives `profiles.role` from that. It is the only thing that writes
+   a tier, it never touches a `friend` or an `admin`, and it keeps Premium alive while a failed
+   card is being retried.
+5. The open tab hears the change over Realtime and the badge flips. `checkout-status` is the
+   fallback for a webhook that is slow, and `customer-portal` opens Stripe's own page for changing
+   a card or cancelling.
+
+The redirect back from Stripe is never treated as proof of payment. The webhook is.
+
+#### Setting it up
+
+In Stripe: make a product with a recurring price, copy the price id and add a webhook endpoint at
+`https://<project-ref>.supabase.co/functions/v1/stripe-webhook` subscribed to
+`checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`,
+`customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed` and
+`charge.dispute.created`. Turn the Customer portal on under Settings, Billing. Prefer a
+**restricted** key over a secret one.
+
+Then, with the Supabase CLI:
+
+```bash
+supabase secrets set STRIPE_SECRET_KEY=rk_live_... STRIPE_WEBHOOK_SECRET=whsec_... \
+  STRIPE_PRICE_MONTHLY=price_... SITE_URL=https://your-site.example
+supabase functions deploy create-checkout-session customer-portal checkout-status stripe-webhook
+```
+
+`supabase/config.toml` is what keeps JWT verification off for `stripe-webhook` and on for the other
+three. Check it held in the Dashboard under Edge Functions after every deploy, because the CLI has
+been known to lose the setting. A webhook deployed with verification **on** rejects every Stripe
+call, and one where the signature check is skipped would let anybody grant themselves Premium.
+
+Re-run `supabase/schema.sql` for the billing tables, the character slot trigger and the profile row
+on Realtime. Then set `SITE_URL`, put the real project ref into the two `connect-src` entries in
+`public/_headers`, and test the whole path with `stripe listen --forward-to` and a test card.
+
+Money also means paperwork. Terms, a privacy policy and a refund policy have to exist and be linked
+from the checkout. Consumer prices are shown VAT inclusive. An EU or UK subscriber has fourteen
+days to change their mind. Whether the VAT is yours to file at all depends on whether Stripe is
+selling as merchant of record: **Stripe Managed Payments**, under Settings, makes Stripe the seller
+and takes that question away. It is worth switching on before the first live payment.
 
 ### Characters without an account
 
