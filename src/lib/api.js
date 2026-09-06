@@ -1,5 +1,12 @@
 import { requireSupabase } from './supabaseClient.js';
 import { BLANK_CHARACTER } from './characterModel.js';
+import {
+  createLocalCharacter,
+  deleteLocalCharacter,
+  getLocalCharacter,
+  isLocalId,
+  updateLocalCharacter,
+} from './localCharacters.js';
 
 /** Columns the sheet writes back. Keeps updates from ever touching id/user_id. */
 const CHARACTER_FIELDS = Object.keys(BLANK_CHARACTER);
@@ -50,6 +57,26 @@ async function withMissingColumnRetry(run, row) {
 
 /* ---------------------------------------------------------------- characters */
 
+/*
+ * Two shelves, one door.
+ *
+ * A character lives in the database under the account that made it, or on this
+ * device under a `local-` id when nobody was signed in to make it. The id says
+ * which, so every function here that takes one branches on it and the pages
+ * above never ask. See src/lib/localCharacters.js for what a device-only
+ * character is and is not. The listing does not branch: an account's list is
+ * the database's and the device's is `listLocalCharacters`, and the dashboard
+ * shows both because they are two different shelves.
+ */
+
+/**
+ * How many characters an account holds. Interface only: nothing in the schema
+ * enforces it, so the dashboard's create card and adoptCharacter below are the
+ * two places it is checked, and they check the same number. The device's own
+ * ceiling is LOCAL_CHARACTER_SLOTS in localCharacters.js.
+ */
+export const CHARACTER_SLOTS = 6;
+
 export async function listCharacters(userId) {
   const sb = requireSupabase();
   const { data, error } = await sb
@@ -63,6 +90,8 @@ export async function listCharacters(userId) {
 }
 
 export async function getCharacter(id) {
+  if (isLocalId(id)) return getLocalCharacter(id);
+
   const sb = requireSupabase();
   // maybeSingle, so a dead link reads as "not found" rather than a PostgREST
   // coercion error.
@@ -72,7 +101,13 @@ export async function getCharacter(id) {
   return data;
 }
 
+/**
+ * No account, no row: with nobody signed in the character is kept on this
+ * device instead, and the same blank is what it starts from.
+ */
 export async function createCharacter(userId, overrides = {}) {
+  if (!userId) return createLocalCharacter({ ...BLANK_CHARACTER, ...pickCharacterFields(overrides) });
+
   const sb = requireSupabase();
   const row = { ...BLANK_CHARACTER, ...overrides, user_id: userId };
 
@@ -83,6 +118,8 @@ export async function createCharacter(userId, overrides = {}) {
 }
 
 export async function updateCharacter(id, patch) {
+  if (isLocalId(id)) return updateLocalCharacter(id, pickCharacterFields(patch));
+
   const sb = requireSupabase();
 
   return withMissingColumnRetry(
@@ -92,7 +129,39 @@ export async function updateCharacter(id, patch) {
 }
 
 export async function deleteCharacter(id) {
+  if (isLocalId(id)) return deleteLocalCharacter(id);
+
   const sb = requireSupabase();
   const { error } = await sb.from('characters').delete().eq('id', id);
   if (error) throw error;
+}
+
+/**
+ * A character kept on this device, written into the account that is signed in.
+ *
+ * Everything the sheet stores comes across and nothing about where it was: the
+ * id, the empty owner and the two clocks are the database's to stamp afresh.
+ * The row is inserted first and the device copy removed only once it is, so a
+ * write that fails leaves the character exactly where it was. Returns the new
+ * row, whose id is the link that now works for everybody.
+ *
+ * The vault's ceiling is checked here rather than by each caller, because the
+ * sheet offers this too and has no list of the account's characters to count.
+ */
+export async function adoptCharacter(localId, userId) {
+  if (!isLocalId(localId)) throw new Error('That character is already saved to an account.');
+  if (!userId) throw new Error('Sign in first, so there is an account to save the character to.');
+
+  const local = getLocalCharacter(localId);
+
+  const held = await listCharacters(userId);
+  if (held.length >= CHARACTER_SLOTS) {
+    throw new Error(
+      `Your vault is full at ${CHARACTER_SLOTS} characters. Delete one there before saving this one.`
+    );
+  }
+
+  const created = await createCharacter(userId, pickCharacterFields(local));
+  deleteLocalCharacter(localId);
+  return created;
 }

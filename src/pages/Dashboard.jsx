@@ -2,10 +2,23 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import CreationPathPick from '../components/CreationPathPick.jsx';
+import KeepCharacter from '../components/KeepCharacter.jsx';
 import Modal from '../components/Modal.jsx';
 import { SkullIcon } from '../components/sheet/parts.jsx';
-import { createCharacter, deleteCharacter, listCharacters } from '../lib/api.js';
+import {
+  CHARACTER_SLOTS,
+  adoptCharacter,
+  createCharacter,
+  deleteCharacter,
+  listCharacters,
+} from '../lib/api.js';
 import { creationPath } from '../lib/creationPaths.js';
+import {
+  LOCAL_CHARACTER_SLOTS,
+  isLocalCharacter,
+  isLocalId,
+  listLocalCharacters,
+} from '../lib/localCharacters.js';
 import {
   compactNumber,
   formatNumber,
@@ -14,8 +27,6 @@ import {
   xpProgress,
 } from '../lib/characterModel.js';
 import './Dashboard.css';
-
-const CHARACTER_SLOTS = 6;
 
 function TalentTag({ talent }) {
   const rank = Math.max(0, Math.min(3, Number(talent.rank) || 0));
@@ -36,10 +47,15 @@ function TalentTag({ talent }) {
  * laid over the card does it rather than an onClick, so the sheet still opens
  * in a new tab on a middle click and still reads as a link to a screen reader.
  * The delete button sits above it and is the one thing that is not the link.
+ *
+ * `onKeep` is handed in for a character kept on this device while somebody is
+ * signed in: the one card that has a second thing to do, which is to move into
+ * the account. The button paints over the link the way the name does.
  */
-function CharacterCard({ character, onDelete }) {
+function CharacterCard({ character, onDelete, onKeep = null }) {
   const xp = xpProgress(character.xp);
   const dead = isDead(character);
+  const local = isLocalCharacter(character);
 
   return (
     <div className="char-card">
@@ -72,6 +88,11 @@ function CharacterCard({ character, onDelete }) {
           </div>
 
           <div className="char-tags">
+            {local && (
+              <span className="tag tag-muted" title="Saved in this browser only, not in an account">
+                This device
+              </span>
+            )}
             {character.lineage && <span className="tag tag-lineage">{character.lineage}</span>}
             {(character.talents || []).map((talent, idx) => (
               <TalentTag key={`${talent.name}-${idx}`} talent={talent} />
@@ -109,6 +130,15 @@ function CharacterCard({ character, onDelete }) {
               <span className="campaign-name">{character.campaign}</span>
             </div>
           )}
+          {onKeep && (
+            <button
+              type="button"
+              className="btn btn-copper btn-sm char-keep"
+              onClick={() => onKeep(character)}
+            >
+              Save to my account
+            </button>
+          )}
         </div>
       </div>
 
@@ -124,15 +154,52 @@ function CharacterCard({ character, onDelete }) {
   );
 }
 
+/**
+ * What a visitor with no account is told, once, at the top of the page: what
+ * they are about to make, where it will live and what it will not be able to
+ * do. The two links out carry the way back here.
+ */
+function DeviceNotice() {
+  return (
+    <aside className="device-notice">
+      <p>
+        <b>No account needed to start.</b> A character made here is saved in this browser, on this
+        device. It opens on the full sheet and plays exactly as a saved one does.
+      </p>
+      <p>
+        The link opens in no other browser, it cannot sit at a table and clearing this
+        browser&rsquo;s data takes it with it. When you want to keep one, create a free account and
+        save it there. Everything you have made comes with it.
+      </p>
+      <div className="device-notice-actions">
+        <Link to="/register" state={{ from: '/dashboard' }} className="btn btn-copper btn-sm">
+          Create an account
+        </Link>
+        <Link to="/login" state={{ from: '/dashboard' }} className="btn btn-minimal btn-sm">
+          Log in
+        </Link>
+      </div>
+    </aside>
+  );
+}
+
 export default function Dashboard() {
-  const { user, displayName } = useAuth();
+  const { user, displayName, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [characters, setCharacters] = useState([]);
-  const [loading, setLoading] = useState(true);
+  /* The account's shelf, as `{ userId, rows }`: a fetch for one account can
+     never be read as another's, and "still loading" is the absence of a fetch
+     for the account signed in now rather than a flag set from inside the
+     effect that fetches. */
+  const [vault, setVault] = useState(null);
+  /* The shelf on this device, read once on the way in. Synchronous, because
+     localStorage is: there is no loading state to show for it. */
+  const [local, setLocal] = useState(() => listLocalCharacters());
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
+  /* The device character whose move into the account is being offered. */
+  const [keeping, setKeeping] = useState(null);
   const [draft, setDraft] = useState({ name: '', campaign: '' });
   /* Which way in they took, and the enlist box's two panes in one value: null
      is the pane that asks, a key is the pane that asks for a name. Nothing is
@@ -141,23 +208,43 @@ export default function Dashboard() {
   const [pathKey, setPathKey] = useState(null);
 
   const path = pathKey ? creationPath(pathKey) : null;
+  const userId = user?.id;
 
   useEffect(() => {
+    /* Wait for the session restore. Deciding "signed out" a moment before the
+       stored session arrives would draw the device shelf at somebody who has
+       a vault. Signed out there is nothing to fetch: the device shelf was read
+       on the way in. */
+    if (authLoading || !userId) return undefined;
+
     let active = true;
 
-    listCharacters(user.id)
+    listCharacters(userId)
       .then((rows) => {
         if (!active) return;
-        setCharacters(rows);
+        setVault({ userId, rows });
         setError('');
       })
-      .catch((err) => active && setError(err.message))
-      .finally(() => active && setLoading(false));
+      .catch((err) => {
+        if (!active) return;
+        /* An empty shelf under the error, rather than the veil for ever. */
+        setVault({ userId, rows: [] });
+        setError(err.message);
+      });
 
     return () => {
       active = false;
     };
-  }, [user.id]);
+  }, [userId, authLoading]);
+
+  /* Signed out there is no vault at all, whatever a stale fetch may hold. */
+  const characters = userId && vault?.userId === userId ? vault.rows : [];
+  const loading = authLoading || (Boolean(userId) && vault?.userId !== userId);
+
+  /** One row taken off the account's shelf, after a delete. */
+  function dropFromVault(id) {
+    setVault((prev) => (prev ? { ...prev, rows: prev.rows.filter((c) => c.id !== id) } : prev));
+  }
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -169,8 +256,9 @@ export default function Dashboard() {
     try {
       /* A name and a campaign are all this box asks for. Everything else a
          character is made of is a level-1 choice with its own chooser, so the
-         row is created blank and the creation pages ask for the rest. */
-      const created = await createCharacter(user.id, {
+         row is created blank and the creation pages ask for the rest. With
+         nobody signed in the row is kept on this device: see api.js. */
+      const created = await createCharacter(userId ?? null, {
         name: draft.name.trim(),
         campaign: draft.campaign.trim(),
       });
@@ -187,7 +275,11 @@ export default function Dashboard() {
   async function handleDelete() {
     try {
       await deleteCharacter(pendingDelete.id);
-      setCharacters((prev) => prev.filter((c) => c.id !== pendingDelete.id));
+      if (isLocalId(pendingDelete.id)) {
+        setLocal((prev) => prev.filter((c) => c.id !== pendingDelete.id));
+      } else {
+        dropFromVault(pendingDelete.id);
+      }
       setPendingDelete(null);
     } catch (err) {
       setError(err.message);
@@ -195,17 +287,32 @@ export default function Dashboard() {
     }
   }
 
-  const atLimit = characters.length >= CHARACTER_SLOTS;
+  /** The move across, from the card's button. KeepCharacter shows the failure. */
+  async function handleKeep() {
+    const kept = await adoptCharacter(keeping.id, userId);
+    setLocal((prev) => prev.filter((c) => c.id !== keeping.id));
+    setVault((prev) => (prev ? { ...prev, rows: [...prev.rows, kept] } : prev));
+    setKeeping(null);
+  }
+
+  /* Whose shelf the grid shows: the account's when there is one, the device's
+     when there is not. Signed in, the device's is a second section below. */
+  const mine = user ? characters : local;
+  const slots = user ? CHARACTER_SLOTS : LOCAL_CHARACTER_SLOTS;
+  const atLimit = mine.length >= slots;
+  const vaultFull = characters.length >= CHARACTER_SLOTS;
 
   return (
     <main className="container container-wide page">
       <h2 className="section-title">
-        <span>{displayName}&rsquo;s Characters</span>
+        <span>{user ? <>{displayName}&rsquo;s Characters</> : 'Characters On This Device'}</span>
         <span className="tag tag-muted">
-          Character Slots: <span style={{ color: 'var(--copper)', marginLeft: 4 }}>{characters.length}</span>{' '}
-          / {CHARACTER_SLOTS}
+          Character Slots: <span style={{ color: 'var(--copper)', marginLeft: 4 }}>{mine.length}</span>{' '}
+          / {slots}
         </span>
       </h2>
+
+      {!authLoading && !user && <DeviceNotice />}
 
       {error && <div className="form-error">{error}</div>}
 
@@ -213,7 +320,7 @@ export default function Dashboard() {
         <div className="loading-veil">Consulting the ledger…</div>
       ) : (
         <div className="char-grid">
-          {characters.map((character) => (
+          {mine.map((character) => (
             <CharacterCard key={character.id} character={character} onDelete={setPendingDelete} />
           ))}
 
@@ -233,10 +340,39 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!loading && characters.length === 0 && (
+      {!loading && mine.length === 0 && (
         <p className="muted center" style={{ marginTop: '2rem' }}>
-          Your vault is empty. Enlist your first drifter to begin.
+          {user
+            ? 'Your vault is empty. Enlist your first drifter to begin.'
+            : 'Nothing here yet. Make a character and it is saved in this browser until you keep it.'}
         </p>
+      )}
+
+      {/* Characters made in this browser before this account signed in. They
+          are not the account's until saved to it, so they stand apart from the
+          vault, each with the one button that moves it across. */}
+      {user && local.length > 0 && (
+        <section className="device-section">
+          <h2 className="section-title">
+            <span>On This Device</span>
+            <span className="tag tag-muted">Not in your account</span>
+          </h2>
+          <p className="device-lead">
+            Made in this browser and saved nowhere else. Save one to your account to keep it, share
+            its sheet and sit it at a table. Until then it cannot join a campaign, and clearing the
+            browser&rsquo;s data takes it with it.
+          </p>
+          <div className="char-grid">
+            {local.map((character) => (
+              <CharacterCard
+                key={character.id}
+                character={character}
+                onDelete={setPendingDelete}
+                onKeep={setKeeping}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Two panes, and `path` is which one you are on: choose a way in, then
@@ -316,6 +452,7 @@ export default function Dashboard() {
               <p className="form-hint">
                 That is all this box needs. Your lineage, background, talent set and attributes are
                 level-1 choices with their own choosers, and {path.title} is where you make them.
+                {!user && ' The character is saved in this browser until you make an account to keep it.'}
               </p>
             </form>
           ) : (
@@ -355,6 +492,16 @@ export default function Dashboard() {
             This cannot be undone.
           </p>
         </Modal>
+      )}
+
+      {keeping && (
+        <KeepCharacter
+          character={keeping}
+          onClose={() => setKeeping(null)}
+          onAdopt={handleKeep}
+          full={vaultFull}
+          from="/dashboard"
+        />
       )}
     </main>
   );

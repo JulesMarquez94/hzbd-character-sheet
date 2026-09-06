@@ -1,10 +1,18 @@
 import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
+import { joinNames, listLocalCharacters } from '../lib/localCharacters.js';
 import './auth.css';
 
 export default function Signup() {
   const { signUp, user, isConfigured } = useAuth();
+  const location = useLocation();
+
+  /* Characters made on this device before there was an account, read once:
+     the reason most people arrive here now, and worth saying above the form.
+     See src/lib/localCharacters.js. */
+  const [waiting] = useState(() => listLocalCharacters().map((row) => row.name));
+  const waitingNames = joinNames(waiting);
 
   const [form, setForm] = useState({
     username: '',
@@ -18,7 +26,9 @@ export default function Signup() {
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState('');
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  /* Back to wherever the offer was made, when it was: a device-only sheet sends
+     its reader here with the way back in the state. */
+  if (user) return <Navigate to={location.state?.from || '/dashboard'} replace />;
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -83,11 +93,18 @@ export default function Signup() {
             <p className="muted">
               Click the link in that email to activate your account, then return here to log in.
             </p>
+            {waiting.length > 0 && (
+              <p className="muted">
+                {waitingNames} {waiting.length === 1 ? 'stays' : 'stay'} saved on this device
+                meanwhile. Once you are logged in, your Characters page offers to save{' '}
+                {waiting.length === 1 ? 'them' : 'each of them'} to the account.
+              </p>
+            )}
           </div>
 
           <div className="auth-footer">
             Back to{' '}
-            <Link className="link" to="/login">
+            <Link className="link" to="/login" state={location.state}>
               Log In
             </Link>
           </div>
@@ -104,6 +121,15 @@ export default function Signup() {
           <h1>Hazebound</h1>
           <p>Create Your Account</p>
         </div>
+
+        {waiting.length > 0 && (
+          <p className="auth-note">
+            <b>{waitingNames}</b> {waiting.length === 1 ? 'is' : 'are'} saved on this device only.
+            Once your account is open, your Characters page offers to save{' '}
+            {waiting.length === 1 ? 'them' : 'each of them'} to it, and nothing you have made is lost
+            on the way.
+          </p>
+        )}
 
         {error && <div className="form-error">{error}</div>}
 
@@ -206,7 +232,7 @@ export default function Signup() {
 
         <div className="auth-footer">
           Already have an account?{' '}
-          <Link className="link" to="/login">
+          <Link className="link" to="/login" state={location.state}>
             Log In
           </Link>
         </div>

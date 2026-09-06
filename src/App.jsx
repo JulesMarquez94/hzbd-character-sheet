@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { DiceTrayProvider } from './components/DiceTray.jsx';
 import Header from './components/Header.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import { isLocalId } from './lib/localCharacters.js';
 
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
@@ -30,6 +31,22 @@ const CampaignPage = lazy(() => import('./pages/CampaignPage.jsx'));
 function SheetRoute(props) {
   const { id } = useParams();
   return <CharacterSheet key={id} {...props} />;
+}
+
+/**
+ * The creation screen, behind the login gate for a database row and open for
+ * a device-only one. A character kept on this device belongs to whoever is
+ * holding the device, so asking them to sign in first would be asking for the
+ * one thing the feature exists to postpone. See src/lib/localCharacters.js.
+ */
+function NewSheetRoute() {
+  const { id } = useParams();
+  if (isLocalId(id)) return <CharacterSheet key={id} creating />;
+  return (
+    <ProtectedRoute>
+      <CharacterSheet key={id} creating />
+    </ProtectedRoute>
+  );
 }
 
 /** Keyed by id for the same reason the sheet is: a campaign's pending saves
@@ -63,26 +80,15 @@ export default function App() {
                 and there is nothing at the old address any more. */}
             <Route path="/codex" element={<Navigate to="/rules" replace />} />
 
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
+            {/* Open to everybody. Signed in it is your account's characters;
+                signed out it is the ones kept on this device, and the way to
+                make one without an account. The page tells the two apart. */}
+            <Route path="/dashboard" element={<Dashboard />} />
             {/* Public: anyone with the link can read a sheet. Editing is gated
                 inside the component (and by RLS). */}
             <Route path="/characters/:id" element={<SheetRoute />} />
             {/* The same sheet with the tabs off: level-1 choices, then lore. */}
-            <Route
-              path="/characters/:id/new"
-              element={
-                <ProtectedRoute>
-                  <SheetRoute creating />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/characters/:id/new" element={<NewSheetRoute />} />
             <Route
               path="/campaigns"
               element={

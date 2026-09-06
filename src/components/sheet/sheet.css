@@ -6438,6 +6438,24 @@ body.tray-open-left.tray-open-right .sheet {
   color: var(--haze-glow);
 }
 
+/* A sheet kept in this browser and nowhere else: see localCharacters.js. A
+   button in a badge's clothing, because the news and the way to change it are
+   the same tap. Amber, which is the save light's own "not written yet". */
+.view-badge.device {
+  font-family: var(--font-body);
+  line-height: 1.2;
+  cursor: pointer;
+  border-color: rgba(255, 179, 0, 0.4);
+  color: var(--level-amber);
+  background-color: rgba(255, 179, 0, 0.08);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.view-badge.device:hover {
+  background-color: rgba(255, 179, 0, 0.16);
+  border-color: rgba(255, 179, 0, 0.65);
+}
+
 /* Pips stay lit but stop pretending to be interactive for viewers. */
 .res-pip-static {
   cursor: default;

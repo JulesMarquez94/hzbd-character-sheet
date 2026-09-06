@@ -66,7 +66,7 @@ const PILLARS = [
   {
     title: 'Rules you can read first',
     body:
-      'The whole rulebook, every card, every item, the bestiary and the glossary are public. Learn the game in one screen before you make an account.',
+      'The whole rulebook, every card, every item, the bestiary and the glossary are public. Learn the game in one screen and make a character before you make an account.',
   },
 ];
 
@@ -79,8 +79,8 @@ const INVITE = [
   },
   {
     title: 'Make a character',
-    body: 'A free account and a name. The sheet walks you through level 1 and does the arithmetic.',
-    to: '/register',
+    body: 'A name is all it asks. The sheet walks you through level 1 and does the arithmetic, and the character is kept on this device until you make an account to keep it.',
+    to: '/dashboard',
     label: 'Create a Character',
   },
   {
@@ -103,11 +103,15 @@ export default function Landing() {
           Hazebound is a Victorian high-fantasy tabletop roleplaying game. Every roll is two dice
           and an attribute. Every ability is a card with your own numbers on it. The whole table
           plays from live sheets that do the arithmetic for you. The rules are open and a character
-          is free to make. We are looking for tables to play it.
+          is free to make, with no account until you want to keep one. We are looking for tables
+          to play it.
         </p>
 
+        {/* Straight to the vault, signed in or not: signed out it is the
+            characters kept on this device, and making one there asks for
+            nothing. See src/lib/localCharacters.js. */}
         <div className="hero-buttons">
-          <Link to={user ? '/dashboard' : '/register'} className="btn btn-copper">
+          <Link to="/dashboard" className="btn btn-copper">
             {user ? 'Open My Vault' : 'Create A Character'}
           </Link>
           <Link to="/rules" className="btn btn-purple-outline">
@@ -188,20 +192,25 @@ export default function Landing() {
               <span className="invite-num">{index + 1}</span>
               <b>{step.title}</b>
               <p>{step.body}</p>
-              <Link to={user && step.to === '/register' ? '/dashboard' : step.to} className="invite-link">
-                {user && step.to === '/register' ? 'Open My Vault' : step.label}
+              <Link to={step.to} className="invite-link">
+                {user && step.to === '/dashboard' ? 'Open My Vault' : step.label}
               </Link>
             </li>
           ))}
         </ol>
 
         <div className="hero-buttons">
-          <Link to={user ? '/dashboard' : '/register'} className="btn btn-copper">
-            {user ? 'Open My Vault' : 'Create A Free Account'}
+          <Link to="/dashboard" className="btn btn-copper">
+            {user ? 'Open My Vault' : 'Create A Character'}
           </Link>
           <Link to="/rules" className="btn btn-purple-outline">
             Read How To Play
           </Link>
+          {!user && (
+            <Link to="/register" className="btn btn-minimal">
+              Create A Free Account
+            </Link>
+          )}
         </div>
       </section>
 

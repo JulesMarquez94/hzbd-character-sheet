@@ -291,3 +291,67 @@
 .char-card:focus-within {
   border-left-color: var(--copper);
 }
+
+/* ---------- ON THIS DEVICE ----------
+   Characters made with nobody signed in. See src/lib/localCharacters.js. The
+   notice is what a visitor reads before making one; the section is where the
+   same characters go once somebody has signed in and they are not yet the
+   account's. Amber on both, the colour the save light uses for "not written
+   yet", because that is what a device-only character is. */
+.device-notice {
+  background-color: var(--panel-teal);
+  border-left: 3px solid var(--level-amber);
+  border-radius: 4px;
+  padding: 1.1rem 1.35rem 1.2rem;
+  margin: 0 0 2rem;
+  display: grid;
+  gap: 0.6rem;
+  max-width: 860px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.device-notice p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.device-notice p b {
+  color: var(--text-silver);
+}
+
+.device-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.device-section {
+  margin-top: 3.5rem;
+}
+
+.device-section .section-title {
+  border-bottom-color: rgba(255, 179, 0, 0.18);
+  margin-bottom: 0.75rem;
+}
+
+.device-lead {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  max-width: 720px;
+  margin-bottom: 1.5rem;
+}
+
+.device-section .char-card {
+  border-left-color: var(--level-amber);
+}
+
+/* Lifted over the link stretched across the card, the way the name is, so
+   the press reaches the button and not the sheet behind it. */
+.char-keep {
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+}

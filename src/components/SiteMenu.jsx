@@ -93,6 +93,9 @@ export default function SiteMenu() {
             </>
           ) : (
             <>
+              <NavLink to="/dashboard" className="dropdown-link">
+                Characters
+              </NavLink>
               <div className="dropdown-divider" />
               <Link to="/login" className="dropdown-link">
                 Log In

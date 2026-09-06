@@ -56,7 +56,7 @@ Open http://localhost:5173.
 | `/rules/items` | Every item: what it does, what it weighs, what it costs |
 | `/rules/bestiary` | The creatures, a line each, with the block behind them |
 | `/rules/glossary` | Every defined term, searchable, plus the colour key |
-| `/dashboard` | Your characters · dossier cards, create, delete |
+| `/dashboard` | Your characters · dossier cards, create, delete. Signed out, the characters kept on this device |
 | `/characters/:id` | The character sheet · **public**, editable only by owner or admin |
 | `/characters/:id/new` | Making a character · four ways in, and `?path=` says which one |
 | `/account` | Display name and password |
@@ -85,6 +85,33 @@ There is deliberately no way to grant admin from inside the app.
 
 Your **dashboard** still lists only your own characters. Public read doesn't mean discoverable,
 it means shareable by link.
+
+### Characters without an account
+
+Nobody has to sign up to find out what the sheet does. **Characters** in the site bar opens the
+vault signed out as well, and a character made there is saved in the browser's own storage under
+an id that starts with `local-`: the same blank row, the same four ways in, the same sheet,
+autosaving to the device instead of to the database. Up to three fit on one device.
+
+What a device-only character cannot do is exactly what an account is for:
+
+- **Nobody else can open it.** The link only resolves in the browser that holds the row. The
+  Share button on its sheet opens the offer to keep it instead of copying a link.
+- **It cannot sit at a table.** A campaign seats database rows. The sheet mounts none of the table
+  plumbing (no log blocks, no fight, no reaction window), the join box lists only saved
+  characters and a Game Master who pastes its link is told why it was refused.
+- **Clearing the browser's data takes it with it.**
+
+The sheet says so with an amber **On this device** badge in its bar, and asks once, on the way out
+of the creation screen, whether to keep the character. Signed out, the offer is a signup or a
+login. Signed in, it is one button, **Save to my account**, which inserts the row under the
+account, removes the device copy and opens the new sheet at its permanent link. The dashboard
+makes the same offer for every device character still sitting outside the account, in an **On
+This Device** section under the vault, and the login and signup pages say which characters are
+waiting. A full vault (six characters) refuses the move until one is deleted.
+
+`src/lib/localCharacters.js` is the device shelf and `src/lib/api.js` branches on the id, so
+nothing above the data layer knows there are two shelves.
 
 ### Live viewing
 

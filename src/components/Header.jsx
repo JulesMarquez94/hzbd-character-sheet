@@ -92,24 +92,20 @@ export default function Header() {
                 Rules
               </NavLink>
             </li>
-            {user ? (
-              <>
-                <li>
-                  <NavLink to="/dashboard" className="nav-link">
-                    Characters
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/campaigns" className="nav-link">
-                    Campaigns
-                  </NavLink>
-                </li>
-              </>
-            ) : (
+            {/* Characters is a real link signed out as well: the page is the
+                characters kept on this device, and the way to make one before
+                there is an account. Campaigns stays an account's thing, because
+                a table can only seat a saved character. */}
+            <li>
+              <NavLink to="/dashboard" className="nav-link">
+                Characters
+              </NavLink>
+            </li>
+            {user && (
               <li>
-                <span className="nav-link nav-link-locked" title="Sign in to open your character vault">
-                  Characters <span className="lock-badge">Requires Auth</span>
-                </span>
+                <NavLink to="/campaigns" className="nav-link">
+                  Campaigns
+                </NavLink>
               </li>
             )}
           </ul>

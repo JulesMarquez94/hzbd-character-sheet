@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
-import { getCharacter, updateCharacter } from '../lib/api.js';
+import { adoptCharacter, getCharacter, updateCharacter } from '../lib/api.js';
+import { isLocalId } from '../lib/localCharacters.js';
 import {
   levelForXp,
   liveCharacter,
@@ -26,6 +27,7 @@ import InventoryTab from '../components/sheet/InventoryTab.jsx';
 import LoreTab from '../components/sheet/LoreTab.jsx';
 import AdvancementTab from '../components/sheet/AdvancementTab.jsx';
 import CreationWizard from '../components/sheet/CreationWizard.jsx';
+import KeepCharacter from '../components/KeepCharacter.jsx';
 import '../components/sheet/sheet.css';
 
 const TABS = ['Character', 'Abilities', 'Inventory', 'Lore', 'Advancement'];
@@ -72,7 +74,14 @@ export default function CharacterSheet({ creating = false }) {
      character is, and because a path swapped part-way through must not be a
      write. See src/lib/creationPaths.js. */
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { user, isAdmin, loading: authLoading } = useAuth();
+
+  /* A character kept in this browser rather than in an account. The id says so,
+     and it changes three things here: whoever holds the device may edit it, it
+     sits at no table, and the sheet carries the offer to keep it. Everything
+     else is the same sheet. See src/lib/localCharacters.js. */
+  const local = isLocalId(id);
 
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +95,10 @@ export default function CharacterSheet({ creating = false }) {
      Opening the window is the hold on the actor's roll: see ReactionWindow.jsx. */
   const [reacting, setReacting] = useState(null);
   const [unitMenuOpen, setUnitMenuOpen] = useState(false);
+  /* Whether the reader opened the offer to keep a device-only character, from
+     the badge or the Share button. The offer is also up when the creation
+     screen just handed over: see `keeping` below and KeepCharacter.jsx. */
+  const [keepOpened, setKeepOpened] = useState(false);
   const tabMenuRef = useRef(null);
   const unitMenuRef = useRef(null);
 
@@ -119,7 +132,7 @@ export default function CharacterSheet({ creating = false }) {
         // attributes moved elsewhere — is brought back in line on open. Only
         // the owner or an admin may write it, so a viewer just reads the row
         // as stored.
-        const editable = Boolean(userId && (userId === data.user_id || isAdmin));
+        const editable = local || Boolean(userId && (userId === data.user_id || isAdmin));
 
         /* A row still holding choices above the level it now stands at:
            experience lost before this rule existed, or a level typed straight
@@ -148,7 +161,7 @@ export default function CharacterSheet({ creating = false }) {
     return () => {
       active = false;
     };
-  }, [id, userId, isAdmin, authLoading]);
+  }, [id, local, userId, isAdmin, authLoading]);
 
   useEffect(() => {
     try {
@@ -231,8 +244,11 @@ export default function CharacterSheet({ creating = false }) {
   }, [flush]);
 
   // Owner or admin. RLS enforces the same rule server-side; this only decides
-  // which controls are rendered.
-  const canEdit = Boolean(character && user && (user.id === character.user_id || isAdmin));
+  // which controls are rendered. A device-only character has no owner but the
+  // device, so whoever is holding it edits it, signed in or not.
+  const canEdit = Boolean(
+    character && (local || (user && (user.id === character.user_id || isAdmin)))
+  );
 
   /** Optimistic local update + debounced persistence. No-op for viewers. */
   const patch = useCallback(
@@ -316,6 +332,31 @@ export default function CharacterSheet({ creating = false }) {
      closes over the stored row, never this one. */
   const shown = useMemo(() => liveCharacter(character), [character]);
 
+  /* The creation screen hands over to the sheet with a note in the navigation
+     state, and the note is the offer: a character just finished on this device
+     is asked whether it should be kept. The offer is read straight off the
+     state rather than copied into one of our own, and closing it rewrites the
+     history entry without the note, so a back-press does not ask twice. */
+  const keepAsked = Boolean(local && location.state?.keep);
+  const keeping = keepOpened || keepAsked;
+
+  function closeKeep() {
+    setKeepOpened(false);
+    if (keepAsked) navigate(location.pathname, { replace: true, state: null });
+  }
+
+  /**
+   * The move into the account, from this sheet. The last edits go first, so
+   * the row that crosses is the one on screen, and the new id is a new sheet:
+   * the route is keyed on it and mounts fresh against the database row.
+   */
+  async function keepToAccount() {
+    clearTimeout(timerRef.current);
+    await flush();
+    const kept = await adoptCharacter(id, user?.id);
+    navigate(`/characters/${kept.id}`, { replace: true });
+  }
+
   if (loading) return <div className="loading-veil">Unrolling the sheet…</div>;
 
   if (error && !character) {
@@ -362,7 +403,9 @@ export default function CharacterSheet({ creating = false }) {
                  fire-and-forget flush can lose the race against that fetch. */
               clearTimeout(timerRef.current);
               await flush();
-              navigate(`/characters/${id}`);
+              /* A character finished on this device is offered a home on the
+                 way out. See KeepCharacter.jsx. */
+              navigate(`/characters/${id}`, { state: local ? { keep: true } : null });
             }}
           />
         </main>
@@ -399,7 +442,11 @@ export default function CharacterSheet({ creating = false }) {
     {/* Which campaigns this sheet sits at, read once for the whole page: the
         Character tab grows a log block per table, and everything that spends
         something posts what it did to all of them. See LogProvider.jsx. */}
-    <LogProvider characterId={character.id} canWrite={canEdit}>
+    {/* A device-only character sits at no table and has no row a table could
+        seat, so the provider is handed nothing: the fight, the calls, the dice
+        watch and the log blocks below all read their tables from it and stay
+        quiet. That is what "cannot join a campaign" means on the sheet. */}
+    <LogProvider characterId={local ? null : character.id} canWrite={canEdit}>
     {/* And the fight this sheet is standing in, when the Game Master is running
         one: who is in the order, as targets a use can be aimed at. Read off the
         table log, because the encounter row itself is the Game Master's alone.
@@ -454,6 +501,16 @@ export default function CharacterSheet({ creating = false }) {
         character={shown}
         patch={patch}
         onClose={() => setReacting(null)}
+      />
+    )}
+    {/* The offer to keep a device-only character: opened by the badge and the
+        Share button on the bar, and once on the way in from the creation screen. */}
+    {keeping && (
+      <KeepCharacter
+        character={character}
+        onClose={closeKeep}
+        onAdopt={keepToAccount}
+        from={location.pathname}
       />
     )}
     <div
@@ -530,12 +587,17 @@ export default function CharacterSheet({ creating = false }) {
                   type="button"
                   className="dropdown-link"
                   onClick={() => {
+                    setTabMenuOpen(false);
+                    if (local) {
+                      setKeepOpened(true);
+                      return;
+                    }
                     navigator.clipboard?.writeText(window.location.href);
                     setCopied(true);
                     setTimeout(() => setCopied(false), 1800);
                   }}
                 >
-                  {copied ? 'Link copied' : 'Share sheet'}
+                  {local ? 'Keep this character' : copied ? 'Link copied' : 'Share sheet'}
                 </button>
 
                 <button
@@ -550,13 +612,26 @@ export default function CharacterSheet({ creating = false }) {
           </div>
 
           <div className="sheet-tabbar-right">
+            {/* Where this sheet lives, when it is not in an account. A button
+                dressed as a badge, because the news and the way to change it
+                are the same tap: it opens the offer to keep the character. */}
+            {local && (
+              <button
+                type="button"
+                className="view-badge device"
+                title="Saved in this browser only · tap to keep this character"
+                onClick={() => setKeepOpened(true)}
+              >
+                On this device
+              </button>
+            )}
             {!canEdit && (
               <span className="view-badge live" title="Viewing live · changes appear without reloading">
                 <span className="live-dot" />
                 Live View
               </span>
             )}
-            {isAdmin && character.user_id !== user?.id && (
+            {!local && isAdmin && character.user_id !== user?.id && (
               <span className="admin-badge">Admin Edit</span>
             )}
             {/* The light and nothing else. "All changes saved" spelled out was
@@ -577,10 +652,17 @@ export default function CharacterSheet({ creating = false }) {
               </span>
             )}
 
+            {/* A device-only sheet has no link worth copying: it opens in this
+                browser and nowhere else. Pressing Share there opens the offer,
+                which says what sharing needs. */}
             <button
               type="button"
               className="btn btn-minimal btn-sm"
               onClick={() => {
+                if (local) {
+                  setKeepOpened(true);
+                  return;
+                }
                 navigator.clipboard?.writeText(window.location.href);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1800);

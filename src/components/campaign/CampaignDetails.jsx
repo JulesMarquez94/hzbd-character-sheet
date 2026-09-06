@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from '../Modal.jsx';
 import { characterIdFromLink, makeJoinCode } from '../../lib/campaigns.js';
+import { LOCAL_PREFIX } from '../../lib/localCharacters.js';
 import { initialsOf, levelForXp } from '../../lib/characterModel.js';
 
 /**
@@ -43,6 +44,18 @@ export default function CampaignDetails({
 
   async function handleAdd(e) {
     e.preventDefault();
+
+    /* A sheet kept on its owner's device has a link that opens nowhere else and
+       no row a table could seat, so it is refused with the reason rather than
+       as "not a link". See src/lib/localCharacters.js. */
+    if (new RegExp(`characters/${LOCAL_PREFIX}`, 'i').test(link)) {
+      setNote({
+        tone: 'error',
+        text: 'That sheet is saved on its owner’s device only. They need to save it to an account before it can sit at a table.',
+      });
+      return;
+    }
+
     const characterId = characterIdFromLink(link);
     if (!characterId) {
       setNote({ tone: 'error', text: 'That is not a sheet link. Paste the address of the character sheet itself.' });

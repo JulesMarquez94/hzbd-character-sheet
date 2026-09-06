@@ -1,12 +1,18 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
+import { joinNames, listLocalCharacters } from '../lib/localCharacters.js';
 import './auth.css';
 
 export default function Login() {
   const { signIn, resetPassword, user, isConfigured, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  /* Characters made on this device with nobody signed in, read once. Said
+     above the form so the reader knows they are still here. See
+     src/lib/localCharacters.js. */
+  const [waiting] = useState(() => listLocalCharacters().map((row) => row.name));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,6 +64,14 @@ export default function Login() {
           <p>Aetheric Engine Portal</p>
         </div>
 
+        {waiting.length > 0 && (
+          <p className="auth-note">
+            <b>{joinNames(waiting)}</b> {waiting.length === 1 ? 'is' : 'are'} saved on this device
+            only. Once you are logged in, your Characters page offers to save{' '}
+            {waiting.length === 1 ? 'them' : 'each of them'} to your account.
+          </p>
+        )}
+
         {error && <div className="form-error">{error}</div>}
         {notice && <div className="form-success">{notice}</div>}
 
@@ -107,8 +121,8 @@ export default function Login() {
 
         <div className="auth-footer">
           New to the Haze?{' '}
-          <Link className="link" to="/register">
-            Enlist a Character
+          <Link className="link" to="/register" state={location.state}>
+            Create an Account
           </Link>
         </div>
       </div>
