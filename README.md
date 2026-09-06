@@ -163,8 +163,14 @@ been known to lose the setting. A webhook deployed with verification **on** reje
 call, and one where the signature check is skipped would let anybody grant themselves Premium.
 
 Re-run `supabase/schema.sql` for the billing tables, the character slot trigger and the profile row
-on Realtime. Then set `SITE_URL`, put the real project ref into the two `connect-src` entries in
-`public/_headers`, and test the whole path with `stripe listen --forward-to` and a test card.
+on Realtime. Then set `SITE_URL` and test the whole path with `stripe listen --forward-to` and a
+test card.
+
+The content security policy in `public/_headers` names the Supabase project by host, and the build
+fills that in from `VITE_SUPABASE_URL` — so the deploy host needs that variable set in its own
+build environment, not just in your `.env.local`. Build without it and the policy names no Supabase
+host at all: the site loads, and every call fails as `Failed to fetch` with the reason only in the
+browser console. The build says so on the way past.
 
 Money also means paperwork. Terms, a privacy policy and a refund policy have to exist and be linked
 from the checkout. Consumer prices are shown VAT inclusive. An EU or UK subscriber has fourteen

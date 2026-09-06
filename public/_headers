@@ -39,9 +39,13 @@
 #   the Supabase project       REST, Auth, Edge Functions and the Realtime
 #                              socket, which is why wss: is listed too
 #
-# REPLACE <your-project-ref> BELOW with the ref from VITE_SUPABASE_URL, in both
-# places. A wrong ref here does not fail loudly: it fails as a site that cannot
-# reach its own database, with the reason only in the browser console.
+# <your-project-ref> below is a placeholder and is not edited by hand. The build
+# replaces it with the host from VITE_SUPABASE_URL, in both places, so the policy
+# and the client always name the same project (see vite.config.js). It was a
+# hand-edit once. It was forgotten once, and the site shipped a policy that
+# blocked its own database: every call failed as "Failed to fetch", with the
+# reason only in the browser console. A build that cannot fill it in now fails
+# instead of deploying that.
 #
 # `img-src` stays open to any https host on purpose. Portraits, campaign
 # thumbnails and card art are pasted links to wherever the player keeps them,
