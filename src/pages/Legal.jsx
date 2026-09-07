@@ -26,15 +26,15 @@ const TERMS = [
   {
     heading: 'Who you are dealing with',
     body: [
-      `${SELLER.brand} is operated by ${SELLER.entity}, a corporation registered in the State of Florida, United States. Where these terms say "we", that is who they mean. Where they say "you", they mean the person using the site, and if you are under 18 they mean you with a parent or guardian's agreement.`,
+      `${SELLER.brand} is operated by ${SELLER.entity}, a corporation registered in the State of Florida, United States. Where these terms say "we", that is who they mean. Where they say "you", they mean the person using the site. If you are under 18, they mean you with a parent or guardian's agreement.`,
       'Using the site at all means accepting these terms. Paying for Premium means accepting them and the refund policy together.',
     ],
   },
   {
     heading: 'What the site does',
     body: [
-      `${SELLER.brand} is a character sheet and campaign tool for a tabletop role-playing game of the same name. It stores characters, campaigns and encounters, does the arithmetic a sheet would otherwise ask you to do by hand, and shows the rules text alongside them.`,
-      'It is offered as it stands. The game is in open playtest, rules change between sessions, and a change to the rules can change what your character sheet computes. That is the nature of a playtest tool and it is not a fault in the service.',
+      `${SELLER.brand} is a character sheet and campaign tool for a tabletop role-playing game of the same name. It stores characters, campaigns and encounters, does the arithmetic a sheet would otherwise ask you to do by hand and shows the rules text alongside them.`,
+      'It is offered as it stands. The game is in open playtest, rules change between sessions and a change to the rules can change what your character sheet computes. That is the nature of a playtest tool and it is not a fault in the service.',
     ],
   },
   {
@@ -42,7 +42,7 @@ const TERMS = [
     body: [
       `You can make characters without an account: up to ${LOCAL_CHARACTER_SLOTS} are kept in your own browser's storage and never reach us. They live in that browser only. Clearing your site data deletes them and we cannot recover them, because we never had them.`,
       `An account needs a working email address. Keep the password to yourself; anything done through your account is treated as done by you. Tell us at ${SELLER.email} if you think somebody else is in it.`,
-      'We can suspend or close an account that is being used to break these terms, to attack the service, or to upload material we are not willing to host. Where the reason allows it, we will say what it was and give you a chance to get your data out first.',
+      'We can suspend or close an account that is being used to break these terms, to attack the service or to upload material we are not willing to host. Where the reason allows it, we will say what it was and give you a chance to get your data out first.',
     ],
   },
   {
@@ -60,7 +60,7 @@ const TERMS = [
     body: [
       'Your characters, campaigns, encounters and notes are yours. We claim no ownership of them. We store and display them because that is the service you asked for, and we look at them only where we have to in order to run or fix the site, or where the law requires it.',
       'The game rules, the written text, the card art, the layouts and the software are ours or our licensors’, and are not yours to republish or resell. Playing the game, running it for your table and quoting from it in the ordinary course of doing that are all fine.',
-      'Portraits and campaign images are links to wherever you keep the picture, not uploads. Whether you have the right to use a picture is your business, not ours, and a link you paste that infringes somebody else’s copyright is your responsibility.',
+      'Portraits and campaign images are links to wherever you keep the picture, not uploads. Whether you have the right to use a picture is your business rather than ours, and a link you paste that infringes somebody else’s copyright is your responsibility.',
     ],
   },
   {
@@ -120,7 +120,7 @@ const PRIVACY = [
   {
     heading: 'What you can ask for',
     body: [
-      `A copy of what we hold about you, a correction, a deletion, or a machine-readable export. If you are in the EEA or the UK you also have the right to object to processing and to complain to your national data protection authority. Write to ${SELLER.email} and we will answer within 30 days.`,
+      `A copy of what we hold about you, a correction, a deletion or a machine-readable export. If you are in the EEA or the UK you also have the right to object to processing and to complain to your national data protection authority. Write to ${SELLER.email} and we will answer within 30 days.`,
       'We do not sell personal information and we do not share it for cross-context behavioural advertising, as those terms are used in United States state privacy law.',
     ],
   },
@@ -145,7 +145,7 @@ const REFUNDS = [
   {
     heading: 'Who sells it, and who refunds it',
     body: [
-      `Your subscription is sold through **Link**, which is Stripe's merchant-of-record service. ${SELLER.entity} makes ${SELLER.brand} and decides what Premium is; Link takes the payment, is the seller on the receipt, and collects and remits any sales tax or VAT. Your card statement will read **LINK.COM*** followed by our name, and your purchase shows in Link's own order history as "sold through Link".`,
+      `Your subscription is sold through **Link**, which is Stripe's merchant-of-record service. ${SELLER.entity} makes ${SELLER.brand} and decides what Premium is; Link takes the payment, is the seller on the receipt and remits any sales tax or VAT. Your card statement will read **LINK.COM*** followed by our name, and your purchase shows in Link's own order history as "sold through Link".`,
       'That means there are two doors for a refund and both of them work. You can ask us, at the address at the foot of this page. Or you can ask Link, who handle payment and subscription support for every order they sell, and who can refund a charge within 60 days of it being taken. Link may also refund a charge on their own judgement without asking us first.',
       'You can manage the subscription from either side too: from your account page here, or from Link’s order management if you have a Link account.',
     ],

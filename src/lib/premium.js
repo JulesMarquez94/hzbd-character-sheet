@@ -153,7 +153,7 @@ async function readError(error, fallback) {
        functions. When it is, it carries the provider's own sentence, which is
        the whole reason the flag exists — so show it rather than the polite
        line that hides it. */
-    if (body?.error) return body.detail ? `${body.error} — ${body.detail}` : body.error;
+    if (body?.error) return body.detail ? `${body.error} ${body.detail}` : body.error;
   } catch {
     /* Not JSON, or already consumed. The fallback says enough. */
   }

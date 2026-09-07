@@ -98,7 +98,7 @@ Four tiers, on a ladder, in `profiles.role`. Every tier has everything the one b
 | **Friend** | 25 | 5 | 50 | ✅ | ✅ |
 | **Admin** | 50 | 20 | 60 | ✅ | ✅ |
 
-Premium is two euros a month through Stripe. **Friend** is the same thing given rather than sold,
+Premium is $3 a month or $30 a year through Stripe. **Friend** is the same thing given rather than sold,
 with the card art switched on as well, and it is handed out by hand from the SQL editor:
 
 ```sql
@@ -143,9 +143,9 @@ The redirect back from Stripe is never treated as proof of payment. The webhook 
 #### Setting it up
 
 In Stripe: make a product with a recurring price, give it an eligible **product tax code**
-(`txcd_10103000`, SaaS for personal use), copy the price id, and add a webhook endpoint at
+(`txcd_10103000`, SaaS for personal use), copy the price id and add a webhook endpoint at
 `https://<project-ref>.supabase.co/functions/v1/stripe-webhook` subscribed to the nine events in
-`HANDLED` at the top of `supabase/functions/stripe-webhook/index.ts` — the subscription lifecycle
+`HANDLED` at the top of `supabase/functions/stripe-webhook/index.ts`: the subscription lifecycle
 including `paused` and `resumed`, `checkout.session.completed`, `invoice.paid`,
 `invoice.payment_failed` and `charge.dispute.created`. Turn the Customer portal on under Settings,
 Billing. Prefer a **restricted** key over a secret one.
@@ -159,8 +159,8 @@ supabase functions deploy create-checkout-session customer-portal checkout-statu
 ```
 
 Three optional flags go alongside those, all off unless set to `true`. `STRIPE_MANAGED_PAYMENTS`
-asks Stripe to sell as merchant of record — **activating it in the Dashboard is not enough on its
-own**, because the Checkout Session has to ask for it too, and one that does not is an ordinary
+asks Stripe to sell as merchant of record. **Activating it in the Dashboard is not enough on
+its own**, because the Checkout Session has to ask for it too. One that does not is an ordinary
 sale with the tax left to you. `STRIPE_AUTOMATIC_TAX` is the opposite arrangement and is ignored
 when the first is on. `STRIPE_REQUIRE_TOS` adds the agreement tickbox and needs a terms URL saved
 under the account's public details; point it at `/terms`.
@@ -175,7 +175,7 @@ on Realtime. Then set `SITE_URL` and test the whole path with `stripe listen --f
 test card.
 
 The content security policy in `public/_headers` names the Supabase project by host, and the build
-fills that in from `VITE_SUPABASE_URL` — so the deploy host needs that variable set in its own
+fills that in from `VITE_SUPABASE_URL`, so the deploy host needs that variable set in its own
 build environment, not just in your `.env.local`. Build without it and the policy names no Supabase
 host at all: the site loads, and every call fails as `Failed to fetch` with the reason only in the
 browser console. The build says so on the way past.
@@ -183,13 +183,13 @@ browser console. The build says so on the way past.
 Money also means paperwork, and it lives in `src/lib/legal.js`. Terms, privacy and refunds are at
 `/terms`, `/privacy` and `/refunds`, rendered from one component, linked from the footer of every
 page and from the pricing page itself where a cardholder can read them before paying. Every fact a
-lawyer would ask for — the registered name, the address, the contact mailbox — is in `SELLER` in
+lawyer would ask for (the registered name, the address, the contact mailbox) is in `SELLER` in
 that one file and nowhere else.
 
 **Those fields ship as placeholders.** While any is left, the pages carry a draft banner and
 `npm run lint:legal` fails, which is deliberate: a terms page that quietly names `[Entity name],
 Inc.` as the contracting party is not a contract, and it is the first thing a cardholder's bank
-reads during a dispute. Fill them in, then have a lawyer read the result — the documents describe
+reads during a dispute. Fill them in, then have a lawyer read the result. The documents describe
 what this site actually does, which is their value, but nobody qualified has looked at them.
 
 An EU or UK subscriber has fourteen days to change their mind whatever else is agreed. Whether the
@@ -201,12 +201,12 @@ of record and US state sales tax nexus is your problem.
 
 Prices are **tax inclusive**: the $3 on the pricing page is the whole of what a card is charged,
 wherever the buyer lives, and any sales tax or VAT comes out of it rather than being added to it.
-That is a deliberate choice and the page depends on it — every price on `/premium` is written
+That is a deliberate choice and the page depends on it: every price on `/premium` is written
 without an "plus tax" qualifier, which is only honest under inclusive pricing, and it is what EU
 consumer price-display law requires of a consumer price.
 
 Two traps guard it. Stripe's own recommendation is **Automatic**, which resolves to *exclusive* for
-USD and CAD — pick **Inclusive** explicitly at `dashboard.stripe.com/settings/tax` or US buyers are
+USD and CAD. Pick **Inclusive** explicitly at `dashboard.stripe.com/settings/tax` or US buyers are
 charged $3 plus tax against a page that promised $3. And the setting is only a default for prices
 that have no `tax_behavior` of their own: Stripe does not allow `tax_behavior` to be changed once it
 has been set on a price, so a price created as exclusive can never become inclusive and has to be
