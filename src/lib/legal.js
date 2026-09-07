@@ -22,30 +22,31 @@
  */
 
 export const SELLER = {
-  /* TODO: the exact registered name from the Florida Division of Corporations,
-     including the suffix. "Hazebound Inc." and "Hazebound, Inc." are different
-     strings and the one on the filing is the one that belongs here. */
-  entity: '[Entity name], Inc.',
+  /* As supplied. Worth one check against the Florida Division of Corporations
+     filing: "Gatorsbytes Inc.", "GatorsBytes, Inc." and "Gatorsbytes, Inc."
+     are three different strings, and the one on the filing is the party to the
+     contract. */
+  entity: 'Gatorsbytes Inc.',
 
-  /* TODO: the principal business address on the Florida filing. A registered
-     agent's address is not the same thing; use the business address. */
   address: {
-    line1: '[Street address]',
-    line2: '',
-    city: '[City]',
+    line1: '7901 4th Street',
+    line2: '#26528',
+    city: 'St. Petersburg',
     state: 'FL',
-    postal: '[ZIP]',
+    postal: '33702',
     country: 'United States',
   },
 
-  /* TODO: a mailbox that a human reads. This one goes on the checkout page, in
-     Stripe's receipts and in the dispute evidence, so it is the address a
-     confused cardholder writes to instead of calling their bank. */
-  email: '[support@your-domain]',
+  /* The mailbox a confused cardholder writes to instead of calling their bank.
+     It is also the address Stripe escalates Managed Payments support to, and
+     an unanswered escalation becomes a refund after 48 hours. */
+  email: 'jules@gatorsbytes.com',
 
-  /* The county whose courts govern the terms. Florida corporations normally
-     name the county of the principal place of business. TODO: confirm. */
-  county: '[County]',
+  /* The Florida county whose courts hear a dispute — not a country. St
+     Petersburg and ZIP 33702 sit in Pinellas County. Confirm it against the
+     filing's principal place of business, because this is the clause that
+     decides where a disagreement is argued. */
+  county: 'Pinellas',
 
   /* The trading name players actually see. This one is not a TODO. */
   brand: 'Hazebound',
@@ -72,9 +73,9 @@ export function sellerAddress() {
    the one you edited, by hand, in the same commit. A "last updated" that moves
    on every deploy tells a reader nothing. */
 export const UPDATED = {
-  terms: '6 September 2026',
-  privacy: '6 September 2026',
-  refunds: '6 September 2026',
+  terms: '7 September 2026',
+  privacy: '7 September 2026',
+  refunds: '7 September 2026',
 };
 
 /**
