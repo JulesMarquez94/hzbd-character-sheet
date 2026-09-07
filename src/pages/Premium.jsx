@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import {
   COMPARISON,
+  PLAN_NOTE,
   PREMIUM_EXCLUDES,
   alreadyHasPremium,
   confirmCheckout,
@@ -10,6 +11,7 @@ import {
   openPortalUrl,
   startCheckout,
 } from '../lib/premium.js';
+import SiteFooter from '../components/SiteFooter.jsx';
 import './Premium.css';
 
 /**
@@ -169,16 +171,28 @@ export default function Premium() {
         <article className="prem-card is-premium">
           <h3 className="prem-name">Premium</h3>
 
-          {plans.map((plan) => (
-            <p className="prem-price" key={plan.key}>
+          {/* The headline price is the first offered plan, and any others are
+              named in the note rather than given a price line of their own. The
+              two cards are stretched to the same height so their comparison
+              rows sit level, and a second 2.1rem price line in this one alone
+              would push its rows out of step with Free's. The note already
+              reserves two lines, so the yearly offer costs no height at all. */}
+          {plans[0] && (
+            <p className="prem-price">
               <b>
-                {plan.currency}
-                {plan.price}
+                {plans[0].currency}
+                {plans[0].price}
               </b>
-              <span>{plan.per}</span>
+              <span>{plans[0].per}</span>
             </p>
-          ))}
-          <p className="prem-note">{plans[0]?.note}</p>
+          )}
+          <p className="prem-note">
+            {plans.length > 1 &&
+              `Or ${plans[1].currency}${plans[1].price} ${plans[1].per}${
+                plans[1].saving ? `, ${plans[1].saving}` : ''
+              }. `}
+            {PLAN_NOTE}
+          </p>
 
           <dl className="prem-rows">
             {COMPARISON.map((row) => (
@@ -257,8 +271,18 @@ export default function Premium() {
             a lapsed account keeps every character and campaign it has and simply cannot start new
             ones past the free ceiling.
           </p>
+          {/* At the point of sale rather than only in the footer. A cardholder
+              has to be able to read what they are agreeing to without leaving
+              the page that is asking for the card. */}
+          <p className="muted prem-fine prem-legal">
+            Subscribing means agreeing to the <Link to="/terms">Terms</Link>, the{' '}
+            <Link to="/privacy">Privacy Policy</Link> and the{' '}
+            <Link to="/refunds">Cancellation and Refunds</Link> policy.
+          </p>
         </div>
       </section>
+
+      <SiteFooter />
     </main>
   );
 }

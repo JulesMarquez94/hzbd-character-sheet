@@ -196,3 +196,17 @@
     min-height: 0;
   }
 }
+
+/* The link line under "Where the money goes". Slightly brighter than the fine
+   print around it: these three are the only links on the page a cardholder is
+   entitled to find before they hand over a card. */
+.prem-legal a {
+  color: var(--copper);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prem-legal a:hover,
+.prem-legal a:focus-visible {
+  color: var(--copper-bright);
+}

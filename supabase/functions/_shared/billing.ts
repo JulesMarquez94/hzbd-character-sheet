@@ -82,8 +82,8 @@ export async function callerFromRequest(req: Request) {
  *
  * A yearly plan is two lines away: make the price in Stripe, set
  * STRIPE_PRICE_YEARLY, and turn on the `yearly` entry in src/lib/premium.js so
- * the page offers it. It is worth doing. Stripe's fixed 0.25 per charge is an
- * eighth of a 2 monthly and a hundredth of a 20 yearly.
+ * the page offers it. It is worth doing. Stripe's fixed $0.30 per charge is a
+ * tenth of a $3 monthly and a hundredth of a $30 yearly.
  */
 export const PLAN_PRICE_ENV: Record<string, string> = {
   monthly: 'STRIPE_PRICE_MONTHLY',
@@ -179,7 +179,26 @@ export function serveJson(handler: (req: Request) => Promise<unknown>) {
     } catch (err) {
       if (err instanceof HttpError) return json(req, { error: err.message }, err.status);
       console.error('[billing]', err);
-      return json(req, { error: 'Something went wrong reaching the payment provider.' }, 500);
+
+      /* The sentence above gives nothing away, which is right: a provider error
+         can name a price, a customer or an account, and none of that belongs in
+         a response to a browser. It is also useless when the thing you need is
+         exactly what the provider said, and the log it went to lives in a
+         dashboard the CLI cannot reach.
+
+         So: off unless STRIPE_DEBUG_ERRORS is set to "true", and set it only
+         while you are looking. A provider's own words are not written for the
+         public and can carry ids from the account. */
+      const detail =
+        (Deno.env.get('STRIPE_DEBUG_ERRORS') ?? '').toLowerCase() === 'true'
+          ? { detail: err instanceof Error ? err.message : String(err) }
+          : {};
+
+      return json(
+        req,
+        { error: 'Something went wrong reaching the payment provider.', ...detail },
+        500
+      );
     }
   };
 }

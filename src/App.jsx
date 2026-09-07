@@ -21,6 +21,7 @@ const Account = lazy(() => import('./pages/Account.jsx'));
 const Premium = lazy(() => import('./pages/Premium.jsx'));
 const Campaigns = lazy(() => import('./pages/Campaigns.jsx'));
 const CampaignPage = lazy(() => import('./pages/CampaignPage.jsx'));
+const Legal = lazy(() => import('./pages/Legal.jsx'));
 
 /**
  * The router keeps one mounted element across `/characters/A` ->
@@ -86,6 +87,14 @@ export default function App() {
                 whether to make an account. Stripe sends the player back here
                 after a checkout, with the session on the query string. */}
             <Route path="/premium" element={<Premium />} />
+
+            {/* The three documents behind the money. Public, uncached by any
+                auth check, and reachable from the footer of every page that
+                sells anything — Stripe and the card networks both require a
+                cardholder to be able to read them before and after paying. */}
+            <Route path="/terms" element={<Legal page="terms" />} />
+            <Route path="/privacy" element={<Legal page="privacy" />} />
+            <Route path="/refunds" element={<Legal page="refunds" />} />
 
             {/* Open to everybody. Signed in it is your account's characters;
                 signed out it is the ones kept on this device, and the way to

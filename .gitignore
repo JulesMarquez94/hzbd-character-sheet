@@ -32,3 +32,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Supabase CLI scratch state. Written by `supabase link` and rewritten on every
+# deploy. It names the linked project and caches server versions, so it is local
+# machine state rather than anything the repository should carry.
+supabase/.temp/

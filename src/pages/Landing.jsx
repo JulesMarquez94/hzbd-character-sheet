@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import AbilityCard from '../components/AbilityCard.jsx';
+import SiteFooter from '../components/SiteFooter.jsx';
 /* From spells.js and not weapons.js on purpose: weapons.js assembles the whole
    card registry, so reaching one spell through it would put talents, lineages
    and backgrounds into the bundle a first-time visitor downloads. */
@@ -214,9 +215,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="landing-footer">
-        <p>© {new Date().getFullYear()} Hazebound Chronicles. All mechanical layouts and assets reserved.</p>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

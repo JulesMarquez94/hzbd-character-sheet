@@ -35,29 +35,41 @@ import { LOCAL_CHARACTER_SLOTS } from './localCharacters.js';
  * functions, then flip `enabled` and check the two strings below.
  *
  * It is worth doing sooner rather than later. Stripe's fee has a fixed part of
- * about 0.25 a charge, which is an eighth of a two euro month and a hundredth
- * of a twenty euro year.
+ * about $0.30 a charge, which is a tenth of a $3 month and a hundredth of a $30
+ * year. The yearly plan is the same revenue with a tenth of the fee.
  */
 export const PLANS = [
   {
     key: 'monthly',
     enabled: true,
     label: 'Monthly',
-    price: '2',
-    currency: '€',
+    price: '3',
+    currency: '$',
     per: 'a month',
-    note: 'Cancel any time. It stops at the end of the month you have paid for.',
   },
   {
     key: 'yearly',
-    enabled: false,
+    enabled: true,
     label: 'Yearly',
-    price: '20',
-    currency: '€',
+    price: '30',
+    currency: '$',
     per: 'a year',
-    note: 'Two months free against the monthly price.',
+    saving: 'two months free',
   },
 ];
+
+/**
+ * One note for every period, rather than one per plan.
+ *
+ * The plans used to carry a note each, and the page showed the first plan's.
+ * That was harmless while only the monthly plan was enabled and quietly wrong
+ * the moment the yearly one was: it promised a yearly subscriber their money
+ * ran "to the end of the month you have paid for". The cancellation terms are
+ * the same whatever the interval, so they are said once, in words that are true
+ * of both.
+ */
+export const PLAN_NOTE =
+  'Cancel any time. A subscription runs to the end of the period you have already paid for.';
 
 export function offeredPlans() {
   return PLANS.filter((plan) => plan.enabled);
@@ -137,7 +149,11 @@ export function alreadyHasPremium(tier) {
 async function readError(error, fallback) {
   try {
     const body = await error?.context?.json?.();
-    if (body?.error) return body.error;
+    /* `detail` is only ever present while STRIPE_DEBUG_ERRORS is on for the
+       functions. When it is, it carries the provider's own sentence, which is
+       the whole reason the flag exists — so show it rather than the polite
+       line that hides it. */
+    if (body?.error) return body.detail ? `${body.error} — ${body.detail}` : body.error;
   } catch {
     /* Not JSON, or already consumed. The fallback says enough. */
   }

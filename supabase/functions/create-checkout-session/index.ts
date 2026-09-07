@@ -37,13 +37,21 @@ const ALREADY_PAYING = ['active', 'trialing', 'past_due'];
  * checkout that 500s because it was not is worse than a checkout without them.
  * So both are off unless the environment turns them on.
  *
+ *   STRIPE_MANAGED_PAYMENTS  makes Stripe the merchant of record for the sale.
+ *                          Activating it in the Dashboard is not enough on its
+ *                          own: the session has to ask for it too, and a session
+ *                          that does not is an ordinary sale where the tax is
+ *                          yours to file. Needs the Managed Payments terms
+ *                          accepted at dashboard.stripe.com/settings/managed-payments
+ *                          and an eligible product tax code on the product.
  *   STRIPE_AUTOMATIC_TAX   for selling as your own merchant of record with a
- *                          Stripe Tax registration. Leave it off under Managed
- *                          Payments, where Stripe is the seller and handles the
- *                          tax itself.
+ *                          Stripe Tax registration. Mutually exclusive with the
+ *                          above in practice: under Managed Payments Stripe is
+ *                          the seller and handles the tax itself, so asking for
+ *                          both is asking two parties to charge one tax.
  *   STRIPE_REQUIRE_TOS     shows the "I agree to the terms" tickbox, and needs
  *                          a terms of service URL saved under the account's
- *                          public details.
+ *                          public details. Point it at /terms.
  */
 const flag = (name: string) => (Deno.env.get(name) ?? '').toLowerCase() === 'true';
 
@@ -97,7 +105,22 @@ Deno.serve(
         );
     }
 
-    const automaticTax = flag('STRIPE_AUTOMATIC_TAX');
+    const managedPayments = flag('STRIPE_MANAGED_PAYMENTS');
+
+    /* Under Managed Payments the seller is Stripe, and Stripe works the tax out
+       itself. Sending automatic_tax as well would be this account asking to
+       compute a tax it is not the one collecting, so the flag loses. */
+    const automaticTax = flag('STRIPE_AUTOMATIC_TAX') && !managedPayments;
+
+    /* `managed_payments` is younger than some of the type definitions stripe@22
+       has shipped, and this function is type-checked at deploy time on whatever
+       version the registry resolves that day. Widening it to `object` means the
+       property still reaches Stripe at runtime but the compiler is not asked to
+       know about it — and because `object` contributes no known keys, every
+       other field in the call below is still checked as strictly as before. */
+    const managedPaymentsParam = (
+      managedPayments ? { managed_payments: { enabled: true } } : {}
+    ) as object;
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -115,6 +138,7 @@ Deno.serve(
       cancel_url: `${siteUrl()}/premium?checkout=cancelled`,
 
       allow_promotion_codes: true,
+      ...managedPaymentsParam,
       ...(automaticTax
         ? { automatic_tax: { enabled: true }, customer_update: { address: 'auto' as const } }
         : {}),

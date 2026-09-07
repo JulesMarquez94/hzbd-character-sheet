@@ -142,12 +142,13 @@ The redirect back from Stripe is never treated as proof of payment. The webhook 
 
 #### Setting it up
 
-In Stripe: make a product with a recurring price, copy the price id and add a webhook endpoint at
-`https://<project-ref>.supabase.co/functions/v1/stripe-webhook` subscribed to
-`checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`,
-`customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed` and
-`charge.dispute.created`. Turn the Customer portal on under Settings, Billing. Prefer a
-**restricted** key over a secret one.
+In Stripe: make a product with a recurring price, give it an eligible **product tax code**
+(`txcd_10103000`, SaaS for personal use), copy the price id, and add a webhook endpoint at
+`https://<project-ref>.supabase.co/functions/v1/stripe-webhook` subscribed to the nine events in
+`HANDLED` at the top of `supabase/functions/stripe-webhook/index.ts` — the subscription lifecycle
+including `paused` and `resumed`, `checkout.session.completed`, `invoice.paid`,
+`invoice.payment_failed` and `charge.dispute.created`. Turn the Customer portal on under Settings,
+Billing. Prefer a **restricted** key over a secret one.
 
 Then, with the Supabase CLI:
 
@@ -156,6 +157,13 @@ supabase secrets set STRIPE_SECRET_KEY=rk_live_... STRIPE_WEBHOOK_SECRET=whsec_.
   STRIPE_PRICE_MONTHLY=price_... SITE_URL=https://your-site.example
 supabase functions deploy create-checkout-session customer-portal checkout-status stripe-webhook
 ```
+
+Three optional flags go alongside those, all off unless set to `true`. `STRIPE_MANAGED_PAYMENTS`
+asks Stripe to sell as merchant of record — **activating it in the Dashboard is not enough on its
+own**, because the Checkout Session has to ask for it too, and one that does not is an ordinary
+sale with the tax left to you. `STRIPE_AUTOMATIC_TAX` is the opposite arrangement and is ignored
+when the first is on. `STRIPE_REQUIRE_TOS` adds the agreement tickbox and needs a terms URL saved
+under the account's public details; point it at `/terms`.
 
 `supabase/config.toml` is what keeps JWT verification off for `stripe-webhook` and on for the other
 three. Check it held in the Dashboard under Edge Functions after every deploy, because the CLI has
@@ -172,11 +180,38 @@ build environment, not just in your `.env.local`. Build without it and the polic
 host at all: the site loads, and every call fails as `Failed to fetch` with the reason only in the
 browser console. The build says so on the way past.
 
-Money also means paperwork. Terms, a privacy policy and a refund policy have to exist and be linked
-from the checkout. Consumer prices are shown VAT inclusive. An EU or UK subscriber has fourteen
-days to change their mind. Whether the VAT is yours to file at all depends on whether Stripe is
-selling as merchant of record: **Stripe Managed Payments**, under Settings, makes Stripe the seller
-and takes that question away. It is worth switching on before the first live payment.
+Money also means paperwork, and it lives in `src/lib/legal.js`. Terms, privacy and refunds are at
+`/terms`, `/privacy` and `/refunds`, rendered from one component, linked from the footer of every
+page and from the pricing page itself where a cardholder can read them before paying. Every fact a
+lawyer would ask for — the registered name, the address, the contact mailbox — is in `SELLER` in
+that one file and nowhere else.
+
+**Those fields ship as placeholders.** While any is left, the pages carry a draft banner and
+`npm run lint:legal` fails, which is deliberate: a terms page that quietly names `[Entity name],
+Inc.` as the contracting party is not a contract, and it is the first thing a cardholder's bank
+reads during a dispute. Fill them in, then have a lawyer read the result — the documents describe
+what this site actually does, which is their value, but nobody qualified has looked at them.
+
+An EU or UK subscriber has fourteen days to change their mind whatever else is agreed. Whether the
+sales tax is yours to file depends on **Stripe Managed Payments**, at
+`dashboard.stripe.com/settings/managed-payments`: accept its terms there, set
+`STRIPE_MANAGED_PAYMENTS=true` on the functions, and Stripe becomes the seller and handles indirect
+tax in 80-odd countries. Worth doing before the first live payment. Without it you are the merchant
+of record and US state sales tax nexus is your problem.
+
+Prices are **tax inclusive**: the $3 on the pricing page is the whole of what a card is charged,
+wherever the buyer lives, and any sales tax or VAT comes out of it rather than being added to it.
+That is a deliberate choice and the page depends on it — every price on `/premium` is written
+without an "plus tax" qualifier, which is only honest under inclusive pricing, and it is what EU
+consumer price-display law requires of a consumer price.
+
+Two traps guard it. Stripe's own recommendation is **Automatic**, which resolves to *exclusive* for
+USD and CAD — pick **Inclusive** explicitly at `dashboard.stripe.com/settings/tax` or US buyers are
+charged $3 plus tax against a page that promised $3. And the setting is only a default for prices
+that have no `tax_behavior` of their own: Stripe does not allow `tax_behavior` to be changed once it
+has been set on a price, so a price created as exclusive can never become inclusive and has to be
+replaced with a new one. Check a price before trusting the account default, and if the pricing model
+ever moves to exclusive, `PLAN_NOTE` and the per-plan copy in `src/lib/premium.js` have to say so.
 
 ### Characters without an account
 
