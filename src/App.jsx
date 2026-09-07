@@ -22,6 +22,7 @@ const Premium = lazy(() => import('./pages/Premium.jsx'));
 const Campaigns = lazy(() => import('./pages/Campaigns.jsx'));
 const CampaignPage = lazy(() => import('./pages/CampaignPage.jsx'));
 const Legal = lazy(() => import('./pages/Legal.jsx'));
+const Faq = lazy(() => import('./pages/Faq.jsx'));
 
 /**
  * The router keeps one mounted element across `/characters/A` ->
@@ -68,7 +69,7 @@ export default function App() {
         <DiceTrayProvider>
         <Header />
 
-        <Suspense fallback={<div className="loading-veil">Unrolling the sheet…</div>}>
+        <Suspense fallback={<div className="loading-veil">Loading…</div>}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
@@ -87,6 +88,12 @@ export default function App() {
                 whether to make an account. Stripe sends the player back here
                 after a checkout, with the session on the query string. */}
             <Route path="/premium" element={<Premium />} />
+
+            {/* The answers to the questions the landing page raises, on their
+                own page so the footer, the pricing page and a link sent by a
+                friend all have somewhere to point. The same list is at the
+                bottom of the landing page. */}
+            <Route path="/faq" element={<Faq />} />
 
             {/* The three documents behind the money. Public, uncached by any
                 auth check, and reachable from the footer of every page that

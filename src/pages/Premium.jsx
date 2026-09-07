@@ -123,7 +123,7 @@ export default function Premium() {
         )}
       </h2>
 
-      {settling && <div className="loading-veil">Checking with the counting house…</div>}
+      {settling && <div className="loading-veil">Confirming your payment…</div>}
 
       {landed && (
         <div className="form-success">
@@ -261,8 +261,9 @@ export default function Premium() {
           <h3 className="frame-heading">Where the money goes</h3>
           <p>
             Hazebound runs on one database and one static host, and both of them send a bill. A
-            subscription pays that bill first and buys writing time after it. That is the whole of
-            the business plan.
+            subscription pays that bill first, buys the time to keep building after it and goes
+            towards an artist after that. That is the whole of the business plan, and it is set out
+            at more length on the <Link to="/faq">FAQ</Link>.
           </p>
           <p className="muted prem-fine">
             Payments are handled by Stripe. No card detail is ever entered on this site or stored by

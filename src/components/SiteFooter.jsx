@@ -28,6 +28,7 @@ export default function SiteFooter() {
             {page.label}
           </Link>
         ))}
+        <Link to="/faq">FAQ</Link>
         <Link to="/premium">Premium</Link>
         <a href={`mailto:${SELLER.email}`}>Contact</a>
       </nav>

@@ -220,13 +220,20 @@ export default function Signup() {
               onChange={(e) => update('terms', e.target.checked)}
             />
             <span>
-              I agree to the <a className="link" href="#terms">Terms of Service</a> and{' '}
-              <a className="link" href="#privacy">Privacy Policy</a>.
+              I agree to the{' '}
+              <a className="link" href="/terms" target="_blank" rel="noreferrer">
+                Terms of Service
+              </a>{' '}
+              and the{' '}
+              <a className="link" href="/privacy" target="_blank" rel="noreferrer">
+                Privacy Policy
+              </a>
+              .
             </span>
           </label>
 
           <button className="btn btn-copper btn-block" type="submit" disabled={busy || !isConfigured}>
-            {busy ? 'Enlisting…' : 'Create Account'}
+            {busy ? 'Creating Account…' : 'Create Account'}
           </button>
         </form>
 

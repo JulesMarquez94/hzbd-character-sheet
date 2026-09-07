@@ -322,7 +322,7 @@ export default function Dashboard() {
       {error && <div className="form-error">{error}</div>}
 
       {loading ? (
-        <div className="loading-veil">Consulting the ledger…</div>
+        <div className="loading-veil">Loading your characters…</div>
       ) : (
         <div className="char-grid">
           {mine.map((character) => (
@@ -347,7 +347,7 @@ export default function Dashboard() {
 
       {!loading && user && atLimit && (
         <PremiumNote>
-          Your vault is full at {slots} characters. Delete one to make room, or keep{' '}
+          You are using all {slots} of your character slots. Delete one to make room, or keep{' '}
           {CHARACTER_SLOTS.premium} at once.
         </PremiumNote>
       )}
@@ -355,14 +355,14 @@ export default function Dashboard() {
       {!loading && mine.length === 0 && (
         <p className="muted center" style={{ marginTop: '2rem' }}>
           {user
-            ? 'Your vault is empty. Enlist your first drifter to begin.'
+            ? 'No characters yet. Make your first one to begin.'
             : 'Nothing here yet. Make a character and it is saved in this browser until you keep it.'}
         </p>
       )}
 
       {/* Characters made in this browser before this account signed in. They
-          are not the account's until saved to it, so they stand apart from the
-          vault, each with the one button that moves it across. */}
+          are not the account's until saved to it, so they stand apart from
+          the account's own, each with the one button that moves it across. */}
       {user && local.length > 0 && (
         <section className="device-section">
           <h2 className="section-title">
@@ -393,7 +393,7 @@ export default function Dashboard() {
           finding it out before. */}
       {creating && (
         <Modal
-          title={path ? 'Enlist a Character' : 'Make a Character'}
+          title={path ? 'Name Your Character' : 'Make a Character'}
           onClose={() => setCreating(false)}
           /* Four cards want the roomy measure. A two-field form does not: the
              same form spread over 900px reads worse than it does at 560. */

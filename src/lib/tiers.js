@@ -52,7 +52,7 @@ export const TIERS = [
     id: 'premium',
     rank: 1,
     label: 'Premium',
-    blurb: 'A bigger vault, five campaigns and creatures of your own.',
+    blurb: 'More characters, five campaigns and creatures of your own.',
   },
   {
     id: 'friend',

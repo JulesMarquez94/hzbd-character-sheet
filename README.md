@@ -50,6 +50,7 @@ Open http://localhost:5173.
 | --- | --- |
 | `/` | Landing page with a live ability-card showcase |
 | `/register`, `/login` | Signup with email confirmation, login, password recovery |
+| `/faq` | The questions the landing page raises: the money, the missing art, who builds it |
 | `/rules` | How to play, in a screen, with the Game Master's one page under it |
 | `/rules/rulebook` | The whole rulebook, rendered from `docs/rulebook.md` and never retyped |
 | `/rules/cards` | Every card in the game, filterable, with the card itself a tap behind |

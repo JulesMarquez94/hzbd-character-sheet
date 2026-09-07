@@ -93,7 +93,7 @@ export function offeredPlans() {
 export const COMPARISON = [
   {
     id: 'characters',
-    label: 'Characters in your vault',
+    label: 'Characters in your account',
     free: `${CHARACTER_SLOTS.free}`,
     premium: `${CHARACTER_SLOTS.premium}`,
     note: `Plus ${LOCAL_CHARACTER_SLOTS} more kept on any device, signed in or not.`,

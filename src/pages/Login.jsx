@@ -46,7 +46,7 @@ export default function Login() {
 
   async function handleForgotPassword() {
     if (!email.trim()) {
-      setError('Enter your email address first, then press "Lost Key?".');
+      setError('Enter your email address first, then press "Forgot password?".');
       return;
     }
     setError('');
@@ -61,7 +61,7 @@ export default function Login() {
         <div className="auth-header">
           <img src="/Hazebound-icon.png" alt="" className="auth-logo" />
           <h1>Hazebound</h1>
-          <p>Aetheric Engine Portal</p>
+          <p>Log in to your account</p>
         </div>
 
         {waiting.length > 0 && (
@@ -78,14 +78,14 @@ export default function Login() {
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <label className="form-label" htmlFor="email">
-              Account Email
+              Email Address
             </label>
             <input
               className="form-input"
               type="email"
               id="email"
               autoComplete="username"
-              placeholder="thalira@aethernet.com"
+              placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -94,7 +94,7 @@ export default function Login() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="password">
-              Secure Access Key
+              Password
             </label>
             <input
               className="form-input"
@@ -110,17 +110,17 @@ export default function Login() {
 
           <div className="auth-options">
             <button type="button" className="link link-button" onClick={handleForgotPassword}>
-              Lost Key?
+              Forgot password?
             </button>
           </div>
 
           <button className="btn btn-copper btn-block" type="submit" disabled={busy || !isConfigured}>
-            {busy ? 'Initializing…' : 'Initialize Link'}
+            {busy ? 'Logging In…' : 'Log In'}
           </button>
         </form>
 
         <div className="auth-footer">
-          New to the Haze?{' '}
+          New here?{' '}
           <Link className="link" to="/register" state={location.state}>
             Create an Account
           </Link>

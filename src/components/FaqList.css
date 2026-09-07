@@ -1,0 +1,92 @@
+/*
+ * The FAQ accordion. Shared by the landing page strip and the whole of /faq,
+ * so nothing in here assumes a width or a background: both hosts supply those.
+ *
+ * Rows separated by hairlines rather than boxed as cards. Eight panels stacked
+ * on the landing page read as another section of the sales pitch, which is the
+ * one thing a FAQ must not look like.
+ */
+
+.faq-list {
+  border-top: 1px solid var(--hairline);
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.faq-item summary {
+  cursor: pointer;
+  list-style: none;
+  display: block;
+  position: relative;
+  padding: 1.15rem 2.5rem 1.15rem 0;
+  color: var(--text-silver);
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+}
+
+/* Safari draws its own triangle from the shadow DOM, and it ignores
+   `list-style` while it does it. */
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary:hover,
+.faq-item[open] summary {
+  color: var(--copper);
+}
+
+.faq-item summary:focus-visible {
+  outline: 1px solid var(--copper);
+  outline-offset: 3px;
+}
+
+/* U+2212 as an escape rather than the character, so the minus that means
+   "collapse this" can never be mistaken for one of the dashes
+   docs/text-style.md bans. */
+.faq-item summary::after {
+  content: '+';
+  position: absolute;
+  right: 0.25rem;
+  top: 1.05rem;
+  color: var(--copper);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.faq-item[open] summary::after {
+  content: '\2212';
+}
+
+.faq-answer {
+  padding: 0 2.5rem 1.4rem 0;
+}
+
+.faq-answer p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  margin: 0 0 0.9rem;
+}
+
+.faq-answer p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- THE DISCORD CALL ---------- */
+
+.faq-discord {
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+.faq-discord p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  max-width: 40rem;
+  margin: 0 auto 1.4rem;
+}

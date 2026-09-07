@@ -101,7 +101,7 @@ export default function Account() {
     }
     setPassword('');
     setConfirm('');
-    setMessage('Access key changed.');
+    setMessage('Password changed.');
   }
 
   return (
@@ -157,7 +157,7 @@ export default function Account() {
 
       <div className="panel">
         <form className="frame" onSubmit={changePassword}>
-          <h3 className="frame-heading">Change Access Key</h3>
+          <h3 className="frame-heading">Change Password</h3>
 
           <div className="form-group">
             <label className="form-label" htmlFor="new-password">
@@ -189,7 +189,7 @@ export default function Account() {
           </div>
 
           <button className="btn btn-copper btn-sm" type="submit" disabled={busy}>
-            Update Key
+            Update Password
           </button>
         </form>
       </div>

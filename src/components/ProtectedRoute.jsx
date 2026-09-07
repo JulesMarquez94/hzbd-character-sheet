@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return <div className="loading-veil">Opening the vault…</div>;
+    return <div className="loading-veil">Loading…</div>;
   }
 
   if (!isConfigured) {

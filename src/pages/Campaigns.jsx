@@ -151,7 +151,7 @@ export default function Campaigns() {
       {error && <div className="form-error">{error}</div>}
 
       {loading ? (
-        <div className="loading-veil">Consulting the ledger…</div>
+        <div className="loading-veil">Loading your campaigns…</div>
       ) : (
         <>
           <div className="camp-grid">
@@ -504,7 +504,7 @@ function JoinCampaign({ userId, onClose, onJoined }) {
           </label>
           {characters && characters.length === 0 ? (
             <p className="form-hint">
-              You have no characters yet. <Link to="/dashboard">Enlist one</Link> first, then come
+              You have no characters yet. <Link to="/dashboard">Make one</Link> first, then come
               back with the code.
             </p>
           ) : (
@@ -516,7 +516,7 @@ function JoinCampaign({ userId, onClose, onJoined }) {
               required
             >
               <option value="" disabled>
-                {characters ? 'Pick who sits down' : 'Consulting the ledger…'}
+                {characters ? 'Pick who sits down' : 'Loading your characters…'}
               </option>
               {(characters ?? []).map((row) => (
                 <option key={row.id} value={row.id}>

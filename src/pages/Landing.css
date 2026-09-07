@@ -288,3 +288,65 @@
     padding-inline: 1.25rem;
   }
 }
+
+/* ---------- THE PROMISE UNDER THE BUTTON ---------- */
+/* The one line that stops "Create A Character" reading as "Sign Up". It sits
+   under the buttons rather than in the lede because that is where the decision
+   is taken, and small rather than loud because it is reassurance and not a
+   pitch. */
+.hero-note {
+  margin: 1.5rem auto 0;
+  max-width: 34rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.hero-note a {
+  color: var(--copper);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(200, 138, 75, 0.35);
+  white-space: nowrap;
+}
+
+.hero-note a:hover {
+  color: var(--copper-bright, var(--text-bright));
+  border-bottom-color: currentColor;
+}
+
+/* ---------- THE FAQ STRIP ---------- */
+/* Narrower than the sections above it, because an answer is prose and prose at
+   the full width of the pillars is a paragraph nobody finishes. The heading is
+   centred with the rest of the page; the accordion under it is not, because a
+   centred question and a left-aligned answer never line up. */
+.faq-strip {
+  padding-top: 1rem;
+  padding-bottom: 6rem;
+  text-align: center;
+}
+
+.faq-strip .heading-section {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.faq-strip .invite-lede {
+  margin-bottom: 2.5rem;
+}
+
+.faq-strip .invite-lede a {
+  color: var(--copper);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(200, 138, 75, 0.35);
+}
+
+.faq-strip .invite-lede a:hover {
+  color: var(--copper-bright, var(--text-bright));
+  border-bottom-color: currentColor;
+}
+
+.faq-strip .faq-list {
+  max-width: 46rem;
+  margin: 0 auto;
+  text-align: left;
+}

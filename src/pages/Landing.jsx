@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import AbilityCard from '../components/AbilityCard.jsx';
+import FaqList, { DiscordCta } from '../components/FaqList.jsx';
 import SiteFooter from '../components/SiteFooter.jsx';
 /* From spells.js and not weapons.js on purpose: weapons.js assembles the whole
    card registry, so reaching one spell through it would put talents, lineages
@@ -16,8 +17,21 @@ import './Landing.css';
  * It sells the system before the software. The three laws under the hero are
  * the same three the rulebook and the primer open with, in the same words, so a
  * reader who follows the button finds the page they were promised. The three
- * pillars below the card are what the website adds to the game, and the last
- * section is the invitation itself: three steps and one button.
+ * pillars below the card are what the website adds to the game, the invite is
+ * three steps and one button, and the FAQ at the bottom answers the two
+ * questions this page raises and cannot answer honestly inside a sales pitch:
+ * what the money is for, and why almost nothing is illustrated yet.
+ *
+ * ------------------------------------------------------------------- the hero
+ * Three sentences and two buttons, and it is short on purpose. Every extra
+ * clause up here is read instead of the button.
+ *
+ * The one thing that earns its place beside the button is the line under it:
+ * making a character asks for nothing, and a visitor who does not know that
+ * reads "Create A Character" as "Sign Up". That promise used to be the fourth
+ * sentence of the lede and the second of three competing buttons, which is to
+ * say it was made twice and arrived too late both times. It is said once now,
+ * where the decision is taken.
  *
  * ------------------------------------------------------------------ the card
  * It used to be a hand-written copy of Blood Spear, which went stale the moment
@@ -98,32 +112,34 @@ export default function Landing() {
   return (
     <main className="page landing">
       <section className="hero container">
-        <span className="hero-badge">A tabletop roleplaying game · open playtest</span>
+        <span className="hero-badge">Open playtest · free to play</span>
         <h1 className="heading-hero">Enter The Hazebound Worlds</h1>
         <p className="hero-lede">
-          Hazebound is a Victorian high-fantasy tabletop roleplaying game. Every roll is two dice
-          and an attribute. Every ability is a card with your own numbers on it. The whole table
-          plays from live sheets that do the arithmetic for you. The rules are open and a character
-          is free to make, with no account until you want to keep one. We are looking for tables
-          to play it.
+          A Victorian high-fantasy tabletop roleplaying game. Every roll is two dice plus an
+          attribute. Every ability is a card with your own numbers already on it, and the sheet
+          does the arithmetic while you play.
         </p>
 
-        {/* Straight to the vault, signed in or not: signed out it is the
-            characters kept on this device, and making one there asks for
-            nothing. See src/lib/localCharacters.js. */}
+        {/* Straight to the characters page, signed in or not: signed out it
+            is the characters kept on this device, and making one there asks
+            for nothing. See src/lib/localCharacters.js. */}
         <div className="hero-buttons">
           <Link to="/dashboard" className="btn btn-copper">
-            {user ? 'Open My Vault' : 'Create A Character'}
+            {user ? 'My Characters' : 'Create A Character'}
           </Link>
           <Link to="/rules" className="btn btn-purple-outline">
             Read The Rules
           </Link>
-          {!user && (
-            <Link to="/login" className="btn btn-minimal">
-              I Have An Account
-            </Link>
-          )}
         </div>
+
+        {/* The promise, at the button rather than in the lede. Signed in it is
+            not news, so it is not said. */}
+        {!user && (
+          <p className="hero-note">
+            No account needed. A character you make now is saved in this browser and opens on the
+            full sheet. Already have an account? <Link to="/login">Log in</Link>.
+          </p>
+        )}
       </section>
 
       <section className="container laws" aria-label="How the game works">
@@ -183,7 +199,7 @@ export default function Landing() {
         <span className="hero-badge">Test it at your table</span>
         <h2 className="heading-section">Three steps to a first session</h2>
         <p className="invite-lede">
-          The game is in open playtest. Play it, break it and tell us what happened. Everything
+          The game is in open playtest. Play it, break it and tell me what happened. Everything
           you need is on this site.
         </p>
 
@@ -194,7 +210,7 @@ export default function Landing() {
               <b>{step.title}</b>
               <p>{step.body}</p>
               <Link to={step.to} className="invite-link">
-                {user && step.to === '/dashboard' ? 'Open My Vault' : step.label}
+                {user && step.to === '/dashboard' ? 'My Characters' : step.label}
               </Link>
             </li>
           ))}
@@ -202,7 +218,7 @@ export default function Landing() {
 
         <div className="hero-buttons">
           <Link to="/dashboard" className="btn btn-copper">
-            {user ? 'Open My Vault' : 'Create A Character'}
+            {user ? 'My Characters' : 'Create A Character'}
           </Link>
           <Link to="/rules" className="btn btn-purple-outline">
             Read How To Play
@@ -213,6 +229,23 @@ export default function Landing() {
             </Link>
           )}
         </div>
+      </section>
+
+      {/* Last, because none of it is a reason to try the game and all of it
+          is a reason to trust the person asking. The words are in
+          src/lib/faq.js and /faq renders the same list. */}
+      <section className="container faq-strip" aria-labelledby="faq-heading">
+        <span className="hero-badge">Before you ask</span>
+        <h2 className="heading-section" id="faq-heading">
+          Common questions
+        </h2>
+        <p className="invite-lede">
+          What it costs, what is still missing and who is behind it. Every answer is also on the{' '}
+          <Link to="/faq">FAQ page</Link>.
+        </p>
+
+        <FaqList />
+        <DiscordCta />
       </section>
 
       <SiteFooter />

@@ -106,7 +106,7 @@ export default function KeepCharacter({ character, onClose, onAdopt = null, full
       </p>
       {full && (
         <p className="form-error" style={{ marginTop: '0.9rem', marginBottom: 0 }}>
-          Your vault is full. Delete a character there before saving this one.
+          Your account is full. Delete a character there before saving this one.
         </p>
       )}
       {error && (
