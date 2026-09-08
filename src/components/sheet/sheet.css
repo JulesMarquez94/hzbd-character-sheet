@@ -13563,20 +13563,22 @@ button.tgt-chip:disabled {
   color: var(--path-accent);
 }
 
+/* Where you are standing and what you can see, as prose, before anything is
+   asked of you. It is the longest thing on the screen on purpose. */
+.xr-scene {
+  margin: 0.6rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.65;
+  color: var(--text-silver);
+}
+
 .xr-asks {
-  margin: 0.35rem 0 0;
+  margin: 0.9rem 0 0;
   font-family: var(--font-headings);
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   line-height: 1.35;
   letter-spacing: 0.4px;
   color: var(--text-bright);
-}
-
-.xr-text {
-  margin: 0.6rem 0 0;
-  font-size: 0.8rem;
-  line-height: 1.6;
-  color: var(--text-silver);
 }
 
 /* The answers are a column of full-width buttons rather than a row of tiles:

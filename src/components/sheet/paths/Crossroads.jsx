@@ -159,8 +159,11 @@ function Question({ step, view, onPick }) {
       <span className="xr-where">
         {stage.title} · Question {view.answered + 1} of {view.total}
       </span>
+      {/* The scene first, as prose, and the question it closes on as the
+          heading under it. Read top to bottom that is where you are, then what
+          is being asked of you, then the four ways you might act. */}
+      {question.scene && <p className="xr-scene">{question.scene}</p>}
       <h3 className="xr-asks">{question.asks}</h3>
-      {question.text && <p className="xr-text">{question.text}</p>}
 
       <ul className="xr-options">
         {question.options.map((option) => (

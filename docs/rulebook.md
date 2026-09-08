@@ -649,11 +649,14 @@ buying works.
 
 The Crossroads is the other way in, for anyone who would rather answer for a character than
 tick boxes on a sheet. It puts you in twelve moments of the life they led, from childhood
-to the night they left, and asks what you do in each: a dog cornered behind the mill, a
-locked door with what you want behind it, someone bleeding in the street and nobody
-stopping. Every moment offers at most four answers. The moments are drawn from a larger
-pool, so no two walks ask quite the same things. Some only happen because of what you did
-earlier, when the watch comes for a thief.
+to the night they left. Each one sets the scene, where you are standing and what you can
+see, and asks what you do: a locked iron gate with the strongbox visible through the bars,
+a man bleeding in the gutter with the crowd stepping round him, three knives coming out
+of the fog. Every moment offers at most four answers, and each answer is a way of acting
+with what your character has: the lockpicks, the vial of acid, the words that let a hand
+pass through iron, or the strength to tear the gate out of the wall. The moments are drawn
+from a larger pool, so no two walks ask quite the same things. Some only happen because of
+what you did earlier, when the watch comes for a thief.
 
 Nothing is written to the sheet while you answer. Each answer scores points towards
 attributes, talent sets, lineages, backgrounds, skills and gear, and at the end the points

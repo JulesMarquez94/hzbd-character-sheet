@@ -13564,3 +13564,34 @@ highest stat. There should be a certain amount of logic."
 - `lint:crossroads` clean with the new sections (one attribute an answer, every set, folk
   lineage, weapon and armor in its lane, the refusal cases, coherence on every walk),
   `npm run lint`, `lint:text` and `npm run build` clean.
+
+### Third pass, the same day: the scene is exposed and the answer is a means
+
+Jules, on the second draft: "you did not understand me. It's not the one question. You are
+exposing a scenario." And the whole of his example: "You are standing in front of a locked gate.
+You can see that on the other side is the treasure chest. How do you proceed to open the lock? a,
+use your lockpicks to pick the lock; b, use a vial of acid which you pour on the bars and then
+pass through; c, cast the powerful spell that allows your hand to melt metals; d, use your
+strength to pull away the grid and step in." Every question must be that: a scene that explains
+the situation the character is in, then the question, then at most four ways of acting.
+
+- **Every question carries a `scene`**, two to four sentences of where you stand, what you can
+  see and what is at stake, printed as a paragraph, and an `asks` that is only the question,
+  printed as the heading under it. The checker requires at least two sentences of scene and a
+  question of sixty characters or fewer. The old `text` field is gone.
+- **Every answer is a way of acting**, the means and what comes of it: not "pick the lock" but the
+  picks, the quarter of an hour and the turn; not "burn it" but the vial of acid poured over the
+  hinge pins and the wait for the metal to soften. The checker requires eight words at least and
+  a `told` clause on every answer. The locked gate is Jules's example almost word for word, and
+  its four answers are his four: the picks (Instinct, Trickster, Criminal), the acid (Mind,
+  Alchemist), the spell that lets a hand pass through iron (Mind, Arcanist) and the strength to
+  tear the grid out of the stone (Physique, Berserker, Colossus, Brawler).
+- **The points did not move.** Every option keeps the `gives` the second pass balanced, so the
+  census stands as reported above, except the gate, whose "study the hinges" and "wait for
+  someone to come" answers became the acid and the spell, both Mind.
+- Rulebook 4.9 says so, with the gate as its example.
+
+### Proved
+
+- `lint:crossroads` with the two new sections clean, `npm run lint`, `lint:text` and
+  `npm run build` clean, and a run walked in the browser end to end.

@@ -112,8 +112,10 @@ section('every question is whole');
   for (const question of QUESTIONS) {
     const where = question.id;
     check(`${where}: stage is known`, stageIds.has(question.stage), true);
+    check(`${where}: exposes a scene of at least two sentences`, (question.scene?.match(/[.!?](\s|$)/g) ?? []).length >= 2, true);
     check(`${where}: asks something`, Boolean(question.asks?.trim()), true);
     check(`${where}: the scene ends by asking`, /\?$/.test(question.asks.trim()), true);
+    check(`${where}: the question is a question, not the scene`, question.asks.trim().length <= 60, true);
     check(`${where}: recalls something`, Boolean(question.recall?.trim()), true);
     check(`${where}: at least two options`, question.options.length >= 2, true);
     check(`${where}: at most ${MAX_OPTIONS} options`, question.options.length <= MAX_OPTIONS, true);
@@ -124,6 +126,10 @@ section('every question is whole');
     for (const option of question.options) {
       const at = `${where}/${option.id}`;
       check(`${at}: has a label`, Boolean(option.label?.trim()), true);
+      /* A way of acting, not a quip: the means and what comes of it takes more
+         than a handful of words to say. */
+      check(`${at}: the answer says how`, option.label.trim().split(/\s+/).length >= 8, true);
+      check(`${at}: has a told clause`, Boolean(option.told?.trim()), true);
       const sentence = sentenceOf({ question, option });
       check(`${at}: the story sentence ends`, /[.!?]$/.test(sentence), true);
       check(`${at}: the story sentence has no double space`, /\s\s/.test(sentence), false);
