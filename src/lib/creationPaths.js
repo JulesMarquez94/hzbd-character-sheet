@@ -51,13 +51,13 @@ export const CREATION_PATHS = [
     ready: false,
   },
   {
-    key: 'adventure',
-    title: 'The Long Road',
-    line: 'Answer for yourself and meet who you became.',
+    key: 'crossroads',
+    title: 'Crossroads',
+    line: 'Answer at every fork, and meet who you became.',
     blurb:
-      'A run of questions about where you came from and what you did about it. Your lineage, background, talents and attributes fall out of the answers, and the drifter is waiting for you at the end of them.',
+      'A run of questions about where you came from and what you did when the road tested you. Your lineage, background, talents and attributes fall out of the answers, and a level 2 drifter is waiting for you at the end of them.',
     accent: 'var(--haze-glow)',
-    ready: false,
+    ready: true,
   },
 ];
 

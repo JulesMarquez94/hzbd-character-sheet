@@ -13408,3 +13408,96 @@ are gone, because they do not.
 - In the browser: `/rules` and `/rules/rulebook` render with no console errors, eight coloured
   verdict cells (1.2 and Appendix A) in the tray's four tones, the rail lists Eleven · Running the
   Game and Twelve · The Glossary, and no stray markdown anywhere on the page.
+
+## The Crossroads, 2026-09-08
+
+The fourth way to make a character is built. Jules, in chat, asked for "character creation
+that is done through storytelling", a "make your own choice type of adventure" that "start[s]
+our question, were you born in a city, in the countryside, and so on", where "every time you
+answer one of these questions ... it gives you a score", and at the end "contextualize[s] all
+the points": level 2, "the two talent sets that have the most points", "plus two to the one
+that has the most points and plus one" to the next, the lineage and background with the most
+points, "and give a logical weapon to it". He asked for a new name for The Long Road, and
+for the pool of questions to rotate so no two runs are the same and so a new talent set
+"integrate[s] into that" by being scored.
+
+### The name
+
+**Crossroads.** The other three ways in are named for the manner of choosing (Free Hand,
+Ready-Made, Walkthrough), and a choose-your-own-adventure is a run of forks. The key in the
+URL is `crossroads` too; `adventure` never worked, so no bookmark is lost. The glyph the card
+wears is the fork it always had.
+
+### What it is
+
+- `src/lib/crossroadsPool.js`: **40 questions in seven stages** (Birth, Family, Blood, Youth,
+  Trade, The Road, Leaving), 12 asked a run (1, 1, 2, 2, 1, 4, 1). Every option carries
+  `gives`, points grouped as attribute, talent, lineage, background, skill, weapon and armor,
+  and a `told` clause the backstory is built from. Two youth questions carry `requires` and
+  only appear after a city or a country birth, which is the "progressive logic" in the ask.
+  `WEAPON_DEFAULTS` and `ARMOR_DEFAULTS` are what the highest attribute reaches for when no
+  answer named either.
+- `src/lib/crossroads.js`: the run is a seed and a list of answers, and everything else is
+  replayed from it (mulberry32). Each stage draws from its eligible pool, weighted toward
+  questions offering a written set, lineage or background no earlier question offered, which
+  is the rotation Jules asked for. `resolve` ranks by points, then by which id was scored
+  earliest in the run, then a fallback on the highest attribute, then codex order. Written
+  sets only: a roster placeholder can be scored and never wins. `applyOutcome` writes the
+  character with `chooseAt`, `setBoosts`, `setLineage` and `buildKitPatch`, stamps 1,000 XP
+  through the ledger, and writes the answers into `lore.backstory` if it is blank.
+- `src/components/sheet/paths/Crossroads.jsx`: one question at a time under a stage rail,
+  then the reveal in the level-1 block's own `PickBlock` panels and colours. Back takes one
+  answer off; Start over draws a new seed; Take this character writes one patch and opens the
+  sheet. The run lives in sessionStorage under the character id until it is taken.
+- `src/lib/kit.js`: `buildKitPatch` and `buildReturnPatch` moved out of BackgroundPick.jsx,
+  unchanged, so the outfitter and the Crossroads hand a kit over the same way and one receipt
+  hands either back.
+- `scripts/check-crossroads.mjs`, `npm run lint:crossroads`: every id resolves against the
+  codex, every `requires` tag is set by an earlier stage, every stage has enough unconditional
+  questions to fill its draw, every written set, lineage, background and attribute is scored
+  somewhere, a run replays from its seed, and 4,000 random walks each make a whole level 2
+  character with every written set, lineage and background winning at least once. `--list`
+  prints the census.
+- The rulebook gained 4.9 The Crossroads, 4.1 names the four ways in, the Contents row and the
+  primer's first step say so, and the dashboard says two of the four are built.
+
+### Mine, worth Jules's eye
+
+- **Every question, option and number in the pool.** There is no design sheet behind it;
+  three examples were given and the rest is drafted around them. The trade stage hands out 3
+  points a background, the leaving stage 3 a talent set, everything else 1 or 2.
+- **Ties break on the earliest-scored id**, then on the highest attribute, then on codex order.
+  The reasoning is that birth and blood are the deepest roots. A coin flip was the alternative.
+- **Placeholders score but never win.** Points on Hemoturgy or Sharpshooter sit in the pool
+  now and start counting the day those sets are written.
+- **Level 2 is 1,000 XP through the ledger**, noted "Made at the Crossroads". A row already
+  above that is left where it stands.
+- **Skills**: the background's own pool ranked by the points the answers put on skills, filled
+  by pool order when the answers named too few. Three level-1 skills are scored by no question
+  yet: Unseen Spellwork, Arcane Marshal, Spell Eater.
+- **The kit**: armor and weapon by points, then the strongest set's own `martial.weapon`
+  families, then the attribute defaults. A two-weapon trade takes the top two.
+- **Follow-up questions stay open on the Advancement tab**: a Wildkin's two traits, a Draconic
+  scale colour, a Feral Curse's animal, a Draconic Bond's name, a pact, a spellbook. The reveal
+  says which set or lineage will ask, and the tab badges them as it always has. Answering them
+  from the story (scale colour off a "your scales were red" answer) is possible and not done.
+- **The balance, under random answers**: Physique takes the +2 about a fifth of the time and
+  Instinct about two fifths, Guardian is held in three runs of ten and Colossus in one of
+  twelve, Criminal and Outlander are the commonest trades and Fey the rarest blood. A player
+  answering in character will lean far harder than a coin does, so these are a floor rather
+  than a forecast, and the census is one command away when the numbers move.
+- The current pools are not refilled on creation: a level 2 Undead opens on 50 of 80 Health,
+  exactly as a free-hand character does after placing a boost. Left as the sheet has always
+  been.
+
+### Proved
+
+- `npm run lint`, `lint:text` (the pool is user-facing text and passes clean), `lint:crossroads`
+  and `npm run build` all clean.
+- In the browser, signed out: Create Character offers Crossroads as the fourth card, the name
+  form hands over to `/characters/local-…/new?path=crossroads`, twelve questions run with the
+  stage rail advancing and the run in sessionStorage, the reveal lists Colossus and Alchemist,
+  Undead, Merchant with Charismatic, Heavy Armor and a Melee Great, 6,000 coins and 70
+  Supplies, 6 / 4 / 5, and a three-paragraph story. Take this character opened the sheet at
+  LVL 02 with the kit worn, the belt clipped, the three ledger rows and the backstory written,
+  and the sessionStorage entry gone. No console errors.

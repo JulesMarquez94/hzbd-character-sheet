@@ -13494,3 +13494,194 @@ button.tgt-chip:disabled {
   font-size: 0.58rem;
   color: rgba(148, 167, 176, 0.65);
 }
+
+/* =========================================================
+   THE CROSSROADS — making a character by answering for them
+   One question at a time, then the reveal in the level-1
+   block's own panels. See paths/Crossroads.jsx.
+   ========================================================= */
+
+/* The path's own colour rides the container; PathSoon and the dashboard cards
+   already read the same variable. */
+.crossroads {
+  --path-accent: var(--haze-glow);
+}
+
+/* Seven stages as a rail. A stage is a life's chapter rather than a step you
+   can jump to, so these are not buttons: the one being asked wears the path's
+   colour, the ones behind it are lit and the ones ahead are not yet. */
+.xr-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+}
+
+.xr-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid rgba(148, 167, 176, 0.18);
+  border-radius: 999px;
+  background-color: var(--inset-bg);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.xr-stage-n {
+  font-family: var(--font-headings);
+  font-weight: 700;
+}
+
+.xr-stage.is-here {
+  border-color: var(--path-accent);
+  color: var(--path-accent);
+}
+
+.xr-stage.is-done {
+  color: var(--text-silver);
+}
+
+/* ---------- one question ---------- */
+.xr-question {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem 1.15rem;
+  border: 1px solid rgba(148, 167, 176, 0.14);
+  border-top: 2px solid color-mix(in srgb, var(--path-accent) 60%, transparent);
+  border-radius: 6px;
+  background-color: rgba(9, 17, 21, 0.32);
+}
+
+.xr-where {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--path-accent);
+}
+
+.xr-asks {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-headings);
+  font-size: 1.15rem;
+  line-height: 1.35;
+  letter-spacing: 0.4px;
+  color: var(--text-bright);
+}
+
+.xr-text {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-silver);
+}
+
+/* The answers are a column of full-width buttons rather than a row of tiles:
+   every one is a sentence, and a sentence wants a line to itself. */
+.xr-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+}
+
+.xr-option {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-radius: 5px;
+  background-color: rgba(9, 17, 21, 0.42);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: left;
+  color: var(--text-silver);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.xr-option:hover,
+.xr-option:focus-visible {
+  border-color: color-mix(in srgb, var(--path-accent) 55%, transparent);
+  background-color: rgba(9, 17, 21, 0.62);
+  transform: translateX(3px);
+}
+
+.xr-option-label {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.xr-option-go {
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--path-accent);
+  opacity: 0.7;
+}
+
+.xr-note {
+  margin: 0.8rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* ---------- the reveal ---------- */
+.xr-lead {
+  margin: 0.9rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-silver);
+}
+
+/* Which level bought a set, under its name and over its tagline. */
+.xr-face-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--pick-accent, var(--copper));
+}
+
+.xr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+}
+
+.xr-kit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+}
+
+.xr-kit li {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.xr-kit b {
+  font-weight: 600;
+  color: var(--text-silver);
+}
+
+.xr-story p {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: var(--text-silver);
+}

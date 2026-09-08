@@ -477,7 +477,8 @@ export default function Dashboard() {
               <CreationPathPick onPick={setPathKey} />
 
               <p className="form-hint path-foot">
-                Only the free hand is built today. The other three are on their way.
+                Two of the four are built today, the free hand and the crossroads. The other two are
+                on their way.
               </p>
             </>
           )}

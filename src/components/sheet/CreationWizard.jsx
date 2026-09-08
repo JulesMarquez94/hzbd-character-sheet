@@ -1,4 +1,5 @@
 import { DEFAULT_PATH, creationPath } from '../../lib/creationPaths.js';
+import Crossroads from './paths/Crossroads.jsx';
 import FreeHand from './paths/FreeHand.jsx';
 import PathSoon from './paths/PathSoon.jsx';
 
@@ -20,6 +21,7 @@ import PathSoon from './paths/PathSoon.jsx';
  */
 const PATH_VIEWS = {
   freeform: FreeHand,
+  crossroads: Crossroads,
 };
 
 export default function CreationWizard({ path = DEFAULT_PATH, ...props }) {

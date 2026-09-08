@@ -81,7 +81,7 @@ const RESULTS = [
 
 /* Making a character, in the order the website asks. See Chapter Four. */
 const STEPS = [
-  ['Create the character', 'On your dashboard, press Create Character and give it a name and a campaign. The creation page opens, and every choice on it saves as you make it.'],
+  ['Create the character', 'On your dashboard, press Create Character, choose a way in and give it a name and a campaign. The free hand opens the creation page with every choice on it, saving as you go. The Crossroads asks about the life they led instead, and makes a level 2 character from your answers.'],
   ['Choose a talent set', 'What your character has trained at. It gives you cards now, and every even level from here will raise a set or add a new one.'],
   ['Choose a lineage', 'What your character is. A few cards, sometimes an attribute bonus. It costs nothing and forbids nothing.'],
   ['Choose a background', 'What your character did before. Pick its skills, then choose a Common armor set and a weapon from the outfitter. You start with 70 Supplies and 2,000 to 6,000 coins: the fewer skills a background teaches, the more coin it gives.'],

@@ -43,7 +43,7 @@ const GLYPHS = {
       <path d="M5 7.7v2.6M5 13.7v2.6M10 6h11M10 12h11M10 18h11" />
     </>
   ),
-  adventure: (
+  crossroads: (
     <>
       <path d="M12 21v-6l-4-4V7.2" />
       <path d="M12 15l4-4V7.2" />

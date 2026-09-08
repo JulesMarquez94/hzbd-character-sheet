@@ -82,7 +82,7 @@ same thing everywhere.
 | **One** | **The Dice** · the roll and its three kinds, choosing the attribute, rolls made against you, the four results, Advantage, exploding dice, the difficulty ladder |
 | **Two** | **The Character** · the three attributes, everything they buy, dying, the pools |
 | **Three** | **Advancement** · experience, what a level grants, talent ranks |
-| **Four** | **Making a Character** · step by step, as the website walks you through it |
+| **Four** | **Making a Character** · step by step, as the website walks you through it, with the Crossroads at the end |
 | **Five** | **The Fight** · initiative, distance, your turn step by step, reactions, the basic actions, damage |
 | **Six** | **Magic** · the schools, what a spell costs, the four second halves |
 | **Seven** | **Gear and Coin** · slots, armor, weapons, bags, money, Supplies, buying and selling |
@@ -531,13 +531,18 @@ There are no points to buy, no dice to roll and no arithmetic to do.
 
 ### 4.1 Start on the dashboard
 
-On your dashboard, press **Create Character**. It asks for two things: your character's
-name and the name of the campaign they are for. Both can be changed later. The character
-is created at once, and the creation page opens.
+On your dashboard, press **Create Character**. It asks you to choose a way in, then for two
+things: your character's name and the name of the campaign they are for. Both can be
+changed later. The character is created at once, and the creation page opens.
 
-The creation page has two steps at the top: **The character**, which is everything level 1
-gives you, and **Their story**, which is the lore. Every choice saves as you make it, so
-you can close the page and come back.
+Four ways in are offered and two are built. **Free Hand** opens every level 1 choice at
+once, and 4.2 to 4.8 describe it. **Crossroads** asks you about the life your character
+led and makes the character from your answers. See 4.9. Ready-Made and Walkthrough are on
+their way. All four end on the same sheet.
+
+On the free hand, the creation page has two steps at the top: **The character**, which is
+everything level 1 gives you, and **Their story**, which is the lore. Every choice saves as
+you make it, so you can close the page and come back.
 
 ### 4.2 The four choices of level 1
 
@@ -639,6 +644,28 @@ There is no shop to spend your purse in before the first session. You start with
 your background gave you and the coins in your ledger. Anything else you want is
 bought in the game, from the people your Game Master puts in front of you. See 7.8 for how
 buying works.
+
+### 4.9 The Crossroads
+
+The Crossroads is the other way in, for anyone who would rather answer questions about a
+life than tick boxes on a sheet. It asks twelve questions in seven stages: where you were
+born, who raised you, what the blood shows, how you grew up, what you did for a living,
+what you did when the road tested you and why you left. Every question is drawn from a
+larger pool, so no two walks ask quite the same things. Some questions only appear because
+of an earlier answer.
+
+Nothing is written to the sheet while you answer. Each answer scores points towards
+attributes, talent sets, lineages, backgrounds, skills and gear, and at the end the points
+are counted. The highest talent set is taken at level 1 and the second at level 2, both at
+Novice. The highest attribute takes the +2 and the second the +1. The highest lineage and
+background are yours, the background's skills are the ones your answers leaned towards and
+the outfitter's armor and weapon follow the same count. Your answers are written into the
+backstory on the lore page, one sentence each.
+
+A character made at the Crossroads starts at **level 2**, with 1,000 experience in the
+ledger and both talent choices spent. A talent set that has no cards yet can gather points
+but is never chosen. Everything the Crossroads decided can be changed afterwards from the
+Advancement tab, exactly as if you had chosen it by hand.
 
 ---
 
