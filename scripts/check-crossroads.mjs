@@ -24,13 +24,18 @@ import {
   RUN_LENGTH,
   answer,
   applyOutcome,
+  armorStat,
+  decide,
+  lineageRaises,
   newRun,
   resolve,
   sentenceOf,
+  setLeans,
   walk,
+  weaponStat,
 } from '../src/lib/crossroads.js';
 import { ATTRIBUTE_KEYS } from '../src/lib/attributes.js';
-import { TALENTS, normalizeTalents } from '../src/lib/talents.js';
+import { TALENTS, getTalent, normalizeTalents } from '../src/lib/talents.js';
 import { LINEAGES } from '../src/lib/lineages.js';
 import { BACKGROUNDS, SKILLS, normalizeKit, skillPicks } from '../src/lib/backgrounds.js';
 import { ARMOR_SETS, startingWeapons } from '../src/lib/items.js';
@@ -39,6 +44,7 @@ import { levelPicksState } from '../src/lib/levelPicks.js';
 
 const LIST = process.argv.includes('--list');
 const RUNS = 4000;
+const MAX_OPTIONS = 4;
 const findings = [];
 
 function check(what, got, want) {
@@ -107,8 +113,10 @@ section('every question is whole');
     const where = question.id;
     check(`${where}: stage is known`, stageIds.has(question.stage), true);
     check(`${where}: asks something`, Boolean(question.asks?.trim()), true);
+    check(`${where}: the scene ends by asking`, /\?$/.test(question.asks.trim()), true);
     check(`${where}: recalls something`, Boolean(question.recall?.trim()), true);
     check(`${where}: at least two options`, question.options.length >= 2, true);
+    check(`${where}: at most ${MAX_OPTIONS} options`, question.options.length <= MAX_OPTIONS, true);
 
     const optionIds = question.options.map((option) => option.id);
     check(`${where}: option ids are unique`, new Set(optionIds).size, optionIds.length);
@@ -152,6 +160,38 @@ section('every point lands on something real');
   }
 }
 
+section('every answer leans one way');
+{
+  for (const question of QUESTIONS) {
+    for (const option of question.options) {
+      const at = `${question.id}/${option.id}`;
+      const gives = option.gives ?? {};
+      const lanes = Object.keys(gives.attribute ?? {});
+      check(`${at}: gives exactly one attribute`, lanes.length, 1);
+      const lane = lanes[0];
+      if (!lane) continue;
+      check(`${at}: the attribute point is 1 or 2`, [1, 2].includes(gives.attribute[lane]), true);
+
+      for (const id of Object.keys(gives.talent ?? {})) {
+        const talent = getTalent(id);
+        check(`${at}: ${id} is shelved on ${lane} or on nothing`, talent ? setLeans(talent, lane) : false, true);
+      }
+      for (const id of Object.keys(gives.lineage ?? {})) {
+        const lineage = LINEAGES.find((one) => one.id === id);
+        const raises = lineage ? lineageRaises(lineage) : [];
+        check(`${at}: ${id} raises ${lane} or nothing`, raises.every((key) => key === lane), true);
+      }
+      for (const id of Object.keys(gives.weapon ?? {})) {
+        const weapon = startingWeapons().find((one) => one.id === id);
+        check(`${at}: ${id} scales on ${lane}`, weapon ? weaponStat(weapon) : null, lane);
+      }
+      for (const name of Object.keys(gives.armor ?? {})) {
+        check(`${at}: ${name} suits ${lane}`, armorStat(name), lane);
+      }
+    }
+  }
+}
+
 section('every stage can always be filled');
 {
   for (const stage of STAGES) {
@@ -186,11 +226,16 @@ section('the defaults are real');
 {
   for (const [key, ids] of Object.entries(WEAPON_DEFAULTS)) {
     check(`weapon defaults name an attribute: ${key}`, ATTRIBUTE_KEYS.includes(key), true);
-    for (const id of ids) check(`weapon default ${id} is a starting weapon`, WEAPON_IDS.has(id), true);
+    for (const id of ids) {
+      const weapon = startingWeapons().find((one) => one.id === id);
+      check(`weapon default ${id} is a starting weapon`, Boolean(weapon), true);
+      check(`weapon default ${id} scales on ${key}`, weapon ? weaponStat(weapon) : null, key);
+    }
   }
   for (const [key, name] of Object.entries(ARMOR_DEFAULTS)) {
     check(`armor defaults name an attribute: ${key}`, ATTRIBUTE_KEYS.includes(key), true);
     check(`armor default ${name} is a set`, ARMOR_NAMES.has(name), true);
+    check(`armor default ${name} reads back as ${key}`, armorStat(name), key);
   }
   check('every attribute has a weapon default', ATTRIBUTE_KEYS.every((key) => WEAPON_DEFAULTS[key]?.length > 0), true);
   check('every attribute has an armor default', ATTRIBUTE_KEYS.every((key) => ARMOR_DEFAULTS[key]), true);
@@ -270,6 +315,13 @@ section(`${RUNS} walks`);
     if (new Set(outcome.weapons.map((weapon) => weapon.id)).size !== outcome.weapons.length) problems.push('a weapon twice');
     if (!ARMOR_NAMES.has(outcome.armorSet)) problems.push(`armor ${outcome.armorSet}`);
     if (outcome.story.length !== 3) problems.push(`story paragraphs ${outcome.story.length}`);
+
+    /* And nothing built on the attribute left lowest. */
+    const stands = (talent) => setLeans(talent, outcome.major) || setLeans(talent, outcome.minor);
+    if (!outcome.talents.every(stands)) problems.push('a set on the lowest attribute');
+    if (lineageRaises(outcome.lineage).includes(outcome.least)) problems.push('a lineage raising the lowest attribute');
+    if (!outcome.weapons.every((weapon) => [null, outcome.major, outcome.minor].includes(weaponStat(weapon)))) problems.push('a weapon on the lowest attribute');
+    if (![outcome.major, outcome.minor].includes(armorStat(outcome.armorSet))) problems.push('armor for the lowest attribute');
     if (problems.length) shape = `seed ${seed}: ${problems.join(', ')}`;
   }
 
@@ -300,6 +352,85 @@ section(`${RUNS} walks`);
       for (const [id, n] of rows) console.log(`    ${id.padEnd(20)} ${String(n).padStart(5)}  ${pct(n)}`);
     }
   }
+}
+
+/* -------------------------------------------------------------- the refusal */
+
+/** A tally written by hand, in the shape `tally` hands back. */
+function count(spec) {
+  const scores = {};
+  for (const group of ['attribute', 'talent', 'lineage', 'background', 'skill', 'weapon', 'armor']) {
+    scores[group] = new Map();
+  }
+  for (const [group, points] of Object.entries(spec)) {
+    for (const [id, score] of Object.entries(points)) scores[group].set(id, { score, first: 0 });
+  }
+  return scores;
+}
+
+const ids = (list) => list.map((item) => item.id);
+
+section('the count refuses a contradiction');
+{
+  /* Jules's own example: a Guardian and a Duelist out-scoring everything while
+     Mind carries the most points. The Guardian stands on the Physique that is
+     left lowest, so it is refused; the Duelist stands on the Instinct 5 and
+     stays; the Arcanist, the only Mind set that scored, takes level 1. */
+  const jules = decide(count({
+    attribute: { mind: 9, instinct: 4, physique: 3 },
+    talent: { guardian: 7, duelist: 6, arcanist: 2 },
+  }));
+  check('Mind takes the +2', [jules.major, jules.minor, jules.least], ['mind', 'instinct', 'physique']);
+  check('the Arcanist leads and the Duelist follows; the Guardian is refused', ids(jules.talents), ['arcanist', 'duelist']);
+
+  /* The same count with Physique second: now the Guardian stays and the Duelist
+     is the one on the lowest attribute. */
+  const flipped = decide(count({
+    attribute: { mind: 9, physique: 4, instinct: 3 },
+    talent: { guardian: 7, duelist: 6, arcanist: 2 },
+  }));
+  check('with Physique second the Guardian stays and the Duelist goes', ids(flipped.talents), ['arcanist', 'guardian']);
+
+  /* No set on the +2 scored at all: the strongest set that fits leads, and
+     nothing on the lowest attribute is reached for. */
+  const noLead = decide(count({
+    attribute: { mind: 5, physique: 4, instinct: 1 },
+    talent: { guardian: 5, berserker: 2, duelist: 4 },
+  }));
+  check('without a Mind set the Guardian leads on the Physique beside it', ids(noLead.talents), ['guardian', 'berserker']);
+
+  /* A set shelved on no attribute stands beside anything, and the second set
+     still comes from the two highest. */
+  const bond = decide(count({
+    attribute: { instinct: 6, mind: 2, physique: 1 },
+    talent: { 'draconic-bond': 5 },
+  }));
+  check('the Draconic Bond leads', bond.talents[0].id, 'draconic-bond');
+  check('and the second set is not built on Physique', setLeans(bond.talents[1], 'instinct') || setLeans(bond.talents[1], 'mind'), true);
+
+  /* A lineage that raises the lowest attribute is refused however many points
+     it gathered. */
+  const stalwart = decide(count({
+    attribute: { mind: 6, instinct: 3, physique: 1 },
+    lineage: { stalwart: 9, luminary: 1 },
+  }));
+  check('Stalwart cannot raise a Physique left at 4', stalwart.lineage.id, 'luminary');
+
+  /* A weapon that scales on the lowest attribute is refused; so is its armor. */
+  const arms = decide(count({
+    attribute: { physique: 6, mind: 3, instinct: 1 },
+    weapon: { 'finesse-weapon': 9 },
+    armor: { 'Light Armor': 9 },
+  }));
+  check('a finesse blade is refused to an Instinct of 4', weaponStat(arms.weapons[0]), 'physique');
+  check('and Light Armor with it', arms.armorSet, 'Heavy Armor');
+
+  /* An empty count still makes a whole character. */
+  const blank = decide(count({}));
+  check('an empty count has two sets', blank.talents.length, 2);
+  check('and a lineage, a background, a weapon and an armor set', [
+    Boolean(blank.lineage), Boolean(blank.background), blank.weapons.length >= 1, Boolean(blank.armorSet),
+  ], [true, true, true, true]);
 }
 
 /* ------------------------------------------------------------------ the patch */

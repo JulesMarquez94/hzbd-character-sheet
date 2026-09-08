@@ -2,11 +2,12 @@
  * The Crossroads: a run of questions, the points they leave and the character
  * they add up to.
  *
- * The fourth way to make a character. You are asked about the life you led,
- * twelve questions across seven stages, and every answer puts points on the
- * things a character is made of. When the last one is answered the points are
- * counted and the drifter is made at level 2, with both talent choices spent.
- * The questions are in crossroadsPool.js; this is the walk and the arithmetic.
+ * The fourth way to make a character. You are put in twelve moments of the
+ * life you led, across seven stages, and asked what you do in each; every
+ * answer puts points on the things a character is made of. When the last one is
+ * answered the points are counted and the drifter is made at level 2, with both
+ * talent choices spent. The questions are in crossroadsPool.js; this is the
+ * walk and the arithmetic.
  *
  * ------------------------------------------------------------------- the run
  * A run is two things and nothing else: a seed and the answers so far.
@@ -32,9 +33,33 @@
  *
  * ----------------------------------------------------------------- the count
  * Points are summed per id. Ties break on which id was scored **earliest** in
- * the run, because the earliest answers are birth and blood and those are the
- * deepest roots, and then on the codex's own order. Written talent sets only:
- * a roster placeholder can gather points and never wins.
+ * the run, because the earliest answers are childhood and blood and those are
+ * the deepest roots, and then on the codex's own order. Written talent sets
+ * only: a roster placeholder can gather points and never wins.
+ *
+ * ------------------------------------------------------------ it has to add up
+ * Jules, 2026-09-08: "it shouldn't be possible for you to get something like a
+ * Duelist and Guardian, which are marked as Instinct and Physique, and to have
+ * Mind as the highest stat. There should be a certain amount of logic."
+ *
+ * Two halves. The pool's half is that every answer leans one way (see the laws
+ * at the top of crossroadsPool.js), so the points a player puts down agree with
+ * themselves. This file's half is the rule the count keeps whatever the points
+ * say: **nothing is ever built on the attribute you left lowest.**
+ *
+ *   The three attributes rank by points: the +2, the +1 and the one left at 4.
+ *   The two talent sets are shelved on the +2 or the +1, or on no attribute at
+ *     all (the Draconic Bond and the Pact stand beside anything). The set at
+ *     level 1 is the strongest of those shelved on the +2, when any such set
+ *     scored; the set at level 2 is the strongest of the rest.
+ *   A lineage whose card raises an attribute never raises the lowest one.
+ *   The kit's weapon scales on the +2 or the +1, and its armor is the set that
+ *     suits one of them.
+ *
+ * So a Mind 6 may hold an Arcanist and a Guardian, since the Guardian stands on
+ * the Physique 5 beside it, and can never hold a Duelist while Instinct sits at
+ * 4. `decide` below is the whole of that rule, and scripts/check-crossroads.mjs
+ * feeds it exactly the count Jules described and expects it refused.
  *
  * Where nothing was scored at all, the count falls back on the highest
  * attribute: a set that leans on it, a lineage that raises it, the armor and
@@ -58,6 +83,7 @@ import { TALENTS, chooseAt } from './talents.js';
 import { LINEAGES } from './lineages.js';
 import { BACKGROUNDS, normalizeKit, skillPicks } from './backgrounds.js';
 import { ARMOR_SETS, startingWeapons } from './items.js';
+import { getCard } from './weapons.js';
 import { XP_TABLE, appendLedger, newLedgerId, xpForLevel } from './characterModel.js';
 import { setBoosts, setLineage } from './levelPicks.js';
 import { buildKitPatch, buildReturnPatch } from './kit.js';
@@ -275,6 +301,39 @@ function rank(items, bucket, keyOf = (item) => item.id, prefer = () => 0) {
     .map((row) => row.item);
 }
 
+/* ------------------------------------------------------------- what leans where
+ * The vocabulary the coherence rule is written in, exported so the checker can
+ * hold the pool to the same words.
+ */
+
+const isAttribute = (stat) => ATTRIBUTE_KEYS.includes(stat);
+
+/** Whether a set can stand beside an attribute: shelved on it, or on none. */
+export function setLeans(talent, key) {
+  return !isAttribute(talent?.stat) || talent.stat === key;
+}
+
+/** The attributes an ancestry's cards raise, as keys. Empty for most of them. */
+export function lineageRaises(lineage) {
+  return ATTRIBUTE_KEYS.filter((key) => Math.floor(Number(lineage?.attributes?.[key]) || 0) > 0);
+}
+
+/**
+ * The attribute a weapon scales on, read off its first card rather than off a
+ * table of its own: a Fist Weapon strikes with Instinct and a Long Bow draws on
+ * Physique because the codex says so, and the Crossroads has no business saying
+ * otherwise. Null for a weapon whose card names none.
+ */
+export function weaponStat(weapon) {
+  const stat = getCard(weapon?.abilities?.[0])?.stat;
+  return isAttribute(stat) ? stat : null;
+}
+
+/** The attribute an armor set suits, which is the one whose default it is. */
+export function armorStat(setName) {
+  return Object.keys(ARMOR_DEFAULTS).find((key) => ARMOR_DEFAULTS[key] === setName) ?? null;
+}
+
 const lowerFirst = (text) => text.charAt(0).toLowerCase() + text.slice(1);
 
 /** One sentence of the backstory, from a step's question and its answer. */
@@ -285,7 +344,7 @@ export function sentenceOf(step) {
 
 /* Three paragraphs: where you came from, what you became, what the road showed. */
 const STORY_PARAGRAPHS = [
-  ['birth', 'family', 'blood'],
+  ['childhood', 'home', 'blood'],
   ['youth', 'trade'],
   ['road', 'leaving'],
 ];
@@ -301,12 +360,15 @@ export function storyOf(steps) {
 }
 
 /**
- * The character the answers add up to. Whole even on an empty run, by the
- * fallbacks described at the top of the file.
+ * The character a tally adds up to, under the rule that nothing is built on the
+ * attribute left lowest. Whole even on an empty tally, by the fallbacks
+ * described at the top of the file. `resolve` hands it a run's own count; the
+ * checker hands it counts written by hand.
  *
  *   major, minor   attribute keys for the +2 and the +1
+ *   least          the one left at 4
  *   attributes     the three, best first
- *   talents        two written sets, strongest first
+ *   talents        two written sets, the level-1 set first
  *   lineage, background
  *   skills         the background's skills the count kept, as many as it teaches
  *   weapons        as many as the background's kit arms
@@ -314,61 +376,73 @@ export function storyOf(steps) {
  *   story          paragraphs for the lore page
  *   scores         the tally, for anything that wants to say why
  */
-export function resolve(run) {
-  const view = walk(run);
-  const scores = tally(run);
+export function decide(scores, steps = []) {
+  const points = (group, id) => scores[group]?.get(id)?.score ?? 0;
 
   const attributes = rank(ATTRIBUTE_KEYS.map(getAttribute), scores.attribute, (a) => a.key);
-  const major = attributes[0].key;
-  const minor = attributes[1].key;
+  const [major, minor, least] = attributes.map((attribute) => attribute.key);
 
-  const talents = rank(
-    TALENTS.filter((talent) => !talent.stub),
-    scores.talent,
-    (talent) => talent.id,
-    (talent) => (talent.stat === major ? 1 : 0)
-  ).slice(0, 2);
+  /* Sets shelved on the +2 or the +1, or on nothing. The level-1 set is the
+     strongest of those that stand on the +2 and actually scored; failing any,
+     the strongest that fits at all. The level-2 set is the strongest of the
+     rest. Nothing shelved on the lowest attribute is ever in the running. */
+  const fitting = TALENTS.filter(
+    (talent) => !talent.stub && (setLeans(talent, major) || setLeans(talent, minor))
+  );
+  const ordered = rank(fitting, scores.talent, (talent) => talent.id, (talent) =>
+    setLeans(talent, major) ? 1 : 0
+  );
+  const leading = ordered.filter((talent) => setLeans(talent, major) && points('talent', talent.id) > 0);
+  const first = leading[0] ?? ordered[0];
+  const second = ordered.find((talent) => talent.id !== first.id);
+  const talents = [first, second].filter(Boolean);
 
-  /* An ancestry that raises the highest attribute is the one reached for when
-     the answers named none: the same `attributes` field levelPicks.js adds up. */
+  /* An ancestry whose card raises an attribute may not raise the lowest one, and
+     one that raises the +2 is the first reached for when the answers named none. */
   const lineage = rank(
-    LINEAGES,
+    LINEAGES.filter((one) => !lineageRaises(one).includes(least)),
     scores.lineage,
     (one) => one.id,
-    (one) => Math.floor(Number(one.attributes?.[major]) || 0)
+    (one) => (lineageRaises(one).includes(major) ? 2 : lineageRaises(one).includes(minor) ? 1 : 0)
   )[0];
 
   const background = rank(BACKGROUNDS, scores.background)[0];
   const skills = rank(background.skills, scores.skill).slice(0, skillPicks(background));
 
-  /* What the strongest set trains on, off its own `martial` spec, is the first
-     thing reached for when the answers named no weapon: a Duelist made by the
-     count gets a finesse blade rather than the physique default. */
+  /* A weapon that scales on the +2 or the +1. Among those, what the level-1 set
+     trains on comes first, off its own `martial` spec, so a Duelist made by the
+     count holds a finesse blade; then the +2's own weapons; then the defaults. */
   const wants = []
-    .concat(talents[0]?.martial?.weapon ?? [])
+    .concat(first?.martial?.weapon ?? [])
     .map((tag) => String(tag).toLowerCase());
   const defaults = WEAPON_DEFAULTS[major] ?? [];
+  const arms = startingWeapons().filter((weapon) => {
+    const stat = weaponStat(weapon);
+    return !stat || stat === major || stat === minor;
+  });
   const weapons = rank(
-    startingWeapons(),
+    arms,
     scores.weapon,
     (weapon) => weapon.id,
     (weapon) => {
       const family = (weapon.tags ?? []).some((tag) => wants.includes(String(tag).toLowerCase()));
       const at = defaults.indexOf(weapon.id);
-      return (family ? 10 : 0) + (at === -1 ? 0 : defaults.length - at);
+      return (family ? 20 : 0) + (weaponStat(weapon) === major ? 10 : 0) + (at === -1 ? 0 : defaults.length - at);
     }
   ).slice(0, Math.max(1, Math.floor(Number(background.kit?.weapons) || 1)));
 
+  /* And the armor that suits the +2 or the +1, the +2's first. */
   const armorSet = rank(
-    Object.keys(ARMOR_SETS),
+    Object.keys(ARMOR_SETS).filter((name) => [major, minor].includes(armorStat(name) ?? major)),
     scores.armor,
     (name) => name,
-    (name) => (name === ARMOR_DEFAULTS[major] ? 1 : 0)
+    (name) => (armorStat(name) === major ? 1 : 0)
   )[0];
 
   return {
     major,
     minor,
+    least,
     attributes,
     talents,
     lineage,
@@ -376,10 +450,15 @@ export function resolve(run) {
     skills,
     weapons,
     armorSet,
-    story: storyOf(view.steps),
+    story: storyOf(steps),
     scores,
-    steps: view.steps,
+    steps,
   };
+}
+
+/** The character a run's answers add up to. See `decide`. */
+export function resolve(run) {
+  return decide(tally(run), walk(run).steps);
 }
 
 /* ---------------------------------------------------------------- the writing */

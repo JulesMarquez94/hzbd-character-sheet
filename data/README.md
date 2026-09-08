@@ -13501,3 +13501,66 @@ wears is the fork it always had.
   Supplies, 6 / 4 / 5, and a three-paragraph story. Take this character opened the sheet at
   LVL 02 with the kit worn, the belt clipped, the three ledger rows and the backstory written,
   and the sessionStorage entry gone. No console errors.
+
+### Second pass, the same day
+
+Jules, on seeing the first draft: "the style of question is wrong. Like I said, the question is
+to be situation", "the number of answering selection never be more than four", none of the
+choices should read like "that type of element in this person's blood, fire, storm, water,
+because that's just telling the player", and "it shouldn't be possible for you to get something
+like a Duelist and Guardian, which are marked as Instinct and Physique, and to have Mind as the
+highest stat. There should be a certain amount of logic."
+
+- **Every question is a scene now, forty-three of them**, childhood to the night you left, and
+  every one ends by asking what you do: a dog cornered behind the mill, the barn on fire with
+  the calf inside, a debt collector at the door when you are twelve, wolves at the edge of the
+  firelight, the watch with a warrant. The birth, name, "what runs in the blood" and "which
+  ancestor" questions are gone. The stages are Childhood, Home, Blood, Youth, Trade, The Road
+  and Leaving, still 1, 1, 2, 2, 1, 4, 1 for twelve a run.
+- **Four answers at most**, held by the checker. The ten-option trade questions became four
+  scenes of four (the warehouse fire, the lord's broken axle, the missing singer, the body
+  behind the guildhall), each answer showing a trade by what you do rather than naming it.
+- **Every answer leans one way.** Exactly one attribute, and everything else it gives is built on
+  that attribute: a set shelved on it or on nothing (`setLeans`), a Stalwart, Wildheart or
+  Luminary point only in its own lane (`lineageRaises`), a weapon that scales on it
+  (`weaponStat`, read off the weapon's first card, which is why a Fist Weapon is Instinct here
+  and a Long Bow is Physique) and the armor set that suits it (`armorStat`). The checker holds
+  all 172 options to it. Backgrounds and skills are free of the law; the other ten lineages are
+  placed by hand where the reaction fits, and never named.
+- **The count refuses the contradiction.** `decide` in crossroads.js: the two sets come from
+  those shelved on the +2 or the +1 (or on nothing), the level-1 set is the strongest that
+  scored on the +2, a lineage may not raise the lowest attribute, and the weapon and armor follow
+  the same two. The checker feeds it Jules's exact count (Mind 9 / Instinct 4 / Physique 3 with
+  Guardian 7, Duelist 6, Arcanist 2) and expects Arcanist then Duelist, Guardian refused; the
+  flipped count keeps the Guardian and refuses the Duelist. Every one of the 4,000 random walks
+  is checked for the same four rules.
+- **Three conditional scenes** instead of two, on what you did rather than where you were born:
+  the watch comes for a thief (`did:theft`), the academy writes to somebody who spoke a word they
+  did not know (`did:magic`), the man you put down comes back with four friends (`did:violence`).
+- **Balance under random answers**, after thinning the folk lineages and the two commonest
+  trades: the +2 lands Physique 37%, Mind 35%, Instinct 28%; every set is held in between 6%
+  (Mycomancer) and 29% (Guardian) of runs; every lineage wins, Stonebound and Skybound the most
+  at 13% and 12%, Stalwart and Wildheart the least at under 2% now that they ride only the
+  answers that are theirs; backgrounds run from Aristocrat at 7% to Criminal at 14%. The
+  four skills nothing scored are scored now (Tailor, Arcane Marshal, Unseen Spellwork, Spell
+  Eater).
+- Rulebook 4.9 and the path's card say moments and answers rather than questions about a life,
+  and 4.9 states the rule: nothing is ever built on the attribute you left lowest.
+
+### Mine, worth Jules's eye
+
+- The forty-three scenes and every number under them. The three he gave are in: the hurt
+  stranger (flask, carry them to the watch house, rob them, hunt the one who did it), the locked
+  door (shoulder, pick, study, wait) and the birth question, which is gone by his own rule.
+- Whether the folk lineages should be this rare. They are the plain +1 to an attribute and now
+  ride only nine, six and eleven answers; a player who answers like a Stalwart all the way down
+  will still get one, but a coin almost never does.
+- A "Blood" stage that is scenes rather than traits. The blood shows in what you do (you dive
+  into the flood and the cold does not reach you, you pull the bar from the coals bare-handed),
+  and the stage title is the one word left from the old draft.
+
+### Proved
+
+- `lint:crossroads` clean with the new sections (one attribute an answer, every set, folk
+  lineage, weapon and armor in its lane, the refusal cases, coherence on every walk),
+  `npm run lint`, `lint:text` and `npm run build` clean.

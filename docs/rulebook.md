@@ -647,20 +647,28 @@ buying works.
 
 ### 4.9 The Crossroads
 
-The Crossroads is the other way in, for anyone who would rather answer questions about a
-life than tick boxes on a sheet. It asks twelve questions in seven stages: where you were
-born, who raised you, what the blood shows, how you grew up, what you did for a living,
-what you did when the road tested you and why you left. Every question is drawn from a
-larger pool, so no two walks ask quite the same things. Some questions only appear because
-of an earlier answer.
+The Crossroads is the other way in, for anyone who would rather answer for a character than
+tick boxes on a sheet. It puts you in twelve moments of the life they led, from childhood
+to the night they left, and asks what you do in each: a dog cornered behind the mill, a
+locked door with what you want behind it, someone bleeding in the street and nobody
+stopping. Every moment offers at most four answers. The moments are drawn from a larger
+pool, so no two walks ask quite the same things. Some only happen because of what you did
+earlier, when the watch comes for a thief.
 
 Nothing is written to the sheet while you answer. Each answer scores points towards
 attributes, talent sets, lineages, backgrounds, skills and gear, and at the end the points
-are counted. The highest talent set is taken at level 1 and the second at level 2, both at
-Novice. The highest attribute takes the +2 and the second the +1. The highest lineage and
-background are yours, the background's skills are the ones your answers leaned towards and
-the outfitter's armor and weapon follow the same count. Your answers are written into the
-backstory on the lore page, one sentence each.
+are counted. The highest attribute takes the +2 and the second the +1. Your two talent sets
+are the strongest of those built on your two highest attributes, the first at level 1 and
+the second at level 2, both at Novice. The highest lineage and background are yours, the
+background's skills are the ones your answers leaned towards and the outfitter's armor and
+weapon follow the same count. Your answers are written into the backstory on the lore page,
+one sentence each.
+
+The count always adds up to somebody. Every answer leans one way, so putting your shoulder
+through a door counts for Physique and for the sets, weapons and armor built on it. It
+counts for nothing else. Nothing is ever built on the attribute you left lowest: a character
+with Mind at 6 may hold a set built on the Physique 5 beside it, and never one built on an
+Instinct of 4.
 
 A character made at the Crossroads starts at **level 2**, with 1,000 experience in the
 ledger and both talent choices spent. A talent set that has no cards yet can gather points

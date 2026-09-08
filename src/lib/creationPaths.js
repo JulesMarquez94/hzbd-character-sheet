@@ -55,7 +55,7 @@ export const CREATION_PATHS = [
     title: 'Crossroads',
     line: 'Answer at every fork, and meet who you became.',
     blurb:
-      'A run of questions about where you came from and what you did when the road tested you. Your lineage, background, talents and attributes fall out of the answers, and a level 2 drifter is waiting for you at the end of them.',
+      'Twelve moments from a life, and what you did in each. Your lineage, background, talents and attributes fall out of the answers, and a level 2 drifter is waiting for you at the end of them.',
     accent: 'var(--haze-glow)',
     ready: true,
   },

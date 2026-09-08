@@ -1,47 +1,72 @@
 /**
- * The Crossroads: the questions a life is made of.
+ * The Crossroads: the situations a life is made of.
  *
- * The fourth way to make a character asks you about the one you are making
- * rather than handing you the choosers. Where were you born, who raised you,
- * what did you do when three knives came out of the fog. Every answer puts
- * points on the things a level-1 character is made of, and at the end the points
- * are counted and the drifter is waiting. See crossroads.js for the counting;
- * this file is only the questions.
+ * The fourth way to make a character puts you in a moment and asks what you
+ * do. A dog cornered behind the mill. A locked door with what you want behind
+ * it. Someone bleeding in the street and nobody stopping. Every answer puts
+ * points on the things a level-1 character is made of, and at the end the
+ * points are counted and the drifter is waiting. See crossroads.js for the
+ * counting; this file is only the questions.
  *
  * ------------------------------------------------------------------ provenance
- * **House-written on 2026-09-08.** There is no design sheet behind this pool.
- * Jules gave the shape in chat and three questions as examples: born in a city
- * or the countryside, someone hurt in the street, a locked door bashed or picked.
- * Everything else here, every question, every option and every number under it,
- * was drafted around those three and is the designer's to overrule, cut or
- * rewrite. The scores are a first balance and nothing more.
+ * **House-written on 2026-09-08, and rewritten the same day.** There is no
+ * design sheet behind this pool. Jules gave the shape in chat and three scenes
+ * as examples: someone hurt in the street (heal them, fetch the watch, rob
+ * them and run), a locked door (bash it or pick it), and where you were born.
+ * The first draft asked about the life directly, "where were you born, what
+ * runs in the blood", and offered up to twelve answers. Jules threw that out:
+ * "the question is to be situation", never more than four answers, and no
+ * answer may read like a menu of what your blood is ("that type of element in
+ * this person's blood, fire, storm, water, because that's just telling the
+ * player"). Everything here is drafted to those three rules and every number
+ * under it is the designer's to overrule, cut or rewrite.
+ *
+ * ------------------------------------------------------------------- the laws
+ * Three, and scripts/check-crossroads.mjs holds every option to them.
+ *
+ * **A question is a scene, and it ends by asking what you do.** The stages
+ * are the chapters of a life, childhood to the night you left, but nothing in
+ * them is a form: a scene is asked, four things could be done, you say which.
+ *
+ * **Four answers at most.**
+ *
+ * **An answer leans one way.** Every option gives exactly one attribute, and
+ * everything else it gives is built on that attribute: a talent set is either
+ * shelved on it or on no attribute at all (the Draconic Bond, the Pact), a
+ * Stalwart, Wildheart or Luminary point only rides an answer in its own
+ * attribute, a weapon scales on it and an armor set is the one that suits it.
+ * Putting your shoulder through the door is Physique and the Berserker and the
+ * Colossus and a heavy blade, all at once, and nothing else. That is what makes
+ * the count add up to somebody: a player who answers like a brawler ends up a
+ * brawler, and never a Mind 6 holding a Guardian's shield.
+ *
+ * Backgrounds and skills are free of the law, since a Criminal may be built on
+ * any attribute. The other ten lineages are free of it too, and are placed by
+ * hand where the reaction fits the blood: diving into a flood is Tidebound,
+ * pulling a bar from the coals bare-handed is Scorchbound, meeting a wolf's
+ * eyes and holding them is Wildkin. None of them says so.
  *
  * -------------------------------------------------------------------- the shape
- * A run walks the STAGES in order and asks `draw` questions from each stage's
- * pool, chosen at random and leaning toward whatever the run has not yet given
- * a chance to. So no two runs ask quite the same things, and a question may sit
- * unasked for many runs before its turn comes.
- *
  *   id        stable; a run's answers are stored against it
  *   stage     which chapter of the life it belongs to
- *   asks      the question, as a heading
- *   text      a line under it, when the question wants setting
+ *   asks      the scene, ending in the question
+ *   text      a line under it, when the scene wants setting
  *   recall    how the backstory begins this sentence. `recall` + the option's
  *             `told` is one sentence of the lore page's backstory
  *   requires  optional. Tags an earlier answer must have set, any one of them.
- *             This is how a question only appears because of what came before:
- *             a city childhood is asked of a city birth and nobody else
- *   options   the choices, in the order they are offered
+ *             This is how a scene only happens because of what you did before:
+ *             the watch comes for a thief, the academy writes to somebody who
+ *             spoke a word they did not know, the man you put down comes back
+ *   options   the choices, in the order they are offered. Four at most
  *
  * An option:
  *
  *   id        stable within its question
- *   label     the choice as the player reads it
- *   told      the clause the backstory writes after `recall`. Left out when the
- *             label already reads as one with its first letter lowered
+ *   label     the choice as the player reads it, imperative or plain
+ *   told      the clause the backstory writes after `recall`
  *   tags      optional. What this answer makes true of the life, for `requires`
  *   gives     the points, grouped by what they land on:
- *               attribute   physique, instinct or mind
+ *               attribute   exactly one of physique, instinct or mind
  *               talent      a set's id. A roster placeholder may be scored
  *                           and is never chosen; when its cards land it starts
  *                           winning with no change here
@@ -53,23 +78,23 @@
  *               armor       a set name: Light, Heavy or Magic Armor
  *
  * A point is a point wherever it lands. The trade stage hands out three at a
- * time because what you did for a living is most of what a background is; the
- * road hands out one or two because a single night says less about a life than
- * ten years did.
+ * time because what you did for a living is most of what a background is; a
+ * night on the road hands out one or two because a single night says less about
+ * a life than ten years did.
  *
  * ------------------------------------------------------------------- the voice
- * The reader is `you`, and the questions are asked of the character rather than
- * of the player. A label is what you did, in the imperative or the plain past,
- * and it never names a rule, a set or a number: "roar and go through the middle
- * one" is a Berserker's answer without saying so, which is the whole point of
- * asking it this way. docs/text-style.md applies to every word here.
+ * The reader is `you`, and the scene is asked of the character rather than of
+ * the player. A label is what you did and never names a rule, a set or a
+ * number: "roar and go through the middle one" is a Berserker's answer without
+ * saying so, which is the whole point of asking it this way. docs/text-style.md
+ * applies to every word here.
  */
 
 /* ------------------------------------------------------------------ the stages */
 
 export const STAGES = [
-  { id: 'birth', title: 'Birth', draw: 1 },
-  { id: 'family', title: 'Family', draw: 1 },
+  { id: 'childhood', title: 'Childhood', draw: 1 },
+  { id: 'home', title: 'Home', draw: 1 },
   { id: 'blood', title: 'Blood', draw: 2 },
   { id: 'youth', title: 'Youth', draw: 2 },
   { id: 'trade', title: 'Trade', draw: 1 },
@@ -79,12 +104,13 @@ export const STAGES = [
 
 /* ------------------------------------------------------------ what fills a gap
  * The kit's armor and weapon are scored by answers like everything else, but a
- * run can end with nothing pointing at either. These are what an attribute
- * reaches for then, in order of preference, and they are data so that the
- * designer can move them without reading the engine. */
+ * run can end with nothing pointing at either. These are what the highest
+ * attribute reaches for then, in order of preference, and they are data so the
+ * designer can move them without reading the engine. Each weapon scales on the
+ * attribute it is listed under; the checker holds them to that. */
 
 export const WEAPON_DEFAULTS = {
-  physique: ['melee-heavy', 'melee-great', 'polearm'],
+  physique: ['melee-heavy', 'melee-great', 'melee-light-shield'],
   instinct: ['finesse-weapon', 'short-bow', 'flintlock-pistol'],
   mind: ['fire-wand', 'psychic-tome', 'sharp-staff'],
 };
@@ -98,1605 +124,775 @@ export const ARMOR_DEFAULTS = {
 /* --------------------------------------------------------------- the questions */
 
 export const QUESTIONS = [
-  /* ================================================================== birth */
+  /* ============================================================ childhood */
   {
-    id: 'birth-where',
-    stage: 'birth',
-    asks: 'Where were you born?',
-    text: 'Start at the beginning. Before the road, and before the name you go by now, there was a place.',
-    recall: 'You were born',
+    id: 'child-dog',
+    stage: 'childhood',
+    asks: 'You are six. The other children have cornered a stray dog behind the mill, and one of them has picked up a stone. What do you do?',
+    recall: 'At six, with a dog cornered behind the mill, you',
     options: [
       {
-        id: 'city',
-        label: 'In a city, under smoke and bells.',
-        tags: ['born:city'],
+        id: 'stand',
+        label: 'Stand in front of the dog and take the stone yourself.',
+        told: 'stood in front of the dog and took the stone yourself.',
         gives: {
-          attribute: { instinct: 1 },
-          background: { criminal: 1, merchant: 1, investigator: 1 },
-          skill: { streetwise: 1 },
-        },
-      },
-      {
-        id: 'country',
-        label: 'On a farm, a long walk from anywhere.',
-        tags: ['born:country'],
-        gives: {
-          attribute: { physique: 1 },
-          background: { outlander: 1, craftsman: 1 },
-          lineage: { stalwart: 1, wildheart: 1 },
-          skill: { survivalist: 1 },
-        },
-      },
-      {
-        id: 'port',
-        label: 'In a port town that smelled of tar and fish.',
-        tags: ['born:port'],
-        gives: {
-          attribute: { instinct: 1 },
-          background: { merchant: 1, criminal: 1 },
-          lineage: { tidebound: 2 },
-          skill: { seafarer: 1 },
-        },
-      },
-      {
-        id: 'mountain',
-        label: 'In the mountains, where winter comes early.',
-        tags: ['born:mountain'],
-        gives: {
-          attribute: { physique: 1 },
-          lineage: { stonebound: 3, stalwart: 1, skybound: 1 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1 },
-        },
-      },
-      {
-        id: 'ash',
-        label: 'Beside a volcano, in a village of ash and heat.',
-        tags: ['born:ash'],
-        gives: {
-          attribute: { physique: 1 },
-          lineage: { scorchbound: 2 },
-          background: { craftsman: 1 },
-        },
-      },
-      {
-        id: 'forest',
-        label: 'Deep in a forest the maps leave blank.',
-        tags: ['born:forest'],
-        gives: {
-          attribute: { instinct: 1 },
-          lineage: { fey: 1, wildkin: 1, wildheart: 1 },
-          background: { outlander: 1 },
-          talent: { mycomancer: 2 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'birth-hour',
-    stage: 'birth',
-    asks: 'What was said about the night you were born?',
-    recall: 'Of the night you were born, it was said that',
-    options: [
-      {
-        id: 'storm',
-        label: 'A storm broke the moment you drew breath.',
-        gives: {
-          lineage: { skybound: 2, tidebound: 1 },
-          attribute: { instinct: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-      {
-        id: 'lamps',
-        label: 'The midwife swore the lamps burned brighter.',
-        gives: {
-          lineage: { celestial: 2, luminary: 1 },
-          attribute: { mind: 1 },
-          talent: { enchanter: 1 },
-        },
-      },
-      {
-        id: 'walls',
-        label: 'Something in the walls scratched all night, then stopped.',
-        gives: {
-          lineage: { infernal: 2, undead: 1 },
-          attribute: { mind: 1 },
-          talent: { pactbound: 1 },
-        },
-      },
-      {
-        id: 'nothing',
-        label: 'Nothing at all. You were born, you cried, the world went on.',
-        gives: {
-          lineage: { stalwart: 1, wildheart: 1, luminary: 1 },
-          attribute: { physique: 1 },
-          background: { craftsman: 1, military: 1 },
-        },
-      },
-      {
-        id: 'cat',
-        label: 'The household cat would not leave your cradle.',
-        gives: {
-          lineage: { wildkin: 2, fey: 1 },
-          attribute: { instinct: 1 },
-          talent: { 'feral-curse': 1, beastbond: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'birth-name',
-    stage: 'birth',
-    asks: 'Who named you?',
-    recall: 'You were named by',
-    options: [
-      {
-        id: 'mother',
-        label: 'Your mother, after her own mother.',
-        gives: {
-          attribute: { physique: 1 },
-          background: { craftsman: 1, outlander: 1 },
+          attribute: { physique: 2 },
+          talent: { guardian: 2 },
           lineage: { stalwart: 1 },
-          skill: { frugal: 1 },
-        },
-      },
-      {
-        id: 'priest',
-        label: 'A priest, from a book nobody else could read.',
-        gives: {
-          attribute: { mind: 1 },
-          lineage: { celestial: 1, luminary: 1 },
-          background: { erudit: 1 },
-          skill: { scholar: 1 },
-        },
-      },
-      {
-        id: 'crew',
-        label: 'The crew of the ship you were born on.',
-        gives: {
-          background: { merchant: 1, mercenary: 1 },
-          lineage: { tidebound: 1 },
-          skill: { seafarer: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'nobody',
-        label: 'Nobody. You chose it yourself, later.',
-        told: 'nobody at all. You chose the name yourself, later.',
-        gives: {
-          background: { criminal: 1, entertainer: 1, outlander: 1 },
-          attribute: { instinct: 1 },
-          talent: { trickster: 1 },
-          skill: { cunning: 1 },
-        },
-      },
-      {
-        id: 'steward',
-        label: 'The house steward, who wrote it in the family register.',
-        gives: {
-          background: { aristocrat: 2 },
-          skill: { charismatic: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'birth-first',
-    stage: 'birth',
-    asks: 'What is the first thing you remember?',
-    recall: 'The first thing you remember is',
-    options: [
-      {
-        id: 'tool',
-        label: 'The weight of a tool put in your hands too early.',
-        gives: {
-          attribute: { physique: 1 },
-          background: { craftsman: 2 },
-          skill: { skilled: 1 },
-          talent: { colossus: 1 },
-        },
-      },
-      {
-        id: 'horse',
-        label: 'Being lifted onto a horse in a courtyard full of banners.',
-        gives: {
-          background: { aristocrat: 1, military: 1 },
-          attribute: { instinct: 1 },
-          skill: { mastermind: 1 },
-        },
-      },
-      {
-        id: 'hiding',
-        label: 'Hiding, and being good at it.',
-        gives: {
-          attribute: { instinct: 2 },
-          background: { criminal: 1 },
-          skill: { cunning: 1, streetwise: 1 },
-          talent: { trickster: 1 },
-        },
-      },
-      {
-        id: 'book',
-        label: 'A book with pictures of things that did not exist. Or did not, then.',
-        gives: {
-          attribute: { mind: 2 },
-          background: { erudit: 1 },
-          skill: { scholar: 1, occultist: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-      {
-        id: 'water',
-        label: 'Water closing over your head, and not being afraid.',
-        gives: {
-          lineage: { tidebound: 2 },
-          attribute: { instinct: 1 },
-          skill: { seafarer: 1 },
-          background: { outlander: 1 },
-        },
-      },
-    ],
-  },
-
-  /* ================================================================= family */
-  {
-    id: 'family-raised',
-    stage: 'family',
-    asks: 'Who raised you?',
-    recall: 'You were raised by',
-    options: [
-      {
-        id: 'parents',
-        label: 'Both parents, in a house that was never quiet.',
-        gives: {
-          attribute: { physique: 1 },
-          background: { craftsman: 1, merchant: 1 },
-          lineage: { stalwart: 1 },
+          background: { military: 1 },
           skill: { helpful: 1 },
         },
       },
       {
-        id: 'grandmother',
-        label: 'A grandmother who knew every plant by name.',
-        gives: {
-          attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 2, alchemist: 1 },
-          skill: { apothecary: 1 },
-          background: { outlander: 1 },
-          lineage: { wildheart: 1 },
-        },
-      },
-      {
-        id: 'regiment',
-        label: 'A regiment. Your father’s, then yours.',
-        gives: {
-          background: { military: 3 },
-          attribute: { physique: 2 },
-          talent: { guardian: 1 },
-          skill: { vigilant: 1 },
-        },
-      },
-      {
-        id: 'streets',
-        label: 'The streets, and a gang of children like you.',
-        gives: {
-          background: { criminal: 2, entertainer: 1 },
-          attribute: { instinct: 1 },
-          talent: { trickster: 1 },
-          skill: { streetwise: 1 },
-        },
-      },
-      {
-        id: 'tutor',
-        label: 'A tutor, in a house where you were seen and not heard.',
-        gives: {
-          background: { aristocrat: 2, erudit: 1 },
-          attribute: { mind: 1 },
-          skill: { scholar: 1, charismatic: 1 },
-        },
-      },
-      {
-        id: 'monastery',
-        label: 'Nobody you would call family. A monastery took you in.',
-        gives: {
-          attribute: { mind: 1 },
-          background: { erudit: 1, investigator: 1 },
-          lineage: { celestial: 1 },
-          skill: { occultist: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'family-trade',
-    stage: 'family',
-    asks: 'What did the people who raised you do for a living?',
-    recall: 'The people who raised you',
-    options: [
-      {
-        id: 'shop',
-        label: 'Kept a shop and counted every coin twice.',
-        gives: {
-          background: { merchant: 2 },
-          skill: { haggler: 1, frugal: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'iron',
-        label: 'Worked iron until their hands were iron.',
-        gives: {
-          background: { craftsman: 2 },
-          attribute: { physique: 2 },
-          skill: { skilled: 1 },
-          talent: { colossus: 1 },
-          weapon: { 'melee-heavy': 1 },
-        },
-      },
-      {
-        id: 'swords',
-        label: 'Sold their swords to whoever was buying.',
-        gives: {
-          background: { mercenary: 2 },
-          attribute: { physique: 2 },
-          skill: { 'quick-draw': 1 },
-          talent: { berserker: 1 },
-        },
-      },
-      {
-        id: 'sang',
-        label: 'Sang for their supper in every town between two rivers.',
-        gives: {
-          background: { entertainer: 2 },
-          attribute: { instinct: 1 },
-          skill: { troubadour: 1, charismatic: 1 },
-          weapon: { 'enchanted-instrument': 1 },
-        },
-      },
-      {
-        id: 'hunted',
-        label: 'Hunted and trapped, and sold what they did not eat.',
-        gives: {
-          background: { outlander: 2 },
-          attribute: { instinct: 1 },
-          skill: { survivalist: 1 },
-          weapon: { 'short-bow': 1, bow: 1 },
-        },
-      },
-      {
-        id: 'land',
-        label: 'Owned land, and other people worked it.',
-        gives: {
-          background: { aristocrat: 2 },
-          attribute: { mind: 1 },
-          skill: { charismatic: 1, mastermind: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'family-taught',
-    stage: 'family',
-    asks: 'What is the one thing they made sure you learned?',
-    recall: 'The one thing they made sure you learned was',
-    options: [
-      {
-        id: 'blow',
-        label: 'How to take a blow and stay standing.',
-        gives: {
-          attribute: { physique: 2 },
-          talent: { guardian: 1, berserker: 1 },
-          background: { military: 1 },
-          armor: { 'Heavy Armor': 1 },
-        },
-      },
-      {
-        id: 'room',
-        label: 'How to read a room before you open your mouth.',
-        gives: {
-          attribute: { instinct: 1, mind: 1 },
-          skill: { empath: 1, charismatic: 1 },
-          background: { entertainer: 1, aristocrat: 1, investigator: 1 },
-        },
-      },
-      {
-        id: 'read',
-        label: 'How to read, full stop. Everything else followed.',
-        gives: {
-          attribute: { mind: 2 },
-          background: { erudit: 1 },
-          skill: { scholar: 1 },
-          talent: { arcanist: 1, enchanter: 1 },
-        },
-      },
-      {
-        id: 'mend',
-        label: 'How to mend what is broken rather than throw it away.',
-        gives: {
-          background: { craftsman: 1, outlander: 1 },
-          skill: { tailor: 1, scavenger: 1 },
-          talent: { enchanter: 1, alchemist: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'lie',
-        label: 'How to lie well and run faster.',
+        id: 'whistle',
+        label: 'Whistle, low. The dog comes to you instead of running.',
+        told: 'whistled low, and the dog came to you instead of running.',
         gives: {
           attribute: { instinct: 2 },
-          background: { criminal: 1 },
-          skill: { cunning: 1 },
-          talent: { trickster: 1 },
-        },
-      },
-      {
-        id: 'animal',
-        label: 'How to keep an animal calm with your hands and your voice.',
-        gives: {
-          attribute: { instinct: 1 },
-          lineage: { wildkin: 1, wildheart: 2 },
-          talent: { 'draconic-bond': 2, 'feral-curse': 1 },
+          talent: { 'feral-curse': 1, 'draconic-bond': 2 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
           skill: { survivalist: 1 },
         },
       },
-    ],
-  },
-
-  {
-    id: 'family-secret',
-    stage: 'family',
-    asks: 'Every family keeps something quiet. What was yours?',
-    recall: 'What your family kept quiet was',
-    options: [
       {
-        id: 'bargain',
-        label: 'An ancestor’s bargain, and a debt still being paid.',
+        id: 'story',
+        label: 'Tell them, loudly and with conviction, what became of the last boy who stoned a dog.',
+        told: 'told them, loudly and with conviction, what became of the last boy who stoned a dog.',
         gives: {
-          lineage: { infernal: 2 },
-          talent: { pactbound: 2 },
           attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'dragon',
-        label: 'A grandfather who was, by every account, a dragon.',
-        gives: {
-          lineage: { draconic: 3 },
-          talent: { 'dragon-aspect': 1, 'draconic-bond': 1 },
-          attribute: { physique: 1 },
-        },
-      },
-      {
-        id: 'stolen',
-        label: 'That the family fortune was stolen, twice.',
-        gives: {
-          background: { criminal: 1, aristocrat: 1, merchant: 1 },
-          skill: { cunning: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'died',
-        label: 'That one of you did not die when they should have.',
-        gives: {
-          lineage: { undead: 3 },
-          attribute: { mind: 1 },
-          talent: { alchemist: 1 },
-        },
-      },
-      {
-        id: 'woods',
-        label: 'That the woods behind the house were not entirely empty.',
-        gives: {
-          lineage: { fey: 2, wildkin: 1 },
-          talent: { mycomancer: 2 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'nothing',
-        label: 'Nothing. You checked. That was its own disappointment.',
-        told: 'nothing. You checked, and that was its own disappointment.',
-        gives: {
-          lineage: { luminary: 1, stalwart: 1 },
-          background: { investigator: 1 },
-          skill: { inquisitor: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-    ],
-  },
-
-  /* ================================================================== blood */
-  {
-    id: 'blood-marks',
-    stage: 'blood',
-    asks: 'What did people notice about you before you could speak?',
-    recall: 'Before you could speak, people noticed',
-    options: [
-      {
-        id: 'light',
-        label: 'Faint light under the skin, like a lamp behind cloth.',
-        gives: { lineage: { celestial: 3 }, attribute: { mind: 1 } },
-      },
-      {
-        id: 'horns',
-        label: 'Horns, small and hard, that the midwife tried not to mention.',
-        gives: { lineage: { infernal: 3 }, attribute: { mind: 1 } },
-      },
-      {
-        id: 'wings',
-        label: 'Wings like a dragonfly’s, and a frame too light for them.',
-        gives: { lineage: { fey: 3 }, attribute: { instinct: 1 } },
-      },
-      {
-        id: 'scales',
-        label: 'Scales, in a colour that ran in the family.',
-        gives: { lineage: { draconic: 3 }, attribute: { physique: 1 } },
-      },
-      {
-        id: 'ears',
-        label: 'Ears, or a tail, or eyes that caught the light like a cat’s.',
-        gives: { lineage: { wildkin: 3 }, attribute: { instinct: 1 } },
-      },
-      {
-        id: 'nothing',
-        label: 'Nothing. You looked like everyone else, and you still do.',
-        gives: {
-          lineage: { stalwart: 1, wildheart: 1, luminary: 1 },
-          attribute: { physique: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'blood-element',
-    stage: 'blood',
-    asks: 'Which of the four did your family swear ran in the blood?',
-    recall: 'Your family swore that',
-    options: [
-      {
-        id: 'fire',
-        label: 'Fire. Nobody in your house has ever been cold.',
-        told: 'fire ran in the blood. Nobody in your house has ever been cold.',
-        gives: {
-          lineage: { scorchbound: 3 },
-          attribute: { physique: 1 },
-          weapon: { 'fire-wand': 1 },
-        },
-      },
-      {
-        id: 'wind',
-        label: 'Wind. You were always the fastest, and the first up any hill.',
-        told: 'wind ran in the blood. You were always the fastest, and the first up any hill.',
-        gives: { lineage: { skybound: 3 }, attribute: { instinct: 1 } },
-      },
-      {
-        id: 'water',
-        label: 'Water. You could hold your breath longer than was reasonable.',
-        told: 'water ran in the blood. You could hold your breath longer than was reasonable.',
-        gives: {
-          lineage: { tidebound: 3 },
-          attribute: { instinct: 1 },
-          skill: { seafarer: 1 },
+          lineage: { infernal: 1 },
+          background: { entertainer: 2 },
+          skill: { troubadour: 1, charismatic: 1 },
         },
       },
       {
         id: 'stone',
-        label: 'Stone. You do not bruise easily, and you do not move when pushed.',
-        told: 'stone ran in the blood. You do not bruise easily, and you do not move when pushed.',
+        label: 'Throw a stone of your own, at the one holding the stone.',
+        told: 'threw a stone of your own, at the one holding the stone.',
+        tags: ['did:violence'],
         gives: {
-          lineage: { stonebound: 3 },
           attribute: { physique: 1 },
-          talent: { guardian: 1 },
-        },
-      },
-      {
-        id: 'none',
-        label: 'None of them. The blood was only blood.',
-        told: 'none of the four ran in the blood. The blood was only blood.',
-        gives: {
-          lineage: { stalwart: 1, luminary: 1, wildheart: 1, undead: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'blood-body',
-    stage: 'blood',
-    asks: 'How does your body answer when you ask too much of it?',
-    recall: 'Asked for too much, your body',
-    options: [
-      {
-        id: 'more',
-        label: 'It gives more. It always has, and it frightens people.',
-        told: 'gives more. It always has, and it frightens people.',
-        gives: {
-          lineage: { stalwart: 2 },
-          attribute: { physique: 2 },
-          talent: { berserker: 1, colossus: 1 },
-        },
-      },
-      {
-        id: 'moves',
-        label: 'It moves before you have decided to. You catch up later.',
-        told: 'moves before you have decided to. You catch up later.',
-        gives: {
-          lineage: { wildheart: 3 },
-          attribute: { instinct: 2 },
-          talent: { duelist: 1, trickster: 1 },
-        },
-      },
-      {
-        id: 'waits',
-        label: 'It waits while the mind finishes. Then it does exactly what it was told.',
-        told: 'waits while the mind finishes, then does exactly what it was told.',
-        gives: {
-          lineage: { luminary: 2 },
-          attribute: { mind: 2 },
-          talent: { arcanist: 1, enchanter: 1 },
-        },
-      },
-      {
-        id: 'tireless',
-        label: 'It does not tire, and it does not heal. Not properly.',
-        told: 'does not tire, and does not heal. Not properly.',
-        gives: { lineage: { undead: 3 }, attribute: { physique: 1 } },
-      },
-      {
-        id: 'changes',
-        label: 'It changes. Teeth, nails, the set of the shoulders. Then it changes back.',
-        told: 'changes. Teeth, nails, the set of the shoulders. Then it changes back.',
-        gives: {
-          lineage: { wildkin: 2 },
-          talent: { 'feral-curse': 2 },
-          attribute: { instinct: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'blood-dream',
-    stage: 'blood',
-    asks: 'What do you dream about, more often than you would like?',
-    recall: 'More often than you would like, you dream of',
-    options: [
-      {
-        id: 'light',
-        label: 'Falling upward, into a light that knows your name.',
-        gives: {
-          lineage: { celestial: 2, skybound: 1 },
-          attribute: { mind: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-      {
-        id: 'contract',
-        label: 'A contract you cannot read, with your signature already on it.',
-        gives: {
-          lineage: { infernal: 2 },
-          talent: { pactbound: 2 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'legs',
-        label: 'Running on four legs through country you have never seen.',
-        gives: {
-          lineage: { wildkin: 2, wildheart: 2 },
-          talent: { 'feral-curse': 2 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'sea',
-        label: 'The bottom of the sea, and being at home there.',
-        gives: { lineage: { tidebound: 2 }, attribute: { instinct: 1 } },
-      },
-      {
-        id: 'fire',
-        label: 'Fire that does not burn you, and a voice inside it.',
-        gives: { lineage: { scorchbound: 2, draconic: 1 }, attribute: { physique: 1 } },
-      },
-      {
-        id: 'nothing',
-        label: 'Nothing. You sleep like the dead.',
-        gives: { lineage: { undead: 1, stalwart: 1 }, attribute: { physique: 1 } },
-      },
-    ],
-  },
-
-  {
-    id: 'blood-old',
-    stage: 'blood',
-    asks: 'Which of your ancestors do people still tell stories about?',
-    recall: 'The ancestor people still tell stories about is',
-    options: [
-      {
-        id: 'pact',
-        label: 'The one who made a pact, and the one who paid for it.',
-        gives: {
-          lineage: { infernal: 2, celestial: 1 },
-          talent: { pactbound: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'pass',
-        label: 'The one who stood in the mountain pass alone, and held it.',
-        gives: {
-          lineage: { stalwart: 2, stonebound: 2 },
-          talent: { guardian: 2 },
-          attribute: { physique: 1 },
-          weapon: { 'melee-heavy-shield': 1 },
-        },
-      },
-      {
-        id: 'birds',
-        label: 'The one who could talk to birds, or said she could.',
-        gives: {
-          lineage: { wildkin: 1, fey: 1, skybound: 1 },
-          talent: { 'draconic-bond': 1, mycomancer: 2 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'book',
-        label: 'The one who wrote the book the academy still teaches from.',
-        gives: {
-          lineage: { luminary: 2 },
-          background: { erudit: 1 },
-          talent: { arcanist: 1, enchanter: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'grave',
-        label: 'The one who came back from the grave to finish an argument.',
-        gives: {
-          lineage: { undead: 2 },
-          attribute: { mind: 1 },
-          talent: { alchemist: 1 },
-        },
-      },
-    ],
-  },
-
-  /* ================================================================== youth */
-  {
-    id: 'youth-trouble',
-    stage: 'youth',
-    asks: 'What kind of trouble were you in, as a child?',
-    recall: 'As a child, the trouble you were in was',
-    options: [
-      {
-        id: 'fights',
-        label: 'Fights. You started some and finished most.',
-        gives: {
-          attribute: { physique: 2 },
           talent: { berserker: 2, brawler: 1 },
-          background: { military: 1, mercenary: 1 },
-          weapon: { 'fist-weapon': 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
         },
       },
+    ],
+  },
+
+  {
+    id: 'child-fire',
+    stage: 'childhood',
+    asks: 'The barn is on fire and the calf is still inside. The grown-ups are all at the well. What do you do?',
+    recall: 'When the barn burned, you',
+    options: [
       {
-        id: 'theft',
-        label: 'Theft. Small things, then less small things.',
+        id: 'in',
+        label: 'Go in through the smoke, low and fast, and come out with the calf.',
+        told: 'went in through the smoke, low and fast, and came out with the calf.',
         gives: {
-          attribute: { instinct: 2 },
-          background: { criminal: 2 },
-          talent: { trickster: 2 },
-          skill: { cunning: 1 },
-          weapon: { 'finesse-weapon': 1 },
-        },
-      },
-      {
-        id: 'questions',
-        label: 'Questions. You would not stop asking them.',
-        gives: {
-          attribute: { mind: 2 },
-          background: { erudit: 1, investigator: 1 },
-          skill: { scholar: 1, inquisitor: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-      {
-        id: 'wandering',
-        label: 'Wandering. You were always found somewhere you should not have been.',
-        gives: {
-          attribute: { instinct: 1 },
-          background: { outlander: 2 },
-          skill: { cartographer: 1, survivalist: 1 },
-          talent: { mycomancer: 2 },
-        },
-      },
-      {
-        id: 'experiments',
-        label: 'Experiments. Things that smoked, dissolved or exploded.',
-        gives: {
-          attribute: { mind: 2 },
-          talent: { alchemist: 2, 'cauldron-keeper': 1 },
-          background: { craftsman: 1 },
-          skill: { apothecary: 1 },
-        },
-      },
-      {
-        id: 'none',
-        label: 'None. You were the one who kept the others out of it.',
-        told: 'none at all. You were the one who kept the others out of it.',
-        gives: {
-          attribute: { physique: 1, mind: 1 },
-          talent: { guardian: 2 },
-          skill: { helpful: 1 },
+          attribute: { physique: 2 },
+          talent: { guardian: 1, berserker: 1 },
+          lineage: { scorchbound: 2 },
           background: { military: 1 },
         },
       },
-    ],
-  },
-
-  {
-    id: 'youth-friend',
-    stage: 'youth',
-    asks: 'Who was your closest companion, growing up?',
-    recall: 'Growing up, your closest companion was',
-    options: [
       {
-        id: 'beast',
-        label: 'A dog, a hawk or something stranger that chose you.',
+        id: 'back',
+        label: 'Slip round the back where the boards are rotten and coax the calf out through the gap.',
+        told: 'slipped round the back where the boards were rotten and coaxed the calf out through the gap.',
         gives: {
-          talent: { 'draconic-bond': 2, beastbond: 1, 'feral-curse': 1 },
           attribute: { instinct: 1 },
           lineage: { wildkin: 1 },
-          skill: { survivalist: 1 },
-        },
-      },
-      {
-        id: 'book',
-        label: 'A book. Several books, the same ones, over and over.',
-        gives: {
-          attribute: { mind: 2 },
-          talent: { arcanist: 1, enchanter: 1 },
-          background: { erudit: 1 },
-          skill: { scholar: 1 },
-        },
-      },
-      {
-        id: 'gang',
-        label: 'A gang. You were loyal to them and they were mostly loyal to you.',
-        gives: {
-          background: { criminal: 2, mercenary: 1 },
-          attribute: { instinct: 1 },
-          skill: { streetwise: 1 },
-          talent: { trickster: 1 },
-        },
-      },
-      {
-        id: 'sword',
-        label: 'Your sword. You named it, and you were not embarrassed.',
-        gives: {
-          talent: { duelist: 2, colossus: 1 },
-          attribute: { physique: 1, instinct: 1 },
-          background: { military: 1 },
-          weapon: { 'finesse-weapon': 1, 'melee-heavy': 1 },
-        },
-      },
-      {
-        id: 'cauldron',
-        label: 'A cauldron your grandmother left you, and the garden that fed it.',
-        gives: {
-          talent: { 'cauldron-keeper': 2, alchemist: 1 },
-          attribute: { instinct: 1 },
-          skill: { apothecary: 1 },
-          background: { outlander: 1 },
-        },
-      },
-      {
-        id: 'nobody',
-        label: 'Nobody. You were fine. You are still fine.',
-        told: 'nobody. You were fine, and you are still fine.',
-        gives: {
-          attribute: { physique: 1 },
-          lineage: { undead: 1 },
-          talent: { berserker: 1 },
-          background: { investigator: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'youth-fear',
-    stage: 'youth',
-    asks: 'What were you afraid of, and what did you do about it?',
-    recall: 'You were afraid of',
-    options: [
-      {
-        id: 'dark',
-        label: 'The dark. You learned to move through it until it was yours.',
-        gives: {
-          attribute: { instinct: 2 },
-          talent: { trickster: 1, 'feral-curse': 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1 },
-          lineage: { infernal: 1 },
-        },
-      },
-      {
-        id: 'small',
-        label: 'Being small. You got bigger, on purpose, for years.',
-        gives: {
-          attribute: { physique: 2 },
-          talent: { colossus: 2, berserker: 1 },
-          armor: { 'Heavy Armor': 1 },
-          weapon: { 'melee-great': 1 },
-        },
-      },
-      {
-        id: 'stupid',
-        label: 'Being stupid. You read until the fear was somebody else’s.',
-        gives: {
-          attribute: { mind: 2 },
-          talent: { arcanist: 1, enchanter: 1, alchemist: 1 },
-          background: { erudit: 1 },
-          skill: { scholar: 1 },
-        },
-      },
-      {
-        id: 'losing',
-        label: 'Losing people. You learned to stand between them and the thing.',
-        gives: {
-          attribute: { physique: 1 },
-          talent: { guardian: 3 },
-          skill: { healer: 1 },
-          background: { military: 1 },
-          weapon: { 'melee-light-shield': 1 },
-        },
-      },
-      {
-        id: 'seen',
-        label: 'Being seen. You learned to make people look where you wanted.',
-        gives: {
-          attribute: { instinct: 1 },
-          background: { entertainer: 1, criminal: 1 },
-          skill: { charismatic: 1, cunning: 1 },
-          talent: { trickster: 1 },
-        },
-      },
-      {
-        id: 'nameless',
-        label: 'Nothing you could name. It followed you anyway.',
-        gives: {
-          talent: { pactbound: 1 },
-          lineage: { infernal: 1 },
-          attribute: { mind: 1 },
-          background: { investigator: 1 },
-          skill: { occultist: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'youth-gift',
-    stage: 'youth',
-    asks: 'What could you do that the other children could not?',
-    recall: 'What you could do that the other children could not was',
-    options: [
-      {
-        id: 'vanish',
-        label: 'Make a coin vanish, then a purse, then yourself.',
-        gives: {
-          talent: { trickster: 3 },
-          attribute: { instinct: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1 },
-        },
-      },
-      {
-        id: 'lift',
-        label: 'Lift what took two of them to move.',
-        gives: {
-          talent: { colossus: 2, berserker: 1 },
-          attribute: { physique: 2 },
           background: { craftsman: 1 },
-          weapon: { 'melee-great': 1 },
+          skill: { survivalist: 1, cunning: 1 },
         },
       },
       {
-        id: 'talk',
-        label: 'Talk an adult out of a punishment with a straight face.',
+        id: 'well',
+        label: 'Run for the well and get the bucket line moving before anyone thinks to.',
+        told: 'ran for the well and had the bucket line moving before anyone thought to.',
         gives: {
-          attribute: { instinct: 1, mind: 1 },
-          skill: { charismatic: 1, empath: 1 },
-          background: { entertainer: 1, aristocrat: 1, merchant: 1 },
+          attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          background: { military: 1, aristocrat: 1 },
+          skill: { mastermind: 1, helpful: 1 },
         },
       },
       {
-        id: 'candle',
-        label: 'Make a candle light without touching it.',
+        id: 'roof',
+        label: 'Watch how the fire moves, and understand before anyone else that the roof is about to come down.',
+        told: 'watched how the fire moved, and understood before anyone else that the roof was about to come down.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2, enchanter: 1 },
-          skill: { 'innate-spell-novice': 1 },
-          lineage: { celestial: 1, scorchbound: 1 },
-        },
-      },
-      {
-        id: 'wall',
-        label: 'Hold a shield wall of one against three.',
-        gives: {
-          talent: { guardian: 3 },
-          attribute: { physique: 1 },
-          background: { military: 1 },
-          armor: { 'Heavy Armor': 1 },
-        },
-      },
-      {
-        id: 'brew',
-        label: 'Brew something from weeds that actually worked.',
-        gives: {
-          talent: { 'cauldron-keeper': 2, alchemist: 2 },
-          attribute: { instinct: 1 },
-          skill: { apothecary: 1 },
-        },
-      },
-      {
-        id: 'target',
-        label: 'Hit a target the others could not see.',
-        gives: {
-          attribute: { instinct: 2 },
-          talent: { sharpshooter: 1, duelist: 1 },
-          weapon: { 'short-bow': 1, 'flintlock-pistol': 1 },
-          skill: { vigilant: 1 },
+          talent: { arcanist: 1, alchemist: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 2 },
+          skill: { scholar: 1 },
         },
       },
     ],
   },
 
   {
-    id: 'youth-lesson',
-    stage: 'youth',
-    asks: 'What did the world teach you first, and hardest?',
-    recall: 'The world taught you first, and hardest,',
+    id: 'child-market',
+    stage: 'childhood',
+    asks: 'You are eight, at the market, with a coin that is not enough for the thing you want. The stallholder has turned away. What do you do?',
+    recall: 'At eight, with a coin that was not enough, you',
     options: [
       {
-        id: 'door',
-        label: 'That a locked door is a suggestion.',
+        id: 'take',
+        label: 'Take it and walk. Not run.',
+        told: 'took the thing and walked, not ran.',
+        tags: ['did:theft'],
         gives: {
-          talent: { trickster: 1 },
+          attribute: { instinct: 2 },
+          talent: { trickster: 2 },
+          lineage: { fey: 1 },
           background: { criminal: 2 },
-          attribute: { instinct: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
       {
-        id: 'strong',
-        label: 'That the strong take, unless someone stands in the way.',
+        id: 'promise',
+        label: 'Offer the coin and a promise, and mean the promise.',
+        told: 'offered the coin and a promise, and meant the promise.',
         gives: {
-          talent: { guardian: 2, berserker: 1 },
+          attribute: { mind: 1 },
+          lineage: { celestial: 1 },
+          background: { merchant: 2, aristocrat: 2 },
+          skill: { haggler: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'crates',
+        label: 'Offer to carry crates for the rest of the day, until the coin is enough.',
+        told: 'offered to carry crates until the coin was enough, and carried them.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 1, colossus: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1, military: 1 },
+          skill: { frugal: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'make',
+        label: 'Put the coin away. You will make one yourself, and it will be better.',
+        told: 'put the coin away, made one yourself, and it was better.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { enchanter: 3, alchemist: 1 },
+          background: { craftsman: 1 },
+          skill: { skilled: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-dark',
+    stage: 'childhood',
+    asks: 'The cellar door has shut behind you and the candle has gone out. Nobody heard. What do you do?',
+    recall: 'Shut in the dark cellar, you',
+    options: [
+      {
+        id: 'shoulder',
+        label: 'Shoulder the door until the latch gives.',
+        told: 'shouldered the door until the latch gave.',
+        gives: {
           attribute: { physique: 2 },
-          background: { military: 1, mercenary: 1 },
+          talent: { berserker: 1, colossus: 1 },
+          lineage: { stalwart: 1 },
         },
       },
       {
-        id: 'price',
-        label: 'That everything has a price, and most prices are negotiable.',
+        id: 'listen',
+        label: 'Sit still. Listen. Let your eyes learn the dark.',
+        told: 'sat still, listened and let your eyes learn the dark.',
         gives: {
-          background: { merchant: 2, aristocrat: 1 },
-          skill: { haggler: 1 },
-          attribute: { mind: 1 },
+          attribute: { instinct: 2 },
+          talent: { 'feral-curse': 2, trickster: 1 },
+          lineage: { wildkin: 1, wildheart: 1 },
+          skill: { vigilant: 1 },
         },
       },
       {
-        id: 'books',
-        label: 'That the old books were right about more than anyone admits.',
+        id: 'walls',
+        label: 'Feel along the walls for the shelf, the jars and the way the stones are laid, until you know the room.',
+        told: 'felt along the walls for the shelf, the jars and the way the stones were laid, until you knew the room.',
         gives: {
-          background: { erudit: 2 },
+          attribute: { mind: 2 },
           talent: { arcanist: 1, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1 },
+          skill: { skilled: 1 },
+        },
+      },
+      {
+        id: 'speak',
+        label: 'Speak into the dark, to whatever is in there with you. It answers.',
+        told: 'spoke into the dark, to whatever was in there with you, and it answered.',
+        tags: ['did:magic'],
+        gives: {
           attribute: { mind: 1 },
+          talent: { pactbound: 2 },
+          lineage: { infernal: 1 },
           skill: { occultist: 1 },
         },
       },
-      {
-        id: 'wild',
-        label: 'That the wild does not care whether you live.',
-        gives: {
-          background: { outlander: 2 },
-          attribute: { instinct: 1 },
-          skill: { survivalist: 1 },
-          talent: { 'feral-curse': 1, mycomancer: 2 },
-        },
-      },
-      {
-        id: 'crowd',
-        label: 'That a crowd will believe anything said with enough confidence.',
-        gives: {
-          background: { entertainer: 2 },
-          attribute: { instinct: 1 },
-          skill: { troubadour: 1, charismatic: 1 },
-          talent: { trickster: 1 },
-        },
-      },
     ],
   },
 
+  /* ================================================================= home */
   {
-    id: 'youth-city',
-    stage: 'youth',
-    requires: ['born:city', 'born:port'],
-    asks: 'The city raised you as much as anyone did. Which part of it?',
-    recall: 'The part of the city that raised you was',
+    id: 'home-debt',
+    stage: 'home',
+    asks: 'A man comes to the door for a debt your father cannot pay, and your father is not home. You are twelve. What do you do?',
+    recall: 'When the debt collector came and your father was out, you',
     options: [
       {
-        id: 'docks',
-        label: 'The docks, where everything arrives and half of it goes missing.',
+        id: 'doorway',
+        label: 'Stand in the doorway and tell him to come back when there is a man in the house to speak to.',
+        told: 'stood in the doorway and told him to come back when there was a man in the house to speak to.',
         gives: {
-          background: { criminal: 1, merchant: 1 },
-          attribute: { instinct: 1 },
-          skill: { streetwise: 1 },
-          lineage: { tidebound: 1 },
-        },
-      },
-      {
-        id: 'market',
-        label: 'The market, where you learned the price of everything.',
-        gives: {
-          background: { merchant: 2 },
-          skill: { haggler: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'rooftops',
-        label: 'The rooftops, which nobody else seemed to know were there.',
-        gives: {
-          talent: { trickster: 2 },
-          background: { criminal: 1 },
-          attribute: { instinct: 1 },
-          skill: { cunning: 1 },
-        },
-      },
-      {
-        id: 'university',
-        label: 'The university quarter, where you were not enrolled and read anyway.',
-        gives: {
-          background: { erudit: 2 },
-          attribute: { mind: 1 },
-          skill: { scholar: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-      {
-        id: 'garrison',
-        label: 'The garrison, where a sergeant let you carry water and then a spear.',
-        gives: {
-          background: { military: 2 },
           attribute: { physique: 1 },
-          talent: { guardian: 1 },
-          weapon: { polearm: 1 },
-        },
-      },
-      {
-        id: 'theatre',
-        label: 'The theatre district, front row when you could pay and backstage when you could not.',
-        gives: {
-          background: { entertainer: 2 },
-          attribute: { instinct: 1 },
-          skill: { troubadour: 1 },
-        },
-      },
-      {
-        id: 'watch',
-        label: 'The watch house, where you learned what a lie sounds like.',
-        gives: {
-          background: { investigator: 2 },
-          attribute: { mind: 1 },
-          skill: { inquisitor: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'youth-country',
-    stage: 'youth',
-    requires: ['born:country', 'born:mountain', 'born:forest', 'born:ash'],
-    asks: 'Far from any town, how did you fill the days?',
-    recall: 'Far from any town, you filled the days',
-    options: [
-      {
-        id: 'hunting',
-        label: 'Hunting, and getting good enough at it to feed the house.',
-        gives: {
-          background: { outlander: 2 },
-          attribute: { instinct: 1 },
-          skill: { survivalist: 1 },
-          weapon: { bow: 1, 'short-bow': 1 },
-        },
-      },
-      {
-        id: 'working',
-        label: 'Working the forge, the mill or the field until dark.',
-        gives: {
-          background: { craftsman: 2 },
-          attribute: { physique: 2 },
-          skill: { skilled: 1 },
-          talent: { colossus: 1 },
-        },
-      },
-      {
-        id: 'gathering',
-        label: 'Gathering what grew, and learning which of it would kill you.',
-        gives: {
-          talent: { 'cauldron-keeper': 2, alchemist: 1 },
-          skill: { apothecary: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'animals',
-        label: 'With the animals, who liked you better than people did.',
-        gives: {
-          talent: { 'draconic-bond': 1, 'feral-curse': 1 },
-          lineage: { wildkin: 1, wildheart: 2 },
-          attribute: { instinct: 1 },
-          skill: { survivalist: 1 },
-        },
-      },
-      {
-        id: 'reading',
-        label: 'Reading the one shelf of books until the bindings gave out.',
-        gives: {
-          background: { erudit: 1 },
-          lineage: { luminary: 1 },
-          attribute: { mind: 2 },
-          skill: { scholar: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-      {
-        id: 'flock',
-        label: 'Guarding the flock against whatever came down from the hills.',
-        gives: {
           talent: { guardian: 2 },
-          attribute: { physique: 1 },
           background: { military: 1 },
           skill: { vigilant: 1 },
-          weapon: { polearm: 1 },
+        },
+      },
+      {
+        id: 'talk',
+        label: 'Invite him in, pour what there is to pour and talk the debt down by half before he notices.',
+        told: 'invited him in, poured what there was to pour and talked the debt down by half before he noticed.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { merchant: 2, aristocrat: 1 },
+          skill: { haggler: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'follow',
+        label: 'Follow him home afterwards and learn where he keeps his ledger.',
+        told: 'followed him home afterwards and learned where he kept his ledger.',
+        gives: {
+          attribute: { instinct: 1 },
+          background: { criminal: 2, investigator: 1 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'ask',
+        label: 'Ask him what the debt is really for. Nobody sends a man like this for money.',
+        told: 'asked him what the debt was really for, because nobody sends a man like that for money.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          lineage: { infernal: 1 },
+          background: { investigator: 2 },
+          skill: { inquisitor: 1, empath: 1 },
         },
       },
     ],
   },
 
-  /* ================================================================== trade */
   {
-    id: 'trade-living',
-    stage: 'trade',
-    asks: 'By the time you were grown, how did you make your living?',
-    recall: 'By the time you were grown, you made your living',
+    id: 'home-sick',
+    stage: 'home',
+    asks: 'Your sister has a fever the village healer cannot break, and the nearest physician is two days away. What do you do?',
+    recall: 'When your sister’s fever would not break, you',
     options: [
       {
-        id: 'criminal',
-        label: 'On the wrong side of other people’s doors.',
+        id: 'go',
+        label: 'Go. Two days there and two back, and you run the first of them.',
+        told: 'went for the physician, two days there and two back, and ran the first of them.',
         gives: {
-          background: { criminal: 3 },
-          attribute: { instinct: 1 },
-          skill: { cunning: 1 },
-          talent: { trickster: 1 },
-          weapon: { 'finesse-weapon': 1 },
-        },
-      },
-      {
-        id: 'erudit',
-        label: 'In a library, an academy or somebody’s private study.',
-        gives: {
-          background: { erudit: 3 },
-          attribute: { mind: 1 },
-          skill: { scholar: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-      {
-        id: 'military',
-        label: 'In a regiment, under a banner that was not yours.',
-        gives: {
-          background: { military: 3 },
-          attribute: { physique: 2 },
-          skill: { vigilant: 1 },
-          talent: { guardian: 1 },
-          weapon: { polearm: 1 },
-        },
-      },
-      {
-        id: 'outlander',
-        label: 'On the road, the river or the ridge, wherever the work was.',
-        gives: {
-          background: { outlander: 3 },
-          attribute: { instinct: 1 },
-          skill: { survivalist: 1 },
-          weapon: { bow: 1 },
-        },
-      },
-      {
-        id: 'craftsman',
-        label: 'At a bench, with a guild mark to show for it.',
-        gives: {
-          background: { craftsman: 3 },
           attribute: { physique: 1 },
-          skill: { skilled: 1 },
-          talent: { enchanter: 1 },
+          talent: { guardian: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { survivalist: 1 },
         },
       },
       {
-        id: 'entertainer',
-        label: 'On a stage, or the nearest thing to one.',
+        id: 'gather',
+        label: 'Gather what grows by the stream, boil it the way your grandmother did and pray you remember right.',
+        told: 'gathered what grew by the stream, boiled it the way your grandmother did and prayed you remembered right.',
         gives: {
-          background: { entertainer: 3 },
           attribute: { instinct: 1 },
-          skill: { troubadour: 1 },
+          talent: { 'cauldron-keeper': 2, mycomancer: 2 },
+          skill: { apothecary: 1 },
+        },
+      },
+      {
+        id: 'read',
+        label: 'Read every page of the almanac on the shelf until you find the fever.',
+        told: 'read every page of the almanac on the shelf until you found the fever.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { alchemist: 1, arcanist: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 2 },
+          skill: { physician: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'promise',
+        label: 'Sit with her through the nights, holding on. Promise anything to anyone listening.',
+        told: 'sat with her through the nights, holding on, promising anything to anyone listening.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 1 },
+          lineage: { celestial: 1, infernal: 1 },
+          skill: { healer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-feast',
+    stage: 'home',
+    asks: 'The harvest feast. Your uncle, drunk, has started on the story about your mother that nobody tells. What do you do?',
+    recall: 'When your drunk uncle started the story nobody tells, you',
+    options: [
+      {
+        id: 'back',
+        label: 'Put him on his back in the yard before he finishes the sentence.',
+        told: 'put him on his back in the yard before he finished the sentence.',
+        tags: ['did:violence'],
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, brawler: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+        },
+      },
+      {
+        id: 'song',
+        label: 'Start a song, loud enough that the table joins in and the story is lost.',
+        told: 'started a song, loud enough that the table joined in and the story was lost.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { entertainer: 3 },
+          skill: { troubadour: 1, charismatic: 1 },
           weapon: { 'enchanted-instrument': 1 },
         },
       },
       {
-        id: 'merchant',
-        label: 'Buying low in one town and selling high in the next.',
+        id: 'ask',
+        label: 'Let him finish. Then ask, quietly, for the parts he left out.',
+        told: 'let him finish, then asked, quietly, for the parts he left out.',
         gives: {
-          background: { merchant: 3 },
           attribute: { mind: 1 },
-          skill: { haggler: 1 },
-        },
-      },
-      {
-        id: 'aristocrat',
-        label: 'You did not. Your name did it for you.',
-        told: 'by your name, which did the work for you.',
-        gives: {
-          background: { aristocrat: 3 },
-          attribute: { instinct: 1 },
-          skill: { charismatic: 1 },
-        },
-      },
-      {
-        id: 'investigator',
-        label: 'Finding out who was lying, for whoever paid.',
-        gives: {
-          background: { investigator: 3 },
-          attribute: { mind: 1 },
-          skill: { inquisitor: 1 },
-        },
-      },
-      {
-        id: 'mercenary',
-        label: 'Fighting for whichever side was hiring.',
-        gives: {
-          background: { mercenary: 3 },
-          attribute: { physique: 2 },
-          skill: { 'quick-draw': 1 },
-          talent: { berserker: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'trade-master',
-    stage: 'trade',
-    asks: 'Who taught you your trade?',
-    recall: 'Your trade was taught to you by',
-    options: [
-      {
-        id: 'fence',
-        label: 'A fence who took a cut of everything and taught you why.',
-        gives: {
-          background: { criminal: 3 },
-          skill: { haggler: 1, streetwise: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'master',
-        label: 'A master who died before you finished, leaving you the books.',
-        gives: {
-          background: { erudit: 3 },
-          skill: { scholar: 1 },
-          attribute: { mind: 1 },
-          talent: { arcanist: 1 },
-        },
-      },
-      {
-        id: 'sergeant',
-        label: 'A sergeant who never once said your name.',
-        gives: {
-          background: { military: 3 },
-          skill: { vigilant: 1 },
-          attribute: { physique: 2 },
-        },
-      },
-      {
-        id: 'walker',
-        label: 'A woman who had walked every road on the map and a few off it.',
-        gives: {
-          background: { outlander: 3 },
-          skill: { cartographer: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'guild',
-        label: 'A guild, in the slow, exacting, seven-year way guilds do it.',
-        gives: {
-          background: { craftsman: 3 },
-          skill: { skilled: 1 },
-          attribute: { physique: 1 },
-          talent: { enchanter: 1 },
-        },
-      },
-      {
-        id: 'troupe',
-        label: 'A troupe that adopted you and never asked where you came from.',
-        gives: {
-          background: { entertainer: 3 },
-          skill: { troubadour: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'house',
-        label: 'A merchant house that started you at the ledgers.',
-        gives: {
-          background: { merchant: 3 },
-          skill: { frugal: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'tutors',
-        label: 'Tutors, riding masters and a dancing instructor you despised.',
-        gives: {
-          background: { aristocrat: 3 },
-          skill: { charismatic: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'clerk',
-        label: 'A magistrate’s clerk who taught you to read a silence.',
-        gives: {
-          background: { investigator: 3 },
+          background: { investigator: 1, erudit: 1 },
           skill: { inquisitor: 1, empath: 1 },
-          attribute: { mind: 1 },
         },
       },
       {
-        id: 'company',
-        label: 'A free company. You learned by not dying.',
+        id: 'cup',
+        label: 'Refill his cup with something that will have him asleep inside a minute.',
+        told: 'refilled his cup with something that had him asleep inside a minute.',
         gives: {
-          background: { mercenary: 3 },
-          skill: { 'quick-draw': 1 },
-          attribute: { physique: 2 },
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 2, trickster: 1 },
+          skill: { apothecary: 1, cunning: 1 },
         },
       },
     ],
   },
 
   {
-    id: 'trade-proud',
-    stage: 'trade',
-    asks: 'What piece of work are you proudest of?',
-    recall: 'The piece of work you are proudest of is',
+    id: 'home-leave',
+    stage: 'home',
+    asks: 'Your family is leaving the valley for good, the cart is full and there is room for one more thing of yours. What do you take?',
+    recall: 'When the family left the valley, you took',
     options: [
       {
-        id: 'vault',
-        label: 'A vault nobody has yet noticed is empty.',
+        id: 'hammer',
+        label: 'Your father’s hammer. It is heavier than you, and you carry it anyway.',
+        told: 'your father’s hammer. It was heavier than you and you carried it anyway.',
         gives: {
-          background: { criminal: 3 },
-          talent: { trickster: 1 },
-          attribute: { instinct: 1 },
+          attribute: { physique: 1 },
+          talent: { colossus: 2 },
+          background: { craftsman: 1 },
+          weapon: { 'melee-heavy': 1 },
         },
       },
       {
-        id: 'treatise',
-        label: 'A treatise three people have read. All three argued.',
+        id: 'book',
+        label: 'The book nobody else could read.',
+        told: 'the book nobody else could read.',
         gives: {
-          background: { erudit: 3 },
           attribute: { mind: 1 },
-          skill: { scholar: 1 },
+          talent: { arcanist: 2, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, occultist: 1 },
+          weapon: { 'psychic-tome': 1 },
         },
       },
       {
-        id: 'line',
-        label: 'A line that held when the one beside it broke.',
+        id: 'hound',
+        label: 'The hound. Nobody agreed to that, and nobody stopped you.',
+        told: 'the hound. Nobody agreed to that, and nobody stopped you.',
         gives: {
-          background: { military: 2, mercenary: 1 },
-          talent: { guardian: 2 },
-          attribute: { physique: 2 },
-        },
-      },
-      {
-        id: 'pass',
-        label: 'A pass crossed in winter that the locals said could not be.',
-        gives: {
-          background: { outlander: 3 },
           attribute: { instinct: 1 },
+          talent: { 'draconic-bond': 3, 'feral-curse': 1 },
+          lineage: { wildkin: 1 },
+        },
+      },
+      {
+        id: 'nothing',
+        label: 'Nothing. You walk beside the cart with your hands free and your eyes on the road.',
+        told: 'nothing, and walked beside the cart with your hands free and your eyes on the road.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ================================================================ blood */
+  {
+    id: 'blood-cliff',
+    stage: 'blood',
+    asks: 'The rain has taken the path along the cliff. The only way on is the rock face. What do you do?',
+    recall: 'With the cliff path gone, you',
+    options: [
+      {
+        id: 'climb',
+        label: 'Climb it. Your hands find holds before your eyes do, and the height means nothing.',
+        told: 'climbed. Your hands found holds before your eyes did, and the height meant nothing.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1 },
+          lineage: { skybound: 3, wildkin: 1 },
           skill: { survivalist: 1 },
         },
       },
       {
-        id: 'blade',
-        label: 'A blade you made that is still in use, by someone who does not know your name.',
+        id: 'stones',
+        label: 'Find the fallen stones, lift them back and build the path again.',
+        told: 'found the fallen stones, lifted them back and built the path again.',
         gives: {
-          background: { craftsman: 3 },
-          attribute: { physique: 1 },
-          skill: { skilled: 1 },
-          talent: { enchanter: 1 },
-        },
-      },
-      {
-        id: 'room',
-        label: 'A room of two hundred, silent, waiting for the last verse.',
-        gives: {
-          background: { entertainer: 3 },
-          attribute: { instinct: 1 },
-          skill: { troubadour: 1 },
-        },
-      },
-      {
-        id: 'deal',
-        label: 'A deal that made both sides think they had won.',
-        gives: {
-          background: { merchant: 3 },
-          skill: { haggler: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'marriage',
-        label: 'A marriage you arranged and a war you prevented by it.',
-        gives: {
-          background: { aristocrat: 3 },
-          skill: { mastermind: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'button',
-        label: 'A murderer found because of a single wrong button.',
-        gives: {
-          background: { investigator: 3 },
-          attribute: { mind: 1 },
-          skill: { inquisitor: 1 },
-        },
-      },
-      {
-        id: 'contract',
-        label: 'A contract fulfilled to the letter, and not a word more.',
-        gives: {
-          background: { mercenary: 3 },
           attribute: { physique: 2 },
-          skill: { vigilant: 1 },
+          talent: { colossus: 1, guardian: 1 },
+          lineage: { stonebound: 3 },
+          background: { craftsman: 1 },
+        },
+      },
+      {
+        id: 'read',
+        label: 'Read the face for its fault lines and pick the one route a careless climber would not.',
+        told: 'read the face for its fault lines and picked the one route a careless climber would not.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1 },
+          skill: { cartographer: 1 },
+        },
+      },
+      {
+        id: 'step',
+        label: 'Step off the edge, and trust the wind, or whatever it is, to hold you.',
+        told: 'stepped off the edge and trusted the wind, or whatever it was, to hold you.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { instinct: 1 },
+          lineage: { fey: 2, skybound: 1, celestial: 1, infernal: 1 },
         },
       },
     ],
   },
 
-  /* =================================================================== road */
   {
-    id: 'road-door',
-    stage: 'road',
-    asks: 'A locked door, and what you want is on the other side. Nobody is coming to open it.',
+    id: 'blood-river',
+    stage: 'blood',
+    asks: 'The ferry is gone, the river is in flood and the child who fell in is already ten yards out. What do you do?',
+    recall: 'When the child went into the flood, you',
+    options: [
+      {
+        id: 'dive',
+        label: 'Dive. The cold does not reach you the way it should, and you have the child before the bend.',
+        told: 'dived. The cold never reached you the way it should have, and you had the child before the bend.',
+        gives: {
+          attribute: { instinct: 1 },
+          lineage: { tidebound: 3 },
+          skill: { seafarer: 1 },
+        },
+      },
+      {
+        id: 'bank',
+        label: 'Run the bank ahead of them, wade in where it shallows and catch them as they come.',
+        told: 'ran the bank ahead of them, waded in where it shallowed and caught them as they came.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'rope',
+        label: 'Throw the rope, anchor yourself and haul. It is the only way two people come out.',
+        told: 'threw the rope, anchored yourself and hauled, because that is the only way two people come out.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          background: { military: 1 },
+          skill: { mastermind: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'word',
+        label: 'Speak a word you did not know you knew, and the water slows.',
+        told: 'spoke a word you did not know you knew, and the water slowed.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 2 },
+          lineage: { tidebound: 1, celestial: 1 },
+          skill: { 'innate-spell-novice': 1 },
+          weapon: { 'frost-wand': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-forge',
+    stage: 'blood',
+    asks: 'The smith has stepped out and left the forge lit, the bar in the coals and the door open. What do you do?',
+    recall: 'Alone in the smith’s open forge, you',
+    options: [
+      {
+        id: 'hammer',
+        label: 'Take up the hammer. Your arm knows the rhythm before you have thought about it.',
+        told: 'took up the hammer, and your arm knew the rhythm before you had thought about it.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, berserker: 1 },
+          lineage: { scorchbound: 1 },
+          background: { craftsman: 1 },
+          weapon: { 'melee-heavy': 1 },
+        },
+      },
+      {
+        id: 'bare',
+        label: 'Pull the bar from the coals with your bare hand, and only notice afterwards.',
+        told: 'pulled the bar from the coals with your bare hand, and only noticed afterwards.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { berserker: 1 },
+          lineage: { scorchbound: 3, draconic: 1, undead: 1 },
+        },
+      },
+      {
+        id: 'study',
+        label: 'Study the quench, the colour of the steel and the way the tools are laid. You will do this better.',
+        told: 'studied the quench, the colour of the steel and the way the tools were laid. You would do this better.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { enchanter: 3, alchemist: 1 },
+          background: { craftsman: 2 },
+          skill: { skilled: 1 },
+        },
+      },
+      {
+        id: 'chisel',
+        label: 'Pocket the good chisel and be gone before he is back.',
+        told: 'pocketed the good chisel and were gone before he was back.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 2 },
+          lineage: { fey: 1 },
+          background: { criminal: 2 },
+          skill: { cunning: 1, streetwise: 1 },
+          weapon: { 'finesse-weapon': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-wolves',
+    stage: 'blood',
+    asks: 'Three wolves at the edge of the firelight. The horses are screaming. What do you do?',
+    recall: 'With wolves at the edge of the firelight, you',
+    options: [
+      {
+        id: 'roar',
+        label: 'Stand up with the burning brand and roar back. Something in your voice makes them think again.',
+        told: 'stood up with the burning brand and roared back, and something in your voice made them think again.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2 },
+          lineage: { draconic: 3 },
+          background: { military: 1 },
+        },
+      },
+      {
+        id: 'eyes',
+        label: 'Meet the lead wolf’s eyes and hold them. It knows you, or knows what you are.',
+        told: 'met the lead wolf’s eyes and held them. It knew you, or knew what you were.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'feral-curse': 3, 'draconic-bond': 1 },
+          lineage: { wildkin: 2 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'shield',
+        label: 'Get between the wolves and the horses with the shield off the cart, and let them come.',
+        told: 'got between the wolves and the horses with the shield off the cart, and let them come.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 3 },
+          background: { military: 1 },
+          weapon: { 'melee-light-shield': 1 },
+          armor: { 'Heavy Armor': 1 },
+        },
+      },
+      {
+        id: 'powder',
+        label: 'Throw the powder from your pouch into the fire. The flash sends them off, and you into the dark for more.',
+        told: 'threw the powder from your pouch into the fire. The flash sent them off, and you into the dark for more.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { alchemist: 2 },
+          skill: { apothecary: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-grave',
+    stage: 'blood',
+    asks: 'You wake in the ditch where they left you for dead, with the wound that should have finished you. What do you do?',
+    recall: 'Waking in the ditch where they left you for dead, you',
+    options: [
+      {
+        id: 'up',
+        label: 'Get up. It hurts less than it should, and you have somewhere to be.',
+        told: 'got up. It hurt less than it should have, and you had somewhere to be.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 1 },
+          lineage: { undead: 3 },
+          background: { mercenary: 1 },
+        },
+      },
+      {
+        id: 'still',
+        label: 'Lie still until the ones who did it are gone. Then follow them home.',
+        told: 'lay still until the ones who did it were gone, then followed them home.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, duelist: 1 },
+          lineage: { wildheart: 1 },
+          background: { investigator: 1 },
+          skill: { cunning: 1, vigilant: 1 },
+        },
+      },
+      {
+        id: 'bind',
+        label: 'Pack the wound with what you can reach, bind it with your shirt and count your pulse until morning.',
+        told: 'packed the wound with what you could reach, bound it with your shirt and counted your pulse until morning.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { alchemist: 1 },
+          lineage: { celestial: 1 },
+          background: { erudit: 1 },
+          skill: { physician: 1, healer: 1 },
+        },
+      },
+      {
+        id: 'promise',
+        label: 'Make a promise to whatever is listening. Something listens.',
+        told: 'made a promise to whatever was listening, and something listened.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 3 },
+          lineage: { infernal: 2 },
+          skill: { occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ================================================================ youth */
+  {
+    id: 'youth-duel',
+    stage: 'youth',
+    asks: 'The miller’s son has called you out in front of everyone, and everyone is waiting. What do you do?',
+    recall: 'Called out in front of everyone, you',
+    options: [
+      {
+        id: 'first',
+        label: 'Hit him first, before the waiting is over.',
+        told: 'hit him first, before the waiting was over.',
+        tags: ['did:violence'],
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, brawler: 1 },
+          background: { mercenary: 2 },
+          weapon: { 'melee-light': 1 },
+        },
+      },
+      {
+        id: 'hour',
+        label: 'Name the hour and the place, and bring a second. It will be done properly.',
+        told: 'named the hour and the place and brought a second. It was done properly.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 3 },
+          background: { aristocrat: 1 },
+          skill: { 'quick-draw': 1 },
+          weapon: { 'finesse-weapon': 1 },
+        },
+      },
+      {
+        id: 'laugh',
+        label: 'Laugh, agree with every word he said and buy him a drink. The crowd turns before he does.',
+        told: 'laughed, agreed with every word he said and bought him a drink, and the crowd turned before he did.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { entertainer: 2, merchant: 1 },
+          skill: { charismatic: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'walk',
+        label: 'Walk away. There will be a night when he is alone.',
+        told: 'walked away. There would be a night when he was alone.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 2 },
+          skill: { cunning: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'youth-lock',
+    stage: 'youth',
+    asks: 'A locked door with what you want behind it. Nobody is coming to open it and nobody is watching. What do you do?',
     recall: 'Faced with a locked door, you',
     options: [
       {
@@ -1705,147 +901,547 @@ export const QUESTIONS = [
         told: 'put your shoulder through it.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 1, colossus: 1 },
+          talent: { berserker: 1, colossus: 1, brawler: 1 },
           weapon: { 'melee-heavy': 1 },
         },
       },
       {
         id: 'pick',
         label: 'Pick the lock. You have the tools, and the patience.',
-        told: 'picked the lock, with tools you happened to have and patience you did not know you had.',
+        told: 'picked the lock. You had the tools, and the patience.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1 },
-          background: { criminal: 1 },
+          talent: { trickster: 2 },
+          background: { criminal: 2 },
           skill: { cunning: 1 },
           weapon: { 'finesse-weapon': 1 },
         },
       },
       {
         id: 'study',
-        label: 'Study the lock, the hinges and the frame. There is always a flaw.',
-        told: 'studied the lock, the hinges and the frame until you found the flaw.',
+        label: 'Study the hinges, the frame and the lock plate. There is always a flaw, and you find it.',
+        told: 'studied the hinges, the frame and the lock plate until you found the flaw. There is always a flaw.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 1, enchanter: 1 },
-          skill: { skilled: 1 },
+          talent: { enchanter: 1, arcanist: 1 },
           background: { investigator: 1 },
+          skill: { skilled: 1 },
         },
       },
       {
         id: 'wait',
         label: 'Wait. Someone always comes, and then the door is their problem.',
-        told: 'waited for someone to come and make the door their problem.',
+        told: 'waited. Someone always comes, and then the door is their problem.',
         gives: {
-          attribute: { instinct: 1, mind: 1 },
-          skill: { empath: 1, vigilant: 1 },
+          attribute: { instinct: 1 },
           talent: { duelist: 1 },
           background: { investigator: 1 },
-        },
-      },
-      {
-        id: 'burn',
-        label: 'Burn it. Doors are made of wood for a reason.',
-        told: 'burned it. Doors are made of wood for a reason.',
-        gives: {
-          attribute: { mind: 1 },
-          talent: { arcanist: 1, alchemist: 1 },
-          lineage: { scorchbound: 1 },
-          weapon: { 'fire-wand': 1 },
+          skill: { empath: 1, vigilant: 1 },
         },
       },
     ],
   },
 
   {
-    id: 'road-hurt',
-    stage: 'road',
-    asks: 'Someone is hurt in the street. Bleeding, and nobody is stopping.',
+    id: 'youth-hurt',
+    stage: 'youth',
+    asks: 'Someone is hurt in the street, bleeding, and nobody is stopping. What do you do?',
     recall: 'When someone lay bleeding in the street, you',
     options: [
       {
-        id: 'kneel',
-        label: 'Kneel and stop the bleeding. You know how.',
-        told: 'knelt and stopped the bleeding, because you knew how.',
+        id: 'flask',
+        label: 'Kneel, stop the bleeding and pour what is in your flask down their throat.',
+        told: 'knelt, stopped the bleeding and poured what was in your flask down their throat.',
         gives: {
-          skill: { healer: 1, physician: 1 },
           attribute: { mind: 1 },
-          talent: { alchemist: 1, 'cauldron-keeper': 1 },
-          background: { outlander: 1 },
+          talent: { alchemist: 2 },
+          lineage: { celestial: 1 },
+          skill: { healer: 1, physician: 1 },
         },
       },
       {
         id: 'carry',
-        label: 'Carry them to help. It is faster than waiting for it.',
-        told: 'carried them to help, since it was faster than waiting for it.',
+        label: 'Lift them and carry them to the watch house yourself. It is faster.',
+        told: 'lifted them and carried them to the watch house yourself. It was faster.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 1, colossus: 1 },
+          talent: { guardian: 2, colossus: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
           skill: { helpful: 1 },
         },
       },
       {
-        id: 'find',
-        label: 'Find who did it. They are not far.',
-        told: 'went after whoever did it. They were not far.',
-        gives: {
-          attribute: { instinct: 1 },
-          skill: { inquisitor: 1, vigilant: 1 },
-          background: { investigator: 1 },
-          talent: { duelist: 1 },
-        },
-      },
-      {
         id: 'pockets',
-        label: 'Check their pockets while you check their pulse.',
-        told: 'checked their pockets while you checked their pulse.',
+        label: 'Check their pockets while you check their pulse, and be gone.',
+        told: 'checked their pockets while you checked their pulse, and were gone.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          background: { criminal: 1 },
-          talent: { trickster: 1 },
-          skill: { streetwise: 1 },
+          talent: { trickster: 2 },
+          background: { criminal: 2 },
+          skill: { streetwise: 1, cunning: 1 },
         },
       },
       {
-        id: 'walk',
-        label: 'Keep walking. It is a trap, or it is not your business, and either way.',
-        told: 'kept walking. It was a trap, or it was none of your business, and either way.',
+        id: 'find',
+        label: 'Find who did it. They are not far, and they are not expecting you.',
+        told: 'went after whoever did it. They were not far, and they were not expecting you.',
         gives: {
-          attribute: { mind: 1 },
-          background: { mercenary: 1 },
-          talent: { berserker: 1 },
-          skill: { cunning: 1 },
+          attribute: { instinct: 1 },
+          talent: { duelist: 1, 'feral-curse': 1 },
+          lineage: { wildkin: 1 },
+          background: { investigator: 1, mercenary: 1 },
+          skill: { vigilant: 1, inquisitor: 1 },
         },
       },
     ],
   },
 
   {
+    id: 'youth-book',
+    stage: 'youth',
+    asks: 'The travelling scholar has left his trunk of books unlocked in the taproom while he sleeps. What do you do?',
+    recall: 'With the scholar’s trunk unlocked and the scholar asleep, you',
+    options: [
+      {
+        id: 'read',
+        label: 'Read until dawn, and put every book back exactly where it was.',
+        told: 'read until dawn, and put every book back exactly where it had been.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 2, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 3 },
+          skill: { scholar: 1, occultist: 1 },
+        },
+      },
+      {
+        id: 'clasp',
+        label: 'Take the one with the brass clasp. He has more books than he needs.',
+        told: 'took the one with the brass clasp. He had more books than he needed.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1 },
+        },
+      },
+      {
+        id: 'lock',
+        label: 'Sell him a lock in the morning, and a strongbox for the lock.',
+        told: 'sold him a lock in the morning, and a strongbox for the lock.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { merchant: 2, craftsman: 1 },
+          skill: { haggler: 1 },
+        },
+      },
+      {
+        id: 'door',
+        label: 'Sit outside his door with your back to it until he wakes. Someone should.',
+        told: 'sat outside his door with your back to it until he woke. Someone should.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 2 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'youth-beast',
+    stage: 'youth',
+    asks: 'A wounded beast is caught in a snare, and it will bite anything that comes near. What do you do?',
+    recall: 'Finding a wounded beast in a snare, you',
+    options: [
+      {
+        id: 'talk',
+        label: 'Talk to it, low and steady, and cut it loose.',
+        told: 'talked to it, low and steady, and cut it loose.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'draconic-bond': 3, 'feral-curse': 2 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'end',
+        label: 'End it cleanly. Take the meat and the pelt.',
+        told: 'ended it cleanly and took the meat and the pelt.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { berserker: 1 },
+          background: { mercenary: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
+          weapon: { 'melee-light': 1 },
+        },
+      },
+      {
+        id: 'dust',
+        label: 'Blow the sleeping dust from your pouch into its face, then work on the leg.',
+        told: 'blew the sleeping dust from your pouch into its face, then worked on the leg.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { alchemist: 2 },
+          skill: { apothecary: 1 },
+        },
+      },
+      {
+        id: 'bind',
+        label: 'Bind its jaws first and the leg second, the way the old trapper showed you.',
+        told: 'bound its jaws first and the leg second, the way the old trapper showed you.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 2, mycomancer: 3 },
+          background: { outlander: 2 },
+          skill: { healer: 1, survivalist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'youth-watch',
+    stage: 'youth',
+    requires: ['did:theft'],
+    asks: 'The watch has your description and a warrant, and they are at the door. What do you do?',
+    recall: 'When the watch came to the door with a warrant, you',
+    options: [
+      {
+        id: 'roofs',
+        label: 'Out the window and across the roofs. They never look up.',
+        told: 'went out the window and across the roofs. They never look up.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2 },
+          lineage: { fey: 1, skybound: 1 },
+          background: { criminal: 2 },
+          skill: { cunning: 1 },
+        },
+      },
+      {
+        id: 'warrant',
+        label: 'Open the door and ask to see the warrant. Then find the flaw in it.',
+        told: 'opened the door, asked to see the warrant and found the flaw in it.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 1 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { inquisitor: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'doorway',
+        label: 'Stand in the doorway and let them try.',
+        told: 'stood in the doorway and let them try.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { brawler: 1, colossus: 1, berserker: 1 },
+          lineage: { stalwart: 1, undead: 1 },
+          background: { mercenary: 1 },
+        },
+      },
+      {
+        id: 'bargain',
+        label: 'Bargain. Everything they want is for sale, including the man who hired you.',
+        told: 'bargained. Everything they wanted was for sale, including the man who hired you.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1 },
+          skill: { haggler: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'youth-letter',
+    stage: 'youth',
+    requires: ['did:magic'],
+    asks: 'A letter comes, sealed with a mark you do not know, from an academy you never wrote to. It says they have been watching. What do you do?',
+    recall: 'When the academy’s letter came, you',
+    options: [
+      {
+        id: 'go',
+        label: 'Go. Whatever they saw, you want to know its name.',
+        told: 'went. Whatever they had seen, you wanted to know its name.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 2, enchanter: 1 },
+          lineage: { luminary: 1, celestial: 1 },
+          background: { erudit: 2 },
+          skill: { scholar: 1 },
+        },
+      },
+      {
+        id: 'burn',
+        label: 'Burn it. Nothing that watches you from a distance means you well.',
+        told: 'burned it. Nothing that watches you from a distance means you well.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'feral-curse': 2, mycomancer: 2 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'price',
+        label: 'Write back and name a price for being watched.',
+        told: 'wrote back and named a price for being watched.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1 },
+          skill: { haggler: 1 },
+        },
+      },
+      {
+        id: 'nail',
+        label: 'Nail it to the academy’s own door and stand there until someone explains.',
+        told: 'nailed it to the academy’s own door and stood there until someone explained.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 1 },
+          background: { military: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ================================================================ trade */
+  {
+    id: 'trade-fire',
+    stage: 'trade',
+    asks: 'The warehouse on the quay is burning, and half the town has come to watch. What do you do?',
+    recall: 'When the warehouse on the quay burned, you',
+    options: [
+      {
+        id: 'crews',
+        label: 'Get the crews into a line and the pumps working. Someone has to give the orders.',
+        told: 'got the crews into a line and the pumps working. Someone had to give the orders.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 1 },
+          background: { military: 3 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'calm',
+        label: 'Note who is watching too calmly, and follow him afterwards.',
+        told: 'noted who was watching too calmly, and followed him afterwards.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { investigator: 3 },
+          skill: { inquisitor: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'salvage',
+        label: 'Buy the salvage rights from the owner while it is still burning.',
+        told: 'bought the salvage rights from the owner while it was still burning.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { merchant: 3 },
+          skill: { haggler: 1 },
+        },
+      },
+      {
+        id: 'keep',
+        label: 'Go in for whatever is not yet burning, and keep it.',
+        told: 'went in for whatever was not yet burning, and kept it.',
+        gives: {
+          attribute: { instinct: 1 },
+          background: { criminal: 3 },
+          skill: { streetwise: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-noble',
+    stage: 'trade',
+    asks: 'A lord’s carriage has broken an axle on the road, and the lord is shouting. What do you do?',
+    recall: 'When the lord’s carriage broke its axle, you',
+    options: [
+      {
+        id: 'fix',
+        label: 'Fix the axle. It takes an hour, and you do it better than the man who built it.',
+        told: 'fixed the axle. It took an hour, and you did it better than the man who built it.',
+        gives: {
+          attribute: { physique: 1 },
+          background: { craftsman: 3 },
+          skill: { skilled: 1, tailor: 1 },
+        },
+      },
+      {
+        id: 'price',
+        label: 'Name a price for the fixing, and double it when he shouts again.',
+        told: 'named a price for the fixing, and doubled it when he shouted again.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { merchant: 2, mercenary: 1 },
+          skill: { haggler: 1 },
+        },
+      },
+      {
+        id: 'house',
+        label: 'Address him by his house and his father’s name, and watch the shouting stop.',
+        told: 'addressed him by his house and his father’s name, and watched the shouting stop.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { aristocrat: 3 },
+          skill: { charismatic: 1 },
+        },
+      },
+      {
+        id: 'lift',
+        label: 'Lift the carriage while the wheel is set. It is quicker than a jack.',
+        told: 'lifted the carriage while the wheel was set. It was quicker than a jack.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1, mercenary: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-stage',
+    stage: 'trade',
+    asks: 'The tavern’s singer has not turned up, the room is full and the landlord is looking at you. What do you do?',
+    recall: 'With the singer missing and the room full, you',
+    options: [
+      {
+        id: 'stage',
+        label: 'Take the stage. You have never once been able to resist a full room.',
+        told: 'took the stage. You have never once been able to resist a full room.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { entertainer: 3 },
+          skill: { troubadour: 1, charismatic: 1 },
+          weapon: { 'enchanted-instrument': 1 },
+        },
+      },
+      {
+        id: 'scar',
+        label: 'Tell them a true story from the last war, and show them the scar.',
+        told: 'told them a true story from the last war, and showed them the scar.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { berserker: 1 },
+          background: { mercenary: 2, military: 1 },
+          skill: { charismatic: 1 },
+        },
+      },
+      {
+        id: 'almanac',
+        label: 'Read them the almanac’s weather for the week, which is what a room actually wants to know.',
+        told: 'read them the almanac’s weather for the week, which is what a room actually wants to know.',
+        gives: {
+          attribute: { mind: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 3 },
+          skill: { scholar: 1 },
+        },
+      },
+      {
+        id: 'road',
+        label: 'Slip out the back. You were only ever passing through, and the road is quieter.',
+        told: 'slipped out the back. You were only ever passing through, and the road was quieter.',
+        gives: {
+          attribute: { instinct: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 3 },
+          skill: { survivalist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-body',
+    stage: 'trade',
+    asks: 'There is a body in the alley behind the guildhall, and you found it. What do you do?',
+    recall: 'Finding the body behind the guildhall, you',
+    options: [
+      {
+        id: 'read',
+        label: 'Read the scene: the boots, the hands, the way he fell. You know how he died before the watch arrives.',
+        told: 'read the scene, the boots, the hands and the way he fell, and knew how he died before the watch arrived.',
+        gives: {
+          attribute: { mind: 2 },
+          lineage: { luminary: 1 },
+          background: { investigator: 3 },
+          skill: { inquisitor: 1, physician: 1 },
+        },
+      },
+      {
+        id: 'search',
+        label: 'Search him for coin and papers, then walk away whistling.',
+        told: 'searched him for coin and papers, then walked away whistling.',
+        gives: {
+          attribute: { instinct: 1 },
+          background: { criminal: 3 },
+          skill: { streetwise: 1 },
+        },
+      },
+      {
+        id: 'carry',
+        label: 'Carry him to the guildhall steps and wait with him until someone comes.',
+        told: 'carried him to the guildhall steps and waited with him until someone came.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 2 },
+          lineage: { celestial: 1 },
+          background: { craftsman: 2, military: 1 },
+        },
+      },
+      {
+        id: 'seal',
+        label: 'Send word to the magistrate under your family’s seal, so it is taken seriously.',
+        told: 'sent word to the magistrate under your family’s seal, so that it would be taken seriously.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { aristocrat: 3 },
+          skill: { charismatic: 1, mastermind: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ================================================================= road */
+  {
     id: 'road-ambush',
     stage: 'road',
-    asks: 'Three of them step out of the fog. They want your purse, and they have knives.',
+    asks: 'Three of them step out of the fog with knives. They want the purse. What do you do?',
     recall: 'When three knives came out of the fog, you',
     options: [
       {
         id: 'purse',
-        label: 'Give them the purse. It is lighter than a funeral.',
-        told: 'handed over the purse. It was lighter than a funeral.',
+        label: 'Give them the purse. It is lighter than a funeral, and you will find them later.',
+        told: 'handed over the purse. It was lighter than a funeral, and you would find them later.',
         gives: {
-          attribute: { mind: 1 },
-          background: { merchant: 1 },
-          skill: { haggler: 1 },
+          attribute: { instinct: 1 },
           talent: { trickster: 1 },
-        },
-      },
-      {
-        id: 'draw',
-        label: 'Draw first. You have never lost a fight you started.',
-        told: 'drew first. You have never lost a fight you started.',
-        gives: {
-          attribute: { physique: 1, instinct: 1 },
-          talent: { duelist: 2 },
-          weapon: { 'finesse-weapon': 1, 'paired-finesse': 1 },
-          skill: { 'quick-draw': 1 },
+          skill: { cunning: 1 },
         },
       },
       {
@@ -1855,6 +1451,7 @@ export const QUESTIONS = [
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 3 },
+          lineage: { draconic: 2 },
           weapon: { 'melee-heavy': 1, 'melee-great': 1 },
         },
       },
@@ -1865,8 +1462,9 @@ export const QUESTIONS = [
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 2 },
+          lineage: { stonebound: 2 },
+          weapon: { 'melee-light-shield': 1 },
           armor: { 'Heavy Armor': 1 },
-          weapon: { 'finesse-shield': 1 },
         },
       },
       {
@@ -1876,391 +1474,18 @@ export const QUESTIONS = [
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 2 },
+          lineage: { celestial: 1 },
+          skill: { 'unseen-spellwork': 1 },
           weapon: { 'lightning-wand': 1 },
-          lineage: { celestial: 1 },
-        },
-      },
-      {
-        id: 'vial',
-        label: 'Throw the vial. The fog gets thicker, and you are elsewhere.',
-        told: 'threw the vial. The fog got thicker, and you were elsewhere.',
-        gives: {
-          attribute: { instinct: 1 },
-          talent: { alchemist: 2, trickster: 1 },
-          skill: { cunning: 1 },
-        },
-      },
-      {
-        id: 'change',
-        label: 'Change. Let them see what they have cornered.',
-        told: 'changed, and let them see what they had cornered.',
-        gives: {
-          talent: { 'feral-curse': 3 },
-          attribute: { instinct: 1 },
-          lineage: { wildkin: 1 },
         },
       },
     ],
   },
 
   {
-    id: 'road-beast',
+    id: 'road-duel',
     stage: 'road',
-    asks: 'A wounded beast is caught in a snare, and it will bite anything that comes near.',
-    recall: 'Finding a wounded beast in a snare, you',
-    options: [
-      {
-        id: 'talk',
-        label: 'Talk to it, low and steady, and cut it loose.',
-        told: 'talked to it, low and steady, and cut it loose.',
-        gives: {
-          attribute: { instinct: 2 },
-          talent: { 'draconic-bond': 2, 'feral-curse': 1, beastbond: 1 },
-          skill: { survivalist: 1 },
-          lineage: { wildkin: 1 },
-        },
-      },
-      {
-        id: 'misery',
-        label: 'Put it out of its misery. Cleanly.',
-        told: 'put it out of its misery, cleanly.',
-        gives: {
-          attribute: { physique: 1 },
-          background: { mercenary: 1 },
-          talent: { berserker: 1 },
-          weapon: { bow: 1 },
-        },
-      },
-      {
-        id: 'sedate',
-        label: 'Sedate it with something from your bag, then work.',
-        told: 'sedated it with something from your bag, then went to work.',
-        gives: {
-          attribute: { mind: 1 },
-          talent: { alchemist: 2, 'cauldron-keeper': 1 },
-          skill: { apothecary: 1 },
-        },
-      },
-      {
-        id: 'leave',
-        label: 'Leave it. The snare belongs to someone, and so does the beast.',
-        told: 'left it. The snare belonged to someone, and so did the beast.',
-        gives: {
-          attribute: { mind: 1 },
-          background: { investigator: 1, merchant: 1 },
-          skill: { cunning: 1 },
-        },
-      },
-      {
-        id: 'bind',
-        label: 'Bind the wound first, then the jaws. You have done this before.',
-        told: 'bound the wound first and the jaws second. You had done it before.',
-        gives: {
-          skill: { healer: 1 },
-          attribute: { instinct: 1 },
-          background: { outlander: 1 },
-          talent: { mycomancer: 2 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'road-camp',
-    stage: 'road',
-    asks: 'Night on the road, and the fire needs tending. What do you do with the hours?',
-    recall: 'On the road, you spent the night hours',
-    options: [
-      {
-        id: 'sharpen',
-        label: 'Sharpen, oil and check every buckle twice.',
-        told: 'sharpening, oiling and checking every buckle twice.',
-        gives: {
-          attribute: { physique: 1 },
-          background: { military: 1, mercenary: 1 },
-          skill: { vigilant: 1 },
-          talent: { duelist: 1 },
-          armor: { 'Heavy Armor': 1 },
-        },
-      },
-      {
-        id: 'read',
-        label: 'Read by the light until the light gives out.',
-        told: 'reading by the fire until the light gave out.',
-        gives: {
-          attribute: { mind: 2 },
-          background: { erudit: 1 },
-          talent: { arcanist: 1 },
-          skill: { scholar: 1 },
-        },
-      },
-      {
-        id: 'perimeter',
-        label: 'Walk the perimeter. Something is always out there.',
-        told: 'walking the perimeter. Something is always out there.',
-        gives: {
-          attribute: { instinct: 2 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1, vigilant: 1 },
-          talent: { 'feral-curse': 1 },
-        },
-      },
-      {
-        id: 'boil',
-        label: 'Boil, steep and bottle. The fire is a tool.',
-        told: 'boiling, steeping and bottling. A fire is a tool.',
-        gives: {
-          talent: { 'cauldron-keeper': 2, alchemist: 1 },
-          skill: { apothecary: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'play',
-        label: 'Play something. Whoever is listening in the dark can listen too.',
-        told: 'playing something, for whoever was listening in the dark.',
-        gives: {
-          background: { entertainer: 1 },
-          skill: { troubadour: 1 },
-          attribute: { instinct: 1 },
-          weapon: { 'enchanted-instrument': 1 },
-        },
-      },
-      {
-        id: 'beast',
-        label: 'Sit with the beast that travels with you and say nothing.',
-        told: 'sitting with the beast that travels with you, saying nothing.',
-        gives: {
-          talent: { 'draconic-bond': 2 },
-          attribute: { instinct: 1 },
-          lineage: { wildkin: 1 },
-        },
-      },
-      {
-        id: 'runes',
-        label: 'Trace the runes on your gear again. They fade if you do not.',
-        told: 'tracing the runes on your gear again, because they fade if you do not.',
-        gives: {
-          talent: { enchanter: 3 },
-          attribute: { mind: 1 },
-          armor: { 'Magic Armor': 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'road-river',
-    stage: 'road',
-    asks: 'The path ends at a river too wide to jump and too fast to swim.',
-    recall: 'At a river too wide to jump, you',
-    options: [
-      {
-        id: 'swim',
-        label: 'Swim it anyway.',
-        told: 'swam it anyway.',
-        gives: {
-          attribute: { physique: 2 },
-          talent: { berserker: 1 },
-          lineage: { tidebound: 1 },
-          skill: { seafarer: 1 },
-        },
-      },
-      {
-        id: 'tree',
-        label: 'Find a tree, fell it and make a bridge.',
-        told: 'felled a tree and made a bridge of it.',
-        gives: {
-          attribute: { physique: 2 },
-          talent: { colossus: 1 },
-          skill: { survivalist: 1 },
-          background: { outlander: 1 },
-          weapon: { 'melee-heavy': 1 },
-        },
-      },
-      {
-        id: 'ford',
-        label: 'Read the water. There is a ford, and you will find it.',
-        told: 'read the water until you found the ford.',
-        gives: {
-          attribute: { instinct: 1, mind: 1 },
-          skill: { cartographer: 1, survivalist: 1 },
-          background: { outlander: 1 },
-        },
-      },
-      {
-        id: 'spell',
-        label: 'Freeze it, burn it, part it. There is a spell for this.',
-        told: 'froze it, burned it or parted it. There is a spell for this.',
-        gives: {
-          attribute: { mind: 2 },
-          talent: { arcanist: 2 },
-          weapon: { 'frost-wand': 1 },
-          lineage: { tidebound: 1 },
-        },
-      },
-      {
-        id: 'ferry',
-        label: 'Pay the ferryman on the far bank. There is always a ferryman.',
-        told: 'paid the ferryman on the far bank. There is always a ferryman.',
-        gives: {
-          background: { merchant: 1, aristocrat: 1 },
-          skill: { haggler: 1, charismatic: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'around',
-        label: 'Go around. You are in no hurry.',
-        told: 'went around. You were in no hurry.',
-        gives: {
-          attribute: { instinct: 1 },
-          background: { outlander: 1 },
-          skill: { frugal: 1 },
-          talent: { guardian: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'road-oath',
-    stage: 'road',
-    asks: 'A magistrate asks you, under oath, where you were last night. You were somewhere you should not have been.',
-    recall: 'Asked under oath where you had been, you',
-    options: [
-      {
-        id: 'lie',
-        label: 'Lie, beautifully. It is a gift.',
-        told: 'lied, beautifully. It is a gift.',
-        gives: {
-          attribute: { instinct: 1 },
-          skill: { charismatic: 1, cunning: 1 },
-          talent: { trickster: 1 },
-          background: { entertainer: 1, criminal: 1 },
-        },
-      },
-      {
-        id: 'truth',
-        label: 'Tell the truth. Let them do what they will.',
-        told: 'told the truth and let them do what they would.',
-        gives: {
-          attribute: { mind: 1 },
-          talent: { guardian: 1 },
-          lineage: { celestial: 1 },
-          background: { investigator: 1 },
-        },
-      },
-      {
-        id: 'deflect',
-        label: 'Answer a different question and make them think it was theirs.',
-        told: 'answered a different question and made them think it was theirs.',
-        gives: {
-          attribute: { mind: 2 },
-          skill: { mastermind: 1, empath: 1 },
-          background: { aristocrat: 1, investigator: 1 },
-        },
-      },
-      {
-        id: 'silence',
-        label: 'Say nothing. Stand there until they tire of you.',
-        told: 'said nothing, and stood there until they tired of you.',
-        gives: {
-          attribute: { physique: 1 },
-          lineage: { stalwart: 1 },
-          talent: { berserker: 1, colossus: 1 },
-          background: { mercenary: 1 },
-        },
-      },
-      {
-        id: 'ask',
-        label: 'Ask, politely, what they think they know.',
-        told: 'asked, politely, what they thought they knew.',
-        gives: {
-          attribute: { mind: 1 },
-          skill: { inquisitor: 1 },
-          background: { investigator: 2 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'road-market',
-    stage: 'road',
-    asks: 'A market stall has the one thing you need, at three times what it is worth.',
-    recall: 'Faced with a price three times too high, you',
-    options: [
-      {
-        id: 'haggle',
-        label: 'Haggle until the stallholder is tired of hearing your voice.',
-        told: 'haggled until the stallholder was tired of hearing your voice.',
-        gives: {
-          background: { merchant: 2 },
-          skill: { haggler: 2 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'pay',
-        label: 'Pay. Time is worth more than coin.',
-        told: 'paid. Time is worth more than coin.',
-        gives: {
-          background: { aristocrat: 1 },
-          skill: { charismatic: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'take',
-        label: 'Take it when the stallholder looks away.',
-        told: 'took it when the stallholder looked away.',
-        gives: {
-          background: { criminal: 2 },
-          talent: { trickster: 2 },
-          attribute: { instinct: 1 },
-          skill: { cunning: 1 },
-        },
-      },
-      {
-        id: 'make',
-        label: 'Make one yourself. It cannot be that hard.',
-        told: 'made one yourself. It could not be that hard.',
-        gives: {
-          background: { craftsman: 2 },
-          talent: { enchanter: 1, alchemist: 1 },
-          skill: { skilled: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'without',
-        label: 'Do without. You have done without before.',
-        told: 'did without. You have done without before.',
-        gives: {
-          background: { outlander: 1 },
-          skill: { frugal: 1, scavenger: 1 },
-          attribute: { physique: 1 },
-          lineage: { stalwart: 1 },
-        },
-      },
-      {
-        id: 'song',
-        label: 'Offer a song, a story or a trick in place of coin.',
-        told: 'offered a song, a story or a trick in place of coin.',
-        gives: {
-          background: { entertainer: 2 },
-          skill: { troubadour: 1 },
-          attribute: { instinct: 1 },
-        },
-      },
-    ],
-  },
-
-  {
-    id: 'road-taproom',
-    stage: 'road',
-    asks: 'A stranger insults you in a taproom, loudly, and the room goes quiet.',
+    asks: 'A stranger insults you in a taproom, loudly, and the room goes quiet. What do you do?',
     recall: 'Insulted in a quiet taproom, you',
     options: [
       {
@@ -2270,18 +1495,19 @@ export const QUESTIONS = [
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 2, brawler: 1 },
-          weapon: { 'fist-weapon': 1 },
+          background: { mercenary: 2 },
+          weapon: { 'melee-light': 1 },
         },
       },
       {
         id: 'outside',
-        label: 'Invite them outside. Formally. With witnesses.',
+        label: 'Invite them outside. Formally, with witnesses.',
         told: 'invited them outside. Formally, with witnesses.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 3 },
-          weapon: { 'finesse-weapon': 1 },
           background: { aristocrat: 1 },
+          weapon: { 'finesse-weapon': 1 },
         },
       },
       {
@@ -2289,31 +1515,181 @@ export const QUESTIONS = [
         label: 'Laugh, buy them a drink and find out who sent them.',
         told: 'laughed, bought them a drink and found out who had sent them.',
         gives: {
-          attribute: { instinct: 1, mind: 1 },
-          skill: { charismatic: 1, inquisitor: 1 },
-          background: { investigator: 1, entertainer: 1 },
-        },
-      },
-      {
-        id: 'pass',
-        label: 'Let it pass. Their words weigh nothing.',
-        told: 'let it pass. Their words weighed nothing.',
-        gives: {
           attribute: { mind: 1 },
-          talent: { guardian: 1 },
-          lineage: { stalwart: 1 },
-          skill: { empath: 1 },
+          background: { investigator: 1, entertainer: 1 },
+          skill: { charismatic: 1, inquisitor: 1 },
         },
       },
       {
-        id: 'poison',
+        id: 'cup',
         label: 'Make sure something unfortunate happens to their drink.',
         told: 'made sure something unfortunate happened to their drink.',
         gives: {
-          talent: { alchemist: 1, trickster: 1 },
-          skill: { cunning: 1 },
           attribute: { instinct: 1 },
-          background: { criminal: 1 },
+          talent: { 'cauldron-keeper': 2 },
+          lineage: { fey: 1 },
+          skill: { apothecary: 1, cunning: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-river',
+    stage: 'road',
+    asks: 'The path ends at a river too wide to jump and too fast to swim. What do you do?',
+    recall: 'At a river too wide to jump, you',
+    options: [
+      {
+        id: 'swim',
+        label: 'Swim it anyway.',
+        told: 'swam it anyway.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 1 },
+          lineage: { tidebound: 3 },
+          skill: { seafarer: 1 },
+        },
+      },
+      {
+        id: 'tree',
+        label: 'Fell a tree and make a bridge of it.',
+        told: 'felled a tree and made a bridge of it.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { colossus: 2 },
+          lineage: { stonebound: 1 },
+          skill: { survivalist: 1 },
+          weapon: { 'melee-heavy': 1 },
+        },
+      },
+      {
+        id: 'ford',
+        label: 'Read the water for the ford, and find it a mile upstream.',
+        told: 'read the water for the ford and found it a mile upstream.',
+        gives: {
+          attribute: { instinct: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 2 },
+          skill: { cartographer: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'spell',
+        label: 'Freeze it, burn it or part it. There is a spell for this.',
+        told: 'froze it, burned it or parted it. There is a spell for this.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 2 },
+          skill: { 'innate-spell-novice': 1 },
+          weapon: { 'frost-wand': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-oath',
+    stage: 'road',
+    asks: 'A magistrate asks you, under oath, where you were last night. You were somewhere you should not have been. What do you do?',
+    recall: 'Asked under oath where you had been, you',
+    options: [
+      {
+        id: 'lie',
+        label: 'Lie, beautifully. It is a gift.',
+        told: 'lied, beautifully. It is a gift.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 2 },
+          lineage: { fey: 1 },
+          background: { entertainer: 1, criminal: 1 },
+          skill: { cunning: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'truth',
+        label: 'Tell the truth, and let them do what they will.',
+        told: 'told the truth and let them do what they would.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 1 },
+          lineage: { celestial: 1 },
+          background: { military: 1 },
+        },
+      },
+      {
+        id: 'deflect',
+        label: 'Answer a different question and make them think it was theirs.',
+        told: 'answered a different question and made them think it was theirs.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 1 },
+          lineage: { infernal: 1 },
+          background: { aristocrat: 1, investigator: 1 },
+          skill: { mastermind: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'nothing',
+        label: 'Say nothing. Stand there until they tire of you.',
+        told: 'said nothing, and stood there until they tired of you.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { colossus: 1 },
+          lineage: { stonebound: 2, undead: 2 },
+          background: { mercenary: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-market',
+    stage: 'road',
+    asks: 'A market stall has the one thing you need, at three times what it is worth. What do you do?',
+    recall: 'Faced with a price three times too high, you',
+    options: [
+      {
+        id: 'haggle',
+        label: 'Haggle until the stallholder is tired of hearing your voice.',
+        told: 'haggled until the stallholder was tired of hearing your voice.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { merchant: 2 },
+          skill: { haggler: 2 },
+        },
+      },
+      {
+        id: 'take',
+        label: 'Take it when the stallholder looks away.',
+        told: 'took it when the stallholder looked away.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 2 },
+          background: { criminal: 2 },
+          skill: { cunning: 1 },
+        },
+      },
+      {
+        id: 'make',
+        label: 'Make one yourself. It cannot be that hard.',
+        told: 'made one yourself. It could not be that hard.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { enchanter: 3, alchemist: 1 },
+          background: { craftsman: 2 },
+          skill: { skilled: 1 },
+        },
+      },
+      {
+        id: 'without',
+        label: 'Do without. You have done without before.',
+        told: 'did without. You have done without before.',
+        gives: {
+          attribute: { physique: 1 },
+          lineage: { stalwart: 1, undead: 1 },
+          background: { outlander: 1 },
+          skill: { frugal: 1, scavenger: 1 },
         },
       },
     ],
@@ -2322,7 +1698,7 @@ export const QUESTIONS = [
   {
     id: 'road-wand',
     stage: 'road',
-    asks: 'A wand lies in the mud where a mage fell. It is still warm.',
+    asks: 'A wand lies in the mud where a mage fell. It is still warm. What do you do?',
     recall: 'Finding a dead mage’s wand in the mud, you',
     options: [
       {
@@ -2332,8 +1708,9 @@ export const QUESTIONS = [
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 2 },
-          weapon: { 'fire-wand': 1, 'lightning-wand': 1 },
+          lineage: { celestial: 1 },
           skill: { 'innate-spell-novice': 1 },
+          weapon: { 'fire-wand': 1, 'lightning-wand': 1 },
         },
       },
       {
@@ -2342,9 +1719,9 @@ export const QUESTIONS = [
         told: 'took it apart to see how it was made.',
         gives: {
           attribute: { mind: 2 },
-          talent: { enchanter: 2 },
+          talent: { enchanter: 3 },
           background: { craftsman: 1 },
-          skill: { skilled: 1 },
+          skill: { skilled: 1, 'arcane-marshal': 1 },
         },
       },
       {
@@ -2352,40 +1729,20 @@ export const QUESTIONS = [
         label: 'Sell it. Somebody will pay a great deal.',
         told: 'sold it. Somebody paid a great deal.',
         gives: {
-          background: { merchant: 1, criminal: 1 },
-          skill: { haggler: 1 },
           attribute: { instinct: 1 },
+          background: { merchant: 1 },
+          skill: { haggler: 1, streetwise: 1 },
         },
       },
       {
-        id: 'leave',
-        label: 'Leave it. Nothing good follows a dead mage’s things.',
-        told: 'left it. Nothing good follows a dead mage’s things.',
+        id: 'snap',
+        label: 'Snap it. Nothing good follows a dead mage’s things, and you trust your own hands.',
+        told: 'snapped it. Nothing good follows a dead mage’s things, and you trust your own hands.',
         gives: {
-          attribute: { instinct: 1 },
-          background: { outlander: 1 },
-          skill: { occultist: 1 },
-        },
-      },
-      {
-        id: 'return',
-        label: 'Give it to whoever comes looking. They will come.',
-        told: 'held it for whoever came looking, because somebody always does.',
-        gives: {
-          attribute: { mind: 1 },
-          talent: { guardian: 1 },
-          skill: { helpful: 1 },
-          background: { aristocrat: 1 },
-        },
-      },
-      {
-        id: 'pull',
-        label: 'Feel it pull at something under your skin, and answer.',
-        told: 'felt it pull at something under your skin, and answered.',
-        gives: {
-          talent: { pactbound: 2 },
-          lineage: { infernal: 1, celestial: 1 },
-          attribute: { mind: 1 },
+          attribute: { physique: 1 },
+          talent: { berserker: 1 },
+          lineage: { stalwart: 1 },
+          skill: { 'spell-eater': 1 },
         },
       },
     ],
@@ -2394,7 +1751,7 @@ export const QUESTIONS = [
   {
     id: 'road-wall',
     stage: 'road',
-    asks: 'The town wall is between you and where you must be, and the gate is shut for the night.',
+    asks: 'The town wall is between you and where you must be, and the gate is shut for the night. What do you do?',
     recall: 'With the gate shut for the night, you',
     options: [
       {
@@ -2404,17 +1761,17 @@ export const QUESTIONS = [
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1 },
-          background: { criminal: 1 },
+          lineage: { skybound: 2, fey: 1 },
           skill: { cunning: 1 },
         },
       },
       {
         id: 'knock',
-        label: 'Knock. Loudly. Until someone opens it to make you stop.',
+        label: 'Knock, loudly, until someone opens it to make you stop.',
         told: 'knocked, loudly, until someone opened it to make you stop.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 1, colossus: 1 },
+          talent: { colossus: 1, berserker: 1 },
           background: { military: 1 },
         },
       },
@@ -2423,20 +1780,10 @@ export const QUESTIONS = [
         label: 'Bribe the watch. It is what the watch is for.',
         told: 'bribed the watch. It is what the watch is for.',
         gives: {
+          attribute: { mind: 1 },
+          lineage: { infernal: 1 },
           background: { merchant: 1, criminal: 1 },
           skill: { haggler: 1, streetwise: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'drain',
-        label: 'Find the drain. There is always a drain.',
-        told: 'found the drain. There is always a drain.',
-        gives: {
-          attribute: { mind: 1, instinct: 1 },
-          background: { investigator: 1 },
-          skill: { cartographer: 1 },
-          talent: { mycomancer: 2 },
         },
       },
       {
@@ -2444,18 +1791,10 @@ export const QUESTIONS = [
         label: 'Wait for dawn under a hedge. You have slept in worse.',
         told: 'slept under a hedge until dawn. You have slept in worse.',
         gives: {
+          attribute: { instinct: 1 },
+          talent: { 'feral-curse': 1, mycomancer: 2 },
           background: { outlander: 2 },
           skill: { survivalist: 1, frugal: 1 },
-          attribute: { physique: 1 },
-        },
-      },
-      {
-        id: 'wings',
-        label: 'Grow wings, or something like them, and go over.',
-        told: 'went over, on wings or something like them.',
-        gives: {
-          lineage: { fey: 2, celestial: 1, infernal: 1, skybound: 1 },
-          attribute: { instinct: 1 },
         },
       },
     ],
@@ -2464,7 +1803,7 @@ export const QUESTIONS = [
   {
     id: 'road-purse',
     stage: 'road',
-    asks: 'You find a purse of gold that is plainly not yours. Nobody saw.',
+    asks: 'You find a purse of gold that is plainly not yours. Nobody saw. What do you do?',
     recall: 'Finding a purse of gold that was not yours, you',
     options: [
       {
@@ -2472,10 +1811,11 @@ export const QUESTIONS = [
         label: 'Keep it. Nobody saw.',
         told: 'kept it. Nobody saw.',
         gives: {
-          background: { criminal: 2 },
-          skill: { cunning: 1 },
           attribute: { instinct: 1 },
           talent: { trickster: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 2 },
+          skill: { cunning: 1 },
         },
       },
       {
@@ -2483,21 +1823,10 @@ export const QUESTIONS = [
         label: 'Find the owner. It will take all day and you will do it anyway.',
         told: 'found the owner. It took all day and you did it anyway.',
         gives: {
-          talent: { guardian: 1 },
-          skill: { helpful: 1, inquisitor: 1 },
+          attribute: { mind: 1 },
+          lineage: { celestial: 2 },
           background: { investigator: 1 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'spend',
-        label: 'Spend it before it can be missed, on something that lasts.',
-        told: 'spent it before it could be missed, on something that lasts.',
-        gives: {
-          background: { merchant: 1, craftsman: 1 },
-          skill: { haggler: 1 },
-          talent: { enchanter: 1 },
-          attribute: { mind: 1 },
+          skill: { helpful: 1, inquisitor: 1 },
         },
       },
       {
@@ -2505,9 +1834,10 @@ export const QUESTIONS = [
         label: 'Split it with whoever is with you. Shares keep friends.',
         told: 'split it with whoever was with you. Shares keep friends.',
         gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 1 },
           background: { mercenary: 1, entertainer: 1 },
           skill: { charismatic: 1 },
-          attribute: { instinct: 1 },
         },
       },
       {
@@ -2515,10 +1845,10 @@ export const QUESTIONS = [
         label: 'Leave it where it lies. Gold like that is bait.',
         told: 'left it where it lay. Gold like that is bait.',
         gives: {
-          background: { outlander: 1 },
+          attribute: { physique: 1 },
+          talent: { guardian: 1 },
+          lineage: { stonebound: 1 },
           skill: { vigilant: 1 },
-          attribute: { instinct: 1 },
-          lineage: { stalwart: 1 },
         },
       },
     ],
@@ -2527,7 +1857,7 @@ export const QUESTIONS = [
   {
     id: 'road-fever',
     stage: 'road',
-    asks: 'The village has a fever, and the road out is closed until it passes.',
+    asks: 'The village has a fever, and the road out is closed until it passes. What do you do?',
     recall: 'Shut in a village with a fever, you',
     options: [
       {
@@ -2535,9 +1865,9 @@ export const QUESTIONS = [
         label: 'Brew what they need from what grows here.',
         told: 'brewed what they needed from what grew there.',
         gives: {
-          talent: { 'cauldron-keeper': 3, alchemist: 1 },
-          skill: { apothecary: 1 },
           attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 3, mycomancer: 2 },
+          skill: { apothecary: 1 },
         },
       },
       {
@@ -2545,9 +1875,10 @@ export const QUESTIONS = [
         label: 'Nurse them. Sleep can wait.',
         told: 'nursed them. Sleep could wait.',
         gives: {
-          skill: { healer: 2, physician: 1 },
-          talent: { guardian: 1 },
           attribute: { mind: 1 },
+          talent: { alchemist: 1 },
+          lineage: { celestial: 2 },
+          skill: { healer: 2, physician: 1 },
         },
       },
       {
@@ -2556,19 +1887,10 @@ export const QUESTIONS = [
         told: 'found where the water had gone bad.',
         gives: {
           attribute: { mind: 2 },
+          talent: { alchemist: 1, arcanist: 1 },
+          lineage: { luminary: 1 },
           background: { investigator: 1 },
           skill: { scholar: 1, physician: 1 },
-          talent: { alchemist: 1 },
-        },
-      },
-      {
-        id: 'leave',
-        label: 'Leave anyway. Closed roads are a suggestion.',
-        told: 'left anyway. A closed road is a suggestion.',
-        gives: {
-          attribute: { instinct: 1 },
-          background: { outlander: 1, criminal: 1 },
-          skill: { survivalist: 1 },
         },
       },
       {
@@ -2577,91 +1899,328 @@ export const QUESTIONS = [
         told: 'held the quarantine line. Nobody out, nobody in.',
         gives: {
           attribute: { physique: 1 },
+          talent: { guardian: 2 },
           background: { military: 1 },
-          talent: { guardian: 1 },
           skill: { vigilant: 1 },
+          armor: { 'Heavy Armor': 1 },
         },
       },
     ],
   },
 
-  /* ================================================================ leaving */
   {
-    id: 'leaving-why',
-    stage: 'leaving',
-    asks: 'Why did you leave the life you had?',
-    recall: 'You left the life you had because',
+    id: 'road-camp',
+    stage: 'road',
+    asks: 'Night on the road, the fire needs tending and the others are asleep. What do you do with the hours?',
+    recall: 'On the road, with the others asleep, you spent the night hours',
     options: [
       {
-        id: 'ended',
-        label: 'It ended. A fire, a war, a debt called in.',
-        told: 'it ended. A fire, a war, a debt called in.',
+        id: 'sharpen',
+        label: 'Sharpen, oil and check every buckle twice.',
+        told: 'sharpening, oiling and checking every buckle twice.',
         gives: {
           attribute: { physique: 1 },
-          talent: { berserker: 1 },
-          background: { mercenary: 1, military: 1 },
-          lineage: { undead: 1 },
+          talent: { guardian: 1 },
+          background: { military: 1, mercenary: 1 },
+          skill: { vigilant: 1 },
+          armor: { 'Heavy Armor': 1 },
         },
       },
       {
-        id: 'protect',
-        label: 'Someone needed protecting, and the only way was away.',
-        told: 'someone needed protecting, and the only way was away.',
+        id: 'perimeter',
+        label: 'Walk the perimeter. Something is always out there.',
+        told: 'walking the perimeter. Something is always out there.',
         gives: {
-          talent: { guardian: 2 },
-          skill: { helpful: 1 },
-          attribute: { physique: 2 },
+          attribute: { instinct: 2 },
+          talent: { 'feral-curse': 3, duelist: 1 },
+          lineage: { wildkin: 1, wildheart: 1 },
+          skill: { survivalist: 1 },
         },
       },
       {
-        id: 'caught',
-        label: 'You were caught. Leaving was the alternative to hanging.',
-        told: 'you were caught, and leaving was the alternative to hanging.',
+        id: 'read',
+        label: 'Read by the fire until the light gives out.',
+        told: 'reading by the fire until the light gave out.',
         gives: {
-          background: { criminal: 1 },
-          talent: { trickster: 1 },
+          attribute: { mind: 2 },
+          talent: { arcanist: 1, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 2 },
+          skill: { scholar: 1 },
+        },
+      },
+      {
+        id: 'creature',
+        label: 'Sit with the creature that travels with you, and say nothing.',
+        told: 'sitting with the creature that travels with you, saying nothing.',
+        gives: {
           attribute: { instinct: 1 },
+          talent: { 'draconic-bond': 3 },
+          lineage: { wildkin: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-bridge',
+    stage: 'road',
+    asks: 'A bridge with a toll. The man the size of a door collecting it has decided you owe double. What do you do?',
+    recall: 'At the bridge where the toll had doubled, you',
+    options: [
+      {
+        id: 'pay',
+        label: 'Pay double, smile and be across before he can think of triple.',
+        told: 'paid double, smiled and were across before he could think of triple.',
+        gives: {
+          attribute: { mind: 1 },
+          background: { merchant: 1, aristocrat: 2 },
+          skill: { haggler: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'lift',
+        label: 'Pick him up and set him down on the other side of the road.',
+        told: 'picked him up and set him down on the other side of the road.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 3, brawler: 1 },
+        },
+      },
+      {
+        id: 'wade',
+        label: 'Wade the river under the bridge while he is still explaining the arithmetic.',
+        told: 'waded the river under the bridge while he was still explaining the arithmetic.',
+        gives: {
+          attribute: { instinct: 1 },
+          lineage: { tidebound: 2 },
+          skill: { cunning: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'flask',
+        label: 'Offer him a drink from your flask. He will not remember you passing.',
+        told: 'offered him a drink from your flask. He did not remember you passing.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 3 },
+          lineage: { fey: 1 },
+          skill: { apothecary: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-child',
+    stage: 'road',
+    asks: 'A lost child is crying in the market crowd. A man is walking towards it too quickly. What do you do?',
+    recall: 'Seeing a man close on a lost child in the market, you',
+    options: [
+      {
+        id: 'between',
+        label: 'Get between them. Whatever he wants, he can want it through you.',
+        told: 'got between them. Whatever he wanted, he could want it through you.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 3 },
+          lineage: { celestial: 1 },
+          background: { military: 1 },
+        },
+      },
+      {
+        id: 'wrist',
+        label: 'Take the man’s wrist as he reaches, and look at him until he leaves.',
+        told: 'took the man’s wrist as he reached, and looked at him until he left.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 2, 'feral-curse': 1 },
+          lineage: { wildkin: 1 },
+          background: { mercenary: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'call',
+        label: 'Call the child’s description across the whole market in a voice that carries. Crowds find mothers.',
+        told: 'called the child’s description across the whole market in a voice that carried. Crowds find mothers.',
+        gives: {
+          attribute: { mind: 1 },
+          lineage: { celestial: 1 },
+          background: { entertainer: 2, aristocrat: 1 },
+          skill: { charismatic: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'watch',
+        label: 'Watch the man. He is not the father, and you want to know where he goes.',
+        told: 'watched the man. He was not the father, and you wanted to know where he went.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          background: { investigator: 2 },
+          skill: { inquisitor: 1, cunning: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-storm',
+    stage: 'road',
+    asks: 'The storm has taken the roof off the inn, and the family is out in it with a baby. What do you do?',
+    recall: 'When the storm took the roof off the inn, you',
+    options: [
+      {
+        id: 'beam',
+        label: 'Hold the beam up while they get the thatch back over it. All night, if it takes all night.',
+        told: 'held the beam up while they got the thatch back over it. All night, since it took all night.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, guardian: 1 },
+          lineage: { stonebound: 2 },
+          background: { craftsman: 1 },
+        },
+      },
+      {
+        id: 'baby',
+        label: 'Put the baby inside your coat and walk into the wind for the next farm. You know the way in the dark.',
+        told: 'put the baby inside your coat and walked into the wind for the next farm. You knew the way in the dark.',
+        gives: {
+          attribute: { instinct: 1 },
+          lineage: { skybound: 3 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, cartographer: 1 },
+        },
+      },
+      {
+        id: 'fire',
+        label: 'Get a fire going in the cellar from wet wood and nothing, and warm them.',
+        told: 'got a fire going in the cellar from wet wood and nothing, and warmed them.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { alchemist: 2 },
+          lineage: { scorchbound: 1 },
+          background: { craftsman: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'speak',
+        label: 'Stand in the rain and speak to the storm. It listens, a little.',
+        told: 'stood in the rain and spoke to the storm, and it listened, a little.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 1, pactbound: 1 },
+          lineage: { skybound: 1, celestial: 1 },
+          skill: { 'innate-spell-novice': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-reputation',
+    stage: 'road',
+    requires: ['did:violence'],
+    asks: 'The man you put down years ago is in the taproom doorway with four friends, and he has recognised you. What do you do?',
+    recall: 'When the man you once put down found you with four friends, you',
+    options: [
+      {
+        id: 'again',
+        label: 'Do it again, and this time make sure of it.',
+        told: 'did it again, and this time made sure of it.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, brawler: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+        },
+      },
+      {
+        id: 'table',
+        label: 'Put the table between him and the room, so that whatever happens, happens to you.',
+        told: 'put the table between him and the room, so that whatever happened, happened to you.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 2 },
+          background: { military: 1 },
+          armor: { 'Heavy Armor': 1 },
+        },
+      },
+      {
+        id: 'window',
+        label: 'Be out of the window before he has finished pointing.',
+        told: 'were out of the window before he had finished pointing.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2 },
+          lineage: { fey: 1 },
           skill: { cunning: 1 },
         },
       },
       {
-        id: 'called',
-        label: 'You were called. You still do not know by what.',
-        told: 'you were called, and you still do not know by what.',
+        id: 'drink',
+        label: 'Buy all five of them a drink and ask after his mother, whose name you remember.',
+        told: 'bought all five of them a drink and asked after his mother, whose name you remembered.',
         gives: {
-          talent: { pactbound: 2, arcanist: 1 },
-          lineage: { celestial: 1, infernal: 1 },
           attribute: { mind: 1 },
+          background: { merchant: 1, entertainer: 2 },
+          skill: { charismatic: 1, empath: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ============================================================== leaving */
+  {
+    id: 'leaving-night',
+    stage: 'leaving',
+    asks: 'The night you leave the life you had, the house is burning behind you. What do you do?',
+    recall: 'The night you left, with the house burning behind you, you',
+    options: [
+      {
+        id: 'back',
+        label: 'Go back in for the one who is still inside.',
+        told: 'went back in for the one who was still inside.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 3 },
+          lineage: { scorchbound: 1, celestial: 1 },
+          background: { military: 1 },
         },
       },
       {
-        id: 'books',
-        label: 'The books ran out. There was nothing left to learn there.',
-        told: 'the books ran out. There was nothing left to learn there.',
+        id: 'lit',
+        label: 'Keep walking. You lit it.',
+        told: 'kept walking. You lit it.',
         gives: {
-          background: { erudit: 1 },
-          talent: { arcanist: 1, enchanter: 1 },
-          attribute: { mind: 2 },
+          attribute: { mind: 1 },
+          talent: { alchemist: 1, pactbound: 1 },
+          lineage: { infernal: 2 },
         },
       },
       {
-        id: 'wild',
-        label: 'The wild called, and the beast in you answered.',
-        told: 'the wild called, and the beast in you answered.',
+        id: 'watch',
+        label: 'Stand and watch until the roof falls, then go. You needed to see it end.',
+        told: 'stood and watched until the roof fell, then went. You needed to see it end.',
         gives: {
-          talent: { 'feral-curse': 2, mycomancer: 2, 'draconic-bond': 1 },
-          attribute: { instinct: 1 },
+          attribute: { physique: 1 },
+          talent: { berserker: 2 },
+          lineage: { draconic: 1, undead: 2 },
+          background: { mercenary: 1 },
+        },
+      },
+      {
+        id: 'run',
+        label: 'Run, with the hound at your heel. Do not look back.',
+        told: 'ran with the hound at your heel and did not look back.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'draconic-bond': 2, 'feral-curse': 2 },
           lineage: { wildkin: 1 },
-        },
-      },
-      {
-        id: 'hill',
-        label: 'Nothing dramatic. You wanted to see what was over the hill.',
-        told: 'you wanted to see what was over the hill. Nothing more dramatic than that.',
-        gives: {
-          background: { outlander: 1, entertainer: 1, merchant: 1 },
-          attribute: { instinct: 1 },
-          skill: { cartographer: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1 },
         },
       },
     ],
@@ -2670,123 +2229,103 @@ export const QUESTIONS = [
   {
     id: 'leaving-carry',
     stage: 'leaving',
-    asks: 'What did you take with you, the night you left?',
-    recall: 'The night you left, you took',
+    asks: 'You can carry one thing out of the life you are leaving, and the cart is already moving. What do you take?',
+    recall: 'Out of the life you left, you carried',
     options: [
       {
         id: 'great',
-        label: 'A weapon too big for the doorway.',
+        label: 'The weapon that is too big for the doorway.',
+        told: 'the weapon that was too big for the doorway.',
         gives: {
+          attribute: { physique: 1 },
           talent: { colossus: 3 },
-          attribute: { physique: 2 },
-          weapon: { 'melee-great': 1, 'great-polearm': 1 },
+          weapon: { 'melee-great': 1, 'long-bow': 1 },
         },
       },
       {
         id: 'blades',
-        label: 'A blade, a second blade and no sentiment.',
+        label: 'The blade, and the second blade.',
+        told: 'the blade, and the second blade.',
         gives: {
-          talent: { duelist: 2 },
           attribute: { instinct: 1 },
+          talent: { duelist: 3 },
+          skill: { 'quick-draw': 1 },
           weapon: { 'paired-finesse': 1, 'finesse-weapon': 1 },
         },
       },
       {
-        id: 'shield',
-        label: 'A shield with a name on it that was not yours yet.',
+        id: 'book',
+        label: 'The book you were never supposed to have.',
+        told: 'the book you were never supposed to have.',
         gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 2, enchanter: 1 },
+          background: { erudit: 2 },
+          skill: { occultist: 1 },
+          weapon: { 'psychic-tome': 1, 'sacred-tome': 1 },
+        },
+      },
+      {
+        id: 'shield',
+        label: 'The shield with a name on it that is not yours yet.',
+        told: 'the shield with a name on it that was not yours yet.',
+        gives: {
+          attribute: { physique: 1 },
           talent: { guardian: 3 },
-          attribute: { physique: 2 },
-          weapon: { 'melee-light-shield': 1, 'melee-heavy-shield': 1 },
+          weapon: { 'melee-light-shield': 1 },
           armor: { 'Heavy Armor': 1 },
         },
       },
-      {
-        id: 'book',
-        label: 'A book you were not supposed to have.',
-        gives: {
-          talent: { arcanist: 2, enchanter: 1 },
-          attribute: { mind: 1 },
-          weapon: { 'psychic-tome': 1, 'sacred-tome': 1 },
-          skill: { occultist: 1 },
-        },
-      },
+    ],
+  },
+
+  {
+    id: 'leaving-pack',
+    stage: 'leaving',
+    asks: 'There is room in the pack for one more thing, and someone is calling your name from the road. What goes in?',
+    recall: 'Into the pack, with someone calling from the road, went',
+    options: [
       {
         id: 'cauldron',
-        label: 'A cauldron, a bundle of herbs and a jar of something that moved.',
+        label: 'The cauldron, the herbs and the jar of something that moves.',
+        told: 'the cauldron, the herbs and the jar of something that moved.',
         gives: {
-          talent: { 'cauldron-keeper': 2, alchemist: 2 },
           attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 3 },
           skill: { apothecary: 1 },
         },
       },
       {
-        id: 'bow',
-        label: 'A bow, a good knife and the last of the dried meat.',
-        gives: {
-          background: { outlander: 1 },
-          attribute: { instinct: 1 },
-          weapon: { bow: 1, 'long-bow': 1 },
-          skill: { survivalist: 1 },
-          talent: { sharpshooter: 1 },
-        },
-      },
-      {
-        id: 'creature',
-        label: 'A creature that would not stay behind.',
-        gives: {
-          talent: { 'draconic-bond': 3 },
-          attribute: { instinct: 1 },
-          lineage: { wildkin: 1 },
-        },
-      },
-      {
         id: 'pistol',
-        label: 'A pistol, a lantern and a list of names.',
+        label: 'The pistol, the lantern and the list of names.',
+        told: 'the pistol, the lantern and the list of names.',
         gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 1, sharpshooter: 1 },
           background: { investigator: 1, mercenary: 1 },
-          attribute: { instinct: 1 },
-          weapon: { 'flintlock-pistol': 1 },
           skill: { vigilant: 1 },
-        },
-      },
-      {
-        id: 'picks',
-        label: 'A set of lockpicks and someone else’s coat.',
-        gives: {
-          talent: { trickster: 2 },
-          background: { criminal: 1 },
-          attribute: { instinct: 1 },
-          weapon: { 'finesse-weapon': 1 },
-          skill: { cunning: 1 },
-        },
-      },
-      {
-        id: 'hands',
-        label: 'Nothing but your hands, and the anger.',
-        gives: {
-          talent: { berserker: 3 },
-          attribute: { physique: 2 },
-          weapon: { 'fist-weapon': 1 },
-        },
-      },
-      {
-        id: 'staff',
-        label: 'A staff cut from a tree that spoke to you once.',
-        gives: {
-          talent: { mycomancer: 3 },
-          attribute: { instinct: 1 },
-          weapon: { 'sharp-staff': 1, 'force-staff': 1 },
-          lineage: { fey: 1 },
+          weapon: { 'flintlock-pistol': 1 },
         },
       },
       {
         id: 'contract',
-        label: 'A contract, signed in something that was not ink.',
+        label: 'The contract, signed in something that was not ink.',
+        told: 'the contract, signed in something that was not ink.',
         gives: {
-          talent: { pactbound: 3 },
           attribute: { mind: 1 },
+          talent: { pactbound: 3 },
           lineage: { infernal: 1 },
+        },
+      },
+      {
+        id: 'nothing',
+        label: 'Nothing. Your hands, and the anger, are enough.',
+        told: 'nothing at all. Your hands and the anger were enough.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 3 },
+          lineage: { draconic: 1 },
+          weapon: { 'melee-light': 1 },
         },
       },
     ],
@@ -2795,176 +2334,105 @@ export const QUESTIONS = [
   {
     id: 'leaving-fight',
     stage: 'leaving',
-    asks: 'Think of the first real fight you were in. How did it go?',
-    recall: 'In your first real fight,',
+    asks: 'The first real fight after you leave: an alley, two men and no way round. How does it end?',
+    recall: 'Your first real fight on the road ended',
     options: [
       {
-        id: 'door',
-        label: 'You held the door and nobody got past.',
+        id: 'wall',
+        label: 'With your back to the wall and neither of them past you.',
+        told: 'with your back to the wall and neither of them past you.',
         gives: {
+          attribute: { physique: 1 },
           talent: { guardian: 3 },
-          attribute: { physique: 2 },
+          weapon: { 'melee-light-shield': 1 },
           armor: { 'Heavy Armor': 1 },
-          weapon: { 'finesse-shield': 1 },
         },
       },
       {
-        id: 'temper',
-        label: 'You lost your temper and, afterwards, some memory of it.',
+        id: 'over',
+        label: 'With you standing over them and no memory of the middle.',
+        told: 'with you standing over them and no memory of the middle.',
         gives: {
-          talent: { berserker: 3 },
           attribute: { physique: 2 },
+          talent: { berserker: 3 },
+          lineage: { draconic: 2 },
           weapon: { 'melee-heavy': 1 },
         },
       },
       {
-        id: 'quicker',
-        label: 'You were quicker than them, and that was the whole of it.',
-        gives: {
-          talent: { duelist: 3 },
-          attribute: { instinct: 1 },
-          weapon: { 'finesse-weapon': 1 },
-        },
-      },
-      {
         id: 'behind',
-        label: 'You were not where they looked. You were behind them, and then it was over.',
+        label: 'Before it starts. You were behind them, and then it was over.',
+        told: 'before it started. You were behind them, and then it was over.',
         gives: {
+          attribute: { instinct: 2 },
           talent: { trickster: 3 },
-          attribute: { instinct: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
           skill: { cunning: 1 },
         },
       },
       {
         id: 'fire',
-        label: 'You did not touch anyone. The fire did.',
+        label: 'With the alley on fire and you not having touched anyone.',
+        told: 'with the alley on fire and you not having touched anyone.',
         gives: {
+          attribute: { mind: 2 },
           talent: { arcanist: 3 },
-          attribute: { mind: 1 },
+          lineage: { scorchbound: 1 },
           weapon: { 'fire-wand': 1 },
-        },
-      },
-      {
-        id: 'brewed',
-        label: 'Something you had brewed did the work before the first blow.',
-        gives: {
-          talent: { alchemist: 2, 'cauldron-keeper': 2 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'brought',
-        label: 'You brought something to the fight that was not you.',
-        gives: {
-          talent: { 'draconic-bond': 2, mycomancer: 2 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'notyou',
-        label: 'You do not remember being yourself.',
-        gives: {
-          talent: { 'feral-curse': 3 },
-          attribute: { instinct: 1 },
-        },
-      },
-      {
-        id: 'lifted',
-        label: 'You lifted something no one should lift, and swung it.',
-        gives: {
-          talent: { colossus: 3 },
-          attribute: { physique: 2 },
-          weapon: { 'melee-great': 1 },
-        },
-      },
-      {
-        id: 'blade',
-        label: 'Your blade knew what to do before you did, and asked for something after.',
-        gives: {
-          talent: { pactbound: 3 },
-          attribute: { mind: 1 },
-        },
-      },
-      {
-        id: 'armor',
-        label: 'The armor you had worked on for a month held, exactly as you said it would.',
-        gives: {
-          talent: { enchanter: 3 },
-          attribute: { mind: 1 },
-          armor: { 'Magic Armor': 1 },
         },
       },
     ],
   },
 
   {
-    id: 'leaving-look',
+    id: 'leaving-road',
     stage: 'leaving',
-    asks: 'When people look at you now, what do they see first?',
-    recall: 'When people look at you now, they see first',
+    asks: 'The road forks at the milestone: the city, the wild, the sea and the mountain pass. Nobody is waiting for you on any of them. Which do you take?',
+    recall: 'At the milestone where the road forked, you took',
     options: [
       {
-        id: 'size',
-        label: 'The size of you.',
+        id: 'wild',
+        label: 'The wild. The trees already know your name.',
+        told: 'the wild. The trees already knew your name.',
         gives: {
-          attribute: { physique: 2 },
-          talent: { colossus: 1, berserker: 1 },
-          lineage: { stalwart: 1 },
-          armor: { 'Heavy Armor': 1 },
-        },
-      },
-      {
-        id: 'stand',
-        label: 'The way you stand: between them and the door.',
-        gives: {
-          talent: { guardian: 2 },
-          attribute: { physique: 2 },
-          skill: { vigilant: 1 },
-        },
-      },
-      {
-        id: 'eyes',
-        label: 'The eyes. They move too much, or not at all.',
-        told: 'the eyes, which move too much or not at all.',
-        gives: {
-          attribute: { instinct: 2 },
-          talent: { trickster: 1, duelist: 1 },
-          skill: { vigilant: 1 },
-        },
-      },
-      {
-        id: 'ink',
-        label: 'The ink on your fingers and the book under your arm.',
-        gives: {
-          attribute: { mind: 2 },
-          talent: { arcanist: 1, enchanter: 1 },
-          background: { erudit: 1 },
-        },
-      },
-      {
-        id: 'smell',
-        label: 'The smell of herbs, smoke and something sharp.',
-        gives: {
-          talent: { 'cauldron-keeper': 1, alchemist: 1 },
           attribute: { instinct: 1 },
-          skill: { apothecary: 1 },
+          talent: { mycomancer: 3, 'feral-curse': 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 2 },
         },
       },
       {
-        id: 'companion',
-        label: 'Whatever it is that travels with you.',
+        id: 'city',
+        label: 'The city. There is work there for someone who can make things.',
+        told: 'the city. There was work there for someone who could make things.',
         gives: {
-          talent: { 'draconic-bond': 2 },
-          attribute: { instinct: 1 },
+          attribute: { mind: 1 },
+          talent: { enchanter: 3, alchemist: 1 },
+          background: { craftsman: 1, merchant: 1 },
         },
       },
       {
-        id: 'wrong',
-        label: 'Something wrong, just under the surface, that they cannot name.',
+        id: 'pass',
+        label: 'The pass. Whatever is up there, you can carry it.',
+        told: 'the pass. Whatever was up there, you could carry it.',
         gives: {
-          talent: { 'feral-curse': 1, pactbound: 1 },
-          lineage: { undead: 1, infernal: 1 },
+          attribute: { physique: 1 },
+          talent: { colossus: 1, guardian: 1 },
+          lineage: { stonebound: 2 },
+          background: { mercenary: 1 },
+        },
+      },
+      {
+        id: 'sea',
+        label: 'The sea. You have never once been afraid of deep water.',
+        told: 'the sea. You have never once been afraid of deep water.',
+        gives: {
           attribute: { instinct: 1 },
+          talent: { duelist: 1 },
+          lineage: { tidebound: 3 },
+          background: { merchant: 1, outlander: 1 },
+          skill: { seafarer: 1 },
         },
       },
     ],
