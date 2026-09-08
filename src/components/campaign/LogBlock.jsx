@@ -601,10 +601,11 @@ function Throw({ roll, named = true }) {
  * that was never cropped for this frame has to crop harder than `object-fit`
  * can on its own: see `.log-face` for what the two boxes do.
  *
- * An uploaded picture is asked for its `face` crop, which is already a face, so
- * the frame is told not to zoom it again. Only a link to somebody else's host
- * and a row written before the uploader existed still get the old treatment,
- * which is exactly what it was built for: a standing figure in a 26px column.
+ * An uploaded picture is asked for its `face` crop, which is already a face and
+ * was framed by its owner in a preview of this very circle, so the frame is told
+ * not to zoom it again. Only a link to somebody else's host and a row written
+ * before the uploader existed still get the old treatment, which is exactly what
+ * it was built for: a standing figure inside a 32px circle.
  */
 function Face({ name, src }) {
   const initials = String(name || '?')

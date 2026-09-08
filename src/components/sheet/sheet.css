@@ -13183,11 +13183,18 @@ button.tgt-chip:disabled {
 }
 
 /*
- * A rectangle, like every other portrait on the sheet: the 4px corner of the
- * identity frame and the minion plate rather than a circle of its own. 32px is
- * the head body's two lines exactly, the name plus the sentence plus the gap
- * between them, so the picture is as tall as the row it belongs to and nothing
- * under it moves.
+ * A circle, and the one place on the sheet that is. Everywhere else a portrait
+ * is a plate with a 4px corner, because everywhere else it is a picture of a
+ * character. Here it is a *speaker*: the log is a feed of who did what, and a
+ * round face is how a feed marks the person talking. The notice cards that fly
+ * up over the sheet already drew one (`.log-call-face`), so the two halves of
+ * the log used to disagree about the shape of a person. Jules, 2026-09-08:
+ * the log takes the round picture.
+ *
+ * 32px is the head body's two lines exactly, the name plus the sentence plus
+ * the gap between them, so the face is as tall as the row it belongs to and
+ * nothing under it moves. Square now rather than 26 wide, because a circle has
+ * to be, and the row's text sits 6px further along for it.
  */
 .log-face {
   flex: 0 0 auto;
@@ -13195,9 +13202,9 @@ button.tgt-chip:disabled {
      sits in is a flex container, which would blockify it anyway, but a frame
      whose size depends on who is holding it is a frame waiting to be moved. */
   display: block;
-  width: 26px;
+  width: 32px;
   height: 32px;
-  border-radius: 4px;
+  border-radius: 50%;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--log-accent) 60%, transparent);
   background-color: var(--bg-black);
@@ -13205,19 +13212,23 @@ button.tgt-chip:disabled {
 
 /*
  * Zoomed to the head, which is the whole reason the frame is a wrapper and not
- * the picture itself. A sheet portrait is a standing figure drawn into a
- * 132x234 frame, and `cover` alone put the whole of that figure down a 26px
- * column: the face came out about five pixels tall, a smudge you could tell
- * from another smudge by its colour and nothing else.
+ * the picture itself. A pasted portrait is a standing figure, and `cover` alone
+ * put the whole of that figure inside a 32px circle: the face came out about
+ * five pixels tall, a smudge you could tell from another smudge by its colour
+ * and nothing else.
  *
  * So the picture is drawn at twice the frame, pulled back to the middle by half
  * a frame, and the frame keeps its top half. On a standing figure the top half
  * is head and shoulders, which is the same rule every other crop on the sheet
  * follows, only harder: keep the face, lose the boots.
  *
+ * Pushed down a little rather than flush to the top, which is what the plate
+ * wanted. A circle cuts hardest at its crown, and a head sitting on the top
+ * edge loses the top of itself to the curve.
+ *
  * Twice the size rather than `transform: scale(2)`, which lands the crop in
  * exactly the same place: at 200% the browser draws the picture at the doubled
- * size and the frame clips it, where a transform would have it drawn at 26px
+ * size and the frame clips it, where a transform would have it drawn at 32px
  * and then blown up. The difference is whether a face this small is sharp or a
  * smear.
  */
@@ -13227,26 +13238,30 @@ button.tgt-chip:disabled {
   height: 200%;
   margin-left: -50%;
   object-fit: cover;
-  object-position: 50% 0;
+  object-position: 50% 8%;
 }
 
 /*
- * An uploaded picture arrives already cropped to a face (see
- * src/lib/imageViews.js), so the zoom above would be applied to a head that has
- * already been framed and would take the top of it off. The picture fills the
- * frame instead, which is all `cover` ever had to do.
+ * An uploaded picture arrives already cropped to a face, and framed by its
+ * owner in a preview of this very circle (see VIEWS in src/lib/imageViews.js).
+ * So there is nothing left to do: a square file in a round frame of the same
+ * measure shows exactly what they framed, and the zoom above would take the top
+ * of a head that has already been placed.
  */
 .log-face.is-cropped img {
   width: 100%;
   height: 100%;
   margin-left: 0;
+  object-position: 50% 50%;
 }
 
-/* No portrait on the sheet, or a row written before the log carried one. */
+/* No portrait on the sheet, or a row written before the log carried one. The
+   initials keep the circle rather than falling back to a square, so a feed of
+   mixed rows is a column of one shape. */
 .log-face.is-blank {
   display: grid;
   place-items: center;
-  font-size: 0.6rem;
+  font-size: 0.64rem;
   letter-spacing: 0.02em;
   color: var(--text-muted);
 }
