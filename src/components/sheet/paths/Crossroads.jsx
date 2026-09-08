@@ -317,7 +317,10 @@ function Reveal({ outcome }) {
       <PickBlock kind="lore" step="5" title="Their story" state="Written" done>
         <div className="xr-story">
           {story.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
+            <div key={paragraph.stage} className="xr-story-part">
+              <span className="xr-story-title">{paragraph.title}</span>
+              <p>{paragraph.text}</p>
+            </div>
           ))}
         </div>
         <p className="pick-line">

@@ -664,8 +664,9 @@ are counted. The highest attribute takes the +2 and the second the +1. Your two 
 are the strongest of those built on your two highest attributes, the first at level 1 and
 the second at level 2, both at Novice. The highest lineage and background are yours, the
 background's skills are the ones your answers leaned towards and the outfitter's armor and
-weapon follow the same count. Your answers are written into the backstory on the lore page,
-one sentence each.
+weapon follow the same count. Your answers are told as a short story on the lore page: a
+paragraph for each chapter of the life, each closing on what that chapter showed, then a
+last one for who you became.
 
 The count always adds up to somebody. Every answer leans one way, so putting your shoulder
 through a door counts for Physique and for the sets, weapons and armor built on it. It

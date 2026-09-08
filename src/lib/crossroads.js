@@ -72,10 +72,11 @@
  * Novice. The +2 on the highest attribute and the +1 on the next. The strongest
  * lineage and background, the background's skills in the order the answers
  * leaned, and the outfitter's armor and weapon from the same count. The answers
- * themselves become the backstory on the lore page, one sentence each, in the
- * order they were given. Everything is written through the same functions the
- * level-1 panels write with, so a Crossroads character is a character like any
- * other and every choice can be changed afterwards from the Advancement tab.
+ * are told as a short story on the lore page, a paragraph for each chapter of
+ * the life and a last one for who you became (crossroadsStory.js). Everything
+ * is written through the same functions the level-1 panels write with, so a
+ * Crossroads character is a character like any other and every choice can be
+ * changed afterwards from the Advancement tab.
  */
 
 import { ATTRIBUTE_KEYS, getAttribute } from './attributes.js';
@@ -88,6 +89,9 @@ import { XP_TABLE, appendLedger, newLedgerId, xpForLevel } from './characterMode
 import { setBoosts, setLineage } from './levelPicks.js';
 import { buildKitPatch, buildReturnPatch } from './kit.js';
 import { ARMOR_DEFAULTS, QUESTIONS, STAGES, WEAPON_DEFAULTS } from './crossroadsPool.js';
+import { narrate, sentenceOf } from './crossroadsStory.js';
+
+export { sentenceOf };
 
 /** How many questions a whole run asks, when no stage runs short. */
 export const RUN_LENGTH = STAGES.reduce((total, stage) => total + stage.draw, 0);
@@ -334,31 +338,6 @@ export function armorStat(setName) {
   return Object.keys(ARMOR_DEFAULTS).find((key) => ARMOR_DEFAULTS[key] === setName) ?? null;
 }
 
-const lowerFirst = (text) => text.charAt(0).toLowerCase() + text.slice(1);
-
-/** One sentence of the backstory, from a step's question and its answer. */
-export function sentenceOf(step) {
-  const told = step.option.told ?? lowerFirst(step.option.label);
-  return `${step.question.recall} ${told}`.trim();
-}
-
-/* Three paragraphs: where you came from, what you became, what the road showed. */
-const STORY_PARAGRAPHS = [
-  ['childhood', 'home', 'blood'],
-  ['youth', 'trade'],
-  ['road', 'leaving'],
-];
-
-/** The answers as a backstory, one paragraph per act, empty ones left out. */
-export function storyOf(steps) {
-  return STORY_PARAGRAPHS.map((stageIds) =>
-    steps
-      .filter((step) => step.option && stageIds.includes(step.stage.id))
-      .map(sentenceOf)
-      .join(' ')
-  ).filter(Boolean);
-}
-
 /**
  * The character a tally adds up to, under the rule that nothing is built on the
  * attribute left lowest. Whole even on an empty tally, by the fallbacks
@@ -373,7 +352,9 @@ export function storyOf(steps) {
  *   skills         the background's skills the count kept, as many as it teaches
  *   weapons        as many as the background's kit arms
  *   armorSet       a set name
- *   story          paragraphs for the lore page
+ *   story          the life as a short story, one paragraph a chapter and a
+ *                  last one for who you became, as `{ stage, title, text }`.
+ *                  See crossroadsStory.js
  *   scores         the tally, for anything that wants to say why
  */
 export function decide(scores, steps = []) {
@@ -439,7 +420,7 @@ export function decide(scores, steps = []) {
     (name) => (armorStat(name) === major ? 1 : 0)
   )[0];
 
-  return {
+  const outcome = {
     major,
     minor,
     least,
@@ -450,15 +431,24 @@ export function decide(scores, steps = []) {
     skills,
     weapons,
     armorSet,
-    story: storyOf(steps),
     scores,
     steps,
   };
+
+  /* Told last, because the chapters close on what the count decided: the
+     blood on the lineage, the trade on the background, the leaving on the set
+     at level 1. See crossroadsStory.js. */
+  return { ...outcome, story: narrate(steps, outcome) };
 }
 
 /** The character a run's answers add up to. See `decide`. */
 export function resolve(run) {
   return decide(tally(run), walk(run).steps);
+}
+
+/** The story as the lore page stores it: the paragraphs, a blank line between. */
+export function storyText(story) {
+  return story.map((paragraph) => paragraph.text).join('\n\n');
 }
 
 /* ---------------------------------------------------------------- the writing */
@@ -528,7 +518,7 @@ export function applyOutcome(character, outcome) {
 
   const lore = next.lore && typeof next.lore === 'object' ? next.lore : {};
   if (!String(lore.backstory ?? '').trim() && outcome.story.length > 0) {
-    merge({ lore: { ...lore, backstory: outcome.story.join('\n\n') } });
+    merge({ lore: { ...lore, backstory: storyText(outcome.story) } });
   }
 
   return patch;

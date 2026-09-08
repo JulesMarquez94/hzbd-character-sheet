@@ -13595,3 +13595,46 @@ the situation the character is in, then the question, then at most four ways of 
 
 - `lint:crossroads` with the two new sections clean, `npm run lint`, `lint:text` and
   `npm run build` clean, and a run walked in the browser end to end.
+
+### Fourth pass, the same day: the story is told, not traced
+
+Jules: "instead of directly narrating the trace of players as made, for each of the seven
+sections it takes all the choices and makes a little summary like a narration, something that
+makes more like a short story." The backstory had been twelve sentences in a row, one an answer.
+
+- **`src/lib/crossroadsStory.js` is a narrator.** One paragraph a chapter: an opening line
+  (two variants a chapter, picked off the run), the answers as beats with connectives leading in
+  from the second onward ("Later,", "And once,"), and a closing that says what the chapter
+  showed. Childhood, Home, Youth and The Road close on the way that chapter's answers leant,
+  Physique, Instinct, Mind or a mix. **Blood closes on the lineage the whole run made**, Trade on
+  the background and Leaving on the set taken at level 1, each with a sentence of its own ("That
+  was the tide in your blood, which has never yet met a water it feared." "It was a thief's
+  answer, and it was a thief the trade made of you." "Nobody saw you go, which is how you have
+  preferred it since."). A last paragraph says who came out: "That is how a Skybound thief came
+  to the road: quick of hand and quicker of eye, with a Trickster's fingers and a way of not
+  being where anyone looked, and an Arcanist's first words in the mouth."
+- The reveal prints each paragraph under its chapter's caption; the lore page stores the prose
+  alone, paragraphs apart.
+- **Writing every combination was not done.** Two road answers out of thirteen questions of four
+  make thousands of combinations; the paragraph is composed instead, and the closing sentence
+  is where the summary lives. Where a whole chapter is one answer (Childhood, Home, Trade,
+  Leaving) the closing reads as the summary of that one answer.
+- The checker requires a frame with an opening for every stage, a closing for every lane on the
+  four lane-closed stages, a closing sentence for all 13 lineages, all 10 backgrounds and all 13
+  written sets, a noun for every background and a phrase for every set and attribute, and on
+  every one of the 4,000 walks a paragraph per chapter answered plus one, each ending, with no
+  doubled space, no `undefined` and no sentence starting lower-case.
+- Rulebook 4.9 says the answers are told as a short story.
+
+### Mine, worth Jules's eye
+
+- Every opening, closing, noun and phrase in `crossroadsStory.js`: 14 openings, 16 lane closings,
+  13 lineage closings, 10 background closings, 13 set closings, 10 nouns, 3 attribute phrases
+  and 13 set phrases.
+- Whether the beats should be shortened further on the road, where four answers make the longest
+  paragraph.
+
+### Proved
+
+- `lint:crossroads` with the chapter section clean, `npm run lint`, `lint:text` and
+  `npm run build` clean, and a story read off a run in the browser.

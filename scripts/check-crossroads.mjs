@@ -31,9 +31,19 @@ import {
   resolve,
   sentenceOf,
   setLeans,
+  storyText,
   walk,
   weaponStat,
 } from '../src/lib/crossroads.js';
+import {
+  ATTRIBUTE_PHRASES,
+  BACKGROUND_CLOSES,
+  BACKGROUND_NOUNS,
+  LINEAGE_CLOSES,
+  STAGE_FRAMES,
+  TALENT_CLOSES,
+  TALENT_PHRASES,
+} from '../src/lib/crossroadsStory.js';
 import { ATTRIBUTE_KEYS } from '../src/lib/attributes.js';
 import { TALENTS, getTalent, normalizeTalents } from '../src/lib/talents.js';
 import { LINEAGES } from '../src/lib/lineages.js';
@@ -228,6 +238,40 @@ section('everything written can be scored');
   if (LIST) console.log(`  info  ${offered.size - unscored.length} of ${offered.size} level-1 skills are scored${unscored.length ? `; unscored: ${unscored.join(', ')}` : ''}`);
 }
 
+section('every chapter can close');
+{
+  for (const stage of STAGES) {
+    const frame = STAGE_FRAMES[stage.id];
+    check(`${stage.id}: has a frame`, Boolean(frame), true);
+    check(`${stage.id}: has an opening`, (frame?.opens?.length ?? 0) >= 1, true);
+    if (frame?.closes) {
+      for (const lane of [...ATTRIBUTE_KEYS, 'mixed']) {
+        check(`${stage.id}: closes on ${lane}`, Boolean(frame.closes[lane]), true);
+      }
+    }
+  }
+  check('blood, trade and leaving close on what the count decided', [
+    STAGE_FRAMES.blood.closes, STAGE_FRAMES.trade.closes, STAGE_FRAMES.leaving.closes,
+  ], [null, null, null]);
+  for (const lineage of LINEAGES) check(`the blood closes on ${lineage.name}`, Boolean(LINEAGE_CLOSES[lineage.id]), true);
+  for (const background of BACKGROUNDS) {
+    check(`the trade closes on ${background.name}`, Boolean(BACKGROUND_CLOSES[background.id]), true);
+    check(`${background.name} has a noun`, Boolean(BACKGROUND_NOUNS[background.id]), true);
+  }
+  for (const talent of WRITTEN) {
+    check(`the leaving closes on ${talent.name}`, Boolean(TALENT_CLOSES[talent.id]), true);
+    check(`${talent.name} has a phrase`, Boolean(TALENT_PHRASES[talent.id]), true);
+  }
+  for (const key of ATTRIBUTE_KEYS) check(`${key} has a phrase`, Boolean(ATTRIBUTE_PHRASES[key]), true);
+
+  /* Every sentence here has to end, and to be a sentence. */
+  const every = [
+    ...Object.values(STAGE_FRAMES).flatMap((frame) => [...frame.opens, ...Object.values(frame.closes ?? {})]),
+    ...Object.values(LINEAGE_CLOSES), ...Object.values(BACKGROUND_CLOSES), ...Object.values(TALENT_CLOSES),
+  ];
+  check('every opening and closing ends', every.every((line) => /[.!?]$/.test(line)), true);
+}
+
 section('the defaults are real');
 {
   for (const [key, ids] of Object.entries(WEAPON_DEFAULTS)) {
@@ -320,7 +364,16 @@ section(`${RUNS} walks`);
     if (outcome.weapons.length !== outcome.background.kit.weapons) problems.push(`weapons ${outcome.weapons.length}`);
     if (new Set(outcome.weapons.map((weapon) => weapon.id)).size !== outcome.weapons.length) problems.push('a weapon twice');
     if (!ARMOR_NAMES.has(outcome.armorSet)) problems.push(`armor ${outcome.armorSet}`);
-    if (outcome.story.length !== 3) problems.push(`story paragraphs ${outcome.story.length}`);
+    /* A paragraph a chapter answered, and one for who you became. Every one a
+       finished piece of prose: it ends, nothing is doubled and nothing that the
+       narrator was handed came back as "undefined". */
+    const chapters = new Set(outcome.steps.filter((step) => step.option).map((step) => step.stage.id)).size;
+    if (outcome.story.length !== chapters + 1) problems.push(`story paragraphs ${outcome.story.length} for ${chapters} chapters`);
+    for (const paragraph of outcome.story) {
+      if (!paragraph.title || !/[.!?]$/.test(paragraph.text)) problems.push(`unfinished paragraph ${paragraph.stage}`);
+      if (/\s\s|undefined|null|\{|\}/.test(paragraph.text)) problems.push(`ragged paragraph ${paragraph.stage}`);
+      if (/[.!?]\s[a-z]/.test(paragraph.text)) problems.push(`a sentence in ${paragraph.stage} starts lower-case`);
+    }
 
     /* And nothing built on the attribute left lowest. */
     const stands = (talent) => setLeans(talent, outcome.major) || setLeans(talent, outcome.minor);
@@ -477,7 +530,7 @@ section('the patch makes a level 2 character');
     if (made.level !== CROSSROADS_LEVEL) problems.push(`level ${made.level}`);
     if (!made.ledger?.some((row) => row.kind === 'xp' && row.delta === XP_TABLE[CROSSROADS_LEVEL])) problems.push('xp ledger');
     if (!String(made.lore?.backstory ?? '').trim()) problems.push('backstory');
-    if (made.lore?.backstory !== outcome.story.join('\n\n')) problems.push('backstory text');
+    if (made.lore?.backstory !== storyText(outcome.story)) problems.push('backstory text');
 
     if (problems.length) problem = `seed ${seed}: ${problems.join(', ')}`;
   }
