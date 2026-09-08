@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import ShareCode from './ShareCode.jsx';
+import PortraitField from '../images/PortraitField.jsx';
 import TagFilter from './TagFilter.jsx';
 import { Gated } from './parts.jsx';
 import { ItemCarry, ItemIcon, ItemStats, ItemTags } from './itemParts.jsx';
@@ -360,20 +361,15 @@ export default function ForgeWindow({ character, onForge, onClose }) {
                 </span>
               </label>
 
-              <label className="ench-target">
-                <span className="fx-label">A picture of it</span>
-                <input
-                  type="url"
+              <div className="ench-target">
+                <PortraitField
+                  label="A picture of it"
+                  view="plate"
                   value={art}
-                  placeholder={base.art_url ?? 'https://…'}
-                  spellCheck="false"
-                  onChange={(event) => setArt(event.target.value)}
+                  onChange={(url) => setArt(url ?? '')}
+                  hint="Nothing chosen keeps the codex picture. Yours shows at every account tier, because it is yours."
                 />
-                <span className="ench-target-note">
-                  A link to an image. Blank keeps the codex picture, and yours shows at every
-                  account tier because it is yours.
-                </span>
-              </label>
+              </div>
 
               {ench.length > 0 && (
                 <ul className="forge-list">

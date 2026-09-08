@@ -29,6 +29,7 @@ import {
   xpProgress,
 } from '../lib/characterModel.js';
 import './Dashboard.css';
+import { viewUrl } from '../lib/imageViews.js';
 
 function TalentTag({ talent }) {
   const rank = Math.max(0, Math.min(3, Number(talent.rank) || 0));
@@ -69,7 +70,7 @@ function CharacterCard({ character, onDelete, onKeep = null }) {
 
       <Link to={`/characters/${character.id}`} className="char-portrait">
         {character.portrait_url ? (
-          <img src={character.portrait_url} alt="" />
+          <img src={viewUrl(character.portrait_url, 'portrait')} alt="" />
         ) : (
           <span className="portrait-initials">{initialsOf(character.name)}</span>
         )}

@@ -3,6 +3,7 @@ import Modal from '../Modal.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { damageStyle } from '../../lib/cardText.js';
 import { minionState, setMinionIdentity } from '../../lib/minions.js';
+import PortraitField from '../images/PortraitField.jsx';
 
 /**
  * Naming the creature a talent set just put on the board.
@@ -46,44 +47,28 @@ export function MinionWindow({ character, minion, patch, readOnly = false, onClo
         is, and it stands on your Character tab with two blocks of its own.
       </p>
 
-      <div className="minion-editor">
-        <div className="minion-portrait">
-          {minion.portrait_url ? (
-            <img src={minion.portrait_url} alt="" />
-          ) : (
-            <span className="muted">No picture</span>
-          )}
-        </div>
+      <label className="form-label" htmlFor="minion-name">
+        Name
+      </label>
+      <input
+        className="form-input"
+        id="minion-name"
+        readOnly={readOnly}
+        value={minion.name}
+        placeholder="What do you call it?"
+        maxLength={60}
+        onChange={(event) => write({ name: event.target.value })}
+      />
 
-        <div className="minion-fields">
-          <label className="form-label" htmlFor="minion-name">
-            Name
-          </label>
-          <input
-            className="form-input"
-            id="minion-name"
-            readOnly={readOnly}
-            value={minion.name}
-            placeholder="What do you call it?"
-            maxLength={60}
-            onChange={(event) => write({ name: event.target.value })}
-          />
-
-          <label className="form-label" htmlFor="minion-art" style={{ marginTop: '1rem' }}>
-            Picture URL
-          </label>
-          <input
-            className="form-input"
-            id="minion-art"
-            readOnly={readOnly}
-            value={minion.portrait_url ?? ''}
-            placeholder="https://…/wyrmling.png"
-            onChange={(event) => write({ portrait_url: event.target.value })}
-          />
-          <p className="form-hint">
-            Paste a link to any image, the same as a portrait. Its block draws it square.
-          </p>
-        </div>
+      <div style={{ marginTop: '1rem' }}>
+        <PortraitField
+          label="Picture"
+          view="face"
+          value={minion.portrait_url}
+          onChange={(url) => write({ portrait_url: url ?? '' })}
+          readOnly={readOnly}
+          hint="Its block draws it square, so the face is the frame that matters here."
+        />
       </div>
 
       {scales.length > 0 && (

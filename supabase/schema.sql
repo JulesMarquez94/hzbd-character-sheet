@@ -1491,6 +1491,143 @@ create trigger subscriptions_touch_updated_at
   for each row execute function public.touch_updated_at();
 
 -- ----------------------------------------------------------------------------
+--  PICTURES  (the storage bucket behind every portrait on the site)
+--
+--  One bucket, one folder per account, five objects per picture:
+--
+--    <user id>/<image id>.master.webp     the kept source, only ever re-cropped
+--    <user id>/<image id>.portrait.webp   9:16
+--    <user id>/<image id>.plate.webp      4:3
+--    <user id>/<image id>.face.webp       1:1
+--    <user id>/<image id>.meta.json       where the three crops were left
+--
+--  Public to read, because a character sheet is public to read and a portrait is
+--  part of one. Nothing is ever listed to anybody but its owner, though: the
+--  select policy below is owner-only, and everybody else reads a picture through
+--  the /object/public route, which needs the address to have been handed to them.
+--
+--  No table stands behind this. Storage is the record. A row and a file can
+--  disagree, and the way they disagree in practice is a file with no row: bytes
+--  an account is paying for and cannot see in order to delete. See the note at
+--  the top of src/lib/imageStore.js.
+--
+--  There are two ceilings and this file holds both of them:
+--
+--    per object   `file_size_limit` on the bucket, 1 MiB. The browser encodes
+--                 well under it (see OBJECT_BYTES_MAX in src/lib/imageViews.js),
+--                 and this is what refuses an upload that claims otherwise.
+--    per account  `image_slots` below, counted by `image_room` and enforced by
+--                 the insert policy. A count of pictures rather than a number of
+--                 bytes, because a count is a thing a person can be shown.
+--
+--  The two multiply out to the worst case an account can cost: five objects a
+--  picture, a megabyte an object, so a paid shelf cannot pass about 500 MB even
+--  if every file arrived at the limit. What it will actually cost is about a
+--  third of a megabyte a picture.
+-- ----------------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('portraits', 'portraits', true, 1048576, array['image/webp', 'application/json'])
+on conflict (id) do update
+  set public             = true,
+      file_size_limit    = 1048576,
+      allowed_mime_types = array['image/webp', 'application/json'];
+
+-- ----------------------------------------------------------------------------
+--  How many pictures of their own each tier may keep. IMAGE_SLOTS in
+--  src/lib/tiers.js is the same table again, and that one is only what the
+--  interface offers: this pair is what enforces it. Change one and change the
+--  other; scripts/check-images.mjs fails if they disagree.
+--
+--  Jules, 2026-09-08: ten free, a hundred paid.
+-- ----------------------------------------------------------------------------
+create or replace function public.image_slots(tier text)
+returns int
+language sql immutable
+as $$
+  select case tier
+           when 'admin'   then 300
+           when 'friend'  then 100
+           when 'premium' then 100
+           else 10
+         end;
+$$;
+
+-- ----------------------------------------------------------------------------
+--  Whether this account has room for the picture this object belongs to.
+--
+--  A picture is five objects, so the count is of distinct image ids and not of
+--  objects: `<id>.master.webp` and `<id>.face.webp` are one picture. The id
+--  being written is excluded from its own count, which is what makes the
+--  second, third and fourth object of a new upload land after the first one has
+--  already taken the slot.
+--
+--  SECURITY DEFINER because it reads storage.objects from inside a policy on
+--  storage.objects, the same reason public.is_admin() is one. Named parts are
+--  cut with split_part rather than storage.filename() so the whole thing depends
+--  on nothing but the path shape this file documents.
+-- ----------------------------------------------------------------------------
+create or replace function public.image_room(p_name text)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select (
+    select count(distinct split_part(split_part(o.name, '/', 2), '.', 1))
+      from storage.objects o
+     where o.bucket_id = 'portraits'
+       -- `like` rather than split_part on this side so the index on
+       -- (bucket_id, name) is usable: the count runs on every upload.
+       and o.name like (auth.uid()::text || '/%')
+       and split_part(split_part(o.name, '/', 2), '.', 1)
+           <> split_part(split_part(p_name, '/', 2), '.', 1)
+  ) < public.image_slots(public.account_tier());
+$$;
+
+-- Your own folder, and one level deep exactly: `<uid>/<file>`. Anything nested
+-- deeper would break the id parsing that both the library and the count above
+-- rely on, so it is refused rather than tolerated.
+create or replace function public.owns_image_path(p_name text)
+returns boolean
+language sql stable
+as $$
+  select split_part(p_name, '/', 1) = auth.uid()::text
+     and split_part(p_name, '/', 2) <> ''
+     and split_part(p_name, '/', 3) = '';
+$$;
+
+-- Only the owner may list or download. Everybody else reads a picture through
+-- the public route, which does not consult these policies: that is the whole
+-- difference between a portrait being *shareable* and being *discoverable*, and
+-- it is the same distinction "characters: public read" makes for a sheet.
+drop policy if exists "portraits: owner read" on storage.objects;
+create policy "portraits: owner read" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'portraits' and public.owns_image_path(name));
+
+-- The ceiling is here and nowhere else that matters.
+drop policy if exists "portraits: owner insert" on storage.objects;
+create policy "portraits: owner insert" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'portraits'
+    and public.owns_image_path(name)
+    and public.image_room(name)
+  );
+
+-- No room check on the way through here: an overwrite is a re-crop, and a
+-- re-crop takes no new slot. It is also why a stored URL never changes.
+drop policy if exists "portraits: owner update" on storage.objects;
+create policy "portraits: owner update" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'portraits' and public.owns_image_path(name))
+  with check (bucket_id = 'portraits' and public.owns_image_path(name));
+
+drop policy if exists "portraits: owner delete" on storage.objects;
+create policy "portraits: owner delete" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'portraits' and public.owns_image_path(name));
+
+-- ----------------------------------------------------------------------------
 --  REALTIME
 --  Lets viewers see a sheet update without reloading. Realtime still honours
 --  RLS, so subscribers only receive rows they are allowed to read.

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useAuth } from '../context/auth-context.js';
+import { viewUrl } from '../lib/imageViews.js';
 
 /**
  * The one place that decides whether a picture from the codex is drawn.
@@ -20,8 +21,18 @@ import { useAuth } from '../context/auth-context.js';
  * **The exception** is art a player put on their own sheet: a portrait they
  * uploaded, an image in their lore. That is theirs and shows at every tier.
  * Pass `'lore'` as the source for those and the gate stands aside.
+ *
+ * ------------------------------------------------------------------ the shape
+ * Everything this hook feeds is a 4:3 window: the card's own plate, the item
+ * card, the brief. So a picture that was uploaded here is asked for its `plate`
+ * crop on the way through, and one from anywhere else is handed back untouched.
+ * That is why no art surface had to learn what a crop is. See viewUrl in
+ * src/lib/imageViews.js.
  */
 export default function useCodexArt() {
   const { showsArt } = useAuth();
-  return useCallback((url, source = 'codex') => (url && showsArt(source) ? url : null), [showsArt]);
+  return useCallback(
+    (url, source = 'codex', view = 'plate') => (url && showsArt(source) ? viewUrl(url, view) : null),
+    [showsArt]
+  );
 }

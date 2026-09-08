@@ -45,6 +45,7 @@ import { minionBlockIds, minionState } from '../../lib/minions.js';
 import { pactBlockIds, pactState } from '../../lib/pact.js';
 import { statMath } from '../../lib/statMath.js';
 import { normalizeTalents } from '../../lib/talents.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /* The three tiles read from the shared codex — label, colour and tooltip alike
    — so this tab and the Advancement tab's chooser can never drift apart on what
@@ -344,7 +345,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
 
         <div className="id-portrait">
           {character.portrait_url ? (
-            <img src={character.portrait_url} alt="" />
+            <img src={viewUrl(character.portrait_url, 'plate')} alt="" />
           ) : (
             <span className="id-initials">{initialsOf(character.name)}</span>
           )}

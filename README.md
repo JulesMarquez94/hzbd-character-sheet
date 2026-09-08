@@ -13,7 +13,9 @@ Built with React 19 + Vite + React Router, with Supabase for auth and storage.
 2. Open **SQL Editor** and run the contents of [`supabase/schema.sql`](supabase/schema.sql).
    It creates `profiles`, `characters`, `abilities` and `inventory_items`, turns on row-level
    security so each account only ever sees its own data and adds a trigger that creates a
-   profile row on signup. The script is safe to re-run.
+   profile row on signup. It also makes the `portraits` storage bucket every uploaded picture
+   goes into, with the policies that hold an account to its own folder and its own ceiling. The
+   script is safe to re-run.
 3. Go to **Project Settings → API** and copy the *Project URL* and the *anon public* key.
 
 ## 2. Configure the app
@@ -61,6 +63,7 @@ Open http://localhost:5173.
 | `/characters/:id` | The character sheet · **public**, editable only by owner or admin |
 | `/characters/:id/new` | Making a character · four ways in, and `?path=` says which one |
 | `/account` | Display name, password and the subscription |
+| `/pictures` | Every picture you have uploaded, what is using it and how much room is left |
 | `/premium` | What Premium adds, and where it is bought. Open signed out |
 
 ### Who can do what
@@ -92,12 +95,12 @@ it means shareable by link.
 
 Four tiers, on a ladder, in `profiles.role`. Every tier has everything the one below it has.
 
-| | Characters | Campaigns you run | Creatures you forge | Physics dice | Card art |
-| --- | --- | --- | --- | --- | --- |
-| **Free** | 3 | 1 | none | flat table | empty plates |
-| **Premium** | 25 | 5 | 50 | ✅ | empty plates |
-| **Friend** | 25 | 5 | 50 | ✅ | ✅ |
-| **Admin** | 50 | 20 | 60 | ✅ | ✅ |
+| | Characters | Campaigns you run | Creatures you forge | Pictures | Physics dice | Card art |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Free** | 3 | 1 | none | 10 | flat table | empty plates |
+| **Premium** | 25 | 5 | 50 | 100 | ✅ | empty plates |
+| **Friend** | 25 | 5 | 50 | 100 | ✅ | ✅ |
+| **Admin** | 50 | 20 | 60 | 300 | ✅ | ✅ |
 
 Premium is $3 a month or $30 a year through Stripe. **Friend** is the same thing given rather than sold,
 with the card art switched on as well, and it is handed out by hand from the SQL editor:
@@ -111,10 +114,11 @@ Card art sits at `friend` rather than at `premium` on purpose. What is sold has 
 that will still be there next month, and the codex is still being drawn. Move
 `CAPABILITIES.art` in `src/lib/tiers.js` to `'premium'` when it is finished.
 
-Three of those numbers are ceilings rather than capabilities, and all three are enforced twice:
-`src/lib/tiers.js` is what the interface offers, and a trigger in `supabase/schema.sql` is what
-actually refuses the insert. **Change one and change the other.** The checkers catch it for
-creatures; nothing catches it for the other two.
+Four of those numbers are ceilings rather than capabilities, and all four are enforced twice:
+`src/lib/tiers.js` is what the interface offers, and `supabase/schema.sql` is what actually
+refuses the write. For characters, campaigns and creatures that is a trigger on the table; for
+pictures it is a policy on the storage bucket. **Change one and change the other.** The checkers
+catch it for creatures and for pictures; nothing catches it for the other two.
 
 Every ceiling is checked on insert only, so a lapsed subscription takes nothing away. An account
 that held five campaigns keeps all five, open and editable, and simply cannot start a sixth until
@@ -240,6 +244,51 @@ waiting. A full vault (six characters) refuses the move until one is deleted.
 
 `src/lib/localCharacters.js` is the device shelf and `src/lib/api.js` branches on the id, so
 nothing above the data layer knows there are two shelves.
+
+### Pictures
+
+Every picture on the site is uploaded rather than linked, and one upload is kept in **three
+shapes**, because the site draws the same picture in three frames that disagree about what a
+picture is:
+
+| Shape | Ratio | Written | Where it is drawn |
+| --- | --- | --- | --- |
+| `portrait` | 9:16 | 576x1024 | The dashboard's dossier card, and any tall frame |
+| `plate` | 4:3 | 768x576 | The sheet's identity frame, card art, a creature's brief |
+| `face` | 1:1 | 512x512 | The log, the party bar, the roster, a minion's square |
+
+The player frames all three themselves when they upload, dragging and zooming each one with the
+other two live beside it. A `master` capped at 1280px is kept as well, so the framing can be moved
+later without finding the original again, and nothing else ever draws it. Five objects a picture,
+about 320 KB all in:
+
+```
+<user id>/<image id>.master.webp     <image id>.portrait.webp
+<image id>.plate.webp                <image id>.face.webp
+<image id>.meta.json                 where the three crops were left
+```
+
+**No column was added for any of this.** A sheet still holds one `portrait_url`, a creature one, a
+campaign one, and each holds the `portrait` URL. Every frame calls `viewUrl(url, 'face')` (or
+`'plate'`) and gets the sibling file, because the only difference between the four addresses is one
+path segment. `viewUrl` hands back anything it does not recognise untouched, so a link pasted before
+the uploader existed still draws, and it is idempotent, so a portrait copied into a campaign log row
+last month still resolves to the shape the log wants today. See `src/lib/imageViews.js`.
+
+Cropping is baked into the files rather than applied in CSS for one reason: the campaign log copies
+a portrait URL into the row when the row is written and nothing may ever go back and edit that. A
+re-crop overwrites the same four addresses, so every sheet, creature and log row pointing at the
+picture shows the new framing without anything being found and rewritten.
+
+There is no table behind the shelf. Storage is the record, `list()` is the only query, and the
+ceiling is enforced by a policy on the bucket that counts the account's own pictures
+(`public.image_room`), with `file_size_limit` refusing any object over 1 MiB whatever the browser
+claims it encoded. A row and a file can disagree, and the way they disagree in practice is a file
+with no row: bytes an account is paying for and cannot see in order to delete.
+
+The conversion is all client-side, in a canvas: whatever is uploaded (PNG, JPEG, WebP, AVIF, GIF)
+is decoded with its EXIF rotation applied, cropped three ways, re-encoded as WebP and capped.
+Nothing the player chose is ever stored.
 
 ### Live viewing
 
@@ -427,7 +476,7 @@ npm run preview  # serve the production build
 npm run lint     # eslint
 ```
 
-Fifteen checkers prove things eslint cannot. Each takes `--list` to print every case it walked
+Nineteen checkers prove things eslint cannot. Each takes `--list` to print every case it walked
 rather than only what it found:
 
 ```bash
@@ -444,6 +493,10 @@ npm run lint:log       # a use and its throws gather back into one chain
 npm run lint:layout    # block orders, blank cells and trays all round-trip
 npm run lint:creatures # every creature scales along the character's own curve
 npm run lint:combat    # targets counted, landings soaked, boundaries rolled
+npm run lint:moves     # every Martial Move is ticked on inside an attack
 npm run lint:plan      # every card says what it rolls
 npm run lint:help      # every offer made after a roll is one that could help
+npm run lint:legal     # no checkout can ship pointing at an unfinished contract
+npm run lint:crossroads # every id in the Crossroads pool names something real
+npm run lint:images    # picture slots, the three shapes and the crop clamp
 ```

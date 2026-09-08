@@ -303,9 +303,14 @@ export const ROW_ICON = 48;
  */
 export function ItemIcon({ item, size = 40 }) {
   const color = rarityColor(item);
+  /* The square crop rather than the 4:3 one every other art surface takes: this
+     tile is a square, and a wide picture in it loses its sides. The codex's own
+     item pictures are square already, so this only ever changes what an
+     uploaded one is asked for. See src/lib/imageViews.js. */
   const plate = useCodexArt()(
     item?.art_thumb ?? item?.art_url ?? null,
-    item?.artOwn ? 'lore' : 'codex'
+    item?.artOwn ? 'lore' : 'codex',
+    'face'
   );
 
   return (

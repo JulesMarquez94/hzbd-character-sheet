@@ -60,7 +60,7 @@ const TERMS = [
     body: [
       'Your characters, campaigns, encounters and notes are yours. We claim no ownership of them. We store and display them because that is the service you asked for, and we look at them only where we have to in order to run or fix the site, or where the law requires it.',
       'The game rules, the written text, the card art, the layouts and the software are ours or our licensors’, and are not yours to republish or resell. Playing the game, running it for your table and quoting from it in the ordinary course of doing that are all fine.',
-      'Portraits and campaign images are links to wherever you keep the picture, not uploads. Whether you have the right to use a picture is your business rather than ours, and a link you paste that infringes somebody else’s copyright is your responsibility.',
+      'Pictures you upload stay yours. By uploading one you are telling us you have the right to use it, so a picture that infringes somebody else’s copyright is your responsibility rather than ours. We convert and cap what you upload so that we can serve it, and we show it only on your own pages: a portrait on a character sheet can be opened by anybody holding that sheet’s link, exactly like the rest of the sheet.',
     ],
   },
   {
@@ -92,7 +92,7 @@ const PRIVACY = [
     heading: 'What we hold',
     body: [
       '**Your email address and password.** The password is stored hashed by our authentication provider and is not readable by us.',
-      '**What you make.** Characters, campaigns, encounters, creatures and notes, plus the links you paste for portraits and images. Images are not uploaded to us; we store the link.',
+      '**What you make.** Characters, campaigns, encounters, creatures and notes, plus any pictures you upload. An uploaded picture is converted, capped in size and kept with your account. It is served from an address anyone holding it can open, exactly like the character sheet it sits on. Deleting it on your pictures page deletes the file.',
       '**Billing identifiers.** If you subscribe, we store a Stripe customer id, a subscription id and its status, so the site knows which tier your account is on. **No card number, expiry or security code ever reaches this site.** Card details are entered on Stripe’s own domain, which is why the payment button is a redirect rather than a form.',
       '**Ordinary server logs.** Our hosts keep short-lived records of requests, including IP addresses, for security and debugging.',
       '**Nothing at all, for a device-only character.** Characters made without an account are written to your own browser’s storage and are never sent to us.',

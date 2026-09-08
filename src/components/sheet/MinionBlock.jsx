@@ -15,6 +15,7 @@ import { usePlayCard } from './usePlayCard.js';
 import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
 import { minionActor, minionSpend, setMinionEffects, setMinionPool } from '../../lib/minions.js';
 import { minionMath } from '../../lib/statMath.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /**
  * The two blocks a creature gets on the Character tab, and they only exist when
@@ -171,7 +172,7 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
       <div className="minion-id">
         <span className="minion-plate">
           {minion.portrait_url ? (
-            <img src={minion.portrait_url} alt="" />
+            <img src={viewUrl(minion.portrait_url, 'face')} alt="" />
           ) : (
             <span className="minion-plate-empty" aria-hidden="true" />
           )}

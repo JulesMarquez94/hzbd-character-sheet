@@ -6,6 +6,7 @@ import { shieldCapFor } from '../../lib/characterModel.js';
 import { enterFormBody, leaveFormBody } from '../../lib/combatBar.js';
 import { canEnterForm, enterForm, setFeralDifficulty, settleForm } from '../../lib/feral.js';
 import { statMath } from '../../lib/statMath.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /**
  * The Feral Form block: the one a talent set adds when it can turn you into
@@ -107,7 +108,7 @@ export default function FeralBlock({ character, form, patch, readOnly = false })
       <div className="minion-id">
         <span className="minion-plate">
           {form.portrait_url ? (
-            <img src={form.portrait_url} alt="" />
+            <img src={viewUrl(form.portrait_url, 'face')} alt="" />
           ) : (
             <span className="minion-plate-empty" aria-hidden="true" />
           )}

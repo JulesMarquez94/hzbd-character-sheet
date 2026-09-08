@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from '../Modal.jsx';
+import PortraitField from '../images/PortraitField.jsx';
 import { characterIdFromLink, makeJoinCode } from '../../lib/campaigns.js';
 import { LOCAL_PREFIX } from '../../lib/localCharacters.js';
 import { initialsOf, levelForXp } from '../../lib/characterModel.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /**
  * The Details tab: everything a campaign *is*, editable by the DM who runs it.
@@ -121,20 +123,13 @@ export default function CampaignDetails({
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="camp-thumb">
-                Thumbnail
-              </label>
-              <input
-                className="form-input"
-                id="camp-thumb"
-                value={campaign.thumbnail_url ?? ''}
-                onChange={(e) => patch({ thumbnail_url: e.target.value || null })}
-                placeholder="https://… a link to an image"
+              <PortraitField
+                label="Thumbnail"
+                view="face"
+                value={campaign.thumbnail_url}
+                onChange={(url) => patch({ thumbnail_url: url })}
+                hint="The campaign's card is a square, so the face is the frame it draws. The strip under this panel is the wide plate."
               />
-              <p className="form-hint">
-                A plain link to a picture, the way portraits work. It becomes the face of the
-                campaign's card.
-              </p>
             </div>
           </>
         ) : (
@@ -146,7 +141,7 @@ export default function CampaignDetails({
 
         {campaign.thumbnail_url && (
           <div className="camp-thumb-preview">
-            <img src={campaign.thumbnail_url} alt="" />
+            <img src={viewUrl(campaign.thumbnail_url, 'plate')} alt="" />
           </div>
         )}
       </section>
@@ -196,7 +191,7 @@ export default function CampaignDetails({
                 <li key={member.id} className="camp-roster-row">
                   <span className="camp-roster-face">
                     {who.portrait_url ? (
-                      <img src={who.portrait_url} alt="" />
+                      <img src={viewUrl(who.portrait_url, 'face')} alt="" />
                     ) : (
                       <span className="camp-roster-initials">{initialsOf(who.name)}</span>
                     )}

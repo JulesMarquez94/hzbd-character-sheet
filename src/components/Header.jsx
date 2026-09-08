@@ -141,6 +141,9 @@ export default function Header() {
                   <Link to="/campaigns" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                     My Campaigns
                   </Link>
+                  <Link to="/pictures" className="dropdown-link" onClick={() => setMenuOpen(false)}>
+                    My Pictures
+                  </Link>
                   <Link to="/account" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                     Account Settings
                   </Link>

@@ -1,5 +1,6 @@
 import PickBlock from './PickBlock.jsx';
 import JournalBlock from './JournalBlock.jsx';
+import PortraitField from '../images/PortraitField.jsx';
 
 /**
  * Lore: who this character is when nobody is rolling dice, and what the table
@@ -62,47 +63,30 @@ export default function LoreTab({ character, patch, readOnly = false }) {
         >
           <p className="pick-lead">
             The picture and the one line. Both of them travel: the portrait is your dashboard card,
-            and the concept is what anyone opening the sheet reads first.
+            your face in the campaign log and the plate at the top of this sheet, and the concept is
+            what anyone opening the sheet reads first.
           </p>
 
-          <div className="portrait-editor">
-            <div className="portrait-frame">
-              {character.portrait_url ? (
-                <img src={character.portrait_url} alt="" />
-              ) : (
-                <span className="muted">No portrait</span>
-              )}
-            </div>
+          <PortraitField
+            label="Portrait"
+            view="portrait"
+            value={character.portrait_url}
+            onChange={(url) => patch({ portrait_url: url })}
+            readOnly={readOnly}
+            hint="Upload a picture and frame it three ways: the tall card, the sheet's plate and the small face the log uses."
+          />
 
-            <div className="portrait-fields">
-              <label className="form-label" htmlFor="portrait-url">
-                Portrait Image URL
-              </label>
-              <input
-                className="form-input"
-                readOnly={readOnly}
-                id="portrait-url"
-                value={character.portrait_url || ''}
-                placeholder="https://…/thalira.png"
-                onChange={(e) => patch({ portrait_url: e.target.value })}
-              />
-              <p className="form-hint">
-                Paste a link to any image. Portraits show on your dashboard card at 9:16.
-              </p>
-
-              <label className="form-label" htmlFor="blurb" style={{ marginTop: '1rem' }}>
-                One-line Concept
-              </label>
-              <input
-                className="form-input"
-                readOnly={readOnly}
-                id="blurb"
-                value={character.blurb || ''}
-                placeholder="A tide-born skirmisher who commands bioluminescent aether-swarms."
-                onChange={(e) => patch({ blurb: e.target.value })}
-              />
-            </div>
-          </div>
+          <label className="form-label" htmlFor="blurb" style={{ marginTop: '1rem' }}>
+            One-line Concept
+          </label>
+          <input
+            className="form-input"
+            readOnly={readOnly}
+            id="blurb"
+            value={character.blurb || ''}
+            placeholder="A tide-born skirmisher who commands bioluminescent aether-swarms."
+            onChange={(e) => patch({ blurb: e.target.value })}
+          />
         </PickBlock>
 
         {FIELDS.map((field, index) => (

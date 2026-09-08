@@ -1,5 +1,6 @@
 import { metersToFeet } from '../../lib/characterModel.js';
 import { creatureMoves, creatureStats, getRank } from '../../lib/creatures.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /**
  * A creature said in a line rather than drawn as the enemy it would be.
@@ -103,7 +104,7 @@ export default function CreatureBrief({ creature, unit = 'metric', onOpen, child
             className={`card-brief-art${creature.portrait_url ? '' : ' card-brief-art-empty'}`}
             style={
               creature.portrait_url
-                ? { backgroundImage: `url("${creature.portrait_url}")` }
+                ? { backgroundImage: `url("${viewUrl(creature.portrait_url, 'plate')}")` }
                 : undefined
             }
           />

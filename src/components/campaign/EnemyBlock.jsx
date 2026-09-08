@@ -22,6 +22,7 @@ import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.
 import { newChain } from '../../lib/logChain.js';
 import { rollPlan } from '../../lib/rollPlan.js';
 import { getCard } from '../../lib/weapons.js';
+import { viewUrl } from '../../lib/imageViews.js';
 import {
   breakWard,
   foeActor,
@@ -243,7 +244,7 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove, onEdit }) {
       <div className="foe-id">
         <span className="foe-plate" style={{ '--rank-tone': rank.color }}>
           {creature.portrait_url ? (
-            <img src={creature.portrait_url} alt="" />
+            <img src={viewUrl(creature.portrait_url, 'face')} alt="" />
           ) : (
             <span className="foe-plate-empty" aria-hidden="true" />
           )}

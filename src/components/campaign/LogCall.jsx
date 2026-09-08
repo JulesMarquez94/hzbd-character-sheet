@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { noticeOf } from '../../lib/logChain.js';
 import { subscribeToTable } from '../../lib/realtime.js';
+import { viewUrl } from '../../lib/imageViews.js';
 
 /** How long a notice stays up before it takes itself away, in milliseconds. */
 const NOTICE_MS = 7000;
@@ -150,7 +151,7 @@ export default function LogCall({ tables = null, mine = [], table = false }) {
           title="This clears itself. Tap to put it away."
         >
           {notice.portrait ? (
-            <img className="log-call-face" src={notice.portrait} alt="" loading="lazy" />
+            <img className="log-call-face" src={viewUrl(notice.portrait, 'face')} alt="" loading="lazy" />
           ) : (
             <span className="log-call-face is-blank" aria-hidden="true">
               {initialsOf(notice.actor)}

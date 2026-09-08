@@ -1,0 +1,452 @@
+/*
+ * Pictures: the field, the shelf and the crop editor.
+ *
+ * One stylesheet for all three because all three are the same handful of
+ * shapes: a frame with a picture inside it, cropped by the frame. The only
+ * differences are how big and how round.
+ *
+ * It carries its own meter bar rather than borrowing `.bar-track` from
+ * sheet.css. The shelf has a page of its own now, and that page must not have to
+ * download the whole character sheet's stylesheet to draw one line.
+ */
+
+/* ============================================================ THE FIELD ==== */
+
+.pf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pf-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+/*
+ * The frame is the shape the picture is stored in, so nothing is cropped here:
+ * `cover` is belt and braces for a picture from before the uploader, or a link
+ * to somebody else's host, which can be any shape at all.
+ */
+.pf-frame {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 138, 75, 0.3);
+  background-color: var(--art-ground);
+  display: grid;
+  place-items: center;
+}
+
+.pf-frame.is-portrait {
+  width: 108px;
+  aspect-ratio: 9 / 16;
+}
+
+.pf-frame.is-plate {
+  width: 168px;
+  aspect-ratio: 4 / 3;
+}
+
+.pf-frame.is-face {
+  width: 108px;
+  aspect-ratio: 1;
+}
+
+.pf-frame.is-round {
+  border-radius: 50%;
+}
+
+.pf-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The house bias: what a crop gives up is the boots. */
+  object-position: 50% 0;
+}
+
+.pf-frame.is-empty {
+  background-image: var(--art-haze);
+}
+
+.pf-empty {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0 0.3rem;
+}
+
+.pf-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pf-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ============================================================ THE SHELF ==== */
+
+.img-library {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.img-lead {
+  margin-bottom: 0.9rem;
+}
+
+.img-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.img-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.img-meter-head .form-label {
+  margin: 0;
+}
+
+.img-meter-count {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--copper);
+}
+
+.img-meter-count.is-full {
+  color: var(--level-amber);
+}
+
+.img-bar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--inset-bg);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+}
+
+.img-bar-fill {
+  display: block;
+  height: 100%;
+  background-color: var(--copper);
+  transition: width 0.2s ease;
+}
+
+.img-bar-fill.is-full {
+  background-color: var(--level-amber);
+}
+
+.img-meter-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------- the grid */
+
+.img-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(132px, 100%), 1fr));
+  gap: 0.85rem;
+}
+
+.img-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.45rem;
+  border-radius: 5px;
+  border: 1px solid var(--hairline);
+  background-color: var(--inset-bg);
+}
+
+.img-tile.is-chosen {
+  border-color: rgba(0, 229, 255, 0.45);
+}
+
+/* 9:16, the same measure the dossier card and the whole block grid use. A
+   picture is most recognisable in the tallest crop it has: that is the one that
+   still holds the whole figure. */
+.img-tile-plate {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  padding: 0;
+  border: 1px solid rgba(200, 138, 75, 0.25);
+  border-radius: 4px;
+  background-color: var(--art-ground);
+  overflow: hidden;
+  cursor: default;
+}
+
+button.img-tile-plate {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+button.img-tile-plate:hover:not(:disabled),
+button.img-tile-plate:focus-visible {
+  border-color: var(--copper);
+  transform: translateY(-2px);
+}
+
+.img-tile-plate img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.img-tile-chosen {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 2px 4px;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bg-black);
+  background-color: rgba(0, 229, 255, 0.85);
+}
+
+.img-tile-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.img-tile-used {
+  font-size: 0.68rem;
+  color: var(--text-silver);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.img-tile-used a {
+  color: var(--focus-cyan);
+  text-decoration: none;
+}
+
+.img-tile-used a:hover {
+  text-decoration: underline;
+}
+
+.img-tile-size {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+.img-tile-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.img-tile-ask {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.img-tile-ask-line {
+  font-size: 0.68rem;
+  color: var(--level-amber);
+}
+
+.img-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+/* ====================================================== THE CROP EDITOR ==== */
+
+.crop-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+
+/* The three shapes, in a row above the stage on a phone and in a column beside
+   it once there is room. All three are live: pulling the face down to the eyes
+   must not quietly ruin the dashboard card, and the only way to know it has not
+   is to be looking at it.
+ *
+ * Above rather than below on a phone, which is where they started. Under the
+ * stage they were off the bottom of the screen behind a 340px frame, so the one
+ * thing this editor exists to show was the one thing you had to scroll for. */
+.crop-views {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.crop-stage {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-items: flex-start;
+}
+
+@media (min-width: 620px) {
+  .crop-views {
+    flex-direction: column;
+    flex: 0 0 auto;
+  }
+}
+
+.crop-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+}
+
+.crop-view:hover {
+  border-color: var(--hairline);
+}
+
+.crop-view.is-active {
+  border-color: var(--copper);
+  background-color: var(--inset-bg);
+}
+
+.crop-view-name {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.crop-view.is-active .crop-view-name {
+  color: var(--copper);
+}
+
+/* The frame itself, at every size it is drawn: 45px in a thumbnail and 320 on
+   the stage. The picture inside is positioned rather than transformed, because a
+   transform and a clamp disagree about what "left" means the moment the picture
+   is also the drag surface. See src/lib/imageCrop.js. */
+.crop-frame {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 3px;
+  border: 1px solid rgba(200, 138, 75, 0.3);
+  background-color: var(--art-ground);
+}
+
+.crop-frame.is-round {
+  border-radius: 50%;
+}
+
+.crop-frame img {
+  position: absolute;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.crop-hold {
+  cursor: grab;
+  border-radius: 4px;
+  /* The frame is the drag surface, so the browser must not decide a drag was a
+     scroll, and it must not decide a drag was a text selection either: a
+     selection that starts inside the frame turns the next drag into a native
+     drag of the selection, and the pointer moves stop arriving. */
+  touch-action: none;
+  user-select: none;
+}
+
+.crop-hold:active {
+  cursor: grabbing;
+}
+
+.crop-hold:focus-visible {
+  outline: 2px solid var(--focus-cyan);
+  outline-offset: 3px;
+}
+
+.crop-big {
+  border-width: 1px;
+  border-color: rgba(200, 138, 75, 0.5);
+}
+
+.crop-where {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  max-width: 340px;
+}
+
+.crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 340px;
+}
+
+.crop-zoom-label {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.crop-zoom input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--copper);
+}
+
+/* ========================================================== THE PAGE ==== */
+
+.pics-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.pics-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}

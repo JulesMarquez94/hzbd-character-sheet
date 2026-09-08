@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import TagFilter from '../sheet/TagFilter.jsx';
+import PortraitField from '../images/PortraitField.jsx';
 import { useTagFilter } from '../sheet/useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
@@ -362,15 +363,12 @@ export default function CreatureForge({
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="forge-art">
-              Picture
-            </label>
-            <input
-              className="form-input"
-              id="forge-art"
-              value={body.portrait_url ?? ''}
-              placeholder="https://… a link to an image"
-              onChange={(event) => set({ portrait_url: event.target.value || null })}
+            <PortraitField
+              label="Picture"
+              view="plate"
+              value={body.portrait_url}
+              onChange={(url) => set({ portrait_url: url })}
+              hint="Its brief and its block draw the wide plate. The face is what the log uses when it acts."
             />
           </div>
         </section>

@@ -222,6 +222,36 @@ export function canForgeCreature(tier) {
   return creatureSlots(tier) > 0;
 }
 
+/**
+ * How many pictures of their own each tier may keep.
+ *
+ * One picture is one upload: a capped master and the three baked crops that come
+ * out of it (see src/lib/imageViews.js), which together come to about 320 KB. So
+ * a free shelf is a few megabytes and a paid one about thirty, and the ceiling
+ * is a count rather than a number of bytes because a count is a thing a person
+ * can see on a page and count for themselves.
+ *
+ * The numbers follow the other ceilings rather than being chosen next to them:
+ * ten covers three characters, a campaign and a spare, and a hundred covers
+ * twenty-five characters plus fifty forged creatures with room over.
+ *
+ * Jules, 2026-09-08: ten free, a hundred paid.
+ *
+ * Its twin is `public.image_slots` in supabase/schema.sql, behind the policy on
+ * the bucket, and **that** is what actually refuses an upload. Change one and
+ * change the other; scripts/check-images.mjs fails if they disagree.
+ */
+export const IMAGE_SLOTS = {
+  free: 10,
+  premium: 100,
+  friend: 100,
+  admin: 300,
+};
+
+export function imageSlots(tier) {
+  return IMAGE_SLOTS[normalizeTier(tier)] ?? IMAGE_SLOTS.free;
+}
+
 /* ----------------------------------------------------------------- the art */
 
 /**

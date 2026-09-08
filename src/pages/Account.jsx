@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import { supabase } from '../lib/supabaseClient.js';
 import { openPortalUrl } from '../lib/premium.js';
+import { imageSlots } from '../lib/tiers.js';
 
 export default function Account() {
   const { user, profile, displayName, tier, tierInfo } = useAuth();
@@ -153,6 +154,19 @@ export default function Account() {
             Save Name
           </button>
         </form>
+
+        {/* The shelf has a page of its own, and this is where somebody looking
+            for "where do my uploads live" will look first. */}
+        <div className="frame" style={{ marginTop: '1.1rem' }}>
+          <h3 className="frame-heading">Pictures</h3>
+          <p className="form-hint">
+            Every picture you have uploaded, what it is being used by and how much room is left.
+            This account holds {imageSlots(tier)}.
+          </p>
+          <Link className="btn btn-sm" to="/pictures">
+            Manage pictures
+          </Link>
+        </div>
       </div>
 
       <div className="panel">

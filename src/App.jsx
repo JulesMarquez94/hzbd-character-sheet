@@ -18,6 +18,10 @@ const Rules = lazy(() => import('./pages/Rules.jsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const CharacterSheet = lazy(() => import('./pages/CharacterSheet.jsx'));
 const Account = lazy(() => import('./pages/Account.jsx'));
+// The shelf of uploaded pictures. Lazy for the same reason the rest are, and
+// more so: it pulls in the crop editor and the canvas work behind it, which
+// nothing else on the site needs.
+const Pictures = lazy(() => import('./pages/Pictures.jsx'));
 const Premium = lazy(() => import('./pages/Premium.jsx'));
 const Campaigns = lazy(() => import('./pages/Campaigns.jsx'));
 const CampaignPage = lazy(() => import('./pages/CampaignPage.jsx'));
@@ -136,6 +140,16 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Account />
+                </ProtectedRoute>
+              }
+            />
+            {/* Pictures are kept with an account, so there is nothing on this
+                page for anybody who has not got one. */}
+            <Route
+              path="/pictures"
+              element={
+                <ProtectedRoute>
+                  <Pictures />
                 </ProtectedRoute>
               }
             />

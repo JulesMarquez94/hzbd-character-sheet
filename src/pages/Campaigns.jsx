@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context.js';
 import Modal from '../components/Modal.jsx';
 import PremiumNote from '../components/PremiumNote.jsx';
+import PortraitField from '../components/images/PortraitField.jsx';
 import {
   characterIdFromLink,
   createCampaign,
@@ -15,6 +16,7 @@ import { getCharacter, listCharacters } from '../lib/api.js';
 import { initialsOf, levelForXp } from '../lib/characterModel.js';
 import { CAMPAIGN_SLOTS, campaignSlots } from '../lib/tiers.js';
 import './Campaigns.css';
+import { viewUrl } from '../lib/imageViews.js';
 
 /**
  * The Campaigns page: every table this account sits at, split by which chair.
@@ -30,7 +32,7 @@ function MemberChip({ character }) {
     <span className="camp-member-chip">
       <span className="camp-member-face">
         {character.portrait_url ? (
-          <img src={character.portrait_url} alt="" />
+          <img src={viewUrl(character.portrait_url, 'face')} alt="" />
         ) : (
           <span className="camp-member-initials">{initialsOf(character.name)}</span>
         )}
@@ -59,7 +61,7 @@ function CampaignCard({ campaign, onDelete }) {
 
       <div className="camp-thumb">
         {campaign.thumbnail_url ? (
-          <img src={campaign.thumbnail_url} alt="" />
+          <img src={viewUrl(campaign.thumbnail_url, 'face')} alt="" />
         ) : (
           <span className="camp-thumb-initials">{initialsOf(campaign.name)}</span>
         )}
@@ -357,15 +359,12 @@ function CreateCampaign({ userId, onClose, onCreated }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label" htmlFor="new-camp-thumb">
-            Thumbnail
-          </label>
-          <input
-            className="form-input"
-            id="new-camp-thumb"
+          <PortraitField
+            label="Thumbnail"
+            view="face"
             value={draft.thumbnail_url}
-            onChange={(e) => setDraft({ ...draft, thumbnail_url: e.target.value })}
-            placeholder="https://… a link to an image"
+            onChange={(url) => setDraft({ ...draft, thumbnail_url: url ?? '' })}
+            hint="The face of this campaign's card. Optional, and changeable later."
           />
         </div>
 

@@ -10,6 +10,7 @@ import {
   StatBox,
 } from '../sheet/parts.jsx';
 import { ATTRIBUTES } from '../../lib/attributes.js';
+import { viewUrl } from '../../lib/imageViews.js';
 import {
   compactNumber,
   formatNumber,
@@ -119,7 +120,7 @@ export default function PartyBlock({ character, math = {}, unit = 'metric' }) {
           title={`Open ${character.name}'s sheet`}
         >
           {character.portrait_url ? (
-            <img src={character.portrait_url} alt="" />
+            <img src={viewUrl(character.portrait_url, 'face')} alt="" />
           ) : (
             <span className="party-initials">{initialsOf(character.name)}</span>
           )}

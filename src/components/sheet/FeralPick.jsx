@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from '../Modal.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { feralState, setFeralIdentity } from '../../lib/feral.js';
+import PortraitField from '../images/PortraitField.jsx';
 
 /**
  * Naming the thing a Feral Curse turns you into, and saying what it is.
@@ -57,44 +58,28 @@ export function FeralWindow({ character, form, patch, readOnly = false, onClose 
         block of its own on your Character tab.
       </p>
 
-      <div className="minion-editor">
-        <div className="minion-portrait">
-          {form.portrait_url ? (
-            <img src={form.portrait_url} alt="" />
-          ) : (
-            <span className="muted">No picture</span>
-          )}
-        </div>
+      <label className="form-label" htmlFor="feral-name">
+        Name
+      </label>
+      <input
+        className="form-input"
+        id="feral-name"
+        readOnly={readOnly}
+        value={form.name}
+        placeholder="What do you call it?"
+        maxLength={60}
+        onChange={(event) => write({ name: event.target.value })}
+      />
 
-        <div className="minion-fields">
-          <label className="form-label" htmlFor="feral-name">
-            Name
-          </label>
-          <input
-            className="form-input"
-            id="feral-name"
-            readOnly={readOnly}
-            value={form.name}
-            placeholder="What do you call it?"
-            maxLength={60}
-            onChange={(event) => write({ name: event.target.value })}
-          />
-
-          <label className="form-label" htmlFor="feral-art" style={{ marginTop: '1rem' }}>
-            Picture URL
-          </label>
-          <input
-            className="form-input"
-            id="feral-art"
-            readOnly={readOnly}
-            value={form.portrait_url ?? ''}
-            placeholder="https://…/wolf.png"
-            onChange={(event) => write({ portrait_url: event.target.value })}
-          />
-          <p className="form-hint">
-            Paste a link to any image, the same as a portrait. Its block draws it square.
-          </p>
-        </div>
+      <div style={{ marginTop: '1rem' }}>
+        <PortraitField
+          label="Picture"
+          view="face"
+          value={form.portrait_url}
+          onChange={(url) => write({ portrait_url: url ?? '' })}
+          readOnly={readOnly}
+          hint="Its block draws it square, so the face is the frame that matters here."
+        />
       </div>
 
       <div className="pick-part">

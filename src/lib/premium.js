@@ -1,5 +1,5 @@
 import { requireSupabase } from './supabaseClient.js';
-import { CAMPAIGN_SLOTS, CHARACTER_SLOTS, CREATURE_SLOTS, can } from './tiers.js';
+import { CAMPAIGN_SLOTS, CHARACTER_SLOTS, CREATURE_SLOTS, IMAGE_SLOTS, can } from './tiers.js';
 import { LOCAL_CHARACTER_SLOTS } from './localCharacters.js';
 
 /**
@@ -111,6 +111,13 @@ export const COMPARISON = [
     free: CREATURE_SLOTS.free === 0 ? 'None' : `${CREATURE_SLOTS.free}`,
     premium: `${CREATURE_SLOTS.premium}`,
     note: 'Build an enemy out of the same numbers the printed ones use, and lay it in your own encounters.',
+  },
+  {
+    id: 'pictures',
+    label: 'Pictures you upload',
+    free: `${IMAGE_SLOTS.free}`,
+    premium: `${IMAGE_SLOTS.premium}`,
+    note: 'One upload is framed three ways: the tall dashboard card, the sheet plate and the small face the campaign log uses.',
   },
   {
     id: 'dice',
