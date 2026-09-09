@@ -287,6 +287,7 @@ export default function AbilityCard({
             size={38}
             className="ac-costs"
             apWas={cost.cut > 0 ? cost.printed : null}
+            wpWas={cost.wpCut > 0 ? cost.wpPrinted : null}
             cutFrom={cost.from}
           />
           <RollArrow

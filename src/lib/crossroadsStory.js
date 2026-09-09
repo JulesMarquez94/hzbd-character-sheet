@@ -178,6 +178,7 @@ export const TALENT_CLOSES = {
   arcanist: 'You had the first words by then, and the road was where you meant to learn the rest.',
   'draconic-bond': 'The creature would not stay behind, and you did not ask it to.',
   pactbound: 'The debt came with you. It always does.',
+  runebearer: 'What you took with you was already on you, and it will be there when everything else is gone.',
 };
 
 /* ----------------------------------------------------------- who you became */
@@ -219,6 +220,7 @@ export const TALENT_PHRASES = {
   arcanist: 'an Arcanist’s first words in the mouth',
   'draconic-bond': 'a creature at heel that would not be left behind',
   pactbound: 'a debt signed in something that was not ink',
+  runebearer: 'a sleeve full of marks that warm when they are wanted',
 };
 
 const BECAME_OPENS = ['That is how', 'So it was that'];

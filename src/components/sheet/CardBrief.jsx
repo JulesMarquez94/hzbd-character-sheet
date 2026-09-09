@@ -115,6 +115,7 @@ export default function CardBrief({
                 size={20}
                 className="card-brief-costs"
                 apWas={cost.cut > 0 ? cost.printed : null}
+                wpWas={cost.wpCut > 0 ? cost.wpPrinted : null}
                 cutFrom={cost.from}
               />
             </span>

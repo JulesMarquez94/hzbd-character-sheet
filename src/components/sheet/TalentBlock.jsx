@@ -17,6 +17,7 @@ import { useCardStack } from '../../context/card-stack.js';
 import { alchemyPreview } from '../../lib/alchemy.js';
 import { brewPreview } from '../../lib/brews.js';
 import { enchantmentsAt } from '../../lib/enchantments.js';
+import { levelForXp } from '../../lib/characterModel.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
 import { feralOf } from '../../lib/feral.js';
 import { minionOf } from '../../lib/minions.js';
@@ -536,7 +537,10 @@ function TalentPresentation({ option, character }) {
 
       {TALENT_RANKS.map(({ rank, title, minLevel }) => {
         const cards = cardsAtRank(talent, rank);
-        const choice = rankPreview(talent, rank);
+        /* The character rides along for the one ceiling that reads an attribute: a
+           Runebearer's slate is half their Physique plus 4 a rank, and a preview
+           worked out without them would under-report it. See capacityAt. */
+        const choice = rankPreview(talent, rank, levelForXp(character?.xp), character);
         const brewing = brewPreview(talent, rank);
         const enchanting = enchantPreview(talent, rank);
         const alchemy = alchemyPreview(talent, rank);

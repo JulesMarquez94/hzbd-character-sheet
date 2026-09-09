@@ -49,6 +49,7 @@
 import { rechargeRest } from './items.js';
 import { getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
+import { runeLimit } from './runes.js';
 
 /* ------------------------------------------------------- a count that grows
  * Two cards on the Skills tab say the same thing: "You can use this feature
@@ -165,7 +166,7 @@ export function normalizeUses(value, character = null) {
 
   const clean = {};
   for (const [id, count] of Object.entries(source)) {
-    const limit = cardLimit(resolveCard(id), character);
+    const limit = limitFor(character, resolveCard(id), id);
     if (!limit) continue;
 
     const used = Math.min(limit.max, Math.max(0, Math.floor(Number(count) || 0)));
@@ -194,6 +195,24 @@ function resolveCard(id) {
 }
 
 /**
+ * The limit a card answers to **in these hands**: its own rider first, and then
+ * whatever the holder imposes on it.
+ *
+ * One holder does, and it is the reason this reading exists. A Runebearer cuts
+ * spells into their skin and each one fires once before a Long Rest, so Barkskin
+ * is a once-a-day card for exactly the person who inscribed it and an ordinary
+ * spell for everybody else. That cannot be a rider on the card, because the card
+ * is in the codex and the scar is on the character.
+ *
+ * Asked in that order rather than the other way round: a card that prints its own
+ * limit keeps it, and nothing a holder carries may quietly widen a count the
+ * designer wrote. Nothing in the codex is both today. See runes.js.
+ */
+function limitFor(character, card, id = card?.id) {
+  return cardLimit(card, character) ?? runeLimit(character, id);
+}
+
+/**
  * How a limited card stands right now: what it holds, what is gone, what is
  * left, and whether there is anything left at all.
  *
@@ -201,7 +220,7 @@ function resolveCard(id) {
  * counts down and `spent` is the whole of what greys a chip out.
  */
 export function cardUse(character, card) {
-  const limit = cardLimit(card, character);
+  const limit = limitFor(character, card);
   if (!limit) return null;
 
   const stored = normalizeUses(character?.card_uses, character);
@@ -390,7 +409,7 @@ export function usesRest(character, ends = []) {
 
   for (const [id, used] of Object.entries(stored)) {
     const card = resolveCard(id);
-    const limit = cardLimit(card, character);
+    const limit = limitFor(character, card, id);
     if (!limit?.fills || !ends.includes(limit.fills)) continue;
 
     delete next[id];

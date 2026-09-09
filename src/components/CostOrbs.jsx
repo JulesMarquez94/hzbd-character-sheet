@@ -84,13 +84,28 @@ export function CostOrb({ kind, value, size = 34, was = null, from = [] }) {
   );
 }
 
-export default function CostOrbs({ ap, wp, size = 34, className = 'cost-orbs', apWas = null, cutFrom = [] }) {
+/**
+ * `wpWas` is the other half of the same idea, and it arrived with the first
+ * source that moves a Willpower cost rather than an Action Point one: a
+ * Runebearer's rune fires for no Willpower at all, whatever the spell prints.
+ * A violet orb reading 0 beside a card printing 4 is exactly the moment the old
+ * number has to still be visible. See cardCost in cardText.js.
+ */
+export default function CostOrbs({
+  ap,
+  wp,
+  size = 34,
+  className = 'cost-orbs',
+  apWas = null,
+  wpWas = null,
+  cutFrom = [],
+}) {
   if (!has(ap) && !has(wp)) return null;
 
   return (
     <span className={className}>
       {has(ap) && <CostOrb kind="ap" value={ap} size={size} was={apWas} from={cutFrom} />}
-      {has(wp) && <CostOrb kind="wp" value={wp} size={size} />}
+      {has(wp) && <CostOrb kind="wp" value={wp} size={size} was={wpWas} from={cutFrom} />}
     </span>
   );
 }

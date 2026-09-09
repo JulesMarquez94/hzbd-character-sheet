@@ -84,6 +84,7 @@ import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
 import { beltRest, characterGrantSources, getItem, heldItem, normalizePack } from './items.js';
 import { normalizeForged } from './forged.js';
 import { pactState, reshapePactWeapon, writePactForm } from './pact.js';
+import { reviveRunes } from './runes.js';
 import { usesRest } from './uses.js';
 
 /** What each rest costs and what it gives back. */
@@ -410,11 +411,17 @@ export function restActions(character, kind, talents = character?.talents) {
      allowance is measured off what the night *started* with. Without it the rest
      window granted one more spell for every spell it had already granted. See
      restSwaps in loadouts.js. */
+  /* The character rides in as the attributes a ceiling might be read against.
+     One pool has one: a Runebearer's slate is half their Physique plus 4 a rank,
+     so a rest window that measured it without them would offer a night's rune
+     against a capacity four short of the real one. See capacityAt in
+     loadouts.js. */
   for (const { talent, state, mode } of restSwaps(
     talents,
     kind,
     levelForXp(character?.xp),
-    character?.talents
+    character?.talents,
+    character
   )) {
     rows.push({
       id: `prepare:${talent.id}`,
@@ -422,7 +429,7 @@ export function restActions(character, kind, talents = character?.talents) {
       mode,
       label:
         mode === 'research'
-          ? `Research a ${state.spec.noun}`
+          ? `${state.spec.verb ?? 'Research'} a ${state.spec.noun}`
           : `Change your ${plural(state.spec.noun, state.known)}`,
       from: `${talent.name} · ${state.spec.label}`,
       note: researchNote(state, mode) ?? prepareNote(state),
@@ -476,11 +483,16 @@ function prepareNote(state) {
 function researchNote(state, mode) {
   if (mode !== 'research') return null;
 
+  /* The word for what the pool is holding, off the spec. An Arcanist's spells
+     are written down and a Runebearer's runes are cut into them, and a rest
+     window that said the second in the first's voice would read as somebody
+     else's set. */
+  const kept = state.spec.kept ?? 'written down';
   const held = state.picks.length;
   if (state.full) {
-    return `Full at ${state.capacity}. Tonight's ${state.spec.noun} replaces one already written.`;
+    return `Full at ${state.capacity}. Tonight's ${state.spec.noun} replaces one already there.`;
   }
-  return `${held} of ${state.capacity} written down. Tonight adds one more.`;
+  return `${held} of ${state.capacity} ${kept}. Tonight adds one more.`;
 }
 
 
@@ -514,6 +526,11 @@ export function layingAffordable(character, kind, prepared, enchantment) {
  * writes it in this same patch, so a rest backed out of leaves the components in
  * the crate and the flasks unmade.
  *
+ * `revived` is the runes a Runebearer chose to bring back on a Short Rest, as
+ * card ids. Chosen in the window rather than worked out here, because RECHARGED
+ * is a budget spent against a list and every other thing a rest gives back is
+ * automatic. See runes.js.
+ *
  * `free` is a rest nobody paid for, and there is exactly one: LIFE TREE TEA
  * "gives you the benefit of a Long Rest. It costs no Supplies and it does not
  * spend your Long Rest action." The crate is untouched and no cost line is
@@ -528,7 +545,7 @@ export function restPlan(
   prepared = null,
   brews = [],
   reshaped = null,
-  { free = false } = {}
+  { free = false, revived = [] } = {}
 ) {
   const rest = getRest(kind);
   if (!rest) return null;
@@ -832,6 +849,24 @@ export function restPlan(
   if (again) {
     Object.assign(patch, again.patch);
     lines.push(...again.lines);
+  }
+
+  /* ---- and the runes a Runebearer chose to light again ----
+     RECHARGED: "you can bring back any number of fired runes whose Willpower
+     costs add up to no more than your Physique." A budget spent against a list,
+     so unlike everything above it this one is a *choice* and arrives from the
+     window rather than being worked out here.
+
+     Read off whatever the line above already wrote rather than off the
+     character, because both write the same column: on a Long Rest `usesRest`
+     has just emptied it and there is nothing left to bring back, and on a Short
+     Rest it has cleared the short-rest cards and left the runes exactly where
+     they were. Either way this is the second edit of one map and not a second
+     map. See runes.js. */
+  const lit = reviveRunes({ ...character, card_uses: patch.card_uses ?? character?.card_uses }, revived);
+  if (lit) {
+    Object.assign(patch, lit.patch);
+    lines.push(...lit.lines);
   }
 
   /* ---- what was re-prepared while the fire burned down ---- */

@@ -13730,3 +13730,116 @@ button.tgt-chip:disabled {
   line-height: 1.65;
   color: var(--text-silver);
 }
+
+/* =========================================================
+   THE RUNE BLOCK
+   ---------------------------------------------------------
+   A talent set that cuts its spells into its holder gets one
+   block of its own, and it is only there when the set is.
+   The cell wears talent amber on its top edge like a
+   creature's, a form's and a pact's, because the same kind of
+   choice granted it.
+   ========================================================= */
+.sheet-cell.cell-rune {
+  border-top-color: var(--level-amber);
+}
+
+/* The head, the overflow warning and the foot all keep their place; the slate
+   is the only part with no natural length, so the slate is the part that
+   scrolls. Same arrangement `.minion-actions` makes with its quick bar, and for
+   the same reason: a block on this tab does not scroll, the list inside it
+   does. */
+.rune-block {
+  gap: 0.55rem;
+  overflow: hidden;
+}
+
+.rune-list {
+  flex: 0 1 auto;
+  min-height: 72px;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 138, 75, 0.35) transparent;
+}
+
+.rune-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rune-list::-webkit-scrollbar-thumb {
+  background: rgba(200, 138, 75, 0.35);
+  border-radius: 3px;
+}
+
+/* What a rest gives back, which is the one sentence that makes the list above
+   mean anything. Pinned under the slate rather than scrolling with it. */
+.rune-foot {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* The Short Rest chooser a Runebearer gets: every fired rune, tapped back on
+   until the budget runs out. A chip rather than a row, because there may be a
+   dozen of them and the only two things worth reading are the name and what it
+   costs to light again. */
+.rest-runes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid var(--level-amber);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+.rest-runes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.rest-rune {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid rgba(148, 167, 176, 0.22);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-silver);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.rest-rune:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--level-amber) 55%, transparent);
+}
+
+/* Chosen: amber, the colour of the talent that is paying for it. */
+.rest-rune.is-on {
+  border-color: var(--level-amber);
+  color: var(--text-bright);
+  background-color: color-mix(in srgb, var(--level-amber) 12%, transparent);
+}
+
+.rest-rune:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rest-rune-name {
+  font-weight: 600;
+}
+
+.rest-runes-budget {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}

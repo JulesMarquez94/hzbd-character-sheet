@@ -430,6 +430,55 @@ const SHEETS = [
       if (book && book.value !== 12) fail(`Arcanist worth ${book.value}, want 12`);
     },
   },
+  {
+    /* And the same shape read off an *attribute* rather than off a rank, which is
+       the wrinkle a Runebearer adds: RUNIC NETWORK raises the maximum by the
+       holder’s Physique, so the two files have to agree not only that the rider
+       lands but on which Physique it lands off. `deriveStats` works its own out
+       of the column plus what is worn; `statMath` reads the bent one off the
+       shown row. A ring lending a point of Physique lends a point of Willpower
+       with it, and a reading that took the unbent attribute would be short by
+       exactly that.
+
+       So the sheet wears one: BODILY VIGOR is +1 Physique, laid by an Enchanter
+       who is also the Runebearer. Rank 2 rather than 1, because the grant opens
+       at Rank 2 and a wrong reading that ignored the rank would still pass at 1. */
+    name: 'a Runebearer wearing a point of Physique, whose runes are worth the whole of it',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      talents: [
+        {
+          id: 'enchanter',
+          rank: 3,
+          taken: [1, 2, 4],
+          worn: ['bodily-vigor'],
+        },
+        {
+          id: 'runebearer',
+          rank: 2,
+          taken: [3, 6],
+          picks: ['barkskin', 'heal'],
+        },
+      ],
+    },
+    expect: (math, fail) => {
+      const slate = math.willpower_max.terms.find((t) => t.label === 'Runebearer');
+      if (!slate) fail('the runes raised the Willpower and the line does not name the set');
+
+      /* Whatever the ladder and the ring come to, the two have to be the same
+         number: the tile prints the Physique and the runes are worth it. */
+      const held = math.physique.total;
+      if (slate && slate.value !== held) {
+        fail(`Runebearer worth ${slate.value}, want ${held}, which is the Physique on the tile`);
+      }
+
+      /* And the ring is actually on, so the line above is not agreeing with itself
+         about an unbent attribute. */
+      const worn = math.physique.terms.find((t) => t.label === 'Bodily Vigor');
+      if (!worn) fail('the worn Physique never landed, so the rune line proves nothing');
+    },
+  },
 ];
 
 /** A row the sheet has brought into line with its own ledger, then bent. */

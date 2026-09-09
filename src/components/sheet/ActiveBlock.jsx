@@ -86,6 +86,9 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
       apWas: move.apWas ?? null,
       apCutFrom: move.apCutFrom ?? [],
       wp: move.wp,
+      /* And the same for the other orb, which a Runebearer's runes are the first
+         thing to move: a rune fires for no Willpower whatever the spell prints. */
+      wpWas: move.wpWas ?? null,
       variable: move.variable,
       converts: move.converts,
       opens: move.opens,
@@ -265,6 +268,7 @@ export function BarChip({ move, readOnly, onUse }) {
              through, so the one place it has left says what came off. The prompt
              behind the tap prints it properly. */
           move.apWas ? `${move.apWas} Action Points cut to ${move.ap}` : null,
+          move.wpWas ? `${move.wpWas} Willpower cut to ${move.wp || 'none'}` : null,
         ]
           .filter(Boolean)
           .join(' · ')

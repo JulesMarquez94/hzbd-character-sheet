@@ -427,8 +427,9 @@ function StowedWeapon({ item, stack }) {
   );
 }
 
-/** The ⓘ that every row carries: the card or the item, dealt onto the pile. */
-function InfoButton({ onClick, label }) {
+/** The ⓘ that every row carries: the card or the item, dealt onto the pile.
+    Exported since 2026-09-08, because the rune block's rows are the same row. */
+export function InfoButton({ onClick, label }) {
   return (
     <button
       type="button"

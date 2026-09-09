@@ -66,6 +66,10 @@ export default function LoadoutSection({
   const state = loadoutState(talents, talent, {
     level: levelForXp(character?.xp),
     capped: 'capacity',
+    /* And the attributes, for the one ceiling that reads one: a Runebearer's
+       slate is half their Physique plus 4 a rank. See capacityAt in
+       loadouts.js. */
+    attributes: character,
   });
   if (!state) return null;
 
@@ -80,7 +84,7 @@ export default function LoadoutSection({
             in question has room for six more. */}
         <span className={`pick-count${complete ? '' : ' is-open'}`}>
           {library
-            ? `${picks.length} of ${capacity} written down`
+            ? `${picks.length} of ${capacity} ${kept(spec)}`
             : `${picks.length} of ${known} chosen`}
         </span>
       </span>
@@ -104,7 +108,7 @@ export default function LoadoutSection({
               </div>
             ) : (
               <p className="pick-line" key={pick.id}>
-                {pick.id} is written down but this build&rsquo;s codex has no card by that name.
+                {pick.id} is held but this build&rsquo;s codex has no card by that name.
               </p>
             )
           )}
@@ -112,10 +116,15 @@ export default function LoadoutSection({
       ) : (
         <p className="pick-line">
           {library
-            ? `Nothing written down yet. Your ${spec.label.toLowerCase()} begins with ${owed} ${plural(
-                spec.noun,
-                owed
-              )} of your choosing, and holds ${capacity} in all.`
+            ? owed > 0
+              ? `Nothing ${kept(spec)} yet. ${upper(holder(spec))} begins with ${owed} ${plural(
+                  spec.noun,
+                  owed
+                )} of your choosing, and holds ${capacity} in all.`
+              : `Nothing ${kept(spec)} yet. ${upper(holder(spec))} holds ${capacity} ${plural(
+                  spec.noun,
+                  capacity
+                )}.`
             : `Nothing chosen yet. This set knows ${known} ${plural(
                 spec.noun,
                 known
@@ -205,7 +214,7 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
         <>
           <span className={`pick-count${remaining ? ' is-open' : ''}`}>
             {library
-              ? `${known - remaining} of ${capacity} written down`
+              ? `${known - remaining} of ${capacity} ${kept(spec)}`
               : `${known - remaining} of ${known} chosen`}
           </span>
           {!readOnly && known - remaining > 0 && (
@@ -227,15 +236,15 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
       <p className="frame-foot" style={{ marginTop: 0 }}>
         {library ? (
           <>
-            At rank {rank} your {spec.label.toLowerCase()} holds <b>{capacity}</b>{' '}
+            At rank {rank} {holder(spec)} holds <b>{capacity}</b>{' '}
             {plural(spec.noun, capacity)}
             {tiers.length > 0 ? `, up to ${listOut(tiers)}` : ''}.{' '}
             {full
-              ? `It is full, so a ${spec.noun} written in now replaces one already there.`
+              ? `It is full, so a ${spec.noun} ${kept(spec)} now replaces one already there.`
               : owed > 0
                 ? `${owed} of them arrive with the set, and this is where you write them in.`
                 : nightly
-                  ? `Tonight you can write in ${remaining} more.`
+                  ? `Tonight you can ${verbOf(spec)} ${remaining} more.`
                   : `There is room for ${remaining} more.`}{' '}
             {spec.note}
           </>
@@ -322,7 +331,7 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
  */
 export function LoadoutRankNote({ talent, rank, character = null }) {
   const [open, setOpen] = useState(false);
-  const preview = rankPreview(talent, rank, levelForXp(character?.xp));
+  const preview = rankPreview(talent, rank, levelForXp(character?.xp), character);
   if (!preview || preview.known === 0) return null;
 
   const { spec, known, gained, opened, count, library, granted } = preview;
@@ -562,6 +571,37 @@ function poolTags(options) {
     label: tag,
     kind: 'card',
   }));
+}
+
+/**
+ * What holds a pool, as a noun phrase a sentence can lean on.
+ *
+ * A spellbook holds spells, and a Runebearer's runes are held by the Runebearer.
+ * The label cannot say the second on its own: a plural one comes out as "your
+ * runes holds 16 runes". So a spec whose label will not take the verb carries the
+ * phrase instead, and every pool written before this keeps the sentence it had.
+ */
+function holder(spec) {
+  return spec?.holds ?? `your ${(spec?.label ?? '').toLowerCase()}`;
+}
+
+/** The pool's own verb, lowercased for mid-sentence: research, inscribe. */
+function verbOf(spec) {
+  return (spec?.verb ?? 'Write in').toLowerCase();
+}
+
+/** A phrase promoted to the head of a sentence. */
+function upper(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * What a library calls the state of holding something, off the spec's own word.
+ * An Arcanist's spells are written down and a Runebearer's runes are cut into
+ * them. Defaulted, so every pool written before this existed keeps its words.
+ */
+function kept(spec) {
+  return spec?.kept ?? 'written down';
 }
 
 function plural(noun, count) {

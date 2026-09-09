@@ -3281,15 +3281,278 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    id: 'runebearer',
+    name: 'Runebearer',
+    /* The fourteenth written set, and the second placeholder on the Physique
+       shelf to be filled. Adapted 2026-09-08 from three sources that disagree
+       with each other, which is why this comment is long:
+
+         the old cards    `data/Source Temp/.../Old/Runebearer/`, two printed
+                          pages over five ranks. Basic Runework, Recharge, Runic
+                          Network, Instinctive Activation, Streamlined Patterns.
+         the conversion   `data/Conversion/Talent Set - Runebearer.xlsx`, seven
+                          tabs from the 2026-08-23 pass. Six cards, and an Open
+                          Questions tab that flagged four things this set could
+                          not be built without.
+         the designer     the answers, in chat on 2026-09-08, which reversed two
+                          of the conversion's own readings.
+
+       **The conversion is superseded and its centrepiece is gone.** Both older
+       sources price a rune in *permanent* maximum Willpower: you inscribe a
+       spell, your ceiling comes down by what the spell would have cost, and it
+       stays down until the rune is cut away. The conversion built a whole
+       Special Feature tab around it. Jules dropped it: the limit is the slate,
+       and the slate is a count. Nothing subtracts from a maximum anywhere on
+       this sheet, and now nothing has to.
+
+       ------------------------------------------------------------ the four answers
+       Each one changed something, and each is written on the card it changed:
+
+         the pool     **any spell in the codex**, with its reach collapsed to
+                      touch. The old cards allow only spells "that have a range
+                      of Self or Touch"; Jules's own example is a Fire Seed
+                      planted on somebody you are touching and detonated within
+                      touch of them, which only makes sense if the ranged spells
+                      are in. So there is no `school` and no reach filter, and
+                      the range rule is printed on RUNEWORK.
+         the count    half your Physique plus 4 a rank, which is
+                      `capacity.perStat` and the first attribute in the codex to
+                      move a ceiling. Physique 4 at Rank 1 is 6 runes and
+                      Physique 8 at Rank 3 is 16.
+         the halves   an inscribed spell **can** be Overcast and Multicast, as
+                      often as the spell allows. The one line the conversion
+                      called "already in the site vocabulary" and kept word for
+                      word is the one line Jules reversed. It is what makes the
+                      Fire Seed example work: the rune plants the seed for free
+                      and the detonation is paid for out of pocket.
+         the ladder   normalised. The old pages reach Adept at Rank 3 and Master
+                      at Rank 5, which is slower than every other set on the
+                      wall; the conversion's own Open Questions tab asked for a
+                      ruling and Jules gave the usual ladder.
+
+       ------------------------------------------------------------ the two cards moved
+       INSTINCTIVE ACTIVATION and STREAMLINED PATTERNS are **not built**. Firing
+       always costs an Action Point ("Acitviting those psell always cost 1 action
+       points"), which deletes the first, and there is no inscription cost left
+       for the second to discount. What Jules asked for at the top two rungs is a
+       Willpower grant and a recharge, so RUNIC NETWORK keeps the conversion's own
+       Willpower half at the whole of the Physique rather than half of it, and
+       RECHARGE comes up from Rank 2 to the Master rung as RECHARGED.
+
+       **One contradiction is resolved rather than transcribed.** Jules ruled
+       both that every rune comes back on a Long Rest and that the Master talent
+       brings some back "during a long rest", and the second is nothing at all if
+       the first is true. Built as the Short Rest the original Rank 2 card
+       printed, which is the only reading where the card does anything. Flagged
+       in data/README.md.
+
+       Both plates and all four card pictures are unpainted. The prompts are on
+       the conversion's Image Prompts tab and copied into data/README.md. */
+    tagline: 'Spells cut into the skin, one firing apiece, and nothing to pay when they go off.',
+    /* No plate yet. Null rather than a path to a file that is not there: the
+       tiles draw the picture as a CSS background and would show nothing either
+       way, but the summary and the presentation page use an `img` and would show
+       a broken one. Drop the overview picture into `data/Runebearer/` and run
+       `npm run art:cards`; it lands at public/talents/runebearer.jpg, and this
+       becomes that path. */
+    art: null,
+    /* Support, Defense and Physique are the conversion's Overview tab. The fourth
+       is added here for the reason the Arcanist's was: `spellcasting` is the role
+       this whole track is, and a caster missing off the casting shelf would be a
+       hole in the filter rather than a judgement. Flagged in data/README.md. */
+    tags: ['physique', 'spellcasting', 'support', 'defense'],
+    stat: 'physique',
+    /* The slate, as an ordinary pool. Everything here is loadouts.js's, and only
+       three fields are new to it:
+
+         `capacity.perStat`   half your Physique, floored on its own before the 4
+                              a rank joins it. The first ceiling an attribute
+                              moves. See capacityAt in loadouts.js.
+         `price`              "for 1 Action Point and no Willpower", flat across a
+                              pool whose printed costs run from 1 to 5 Action
+                              Points and to 12 Willpower. A cut could not say it,
+                              so `cardCost` learned to be handed a price instead
+                              of a discount. Every orb on the sheet then prints
+                              the printed number struck through beside it.
+         `verb` and `kept`    the two words a rest window and an Abilities block
+                              would otherwise say in the Arcanist's voice. A rune
+                              is inscribed and cut into you, not researched and
+                              written down.
+
+       No `school`, because the pool is the whole codex. The tier gate in
+       loadouts.js is the only thing narrowing it, which is the Arcanist's
+       situation exactly and the reason that gate stopped leaning on the school
+       one. A Unique or a Legendary spell falls off the ladder and is refused by
+       name.
+
+       `cast: 'physique'` is the set's own line and the reason it is shelved
+       where it is. A spell is printed for Mind; a Runebearer rolls it off the
+       body it is cut into, and the card prints the numbers they actually roll.
+
+       No `start`. A Runebearer arrives with bare skin and fills the slate from
+       the panel, which is the sheet's editing surface for every pool; the rest
+       window grants one a night, which is what RUNEWORK actually promises. See
+       the note on allowance against capacity in loadouts.js. */
+    loadout: {
+      id: 'runebearer-runes',
+      label: 'Runes',
+      noun: 'rune',
+      kind: 'spell',
+      group: 'school',
+      cast: 'physique',
+      capacity: { perRank: 4, perStat: { stat: 'physique', divide: 2 } },
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      research: ['long'],
+      verb: 'Inscribe',
+      kept: 'cut into you',
+      section: 'What is cut into you',
+      holds: 'your skin',
+      price: { ap: 1, wp: 0, from: 'Rune Activation' },
+      note: 'One a night, cut with your Long Rest action. A rune fires once and comes back with the morning, and what it does reaches yourself or something you can touch and no further.',
+    },
+    /* The ninth shape of what a set can hand over: a slate. Numbers only, and
+       what they mean is runes.js's business, which is the same split minions.js,
+       feral.js and pact.js keep.
+
+       Neither of these is stored anywhere. What is inscribed is `picks` on the
+       talent entry like every other pool, and what has been fired is `card_uses`
+       like every other spent use, so this set needed no column and no migration.
+       See the note at the top of runes.js. */
+    runes: {
+      label: 'Runes',
+      /* RUNIC NETWORK. `per: 1` is "1 Willpower per point of Physique", which is
+         the whole attribute; the conversion had half of it at this rung and the
+         whole of it at the next, and there is no next rung any more. */
+      willpower: { rank: 2, stat: 'physique', per: 1, from: 'Runic Network' },
+      /* RECHARGED, and the one ruling in this set that is a reading rather than
+         a transcription. A Short Rest, because a Long Rest already brings the
+         whole slate back on its own. */
+      recharge: { rank: 3, rest: 'short', stat: 'physique', from: 'Recharged' },
+    },
+    blurb:
+      'A Runebearer carries their magic on their body. A spell is cut into the skin, and from that moment it costs almost nothing to fire: an Action Point, no Willpower, and no words. The work was done on some night years ago, by hand, with a needle. What it costs instead is room, and there is only so much skin.\n\n' + // text-style-ok: joins two clauses
+      'They excel at having something left. Every other caster is a pool that empties, and a Runebearer is a set of switches that were bought long before the fight started. Nothing a rune does reaches further than what they can put a hand on, so they work in the middle of it rather than behind it, and every rune is spent for the day once it fires.\n\n' + // text-style-ok: joins two clauses
+      'A Runebearer’s presence is a source of dependable, unspendable resilience. The body that carries the runes is the same body that pays for everything else they can do, so they grow into their own Willpower rather than into their Mind, and at the last a few hours off their feet is enough to bring part of the slate back.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'runework',
+        rank: 1,
+        name: 'Runework',
+        summary: 'Spells cut into your own skin, one a night, and nothing they do reaches past your arm.',
+        kind: 'talent',
+        tags: ['Runebearer', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: the slate is `loadout.capacity` and the ladder is
+           `loadout.tiers`, neither of them read out of this prose.
+
+           `printout` was the conversion's id for this card and it is not one:
+           Printout was the old page's heading for the printable-card link, and
+           no card was ever called it. The id is the name.
+
+           The range rule is the one printed sentence in the set that the sheet
+           cannot check. There is no range field on a spell (see spells.js), so
+           nothing here can refuse a cast made across a room, and the table plays
+           it the way it plays a Mycomancer's free hand. Flagged in
+           data/README.md. */
+        body:
+          'You cut spells into your own skin. A rune reaches yourself or something you can touch, whatever range the spell prints.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to cut one spell in, to cut one away or to do both. No spell can be cut twice.\n\n' +
+          'You carry half your Physique in runes, plus 4 for every Rank in Runebearer. At Rank 2 you can inscribe Adept Spells, and at Rank 3 Master Spells.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'rune-activation',
+        rank: 1,
+        name: 'Rune Activation',
+        summary: 'One rune a turn for a single Action Point, and the spell asks nothing else of you.',
+        kind: 'talent',
+        /* **Passive, and the conversion tagged it Ability with 1 Action Point in
+           the cost column.** Changed on the way in, because the price it prints is
+           the price of firing a *rune* and there is nothing here to press: the
+           runes are the chips, on the block and on the quick bar, and each of them
+           already charges this 1 with the spell’s own cost struck through beside
+           it. Left as an Ability it would have been a chip of its own charging an
+           Action Point for nothing, which is the same reason a Martial Move is kept
+           off that bar. The cost columns are empty for the same reason and the
+           sentence keeps the number. Flagged in data/README.md. */
+        tags: ['Runebearer', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: the price is `loadout.price` and the once-a-rest
+           limit is `runeLimit` in runes.js, which is the tracker every other
+           spent card already uses.
+
+           **"Once a turn" is printed and not enforced**, which is the same
+           ruling RECKLESS VIOLENCE's "once per round" got: the use tracker holds
+           a count and a rest, and a turn is neither. The card says it, the table
+           keeps it, and a Runebearer with 6 Action Points could tap six runes if
+           nobody was reading. Flagged in data/README.md.
+
+           The second paragraph is Jules's reversal of the old "Inscribed spells
+           cannot be Overcast or multicasted", and it is deliberately the shape
+           his Fire Seed example needs: the free firing is spent, and anything the
+           spell offers on top of it is bought at the printed price out of your
+           own Willpower, as often as the spell allows. */
+        body:
+          'Once a turn, you can fire one of your runes for 1 Action Point and no Willpower.\n\n' +
+          'A fired rune is spent until your next Long Rest. Its Overcast and its Multicast are not, and you can pay for either as often as the spell allows.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'runic-network',
+        rank: 2,
+        name: 'Runic Network',
+        summary: 'The runework carries a charge of its own: Willpower equal to your whole Physique.',
+        kind: 'talent',
+        tags: ['Runebearer', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: `runes.willpower`, summed into both places a
+           Willpower maximum is worked out. See runes.js.
+
+           **The concentration clause is gone.** Both old pages carry one ("you
+           can maintain concentration on up to 2 spells", raised to 3 at Rank 3)
+           and the conversion translated it to an Upkeep cap. The site has no
+           concentration and no cap on how many Upkeeps you may pay, so printing
+           one would be a rule nothing enforces on a card that has a real number
+           on it already. Flagged in data/README.md. */
+        body: 'Your maximum Willpower is increased by your Physique.',
+      },
+      {
+        id: 'recharged',
+        rank: 3,
+        name: 'Recharged',
+        summary: 'A few hours off your feet, and a Physique worth of spent runes light up again.',
+        kind: 'talent',
+        tags: ['Runebearer', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* Mechanics as data: `runes.recharge`, offered as a chooser in the Short
+           Rest window and spent against the budget there. See runes.js.
+
+           The original card is Rank 2 and reads "After a short rest, you can
+           reactivate a number of previously used Rune spells with a total
+           cumulative cost not exceeding your Wits". Wits is Physique on this
+           sheet, "reactivate" is brought back, and the rung is Master. The budget
+           shape is untouched, because it is the good idea in the set. */
+        body:
+          'Whenever you take a Short Rest, you can bring back any number of fired runes whose Willpower costs add up to no more than your Physique.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------- the roster *
- * Twenty-one sets that have a name and nothing else.
+ * Twenty sets that have a name and nothing else.
  *
  * The designer keeps a roster of every set the game is going to have, four
- * columns wide and cut by the attribute each one leans on. Thirteen of its
- * slots are written and sit in the codex above (the Alchemist and the Pact of
- * Ordenance were placeholders here first). These are the rest, standing in the codex
+ * columns wide and cut by the attribute each one leans on. Fourteen of its
+ * slots are written and sit in the codex above (the Alchemist, the Pact of
+ * Ordenance and the Runebearer were placeholders here first). These are the rest, standing in the codex
  * as placeholders so the wall reads as the whole plan rather than as the part of
  * it that happens to be finished.
  *
@@ -3367,8 +3630,9 @@ function placeholder(id, name, stat) {
 /* The roster, column by column and in its own row order, so every shelf reads
    its written sets first and then the rest of that column top to bottom. */
 const TALENT_PLACEHOLDERS = [
-  /* Physique, rows 1, 4, 5, 7, 8 and 9. Colossus, Berserker and Guardian are
-     rows 2, 3 and 6 and are written.
+  /* Physique, rows 1, 5, 7, 8 and 9. Colossus, Berserker and Guardian are rows
+     2, 3 and 6 and are written, and so is the Runebearer, which was row 4 until
+     2026-09-08.
 
      `Brawlere` is read as Brawler, and `Hamoturgy` as Hemoturgy, which the
      designer settled on 2026-08-24 against Haemoturgy and Haemothurgy. Both are
@@ -3379,7 +3643,6 @@ const TALENT_PLACEHOLDERS = [
      day: three dragon-shaped entries in the codex for now, and which of them the
      Draconic Bond turns out to be is a question its own sheet will answer. */
   placeholder('brawler', 'Brawler', 'physique'),
-  placeholder('runebearer', 'Runebearer', 'physique'),
   placeholder('hemoturgy', 'Hemoturgy', 'physique'),
   placeholder('totemic', 'Totemic', 'physique'),
   placeholder('painseeker', 'Painseeker', 'physique'),

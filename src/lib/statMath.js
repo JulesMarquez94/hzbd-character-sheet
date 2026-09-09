@@ -90,6 +90,7 @@ import { lineageGrantSources } from './lineages.js';
 import { weaponRiders } from './moves.js';
 import { runningRiders } from './riders.js';
 import { spellbookWillpowerFrom } from './spellbook.js';
+import { runeWillpowerFrom } from './runes.js';
 import { pointCeilings, tricksterOf } from './tricks.js';
 
 /* Speed is the one stat whose formula is written in metres and printed in either
@@ -451,6 +452,12 @@ export function statMath(character) {
          reader wants from a Willpower of 62 is the word "Arcanist", and the set
          is what they can go and look at. */
       ...spellbookWillpowerFrom(character.talents).map((row) =>
+        term(row.willpower, row.talent.name)
+      ),
+      /* And the same for a slate of runes, named after its set for the same
+         reason: what a reader wants from a Willpower of 38 is the word
+         "Runebearer". See runes.js. */
+      ...runeWillpowerFrom(character.talents, { physique: p, instinct: i, mind: m }).map((row) =>
         term(row.willpower, row.talent.name)
       ),
     ],

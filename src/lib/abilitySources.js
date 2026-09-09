@@ -96,6 +96,18 @@ function listOut(words) {
 }
 
 /**
+ * What a library calls the state of holding something, off the spec's own word.
+ *
+ * An Arcanist's spells are written down. A Runebearer's runes are cut into you,
+ * and a block that said the second in the first's voice would read as somebody
+ * else's set. Defaulted rather than required, so every pool written before this
+ * existed keeps the words it had.
+ */
+function kept(spec) {
+  return spec?.kept ?? 'written down';
+}
+
+/**
  * When a pool may be re-chosen, said the way the granting card says it.
  *
  * `swap` is the permission, transcribed off that card (see loadouts.js). A set
@@ -110,7 +122,12 @@ function swapLine(spec) {
      wrong promise for a book you are only ever allowed to add one page to. */
   const research = Array.isArray(spec?.research) ? spec.research : [];
   if (research.length > 0) {
-    return `one more researched on ${listOut(research.map((kind) => `a ${kind} rest`))}`;
+    /* In the pool’s own verb: a spell is researched and a rune is inscribed.
+       Lowercased, because it is mid-sentence here and heads a row in the rest
+       window. */
+    const verb = (spec.verb ?? 'Research').toLowerCase();
+    const done = verb.endsWith('e') ? `${verb}d` : `${verb}ed`;
+    return `one more ${done} on ${listOut(research.map((kind) => `a ${kind} rest`))}`;
   }
 
   const rests = Array.isArray(spec?.swap) ? spec.swap : [];
@@ -287,6 +304,10 @@ function talentSources(character) {
     const loadout = loadoutOf(talent)
       ? loadoutState(character?.talents, talent, {
           level: levelForXp(character?.xp),
+          /* And the attributes, for the one ceiling that reads one: a
+             Runebearer's slate is half their Physique plus 4 a rank. See
+             capacityAt in loadouts.js. */
+          attributes: character,
           /* The Abilities tab is the sheet's other editing surface for a pool, so it
              reads the same numbers the Advancement tab's panel does: a library capped
              at what it can hold rather than at what tonight allows. See loadoutState. */
@@ -304,18 +325,21 @@ function talentSources(character) {
            wrong the moment a set arrived whose card grants no swap at all. */
         note: `${talent.name} · ${loadout.picks.length} of ${
           loadout.library ? loadout.capacity : loadout.known
-        } ${loadout.library ? 'written down' : 'chosen'}, ${swapLine(loadout.spec)}`,
+        } ${loadout.library ? kept(loadout.spec) : 'chosen'}, ${swapLine(loadout.spec)}`,
         art: talent.art ?? null,
         sections: [
           {
             ...section(
               `loadout-${loadout.spec.id}`,
-              `Prepared ${plural(loadout.spec.noun, loadout.known)}`,
+              /* What the section is called, off the spec where it has a name of its
+                 own. A Mycomancer's hand is prepared and a Runebearer's slate is not:
+                 it is what is cut into them. */
+              loadout.spec.section ?? `Prepared ${plural(loadout.spec.noun, loadout.known)}`,
               loadout.picks
                 .filter((pick) => pick.card)
                 .map((pick) => entry(pick.card, pick.modifiers)),
               `${loadout.picks.length} of ${loadout.library ? loadout.capacity : loadout.known} ${
-                loadout.library ? 'written down' : 'chosen'
+                loadout.library ? kept(loadout.spec) : 'chosen'
               }`
             ),
             // Everything the block needs to raise the chooser and colour the count.

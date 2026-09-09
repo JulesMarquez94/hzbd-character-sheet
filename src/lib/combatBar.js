@@ -151,7 +151,12 @@ function move(key, card, { name, source, modifiers = null, note = null, extra = 
     ap: cost.ap ?? null,
     apWas: cost.cut > 0 ? cost.printed : null,
     apCutFrom: cost.from,
-    wp: card?.wp ?? null,
+    /* Off the reading rather than off the card, since 2026-09-08: a Runebearer's
+       rune is the first thing on the sheet whose *Willpower* a source moves, and
+       a chip that charged the printed 4 for a spell that costs nothing to fire
+       would take the pool apart. See `price` in loadouts.js. */
+    wp: cost.wp ?? null,
+    wpWas: cost.wpCut > 0 ? cost.wpPrinted : null,
     variable: Boolean(card?.variable),
     converts: card?.converts ?? null,
     /* What using this opens once it is paid for. BREW opens the brewing window,

@@ -542,6 +542,14 @@ export default function UsePrompt({
         ? dialled
         : Number(request.ap) || 0;
   const apWas = !taken && apPrinted > price.ap ? apPrinted : null;
+
+  /* And the same reading of the other orb. Only one thing in the codex moves a
+     Willpower cost rather than an Action Point one, and it moves it all the way:
+     a Runebearer fires an inscribed spell for nothing, whatever the spell prints.
+     Held to the same rule as the Action Points, so an Overcast being added on top
+     puts both revisions away rather than showing a sum nobody can read. */
+  const wpPrinted = Number(request.wpWas) > 0 ? Number(request.wpWas) : Number(request.wp) || 0;
+  const wpWas = !taken && wpPrinted > price.wp ? wpPrinted : null;
   const cutFrom = [
     ...(request.apCutFrom ?? []),
     /* A move that moved the Action Points, either way it can: a signed delta, or
@@ -693,11 +701,11 @@ export default function UsePrompt({
               explains why the orbs below disagree with what the card was written
               with. The card in the right-hand column strikes the old number
               through in the same breath. */}
-          {apWas !== null && (
+          {(apWas !== null || wpWas !== null) && (
             <p className="use-cut">
               {cutFrom.length > 0 && <b>{listAnd(cutFrom)}</b>}
               {cutFrom.length > 0 ? ' · ' : ''}
-              {apWas} Action Points cut to {price.ap}.
+              {cutLine(apWas, price.ap, wpWas, price.wp)}
             </p>
           )}
 
@@ -931,7 +939,21 @@ export default function UsePrompt({
                     {/* A conversion shows both ends of the move, not one cost. */}
                     {converts && price.ap > 0 && <span className="use-way-arrow">&rarr;</span>}
                     {converts && price.ap > 0 && <CostOrb kind="rp" value={price.ap} size={30} />}
-                    {price.wp > 0 && <CostOrb kind="wp" value={price.wp} size={30} />}
+                    {price.wp > 0 && (
+                      <CostOrb kind="wp" value={price.wp} size={30} was={wpWas} from={cutFrom} />
+                    )}
+                    {/* A price cut to nothing has no orb to strike through, so the
+                        old number is drawn on its own: a rune that would have cost
+                        4 Willpower and costs none still owes the reader that 4. */}
+                    {price.wp === 0 && wpWas !== null && (
+                      <span
+                        className="cost-orb-was"
+                        style={{ '--orb-cut': 'var(--stat-wp)', fontSize: 16 }}
+                        title={`${wpWas} Willpower, and none of it charged`}
+                      >
+                        {wpWas}
+                      </span>
+                    )}
                     {price.health > 0 && <CostOrb kind="hp" value={price.health} size={30} />}
                     {price.ap === 0 && price.wp === 0 && price.health === 0 && (
                       <span className="use-way-free">{converts ? 'None' : 'Free'}</span>
@@ -1457,4 +1479,20 @@ function shortfalls(character, { ap, wp, health }, way) {
 function listAnd(words) {
   if (words.length <= 1) return words[0] ?? '';
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/**
+ * The sentence under the source line when something has revised the price: which
+ * orbs moved, and what they moved from.
+ *
+ * Two halves rather than one, because a Runebearer's rune moves both at once and
+ * two sentences saying it would read as two separate revisions. A price cut to
+ * nothing says "none" rather than 0, since the orb it is talking about is not
+ * drawn at all.
+ */
+function cutLine(apWas, ap, wpWas, wp) {
+  const parts = [];
+  if (apWas !== null) parts.push(`${apWas} Action Points cut to ${ap || 'none'}`);
+  if (wpWas !== null) parts.push(`${wpWas} Willpower cut to ${wp || 'none'}`);
+  return `${parts.join(' and ')}.`;
 }

@@ -388,8 +388,26 @@ export function cardProse(text) {
  */
 export function cardCost(card, modifiers = null) {
   const printed = card?.ap_cost ?? card?.ap;
-  const wp = card?.wp_cost ?? card?.wp;
-  const flat = { ap: printed, wp, printed, cut: 0, from: [] };
+  const wpPrinted = card?.wp_cost ?? card?.wp;
+  const flat = { ap: printed, wp: wpPrinted, printed, cut: 0, from: [], wpPrinted, wpCut: 0 };
+
+  /* ---- a price set outright, before any cut is considered ----
+     A pool may charge its own price for everything in it. RUNE ACTIVATION is the
+     one that does: "fire one of your inscribed spells for 1 Action Point and no
+     Willpower", across a slate whose printed costs run from 1 to 5 and whose
+     printed Willpower runs to 12.
+
+     A cut cannot say that. `apCut` takes a constant off, so thirty printed costs
+     come out as thirty different numbers, and nothing in a cut reaches the
+     Willpower at all. So this is an assignment rather than a subtraction, and it
+     is read first: a price that replaces the printed one has nothing left for a
+     discount to come off. See `price` in loadouts.js.
+
+     Both halves are optional and each only bites on a card that printed
+     something. A passive prints no Action Points, and a rider that gave it some
+     would be inventing a cost rather than replacing one. */
+  const set = costSet(modifiers, printed, wpPrinted);
+  if (set) return set;
 
   const cut = Math.max(0, Math.floor(Number(modifiers?.apCut) || 0));
   if (cut === 0 || !Number.isFinite(Number(printed))) return flat;
@@ -401,7 +419,43 @@ export function cardCost(card, modifiers = null) {
   const ap = Math.max(Math.min(Number(printed), floor), Number(printed) - cut);
   if (ap === Number(printed)) return flat;
 
-  return { ap, wp, printed: Number(printed), cut: Number(printed) - ap, from: modifiers?.apCutFrom ?? [] };
+  return {
+    ap,
+    wp: wpPrinted,
+    printed: Number(printed),
+    cut: Number(printed) - ap,
+    from: modifiers?.apCutFrom ?? [],
+    wpPrinted,
+    wpCut: 0,
+  };
+}
+
+/**
+ * The price a pool imposes on its own cards, or null when no pool imposes one.
+ *
+ * Written as its own reading rather than inline, because "was it set" and "what
+ * did it come down from" are two questions and both of them have to survive a
+ * card that printed nothing for the half being set.
+ */
+function costSet(modifiers, printed, wpPrinted) {
+  const apSet = Number(modifiers?.apSet);
+  const wpSet = Number(modifiers?.wpSet);
+  const onAp = Number.isFinite(apSet) && Number.isFinite(Number(printed));
+  const onWp = Number.isFinite(wpSet) && Number.isFinite(Number(wpPrinted));
+  if (!onAp && !onWp) return null;
+
+  const ap = onAp ? Math.max(0, Math.floor(apSet)) : printed;
+  const wp = onWp ? Math.max(0, Math.floor(wpSet)) : wpPrinted;
+
+  return {
+    ap,
+    wp,
+    printed,
+    cut: onAp ? Number(printed) - ap : 0,
+    from: modifiers?.costFrom ?? [],
+    wpPrinted,
+    wpCut: onWp ? Number(wpPrinted) - wp : 0,
+  };
 }
 
 /** What a card prints as its heading: its name, less the weapon it belongs to. */

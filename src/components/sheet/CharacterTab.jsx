@@ -8,6 +8,7 @@ import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
 import PactBlock from './PactBlock.jsx';
 import PassiveBlock from './PassiveBlock.jsx';
+import RuneBlock from './RuneBlock.jsx';
 import TurnBlock from './TurnBlock.jsx';
 import {
   AttrTile,
@@ -43,6 +44,7 @@ import {
 import { feralBlockIds, feralState } from '../../lib/feral.js';
 import { minionBlockIds, minionState } from '../../lib/minions.js';
 import { pactBlockIds, pactState } from '../../lib/pact.js';
+import { runeBlockIds, runeState } from '../../lib/runes.js';
 import { statMath } from '../../lib/statMath.js';
 import { normalizeTalents } from '../../lib/talents.js';
 import { viewUrl } from '../../lib/imageViews.js';
@@ -198,6 +200,11 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      missions, there for as long as the set is held. See pact.js. */
   const pacts = useMemo(() => pactState(character), [character]);
 
+  /* And the slates. One block each: every rune cut into this character, what
+     firing one costs and which of them have been fired since the last Long
+     Rest. There for as long as the set is held. See runes.js. */
+  const slates = useMemo(() => runeState(character), [character]);
+
   /* And the tables this character sits at. One log block each, there for as
      long as the membership is: a sheet linked to no campaign has none of them
      and is exactly the sheet it always was. Read by the page rather than here,
@@ -210,6 +217,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ...minionBlockIds(character),
       ...feralBlockIds(character),
       ...pactBlockIds(character),
+      ...runeBlockIds(character),
       ...tables.map((table) => `log:${table.id}`),
       /* And the fight at each of those tables, beside its log: the same order
          the Game Master's runner draws, read off the announcements. There
@@ -277,6 +285,17 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           : { name: String(id), note: null };
       }
 
+      const inked = /^rune:(.+)$/.exec(String(id));
+      if (inked) {
+        const slate = slates.find((row) => row.id === inked[1]);
+        return slate
+          ? {
+              name: slate.pool.label,
+              note: `${slate.talent.name}: what is cut into you, and what is left in it`,
+            }
+          : { name: String(id), note: null };
+      }
+
       const struck = /^pact:(.+)$/.exec(String(id));
       if (struck) {
         const pact = pacts.find((row) => row.id === struck[1]);
@@ -302,7 +321,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             note: `${minion.spec.label}: attributes, defenses, Health and Shield`,
           };
     },
-    [minions, forms, pacts, tables]
+    [minions, forms, pacts, slates, tables]
   );
 
   /* Arranging happens in a modal rather than on the tab itself. Dragging a
@@ -628,6 +647,16 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ])
     ),
 
+    /* ============ A SLATE'S ONE ============
+       Only there when a set cuts its spells into its holder. The runes, what
+       each costs to fire here, and what a rest gives back. */
+    ...Object.fromEntries(
+      slates.map((slate) => [
+        `rune:${slate.id}`,
+        <RuneBlock character={character} slate={slate} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
     /* ============ A TABLE'S TWO ============
        Only there when this character is linked to a campaign, one pair per
        campaign: what the whole party has been doing, and the fight the runner
@@ -693,6 +722,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
                 String(id).startsWith('minion:') ? ' cell-minion' : ''
               }${String(id).startsWith('feral:') ? ' cell-feral' : ''}${
                 String(id).startsWith('pact:') ? ' cell-pact' : ''
+              }${
+                String(id).startsWith('rune:') ? ' cell-rune' : ''
               }`}
             >
               {blocks[id]}

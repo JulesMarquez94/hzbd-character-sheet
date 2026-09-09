@@ -609,15 +609,17 @@ returned.
 
 ### 4.5 Talent set
 
-Thirty-four talent sets are named. **Thirteen are written and can be taken**: Guardian,
+Thirty-four talent sets are named. **Fourteen are written and can be taken**: Guardian,
 Mycomancer, Cauldron Keeper, Enchanter, Draconic Bond, Trickster, Duelist, Feral Curse,
-Berserker, Colossus, Arcanist, Alchemist and Pact of Ordenance. The rest are shown on the
-wall so you can see what is coming, but they have no cards yet and cannot be chosen.
+Berserker, Colossus, Arcanist, Alchemist, Pact of Ordenance and Runebearer. The rest are
+shown on the wall so you can see what is coming, but they have no cards yet and cannot be
+chosen.
 
 A talent set gives you cards at Novice rank now, and more at Adept and Master as you take
 those ranks. Some sets also give you something that is not a card: a **creature** you
 control, a **form** you can turn into, a **pact** you must feed, a **spellbook** you prepare
-spells from or a **cauldron** you brew in. The set's own page explains it.
+spells from, a **slate of runes** cut into your own skin or a **cauldron** you brew in. The
+set's own page explains it.
 
 ### 4.6 Attributes
 
@@ -1761,8 +1763,8 @@ reading of what the cards using it imply.
 
 1. **There is no ability that raises the dead.** The price is set (see 2.3.1). The spell
    that does the work has not been written.
-2. **Twenty-one talent sets are names without cards**: Brawler, Runebearer, Hemoturgy,
-   Totemic, Painseeker, Dragon Aspect, Virtuoso, Flowing Fist, Sharpshooter, Wilder,
+2. **Twenty talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
+   Painseeker, Dragon Aspect, Virtuoso, Flowing Fist, Sharpshooter, Wilder,
    Necromancer, Spellquill, Spellblade, Thaumaturge, Tactician, Elemental Aspect,
    Beastbond, Oathbound, Quartermaster, Weaver and Weapon Master.
 3. **The world.** This is a rules book, and the setting is one sentence on the cover. It

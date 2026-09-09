@@ -13638,3 +13638,163 @@ makes more like a short story." The backstory had been twelve sentences in a row
 
 - `lint:crossroads` with the chapter section clean, `npm run lint`, `lint:text` and
   `npm run build` clean, and a story read off a run in the browser.
+
+## The Runebearer, 2026-09-08
+
+The fourteenth written set, and the second placeholder on the Physique shelf to be filled.
+Jules asked for it in chat and gave the whole design in eight lines: a caster who "can
+inscribe tattoo on his skin to cast spell, however spell will always be cast on touch or
+themselves", a limit on how many, one Action Point to fire one, "a rune interface so a new
+block that allow to preview and manage tattoo", a Long Rest action that changes a tattoo,
+"once the spell is used it cannot be used again", `half physique + 4 per rank` for the count,
+an Adept talent worth "1 willpower per point of physique" and a Master talent that
+"allow[s] to reactive some tattoo".
+
+### Three sources, and which one won
+
+- **The old cards**, `data/Source Temp/Hazebound/Ressources/Skillsets/Old/Runebearer/`: two
+  printed pages over five ranks. Basic Runework, Recharge, Runic Network, Instinctive
+  Activation, Streamlined Patterns. Spellpower is Wits + Level, the budget on Recharge is Wits
+  and the inscription cost is permanent Willpower.
+- **The conversion workbook**, `data/Conversion/Talent Set - Runebearer.xlsx`, from the
+  2026-08-23 pass. Seven tabs, six cards, and an Open Questions tab that flagged four things
+  the set could not be built without. The workbook is gitignored, so its six substantive tabs
+  are exported to `data/templates/runebearer-{overview,ability,notes,questions,feature,prompts}.csv`
+  and **those are the copy of record**.
+- **Jules, 2026-09-08**, who answered all four and reversed two of the workbook's own readings.
+  His answers are the design; the workbook is where the words came from.
+
+### The four answers
+
+| Open question | The answer |
+| --- | --- |
+| Which spells qualify? | **Any spell in the codex**, with its reach collapsed to touch. |
+| Does the permanent Willpower loss survive? | **No.** The count is the limit. |
+| What does a Long Rest do to fired runes? | **Brings every one of them back.** |
+| How is `half physique + 4 per rank` read? | `floor(Physique / 2) + 4 x Rank`. |
+
+The first is the biggest. Both older sources allow only spells "that have a range of Self or
+Touch", and Jules's own example is a Fire Seed planted on somebody you are touching and
+detonated within touch of them, which only makes sense if the ranged spells are in. So there
+is no reach filter and no `school`: the pool is the whole codex, gated by the tier ladder
+alone, exactly as the Arcanist's is.
+
+The second deletes the workbook's centrepiece. Its Special Feature tab is a page and a half on
+subtracting from a derived maximum, and none of it was built. Nothing on this sheet subtracts
+from a maximum and now nothing has to.
+
+The fourth means a Physique 4 Rank 1 Runebearer carries 6 runes and a Physique 8 Rank 3 one
+carries **16**. That is a lot of free casts a day, and it is the number worth watching first if
+the set turns out too strong.
+
+### What else changed, and why
+
+- **The ladder is normalised.** The old pages reach Adept at Rank 3 and Master at Rank 5, which
+  is slower than every other set on the wall. Jules ruled the usual ladder: Novice spells at
+  Rank 1, Adept at 2, Master at 3.
+- **An inscribed spell can be Overcast and Multicast.** The workbook kept "Inscribed spells
+  cannot be Overcast or multicasted" word for word and called it the one line already in the
+  site's vocabulary. It is the line Jules reversed, and it is what makes the Fire Seed example
+  work: the rune plants the seed for free, and the detonation is bought at the printed price
+  out of your own Willpower, as often as the spell allows.
+- **INSTINCTIVE ACTIVATION and STREAMLINED PATTERNS are not built.** Firing always costs an
+  Action Point, which deletes the first, and there is no inscription cost left for the second to
+  discount. The top two rungs are the Willpower grant and the recharge Jules asked for instead.
+- **RUNIC NETWORK grants the whole Physique**, where the workbook had half of it at Adept and
+  the whole of it at Master. There is no Master rung left for the second half to live on.
+- **The concentration clause is gone.** Both old pages carry one ("you can maintain
+  concentration on up to 2 spells", raised to 3 at Rank 3) and the workbook translated it to a
+  cap on how many Upkeeps you may pay at once. The site has no concentration and no such cap, so
+  printing one would be a rule nothing enforces. Flagged below.
+- **`printout` is not a card id.** Printout was the old page's heading for the printable-card
+  link. The card is RUNEWORK and the id is its name.
+
+### One contradiction, resolved rather than transcribed
+
+Jules ruled both that **every rune comes back on a Long Rest** and that the Master talent
+brings some back **"during a long rest"**. The second is nothing at all if the first is true.
+Built as the **Short Rest** the original Rank 2 card printed, which is the only reading where
+the Master card does anything, and the budget shape is untouched because it is the good idea in
+the set. Told to Jules at the time. If he meant something else at the Master rung, this is the
+line to change: `runes.recharge.rest` in `talents.js`.
+
+### What is built
+
+- `src/lib/talents.js`: the set, four cards. RUNEWORK and RUNE ACTIVATION at Novice, RUNIC
+  NETWORK at Adept, RECHARGED at Master. A `loadout` spec for the slate and a `runes` spec for
+  everything the pool machinery does not already do.
+- `src/lib/runes.js`: **the ninth shape of what a set can hand over**, beside a fixed hand, a
+  loadout, a brewing spec, an enchanting one, a minion, the Trickster's tricks, the Duelist's
+  martial and the Pact's debt. The slate, the fired state, the recharge budget and the Willpower
+  the set lends back. Same split as minions.js, feral.js and pact.js: talents.js describes,
+  runes.js resolves, talents.js stays a leaf.
+- `src/components/sheet/RuneBlock.jsx`: the interface Jules asked for. Every rune on one line
+  with what firing it costs in these hands, the fired ones greyed out with the reason, an ⓘ that
+  deals the card, an Inscribe button that raises the same chooser every other pool on the sheet
+  uses, and a foot saying what a rest gives back. One 360x640 cell, and the list is the only part
+  that scrolls.
+- `src/lib/loadouts.js`: two new spec fields the pool machinery grew for this set.
+  `capacity.perStat` is **the first ceiling in the codex an attribute moves**, and `price` is the
+  first pool to charge its own price for its cards rather than discount the printed one.
+- `src/lib/cardText.js`: `cardCost` reads a price that was *set* as well as one that was cut,
+  and reports what the Willpower came down from. Every orb on the sheet then strikes the printed
+  number through beside the new one: the card, the brief, the quick-bar chip's tooltip and the
+  pay button.
+- `src/lib/uses.js`: `limitFor` asks the card for its own limit first and the *holder* second,
+  which is the seam the whole set hangs on. A rune needed no column: what is inscribed is
+  `picks` on the talent entry like every other pool, and what has been fired is `card_uses` like
+  every other spent use, so **there is no migration behind this set**.
+- `src/lib/rest.js` and `RestPrompt.jsx`: the Long Rest action reads "Inscribe a rune", and a
+  Short Rest offers the fired ones back as chips against a Willpower budget. It sits beside the
+  plan rather than in the action slot, because a Short Rest buys no action.
+- `src/lib/crossroadsPool.js` and `crossroadsStory.js`: two new scenes, a closing and a phrase,
+  because `lint:crossroads` requires every written set to be scorable and to win at least once.
+  The Runebearer takes 4.0% of 4,000 walks, between the Mycomancer and the Cauldron Keeper.
+
+### Open, and waiting on Jules
+
+1. **"Once a turn" is printed and not enforced.** The use tracker holds a count and a rest, and
+   a turn is neither. Same ruling RECKLESS VIOLENCE's "once per round" got. A Runebearer with 6
+   Action Points could tap six runes if nobody at the table was reading.
+2. **The touch rule is printed and not enforced.** There is no range field on a spell, so
+   nothing can refuse a rune cast across a room. The table plays it, the way it plays a
+   Mycomancer's free hand.
+3. **RUNE ACTIVATION is tagged Passive and its cost columns are empty**, where the workbook has
+   Ability and 1 Action Point. The price it prints is the price of firing a *rune*, and the runes
+   are already the chips; left as an Ability it would have been a chip of its own charging an
+   Action Point for nothing. The sentence keeps the number.
+4. **The concentration clause was dropped** rather than translated. See above.
+5. **`spellcasting` was added to its tags**, beside the workbook's own Support, Defense and
+   Physique. Same addition the Arcanist got and for the same reason.
+6. **The panel fills the slate freely.** One rune a night is enforced in the rest window and
+   nowhere else, which is the law every pool on this sheet already lives by. It is what lets a
+   new Runebearer arrive with their skin already covered instead of spending six nights on it.
+7. **One tracker per card.** `card_uses` is keyed by the card and not by where it came from, by
+   the stacking law, so a Runebearer who also knows Barkskin from somewhere else spends it for
+   the day when the rune fires.
+8. **16 runes at Rank 3.** See above.
+9. **No art.** Both plates and all four card pictures are unpainted. The prompts are in
+   `data/templates/runebearer-prompts.csv`. Drop the pictures into `data/Runebearer/` and run
+   `npm run art:cards`; the set's `art: null` becomes `/talents/runebearer.jpg`.
+
+### Mine, worth Jules's eye
+
+- Every word of the four cards, the tagline and the blurb. The blurb keeps three of the
+  workbook Overview's sentences and rewrites the rest around the dropped Willpower debt.
+- The two Crossroads scenes (`youth-needle`, `road-bleeding`) and every number under them, plus
+  the Runebearer's closing sentence and phrase in `crossroadsStory.js`.
+- The wording of the rune block, the rest window's rune chips and the "cut to none" line in the
+  use prompt.
+
+### Proved
+
+- `npm run lint`, `lint:text`, `lint:cards`, `lint:halves`, `lint:order`, `lint:riders`,
+  `lint:plan`, `lint:layout`, `lint:crossroads`, `lint:help`, `lint:legal` and `lint:images`
+  all clean.
+- `lint:math` grew a **fifteenth sheet**: a Runebearer wearing a worn point of Physique, which
+  holds `deriveStats` and `statMath` to the same effective attribute. Both read 8 and the tile
+  agrees.
+- A Rank 3 Physique 8 sheet driven through `runeState`, the quick bar, `restActions`,
+  `restPlan` on both rests and `abilitySources`: capacity 16, two runes fired, the chips priced
+  1 Action Point with the printed 3 and 2 struck through, the Short Rest bringing both back for
+  4 of a budget of 8, and the Long Rest bringing them back on its own.

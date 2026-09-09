@@ -17,6 +17,7 @@ import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
 import { feralArmor, feralShieldShare } from './feral.js';
 import { spellbookWillpower } from './spellbook.js';
+import { runeWillpower } from './runes.js';
 import { effectRiders, riderShift } from './riders.js';
 import { lineageGrants } from './lineages.js';
 
@@ -559,8 +560,19 @@ export function deriveStats(character, extra = null, running = null) {
        off the set rather than the tracker, because it is a Novice passive and not
        a state: the Willpower is there before the first spell is written and stays
        after the book is full. See spellbook.js. */
+    /* And what a body full of runes lends back. RUNIC NETWORK raises the maximum
+       by the holder's whole Physique, which is the one thing that makes a caster
+       shelved under Physique able to pay for anything at all: Willpower is 2 a
+       point of Mind and a Runebearer has spent their levels elsewhere. Read off
+       the effective Physique, so a ring that lends the body strength lends the
+       Willpower that comes with it. See runes.js. */
     willpower_max: Math.floor(
-      2 * lvl + 2 * m + 10 + flat('willpowerMax') + spellbookWillpower(character?.talents)
+      2 * lvl +
+        2 * m +
+        10 +
+        flat('willpowerMax') +
+        spellbookWillpower(character?.talents) +
+        runeWillpower(character?.talents, { physique: p, instinct: i, mind: m })
     ),
     avoid: Math.floor(avoid),
     defense: Math.floor(armorTotal),

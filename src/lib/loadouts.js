@@ -137,8 +137,8 @@ export function isLibrary(spec) {
  * rank preview counts it, and `TalentBlock` compares two ranks of it to decide
  * whether a rank just widened the pool enough to open the chooser.
  */
-export function knownAt(spec, rank, level = 1) {
-  if (isLibrary(spec)) return capacityAt(spec, rank, level);
+export function knownAt(spec, rank, level = 1, attributes = null) {
+  if (isLibrary(spec)) return capacityAt(spec, rank, level, attributes);
   return spec?.known?.[rank] ?? 0;
 }
 
@@ -153,15 +153,36 @@ export function knownAt(spec, rank, level = 1) {
  *
  * A rank of 0 is a set not taken, and it holds nothing. The level floors at 1,
  * which is the only level a character can actually be at their lowest.
+ *
+ * ------------------------------------------------------------- the third term
+ * `perStat` is the Runebearer's, and it is the first ceiling in the codex that
+ * an *attribute* moves: RUNEWORK carries "half your Physique, plus 4 for every
+ * Rank in Runebearer", so the slate grows when the body does. It is read off
+ * whatever `attributes` is handed in, which is a character on every caller that
+ * has one, and it contributes nothing at all to the two callers that do not (a
+ * Duelist's hand and a rank-to-rank comparison, neither of which carries one).
+ *
+ * Divided rather than scaled by a fraction, so "half" is exact arithmetic and
+ * not a float that rounds where nobody is looking, and floored on its own before
+ * the other two terms join it: half of 5 is 2, and 2 + 4 is 6.
  */
-export function capacityAt(spec, rank, level = 1) {
+export function capacityAt(spec, rank, level = 1, attributes = null) {
   if (!isLibrary(spec)) return spec?.known?.[rank] ?? 0;
   if (!(Math.floor(Number(rank) || 0) > 0)) return 0;
 
   const perRank = Math.floor(Number(spec.capacity.perRank) || 0) * Math.floor(Number(rank) || 0);
   const perLevel =
     Math.floor(Number(spec.capacity.perLevel) || 0) * Math.max(1, Math.floor(Number(level) || 1));
-  return Math.max(0, perRank + perLevel);
+  return Math.max(0, perRank + perLevel + statTerm(spec.capacity.perStat, attributes));
+}
+
+/** The `perStat` half of a ceiling: `{ stat, divide }` read against a character. */
+function statTerm(perStat, attributes) {
+  if (!perStat || !attributes) return 0;
+
+  const held = Math.max(0, Math.floor(Number(attributes[perStat.stat]) || 0));
+  const divide = Math.max(1, Math.floor(Number(perStat.divide) || 1));
+  return Math.floor(held / divide);
 }
 
 /**
@@ -184,10 +205,10 @@ export function capacityAt(spec, rank, level = 1) {
  * would be a second source of truth for a thing the picks already say, and the
  * two would drift the first time somebody edited a book by hand.
  */
-export function allowanceAt(spec, rank, level = 1, held = 0, grant = 0) {
+export function allowanceAt(spec, rank, level = 1, held = 0, grant = 0, attributes = null) {
   if (!isLibrary(spec)) return knownAt(spec, rank);
 
-  const capacity = capacityAt(spec, rank, level);
+  const capacity = capacityAt(spec, rank, level, attributes);
   if (capacity === 0) return 0;
 
   const start = Math.max(0, Math.floor(Number(spec.start) || 0));
@@ -259,6 +280,29 @@ export function loadoutModifiers(spec, rank) {
 
     const saved = sourceRow(spec.discount.from ?? spec.label, { apCut: cut });
     if (saved) sources.push(saved);
+  }
+
+  /* And the third way a pool can move a price, which is neither a boost nor a
+     cut: a set that charges its *own* price for everything in it, whatever the
+     card prints. RUNE ACTIVATION is the first and the reason this exists: "fire
+     one of your inscribed spells for 1 Action Point and no Willpower" is a flat
+     1 and a flat 0 across a pool where the printed costs run from 1 to 5.
+
+     A cut could not say it. `apCut` takes a constant off every card, so a pool
+     of thirty different printed costs would come out thirty different numbers,
+     and no cut at all reaches the Willpower. So this is a *set* rather than a
+     subtraction, and `cardCost` prints the old number struck through beside the
+     new one exactly as it does for a cut. See cardCost in cardText.js.
+
+     Not indexed by rank, unlike the boost and the cut above. Both of those are a
+     later rank changing what an earlier one already handed over; this is the card
+     that hands the pool over in the first place, so it is true at every rank the
+     set is held at and false at no rank at all. */
+  const price = spec?.price ?? null;
+  if (price && rank > 0) {
+    if (Number.isFinite(Number(price.ap))) riders.apSet = Math.max(0, Math.floor(Number(price.ap)));
+    if (Number.isFinite(Number(price.wp))) riders.wpSet = Math.max(0, Math.floor(Number(price.wp)));
+    riders.costFrom = [price.from ?? spec.label];
   }
 
   if (sources.length > 0) riders.sources = sources;
@@ -407,7 +451,7 @@ export function loadoutOptions({ talent, rank, picks }) {
 export function loadoutState(
   talents,
   talent,
-  { level = 1, grant = 0, capped = 'allowance', base = null } = {}
+  { level = 1, grant = 0, capped = 'allowance', base = null, attributes = null } = {}
 ) {
   const spec = loadoutOf(talent);
   if (!spec) return null;
@@ -432,11 +476,11 @@ export function loadoutState(
      what the chooser is capped at and what every "3 of 4 chosen" line counts
      against; `capacity` is the ceiling a library is working towards, and it is
      the only number ARCANE RESEARCH actually prints. */
-  const capacity = capacityAt(spec, rank, level);
+  const capacity = capacityAt(spec, rank, level, attributes);
   const known =
     capped === 'capacity'
       ? capacity
-      : allowanceAt(spec, rank, level, base ?? picks.length, grant);
+      : allowanceAt(spec, rank, level, base ?? picks.length, grant, attributes);
 
   /* And the third, which is the only one a pool can actually *owe* you.
 
@@ -570,7 +614,7 @@ export function researchesAtRest(spec, kind) {
  * there is nothing to swap, and an empty pool in the rest window is a row that
  * only asks to be tapped and then apologises.
  */
-export function restSwaps(talents, kind, level = 1, opened = talents) {
+export function restSwaps(talents, kind, level = 1, opened = talents, attributes = null) {
   const rows = [];
 
   for (const entry of normalizeTalents(talents)) {
@@ -597,13 +641,14 @@ export function restSwaps(talents, kind, level = 1, opened = talents) {
         level,
         grant: 1,
         base: heldPicks(opened, entry.id).length,
+        attributes,
       });
       if (state && state.capacity > 0) rows.push({ talent, state, mode: 'research' });
       continue;
     }
 
     if (!swapsAtRest(spec, kind)) continue;
-    const state = loadoutState(talents, talent, { level });
+    const state = loadoutState(talents, talent, { level, attributes });
     if (state && state.known > 0) rows.push({ talent, state, mode: 'swap' });
   }
 
@@ -677,15 +722,15 @@ export function newAtRank(talent, rank) {
 }
 
 /** What a rank would open up, for the preview page that has not taken it yet. */
-export function rankPreview(talent, rank, level = 1) {
+export function rankPreview(talent, rank, level = 1, attributes = null) {
   const spec = loadoutOf(talent);
   if (!spec) return null;
 
   /* For a library these two are ceilings rather than hands, so `gained` below is
      room made and not cards handed over. The note that prints it says which, and
      it is the reason `library` rides along. See LoadoutRankNote. */
-  const known = knownAt(spec, rank, level);
-  const previous = knownAt(spec, rank - 1, level);
+  const known = knownAt(spec, rank, level, attributes);
+  const previous = knownAt(spec, rank - 1, level, attributes);
   const tiers = tiersAt(spec, rank);
   const { legal, fresh, opened, widens } = rankOptions(talent, rank);
 

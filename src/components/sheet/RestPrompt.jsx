@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
+import { CostOrb } from '../CostOrbs.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
 import BrewRest from './BrewRest.jsx';
 import EnchantAction from './EnchantRest.jsx';
@@ -14,6 +15,7 @@ import { getItem, heldItem } from '../../lib/items.js';
 import { getEnchantment } from '../../lib/enchantments.js';
 import { getRest, labourAffordable, restActions, restPlan } from '../../lib/rest.js';
 import { pickChanges, toggleLoadoutPick } from '../../lib/loadouts.js';
+import { rechargeSpend, runeRecharges } from '../../lib/runes.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
 /**
@@ -80,6 +82,12 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      the same reason `brews` is — a weapon's form is nothing the `talents` draft
      holds. It becomes a forged-record write in the rest's own patch. */
   const [reshaped, setReshaped] = useState(null);
+  /* And which fired runes a Runebearer is lighting again tonight: card ids, held
+     apart from the draft above for the same reason the brews are. It is
+     deliberately **not** part of the action slot and `clearAction` does not
+     touch it: RECHARGED is something a Short Rest does, not something a night is
+     spent on, so it sits beside the plan rather than in the slot. */
+  const [revived, setRevived] = useState([]);
 
   /* Whether the list of actions is up, and which one's step is. */
   const [menu, setMenu] = useState(false);
@@ -100,9 +108,14 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      rule. */
   const picked = useMemo(() => (chosen ? [chosen] : []), [chosen]);
   const plan = useMemo(
-    () => restPlan(character, kind, picked, prepared, brews, reshaped),
-    [character, kind, picked, prepared, brews, reshaped]
+    () => restPlan(character, kind, picked, prepared, brews, reshaped, { revived }),
+    [character, kind, picked, prepared, brews, reshaped, revived]
   );
+
+  /* What a Short Rest could bring back, per set that can bring anything back.
+     Empty for everybody else, and empty for a Long Rest, which brings the whole
+     slate back on its own. See runes.js. */
+  const recharges = useMemo(() => runeRecharges(character, kind), [character, kind]);
 
   /** Take the slot back, and everything the action had written into the draft. */
   function clearAction() {
@@ -223,6 +236,26 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
               {action ? ', or spend the night on something cheaper' : ''}.
             </p>
           )}
+
+          {/* ---------- WHAT LIGHTS AGAIN ---------- *
+              RECHARGED: "you can bring back any number of fired runes whose
+              Willpower costs add up to no more than your Physique." A budget
+              spent against a list, which is the only thing a rest gives back
+              that is a *choice*, so it is the only one with a chooser. Above the
+              action slot because it is not one: a Short Rest buys no action at
+              all, and this happens on every Short Rest a Runebearer takes. */}
+          {recharges.map((row) => (
+            <RuneRecharge
+              key={row.talent.id}
+              row={row}
+              chosen={revived}
+              onToggle={(id) =>
+                setRevived((held) =>
+                  held.includes(id) ? held.filter((held_id) => held_id !== id) : [...held, id]
+                )
+              }
+            />
+          ))}
 
           {/* ---------- THE ACTION SLOT ---------- *
               One, because a rest buys one. Empty until you open it, and after
@@ -492,6 +525,64 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
  * laying anything leaves the slot open, and it says so rather than reading as a
  * night's work finished.
  */
+/**
+ * One slate's fired runes, offered back against a budget.
+ *
+ * Every fired rune is shown rather than only the affordable ones, and the ones
+ * that no longer fit are refused with the reason on them. That is how every
+ * other budget on this sheet reads, and hiding them would leave a player
+ * wondering where the rest of their runes went.
+ *
+ * Cheapest first, off `runeRecharges`, so tapping down the list is the order
+ * that fits the most back under the budget.
+ */
+function RuneRecharge({ row, chosen, onToggle }) {
+  const spend = rechargeSpend(row, chosen);
+
+  return (
+    <>
+      <span className="fx-label">
+        Runes to bring back
+        <span className="rest-labour-rule">{row.from}</span>
+      </span>
+
+      <div className="rest-runes">
+        <div className="rest-runes-list">
+          {row.spent.map((rune) => {
+            const on = chosen.includes(rune.id);
+            const afford = on || rune.cost <= spend.left;
+            const name = rune.card?.name ?? rune.id;
+
+            return (
+              <button
+                type="button"
+                key={rune.id}
+                className={`rest-rune${on ? ' is-on' : ''}`}
+                onClick={() => onToggle(rune.id)}
+                disabled={!afford}
+                title={
+                  afford
+                    ? on
+                      ? `${name} comes back. Tap to leave it spent`
+                      : `Bring ${name} back for ${rune.cost} of the budget`
+                    : `${name} costs ${rune.cost} and you have ${spend.left} left`
+                }
+              >
+                <span className="rest-rune-name">{name}</span>
+                <CostOrb kind="wp" value={rune.cost} size={17} />
+              </button>
+            );
+          })}
+        </div>
+
+        <span className="rest-runes-budget">
+          {spend.cost} of {spend.budget} Willpower spent bringing them back
+        </span>
+      </div>
+    </>
+  );
+}
+
 function summarise(action, { chosen, character, talents, brews, reshaped }) {
   if (action.kind === 'labour') {
     return chosen

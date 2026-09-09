@@ -1275,6 +1275,66 @@ export const QUESTIONS = [
     ],
   },
 
+  {
+    /* The Runebearer's own scene, added 2026-09-08 with the set. A Physique
+       caster had nowhere to be scored: every answer that leans on the body in
+       this pool is a shoulder against a door, and a set whose magic is cut into
+       the arm needed a moment where the body is the instrument rather than the
+       lever. */
+    id: 'youth-needle',
+    stage: 'youth',
+    scene:
+      'The old soldier who works out of the back of the tannery does this for coin: a needle, a pot of grey ink and a word said over the pot before he starts. Whatever he puts on you tonight is on you for the rest of your life. There are two men ahead of you and one of them has already stopped pretending it does not hurt.',
+    asks: 'What do you do?',
+    recall: 'In the back room of the tannery, with the needle already wet, you',
+    options: [
+      {
+        id: 'shoulder',
+        label: 'Strip to the waist and tell him to start at the shoulder and work down. It takes four hours and you make no sound in any of them. When it is finished there is a mark on your arm that warms when you close your fist.',
+        told: 'stripped to the waist and sat four hours without a sound, then walked out with a mark on your arm that warmed when you closed your fist.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { runebearer: 3 },
+          lineage: { stonebound: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'watch',
+        label: 'Give up your place in the queue and watch from the corner instead, for as long as he will have you there. By the third man you know the order the lines go on and which of them he says the word over.',
+        told: 'gave up your place and watched from the corner until you knew the order the lines went on.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 2, enchanter: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, occultist: 1 },
+        },
+      },
+      {
+        id: 'wrist',
+        label: 'Hold out one hand and ask for something small on the inside of the wrist, where a sleeve covers it. You are out in a quarter of an hour and nobody on the street is any the wiser.',
+        told: 'took something small on the inside of your wrist where a sleeve covers it, and were out in a quarter of an hour.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 2 },
+          background: { criminal: 1 },
+          skill: { streetwise: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'price',
+        label: 'Ask him what the word costs on its own, without the ink. He laughs, and then he sees that you are serious, and the price he names is most of what you have on you.',
+        told: 'asked what the word cost without the ink, and paid most of what you had for it.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2 },
+          background: { merchant: 1 },
+          skill: { haggler: 1, occultist: 1 },
+        },
+      },
+    ],
+  },
+
   /* ================================================================== trade */
   {
     id: 'trade-fire',
@@ -2258,6 +2318,63 @@ export const QUESTIONS = [
           attribute: { mind: 1 },
           background: { merchant: 1, entertainer: 2 },
           skill: { charismatic: 1, empath: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    /* The second half of the Runebearer's pair, and deliberately on the road
+       rather than in the youth: a mark is cut once and then spent, over and
+       over, on whatever the road puts in front of it. */
+    id: 'road-bleeding',
+    stage: 'road',
+    scene:
+      'A cart has gone over on the bend and one of the drovers is under the wheel with his leg opened to the bone. The blood is coming faster than anybody can pack it and there is no surgeon within a day of here. The ring of people standing round him are all looking at somebody else.',
+    asks: 'What do you do?',
+    recall: 'On the road, with a drover bleeding out under a cart wheel, you',
+    options: [
+      {
+        id: 'hands',
+        label: 'Kneel in it, put both hands flat on the leg and hold them there. The mark on your forearm goes cold, the bleeding stops, and you are grey to the lips for an hour afterwards.',
+        told: 'knelt in the blood and held both hands on the leg until the mark on your forearm went cold and the bleeding stopped.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { runebearer: 3 },
+          lineage: { stalwart: 1 },
+          skill: { healer: 1 },
+        },
+      },
+      {
+        id: 'vial',
+        label: 'Get the small green bottle off your belt, tip half of it into the wound and the other half into him. It burns going in and he screams the yard down, and then the bleeding slows.',
+        told: 'tipped half a green bottle into the wound and the other half into the man, and the bleeding slowed.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { alchemist: 2 },
+          background: { erudit: 1 },
+          skill: { apothecary: 1, physician: 1 },
+        },
+      },
+      {
+        id: 'axle',
+        label: 'Get your shoulder under the axle and stand up with it, and keep standing while two of them drag him clear. Nobody thinks to count how long you hold it.',
+        told: 'got your shoulder under the axle and stood up with it until they had dragged him clear.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, guardian: 1 },
+          lineage: { stonebound: 1 },
+        },
+      },
+      {
+        id: 'strap',
+        label: 'Cut a strap off the harness, get it round the thigh above the wound and twist it down with the handle of your knife until the bleeding stops. It takes you eleven seconds.',
+        told: 'cut a strap off the harness and twisted a tourniquet down on the leg with your knife handle.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1, trickster: 1 },
+          background: { military: 1 },
+          skill: { physician: 1, vigilant: 1 },
         },
       },
     ],
