@@ -769,7 +769,12 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       {/* The two side trays, pinned to the window rather than laid on the tab:
           whatever is on one is a tap away whatever the tab is scrolled to. Only
           drawn when something is actually on one. See BlockTrays.jsx. */}
-      <BlockTrays trays={trays} render={(id) => blocks[id]} describe={describeBlock} />
+      <BlockTrays
+        trays={trays}
+        render={(id) => blocks[id]}
+        describe={describeBlock}
+        scope={`character:${character?.id ?? 'anon'}`}
+      />
 
       <div className="sheet-grid-6">
         {order.map((id, at) =>

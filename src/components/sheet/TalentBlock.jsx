@@ -5,6 +5,7 @@ import PickBlock from './PickBlock.jsx';
 import FeralSection from './FeralPick.jsx';
 import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
 import MinionSection from './MinionPick.jsx';
+import MinionPreview from './MinionPreview.jsx';
 import PactSection, { PactRankNote } from './PactPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { BrewRankNote } from './BrewWindow.jsx';
@@ -20,7 +21,7 @@ import { enchantmentsAt } from '../../lib/enchantments.js';
 import { levelForXp } from '../../lib/characterModel.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
 import { feralOf } from '../../lib/feral.js';
-import { minionOf } from '../../lib/minions.js';
+import { isMinionCard, minionKindRows, minionKinds, minionOf } from '../../lib/minions.js';
 import { pactOf } from '../../lib/pact.js';
 import {
   TALENT_RANKS,
@@ -515,6 +516,9 @@ function TalentPresentation({ option, character }) {
   const { talent, held } = option;
   const stack = useCardStack();
   const art = useCodexArt()(talent.art);
+  /* Whether this set hands over a *menu* of bodies rather than one. A menu keeps
+     its cards off this page and shows the bodies themselves instead. */
+  const roster = minionKinds(minionOf(talent)).length > 0;
 
   return (
     <div className="talent-page">
@@ -536,7 +540,18 @@ function TalentPresentation({ option, character }) {
       </header>
 
       {TALENT_RANKS.map(({ rank, title, minLevel }) => {
-        const cards = cardsAtRank(talent, rank);
+        /* A roster's bodies keep their cards off this page for the same reason
+           they keep them off the Abilities tab: they belong to the creature. What
+           the rank shows instead is the bodies themselves, each a press behind a
+           block. See "and the bodies" in abilitySources.js, and MinionPreview. */
+        const cards = cardsAtRank(talent, rank).filter(
+          (card) => !roster || !isMinionCard(card)
+        );
+        const bodies = roster
+          ? minionKindRows(character, talent, { rank }).filter(
+              (row) => Math.max(1, Math.floor(Number(row.kind?.rank) || 1)) === rank
+            )
+          : [];
         /* The character rides along for the one ceiling that reads an attribute: a
            Runebearer's slate is half their Physique plus 4 a rank, and a preview
            worked out without them would under-report it. See capacityAt. */
@@ -546,6 +561,7 @@ function TalentPresentation({ option, character }) {
         const alchemy = alchemyPreview(talent, rank);
         if (
           cards.length === 0 &&
+          bodies.length === 0 &&
           !choice?.known &&
           !brewing?.tiers?.length &&
           !enchanting?.tiers?.length &&
@@ -577,6 +593,15 @@ function TalentPresentation({ option, character }) {
                 />
               ))}
             </div>
+
+            {/* And the bodies it opens, in place of their cards. */}
+            {bodies.length > 0 && (
+              <MinionPreview
+                bodies={bodies}
+                character={character}
+                lead={`${bodies.length === 1 ? 'The body' : `The ${bodies.length} bodies`} this rank opens, with what each one costs. Open one to read its stat block and everything it can do.`}
+              />
+            )}
 
             {/* What this rank leaves to you, with the pool one tap away. A set
                 that says "you learn two spells" should be readable as which

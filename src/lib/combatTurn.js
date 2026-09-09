@@ -110,6 +110,17 @@ export const EFFECT_NOTE_MAX = 400;
 /** As many turns as the tracker will offer to count. */
 export const TURNS_MAX = 99;
 
+/**
+ * How long a turn is, in seconds.
+ *
+ * The codex has always known this and never written it down: every duration in
+ * it is printed as "10 turns (1 minute)", which is six seconds a turn said sixty
+ * times over. It is a number now because a rest needs it — a Short Rest is an
+ * hour and a Long Rest eight, and an effect counted in turns is over long before
+ * either of them finishes. See `restEnds` in rest.js.
+ */
+export const TURN_SECONDS = 6;
+
 export function newEffectId() {
   return (
     globalThis.crypto?.randomUUID?.() ??

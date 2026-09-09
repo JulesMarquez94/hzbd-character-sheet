@@ -68,6 +68,11 @@ export default function CardBrief({
   onOpen,
   held = false,
   children = null,
+  /* `{ onStart, onEnd }` from a wall you can drag out of, or null. The brief
+     itself is what gets picked up rather than a handle on it, because the thing
+     being dragged is the card and there is nothing else in the box. Only the
+     loadout chooser hands this in: every other wall is read. */
+  drag = null,
 }) {
   const codexArt = useCodexArt();
 
@@ -93,7 +98,22 @@ export default function CardBrief({
   const cost = cardCost(card, modifiers);
 
   return (
-    <div className={`card-brief ac-kind-${card.kind ?? 'ability'}${held ? ' is-held' : ''}`}>
+    <div
+      className={`card-brief ac-kind-${card.kind ?? 'ability'}${held ? ' is-held' : ''}${
+        drag ? ' is-draggable' : ''
+      }`}
+      draggable={drag ? true : undefined}
+      onDragStart={
+        drag
+          ? (event) => {
+              event.dataTransfer.setData('text/plain', drag.id ?? card.id);
+              event.dataTransfer.effectAllowed = 'copy';
+              drag.onStart?.();
+            }
+          : undefined
+      }
+      onDragEnd={drag ? () => drag.onEnd?.() : undefined}
+    >
       <button
         type="button"
         className="card-brief-face"

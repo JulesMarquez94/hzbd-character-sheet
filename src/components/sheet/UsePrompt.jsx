@@ -98,6 +98,12 @@ import { costWords, halfPrice, halfRoom, secondHalf } from '../../lib/overcast.j
  * so the player knows what they are signing up for, and combatTurn.js goes on
  * tracking it as the running effect it is.
  *
+ * And one holder may take the offer away. A Runebearer fires the spell exactly
+ * as printed, so the pool lays `noHalf` on every rune and the control becomes a
+ * line saying which card closed it. Said rather than hidden: the card dealt
+ * beside the prompt still prints its Overcast in full, and a prompt that quietly
+ * skipped it would read as the sheet having missed it.
+ *
  * ------------------------------------------------------------ who did this to it
  * And under the two ways, **every source changing this card, and what each one
  * changed.** Jules, 2026-08-28, testing: "My finesse pact bound weapon as two
@@ -262,7 +268,15 @@ export default function UsePrompt({
      taken at all, which is where every use starts: the printed cost is the cost
      until the player says otherwise. */
   const half = useMemo(() => secondHalf(request.card), [request.card]);
-  const offer = half?.kind === 'option' ? half : null;
+  /* And whether whoever handed this card over will let it be taken. One does
+     not: a Runebearer fires the spell as printed, so `noHalf` rides on the pool
+     and the offer becomes a sentence saying who took it away. Refusing it
+     silently would read as a codex that had forgotten the Overcast, which is the
+     one thing the card in the corner would contradict. See loadoutModifiers in
+     loadouts.js. */
+  const barred = Boolean(request.modifiers?.noHalf);
+  const offer = half?.kind === 'option' && !barred ? half : null;
+  const refused = half?.kind === 'option' && barred ? half : null;
   const toll = half?.kind === 'toll' ? half : null;
   const [times, setTimes] = useState(0);
 
@@ -827,6 +841,10 @@ export default function UsePrompt({
               onTake={take}
             />
           )}
+
+          {/* And the same place, saying so, when the card offers one and this way
+              of casting it does not. */}
+          {refused && <HalfRefused half={refused} from={request.modifiers?.noHalfFrom} />}
 
           {/* What you can add to the swing, above the targets because a move can
               change who it reaches, and above the ways because the Willpower it
@@ -1530,6 +1548,46 @@ function HalfOffer({ half, step, times, room, base, onTake }) {
       )}
     </div>
   );
+}
+
+/**
+ * The same half, in the same place, when the way you are casting the card will
+ * not have it.
+ *
+ * One holder does that, and it is why this exists: a Runebearer fires the spell
+ * as printed, so RUNE ACTIVATION takes the Overcast off every rune. The control
+ * is replaced rather than dropped, because the card dealt beside this prompt is
+ * still printing its second half in full, and a prompt that simply did not
+ * mention it would read as the sheet having missed it.
+ *
+ * It wears the same colour the offer does, off the same glossary entry, so the
+ * refusal is visibly about the words on the card and not about the cast.
+ */
+function HalfRefused({ half, from = [] }) {
+  const keyword = getKeyword(half.name);
+  const who = Array.isArray(from) ? from.filter(Boolean) : [from].filter(Boolean);
+
+  return (
+    <div
+      className="use-half is-refused"
+      style={keyword ? { '--half-accent': keyword.color } : undefined}
+    >
+      <div className="use-half-take is-off" title={keyword?.detail}>
+        <span className="use-half-body">
+          <span className="use-half-name">{half.name}</span>
+          <span className="use-half-note">
+            Not open to you here{who.length > 0 ? `. ${namesOf(who)} casts it as printed` : ''}
+          </span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** "Rune Activation", "Rune Activation and Bound Edge". No Oxford comma. */
+function namesOf(words) {
+  if (words.length <= 1) return words[0] ?? '';
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
 /** Whether taking it adds to the printed cost or stands in for it. */

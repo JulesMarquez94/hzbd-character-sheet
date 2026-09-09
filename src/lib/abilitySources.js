@@ -39,9 +39,18 @@ import { getLineage, lineageCards } from './lineages.js';
 import { levelForXp } from './characterModel.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { loadoutOf, loadoutState, swapRests } from './loadouts.js';
-import { isMinionCard, minionKindRiders, minionModifiers, minionState } from './minions.js';
+import {
+  isMinionCard,
+  minionKindRiders,
+  minionKindRows,
+  minionKinds,
+  minionModifiers,
+  minionOf,
+  minionState,
+} from './minions.js';
 import { pactBoonRows, pactState } from './pact.js';
 import { cardsAtRank, getTalent, normalizeTalents, rankInfo } from './talents.js';
+import { commandRiders } from './undead.js';
 import { getCard, itemEnchantments } from './weapons.js';
 
 /* --------------------------------------------------------------- the parts */
@@ -87,6 +96,17 @@ function section(id, label, cards, note = null) {
 /** "spell" / "spells", the only plural rule this file needs. */
 function plural(noun, count) {
   return count === 1 ? noun : `${noun}s`;
+}
+
+/** A pick list with the second copy of anything dropped, first one kept. */
+function uniqueCards(picks) {
+  const seen = new Set();
+  return (picks ?? []).filter((pick) => {
+    const id = pick.card?.id ?? pick.id;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
 }
 
 /** "3, 5 and 7". No Oxford comma, per the house voice. */
@@ -281,26 +301,71 @@ function talentSources(character) {
        minionKindRiders in minions.js. */
     const kinds = minionKindRiders(character, talent);
 
-    /** The rider a card is read with here: its body's, or its reader's. */
+    /* And the one card in the codex whose Action Point cost is worked out rather
+       than printed: COMMAND THE DEAD, at 1 per 4 Marrow standing. Keyed by card
+       id, and empty for every set that does not keep an Ossuary. The rider lands
+       here because this is where the quick bar reads its cards from as well (see
+       `rowsOf` in combatBar.js), so the chip, the prompt and the dealt card all
+       print one number. See `commandRiders` in undead.js. */
+    const commands = commandRiders(character, talent.id);
+
+    /** The rider a card is read with here: its body's, its own, or its reader's. */
     const riderFor = (card) => {
+      if (commands[card.id]) return commands[card.id];
       for (const tag of card.tags ?? []) {
         if (kinds[tag]) return kinds[tag];
       }
       return riders && isMinionCard(card) ? riders : null;
     };
 
+    /* ---- and the bodies, which are not cards ----
+       "You should not see the minion's ability. Instead you should have a preview
+       minion menu at each rank that gives you a pop up that shows the blocks like
+       in the bestiary" (Jules, 2026-09-09).
+
+       A Necromancer at Master holds six cards of their own and *sixteen* belonging
+       to seven bodies, and every one of those sixteen was a brief in this block
+       and a chip on the quick bar filter. None of them is a thing the character
+       can do: a Bone Bow is something a skeleton does, and it is already on the
+       skeleton's own block with the skeleton's own numbers on it.
+
+       So they come off the rank list and the rank keeps a *body* instead — the
+       kinds that rung opened, each one a press that draws the creature as the two
+       blocks it would stand up as. Which is what the bestiary already does with a
+       creature, and the same two blocks. See `bodiesAt` and MinionPreview.
+
+       A set with one body keeps its cards exactly where they were. The split is
+       worth drawing: a Draconic Bond's ally is *the* creature the set is about,
+       its four cards are half of what the set is, and there is nothing to preview
+       because the thing itself is on the Character tab already. A roster is a
+       menu, and a menu of stat blocks is what wanted a door rather than a list. */
+    const roster = minionKinds(minionOf(talent));
+    const previews = roster.length > 0;
+    const bodiesAt = (rank) =>
+      previews
+        ? minionKindRows(character, talent, { rank }).filter(
+            (row) => Math.max(1, Math.floor(Number(row.kind?.rank) || 1)) === rank
+          )
+        : [];
+
     const sections = [];
     for (let rank = 1; rank <= held.rank; rank += 1) {
-      const cards = cardsAtRank(talent, rank);
-      if (cards.length === 0) continue;
+      /* A roster's bodies keep their cards off this list: they belong to the
+          creature and not to its keeper. See "and the bodies" above. */
+      const cards = cardsAtRank(talent, rank).filter(
+        (card) => !previews || !isMinionCard(card)
+      );
+      const bodies = bodiesAt(rank);
+      if (cards.length === 0 && bodies.length === 0) continue;
       const title = rankInfo(rank)?.title;
-      sections.push(
-        section(
+      sections.push({
+        ...section(
           `rank-${rank}`,
           `Rank ${rank}${title ? ` · ${title}` : ''}`,
           cards.map((card) => entry(card, riderFor(card)))
-        )
-      );
+        ),
+        ...(bodies.length > 0 ? { bodies } : {}),
+      });
     }
 
     const info = rankInfo(held.rank);
@@ -354,7 +419,15 @@ function talentSources(character) {
                  own. A Mycomancer's hand is prepared and a Runebearer's slate is not:
                  it is what is cut into them. */
               loadout.spec.section ?? `Prepared ${plural(loadout.spec.noun, loadout.known)}`,
-              loadout.picks
+              /* One row per **card**, not per pick, because a pool may now hold
+                 the same card twice: a Runebearer with two Fire Seeds has one
+                 spell listed here and two firings, and the count is what the
+                 tracker draws on the chip (see `runeLimit` in runes.js). Two
+                 identical rows would be two of everything downstream, from the
+                 quick bar's key to the wall of briefs. The copies are counted
+                 where they are a decision: the slate's own block and the
+                 chooser's column. */
+              uniqueCards(loadout.picks)
                 .filter((pick) => pick.card)
                 .map((pick) => entry(pick.card, pick.modifiers)),
               `${loadout.picks.length} of ${loadout.library ? loadout.capacity : loadout.known} ${

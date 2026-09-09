@@ -167,7 +167,12 @@ export default function AbilitiesTab({ character, patch, readOnly = false }) {
         )}
 
         {/* Pinned to the window rather than laid on the tab. See BlockTrays. */}
-        <BlockTrays trays={trays} render={trayed} describe={describe} />
+        <BlockTrays
+          trays={trays}
+          render={trayed}
+          describe={describe}
+          scope={`abilities:${character?.id ?? 'anon'}`}
+        />
 
         {sources.length > 0 && (
           <TagFilter

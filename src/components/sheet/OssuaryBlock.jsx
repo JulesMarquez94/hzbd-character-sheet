@@ -7,7 +7,7 @@ import { useCardStack } from '../../context/card-stack.js';
 import { cardCost } from '../../lib/cardText.js';
 import { shortName } from '../../lib/combatBar.js';
 import { dropMinion, minionState } from '../../lib/minions.js';
-import { commandOf, commanded, undeadOffers } from '../../lib/undead.js';
+import { commandOf, commandRiders, commanded, undeadOffers } from '../../lib/undead.js';
 import { usePlayCard } from './usePlayCard.js';
 
 /**
@@ -19,10 +19,13 @@ import { usePlayCard } from './usePlayCard.js';
  *                 resource bar, because it is a pool like any other.
  *   the risen     every body it is holding, what each one cost, and the one press
  *                 that lets one go. A destroyed body is still in here until it is
- *                 laid to rest or a Long Rest sweeps it up, which is what THE
- *                 OSSUARY says and is why the Marrow reads the way it does.
- *   the Command   the two Action Points that turn a row of standing corpses into
- *                 a fight, and whether they have been spent this turn.
+ *                 laid to rest or a Long Rest sweeps it up — its Marrow came back
+ *                 the moment it fell and its Willpower did not, which is the one
+ *                 place on this sheet where two costs of one thing end at
+ *                 different times. See "a body that fell" in undead.js.
+ *   the Command   the Action Points that turn a row of standing corpses into a
+ *                 fight, and whether they have been spent this turn. One per four
+ *                 Marrow standing, so the price is on the card rather than in it.
  *
  * ------------------------------------------------------------------- one block
  * A body gets two blocks of its own, because it has a stat block and a turn to
@@ -47,7 +50,11 @@ export default function OssuaryBlock({ character, state, patch, readOnly = false
   const stack = useCardStack();
   const play = usePlayCard({ character, patch });
 
-  const { spec, total, spent, left, over, burden, owed, bodies } = state;
+  const { spec, total, spent, left, over, perMarrow, owed, wrecked, bodies, wrecks } = state;
+  /* Everything still on its feet, which is what the Command wakes and what every
+     line below counts. A wreck is in `bodies` and in the list, because it is
+     still holding Willpower and still has to be buried. */
+  const up = bodies.length - wrecks.length;
 
   /* The bodies as the sheet knows them, so this block can say which of them is
      broken. This file may read both; undead.js may not read either (see the note
@@ -59,9 +66,15 @@ export default function OssuaryBlock({ character, state, patch, readOnly = false
   const card = commandOf(state);
   const woken = commanded(character, state);
 
+  /* What the press costs, off the Marrow in use rather than off the card. Read
+     through the same rider the quick bar and the Abilities tab read it through,
+     so the three of them can never print three different numbers. See
+     `commandRiders` in undead.js. */
+  const riders = commandRiders(character, state.id)[card?.id] ?? null;
+  const cost = cardCost(card, riders);
+
   function command() {
     if (!card) return;
-    const cost = cardCost(card, null);
 
     setRequest({
       name: shortName(card),
@@ -69,10 +82,11 @@ export default function OssuaryBlock({ character, state, patch, readOnly = false
       ap: cost.ap,
       wp: cost.wp,
       card,
+      modifiers: riders,
       note:
-        bodies.length === 0
-          ? 'Nothing raised yet, so nothing to wake.'
-          : `${bodies.length} ${bodies.length === 1 ? 'body' : 'bodies'} can act until your Turn End.`,
+        up === 0
+          ? 'Nothing standing, so nothing to wake.'
+          : `${up} ${up === 1 ? 'body' : 'bodies'} can act until your Turn End, at 1 Action Point for every 4 Marrow standing.`,
     });
   }
 
@@ -139,7 +153,15 @@ export default function OssuaryBlock({ character, state, patch, readOnly = false
       {owed > 0 && (
         <p className="ossuary-debt">
           <b>{owed} Willpower</b> of your maximum is in {bodies.length === 1 ? 'it' : 'them'}, at{' '}
-          {burden} a body, and it comes back with any body you lay to rest.
+          {perMarrow} for every {spec.resource ?? 'Marrow'} spent, and it comes back with any body
+          you lay to rest.
+          {wrecked > 0 && (
+            <>
+              {' '}
+              {wrecked} of it is in {wrecks.length === 1 ? 'a wreck' : `${wrecks.length} wrecks`},
+              whose {spec.resource ?? 'Marrow'} you already have back.
+            </>
+          )}
         </p>
       )}
 
@@ -158,11 +180,11 @@ export default function OssuaryBlock({ character, state, patch, readOnly = false
             title={
               woken
                 ? `Already commanded. They can act until your Turn End`
-                : `Wake ${bodies.length === 1 ? 'it' : 'them'} for the turn`
+                : `Wake ${up === 1 ? 'it' : 'them'} for the turn. ${cost.ap} Action ${cost.ap === 1 ? 'Point' : 'Points'} for ${spent} ${spec.resource ?? 'Marrow'} standing`
             }
           >
             <span className="use-row-name">{shortName(card)}</span>
-            <CostOrbs ap={card.ap} wp={card.wp} size={19} className="use-row-costs" />
+            <CostOrbs ap={cost.ap} wp={cost.wp} size={19} className="use-row-costs" />
           </button>
 
           <InfoButton onClick={() => stack?.openCard(card)} label={`${card.name} card`} />
@@ -170,11 +192,11 @@ export default function OssuaryBlock({ character, state, patch, readOnly = false
       )}
 
       <p className="ossuary-foot">
-        {bodies.length === 0
-          ? 'Nothing to command yet.'
+        {up === 0
+          ? 'Nothing standing to command.'
           : woken
-            ? `Commanded. ${bodies.length === 1 ? 'It acts' : 'They act'} on your turn until your Turn End.`
-            : `Not commanded. ${bodies.length === 1 ? 'It stands' : 'They stand'} where ${bodies.length === 1 ? 'it is' : 'they are'} and does nothing.`}
+            ? `Commanded. ${up === 1 ? 'It acts' : 'They act'} on your turn until your Turn End.`
+            : `Not commanded. ${up === 1 ? 'It stands' : 'They stand'} where ${up === 1 ? 'it is' : 'they are'} and does nothing.`}
       </p>
 
       {request && (
@@ -215,11 +237,17 @@ function BodyRow({ body, row, spec, readOnly, onRest }) {
   }
 
   return (
-    <div className={`ossuary-row${row?.down ? ' is-down' : ''}`}>
+    <div className={`ossuary-row${body.down ? ' is-down' : ''}`}>
       <span className="ossuary-row-body">
         <span className="ossuary-row-name">{name}</span>
         <span className="ossuary-row-note">
-          {label} · {body.cost} {spec.resource ?? 'Marrow'}
+          {/* A wreck reads its Willpower where a standing body reads its Marrow,
+              because the wreck has already given the Marrow back and the
+              Willpower is the only thing it is still costing. */}
+          {label} ·{' '}
+          {body.down
+            ? `${body.willpower} Willpower`
+            : `${body.cost} ${spec.resource ?? 'Marrow'}`}
           {row ? (row.down ? ' · Destroyed' : ` · ${row.health} of ${row.stats.health_max}`) : ''}
         </span>
       </span>
@@ -239,7 +267,11 @@ function BodyRow({ body, row, spec, readOnly, onRest }) {
             type="button"
             className="rest-opt"
             onClick={() => setAsking(true)}
-            title={`Lay ${name} to rest. ${body.cost} ${spec.resource ?? 'Marrow'} comes back, and it is gone for good`}
+            title={
+              body.down
+                ? `Bury ${name}. Its ${spec.resource ?? 'Marrow'} is already back; this is the ${body.willpower} maximum Willpower`
+                : `Lay ${name} to rest. ${body.cost} ${spec.resource ?? 'Marrow'} and ${body.willpower} maximum Willpower come back, and it is gone for good`
+            }
           >
             {row?.down ? 'Bury it' : 'Lay to rest'}
           </button>

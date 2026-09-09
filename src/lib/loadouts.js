@@ -41,6 +41,19 @@
  * The difference the code actually turns on is **capacity against allowance**.
  * A hand has one number and they are the same. A library has two: what it could
  * hold one day, and what it may hold tonight. See `allowanceAt`.
+ *
+ * -------------------------------------------------------- and one more axis
+ * Every pool before 2026-09-09 held each card at most once, and nothing said so
+ * out loud: the stored picks were deduped on the way in and the chooser toggled.
+ * A Runebearer may inscribe the same spell twice, and each copy is its own
+ * one-shot ("each beings it on 1 time use instance", Jules), so a spec may carry
+ * `repeat: true` and everything that counts picks counts *copies* instead.
+ *
+ * It is orthogonal to the two shapes above: a hand or a library may repeat, and
+ * a pool that does not carry the flag behaves exactly as it always did, down to
+ * the dedupe in `normalizeTalents`. What changes for a repeating pool is only
+ * this: a tap is an add rather than a toggle, taking one back drops one copy,
+ * and the count on the wall says how many are on you. See `allowsRepeat`.
  */
 
 import { sourceRow } from './attribution.js';
@@ -144,6 +157,29 @@ export function isLibrary(spec) {
  */
 export function isWhole(spec) {
   return Boolean(spec?.all);
+}
+
+/**
+ * Whether the same card may be held more than once.
+ *
+ * The Runebearer's, and the reason it exists: a rune fires once and a second
+ * copy of the same rune is a second firing, so "no spell can be inscribed twice"
+ * was dropped on 2026-09-09. Every other pool holds each card at most once, and
+ * for those this is false and nothing below it changes.
+ *
+ * Read in three places, and they are the whole of it: `normalizeTalents` keeps
+ * duplicates instead of deduping them, `toggleLoadoutPick` adds instead of
+ * toggling, and the chooser counts copies rather than asking whether a card is
+ * in the list. A whole pool can never repeat: it *is* the codex, and a codex
+ * cannot hold a card twice.
+ */
+export function allowsRepeat(spec) {
+  return Boolean(spec?.repeat) && !isWhole(spec);
+}
+
+/** How many copies of one card a list of picks holds. */
+export function copiesOf(picks, cardId) {
+  return (picks ?? []).filter((id) => id === cardId).length;
 }
 
 /**
@@ -382,6 +418,23 @@ export function loadoutModifiers(spec, rank) {
     riders.costFrom = [price.from ?? spec.label];
   }
 
+  /* And the fourth thing a pool can do to a card, which is to take something off
+     it: `halves: false` refuses the optional second half.
+
+     The Runebearer's, and Jules's reversal of his own 2026-09-08 ruling
+     ("Simply make it that Runebearer cannot overcast, multicast of other
+     keywords", 2026-09-09). A rune fires as printed and nothing more. It rides
+     on the pool rather than on the cards, exactly as the price does, because the
+     same spell out of a spellbook is Overcast as freely as it ever was: the
+     refusal belongs to the slate it is inscribed on.
+
+     `noHalfFrom` is what the prompt credits, so the one place the option used to
+     be says who took it away rather than quietly printing one fewer control. */
+  if (spec?.halves === false && rank > 0) {
+    riders.noHalf = true;
+    riders.noHalfFrom = [spec.halvesFrom ?? spec.label];
+  }
+
   if (sources.length > 0) riders.sources = sources;
 
   return Object.keys(riders).length > 0 ? riders : null;
@@ -431,7 +484,7 @@ export function loadoutOptions({ talent, rank, picks }) {
   const spec = loadoutOf(talent);
   if (!spec) return [];
 
-  const held = new Set(picks ?? []);
+  const held = picks ?? [];
   const legalTiers = tiersAt(spec, rank);
   const modifiers = loadoutModifiers(spec, rank);
 
@@ -440,8 +493,12 @@ export function loadoutOptions({ talent, rank, picks }) {
       const tier = tierOf(card);
       const school = schoolOf(card);
       const sub = subSchoolOf(card);
-      const known = held.has(card.id);
-      const row = { card, tier, school, sub, known, modifiers };
+      /* How many are held, and whether any is. `known` was the only one of these
+         until a pool could hold two of the same card; it stays a boolean because
+         every wall, every count and every refusal downstream reads it as one. */
+      const copies = copiesOf(held, card.id);
+      const known = copies > 0;
+      const row = { card, tier, school, sub, known, copies, modifiers };
 
       /* Every gate in one place, so the chooser's reasons and a whole pool's
          count can never disagree about what is legal. The stand-in gate among
@@ -522,7 +579,14 @@ export function loadoutState(
   if (isWhole(spec)) {
     const modifiers = loadoutModifiers(spec, rank);
     const cards = wholePool(spec, rank);
-    const picks = cards.map((card) => ({ id: card.id, card, ok: true, modifiers }));
+    const picks = cards.map((card) => ({
+      id: card.id,
+      key: card.id,
+      copy: 1,
+      card,
+      ok: true,
+      modifiers,
+    }));
 
     return {
       spec,
@@ -532,6 +596,7 @@ export function loadoutState(
       capacity: picks.length,
       library: false,
       whole: true,
+      repeat: false,
       full: true,
       chosen: picks.length,
       remaining: 0,
@@ -550,12 +615,25 @@ export function loadoutState(
   // deleting somebody's spell is worse than showing one they have to fix.
   const legal = new Set(options.filter((option) => option.ok).map((option) => option.card.id));
   const modifiers = loadoutModifiers(spec, rank);
-  const picks = (entry?.picks ?? []).map((id) => ({
-    id,
-    card: options.find((option) => option.card.id === id)?.card ?? null,
-    ok: legal.has(id),
-    modifiers,
-  }));
+  /* `key` rather than `id` is what a list renders against, because a repeating
+     pool holds two rows wearing one id and React would key both the same. It is
+     the id and which copy this is, which is stable for as long as the list is:
+     dropping the first of two Fire Seeds renumbers the second, and that is the
+     same renumbering the list itself just did. */
+  const seen = new Map();
+  const picks = (entry?.picks ?? []).map((id) => {
+    const copy = (seen.get(id) ?? 0) + 1;
+    seen.set(id, copy);
+
+    return {
+      id,
+      key: copy > 1 ? `${id}#${copy}` : id,
+      copy,
+      card: options.find((option) => option.card.id === id)?.card ?? null,
+      ok: legal.has(id),
+      modifiers,
+    };
+  });
 
   /* The two numbers, and for a hand they are the same one twice. `known` is
      what the chooser is capped at and what every "3 of 4 chosen" line counts
@@ -587,6 +665,9 @@ export function loadoutState(
     capacity,
     library: isLibrary(spec),
     whole: false,
+    /* Whether one card may be held twice, so a chooser knows a tap on something
+       already held is another copy rather than giving it back. */
+    repeat: allowsRepeat(spec),
     /* Whether there is any room left at all, which is what turns the rest window's
        line from "adds one more" into "replaces one already written". */
     full: isLibrary(spec) && picks.length >= capacity,
@@ -603,13 +684,37 @@ export function loadoutState(
 /**
  * Take or give back one card, capped at what the rank knows. At the cap the
  * oldest pick gives way, so a full hand is one tap to change rather than two.
+ *
+ * `how` is which of the three a gesture meant, and all three are honoured by
+ * every pool:
+ *
+ *   toggle   in the list, take it out; out of it, put it in. What a tap on a
+ *            wall has always been, and still the default.
+ *   add      have it. One more copy where the pool allows copies, and nothing at
+ *            all where it does not and one is already held.
+ *   drop     one copy back, the newest of them. The newest rather than the
+ *            oldest because it is the one the last tap put on: taking back what
+ *            you just did should undo what you just did.
+ *
+ * The two new ones exist because a drag has a direction and a tap does not.
+ * Dropping a card on the column means *have this*, and if it were read as a
+ * toggle then dragging something you already held would quietly take it off,
+ * which is the opposite of what the gesture looks like.
  */
-export function toggleLoadoutPick(talents, talentId, cardId, known) {
+export function toggleLoadoutPick(talents, talentId, cardId, known, how = 'toggle') {
   const picks = heldPicks(talents, talentId);
+  const repeat = allowsRepeat(loadoutOf(getTalent(talentId)));
+  const held = picks.includes(cardId);
 
-  if (picks.includes(cardId)) {
-    return setTalentPicks(talents, talentId, picks.filter((id) => id !== cardId));
+  if (how === 'drop' || (how === 'toggle' && held)) {
+    const at = picks.lastIndexOf(cardId);
+    if (at < 0) return talents;
+    return setTalentPicks(talents, talentId, picks.filter((_, i) => i !== at));
   }
+
+  // Already have it, and this pool holds one of each. Nothing to do.
+  if (how === 'add' && held && !repeat) return talents;
+
   // A rank that knows nothing takes nothing — without this, "replace the
   // oldest" below would happily store a pick into an empty allowance.
   if (!(Number(known) > 0)) return talents;
@@ -642,10 +747,16 @@ export function poolAction(state) {
   if (whole) return `Read your ${spec.label.toLowerCase()}`;
 
   if (owed > 0) {
-    return `${library ? 'Write in' : 'Choose'} ${owed} more ${plural(spec.noun, owed)}`;
+    /* In the pool's own verb where it has one. "Write in 2 more runes" is the
+       Arcanist's sentence on a set whose whole idea is that nothing is written
+       down: a Runebearer inscribes them. Same field the rest window and the
+       chooser already read, and every pool without one keeps the words it had.
+       See `verb` in talents.js. */
+    const verb = library ? (spec.verb ?? 'Write in') : 'Choose';
+    return `${verb} ${owed} more ${plural(spec.noun, owed)}`;
   }
   return library
-    ? `Open your ${spec.label.toLowerCase()}`
+    ? `Open ${spec.holds ?? `your ${spec.label.toLowerCase()}`}`
     : `Change your ${plural(spec.noun, 2)}`;
 }
 
@@ -782,6 +893,31 @@ function nameOfCard(id) {
 }
 
 /**
+ * What one list holds that the other does not, named, with a count on anything
+ * held more than once: `['Barkskin', 'Fire Seed x2']`.
+ *
+ * A multiset difference, in the codex's own order. "x2" is the spelling
+ * `brewSummary` and the alchemy rack already use for a line of prose; the chips
+ * on the sheet write it "×2", and neither is a place the other belongs.
+ */
+function movedPicks(from, against) {
+  const left = new Map();
+  for (const id of against) left.set(id, (left.get(id) ?? 0) + 1);
+
+  const moved = new Map();
+  for (const id of from) {
+    const spare = left.get(id) ?? 0;
+    if (spare > 0) {
+      left.set(id, spare - 1);
+      continue;
+    }
+    moved.set(id, (moved.get(id) ?? 0) + 1);
+  }
+
+  return [...moved].map(([id, count]) => (count > 1 ? `${nameOfCard(id)} x${count}` : nameOfCard(id)));
+}
+
+/**
  * What changed between two talent records, set by set — named rather than
  * counted, because "Bramble Whip put down, Spore Cloud taken up" is what the
  * player is about to agree to, and "2 changed" is not.
@@ -798,18 +934,17 @@ export function pickChanges(before, after) {
     const spec = loadoutOf(talent);
     if (!spec) continue;
 
-    const held = entry.picks ?? [];
-    const previous = was.get(entry.id) ?? [];
-    const dropped = previous.filter((id) => !held.includes(id));
-    const learned = held.filter((id) => !previous.includes(id));
+    /* Counted rather than compared with `includes`, because a pool that may hold
+       the same card twice can move without either list changing: inscribing a
+       second Fire Seed over a first is a night's work, and a diff that asked
+       "was Fire Seed there before" would call it no change at all and save
+       nothing. Every other pool holds one of each, where a count of 1 against a
+       count of 0 is the same answer `includes` gave. */
+    const dropped = movedPicks(was.get(entry.id) ?? [], entry.picks ?? []);
+    const learned = movedPicks(entry.picks ?? [], was.get(entry.id) ?? []);
     if (dropped.length === 0 && learned.length === 0) continue;
 
-    rows.push({
-      talent,
-      spec,
-      dropped: dropped.map(nameOfCard),
-      learned: learned.map(nameOfCard),
-    });
+    rows.push({ talent, spec, dropped, learned });
   }
 
   return rows;

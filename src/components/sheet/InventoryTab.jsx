@@ -233,6 +233,7 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
           trays={trays}
           render={(id) => blocks[id]}
           describe={(id) => ({ name: labelOf(id), note: null })}
+          scope={`inventory:${character?.id ?? 'anon'}`}
         />
 
         <div className="sheet-grid-6">

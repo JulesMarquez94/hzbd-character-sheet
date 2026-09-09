@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import CardBrief from './CardBrief.jsx';
+import CostOrbs from '../CostOrbs.jsx';
 import Modal from '../Modal.jsx';
 import TagFilter from './TagFilter.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { poolTags, useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { cardHaystack } from '../../lib/abilitySources.js';
+import { cardCost } from '../../lib/cardText.js';
 import { compareWords } from '../../lib/cardOrder.js';
 import { levelForXp } from '../../lib/characterModel.js';
 import {
@@ -158,8 +160,8 @@ export default function LoadoutSection({
           character={character}
           state={state}
           readOnly={readOnly}
-          onToggle={(cardId) =>
-            patch({ talents: toggleLoadoutPick(talents, talent.id, cardId, known) })
+          onToggle={(cardId, how) =>
+            patch({ talents: toggleLoadoutPick(talents, talent.id, cardId, known, how) })
           }
           onClear={() => patch({ talents: setTalentPicks(talents, talent.id, []) })}
           onClose={() => setChoosing(false)}
@@ -172,13 +174,48 @@ export default function LoadoutSection({
 /* --------------------------------------------------------------- chooser */
 
 /**
- * The pool as a wall of briefs: what each one costs, what it deals and the
- * first thing it does, with the card itself dealt onto the stack when one is
- * tapped. Thirty spells printed at their real size is a wall you scroll past
- * rather than a pool you choose from.
+ * The pool, in two panes: the wall you choose from, and the column of what you
+ * have chosen.
+ *
+ * ------------------------------------------------------------- the two panes
+ * Asked for directly (Jules, 2026-09-09): "I want the screen split in 2 third is
+ * the list with filter and on the right there is the selected one in a column.
+ * So you select (over even drag and drop them) to that column. Or remove the
+ * from there."
+ *
+ * It replaces a single wall where what you held was said by a word on a button
+ * and a number in the footer. Choosing four spells out of a hundred and forty
+ * meant scrolling back up the wall to find out what you already had, and giving
+ * one back meant finding it again among the hundred and forty. The column is the
+ * answer to both: what is on you is always on screen, in the order it is stored,
+ * and the × beside a row is the only place you ever have to look to take one off.
+ *
+ *   the wall    two thirds, and everything it always was: the lead, the filter
+ *               and the briefs, cut into sections by whatever the spec groups on.
+ *   the column  one third, sticky, listing what is held with a cost, a card and
+ *               an ×. It is also a drop target.
+ *
+ * Under 900px they stack and the column goes **first**, which is the one thing
+ * that is not simply the desktop layout narrowed: on a phone the wall is a
+ * hundred rows long, and a column underneath it is a column nobody will ever
+ * see. That is the same break the Cauldron, the Enchanter and the effect tracker
+ * share (see dialog widths in the CSS).
+ *
+ * -------------------------------------------------------------- drag and drop
+ * A brief can be dragged into the column and a row can be dragged out of it,
+ * which is the "over even drag and drop them" half of the ask. It is deliberately
+ * the *second* way to do both: every tap still works, drag is a shortcut for
+ * people who reach for it, and nothing about the dialog needs a pointer that can
+ * hold something. Touch devices get the taps, which is the whole reason the
+ * buttons were not replaced.
  */
 export function LoadoutChooser({ talent, character, state, readOnly, onToggle, onClear, onClose }) {
   const { spec, options, known, rank, remaining, owed, tiers, library, capacity, full } = state;
+  /* What is being dragged and where from, so both panes can light up as targets.
+     The payload rides in `dataTransfer` as well, because that is what a drop
+     outside this dialog would read, but a dragover cannot see it: only the drop
+     can. So the state is what the styling and the guards read. */
+  const [dragging, setDragging] = useState(null);
 
   /* Which window this is, read off the state rather than passed in. Only a rest
      caps a library below its ceiling, so a library whose allowance is short of its
@@ -209,6 +246,42 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
      another school's and no rank opens it, so counting it here would promise a
      Mycomancer thirty-four Elemental spells that are never coming. */
   const later = options.filter((option) => option.gate === 'tier' && option.tier).length;
+
+  /* Whether one card may be held twice. Only the Runebearer says yes, and it
+     changes three things in here: a tap on something already held is another
+     copy, the wall counts copies instead of saying "known", and a line above the
+     panes says so before anybody has to work it out from a button. */
+  const repeat = Boolean(state.repeat);
+  const verb = spec.verb ?? 'Learn';
+
+  /* Both directions of a drag, and both are just the tap they shadow: dropping a
+     brief on the column is the button under it, and dropping a row on the wall is
+     the × beside it. Guarded by where the drag started, so letting go of a held
+     row over the column (or a brief over the wall) does nothing rather than
+     something surprising. */
+  function take(cardId) {
+    if (readOnly) return;
+    onToggle(cardId, 'add');
+  }
+
+  function give(cardId) {
+    if (readOnly) return;
+    onToggle(cardId, 'drop');
+  }
+
+  function onDropHeld(event) {
+    event.preventDefault();
+    const id = dragging?.from === 'wall' ? dragging.id : null;
+    setDragging(null);
+    if (id) take(id);
+  }
+
+  function onDropWall(event) {
+    event.preventDefault();
+    const id = dragging?.from === 'held' ? dragging.id : null;
+    setDragging(null);
+    if (id) give(id);
+  }
 
   return (
     <Modal
@@ -262,70 +335,239 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
         )}
       </p>
 
-      {/* Both lines used to name the school outright, which reads as a hole in a
-          sentence for a pool that has none: a Martial Move belongs to no school
-          and the tier is all that sorts it. So the school is said when there is
-          one and left out when there is not. */}
-      {offered.length === 0 ? (
-        <p className="pick-notice is-warning">
-          This build&rsquo;s codex holds no {spec.school ? `${spec.school} ` : ''}
-          {plural(spec.noun, 2)} this rank can take yet. Add them to the codex and they appear here
-          on their own.
+      {/* The one thing said above both panes, because it is true of the whole
+          dialog rather than of either half: this pool may hold the same card
+          twice. The spec may write the sentence itself, since a rune fires and a
+          Martial Move would not. */}
+      {repeat && (
+        <p className="pick-line pool-repeat">
+          {spec.repeatNote ??
+            `The same ${spec.noun} can be ${kept(spec)} more than once. Each copy is its own single use.`}
         </p>
-      ) : (
-        later > 0 && (
-          <p className="pick-line">
-            {later} more {plural(spec.noun, later)} {spec.school ? 'in this school' : 'in the codex'}{' '}
-            {later === 1 ? 'is' : 'are'} held back for higher ranks.
-          </p>
-        )
       )}
 
-      <TagFilter
-        filter={filter}
-        count={visible.length}
-        noun={spec.noun}
-        placeholder={`Search ${spec.label.toLowerCase()}`}
-      />
+      <div className="pool-split">
+        {/* ---------- THE WALL ----------
+            Two thirds, and everything the dialog used to be. It is also where a
+            row dragged out of the column lands, which is the same gesture as
+            tapping the × on it. */}
+        <div
+          className={`pool-shelf${dragging?.from === 'held' ? ' is-target' : ''}`}
+          onDragOver={(event) => dragging?.from === 'held' && event.preventDefault()}
+          onDrop={onDropWall}
+        >
+          {/* Both lines used to name the school outright, which reads as a hole in
+              a sentence for a pool that has none: a Martial Move belongs to no
+              school and the tier is all that sorts it. So the school is said when
+              there is one and left out when there is not. */}
+          {offered.length === 0 ? (
+            <p className="pick-notice is-warning">
+              This build&rsquo;s codex holds no {spec.school ? `${spec.school} ` : ''}
+              {plural(spec.noun, 2)} this rank can take yet. Add them to the codex and they appear
+              here on their own.
+            </p>
+          ) : (
+            later > 0 && (
+              <p className="pick-line">
+                {later} more {plural(spec.noun, later)}{' '}
+                {spec.school ? 'in this school' : 'in the codex'}{' '}
+                {later === 1 ? 'is' : 'are'} held back for higher ranks.
+              </p>
+            )
+          )}
 
-      <PoolWall
-        options={visible}
-        noun={spec.noun}
-        character={character}
-        group={spec.group}
-        action={(option) =>
-          !readOnly && (
-            <button
-              type="button"
-              className={`btn btn-sm card-brief-btn ${
-                option.known ? 'btn-minimal talent-drop' : 'btn-take'
-              }`}
-              /* The wall is cut to what the rank can take, so the only refusal
-                 that reaches it is a stored pick the rank has since lost. That
-                 one still says why on hover, the way the block says it above.
+          <TagFilter
+            filter={filter}
+            count={visible.length}
+            noun={spec.noun}
+            placeholder={`Search ${spec.label.toLowerCase()}`}
+          />
 
-                 And when there is no room left, what taking this one costs, which
-                 is the sentence "replace the oldest" never had. */
-              title={
-                !option.ok
-                  ? option.reason
-                  : !option.known && pushed
-                    ? `No room for another. Taking this one puts ${nameOfPick(pushed)} out, which is the oldest thing in your ${spec.label.toLowerCase()}.`
-                    : undefined
-              }
-              onClick={() => onToggle(option.card.id)}
-            >
-              {option.known
-                ? 'Known, give it back'
-                : pushed
-                  ? `Learn it · ${nameOfPick(pushed)} goes`
-                  : `Learn this ${spec.noun}`}
-            </button>
-          )
-        }
-      />
+          <PoolWall
+            options={visible}
+            noun={spec.noun}
+            character={character}
+            group={spec.group}
+            /* Dragged by the card rather than by a handle, and only when there is
+               somewhere for it to go. A read-only chooser drags nothing. */
+            drag={
+              readOnly
+                ? null
+                : (option) => ({
+                    id: option.card.id,
+                    onStart: () => setDragging({ from: 'wall', id: option.card.id }),
+                    onEnd: () => setDragging(null),
+                  })
+            }
+            action={(option) =>
+              !readOnly && (
+                <button
+                  type="button"
+                  className={`btn btn-sm card-brief-btn ${
+                    option.known && !repeat ? 'btn-minimal talent-drop' : 'btn-take'
+                  }`}
+                  /* The wall is cut to what the rank can take, so the only refusal
+                     that reaches it is a stored pick the rank has since lost. That
+                     one still says why on hover, the way the block says it above.
+
+                     And when there is no room left, what taking this one costs,
+                     which is the sentence "replace the oldest" never had. */
+                  title={
+                    !option.ok
+                      ? option.reason
+                      : (repeat || !option.known) && pushed
+                        ? `No room for another. Taking this one puts ${nameOfPick(pushed)} out, which is the oldest thing in your ${spec.label.toLowerCase()}.`
+                        : undefined
+                  }
+                  onClick={() => (option.known && !repeat ? give(option.card.id) : take(option.card.id))}
+                >
+                  {/* A repeating pool never says "known, give it back", because
+                      another copy is the likelier thing to want from the wall and
+                      the column beside it is where one is given back. */}
+                  {repeat
+                    ? option.copies > 0
+                      ? `${verb} another · ${option.copies} on you`
+                      : `${verb} this ${spec.noun}`
+                    : option.known
+                      ? 'Known, give it back'
+                      : pushed
+                        ? `Learn it · ${nameOfPick(pushed)} goes`
+                        : `Learn this ${spec.noun}`}
+                </button>
+              )
+            }
+          />
+        </div>
+
+        {/* ---------- WHAT YOU HOLD ----------
+            One third, and the half of this dialog that did not exist before: the
+            picks, in the order they are stored, each with the card behind it and
+            an × to take it off. Sticky, so it stays beside the wall however far
+            down the wall you are. */}
+        <aside
+          className={`pool-held${dragging?.from === 'wall' ? ' is-target' : ''}`}
+          onDragOver={(event) => dragging?.from === 'wall' && event.preventDefault()}
+          onDrop={onDropHeld}
+        >
+          <div className="pool-held-head">
+            <span className="stat-category-label">{heldTitle(spec, library)}</span>
+            <span className={`pick-count${remaining ? ' is-open' : ''}`}>
+              {state.picks.length} of {library ? capacity : known}
+            </span>
+          </div>
+
+          {state.picks.length === 0 ? (
+            <p className="pick-line pool-held-empty">
+              Nothing here yet. Tap a {spec.noun} on the left, or drag one over.
+            </p>
+          ) : (
+            <div className="pool-held-list">
+              {state.picks.map((pick) => (
+                <HeldRow
+                  key={pick.key}
+                  pick={pick}
+                  spec={spec}
+                  readOnly={readOnly}
+                  onDrop={() => give(pick.id)}
+                  onDragStart={() => setDragging({ from: 'held', id: pick.id })}
+                  onDragEnd={() => setDragging(null)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* What the next tap costs, where the thing it costs is listed. On the
+              wall it was a tooltip on one button; here it is a sentence beside the
+              card that is about to go. */}
+          {pushed && !readOnly && (
+            <p className="pick-line pool-held-note">
+              Full. The next one you take puts {nameOfPick(pushed)} out.
+            </p>
+          )}
+        </aside>
+      </div>
     </Modal>
   );
+}
+
+/**
+ * One thing you are holding: the card, what it costs, and the way to give it
+ * back.
+ *
+ * The name is a button that deals the card, which is the gesture every other
+ * list of cards on this sheet uses, and the × is separate so neither is ever
+ * pressed by accident. Draggable onto the wall, which is the same as pressing
+ * the ×.
+ */
+function HeldRow({ pick, spec, readOnly, onDrop, onDragStart, onDragEnd }) {
+  const stack = useCardStack();
+  const { card } = pick;
+
+  if (!card) {
+    return (
+      <p className="pick-line">
+        {pick.id} is held and this build&rsquo;s codex has no card by that name.
+      </p>
+    );
+  }
+
+  const cost = cardCost(card, pick.modifiers);
+
+  return (
+    <div
+      className={`pool-held-row${pick.ok ? '' : ' is-illegal'}`}
+      draggable={!readOnly}
+      onDragStart={(event) => {
+        event.dataTransfer.setData('text/plain', pick.id);
+        event.dataTransfer.effectAllowed = 'move';
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+    >
+      <button
+        type="button"
+        className="pool-held-face"
+        onClick={() => stack?.openCard(card, pick.modifiers)}
+        title={`Open the ${card.name} card`}
+      >
+        <span className="pool-held-name">
+          {card.name}
+          {/* Which of them this is, on the copies and nowhere else. A pool that
+              holds one of each never prints it. */}
+          {pick.copy > 1 && <span className="pool-held-copy">×{pick.copy}</span>}
+        </span>
+        <CostOrbs
+          ap={cost.ap}
+          wp={cost.wp}
+          size={17}
+          className="pool-held-costs"
+          apWas={cost.cut > 0 ? cost.printed : null}
+          wpWas={cost.wpCut > 0 ? cost.wpPrinted : null}
+          cutFrom={cost.from}
+        />
+      </button>
+
+      {!pick.ok && <span className="pool-held-illegal">Not legal at your rank</span>}
+
+      {!readOnly && (
+        <button
+          type="button"
+          className="pool-held-drop"
+          onClick={onDrop}
+          title={`Take ${card.name} back off ${holder(spec)}`}
+          aria-label={`Give ${card.name} back`}
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** What the column of held cards is called, off the spec where it says. */
+function heldTitle(spec, library) {
+  if (spec?.section) return spec.section;
+  return library ? `What is ${kept(spec)}` : 'What you have chosen';
 }
 
 /* ------------------------------------------- the preview, rank by rank */
@@ -478,24 +720,32 @@ function LoadoutBrowser({ talent, rank, spec, opened = [], character, onClose })
  * Unfiled. Anything else falls back to the sub-school, which is what every
  * existing spec means by saying nothing.
  */
-export function PoolWall({ options, noun, character, group = 'sub', action = null }) {
+export function PoolWall({ options, noun, character, group = 'sub', action = null, drag = null }) {
   const stack = useCardStack();
   const groups = groupPool(options, group);
 
   const wall = (list) => (
     <div className="card-brief-wall">
-      {list.map((option) => (
-        <CardBrief
-          key={option.card.id}
-          card={option.card}
-          character={character}
-          modifiers={option.modifiers}
-          held={option.known}
-          onOpen={() => stack?.openCard(option.card, option.modifiers)}
-        >
-          {action?.(option)}
-        </CardBrief>
-      ))}
+      {list.map((option) => {
+        /* Whether this one can be picked up and carried to the column beside the
+           wall. Null on every wall that is only read: the rank preview, the
+           browser and the encounter's own shelf. See the chooser. */
+        const held = drag?.(option) ?? null;
+
+        return (
+          <CardBrief
+            key={option.card.id}
+            card={option.card}
+            character={character}
+            modifiers={option.modifiers}
+            held={option.known}
+            onOpen={() => stack?.openCard(option.card, option.modifiers)}
+            drag={held}
+          >
+            {action?.(option)}
+          </CardBrief>
+        );
+      })}
     </div>
   );
 

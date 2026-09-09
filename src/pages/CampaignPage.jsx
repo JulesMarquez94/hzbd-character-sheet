@@ -592,7 +592,12 @@ export default function CampaignPage() {
               <CardStackProvider character={null}>
                 {/* Pinned to the window rather than laid on the grid: the log
                     within reach of every row of the party. See BlockTrays. */}
-                <BlockTrays trays={trays} render={renderBlock} describe={describeBlock} />
+                <BlockTrays
+                  trays={trays}
+                  render={renderBlock}
+                  describe={describeBlock}
+                  scope={`campaign:${id}`}
+                />
 
                 <div className="sheet-grid-6">
                   {order.map((blockId, at) => {

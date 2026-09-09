@@ -67,7 +67,7 @@
 
 import { brewAffordable, brewRows, brewedItems, normalizeBrews, restAlchemy } from './alchemy.js';
 import { appendLedger, clamp, formatNumber, levelForXp, newLedgerId } from './characterModel.js';
-import { normalizeEffects } from './combatTurn.js';
+import { TURN_SECONDS, normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
 import { characterSkillGrantSources, normalizeLevelPicks } from './levelPicks.js';
 import { pickChanges, restSwaps } from './loadouts.js';
@@ -104,19 +104,66 @@ export const RESTS = {
     supplies: 5,
     // Ends only what says "short"; a long rest's effects sit through it.
     ends: ['short'],
-    blurb: 'A few hours off your feet. Enough to bind a wound and eat.',
+    /* How long it takes. The rulebook's own table: "Time · 1 hour · 8 hours".
+       It is here because a rest ends more than what names it — see `restEnds`. */
+    hours: 1,
+    blurb: 'An hour off your feet. Enough to bind a wound and eat.',
   },
   long: {
     id: 'long',
     label: 'Long Rest',
     supplies: 10,
     ends: ['short', 'long'],
+    hours: 8,
     blurb: 'A full night. Everything comes back, and the work of the camp gets done.',
   },
 };
 
 export function getRest(kind) {
   return RESTS[kind] ?? null;
+}
+
+/**
+ * Whether this rest is the end of one running effect.
+ *
+ * Two ways an effect ends at a rest, and until 2026-09-09 the sheet only knew
+ * the first:
+ *
+ *   it names the rest    `until` is 'short' or 'long', and `ends` says which of
+ *                        those this rest closes. A long rest ends what a short
+ *                        one does and never the other way round.
+ *   the rest outlasts it **the clock**. Jules: "when taking a short rest,
+ *                        effects that are under 1 hour should clear. So for
+ *                        example cloak of flame is 5 turns, a turn is 6 seconds.
+ *                        Same thing with long rest which is 8 hours."
+ *
+ * The second is arithmetic and nothing else: a turn is six seconds (see
+ * TURN_SECONDS), a Short Rest is an hour and a Long Rest eight, so anything
+ * still counting turns is long finished by the time either of them is. CLOAK OF
+ * FLAMES is five turns — half a minute — and sitting down for an hour with it
+ * still burning was the sheet holding a row nobody could have been wearing.
+ *
+ * Written as the comparison rather than as "every turn count clears" so the two
+ * rests stay different: a row counted in turns that somehow reached past an hour
+ * would sit through a short rest and go on the long one, which is what the
+ * numbers say and what a table would rule.
+ *
+ * A row with no count and no rest on it is open-ended — "until manually
+ * removed" — and no rest touches it. That is the other half of the tracker's own
+ * law and it is deliberately unchanged: a Grapple is not something you sleep
+ * off.
+ */
+export function restEnds(rest, effect) {
+  if (!effect) return false;
+
+  const ends = rest?.ends ?? [];
+  if (effect.until && ends.includes(effect.until)) return true;
+
+  if (effect.turns === null || effect.turns === undefined) return false;
+
+  const turns = Math.max(0, Math.floor(Number(effect.turns) || 0));
+  const hours = Math.max(0, Number(rest?.hours) || 0);
+  return turns * TURN_SECONDS < hours * 3600;
 }
 
 /**
@@ -857,7 +904,7 @@ export function restPlan(
      A creature's own tracker is ended by the same rest that ends its bonded's,
      so which durations this rest closes goes down with the call — the creature
      has no rest of its own to take. */
-  const creatures = minionRest(character, kind, rest.ends);
+  const creatures = minionRest(character, kind, (effect) => restEnds(rest, effect));
   if (creatures) {
     Object.assign(patch, creatures.patch);
     lines.push(...creatures.lines);
@@ -948,10 +995,10 @@ export function restPlan(
   }
 
   /* ---- and the runes a Runebearer chose to light again ----
-     RECHARGED: "you can bring back any number of fired runes whose Willpower
-     costs add up to no more than your Physique." A budget spent against a list,
-     so unlike everything above it this one is a *choice* and arrives from the
-     window rather than being worked out here.
+     RECHARGED: "you can bring back up to 4 of your fired runes." A budget spent
+     against a list, so unlike everything above it this one is a *choice* and
+     arrives from the window rather than being worked out here. What arrives is
+     the runes' own keys, since a slate may hold the same spell twice.
 
      Read off whatever the line above already wrote rather than off the
      character, because both write the same column: on a Long Rest `usesRest`
@@ -1049,9 +1096,12 @@ export function restPlan(
     lines.push(...raiseLines(state, draft, name));
   }
 
-  /* ---- what the rest ends ---- */
+  /* ---- what the rest ends ----
+     Two ways one ends, and `restEnds` is both of them: the row names this rest,
+     or this rest is simply longer than the row had left. See it for the whole of
+     why the second one exists. */
   const effects = normalizeEffects(character?.effects);
-  const ending = effects.filter((effect) => effect.until && rest.ends.includes(effect.until));
+  const ending = effects.filter((effect) => restEnds(rest, effect));
 
   if (ending.length > 0) {
     patch.effects = effects.filter((effect) => !ending.includes(effect));
@@ -1063,7 +1113,12 @@ export function restPlan(
     });
   }
 
-  const kept = effects.filter((effect) => effect.until === 'long' && kind === 'short');
+  /* And what sits through it. Only what this rest could not reach and a long one
+     can: a row counted in turns is over either way, so it is never listed here
+     as something a long rest is still owed. */
+  const kept = effects.filter(
+    (effect) => !ending.includes(effect) && kind === 'short' && restEnds(RESTS.long, effect)
+  );
   if (kept.length > 0) {
     lines.push({
       key: 'kept',

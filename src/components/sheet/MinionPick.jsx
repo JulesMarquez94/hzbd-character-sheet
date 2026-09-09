@@ -195,7 +195,7 @@ export default function MinionSection({
  * is the question a Necromancer taking Rank 2 or Rank 3 is actually asking.
  */
 function OssuarySection({ state }) {
-  const { spec, total, spent, left, bodies, burden, owed } = state;
+  const { spec, total, spent, left, bodies, wrecks, perMarrow, owed, wrecked } = state;
   const offers = undeadOffers(state);
   const open = offers.filter((offer) => offer.ok);
   const shut = offers.filter((offer) => !offer.ok && offer.gate === 'rank');
@@ -212,9 +212,13 @@ function OssuarySection({ state }) {
       <p className="pick-line">
         {bodies.length === 0
           ? `Nothing raised. ${marrowNote(state, offers)} Raising one is a Long Rest action, over a corpse, and it is named in the window that raises it.`
-          : `${bodies.length} ${bodies.length === 1 ? 'body' : 'bodies'} standing, ${
-              bodies.length === 1 ? 'each' : 'all'
-            } with two blocks on your Character tab. ${marrowNote(state, offers)}`}
+          : `${bodies.length - wrecks.length} ${
+              bodies.length - wrecks.length === 1 ? 'body' : 'bodies'
+            } standing${
+              wrecks.length > 0
+                ? ` and ${wrecks.length} destroyed`
+                : `, ${bodies.length === 1 ? 'each' : 'all'} with two blocks on your Character tab`
+            }. ${marrowNote(state, offers)}`}
       </p>
 
       {open.length > 0 && (
@@ -231,8 +235,10 @@ function OssuarySection({ state }) {
 
       {owed > 0 && (
         <p className="pick-notice">
-          {owed} of your maximum Willpower is in {bodies.length === 1 ? 'it' : 'them'}, at {burden} a
-          body. It comes back with any body you lay to rest.
+          {owed} of your maximum Willpower is in {bodies.length === 1 ? 'it' : 'them'}, at{' '}
+          {perMarrow} a Marrow. It comes back with any body you lay to rest.
+          {wrecked > 0 &&
+            ` ${wrecked} of it is in ${wrecks.length === 1 ? 'a wreck' : 'wrecks'} that a Long Rest sweeps up.`}
         </p>
       )}
     </div>

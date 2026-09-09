@@ -72,6 +72,11 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
     attributes: character,
   });
 
+  /* How many the set itself still owes: two arrive with it, and until they are
+     chosen an empty slate is a question nobody has been asked rather than a
+     Runebearer who has decided against runes. See `start` in talents.js. */
+  const owed = state?.owed ?? 0;
+
   function fire(rune) {
     const cost = cardCost(rune.card, rune.modifiers);
 
@@ -127,14 +132,15 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
       <div className="rune-list">
         {runes.length === 0 ? (
           <p className="pick-line">
-            Nothing inscribed yet. Your runework holds {capacity}{' '}
-            {capacity === 1 ? 'rune' : 'runes'}, and each one you take will hold its own Willpower
-            cost off your maximum.
+            Nothing inscribed yet.{' '}
+            {owed > 0 ? `${owed} arrive with the set and are yours to choose. ` : ''}
+            Your runework holds {capacity} {capacity === 1 ? 'rune' : 'runes'}, and each one you
+            take will hold its own Willpower cost off your maximum.
           </p>
         ) : (
           runes.map((rune) => (
             <RuneRow
-              key={rune.id}
+              key={rune.key}
               rune={rune}
               stack={stack}
               readOnly={readOnly || !patch}
@@ -188,7 +194,7 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
                 spent.length === 1 ? 'It comes' : 'They come'
               } back with your next Long Rest.`}
         {recharge && runes.length > 0
-          ? ` A Short Rest brings back ${recharge.budget} Willpower worth of them, chosen in the rest window.`
+          ? ` A Short Rest brings back ${recharge.count} of them, chosen in the rest window.`
           : ''}
       </p>
 
@@ -198,8 +204,10 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
           character={character}
           state={state}
           readOnly={readOnly || !patch}
-          onToggle={(cardId) =>
-            patch({ talents: toggleLoadoutPick(character?.talents, talent.id, cardId, state.known) })
+          onToggle={(cardId, how) =>
+            patch({
+              talents: toggleLoadoutPick(character?.talents, talent.id, cardId, state.known, how),
+            })
           }
           onClear={() => patch({ talents: setTalentPicks(character?.talents, talent.id, []) })}
           onClose={() => setChoosing(false)}
@@ -227,7 +235,7 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
  * with the reason on it, which is the shape the belt gives an empty flask.
  */
 function RuneRow({ rune, stack, readOnly, onFire }) {
-  const { card, fired, modifiers } = rune;
+  const { card, fired, modifiers, copy, copies } = rune;
 
   if (!card) {
     return (
@@ -238,6 +246,11 @@ function RuneRow({ rune, stack, readOnly, onFire }) {
   }
 
   const cost = cardCost(card, modifiers);
+  /* Which of them this is, on the copies and nowhere else. The same spell may be
+     inscribed more than once and each copy is its own firing, so two rows wearing
+     one name have to be tellable apart at a glance: the first can be dark and the
+     second live. */
+  const which = copies > 1 ? `${copy} of ${copies}` : null;
 
   return (
     <div className={`use-row${fired ? ' use-row-spent' : ''}`}>
@@ -251,10 +264,13 @@ function RuneRow({ rune, stack, readOnly, onFire }) {
             ? `${card.name} has been fired. It comes back after a Long Rest.`
             : readOnly
               ? card.name
-              : `Fire ${shortName(card)}`
+              : `Fire ${shortName(card)}${which ? ` (${which})` : ''}`
         }
       >
-        <span className="use-row-name">{shortName(card)}</span>
+        <span className="use-row-name">
+          {shortName(card)}
+          {which && <span className="rune-copy">{which}</span>}
+        </span>
 
         {fired ? (
           <span className="use-row-spent-note">Fired</span>

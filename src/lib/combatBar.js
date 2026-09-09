@@ -974,8 +974,13 @@ export function spendUse(request, character, mode, amount, { free = false, price
      row taken out of the middle. See "added, not laid" in moves.js.
 
      Guarded on the card rather than on the character, because a creature's block
-     pays through here too and hands its own row in as `character`. No minion
-     card is tagged Weapon Attack, so nothing there is touched. */
+     pays through here too and hands its own row in as `character`. Several minion
+     cards *are* tagged Weapon Attack — an abomination's sweep since it was
+     written, and a skeleton's two swings and a ghoul's two since 2026-09-09,
+     because that tag is what lets a Martial Move ride one. Nothing there is
+     touched anyway: what this takes off is a Trickster's rider, and no creature
+     on the board has a Trickster's tracker. `spendTricks` finding nothing hands
+     back null and the row is left exactly as it was. */
   if (isWeaponAttack(request.card)) {
     const withoutTricks = spendTricks(body.effects ?? character?.effects, request.card);
     if (withoutTricks) body.effects = withoutTricks;

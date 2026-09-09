@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import CardBrief from './CardBrief.jsx';
+import MinionPreview from './MinionPreview.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { ChoicePicker } from './LineagePick.jsx';
 import { LoadoutChooser } from './LoadoutPick.jsx';
@@ -131,6 +132,11 @@ function Section({ part, source, character, patch, readOnly, onOpen }) {
         })}
       </div>
 
+      {/* The bodies this rank opened, in place of their cards. A roster's cards
+          belong to the creature and not to its keeper, so the rank keeps a door
+          rather than a list. See "and the bodies" in abilitySources.js. */}
+      {part.bodies && <MinionPreview bodies={part.bodies} character={character} />}
+
       {part.loadout && (
         <LoadoutTools
           loadout={part.loadout}
@@ -210,8 +216,8 @@ function LoadoutTools({ loadout, character, patch, readOnly }) {
           character={character}
           state={state}
           readOnly={readOnly}
-          onToggle={(cardId) =>
-            patch({ talents: toggleLoadoutPick(character.talents, talent.id, cardId, known) })
+          onToggle={(cardId, how) =>
+            patch({ talents: toggleLoadoutPick(character.talents, talent.id, cardId, known, how) })
           }
           onClear={() => patch({ talents: setTalentPicks(character.talents, talent.id, []) })}
           onClose={() => setChoosing(false)}

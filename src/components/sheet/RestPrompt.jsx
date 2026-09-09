@@ -251,20 +251,23 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
           )}
 
           {/* ---------- WHAT LIGHTS AGAIN ---------- *
-              RECHARGED: "you can bring back any number of fired runes whose
-              Willpower costs add up to no more than your Physique." A budget
-              spent against a list, which is the only thing a rest gives back
-              that is a *choice*, so it is the only one with a chooser. Above the
-              action slot because it is not one: a Short Rest buys no action at
-              all, and this happens on every Short Rest a Runebearer takes. */}
+              RECHARGED: "you can bring back up to 4 of your fired runes." A
+              budget spent against a list, which is the only thing a rest gives
+              back that is a *choice*, so it is the only one with a chooser. Above
+              the action slot because it is not one: a Short Rest buys no action
+              at all, and this happens on every Short Rest a Runebearer takes.
+
+              Held by the rune's `key` rather than by the card's id, since a slate
+              may carry the same spell twice and bringing one of the two back has
+              to be a thing this list can say. */}
           {recharges.map((row) => (
             <RuneRecharge
               key={row.talent.id}
               row={row}
               chosen={revived}
-              onToggle={(id) =>
+              onToggle={(runeKey) =>
                 setRevived((held) =>
-                  held.includes(id) ? held.filter((held_id) => held_id !== id) : [...held, id]
+                  held.includes(runeKey) ? held.filter((one) => one !== runeKey) : [...held, runeKey]
                 )
               }
             />
@@ -342,8 +345,8 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
           talent={step.talent}
           character={character}
           state={step.state}
-          onToggle={(cardId) =>
-            setPrepared(toggleLoadoutPick(talents, step.talent.id, cardId, step.state.known))
+          onToggle={(cardId, how) =>
+            setPrepared(toggleLoadoutPick(talents, step.talent.id, cardId, step.state.known, how))
           }
           onClear={() => setPrepared(setTalentPicks(talents, step.talent.id, []))}
           onClose={() => setStepId(null)}
@@ -556,13 +559,19 @@ function ActionMenu({ actions, action, character, kind, onTake, onRead }) {
 /**
  * One slate's fired runes, offered back against a budget.
  *
- * Every fired rune is shown rather than only the affordable ones, and the ones
- * that no longer fit are refused with the reason on them. That is how every
- * other budget on this sheet reads, and hiding them would leave a player
+ * Every fired rune is shown rather than only the ones there is still room for,
+ * and the ones past the count are refused with the reason on them. That is how
+ * every other budget on this sheet reads, and hiding them would leave a player
  * wondering where the rest of their runes went.
  *
- * Cheapest first, off `runeRecharges`, so tapping down the list is the order
- * that fits the most back under the budget.
+ * **The budget is a count of runes**, four of them at Master, and it stopped
+ * being a Willpower allowance on 2026-09-09. So the orb beside each name is no
+ * longer a price being paid here: it is what that rune is worth, which is how a
+ * player decides which four to spend the four on. Dearest first, off
+ * `runeRecharges`, so tapping straight down the list is the strong play.
+ *
+ * The same spell inscribed twice is two rows, one per copy, and each is tapped
+ * on its own key.
  */
 function RuneRecharge({ row, chosen, onToggle }) {
   const spend = rechargeSpend(row, chosen);
@@ -577,26 +586,27 @@ function RuneRecharge({ row, chosen, onToggle }) {
       <div className="rest-runes">
         <div className="rest-runes-list">
           {row.spent.map((rune) => {
-            const on = chosen.includes(rune.id);
-            const afford = on || rune.cost <= spend.left;
+            const on = chosen.includes(rune.key);
+            const room = on || spend.left > 0;
             const name = rune.card?.name ?? rune.id;
+            const which = rune.copies > 1 ? `${name} (${rune.copy} of ${rune.copies})` : name;
 
             return (
               <button
                 type="button"
-                key={rune.id}
+                key={rune.key}
                 className={`rest-rune${on ? ' is-on' : ''}`}
-                onClick={() => onToggle(rune.id)}
-                disabled={!afford}
+                onClick={() => onToggle(rune.key)}
+                disabled={!room}
                 title={
-                  afford
+                  room
                     ? on
-                      ? `${name} comes back. Tap to leave it spent`
-                      : `Bring ${name} back for ${rune.cost} of the budget`
-                    : `${name} costs ${rune.cost} and you have ${spend.left} left`
+                      ? `${which} comes back. Tap to leave it spent`
+                      : `Bring ${which} back. It is worth ${rune.cost} Willpower on your slate`
+                    : `${spend.budget} is all this rest brings back. Tap one off to make room for ${which}`
                 }
               >
-                <span className="rest-rune-name">{name}</span>
+                <span className="rest-rune-name">{which}</span>
                 <CostOrb kind="wp" value={rune.cost} size={17} />
               </button>
             );
@@ -604,7 +614,7 @@ function RuneRecharge({ row, chosen, onToggle }) {
         </div>
 
         <span className="rest-runes-budget">
-          {spend.cost} of {spend.budget} Willpower spent bringing them back
+          {spend.cost} of {spend.budget} {spend.budget === 1 ? 'rune' : 'runes'} brought back
         </span>
       </div>
     </>

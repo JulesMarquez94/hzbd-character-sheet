@@ -14,15 +14,21 @@
  *                which is the first ceiling in the codex an attribute moves. It
  *                is `capacity.perStat` on the loadout spec, not here: the pool
  *                machinery already knows how to hold a ceiling and this file
- *                does not need a second copy of it.
+ *                does not need a second copy of it. Two of them are inscribed
+ *                the day the set is taken (`start: 2`) and the rest one a night.
  *   fired once   a rune fires once and is dead until the next Long Rest. That is
  *                the `card_uses` tracker exactly, so it *is* the `card_uses`
  *                tracker: `runeLimit` below is what makes an ordinary spell card
  *                answer "once, and a Long Rest fills it" for the one person who
  *                has it inscribed on their arm. See uses.js.
- *   brought back RECHARGED: a Short Rest returns fired runes whose Willpower
- *                costs add up to no more than your Physique. A budget spent
- *                against a list, chosen in the rest window.
+ *   twice over   the same spell may be inscribed more than once, and each copy is
+ *                its own firing. Two copies are two entries in `picks`, which is
+ *                the whole of the storage: `runeLimit` hands the card as many
+ *                uses as there are copies and the existing count spends them one
+ *                at a time. See `repeat` in loadouts.js.
+ *   brought back RECHARGED: a Short Rest returns up to 4 fired runes, whatever
+ *                they cost. A count spent against a list, chosen in the rest
+ *                window.
  *
  * Same split as minions.js, feral.js and pact.js: the `runes` spec on the set in
  * talents.js says what THIS set's runework is made of, and this file knows what
@@ -44,6 +50,11 @@
  * is the same law that stops two rings both carrying Defibrillation buying two
  * saves, read on a set that writes its spells onto itself.
  *
+ * The same keying is what makes a second copy free of new storage. Two Barkskins
+ * on one arm are not two rows, they are one row counting to two, so nothing
+ * downstream had to learn what a copy is: the chip greys after the second
+ * firing and the morning clears the count.
+ *
  * ------------------------------------------------------------------- imports
  * uses.js imports this file, so this file may not import uses.js. It reads the
  * `card_uses` column directly, with its own small repair, and never writes it:
@@ -51,7 +62,7 @@
  * back is `reviveRunes` below, which is the only write in here.
  */
 
-import { capacityAt, heldPicks, loadoutModifiers, loadoutOf } from './loadouts.js';
+import { capacityAt, copiesOf, heldPicks, loadoutModifiers, loadoutOf } from './loadouts.js';
 import { getCard } from './weapons.js';
 import { getTalent, normalizeTalents } from './talents.js';
 
@@ -82,16 +93,8 @@ export function runeSets(talents) {
 
 /* ------------------------------------------------------------- what is fired */
 
-/**
- * The `card_uses` column, read rather than trusted, the way every jsonb column
- * on this sheet is read.
- *
- * Deliberately not `normalizeUses` from uses.js: that repairs a count against the
- * card's own limit and this file may not import it. All this needs is "has this
- * id been spent at all", so a positive number is spent and everything else is
- * not.
- */
-function usedIds(character) {
+/** The `card_uses` column as an object, or an empty one. Read, never trusted. */
+function storedUses(character) {
   let source = character?.card_uses;
   if (typeof source === 'string') {
     try {
@@ -100,23 +103,41 @@ function usedIds(character) {
       source = null;
     }
   }
-  if (!source || typeof source !== 'object' || Array.isArray(source)) return new Set();
-
-  return new Set(
-    Object.entries(source)
-      .filter(([, count]) => Math.floor(Number(count) || 0) > 0)
-      .map(([id]) => id)
-  );
+  return source && typeof source === 'object' && !Array.isArray(source) ? source : {};
 }
 
 /**
- * What a rune costs to bring back, which is the spell's own printed Willpower.
+ * How many firings are spent against each card id.
  *
- * RECHARGED budgets in the spell's cost and the spell's cost is what the card
- * prints, not what firing it charged: firing charges nothing, and a budget
- * measured against nothing would bring the whole slate back every time. So the
- * number here is the one on the card in the codex, which is also the one the
- * rune's own orb shows struck through.
+ * Deliberately not `normalizeUses` from uses.js: that repairs a count against the
+ * card's own limit and this file may not import it. It was a Set of "has this
+ * been spent at all" until a slate could hold two of the same rune, and a Set
+ * cannot say that one of two Barkskins is gone. So it counts, and the caller
+ * clamps against the copies it actually has.
+ */
+function usedCounts(character) {
+  const counts = new Map();
+
+  for (const [id, count] of Object.entries(storedUses(character))) {
+    const spent = Math.floor(Number(count) || 0);
+    if (spent > 0) counts.set(id, spent);
+  }
+
+  return counts;
+}
+
+/**
+ * What a rune is worth, which is the spell's own printed Willpower.
+ *
+ * This is the number the slate holds off the maximum for as long as the rune is
+ * on, and it is the one on the card in the codex rather than what firing it
+ * charged: firing charges nothing. It is also the number the rune's own orb
+ * shows struck through.
+ *
+ * It stopped being what a *recharge* is measured in on 2026-09-09, when the
+ * Master card went from a Willpower allowance to a count of four runes. It is
+ * still printed beside every fired rune in the rest window, because which four
+ * to bring back is a decision made on what they were worth.
  */
 export function runeCost(card) {
   return Math.max(0, Math.floor(Number(card?.wp_cost ?? card?.wp) || 0));
@@ -136,7 +157,7 @@ export function runeCost(card) {
  */
 export function runeState(character) {
   const talents = character?.talents;
-  const used = usedIds(character);
+  const used = usedCounts(character);
   const level = Math.max(1, Math.floor(Number(character?.level) || 1));
 
   return runeSets(talents)
@@ -148,19 +169,41 @@ export function runeState(character) {
       const capacity = capacityAt(pool, rank, level, character);
       const modifiers = loadoutModifiers(pool, rank);
 
+      /* One row per **copy**, because that is what a rune is now: the same spell
+         inscribed twice is two runes, two firings and twice the Willpower off the
+         maximum, and a list that folded them into one row with a number on it
+         would be the one place on the sheet where two runes read as one.
+
+         Which copy is fired is decided by the count and not by the row: the
+         column holds "barkskin: 1" and knows nothing about which of the two arms
+         it came off, so the copies are marked in order and the last one inscribed
+         is the last one to go dark. Identical copies make that a distinction
+         without a difference, which is why the count can stay one row. */
+      const seen = new Map();
       const runes = heldPicks(talents, talent.id).map((id) => {
         const card = getCard(id) ?? null;
+        const copy = (seen.get(id) ?? 0) + 1;
+        seen.set(id, copy);
+
         return {
           id,
+          /* What a list renders against, since two copies wear one id. */
+          key: copy > 1 ? `${id}#${copy}` : id,
+          copy,
+          copies: 0,
           card,
           /* A pick the codex no longer answers for is kept and shown rather than
              dropped, exactly as `loadoutState` keeps one: quietly deleting
              somebody's rune is worse than showing them one they have to fix. */
           cost: card ? runeCost(card) : 0,
-          fired: used.has(id),
+          fired: copy <= (used.get(id) ?? 0),
           modifiers,
         };
       });
+      /* And how many of each there are, laid on every row of that id once they
+         are all counted, so a row can say "the second of two" without the block
+         counting the list again. */
+      for (const rune of runes) rune.copies = seen.get(rune.id) ?? 1;
 
       const spent = runes.filter((rune) => rune.fired);
 
@@ -220,14 +263,21 @@ export function runeBlockIds(character) {
 export function runeLimit(character, cardId) {
   if (!cardId) return null;
 
+  /* **The count is the copies**, which is the whole of what "the same spell can
+     be inscribed more than once, each one a single use" needed (Jules,
+     2026-09-09). Two Fire Seeds on one arm are one tracker row counting to two,
+     so the chip greys after the second firing and the morning clears both.
+
+     Summed across sets rather than taken at the highest, the same way
+     `runeWillpowerFrom` sums: two sets that each inscribed it are two runes and
+     two firings. Moot until a second rune set exists. */
+  let max = 0;
   for (const { talent, entry } of runeSets(character?.talents)) {
     if (Math.floor(Number(entry.rank) || 0) < 1) continue;
-    if (!heldPicks(character?.talents, talent.id).includes(cardId)) continue;
-
-    return { max: 1, recharge: 'Long Rest', fills: 'long' };
+    max += copiesOf(heldPicks(character?.talents, talent.id), cardId);
   }
 
-  return null;
+  return max > 0 ? { max, recharge: 'Long Rest', fills: 'long' } : null;
 }
 
 /** Whether a card is inscribed on this character at all. */
@@ -238,21 +288,29 @@ export function isRune(character, cardId) {
 /* ------------------------------------------------------------ what a rest gives */
 
 /**
- * RECHARGED, as a budget: what a Short Rest could bring back, and how much of
- * the slate it may reach.
+ * RECHARGED, as a budget: how many fired runes a Short Rest may light again.
  *
  * Null until the rank that grants it, which keeps the rest window quiet for
- * every Runebearer who has not bought it. The budget itself is an attribute
- * rather than a number on the card, so it grows with the body the runes are on,
- * which is the shape the original card had and the reason it survived the move to
- * the Master rung.
+ * every Runebearer who has not bought it.
+ *
+ * **A count of runes since 2026-09-09**, where it used to be a Willpower
+ * allowance spent against their printed costs. The old shape was the original
+ * card's and it paid out backwards: a Physique of 8 brought back four cantrips
+ * or none of the one Master spell the slate was built around. "Have the tattoo
+ * return be 4 by master" is a flat four, whatever they cost, and `rule.count` is
+ * where the four lives. A rule naming a `stat` instead reads the same number off
+ * an attribute, so a set that wants "a Physique of them" can say so without this
+ * going back to being a price.
  */
 function rechargeOf(character, spec, rank) {
   const rule = spec?.recharge ?? null;
   if (!rule || rank < Math.max(1, Math.floor(Number(rule.rank) || 1))) return null;
 
-  const budget = Math.max(0, Math.floor(Number(character?.[rule.stat]) || 0));
-  return { ...rule, budget };
+  const count = rule.stat
+    ? Math.max(0, Math.floor(Number(character?.[rule.stat]) || 0))
+    : Math.max(0, Math.floor(Number(rule.count) || 0));
+
+  return { ...rule, count };
 }
 
 /**
@@ -275,26 +333,33 @@ export function runeRecharges(character, kind) {
     .map((slate) => ({
       talent: slate.talent,
       slate,
-      budget: slate.recharge.budget,
+      budget: slate.recharge.count,
       from: slate.recharge.from ?? slate.talent.name,
-      /* Cheapest first, so the tap order is the one that fits the most back
-         under the budget and a player does not have to sort a list to spend it
-         well. */
-      spent: [...slate.spent].sort((a, b) => a.cost - b.cost),
+      /* **Dearest first**, which is the reverse of the order this list had while
+         the budget was Willpower. Cheapest first was the order that fitted the
+         most back under a price; four runes is four runes, so the order that
+         spends it best is the one that starts with the spell that cost the most
+         to inscribe. Tapping straight down the list is the strong play either
+         way, which is the whole point of sorting it. */
+      spent: [...slate.spent].sort((a, b) => b.cost - a.cost),
     }));
 }
 
 /**
  * What one chosen set of runes costs against the budget, and whether it fits.
  *
+ * A rune apiece since 2026-09-09, so `cost` counts rows rather than adding up
+ * Willpower. The two names are kept because the window prints the same sentence
+ * either way: what has been spent, and what is left of it.
+ *
  * Read rather than enforced at the tap: the chooser offers a rune it cannot
  * afford as refused-with-a-reason rather than hiding it, which is how every
  * other budget on this sheet reads.
  */
-export function rechargeSpend(row, ids = []) {
-  const chosen = (row?.spent ?? []).filter((rune) => ids.includes(rune.id));
-  const cost = chosen.reduce((sum, rune) => sum + rune.cost, 0);
+export function rechargeSpend(row, keys = []) {
+  const chosen = (row?.spent ?? []).filter((rune) => keys.includes(rune.key));
   const budget = Math.max(0, Math.floor(Number(row?.budget) || 0));
+  const cost = chosen.length;
 
   return { chosen, cost, budget, left: budget - cost, fits: cost <= budget };
 }
@@ -312,30 +377,41 @@ export function rechargeSpend(row, ids = []) {
  * Null when nothing was chosen, so a rest that recharges nothing writes nothing
  * and prints nothing.
  */
-export function reviveRunes(character, ids = []) {
-  const stored = usedIds(character);
-  const bringing = ids.filter((id) => stored.has(id));
-  if (bringing.length === 0) return null;
+export function reviveRunes(character, keys = []) {
+  const used = usedCounts(character);
 
-  let source = character?.card_uses;
-  if (typeof source === 'string') {
-    try {
-      source = JSON.parse(source);
-    } catch {
-      source = null;
-    }
+  /* The keys name copies and the column counts firings, so what comes back is
+     how many of each id were chosen. A key for a rune with nothing spent against
+     it brings nothing back, which is what the `Math.min` says: a stale draft
+     cannot conjure a firing that was never made. */
+  const bringing = new Map();
+  for (const key of keys) {
+    const id = String(key).split('#')[0];
+    const spent = used.get(id) ?? 0;
+    if (spent <= 0) continue;
+    bringing.set(id, Math.min(spent, (bringing.get(id) ?? 0) + 1));
   }
-  const next = { ...(source && typeof source === 'object' && !Array.isArray(source) ? source : {}) };
-  for (const id of bringing) delete next[id];
+  if (bringing.size === 0) return null;
+
+  const next = { ...storedUses(character) };
+  for (const [id, count] of bringing) {
+    const left = (used.get(id) ?? 0) - count;
+    if (left > 0) next[id] = left;
+    else delete next[id];
+  }
 
   return {
     patch: { card_uses: next },
-    lines: bringing.map((id) => {
+    lines: [...bringing].map(([id, count]) => {
       const card = getCard(id);
+      const name = card?.name ?? id;
+
       return {
         key: `rune-${id}`,
-        label: `${card?.name ?? id} lights again`,
-        detail: `Brought back off the slate. ${runeCost(card)} against the budget.`,
+        label: count > 1 ? `${name} x${count} light again` : `${name} lights again`,
+        detail: `Brought back off the slate, ${
+          count === 1 ? 'one rune' : `${count} runes`
+        } of what the rest allows.`,
         tone: 'gain',
       };
     }),

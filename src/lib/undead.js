@@ -17,10 +17,36 @@
  *                What each one *is* is a `minion` roster and belongs to
  *                minions.js; what each one *costs* is here.
  *   the debt     "for each construct that you have active you also reduce your
- *                maximum Willpower." Two a body, one at the Master rung, and it
- *                is the second thing in the codex that comes *off* a derived
- *                maximum rather than adding to one. The first is a slate of
- *                runes, and this file floors its debt exactly as runes.js does.
+ *                maximum Willpower." **One per Marrow the body cost**, which is
+ *                Jules's ruling of 2026-09-09 and replaces the flat two a body
+ *                this file opened with: "max willpower is reduce by 1 per marrow
+ *                it cost to animate the body." So a skeleton is 3 and an
+ *                abomination is 9, and the Ossuary's two numbers are the same
+ *                number read twice. It is the second thing in the codex that
+ *                comes *off* a derived maximum rather than adding to one. The
+ *                first is a slate of runes, and this file floors its debt exactly
+ *                as runes.js does.
+ *
+ * ------------------------------------------------------------- a body that fell
+ * "An undead minion that reaches 0 is destroyed and the resources are freed, but
+ * the Willpower comes back on a Long Rest" (Jules, 2026-09-09). So the two halves
+ * of what a body holds come apart the moment it falls, and this is the only place
+ * in the codex where two costs of one thing end at different times:
+ *
+ *   the Marrow      back at once. It is animating stuff and there is nothing left
+ *                   to animate.
+ *   the Willpower   held until the row leaves the column, which is a Long Rest
+ *                   sweeping the wreck up or its keeper laying it to rest.
+ *
+ * Which is what the block's own prose always said — "its Marrow is already back
+ * in your Ossuary, and a Long Rest is what sweeps up the rest of it" — and what
+ * the arithmetic did not do until now.
+ *
+ * It also means this file has to be able to tell a destroyed body from a standing
+ * one, which the note on imports below says it cannot. It can, for the one
+ * question it is asking: a stored Health of nothing is a body at nothing, because
+ * a floor of 0 is the whole of what `floor` says and an absent Health means full.
+ * See `fallen`.
  *
  * Same split as minions.js, feral.js, pact.js and runes.js: the `undead` spec on
  * the set in talents.js says what THIS set's graveyard is made of, and this file
@@ -46,13 +72,11 @@
  * buries one is `dropMinion`'s, both in minions.js, called from the rest window
  * and the block, which are free to import either.
  *
- * The one consequence worth knowing is that this file cannot ask whether a body
- * is destroyed: that is a Health against a ceiling and the ceiling is
- * `minionDerived`'s. It does not need to. A body holds its Marrow and its
- * Willpower for as long as its row is in the column, standing or broken, and the
- * two ways a row leaves are a Long Rest sweeping the wreck up (see `perish` in
- * minions.js) and its keeper laying it to rest by hand. THE OSSUARY says so in
- * as many words, which is what makes the arithmetic here a count of rows.
+ * The one consequence worth knowing is that this file cannot ask what a body's
+ * *ceiling* is: that is `minionDerived`'s. It never needs to. Whether a body has
+ * fallen is a Health against its floor and the floor is nothing, so `fallen`
+ * answers it off the row alone; everything else here is a count of what the rows
+ * cost, read off the codex.
  */
 
 import { getCard } from './weapons.js';
@@ -118,6 +142,21 @@ function costOf(kind) {
   return Math.max(0, Math.floor(Number(kind?.cost) || 0));
 }
 
+/**
+ * Whether a stored body has been destroyed.
+ *
+ * A Health of nothing, and nothing else: `floor: 0` on the spec is the whole of
+ * "it cannot go in negative", and `resolveMinion` in minions.js reads the same
+ * row to the same answer. An **absent** Health is a full one — a body raised a
+ * moment ago has none written yet — which is why this asks whether the field is a
+ * number before it asks what the number is. Written by hand rather than borrowed,
+ * because the borrow would be an import this file may not make.
+ */
+function fallen(row) {
+  const health = Number(row?.health);
+  return Number.isFinite(health) && Math.floor(health) <= 0;
+}
+
 /** The rung a kind opens at. 1 for a kind that names none. */
 function rungOf(kind) {
   return Math.max(1, Math.floor(Number(kind?.rank) || 1));
@@ -148,18 +187,22 @@ function marrowCap(spec, attributes, rank) {
 }
 
 /**
- * What one body costs its keeper's maximum Willpower, at the rank they hold.
+ * How much of its keeper's maximum Willpower one point of Marrow holds.
  *
- * Indexed by rank the way every other rank rider in the codex is, so THE
- * CHARNEL COURT taking it from 2 to 1 is a number in the spec and no change
- * here. Per **body** and not per Marrow, which is what the designer said it was
- * for: three skeletons are three things taking their turn, and one abomination
- * is one, whatever the two of them cost the pool.
+ * A rate rather than a table, and **per Marrow rather than per body** since
+ * 2026-09-09: "max willpower is reduce by 1 per marrow it cost to animate the
+ * body." It was `burden: [null, 2, 2, 1]`, two a body with a rank rider taking
+ * it to one, and it went for two reasons. The designer's number is per Marrow;
+ * and per body priced three skeletons at six Willpower and one abomination at
+ * two, which had the cheap end of the roster costing more to keep than the
+ * expensive end.
+ *
+ * A rank term is gone with it. What a rank buys is which bodies are within
+ * reach, and nothing else. Written as a rule so a ruling that puts a discount
+ * back is a field in the codex and no change here.
  */
-function burdenAt(spec, rank) {
-  const list = spec?.burden;
-  if (!Array.isArray(list)) return 0;
-  return Math.max(0, Math.floor(Number(list[Math.max(0, Math.floor(Number(rank) || 0))]) || 0));
+function burdenRate(spec) {
+  return Math.max(0, Number(spec?.burden?.perMarrow) || 0);
 }
 
 /**
@@ -181,16 +224,32 @@ export function marrowState(character, attributes = character) {
   return undeadSets(character?.talents).map(({ talent, spec, entry, rank, roster }) => {
     const kinds = new Map(roster.map((kind) => [kind.id, kind]));
 
+    const perMarrow = burdenRate(spec);
+
     const bodies = rows
       .filter((row) => row.set === talent.id)
       .map((row) => {
         const kind = kinds.get(row.kind) ?? null;
-        return { ...row, kind, cost: costOf(kind), known: Boolean(kind) };
+        const cost = costOf(kind);
+        return {
+          ...row,
+          kind,
+          cost,
+          known: Boolean(kind),
+          /* Destroyed, which is what decides whether its Marrow is back. Its
+             Willpower is owed either way. */
+          down: fallen(row.row),
+          willpower: Math.floor(cost * perMarrow),
+        };
       });
 
     const total = marrowCap(spec, attributes, rank);
-    const spent = bodies.reduce((sum, body) => sum + body.cost, 0);
-    const burden = burdenAt(spec, rank);
+    /* Two sums over one list, and they come apart the moment a body falls. See
+       "a body that fell" at the top: the Marrow of a destroyed body is back at
+       once, and its Willpower is held until the row leaves the column. */
+    const spent = bodies.reduce((sum, body) => sum + (body.down ? 0 : body.cost), 0);
+    const held = bodies.reduce((sum, body) => sum + body.cost, 0);
+    const wrecks = bodies.filter((body) => body.down);
 
     return {
       id: talent.id,
@@ -200,6 +259,10 @@ export function marrowState(character, attributes = character) {
       rank,
       roster,
       bodies,
+      /* And the wrecks on their own, because three of the block's own lines are
+         about them and every one of them would otherwise be a filter at the
+         render site. */
+      wrecks,
       total,
       spent,
       /* What is left to spend, floored at nothing. A Mind that fell, or a rank
@@ -207,9 +270,15 @@ export function marrowState(character, attributes = character) {
          says so rather than pretending, and `over` is what it says it with. */
       left: Math.max(0, total - spent),
       over: Math.max(0, spent - total),
-      /* Per body, and the whole of it, which is what the Willpower tile needs. */
-      burden,
-      owed: burden * bodies.length,
+      /* The rate, and the whole of the debt, which is what the Willpower tile
+         needs. `owed` counts every row in the column and `spent` does not, so a
+         Necromancer standing over a wreck has Marrow to spend and no Willpower
+         to show for it until the morning. */
+      perMarrow,
+      owed: Math.floor(held * perMarrow),
+      /* What the wrecks are holding out of that, so a block can say what a Long
+         Rest is about to give back. */
+      wrecked: wrecks.reduce((sum, body) => sum + body.willpower, 0),
     };
   });
 }
@@ -421,19 +490,18 @@ export function raiseDraft(state, offer, draft = {}) {
   const corpse = CORPSES.includes(draft.corpse) ? draft.corpse : null;
 
   /* The rank that opens a body's own remains, and whether there is anything left
-     to raise over. A destroyed body is one whose row is still in the column, and
-     this file cannot tell a destroyed one from a standing one (see the note on
-     imports at the top), so the offer is made whenever *any* body of theirs is
-     in the Ossuary and the choice of which one is the player's. It is the same
-     trust the corpse question itself runs on. */
+     to raise over. **A wreck and not any body of theirs**, which this file can
+     now tell apart: `fallen` reads it off the row, and offering a standing ghoul
+     as a corpse was the window inviting a Necromancer to pull one down to save a
+     hundred Supplies. */
   const remains = Math.max(0, Math.floor(Number(spec?.remains) || 0));
-  const reusable = remains > 0 && state.rank >= remains && state.bodies.length > 0;
+  const reusable = remains > 0 && state.rank >= remains && state.wrecks.length > 0;
 
   /* And *which* of their own it comes out of, which is a question the answer
-     raises. Held to a body this Ossuary actually has, so a stale id off an
+     raises. Held to a wreck this Ossuary actually has, so a stale id off an
      earlier draft is no answer at all: without this the remains could be chosen,
      no wreck named, and a free corpse taken for nothing. */
-  const over = reusable && state.bodies.some((body) => body.id === draft.over) ? draft.over : null;
+  const over = reusable && state.wrecks.some((body) => body.id === draft.over) ? draft.over : null;
 
   const supplies =
     corpse === 'built' ? Math.max(0, Math.floor(Number(spec?.supplies) || 0)) : 0;
@@ -526,16 +594,22 @@ export function raiseLines(state, draft, name) {
     });
   }
 
-  if (state.burden > 0) {
+  const debt = burdenOf(state, draft.cost);
+  if (debt > 0) {
     lines.push({
       key: 'raise-burden',
-      label: `Maximum Willpower ${state.burden} lower`,
-      detail: `Every body in your ${state.spec.label} takes ${state.burden}. That is ${state.owed + state.burden} in all.`,
+      label: `Maximum Willpower ${debt} lower`,
+      detail: `A body takes ${state.perMarrow} for every Marrow it cost. That is ${state.owed + debt} in all, and every point of it is in something standing or in something broken.`,
       tone: 'cost',
     });
   }
 
   return lines;
+}
+
+/** What a body of this price takes off its keeper's maximum Willpower. */
+export function burdenOf(state, cost) {
+  return Math.floor(Math.max(0, Math.floor(Number(cost) || 0)) * (state?.perMarrow ?? 0));
 }
 
 /**
@@ -583,10 +657,15 @@ export function marrowNote(state, offers) {
  * The card that wakes a set's bodies, and whether it is running.
  *
  * "Having the undead minion act requires the necromancer to spend two Action
- * Points to use the Command action." The card is an ordinary card and the cost is
- * printed on it, so nothing here prices it: the quick bar and the Ossuary block
- * both play it through the same prompt every other use goes through, and it lays
- * its own one-turn row because its text says "until your next Turn End".
+ * Points to use the Command action." The card is an ordinary card and it plays
+ * through the same prompt every other use goes through, laying its own one-turn
+ * row because its text says "until your next Turn End".
+ *
+ * What it *costs* is no longer printed on it, which is the one thing that
+ * changed on 2026-09-09: "command the undead cost should be 1 action point per 4
+ * marrow currently used." A flat two was the same price for one skeleton and for
+ * a procession of five, and the whole shape of the set is that an army is
+ * expensive to keep. See `commandCost`.
  *
  * `commandedBy` in minions.js is what each body reads. This is what the block
  * reads, so the press and the state come out of one place.
@@ -594,6 +673,49 @@ export function marrowNote(state, offers) {
 export function commandOf(state) {
   const id = state?.spec?.command?.card;
   return id ? getCard(id) ?? null : null;
+}
+
+/**
+ * What waking them costs right now, in Action Points.
+ *
+ * One per `command.perMarrow` of the Marrow **in use**, rounded up, and never
+ * less than one. In use rather than in the column, because a wreck is not
+ * something you can tell to do anything: a Necromancer whose ghoul went down
+ * mid-fight pays for what is still standing.
+ *
+ * Floored at one so the card is never free. Rounded up so the fourth Marrow and
+ * the first cost the same, which is what "per 4" means at a table.
+ */
+export function commandCost(state) {
+  const per = Math.max(1, Math.floor(Number(state?.spec?.command?.perMarrow) || 0));
+  const used = Math.max(0, Math.floor(Number(state?.spent) || 0));
+  return Math.max(1, Math.ceil(used / per));
+}
+
+/**
+ * The rider that puts that price on the card, keyed by card id.
+ *
+ * `apSet` is the same field a pool's own price uses (see `loadoutModifiers` in
+ * loadouts.js), and it lands the same way: `cardCost` prints the new number with
+ * the printed one struck through beside it, and the use prompt charges what is
+ * printed after the rider. So the quick bar, the Ossuary block, the Abilities tab
+ * and the dealt card all read one number without any of them knowing where it
+ * came from.
+ *
+ * Empty for a set whose command names no rate, which keeps whatever it printed.
+ */
+export function commandRiders(character, talentId = null) {
+  const riders = {};
+
+  for (const state of marrowState(character)) {
+    if (talentId && state.id !== talentId) continue;
+    const id = state.spec?.command?.card;
+    if (!id || !(Number(state.spec.command.perMarrow) > 0)) continue;
+
+    riders[id] = { apSet: commandCost(state), costFrom: [state.spec.label] };
+  }
+
+  return riders;
 }
 
 /** Whether this Ossuary's bodies have been woken and can still act this turn. */

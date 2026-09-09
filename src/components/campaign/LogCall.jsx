@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { noticeOf } from '../../lib/logChain.js';
 import { subscribeToTable } from '../../lib/realtime.js';
-import { viewUrl } from '../../lib/imageViews.js';
+import { isVaultImage, viewUrl } from '../../lib/imageViews.js';
 
 /** How long a notice stays up before it takes itself away, in milliseconds. */
 const NOTICE_MS = 7000;
@@ -151,7 +151,18 @@ export default function LogCall({ tables = null, mine = [], table = false }) {
           title="This clears itself. Tap to put it away."
         >
           {notice.portrait ? (
-            <img className="log-call-face" src={viewUrl(notice.portrait, 'face')} alt="" loading="lazy" />
+            /* Wrapped rather than being the frame itself, exactly as the feed's
+               own face is, because a picture that was never cropped for a circle
+               has to crop harder than `object-fit` can on its own. Drawn bare
+               until 2026-09-09, which centre-cropped a standing figure into a
+               24px circle and showed a stripe of shirt: the very failure the
+               three baked crops exist to avoid. See `.log-face` in sheet.css for
+               what the two boxes do. */
+            <span
+              className={`log-call-face${isVaultImage(notice.portrait) ? ' is-cropped' : ''}`}
+            >
+              <img src={viewUrl(notice.portrait, 'face')} alt="" loading="lazy" />
+            </span>
           ) : (
             <span className="log-call-face is-blank" aria-hidden="true">
               {initialsOf(notice.actor)}

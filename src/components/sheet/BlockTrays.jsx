@@ -30,8 +30,13 @@ import { TRAY_SIDES, TRAY_SLOTS, traysHold } from '../../lib/characterModel.js';
  * opens its block over the whole screen. Slide it off the way it came to put it
  * away, or press the close.
  *
- * Nothing here writes. A block in a tray is the same block it was in the grid,
- * with the same live values and the same buttons.
+ * ------------------------------------------------------------- and it stays put
+ * Which side stands open is remembered, per tab and per character, so a reload
+ * or a walk to another tab and back finds the tray where it was left. See the
+ * note above `KEY`.
+ *
+ * Nothing here writes to the character. A block in a tray is the same block it
+ * was in the grid, with the same live values and the same buttons.
  */
 
 /** Where the phone layout starts, the same place the tab bar folds into a
@@ -72,6 +77,57 @@ function pull(was, side) {
   return next;
 }
 
+/* --------------------------------------------------------- what is remembered
+ *
+ * Which side stands open, kept per tab and per character.
+ *
+ * "The page should remember the position of the tray", Jules, 2026-09-09. A tray
+ * is where the block you touch every turn lives, and pulling it open again after
+ * every reload — and after every walk to another tab and back — is the one
+ * gesture the trays exist to save.
+ *
+ * localStorage rather than a column, for the reason useFoldedGroups gives about
+ * folded groups: which drawer you like open is a reading preference and not a
+ * fact about the character. Nothing here can be lost that one tap does not put
+ * back, and a machine with no storage simply starts closed.
+ *
+ * **The phone is deliberately not remembered.** There, a tray is one block laid
+ * over the whole screen, and restoring that on arrival would open a sheet
+ * nobody asked for over the page they came to read. What is remembered is a
+ * position; the phone's is a thing being shown.
+ */
+const KEY = 'hzbd-trays';
+
+function readAll() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(KEY) ?? '{}');
+    return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+  } catch {
+    // No storage, or something else wrote nonsense into the key. Start closed.
+    return {};
+  }
+}
+
+/** One slot as `{ left, right }`, read rather than trusted. */
+function readSlot(slot) {
+  const held = readAll()[slot];
+  return {
+    left: held?.left === true,
+    right: held?.right === true,
+  };
+}
+
+function writeSlot(slot, open) {
+  try {
+    const all = readAll();
+    if (open.left || open.right) all[slot] = { left: open.left, right: open.right };
+    else delete all[slot];
+    localStorage.setItem(KEY, JSON.stringify(all));
+  } catch {
+    // Full, or blocked. The tray still opens for this sitting.
+  }
+}
+
 function usePhone() {
   return useSyncExternalStore(
     (wake) => {
@@ -88,13 +144,34 @@ function usePhone() {
  * @param trays     `{ left, right }` of block ids, holes and all
  * @param render    id -> the block itself, the same node the grid would draw
  * @param describe  id -> `{ name, note }`, for the handle and the label
+ * @param scope     which tab's trays these are, so two tabs remember separately
  */
-export default function BlockTrays({ trays, render, describe }) {
+export default function BlockTrays({ trays, render, describe, scope = 'sheet' }) {
   const phone = usePhone();
   /* The rail elements, for measuring the push against. See the effect below. */
   const rails = useRef({});
-  /* Which side is pushed open on a desktop. Both may be, one each side. */
-  const [open, setOpen] = useState({ left: false, right: false });
+  /* Which side is pushed open on a desktop. Both may be, one each side, and
+     whichever it was last time is where it starts — see the note above KEY. A
+     remembered pair is held to what this window can actually show: a narrow
+     window that remembers both open would draw them over the blocks between
+     them, which is the very thing BOTH_TRAYS exists to prevent. */
+  const [open, setOpen] = useState(() => {
+    if (phone) return { left: false, right: false };
+    const held = readSlot(scope);
+    if (held.left && held.right && window.innerWidth < BOTH_TRAYS) return { ...held, right: false };
+    return held;
+  });
+
+  /** A press: move the state, and remember where it left the tray. */
+  const press = useCallback(
+    (side) =>
+      setOpen((was) => {
+        const next = pull(was, side);
+        writeSlot(scope, next);
+        return next;
+      }),
+    [scope]
+  );
   /* And which single block is over the whole screen on a phone: `{ side, at }`.
      One at a time, which is all there is room for. */
   const [shown, setShown] = useState(null);
@@ -148,12 +225,15 @@ export default function BlockTrays({ trays, render, describe }) {
   /* A phone that grows into a desktop, or the other way, puts away whatever was
      open in the layout that no longer exists. Set during the render that hears
      about it rather than in an effect: React takes the new state before it
-     paints, so nothing is ever drawn in the layout it does not belong to. */
+     paints, so nothing is ever drawn in the layout it does not belong to.
+     Growing into a desktop lands on the remembered position rather than on
+     nothing, which is where a reload would have landed it. Nothing is written
+     here: a window being dragged is not somebody putting a tray away. */
   const [was, setWas] = useState(phone);
   if (was !== phone) {
     setWas(phone);
     setShown(null);
-    setOpen({ left: false, right: false });
+    setOpen(phone ? { left: false, right: false } : readSlot(scope));
   }
 
   const sides = TRAY_SIDES.filter((side) => traysHold(trays, side));
@@ -210,7 +290,7 @@ export default function BlockTrays({ trays, render, describe }) {
             type="button"
             className="tray-handle"
             aria-expanded={open[side]}
-            onClick={() => setOpen((was) => pull(was, side))}
+            onClick={() => press(side)}
             title={open[side] ? 'Push the tray back in' : 'Pull the tray open'}
           >
             <span className="tray-handle-arrow" aria-hidden="true">

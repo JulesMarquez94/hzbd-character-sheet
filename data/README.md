@@ -14095,6 +14095,13 @@ written here from that description. The description itself is transcribed in ful
 comment above the set in `src/lib/talents.js`, because it is the only source of record
 there is.
 
+> **Amended the same evening.** Eight of the numbers below were ruled on within hours of
+> being written: the Willpower a body costs, what a destroyed one gives back, the Command's
+> price, all seven stat blocks, the skeleton's sword, two granted Martial Moves and IRON
+> PROVOCATION. Read this section for what was described and why, then
+> [the amendment](#the-dead-cost-what-they-cost-and-four-smaller-things-2026-09-09) for what
+> the codex actually holds.
+
 ### What the set is
 
 A Necromancer keeps an **Ossuary** with **Marrow** in it, and the Marrow is their **Mind**.
@@ -14272,3 +14279,363 @@ but the shape is unusual: it is the only pool in the codex a rank does not widen
   yours raises nothing and says so, a stale id raises nothing, and the one that names a
   wreck drops that wreck in the same patch the new body arrives in, with no Supplies moved.
   Without that check the answer was a free corpse.
+
+## A pool has two panes, and the Runebearer holds one twice, 2026-09-09
+
+Four rulings on the Runebearer and one change to the way **every** pool on the sheet is
+chosen from. Jules, in one message: three fixes to the set, then "In general lets change
+the way you select spells or other similar."
+
+### Two panes, everywhere a pool is chosen
+
+> "I want the screen split in 2 third is the list with filter and on the right there is the
+> selected one in a column. So you select (over even drag and drop them) to that column. Or
+> remove the from there."
+
+`LoadoutChooser` is the one chooser every pool on the sheet raises: a Mycomancer's hand, an
+Arcanist's spellbook, a Duelist's Martial Moves, a Spellblade's carried spells, a
+Runebearer's slate, and the rest window's own copy of all five. It was a single wall of
+briefs where what you held was said by a word on a button and a number in the footer.
+Choosing four spells out of a hundred and forty meant scrolling back up to find out what
+you already had, and giving one back meant finding it again among the hundred and forty.
+
+Now it is two panes, and the column is the answer to both:
+
+| | |
+| --- | --- |
+| the wall | two thirds. The lead, the filter and the briefs, cut into sections as before. |
+| the column | one third, sticky, listing what is held with its cost, the card behind it and an × to give it back. |
+
+- **A literal two thirds and one third** (`minmax(0, 2fr) minmax(280px, 1fr)`), rather than
+  the 1.4/0.6 the Cauldron, the Enchanter and the effect tracker take. It is the measure
+  that was asked for. The break is the same 900px all four share.
+- **Under the break the column comes first.** The one thing that is not the desktop layout
+  narrowed: on a phone the wall is a hundred rows long, and a column underneath it is a
+  column nobody ever sees.
+- **Drag and drop, as the second way to do both.** A brief can be carried into the column
+  and a row can be carried out of it onto the wall, and both panes light up while something
+  is being carried that they would take. Every tap still works and nothing needs a pointer
+  that can hold something, which is what keeps it usable on a phone.
+- **The column says what a tap costs.** "Full. The next one you take puts Barkskin out" used
+  to be a tooltip on one button in the wall; it is now a sentence beside the card that is
+  about to go.
+- The wall's button, the footer count and every word in the lead are untouched, so a
+  Mycomancer's chooser reads exactly as it did with a column added beside it.
+
+A drag has a direction and a tap does not, so `toggleLoadoutPick` learned two more verbs
+beside the toggle it already was: `add` ("have it") and `drop` ("give one back"). Without
+them, dropping a card you already held onto the column would have read as a toggle and
+quietly taken it off, which is the opposite of what the gesture looks like.
+
+### A rune is engraved twice over
+
+> "add the thing on top of it that is he can inscribe the same spells more than once. each
+> beings it on 1 time use instance."
+
+Both older sources forbid it and the 2026-09-08 build printed the ban on RUNEWORK. It is
+gone. `repeat: true` on a loadout spec is the first pool in the codex that may hold one card
+twice, and it is generic: any pool could carry it, and none of the others do.
+
+**It needed no storage at all**, which is the same thing that was true of the set the day it
+was built. Two copies are two entries in `picks`, and `runeLimit` hands the spell as many
+uses as there are copies, so the `card_uses` row it always had counts them down one firing
+at a time. The chip greys after the second, the morning clears both.
+
+- `normalizeTalents` and `setTalentPicks` both deduped picks on the way past, which was
+  right for every pool until this one. They now ask the set: `cleanPicks` keeps duplicates
+  for a spec that repeats and dedupes for every other.
+- `pickChanges` counts rather than asking `includes`, so a second Fire Seed inscribed over a
+  first is a night's work the rest window can see and save. It was a no-change before.
+- The slate lists **one row per copy**, marked "1 of 2" and "2 of 2": two runes are two
+  firings and twice the Willpower off the maximum, so folding them into one row with a
+  number on it would be the one place on the sheet where two runes read as one.
+- The Abilities tab and the quick bar list **one row per card**, because the tracker's own
+  count is what says there are two of them. Two identical rows there would be two of
+  everything downstream, starting with the key.
+- The line above the chooser's panes is where the rule is said out loud, off the spec's own
+  words: "The same rune can be inscribed more than once. Each copy is its own single use."
+
+### Two arrive with the set
+
+> "the runebearer engraves 2 rune when he take the talent set."
+
+`start: 2` on the pool, which is the Arcanist's own field and the same machinery: the panel
+*owes* them until they are chosen, and the block says so where an empty slate used to read
+as a Runebearer who had decided against runes. Everything after the two is what it was, one
+a night with the Long Rest action, up to half your Physique plus 4 a rank.
+
+### Four runes back, not a Physique of Willpower
+
+> "Have the tattoo return be 4 by master."
+
+RECHARGED was a Willpower allowance spent against the runes' own printed costs, which is the
+original card's shape and pays out backwards: a Physique of 8 brought back four cantrips or
+none of the one Master spell the slate was built around. It is a flat **4 runes** now,
+whatever they cost.
+
+- `recharge` on the spec is `{ rank: 3, rest: 'short', count: 4 }`. A rule naming a `stat`
+  instead still reads the count off an attribute, so a future set can say "a Physique of
+  them" without this going back to being a price.
+- The rest window offers **dearest first**, which is the reverse of the order it had while
+  the budget was Willpower: cheapest first fitted the most under a price, and four is four.
+  The orb beside each name is no longer a price being paid, it is what that rune is worth,
+  which is how you decide which four.
+- Fired copies are offered one row each, "Barkskin (1 of 2)" and "(2 of 2)", and reviving
+  one decrements the count rather than clearing the row.
+
+### A rune fires as printed
+
+> "Simply make it that Runebearer cannot overcast, multicast of other keywords."
+
+The reversal of the 2026-09-08 reversal, which puts the set where both older sources always
+had it. `halves: false` on the pool lays a `noHalf` rider on every card it hands out, and
+the use prompt replaces the Overcast control with a line in the Overcast's own colour:
+**"Overcast · Not open to you here. Rune Activation casts it as printed."**
+
+Said rather than hidden, because the card dealt beside the prompt still prints its second
+half in full and a prompt that quietly skipped it would read as the sheet having missed it.
+The same spell cast out of anybody else's book is Overcast as freely as it ever was: the
+refusal belongs to the slate, not to the card.
+
+### The cards
+
+| Card | Was | Is |
+| --- | --- | --- |
+| RUNEWORK | "no spell can be inscribed twice" | "two of them the day you learn how ... The same spell can be inscribed any number of times and each copy fires on its own" |
+| RUNE ACTIVATION | "Its Overcast and its Multicast are not, and you can pay for either as often as the spell allows" | "A rune fires the spell exactly as printed. It cannot be Overcast or Multicast, and nothing else the card offers is open to it" |
+| RECHARGED | "any number of fired runes whose Willpower costs add up to no more than your Physique" | "up to 4 of your fired runes" |
+
+### Proved
+
+- `npm run lint`, all nineteen `lint:*` scripts and `npm run build`, all clean, with the
+  Necromancer work landing in the same tree.
+- Forty-odd assertions driven through `loadoutState`, `toggleLoadoutPick`, `runeState`,
+  `runeLimit`, `cardUse`, `spendCardUse`, `normalizeUses`, `runeRecharges`, `rechargeSpend`,
+  `reviveRunes`, `pickChanges` and `deriveStats`: two Barkskins store as two picks and one
+  Heal as one, the limit reads `max: 2`, the second firing spends it and the third is
+  refused, the slate marks copy 1 fired and copy 2 ready, the debt counts both, reviving one
+  key leaves `{ barkskin: 1 }` and reviving both empties the row, and a Mycomancer handed the
+  same three verbs still holds one of each.
+- The chooser driven in a browser harness at 1180 and at 375: the column fills and empties by
+  tap, by × and by drag in both directions, both panes light up mid-drag, "Inscribe another ·
+  2 on you" counts the copies, the rest window's chooser still grants exactly one a night and
+  then replaces, and the column sits above the wall on a phone.
+- The rune block at 360x640 with four runes and one fired, and the Short Rest window with six
+  fired: the budget caps at four, the two it cannot reach are refused by name, and the plan
+  prints a line apiece.
+
+### Still open
+
+- **The slate's ceiling is still 16 at Rank 3**, and the Willpower cost still runs out long
+  before it. Two of the four rulings above (the two free runes, the four brought back) make
+  the early ranks kinder without touching that. It is the same open item the 2026-09-09
+  morning left.
+- **Nothing stops a rune being fired twice in one turn.** RUNE ACTIVATION prints "once a
+  turn" and the tracker holds a count and a rest, not a turn. A Runebearer with two copies of
+  one spell and 2 Action Points can now fire both in the same turn, which is the reading the
+  card forbids and the sheet cannot see. Unchanged by this pass, and worth a ruling.
+- **Drag and drop is mouse only.** HTML5 drag events do not fire on touch, so a phone gets
+  the taps. Nothing is lost, but it is the reason the buttons were not replaced.
+
+## The dead cost what they cost, and four smaller things, 2026-09-09
+
+One message, nine items. Eight of them are the Necromancer, which had been in the codex for
+about a day, and the other four are the log, the trays, the rests and the talent wall. The
+answers to the three questions this pass had to ask are recorded at the foot of it.
+
+### The Necromancer
+
+**The debt is 1 Willpower per Marrow.** "Max willpower is reduce by 1 per marrow it cost to
+animate the body." It was `burden: [null, 2, 2, 1]`, two a body with a rank rider taking it
+to one, which was this file's own guess at "a small amount" and answers **open item 2** of
+the morning's list. It is `burden: { perMarrow: 1 }` now, so the pool and the debt are the
+same number read twice: a Necromancer on Mind 9 holding a full Ossuary has 9 less maximum
+Willpower whatever it is made of, and three skeletons no longer cost three times what one
+abomination costs. The rank term went with it, and DEEPER GRAVES lost the third paragraph it
+was carrying, which claimed a discount the rank table never gave.
+
+**A body that falls gives its Marrow back and keeps its Willpower.** "An undead minion that
+reaches 0 is destroyed and the resources are freed, but the willpower comes back on a long
+rest." This is the one place on the sheet where two costs of one thing end at different
+times, and it is what the block's own prose already said and the arithmetic did not do. It
+reverses **open item 9**. `undead.js` can now tell a wreck from a standing body without
+importing `minions.js`: a Health of nothing is a body at nothing, since `floor: 0` is the
+whole of "it cannot go in negative". Two sums over one list, `spent` and `owed`, and the
+window's "your own remains" is held to an actual wreck rather than to any body of theirs,
+which had been an invitation to pull a ghoul down to save a hundred Supplies.
+
+**Command the Dead is 1 Action Point per 4 Marrow standing**, rounded up and never less than
+1, in place of a flat 2. So a lone skeleton is 1 and a Master's whole court is 3, and a
+bigger army is a slower one to wake. Wired rather than printed, through the same `apSet`
+rider a pool's own price uses, so the chip, the use prompt, the Abilities tab and the dealt
+card all read one number. The card prints 1, which is the floor and what the codex shows a
+reader with no Ossuary of their own.
+
+**Every body is built the same way, and nothing starts at 1.** "No entity starts with 1 in a
+stat, default is 4 as base. Minion entities should have 1 main and then alternate mind and
+instinct." This replaces the whole of **open item 4**. Two numbers are left to choose per
+kind: a floor of **4 in all three attributes**, and the one attribute it is *for*, at **5 at
+Novice, 7 at Adept and 9 at Master**. So the rungs open on 13, 15 and 17 points where a
+draconic ally opens on 16, against 9, 12 and 14 before. The growth is one rule for all
+seven: the main every odd level, then Mind and Instinct alternating on the even ones. Which
+reads oddly for a body whose main is one of those two and is right anyway, since Instinct is
+Reflex, Initiative and Speed, Mind is Grit, and Physique is Health, which grows per level on
+its own.
+
+**The skeleton swings off Instinct with both hands.** RUSTED SWORD was Physique, which made
+it the one body in the codex rolling two attributes and the one that had to grow both.
+
+**Two bodies know a Martial Move outright.** "Give reckless martial move to skeleton. Ghoul
+can use wound." `knows: ['reckless']` on the kind, which is a new field beside the
+`moves: { count, tiers }` the abomination already had: that one *chooses* some the night it
+rises, this one has them and cannot give them back. Both resolve into the same `moveRows` the
+actor carries, so nothing downstream can tell them apart. It needed the `Weapon Attack` tag
+on all four of those bodies' swings, because that tag and nothing else is what a move rides.
+
+**IRON PROVOCATION costs 2 Willpower and lasts one turn**, from 1 and two turns. A taunt on
+every enemy inside 9 metres is the widest single clause in the roster and it was holding a
+side of the board for a Willpower and a press.
+
+**The minions' abilities came off the ability lists.** "You should not see the minion's
+ability. Instead you should have a preview minion menu at each rank that gives you a pop up
+that shows the blocks like in the bestiary." A Necromancer at Master owned six cards and
+sixteen belonging to seven bodies, every one of the sixteen a brief in the set's own block
+and a row on its presentation page. None of them is a thing the character can do. So a rank
+that opens bodies now keeps a row of doors instead, and behind each one the creature drawn
+as the **two blocks it would stand up as**: `MinionStatsBlock` and `MinionActionsBlock`
+read-only, which are the very blocks it takes on the Character tab, rather than a second
+rendering of the same numbers. The pattern the bestiary set on 2026-09-04.
+
+A set with **one** body keeps its cards where they were. The split is worth drawing: a
+Draconic Bond's ally is *the* creature the set is about, its four cards are half of what the
+set is, and there is nothing to preview because the thing itself is already on the sheet.
+
+**The raise window confirms rather than going back.** "Instead of back to rest, have the text
+read confirm, have it greyed out until all choices are made. Have the mouse over tell you
+what is missing." It read "Back to the rest" and was always live, which made the way out and
+the way to accept the same button: a half-filled raising looked done. It is **Confirm**, dead
+until the draft is answered for, and its tooltip is the same sentence the footer count prints
+("It needs a name", "Say which of yours it comes out of", "2 more spells to choose"). Nothing
+about what it does changed: it closes the step, and the rest still writes nothing until "Yes,
+rest" is pressed. The dialog's own close is still the way to leave a raising unfinished.
+
+### A rest ends what it outlasts
+
+> "When taking a short rest, effects that are under 1 hour should clear. So for example cloak
+> of flame is 5 turns, a turn is 6 seconds. Same thing with long rest which is 8 hours."
+
+Until now a rest ended what *named* it: a row saying "until a short rest" or "until a long
+rest", and nothing else. So CLOAK OF FLAMES, five turns and half a minute of fire, sat
+burning through an hour off your feet.
+
+`restEnds` is both ways now, and the second is arithmetic and nothing else. `TURN_SECONDS`
+is **6**, which the codex has always known and never written down (every duration in it is
+printed as "10 turns (1 minute)"), and the rulebook's own table gives the rests as 1 hour and
+8 hours. So a row counted in turns clears at a rest longer than it has left.
+
+Written as the comparison rather than as "every turn count clears", so the two rests stay
+different: a row that somehow reached past an hour sits through a short rest and goes on the
+long one, which is what the numbers say. A row with **no count and no rest on it** is
+open-ended and no rest touches it, which is the tracker's own law and deliberately unchanged:
+a Grapple is not something you sleep off. `minionRest` takes the test as a predicate now
+rather than the list of durations it took before, so the rule lives in one place whoever the
+effect is on.
+
+### The log
+
+**The notice cards crop a face.** They drew the picture as the frame itself, with a bare
+`object-fit: cover` on a 24px circle, so a standing figure came out as a stripe of shirt:
+the one failure the three baked crops in `imageViews.js` exist to avoid. It is the feed's own
+two boxes now, a frame with the picture drawn at twice the size inside it keeping the top
+half, and an uploaded face crop left exactly as its owner framed it. Both halves of the log
+crop a person the same way.
+
+**A closed entry is a fifth taller**, 46px to 55px, measured. "Make the log blocks a bit
+taller like 20% taller so text does not overlap as much." Four numbers decide that height and
+they move together: the head's padding, the two line heights and the gap between the name and
+the sentence. The face is resized with them, 32px to 39px, because it is the two lines
+exactly.
+
+### The trays remember where they were
+
+"The page should remember the position of the tray." Which side stands open, kept per tab and
+per character in `localStorage` beside the folded groups, for the same reason: which drawer
+you like open is a reading preference and not a fact about the character. A remembered pair is
+held to what the window can show, so a narrow window that remembered both open does not draw
+them over the blocks between them.
+
+**The phone is deliberately not remembered.** There a tray is one block laid over the whole
+screen, and restoring that on arrival would open a sheet nobody asked for over the page they
+came to read. What is remembered is a position; the phone's is a thing being shown.
+
+### The talent wall has a Current shelf
+
+"Move the talent set you already have selected to the top on Current category." Four shelves
+and thirty-four sets is a wall you scroll, and the answer to "where is the set I am ranking
+up" was somewhere down the Mind shelf between two placeholders. Held sets are cut off the top
+into a fifth shelf and taken out of the attribute shelf they would otherwise sit on, because
+one set drawn twice on one wall is a reader wondering which tile is the real one. Not one of
+`TALENT_CATEGORIES`: those four are a fact about a *set* and this one is a fact about the
+reader, so it is cut in `talentShelves`, the only place both are known.
+
+One thing it inherits and does not change: a set already finished at Master is off the
+chooser's wall entirely, because a wall of sets you cannot take is a wall you read once. So
+the Current shelf holds the sets you hold *and can still rank up*, which at level 6 with a
+Rank 2 Necromancer is the Berserker beside it and not the Necromancer.
+
+### The three questions this pass asked
+
+- **The log's crop.** Its 32px circle already asked for the square `face` crop, so "the log
+  should be using the most zoomed in image" had to mean something else. It was the notice
+  cards, which are the other half of the log and were cropping a face centrally.
+- **Which tray.** The dice tray is a fixed button in a corner and cannot be moved at all, so
+  remembering its position would have meant making it draggable first. It was the sheet's
+  side trays.
+- **Which knight card.** BONEWALL is 1 Action Point and intercepts damage for you forever
+  once paid, which is the card that most wants a duration; IRON PROVOCATION is the one with a
+  Willpower cost to double. It is IRON PROVOCATION.
+
+### Proved
+
+- `npm run lint`, all nineteen `lint:*` scripts and `npm run build`, all clean, with the
+  Runebearer work landing in the same tree.
+- `lint:math`'s Necromancer sheet rewritten to the new rule and passing: a ghoul at 3, a
+  skeleton at 3 and a knight at 6 is **12** off the maximum, where a reading that had gone
+  back to counting rows would come out at 3 or at 6 and never at 12.
+- The Ossuary arithmetic driven through `marrowState` and `commandCost` on six sheets: a lone
+  skeleton is 3 spent, 3 owed and 1 Action Point to wake; the same skeleton destroyed is 0
+  spent, 3 still owed and 3 in a wreck; an abomination beside a destroyed ghoul is 9 spent
+  and **12** owed, and 3 Action Points to wake the one that can act.
+- The seven bodies at level 1 and at level 10: no attribute below 4, every main where the
+  rung says, the skeleton knowing RECKLESS and the ghoul WOUND, and the ghoul at level 10 on
+  Physique 4, Instinct 11 and Mind 7, which is the growth rule counted out by hand.
+- `restPlan` on a tracker holding five rows: a short rest ends CLOAK OF FLAMES, SHADOW BIND
+  and an "until a short rest" row, leaves PREPARED sitting and says so, and never touches the
+  Grapple. A long rest ends everything but the Grapple.
+- A browser harness at 1280 and at 375: the log head measured at 55px against 46 with the old
+  four numbers put back; the notice face drawing at 44px inside a 22px circle for a pasted
+  link and at 22px for an uploaded crop; the preview row two columns wide inside a 360px
+  block and the popup drawing both of the ghoul's blocks with no "Not commanded" line on a
+  body that does not exist; the Confirm button walking from dead through "It needs a name" to
+  live and only closing the step on the last press; and the left tray opened, reloaded, found
+  still open with its width measured, then closed and the key dropped.
+- And the trays' phone path: a stored pair of open sides draws two handles and lays nothing
+  over the page.
+
+### Still open
+
+- **The Ossuary's two numbers are now one number.** With the debt at 1 per Marrow, a
+  Necromancer's maximum Willpower is down by exactly what their Ossuary is holding, and a
+  full Ossuary is their whole Mind. Mind is also what buys the Willpower in the first place,
+  at 2 a point, so a Necromancer who raises to the ceiling has spent half of what their Mind
+  gave them. That is a clean shape and a strong one, and it is worth a look at a table.
+- **The base of 4 lifted every Novice body's defences.** The Healths barely moved, since
+  those are mostly per level, but a wraith answers on Grit and its Grit is 9 at level 1 where
+  it was 7. Nothing was balanced against the old numbers, so this is a note rather than a
+  worry.
+- **IRON PROVOCATION at 2 Willpower a turn** is expensive on a pool the knight's master also
+  spends. Deliberate, and the sort of number a session tells you about.
+- **BONEWALL still has no duration.** It is 1 Action Point, no Willpower, and it intercepts
+  damage meant for its master for as long as the knight stands within 6 metres. It was the
+  other reading of the ruling above, and the ruling went to IRON PROVOCATION, so this one is
+  untouched and still the widest promise on the sheet.

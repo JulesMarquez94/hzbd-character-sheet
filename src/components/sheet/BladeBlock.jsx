@@ -177,8 +177,10 @@ export default function BladeBlock({ character, state, patch, readOnly = false }
           character={character}
           state={hand}
           readOnly={readOnly || !patch}
-          onToggle={(cardId) =>
-            patch({ talents: toggleLoadoutPick(character?.talents, talent.id, cardId, hand.known) })
+          onToggle={(cardId, how) =>
+            patch({
+              talents: toggleLoadoutPick(character?.talents, talent.id, cardId, hand.known, how),
+            })
           }
           onClear={() => patch({ talents: setTalentPicks(character?.talents, talent.id, []) })}
           onClose={() => setChoosing(false)}

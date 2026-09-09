@@ -9184,14 +9184,42 @@ body.tray-open-left.tray-open-right .sheet {
   }
 }
 
+/* A frame with a picture inside it rather than the picture itself, which is the
+   same two boxes `.log-face` uses and for the same reason. It was the picture
+   itself until 2026-09-09, with a bare `object-fit: cover` on a 24px circle: a
+   standing figure centre-cropped into that is a stripe of shirt, which is the
+   one failure the three baked crops in src/lib/imageViews.js exist to avoid.
+   Both halves of the log now crop a face the same way. */
 .log-call-face {
   flex: 0 0 auto;
+  display: block;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  object-fit: cover;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--call-tone) 60%, transparent);
   background-color: var(--bg-black);
+}
+
+/* Zoomed to the head. See `.log-face img` for the whole of why: drawn at twice
+   the frame and pulled back to the middle, so the frame keeps the top half,
+   which on a standing figure is head and shoulders. */
+.log-call-face img {
+  display: block;
+  width: 200%;
+  height: 200%;
+  margin-left: -50%;
+  object-fit: cover;
+  object-position: 50% 8%;
+}
+
+/* An uploaded picture is already a face, framed by its owner in a preview of
+   this very circle, so there is nothing left to crop. */
+.log-call-face.is-cropped img {
+  width: 100%;
+  height: 100%;
+  margin-left: 0;
+  object-position: 50% 50%;
 }
 
 .log-call-face.is-blank {
@@ -13167,13 +13195,21 @@ button.tgt-chip:disabled {
    room for the ellipsis, so a "g" lost its tail as well. A closed entry is the
    thing this block is read as, forty at a time, so it is the one that has to
    breathe. Nothing else on the tab moves: a block is a hard 640px everywhere,
-   and what grew is the row inside it. */
+   and what grew is the row inside it.
+
+   **Grown a fifth again on 2026-09-09**, on Jules's instruction: "make the log
+   blocks a bit taller like 20% taller so text does not overlap as much". 1.35
+   was still tight enough that a descender on the name met the ascender of the
+   sentence at some font sizes. The four numbers that decide the height of a
+   closed entry move together — this padding, the two line heights and the gap
+   in `.log-head-body` — and the face is resized to match them, because it is
+   the two lines exactly. 46px to 55px, which is the fifth. */
 .log-head {
   display: flex;
   align-items: flex-start;
   gap: 0.4rem;
   width: 100%;
-  padding: 0.42rem 0.4rem;
+  padding: 0.5rem 0.4rem;
 
   border: none;
   background: none;
@@ -13191,10 +13227,11 @@ button.tgt-chip:disabled {
  * the log used to disagree about the shape of a person. Jules, 2026-09-08:
  * the log takes the round picture.
  *
- * 32px is the head body's two lines exactly, the name plus the sentence plus
+ * 39px is the head body's two lines exactly, the name plus the sentence plus
  * the gap between them, so the face is as tall as the row it belongs to and
- * nothing under it moves. Square now rather than 26 wide, because a circle has
- * to be, and the row's text sits 6px further along for it.
+ * nothing under it moves. Square rather than 26 wide, because a circle has to
+ * be, and the row's text sits 6px further along for it. It was 32 while the two
+ * lines were 1.35: change either line height and this number changes with it.
  */
 .log-face {
   flex: 0 0 auto;
@@ -13202,8 +13239,8 @@ button.tgt-chip:disabled {
      sits in is a flex container, which would blockify it anyway, but a frame
      whose size depends on who is holding it is a frame waiting to be moved. */
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 39px;
+  height: 39px;
   border-radius: 50%;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--log-accent) 60%, transparent);
@@ -13271,14 +13308,14 @@ button.tgt-chip:disabled {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 /* The name, in the site's own teal. */
 .log-who {
   font-size: 0.72rem;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.6;
   color: var(--focus-cyan);
 }
 
@@ -13288,7 +13325,7 @@ button.tgt-chip:disabled {
   gap: 0.25rem;
   min-width: 0;
   font-size: 0.68rem;
-  line-height: 1.35;
+  line-height: 1.6;
 }
 
 .log-verb {
@@ -14186,6 +14223,105 @@ button.tgt-chip:disabled {
 }
 
 /* =========================================================
+   PREVIEWING ONE
+   ---------------------------------------------------------
+   "You should not see the minion's ability. Instead you should have a preview
+   minion menu at each rank that gives you a pop up that shows the blocks like in
+   the bestiary" (Jules, 2026-09-09).
+
+   So a rank that opens bodies keeps a row of doors where sixteen card briefs
+   used to be, and behind each one the two blocks the body would stand up as. The
+   pattern the bestiary set: a menu you scan, the block one press behind it. See
+   MinionPreview.jsx.
+   ========================================================= */
+.minion-peeks {
+  margin-top: 0.5rem;
+}
+
+.minion-peeks-lead {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* Auto-fit at a narrow measure, because this row is drawn in two places of very
+   different widths: a 360px block on the Abilities tab, where it is one column,
+   and the set's presentation page, where three fit. */
+.minion-peek-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.4rem;
+}
+
+.minion-peek {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(148, 167, 176, 0.18);
+  border-left: 2px solid var(--family-death);
+  border-radius: 5px;
+  background-color: var(--inset-bg);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.minion-peek:hover,
+.minion-peek:focus-visible {
+  border-color: var(--family-death);
+  background-color: rgba(111, 162, 113, 0.1);
+}
+
+.minion-peek-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.minion-peek-name {
+  flex: 1 1 auto;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-silver);
+}
+
+/* The price, in the resource's own colour and as bare a number as the raise
+   window's, because the line above the row already says what it is. */
+.minion-peek-cost {
+  flex: 0 0 auto;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--family-death);
+}
+
+.minion-peek-note {
+  font-size: 0.64rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* The two blocks, side by side inside the dialog, which is the shape a bonded
+   creature's pair makes on the Character tab in their factory order. The same
+   two-block measure the foe page takes, written here rather than borrowed:
+   `.foe-page` lives in Campaigns.css and this dialog is opened from tabs that
+   never load it. It falls to one column when the dialog cannot hold two. */
+.minion-page {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  width: min(100%, calc(var(--block-w) * 2 + 16px));
+  margin-inline: auto;
+}
+
+.minion-page > .sheet-cell {
+  width: 100%;
+}
+
+/* =========================================================
    RAISING ONE
    ---------------------------------------------------------
    The Long Rest step. Three parts, each its own shape: the wall of bodies, the
@@ -14360,4 +14496,231 @@ button.tgt-chip:disabled {
 .raise-remain-kind {
   font-size: 0.66rem;
   color: var(--text-muted);
+}
+
+/* =========================================
+   A POOL, IN TWO PANES
+   =========================================
+   The loadout chooser, since 2026-09-09: the wall you choose from, and beside it
+   a column of what you have chosen. "I want the screen split in 2 third is the
+   list with filter and on the right there is the selected one in a column"
+   (Jules), so it is a literal two thirds and one third rather than the 1.4/0.6
+   the Cauldron and the effect tracker take. The break is the same 900px all four
+   share.
+
+   Under the break the column comes **first**, which is the one thing that is not
+   the desktop layout narrowed. On a phone the wall is a hundred rows long, and a
+   column underneath it is a column nobody ever sees. */
+.pool-split {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 1rem;
+  align-items: start;
+  margin-top: 0.8rem;
+}
+
+.pool-shelf {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+/* The one sentence above both panes: this pool may hold the same card twice. */
+.pool-repeat {
+  margin-top: 0.5rem;
+}
+
+/* Sticky inside the dialog's own scroller, so what you hold stays beside the
+   wall however far down the wall you are. */
+.pool-held {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.65rem 0.7rem 0.7rem;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background-color: var(--inset-bg);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+/* Both panes light up when something is being carried that they would take. */
+.pool-held.is-target {
+  border-color: var(--copper);
+  background-color: rgba(200, 138, 75, 0.08);
+}
+
+.pool-shelf.is-target {
+  border-color: color-mix(in srgb, var(--danger-rose) 55%, transparent);
+  background-color: rgba(214, 106, 122, 0.06);
+}
+
+.pool-held-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pool-held-head .pick-count {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.pool-held-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 52vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 138, 75, 0.35) transparent;
+}
+
+.pool-held-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pool-held-list::-webkit-scrollbar-thumb {
+  background-color: rgba(200, 138, 75, 0.35);
+  border-radius: 3px;
+}
+
+.pool-held-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(148, 167, 176, 0.18);
+  border-radius: 4px;
+  background-color: rgba(9, 17, 21, 0.35);
+}
+
+.pool-held-row[draggable='true'] {
+  cursor: grab;
+}
+
+.pool-held-row.is-illegal {
+  border-color: color-mix(in srgb, var(--danger-rose) 45%, transparent);
+}
+
+.pool-held-face {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.1rem 0.4rem 0.55rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.pool-held-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.76rem;
+  color: var(--text-silver);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pool-held-face:hover .pool-held-name,
+.pool-held-face:focus-visible .pool-held-name {
+  color: var(--copper);
+}
+
+/* Which copy this is, printed only on a pool that can hold two of one card. */
+.pool-held-copy,
+.rune-copy {
+  flex-shrink: 0;
+  font-family: var(--font-headings);
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.rune-copy {
+  margin-left: 0.35rem;
+}
+
+.pool-held-costs {
+  flex-shrink: 0;
+}
+
+.pool-held-illegal {
+  font-size: 0.62rem;
+  color: var(--danger-rose);
+  padding-right: 0.2rem;
+}
+
+.pool-held-drop {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-right: 0.35rem;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.pool-held-drop:hover,
+.pool-held-drop:focus-visible {
+  border-color: color-mix(in srgb, var(--danger-rose) 55%, transparent);
+  color: var(--danger-rose);
+}
+
+.pool-held-empty,
+.pool-held-note {
+  margin: 0;
+}
+
+/* A brief you can pick up and carry to the column. The cursor is the whole of
+   the affordance: the button under it already says the same thing in words. */
+.card-brief.is-draggable {
+  cursor: grab;
+}
+
+@media (max-width: 900px) {
+  .pool-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pool-held {
+    position: static;
+    order: -1;
+  }
+
+  .pool-held-list {
+    max-height: 220px;
+  }
+}
+
+/* A second half the card prints and this way of casting will not have: the
+   Runebearer's runes fire as printed. Shaped like the offer it replaces so the
+   eye lands in the same place, and dimmed rather than dressed as a control,
+   since there is nothing here to press. */
+.use-half.is-refused .use-half-take {
+  cursor: default;
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+.use-half.is-refused .use-half-name {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--half-accent) 60%, transparent);
 }

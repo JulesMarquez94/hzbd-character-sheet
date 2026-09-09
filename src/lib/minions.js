@@ -76,6 +76,13 @@
  * from its quick bar, paid out of its Action Points, and they are kept off the
  * character's own bar so that nothing is ever paid out of the wrong pool.
  *
+ * A body may also **know a Martial Move outright**, which is the one thing it
+ * plays that is not a card of its own: `knows: ['reckless']` on the kind, and
+ * the move is offered inside its own swing's prompt exactly as a Duelist's is.
+ * A move is never a chip — see `moveRows` — so this is a list of ids and not a
+ * tag. Beside it, `moves: { count, tiers }` is a body that *chooses* some the
+ * night it stands up, and a kind may carry either or both.
+ *
  * This file reads the codex and the character. It writes nothing on its own —
  * every writer here hands back a patch body for somebody else to save.
  */
@@ -435,8 +442,15 @@ function resolveMinion(character, { talent, spec, entry, kind, id, row, level })
        a swing inside that swing's own prompt and is never played on its own (see
        "added, not laid" in moves.js), so a chip for one would be a way to spend
        Willpower on nothing. Resolved as the rows `heldMoves` hands back, ready to
-       ride on the actor. */
-    moveRows: moves
+       ride on the actor.
+
+       Two sources and they are the same two a character has. `body.knows` is what
+       the *kind* was raised knowing however many of them stand — Jules, on
+       2026-09-09: "give reckless martial move to skeleton. Ghoul can use wound" —
+       and `moves` is what this one body chose the night it stood up, which is the
+       abomination and nothing else. Named first because it is the printed half:
+       a skeleton's RECKLESS is on every skeleton and cannot be given back. */
+    moveRows: [...(body.knows ?? []), ...moves]
       .map((id) => getCard(id))
       .filter(Boolean)
       .map((card) => ({ card, talent, modifiers: null })),
@@ -507,14 +521,27 @@ export function minionState(character) {
  *
  * Empty for a set with one body, which has no menu to show.
  */
-export function minionKindRows(character, talent) {
+export function minionKindRows(character, talent, { rank = null } = {}) {
   const spec = minionOf(talent);
   const kinds = minionKinds(spec);
   if (kinds.length === 0) return [];
 
   const set = typeof talent === 'string' ? getTalent(talent) : talent;
-  const entry = normalizeTalents(character?.talents).find((row) => row.id === set?.id);
-  if (!entry) return [];
+  const held = normalizeTalents(character?.talents).find((row) => row.id === set?.id) ?? null;
+
+  /* At what rank the bodies are read. The held one by default, which is what the
+     Abilities tab wants: a rank prints the cards that rank has given, and a body
+     whose rung is above it has none of them yet.
+
+     `rank` overrides it for the two readers who are showing a set rather than
+     playing one — the presentation page in the chooser draws all three rungs
+     whether or not the reader holds any of them, and a preview of an abomination
+     under the heading "Rank 3" has to be the abomination at Rank 3. A set held
+     by nobody at all is read at whatever rank was asked for, which is how a
+     reader with no Necromancer can still look one over. */
+  const entry = held ?? { id: set?.id, rank: 0, taken: [], picks: [] };
+  const at = rank === null ? entry.rank : Math.max(0, Math.floor(Number(rank) || 0));
+  if (at <= 0 && !held) return [];
 
   const level = levelForXp(character?.xp);
 
@@ -522,7 +549,7 @@ export function minionKindRows(character, talent) {
     resolveMinion(character, {
       talent: set,
       spec,
-      entry,
+      entry: { ...entry, rank: at },
       kind,
       /* Not a key in the column: nothing here is stored. It only has to be
          unique among the menu's own rows, and a block id built from it would
@@ -910,12 +937,17 @@ export function refillMinions(character, { reaction = false, tick = null } = {})
  * into your shadow and is unable to reemerge until you take a Long Rest". A
  * short rest is offered nothing, because the card never printed one.
  *
- * `ends` is which durations this rest puts an end to, handed in by rest.js from
- * the rest's own entry. A creature has no rest of its own — it rests when its
+ * `ended` is the test for whether this rest is the end of one running row,
+ * handed down by rest.js. A creature has no rest of its own — it rests when its
  * bonded does — so what a rest ends on its tracker is decided there and applied
  * here, in the one write that also touches its Health.
+ *
+ * A predicate rather than the list of durations it used to be, because since
+ * 2026-09-09 a rest also ends what it simply outlasts: a row counted in turns is
+ * six seconds a turn, and both rests are hours. That arithmetic is one sentence
+ * and it belongs in one place. See `restEnds`.
  */
-export function minionRest(character, kind, ends = []) {
+export function minionRest(character, kind, ended = () => false) {
   const list = minionState(character);
   if (list.length === 0) return null;
 
@@ -927,7 +959,7 @@ export function minionRest(character, kind, ends = []) {
   for (const minion of list) {
     /* What the rest ends is asked of every creature, whatever rest brings this
        one back: a short rest that restores nothing still ends what it ends. */
-    const ending = minion.effects.filter((effect) => effect?.until && ends.includes(effect.until));
+    const ending = minion.effects.filter((effect) => ended(effect));
 
     if (ending.length > 0) {
       const kept = minion.effects.filter((effect) => !ending.includes(effect));

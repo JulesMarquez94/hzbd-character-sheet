@@ -496,10 +496,12 @@ const SHEETS = [
        three bodies pays for all three, and `deriveStats` and `statMath` have to
        floor the same debt against the same room in the same order.
 
-       Rank 2 rather than 3, because THE CHARNEL COURT takes the burden from 2 to
-       1 and a reading that ignored the rank would pass at either end of that. So
-       the expected number is 2 a body and the rank is the one that charges it. */
-    name: 'a Necromancer holding three bodies, each one worth 2 of the maximum',
+       **One Willpower per Marrow since 2026-09-09**, which is what makes the
+       three bodies chosen here worth checking rather than a count: a ghoul at 3,
+       a skeleton at 3 and an undead knight at 6 is 12, and a reading that had
+       gone back to counting rows would come out at 3 or at 6 and never at 12.
+       Rank 2 because the knight needs it. */
+    name: 'a Necromancer holding three bodies, each one worth its own Marrow',
     row: {
       xp: 44000,
       level_picks: LADDER,
@@ -513,8 +515,8 @@ const SHEETS = [
     expect: (math, fail) => {
       const owed = math.willpower_max.terms.find((t) => t.label === '3 bodies raised');
       if (!owed) fail('three raised bodies cost nothing off the maximum');
-      if (owed && owed.value !== -6) {
-        fail(`3 bodies raised worth ${owed.value}, want -6 (2 apiece at Rank 2)`);
+      if (owed && owed.value !== -12) {
+        fail(`3 bodies raised worth ${owed.value}, want -12 (3 + 3 + 6 Marrow, at 1 apiece)`);
       }
 
       /* And the pool they were paid out of, which is the Mind on the tile. A

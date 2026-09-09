@@ -7,7 +7,7 @@ import { PoolWall } from './LoadoutPick.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { cardHaystack } from '../../lib/abilitySources.js';
 import { minionKindRows } from '../../lib/minions.js';
-import { CARDS } from '../../lib/weapons.js';
+import { CARDS, getCard } from '../../lib/weapons.js';
 import { raiseDraft, undeadMovePool, undeadSpellPool } from '../../lib/undead.js';
 
 /**
@@ -71,17 +71,39 @@ export default function RaiseWindow({ character, row, draft, onDraft, onClose })
                 : `${state.left} of ${state.total} Marrow to spend`}
           </span>
           <span className="spacer" />
-          <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
-            ← Back to the rest
+          {/* **Confirm, and dead until it is answered for.** Jules, 2026-09-09:
+              "instead of back to rest, have the text read confirm, have it greyed
+              out until all choice are made. Have the mouse over tell you what is
+              missing." It read "← Back to the rest" and was always live, which
+              made the way out of the window and the way to accept it the same
+              button: a half-filled raising looked done.
+
+              It still only closes the step. Nothing here is written until "Yes,
+              rest" is pressed, which is the whole point of the rest window — and
+              the dialog's own × is still the way to leave a raising unfinished. */}
+          <button
+            type="button"
+            className="btn btn-take btn-sm"
+            disabled={!plan?.ready}
+            onClick={onClose}
+            title={
+              plan?.ready
+                ? `${draft.name} stands up when you take the rest`
+                : chosen
+                  ? owing(plan, spells, moves)
+                  : 'Choose which body you are raising'
+            }
+          >
+            Confirm
           </button>
         </>
       }
     >
       <p className="frame-foot" style={{ marginTop: 0 }}>
         One body a night, over a corpse. It takes its Marrow out of your {state.spec.label} and
-        keeps it until you lay the body to rest, and while it is in there your maximum Willpower
-        is {state.burden} lower. What it is and what it knows are fixed tonight: nothing about a
-        raised body can be changed afterwards.
+        keeps it until you lay the body to rest, and your maximum Willpower comes down by{' '}
+        {state.perMarrow} for every Marrow it cost. What it is and what it knows are fixed
+        tonight: nothing about a raised body can be changed afterwards.
       </p>
 
       {/* ---------- WHICH BODY ---------- */}
@@ -224,7 +246,7 @@ export default function RaiseWindow({ character, row, draft, onDraft, onClose })
                 in, so its Marrow comes back on the same press. */}
             {plan.corpse === 'remains' && plan.reusable && (
               <div className="raise-remains">
-                {state.bodies.map((held) => (
+                {state.wrecks.map((held) => (
                   <button
                     type="button"
                     key={held.id}
@@ -233,7 +255,7 @@ export default function RaiseWindow({ character, row, draft, onDraft, onClose })
                   >
                     <span className="raise-remain-name">{held.row.name || 'Unnamed'}</span>
                     <span className="raise-remain-kind">
-                      {held.kind?.label ?? held.kind ?? 'unknown'} · {held.cost} Marrow back
+                      {held.kind?.label ?? held.kind ?? 'unknown'} · {held.willpower} Willpower back
                     </span>
                   </button>
                 ))}
@@ -403,6 +425,13 @@ function whatItDoes(kind, shown) {
   const drilled = kind.moves?.count ?? 0;
 
   const said = [...names];
+  /* And the Martial Moves it simply has. A move is never a chip, so a body that
+     knows one has nothing on its bar to say so and this line is the only place
+     the choice can read it. See `knows` in minions.js. */
+  for (const id of kind.knows ?? []) {
+    const card = getCard(id);
+    if (card) said.push(card.name);
+  }
   if (owed > 0) said.push(`${owed} ${owed === 1 ? 'spell' : 'spells'} of your choosing`);
   if (drilled > 0) said.push(`${drilled} Martial ${drilled === 1 ? 'Move' : 'Moves'}`);
 

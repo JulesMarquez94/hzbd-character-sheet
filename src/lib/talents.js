@@ -156,6 +156,27 @@ export const TALENT_CATEGORIES = [
 
 const OTHER_CATEGORY = TALENT_CATEGORIES[TALENT_CATEGORIES.length - 1];
 
+/**
+ * And a shelf above all four: what this character already holds.
+ *
+ * "In the talent set selection screen, move the talent set you already have
+ * selected to the top on 'Current' category", Jules, 2026-09-09. Four shelves
+ * and thirty-four sets is a wall you scroll, and the answer to "where is the set
+ * I am ranking up" was somewhere down the Mind shelf between two placeholders.
+ * A level spent on a set you hold is the commonest choice there is, so it is the
+ * first thing on the wall.
+ *
+ * Not one of `TALENT_CATEGORIES`, and deliberately: those four are a fact about
+ * a *set* — the attribute it is built on — and `talentCategory` answers them off
+ * the set alone. This one is a fact about the reader, so it is cut in
+ * `talentShelves`, which is the only place both are known.
+ */
+const HELD_CATEGORY = {
+  id: 'current',
+  label: 'Current',
+  note: 'Sets you already hold. A level spent here deepens one rather than starting something new.',
+};
+
 /* ------------------------------------------------------------- the codex */
 
 /* --------------------------------------------------------- the granted three
@@ -3330,17 +3351,30 @@ const TALENT_SETS = [
                       move a ceiling. Physique 4 at Rank 1 is 6 runes and
                       Physique 8 at Rank 3 is 16. What a Runebearer can
                       afford runs out long before that, which is what the
-                      restored Willpower cost is for.
-         the halves   an inscribed spell **can** be Overcast and Multicast, as
-                      often as the spell allows. The one line the conversion
-                      called "already in the site vocabulary" and kept word for
-                      word is the one line Jules reversed. It is what makes the
-                      Fire Seed example work: the rune plants the seed for free
-                      and the detonation is paid for out of pocket.
+                      restored Willpower cost is for. Two of them arrive with the
+                      set (`start: 2`, 2026-09-09) and the rest are a night's work
+                      apiece.
+         the halves   an inscribed spell **cannot** be Overcast or Multicast, and
+                      nothing else its card offers is open to it either. Reversed
+                      on 2026-09-08 and reversed back on 2026-09-09, which puts
+                      the set where both older sources always had it: the
+                      conversion kept the old page's line word for word and
+                      called it "already in the site vocabulary". Wired rather
+                      than printed: `halves: false` on the pool. The Fire Seed
+                      example still works, it is simply the printed spell that is
+                      planted.
          the ladder   normalised. The old pages reach Adept at Rank 3 and Master
                       at Rank 5, which is slower than every other set on the
                       wall; the conversion's own Open Questions tab asked for a
                       ruling and Jules gave the usual ladder.
+         the copies   **the same spell may be inscribed more than once**, and each
+                      copy is its own single firing (2026-09-09). Both older
+                      sources forbid it and the 2026-09-08 build printed the ban
+                      on RUNEWORK. It is the first pool in the codex that can hold
+                      one card twice, and it needed no more than the `repeat` flag
+                      and a count where an "is it held" used to be: `runeLimit`
+                      hands the spell as many uses as there are copies, and the
+                      one `card_uses` row it always had counts them down.
 
        ------------------------------------------------------------ the two cards moved
        INSTINCTIVE ACTIVATION and STREAMLINED PATTERNS are **not built**. Firing
@@ -3402,10 +3436,12 @@ const TALENT_SETS = [
        where it is. A spell is printed for Mind; a Runebearer rolls it off the
        body it is written on, and the card prints the numbers they actually roll.
 
-       No `start`. A Runebearer arrives with nothing on them and fills the slate from
-       the panel, which is the sheet's editing surface for every pool; the rest
-       window grants one a night, which is what RUNEWORK actually promises. See
-       the note on allowance against capacity in loadouts.js. */
+       `start: 2` since 2026-09-09, and it is the second thing the panel is for: a
+       Runebearer engraves two the day they take the set, then fills the rest of
+       the slate a night at a time. The panel is the sheet's editing surface for
+       every pool and may write up to the ceiling; the rest window grants one a
+       night, which is what RUNEWORK actually promises. See the note on allowance
+       against capacity in loadouts.js. */
     loadout: {
       id: 'runebearer-runes',
       label: 'Runes',
@@ -3414,14 +3450,35 @@ const TALENT_SETS = [
       group: 'school',
       cast: 'physique',
       capacity: { perRank: 4, perStat: { stat: 'physique', divide: 2 } },
+      /* Two the night the set is taken ("the runebearer engraves 2 rune when he
+         take the talent set", Jules, 2026-09-09), and one a night after that.
+         The same `start` an Arcanist's spellbook carries, which is what makes the
+         panel *owe* them: a Runebearer arriving with an empty slate is a
+         Runebearer who has not been asked yet, and the block says so until they
+         have. See `allowanceAt` and `owed` in loadouts.js. */
+      start: 2,
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       research: ['long'],
+      /* The first pool in the codex that may hold the same card twice, and the
+         reason `repeat` exists: a rune fires once, so a second copy of it is a
+         second firing. "he can inscribe the same spells more than once. each
+         beings it on 1 time use instance" (Jules, 2026-09-09). Nothing else about
+         it is special-cased: the copies are two entries in `picks`, and
+         `runeLimit` counts them into the one `card_uses` row the spell already
+         had. See allowsRepeat in loadouts.js and runes.js. */
+      repeat: true,
+      /* And the first that takes something *off* the cards in it. An inscribed
+         spell is fired as printed: no Overcast, no Multicast and no other option
+         the card offers. Jules's reversal of his own 2026-09-08 ruling, on
+         2026-09-09. See loadoutModifiers. */
+      halves: false,
+      halvesFrom: 'Rune Activation',
       verb: 'Inscribe',
       kept: 'inscribed',
       section: 'What is inscribed on you',
       holds: 'your runework',
       price: { ap: 1, wp: 0, from: 'Rune Activation' },
-      note: 'One a night, inscribed with your Long Rest action. Each one holds its own Willpower cost off your maximum, fires once and comes back with the morning, and reaches yourself or something you can touch and no further.',
+      note: 'Two arrive with the set and one a night after that, inscribed with your Long Rest action. Each one holds its own Willpower cost off your maximum, fires once as printed and comes back with the morning, and reaches yourself or something you can touch and no further.',
     },
     /* The ninth shape of what a set can hand over: a slate. Numbers only, and
        what they mean is runes.js's business, which is the same split minions.js,
@@ -3439,8 +3496,15 @@ const TALENT_SETS = [
       willpower: { rank: 2, stat: 'physique', per: 1, from: 'Runic Network' },
       /* RECHARGED, and the one ruling in this set that is a reading rather than
          a transcription. A Short Rest, because a Long Rest already brings the
-         whole slate back on its own. */
-      recharge: { rank: 3, rest: 'short', stat: 'physique', from: 'Recharged' },
+         whole slate back on its own.
+
+         **A count, and not a budget, since 2026-09-09.** The original card and
+         the 2026-09-08 build both spent a Willpower allowance against the runes'
+         own printed costs, which meant the cheap end of the slate came back four
+         at a time and a single Master spell came back never. Jules asked for a
+         flat four ("Have the tattoo return be 4 by master"), so what the budget
+         is spent on is runes. */
+      recharge: { rank: 3, rest: 'short', count: 4, from: 'Recharged' },
     },
     blurb:
       'A Runebearer carries their magic on their body. A spell is inscribed on the skin and from that moment it costs nothing to cast, because it was paid for once and paid in full: the maximum Willpower comes down by what the spell would have cost, and stays down until the rune is taken off.\n\n' + // text-style-ok: joins two clauses
@@ -3470,8 +3534,8 @@ const TALENT_SETS = [
            it the way it plays a Mycomancer's free hand. Flagged in
            data/README.md. */
         body:
-          'You inscribe spells on your own skin. A rune reaches yourself or something you can touch, whatever the spell prints.\n\n' +
-          'An inscribed spell lowers your maximum Willpower by its own cost until it is removed, and no spell can be inscribed twice. Your Long Rest action inscribes one, removes one or does both.\n\n' + // text-style-ok: joins two clauses
+          'You inscribe spells on your own skin, two of them the day you learn how. A rune reaches yourself or something you can touch, whatever the spell prints.\n\n' + // text-style-ok: joins two clauses
+          'An inscribed spell lowers your maximum Willpower by its own cost until it is removed. The same spell can be inscribed any number of times and each copy fires on its own. Your Long Rest action inscribes one, removes one or does both.\n\n' +
           'You carry half your Physique in runes, plus 4 per Rank in Runebearer. Adept Spells at Rank 2, Master Spells at Rank 3.',
       },
       {
@@ -3503,14 +3567,18 @@ const TALENT_SETS = [
            keeps it, and a Runebearer with 6 Action Points could tap six runes if
            nobody was reading. Flagged in data/README.md.
 
-           The second paragraph is Jules's reversal of the old "Inscribed spells
-           cannot be Overcast or multicasted", and it is deliberately the shape
-           his Fire Seed example needs: the free firing is spent, and anything the
-           spell offers on top of it is bought at the printed price out of your
-           own Willpower, as often as the spell allows. */
+           **The second paragraph reversed twice and this is the older reading
+           back.** The old printed page said "Inscribed spells cannot be Overcast
+           or multicasted", the conversion kept it word for word, Jules dropped it
+           on 2026-09-08 and restored it on 2026-09-09: "Simply make it that
+           Runebearer cannot overcast, multicast of other keywords." So a rune is
+           the spell as printed and nothing else on the card is on offer, which is
+           wired rather than left to the table: `halves: false` on the pool, and
+           the use prompt says who took the option away. See loadoutModifiers in
+           loadouts.js. */
         body:
           'Once a turn, you can fire one of your runes for 1 Action Point and no Willpower.\n\n' +
-          'A fired rune is spent until your next Long Rest. Its Overcast and its Multicast are not, and you can pay for either as often as the spell allows.', // text-style-ok: joins two clauses
+          'A rune fires the spell exactly as printed. It cannot be Overcast or Multicast, and nothing else the card offers is open to it. A fired rune is spent until your next Long Rest.', // text-style-ok: joins two clauses
       },
       {
         id: 'runic-network',
@@ -3537,7 +3605,7 @@ const TALENT_SETS = [
         id: 'recharged',
         rank: 3,
         name: 'Recharged',
-        summary: 'A few hours off your feet, and a Physique worth of fired runes light up again.',
+        summary: 'A few hours off your feet, and four of your fired runes light up again.',
         kind: 'talent',
         tags: ['Runebearer', 'Master Talent', 'Passive'],
         ap: null,
@@ -3549,10 +3617,15 @@ const TALENT_SETS = [
            The original card is Rank 2 and reads "After a short rest, you can
            reactivate a number of previously used Rune spells with a total
            cumulative cost not exceeding your Wits". Wits is Physique on this
-           sheet, "reactivate" is brought back, and the rung is Master. The budget
-           shape is untouched, because it is the good idea in the set. */
+           sheet, "reactivate" is brought back, and the rung is Master.
+
+           **The budget is a count now** (Jules, 2026-09-09: "Have the tattoo
+           return be 4 by master"). Spent against Willpower it paid for the cheap
+           end of the slate four times over and never once for a Master spell,
+           which is the wrong way round for the top card in the set. Four runes,
+           whatever they cost. */
         body:
-          'Whenever you take a Short Rest, you can bring back any number of fired runes whose Willpower costs add up to no more than your Physique.',
+          'Whenever you take a Short Rest, you can bring back up to 4 of your fired runes.',
       },
     ],
   },
@@ -4008,13 +4081,17 @@ const TALENT_SETS = [
          Willpower. It's a small amount, but it offsets the fact that you have
          several actors you control in combat."
 
-         Per **body** and not per Marrow, which is the whole of what he said it
-         was for: three skeletons cost three times what one abomination costs,
-         because three skeletons are three things taking their turn. Indexed by
-         rank the way every other rank rider in this file is, and THE CHARNEL
-         COURT is what takes it down to 1. Flagged: he gave the shape and no
-         number, so 2 is this file's. */
-      burden: [null, 2, 2, 1],
+         **Per Marrow, and 1 apiece**, ruled on 2026-09-09: "max willpower is
+         reduce by 1 per marrow it cost to animate the body." So a skeleton is 3
+         and an abomination is 9, and the pool and the debt are the same number
+         read twice: a Necromancer on Mind 9 holding a full Ossuary has 9 less
+         maximum Willpower, whatever it is made of.
+
+         It was `[null, 2, 2, 1]`, two a body with a rank rider taking it to one,
+         which was this file's guess at "a small amount" and priced three
+         skeletons at six Willpower against one abomination's two. The rank term
+         went with it — what a rank buys is which bodies are within reach. */
+      burden: { perMarrow: 1 },
       /* "To raise an undead, that's an action that is done during a Long Rest.
          Only one undead at a time can be done." */
       rests: ['long'],
@@ -4030,10 +4107,15 @@ const TALENT_SETS = [
       remains: 2,
       /* "Having the undead minion act requires the necromancer to spend two
          Action Points to use the Command action." The card is an ordinary card
-         and the cost is printed on it; this is the pointer the bodies read, so
-         each of them can say whether it may act. See `commandedBy` in
-         minions.js. */
-      command: { card: 'command-the-dead' },
+         and this is the pointer the bodies read, so each of them can say whether
+         it may act. See `commandedBy` in minions.js.
+
+         `perMarrow` is what it costs, and it is a rate rather than the flat two
+         it was: "command the undead cost should be 1 action point per 4 marrow
+         currently used" (Jules, 2026-09-09). Rounded up and never less than one,
+         so a lone skeleton is 1 Action Point and a Master's whole court is 3.
+         See `commandCost` in undead.js, which is what actually prices the card. */
+      command: { card: 'command-the-dead', perMarrow: 4 },
     },
     /* ------------------------------------------------------------- the bodies
        Seven of them, which is why this is a `roster` rather than a body: see
@@ -4045,9 +4127,33 @@ const TALENT_SETS = [
        the scales." So every number below is this file's, built against the two
        stat blocks the codex already has: a character's own (10 Health a level and
        10 a Physique, `deriveStats`) and a draconic ally's (5 and 5, and 16 points
-       of attribute at level 1). An undead is cheaper than either, so a Novice
-       body opens on 9 points of attribute where the ally opens on 16, and the
-       rungs run 9, 12 and 14.
+       of attribute at level 1). An undead is cheaper than both.
+
+       **Rebuilt on 2026-09-09 to one shape**, on Jules's ruling: "no entity
+       starts with 1 in a stat, default is 4 as base. Minion entities should have
+       1 main and then alternate mind and instinct."
+
+       So every body in the codex is now built the same way, and there are only
+       two numbers left to choose per kind:
+
+         the floor   4 in all three attributes. Nothing anywhere in the game has a
+                     1 in a stat, and the first draft of this roster had a ghoul
+                     on Mind 0 and a wraith on Physique 2 — a stat block written
+                     as a shape rather than as a creature. 4 is where a starting
+                     character's spread sits, and an undead is not less than a
+                     person at the thing it is not for.
+         the main    the one attribute it is *for*, above the floor: 5 at the
+                     Novice rung, 7 at Adept and 9 at Master. So the three rungs
+                     open on 13, 15 and 17 points of attribute where a draconic
+                     ally opens on 16, and what a rung buys is which of the three
+                     the main is and how much of it there is.
+
+       And the growth is the same for all seven: the main every odd level, then
+       Mind and Instinct alternating on the even ones. Which reads oddly for a
+       body whose main is one of those two and is right anyway — Instinct is
+       Reflex, Initiative and Speed, Mind is Grit, and Physique is Health, which
+       already grows per level on its own. A body gets better at what it is for
+       and harder to put down, whatever it is.
 
        Each kind's Defense is the sum of the two attributes it is built on, which
        is the rule the ally's own Notes set down ("a Defense equal to its Grit")
@@ -4086,10 +4192,23 @@ const TALENT_SETS = [
           cost: 3,
           rank: 1,
           kin: 'skeleton with a bow across its back',
-          base: { physique: 4, instinct: 4, mind: 1 },
-          growth: { odd: ['instinct'], even: ['physique'] },
+          /* Instinct for both hands since 2026-09-09: "make the skeleton use
+             instinct for both weapons". It was the one body built to be balanced
+             across two attributes, because its sword rolled Physique and its bow
+             Instinct, and one attribute for both is what makes it a body with a
+             main like every other. */
+          base: { physique: 4, instinct: 5, mind: 4 },
+          growth: { odd: ['instinct'], even: ['mind', 'instinct'] },
           health: { perLevel: 3, perPhysique: 3 },
           defense: 'reflex',
+          /* "Give reckless martial move to skeleton" (Jules, 2026-09-09). Known
+             outright rather than chosen: every skeleton archer has it and none of
+             them can give it back. RECKLESS buys advantage and an Elevated die
+             with advantage against itself, which is the whole character of a
+             thing that does not care what happens to it. Offered inside its own
+             swing's prompt, at 1 Willpower for every 2 Action Points the swing
+             costs. See `knows` in minions.js. */
+          knows: ['reckless'],
         },
         {
           /* "A ghoul, which is a fast agile fighter that punches and has an
@@ -4107,10 +4226,15 @@ const TALENT_SETS = [
           cost: 3,
           rank: 1,
           kin: 'ghoul that has not eaten',
-          base: { physique: 4, instinct: 5, mind: 0 },
-          growth: { odd: ['instinct'], even: ['physique'] },
+          base: { physique: 4, instinct: 5, mind: 4 },
+          growth: { odd: ['instinct'], even: ['mind', 'instinct'] },
           health: { perLevel: 4, perPhysique: 3 },
           defense: 'reflex',
+          /* "Ghoul can use wound" (Jules, 2026-09-09). WOUND leaves an opening
+             that every weapon swing after it bites through, which is what a thing
+             with claws and no reach is for: it cannot finish anything at range,
+             so what it does is open something up for whatever can. */
+          knows: ['wound'],
         },
         {
           /* "A wraith, which is a simple ranged spellcaster, which has one
@@ -4124,8 +4248,8 @@ const TALENT_SETS = [
           cost: 3,
           rank: 1,
           kin: 'wraith that is barely there',
-          base: { physique: 2, instinct: 3, mind: 4 },
-          growth: { odd: ['mind'], even: ['instinct', 'physique'] },
+          base: { physique: 4, instinct: 4, mind: 5 },
+          growth: { odd: ['mind'], even: ['mind', 'instinct'] },
           health: { perLevel: 4, perPhysique: 2 },
           defense: 'grit',
         },
@@ -4147,8 +4271,8 @@ const TALENT_SETS = [
           cost: 6,
           rank: 2,
           kin: 'skeleton that remembers being taught',
-          base: { physique: 3, instinct: 3, mind: 6 },
-          growth: { odd: ['mind'], even: ['instinct', 'physique'] },
+          base: { physique: 4, instinct: 4, mind: 7 },
+          growth: { odd: ['mind'], even: ['mind', 'instinct'] },
           health: { perLevel: 4, perPhysique: 3 },
           defense: 'grit',
           spells: { count: 2, tiers: ['Novice'] },
@@ -4169,8 +4293,8 @@ const TALENT_SETS = [
           cost: 6,
           rank: 2,
           kin: 'knight that never took its plate off',
-          base: { physique: 6, instinct: 4, mind: 2 },
-          growth: { odd: ['physique'], even: ['instinct', 'physique'] },
+          base: { physique: 7, instinct: 4, mind: 4 },
+          growth: { odd: ['physique'], even: ['mind', 'instinct'] },
           health: { perLevel: 5, perPhysique: 4 },
           defense: 'reflex',
           armor: 3,
@@ -4193,8 +4317,8 @@ const TALENT_SETS = [
           cost: 9,
           rank: 3,
           kin: 'thing sewn out of several people',
-          base: { physique: 9, instinct: 3, mind: 2 },
-          growth: { odd: ['physique'], even: ['physique', 'instinct'] },
+          base: { physique: 9, instinct: 4, mind: 4 },
+          growth: { odd: ['physique'], even: ['mind', 'instinct'] },
           health: { perLevel: 6, perPhysique: 5 },
           defense: 'physique',
           /* "Add that the abomination can learn 2 martial move of any rank"
@@ -4225,8 +4349,8 @@ const TALENT_SETS = [
           cost: 9,
           rank: 3,
           kin: 'cleric still saying its office',
-          base: { physique: 3, instinct: 4, mind: 8 },
-          growth: { odd: ['mind'], even: ['instinct', 'physique'] },
+          base: { physique: 4, instinct: 4, mind: 9 },
+          growth: { odd: ['mind'], even: ['mind', 'instinct'] },
           health: { perLevel: 4, perPhysique: 3 },
           defense: 'grit',
           spells: {
@@ -4266,7 +4390,7 @@ const TALENT_SETS = [
     },
     blurb:
       'A Necromancer keeps an Ossuary, and what is in it is Marrow: the animating stuff of the dead, measured out in their own Mind and spent a body at a time. Over a fresh corpse and a full night they put that Marrow into something that used to be a person, and in the morning it stands up and waits to be told.\n\n' +
-      'They excel at being an army. A skeleton with a bow, a ghoul that runs, a wraith that fills a room with blinding fog, a knight that steps in front of blows meant for its master: each is bought with Marrow that stays spent for as long as the body stands, and paid for again out of the Willpower its keeper no longer has. None of them thinks. Two Action Points spent on the Command is what turns a row of standing corpses into a fight.\n\n' + // text-style-ok: joins two clauses
+      'They excel at being an army. A skeleton with a bow, a ghoul that runs, a wraith that fills a room with blinding fog, a knight that steps in front of blows meant for its master: each is bought with Marrow that stays spent for as long as the body stands, and paid for again out of the Willpower its keeper no longer has. None of them thinks. An Action Point for every four Marrow standing is what turns a row of corpses into a fight, so a bigger court is a slower one to wake.\n\n' + // text-style-ok: joins two clauses
       'A Necromancer at the height of their work is a small procession: an abomination hauling bodies to itself on a hook, a cleric mumbling light over the ruin and somewhere behind all of it a drifter who has given up half their own strength to keep the whole thing on its feet.',
     cards: [
       /* ============================================== the Necromancer's own six */
@@ -4274,7 +4398,7 @@ const TALENT_SETS = [
         id: 'the-ossuary',
         rank: 1,
         name: 'The Ossuary',
-        summary: 'Marrow equal to your Mind, spent to stand a body up and held for as long as it stands.',
+        summary: 'Marrow equal to your Mind, and a point of maximum Willpower for every point of it spent.',
         kind: 'talent',
         tags: ['Necromancer', 'Novice Talent', 'Passive'],
         ap: null,
@@ -4282,8 +4406,8 @@ const TALENT_SETS = [
         stat: 'mind',
         body:
           'You keep an Ossuary of animating Marrow, and it holds an amount equal to your {mind} [[mind]].\n\n' +
-          'A body you raise takes the Marrow it costs and keeps it until you lay the body to rest. Destroyed or standing, it is still in your Ossuary.\n\n' +
-          'While a body is in your Ossuary, your maximum Willpower is reduced by 2.',
+          'A body you raise takes the Marrow it costs, and your maximum Willpower is reduced by the same amount for as long as the body is in your Ossuary.\n\n' +
+          'A body destroyed gives its Marrow back at once. The Willpower comes back when you lay what is left of it to rest.',
       },
       {
         id: 'raise-the-dead',
@@ -4303,14 +4427,20 @@ const TALENT_SETS = [
         id: 'command-the-dead',
         rank: 1,
         name: 'Command the Dead',
-        summary: 'Two Action Points, and every body you raised can act this turn.',
+        summary: 'An Action Point for every 4 Marrow standing, and all of it can act this turn.',
         kind: 'talent',
         tags: ['Necromancer', 'Novice Talent', 'Ability'],
-        ap: 2,
+        /* The floor, and what the codex prints for a reader with no Ossuary of
+           their own. What it actually costs is worked out against the Marrow in
+           use and set on the card as a rider, which is what puts the real number
+           on the chip, in the prompt and on the dealt card at once. See
+           `commandCost` in undead.js. */
+        ap: 1,
         wp: null,
         stat: 'mind',
         body:
           'Every undead you have raised can act on your turn **until your next Turn End**, spending its own Action Points and Reaction Points and your Willpower.\n\n' +
+          'This costs 1 Action Point for every 4 Marrow standing in your Ossuary, rounded up and never less than 1.\n\n' +
           'None of them is its own. Without this they stand where they are and do nothing at all.',
       },
       {
@@ -4337,16 +4467,19 @@ const TALENT_SETS = [
         ap: null,
         wp: null,
         stat: 'mind',
+        /* The third paragraph was "Each body you hold costs 1 less of your
+           maximum Willpower", which was never true: the rank table it named read
+           2 at Rank 1 and 2 at Rank 2. It went with the rank term itself when the
+           debt became 1 per Marrow on 2026-09-09. */
         body:
           'You can raise a skeleton magus or an undead knight, at 6 Marrow apiece.\n\n' +
-          'What is left of your own risen is corpse enough. A body of yours that has been destroyed can be raised again out of its own remains, with no corpse to find and no Supplies to spend.\n\n' +
-          'Each body you hold costs 1 less of your maximum Willpower.',
+          'What is left of your own risen is corpse enough. A body of yours that has been destroyed can be raised again out of its own remains, with no corpse to find and no Supplies to spend.',
       },
       {
         id: 'charnel-court',
         rank: 3,
         name: 'The Charnel Court',
-        summary: 'The abomination and the cleric, at 9 Marrow, and every body is cheaper to keep.',
+        summary: 'The abomination and the cleric at 9 Marrow, and one Command wakes the whole court.',
         kind: 'talent',
         tags: ['Necromancer', 'Master Talent', 'Passive'],
         ap: null,
@@ -4364,7 +4497,7 @@ const TALENT_SETS = [
         name: 'Bone Bow',
         summary: 'A shortbow shot at 18 meters, off its own Instinct.',
         kind: 'talent',
-        tags: ['Skeleton Archer', 'Novice Ability'],
+        tags: ['Skeleton Archer', 'Novice Ability', 'Weapon Attack'],
         ap: 3,
         wp: null,
         stat: 'instinct',
@@ -4379,13 +4512,20 @@ const TALENT_SETS = [
         name: 'Rusted Sword',
         summary: 'The plain sword it was buried with.',
         kind: 'talent',
-        tags: ['Skeleton Archer', 'Novice Ability'],
+        /* `Weapon Attack`, because a skeleton archer knows RECKLESS and a move
+           rides a weapon attack and nothing else. Both its swings carry it: see
+           `moveRides` in moves.js, which asks the tag and nothing more. */
+        tags: ['Skeleton Archer', 'Novice Ability', 'Weapon Attack'],
         ap: 3,
         wp: null,
-        stat: 'physique',
+        /* Instinct, like its bow. "Make the skeleton use instinct for both
+           weapons" (Jules, 2026-09-09) — it was Physique, which made this the
+           one body in the codex that rolled two different attributes and the one
+           that had to grow both. */
+        stat: 'instinct',
         damage: ['Sharp'],
         body:
-          'It makes a {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'It makes an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
           'On a hit, it deals [[1d6 + stat]] {damage} damage.',
       },
 
@@ -4396,7 +4536,9 @@ const TALENT_SETS = [
         name: 'Rending Punch',
         summary: 'A cheap swing it can throw three of in a turn.',
         kind: 'talent',
-        tags: ['Ghoul', 'Novice Ability'],
+        /* `Weapon Attack` on both of the ghoul's swings, because it knows WOUND
+           and a move rides a weapon attack and nothing else. */
+        tags: ['Ghoul', 'Novice Ability', 'Weapon Attack'],
         ap: 2,
         wp: null,
         stat: 'instinct',
@@ -4411,7 +4553,7 @@ const TALENT_SETS = [
         name: 'Infected Claws',
         summary: 'Filthy claws that leave whatever they open diseased.',
         kind: 'talent',
-        tags: ['Ghoul', 'Novice Ability'],
+        tags: ['Ghoul', 'Novice Ability', 'Weapon Attack'],
         ap: 4,
         wp: null,
         stat: 'instinct',
@@ -4520,11 +4662,18 @@ const TALENT_SETS = [
         kind: 'talent',
         tags: ['Undead Knight', 'Adept Ability'],
         ap: 2,
-        wp: 1,
+        /* 2 and one turn, from 1 and two turns. Jules, 2026-09-09: "double the
+           cost of the skeleton knight ability in willpower, make it last until
+           the end of the entity's turn." A taunt on every enemy inside 9 meters
+           is the widest single clause any body in the roster has, and it was
+           holding a whole side of the board for a Willpower and a press. Now it
+           is bought again every turn it is wanted, out of a pool that is its
+           keeper's and not its own. */
+        wp: 2,
         stat: 'physique',
         body:
           'It beats its shield and howls. It makes a {stat} Roll {roll} against the Grit of **all enemy entities** within **9 meters (30 feet)** that can hear it.\n\n' +
-          'On a success, their attacks must be aimed at it for **2 turns**.',
+          'On a success, their attacks must be aimed at it **until its next Turn End**.',
       },
 
       /* ============================================== what the abomination does */
@@ -4819,12 +4968,26 @@ export function talentCategory(talent) {
  * filtered wall is shelved by what survived the filter: an empty shelf is left
  * off entirely instead of printing a heading over nothing. Takes options the way
  * `optionsAt` hands them over, and anything else carrying a `talent`.
+ *
+ * Five shelves rather than four since 2026-09-09: what the reader already holds
+ * is cut off the top. See HELD_CATEGORY.
  */
 export function talentShelves(options) {
-  return TALENT_CATEGORIES.map((category) => ({
+  /* Held first, and taken out of the attribute shelf it would otherwise sit on:
+     one set drawn twice on one wall is the reader wondering which of the two
+     tiles is the real one. An option with no `held` on it is somebody handing in
+     a list that is not `optionsAt`'s, and nothing it holds is current. */
+  const held = options.filter((option) => (Number(option?.held) || 0) > 0);
+  const rest = options.filter((option) => !(Number(option?.held) || 0));
+
+  const shelves = TALENT_CATEGORIES.map((category) => ({
     category,
-    options: options.filter((option) => talentCategory(option.talent) === category),
-  })).filter((shelf) => shelf.options.length > 0);
+    options: rest.filter((option) => talentCategory(option.talent) === category),
+  }));
+
+  return [{ category: HELD_CATEGORY, options: held }, ...shelves].filter(
+    (shelf) => shelf.options.length > 0
+  );
 }
 
 /** The cards a rank *adds* — not everything the track has given so far. */
@@ -4968,11 +5131,10 @@ export function normalizeTalents(value) {
       rank: Math.min(MAX_TALENT_RANK, Math.max(1, Math.floor(Number(entry.rank) || 1))),
       taken: Array.isArray(entry.taken) ? entry.taken : null,
       // Card ids for a set that lets you choose what it teaches, such as a
-      // Mycomancer's spells. Only ids are kept here, each once; whether they
-      // are legal at the rank held is loadouts.js's business.
-      picks: [...new Set((Array.isArray(entry.picks) ? entry.picks : []).filter(
-        (pick) => typeof pick === 'string' && pick
-      ))],
+      // Mycomancer's spells. Only ids are kept here; whether they are legal at
+      // the rank held is loadouts.js's business, and whether the same id may
+      // appear twice is the set's own. See `cleanPicks`.
+      picks: cleanPicks(id, entry.picks),
       /* What an Enchanter has laid, in the two places their cards put it: WIELDER
          OF WONDER's enchantments on their own person, and ENCHANTING's on the
          things they carry. Repaired for *shape* only, exactly as `picks` is —
@@ -5151,11 +5313,36 @@ export function serializeTalents(list) {
  */
 export function setTalentPicks(talents, talentId, picks) {
   const list = normalizeTalents(talents);
-  const clean = [...new Set((Array.isArray(picks) ? picks : []).filter(Boolean))];
 
   return serializeTalents(
-    list.map((entry) => (entry.id === talentId ? { ...entry, picks: clean } : entry))
+    list.map((entry) =>
+      entry.id === talentId ? { ...entry, picks: cleanPicks(talentId, picks) } : entry
+    )
   );
+}
+
+/**
+ * A stored pick list, repaired for shape: strings only, and each id once unless
+ * the set says otherwise.
+ *
+ * **The dedupe is the interesting half.** It has been here since picks existed
+ * and it was right for every pool until the Runebearer stopped saying "no spell
+ * can be inscribed twice" (2026-09-09): a second copy of a rune is a second
+ * firing, so for a set whose loadout carries `repeat` the duplicates *are* the
+ * record and dropping them would silently take a rune off somebody's arm.
+ *
+ * Read off the set rather than passed in, because both callers are repairs that
+ * happen far from any chooser: one on the way in from the column, one on the way
+ * back out to it. talents.js may not import loadouts.js (loadouts.js imports
+ * this file), and it does not need to: the flag is on the spec, and the spec is
+ * in this file.
+ */
+function cleanPicks(talentId, picks) {
+  const list = (Array.isArray(picks) ? picks : []).filter(
+    (pick) => typeof pick === 'string' && pick
+  );
+
+  return getTalent(talentId)?.loadout?.repeat ? list : [...new Set(list)];
 }
 
 
