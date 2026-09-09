@@ -14858,3 +14858,208 @@ because a trade across the party is exactly what the rest of them want to see go
   the whole audit trail: there is no ledger of who owned what.
 - **A gift is items only.** Coins and Supplies do not travel, which the ask did not name and a
   party will want within a session.
+
+## Forty more forks, the numbers shown to an admin, and what the cards do not do, 2026-09-09
+
+Four asks in one message: "expand on the crossraods. Add more varation, like 40 more. Create an
+admin only feature which is that when you are admin and you mouse over a choise it shows you what
+it gives weight to. Do a text consistency pass about the entire system. And check for any card
+effect that might now be working."
+
+### Fifty-one questions became ninety-one
+
+**Nothing in the engine or the stages moved.** A run is still eight questions in seven chapters,
+still a seed and a list of answers, still counted by `decide` under the rule that nothing is built
+on the attribute you left lowest. The forty new scenes went where the pool was thinnest against its
+own draw:
+
+| Stage | Draw | Was | Now | One question was asked |
+| --- | --- | --- | --- | --- |
+| Childhood | 1 | 4 | 10 | 25% of runs → 10% |
+| Home | 1 | 4 | 10 | 28% → 10% |
+| Blood | 1 | 5 | 10 | 25% → 11% |
+| Youth | 1 | 11 | 16 | 13% → 8% |
+| Trade | 1 | 4 | 10 | 36% → 12% |
+| The Road | 2 | 18 | 24 | 18% → 10% |
+| Leaving | 1 | 5 | 11 | 28% → 12% |
+
+Childhood, Home and Trade were the ones that mattered: four scenes behind a draw of one meant one
+run in four opened on the same dog behind the mill, and one in three found the same stage in the
+market town. They hold ten apiece now.
+
+Every new scene is drafted to the four laws at the top of `crossroadsPool.js` and nothing about
+them is new: a situation in two to four sentences, at most four answers, each answer a way of
+acting with a means you can picture, and each answer leaning exactly one way. The Spellquill's
+abbey and the Necromancer's plague cart were the shape to copy, so the new ones include a chapel
+bell rope with a word scratched inside the housing, a skull the plough turned up, a tithe-man
+counting eleven sacks of nine, a marriage contract on the front-room table, a press gang in a
+taproom and a horse in a stable on the last night.
+
+**The numbers under them were tuned twice, against the census and not by eye.** The first draft was
+coherent and badly balanced: it put the Trickster in a run in three and the Spellblade in one in
+seventy, because a scene about being quick and unseen writes itself and a scene about a word in a
+blade does not. 122 point edits later, over 4,000 walks:
+
+| Held | Before the drop | First draft | Shipped |
+| --- | --- | --- | --- |
+| Guardian | 30.3% | 26.4% | 23.4% |
+| Trickster | 18.7% | 33.2% | 24.2% |
+| Colossus | 14.4% | 22.5% | 18.5% |
+| Berserker | 21.5% | 13.1% | 17.1% |
+| Spellquill | 3.1% | 11.2% | 9.7% |
+| Duelist | 7.0% | 9.4% | 10.4% |
+| Runebearer | 3.5% | 3.0% | 6.6% |
+| Necromancer | 3.4% | 5.8% | 6.0% |
+| Mycomancer | 6.3% | 4.2% | 6.2% |
+| Spellblade | 3.0% | 1.4% | 3.5% |
+
+The spread was 3.0% to 30.3% and is 3.5% to 24.2%. Lineages moved the same way: Wildheart was the
+rarest ancestry in the codex at 2.5% and is 5.7%, and the thirteen now run 5.4% to 10.3% against
+2.5% to 10.9%. Backgrounds run 7.0% to 12.6% against 6.4% to 13.4%.
+
+Two scenes were rewritten during the tuning rather than renumbered. The press gang's Mind answer
+was reading a county warrant and is now a hand on a hilt and the other half of it said under the
+breath, which is the Spellblade's third scene and the reason it climbed at all. The barrow
+robbers' "piece that is moving" is now a blade, so the same card can carry it.
+
+### The gates got rarer, and that is the one number worth Jules's eye
+
+Three scenes in the pool only happen because of what you did earlier: `youth-watch` (the watch
+comes for a thief), `youth-letter` (the academy writes to somebody who spoke a word they did not
+know) and `road-reputation` (the man you put down comes back with friends). Twenty of the new
+answers set a tag, so the *gate* is satisfied far more often: `did:theft` by the Youth chapter went
+from 12.3% of runs to 17.0%, and by the road from 19.1% to 24.5%.
+
+They are still asked less, because the pool they are drawn from doubled. `road-reputation` is asked
+in 0.6 runs of 100 against 0.9 before, `youth-watch` 1.7 against 1.6, `youth-letter` 2.1 against
+3.0. The fix is the one the eight-question drop already flagged and did not make: lean the draw
+toward a gate the run has earned, the way it already leans toward a question that widens the count.
+That is still a design call and it is still not made.
+
+### An admin can see what an answer scores
+
+`weightsOf(option)` in `crossroads.js` resolves an answer's whole `gives` to the names the codex
+prints, group by group, in the order the pool wrote them. `Weights` in `Crossroads.jsx` draws it
+under the answer it belongs to, on hover **or on focus**, so tabbing the four of them reads them
+out in turn. Off entirely for everybody who is not `tier === 'admin'`: no panel in the DOM, no
+class on the list, no "+2" anywhere in the question.
+
+It is in the engine rather than in the screen for one reason: **the screen cannot print a raw id.**
+A set renamed in the codex would go on scoring and start reading as its own slug, and
+`check-crossroads.mjs` now has a section holding all 364 answers to resolving through it, to the
+point and to the group.
+
+What it shows beside each name is the part worth having: **the shelf.** A talent set reads
+`+2 Tactician · Mind, no cards yet`, an ancestry `+1 Luminary · +1 Mind`, a weapon and an armor set
+the attribute they suit. Every answer leans one way, and the shelf is where a point on the wrong
+one would show without running the checker. The row under the answers also lists what the answer
+makes true of the life, so the three gates are visible from the screen for the first time.
+
+The panel is opaque and `pointer-events: none`, which is what lets the mouse walk down the column
+and hand the panel from one answer to the next.
+
+### The text consistency pass found the talent roster two sets out of date
+
+Everything the rulebook claims about the registries was read back against them. The lineage and
+background lists match name for name and count for count, the skill picks range one to three with
+the Criminal at the top and the Merchant at the bottom, two weapons go to the Military and the
+Mercenary and nobody else, seven bags, armor in three families of three tiers, nine damage types.
+Four things did not match:
+
+1. **`4.5` said fifteen written talent sets and named fifteen.** There are seventeen: the
+   Necromancer and the Spellquill were written on the 8th and the 9th and never added. Appendix B
+   still counted eighteen placeholders and listed the Spellquill among them, so the two halves came
+   to 33 of a stated 34. Both fixed, and 17 + 17 is now 34.
+2. **`8.1` listed four Long Rest actions.** The sheet offers eight kinds. Writing (the Spellquill's
+   leaves), Raising (a body out of the Ossuary) and Reshaping (the Pact's weapon) were missing, and
+   Enchanting's second half (changing what you wear) was not named. `rest.js`'s own comment said
+   "Five kinds so far" and listed five. Both now list eight, and the comment says the rulebook
+   bullet is part of adding a ninth.
+3. **`6.1` accounted for seven Elemental families and its own table lists eight.** Lightning runs
+   three spells deep, which is the compound shape, so four of the six pairings are written and not
+   three. The sentence now says four and names it, and says nothing about which two elements make
+   it, because that is open ruling 01 on the compound law and this is not the place to settle it.
+4. **`4.5`'s list of what a set gives that is not a card** had seven entries for nine sets with
+   one. The Necromancer's ossuary and the Spellquill's desk are in it now.
+
+Four stale numbers in comments went with them: `LineagePick.jsx` said eighteen ancestries where
+there are thirteen, `Book.jsx` said seventeen rail rows where the rail draws sixteen, and
+`loadouts.js` and `LoadoutPick.jsx` both promised "a Mycomancer's thirty-four Elemental spells"
+where the school now holds 44. The last two lost the number rather than gaining a new one, so they
+cannot rot again. `check-crossroads.mjs`'s own header said forty questions.
+
+### Every card read for whether the sheet does what it says
+
+948 cards, every one whose printed text names a number this sheet holds, against everything that
+could carry it: an effect rider, a `grants`, an item grant, a `martial` spec, a form, a rune, an
+ossuary. Most of the hits are wired and were wired somewhere unobvious: the Duelist's AGILE through
+`martial.grants`, FERAL HIDE and FERAL FORM through `feral.js`, BESTIAL SENSE's Shield share through
+`shieldShareFor`, RUNIC NETWORK and THE OSSUARY through the two things that subtract from a derived
+maximum. Nothing this session's work touched moved any of them, and all twenty linters are clean.
+
+**One gap is new to this log, and it is small.**
+
+- **GUARDIAN · JUST IN TIME**, Rank 2: "Additionally your Movement Speed is increased by 1." Nothing
+  reads it. A rank-2 Guardian's Speed tile is the same 5.5 metres it was at Rank 1. This is not the
+  shape SHIELD EXPERTISE's Defense point is: it is flat, unconditional and permanent, exactly what
+  `grants: { speed: 1 }` does on WIND GRACE. What is missing is a reader: a talent card's `grants`
+  is read only by `checks.js`, for skill checks, so a `talentGrants` in `lineageGrants`'s shape is
+  the work, plus a term in `statMath` so the tile can say which card lengthened it.
+
+**And one gap is the largest unwired effect in the codex, and it was on the record as a shape
+problem rather than as a number.**
+
+- **UNDEATH RESILIENCE** ("You gain 15 Health per level in Fortitude and Physique instead of 10")
+  and **FEY BLOOD** ("7 instead of 10"). Neither is a pool card: every Undead and every Fey holds
+  one. `health_max` is `10 * level + 10 * physique` for everybody. At level 3 with Physique 6 an
+  Undead's sheet says 90 where its own card says 135, and a Fey's says 90 where its card says 63.
+  A third card, HEARTHY, is the same shape. `flat` has no field for a *rate*, and it should not:
+  the rate belongs in the formula, as a per-card multiplier the way `shieldShareFor` already takes
+  the Shield share off `feral.js`. That is a mechanism decision and a 45-point one at level 3.
+
+The rest were already on the record and are re-verified rather than re-found: SHIELD EXPERTISE's
++1 Defense (deliberately not added on 2026-09-02, because it moves the Defense of every Guardian
+on a sheet and nobody asked), MINERAL SKIN and SCALEY's +1 Defense, INNER TIDE's +4 Willpower,
+WILD SWIFTNESS's 1.5 metres against its wired twin WIND GRACE, the three Armor Masteries whose
+bonus is conditional on a full set where `grants` is flat, and BERSERKER'S RAGE, whose +Physique
+scales on the holder's own rank and so hits the same wall LIFE DRAUGHT and VIGOR do: `runningRiders`
+is handed an effects list and no character to measure a rank against. One argument threaded through
+it unlocks all three.
+
+### Proved
+
+- All twenty linters clean, before and after: `lint`, `lint:text` (260 files, and the 26 serial
+  commas the new prose introduced were rewritten rather than marked, because the fifty-one questions
+  already in the pool carry no marks), `lint:math`, `lint:halves`, `lint:riders`, `lint:weapons`,
+  `lint:potions`, `lint:order`, `lint:cards`, `lint:dice`, `lint:log`, `lint:layout`,
+  `lint:creatures`, `lint:combat`, `lint:moves`, `lint:plan`, `lint:help`, `lint:legal`,
+  `lint:crossroads` and `lint:images`.
+- `lint:crossroads`: 91 questions in 7 stages, 8 asked a run, 4,000 walks, every written set,
+  lineage and background winning at least once, every question asked in some run, every outcome a
+  whole character with nothing built on the attribute left lowest, and 17,284 cases including the
+  new "every answer can be read back" section.
+- In the browser, through a throwaway harness at the project root (deleted, `git status` checked):
+  the run asks Childhood through Leaving counting 1 of 8 to 8 of 8 and lands on a Guardian and
+  Arcanist with eight chapters of story. As `tier: 'admin'` the panel is `display: none` until the
+  answer is hovered or focused, shows one row a group with the shelf beside each name, is 786px
+  wide under a 786px answer with nothing clipping it and no console errors. As `tier: 'free'` there
+  are four answers, zero panels, no admin note and no `+N` anywhere in the question.
+- `/rules` re-read after the rulebook edits: seventeen written sets naming the Necromancer and the
+  Spellquill, seventeen placeholders without the Spellquill, the three new Long Rest bullets and
+  the four Elemental pairings, and no trace of "Fifteen are written" or "Eighteen talent sets".
+- The card audit is a scratchpad script, not a checker. It reads 948 cards against ten patterns and
+  every finding above was then confirmed against a real character through `deriveStats`,
+  `weaponRiders` and `lineageGrants` rather than off the regex.
+
+### Still open
+
+- **The three gates are rarer than they were**, and leaning the draw toward an earned gate is the
+  design call the eight-question drop left and this drop did not take either. Numbers above.
+- **The Spellblade is the thinnest written set at 3.5%.** It is scored in five scenes against the
+  Guardian's fifty-one, it leads three of them, and Mind is the most crowded shelf in the codex:
+  six written sets share it. Another scene is the fix and it wants his word on where a
+  Spellblade's youth happens.
+- **UNDEATH RESILIENCE, FEY BLOOD and HEARTHY need a rate, not a rider.** The largest number on
+  this page.
+- **GUARDIAN · JUST IN TIME needs a talent-card `grants` reader**, which is four lines plus a
+  `statMath` term and would be the first flat rider a talent card carries.

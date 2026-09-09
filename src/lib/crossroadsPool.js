@@ -30,6 +30,17 @@
  * like a menu of what your blood is. Everything here is drafted to those rules
  * and every number under it is the designer's to overrule, cut or rewrite.
  *
+ * **Forty more, 2026-09-09.** Jules: "expand on the crossraods. Add more
+ * varation, like 40 more." Fifty-one questions became ninety-one, weighted
+ * toward the stages that were asked most often with the fewest scenes behind
+ * them: childhood, home and trade each had four questions and a draw of one, so
+ * one run in four opened on the same dog behind the mill. They now hold ten
+ * apiece. Nothing in the engine or the stages moved, and a run is still eight
+ * questions. The numbers under the new answers were then tuned twice against
+ * the census, because the first draft of them put the Trickster in a run in
+ * three and the Spellblade in one in seventy. See data/README.md for both
+ * tables.
+ *
  * ------------------------------------------------------------------- the laws
  * Four, and scripts/check-crossroads.mjs holds every question and option to them.
  *
@@ -104,6 +115,10 @@
  * a number: "roar, drag your blade out and go straight through the man in the
  * middle" is a Berserker's answer without saying so, which is the whole point of
  * asking it this way. docs/text-style.md applies to every word here.
+ *
+ * The one reader who is shown the numbers is an admin, on hover, and only so
+ * that the pool can be held to its own laws from the screen rather than from a
+ * checker. See `weightsOf` in crossroads.js and `Weights` in Crossroads.jsx.
  */
 
 /* ------------------------------------------------------------------ the stages */
@@ -3016,6 +3031,2316 @@ export const QUESTIONS = [
           talent: { mycomancer: 2, trickster: 1 },
           background: { outlander: 1 },
           skill: { inquisitor: 1, survivalist: 1 },
+        },
+      },
+    ],
+  },
+  /* ==================================================== childhood, second drop
+     Six more, added 2026-09-09. Childhood had four scenes and a draw of one, so
+     one run in four opened on the same dog behind the mill. See the census note
+     in data/README.md. */
+  {
+    id: 'child-ice',
+    stage: 'childhood',
+    scene:
+      'The pond has been frozen a fortnight and the miller’s boy has gone through it, forty feet out from the bank. He is holding the edge with both arms and the ice is going grey around him. There are four of you on the bank and you are the oldest by a year.',
+    asks: 'What do you do?',
+    recall: 'On the grey ice the winter the miller’s boy went through, you',
+    options: [
+      {
+        id: 'rail',
+        label: 'Pull a rail off the fence, break the ice all the way in to him and haul him out through the water instead of over it.',
+        told: 'broke the ice in to him with a fence rail and hauled him out through the water.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, runebearer: 1 },
+          background: { military: 1 },
+          skill: { helpful: 1 },
+        },
+      },
+      {
+        id: 'flat',
+        label: 'Go out flat on your belly with your arms and legs spread, sliding, until you have a hand on his collar and can be pulled back by the ankles.',
+        told: 'went out flat on your belly until you had a hand on his collar.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1, trickster: 1, 'feral-curse': 1 },
+          lineage: { wildheart: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'door',
+        label: 'Send the lightest of the four out on the barn door with a rope on it, and stand on the bank working out the angle and the count.',
+        told: 'sent the lightest of you out on the barn door with a rope, and worked the angle from the bank.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2, enchanter: 1 },
+          background: { military: 1 },
+          skill: { mastermind: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'swim',
+        label: 'Go in on purpose off the open bank and swim to him under the edge of the ice. The cold does not reach you the way it reaches other people.',
+        told: 'went into the open water on purpose and swam to him under the edge of the ice.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { wilder: 1 },
+          lineage: { tidebound: 3 },
+          skill: { seafarer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-tithe',
+    stage: 'childhood',
+    scene:
+      'The tithe-man has the family’s grain out in the yard and a tally stick in his hand, and he is counting eleven sacks where you know there are nine. Your father is standing with his hat off, saying nothing. The tithe-man has a boy with him and a mule, and neither of them is looking at the sacks.',
+    asks: 'What do you do?',
+    recall: 'In the yard the year the tithe-man counted eleven sacks of nine, you',
+    options: [
+      {
+        id: 'count',
+        label: 'Say the number out loud in front of the boy, broken down sack by sack, the way you have been doing it in your head since he started.',
+        told: 'said the true number out loud, sack by sack, in front of the tithe-man’s own boy.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1 },
+          skill: { mastermind: 1, inquisitor: 1 },
+        },
+      },
+      {
+        id: 'sacks',
+        label: 'Move two sacks behind the cart while the boy is busy with the mule, so that the count he writes down is the count you want written.',
+        told: 'moved two sacks behind the cart, so the count he wrote down was the one you wanted.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 2 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'stick',
+        label: 'Put your hand on the tally stick and keep it there. You are nine years old and he has to decide, in front of your father, what he is going to do about that.',
+        told: 'put your hand on the tally stick and made him decide, in front of your father, what to do about it.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 2, berserker: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'temple',
+        label: 'Ask him, in a small voice, what happens to a man who miscounts for the temple. Let the boy and the mule and your father all hear a child ask it.',
+        told: 'asked him in a small voice what happens to a man who miscounts for the temple.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2 },
+          lineage: { infernal: 1 },
+          background: { aristocrat: 1 },
+          skill: { charismatic: 1, empath: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-bell',
+    stage: 'childhood',
+    scene:
+      'You are up the chapel tower because it is the one place nobody looks for you, and from the window there is smoke on the ridge road, moving. It is not a hearth fire and it is not a charcoal burner. The bell rope is by your hand and nobody has told you to pull it.',
+    asks: 'What do you do?',
+    recall: 'Up the chapel tower, with smoke moving on the ridge road, you',
+    options: [
+      {
+        id: 'pull',
+        label: 'Pull it with both hands and keep pulling until the rope has taken the skin off your palms and the whole valley is awake and out of doors.',
+        told: 'pulled the bell rope until it took the skin off your palms and the whole valley was out of doors.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, runebearer: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'count',
+        label: 'Count the smoke first. Riders make one kind of dust and a burning steading makes another, and you would rather ring the right bell than the loud one.',
+        told: 'counted the smoke first, because you would rather ring the right bell than the loud one.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1 },
+          skill: { inquisitor: 1, cartographer: 1 },
+        },
+      },
+      {
+        id: 'ridge',
+        label: 'Go out the tower window and down the ridge to look at it yourself, and be back before anybody has noticed the bell was not rung.',
+        told: 'went out the tower window to look at the smoke yourself, and were back before anybody missed the bell.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, duelist: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'word',
+        label: 'Say the word scratched inside the bell housing, which you found two summers ago and have been waiting for a reason to use. The bell rings itself.',
+        told: 'said the word scratched inside the bell housing, and the bell rang itself.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { spellquill: 2, arcanist: 1 },
+          lineage: { celestial: 1 },
+          skill: { occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-lamb',
+    stage: 'childhood',
+    scene:
+      'The ewe has thrown a lamb wrong and the lamb is alive and will not be by morning. Your grandmother has put the knife down on the straw beside you and gone back to the house, which is how she says things. The barn is cold and the ewe will not stop.',
+    asks: 'What do you do?',
+    recall: 'In the cold barn the night the ewe threw wrong, you',
+    options: [
+      {
+        id: 'knife',
+        label: 'Use the knife. It takes you two tries and you never tell anybody about the first one.',
+        told: 'used the knife, and never told anybody it took two tries.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { berserker: 1, painseeker: 2 },
+          background: { mercenary: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'coat',
+        label: 'Get the lamb inside your coat against your skin and hold it there all night. It lives, and the ewe knows you now.',
+        told: 'held the lamb inside your coat all night until it lived, and the ewe knew you afterwards.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'feral-curse': 2, 'draconic-bond': 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'milk',
+        label: 'Warm milk, a goose quill and honey off the shelf, and feed it a spoon at a time until first light. Three of the four things you try are your own idea.',
+        told: 'fed it warm milk through a goose quill until first light, and three of the four things you tried were your own idea.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { alchemist: 2, thaumaturge: 1 },
+          background: { craftsman: 1 },
+          skill: { apothecary: 1, physician: 1 },
+        },
+      },
+      {
+        id: 'words',
+        label: 'Sit with it and say the words your grandmother says over the dying, all of them, in the right order, though nobody has ever taught you them.',
+        told: 'said the words your grandmother says over the dying, in the right order, though nobody had taught you them.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { necromancer: 2, spellquill: 1 },
+          lineage: { undead: 1 },
+          skill: { occultist: 1, healer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-skull',
+    stage: 'childhood',
+    scene:
+      'The plough has turned up a skull in the top field, small and brown and not a sheep’s. That field has been ploughed every spring of your life. Your father has already decided to say nothing about it to anybody and has gone to fetch a sack.',
+    asks: 'What do you do?',
+    recall: 'Over the skull the plough turned up in the top field, you',
+    options: [
+      {
+        id: 'ask',
+        label: 'Ask it who it was. Not out loud, and not expecting anything, and you are still standing there when something in the field answers.',
+        told: 'asked it who it was, and were still standing there when something in the field answered.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { necromancer: 3 },
+          lineage: { undead: 1 },
+          skill: { occultist: 1 },
+        },
+      },
+      {
+        id: 'dig',
+        label: 'Dig where the plough found it, all afternoon, until you have the rest of them laid out straight and put a stone over it with a mark cut into the stone.',
+        told: 'dug up the rest of them and laid them straight under a stone with a mark cut into it.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { runebearer: 3, colossus: 1 },
+          lineage: { stonebound: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'sell',
+        label: 'Say nothing and take it. There is a man in the market town who buys curiosities and does not ask which field they came out of.',
+        told: 'took it to the man in the market town who buys curiosities and does not ask which field they came from.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1 },
+          background: { criminal: 1, merchant: 1 },
+          skill: { haggler: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'almshouse',
+        label: 'Get the shape of it into your head, then walk to the almshouse and ask the oldest person there what happened in that field, and keep asking until somebody tells you.',
+        told: 'walked to the almshouse and kept asking what had happened in that field until somebody told you.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          background: { investigator: 1 },
+          skill: { inquisitor: 1, scholar: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-slate',
+    stage: 'childhood',
+    scene:
+      'The schoolmaster pays a farthing a page to whoever will copy his letters out fair, and his hand shakes now, so it is you. Forty pages by Sunday. Halfway down the stack there is a page in a different hand altogether, and it is a list of names with money written beside them.',
+    asks: 'What do you do?',
+    recall: 'Copying the schoolmaster’s letters at a farthing a page, you',
+    options: [
+      {
+        id: 'twice',
+        label: 'Copy it fair with the rest, and copy it twice, and keep the second one. A page in your own hand is a page anybody can read, including you, in ten years.',
+        told: 'copied the page twice and kept the second one, because a page in your own hand is one anybody can read.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellquill: 3 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'hand',
+        label: 'Learn the other hand. By Sunday you can write a line in it that the schoolmaster himself would swear he had not written.',
+        told: 'learned the other hand well enough to write a line the schoolmaster would swear he had not written.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, virtuoso: 2 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, skilled: 1 },
+        },
+      },
+      {
+        id: 'name',
+        label: 'Take the page to the name at the top of it and find out what he will pay for the schoolmaster not to have it.',
+        told: 'took the page to the name at the top of it and found out what he would pay for it.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1 },
+          skill: { haggler: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'forty',
+        label: 'Finish the forty pages, take your farthings and say nothing at all about the one in the middle. Your hand aches for two days afterwards.',
+        told: 'finished all forty pages and said nothing about the one in the middle, and your hand ached for two days.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { runebearer: 2, guardian: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1 },
+          skill: { frugal: 1, skilled: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ========================================================= home, second drop
+     Six more. Home had four and a draw of one, the same problem childhood had. */
+  {
+    id: 'home-winter',
+    stage: 'home',
+    scene:
+      'It is the third week of a bad winter and the woodpile is down to two days. Your mother has counted it twice and stopped counting. The forest behind the house belongs to a man who has hanged people for less than a cord of wood.',
+    asks: 'What do you do?',
+    recall: 'The bad winter the woodpile came down to two days, you',
+    options: [
+      {
+        id: 'axe',
+        label: 'Go up at first light with the axe and come back at dusk with more than you can carry. Twice a day, then again the next day.',
+        told: 'went up with the axe at first light and came back at dusk with more than you could carry.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, berserker: 2 },
+          lineage: { stalwart: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, frugal: 1 },
+          weapon: { 'melee-heavy': 1 },
+        },
+      },
+      {
+        id: 'deadfall',
+        label: 'Take the deadfall only, at night, in three small loads by three different paths, so that nothing on the ground says anybody was ever up there.',
+        told: 'took the deadfall at night by three different paths, so nothing on the ground said you had been there.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, 'feral-curse': 2 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'hearth',
+        label: 'Rebuild the hearth instead. You have watched the smoke go up that chimney all your life and you are fairly sure you know where the heat has been going.',
+        told: 'rebuilt the hearth instead, because you had worked out where the heat had been going.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { enchanter: 3, alchemist: 1 },
+          background: { craftsman: 1 },
+          skill: { skilled: 1, frugal: 1 },
+        },
+      },
+      {
+        id: 'work',
+        label: 'Go and ask the man for work. He has a woodlot and no sons, and by the end of the winter you know his dogs by name and they know yours.',
+        told: 'went and asked the man for work, and by the end of the winter his dogs knew your name.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'draconic-bond': 3, wilder: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { charismatic: 1, helpful: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-brother',
+    stage: 'home',
+    scene:
+      'Your brother has taken the priest’s silver spoon and hidden it under the loose board in the room the two of you sleep in. The priest has been to the house twice. Your brother is younger than you and has told you, in the dark, that he will say it was you.',
+    asks: 'What do you do?',
+    recall: 'Over the priest’s spoon under your brother’s loose board, you',
+    options: [
+      {
+        id: 'take',
+        label: 'Take it. Let him say what he likes, and stand in front of the priest saying nothing at all, and take what comes with your hands at your sides.',
+        told: 'took the blame with your hands at your sides and let your brother say what he liked.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 2, oathbound: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { helpful: 1 },
+        },
+      },
+      {
+        id: 'back',
+        label: 'Put it back where the priest will find it himself, in a place that makes both of you look innocent and the housekeeper look careless.',
+        told: 'put the spoon back where the priest would find it himself and the housekeeper would be blamed.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, 'feral-curse': 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'want',
+        label: 'Work out what your brother actually wants, get it for him another way and then tell him what you know and what it will cost him to keep you quiet.',
+        told: 'found out what your brother really wanted, got it for him another way and named your price for silence.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2, pactbound: 1 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { mastermind: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'yard',
+        label: 'Take your brother out to the yard and settle it there, and then go to the priest together with the spoon and a bruise each.',
+        told: 'settled it with your brother in the yard, and went to the priest together with the spoon and a bruise each.',
+        tags: ['did:violence'],
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, brawler: 1, guardian: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-match',
+    stage: 'home',
+    scene:
+      'There is a man in the front room with your father and a contract on the table, and the contract is a marriage. He is thirty and he has a mill. You are fifteen and you have been listening at the door for a quarter of an hour.',
+    asks: 'What do you do?',
+    recall: 'The afternoon they put a marriage contract on the table, you',
+    options: [
+      {
+        id: 'read',
+        label: 'Go in and read the contract. There are four things wrong with it, you point at each of them in front of both men and the second one ends the afternoon.',
+        told: 'went in, read the contract and pointed at the four things wrong with it in front of both men.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { aristocrat: 2 },
+          skill: { scholar: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'gone',
+        label: 'Be gone by the time they open the door. There is a cart leaving for the market town at dawn and you know the driver well enough.',
+        told: 'were gone before they opened the door, on the dawn cart to the market town.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, duelist: 2 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
+          skill: { cunning: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'agree',
+        label: 'Go in and agree to it, and spend the next hour finding out exactly what the mill is worth and which of the two men needs this more.',
+        told: 'agreed to it, and spent the hour finding out what the mill was worth and which man needed it more.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2 },
+          background: { merchant: 2 },
+          skill: { haggler: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'fire',
+        label: 'Open the door, put the contract in the fire and stand in front of the fire. Nobody in that room is going to move you off it.',
+        told: 'put the contract in the fire and stood in front of the fire, and nobody in the room moved you off it.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, berserker: 1, colossus: 1 },
+          lineage: { scorchbound: 2 },
+          skill: { vigilant: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-well',
+    stage: 'home',
+    scene:
+      'The village well has gone bad, two children are sick and somebody has remembered that your family’s land lies uphill of it. There are eleven people at your gate and the one doing the talking is the smith. Your mother has bolted the door and put her back against it.',
+    asks: 'What do you do?',
+    recall: 'The day eleven of the village came to the gate about the well, you',
+    options: [
+      {
+        id: 'spring',
+        label: 'Go out and take them up to the well. Show them the dead sheep in the upper spring that nobody has looked at, and make the smith look at it first.',
+        told: 'took them up to the well and made the smith look at the dead sheep in the upper spring.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { alchemist: 2, arcanist: 1 },
+          background: { investigator: 1 },
+          skill: { inquisitor: 1, physician: 1 },
+        },
+      },
+      {
+        id: 'gate',
+        label: 'Go out and stand in the gateway. Eleven is not so many when the first two of them have to get past you, and the smith knows it.',
+        told: 'stood in the gateway, because eleven is not so many when the first two have to get past you.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, colossus: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'children',
+        label: 'Go over the back wall and get the two sick children out to your grandmother, who has never once been wrong about a fever, before anybody at the gate has finished shouting.',
+        told: 'got the two sick children over the back wall to your grandmother before the shouting at the gate had finished.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'cauldron-keeper': 2, mycomancer: 1 },
+          background: { outlander: 1 },
+          skill: { healer: 1, apothecary: 1 },
+        },
+      },
+      {
+        id: 'boil',
+        label: 'Boil it. Every drop the village drinks for a fortnight, in your mother’s copper, over a fire you keep alight yourself for fourteen days.',
+        told: 'boiled every drop the village drank for a fortnight over a fire you kept alight yourself.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 1, colossus: 1 },
+          lineage: { scorchbound: 2 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, frugal: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-levy',
+    stage: 'home',
+    scene:
+      'The levy has come through and it takes one from every house that has more than one. There are three of you and your brother is lame. The sergeant is writing names at the table and your mother has not said anything for a full minute.',
+    asks: 'What do you do?',
+    recall: 'The morning the levy came for one body from every house, you',
+    options: [
+      {
+        id: 'own',
+        label: 'Say your own name before anybody else can. You are the biggest thing in that house and the only argument that matters is standing up.',
+        told: 'said your own name before anybody else could.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, berserker: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 2 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'warrant',
+        label: 'Read the warrant over his shoulder. It says one able body a house and it does not say which house, and there is a cousin two fields over who would go for money.',
+        told: 'read the warrant over his shoulder and found the cousin two fields over who would go for money.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { mastermind: 1, inquisitor: 1 },
+        },
+      },
+      {
+        id: 'hedge',
+        label: 'Be somewhere else. You are out of the window and into the hedge before he reaches the second name, and you sleep in the wood for nine days.',
+        told: 'were out the window before he reached the second name, and slept in the wood for nine days.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, 'feral-curse': 2 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1, outlander: 1 },
+          skill: { cunning: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'trade',
+        label: 'Offer him something better. You know where the deserters are camped and he has been looking for a fortnight, and one of those facts is worth the other.',
+        told: 'traded him the deserters’ camp, which he had been looking for a fortnight.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { pactbound: 2, trickster: 1 },
+          background: { criminal: 1, merchant: 1 },
+          skill: { haggler: 1, streetwise: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-loom',
+    stage: 'home',
+    scene:
+      'Your father has been dead a month and the workshop is yours or it is nobody’s. There is a half-finished commission on the bench, a book of his patterns and a man coming on Thursday for the piece. You have watched this work all your life and never once been allowed to do it.',
+    asks: 'What do you do?',
+    recall: 'The month after your father died, over his half-finished commission, you',
+    options: [
+      {
+        id: 'finish',
+        label: 'Finish it. Twelve hours a day until Thursday with your father’s tools, and the man takes it without a word about whose hands were on it.',
+        told: 'finished it in twelve-hour days, and the man took it without a word about whose hands had been on it.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, runebearer: 2 },
+          background: { craftsman: 2 },
+          skill: { skilled: 1, tailor: 1 },
+        },
+      },
+      {
+        id: 'pattern',
+        label: 'Read the pattern book first, every page of it, then finish the piece better than the pattern says. The man notices and comes back in the spring.',
+        told: 'read every page of his pattern book and then finished the piece better than the pattern said.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { enchanter: 3, alchemist: 1 },
+          lineage: { luminary: 1 },
+          background: { craftsman: 1 },
+          skill: { skilled: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'sell',
+        label: 'Sell the tools, the pattern book and the commission, in that order, to three different people before Thursday.',
+        told: 'sold the tools, the book and the commission to three different people before Thursday.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1 },
+          background: { merchant: 2 },
+          skill: { haggler: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'mark',
+        label: 'Cut your father’s mark into the underside of the piece and finish it in his hand rather than your own, and let the man believe what he likes.',
+        told: 'cut your father’s mark into the underside and finished the piece in his hand rather than your own.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { spellquill: 2, enchanter: 1 },
+          background: { criminal: 1 },
+          skill: { skilled: 1, cunning: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ======================================================== blood, second drop
+     Five more. The blood chapter is where an ancestry shows, so every scene
+     here is one an ordinary body does not walk out of. */
+  {
+    id: 'blood-lightning',
+    stage: 'blood',
+    scene:
+      'The storm catches you on the open hill with the flock and there is nowhere to be. The air goes wrong, your hair lifts off your neck and the ewe six feet away drops where she stands. You are still on your feet and the rain has not touched you yet.',
+    asks: 'What do you do?',
+    recall: 'On the open hill the day the storm dropped a ewe six feet from you, you',
+    options: [
+      {
+        id: 'up',
+        label: 'Stand up into it. You have never once been afraid of a high place or a hard wind, and the storm goes over you and takes nothing.',
+        told: 'stood up into the storm, and it went over you and took nothing.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 1 },
+          lineage: { skybound: 3, wildheart: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'flock',
+        label: 'Get the flock off the hill. Two under each arm and the rest driven, four trips, and you are the last thing standing up there for an hour.',
+        told: 'got the whole flock off the hill in four trips, two under each arm.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, guardian: 1, totemic: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'iron',
+        label: 'Put every piece of iron you have on the ground twelve feet away, lie flat in the wet and count the gaps between the light and the sound until they get longer.',
+        told: 'put your iron on the ground twelve feet off and lay flat, counting the gaps until they got longer.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2, arcanist: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, cartographer: 1 },
+        },
+      },
+      {
+        id: 'answer',
+        label: 'Answer it. You do not decide to, and afterwards you can find the shape it left on your palm with your thumb in the dark.',
+        told: 'answered the storm without deciding to, and carried the shape it left on your palm afterwards.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 2, 'elemental-aspect': 1 },
+          lineage: { skybound: 1, celestial: 1 },
+          skill: { 'innate-spell-novice': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-fever',
+    stage: 'blood',
+    scene:
+      'The sweating sickness has taken nine houses in the row and both your parents are in one of them. You have been in and out of that room for eleven days, sleeping on the floor of it and drinking out of the same cup. You have not been ill for an hour.',
+    asks: 'What do you do?',
+    recall: 'Through eleven days of the sweating sickness that never touched you, you',
+    options: [
+      {
+        id: 'carry',
+        label: 'Keep going. Carry water, carry the dead out, carry the priest home when he can no longer walk and be the last one standing in the row.',
+        told: 'carried water and carried the dead, and were the last one standing in the row.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, colossus: 1 },
+          lineage: { undead: 2, stalwart: 1 },
+          background: { military: 1 },
+          skill: { helpful: 1 },
+        },
+      },
+      {
+        id: 'why',
+        label: 'Find out why not you. The same cup, the same room, the same air and eleven days, and there is an answer in that and you mean to have it.',
+        told: 'set out to find why the same cup and the same air had not touched you.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { alchemist: 3, arcanist: 1 },
+          background: { investigator: 1 },
+          skill: { physician: 1, apothecary: 1 },
+        },
+      },
+      {
+        id: 'brew',
+        label: 'Go out to the woods and come back with what your grandmother used to bring back, and brew it in the yard for the whole row.',
+        told: 'brewed what your grandmother used to bring out of the woods, in the yard, for the whole row.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'cauldron-keeper': 3, mycomancer: 1 },
+          background: { outlander: 1 },
+          skill: { apothecary: 1, healer: 1 },
+        },
+      },
+      {
+        id: 'sit',
+        label: 'Sit with the ones nobody else will sit with, and be the one who says the last words, because you have found out that you can and that it costs you nothing.',
+        told: 'sat with the ones nobody else would sit with and said the last words over them.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { necromancer: 2 },
+          lineage: { undead: 1, celestial: 1 },
+          skill: { occultist: 1, empath: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-glass',
+    stage: 'blood',
+    scene:
+      'The house has one good window and you have been looking into it since you were small, because the room reflected in it is not always the room behind you. Tonight there is somebody standing in the reflected doorway. There is nobody standing in the real one.',
+    asks: 'What do you do?',
+    recall: 'The night the window showed somebody in a doorway that was empty, you',
+    options: [
+      {
+        id: 'watch',
+        label: 'Watch it. All night if it takes all night, without moving. Write down in the morning what it did and in what order.',
+        told: 'watched it all night without moving, and wrote down in the morning what it had done and in what order.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 2, spellquill: 1 },
+          background: { erudit: 1 },
+          skill: { occultist: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'stand',
+        label: 'Go and stand in the doorway yourself, the real one, to see which of the two of you the window decides to show.',
+        told: 'stood in the real doorway to see which of the two of you the window would show.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1, trickster: 1 },
+          lineage: { fey: 2, celestial: 1 },
+          skill: { vigilant: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'break',
+        label: 'Break the window. It costs you a winter of cold and a beating, and you have never once regretted it.',
+        told: 'broke the window, and paid for it with a winter of cold and a beating you never regretted.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, brawler: 1, painseeker: 1 },
+          lineage: { draconic: 2 },
+          background: { mercenary: 1 },
+        },
+      },
+      {
+        id: 'speak',
+        label: 'Speak to it. Not in your own language, because the one that comes out of you is not, and it answers you in the same.',
+        told: 'spoke to it in a language that was not yours, and it answered you in the same.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2, spellblade: 2 },
+          lineage: { fey: 1, infernal: 2 },
+          skill: { occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-salt',
+    stage: 'blood',
+    scene:
+      'The boat has gone over a mile out and the other three are in the water with you. The cold takes the oldest of them in about four minutes and you can feel it doing it. It is not doing it to you.',
+    asks: 'What do you do?',
+    recall: 'A mile out, in the water the cold could not get into, you',
+    options: [
+      {
+        id: 'hull',
+        label: 'Get all three of them up onto the hull and stay in the water yourself, holding it steady, for the two hours it takes the tide to put you on the sand.',
+        told: 'held the hull steady from the water for two hours while the tide carried all four of you in.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1 },
+          lineage: { tidebound: 3 },
+          background: { outlander: 1 },
+          skill: { seafarer: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'point',
+        label: 'Swim for the point with the youngest of them on your back. It is half a mile, you do not stop, and you do not look back at the other two.',
+        told: 'swam half a mile to the point with the youngest on your back, and did not look back at the other two.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, berserker: 2 },
+          lineage: { stalwart: 1 },
+          background: { mercenary: 1 },
+          skill: { seafarer: 1 },
+        },
+      },
+      {
+        id: 'sail',
+        label: 'Cut the sail free and get it under all four of you, because a wet sail full of air is a boat for as long as anybody needs one.',
+        told: 'cut the sail free and got it under all four of you, because a wet sail full of air is a boat.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { enchanter: 2, tactician: 1 },
+          background: { craftsman: 1, merchant: 1 },
+          skill: { seafarer: 1, skilled: 1 },
+        },
+      },
+      {
+        id: 'ask',
+        label: 'Ask the water. You have been doing it since you were four, quietly, and it has never once said no to you.',
+        told: 'asked the water, the way you had since you were four, and it did not say no.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 2, 'elemental-aspect': 1 },
+          lineage: { tidebound: 1, celestial: 1 },
+          skill: { 'innate-spell-novice': 1, seafarer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-stone',
+    stage: 'blood',
+    scene:
+      'The quarry face has come down on the shift below yours and there are men under it. The foreman has said the word he says when there is no getting them out. You are fourteen and you are on the rope, and somewhere under thirty tons of it something is still knocking.',
+    asks: 'What do you do?',
+    recall: 'On the rope the day the quarry face came down, you',
+    options: [
+      {
+        id: 'hands',
+        label: 'Go down and start moving it with your hands. Nobody counts the hours, and by the end of it you have shifted stone two men could not, and one of them is alive.',
+        told: 'went down and moved stone two men could not, until one of them came out alive.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 3 },
+          lineage: { stonebound: 2, stalwart: 1 },
+          background: { craftsman: 1 },
+        },
+      },
+      {
+        id: 'face',
+        label: 'Look at the face before anybody touches it. There is one block holding the rest, it can be taken out from the side, and you can say which one it is.',
+        told: 'read the face before anybody touched it and named the one block holding the rest.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { craftsman: 1, investigator: 1 },
+          skill: { cartographer: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'gap',
+        label: 'Go in through the gap nobody else can fit through, on your belly, with a line tied to your ankle, to find out which of the knocking is worth digging for.',
+        told: 'went in on your belly through the gap nobody else could fit, to find which knocking was worth digging for.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, 'feral-curse': 2 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'palm',
+        label: 'Put your hand flat on the face and wait. The knocking comes up through the stone into your palm, and after a while you know exactly where they are.',
+        told: 'put your hand flat on the face until the knocking came up through the stone and told you where they were.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { runebearer: 3, totemic: 1 },
+          lineage: { stonebound: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ======================================================= youth, second drop
+     Five more, for the stage that already had the most and is asked once. */
+  {
+    id: 'youth-cards',
+    stage: 'youth',
+    scene:
+      'You are eleven silver down at a table in a room over a tannery, and the man across from you has been dealing off the bottom for an hour. Two of the four other players know it. Nobody has said anything, because the man has friends by the door.',
+    asks: 'What do you do?',
+    recall: 'Eleven silver down in the room over the tannery, you',
+    options: [
+      {
+        id: 'bottom',
+        label: 'Deal off the bottom yourself. He is watching your face and not your hands, and by midnight you are eight up and he still does not know how.',
+        told: 'dealt off the bottom yourself, and were eight up by midnight without his working out how.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, virtuoso: 1 },
+          background: { criminal: 1, entertainer: 2 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'say',
+        label: 'Say it. Out loud, with the count of every hand he has taken. Let the other four do the arithmetic in front of him.',
+        told: 'said it out loud with the count of every hand he had taken, and let the table do the arithmetic.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2 },
+          background: { aristocrat: 2, investigator: 1 },
+          skill: { mastermind: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'table',
+        label: 'Turn the table over. There are three of them and one of you, it takes a while, and you leave with your eleven silver and somebody else’s coat.',
+        told: 'turned the table over, and left with your eleven silver and somebody else’s coat.',
+        tags: ['did:violence'],
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, brawler: 2 },
+          lineage: { draconic: 2 },
+          background: { mercenary: 1 },
+          skill: { streetwise: 1 },
+        },
+      },
+      {
+        id: 'follow',
+        label: 'Lose the rest of it slowly and cheerfully, and then follow him home. What he does with it afterwards is worth more than eleven silver.',
+        told: 'lost the rest cheerfully and followed him home, because what he did with it was worth more than the money.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 2, pactbound: 1 },
+          background: { investigator: 1, criminal: 1 },
+          skill: { cunning: 1, inquisitor: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'youth-ship',
+    stage: 'youth',
+    scene:
+      'You went into a dockside inn for the bread and you have woken up on a deck with a headache and no coast in sight. The mate has your name on his list in a hand that is not yours. Four days out, and the man in the hammock beside you has been on this ship nine years.',
+    asks: 'What do you do?',
+    recall: 'On the ship you woke up on four days out from the dock, you',
+    options: [
+      {
+        id: 'work',
+        label: 'Work. Harder than anybody, for nine weeks, until the bosun would rather have you willing than have you flogged and come off that ship with a wage and a trade.',
+        told: 'worked harder than anybody for nine weeks, and came off that ship with a wage and a trade.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, runebearer: 2 },
+          background: { mercenary: 1, military: 1 },
+          skill: { seafarer: 1, frugal: 1 },
+        },
+      },
+      {
+        id: 'learn',
+        label: 'Learn the ship. Every hatch, every watch and every man’s habits, and go over the side into a harbour boat on the ninth night without a sound.',
+        told: 'learned every hatch and every watch, and went over the side into a harbour boat on the ninth night.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, duelist: 2 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, seafarer: 1 },
+        },
+      },
+      {
+        id: 'charts',
+        label: 'Learn the navigation. The mate cannot do it sober and the master is sixty, and by the second month the charts are yours and nobody mentions the list again.',
+        told: 'learned the navigation, and by the second month the charts were yours and nobody mentioned the list again.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1, merchant: 1 },
+          skill: { cartographer: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'hold',
+        label: 'Find out what is in the hold. Nine years is a long time to keep a crew, the hatch aft is nailed rather than locked, and whatever is behind it has been fed.',
+        told: 'found out what was behind the nailed hatch aft, and what had been feeding it.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 2, mycomancer: 1 },
+          background: { investigator: 1, criminal: 1 },
+          skill: { inquisitor: 1, streetwise: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'youth-mine',
+    stage: 'youth',
+    scene:
+      'The seam has closed forty feet in and you are on the right side of it. There are five men on the wrong side and the timber crew is saying six hours. You can hear one of them through the fall and he can hear you.',
+    asks: 'What do you do?',
+    recall: 'The day the seam closed on five men with you on the right side of it, you',
+    options: [
+      {
+        id: 'dig',
+        label: 'Start digging and do not stop when the crew tells you to. Four hours, no shoring, and you are the reason two of the five come out at all.',
+        told: 'dug for four hours without shoring, and were the reason two of the five came out.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, berserker: 2, painseeker: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'talk',
+        label: 'Talk to him through the fall. Get the shape of what is behind it out of him foot by foot, and hand the crew a map of a place none of them can see.',
+        told: 'talked him through the fall foot by foot, and handed the crew a map of a place none of them could see.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { cartographer: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'round',
+        label: 'Go round. There is an old working above this one that everybody says is flooded, and you have been up in it twice and it is not.',
+        told: 'went round through the old working above, which everybody said was flooded and was not.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, 'feral-curse': 2 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1, criminal: 1 },
+          skill: { survivalist: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'air',
+        label: 'Get them air. A leather hose, a bellows off the smith, and six hours becomes a thing five men can live through, and you build it in twenty minutes.',
+        told: 'built them air out of a leather hose and the smith’s bellows in twenty minutes.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { enchanter: 3, alchemist: 1 },
+          background: { craftsman: 1 },
+          skill: { skilled: 1, helpful: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'youth-pit',
+    stage: 'youth',
+    scene:
+      'The fighting pit behind the horse fair pays a silver to stand up for three rounds and two silver to win, and you have watched it every market day for a year. The man taking names has looked at you twice. The one who won last week has a bad hand and everybody in the crowd knows it.',
+    asks: 'What do you do?',
+    recall: 'At the fighting pit behind the horse fair, you',
+    options: [
+      {
+        id: 'hand',
+        label: 'Give your name and take the bad hand. Nothing you do in there is hard and everything in it is exact, and you are out in four minutes with two silver.',
+        told: 'took the man with the bad hand, and were out in four minutes with two silver.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 3, 'flowing-fist': 1 },
+          background: { mercenary: 1 },
+          skill: { 'quick-draw': 1 },
+          weapon: { 'fist-weapon': 1 },
+        },
+      },
+      {
+        id: 'biggest',
+        label: 'Give your name and take the biggest man there instead. You lose the first round badly and then you do not lose again, and the crowd remembers your face for a year.',
+        told: 'took the biggest man there, lost the first round badly and did not lose again.',
+        tags: ['did:violence'],
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, painseeker: 2, brawler: 1 },
+          lineage: { draconic: 2 },
+          background: { mercenary: 1 },
+          weapon: { 'melee-light': 1 },
+        },
+      },
+      {
+        id: 'book',
+        label: 'Take the book instead. You have watched a year of these and you know which of them fall in the second round, and by dusk you have made nine silver without being hit.',
+        told: 'took the book instead, and made nine silver by dusk without being hit once.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2, pactbound: 1 },
+          background: { merchant: 2 },
+          skill: { mastermind: 1, haggler: 1 },
+        },
+      },
+      {
+        id: 'odds',
+        label: 'Fight, and lose on purpose twice, and then win the third time at eleven to one against with everything you own riding on yourself.',
+        told: 'lost twice on purpose and then won at eleven to one with everything you owned on yourself.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1, duelist: 2, virtuoso: 1 },
+          background: { criminal: 1, entertainer: 2 },
+          skill: { cunning: 1, charismatic: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'youth-garden',
+    stage: 'youth',
+    scene:
+      'The abbey’s physic garden is walled and locked, the brother who keeps it is dying, and there is nobody else in that house who knows what half of it is for. You have been over that wall since you were nine. He knows, and has never once said so.',
+    asks: 'What do you do?',
+    recall: 'Over the wall of the abbey’s physic garden, the year the brother was dying, you',
+    options: [
+      {
+        id: 'sit',
+        label: 'Go in by the wall as usual and sit with him in the garden until he has told you all of it, bed by bed, over five weeks.',
+        told: 'sat with him in the garden for five weeks until he had told you all of it, bed by bed.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'cauldron-keeper': 3, mycomancer: 2 },
+          background: { outlander: 1 },
+          skill: { apothecary: 1, healer: 1 },
+        },
+      },
+      {
+        id: 'copy',
+        label: 'Copy the book. Every page of the garden book in a fair hand, twice, so that when he is gone the house still has it and so do you.',
+        told: 'copied every page of the garden book twice, so that the house kept it and so did you.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellquill: 3, alchemist: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, apothecary: 1 },
+        },
+      },
+      {
+        id: 'cuttings',
+        label: 'Take cuttings. A little of everything, rooted in a cold frame two miles off. In three years there is a second garden and it is yours.',
+        told: 'took cuttings of everything, and in three years there was a second garden and it was yours.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { mycomancer: 3, 'cauldron-keeper': 1 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1, outlander: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
+        },
+      },
+      {
+        id: 'dig',
+        label: 'Dig it over for him. He cannot lift a spade and the whole of it is going to seed, and you are there every morning for a month before anybody thinks to ask why.',
+        told: 'dug the garden over for him every morning for a month before anybody thought to ask why.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 1, runebearer: 2, colossus: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, frugal: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ======================================================== trade, second drop
+     Six more. What you did for a living is most of what a background is, so
+     these hand out three at a time like the four that were here already. */
+  {
+    id: 'trade-caravan',
+    stage: 'trade',
+    scene:
+      'The caravan master is four days from the pass and has lost two people to the fever, and he is hiring at the last inn before the climb. There are nine of you in the yard and he needs three. He has been looking at the yard for ten minutes without saying anything.',
+    asks: 'What do you do?',
+    recall: 'In the inn yard below the pass, where the caravan master needed three of nine, you',
+    options: [
+      {
+        id: 'lift',
+        label: 'Pick up the heaviest thing in the yard, put it on the wagon he is standing next to, then look at him.',
+        told: 'put the heaviest thing in the yard on his wagon, and then looked at him.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, quartermaster: 1 },
+          background: { mercenary: 3 },
+          skill: { vigilant: 1 },
+          armor: { 'Heavy Armor': 1 },
+        },
+      },
+      {
+        id: 'wheels',
+        label: 'Tell him, in that order, what is wrong with his wheels, his mules and his two remaining guards, and where the pass will get him if he does not fix them.',
+        told: 'told him what was wrong with his wheels, his mules and his guards, and where the pass would get him.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1, trickster: 1 },
+          background: { outlander: 3 },
+          skill: { cartographer: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'manifest',
+        label: 'Read his manifest upside down off the table while he talks, work out what he is actually carrying and offer him the one thing that cargo needs.',
+        told: 'read his manifest upside down off the table and offered him the one thing his cargo needed.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2, enchanter: 1 },
+          background: { merchant: 3 },
+          skill: { haggler: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'aboard',
+        label: 'Be on the wagon when it leaves. He can find out he hired you somewhere up the road, where it is too late to be particular about it.',
+        told: 'were on the wagon when it left, and let him find out he had hired you somewhere up the road.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1 },
+          background: { criminal: 3 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-ward',
+    stage: 'trade',
+    scene:
+      'The sisters at the fever house will take anybody who can stand the smell, and they pay in a bed and two meals. There are forty beds and four of them. The one who shows you round has been awake since the night before last.',
+    asks: 'Which work do you take?',
+    recall: 'At the fever house with forty beds and four sisters, you',
+    options: [
+      {
+        id: 'hopeless',
+        label: 'Take the ones nobody expects to live, and go through everything the house has, one thing at a time, until you find out what actually works on them.',
+        told: 'took the ones nobody expected to live and worked through everything the house had until you found what helped.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { alchemist: 2, arcanist: 1 },
+          background: { investigator: 3 },
+          skill: { physician: 1, apothecary: 1 },
+        },
+      },
+      {
+        id: 'brewing',
+        label: 'Take the brewing. Their store is empty, everything in it can be got within a day’s walk of the door, and you know where all of it grows.',
+        told: 'took the brewing, and filled their empty store from a day’s walk around the door.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'cauldron-keeper': 3, mycomancer: 1 },
+          background: { outlander: 3 },
+          skill: { apothecary: 1, healer: 1 },
+        },
+      },
+      {
+        id: 'carrying',
+        label: 'Take the lifting and the carrying and the dead. Forty beds turn over twice a week and somebody has to be the one who does not flinch at it.',
+        told: 'took the lifting and the carrying and the dead, twice a week, without flinching at it.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 1, colossus: 1, painseeker: 1 },
+          background: { military: 3 },
+          skill: { helpful: 1, vigilant: 1 },
+        },
+      },
+      {
+        id: 'register',
+        label: 'Take the register. Names, dates, what they came in with and what they went out as, and in a year you have the only account of the sickness anybody has written.',
+        told: 'took the register, and in a year had the only written account of the sickness anybody had.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { spellquill: 2, necromancer: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 3 },
+          skill: { scholar: 1, occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-court',
+    stage: 'trade',
+    scene:
+      'The magistrate’s clerk has died and the court sits on Monday. There are eleven cases, forty pages of writ and a queue at the door. The magistrate cannot read his own hand and has stopped pretending otherwise.',
+    asks: 'What do you take on?',
+    recall: 'At the magistrate’s court the week his clerk died, you',
+    options: [
+      {
+        id: 'desk',
+        label: 'Take the desk. By Monday the forty pages are fair, the eleven cases are in an order that makes sense and the magistrate says in open court that he does not know how he managed before.',
+        told: 'took the desk, and by Monday the writs were fair and the magistrate said so in open court.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellquill: 3, tactician: 1 },
+          background: { aristocrat: 3 },
+          skill: { scholar: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'queue',
+        label: 'Take the queue. Eleven cases at the door means eleven people who will each pay to be heard on Monday rather than in the spring.',
+        told: 'took the queue, where eleven people each paid to be heard on Monday rather than in the spring.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, pactbound: 2 },
+          background: { merchant: 3 },
+          skill: { haggler: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'lies',
+        label: 'Read all eleven and find the two that are lies. One of them is the magistrate’s own cousin and you put it in front of him anyway.',
+        told: 'read all eleven and put the two that were lies in front of him, one of them his own cousin’s.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2 },
+          background: { investigator: 3 },
+          skill: { inquisitor: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'door',
+        label: 'Take the door. Forty people, one narrow stair and a magistrate who is going to need somebody standing between him and the fourth case.',
+        told: 'took the door, and stood between the magistrate and the fourth case.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2 },
+          background: { military: 3 },
+          skill: { vigilant: 1 },
+          armor: { 'Heavy Armor': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-ledger',
+    stage: 'trade',
+    scene:
+      'The counting house on the quay wants somebody who can hold a column in their head, and it pays better than anything else on that street. The man interviewing you has a ledger open and one finger on a line. The line is wrong and he does not know it yet.',
+    asks: 'What do you do?',
+    recall: 'In the counting house on the quay, over a line the man had his finger on, you',
+    options: [
+      {
+        id: 'line',
+        label: 'Tell him which line, and what it should say, and what the difference has cost him every month since the spring.',
+        told: 'told him which line was wrong and what it had cost him every month since the spring.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 2, enchanter: 1 },
+          background: { merchant: 3 },
+          skill: { haggler: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'quiet',
+        label: 'Say nothing about the line. Take the work, find out who has been feeding it and decide later which of the two of them you would rather be owed by.',
+        told: 'said nothing about the line, took the work and found out who had been feeding it.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, pactbound: 2 },
+          background: { criminal: 3 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'six',
+        label: 'Ask to see the six ledgers behind that one. By the end of the afternoon you can name the clerk, the ship and the month, and you have never had a better afternoon.',
+        told: 'asked for the six ledgers behind it, and by evening could name the clerk, the ship and the month.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, spellquill: 1 },
+          background: { investigator: 3 },
+          skill: { inquisitor: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'quay',
+        label: 'Take the work on the quay instead. The counting house is four flights up and everything it counts comes off a ship on somebody’s back, and you would rather be the back.',
+        told: 'took the work on the quay instead, and carried what the counting house only counted.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { colossus: 1, runebearer: 2 },
+          background: { mercenary: 2, craftsman: 1 },
+          skill: { frugal: 1, seafarer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-company',
+    stage: 'trade',
+    scene:
+      'The free company is taking names in the market square and paying a month up front. Their sergeant has one eye and a list, and the man in the queue in front of you is fifteen. Everybody in the square knows where the company is going and what happened to the last one that went there.',
+    asks: 'What do you do?',
+    recall: 'In the square where the free company was taking names, you',
+    options: [
+      {
+        id: 'boy',
+        label: 'Sign, and then go back down the queue and tell the fifteen-year-old to go home, and stand there until he does.',
+        told: 'signed, and then stood over the fifteen-year-old in the queue until he went home.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, berserker: 1 },
+          background: { mercenary: 3, military: 1 },
+          skill: { vigilant: 1 },
+          weapon: { 'melee-heavy': 1 },
+        },
+      },
+      {
+        id: 'blade',
+        label: 'Sign, and spend the month up front on your own blade rather than their issue, because the issue is most of what happened to the last company.',
+        told: 'signed, and spent the month up front on your own blade rather than their issue.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 3, sharpshooter: 1 },
+          background: { mercenary: 3 },
+          skill: { 'quick-draw': 1 },
+          weapon: { 'paired-finesse': 1 },
+        },
+      },
+      {
+        id: 'clerk',
+        label: 'Sign as their clerk. A company that cannot count its own powder is a company that loses, and by the second month you are the one saying where it goes.',
+        told: 'signed as their clerk, and by the second month you were the one saying where the powder went.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2, quartermaster: 1 },
+          background: { military: 3 },
+          skill: { mastermind: 1, cartographer: 1 },
+        },
+      },
+      {
+        id: 'behind',
+        label: 'Do not sign. Follow them out at two days’ distance instead, because what a company leaves behind it on that road is going to be worth picking up.',
+        told: 'followed the company out at two days’ distance, for what it left behind on the road.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1, mycomancer: 2 },
+          background: { outlander: 1, criminal: 1 },
+          skill: { scavenger: 1, survivalist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-hall',
+    stage: 'trade',
+    scene:
+      'The guild will not have you and the great house will, as something between a tutor and a curiosity. The letter is on the table and your mother has read it four times. Whatever else it is, it is a room in a house with eleven hundred books in it.',
+    asks: 'What do you do?',
+    recall: 'When the guild refused you and the great house did not, you',
+    options: [
+      {
+        id: 'read',
+        label: 'Go, and read all eleven hundred. It takes nine years, and at the end of them there is nothing in that house you do not know, including what the family did in the war.',
+        told: 'went, and read all eleven hundred books, including everything the family had done in the war.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 2, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 3 },
+          skill: { scholar: 1, occultist: 1 },
+        },
+      },
+      {
+        id: 'curiosity',
+        label: 'Go, and be the thing they think you are, and be so good at it that by the second winter the whole county wants you at their table instead.',
+        told: 'went, and were such a curiosity that by the second winter the whole county wanted you at table.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { virtuoso: 2, trickster: 1 },
+          lineage: { fey: 1 },
+          background: { entertainer: 3 },
+          skill: { troubadour: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'marry',
+        label: 'Go, and marry into it. The letter is an opening and eleven hundred books is a dowry, and you have read enough of them to know how these houses fall.',
+        told: 'went, and married into it, having read enough of their own books to know how such houses fall.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 1, tactician: 1 },
+          background: { aristocrat: 3 },
+          skill: { charismatic: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'quarry',
+        label: 'Do not go. Take the guild’s refusal to the quarry instead, where nobody asks whose son you are and be the best hand on the face inside two years.',
+        told: 'took the guild’s refusal to the quarry, and were the best hand on the face inside two years.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, runebearer: 2 },
+          lineage: { stonebound: 1, stalwart: 1 },
+          background: { craftsman: 3 },
+          skill: { skilled: 1, frugal: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ========================================================= road, second drop
+     Six more for the stage that is asked twice. */
+  {
+    id: 'road-ferry',
+    stage: 'road',
+    scene:
+      'The river is up and the ferryman will not cross. There are eleven of you on the near bank and a fair in the town on the far one, and he has taken the oars out of the boat and gone into his hut. Two of the eleven have goods that will not keep.',
+    asks: 'What do you do?',
+    recall: 'On the near bank the day the ferryman would not cross, you',
+    options: [
+      {
+        id: 'pole',
+        label: 'Take the boat over yourself, twice, standing, with the pole. It is harder than he said it was and you do it anyway.',
+        told: 'took the boat over twice yourself, standing, with the pole.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, berserker: 1, painseeker: 1 },
+          lineage: { stonebound: 1 },
+          skill: { seafarer: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'shallows',
+        label: 'Go upstream to the shallows nobody uses because of the stones, and be in the town with your own load before the ferryman has finished his dinner.',
+        told: 'went up to the stony shallows nobody uses, and were in the town before the ferryman finished his dinner.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 2 },
+          lineage: { wildheart: 1, tidebound: 1 },
+          background: { outlander: 1 },
+          skill: { cartographer: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'water',
+        label: 'Look at the river. It has two more hours of rising in it and then four of falling, and you tell the eleven when it will cross and you are right to the quarter hour.',
+        told: 'read the river and told the eleven the hour it would cross, and were right to the quarter.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2, arcanist: 1 },
+          background: { investigator: 1 },
+          skill: { cartographer: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'freeze',
+        label: 'Freeze it. Not the whole river, only the width of the boat and only for as long as the eleven need, and afterwards nobody on that bank will look at you.',
+        told: 'froze the width of the boat for as long as the eleven needed, and nobody on that bank would look at you.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 2, 'elemental-aspect': 1 },
+          lineage: { tidebound: 1 },
+          skill: { 'innate-spell-novice': 1 },
+          weapon: { 'frost-wand': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-shrine',
+    stage: 'road',
+    scene:
+      'There is a shrine at the fork with a bowl on it and something in the bowl, and the road you want goes past it. The last four travellers have left the bowl alone. There is a smell coming off the shrine that is not incense, and the trees behind it have no birds in them.',
+    asks: 'What do you do?',
+    recall: 'At the shrine on the fork where the trees had no birds in them, you',
+    options: [
+      {
+        id: 'base',
+        label: 'Read the shrine. There is a name cut into the base of it under the moss, and it is not the name of anything that was ever worshipped by choice.',
+        told: 'read the name cut into the base of the shrine, which was not one anything was worshipped by choice.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 2, necromancer: 1 },
+          background: { erudit: 1 },
+          skill: { occultist: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'ditch',
+        label: 'Put the shrine in the ditch. It takes both arms and a while, the smell gets worse before it stops, and the birds are back by morning.',
+        told: 'put the shrine in the ditch, and the birds were back by morning.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, berserker: 2 },
+          lineage: { scorchbound: 2, undead: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'round',
+        label: 'Leave the bowl and take the long way round through the trees, quietly, to be past the fork before whatever the bowl is for has noticed anybody came.',
+        told: 'went the long way round through the trees, and were past the fork before anything noticed you had come.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, 'feral-curse': 2 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
+          skill: { cunning: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'add',
+        label: 'Add to the bowl. Whatever is owed there you would rather be a creditor than a stranger, and you say so out loud in a form of words you did not learn from anybody.',
+        told: 'added to the bowl, and said so out loud in a form of words you had not learned from anybody.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2, necromancer: 1 },
+          lineage: { infernal: 2 },
+          skill: { occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-pass',
+    stage: 'road',
+    scene:
+      'The pass closes in a day and the party ahead of you is not going to make it, because one of them has a leg and the rest have four days of food between eleven. You have the pass in front of you and the weather behind. Their leader has come back down the trail to ask you for nothing in particular.',
+    asks: 'What do you do?',
+    recall: 'A day before the pass closed, with eleven people on the trail below it, you',
+    options: [
+      {
+        id: 'leg',
+        label: 'Carry the leg. Eleven days of somebody else’s weight over a pass that is closing, and you put him down on the far side and go on.',
+        told: 'carried the man with the leg over the closing pass, put him down on the far side and went on.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 3 },
+          lineage: { stalwart: 1 },
+          skill: { helpful: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'split',
+        label: 'Split the party. Six over now with the food and five into the shepherd’s hut with the fire, and say it plainly enough that they actually do it.',
+        told: 'split the party, six over the pass and five into the shepherd’s hut, and said it plainly enough that they did it.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 3 },
+          background: { aristocrat: 1, military: 1 },
+          skill: { mastermind: 1, cartographer: 1 },
+        },
+      },
+      {
+        id: 'feed',
+        label: 'Feed them. Eleven people is nine snares, a frozen hillside and two hours, and you have done it in worse country than this.',
+        told: 'fed all eleven off a frozen hillside in two hours, having done it in worse country.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { mycomancer: 3, 'cauldron-keeper': 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
+        },
+      },
+      {
+        id: 'ahead',
+        label: 'Go over alone tonight and send help up from the far valley in the morning. It is the only answer in which somebody who can actually help them hears in time.',
+        told: 'went over alone that night and sent help up from the far valley in the morning.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1, duelist: 2 },
+          lineage: { skybound: 1 },
+          background: { mercenary: 1 },
+          skill: { cunning: 1, survivalist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-robbers',
+    stage: 'road',
+    scene:
+      'The barrow on the heath has been opened from the side and there are three men down in the hole with a lantern, and a fourth on the top with a crossbow watching the road. What they have taken out is stacked on a cloth. One piece of it is still moving.',
+    asks: 'What do you do?',
+    recall: 'At the barrow on the heath that was opened from the side, you',
+    options: [
+      {
+        id: 'moving',
+        label: 'Take the piece that is moving. It is a blade, the three in the hole have no idea what it is and the one on the top cannot see the cloth.',
+        told: 'took the blade that was still moving, which none of the four of them understood.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellblade: 3, necromancer: 2 },
+          lineage: { undead: 1 },
+          skill: { occultist: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'hole',
+        label: 'Go and put them back in the hole. The crossbow gets one shot and you are on top of the barrow before he has the crank turned.',
+        told: 'put all four of them back in the hole, and were on top of the barrow before the crossbow was cranked.',
+        tags: ['did:violence'],
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, colossus: 1, painseeker: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+          weapon: { 'melee-great': 1 },
+        },
+      },
+      {
+        id: 'tell',
+        label: 'Tell them what they have dug into. Not to save them, because it is already too late for the man with the lantern, and you would rather be the one standing outside.',
+        told: 'told them what they had dug into, too late for the man with the lantern.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { necromancer: 2, arcanist: 1 },
+          background: { investigator: 1 },
+          skill: { inquisitor: 1, occultist: 1 },
+        },
+      },
+      {
+        id: 'morning',
+        label: 'Wait for the barrow to finish with them and take what is left in the morning. It costs you a cold night and nothing else at all.',
+        told: 'waited for the barrow to finish with them and took what was left in the morning.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, 'feral-curse': 2 },
+          background: { criminal: 1, outlander: 1 },
+          skill: { scavenger: 1, vigilant: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-press',
+    stage: 'road',
+    scene:
+      'There is a press gang in the taproom and the door behind you has a man against it. Six of them, and they are not looking for volunteers. The innkeeper has taken his money off the bar and gone into the back.',
+    asks: 'What do you do?',
+    recall: 'In the taproom with a press gang in it and a man on the door, you',
+    options: [
+      {
+        id: 'door',
+        label: 'Go through the man on the door. He is the smallest of the six because they always put the smallest on the door, and that is the last mistake they make tonight.',
+        told: 'went through the smallest of the six, who was the one they had put on the door.',
+        tags: ['did:violence'],
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 2, brawler: 2, guardian: 1 },
+          lineage: { draconic: 2 },
+          background: { mercenary: 1 },
+          weapon: { 'melee-light': 1 },
+        },
+      },
+      {
+        id: 'coat',
+        label: 'Be somebody else. There is a sea officer’s coat on the peg, and by the time they get to you it is you asking them for their warrant.',
+        told: 'put on the sea officer’s coat off the peg, and asked them for their warrant instead.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, virtuoso: 2 },
+          background: { criminal: 1, entertainer: 2 },
+          skill: { cunning: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'hilt',
+        label: 'Put a hand on the hilt at your belt and say the other half of it under your breath, and let all six of them watch what the blade does about that.',
+        told: 'put a hand on the hilt and said the other half of it under your breath, in front of all six of them.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellblade: 3, arcanist: 1 },
+          background: { mercenary: 1 },
+          skill: { occultist: 1, 'quick-draw': 1 },
+        },
+      },
+      {
+        id: 'shilling',
+        label: 'Take the shilling and be over the side in the first harbour. A fortnight of their food and a fortnight’s pay is not the worst trade you have made.',
+        told: 'took the shilling and were over the side in the first harbour.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1, duelist: 1, pactbound: 1 },
+          background: { criminal: 1, mercenary: 1 },
+          skill: { seafarer: 1, frugal: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-hound',
+    stage: 'road',
+    scene:
+      'Something has been following the wagons since the third night, keeping to the treeline, and this morning it is sitting in the road ahead of you. It is thin and enormous and not a dog. The drovers have stopped and one of them has a bow up.',
+    asks: 'What do you do?',
+    recall: 'The morning the thing that had followed the wagons sat down in the road, you',
+    options: [
+      {
+        id: 'hand',
+        label: 'Walk up to it. You put out a hand at the last of it, it decides and after that it walks where you walk for eleven years.',
+        told: 'walked up and put out a hand, and it walked where you walked for eleven years afterwards.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'draconic-bond': 3, 'feral-curse': 1, beastbond: 1 },
+          lineage: { wildkin: 2 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'bow',
+        label: 'Get in front of the bow and then in front of the thing, and let it work out for itself which of the two of you is in its road.',
+        told: 'got in front of the bow and then in front of the thing, and let it decide which of you was in the road.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 1, colossus: 1, berserker: 2 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'what',
+        label: 'Find out what it is first. Thin, enormous, three nights of following and no kill, and every one of those facts says something about what it wants.',
+        told: 'worked out what it was from three nights of following and no kill.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, alchemist: 1, arcanist: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1 },
+          skill: { inquisitor: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'feed',
+        label: 'Feed it. Whatever has followed a wagon train for three nights without taking a beast is hungry for something else, and you would rather find out cheaply.',
+        told: 'fed it, because whatever follows a wagon train for three nights without taking a beast wants something else.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 2, mycomancer: 2, wilder: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
+          skill: { apothecary: 1, survivalist: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ====================================================== leaving, second drop
+     Six more for the last night, which had five. */
+  {
+    id: 'leaving-door',
+    stage: 'leaving',
+    scene:
+      'Your pack is by the door and your mother is standing in front of the door. She has not raised her voice and she is not going to move, and everything she is saying about the road is true. It is an hour before the carrier goes.',
+    asks: 'What do you do?',
+    recall: 'On the last night, with your mother standing in front of the door, you',
+    options: [
+      {
+        id: 'lift',
+        label: 'Pick her up, gently, put her down to one side and go. She is still standing in the road when the carrier turns the corner.',
+        told: 'picked her up gently, put her to one side and went, and she was still in the road at the corner.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, guardian: 1 },
+          lineage: { stalwart: 1 },
+          skill: { helpful: 1 },
+        },
+      },
+      {
+        id: 'answer',
+        label: 'Answer all of it. Every objection in order, out loud, until there is nothing left standing between you and the door, and then go through it having won.',
+        told: 'answered every objection in order until there was nothing left between you and the door.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2 },
+          background: { aristocrat: 1 },
+          skill: { mastermind: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'window',
+        label: 'Go out the window. The pack is already outside underneath it, because you have known for a week how this hour was going to go.',
+        told: 'went out the window to the pack you had left under it a week before.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, duelist: 2 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1 },
+        },
+      },
+      {
+        id: 'promise',
+        label: 'Promise her something, in the form of words you use for the kind of promise that keeps itself. Then go, and carry it.',
+        told: 'promised her something in the form of words that keeps itself, and then went and carried it.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2, spellquill: 1 },
+          lineage: { celestial: 1, infernal: 1 },
+          skill: { occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'leaving-name',
+    stage: 'leaving',
+    scene:
+      'The clerk at the gate writes down everybody who goes out on the north road, and he has the pen in his hand and is waiting. There is nothing behind you worth being followed by. Nobody on the road ahead has ever heard of you.',
+    asks: 'What do you say?',
+    recall: 'At the gate on the north road, with the clerk’s pen waiting, you',
+    options: [
+      {
+        id: 'made',
+        label: 'Give him a name you have made up, spelled the way a family with land spells it, then watch him sit up a little straighter as he writes it down.',
+        told: 'gave him a made-up name spelled the way a family with land spells it, and watched him sit up straighter.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, virtuoso: 2 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'own',
+        label: 'Give him your own. It is the only thing your father left you and you are not going to be the one who puts it down.',
+        told: 'gave him your own name, because it was the only thing your father left you.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, runebearer: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'write',
+        label: 'Write it yourself. He is glad of the help, and it goes into the book in a hand nobody at that gate can match, which is a thing worth having in a book.',
+        told: 'wrote it into the book yourself, in a hand nobody at that gate could match.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellquill: 3, tactician: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'owed',
+        label: 'Give him the name of the thing you owe. It is going to be written next to yours eventually and you would rather be the one who put it there.',
+        told: 'gave him the name of the thing you owe, rather than wait for it to be written next to yours.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2, necromancer: 1 },
+          lineage: { infernal: 2 },
+          skill: { occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'leaving-debt',
+    stage: 'leaving',
+    scene:
+      'You owe eleven silver in this town and you are leaving in the morning, and the man you owe it to has a daughter who has been kind to you. Eleven silver is what the road costs. He has not asked for it in a month.',
+    asks: 'What do you do?',
+    recall: 'With eleven silver owed in that town and the road costing exactly that, you',
+    options: [
+      {
+        id: 'work',
+        label: 'Work it off tonight. Whatever there is in his yard that needs a back, and you are on the road at noon instead of dawn and you owe nobody anything.',
+        told: 'worked it off in his yard through the night, and went at noon owing nobody anything.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, runebearer: 2, guardian: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1 },
+          skill: { frugal: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'owed',
+        label: 'Leave before dawn and leave it owed. You have carried worse than eleven silver and you have never once gone back for any of it.',
+        told: 'left before dawn and left it owed, the way you had left worse than eleven silver.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, duelist: 2 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, outlander: 1 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'better',
+        label: 'Leave him something better than eleven silver. What you know about the man who supplies him is worth four times that, and he finds it out on Thursday.',
+        told: 'left him what you knew about his supplier, which was worth four times eleven silver.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2, enchanter: 1 },
+          background: { merchant: 1, investigator: 1 },
+          skill: { mastermind: 1, haggler: 1 },
+        },
+      },
+      {
+        id: 'sign',
+        label: 'Sign for it. Properly, in a form that holds. Put the leaf in his hand so he can read what he is owed and by whom and for how long.',
+        told: 'signed for it in a form that holds, and put the leaf in his hand.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { spellquill: 3, pactbound: 2 },
+          background: { aristocrat: 1 },
+          skill: { scholar: 1, occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'leaving-horse',
+    stage: 'leaving',
+    scene:
+      'There is a horse in the stable that is not yours and will not be missed until Thursday, and the road you are taking is four days on foot and one and a half on that. The stable boy is asleep. You have put your hand on the bolt once already and taken it off again.',
+    asks: 'What do you do?',
+    recall: 'Over the bolt of a stable door on the last night, you',
+    options: [
+      {
+        id: 'take',
+        label: 'Take it, and put it in a field at the far end with the bridle on the gate, so the man gets it back a week later in better condition than he kept it.',
+        told: 'took the horse and left it in a field at the far end, in better condition than the man kept it.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, duelist: 2 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'walk',
+        label: 'Walk. Four days is four days, and you have not once in your life taken a thing you would afterwards have to explain.',
+        told: 'walked the four days, never having taken a thing you would afterwards have to explain.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 1, colossus: 1, oathbound: 2 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { frugal: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'talk',
+        label: 'Talk to the horse. It comes out of the box for you and follows you down the lane, and no bolt is drawn and nothing is stolen exactly, and it never goes home.',
+        told: 'talked the horse out of its box, and it followed you down the lane and never went home.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'draconic-bond': 3, 'feral-curse': 1 },
+          lineage: { wildkin: 2 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'buy',
+        label: 'Buy it. Wake the boy, name a price that is under the horse and over his loyalty, and be four days ahead by Thursday with a bill of sale in your boot.',
+        told: 'woke the boy and bought it at a price under the horse and over his loyalty.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 2, tactician: 1 },
+          background: { merchant: 2 },
+          skill: { haggler: 1, mastermind: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'leaving-letter',
+    stage: 'leaving',
+    scene:
+      'There is an hour before the carrier and there is paper in the house. Everybody who is going to wonder where you went is asleep upstairs. Whatever you leave on this table is the last thing any of them ever hear from you.',
+    asks: 'What do you leave?',
+    recall: 'On the table, in the hour before the carrier, you left',
+    options: [
+      {
+        id: 'pages',
+        label: 'Write it all. Four pages, where you have gone and why and what is to be done about the roof, in a hand every one of them can read.',
+        told: 'four pages in a hand all of them could read, down to what was to be done about the roof.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellquill: 3, tactician: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'axe',
+        label: 'Leave the axe. Sharpened, on the table, where the letter would have been, because there is nothing you could write that says it better.',
+        told: 'the axe, sharpened, where the letter would have been.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { runebearer: 3, colossus: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1 },
+          skill: { skilled: 1 },
+          weapon: { 'melee-heavy': 1 },
+        },
+      },
+      {
+        id: 'nothing',
+        label: 'Leave nothing at all. A page is a thing somebody can follow, and you are not going to be followed by anybody, including the people you love.',
+        told: 'nothing at all, because a page is a thing somebody can follow.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, duelist: 1, 'feral-curse': 2 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1 },
+        },
+      },
+      {
+        id: 'line',
+        label: 'Leave one line, in the form you were taught, so that whoever reads it out loud is standing in a room that is safe for as long as they need it to be.',
+        told: 'one line in the form you were taught, so that whoever read it out loud stood in a safe room.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { spellquill: 2, arcanist: 1 },
+          lineage: { celestial: 1 },
+          skill: { occultist: 1, 'innate-spell-novice': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'leaving-grave',
+    stage: 'leaving',
+    scene:
+      'The carrier goes at dawn and there is one grave in this town you are not going to see again. It is an hour’s walk out and back and you have the hour. There is frost on everything and nobody knows you are awake.',
+    asks: 'What do you do?',
+    recall: 'In the frost before dawn, over the one grave you were leaving behind, you',
+    options: [
+      {
+        id: 'say',
+        label: 'Go, and say the whole thing out loud, all of it, in the order it happened. Something in that churchyard is listening and you have known it since you were nine.',
+        told: 'said the whole thing out loud in the order it happened, to something in the churchyard that was listening.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { necromancer: 3, spellquill: 1 },
+          lineage: { undead: 1 },
+          skill: { occultist: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'stone',
+        label: 'Go, and put the stone straight. It has been leaning four years, you are the only one who was ever going to do it, and it takes the hour and both hands.',
+        told: 'put the leaning stone straight, which took the hour and both hands.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { runebearer: 3, colossus: 1, guardian: 1 },
+          lineage: { stonebound: 1 },
+          skill: { helpful: 1 },
+        },
+      },
+      {
+        id: 'road',
+        label: 'Do not go. You have said everything you are going to say, and you would rather spend the hour making sure nobody sees which road you take.',
+        told: 'did not go, and spent the hour making sure nobody saw which road you took.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, duelist: 2 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, vigilant: 1 },
+        },
+      },
+      {
+        id: 'earth',
+        label: 'Go, and take something off the grave with you. A handful of the earth in a twist of cloth, because you are not leaving all of them behind and never intended to.',
+        told: 'took a handful of the earth off it in a twist of cloth, because you never intended to leave all of them.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { necromancer: 2, pactbound: 1 },
+          lineage: { undead: 1, infernal: 1 },
+          skill: { occultist: 1 },
         },
       },
     ],

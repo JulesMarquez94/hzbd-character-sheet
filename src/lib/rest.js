@@ -378,13 +378,19 @@ export function restEnchanting(character, kind) {
  * One list, one shape, whatever the action actually is — the same trick
  * abilitySources.js plays with a "source". A new kind of long rest action is a
  * new branch here and a new step in the window, and nothing else has to learn
- * what it is. Five kinds so far:
+ * what it is. Eight kinds so far:
  *
  *   `labour`   a background skill worked during a rest
  *   `enchant`  ENCHANTING, and what it lays on what
  *   `worn`     WIELDER OF WONDER, and what is on the Enchanter's own person
  *   `alchemy`  ALCHEMY, and the flasks it fills out of the crate
  *   `prepare`  a set with a `loadout` that swaps or researches on this rest
+ *   `pact`     THE PACT, and the shape its weapon takes tomorrow
+ *   `raise`    the OSSUARY, and the body that stands up out of it
+ *   `scribe`   SCRIBING, and the leaves the desk turns out for the night
+ *
+ * Rulebook 8.1 lists the same set in the players' own words, so a kind added
+ * here is a bullet there.
  */
 
 /**

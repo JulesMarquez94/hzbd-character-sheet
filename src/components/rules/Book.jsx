@@ -13,9 +13,9 @@ import { RULEBOOK, rulesOf } from '../../lib/rulebook.js';
  * The rail marks whichever chapter you are reading and opens its own rules
  * under it, so `5.6.1 Martial Moves` is one click from anywhere in the book.
  *
- * **The Contents chapter is not drawn.** It is a table of the same seventeen
- * rows this rail already is, and printing both would be the list twice. Nothing
- * else in the book is left out.
+ * **The Contents chapter is not drawn.** It is a table of the chapters this rail
+ * already lists, and printing both would be the list twice. Nothing else in the
+ * book is left out.
  */
 
 /* Where "the top of the page" is, in pixels: clear of the site bar and of the
@@ -43,9 +43,9 @@ export default function Book() {
      above it when the page settles, so nothing fires and the rail keeps marking
      the chapter you left.
 
-     Seventeen rectangles a frame is not the expensive thing it sounds like:
+     One rectangle a chapter a frame is not the expensive thing it sounds like:
      they are read in one batch with nothing written between them, so the
-     browser lays the page out once and answers all seventeen off it. */
+     browser lays the page out once and answers all of them off it. */
   useEffect(() => {
     const node = bodyRef.current;
     if (!node) return undefined;

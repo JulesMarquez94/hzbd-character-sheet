@@ -1,10 +1,10 @@
 /**
  * The Crossroads pool, and the character a run of it makes.
  *
- * Forty questions written by hand, each option carrying points for things that
- * live in five other registries. Two things go wrong quietly with a pool like
- * that: an id that names nothing (a skill renamed, a weapon retired), and a set
- * that nothing scores, which can never be made at the Crossroads and nobody
+ * Ninety-one questions written by hand, each option carrying points for things
+ * that live in five other registries. Two things go wrong quietly with a pool
+ * like that: an id that names nothing (a skill renamed, a weapon retired), and a
+ * set that nothing scores, which can never be made at the Crossroads and nobody
  * would notice until a player asked why. So this reads every id against the
  * codex, and then walks the road a few thousand times with random answers and
  * counts who came out the other end.
@@ -34,6 +34,7 @@ import {
   storyText,
   walk,
   weaponStat,
+  weightsOf,
 } from '../src/lib/crossroads.js';
 import {
   ATTRIBUTE_PHRASES,
@@ -203,6 +204,47 @@ section('every answer leans one way');
       }
       for (const name of Object.keys(gives.armor ?? {})) {
         check(`${at}: ${name} suits ${lane}`, armorStat(name), lane);
+      }
+    }
+  }
+}
+
+section('every answer can be read back');
+{
+  /* The admin reveal prints `weightsOf`, and it has one job: never show an id.
+     A set renamed in the codex would go on scoring and start reading as its own
+     slug on the screen, which is the failure this catches. It also holds the
+     reveal to the points: what it prints is the whole of what the count reads,
+     group for group and number for number. */
+  for (const question of QUESTIONS) {
+    for (const option of question.options) {
+      const at = `${question.id}/${option.id}`;
+      const { groups, tags } = weightsOf(option);
+      const given = Object.entries(option.gives ?? {}).filter(([, points]) =>
+        Object.values(points).some((value) => value > 0)
+      );
+      check(`${at}: the reveal shows every group scored`, groups.length, given.length);
+      check(`${at}: the reveal shows the tags`, tags, [...(option.tags ?? [])]);
+
+      for (const group of groups) {
+        const points = option.gives[group.group];
+        check(`${at}: ${group.group} reads back whole`, group.rows.length, Object.keys(points).length);
+        for (const row of group.rows) {
+          check(`${at}: ${group.group} ${row.id} keeps its points`, row.points, points[row.id]);
+          /* An armor set is named by its name, so there the id is the name. */
+          check(
+            `${at}: ${group.group} ${row.id} reads as a name`,
+            row.name !== row.id || group.group === 'armor',
+            true
+          );
+        }
+      }
+
+      /* Every set says which attribute it stands on, because that is the law an
+         admin is checking the answer against. */
+      const shelves = groups.find((group) => group.group === 'talent')?.rows ?? [];
+      for (const row of shelves) {
+        check(`${at}: ${row.id} names its shelf`, Boolean(row.note), true);
       }
     }
   }

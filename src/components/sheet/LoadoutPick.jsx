@@ -244,7 +244,7 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
 
   /* Only what a rank still owes you. Everything else the pool refused is
      another school's and no rank opens it, so counting it here would promise a
-     Mycomancer thirty-four Elemental spells that are never coming. */
+     Mycomancer every Elemental spell in the codex and never open one. */
   const later = options.filter((option) => option.gate === 'tier' && option.tier).length;
 
   /* Whether one card may be held twice. Only the Runebearer says yes, and it

@@ -13759,6 +13759,97 @@ button.tgt-chip:disabled {
   color: var(--text-muted);
 }
 
+.xr-note-admin {
+  color: color-mix(in srgb, var(--copper) 72%, var(--text-muted));
+}
+
+/* ---------- what an answer scores, for an admin ----------
+   Under the answer rather than beside it: the tab is narrow and every answer is
+   already a full-width sentence. The row is the positioned box, not the button,
+   because the button slides 3px right on hover and the panel must not follow
+   it. See Weights in paths/Crossroads.jsx. */
+.xr-options.is-admin > li {
+  position: relative;
+}
+
+.xr-weights {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 3px);
+  z-index: var(--z-tip);
+  display: none;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--copper) 40%, transparent);
+  border-left: 2px solid var(--copper);
+  border-radius: 4px;
+  /* Opaque, not the tooltip's 0.97: this one is drawn over two more answers and
+     their sentences read through at that alpha. */
+  background-color: rgb(6, 12, 15);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7);
+  /* The mouse passes through to the answers underneath, so moving down the
+     column hands the panel from one answer to the next. */
+  pointer-events: none;
+  text-align: left;
+}
+
+.xr-options.is-admin > li:hover .xr-weights,
+.xr-options.is-admin > li:focus-within .xr-weights {
+  display: flex;
+}
+
+.xr-weight-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.xr-weight-group {
+  flex-shrink: 0;
+  width: 5.4rem;
+  font-family: var(--font-headings);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.xr-weight-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.7rem;
+  min-width: 0;
+}
+
+.xr-weight {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-silver);
+}
+
+.xr-weight b {
+  color: var(--copper);
+}
+
+/* The shelf the point stands on, which is what makes the answer legal. */
+.xr-weight i {
+  margin-left: 0.28rem;
+  font-style: normal;
+  font-size: 0.62rem;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+.xr-weight-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  color: color-mix(in srgb, var(--haze-glow) 70%, var(--text-silver));
+}
+
 /* ---------- the reveal ---------- */
 .xr-lead {
   margin: 0.9rem 0 0;

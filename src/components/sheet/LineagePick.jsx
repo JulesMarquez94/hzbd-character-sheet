@@ -277,7 +277,7 @@ export default function LineagePick({ value, character, patch, step = null, read
  * Three views on one window: a wall of ancestries, the one you open, and — the
  * moment you take it — what it leaves you to decide.
  *
- * Eighteen ancestries are far too many to read through, so the wall filters.
+ * Thirteen ancestries are more than anybody reads through, so the wall filters.
  * The third view is the point of the flow. Half the lineages ask a question on
  * one of their cards: which damage type your scales resist, which attribute you
  * cast the blood's spell with. Being asked it here, while the window that handed

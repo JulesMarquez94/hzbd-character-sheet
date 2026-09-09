@@ -476,7 +476,7 @@ export function heldPicks(talents, talentId) {
  * A card can be refused for two reasons, and they read differently at the
  * table: the wrong school is never going to be yours, while the wrong tier is
  * only a rank away. `gate` says which, because a wall that leaves both off has
- * only one of them to promise: a Mycomancer's thirty-four Elemental spells are
+ * only one of them to promise: a Mycomancer's Elemental spells are
  * not waiting on a rank and counting them as though they were is a sentence the
  * set can never make good on.
  */

@@ -79,10 +79,10 @@
  * changed afterwards from the Advancement tab.
  */
 
-import { ATTRIBUTE_KEYS, getAttribute } from './attributes.js';
-import { TALENTS, chooseAt } from './talents.js';
+import { ATTRIBUTE_KEYS, attributeLabel, getAttribute } from './attributes.js';
+import { TALENTS, chooseAt, getTalent } from './talents.js';
 import { LINEAGES } from './lineages.js';
-import { BACKGROUNDS, normalizeKit, skillPicks } from './backgrounds.js';
+import { BACKGROUNDS, SKILLS, normalizeKit, skillPicks } from './backgrounds.js';
 import { ARMOR_SETS, startingWeapons } from './items.js';
 import { getCard } from './weapons.js';
 import { XP_TABLE, appendLedger, newLedgerId, xpForLevel } from './characterModel.js';
@@ -449,6 +449,88 @@ export function resolve(run) {
 /** The story as the lore page stores it: the paragraphs, a blank line between. */
 export function storyText(story) {
   return story.map((paragraph) => paragraph.text).join('\n\n');
+}
+
+/* -------------------------------------------------------- what an answer gives
+ * Jules, 2026-09-09: "when you are admin and you mouse over a choise it shows
+ * you what it gives weight to."
+ *
+ * An answer's points, resolved to the names the codex prints, in the groups the
+ * count reads and in the order the pool wrote them. This is the whole of what
+ * the admin reveal shows, and it is here rather than in the screen so that the
+ * screen cannot print a raw id and the checker can hold every id in the pool to
+ * resolving through it. See Crossroads.jsx.
+ *
+ * A player never sees any of this. A scene that shows its own arithmetic stops
+ * being a scene, which is the reason the pool never names a set in an answer.
+ */
+
+const WEIGHT_GROUPS = [
+  { group: 'attribute', label: 'Attribute' },
+  { group: 'talent', label: 'Talent sets' },
+  { group: 'lineage', label: 'Lineage' },
+  { group: 'background', label: 'Background' },
+  { group: 'skill', label: 'Skills' },
+  { group: 'weapon', label: 'Weapon' },
+  { group: 'armor', label: 'Armor' },
+];
+
+/** One scored id as a row: its printed name, and the note the shelf earns it. */
+function weightRow(group, id, points) {
+  const row = { id, points, name: id, note: null };
+
+  if (group === 'attribute') {
+    row.name = attributeLabel(id) || id;
+  } else if (group === 'talent') {
+    const talent = getTalent(id);
+    row.name = talent?.name ?? id;
+    /* Which attribute the set is shelved on is what makes the answer legal, so
+       it is worth reading beside the points. A placeholder gathers points and
+       can never be chosen: see `decide`. */
+    const stat = talent?.stat;
+    const shelf = ATTRIBUTE_KEYS.includes(stat) ? attributeLabel(stat) : 'any attribute';
+    row.note = talent?.stub ? `${shelf}, no cards yet` : shelf;
+  } else if (group === 'lineage') {
+    const lineage = LINEAGES.find((one) => one.id === id);
+    row.name = lineage?.name ?? id;
+    const raises = lineage ? lineageRaises(lineage) : [];
+    row.note = raises.length ? `+1 ${raises.map(attributeLabel).join(' and ')}` : null;
+  } else if (group === 'background') {
+    row.name = BACKGROUNDS.find((one) => one.id === id)?.name ?? id;
+  } else if (group === 'skill') {
+    row.name = SKILLS.find((one) => one.id === id)?.name ?? id;
+  } else if (group === 'weapon') {
+    const weapon = startingWeapons().find((one) => one.id === id);
+    row.name = weapon?.name ?? id;
+    const stat = weapon ? weaponStat(weapon) : null;
+    row.note = stat ? attributeLabel(stat) : null;
+  } else if (group === 'armor') {
+    /* A set is named by the name, so the row is the id. Only the shelf is news. */
+    const stat = armorStat(id);
+    row.note = stat ? attributeLabel(stat) : null;
+  }
+
+  return row;
+}
+
+/**
+ * An option's whole `gives`, as `[{ group, label, rows }]`, with any group it
+ * scores nothing in left out. `tags` comes back on its own, because what an
+ * answer makes true of the life is not a point and is the reason a later scene
+ * can be drawn at all.
+ */
+export function weightsOf(option) {
+  const gives = option?.gives ?? {};
+  const groups = [];
+
+  for (const { group, label } of WEIGHT_GROUPS) {
+    const rows = Object.entries(gives[group] ?? {})
+      .map(([id, raw]) => weightRow(group, id, Math.max(0, Math.floor(Number(raw) || 0))))
+      .filter((row) => row.points > 0);
+    if (rows.length) groups.push({ group, label, rows });
+  }
+
+  return { groups, tags: [...(option?.tags ?? [])] };
 }
 
 /* ---------------------------------------------------------------- the writing */

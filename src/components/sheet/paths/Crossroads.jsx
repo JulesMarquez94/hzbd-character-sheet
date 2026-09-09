@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import PickBlock from '../PickBlock.jsx';
 import useCodexArt from '../../useCodexArt.js';
+import { useAuth } from '../../../context/auth-context.js';
 import { ATTRIBUTES, ATTRIBUTE_BASE, attributeLabel } from '../../../lib/attributes.js';
 import { attributeTotals, lineageBonuses } from '../../../lib/levelPicks.js';
 import { creationPath } from '../../../lib/creationPaths.js';
@@ -17,6 +18,7 @@ import {
   resolve,
   saveRun,
   walk,
+  weightsOf,
 } from '../../../lib/crossroads.js';
 import { formatNumber } from '../../../lib/characterModel.js';
 import { getItem } from '../../../lib/items.js';
@@ -153,6 +155,10 @@ function StageRail({ view }) {
 
 function Question({ step, view, onPick }) {
   const { stage, question } = step;
+  /* An admin sees what each answer scores. Nobody else does, and the check is
+     UI only: there is nothing behind it to protect, since the whole pool is in
+     the bundle already. See `Weights`. */
+  const { isAdmin } = useAuth();
 
   return (
     <section className="xr-question" aria-live="polite">
@@ -165,7 +171,7 @@ function Question({ step, view, onPick }) {
       {question.scene && <p className="xr-scene">{question.scene}</p>}
       <h3 className="xr-asks">{question.asks}</h3>
 
-      <ul className="xr-options">
+      <ul className={`xr-options${isAdmin ? ' is-admin' : ''}`}>
         {question.options.map((option) => (
           <li key={option.id}>
             <button type="button" className="xr-option" onClick={() => onPick(option.id)}>
@@ -174,6 +180,7 @@ function Question({ step, view, onPick }) {
                 &rsaquo;
               </span>
             </button>
+            {isAdmin && <Weights option={option} />}
           </li>
         ))}
       </ul>
@@ -184,7 +191,58 @@ function Question({ step, view, onPick }) {
           question, and no two walks ask quite the same things.
         </p>
       )}
+      {isAdmin && (
+        <p className="xr-note xr-note-admin">
+          Admin: hover an answer, or tab to it, to see what it puts points on. Nobody else is shown
+          this.
+        </p>
+      )}
     </section>
+  );
+}
+
+/**
+ * What an answer scores, for an admin who is holding the pool to its own laws.
+ *
+ * Drawn under the answer it belongs to and only while that answer is hovered or
+ * focused, so tabbing through the four of them reads them out in turn. The
+ * shelf beside each set, ancestry, weapon and armor set is the thing worth
+ * checking: every answer leans one way, and this is where a point on the wrong
+ * shelf would show. `weightsOf` in src/lib/crossroads.js resolves the ids, so
+ * nothing here can print one.
+ */
+function Weights({ option }) {
+  const { groups, tags } = useMemo(() => weightsOf(option), [option]);
+  if (groups.length === 0 && tags.length === 0) return null;
+
+  return (
+    <div className="xr-weights" role="note">
+      {groups.map((group) => (
+        <div key={group.group} className="xr-weight-row">
+          <span className="xr-weight-group">{group.label}</span>
+          <span className="xr-weight-rows">
+            {group.rows.map((row) => (
+              <span key={row.id} className="xr-weight">
+                <b>+{row.points}</b> {row.name}
+                {row.note && <i>{row.note}</i>}
+              </span>
+            ))}
+          </span>
+        </div>
+      ))}
+      {tags.length > 0 && (
+        <div className="xr-weight-row">
+          <span className="xr-weight-group">Makes true</span>
+          <span className="xr-weight-rows">
+            {tags.map((tag) => (
+              <span key={tag} className="xr-weight xr-weight-tag">
+                {tag}
+              </span>
+            ))}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
