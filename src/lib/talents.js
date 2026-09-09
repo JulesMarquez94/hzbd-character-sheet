@@ -4759,16 +4759,270 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    id: 'spellquill',
+    name: 'Spellquill',
+    /* The eighteenth set, transcribed 2026-09-09 off
+       `data/Source Temp/Hazebound System - Spellquill.pdf` — one source, no
+       workbook and no Ability tab, the way the Necromancer arrived.
+
+       The PDF is a Google Docs export whose **headings were flattened to vector
+       outlines**, so the body text came out of the content streams and every
+       heading (the five rank titles, the four rung labels on the cost table and
+       all seven Power Word names) had to be rendered back to an image and read.
+       Nothing here is guessed at: the transcription is in data/README.md and the
+       working files are noted there.
+
+       -------------------------------------------------------- five into three
+       The sheet has **five ranks** and this site has three, so the same
+       normalisation the Runebearer had on 2026-09-08 applies. Each rung carries
+       two of the sheet's pages, keeping every card name and every card's own
+       words:
+
+         Rank 1   Arcane Scribe + Ephemeral Spell Scrolls
+         Rank 2   Improved Syntax + Arcane Specialist
+         Rank 3   Analitic Sight + Author of Truth
+
+       And the spell ladder normalises with it. The sheet opens Novice at 1,
+       Apprentice at 2, Adept at 4 and Master at 5; **there is no Apprentice
+       rung in this codex** and never has been (see `scrollTier` in scrolls.js),
+       so it is dropped rather than opened onto an empty shelf, and Novice, Adept
+       and Master land on Ranks 1, 2 and 3. The three prices that survive are the
+       sheet's own. Flagged in data/README.md.
+
+       ------------------------------------------------------------- the prices
+       The sheet is the only thing in the pile that prices a labour in **coin**:
+       500 to 2000 Coins worth of Arcane Quartz. Jules asked for Supplies, and
+       the rate is the potion shelf's own — ten coins to a Supply, which is what
+       makes a Healing Potion 200 coins and 20 Supplies. See scrolls.js. */
+    tagline:
+      'A desk, a stick of Arcane Quartz and a steady hand. Any spell in the world, written down for somebody who cannot cast.',
+    /* No plate yet. Drop pictures into data/Spellquill/ and run `npm run art`. */
+    art: null,
+    /* Mind is the roster's column and the sheet's own prerequisite (8
+       Intelligence). Support and Utility are this file's reading of six cards:
+       nothing here casts anything, and what the whole set does is hand the party
+       casts it could not otherwise make. No `spellcasting`, for the same reason
+       the Alchemist carries none — the point of a scroll is that it works in a
+       hand that has never cast a thing. */
+    tags: ['mind', 'support', 'utility'],
+    stat: 'mind',
+    /* Scribing, as data. The seventh shape of spec in the codex and the second
+       whose output is an item, but the first whose output the player *composes*:
+       a potion is a row on a shelf and a scroll is any of 146 spells with any of
+       seven words on it.
+
+         `tiers`          which rungs of the spell codex the rank may write, the
+                          normalised ladder above.
+         `perRest`        "you can craft 2 spell scrolls during a long rest
+                          without hindering its effects." No rank moves it.
+         `wordsPerScroll` 0 until IMPROVED SYNTAX, then 1, then 2 — which is
+                          ANALITIC SIGHT's "you can now include two Power Words
+                          on one spell scroll".
+         `ephemeral`      whether the fading scrolls are prepared at all. How
+                          many is `floor(Mind / 2) + rank` and is worked out on
+                          the character, not here.
+         `forgiven`       whether AUTHOR OF TRUTH's Willpower forgiveness is
+                          held. How much is Mind + level, the conversion key's
+                          reading of "your Power".
+         `at`             which rest offers it, the same shape `brew`, `swap` and
+                          `reshape` carry. A Short Rest names none of this.
+
+       What a scroll costs is on the rung (scrolls.js), never here. See
+       scribing.js for the night's work. */
+    scribe: {
+      id: 'scribing',
+      label: 'Scribing',
+      noun: 'scroll',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      perRest: [null, 2, 2, 2],
+      wordsPerScroll: [null, 0, 1, 2],
+      ephemeral: true,
+      forgiven: [null, false, false, true],
+      at: ['long'],
+      note: 'Written at the desk and carried away. Your Long Rest action buys the night’s leaves, and the crate pays for the Quartz.',
+    },
+    blurb:
+      'A Spellquill is not a caster. They are a copyist, and what they copy is the shape of a working: the exact order a spell has to be thought in, set down in ground Arcane Quartz on good parchment so that reading it out loud does the thinking for you. Somebody who has never cast anything in their life can hold a Spellquill’s leaf, say what is on it, and have it happen.\n\n' + // text-style-ok: joins two clauses
+      'They excel at handing the party what the party cannot do. The scrolls are written the night before, out of the same crate everyone travels on, and the morning is when they get passed round: a healing spell into the hands of the one who has never held Willpower, a wall of fire for whoever is standing in the doorway. The scroll is destroyed in the reading, which is the whole economy of the set — a Spellquill is spending Quartz to buy somebody else a turn.\n\n' + // text-style-ok: joins two clauses
+      'Their own hand shows in the syntax. A Power Word worked into the writing bends what comes out of it, and the price of that is paid in the writing rather than the reading: a night spent on a subtle scroll is a morning with less Willpower to spend. Pressed with nothing to spare, they can still lay out a handful of leaves in fading ink, good until the next time they sleep.', // text-style-ok: joins two clauses
+    cards: [
+      /* ================================================== Rank 1 · the leaf */
+      {
+        id: 'arcane-scribe',
+        rank: 1,
+        name: 'Arcane Scribe',
+        summary: 'Two spell scrolls on a Long Rest, paid for in Arcane Quartz out of the crate.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `scribe` spec above. `Long Rest` and not
+           `Passive`, the same tag ALCHEMY and ENCHANTING carry, which is what
+           puts the row in the rest window.
+
+           Four changes on the way in.
+
+           The heading is "Rank 1 - Arcane Scribe" and the card is called Arcane
+           Scribe off its own name. A card never names its own rank on this site:
+           the Tags column carries it.
+
+           The introduction ("The Spellquills are individuals capable of writing
+           spell scrolls…") is **not on this card**. It is the rules of a scroll
+           rather than the rules of the set — anybody can read one — so it is
+           printed on the SPELL SCROLL item card in utility.js, which is where a
+           player holding one will look.
+
+           "1 hour" is kept, and it is what makes the two-a-night limit read: two
+           hours of an eight hour night, which is why it does not hinder the rest.
+
+           And the price is converted. "500 Coins worth of Arcane Quartz" is 50
+           Supplies, at the potion shelf's own ten-to-one. The rungs are the
+           normalised three. */
+        body:
+          'You can write a spell onto a blank **Spell Scroll**, known to you or not. Writing one takes **1 hour**, and whenever you take a Long Rest you can use your Long Rest action to write two.\n\n' + // text-style-ok: joins two clauses
+          'A scroll needs parchment, ink and Arcane Quartz, priced by the spell’s rung: **50 Supplies** at Novice, **150** at Adept, **200** at Master. Out of the crate, on the night you write it.\n\n' +
+          'At this rank, only the **Novice** list.',
+      },
+      {
+        id: 'ephemeral-spell-scrolls',
+        rank: 1,
+        name: 'Ephemeral Spell Scrolls',
+        summary: 'Fading leaves prepared free every night, good until the next one.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Its own card rather than a paragraph of ARCANE SCRIBE, because the
+           sheet gives it its own heading and because the two are different
+           permissions: this one costs nothing, is capped by an attribute rather
+           than by a flat two, and is **not** the Long Rest action. It happens on
+           every Long Rest whatever the night was spent on, which is why it sits
+           above the action slot in the rest window rather than in it. See
+           scribing.js.
+
+           "half your Intelligence + your rank in Spellquill" is written as
+           `{mind}` halved plus the rank: Intelligence is Mind on this site, and
+           every halved attribute in this codex floors on its own first.
+
+           Unlike the Alchemist's IMPROVISED BREWING, which prints its expiry and
+           is not wired, **this one is**. That card's potions "expire at the end
+           of the day" and this site has no day; a scroll expires at a Long Rest,
+           and a Long Rest is already a button. */
+        body:
+          'At the end of a Long Rest you can prepare Ephemeral Spell Scrolls: your {mind} halved and rounded down, plus your rank in Spellquill.\n\n' +
+          'They cost no Supplies and they are written in fading ink. An Ephemeral scroll **expires at the start of your next Long Rest**, and until then it works exactly as any other scroll does.\n\n' + // text-style-ok: joins two clauses
+          'Nobody is fooled by one. They are easily identifiable as Ephemeral, and no merchant will take one.',
+      },
+
+      /* ============================================ Rank 2 · the power words */
+      {
+        id: 'improved-syntax',
+        rank: 2,
+        name: 'Improved Syntax',
+        summary: 'Adept spells, and a Power Word worked into the writing for Willpower.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Adept Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The sheet's Rank 2. Its "Apprentice Spell list" becomes Adept, which is
+           the ladder normalisation above: there is no Apprentice rung in this
+           codex.
+
+           The three words it teaches are printed on the card with their costs
+           because they are what the reader is buying, and the seven in all are
+           listed on the shelf the rest window opens. */
+        body:
+          'You can now inscribe spells from the **Adept** list.\n\n' +
+          'You also know how to alter a scroll’s syntax with a **Power Word**. Whenever you write a scroll you may pay a Power Word’s Willpower cost to work it into the writing, one word to a scroll. The price is paid in the writing, so a night’s work leaves you with that much less Willpower in the morning.\n\n' + // text-style-ok: joins two clauses
+          'You know **Unseen** (1), **Repeat** (5) and **Altered** (1).',
+      },
+      {
+        id: 'arcane-specialist',
+        rank: 2,
+        name: 'Arcane Specialist',
+        summary: 'Four more Power Words: longer, surer, cheaper and at full force.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The sheet's Rank 3, which folds onto this rung. A Passive: it teaches
+           four words and asks nothing at the desk that IMPROVED SYNTAX has not
+           already asked.
+
+           The sheet prints "Prerequisite: Level 4" on both its Rank 2 and its
+           Rank 3, which is a copy-paste on the source rather than a design: every
+           other set on the wall climbs 1/4/7/10/16. The normalisation makes the
+           question moot, since both land on Rank 2 and Rank 2 is level 4. Noted
+           in data/README.md. */
+        body:
+          'You learn four more Power Words.\n\n' +
+          '**Enduring** (2) makes a duration half again as long. **Assured** (2) rolls the spell’s attack with advantage and its saving throws with disadvantage. **Swift** (4) takes 3 Action Points off the casting, to a minimum of 1. **Mighty** (2) takes the maximum on every die the spell would roll for damage or healing.', // text-style-ok: joins four sentences
+      },
+
+      /* =============================================== Rank 3 · the authority */
+      {
+        id: 'analitic-sight',
+        rank: 3,
+        name: 'Analitic Sight',
+        summary: 'Master spells, and two Power Words on one leaf.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Master Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The sheet's Rank 4, name and spelling as written. Its "Adept Spell
+           list" becomes Master under the normalisation, which is the same shift
+           IMPROVED SYNTAX takes one rung down. */
+        body:
+          'You can now inscribe spells from the **Master** list.\n\n' +
+          'You can also fit **two Power Words** onto one scroll. Both are paid for in the writing.',
+      },
+      {
+        id: 'author-of-truth',
+        rank: 3,
+        name: 'Author of Truth',
+        summary: 'Read your own scrolls free, up to your Mind plus your level, once a night.',
+        kind: 'talent',
+        tags: ['Spellquill', 'Master Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* The sheet's Rank 5. "an amount of Willpower equal to your Power" is
+           written out: old Power is the attribute plus the level, this site has
+           no such number, and the conversion key sends every "your Power" to an
+           attribute and a level. That is the Alchemist's IMPROVISED BREWING
+           reading, and the Necromancer's.
+
+           Printed and not wired. It is a discount on a cast the sheet has no
+           tracker row for — the Willpower is forgiven at the moment a scroll is
+           read, which is a use of an *item* rather than of this card, and the
+           budget runs across as many reads as it covers. Flagged in
+           data/README.md as an open question, beside the Power Words themselves.
+
+           The tag is `Long Rest` rather than `Passive` because a Long Rest is
+           what gives it back, which is the same reason a belt item that says so
+           carries one. */
+        body:
+          'When casting a spell from a Spell Scroll you may ignore its Willpower cost.\n\n' +
+          'You can forgive a total of your {mind} plus your level this way, across as many scrolls as it covers. Once it is spent you must take a **Long Rest** before you can do it again.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------- the roster *
- * Eighteen sets that have a name and nothing else.
+ * Seventeen sets that have a name and nothing else.
  *
  * The designer keeps a roster of every set the game is going to have, four
- * columns wide and cut by the attribute each one leans on. Sixteen of its
+ * columns wide and cut by the attribute each one leans on. Seventeen of its
  * slots are written and sit in the codex above (the Alchemist, the Pact of
- * Ordenance, the Runebearer, the Spellblade and the Necromancer were
- * placeholders here first). These are the rest, standing in the codex
+ * Ordenance, the Runebearer, the Spellblade, the Necromancer and the Spellquill
+ * were placeholders here first). These are the rest, standing in the codex
  * as placeholders so the wall reads as the whole plan rather than as the part of
  * it that happens to be finished.
  *
@@ -4875,9 +5129,10 @@ const TALENT_PLACEHOLDERS = [
   placeholder('sharpshooter', 'Sharpshooter', 'instinct'),
   placeholder('wilder', 'Wilder', 'instinct'),
 
-  /* Mind, rows 5 and 7 to 9. Arcanist, Enchanter and Alchemist are rows 1, 2
-     and 3 and are written, and so are the Spellblade, which was row 6 until
-     2026-09-09, and the Necromancer, which was row 4 until the day after.
+  /* Mind, rows 7 to 9. Arcanist, Enchanter and Alchemist are rows 1, 2 and 3 and
+     are written, and so are the Spellblade, which was row 6 until 2026-09-09,
+     the Necromancer, which was row 4 until the day after, and the Spellquill,
+     which was row 5 until the day after that.
 
      `SpellBlade` is read as Spellblade and `Tachticain` as Tactician. Row 9 reads
      `Elemental Aspe`, which is the column cutting the cell off rather than a typo,
@@ -4888,7 +5143,6 @@ const TALENT_PLACEHOLDERS = [
      2026-08-24, when its own sheet was converted. The Alchemist and the Cauldron
      Keeper both mix things and sit on different shelves, which is the roster’s own
      arrangement and is left alone. */
-  placeholder('spellquill', 'Spellquill', 'mind'),
   placeholder('thaumaturge', 'Thaumaturge', 'mind'),
   placeholder('tactician', 'Tactician', 'mind'),
   placeholder('elemental-aspect', 'Elemental Aspect', 'mind'),

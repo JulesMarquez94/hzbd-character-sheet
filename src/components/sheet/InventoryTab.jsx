@@ -3,7 +3,9 @@ import ArmorBlock from './ArmorBlock.jsx';
 import BagBar from './BagBar.jsx';
 import BeltBlock from './BeltBlock.jsx';
 import ForgeWindow from './ForgeWindow.jsx';
+import GiveWindow from './GiveWindow.jsx';
 import PackBlock from './PackBlock.jsx';
+import ScrollWindow from './ScrollWindow.jsx';
 import TrinketBlock from './TrinketBlock.jsx';
 import WeaponBlock from './WeaponBlock.jsx';
 import BlockArrange from './BlockArrange.jsx';
@@ -18,6 +20,7 @@ import {
   trayedIds,
 } from '../../lib/characterModel.js';
 import { inventoryOverview } from '../../lib/items.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
 import { useUnit } from '../../context/units.js';
 
 /**
@@ -102,6 +105,10 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
 
   const overview = useMemo(() => inventoryOverview(character), [character]);
 
+  /* Which tables this sheet sits at, read off the page's own provider: it is the
+     one thing that decides whether there is anybody to hand a thing to. */
+  const { tables } = useCampaignLog();
+
   /* Which of the four were pinned to a tray instead of laid on the grid. See
      normalizeTrays and BlockTrays.jsx. */
   const trays = useMemo(
@@ -128,9 +135,26 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
   /* Whether the forge is up. Any block's codex can raise it, and it always ends
      in the same place: a record in the registry and the item in the inventory. */
   const [forging, setForging] = useState(false);
+  /* And the desk beside it, which ends in exactly the same place through exactly
+     the same writer: a spell scroll is a forged record like any other, so
+     `forgeItem` takes both without knowing there are two windows. */
+  const [scribing, setScribing] = useState(false);
+  /* And which pack entry is being handed to somebody: `{ index, item }`, or null.
+     Held here rather than in the block for the same reason the forge is — this is
+     where the tab's one writer lives, and handing a thing over is a write to this
+     sheet before it is anything to anybody else. */
+  const [giving, setGiving] = useState(null);
   const order = savedOrder;
 
   const openForge = !readOnly && patch ? () => setForging(true) : null;
+  const openScribe = !readOnly && patch ? () => setScribing(true) : null;
+  /* Only where there is a table to hand something to. A sheet at no campaign —
+     every device-only character among them — never draws the button, which is
+     the same refusal the log blocks and the fight make. */
+  const openGive =
+    !readOnly && patch && tables.length > 0
+      ? (index, item) => setGiving({ index, item })
+      : null;
 
   const slotProps = {
     character,
@@ -141,6 +165,7 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
     unequip,
     addToPack,
     onForge: openForge,
+    onScribe: openScribe,
     readOnly,
   };
   const trinketProps = {
@@ -154,6 +179,7 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
     swapTrinket,
     addToPack,
     onForge: openForge,
+    onScribe: openScribe,
     readOnly,
   };
   const beltProps = {
@@ -168,6 +194,7 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
     setBeltUsed,
     addToPack,
     onForge: openForge,
+    onScribe: openScribe,
     readOnly,
   };
   const packProps = {
@@ -185,6 +212,8 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
     updateCustomInPack,
     discardFromPack,
     onForge: openForge,
+    onScribe: openScribe,
+    onGive: openGive,
     readOnly,
   };
 
@@ -263,6 +292,24 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
           character={character}
           onForge={forgeItem}
           onClose={() => setForging(false)}
+        />
+      )}
+
+      {scribing && (
+        <ScrollWindow
+          character={character}
+          onForge={forgeItem}
+          onClose={() => setScribing(false)}
+        />
+      )}
+
+      {giving && (
+        <GiveWindow
+          character={character}
+          index={giving.index}
+          item={giving.item}
+          patch={patch}
+          onClose={() => setGiving(null)}
         />
       )}
     </CardStackProvider>

@@ -94,6 +94,17 @@ import { beltRest, characterGrantSources, getItem, heldItem, normalizePack } fro
 import { normalizeForged } from './forged.js';
 import { pactState, reshapePactWeapon, writePactForm } from './pact.js';
 import { reviveRunes } from './runes.js';
+import {
+  fadedScrolls,
+  normalizeScribes,
+  restEphemeral,
+  restScribing,
+  scribeAffordable,
+  scribeRows,
+  scribedRecords,
+  scribingWillpower,
+  withoutScrolls,
+} from './scribing.js';
 import { usesRest } from './uses.js';
 
 /** What each rest costs and what it gives back. */
@@ -453,6 +464,32 @@ export function restActions(character, kind, talents = character?.talents) {
     });
   }
 
+  /* ---- the Spellquill's desk ----
+     ARCANE SCRIBE: "whenever you take a Long Rest you can use your Long Rest
+     action to write two of them and still benefit from the rest." One row
+     whatever the rank, because the rank only changes which rungs are open and
+     how many words fit on a leaf.
+
+     Its sibling, the fading scrolls, is deliberately **not** here: EPHEMERAL
+     SPELL SCROLLS costs no action, so it sits above the slot in the window
+     beside a Runebearer's runes rather than in the list of ways to spend the
+     night. See `restEphemeral`. */
+  const desk = restScribing(held, kind);
+  if (desk) {
+    const words =
+      desk.wordsPerScroll > 0
+        ? `, ${desk.wordsPerScroll} Power ${desk.wordsPerScroll === 1 ? 'Word' : 'Words'} a leaf`
+        : '';
+    rows.push({
+      id: 'scribe',
+      kind: 'scribe',
+      label: `Write ${plural(desk.spec.noun, desk.perRest)}`,
+      from: `${desk.set.name} · ${desk.spec.label}`,
+      note: `${desk.perRest} a night${words}, off a shelf of ${desk.shelf.length}. The Quartz comes out of the crate.`,
+      state: desk,
+    });
+  }
+
   /* ---- what a set re-prepares, and what a set researches ----
      The permission is the granting card's: a Mycomancer's FUNGAL INVOCATION says
      the swap costs the long rest's action, which is exactly what this list is.
@@ -665,7 +702,7 @@ export function restPlan(
   prepared = null,
   brews = [],
   reshaped = null,
-  { free = false, revived = [], raised = null } = {}
+  { free = false, revived = [], raised = null, scribes = [], ephemeral = [] } = {}
 ) {
   const rest = getRest(kind);
   if (!rest) return null;
@@ -769,6 +806,55 @@ export function restPlan(
             : 'Components out of the crate. The flask goes in your pack.'
           : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
       tone: supplies >= 0 ? 'cost' : 'warn',
+    });
+  }
+
+  /* ---- and what came off the desk ----
+     One line a *leaf* rather than one a spell, which is the opposite of the
+     still above and is right for the opposite reason: two Healing Draughts are
+     interchangeable and two scrolls of Fireball with different words on them are
+     not. The fading ones are priced at nothing and still get a line, because a
+     player wants to read what tomorrow is carrying.
+
+     Priced off the character rather than off the draft for the same reason the
+     rest itself is: nothing tonight can change the rank that opened the shelf. */
+  const desk = restScribing(character, kind);
+  /* The two permissions are two calls, because a night can hold either without
+     the other: a Short Rest scribes nothing and prepares nothing, and a Long
+     Rest spent raising the dead still lays out its fading leaves. `quill` is
+     whichever of the two is standing, and it is what the words are validated
+     against — the same rank either way. */
+  const inkwell = restEphemeral(character, kind);
+  const quill = desk ?? inkwell;
+  const scribing = normalizeScribes(scribes, desk);
+  const fading = normalizeScribes(ephemeral, inkwell, { ephemeral: true });
+
+  for (const row of scribeRows(scribing, desk)) {
+    const before = supplies;
+    move(-row.supplies, `${row.name} written`);
+
+    lines.push({
+      key: `scribed-${row.index}-${row.spell.id}`,
+      label: `${row.name}: ${row.supplies} Supplies`,
+      detail:
+        supplies >= 0
+          ? row.words.length > 0
+            ? `${row.tier} Quartz out of the crate, and ${listOut(row.words.map((word) => word.name))} worked into the syntax.`
+            : `${row.tier} Quartz out of the crate. The leaf goes in your pack.`
+          : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
+      tone: supplies >= 0 ? 'cost' : 'warn',
+    });
+  }
+
+  for (const row of scribeRows(fading, inkwell, { ephemeral: true })) {
+    lines.push({
+      key: `faded-${row.index}-${row.spell.id}`,
+      label: `${row.name}: no Supplies`,
+      detail:
+        row.words.length > 0
+          ? `Fading ink, ${listOut(row.words.map((word) => word.name))} worked in. Gone at your next Long Rest.`
+          : 'Fading ink, and no Quartz in it. Gone at your next Long Rest.',
+      tone: 'gain',
     });
   }
 
@@ -876,6 +962,52 @@ export function restPlan(
     patch.pack = [...normalizePack(character?.pack), ...made];
   }
 
+  /* ---- and what the ink did overnight ----
+     Two writes in one place, because they are two halves of one clock and the
+     order between them is load-bearing: **last night's fading scrolls go first,
+     then tonight's are laid down.** A leaf written on one night and a leaf that
+     expired on it must never be the same leaf, and sweeping after writing would
+     take tonight's with it.
+
+     "Ephemeral Spell Scrolls … expire at the start of your next long rest", so
+     the sweep is every Long Rest, whatever the night was spent on and whether or
+     not the character is still a Spellquill — a set handed back does not leave
+     its fading scrolls behind forever. It reaches the pack, the belt, the
+     trinkets and the worn slots, because a scroll can be clipped on. See
+     `withoutScrolls`.
+
+     The records themselves come off the forged shelf in the same patch, so
+     nothing is left pointing at nothing. */
+  const gone = kind === 'long' ? fadedScrolls(character) : [];
+  const swept = gone.length > 0 ? withoutScrolls(character, gone) : null;
+  if (swept) {
+    Object.assign(patch, swept);
+    /* The pack the brews were appended to is the one before the sweep, so it is
+       rebuilt on top of the swept one rather than left holding an expired id. */
+    if (made.length > 0) patch.pack = [...normalizePack(patch.pack), ...made];
+
+    lines.push({
+      key: 'faded-gone',
+      label: `${gone.length} Ephemeral ${gone.length === 1 ? 'scroll' : 'scrolls'} fade`,
+      detail: 'The ink was never meant to last the night. Nothing is left of them.',
+      tone: 'end',
+    });
+  }
+
+  const written = scribedRecords(scribing, fading, quill);
+  if (written.length > 0 || swept) {
+    const shelf = { ...normalizeForged(character?.forged) };
+    for (const id of gone) delete shelf[id];
+    for (const record of written) shelf[record.id] = record;
+    patch.forged = shelf;
+  }
+  if (written.length > 0) {
+    /* Into the pack and not onto the belt, exactly as a flask is: a loop is a
+       place you have chosen to put something, and choosing is what the Inventory
+       tab is for. */
+    patch.pack = [...normalizePack(patch.pack ?? character?.pack), ...written.map((row) => row.id)];
+  }
+
   /* ---- health ---- */
   const healthMax = Math.max(0, Math.floor(Number(character?.health_max) || 0));
   const health = Math.floor(Number(character?.health) || 0);
@@ -954,13 +1086,30 @@ export function restPlan(
   if (kind === 'long') {
     const wpMax = Math.max(0, Math.floor(Number(character?.willpower_max) || 0));
     const wp = Math.floor(Number(character?.willpower) || 0);
-    if (wp !== wpMax) {
-      patch.willpower = wpMax;
+
+    /* And what the night's writing kept back. A Power Word is paid for by the
+       scribe at the moment of writing, and the writing happens inside the very
+       rest that refills the pool — which would make it a price nobody pays. So
+       it comes off **the refill**: a night that spent nine on Power Words wakes
+       at maximum less nine.
+
+       That is the sheet's own price in the sheet's own currency, and it is the
+       reading the Necromancer's bodies already have. Both drafts are charged,
+       because IMPROVED SYNTAX charges for a word "whenever you write a scroll"
+       and does not care which kind of leaf it went on. See scribing.js. */
+    const ink = scribingWillpower(scribing, fading, quill);
+    const back = Math.max(0, wpMax - ink);
+
+    if (wp !== back) {
+      patch.willpower = back;
       lines.push({
         key: 'willpower',
-        label: `Willpower ${wp} to ${wpMax}`,
-        detail: 'Willpower comes back on a long rest.',
-        tone: 'gain',
+        label: `Willpower ${wp} to ${back}`,
+        detail:
+          ink > 0
+            ? `Willpower comes back on a long rest, less the ${ink} the Power Words took to write.`
+            : 'Willpower comes back on a long rest.',
+        tone: ink > 0 ? 'cost' : 'gain',
       });
     }
   }
@@ -1056,7 +1205,12 @@ export function restPlan(
       const record = reshapePactWeapon(pact, weapon);
       if (!record) continue;
 
-      patch.forged = { ...normalizeForged(character?.forged), [record.id]: record };
+      /* Merged onto whatever the shelf is *in this patch* rather than onto the
+         character's own, because a night can touch it twice: a Spellquill's
+         fading scrolls are not the Long Rest action, so the same rest can sweep
+         a scroll, write two more and reshape a blade. Read from the character
+         here and the last writer would win and the others would vanish. */
+      patch.forged = { ...(patch.forged ?? normalizeForged(character?.forged)), [record.id]: record };
       Object.assign(patch, writePactForm(character, pact, weapon));
       lines.push({
         key: `pact-${pact.id}`,
@@ -1152,4 +1306,15 @@ export function labourAffordable(character, kind, option) {
  */
 export function brewingAffordable(character, kind, brews, state, item) {
   return brewAffordable(character, restPrice(character, kind), brews, state, item);
+}
+
+/**
+ * And whether one more leaf could go on the desk, with the rest itself and
+ * everything already on it paid for first.
+ *
+ * The fourth of the same shape, and the second place the price of a rest crosses
+ * into a file that may not import this one. See `brewingAffordable`.
+ */
+export function scribingAffordable(character, kind, draft, state, card) {
+  return scribeAffordable(character, restPrice(character, kind), draft, state, card);
 }

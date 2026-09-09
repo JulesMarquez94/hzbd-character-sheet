@@ -529,6 +529,28 @@ export const UTILITY_CARDS = withArt([
       'Working the picks opens a mundane lock, given **1 minute**, a free hand and quiet enough to hear the pins.\n\n' +
       'A lock built against picking, or one held shut by a working, is beyond them.',
   },
+
+  /* The blank leaf, and the only card in the codex whose whole job is to explain
+     what the thing it is printed on becomes. A *written* scroll teaches the
+     spell instead of this (see `scrollItem` in scrolls.js), so this face is only
+     ever read off an unwritten one — which is what a party buys by the dozen and
+     carries until somebody has a night to spend.
+
+     Every word of it is the Spellquill sheet's introduction, which is where the
+     rules of a scroll are written down and not on the set at all: anybody can
+     use one. */
+  {
+    id: 'spell-scroll',
+    name: 'Spell Scroll',
+    kind: 'item',
+    tags: ['Item', 'Consumable'],
+    ap: null,
+    wp: null,
+    body:
+      'A spell scroll lets its user cast the spell inscribed on it **without having to know it**. The scroll is destroyed in the process.\n\n' +
+      'Casting from a scroll follows all the basic rules of spellcasting, including paying the spell’s own Action Point and Willpower cost.\n\n' + // text-style-ok: joins two clauses
+      'This one is blank. A Spellquill writes a spell onto it at a Long Rest, and until somebody does it is parchment, ink and a stick of Arcane Quartz.',
+  },
 ]);
 
 /* --------------------------------------------------------------- the items */
@@ -1063,5 +1085,37 @@ export const UTILITY_ITEMS = [
     cost: 300,
     abilities: ['thiefs-picks'],
     blurb: 'A leather fold of hooks and tension bars, worn bright at the tips.',
+  },
+
+  /* ----- and the one piece of gear that is a question rather than an answer -----
+   *
+   * The blank leaf. Every spell scroll in play is one of these with a spell on
+   * it, and the writing is a forged record rather than a codex row (see
+   * scrolls.js) because there are 146 spells and this shelf is not going to
+   * carry 146 scrolls.
+   *
+   * `cost` is the parchment, the ink and the stick of Quartz and nothing else,
+   * which is why it is 20 against a Novice scroll's 500: the Quartz a scroll
+   * actually eats is spent in the writing. A written one carries its rung's
+   * coin price instead.
+   *
+   * Consumable with one charge, so the belt destroys it the moment it is used,
+   * which is the sheet's "the scroll is destroyed in the process" and needed
+   * nothing of its own. */
+  {
+    id: 'spell-scroll',
+    name: 'Spell Scroll',
+    slots: ['belt'],
+    tags: ['Common', 'Consumable', 'Scroll'],
+    use: 'consumable',
+    charges: 1,
+    burden: 0,
+    weight: 0.1,
+    cost: 20,
+    abilities: ['spell-scroll'],
+    blurb: 'A tube of oiled leather, a leaf of good parchment and room for one spell.',
+    lore:
+      'Scribes sell them blank by the dozen, and every guild that trains a Spellquill keeps a shelf of them the way a smith keeps bar stock.\n\n' +
+      'The parchment is the cheap half. What a written scroll is worth is the Arcane Quartz ground into the ink, and that is why a spent one is worth picking up: the leaf can be scraped and sold back.',
   },
 ];

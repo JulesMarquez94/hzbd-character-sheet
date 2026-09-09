@@ -30,6 +30,7 @@ export default function WeaponBlock({
   unequip,
   addToPack,
   onForge,
+  onScribe,
   readOnly = false,
 }) {
   const [browseSlot, setBrowseSlot] = useState(null);
@@ -107,6 +108,7 @@ export default function WeaponBlock({
           }}
           onAdd={addToPack}
           onForge={onForge}
+          onScribe={onScribe}
           onClose={() => setBrowseSlot(null)}
           readOnly={readOnly}
         />

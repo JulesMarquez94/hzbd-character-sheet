@@ -103,7 +103,10 @@ export default function LogCall({ tables = null, mine = [], table = false }) {
           if (own.includes(row?.character_id)) return;
           if (table && !row?.character_id) return;
 
-          const notice = noticeOf(row);
+          /* The reader's own sheets, so a row addressed *to* one of them stays
+             quiet: an offer of an item stands in its own panel there. See
+             `noticeOf`. */
+          const notice = noticeOf(row, { mine: own });
           if (!notice) return;
 
           setNotices((was) => {

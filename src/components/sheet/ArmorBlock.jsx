@@ -40,6 +40,7 @@ export default function ArmorBlock({
   unequip,
   addToPack,
   onForge,
+  onScribe,
   readOnly = false,
 }) {
   const [browseSlot, setBrowseSlot] = useState(null);
@@ -165,6 +166,7 @@ export default function ArmorBlock({
           onUnequip={unequipItem}
           onAdd={addToPack}
           onForge={onForge}
+          onScribe={onScribe}
           onClose={() => setBrowseSlot(null)}
           readOnly={readOnly}
         />

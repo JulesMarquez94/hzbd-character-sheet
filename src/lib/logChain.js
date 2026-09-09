@@ -355,6 +355,23 @@ export function worthReplaying(row, { mine = null, table = false, now = Date.now
 const UNDER = new Set(['roll', 'verdict', 'apply', 'effect', 'react', 'summon']);
 
 /**
+ * Whether this row is written *about* an action rather than being one.
+ *
+ * A predicate rather than the bare set above, because the handover is the first
+ * thing in the log whose head and whose answers **share a kind**: an offer is
+ * the action and the three answers to it are rows about that action, and all
+ * four are `give`. Everything else is still decided by kind alone.
+ *
+ * It matters more than it looks. The feed arrives newest first, so a chain whose
+ * kind said nothing would take its *newest* row as the head — a gift would read
+ * as "Longsword taken", with the offer filed underneath it.
+ */
+function underneath(row) {
+  if (row?.kind === 'give') return row.data?.move !== 'offer';
+  return UNDER.has(row?.kind);
+}
+
+/**
  * The feed as `[{ key, head, trail, rolls }]`, newest group first.
  *
  * `trail` is everything the action set off, oldest first, in the order the
@@ -378,13 +395,13 @@ export function groupEvents(events) {
   const heads = new Map();
   for (const row of list) {
     const chain = row?.data?.chain;
-    if (chain && !UNDER.has(row.kind) && !heads.has(chain)) heads.set(chain, row);
+    if (chain && !underneath(row) && !heads.has(chain)) heads.set(chain, row);
   }
 
   const trails = new Map();
   for (const row of list) {
     const chain = row?.data?.chain;
-    if (!chain || !UNDER.has(row.kind) || !heads.has(chain)) continue;
+    if (!chain || !underneath(row) || !heads.has(chain)) continue;
     if (!trails.has(chain)) trails.set(chain, []);
     trails.get(chain).push(row);
   }
@@ -609,6 +626,7 @@ const KNOCK = {
   effect: () => 'laid',
   apply: (row) => row.data?.verb ?? 'dealt',
   summon: (row) => (row.data?.move === 'gone' ? 'took off the table' : 'conjured'),
+  give: (row) => (row.data?.move === 'offer' ? 'offers' : ''),
 };
 
 /**
@@ -626,10 +644,22 @@ const KNOCK = {
  *
  * Everything else speaks, because everything else is somebody at the table
  * doing something to somebody.
+ *
+ * ------------------------------------------------------------- and one for you
+ * `mine` is the reader's own character ids, and it silences the one row that is
+ * addressed *to* them: an offer of an item stands in a panel on the sheet it
+ * names, the way a turn call does, and a banner over the top of it is the same
+ * news twice. Everybody else at the table gets the banner, because a trade
+ * across the party is exactly the sort of thing the rest of them want to see go
+ * past.
+ *
+ * The other three handover rows always speak. "Longsword taken" is the answer
+ * the sender is waiting for, and the sender is not the sheet it was offered to.
  */
-export function noticeOf(row) {
+export function noticeOf(row, { mine = [] } = {}) {
   if (!row?.kind || row.kind === 'roll') return null;
   if (row.kind === 'turn' && PANELLED.has(row.data?.move)) return null;
+  if (row.kind === 'give' && row.data?.move === 'offer' && mine.includes(row.data?.to)) return null;
 
   const verb = KNOCK[row.kind]?.(row) ?? '';
 

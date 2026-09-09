@@ -47,6 +47,11 @@
  */
 
 import { getEnchantment } from './enchantments.js';
+import { normalizeScroll } from './scrolls.js';
+
+/* Aliased so `normalizeForged` reads as one line per field. scrolls.js is a leaf
+   over the spell codex, so taking it does not cost this file its own. */
+const scrollHalf = normalizeScroll;
 
 /**
  * The prefix that tells a forged id from a codex id at a glance, and the reason
@@ -107,6 +112,12 @@ export function normalizeForged(value) {
          Magic Burden its workings ride on. Never in a share code: a pasted
          copy is an ordinary enchanted weapon, not somebody else's bargain. */
       ...(typeof raw.pact === 'string' && raw.pact ? { pact: raw.pact } : {}),
+      /* And what is written on it, for the one base that can be written on: the
+         spell, the Power Words and whether the night's ink was the fading kind.
+         Unlike the pact flag this one **does** ride a share code — a scroll
+         handed across a table is the whole point of the thing, and a copy of a
+         Scroll of Fireball is a Scroll of Fireball. See scrolls.js. */
+      ...(scrollHalf(raw.scroll) ? { scroll: scrollHalf(raw.scroll) } : {}),
     };
   }
   return out;
@@ -156,9 +167,11 @@ function cleanArt(value) {
 }
 
 /** A fresh record from what the forge window collected. */
-export function forgeRecord({ base, ench, name, art }) {
+export function forgeRecord({ base, ench, name, art, scroll }) {
   const id = String(base ?? '');
   if (!id) return null;
+
+  const written = scrollHalf(scroll);
 
   return {
     id: newForgedId(),
@@ -166,6 +179,7 @@ export function forgeRecord({ base, ench, name, art }) {
     ench: normalizeEnch(ench),
     name: cleanName(name),
     art: cleanArt(art),
+    ...(written ? { scroll: written } : {}),
   };
 }
 
@@ -237,16 +251,43 @@ const CODE_TAG = 'HZBD1';
 export function shareCode(record) {
   if (!record?.base) return '';
 
+  /* A scroll travels as `[spell, ...words]`. A **fading** one does not travel at
+     all: there is no way for a copy in somebody else's pack to be held to a
+     clock on a sheet it cannot see, and dropping the flag on the way out would
+     make a code the cheapest permanent scroll in the game — a Spellquill writes
+     five a night for nothing and pastes them all back. So the fading ink has no
+     code, and `codeRefusal` is what says so out loud. */
+  if (record.scroll?.ephemeral) return '';
+
+  const written = record.scroll ? scrollHalf(record.scroll) : null;
+
   const payload = toBase64Url(
     JSON.stringify({
       b: record.base,
       e: (record.ench ?? []).map((entry) => (entry.spell ? [entry.id, entry.spell] : [entry.id])),
       ...(record.name ? { n: record.name } : {}),
       ...(record.art ? { a: record.art } : {}),
+      ...(written ? { s: [written.spell, ...written.words] } : {}),
     })
   );
 
   return `${CODE_TAG}.${payload}.${checksum(payload)}`;
+}
+
+/**
+ * Why this record has no code, or null when it has one.
+ *
+ * `shareCode` hands back an empty string for a thing that cannot travel, and an
+ * empty box beside a Copy button is the one message that helps nobody — the
+ * same reason `readCode` reports its refusals in words. One case so far, and it
+ * is the fading ink.
+ */
+export function codeRefusal(record) {
+  if (!record?.base) return 'There is nothing here to copy.';
+  if (record.scroll?.ephemeral) {
+    return 'A scroll in fading ink cannot be copied. It expires at your own next Long Rest, and nothing in a code could hold somebody else’s copy to that.';
+  }
+  return null;
 }
 
 /**
@@ -289,8 +330,17 @@ export function readCode(text) {
   );
   const ench = normalizeEnch(carried);
 
+  const said = Array.isArray(parsed.s) ? parsed.s : null;
+  const scroll = said ? scrollHalf({ spell: said[0], words: said.slice(1) }) : null;
+
   return {
-    record: { base, ench, name: cleanName(parsed.n), art: cleanArt(parsed.a) },
+    record: {
+      base,
+      ench,
+      name: cleanName(parsed.n),
+      art: cleanArt(parsed.a),
+      ...(scroll ? { scroll } : {}),
+    },
     /* What the codex threw away on the way in, so the window can say "that code
        carried a working this build does not know" rather than silently handing
        over a plainer ring than the sender is holding. */

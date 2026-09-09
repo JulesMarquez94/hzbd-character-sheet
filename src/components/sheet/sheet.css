@@ -9401,6 +9401,64 @@ body.tray-open-left.tray-open-right .sheet {
   }
 }
 
+/* =========================================================
+   SOMEBODY IS HANDING YOU SOMETHING
+   The reaction call's shape in the site's own copper, because
+   it is the same kind of thing: a question at the bottom of
+   the screen with two answers beside it. Two differences,
+   and both are about the clock — this one has none. It waits
+   until it is answered, so it wears the sheet's own colour
+   rather than the reaction's orange alarm, and it carries the
+   thing's own icon, since "a ring" is most of what the reader
+   is deciding about.
+   ========================================================= */
+.give-call {
+  border-color: rgba(199, 138, 84, 0.55);
+  background:
+    linear-gradient(180deg, rgba(199, 138, 84, 0.16), rgba(9, 17, 21, 0.96));
+}
+
+.give-call .reaction-call-head {
+  color: var(--copper);
+}
+
+.give-call-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+/* On a phone the panel is a stack, so the icon goes above the words rather than
+   beside them and takes the row it is given. */
+@media (max-width: 720px) {
+  .give-call-icon {
+    margin-bottom: 8px;
+  }
+}
+
+/* And the party, as the rows a gift is aimed at. The equip target's own shape
+   with a face where the slot glyph goes, and a chosen state, since this list is
+   a choice held until the footer commits it rather than a row of buttons that
+   each do something. */
+.give-target {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  font-family: inherit;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.give-target:hover {
+  border-color: rgba(199, 138, 84, 0.4);
+}
+
+.give-target.is-on {
+  border-color: var(--copper);
+  background-color: rgba(199, 138, 84, 0.12);
+}
+
 /* The reaction window: the shelf of everything the reader can take, over the
    line naming what is being answered. The hold window on the Game Master's
    side prints the lead alone. */

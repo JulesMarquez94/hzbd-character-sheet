@@ -181,6 +181,7 @@ export const TALENT_CLOSES = {
   runebearer: 'What you took with you was already on you, and it will be there when everything else is gone.',
   spellblade: 'You went out with a hand on the hilt and the other half of it in your head.',
   necromancer: 'You did not leave alone, and what walked out behind you had been in the ground that morning.',
+  spellquill: 'You left with a case of blank parchment and the certainty that somebody would need what you could put on it.',
 };
 
 /* ----------------------------------------------------------- who you became */
@@ -225,6 +226,7 @@ export const TALENT_PHRASES = {
   runebearer: 'a sleeve full of marks that warm when they are wanted',
   spellblade: 'a plain weapon that does not stay plain once a hand is on it',
   necromancer: 'a way of looking at the dead as though they were still owed work',
+  spellquill: 'a scribe’s hand and a case of leaves that other people can read out loud',
 };
 
 const BECAME_OPENS = ['That is how', 'So it was that'];

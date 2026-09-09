@@ -24,6 +24,7 @@
 import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
 import { allGrants, damageEnchants, grantSources, laidEntries } from './enchanting.js';
 import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
+import { scrollItem } from './scrolls.js';
 import { pactState, pactWeaponEnch } from './pact.js';
 import { BAG_ITEMS } from './bags.js';
 import { compareTags } from './cardOrder.js';
@@ -970,11 +971,21 @@ export function placementOf(character, id) {
   return loop >= 0 ? `belt loop ${loop + 1}` : null;
 }
 
-/** A forged id as the item it describes, or null for everything else. */
+/**
+ * A forged id as the item it describes, or null for everything else.
+ *
+ * `scrollItem` is the last step rather than part of `forgedItem`, because a
+ * scroll needs the spell codex to know what it is teaching and forged.js may not
+ * reach it. It is a no-op for every record that is not a written scroll, which
+ * is every ring, every blade and every pact weapon.
+ */
 function forgedFor(character, id) {
   if (!character || !isForgedId(id)) return null;
   const record = forgedRecord(character, id);
-  return record ? forgedItem(pactTrimmed(character, record), getItem(record.base)) : null;
+  if (!record) return null;
+
+  const trimmed = pactTrimmed(character, record);
+  return scrollItem(forgedItem(trimmed, getItem(record.base)), trimmed);
 }
 
 /**

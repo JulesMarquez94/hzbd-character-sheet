@@ -2899,4 +2899,125 @@ export const QUESTIONS = [
       },
     ],
   },
+
+  {
+    /* The Spellquill's own scene, added 2026-09-09 with the set. The pool scores
+       plenty of people who *learn* magic and nobody who copies it: every Mind
+       answer in it is somebody reading for themselves, and this set is somebody
+       writing for other people. So the scene is a scriptorium with one page in it
+       that is not a prayer, and the answers are the four things a child does with
+       a page nobody has noticed. */
+    id: 'youth-scriptorium',
+    stage: 'youth',
+    scene:
+      'The abbey pays in bread for a copyist with a steady hand, and yours is steady. Forty prayers a week, and then a page turns up in the pile that is not a prayer at all: it is instructions, and the last line of it is a thing that will happen if the words are said in the right order.',
+    asks: 'What do you do?',
+    recall: 'In the abbey scriptorium, over the page that was not a prayer, you',
+    options: [
+      {
+        id: 'copy',
+        label: 'Copy it. You never do learn it, but you can see the shape of how it works. By the third copy you have made one that a carter who cannot read at all says out loud, and it happens anyway.',
+        told: 'copied the page until a carter who could not read said it out loud and it happened anyway.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellquill: 3 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, occultist: 1 },
+        },
+      },
+      {
+        id: 'learn',
+        label: 'Learn it, properly, the way it is meant to be learned. It takes eleven weeks and at the end of them the page is nothing you need, because the whole of it is in your head.',
+        told: 'spent eleven weeks learning it properly, until the page was nothing you needed.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 3 },
+          background: { erudit: 1 },
+          skill: { scholar: 1 },
+        },
+      },
+      {
+        id: 'sell',
+        label: 'Find out what it is worth. Two men in the town will pay for it and one of them will pay more if the other never hears it existed, and that is the arithmetic you actually enjoy.',
+        told: 'found out what the page was worth, and which of the two buyers would pay more for the other never hearing of it.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2, pactbound: 1 },
+          background: { merchant: 1 },
+          skill: { haggler: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'burn',
+        label: 'Put it in the brazier. You have read the last line twice and you would rather be the only person who ever did.',
+        told: 'read the last line twice and then put the page in the brazier.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    /* The second half of the pair, on the road for the reason the Necromancer's
+       and the Runebearer's are: the first scene is where somebody finds out what
+       they can do, and the road is where somebody else needs it done. This one is
+       the whole set in a sentence — the person who has to cast the spell is not
+       the person who knows it. */
+    id: 'road-illiterate-guard',
+    stage: 'road',
+    scene:
+      'The caravan’s hired guard is worth every coin of her wage and cannot read a word. Something is following the wagons at a distance that has not closed for two nights, and the one thing in the whole train that would answer it is a working nobody aboard can hold in their head.',
+    asks: 'What do you do?',
+    recall: 'On the caravan the thing followed for two nights, you',
+    options: [
+      {
+        id: 'write',
+        label: 'Sit up with a lamp and put the working on parchment in a hand she can sound out. She reads it off the leaf on the third night without understanding one word of it, and the thing does not come back.',
+        told: 'put the working on parchment in a hand the guard could sound out, and she read it off the leaf on the third night.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellquill: 3 },
+          background: { merchant: 1 },
+          skill: { scholar: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'stand',
+        label: 'Stand the third watch yourself and let it close. Whatever it is, it has been deciding for two nights, and you would rather it decided while you were awake and facing it.',
+        told: 'stood the third watch yourself and let the thing close while you were facing it.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, berserker: 1 },
+          background: { mercenary: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'teach',
+        label: 'Teach her the letters. It takes the whole crossing and she is furious with you for most of it, and by the far side she can read her own name and a contract.',
+        told: 'taught the guard her letters across the whole crossing, over her objections.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { enchanter: 2, arcanist: 1 },
+          background: { erudit: 1 },
+          skill: { charismatic: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'track',
+        label: 'Go out and find out what it is. Two nights at a steady distance is a thing making up its mind, and you would rather meet it on ground you picked than on the one it did.',
+        told: 'went out to find out what had been keeping its distance for two nights.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { mycomancer: 2, trickster: 1 },
+          background: { outlander: 1 },
+          skill: { inquisitor: 1, survivalist: 1 },
+        },
+      },
+    ],
+  },
 ];

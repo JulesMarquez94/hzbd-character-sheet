@@ -321,7 +321,9 @@ Five tabs, all auto-saving (edits batch for ~0.7s, then write; the top bar shows
   kilos a point of Physique plus whatever your bag adds, and refuses nothing: past your capacity
   your Movement Speed is halved, and 30% past it you cannot move at all. **Make an Enchanted
   Item** on the codex browser's head builds a piece out of one base and any number of workings,
-  names it, gives it a picture and hands it over as a pasteable code.
+  names it, gives it a picture and hands it over as a pasteable code, and **Write a Spell
+  Scroll** beside it does the same for a scroll: any spell in the codex, any Power Words on it,
+  named and coded. Every row of the pack can also be **handed to somebody at your table**.
 - **Lore**: portrait, concept line, appearance, personality, backstory, allies.
 - **Advancement**: what your character *chose*, level by level. One block per level, level 1
   first and a new one below it each time you level: level 1 asks for a talent set, a lineage, a
@@ -386,6 +388,28 @@ A move costs **Willpower alone** for that reason: the Action Points belong to th
 One move rides a swing. A Master Duelist's Sharp, a Master Colossus's Perfect Technique, a Master
 Feral Cursed's Bestial Frenzy and a Master Guardian's Perfect Guard each allow two, and at Rank 2
 each set has a card that lets its moves reach a *Special* Weapon Attack as well as the plain one.
+
+### Handing something over
+
+Anything in your pack can be given to somebody else at your table. Tap the row, then **Hand it
+over**, pick who, and it is gone from your inventory.
+
+Nothing writes to their sheet, because nothing may: a sheet is the only writer of its own
+numbers and RLS enforces it. So a gift is a conversation over the table log instead. The thing
+comes off your pack and the row carries it; a panel stands up on their screen; and **their** own
+client is what writes it into their inventory. Say no and it comes back to you on its own, the
+next time your sheet hears the refusal or the next time you open it.
+
+Between the offer and the answer the thing belongs to nobody. That is deliberate: leaving it on
+your sheet until they answer would let both of you spend it.
+
+A made thing travels whole, with its workings, its name and its picture, and it keeps its
+identity: the ring in their pack is the ring that was in yours, where a pasted code would only
+ever be a copy. A written-in note travels too. Two things do not: a pact-bound weapon, which is
+the entity's rather than yours, and a spell scroll in fading ink, which cannot be copied by
+code either since it expires at *your* next Long Rest.
+
+The whole trade is on the table log, so the party sees it go past.
 
 ### The Temporary Effects tracker
 

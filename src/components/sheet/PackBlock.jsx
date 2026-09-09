@@ -59,6 +59,11 @@ import {
  *
  * This is also the only place on the sheet where a thing can actually be
  * destroyed. Taking gear off anywhere else only sends it here.
+ *
+ * And, since 2026-09-09, the only place a thing can **leave for somebody else**.
+ * `onGive` takes the pack position rather than the item, because a pack is a flat
+ * list and three healing potions are three entries in it: handing one over takes
+ * one. See handover.js.
  */
 export default function PackBlock({
   character,
@@ -75,6 +80,8 @@ export default function PackBlock({
   updateCustomInPack,
   discardFromPack,
   onForge,
+  onScribe,
+  onGive = null,
   readOnly = false,
 }) {
   const [browsing, setBrowsing] = useState(false);
@@ -176,6 +183,16 @@ export default function PackBlock({
                         discard sits where every other row's does. */}
                     {!readOnly && (
                       <ItemFoot item={null}>
+                        {onGive && (
+                          <button
+                            type="button"
+                            className="rest-opt"
+                            onClick={() => onGive(row.indices[0], { name: row.entry.name })}
+                            title={`Hand ${row.entry.name} to somebody at your table`}
+                          >
+                            Hand over
+                          </button>
+                        )}
                         <DiscardButton
                           name={row.entry.name}
                           onClick={() => setDiscarding({ index: row.indices[0], name: row.entry.name })}
@@ -194,7 +211,14 @@ export default function PackBlock({
                       className="item-row-tap"
                       disabled={readOnly}
                       onClick={() =>
-                        setEquipping({ item: row.item, carried: row.indices.length })
+                        setEquipping({
+                          item: row.item,
+                          carried: row.indices.length,
+                          /* Which of the stacked copies a gift would take. The
+                             first, so handing one of three potions away leaves
+                             two and the row's own count ticks down. */
+                          index: row.indices[0],
+                        })
                       }
                       title={readOnly ? row.item.name : `Where does ${row.item.name} go?`}
                     >
@@ -272,6 +296,7 @@ export default function PackBlock({
              three torches without searching for torches three times. */
           onAdd={addToPack}
           onForge={onForge}
+          onScribe={onScribe}
           onClose={() => setBrowsing(false)}
           readOnly={readOnly}
         />
@@ -301,6 +326,17 @@ export default function PackBlock({
           /* The item's own page is dealt on top of the prompt rather than in
              place of it, so closing the card leaves you where you were. */
           onDetails={() => stack?.openItem(equipping.item)}
+          /* The fourth place it can go, and the only one that is not on this
+             character. Drawn only where the sheet actually sits at a table:
+             the tab decides that, since it is the tab that holds the window. */
+          onGive={
+            onGive
+              ? () => {
+                  onGive(equipping.index, equipping.item);
+                  setEquipping(null);
+                }
+              : null
+          }
           onClose={() => setEquipping(null)}
         />
       )}

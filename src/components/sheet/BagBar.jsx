@@ -43,6 +43,7 @@ export default function BagBar({
   unequip,
   addToPack,
   onForge,
+  onScribe,
   readOnly = false,
 }) {
   const [browsing, setBrowsing] = useState(false);
@@ -133,6 +134,7 @@ export default function BagBar({
           }}
           onAdd={addToPack}
           onForge={onForge}
+          onScribe={onScribe}
           onClose={() => setBrowsing(false)}
           readOnly={readOnly}
         />

@@ -137,6 +137,37 @@ export async function listFightWords(campaignId, { limit = 30 } = {}) {
 }
 
 /**
+ * Every handover word at this table, newest first.
+ *
+ * The read that makes an outstretched hand survive a reload on both sides: a
+ * player who shuts the laptop between the offer and their answer still has the
+ * offer when they open it, and a sender whose gift was refused while they were
+ * away gets it back the next time the sheet mounts.
+ *
+ * Asked for **by kind** rather than scanned out of the feed, for the reason
+ * `listFightWords` is: an evening of casts and throws buries an offer under
+ * sixty rows, and an offer the sheet cannot find is a gift that vanished.
+ *
+ * Acting off a fetch is safe here because every answer is idempotent by
+ * construction: an offer already answered carries the answer on its own chain
+ * and `openOffers` will not offer it again, and a return already made carries a
+ * `returned` row. See handover.js.
+ */
+export async function listGiveWords(campaignId, { limit = 40 } = {}) {
+  const sb = requireSupabase();
+
+  const { data, error } = await sb
+    .from('campaign_events')
+    .select('*')
+    .eq('campaign_id', campaignId)
+    .eq('kind', 'give')
+    .order('seq', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
  * Every throw written under one call, oldest first.
  *
  * The one read on this page that is about catching up rather than listening.
@@ -211,14 +242,26 @@ export function logClearedEvent(by, gone = 0) {
  * Swallows its own failure on purpose. See the note at the top: the points have
  * already left the pool by the time this runs, and an unreachable log must not
  * turn a use that happened into an error the player has to read.
+ *
+ * ------------------------------------------------------- and the one that cares
+ * It **returns** whether the write landed, for the one caller where the row is
+ * not an account of something that already happened but the thing itself: an
+ * offer of an item is delivered *by* the log, so a sender who took the ring off
+ * their own sheet and then lost the row would have lost the ring. `GiveWindow`
+ * waits for a true before it writes. Nobody else has to look, which keeps the
+ * swallow above exactly as it was.
  */
 export async function postEvent(tables, event) {
-  if (!supabase || !event || tables.length === 0) return;
+  if (!supabase || !event || tables.length === 0) return false;
 
   const rows = tables.map((table) => eventRow(table.id, event));
 
   const { error } = await supabase.from('campaign_events').insert(rows);
-  if (error) console.warn('The table log refused an event:', error.message);
+  if (error) {
+    console.warn('The table log refused an event:', error.message);
+    return false;
+  }
+  return true;
 }
 
 /** One event as the row the table stores. The only place the shape is written. */
@@ -406,7 +449,7 @@ export function restEvent(kind, character, { action = null, supplies = 0 } = {})
     actor: character?.name ?? '',
     title: label,
     detail,
-    data: { rest: kind, action, supplies },
+    data: { rest: kind, action, supplies, portrait: portraitOf(character) },
   };
 }
 
@@ -437,8 +480,28 @@ export function turnEvent(move, character, turn) {
     actor: character?.name ?? '',
     title: said.title,
     detail: said.detail,
-    data: { move, count },
+    data: { move, count, portrait: portraitOf(character) },
   };
+}
+
+/**
+ * The face to copy onto a row this character is writing.
+ *
+ * **Every row whose actor is a character carries one.** It is copied in for the
+ * same reason `actor` is, and the schema's note about that covers this too: a
+ * character can be renamed, redrawn or deleted, and a log that then shows the
+ * wrong face beside the right name has lost the only thing worth keeping.
+ *
+ * It is a function rather than a line repeated on every builder because it was
+ * a line repeated on *some* of them. `playEvent` and `rollEvent` had it from the
+ * start and the two rests, the turn button and the fail question never did, so a
+ * night's sleep and a crossed turn drew as initials in a feed where every cast
+ * either side of them wore a portrait — and the pop-up over them drew a blank
+ * circle. See `Face` in LogBlock.jsx and `noticeOf` in logChain.js, both of
+ * which have always read `data.portrait` and found nothing here.
+ */
+function portraitOf(character) {
+  return character?.portrait_url ?? null;
 }
 
 /* ------------------------------------------------------ the fight, announced
@@ -580,7 +643,12 @@ export function turnDoneEvent(character, round) {
     actor: character?.name ?? '',
     title: `Ended turn ${round}`,
     detail: 'Whatever ends here, ends',
-    data: { move: 'ended', round, character: character?.id ?? null },
+    data: {
+      move: 'ended',
+      round,
+      character: character?.id ?? null,
+      portrait: portraitOf(character),
+    },
   };
 }
 
@@ -874,6 +942,87 @@ export function unsummonEvent(body, { by = 'The table' } = {}) {
   };
 }
 
+/* -------------------------------------------------- handing something over
+ *
+ * "add a feature so players can send items to each other in the campaign",
+ * Jules, 2026-09-09.
+ *
+ * Four rows, and they are the same conversation the reaction stack is, for the
+ * same reason: **nobody may write to anybody else's sheet.** So a gift is not a
+ * write, it is an offer held out over the log, and the recipient's own client is
+ * what puts the thing in their own pack.
+ *
+ * All four ride on `data.chain`, which is the offer's own client-minted id and
+ * not the row's — the field the log groups on, so an answer is drawn inside the
+ * offer's own block rather than as a loose row beside it. Same field, same
+ * meaning, as everywhere else in this file.
+ *
+ * What travels is `data.gift`, and what may be in it is handover.js's business
+ * and not this file's. See the note there.
+ */
+
+/** Held out: off the sender's sheet, and not yet on anybody's. */
+export function giveEvent(character, { chain, to, toName, gift, name, note = '' }) {
+  return {
+    kind: 'give',
+    actor: character?.name ?? '',
+    title: name,
+    detail: [`Held out to ${toName}`, note].filter(Boolean).join(' · '),
+    data: {
+      move: 'offer',
+      chain,
+      /* Who it is for, in `data` rather than on the row, for the same reason a
+         turn call names its character there: a row's `character_id` is who
+         *wrote* it, and the schema will not let that be anybody but yourself.
+         See claim_event_actor. */
+      to,
+      toName,
+      gift,
+      name,
+      portrait: portraitOf(character),
+    },
+  };
+}
+
+/** Taken: the recipient wrote it onto their own sheet. */
+export function giftTakenEvent(character, { chain, name, from = '' }) {
+  return {
+    kind: 'give',
+    actor: character?.name ?? '',
+    title: `${name} taken`,
+    detail: from ? `Out of ${from}’s hands` : 'Into their pack',
+    data: { move: 'taken', chain, name, portrait: portraitOf(character) },
+  };
+}
+
+/** Declined: the recipient said no, and it is the sender's to take back. */
+export function giftDeclinedEvent(character, { chain, name }) {
+  return {
+    kind: 'give',
+    actor: character?.name ?? '',
+    title: `${name} declined`,
+    detail: 'Handed straight back',
+    data: { move: 'declined', chain, name, portrait: portraitOf(character) },
+  };
+}
+
+/**
+ * Returned: the sender put it back in their own pack.
+ *
+ * The row that closes the chain. Without it a decline would be a thing the
+ * sender's client saw every time it read the feed, and it would put the ring
+ * back once per read. See `settled` in handover.js.
+ */
+export function giftReturnedEvent(character, { chain, name }) {
+  return {
+    kind: 'give',
+    actor: character?.name ?? '',
+    title: `${name} back in the pack`,
+    detail: 'Nobody took it',
+    data: { move: 'returned', chain, name, portrait: portraitOf(character) },
+  };
+}
+
 /* ------------------------------------------------------------- reading it */
 
 /** "17:42" for today, "Aug 29, 17:42" for anything older. */
@@ -908,6 +1057,9 @@ export function eventWords(event) {
   // The stack's rows carry their whole sentence in the title: "Kaelen —
   // Reacting", "Lark — Fireball fails".
   if (event?.kind === 'react') return '';
+  // "Kaelen offers Longsword", and the three answers say themselves in the
+  // title the way the stack's do: "Longsword taken", "Longsword declined".
+  if (event?.kind === 'give') return event.data?.move === 'offer' ? 'offers' : '';
   return '';
 }
 

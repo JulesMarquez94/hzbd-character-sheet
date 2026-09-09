@@ -6,6 +6,7 @@ import BrewRest from './BrewRest.jsx';
 import EnchantAction from './EnchantRest.jsx';
 import { PactFormWall } from './PactPick.jsx';
 import RaiseWindow from './RaiseWindow.jsx';
+import ScribeRest from './ScribeRest.jsx';
 import { Gated } from './parts.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { useCardStack } from '../../context/card-stack.js';
@@ -17,6 +18,7 @@ import { getEnchantment } from '../../lib/enchantments.js';
 import { getRest, labourAffordable, restActions, restPlan } from '../../lib/rest.js';
 import { pickChanges, toggleLoadoutPick } from '../../lib/loadouts.js';
 import { rechargeSpend, runeRecharges } from '../../lib/runes.js';
+import { restEphemeral, scribeSummary } from '../../lib/scribing.js';
 import { raiseDraft } from '../../lib/undead.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
@@ -97,10 +99,22 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      column holds. It becomes a row in the `minions` column in the rest's own
      patch. See undead.js. */
   const [raised, setRaised] = useState(null);
+  /* And what a Spellquill is writing tonight, in two drafts: the leaves the
+     night's action buys and the fading ones it does not. Two, because they are
+     capped by two different numbers, priced differently and cleared at
+     different times — `clearAction` takes the first back and deliberately
+     leaves the second, since EPHEMERAL SPELL SCROLLS is not the action and a
+     night spent raising the dead still prepares its scrolls. */
+  const [scribes, setScribes] = useState([]);
+  const [ephemeral, setEphemeral] = useState([]);
 
   /* Whether the list of actions is up, and which one's step is. */
   const [menu, setMenu] = useState(false);
   const [stepId, setStepId] = useState(null);
+  /* And whether the fading-ink desk is open. Its own flag rather than a
+     `stepId`, because it is not an action and has no row in `actions` to be
+     the id of. */
+  const [fading, setFading] = useState(false);
 
   const talents = prepared ?? character.talents;
 
@@ -117,9 +131,27 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      rule. */
   const picked = useMemo(() => (chosen ? [chosen] : []), [chosen]);
   const plan = useMemo(
-    () => restPlan(character, kind, picked, prepared, brews, reshaped, { revived, raised }),
-    [character, kind, picked, prepared, brews, reshaped, revived, raised]
+    () =>
+      restPlan(character, kind, picked, prepared, brews, reshaped, {
+        revived,
+        raised,
+        scribes,
+        ephemeral,
+      }),
+    [character, kind, picked, prepared, brews, reshaped, revived, raised, scribes, ephemeral]
   );
+
+  /* What tonight's fading ink can run to, per set that writes any. Empty for
+     everybody else and empty for a Short Rest, the same shape `recharges` has
+     and above the action slot for the same reason: it is not an action.
+
+     Read off the **character** rather than off the draft, which is what
+     `restPlan` does with the same call: a chooser measured against a rank the
+     plan is not measuring against could offer a leaf the rest then refuses to
+     write. Nothing in this window can move a rank anyway — ranks are the
+     Advancement tab's — so the two agree by construction and this keeps them
+     agreeing if that ever changes. See scribing.js. */
+  const fadingInk = useMemo(() => restEphemeral(character, kind), [character, kind]);
 
   /* What a Short Rest could bring back, per set that can bring anything back.
      Empty for everybody else, and empty for a Long Rest, which brings the whole
@@ -134,6 +166,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setBrews([]);
     setReshaped(null);
     setRaised(null);
+    setScribes([]);
   }
 
   /** Fill the slot. Whatever was in it, and whatever it did, goes first. */
@@ -143,6 +176,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setPrepared(null);
     setBrews([]);
     setReshaped(null);
+    setScribes([]);
     setRaised(row.kind === 'raise' ? { set: row.state.id } : null);
     setActionId(row.id);
 
@@ -154,7 +188,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
   if (!rest || !plan) return null;
 
   const held = action
-    ? summarise(action, { chosen, character, talents, brews, reshaped, raised })
+    ? summarise(action, { chosen, character, talents, brews, reshaped, raised, scribes })
     : null;
 
   return (
@@ -273,6 +307,59 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
             />
           ))}
 
+          {/* ---------- WHAT FADES BY MORNING ---------- *
+              EPHEMERAL SPELL SCROLLS: "at the end of a Long Rest you can prepare
+              Ephemeral Spell Scrolls, your Mind halved plus your rank." Free,
+              fading, and **not** an action — so it sits here beside a
+              Runebearer's runes rather than in the slot below, and a night spent
+              raising the dead still lays its leaves out.
+
+              A count against a budget with no price, which is why it is one
+              button rather than a chooser drawn in place: seven Power Words a
+              leaf is a wall, and the wall is the same wall the paid desk opens.
+              See ScribeRest.jsx. */}
+          {fadingInk && (
+            <>
+              <span className="fx-label">
+                Scrolls in fading ink
+                <span className="rest-labour-rule">
+                  {fadingInk.set.name} · costs nothing
+                </span>
+              </span>
+
+              <div className="rest-slot is-filled">
+                <button
+                  type="button"
+                  className="rest-slot-body"
+                  onClick={() => setFading(true)}
+                  title="Choose what fades by morning"
+                >
+                  <span className="rest-slot-name">
+                    {ephemeral.length} of {fadingInk.ephemeral}{' '}
+                    {fadingInk.ephemeral === 1 ? 'leaf' : 'leaves'}
+                  </span>
+                  <span className="rest-slot-from">
+                    Your Mind halved plus your rank. Gone at your next Long Rest
+                  </span>
+                  <span className={`rest-slot-did${ephemeral.length > 0 ? '' : ' is-open'}`}>
+                    {scribeSummary([], ephemeral, fadingInk) ?? 'Nothing written yet'}
+                  </span>
+                </button>
+
+                <span className="rest-slot-tools">
+                  <button type="button" className="rest-opt" onClick={() => setFading(true)}>
+                    {ephemeral.length > 0 ? 'Change' : 'Choose'}
+                  </button>
+                  {ephemeral.length > 0 && (
+                    <button type="button" className="rest-opt" onClick={() => setEphemeral([])}>
+                      Clear
+                    </button>
+                  )}
+                </span>
+              </div>
+            </>
+          )}
+
           {/* ---------- THE ACTION SLOT ---------- *
               One, because a rest buys one. Empty until you open it, and after
               that it says what you are doing and offers the two ways out of it:
@@ -361,6 +448,34 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
           brews={brews}
           onDraft={setBrews}
           onClose={() => setStepId(null)}
+        />
+      )}
+
+      {step?.kind === 'scribe' && (
+        <ScribeRest
+          character={character}
+          kind={kind}
+          state={step.state}
+          draft={scribes}
+          other={ephemeral}
+          onDraft={setScribes}
+          onClose={() => setStepId(null)}
+        />
+      )}
+
+      {/* The same desk at the other price. Raised off its own flag rather than
+          off `stepId`, because the fading ink is not an action and has no row in
+          `actions` to be the id of. */}
+      {fading && fadingInk && (
+        <ScribeRest
+          character={character}
+          kind={kind}
+          state={fadingInk}
+          draft={ephemeral}
+          other={scribes}
+          ephemeral
+          onDraft={setEphemeral}
+          onClose={() => setFading(false)}
         />
       )}
 
@@ -621,7 +736,12 @@ function RuneRecharge({ row, chosen, onToggle }) {
   );
 }
 
-function summarise(action, { chosen, character, talents, brews, reshaped, raised }) {
+function summarise(action, { chosen, character, talents, brews, reshaped, raised, scribes }) {
+  if (action.kind === 'scribe') {
+    const said = scribeSummary(scribes, [], action.state);
+    return said ? { done: true, says: said } : { done: false, says: 'Nothing on the desk yet' };
+  }
+
   if (action.kind === 'labour') {
     return chosen
       ? { done: true, says: `${chosen.gain ? '+' : '−'}${chosen.amount} Supplies` }

@@ -10,6 +10,7 @@ import PactSection, { PactRankNote } from './PactPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { BrewRankNote } from './BrewWindow.jsx';
 import { AlchemyRankNote } from './BrewRest.jsx';
+import { ScribeRankNote } from './ScribeRest.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
@@ -621,6 +622,11 @@ function TalentPresentation({ option, character }) {
                 filled: how many recipes a rank actually opens, and what it does
                 to a night at the still. */}
             <AlchemyRankNote talent={talent} rank={rank} />
+
+            {/* And for the set whose shelf is the whole spell codex: how many
+                spells a rung actually reaches, which "you can now inscribe from
+                the Adept list" does not count out. */}
+            <ScribeRankNote talent={talent} rank={rank} />
 
             {/* And for the set that buys with a debt: what the rank puts on the
                 pact's ladder, which no card body counts out. */}

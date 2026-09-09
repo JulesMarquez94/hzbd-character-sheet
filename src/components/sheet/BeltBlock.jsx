@@ -34,6 +34,7 @@ export default function BeltBlock({
   setBeltUsed,
   addToPack,
   onForge,
+  onScribe,
   readOnly = false,
 }) {
   const [browseIndex, setBrowseIndex] = useState(null);
@@ -111,6 +112,7 @@ export default function BeltBlock({
           }}
           onAdd={addToPack}
           onForge={onForge}
+          onScribe={onScribe}
           onClose={() => setBrowseIndex(null)}
           readOnly={readOnly}
         />

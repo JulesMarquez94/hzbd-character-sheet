@@ -128,6 +128,11 @@ function TagFilter({ tags, active, onToggle }) {
  * `onForge` puts the way into the forge on the browser's own head, between the
  * title and the close — the codex is where you go looking for a thing, so it is
  * where "the thing I want is not in here" has to be answered.
+ *
+ * `onScribe` is the second answer to the same question, beside it: a spell
+ * scroll is a hundred and forty six items this shelf is never going to carry, so
+ * the one blank leaf is in the codex and the writing is its own window. See
+ * ScrollWindow.jsx.
  */
 export default function ItemBrowser({
   slot,
@@ -148,6 +153,7 @@ export default function ItemBrowser({
   onUnequip,
   onAdd = null,
   onForge = null,
+  onScribe = null,
   onClose,
   readOnly,
 }) {
@@ -310,11 +316,20 @@ export default function ItemBrowser({
          this is "none of these". The Modal puts it between the title and the
          close for exactly that reason. */
       action={
-        !readOnly && onForge ? (
-          <button type="button" className="btn btn-minimal btn-sm" onClick={onForge}>
-            + Make an Enchanted Item
-          </button>
-        ) : null
+        readOnly ? null : (
+          <>
+            {onForge && (
+              <button type="button" className="btn btn-minimal btn-sm" onClick={onForge}>
+                + Make an Enchanted Item
+              </button>
+            )}
+            {onScribe && (
+              <button type="button" className="btn btn-minimal btn-sm" onClick={onScribe}>
+                + Write a Spell Scroll
+              </button>
+            )}
+          </>
+        )
       }
     >
       <div className="item-browser">

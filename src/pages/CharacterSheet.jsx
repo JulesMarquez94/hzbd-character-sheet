@@ -15,6 +15,7 @@ import { UnitContext } from '../context/units.js';
 import SiteMenu from '../components/SiteMenu.jsx';
 import CharacterTab from '../components/sheet/CharacterTab.jsx';
 import FightProvider from '../components/campaign/FightProvider.jsx';
+import HandoverCall from '../components/campaign/HandoverCall.jsx';
 import LogCall from '../components/campaign/LogCall.jsx';
 import LogProvider from '../components/campaign/LogProvider.jsx';
 import ReactionCall from '../components/campaign/ReactionCall.jsx';
@@ -482,6 +483,13 @@ export default function CharacterSheet({ creating = false }) {
         somewhere you can afford to have missed a reaction. Only on your own
         sheet, and never about your own rows. See LogCall.jsx. */}
     {canEdit && <LogCall mine={character.id} />}
+    {/* And the one row on the log that is addressed *to* this sheet rather than
+        about it: somebody at the table is holding an item out. It stands in its
+        own panel for the same reason a turn call does — nobody may write to your
+        sheet, so taking it is your own client's write — and the same component
+        quietly puts back anything this sheet offered and nobody took. Renders
+        nothing at a table where neither has happened. See HandoverCall.jsx. */}
+    <HandoverCall character={character} patch={patch} canEdit={canEdit} />
     {/* The reaction window's knock: somebody at the table acted, their roll is
         gated, and this sheet has Reaction Points to answer with. Tapping the
         banner opens the window below, which is itself the hold on their roll.

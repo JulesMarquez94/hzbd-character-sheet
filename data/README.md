@@ -14639,3 +14639,222 @@ Rank 2 Necromancer is the Berserker beside it and not the Necromancer.
   damage meant for its master for as long as the knight stands within 6 metres. It was the
   other reading of the ruling above, and the ruling went to IRON PROVOCATION, so this one is
   untouched and still the widest promise on the sheet.
+
+## The Spellquill writes for other people, and the party hands things round, 2026-09-09
+
+Three asks in one message, and the third reaches furthest into the schema without touching it:
+"It seems the long rest and short rest do not properly use the character image. Then I want you
+to make the spellquill. It need to be able to craft spell scroll in long rest using supplies.
+Also take the oportuniy of adding spells scroll as an item that can be earned. It can be of any
+type. So there need to an interface to create them. I want when you are making it to also add a
+fareture so player can send items to each other in the campaing."
+
+### The face on a rest
+
+`restEvent` never carried a portrait, and neither did the two turn builders. Every row the log
+draws with a face reads `data.portrait` (see `Face` in LogBlock.jsx) and so does every pop-up
+notice (`noticeOf` in logChain.js), so a night's sleep drew as initials in a feed where every
+cast either side of it wore a portrait, and the banner over it drew an empty circle.
+
+One line each, on `restEvent`, `turnEvent` and `turnDoneEvent`, through a new `portraitOf` so
+the next builder does not forget it. It matters for more rows than it looks: "Entered combat"
+and "Left combat" are drawn as full entries with faces, and only `turn` and `ended` are seams
+the feed draws without one.
+
+`reactionFailedEvent` is deliberately **not** given one. Its rows are trail lines under an
+action rather than heads, and a merged notice keeps the head's face, so a portrait there would
+be a field nothing reads.
+
+### The set: five ranks into three, and four rungs into three
+
+| Sheet | Pulled | Landed in |
+| ----- | ------ | --------- |
+| `Source Temp/Hazebound System - Spellquill.pdf` | **2026-09-09, 1 set + 6 cards** | `src/lib/talents.js` (`TALENTS`) |
+| The scroll as an item, and its seven Power Words | **2026-09-09, written here** | `src/lib/scrolls.js`, `src/lib/utility.js` |
+| The night at the desk | **2026-09-09, written here** | `src/lib/scribing.js`, `rest.js`, `ScribeRest.jsx` |
+| Two Crossroads scenes, so the set can be scored and can win | **2026-09-09, written here** | `src/lib/crossroadsPool.js`, `crossroadsStory.js` |
+
+**The PDF had to be rendered to be read.** It is a Google Docs export whose headings were
+flattened to vector outlines, so the body text came out of the content streams and every
+heading was invisible to a text pull: the five rank titles, the four rung labels on the cost
+table and **all seven Power Word names**. They were recovered by converting the PDF's path
+operators to SVG, rasterising, and reading the result. Nothing in the transcription is guessed
+at. It would have been very easy to invent seven plausible words here and be wrong about all of
+them.
+
+**Five ranks became three**, the same normalisation the Runebearer had the day before. Each
+rung carries two of the sheet's pages, and every card keeps its own name and its own words:
+
+| Rank | Cards | The sheet's pages |
+| --- | --- | --- |
+| 1 · Novice | Arcane Scribe, Ephemeral Spell Scrolls | Rank 1 |
+| 2 · Adept | Improved Syntax, Arcane Specialist | Ranks 2 and 3 |
+| 3 · Master | Analitic Sight, Author of Truth | Ranks 4 and 5 |
+
+**And four spell rungs became three.** The sheet opens Novice, Apprentice, Adept and Master at
+its Ranks 1, 2, 4 and 5. **There is no Apprentice rung in this codex** and there never has
+been: `tierOf` in loadouts.js reads three words and every spell ever written carries one of
+them. So Apprentice is dropped rather than opened onto an empty shelf, and Novice, Adept and
+Master land on Ranks 1, 2 and 3. The three prices that survive are the sheet's own.
+
+**The price is the sheet's, in the site's currency.** This is the only labour in the pile
+priced in *coin*: 500 to 2000 Coins worth of Arcane Quartz. Jules asked for Supplies, and the
+rate was not invented. The potion shelf carries both currencies off one column (`coin = 100 x
+Willpower`, `Supplies = 10 x Willpower`), so ten coins is one Supply wherever the codex prices
+the same thing twice, and a Healing Potion is 200 coins and 20 Supplies to prove it. Divided by
+ten: **50, 150 and 200 Supplies**.
+
+### What a scroll is
+
+A **forged record**, on the shelf beside the rings and the pact weapons, carrying a `scroll`
+field of `{ spell, words, ephemeral }`. Not a column, and not 146 codex rows. The reasoning is
+the reasoning the forged shelf exists for: a scroll needs an identity, because two Fireball
+scrolls in one pack are two scrolls and one of them may be Unseen. It arrives with the pruning,
+the placement law and the share code already written.
+
+It is the first item in the codex that **teaches a card the item does not own**. Every other
+piece of gear teaches a fixed list; `scrollItem` swaps in the spell that was written on it,
+takes the spell's own art plate, and adds the rung to the tags so a bag full of Master scrolls
+can be found with the filter.
+
+The blank leaf is a real codex row (`spell-scroll`, Belt Gear, 20 coins, 0.1 kg, one use) and
+its card is the sheet's introduction. The rules of a scroll belong on the thing rather than on
+the set, because anybody can read one.
+
+### Two halves of a night, in two places
+
+The sheet is clear that a Spellquill's night is two separate permissions, and the rest window
+puts them in two places:
+
+- **The scrolls** are the Long Rest **action**. Two a night, paid for in Supplies, permanent.
+- **The fading ones** are not an action at all. `floor(Mind / 2) + rank` of them, free, and
+  they happen on every Long Rest whatever else the night was spent on, so the chooser sits
+  *above* the action slot beside a Runebearer's runes, and `clearAction` deliberately does not
+  touch it.
+
+**The fading ink is wired**, where the Alchemist's IMPROVISED BREWING is not. That card's
+potions "expire at the end of the day" and this site has no day; a scroll expires at a Long
+Rest, and a Long Rest is already a button. The sweep runs on every long rest, reaches the pack,
+the belt, the trinkets and the worn slots, and runs **before** the night's writing so a leaf
+written tonight is never mistaken for one that expired.
+
+**A Power Word is charged, and it comes off the refill.** The cost is Willpower, paid by the
+scribe at the moment of writing, and the writing happens inside the very rest that fills the
+pool, which would make it a price nobody pays. So a long rest now sets Willpower to its maximum
+*less the ink*: a night that spent nine on Power Words wakes at maximum less nine. The plan
+says so on its own line. Same reading the Necromancer's bodies already have.
+
+### And the interface for a scroll nobody wrote
+
+`ScrollWindow.jsx`, on the codex browser's head beside **Make an Enchanted Item**, and it makes
+the same argument in the same words: this is how a scroll *arrives*. Found in a barrow, bought
+off a guild, handed over by the table. So no rank gate, no price and no cap. Every rung, every
+school, any number of Power Words, and a pasteable code in and out.
+
+The one limit it keeps is the ladder. A Legendary or a Unique spell has no rung, so it has no
+price and cannot be scribed by anybody; those two live on the items that carry them.
+
+The fading ink is **not** offered there. An Ephemeral scroll is measured against its writer's
+own next Long Rest, and a found one has nothing to be measured against.
+
+### Handing something over
+
+The third ask, and it needed **no schema change at all**, because the law it runs into is the
+one the encounter runner already solved: nobody may write to anybody else's sheet. So a gift is
+not a write, it is a conversation over the table log. Four moves on one chain, the same shape
+the reaction stack has:
+
+| Move | Written by | What it does |
+| --- | --- | --- |
+| `offer` | the sender | the thing comes off their pack, and the row carries it |
+| `taken` | the recipient | their own client writes it into their own inventory |
+| `declined` | the recipient | they said no |
+| `returned` | the sender | their own client puts it back |
+
+Between the offer and its answer the thing belongs to **nobody**: off one sheet, not yet on
+another, and the log row is the only place it exists. That is deliberate, and the alternative
+is worse, because leaving it on the sender's sheet until the offer is answered lets two people
+spend it. The risk it buys instead is an offer nobody answers, and `returnable` is the answer
+to that: the sender's own client settles a decline by putting the thing back, reading it off a
+fetch as well as off the channel, so a gift refused while the laptop was shut comes home the
+next time the sheet is opened.
+
+Three payloads travel and nothing else: a codex id, a whole forged record, or a written-in
+note. **A forged record travels with its instance id**, because this is a move rather than a
+copy. The same ring leaves one pack and arrives in another, which is exactly what a share code
+refuses to be.
+
+Two things may not be given. A **pact-bound weapon**, because somebody else's bargain is not
+transferable, and anything this build cannot resolve: a payload from a newer build is declined
+rather than dropped, so the sender gets their thing back instead of losing it to a version
+mismatch.
+
+And one small law fell out of it. **A fading scroll may be given and may not be coded.** Giving
+it moves it and nothing is duplicated; a share code would make it the cheapest permanent scroll
+in the game, since a Spellquill writes five a night for nothing. `shareCode` refuses one and
+`codeRefusal` says so out loud, which is also the first time that function has had a reason to
+exist.
+
+### One thing the log had to learn
+
+The handover is the first thing in the feed whose **head and whose answers share a kind**. Four
+`give` rows on one chain, and the feed arrives newest first, so an `UNDER` set keyed on kind
+alone would have taken "Longsword taken" as the head and filed the offer underneath it. `UNDER`
+is now a predicate, `underneath`, and everything else is still decided by kind.
+
+`noticeOf` also takes the reader's own ids now, and silences an offer addressed **to** them.
+That one stands in its own panel on the sheet it names, the way a turn call does, and a banner
+over the top of it would be the same news twice. Everybody else at the table gets the banner,
+because a trade across the party is exactly what the rest of them want to see go past.
+
+### Proved
+
+- `npm run lint`, all twenty `lint:*` scripts and `npm run build`, all clean.
+- A round trip through the lib layer on a Rank 2 Spellquill with Mind 7: the rungs, the
+  two-a-night cap holding against a third leaf, the one-word-a-leaf cap refusing a second word,
+  the fading count coming out at `floor(7/2) + 2 = 5`, the plan's lines, 900 Supplies to 790,
+  Willpower refilling to 15 of 20 against 5 spent on Repeat, three records on the shelf, three
+  ids in the pack, and every one of them resolving through `heldItem` to a scroll that teaches
+  its own spell and carries its own rung.
+- The next long rest sweeping the one fading leaf: the line, the record off the shelf and the id
+  out of the pack.
+- The share code round-tripping a written scroll and dropping the ephemeral flag on the way.
+- Two sheets and a fake log handing things back and forth: a ring with a working on it arriving
+  intact, a fading scroll offered and declined and coming home with its flag, a written note
+  arriving under a fresh id, the pact weapon refused, a second settle skipped by `alreadyHome`,
+  and `groupEvents` drawing each gift as one block with its answers underneath it.
+- A browser pass on the public shelves: all six cards on `/rules/cards` (Talents 110 to 116),
+  ARCANE SCRIBE printing its banner and three paragraphs, and the blank Spell Scroll on
+  `/rules/items` under Belt Gear at 0.1 kg and 20 coins.
+- And a throwaway harness (`smoke.html` plus `src/smoke-harness.jsx`, deleted after) mounting
+  all four new windows: the desk at Rank 3 saying "2 leaves a night" and "Up to 2 Power Words a
+  leaf" over a shelf of **143** spells, which is 146 less the Legendary and the two Uniques,
+  with Barkskin on it at 50 Supplies and Repeat worked in, all seven words listed with their
+  costs, the budget reading "1 of 2 worked in · 5 Willpower off the morning", and the give
+  window correctly refusing a table with nobody else at it.
+
+### Still open
+
+- **50 Supplies for a Novice scroll is the sheet's own 500 coins, and it is steep against a
+  crate.** A starting purse is 6000 coins and 70 Supplies, so a Novice scroll is 8% of the
+  purse and 71% of the crate. The conversion is the codex's own rate and the number is the
+  designer's, so both halves are defensible and the *pair* may not be. It is the first number
+  to look at if scribing feels impossible at low level. Every price is in `SCROLL_TIERS`.
+- **Four of the seven Power Words are prose.** Enduring, Assured, Swift and Mighty each bend a
+  spell in a direction the sheet has a rider for; Unseen turns on a contest nobody has rolled,
+  Repeat is a second cast at the end of a turn, and Altered rewrites a damage type the printed
+  card names inside its own sentence. All seven are charged and printed, and what they do is
+  read off the scroll's own face. A card that said three of its seven options work would be
+  worse than one that is read out loud, which is how SPELLBOOK's free hand already works.
+- **AUTHOR OF TRUTH is printed and not wired.** "Ignore the Willpower cost … for an amount
+  equal to your Power" is a discount on the use of an *item*, spread across as many reads as it
+  covers, and there is no tracker row for it. Mind + level is the conversion key's reading of
+  "your Power" and the card says the number; the table spends it.
+- **The sheet says Level 4 for both its Rank 2 and its Rank 3.** Every other set on the wall
+  climbs 1/4/7/10/16, so it reads as a copy-paste. The normalisation makes it moot, since both
+  land on Rank 2 and Rank 2 is level 4.
+- **Nothing stops a gift crossing a table twice.** Two sheets at two campaigns can pass the
+  same ring back and forth, which is what a party does anyway. Worth knowing that the log is
+  the whole audit trail: there is no ledger of who owned what.
+- **A gift is items only.** Coins and Supplies do not travel, which the ask did not name and a
+  party will want within a session.

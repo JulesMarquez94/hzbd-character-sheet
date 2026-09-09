@@ -46,6 +46,7 @@ export default function TrinketBlock({
   swapTrinket,
   addToPack,
   onForge,
+  onScribe,
   readOnly = false,
 }) {
   /* Which place the codex is open on: an index for a swap, or 'new' for the empty
@@ -208,6 +209,7 @@ export default function TrinketBlock({
           }}
           onAdd={addToPack}
           onForge={onForge}
+          onScribe={onScribe}
           onClose={() => setBrowsing(null)}
           readOnly={readOnly}
         />

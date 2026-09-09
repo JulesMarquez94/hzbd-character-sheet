@@ -38,6 +38,13 @@ import { forgedRecord } from '../../lib/forged.js';
  * inventory opens this window, so this is the answer to "click on it to get the
  * code" — no extra control anywhere, and the code sits next to the thing it
  * describes.
+ *
+ * ------------------------------------------------------------ and the party
+ * `onGive` is the fourth place a thing can go, and it is not a slot: **into
+ * somebody else's pack.** It sits at the foot beside "Read the item" rather than
+ * in the list of places, because the list is places on *this* character and this
+ * is the one answer that takes it off them entirely. Drawn only for a sheet that
+ * actually sits at a table with somebody else at it. See GiveWindow.jsx.
  */
 export default function EquipPrompt({
   item,
@@ -51,6 +58,7 @@ export default function EquipPrompt({
   onClip,
   onWear,
   onDetails,
+  onGive = null,
   onClose,
 }) {
   const targets = targetsFor(item, {
@@ -81,6 +89,16 @@ export default function EquipPrompt({
           <button type="button" className="btn btn-minimal btn-sm" onClick={onDetails}>
             Read the item
           </button>
+          {onGive && (
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              onClick={onGive}
+              title="Hand it to somebody at your table"
+            >
+              Hand it over
+            </button>
+          )}
           <span className="spacer" />
           <button type="button" className="btn btn-minimal btn-sm" onClick={onClose}>
             Close
