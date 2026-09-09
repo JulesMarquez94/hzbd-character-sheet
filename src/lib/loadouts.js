@@ -129,6 +129,81 @@ export function isLibrary(spec) {
 }
 
 /**
+ * Whether the pool *is* the hand: everything in it that this rank may reach is
+ * known, and there is nothing to choose.
+ *
+ * The third shape, and the Necromancer's (2026-09-09). GRAVE LORE: "You know
+ * every Death spell in the codex." That is not a hand of four out of twelve and
+ * it is not a book filled a spell a night, it is the whole family, arriving as
+ * the rungs open. So the spec carries no `known` and no `capacity`, only `all`,
+ * and the count comes off the codex.
+ *
+ * Nothing is stored for such a pool, which is the point: `picks` on the talent
+ * entry would be twelve ids that can never be anything else, and the first time
+ * a spell was added to the family every existing Necromancer would be missing it.
+ */
+export function isWhole(spec) {
+  return Boolean(spec?.all);
+}
+
+/**
+ * Every card in the pool this rank may legally hold.
+ *
+ * The gates, in one place, because two callers need them: `loadoutOptions`, which
+ * has to say *why* a card was refused, and everything about a whole pool, which
+ * only needs the list. A gate added here is added to both.
+ */
+function gateOf(spec, card, legalTiers) {
+  if (card.placeholder) {
+    return { gate: 'school', reason: 'a stand-in for a school not written yet' };
+  }
+  const school = schoolOf(card);
+  if (spec.school && school && school !== spec.school) {
+    return { gate: 'school', reason: `${school} school, not ${spec.school}` };
+  }
+  /* And the family under it, which is the Necromancer's. A Death spell is a
+     Primal spell, and a Primal pool that took the whole school would hand a
+     Necromancer the Flora and the Wild along with their own dead. The school
+     gate above is not enough on its own: this is the narrower one, and a spec
+     with no `family` is unchanged by it. */
+  if (spec.family && subSchoolOf(card) !== spec.family) {
+    return { gate: 'school', reason: `${subSchoolOf(card) ?? 'no family'}, not ${spec.family}` };
+  }
+  /* No `tier &&` guard any more, and that is a real change. A card off the
+     ladder used to pass this gate, and it was safe only because the school
+     gate above caught it first: spells.js says so in as many words, that a
+     Unique Spell stays out of every pool because "no set's school is
+     Elemental or Nightmare". The Arcanist is the first spec to name no
+     school at all, so that gate no longer fires and this one has to. */
+  const tier = tierOf(card);
+  if (legalTiers.length > 0 && !legalTiers.includes(tier)) {
+    return {
+      gate: 'tier',
+      reason: tier
+        ? `${tier} needs a higher rank`
+        : `${tierWord(card)} is not a rung any set reaches`,
+    };
+  }
+  return null;
+}
+
+/**
+ * The cards a whole pool holds at a rank, in printed order.
+ *
+ * The list *is* the hand, so this is what everything about such a pool counts,
+ * prints and plays. Ordered by the codex's own law (see cardOrder.js) rather than
+ * by the registry's order, because it is read as a list of spells rather than
+ * chosen from.
+ */
+export function wholePool(spec, rank) {
+  if (!isWhole(spec) || !(Math.floor(Number(rank) || 0) > 0)) return [];
+  const legalTiers = tiersAt(spec, rank);
+  return loadoutPool(spec)
+    .filter((card) => gateOf(spec, card, legalTiers) === null)
+    .sort(compareCards);
+}
+
+/**
  * How many cards a set knows at a given rank.
  *
  * For a hand that is the whole story and `level` is ignored. For a library it
@@ -138,6 +213,7 @@ export function isLibrary(spec) {
  * whether a rank just widened the pool enough to open the chooser.
  */
 export function knownAt(spec, rank, level = 1, attributes = null) {
+  if (isWhole(spec)) return wholePool(spec, rank).length;
   if (isLibrary(spec)) return capacityAt(spec, rank, level, attributes);
   return spec?.known?.[rank] ?? 0;
 }
@@ -167,6 +243,7 @@ export function knownAt(spec, rank, level = 1, attributes = null) {
  * the other two terms join it: half of 5 is 2, and 2 + 4 is 6.
  */
 export function capacityAt(spec, rank, level = 1, attributes = null) {
+  if (isWhole(spec)) return wholePool(spec, rank).length;
   if (!isLibrary(spec)) return spec?.known?.[rank] ?? 0;
   if (!(Math.floor(Number(rank) || 0) > 0)) return 0;
 
@@ -366,39 +443,14 @@ export function loadoutOptions({ talent, rank, picks }) {
       const known = held.has(card.id);
       const row = { card, tier, school, sub, known, modifiers };
 
-      /* A stand-in for a school nobody has written yet. Refused as a school,
-         because that is what it is: the school is not written, so there is
-         nothing here to learn.
-
-         **This fires on nothing today.** `unwritten-light` and `unwritten-shadow`
+      /* Every gate in one place, so the chooser's reasons and a whole pool's
+         count can never disagree about what is legal. The stand-in gate among
+         them fires on nothing today: `unwritten-light` and `unwritten-shadow`
          were the only two cards that ever carried the flag, and the Ethereal
-         school retired both on 2026-08-25 by simply existing. The gate stays for
-         the next school the lineage tab names before a sheet arrives, which is
-         the situation it was built for. See "the stand-ins" at the foot of
-         spells.js. */
-      if (card.placeholder) {
-        return { ...row, ok: false, gate: 'school', reason: 'a stand-in for a school not written yet' };
-      }
-      if (spec.school && school && school !== spec.school) {
-        return { ...row, ok: false, gate: 'school', reason: `${school} school, not ${spec.school}` };
-      }
-      /* No `tier &&` guard any more, and that is a real change. A card off the
-         ladder used to pass this gate, and it was safe only because the school
-         gate above caught it first: spells.js says so in as many words, that a
-         Unique Spell stays out of every pool because "no set's school is
-         Elemental or Nightmare". The Arcanist is the first spec to name no
-         school at all, so that gate no longer fires and this one has to. */
-      if (legalTiers.length > 0 && !legalTiers.includes(tier)) {
-        return {
-          ...row,
-          ok: false,
-          gate: 'tier',
-          reason: tier
-            ? `${tier} needs a higher rank`
-            : `${tierWord(card)} is not a rung any set reaches`,
-        };
-      }
-      return { ...row, ok: true };
+         school retired both on 2026-08-25 by simply existing. See `gateOf`, and
+         "the stand-ins" at the foot of spells.js. */
+      const refused = gateOf(spec, card, legalTiers);
+      return refused ? { ...row, ok: false, ...refused } : { ...row, ok: true };
     })
     /* What you may take first, and then the law in cardOrder.js: the rung, the
        school, the family, and inside a family the codex's own order.
@@ -458,6 +510,39 @@ export function loadoutState(
 
   const entry = normalizeTalents(talents).find((row) => row.id === (talent.id ?? talent));
   const rank = entry?.rank ?? 0;
+
+  /* ---- a whole pool answers before any of this ----
+     Its hand is the codex, so there are no stored picks to reconcile, no
+     allowance to measure and nothing it can owe. The shape handed back is the
+     same one every reader downstream already knows: the Abilities tab lists
+     `picks`, the quick bar plays them, and `complete` and `owed` keep the
+     Advancement tab from badging a set that has nothing left to answer. What is
+     different is `whole`, which is what a block reads to know it must not offer
+     a chooser: there is nothing in here anybody may change. */
+  if (isWhole(spec)) {
+    const modifiers = loadoutModifiers(spec, rank);
+    const cards = wholePool(spec, rank);
+    const picks = cards.map((card) => ({ id: card.id, card, ok: true, modifiers }));
+
+    return {
+      spec,
+      rank,
+      picks,
+      known: picks.length,
+      capacity: picks.length,
+      library: false,
+      whole: true,
+      full: true,
+      chosen: picks.length,
+      remaining: 0,
+      owed: 0,
+      over: 0,
+      complete: true,
+      options: loadoutOptions({ talent, rank, picks: cards.map((card) => card.id) }),
+      tiers: tiersAt(spec, rank),
+    };
+  }
+
   const options = loadoutOptions({ talent, rank, picks: entry?.picks ?? [] });
 
   // A rank lost, or a codex that dropped a card, can leave a stored pick that
@@ -501,6 +586,7 @@ export function loadoutState(
     known,
     capacity,
     library: isLibrary(spec),
+    whole: false,
     /* Whether there is any room left at all, which is what turns the rest window's
        line from "adds one more" into "replaces one already written". */
     full: isLibrary(spec) && picks.length >= capacity,
@@ -549,7 +635,11 @@ export function toggleLoadoutPick(talents, talentId, cardId, known) {
  *   a hand      otherwise it is changed, which is the only thing left to do with it.
  */
 export function poolAction(state) {
-  const { spec, owed, library } = state;
+  const { spec, owed, library, whole } = state;
+
+  /* A whole pool has no action at all: there is nothing in it to choose and
+     nothing to write in. Read, and the block that shows it says so. */
+  if (whole) return `Read your ${spec.label.toLowerCase()}`;
 
   if (owed > 0) {
     return `${library ? 'Write in' : 'Choose'} ${owed} more ${plural(spec.noun, owed)}`;
@@ -589,8 +679,36 @@ export function displacedBy(state) {
  * card never printed, and the panel on the sheet can still change a hand at any
  * time.
  */
-export function swapsAtRest(spec, kind) {
-  return Array.isArray(spec?.swap) && spec.swap.includes(kind);
+export function swapsAtRest(spec, kind, rank = null) {
+  return swapRests(spec, rank).includes(kind);
+}
+
+/**
+ * Which rests a spec allows a swap on, at this rank.
+ *
+ * Two shapes, and a spec says which by what its entries are:
+ *
+ *   flat          `['long']`. Every rank's, which is what four of the five
+ *                 swapping sets carry and what a swap has always been.
+ *   rank-indexed  `[null, ['long'], ['long'], ['long', 'short']]`, the same shape
+ *                 `tiers` beside it already carries. The Spellblade is the first
+ *                 and only one: TWINNED STRIKE hands a Short Rest the swap a Long
+ *                 Rest had, so the *permission* moves with the rank rather than
+ *                 only the size of the hand.
+ *
+ * A rank-indexed spec asked without a rank answers nothing, which is the honest
+ * answer: "may this set swap?" has no reading that is true of every rank. Every
+ * caller that could not have known better is handed one.
+ */
+export function swapRests(spec, rank = null) {
+  const swap = spec?.swap;
+  if (!Array.isArray(swap)) return [];
+
+  const indexed = swap.some((entry) => entry === null || Array.isArray(entry));
+  if (!indexed) return swap;
+
+  const at = swap[Math.max(0, Math.floor(Number(rank) || 0))];
+  return Array.isArray(at) ? at : [];
 }
 
 /**
@@ -647,7 +765,10 @@ export function restSwaps(talents, kind, level = 1, opened = talents, attributes
       continue;
     }
 
-    if (!swapsAtRest(spec, kind)) continue;
+    /* The rank rides along because one spec's permission moves with it: a Master
+       Spellblade may re-choose on a Short Rest and nobody below them may. See
+       swapRests. */
+    if (!swapsAtRest(spec, kind, entry.rank)) continue;
     const state = loadoutState(talents, talent, { level, attributes });
     if (state && state.known > 0) rows.push({ talent, state, mode: 'swap' });
   }

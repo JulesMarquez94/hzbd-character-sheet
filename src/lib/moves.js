@@ -117,6 +117,7 @@ import { heldItem, normalizeEquipment } from './items.js';
 import { isPlainAttack, isWeaponAttack, trickArrow, trickRider } from './tricks.js';
 import { feralLocks, feralRiders, passesForm } from './feral.js';
 import { pactBoonRows, pactState, pactWeaponRiders } from './pact.js';
+import { bladeRiders } from './spellblade.js';
 import { bendsSwing, effectRiders, riderOf } from './riders.js';
 import { mergeSources, sourceRow } from './attribution.js';
 
@@ -392,7 +393,20 @@ export function heldMoves(character) {
     }
   }
 
-  return [...held, ...grantedMoves(character?.talents)];
+  /* ---- and whatever the *actor* brought with it ----
+     Everything above is read off a talents column, which is right for every
+     character and wrong for the one thing on this sheet that swings a weapon and
+     has no talents of its own. Jules, 2026-09-09: "add that the abomination can
+     learn 2 martial move of any rank."
+
+     A creature's moves are chosen the night it is raised and stored on its own
+     row, so they arrive here already resolved, on the actor the prompt was handed
+     (see `minionActor` in minions.js). Rows in the shape everything above hands
+     back, and nobody downstream can tell which of the four sources a row came
+     from. Empty for every character, who has no such field. */
+  const brought = Array.isArray(character?.moves) ? character.moves.filter(Boolean) : [];
+
+  return [...held, ...brought, ...grantedMoves(character?.talents)];
 }
 
 /**
@@ -846,6 +860,13 @@ export function attackModifiers(character, card, base) {
      attacks through this same fold and those are not the pact's. See
      pactWeaponRiders in pact.js. */
   const bound = swings ? pactWeaponRiders(character, card) : null;
+  /* And the Spellblade's bond, when the thing being swung is the weapon they put
+     a hand on. Three clauses of two cards ride here: the Mind the swing is rolled
+     off, the elemental type the blade now deals, and the Adept's extra die. Same
+     narrowing the pact's rider takes, on the card and on the hand both, so a
+     stowed bow opened from the Inventory tab prints its own numbers. See
+     bladeRiders in spellblade.js. */
+  const edge = swings ? bladeRiders(character, card) : null;
   /* And the Feral Curse's form, which grants advantage on every attack roll and
      another die to the natural weapon's own. Read here rather than in
      `weaponRiders` because it hangs on the *shape you are in* and not on the tag
@@ -878,13 +899,16 @@ export function attackModifiers(character, card, base) {
      hand the untouched card back and drop the die size on the way out. */
   const held = (Number(worn?.elevate) || 0) + (Number(worn?.perMove) || 0);
 
-  if (!trick && !laid && !hide && !bound && passive === 0 && held === 0) return base;
+  if (!trick && !laid && !hide && !bound && !edge && passive === 0 && held === 0) return base;
 
   const empower =
     (Number(base?.empower) || 0) +
     (Number(bound?.empower) || 0) +
     (Number(hide?.empower) || 0) +
-    (Number(laid?.empower) || 0);
+    (Number(laid?.empower) || 0) +
+    /* RESONANT EDGE. A different card from every other term here, so it is a
+       different source and it adds, by the stacking law. */
+    (Number(edge?.empower) || 0);
   const elevate =
     (Number(base?.elevate) || 0) +
     (Number(trick?.elevate) || 0) +
@@ -898,7 +922,7 @@ export function attackModifiers(character, card, base) {
      Fire" and neither of them is thrown away. Deduplicated, so a Fire Infusion
      under a KINDLE WEAPON is one Fire. */
   const damage = [...(base?.damage ?? [])];
-  for (const type of laid?.damage ?? []) {
+  for (const type of [...(laid?.damage ?? []), ...(edge?.damage ?? [])]) {
     if (!damage.includes(type)) damage.push(type);
   }
 
@@ -947,12 +971,19 @@ export function attackModifiers(character, card, base) {
        of them actually did, which is what the use prompt prints under the two
        ways. "Everything that is modified need to be seen but only what modifies
        it", 2026-08-28. See attribution.js. */
-    sources: attackSources({ base, worn, hide, bound, laid, trick, character }),
+    sources: attackSources({ base, worn, hide, bound, laid, trick, edge, character }),
     /* The pact's best-attribute rule, riding the swing the way a loadout's
-       `cast` rides a spell. Only when the pact lends one: nothing else on this
-       path moves a card's attribute, and `modifiers.stat` wins over the card's
-       own in every renderer. */
-    ...(bound?.stat ? { stat: bound.stat } : {}),
+       `cast` rides a spell, and the Spellblade's Mind behind it. `modifiers.stat`
+       wins over the card's own in every renderer, so only one of the two may set
+       it.
+
+       **The pact wins where both are on one weapon**, which happens the moment a
+       Spellblade binds their pact-bound blade. FIRST BOON says "your highest
+       Attribute" and BOUND EDGE says "your {mind}", and the highest is Mind or
+       better by definition: letting the newer card win would be the sheet quietly
+       handing back a worse number for something the player just paid two Willpower
+       for. Flagged in data/README.md. */
+    ...(bound?.stat ? { stat: bound.stat } : edge?.stat ? { stat: edge.stat } : {}),
     ...(perMove > 0 ? { perMove, perMoveFrom } : {}),
   };
 }
@@ -986,7 +1017,7 @@ function instinctOf(character) {
  * for the same Finesse weapon that DEXTEROUS lends an arrow for, and only one of
  * those two is changing the swing.
  */
-function attackSources({ base, worn, hide, bound, laid, trick, character }) {
+function attackSources({ base, worn, hide, bound, laid, trick, edge, character }) {
   const held = (worn?.from ?? []).map((row) =>
     sourceRow(row.name ?? row.talent?.name, {
       advantage: row.advantage,
@@ -995,6 +1026,12 @@ function attackSources({ base, worn, hide, bound, laid, trick, character }) {
   );
 
   const sworn = bound?.sources ?? [];
+
+  /* And the binding, which is two rows already: the card that moved the
+     Attribute and the damage type, and the card that added the die. Built in
+     spellblade.js because that is where the rank was read, and merged here
+     beside the bargain for the same reason it sits beside it in the fold. */
+  const edged = edge?.sources ?? [];
 
   const shape = (hide?.from ?? []).map((row) =>
     sourceRow(row.talent?.name, { advantage: row.advantage, empower: row.empower })
@@ -1031,7 +1068,7 @@ function attackSources({ base, worn, hide, bound, laid, trick, character }) {
       ]
     : [];
 
-  return mergeSources(base?.sources ?? [], held, sworn, shape, tracked, stolen);
+  return mergeSources(base?.sources ?? [], held, sworn, edged, shape, tracked, stolen);
 }
 
 /**

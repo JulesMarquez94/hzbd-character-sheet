@@ -99,6 +99,7 @@ import { CARDS, getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
 import { getMartialMove } from './martial.js';
 import { riderOf } from './riders.js';
+import { normalizeBlade } from './spellblade.js';
 import { statusOf } from './statuses.js';
 import { trickAdvantage } from './tricks.js';
 
@@ -397,6 +398,12 @@ export function normalizeEffects(value) {
       // And the fourth: a Martial Move, waiting on the same swing. Same law and
       // the same reason — see moves.js.
       move: normalizeMove(raw.move),
+      // And the fifth: a Spellblade's bond, naming the weapon it was laid on and
+      // the elemental type that weapon now deals. Same law again — it moves the
+      // Attribute a swing is rolled off, so it is cleaned here rather than
+      // trusted. The row ends itself through `until`, like any other. See
+      // spellblade.js.
+      blade: normalizeBlade(raw.blade),
       // And the condition this row *is*, when a card inflicted one: Poisoned,
       // Rooted, a stack of Bleed. Kept only while the glossary knows the word,
       // the same guard `card` gets, because a condition is what riders.js reads
@@ -477,6 +484,8 @@ export function addEffect(effects, entry) {
       // Move waiting on the same swing.
       trick: normalizeTrick(entry?.trick),
       move: normalizeMove(entry?.move),
+      // See normalizeEffects: the Spellblade's bond.
+      blade: normalizeBlade(entry?.blade),
       // See normalizeEffects: the condition a card inflicted.
       status: statusOf(entry?.status) ? String(entry.status) : null,
       // Never on a row being laid: whatever you did a moment ago, you have not

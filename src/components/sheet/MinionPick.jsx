@@ -3,6 +3,7 @@ import Modal from '../Modal.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { damageStyle } from '../../lib/cardText.js';
 import { minionState, setMinionIdentity } from '../../lib/minions.js';
+import { marrowNote, ossuary, undeadOffers } from '../../lib/undead.js';
 import PortraitField from '../images/PortraitField.jsx';
 
 /**
@@ -42,9 +43,12 @@ export function MinionWindow({ character, minion, patch, readOnly = false, onClo
         </>
       }
     >
+      {/* The lead is the spec's when it has one. "A draconic beast has bound its
+          life to yours" is the Draconic Bond's own sentence and is wrong for a
+          body somebody dug up, so a set that means something else says so. */}
       <p className="pick-lead">
-        A {spec.kin ?? 'creature'} has bound its life to yours. Give it a name, say what colour it
-        is, and it stands on your Character tab with two blocks of its own.
+        {spec.lead ??
+          `A ${spec.kin ?? 'creature'} has bound its life to yours. Give it a name, say what colour it is, and it stands on your Character tab with two blocks of its own.`}
       </p>
 
       <label className="form-label" htmlFor="minion-name">
@@ -129,6 +133,14 @@ export default function MinionSection({
 }) {
   const [editing, setEditing] = useState(autoOpen);
 
+  /* A set that hands over a *menu* of bodies has nothing to name at the rank
+     that bought it: taking the Necromancer opens a graveyard, and the first body
+     is raised on a night, over a corpse, with a name chosen in the window that
+     raises it. So this says what the pool holds and what it can stand up, and the
+     way in is a Long Rest rather than a button. See undead.js. */
+  const grave = ossuary(character, talent.id);
+  if (grave) return <OssuarySection state={grave} />;
+
   const minion = minionState(character).find((row) => row.id === talent.id);
   if (!minion) return null;
 
@@ -167,6 +179,61 @@ export default function MinionSection({
           readOnly={readOnly}
           onClose={() => setEditing(false)}
         />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The Ossuary as the Advancement tab shows it: what the pool holds, what is
+ * standing in it, and what a night could stand up.
+ *
+ * No button, and that is the whole point of it. Every other section on this tab
+ * is a way into a choice, and this one is a *readout*: a body is raised with a
+ * Long Rest action over a corpse, so the way in is the rest window and nowhere
+ * else. What this has to do is say so, and say what the rank just opened, which
+ * is the question a Necromancer taking Rank 2 or Rank 3 is actually asking.
+ */
+function OssuarySection({ state }) {
+  const { spec, total, spent, left, bodies, burden, owed } = state;
+  const offers = undeadOffers(state);
+  const open = offers.filter((offer) => offer.ok);
+  const shut = offers.filter((offer) => !offer.ok && offer.gate === 'rank');
+
+  return (
+    <div className="pick-part">
+      <span className="talent-summary-label">
+        {spec.label}
+        <span className={`pick-count${left > 0 ? ' is-open' : ''}`}>
+          {spent} of {total} {spec.resource ?? 'Marrow'} spent
+        </span>
+      </span>
+
+      <p className="pick-line">
+        {bodies.length === 0
+          ? `Nothing raised. ${marrowNote(state, offers)} Raising one is a Long Rest action, over a corpse, and it is named in the window that raises it.`
+          : `${bodies.length} ${bodies.length === 1 ? 'body' : 'bodies'} standing, ${
+              bodies.length === 1 ? 'each' : 'all'
+            } with two blocks on your Character tab. ${marrowNote(state, offers)}`}
+      </p>
+
+      {open.length > 0 && (
+        <p className="pick-line">
+          Within reach: {open.map((offer) => `${offer.kind.label} at ${offer.cost}`).join(' · ')}.
+        </p>
+      )}
+
+      {shut.length > 0 && (
+        <p className="pick-line">
+          A higher rank opens {shut.map((offer) => offer.kind.label.toLowerCase()).join(' and ')}.
+        </p>
+      )}
+
+      {owed > 0 && (
+        <p className="pick-notice">
+          {owed} of your maximum Willpower is in {bodies.length === 1 ? 'it' : 'them'}, at {burden} a
+          body. It comes back with any body you lay to rest.
+        </p>
       )}
     </div>
   );

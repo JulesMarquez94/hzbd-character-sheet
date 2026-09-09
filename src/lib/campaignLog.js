@@ -290,13 +290,18 @@ export async function claimReaction(campaignId, event) {
  * of what was done rather than a separate act: since 2026-09-02 a move is not its
  * own use, so it writes no row of its own and "Strike" alone would be the log
  * losing the half of the swing the player chose. See UsePrompt.jsx.
+ *
+ * `spells` is the same thing for a Spellblade: what the bound weapon carried in
+ * on the swing. Named apart from the moves because they are two different things
+ * happening to one attack and the row says which is which, "with Reckless,
+ * carrying Fireball", rather than running four names together under one word.
  */
 export function playEvent(
   request,
   character,
   mode,
   amount,
-  { free = false, price = null, chain = null, targets = [], moves = [] } = {}
+  { free = false, price = null, chain = null, targets = [], moves = [], spells = [] } = {}
 ) {
   const ap = Number(price?.ap ?? amount ?? request?.ap) || 0;
   const wp = Number(price?.wp ?? request?.wp) || 0;
@@ -317,6 +322,9 @@ export function playEvent(
     /* What rode the swing, first, because it is the only part of this line that
        is about *what happened* rather than about what it cost. */
     moves.length > 0 ? `with ${listAnd(moves)}` : null,
+    /* And what it carried, which is the same clause about a different kind of
+       thing: a move changed the swing and a spell arrived on the back of it. */
+    spells.length > 0 ? `carrying ${listAnd(spells)}` : null,
     free
       ? 'Waved through by the table'
       : moved

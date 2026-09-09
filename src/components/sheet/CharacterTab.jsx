@@ -8,6 +8,8 @@ import LoadoutBlock from './LoadoutBlock.jsx';
 import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
 import PactBlock from './PactBlock.jsx';
 import PassiveBlock from './PassiveBlock.jsx';
+import BladeBlock from './BladeBlock.jsx';
+import OssuaryBlock from './OssuaryBlock.jsx';
 import RuneBlock from './RuneBlock.jsx';
 import TurnBlock from './TurnBlock.jsx';
 import {
@@ -45,6 +47,8 @@ import { feralBlockIds, feralState } from '../../lib/feral.js';
 import { minionBlockIds, minionState } from '../../lib/minions.js';
 import { pactBlockIds, pactState } from '../../lib/pact.js';
 import { runeBlockIds, runeState } from '../../lib/runes.js';
+import { marrowState, ossuaryBlockIds } from '../../lib/undead.js';
+import { bladeBlockIds, bladeState } from '../../lib/spellblade.js';
 import { statMath } from '../../lib/statMath.js';
 import { normalizeTalents } from '../../lib/talents.js';
 import { viewUrl } from '../../lib/imageViews.js';
@@ -205,6 +209,19 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      Rest. There for as long as the set is held. See runes.js. */
   const slates = useMemo(() => runeState(character), [character]);
 
+  /* And the graveyards. One block each: the Marrow, every body it is holding and
+     the press that wakes them. The bodies themselves are creatures and get their
+     own two blocks apiece through `minions` above, which is why this tab is now
+     the first thing on the sheet whose block count moves inside a session: a
+     Necromancer who raises a ghoul tonight has two more blocks in the morning.
+     See undead.js. */
+  const graves = useMemo(() => marrowState(character), [character]);
+
+  /* And the bindings. One block each: what weapon a set has been put on, what it
+     now deals, and which spells a strike with it can carry in. There for as long
+     as the set is held, whether or not anything is bound. See spellblade.js. */
+  const edges = useMemo(() => bladeState(character), [character]);
+
   /* And the tables this character sits at. One log block each, there for as
      long as the membership is: a sheet linked to no campaign has none of them
      and is exactly the sheet it always was. Read by the page rather than here,
@@ -218,6 +235,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ...feralBlockIds(character),
       ...pactBlockIds(character),
       ...runeBlockIds(character),
+      ...ossuaryBlockIds(character),
+      ...bladeBlockIds(character),
       ...tables.map((table) => `log:${table.id}`),
       /* And the fight at each of those tables, beside its log: the same order
          the Game Master's runner draws, read off the announcements. There
@@ -296,6 +315,17 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           : { name: String(id), note: null };
       }
 
+      const edged = /^blade:(.+)$/.exec(String(id));
+      if (edged) {
+        const edge = edges.find((row) => row.id === edged[1]);
+        return edge
+          ? {
+              name: edge.spec.label,
+              note: `${edge.talent.name}: the weapon you have bound, and what it carries`,
+            }
+          : { name: String(id), note: null };
+      }
+
       const struck = /^pact:(.+)$/.exec(String(id));
       if (struck) {
         const pact = pacts.find((row) => row.id === struck[1]);
@@ -303,6 +333,17 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           ? {
               name: pact.kind ? pact.kind.label : pact.spec.label,
               note: `${pact.talent.name}: the bar, the boons and the missions`,
+            }
+          : { name: String(id), note: null };
+      }
+
+      const buried = /^ossuary:(.+)$/.exec(String(id));
+      if (buried) {
+        const grave = graves.find((row) => row.id === buried[1]);
+        return grave
+          ? {
+              name: grave.spec.label,
+              note: `${grave.talent.name}: the ${(grave.spec.resource ?? 'Marrow').toLowerCase()}, the risen and the Command`,
             }
           : { name: String(id), note: null };
       }
@@ -321,7 +362,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             note: `${minion.spec.label}: attributes, defenses, Health and Shield`,
           };
     },
-    [minions, forms, pacts, slates, tables]
+    [minions, forms, pacts, slates, edges, graves, tables]
   );
 
   /* Arranging happens in a modal rather than on the tab itself. Dragging a
@@ -657,6 +698,27 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ])
     ),
 
+    /* ============ A BINDING'S ONE ============
+       Only there when a set puts its magic into a weapon. What is bound, what it
+       deals, and the spells a strike with it carries in. */
+    ...Object.fromEntries(
+      edges.map((edge) => [
+        `blade:${edge.id}`,
+        <BladeBlock character={character} state={edge} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
+    /* ============ A GRAVEYARD'S ONE ============
+       Only there when a set keeps one. The Marrow, every body it is holding, and
+       the two Action Points that wake them. The bodies get their own two blocks
+       apiece above, the same as any other creature. */
+    ...Object.fromEntries(
+      graves.map((grave) => [
+        `ossuary:${grave.id}`,
+        <OssuaryBlock character={character} state={grave} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
     /* ============ A TABLE'S TWO ============
        Only there when this character is linked to a campaign, one pair per
        campaign: what the whole party has been doing, and the fight the runner
@@ -724,6 +786,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
                 String(id).startsWith('pact:') ? ' cell-pact' : ''
               }${
                 String(id).startsWith('rune:') ? ' cell-rune' : ''
+              }${String(id).startsWith('blade:') ? ' cell-blade' : ''}${
+                String(id).startsWith('ossuary:') ? ' cell-ossuary' : ''
               }`}
             >
               {blocks[id]}

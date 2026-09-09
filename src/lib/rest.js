@@ -71,7 +71,16 @@ import { normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
 import { characterSkillGrantSources, normalizeLevelPicks } from './levelPicks.js';
 import { pickChanges, restSwaps } from './loadouts.js';
-import { minionRest } from './minions.js';
+import { addMinion, dropMinion, minionRest } from './minions.js';
+import {
+  marrowNote,
+  ossuary,
+  raiseBody,
+  raiseDraft,
+  raiseLines,
+  undeadOffers,
+  undeadRaises,
+} from './undead.js';
 import { feralRest } from './feral.js';
 import {
   changeCost,
@@ -455,6 +464,29 @@ export function restActions(character, kind, talents = character?.talents) {
     });
   }
 
+  /* ---- and what stood up in the night ----
+     RAISE THE DEAD: "Whenever you take a Long Rest, you can use your Long Rest
+     action to raise one undead over a fresh corpse." One a night, which is the
+     designer's own limit ("only one undead at a time can be done") and is
+     exactly what this slot already is: a rest buys one action, so the limit
+     needed nothing of its own.
+
+     Offered even with an Ossuary too full to take anything, because opening the
+     menu is how a Necromancer reads their Marrow, and the note is what says how
+     much is left. The step refuses each kind with its own reason. See
+     undead.js. */
+  for (const { state, offers } of undeadRaises(character, kind)) {
+    rows.push({
+      id: `raise:${state.id}`,
+      kind: 'raise',
+      label: state.spec.raising ?? `Raise ${plural(state.spec.noun, 1)}`,
+      from: `${state.talent.name} · ${state.spec.label}`,
+      note: marrowNote(state, offers),
+      state,
+      offers,
+    });
+  }
+
   return rows;
 }
 
@@ -495,6 +527,47 @@ function researchNote(state, mode) {
   return `${held} of ${state.capacity} ${kept}. Tonight adds one more.`;
 }
 
+
+/**
+ * Tonight's raising, read off the window's draft, or null for every night that
+ * is not spending its action on one.
+ *
+ * The draft is `{ set, kind, name, portrait_url, corpse, spells, moves }`, which
+ * is what the step collects. Everything about whether it is *allowed* is
+ * undead.js's, asked here rather than trusted: a draft that names a kind above
+ * the rank, or one the Ossuary cannot pay for, or one with a question still open,
+ * is no raising at all and the rest goes ahead without it.
+ *
+ * `over` is the body this one is being raised out of, when its keeper chose their
+ * own remains as the corpse. It leaves the column in the same patch.
+ */
+export function raisePlan(character, kind, raised) {
+  if (!raised?.set || !raised?.kind) return null;
+
+  const state = ossuary(character, raised.set);
+  if (!state || !(state.spec.rests ?? ['long']).includes(kind)) return null;
+
+  const offer = undeadOffers(state).find((row) => row.kind.id === raised.kind);
+  if (!offer) return null;
+
+  const draft = raiseDraft(state, offer, raised);
+  if (!draft.ready) return null;
+
+  const name = String(raised.name ?? '').trim().slice(0, 60);
+
+  return {
+    state,
+    draft,
+    name,
+    portrait_url: raised.portrait_url ?? null,
+    /* Which of their own the new body comes out of, or null. Settled by
+       `raiseDraft`, which holds it to a body this Ossuary actually has and
+       refuses the whole raising without one: a stale id off an earlier draft
+       must never delete somebody else's creature, and it must not buy a free
+       corpse either. */
+    over: draft.corpse === 'remains' ? draft.over : null,
+  };
+}
 
 /**
  * Whether one more thing could be laid, given that the rest itself is paid for
@@ -545,7 +618,7 @@ export function restPlan(
   prepared = null,
   brews = [],
   reshaped = null,
-  { free = false, revived = [] } = {}
+  { free = false, revived = [], raised = null } = {}
 ) {
   const rest = getRest(kind);
   if (!rest) return null;
@@ -647,6 +720,29 @@ export function restPlan(
           ? still.batch > 1
             ? `Components out of the crate, at ${row.price} a brew. Your still fills ${still.batch} flasks off each one.`
             : 'Components out of the crate. The flask goes in your pack.'
+          : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
+      tone: supplies >= 0 ? 'cost' : 'warn',
+    });
+  }
+
+  /* ---- and the corpse, if one had to be built ----
+     "If he doesn't have a fresh corpse, making an undead costs a hundred
+     Supplies." The largest single thing a rest can spend, so it is a line of its
+     own with the reason on it rather than a hundred Supplies quietly missing from
+     the crate. Priced here, among the supply movements, so a rest that cannot
+     cover it is refused with everything else. The body itself is written further
+     down, once the crate has agreed to it. See undead.js. */
+  const raising = raisePlan(character, kind, raised);
+  if (raising?.draft.supplies > 0) {
+    const before = supplies;
+    move(-raising.draft.supplies, `A corpse built for ${raising.name}`);
+
+    lines.push({
+      key: 'raise-supplies',
+      label: `A corpse to work on: ${raising.draft.supplies} Supplies`,
+      detail:
+        supplies >= 0
+          ? 'Out of the crate. There was no fresh body, so one is made.'
           : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
       tone: supplies >= 0 ? 'cost' : 'warn',
     });
@@ -925,6 +1021,32 @@ export function restPlan(
       // One slot, one action: the first pact with a weapon takes the night.
       break;
     }
+  }
+
+  /* ---- and what stood up over the fire ----
+     The body, written last of the choices because it is the only one that adds a
+     row rather than changing one, and because two of its three lines are about
+     what the row *costs*: the Marrow is spent by the row existing and the
+     Willpower comes off the maximum on the very next render. Neither is written
+     anywhere. See "no column of its own" in undead.js.
+
+     A body raised out of its own remains takes the wreck with it. That is what
+     DEEPER GRAVES buys, and it is why the two writes are one: raising over a
+     corpse that is still on your sheet has to clear it, or the Marrow it was
+     holding is never given back. */
+  if (raising) {
+    const { state, draft, name, portrait_url, over } = raising;
+
+    if (over) Object.assign(patch, dropMinion({ ...character, minions: patch.minions ?? character?.minions }, over) ?? {});
+
+    const { patch: body } = addMinion(
+      { ...character, minions: patch.minions ?? character?.minions },
+      state.id,
+      draft.kind.id,
+      raiseBody(draft, { name, portrait_url })
+    );
+    Object.assign(patch, body);
+    lines.push(...raiseLines(state, draft, name));
   }
 
   /* ---- what the rest ends ---- */

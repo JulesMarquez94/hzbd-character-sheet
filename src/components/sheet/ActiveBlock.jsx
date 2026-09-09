@@ -7,10 +7,12 @@ import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
 import StealWindow from './StealWindow.jsx';
+import { BladeBind } from './BladeBlock.jsx';
 import { moveCount, quickBar } from '../../lib/combatBar.js';
 import { barAccent } from '../../lib/tagColors.js';
 import { usePlayCard } from './usePlayCard.js';
 import { brewSetFor } from '../../lib/brews.js';
+import { bladeState } from '../../lib/spellblade.js';
 import { trickSetFor } from '../../lib/tricks.js';
 
 /**
@@ -59,6 +61,12 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
      it turned out to have nothing to ask: it rides the one plain attack a weapon
      teaches, so the chip knows the price and pays it. See src/lib/tricks.js. */
   const [stealing, setStealing] = useState(null);
+  /* The Spellblade's window, or null. It opens *before* anything is paid, the
+     way the Ephemeral Enchantment shelf does and for the same reason: BOUND EDGE
+     asks which weapon and which of the three, and a use charged before the
+     questions can be answered is one that can be backed out of for two
+     Willpower. See BladeBlock.jsx. */
+  const [binding, setBinding] = useState(null);
 
   // Paying, telling the table and rolling, in one place. See usePlayCard.js.
   const play = usePlayCard({ character, patch });
@@ -73,6 +81,17 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
        action-or-reaction question once the cost is actually known. */
     if (move.pays === 'window' && move.opens === 'ephemeral') {
       setEnchanting(true);
+      return;
+    }
+
+    /* And the binding pays in its own window for the same reason. Matched on the
+       card, because a sheet holding two blade sets holds two bonds and each card
+       binds its own. */
+    if (move.pays === 'window' && move.opens === 'blade') {
+      const state = bladeState(character).find((row) =>
+        row.talent.cards.some((card) => card.id === move.card?.id)
+      );
+      if (state) setBinding(state);
       return;
     }
 
@@ -177,6 +196,15 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
           patch={patch}
           readOnly={readOnly}
           onClose={() => setEnchanting(false)}
+        />
+      )}
+
+      {binding && (
+        <BladeBind
+          character={character}
+          state={binding}
+          patch={patch}
+          onClose={() => setBinding(null)}
         />
       )}
 

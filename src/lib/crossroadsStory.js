@@ -1,8 +1,8 @@
 /**
  * The Crossroads, told as a story.
  *
- * A run of twelve answers used to be written into the backstory as twelve
- * sentences, one after another, which reads as a trace of what was clicked.
+ * A run's answers used to be written into the backstory one sentence each,
+ * one after another, which reads as a trace of what was clicked.
  * Jules, 2026-09-08: "instead of directly narrating the trace of players as
  * made, for each of the seven sections it takes all the choices and makes a
  * little summary like a narration, something that makes more like a short
@@ -16,8 +16,8 @@
  *                 variants so two stories do not start every paragraph alike
  *   the beats     what you did, one sentence an answer, from the question's
  *                 `recall` and the answer's `told`. The second beat onward is
- *                 led in with a connective, so four road answers read as a run
- *                 of events rather than a list
+ *                 led in with a connective, so the road's two answers read as a
+ *                 run of events rather than a list
  *   a closing     the summary Jules asked for: what that chapter says about the
  *                 person. Childhood, Home, Youth and The Road close on the way
  *                 the chapter's answers leant (Physique, Instinct, Mind or a mix
@@ -88,7 +88,7 @@ export const STAGE_FRAMES = {
   blood: {
     opens: [
       'There were moments when something in you showed, and you learned young not to explain them.',
-      'Twice at least, the blood did the deciding before you could.',
+      'Once at least, the blood did the deciding before you could.',
     ],
     /* Closed on the lineage the run made. See LINEAGE_CLOSES. */
     closes: null,
@@ -122,7 +122,7 @@ export const STAGE_FRAMES = {
       physique: 'Every time the road asked, you answered with your feet planted and your hands ready.',
       instinct: 'Every time the road asked, you were already moving before the question was finished.',
       mind: 'Every time the road asked, you thought first, and it was the thinking that got you through.',
-      mixed: 'The road asked in four different voices, and you did not answer in the same one twice. You were never only one thing.',
+      mixed: 'The road asked twice in two different voices, and you did not answer either of them the same way. You were never only one thing.',
     },
   },
   leaving: {
@@ -179,6 +179,8 @@ export const TALENT_CLOSES = {
   'draconic-bond': 'The creature would not stay behind, and you did not ask it to.',
   pactbound: 'The debt came with you. It always does.',
   runebearer: 'What you took with you was already on you, and it will be there when everything else is gone.',
+  spellblade: 'You went out with a hand on the hilt and the other half of it in your head.',
+  necromancer: 'You did not leave alone, and what walked out behind you had been in the ground that morning.',
 };
 
 /* ----------------------------------------------------------- who you became */
@@ -221,6 +223,8 @@ export const TALENT_PHRASES = {
   'draconic-bond': 'a creature at heel that would not be left behind',
   pactbound: 'a debt signed in something that was not ink',
   runebearer: 'a sleeve full of marks that warm when they are wanted',
+  spellblade: 'a plain weapon that does not stay plain once a hand is on it',
+  necromancer: 'a way of looking at the dead as though they were still owed work',
 };
 
 const BECAME_OPENS = ['That is how', 'So it was that'];

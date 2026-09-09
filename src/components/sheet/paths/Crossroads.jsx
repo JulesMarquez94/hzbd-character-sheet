@@ -31,7 +31,7 @@ import { enchantingOf, rankInfo } from '../../../lib/talents.js';
  * The Crossroads: making a character by answering for them.
  *
  * The fourth of the four ways in, and the one for anybody who would rather be
- * asked about a life than shown a wall of choosers. Twelve questions in seven
+ * asked about a life than shown a wall of choosers. Eight questions in seven
  * stages, one at a time, each a fork with a handful of answers. Nothing is
  * written to the row while you answer; the points land in the run, and the run
  * is two small values in this tab's own storage so a refresh does not lose it.

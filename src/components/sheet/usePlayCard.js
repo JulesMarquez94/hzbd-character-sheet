@@ -167,7 +167,27 @@ export function usePlayCard({ character, patch }) {
          adds links rather than replacing them. `price` is what says it was
          taken, exactly as in playEvent. */
       const half = Boolean(options.price);
-      const links = rollPlan(request?.card, actor, request?.modifiers, { half });
+
+      /* And the spells a Spellblade carried in on the swing, each rolling what it
+         rolls after the attack has rolled what it rolls.
+
+         **Their own checks are dropped, which is POINT OF IMPACT as arithmetic**:
+         "It needs no Roll of its own: the Attack Roll carries it, and it lands."
+         So only the `value` links survive, and they queue behind the swing's.
+
+         The miss rule then enforces itself and nothing here had to say so. A
+         chain stops dead at a failed check, so a spell carried in on an attack
+         that missed rolls nothing at all, which is exactly what "whenever you
+         land an attack" asks for. The Willpower still went, because payment is
+         unconditional on this sheet and always has been. See spellblade.js. */
+      const carriedLinks = (options.carried ?? []).flatMap((row) =>
+        rollPlan(row?.card, actor, row?.modifiers).filter((link) => link.shape === 'value')
+      );
+
+      const links = [
+        ...rollPlan(request?.card, actor, request?.modifiers, { half }),
+        ...carriedLinks,
+      ];
 
       /* Every check aimed at the picked targets carries what it is judged by:
          one shared number opens the surface saying "against 15", and differing

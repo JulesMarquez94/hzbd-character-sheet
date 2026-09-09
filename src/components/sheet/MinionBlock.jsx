@@ -97,18 +97,30 @@ const TOP_LINE = [
     key: 'defense',
     label: 'Armor',
     color: 'var(--stat-armor)',
-    info: 'Flat damage reduction. Nothing for a creature: it wears no gear.',
+    info: 'Flat damage reduction. Nothing for most creatures: they wear no gear, and what a body rose in is printed on it and cannot be changed.',
   },
 ];
 
 /* Defense is the one line that is not the character's own formula. The
-   Developpement Notes: "the draconic ally has a Defense equal to its Grit." */
+   Developpement Notes: "the draconic ally has a Defense equal to its Grit."
+   Which stat a body answers on is its own spec's, so the tooltip names it off
+   the spec rather than naming the ally's: an undead knight answers on its Reflex
+   and an abomination on bare Physique. See `minionDerived` in minions.js. */
+const DEFENSE_WORDS = {
+  grit: 'its Grit',
+  reflex: 'its Reflex',
+  physique: 'its Physique',
+  instinct: 'its Instinct',
+  mind: 'its Mind',
+};
+
 const DEFENSE_LINE = [
   {
     key: 'avoid',
     label: 'Defense',
     color: 'var(--focus-cyan)',
-    info: 'How difficult it is to hit. A draconic ally’s is equal to its Grit.',
+    info: 'How difficult it is to hit.',
+    from: 'defense',
   },
   {
     key: 'reflex',
@@ -189,16 +201,22 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
           </span>
 
           <span className="minion-tags">
-            {minion.scale ? (
-              <span
-                className="minion-chip minion-chip-scale"
-                style={tone ? { '--scale-tone': tone.color } : undefined}
-              >
-                {minion.scale.label} · {minion.scale.damage}
-              </span>
-            ) : (
-              <span className="minion-chip is-open">No colour chosen</span>
-            )}
+            {/* The colour chip, and only for a body that has a colour to choose.
+                Every undead in the codex has none: a ghoul is a ghoul, and
+                "No colour chosen" on one would be an open question nobody can
+                ever answer. Asked of the spec rather than of the row, so the
+                unanswered state still shows for a creature that does. */}
+            {(spec.scales?.options?.length ?? 0) > 0 &&
+              (minion.scale ? (
+                <span
+                  className="minion-chip minion-chip-scale"
+                  style={tone ? { '--scale-tone': tone.color } : undefined}
+                >
+                  {minion.scale.label} · {minion.scale.damage}
+                </span>
+              ) : (
+                <span className="minion-chip is-open">No colour chosen</span>
+              ))}
             <span className="minion-chip">{minion.talent.name}</span>
 
             {/* "If its health reach 0 it instantly is shown as dead, it cannot
@@ -259,12 +277,16 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
 
       {/* ---------- AND THE DEFENSES, UNDER THE SAME HEADING ---------- */}
       <div className="attr-row">
-        {DEFENSE_LINE.map(({ key, label, color, info }) => (
+        {DEFENSE_LINE.map(({ key, label, color, info, from }) => (
           <StatBox
             key={key}
             label={label}
             color={color}
-            info={info}
+            info={
+              from === 'defense'
+                ? `${info} This one’s is equal to ${DEFENSE_WORDS[spec.defense ?? 'instinct'] ?? 'its Instinct'}.`
+                : info
+            }
             math={math[key]}
             value={Math.floor(Number(stats[key]) || 0)}
           />
@@ -466,6 +488,20 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
         <p className="minion-down">{minion.spec.down ?? 'It is down and cannot act.'}</p>
       )}
 
+      {/* And a body that has to be woken says whether it has been. "Having the
+          undead minion act requires the necromancer to spend two Action Points
+          to use the Command action. They're not autonomous." So the chips are
+          refused until the press has been made, with the reason on the line
+          rather than on each of them: what is missing is one thing, and it is
+          not on this block. `commanded` is null for every creature the question
+          does not apply to, which is every creature but an undead. See
+          `commandedBy` in minions.js. */}
+      {minion.commanded === false && !minion.down && (
+        <p className="minion-down">
+          Not commanded. Spend the Command on your own turn and it can act until your Turn End.
+        </p>
+      )}
+
       {/* ---------- WHAT IT CAN PLAY ----------
           Its own share of the block's leftover height, and it scrolls inside
           itself rather than pushing the tracker off the bottom. */}
@@ -489,7 +525,7 @@ export function MinionActionsBlock({ character, minion, patch, readOnly = false 
                     <BarChip
                       key={move.key}
                       move={move}
-                      readOnly={readOnly || minion.down}
+                      readOnly={readOnly || minion.down || minion.commanded === false}
                       onUse={() =>
                         setRequest({
                           name: move.card?.name ?? move.name,

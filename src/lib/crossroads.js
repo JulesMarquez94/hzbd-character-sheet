@@ -2,7 +2,7 @@
  * The Crossroads: a run of questions, the points they leave and the character
  * they add up to.
  *
- * The fourth way to make a character. You are put in twelve moments of the
+ * The fourth way to make a character. You are put in eight moments of the
  * life you led, across seven stages, and asked what you do in each; every
  * answer puts points on the things a character is made of. When the last one is
  * answered the points are counted and the drifter is made at level 2, with both
@@ -63,7 +63,7 @@
  *
  * Where nothing was scored at all, the count falls back on the highest
  * attribute: a set that leans on it, a lineage that raises it, the armor and
- * weapon crossroadsPool.js lists for it. A run of twelve answers never gets
+ * weapon crossroadsPool.js lists for it. A run of eight answers never gets
  * that far in practice, and the fallback is there so the outcome is always a
  * whole character.
  *

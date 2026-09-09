@@ -90,7 +90,8 @@ import { lineageGrantSources } from './lineages.js';
 import { weaponRiders } from './moves.js';
 import { runningRiders } from './riders.js';
 import { spellbookWillpowerFrom } from './spellbook.js';
-import { runeWillpowerFrom } from './runes.js';
+import { runeDebtFrom, runeWillpowerFrom } from './runes.js';
+import { undeadBurdenFrom } from './undead.js';
 import { pointCeilings, tricksterOf } from './tricks.js';
 
 /* Speed is the one stat whose formula is written in metres and printed in either
@@ -441,24 +442,50 @@ export function statMath(character) {
     Math.floor(Number(character.health_max) || 0)
   );
 
+  /* Willpower is the one line with a term that comes *off*, so it is built in two
+     passes rather than one list. Everything that adds is worked out first, and
+     the debt a slate of runes holds is floored against that sum, exactly as
+     `deriveStats` floors it. A floor applied in one file and not the other is the
+     drift this whole script exists to catch: the tile would read `unaccounted`. */
+  const willpowerAdds = [
+    term(10, 'base'),
+    term(2 * level, 'your level'),
+    term(2 * m, 'Mind'),
+    ...grantTerms(sources, 'willpowerMax'),
+    ...riderTerms(character.effects, 'willpowerMax'),
+    /* Named after the set and not the card, the way a form's hide is: what a
+       reader wants from a Willpower of 62 is the word "Arcanist", and the set
+       is what they can go and look at. */
+    ...spellbookWillpowerFrom(character.talents).map((row) => term(row.willpower, row.talent.name)),
+    /* And the same for what a slate of runes lends back, named after its set for
+       the same reason. See runes.js. */
+    ...runeWillpowerFrom(character.talents, { physique: p, instinct: i, mind: m }).map((row) =>
+      term(row.willpower, row.talent.name)
+    ),
+  ];
+
+  /* And the two things that come off, in the order `deriveStats` takes them off:
+     the runes first, then the bodies out of whatever is left. Both floored
+     against the same room, which is what keeps this breakdown from disagreeing
+     with the column it is promising to add up to. */
+  const room = willpowerAdds.reduce((total, row) => total + row.value, 0);
+  const inscribed = runeDebtFrom(character.talents, room);
+  const owed = inscribed.reduce((total, row) => total + row.willpower, 0);
+
   math.willpower_max = settle(
     [
-      term(10, 'base'),
-      term(2 * level, 'your level'),
-      term(2 * m, 'Mind'),
-      ...grantTerms(sources, 'willpowerMax'),
-      ...riderTerms(character.effects, 'willpowerMax'),
-      /* Named after the set and not the card, the way a form's hide is: what a
-         reader wants from a Willpower of 62 is the word "Arcanist", and the set
-         is what they can go and look at. */
-      ...spellbookWillpowerFrom(character.talents).map((row) =>
-        term(row.willpower, row.talent.name)
-      ),
-      /* And the same for a slate of runes, named after its set for the same
-         reason: what a reader wants from a Willpower of 38 is the word
-         "Runebearer". See runes.js. */
-      ...runeWillpowerFrom(character.talents, { physique: p, instinct: i, mind: m }).map((row) =>
-        term(row.willpower, row.talent.name)
+      ...willpowerAdds,
+      /* What the runes are holding. Named for the runes rather than for the
+         set, because the set is already on the line above it giving Willpower
+         back: "8 Runebearer − 14 runes inscribed" is two facts a reader can act
+         on, where one folded "−6 Runebearer" is neither. */
+      ...inscribed.map((row) => term(-row.willpower, 'runes inscribed')),
+      /* And what an Ossuary is holding, named the same way and for the same
+         reason: what a reader wants of a Willpower gone quietly missing is the
+         word "bodies", and the block beside it is where they can go and count
+         them. See undead.js. */
+      ...undeadBurdenFrom(character, { physique: p, instinct: i, mind: m }, room - owed).map(
+        (row) => term(-row.willpower, row.bodies === 1 ? 'a body raised' : `${row.bodies} bodies raised`)
       ),
     ],
     Math.floor(Number(character.willpower_max) || 0)
@@ -736,11 +763,17 @@ export function minionMath(minion) {
       stats.health_max
     ),
     /* One term each, so `mathLine` prints nothing: a creature's Shield is half
-       its Health and nothing moves either, and its Armor is flat zero because it
-       wears no gear. In the map anyway, so a tile never has to ask whether a
-       breakdown exists for the stat it is drawing. */
+       its Health and nothing moves either. In the map anyway, so a tile never has
+       to ask whether a breakdown exists for the stat it is drawing. */
     shield_cap: settle([term(stats.shield_cap, 'half its Health')], stats.shield_cap),
-    defense: settle([], stats.defense),
+    /* Armor is almost always nothing, because a creature wears no gear and there
+       is nowhere on the sheet to give it any. The exception is a body that rose
+       in plate: the Necromancer's undead knight carries a printed 3, so the term
+       is named for the body rather than left empty. See `armor` in minions.js. */
+    defense: settle(
+      stats.defense > 0 ? [term(stats.defense, 'what it rose in')] : [],
+      stats.defense
+    ),
     avoid: settle([built], stats.avoid),
     initiative: settle([term(i, 'Instinct'), term(level, 'its level')], stats.initiative),
     reflex: settle([term(p, 'Physique'), term(i, 'Instinct')], stats.reflex),

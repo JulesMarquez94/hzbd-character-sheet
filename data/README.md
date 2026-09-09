@@ -13798,3 +13798,477 @@ line to change: `runes.recharge.rest` in `talents.js`.
   `restPlan` on both rests and `abilitySources`: capacity 16, two runes fired, the chips priced
   1 Action Point with the printed 3 and 2 struck through, the Short Rest bringing both back for
   4 of a budget of 8, and the Long Rest bringing them back on its own.
+
+## The Runebearer pays again, and stops being carved, 2026-09-09
+
+Two changes the morning after, both Jules's: **"reduce the maximum willpower so that the
+spell cost is baked in"**, and a wording ruling on how a rune gets onto the skin.
+
+### The Willpower is back
+
+The 2026-09-08 build dropped the permanent maximum-Willpower cost and left the rune count as
+the only limit. It is restored, and the count stays: a Runebearer is held twice over, by how
+many runes will fit and by what they are worth, and the two limits are different shapes on
+purpose. An inscribed spell lowers the maximum by its own printed Willpower cost for as long
+as it is on you, which is what makes firing one cost nothing. It was paid the night it went on.
+
+- `runeDebtFrom` in `src/lib/runes.js` is the whole of it. **Never stored**, always computed
+  off the pick list, which is the conversion workbook's own insistence: "store the number and
+  one bad edit costs a player their Willpower for good."
+- It is **the only term on this sheet that comes off a derived maximum**, so `deriveStats`
+  now works Willpower out in two passes rather than one expression: everything that adds
+  first, then the debt floored against that sum. `statMath` does the same two passes against
+  the same floor, because a floor in one file and not the other reads as `unaccounted` on the
+  tile, which is exactly what `lint:math` exists to catch.
+- The tile's line now reads, for a Rank 3 Physique 8 Runebearer at level 8 with three runes
+  on: `10 base + 20 your level + 8 Mind + 8 Runebearer − 8 runes inscribed = 38`. The debt is
+  named for the runes rather than for the set, because the set is already on the line above it
+  giving Willpower back, and one folded "−0 Runebearer" would be neither fact.
+- The block prints the total under the slate and turns it red the moment the maximum runs
+  out: "Your maximum Willpower is gone. The runes on you are worth 75, which is more than you
+  had to give." The workbook asked for exactly that, that it never be a silent trap.
+- `lint:math`'s fifteenth sheet now asserts both halves: `+8 Runebearer` off the worn Physique
+  and `−6 runes inscribed` off Barkskin at 2 and Heal at 4.
+
+**The floor is a repair, not a rule, and it is open.** A slate worth more than the maximum
+floors at zero rather than going negative, which means anything inscribed past that point is
+free. The alternative is refusing the inscription outright, and that is Jules's call. What the
+sheet does today is let a Runebearer spend themselves down to nothing on purpose (which the
+Overview's own "set of switches" reading allows) and say so in red when they have.
+
+### Nothing is carved, and nothing is a tattoo
+
+"The carving, the wounds on the skin, is not [right] ... but don't use the word tattoo",
+and the capacity line "sounds like you pretty need some more skin." All three complaints are
+about the same thing: the sheet had committed to a *tool*.
+
+**A rune is inscribed.** That is the old printed cards' own verb, it says nothing about what
+did the work, and the sheet now never names one. Everything that read cut, carve, scar,
+needle or ink is gone, from the cards to the code comments to the Crossroads scene id.
+
+| Was | Is |
+| --- | --- |
+| "You cut spells into your own skin" | "You inscribe spells on your own skin" |
+| "cut one spell in, cut one away" | "inscribes one, removes one or does both" |
+| "3 of 16 cut" | "3 of 16" |
+| "your skin holds 16 runes" | "your runework holds 16 runes" |
+| "Nothing cut into you yet" | "Nothing inscribed yet" |
+| "Bare skin. Your slate holds…" | "Nothing inscribed yet. Your runework holds…" |
+| a needle and a pot of grey ink, in `youth-needle` | a rune worked into the skin, in `youth-rune` |
+| "a slate of runes cut into your own skin" (rulebook 4.5) | "inscribed on your own skin" |
+
+The tagline and the blurb went back to the conversion Overview tab, which is honest again now
+that the debt is: "A spell is inscribed on the skin and from that moment it costs nothing to
+cast, because it was paid for once and paid in full." Only the two clauses his later rulings
+changed are rewritten.
+
+`youth-needle` became `youth-rune`, which breaks the pool's own "a run's answers are stored
+against the id" law. Safe here because no run has ever been saved against it, and noted on the
+question itself.
+
+### Still open
+
+Everything on the 2026-09-08 list stands except the Willpower one, which is now answered, and
+two are worth restating with the debt back:
+
+- **The floor at zero**, above. Refuse the inscription, or keep the warning?
+- **16 runes at Rank 3 is no longer the real ceiling.** What a Runebearer can afford runs out
+  long before the slate fills: a level 8 Physique 8 one has 46 Willpower to give and the
+  sixteen dearest spells in the codex are worth 187. The count and the cost want a second look
+  together.
+- **STREAMLINED PATTERNS has something to discount again.** The old Rank 5 card shaved a point
+  off every inscription, to a minimum of 1. It is still not built, because Jules asked for a
+  Willpower grant and a recharge at the top two rungs, but it is the obvious fifth card now.
+- **An illegal rune is not flagged on the block.** A pick that fell off the tier ladder (a
+  rank handed back, a hand-edited row) shows on the Abilities panel as "not legal at your rank
+  any more" and on the rune block as an ordinary firable rune. The chooser refuses to make
+  one, so it needs a broken sheet to see.
+
+## The Crossroads asks eight, 2026-09-09
+
+Jules: "12 question for the path is to long let reduce it to 8 in total."
+
+**Only the draws moved.** All seven chapters of the life still get asked, at 1, 1, 1, 1, 1, 2, 1 for
+eight a run. Blood and Youth gave up their second question and the road came down from four to two.
+Nothing in the engine needed touching: `RUN_LENGTH` has always been the sum of the draws, and the
+stage rail, the heading ("Leaving · Question 8 of 8"), the stored run and the reveal all read it.
+
+Cutting a chapter whole was the other way to reach eight and it is the worse one. The story is a
+paragraph a chapter, and three of the seven close on what the count decided: the blood names the
+lineage, the trade names the background and the leaving names the set taken at level 1. Dropping a
+stage drops a paragraph and the sentence that says what it was for. The road is the stage with
+fifteen questions behind it and the one that repeats itself most, so it gave up the most.
+
+**The count still adds up to somebody.** 4,000 random walks against HEAD, at twelve and then at eight:
+
+| | twelve | eight |
+| --- | --- | --- |
+| Guardian held | 27.4% | 28.0% |
+| Berserker | 26.0% | 23.0% |
+| Colossus | 19.7% | 17.6% |
+| Draconic Bond | 10.8% | 15.4% |
+| Duelist | 9.4% | 7.2% |
+| Runebearer | 4.0% | 5.1% |
+| the backstory | 555 words | 448 words |
+
+The two sets that stand beside any attribute gain a little, because fewer answers means fewer points
+pushing a shelved set past them. Every written set, lineage and background still wins at least once
+in 4,000 walks, every question in the pool is still asked in some run and every outcome is still a
+whole character with nothing built on the attribute left lowest.
+
+**Three sentences counted the questions out loud and were rewritten.** The blood chapter opened
+"Twice at least, the blood did the deciding before you could" and now opens once. The road's mixed
+closing said the road asked "in four different voices" and now says it asked twice in two. The story
+file's note about "four road answers" reads as the road's two. The path card on Make a Character,
+rulebook 4.9 and the headers of crossroads.js, crossroadsStory.js and Crossroads.jsx all say eight.
+
+### Worth Jules's eye
+
+**The scenes that only happen because of what you did earlier got rare.** A gated question needs the
+tag set and a draw left to spend on it, and both halves got smaller. `road-reputation`, the man you
+put down coming back with friends, is asked in 0.8 runs of 100 against 4.3 before. `youth-watch`, the
+watch coming for a thief, 2.7 against 7.0. `youth-letter`, the academy writing to somebody who spoke
+a word they did not know, 3.7 against 12.6. The draw already leans toward questions that widen the
+count, and leaning it toward a gate the run has earned would put them back where they were. That is a
+design call and it is not made.
+
+### Proved
+
+- `lint:crossroads` clean against HEAD with nothing but this change on it: 45 questions in 7 stages,
+  8 asked a run, 4,000 walks, every outcome whole. Clean again on the working tree an hour later,
+  with the Spellblade scenes in it: 47 questions, 8 asked a run. `eslint` clean on the four files
+  touched. The two `lint:text` serial commas standing today are both in Spellblade option text and
+  in nothing this touched.
+- In the browser, signed out: the path card reads "Eight moments from a life", the run asks Childhood
+  through Leaving with the heading counting 1 of 8 up to 8 of 8, and the reveal made a Celestial
+  Erudit holding Arcanist and Guardian on Mind 6, Physique 5 and Instinct 4, in Magic Armor with a
+  Psychic Tome, 2,000 ¢ and 70 Supplies. Seven chapters of story and Who you became, the road
+  paragraph closing on "The road asked twice in two different voices". Take this character opened the
+  sheet at LVL 02 with the kit worn and the belt clipped, and no console errors anywhere in the walk.
+
+## The Spellblade, 2026-09-09
+
+The fifteenth written set, and the first one in the codex with **no sheet behind it at all**.
+There is no Ability tab for the Spellblade, no conversion workbook and no old printed page.
+Jules described it in chat on 2026-09-09 and every card, number and word below was written
+here from that description. The description itself is transcribed in full in the comment
+above the set in `src/lib/talents.js`, because it is the only source of record there is.
+
+### What the set is
+
+A Spellblade puts a hand on a weapon and it stops being a weapon. **BOUND EDGE** costs 2
+Action Points and 2 Willpower, lasts until your next Long Rest, and does three things to
+whatever you touched: it swings off your **Mind** instead of the Attribute it prints, its
+damage type becomes **Cold, Fire or Lightning**, and at Adept it is **Empowered by 1**.
+
+Then **POINT OF IMPACT**: when you attack with that weapon you may cast one of your prepared
+spells, and it goes off where the attack lands. You pay its Willpower and **1 more for every
+2 Action Points it costs**, and its own Action Points are never paid, because the attack
+already bought the action. It needs no Roll of its own. An area spell centres on the target,
+you may strike an empty space to place one, it can be Overcast and it can never be
+Multicast.
+
+The hand is **1 + 2 x your Rank**, so 3, 5 and 7. **TWINNED STRIKE** at Master carries two
+spells on one attack, takes 1 Willpower off each and lets a Short Rest re-choose them.
+
+### The five readings
+
+Nothing in the description was contradicted. Five things it did not say are settled here,
+and each is written on the card or in the comment beside the data:
+
+1. **The pool is every school**, and the spec carries no `school`. Not said either way, and
+   the examples settle it: a wave of damage is Elemental and a healing field is Primal. The
+   Arcanist is the only other pool with no school and it is the same reason.
+2. **The surcharge rounds up.** "Half the Action Point cost" is exactly the arithmetic
+   `moveWillpower` already does for five Martial Moves, "per 2 Action Points the attack
+   costs, rounded up", and the note in martial.js argues the case: the rung matters and the
+   parity does not. So a 3 Action Point spell costs what a 4 costs. The card prints the
+   **rate** rather than the half, which is why no rounding clause appears on it.
+3. **The spells are cast on a strike and no other way.** Not said outright, and the ground
+   clause settles it: nobody needs permission to hit the floor unless hitting something is
+   the only way the spell leaves your hands. So they are kept off the quick bar the way a
+   Martial Move is, `ridesStrike` in spellblade.js is what says so, and the whole price of
+   one is worked out inside the attack's own prompt.
+4. **The miss is printed and not enforced.** "Whenever you land an attack" names a hit, and
+   this sheet has never known whether one landed. The Willpower is charged when the swing is
+   paid for, which is where every other rider on a swing is charged. **The dice do enforce
+   it**, though, and nothing had to be written for that: a chain stops dead at a failed
+   check, so a spell carried in on an attack that missed rolls nothing at all.
+5. **The Master cut has no floor.** It stops at 0 Willpower rather than at 1. No floor was
+   named, the Arcanist's cut names one because its own card does, and a Novice spell costing
+   nothing at Master is the rung doing what the rung is for.
+
+### And one collision
+
+**The pact wins where both are on one weapon.** A Spellblade who binds their pact-bound
+blade has two cards replacing the same Attribute: FIRST BOON's "your highest Attribute" and
+BOUND EDGE's "your Mind". The highest is Mind or better by definition, so letting the newer
+card win would be the sheet quietly handing back a worse number for something the player
+just paid 2 Willpower for. `attackModifiers` reads the pact first. Worth Jules's eye.
+
+### What is built
+
+- `src/lib/talents.js`: the set, five cards. BOUND EDGE, SPELL STRIKE and POINT OF IMPACT at
+  Novice, RESONANT EDGE at Adept, TWINNED STRIKE at Master. A `loadout` spec for the hand and
+  a `blade` spec for everything the pool machinery does not already do. Replaces the
+  `spellblade` roster placeholder, which was row 6 of the Mind column.
+- `src/lib/spellblade.js`: **the tenth shape of what a set can hand over**, beside a fixed
+  hand, a loadout, a brewing spec, an enchanting one, a minion, the Trickster's tricks, the
+  Duelist's martial, the Feral Curse's feral, the Pact's debt and the Runebearer's slate.
+  This one hands over a **bond**. Same split as the other four: talents.js describes,
+  spellblade.js resolves, talents.js stays a leaf.
+- `src/lib/combatTurn.js`: `blade` is the **fifth mechanical rider** a tracker row can carry,
+  beside an Ephemeral Enchantment, a Trickster's rider, a Martial Move and a condition. Two
+  strings, the weapon and the type, cleaned on the way in like every other one. **No
+  migration behind this set**: `until: 'long'` already ends a row at the right rest, and the
+  `effects` column was already jsonb.
+- `src/lib/moves.js`: `attackModifiers` folds the bond beside the pact's weapon and the
+  Colossus's grip. Tied to the card and to the drawn hand, so a stowed weapon opened from the
+  Inventory tab prints its own numbers.
+- `src/components/sheet/UsePrompt.jsx`: the ridden spells are offered in the attack's own
+  prompt, in the same rows the Martial Moves use, priced into the same pay button and spent
+  by the same press. They are riders for `castPlan` too, so a spell that inflicts something
+  offers it on the swing's targets.
+- `src/components/sheet/usePlayCard.js`: a carried spell's own **value** links are appended
+  to the chain and its check is dropped, which is POINT OF IMPACT as arithmetic.
+- `src/components/sheet/BladeBlock.jsx`: a new Character-tab block. What is bound, what it
+  deals, whether it is drawn, a Release, the spells with what carrying each one costs, and
+  the bind window. `BladeBind` is exported because the quick bar raises the same window.
+- `src/lib/loadouts.js`: `swap` may now be **rank-indexed**, the same shape `tiers` beside it
+  already carries. The first pool whose permission moves with the rank rather than only its
+  size.
+- `src/lib/combatBar.js`: a Spellblade's spells are not chips, the same line and the same
+  reason a Martial Move is not.
+- `src/lib/campaignLog.js`: a use may say what it carried. "Strike · with Reckless · carrying
+  Fireball".
+- `src/lib/crossroadsPool.js` and `crossroadsStory.js`: two new scenes, a closing and a
+  phrase, because `lint:crossroads` requires every written set to be scorable and to win at
+  least once. The Spellblade takes 3.5% of 4,000 walks, just under the Runebearer.
+
+### Open, and waiting on Jules
+
+1. **The card names are mine.** BOUND EDGE, SPELL STRIKE, POINT OF IMPACT, RESONANT EDGE and
+   TWINNED STRIKE. So are the tagline, the blurb and the two Crossroads scenes.
+2. **The pact collision**, above.
+3. **"Magic weapon" is printed and reads nothing.** There is no magic-weapon flag in the
+   codex and inventing one for a single card would be a rule with one holder. It is the
+   designer's own phrase and it stays on the card.
+4. **The bind offers the two weapon slots and nothing else.** "A weapon you can touch" is the
+   card; what this sheet knows about touching is what is in your hands. A blade in the pack
+   is one equip away and the block says so.
+5. **A Short Rest now has an action slot**, for exactly one set at exactly one rank. The rest
+   window's own note has said "a Short Rest buys no action" since the Runebearer, and
+   TWINNED STRIKE is the card that broke it. It reads correctly ("Your Short Rest action")
+   and is offered to nobody else.
+6. **The spells are one hand, not per weapon.** Binding a different weapon does not re-choose
+   them, which is what "they can change the spells at the Long Rest" says.
+7. **No art.** Both plates and all five card pictures are unpainted. Drop the pictures into
+   `data/Spellblade/` and run `npm run art:cards`; the set's `art: null` becomes
+   `/talents/spellblade.jpg`.
+
+### Proved
+
+- `npm run lint`, `lint:text`, `lint:cards`, `lint:halves`, `lint:order`, `lint:riders`,
+  `lint:plan`, `lint:layout`, `lint:crossroads`, `lint:help`, `lint:legal`, `lint:images`,
+  `lint:moves`, `lint:dice`, `lint:log`, `lint:combat`, `lint:creatures`, `lint:weapons`,
+  `lint:potions` and `lint:math` all clean, and `npm run build`.
+- A Rank 1 and a Rank 3 sheet driven through `bladeState`, `bindPatch`, `releasePatch`,
+  `attackModifiers`, `offeredSpells`, `strikePrice`, `quickBar`, `restActions`, `restPlan`
+  and `rollPlan`: the bond lays one row and ends at a Long Rest and not at a Short one, the
+  swing rolls Mind and deals Fire, the stowed weapon's own attacks are untouched, the three
+  spells are off the bar, the prices come out printed plus ceil(ap/2) and 1 less at Master,
+  the Short Rest swap appears at Rank 3 and at no rank below it, and a carried spell
+  contributes its damage link and no check.
+- The block and the prompt driven in a browser harness: binding a Finesse Weapon as Lightning
+  through the two-question window charged 2 Action Points and 2 Willpower once, the block
+  then read "Bound, and not in your hand", the printed Strike card read "a **Mind** Melee
+  Attack (+8)" and "3d6 + 16 **Fire** damage" with both cards credited under "Changing this",
+  two spells ticked priced the swing at 4 Action Points and 6 Willpower, the third was
+  refused with the reason, and the confirm carried both spells out.
+
+## The Necromancer, 2026-09-09
+
+The sixteenth written set, and the second in two days with **no sheet behind it at all**.
+There is no Ability tab for the Necromancer, no conversion workbook and no old printed
+page. Jules described it in chat on 2026-09-09 and every card, number and word below was
+written here from that description. The description itself is transcribed in full in the
+comment above the set in `src/lib/talents.js`, because it is the only source of record
+there is.
+
+### What the set is
+
+A Necromancer keeps an **Ossuary** with **Marrow** in it, and the Marrow is their **Mind**.
+Standing a body up spends the Marrow that body costs and holds it for as long as the body
+is theirs; while a body is in the Ossuary their **maximum Willpower is 2 lower**, 1 at the
+Master rung. Raising one is a **Long Rest action**, one a night, over a corpse, and without
+a corpse a body is built for **100 Supplies**.
+
+Seven bodies, at 3, 6 and 9 Marrow, opening on the rank ladder:
+
+| Marrow | Rung | Body | Built on | What it does |
+| --- | --- | --- | --- | --- |
+| 3 | Novice | Skeleton Archer | Physique and Instinct evenly | Bone Bow at 18 m, Rusted Sword |
+| 3 | Novice | Ghoul | Instinct | Rending Punch at 2 Action Points, Infected Claws that leave the target diseased |
+| 3 | Novice | Wraith | Mind | Grave Bolt at 12 m, and a 6 m fog that blinds |
+| 6 | Adept | Skeleton Magus | Mind | Withering Bolt, and 2 Novice spells chosen the night it rose |
+| 6 | Adept | Undead Knight | Physique, 3 printed Armor | Grave-Iron Blade, a taunt, and a Bonewall that takes a blow meant for you |
+| 9 | Master | Abomination | Physique | A paired-greatsword swing, a 9 m hook that drags, Carrion Reek, and 2 Martial Moves of any rung |
+| 9 | Master | Undead Cleric | Mind | Nothing of its own: 3 Novice or Adept Light or Shadow spells, chosen the night it rose |
+
+In combat none of them is autonomous. **COMMAND THE DEAD** costs 2 Action Points and wakes
+every body until your next Turn End; without it they stand where they are. And a
+Necromancer knows **every Death spell in the codex**, the Novice ones at Rank 1 and a rung
+a rank after that.
+
+### The two reversals, and the one thing they leave tight
+
+The arithmetic changed twice inside one message and the **last** answer is what is built:
+
+- **The pool.** Free points a rank, then "based off your Mind", then "we're still gonna use
+  Mind, the number of bones you have is equal to your Mind". So the pool is the Mind column
+  and a rank adds nothing to it. What a rank buys is *which* bodies are within reach.
+- **The prices.** Three, six and nine, then "so change the cost, instead of being three
+  it's four, eight and twelve", then "scratch that, it's still three six nine". So 3, 6
+  and 9.
+
+Those two together are **tight, and it is the first thing worth a ruling**. A Master
+Necromancer on Mind 10 holds exactly one abomination and nothing beside it. On Mind 12 it
+is four skeletons, or two of the Adept bodies, or one Master body and one Novice one. That
+may be exactly the intent, since the fantasy of the set is expensive rather than numerous,
+but the shape is unusual: it is the only pool in the codex a rank does not widen. Adding
+`marrow.perRank` to the spec is one number if the answer is no.
+
+### The words
+
+"Necromantic bones or something. I'll let you imagine the terms that's more fitting."
+
+- The resource is **Marrow**, the block is the **Ossuary** and a list of the raised is
+  **your risen**. Bones read oddly as a count ("you have 9 bones"), and what the pool
+  actually measures is animating substance that stays in a body while the body stands and
+  drains back out when it falls. Marrow says that; his own word is what it is made of.
+- The **Abomination's aura** is **Corpse Carrion**, which is already a defined term in
+  `keywords.js` off the GORE BLAST plate: "the afflicted entity takes the caster's
+  attribute in Decay damage at every one of its Turn Starts". That is the designer's
+  sentence for the thing he described, so the card inflicts the term rather than restating
+  it. It is named **CARRION REEK** rather than Pestilent Aura because a Necromancer knows
+  PESTILENT CLOUD, and two cards called Pestilent in one set's own blocks doing two
+  different things is a card nobody can find twice.
+- The **Ghoul's** infected claw leaves the target **diseased**, which is SICKNESS's own
+  defined term: "-1 to all attributes until they take a Long Rest". The second card in the
+  codex to inflict it.
+
+### What the sheet grew for it
+
+- **`src/lib/undead.js`**, new. The Marrow, the menu, the burden and the raising. It reads
+  the `minions` column directly and **writes nothing**, the same shape `runes.js` keeps and
+  for the same reason: `characterModel.js` imports it, so it may import neither
+  `characterModel.js` nor `minions.js`.
+- **`src/lib/minions.js`: a `minion` spec may now be a `roster`.** A kind is read *over* the
+  spec, so what is true of every body a set raises is written once and a kind says only what
+  is its own. Everything downstream works on the merged object: the same two blocks draw a
+  draconic ally and a ghoul, the same prompt pays for both. Three fields are new and generic
+  beside it: **`armor`** (the first printed Armor on a creature in the codex, the knight's
+  plate), **`perish`** (a Long Rest sweeps a destroyed body up rather than standing it back
+  up) and **`command`** (a card the bodies have to be woken by).
+- **A body's own `spells` and `moves`**, stored on its row rather than on the talent entry,
+  because two magi are two spellbooks and destroying one must not touch the other. That is
+  the first pool on this sheet that is not a `loadout`, and it is deliberate: a loadout's
+  picks are the set's.
+- **`heldMoves` in `moves.js` reads `character.moves`.** Everything else in that file reads
+  a talents column, which is right for every character and wrong for the one thing on this
+  sheet that swings a weapon and has no talents. An abomination's two moves ride on the
+  actor the prompt was handed, and nobody downstream can tell them from a Duelist's.
+  ABATTOIR SWEEP carries the `Weapon Attack` tag for exactly this reason.
+- **`src/lib/loadouts.js`: a third pool shape, `all`.** The pool *is* the hand. Nothing is
+  stored, nothing is chosen, and a Death spell added to the codex tomorrow is a spell every
+  Necromancer already knows. Plus a **`family`** gate beside the `school` one, because a
+  Death spell is a Primal spell and a Primal pool would have handed over the Flora and the
+  Wild with it.
+- **The second thing in the codex that comes off a derived maximum.** `deriveStats` and
+  `statMath` each take the runes off first and the bodies out of what is left, floored
+  against the same room in the same order, which is what `lint:math` proves. There is a
+  sixteenth sheet in `scripts/check-stat-math.mjs` holding three bodies at Rank 2 and
+  asserting the -6.
+- **`src/components/sheet/OssuaryBlock.jsx`**, new. One 360x640 cell: the Marrow left, every
+  body with what it cost and whether it is broken, the debt, and the Command. Measured at
+  12 bodies: the block holds its shape at 636 of 636 and the list scrolls inside itself.
+- **`src/components/sheet/RaiseWindow.jsx`**, new. The Long Rest step: the wall of seven,
+  the name and the picture, the corpse question, and the spells or moves off the sheet's own
+  `PoolWall` handed the *body* as its character, so a spell on the wall prints the numbers
+  it will actually roll. `PoolWall` is exported for it and `poolTags` moved to
+  `useTagFilter.js`, because a component file may not export a helper.
+- `src/lib/rest.js`: a `raise` action, priced among the supply movements so a rest that
+  cannot cover a built corpse is refused with everything else, and written after the crate
+  has agreed to it. Raising over your own remains drops the wreck in the same patch.
+- `src/lib/crossroadsPool.js` and `crossroadsStory.js`: two new scenes, a closing and a
+  phrase, because `lint:crossroads` requires every written set to be scorable and to win at
+  least once.
+- `docs/rulebook.md`: "there is no ability that raises the dead" is now "no ability that
+  brings a **character** back", because one of those is still true and the other stopped
+  being true today.
+
+### Open, and waiting on Jules
+
+1. **The pool a rank does not widen**, above. The first ruling worth having.
+2. **2 maximum Willpower a body is mine.** He gave the shape ("a small amount") and no
+   number. It is `burden` on the spec, indexed by rank, and THE CHARNEL COURT takes it to 1.
+   Per **body** rather than per Marrow, which is what he said it was for: three skeletons
+   are three things taking their turn.
+3. **The card names are mine**, all twenty-two of them, and so are the tagline, the blurb
+   and the two Crossroads scenes.
+4. **The stat blocks are mine.** "I'll let you make some that make sense and directly
+   utilize the scales." Every kind's Defense is the sum of the two attributes it is built
+   on, which is the draconic ally's own rule read as a rule; the abomination is the
+   exception and answers on bare Physique because it is huge and does not dodge. A Novice
+   body opens on 9 points of attribute where the ally opens on 16.
+5. **DREDGE CORPSE makes the corpse clause soft.** It is a Novice Death spell, so every
+   Necromancer knows it, and it costs 2 Action Points and 1 Willpower to raise "a corpse
+   from the earth at a point on the ground you can see". So the 100 Supplies only ever bites
+   somebody who cannot cast it. The window names the spell in the corpse question rather
+   than ruling on it: whether a dredged corpse is *fresh* is the table's.
+6. **The magus learns any Novice spell in the codex.** That is what he said and it is wide:
+   52 spells across four schools. Narrowing it to Primal, or to Death, is one field.
+7. **The Adept and Master ranks each buy one passive.** DEEPER GRAVES opens the two Adept
+   bodies and makes your own remains corpse enough; THE CHARNEL COURT opens the two Master
+   bodies and takes the burden to 1. The rungs are what a rank actually buys, which is his
+   design, but a rank that buys one card is thin beside a Runebearer's.
+8. **CARRION REEK reads against your Mind and prints no number.** Corpse Carrion says "the
+   caster's attribute" and the caster here is arguably the abomination, whose Mind is 2. He
+   said "the Mind of the necromancer", so the card says "your {mind}" in prose rather than
+   as a live value, because a live value on a creature's card resolves against the creature.
+9. **A destroyed body keeps its Marrow until it is buried.** THE OSSUARY says so outright,
+   and it is the reading that let `undead.js` stay out of `minions.js`: a count of rows
+   needs no Health arithmetic. A Long Rest sweeps the wreck, or one press lets it go.
+10. **No art.** No plate and none of the twenty-two card pictures. Drop them into
+    `data/Necromancer/` and run `npm run art:cards`; the set's `art: null` becomes
+    `/talents/necromancer.jpg`.
+
+### Proved
+
+- `npm run lint`, `lint:text`, `lint:cards`, `lint:halves`, `lint:order`, `lint:riders`,
+  `lint:plan`, `lint:layout`, `lint:crossroads`, `lint:help`, `lint:legal`, `lint:images`,
+  `lint:moves`, `lint:dice`, `lint:log`, `lint:combat`, `lint:creatures`, `lint:weapons`,
+  `lint:potions` and `lint:math` all clean, and `npm run build`.
+- Forty assertions driven through `marrowState`, `undeadOffers`, `raiseDraft`, `restActions`,
+  `restPlan`, `minionState`, `minionActor`, `minionBar`, `quickBar`, `offeredMoves` and
+  `abilitySources`: the Ossuary holds the Mind column, a Rank 3 body costs 1 of the maximum
+  and a Rank 2 body costs 2, a magus with no spells chosen is refused, the rest writes the
+  body and takes the Marrow and the Willpower in one patch, the body's cards are its own
+  two plus the two it rose knowing, its bolt is off its master's bar and the Command is on
+  it, the actor rolls the body's Mind and spends its master's Willpower, both of the
+  abomination's moves ride Abattoir Sweep and neither rides Flesh Hook, the knight's 3 Armor
+  reaches its tile, the Death family is 4 cards at Rank 1 and 12 at Rank 3, 60 Supplies
+  cannot build a corpse and a refused rest writes nothing, a destroyed ghoul keeps its 3
+  Marrow until a Long Rest sweeps it, and forty bodies floor the maximum at 0 rather than
+  going negative.
+- The blocks and the window driven in a browser harness: all three cells fit 358x636 with
+  zero overflow at 6 bodies and again at 12, where the list overflows by 341 and scrolls
+  inside itself; the Marrow bar reads what is *left* against the ceiling rather than the
+  debt against itself; the Command row lights and the body's chips go live on the same
+  press; and the raise window walks the whole road, refusing "It needs a name", then "It
+  needs a corpse", then "2 more spells to choose", and settling on "Ossric is ready to
+  stand up" with the third spell offered as "Take it instead".
+- And the remains held to an answer: choosing your own remains without saying **which** of
+  yours raises nothing and says so, a stale id raises nothing, and the one that names a
+  wreck drops that wreck in the same patch the new body arrives in, with no Supplies moved.
+  Without that check the answer was a free corpse.

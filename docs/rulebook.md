@@ -609,17 +609,17 @@ returned.
 
 ### 4.5 Talent set
 
-Thirty-four talent sets are named. **Fourteen are written and can be taken**: Guardian,
+Thirty-four talent sets are named. **Fifteen are written and can be taken**: Guardian,
 Mycomancer, Cauldron Keeper, Enchanter, Draconic Bond, Trickster, Duelist, Feral Curse,
-Berserker, Colossus, Arcanist, Alchemist, Pact of Ordenance and Runebearer. The rest are
-shown on the wall so you can see what is coming, but they have no cards yet and cannot be
-chosen.
+Berserker, Colossus, Arcanist, Alchemist, Pact of Ordenance, Runebearer and Spellblade. The
+rest are shown on the wall so you can see what is coming, but they have no cards yet and
+cannot be chosen.
 
 A talent set gives you cards at Novice rank now, and more at Adept and Master as you take
 those ranks. Some sets also give you something that is not a card: a **creature** you
 control, a **form** you can turn into, a **pact** you must feed, a **spellbook** you prepare
-spells from, a **slate of runes** cut into your own skin or a **cauldron** you brew in. The
-set's own page explains it.
+spells from, a **slate of runes** inscribed on your own skin, a **weapon you bind** and cast
+through, or a **cauldron** you brew in. The set's own page explains it.
 
 ### 4.6 Attributes
 
@@ -650,7 +650,7 @@ buying works.
 ### 4.9 The Crossroads
 
 The Crossroads is the other way in, for anyone who would rather answer for a character than
-tick boxes on a sheet. It puts you in twelve moments of the life they led, from childhood
+tick boxes on a sheet. It puts you in eight moments of the life they led, from childhood
 to the night they left. Each one sets the scene, where you are standing and what you can
 see, and asks what you do: a locked iron gate with the strongbox visible through the bars,
 a man bleeding in the gutter with the crowd stepping round him, three knives coming out
@@ -1761,12 +1761,14 @@ reading of what the cards using it imply.
 
 ### What is not written yet
 
-1. **There is no ability that raises the dead.** The price is set (see 2.3.1). The spell
-   that does the work has not been written.
-2. **Twenty talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
+1. **There is no ability that brings a character back.** The price is set (see 2.3.1) and
+   the spell that does the work has not been written. A Necromancer raising a corpse as a
+   servant is a different thing: what stands up is a body under orders, not the person who
+   died.
+2. **Eighteen talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
    Painseeker, Dragon Aspect, Virtuoso, Flowing Fist, Sharpshooter, Wilder,
-   Necromancer, Spellquill, Spellblade, Thaumaturge, Tactician, Elemental Aspect,
-   Beastbond, Oathbound, Quartermaster, Weaver and Weapon Master.
+   Spellquill, Thaumaturge, Tactician, Elemental Aspect, Beastbond, Oathbound,
+   Quartermaster, Weaver and Weapon Master.
 3. **The world.** This is a rules book, and the setting is one sentence on the cover. It
    gets a book of its own.
 

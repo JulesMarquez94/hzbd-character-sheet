@@ -1,5 +1,5 @@
 /**
- * Runes: a spell cut into the skin, and what it costs to fire one.
+ * Runes: a spell inscribed on the skin, and what it costs to keep and to fire.
  *
  * The ninth shape of what a talent set can hand over, beside a fixed hand, a
  * `loadout`, a `brewing` spec, an `enchanting` one, a `minion`, the Trickster's
@@ -10,7 +10,7 @@
  *
  * Three things, and they are the whole set:
  *
- *   the slate    how many runes a body holds. Half your Physique plus 4 a rank,
+ *   the slate    how many runes a body carries. Half your Physique plus 4 a rank,
  *                which is the first ceiling in the codex an attribute moves. It
  *                is `capacity.perStat` on the loadout spec, not here: the pool
  *                machinery already knows how to hold a ceiling and this file
@@ -19,7 +19,7 @@
  *                the `card_uses` tracker exactly, so it *is* the `card_uses`
  *                tracker: `runeLimit` below is what makes an ordinary spell card
  *                answer "once, and a Long Rest fills it" for the one person who
- *                has it cut into their arm. See uses.js.
+ *                has it inscribed on their arm. See uses.js.
  *   brought back RECHARGED: a Short Rest returns fired runes whose Willpower
  *                costs add up to no more than your Physique. A budget spent
  *                against a list, chosen in the rest window.
@@ -42,7 +42,7 @@
  * a Runebearer who also knows Barkskin from somewhere else has one Barkskin
  * tracker between the two, and firing the rune spends the spell for the day. It
  * is the same law that stops two rings both carrying Defibrillation buying two
- * saves, read on a set that cuts its spells into itself.
+ * saves, read on a set that writes its spells onto itself.
  *
  * ------------------------------------------------------------------- imports
  * uses.js imports this file, so this file may not import uses.js. It reads the
@@ -64,10 +64,10 @@ export function runesOf(talent) {
 }
 
 /**
- * Every held set that cuts its spells into its holder: `[{ talent, spec, entry }]`.
+ * Every held set that writes its spells onto its holder: `[{ talent, spec, entry }]`.
  *
- * A set with a `runes` spec and no `loadout` would be a slate with nothing to cut
- * into it, so both are required and a set carrying one without the other is
+ * A set with a `runes` spec and no `loadout` would be a slate with nothing to
+ * write on it, so both are required and a set carrying one without the other is
  * simply not a rune set.
  */
 export function runeSets(talents) {
@@ -173,6 +173,11 @@ export function runeState(character) {
         capacity,
         runes,
         modifiers,
+        /* What the slate is holding of the maximum, uncapped. The floor in
+           `runeDebtFrom` is the arithmetic's repair; what a block should print is
+           what these runes actually cost, and the warning beside it is what says
+           the maximum has run out. */
+        debt: runes.reduce((sum, rune) => sum + rune.cost, 0),
         cut: runes.length,
         room: Math.max(0, capacity - runes.length),
         spent,
@@ -199,7 +204,7 @@ export function runeBlockIds(character) {
 
 /**
  * The limit an inscribed spell answers to, or null for every card that is not
- * cut into this character.
+ * inscribed on this character.
  *
  * This is the seam the whole set hangs on. `cardLimit` in uses.js reads a rider
  * printed on the card, and no spell may carry one: Barkskin is once a day for a
@@ -225,7 +230,7 @@ export function runeLimit(character, cardId) {
   return null;
 }
 
-/** Whether a card is cut into this character's skin at all. */
+/** Whether a card is inscribed on this character at all. */
 export function isRune(character, cardId) {
   return runeLimit(character, cardId) !== null;
 }
@@ -238,9 +243,9 @@ export function isRune(character, cardId) {
  *
  * Null until the rank that grants it, which keeps the rest window quiet for
  * every Runebearer who has not bought it. The budget itself is an attribute
- * rather than a number on the card, so it grows with the body the runes are cut
- * into, which is the shape the original card had and the reason it survived the
- * move to the Master rung.
+ * rather than a number on the card, so it grows with the body the runes are on,
+ * which is the shape the original card had and the reason it survived the move to
+ * the Master rung.
  */
 function rechargeOf(character, spec, rank) {
   const rule = spec?.recharge ?? null;
@@ -355,7 +360,7 @@ export function reviveRunes(character, ids = []) {
  * different one is a word in the codex and no change here.
  *
  * Summed across sets rather than taking the highest, like the spellbook and
- * unlike the ceiling rules in feral.js and moves.js. Two sets each cutting their
+ * unlike the ceiling rules in feral.js and moves.js. Two sets each writing their
  * own runes are two sources; the stacking law bites within a source, not across
  * them. Moot until a second such set exists.
  */
@@ -377,7 +382,59 @@ export function runeWillpowerFrom(talents, attributes) {
   return rows;
 }
 
-/** The same, summed. 0 for everybody whose sets cut no runes. */
+/** The same, summed. 0 for everybody whose sets carry no runes. */
 export function runeWillpower(talents, attributes) {
   return runeWillpowerFrom(talents, attributes).reduce((total, row) => total + row.willpower, 0);
+}
+
+/* ------------------------------------------------------------- what it costs */
+
+/**
+ * The Willpower a slate is holding: the sum of what every inscribed spell would
+ * have cost to cast, taken off the maximum for as long as the rune is on.
+ *
+ * **This is the idea the whole set is built on**, and it is why firing a rune
+ * costs nothing: the Willpower was paid once, on the night the rune went on, and
+ * it stays paid. Remove the rune and it comes back. So the number is never
+ * stored anywhere. It is computed from the list every time, exactly as the
+ * conversion workbook's Special Feature tab insisted: "the list is the record and
+ * the number is always computed from it, never stored. Store the number and one
+ * bad edit costs a player their Willpower for good."
+ *
+ * -------------------------------------------------------------------- the floor
+ * `room` is everything the maximum is made of *before* the runes are taken off,
+ * and the debt is capped at it so a maximum can never go below zero. It is a
+ * repair rather than a rule: the chooser warns long before a slate gets there,
+ * and the only way to arrive over the line is to lose the rank or the Physique
+ * that was paying for it.
+ *
+ * Both readers pass the same `room`, which is what keeps `deriveStats` and
+ * `statMath` from disagreeing about a floored number. Flagged in data/README.md,
+ * because whether a Runebearer should be *refused* the inscription instead is
+ * Jules's call.
+ */
+export function runeDebtFrom(talents, room = Infinity) {
+  let left = Number.isFinite(room) ? Math.max(0, Math.floor(room)) : Infinity;
+  const rows = [];
+
+  for (const { talent } of runeSets(talents)) {
+    const owed = heldPicks(talents, talent.id).reduce(
+      (sum, id) => sum + runeCost(getCard(id)),
+      0
+    );
+    if (owed <= 0) continue;
+
+    const willpower = Math.min(owed, left);
+    left -= willpower;
+    /* `owed` rides along so a block can say what the slate *should* be costing
+       when the floor is holding part of it back. */
+    rows.push({ talent, willpower, owed });
+  }
+
+  return rows;
+}
+
+/** The same, summed. 0 for everybody holding no runes. */
+export function runeDebt(talents, room = Infinity) {
+  return runeDebtFrom(talents, room).reduce((total, row) => total + row.willpower, 0);
 }

@@ -17,7 +17,8 @@ import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
 import { feralArmor, feralShieldShare } from './feral.js';
 import { spellbookWillpower } from './spellbook.js';
-import { runeWillpower } from './runes.js';
+import { runeDebt, runeWillpower } from './runes.js';
+import { undeadBurden } from './undead.js';
 import { effectRiders, riderShift } from './riders.js';
 import { lineageGrants } from './lineages.js';
 
@@ -196,7 +197,10 @@ export const SHEET_BLOCK_IDS = [1, 2, 3, 4, 5, 6];
  * every character's; a talent set that puts a creature on the board adds two
  * more, named `minion:<set>` and `minion:<set>:bar` (see minionBlockIds in
  * minions.js), and one that turns its holder into something adds a single
- * `feral:<set>` (see feralBlockIds in feral.js). Those arrive when the set is
+ * `feral:<set>` (see feralBlockIds in feral.js). A set that keeps an Ossuary
+ * adds one of those too, `ossuary:<set>`, and then **two more for every body it
+ * raises**, which is the first thing on this tab that grows and shrinks inside a
+ * session rather than only at a rank. Those arrive when the set is
  * taken and leave when it is handed back, so they are matched the way
  * normalizeSourceOrder matches an Abilities tab that grew a block: still
  * present keeps its place, gone is dropped, and new is appended rather than
@@ -499,6 +503,40 @@ export function deriveStats(character, extra = null, running = null) {
   const reflex = Math.floor(p + i);
   const grit = Math.floor(i + m);
 
+  /* ---- Willpower, in two halves, because one of them is a debt ----
+     Everything that *adds* first: the base, the level, the Mind, whatever is worn
+     or running, an Arcanist's bound book and a Runebearer's RUNIC NETWORK. Read
+     off the effective Physique, so a ring that lends the body strength lends the
+     Willpower that comes with it. See spellbook.js and runes.js.
+
+     Then the two things that take it away. A Runebearer pays a spell's Willpower
+     once, on the night it goes on, and the maximum stays down for as long as the
+     rune does; that is why firing one costs nothing. And a Necromancer pays for
+     every body in their Ossuary, for as long as they are holding it together.
+     **They are the only two things on this sheet that subtract from a derived
+     maximum**, which is why they are worked out here rather than inline: the sum
+     above them is the room they are floored against, so a maximum can never go
+     below zero, and `statMath` floors against the same number in the same order
+     so the tile's breakdown cannot disagree with the column.
+
+     The runes go first and the bodies get what is left. Arbitrary, and it only
+     ever matters to a drifter carrying both who has run out: the total is the
+     same either way, and floored the same. See runes.js and undead.js. */
+  const willpowerHeld =
+    2 * lvl +
+    2 * m +
+    10 +
+    flat('willpowerMax') +
+    spellbookWillpower(character?.talents) +
+    runeWillpower(character?.talents, { physique: p, instinct: i, mind: m });
+  const runesOwed = runeDebt(character?.talents, willpowerHeld);
+  const bodiesOwed = undeadBurden(
+    character,
+    { physique: p, instinct: i, mind: m },
+    willpowerHeld - runesOwed
+  );
+  const willpowerOwed = runesOwed + bodiesOwed;
+
   const gear = equipmentEffects(character);
   const points = pointCeilings(character?.talents);
   /* What everything they own weighs, against what they can shift. Read once
@@ -555,25 +593,8 @@ export function deriveStats(character, extra = null, running = null) {
        BESTIAL SENSE says so, which is the one thing that lets FERAL FORM's "twice
        as much Shield" actually pay twice. See shieldShareFor below. */
     shield_cap: shieldCap(health_max, shieldShareFor(character)) + (gear.shieldCapMind ? m : 0),
-      /* And what a bound book is worth. An Arcanist's SPELLBOOK grants 4 Willpower
-       a rank, which is the one thing on that track that is not about spells. Read
-       off the set rather than the tracker, because it is a Novice passive and not
-       a state: the Willpower is there before the first spell is written and stays
-       after the book is full. See spellbook.js. */
-    /* And what a body full of runes lends back. RUNIC NETWORK raises the maximum
-       by the holder's whole Physique, which is the one thing that makes a caster
-       shelved under Physique able to pay for anything at all: Willpower is 2 a
-       point of Mind and a Runebearer has spent their levels elsewhere. Read off
-       the effective Physique, so a ring that lends the body strength lends the
-       Willpower that comes with it. See runes.js. */
-    willpower_max: Math.floor(
-      2 * lvl +
-        2 * m +
-        10 +
-        flat('willpowerMax') +
-        spellbookWillpower(character?.talents) +
-        runeWillpower(character?.talents, { physique: p, instinct: i, mind: m })
-    ),
+    /* Both halves, worked out above. See the note beside them. */
+    willpower_max: Math.floor(willpowerHeld - willpowerOwed),
     avoid: Math.floor(avoid),
     defense: Math.floor(armorTotal),
     initiative: Math.floor(i + lvl),

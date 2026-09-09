@@ -5,6 +5,7 @@ import { LoadoutChooser } from './LoadoutPick.jsx';
 import BrewRest from './BrewRest.jsx';
 import EnchantAction from './EnchantRest.jsx';
 import { PactFormWall } from './PactPick.jsx';
+import RaiseWindow from './RaiseWindow.jsx';
 import { Gated } from './parts.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { useCardStack } from '../../context/card-stack.js';
@@ -16,6 +17,7 @@ import { getEnchantment } from '../../lib/enchantments.js';
 import { getRest, labourAffordable, restActions, restPlan } from '../../lib/rest.js';
 import { pickChanges, toggleLoadoutPick } from '../../lib/loadouts.js';
 import { rechargeSpend, runeRecharges } from '../../lib/runes.js';
+import { raiseDraft } from '../../lib/undead.js';
 import { setTalentPicks } from '../../lib/talents.js';
 
 /**
@@ -88,6 +90,13 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      touch it: RECHARGED is something a Short Rest does, not something a night is
      spent on, so it sits beside the plan rather than in the slot. */
   const [revived, setRevived] = useState([]);
+  /* And the body a Necromancer is standing up tonight: the whole draft the raise
+     window collects, held here rather than in it so that closing the step keeps
+     what was answered and the plan behind it can price the corpse. Its own piece
+     of state for the same reason the brews are: a body is nothing the `talents`
+     column holds. It becomes a row in the `minions` column in the rest's own
+     patch. See undead.js. */
+  const [raised, setRaised] = useState(null);
 
   /* Whether the list of actions is up, and which one's step is. */
   const [menu, setMenu] = useState(false);
@@ -108,8 +117,8 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      rule. */
   const picked = useMemo(() => (chosen ? [chosen] : []), [chosen]);
   const plan = useMemo(
-    () => restPlan(character, kind, picked, prepared, brews, reshaped, { revived }),
-    [character, kind, picked, prepared, brews, reshaped, revived]
+    () => restPlan(character, kind, picked, prepared, brews, reshaped, { revived, raised }),
+    [character, kind, picked, prepared, brews, reshaped, revived, raised]
   );
 
   /* What a Short Rest could bring back, per set that can bring anything back.
@@ -124,6 +133,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setPrepared(null);
     setBrews([]);
     setReshaped(null);
+    setRaised(null);
   }
 
   /** Fill the slot. Whatever was in it, and whatever it did, goes first. */
@@ -133,6 +143,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setPrepared(null);
     setBrews([]);
     setReshaped(null);
+    setRaised(row.kind === 'raise' ? { set: row.state.id } : null);
     setActionId(row.id);
 
     setMenu(false);
@@ -142,7 +153,9 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
 
   if (!rest || !plan) return null;
 
-  const held = action ? summarise(action, { chosen, character, talents, brews, reshaped }) : null;
+  const held = action
+    ? summarise(action, { chosen, character, talents, brews, reshaped, raised })
+    : null;
 
   return (
     <Modal
@@ -387,6 +400,21 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         </Modal>
       )}
 
+      {/* RAISE THE DEAD, which is the only step that *adds* something to the
+          sheet rather than changing what is there. Everything it collects sits
+          in this window's own draft until the rest is confirmed, exactly like
+          the still and the shelf, so backing out of the night leaves the corpse
+          in the cart. See RaiseWindow.jsx. */}
+      {step?.kind === 'raise' && (
+        <RaiseWindow
+          character={character}
+          row={step}
+          draft={raised}
+          onDraft={setRaised}
+          onClose={() => setStepId(null)}
+        />
+      )}
+
       {step?.kind === 'worn' && (
         <Modal
           title="On your own person"
@@ -583,11 +611,21 @@ function RuneRecharge({ row, chosen, onToggle }) {
   );
 }
 
-function summarise(action, { chosen, character, talents, brews, reshaped }) {
+function summarise(action, { chosen, character, talents, brews, reshaped, raised }) {
   if (action.kind === 'labour') {
     return chosen
       ? { done: true, says: `${chosen.gain ? '+' : '−'}${chosen.amount} Supplies` }
       : { done: false, says: 'No amount chosen yet' };
+  }
+
+  if (action.kind === 'raise') {
+    const offer = action.offers.find((row) => row.kind.id === raised?.kind) ?? null;
+    if (!offer) return { done: false, says: 'No body chosen yet' };
+
+    const plan = raiseDraft(action.state, offer, raised);
+    return plan.ready
+      ? { done: true, says: `${raised.name}, ${offer.kind.label.toLowerCase()} at ${offer.cost} Marrow` }
+      : { done: false, says: `${offer.kind.label}, and something still open` };
   }
 
   if (action.kind === 'pact') {

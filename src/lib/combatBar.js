@@ -86,6 +86,7 @@ import {
   shieldCapFor,
 } from './characterModel.js';
 import { attackModifiers, isMartialMove } from './moves.js';
+import { ridesStrike } from './spellblade.js';
 import { heldThing } from './targeting.js';
 
 /* ------------------------------------------------------------------- parts */
@@ -298,6 +299,15 @@ function knownGroups(character, locks) {
            spend Willpower on nothing. The Abilities tab is where the hand is read
            and the prompt is where it is used. */
         .filter(({ card }) => !isMartialMove(card))
+        /* **And neither is a Spellblade's spell.** It is cast through the weapon
+           they have bound and no other way (see the readings in talents.js), so a
+           chip here would be a second way to spend Willpower on it and a way that
+           does not exist. Same shape as the line above and for the same reason:
+           the Abilities tab is where the hand is read, and the attack's own
+           prompt is where one is used. Asked with the block's id, because what is
+           refused is the copy that came out of *this* pool: a caster who knows the
+           same spell from somewhere else keeps that chip. */
+        .filter(({ card }) => !ridesStrike(character, card, source.id))
         .map(({ card, modifiers }) => {
           /* Composed rather than spread straight into the row, because the last
              of these has to *read* the ones before it: a card that lays a rider

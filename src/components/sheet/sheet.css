@@ -13843,3 +13843,521 @@ button.tgt-chip:disabled {
   font-size: 0.7rem;
   color: var(--text-muted);
 }
+
+/* What the runes are holding of the maximum Willpower, which is the price the
+   whole set is built on. Pinned under the slate beside the rest line, and it
+   turns red at the moment the maximum runs out: a Runebearer who has spent
+   themselves down to nothing has made a real choice, and the sheet says so
+   rather than letting them find out at a pay button. */
+.rune-debt {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.rune-debt b {
+  color: var(--stat-wp);
+}
+
+.rune-debt.is-warning {
+  color: var(--danger-rose);
+}
+
+.rune-debt.is-warning b {
+  color: var(--danger-rose);
+}
+
+/* =========================================================
+   THE BLADE BLOCK
+   ---------------------------------------------------------
+   A talent set that binds a weapon gets one block of its own,
+   and it is only there when the set is. The cell wears talent
+   amber on its top edge like a creature's, a form's, a pact's
+   and a slate's, because the same kind of choice granted it.
+   ========================================================= */
+.sheet-cell.cell-blade {
+  border-top-color: var(--level-amber);
+}
+
+/* The head, the bond, the bind button and the foot all keep their place; the
+   spell list is the only part with no natural length, so the list is the part
+   that scrolls. Same arrangement `.rune-block` makes and for the same reason. */
+.blade-block {
+  gap: 0.55rem;
+  overflow: hidden;
+}
+
+/* What is bound, which is the one line the whole set turns on. Bordered on the
+   left in the damage's own direction rather than in a type colour: the type is
+   named in the sentence, and a border that changed hue every time somebody
+   rebound a sword would read as a different kind of row. */
+.blade-bond {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 0 0 auto;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid var(--level-amber);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+/* Bound to something that is not in your hand. Plainly dimmer, because the
+   binding still stands and lends nothing until the weapon is drawn. */
+.blade-bond.is-stowed {
+  border-left-color: rgba(148, 167, 176, 0.35);
+}
+
+.blade-bond-name {
+  font-family: var(--font-headings);
+  font-size: 0.84rem;
+  letter-spacing: 0.4px;
+  color: var(--text-bone);
+}
+
+.blade-bond-note {
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* Giving the weapon back. Small and to one side: it is the rarer of the two
+   things you do here, and binding another does it on its own. */
+.blade-release {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+}
+
+.blade-list {
+  flex: 0 1 auto;
+  min-height: 60px;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 138, 75, 0.35) transparent;
+}
+
+.blade-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.blade-list::-webkit-scrollbar-thumb {
+  background: rgba(200, 138, 75, 0.35);
+  border-radius: 3px;
+}
+
+/* One prepared spell. Deliberately not a `.use-row`: those are pressable and
+   this is not, because a bound spell is cast on a swing and there is no swing
+   here. A row that looked pressable and did nothing would be worse than one
+   that plainly is not. */
+.blade-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.45rem;
+  border-radius: 3px;
+  background-color: rgba(9, 17, 21, 0.35);
+}
+
+.blade-line.is-out {
+  opacity: 0.45;
+}
+
+.blade-line-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-headings);
+  font-size: 0.78rem;
+  letter-spacing: 0.3px;
+  color: var(--text-bone);
+}
+
+/* How many a strike carries and when the binding ends. Pinned under the list
+   rather than scrolling with it, the way `.rune-foot` is. */
+.blade-foot {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* The two questions the bind window asks. One column for the weapons, because a
+   weapon's name runs long, and a row for the three types, because they do not. */
+.blade-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.7rem;
+}
+
+.blade-opts-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.blade-opt {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid rgba(148, 167, 176, 0.28);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.blade-opt:hover,
+.blade-opt:focus-visible {
+  border-left-color: var(--level-amber);
+}
+
+.blade-opt.is-picked {
+  border-color: var(--level-amber);
+  border-left-color: var(--level-amber);
+  background-color: rgba(9, 17, 21, 0.5);
+}
+
+.blade-opt-name {
+  font-family: var(--font-headings);
+  font-size: 0.82rem;
+  letter-spacing: 0.4px;
+  color: var(--text-bone);
+}
+
+.blade-opt-note {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   THE OSSUARY BLOCK
+   ---------------------------------------------------------
+   A talent set that keeps a graveyard gets one block of its own, the way a
+   slate and a bargain each get one: what is in the pool, every body it is
+   holding, and the press that wakes them.
+
+   Accented on --family-death rather than on a stat colour, because that is the
+   hue the set's own cards wear: a Necromancer knows the whole Death family, and
+   the block should read as part of the same thing. See tagColors.js.
+
+   The same arrangement `.rune-block` and `.minion-actions` make. The head, the
+   bar, the debt line, the Command and the foot all keep their place; the list of
+   bodies is the only part with no natural length, so the list is the part that
+   scrolls.
+   ========================================================= */
+.sheet-cell.cell-ossuary {
+  border-top-color: var(--family-death);
+}
+
+.ossuary-block {
+  gap: 0.55rem;
+  overflow: hidden;
+}
+
+.ossuary-list {
+  flex: 0 1 auto;
+  min-height: 72px;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(111, 162, 113, 0.35) transparent;
+}
+
+.ossuary-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ossuary-list::-webkit-scrollbar-thumb {
+  background: rgba(111, 162, 113, 0.35);
+  border-radius: 3px;
+}
+
+/* One body: who it is on the first line, what it is and what it cost on the
+   second, and the press that lets it go on the right. Not a `.use-row`, because
+   nothing here is played: a body's own moves are on its own two blocks. */
+.ossuary-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid var(--family-death);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+/* Destroyed, and still holding its Marrow until it is buried. Dimmed rather
+   than dropped: THE OSSUARY says the wreck is still in there, and a row that
+   vanished the moment its Health hit zero would take that Marrow with it
+   invisibly. */
+.ossuary-row.is-down {
+  border-left-color: var(--danger-rose);
+  opacity: 0.72;
+}
+
+.ossuary-row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ossuary-row-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-silver);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ossuary-row-note {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* Letting a body go is the one thing on this tab that takes a creature off the
+   board by hand, so it asks first: the two answers sit where the one button was. */
+.ossuary-row-ask {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* What the bodies are costing their keeper's maximum Willpower, which is the
+   price the whole set is built on. Pinned under the list, the same place and the
+   same voice as a slate's own debt line. */
+.ossuary-debt {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-silver);
+}
+
+.ossuary-debt b {
+  color: var(--stat-wp);
+}
+
+/* The Command: an ordinary use row, lit when it has already been spent this
+   turn. "Did I command" is the question a Necromancer asks most, so the answer
+   is on the row itself rather than only in the line under it. */
+.ossuary-command {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  gap: 0.3rem;
+}
+
+.ossuary-command .use-row-main {
+  flex: 1 1 auto;
+  border-left: 2px solid var(--family-death);
+}
+
+.ossuary-command.is-on .use-row-main {
+  border-left-color: var(--focus-cyan);
+  background-color: rgba(94, 199, 214, 0.09);
+}
+
+.ossuary-foot {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* =========================================================
+   RAISING ONE
+   ---------------------------------------------------------
+   The Long Rest step. Three parts, each its own shape: the wall of bodies, the
+   corpse question, and the spells or moves it rises knowing, which are the
+   sheet's own PoolWall and need nothing here.
+   ========================================================= */
+
+/* The seven bodies, as tiles rather than rows: each carries a price, a stat line
+   and what it can do, which is three lines and does not fit a row. Auto-fit so
+   the same wall reads on a phone as one column and on a canvas as three. */
+.raise-kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.raise-kind {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(148, 167, 176, 0.18);
+  border-left: 2px solid var(--family-death);
+  border-radius: 5px;
+  background-color: var(--inset-bg);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.raise-kind:hover:not(:disabled) {
+  border-color: var(--family-death);
+  background-color: rgba(111, 162, 113, 0.08);
+}
+
+.raise-kind.is-on {
+  border-color: var(--family-death);
+  background-color: rgba(111, 162, 113, 0.14);
+}
+
+/* Out of reach: too dear for the Marrow left, or a rung the rank has not
+   bought. Offered dead with the reason on it rather than hidden, so a Novice
+   Necromancer can see what the Master rung is for. */
+.raise-kind.is-shut {
+  opacity: 0.5;
+  cursor: default;
+  border-left-color: rgba(148, 167, 176, 0.3);
+}
+
+.raise-kind-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.raise-kind-name {
+  flex: 1 1 auto;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-silver);
+}
+
+/* The price, in the resource's own colour. Just the number: the window's own
+   lead says what the number is. */
+.raise-kind-cost {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--family-death);
+}
+
+.raise-kind-stats {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.raise-kind-note {
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--text-silver);
+}
+
+.raise-kind.is-shut .raise-kind-note {
+  color: var(--text-muted);
+}
+
+/* The corpse: three answers side by side, one of them a rank's. */
+.raise-corpses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.raise-corpse {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(148, 167, 176, 0.18);
+  border-radius: 5px;
+  background-color: var(--inset-bg);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.raise-corpse:hover:not(:disabled) {
+  border-color: var(--family-death);
+}
+
+.raise-corpse.is-on {
+  border-color: var(--family-death);
+  background-color: rgba(111, 162, 113, 0.14);
+}
+
+.raise-corpse.is-shut {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.raise-corpse-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-silver);
+}
+
+.raise-corpse-note {
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* Which of your own it comes out of, once the remains are the answer. The wreck
+   leaves the column in the same patch the new body arrives in, so this is the
+   only place on the sheet where choosing one thing deletes another. */
+.raise-remains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+}
+
+.raise-remain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid rgba(148, 167, 176, 0.18);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.raise-remain.is-on {
+  border-color: var(--danger-rose);
+  background-color: rgba(214, 106, 122, 0.12);
+}
+
+.raise-remain-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-silver);
+}
+
+.raise-remain-kind {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}

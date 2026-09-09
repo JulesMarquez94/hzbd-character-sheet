@@ -3,10 +3,10 @@ import CardBrief from './CardBrief.jsx';
 import Modal from '../Modal.jsx';
 import TagFilter from './TagFilter.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
-import { useTagFilter } from './useTagFilter.js';
+import { poolTags, useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { cardHaystack } from '../../lib/abilitySources.js';
-import { compareTags, compareWords } from '../../lib/cardOrder.js';
+import { compareWords } from '../../lib/cardOrder.js';
 import { levelForXp } from '../../lib/characterModel.js';
 import {
   displacedBy,
@@ -73,7 +73,7 @@ export default function LoadoutSection({
   });
   if (!state) return null;
 
-  const { spec, picks, known, owed, over, complete, library, capacity } = state;
+  const { spec, picks, known, owed, over, complete, library, capacity, whole } = state;
 
   return (
     <div className="pick-part">
@@ -83,9 +83,11 @@ export default function LoadoutSection({
             it is filling. "5 of 5 chosen" would be a full spellbook, and the book
             in question has room for six more. */}
         <span className={`pick-count${complete ? '' : ' is-open'}`}>
-          {library
-            ? `${picks.length} of ${capacity} ${kept(spec)}`
-            : `${picks.length} of ${known} chosen`}
+          {whole
+            ? `all ${picks.length}`
+            : library
+              ? `${picks.length} of ${capacity} ${kept(spec)}`
+              : `${picks.length} of ${known} chosen`}
         </span>
       </span>
 
@@ -138,7 +140,11 @@ export default function LoadoutSection({
         </p>
       )}
 
-      {!readOnly && (
+      {/* A whole pool has no button, because there is nothing in it anybody may
+          change: GRAVE LORE hands over the entire Death family and a rank is what
+          widens it. The count above says how many, the briefs say which, and the
+          set's own card says why. See `isWhole` in loadouts.js. */}
+      {!readOnly && !whole && (
         <div className="pick-tools pick-tools-tight">
           <button type="button" className="btn btn-sub btn-sm" onClick={() => setChoosing(true)}>
             {poolAction(state)}
@@ -146,7 +152,7 @@ export default function LoadoutSection({
         </div>
       )}
 
-      {choosing && (
+      {choosing && !whole && (
         <LoadoutChooser
           talent={talent}
           character={character}
@@ -472,7 +478,7 @@ function LoadoutBrowser({ talent, rank, spec, opened = [], character, onClose })
  * Unfiled. Anything else falls back to the sub-school, which is what every
  * existing spec means by saying nothing.
  */
-function PoolWall({ options, noun, character, group = 'sub', action = null }) {
+export function PoolWall({ options, noun, character, group = 'sub', action = null }) {
   const stack = useCardStack();
   const groups = groupPool(options, group);
 
@@ -544,34 +550,6 @@ function groupPool(options, by) {
 
 /* ------------------------------------------------------------------ parts */
 
-/**
- * Every tag the pool carries, as the filter row wants them.
- *
- * Minus the ones every card in it carries. A chip that selects the whole pool
- * narrows nothing, and there is always at least one: a Mycomancer's pool is all
- * Primal, and a Duelist's is fourteen cards all tagged Martial Move. The pool has
- * to hold more than one card for the test to mean anything, and a pool whose every
- * tag is universal keeps them all rather than showing a filter row with nothing
- * in it.
- */
-function poolTags(options) {
-  const tally = new Map();
-  for (const option of options) {
-    for (const tag of new Set(option.card.tags ?? [])) {
-      tally.set(tag, (tally.get(tag) ?? 0) + 1);
-    }
-  }
-
-  // Novice, Adept, Master and then the schools, never the alphabet. See cardOrder.js.
-  const all = [...tally.keys()].sort(compareTags);
-  const narrowing = options.length > 1 ? all.filter((tag) => tally.get(tag) < options.length) : all;
-
-  return (narrowing.length > 0 ? narrowing : all).map((tag) => ({
-    id: tag,
-    label: tag,
-    kind: 'card',
-  }));
-}
 
 /**
  * What holds a pool, as a noun phrase a sentence can lean on.
@@ -597,8 +575,8 @@ function upper(text) {
 
 /**
  * What a library calls the state of holding something, off the spec's own word.
- * An Arcanist's spells are written down and a Runebearer's runes are cut into
- * them. Defaulted, so every pool written before this existed keeps its words.
+ * An Arcanist's spells are written down and a Runebearer's runes are inscribed
+ * on them. Defaulted, so every pool written before this existed keeps its words.
  */
 function kept(spec) {
   return spec?.kept ?? 'written down';

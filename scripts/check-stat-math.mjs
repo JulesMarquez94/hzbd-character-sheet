@@ -49,6 +49,7 @@ import {
 } from '../src/lib/items.js';
 import { reapplyTotals } from '../src/lib/levelPicks.js';
 import { minionState } from '../src/lib/minions.js';
+import { marrowState } from '../src/lib/undead.js';
 import { mathLine, minionMath, statMath } from '../src/lib/statMath.js';
 
 const LIST = process.argv.includes('--list');
@@ -477,6 +478,54 @@ const SHEETS = [
          about an unbent attribute. */
       const worn = math.physique.terms.find((t) => t.label === 'Bodily Vigor');
       if (!worn) fail('the worn Physique never landed, so the rune line proves nothing');
+
+      /* And the other half, which is the only term on this sheet that comes *off*
+         a maximum: Barkskin at 2 and Heal at 4 are inscribed, so 6 of the
+         Willpower is in them until they are removed. */
+      const owed = math.willpower_max.terms.find((t) => t.label === 'runes inscribed');
+      if (!owed) fail('two inscribed runes cost nothing off the maximum');
+      if (owed && owed.value !== -6) {
+        fail(`runes inscribed worth ${owed.value}, want -6 (Barkskin 2 and Heal 4)`);
+      }
+    },
+  },
+
+  {
+    /* The second thing in the codex that comes *off* a derived maximum, and the
+       reason this sheet exists beside the one above it: a Necromancer holding
+       three bodies pays for all three, and `deriveStats` and `statMath` have to
+       floor the same debt against the same room in the same order.
+
+       Rank 2 rather than 3, because THE CHARNEL COURT takes the burden from 2 to
+       1 and a reading that ignored the rank would pass at either end of that. So
+       the expected number is 2 a body and the rank is the one that charges it. */
+    name: 'a Necromancer holding three bodies, each one worth 2 of the maximum',
+    row: {
+      xp: 44000,
+      level_picks: LADDER,
+      talents: [{ id: 'necromancer', rank: 2, taken: [3, 6] }],
+      minions: {
+        'body-1': { set: 'necromancer', kind: 'ghoul', name: 'Bite' },
+        'body-2': { set: 'necromancer', kind: 'skeleton-archer', name: 'Quiver' },
+        'body-3': { set: 'necromancer', kind: 'undead-knight', name: 'The Oath' },
+      },
+    },
+    expect: (math, fail) => {
+      const owed = math.willpower_max.terms.find((t) => t.label === '3 bodies raised');
+      if (!owed) fail('three raised bodies cost nothing off the maximum');
+      if (owed && owed.value !== -6) {
+        fail(`3 bodies raised worth ${owed.value}, want -6 (2 apiece at Rank 2)`);
+      }
+
+      /* And the pool they were paid out of, which is the Mind on the tile. A
+         reading that took the stored column rather than the effective one would
+         agree here by accident, so this is the cheap half; the point of the sheet
+         is the line above. */
+      const mind = math.mind.total;
+      const ossuary = marrowState({ ...BLANK_CHARACTER, talents: [{ id: 'necromancer', rank: 2 }], mind });
+      if (ossuary[0] && ossuary[0].total !== mind) {
+        fail(`the Ossuary holds ${ossuary[0].total} Marrow, want ${mind}, which is the Mind on the tile`);
+      }
     },
   },
 ];

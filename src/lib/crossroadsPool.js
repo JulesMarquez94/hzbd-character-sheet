@@ -111,10 +111,10 @@
 export const STAGES = [
   { id: 'childhood', title: 'Childhood', draw: 1 },
   { id: 'home', title: 'Home', draw: 1 },
-  { id: 'blood', title: 'Blood', draw: 2 },
-  { id: 'youth', title: 'Youth', draw: 2 },
+  { id: 'blood', title: 'Blood', draw: 1 },
+  { id: 'youth', title: 'Youth', draw: 1 },
   { id: 'trade', title: 'Trade', draw: 1 },
-  { id: 'road', title: 'The Road', draw: 4 },
+  { id: 'road', title: 'The Road', draw: 2 },
   { id: 'leaving', title: 'Leaving', draw: 1 },
 ];
 
@@ -1278,19 +1278,23 @@ export const QUESTIONS = [
   {
     /* The Runebearer's own scene, added 2026-09-08 with the set. A Physique
        caster had nowhere to be scored: every answer that leans on the body in
-       this pool is a shoulder against a door, and a set whose magic is cut into
+       this pool is a shoulder against a door, and a set whose magic is written on
        the arm needed a moment where the body is the instrument rather than the
-       lever. */
-    id: 'youth-needle',
+       lever.
+
+       `youth-rune` rather than `youth-needle`, renamed 2026-09-09 with the rest of
+       the set: the scene never says what the work is done with, and neither should
+       its id. Safe to move because no run has ever been saved against it. */
+    id: 'youth-rune',
     stage: 'youth',
     scene:
-      'The old soldier who works out of the back of the tannery does this for coin: a needle, a pot of grey ink and a word said over the pot before he starts. Whatever he puts on you tonight is on you for the rest of your life. There are two men ahead of you and one of them has already stopped pretending it does not hurt.',
+      'The old soldier who works out of the back of the tannery does this for coin: a rune worked into the skin of anybody who will sit still long enough, and a word said over the work at the end. Whatever goes on you tonight is on you for the rest of your life. There are two men ahead of you in the queue and one of them has stopped pretending it does not hurt.',
     asks: 'What do you do?',
-    recall: 'In the back room of the tannery, with the needle already wet, you',
+    recall: 'In the back room of the tannery, with two men ahead of you in the queue, you',
     options: [
       {
         id: 'shoulder',
-        label: 'Strip to the waist and tell him to start at the shoulder and work down. It takes four hours and you make no sound in any of them. When it is finished there is a mark on your arm that warms when you close your fist.',
+        label: 'Strip to the waist and ask for the whole of the shoulder, and down the arm from there. It takes four hours and you make no sound in any of them. When it is finished there is a mark on your arm that warms when you close your fist.',
         told: 'stripped to the waist and sat four hours without a sound, then walked out with a mark on your arm that warmed when you closed your fist.',
         gives: {
           attribute: { physique: 2 },
@@ -1301,7 +1305,7 @@ export const QUESTIONS = [
       },
       {
         id: 'watch',
-        label: 'Give up your place in the queue and watch from the corner instead, for as long as he will have you there. By the third man you know the order the lines go on and which of them he says the word over.',
+        label: 'Give up your place in the queue and watch from the corner instead, for as long as they will have you there. By the third man you know the order the lines go on and which of them the word is said over.',
         told: 'gave up your place and watched from the corner until you knew the order the lines went on.',
         gives: {
           attribute: { mind: 2 },
@@ -1323,13 +1327,74 @@ export const QUESTIONS = [
       },
       {
         id: 'price',
-        label: 'Ask him what the word costs on its own, without the ink. He laughs, and then he sees that you are serious, and the price he names is most of what you have on you.',
-        told: 'asked what the word cost without the ink, and paid most of what you had for it.',
+        label: 'Ask what the word costs on its own, without the rune. They laugh, and then they see that you are serious, and the price they name is most of what you have on you.',
+        told: 'asked what the word cost on its own, and paid most of what you had for it.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 2 },
           background: { merchant: 1 },
           skill: { haggler: 1, occultist: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    /* The Spellblade's own scene, added 2026-09-09 with the set. A Mind caster
+       who has to be inside the fight had nowhere to be scored: every answer in
+       this pool that leans on Mind is somebody standing back and reading, and
+       the whole point of this set is the reading arriving on the end of a
+       swing. So the scene puts a book and a blade in the same room and asks
+       which one you pick up. */
+    id: 'youth-hilt',
+    stage: 'youth',
+    scene:
+      'The tutor your family hired for the summer turns out to be two people in one coat. Mornings are declensions and the four schools and what a spell actually is. Afternoons he takes off the coat, hands you a practice blade and knocks you down until supper. At the end of the season he says you have a year of him left in you and asks what you want it spent on.',
+    asks: 'What do you do?',
+    recall: 'When the tutor asked what your last year with him was for, you',
+    options: [
+      {
+        id: 'both',
+        label: 'Tell him both, and that you want them at the same time. He thinks about it for a long minute, then teaches you to hold the first syllable in your teeth while your arms are busy and to let go of it on the moment the edge lands.',
+        told: 'asked for both at once, and learned to hold a syllable in your teeth until the edge landed.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellblade: 3 },
+          lineage: { luminary: 1 },
+          skill: { occultist: 1 },
+        },
+      },
+      {
+        id: 'book',
+        label: 'Take the mornings. The blade is a thing anybody can be taught and the other half is not, and you would rather have the half that takes a lifetime.',
+        told: 'took the mornings, because the blade is a thing anybody can be taught and the other half is not.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 2, enchanter: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1 },
+        },
+      },
+      {
+        id: 'blade',
+        label: 'Take the afternoons, and ask him to stop going easy. By spring you can put him on his back twice in five, which he says is two more than he expected and one fewer than he wanted.',
+        told: 'took the afternoons and asked him to stop going easy, until you could put him on his back twice in five.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 3 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'coat',
+        label: 'Ask him instead where a man learns to be two things at once, and who paid for it. He does not answer, and the not-answering is the most interesting thing that happens to you all year.',
+        told: 'asked him where a man learns to be two things at once and who paid for it, and read everything in the not-answering.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 2 },
+          background: { investigator: 1 },
+          skill: { inquisitor: 1, cunning: 1 },
         },
       },
     ],
@@ -2380,6 +2445,66 @@ export const QUESTIONS = [
     ],
   },
 
+  {
+    /* The second half of the Spellblade's pair, and on the road rather than in
+       the youth for the reason the Runebearer's second is: the tutor taught you
+       the trick and the road is where you find out it only works at arm's
+       length. Every answer here is somebody solving one problem at one distance,
+       which is the question the whole set is an answer to. */
+    id: 'road-lantern',
+    stage: 'road',
+    scene:
+      'Something has been following the caravan for three nights and it only comes close on the fourth. It is fast, it is low to the ground, and it goes straight through the two guards at the tail. The nearest lantern is thirty paces behind you and everything that matters is going to happen inside the next four seconds.',
+    asks: 'What do you do?',
+    recall: 'The night the thing took the tail of the caravan, you',
+    options: [
+      {
+        id: 'meet',
+        label: 'Walk into it. Get a hand on the axe at your belt, say the one word you know all the way through and put both of them into the same place at the same time. What comes off the blade is not steel and it goes into the thing rather than across the yard.',
+        told: 'walked into it with a word and an axe going into the same place at the same moment.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellblade: 3 },
+          lineage: { luminary: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'far',
+        label: 'Get distance. Back off past the wagon, get the width of the yard between you and it, and put everything you have into the space it has to cross to reach you.',
+        told: 'backed off past the wagon and filled the ground it had to cross to reach you.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 3 },
+          background: { erudit: 1 },
+          skill: { occultist: 1 },
+        },
+      },
+      {
+        id: 'lantern',
+        label: 'Go for the lantern instead. Thirty paces back, up onto the wagon and swing it round so the whole tail of the caravan is lit, and let the six people with spears do what six people with spears are for.',
+        told: 'went thirty paces back for the lantern and lit the whole tail of the caravan for the people with spears.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2 },
+          background: { military: 1 },
+          skill: { helpful: 1, vigilant: 1 },
+        },
+      },
+      {
+        id: 'bait',
+        label: 'Cut the traces on the last mule and drive it back down the road past the thing. Whatever it is, it goes after the loud warm thing running away rather than the quiet cold one standing still.',
+        told: 'cut a mule loose and drove it back down the road, and the thing went after the loud warm one.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 2 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, cunning: 1 },
+        },
+      },
+    ],
+  },
+
   /* ================================================================ leaving */
   {
     id: 'leaving-night',
@@ -2651,6 +2776,125 @@ export const QUESTIONS = [
           lineage: { tidebound: 3 },
           background: { merchant: 1, outlander: 1 },
           skill: { seafarer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    /* The Necromancer's own scene, added 2026-09-09 with the set. The pool had
+       nowhere to score somebody who is easy around a body: every Mind answer in
+       it is a person reading, and this set is a person *working*. So the scene is
+       a plague year and a barrow full of people who need moving, and the answers
+       are the four ways a child can be around that. */
+    id: 'youth-barrow',
+    stage: 'youth',
+    scene:
+      'It is the second plague summer and there is nobody left to carry the dead but children and the very old. They put you on the cart with a man who has done it before and stopped talking about it. Forty in the barrow by the end of the week, and none of them have anybody left to say a word over them.',
+    asks: 'What do you do?',
+    recall: 'On the plague cart the summer you were a child, you',
+    options: [
+      {
+        id: 'names',
+        label: 'Learn every one of their names and say them over the barrow at the end, in the order they came. The old man watches you do it on the fourth night and tells you to stop, because things that are named keep listening.',
+        told: 'learned all forty names and said them over the barrow, until the old man told you that things which are named keep listening.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { necromancer: 3 },
+          lineage: { undead: 1 },
+          skill: { occultist: 1 },
+        },
+      },
+      {
+        id: 'hands',
+        label: 'Say nothing and lift. Two a trip and forty by Friday, and the only thing you decide all week is where your hands go so that nothing comes apart on the way.',
+        told: 'said nothing and lifted, two a trip and forty by Friday.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 2, guardian: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'why',
+        label: 'Start opening them instead. You want to know why it took the miller in a night and left his wife, and by the end of the week you have a fair guess and a smell you cannot wash out.',
+        told: 'started opening them instead, to find out why it took the miller in a night and left his wife.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { alchemist: 2, arcanist: 1 },
+          background: { investigator: 1 },
+          skill: { physician: 1, apothecary: 1 },
+        },
+      },
+      {
+        id: 'run',
+        label: 'Get off the cart on the second morning and do not come back. There is fruit going soft in three gardens whose owners are in the barrow, and somebody is going to eat it.',
+        told: 'got off the cart on the second morning and lived off three gardens whose owners were in the barrow.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2 },
+          background: { criminal: 1 },
+          skill: { scavenger: 1, streetwise: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    /* The second half of the Necromancer's pair, on the road for the same reason
+       the Runebearer's is: the first scene is where somebody finds out they are
+       comfortable with this, and the road is where it is a tool somebody reaches
+       for in front of witnesses. */
+    id: 'road-shorthanded',
+    stage: 'road',
+    scene:
+      'The bridge crew is nine men short of finishing before the thaw and the nine are in the churchyard, which is where the last winter put them. The foreman is drunk in the middle of the day and the village has begun to talk about what happens to all of them if the bridge is not up.',
+    asks: 'What do you do?',
+    recall: 'At the bridge that was nine men short of the thaw, you',
+    options: [
+      {
+        id: 'nine',
+        label: 'Go and get the nine. They work through the night and they do not complain about the cold, and by the third night nobody from the village will come down to the water while you are standing there.',
+        told: 'went and got the nine out of the churchyard, and by the third night nobody would come down to the water while you stood there.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { necromancer: 3 },
+          lineage: { infernal: 1 },
+          skill: { mastermind: 1 },
+        },
+      },
+      {
+        id: 'foreman',
+        label: 'Take the foreman apart in front of his own crew, sober him up in the trough and put the work back on its feet by making the whole village afraid of you instead of the thaw.',
+        told: 'took the foreman apart in front of his crew and put the work back on its feet.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, berserker: 1 },
+          background: { military: 1 },
+          skill: { charismatic: 1 },
+        },
+      },
+      {
+        id: 'stone',
+        label: 'Look at what they have actually built and find the four places it is wrong. Fixing those saves them the nine men, and the foreman never forgives you for it.',
+        told: 'found the four places the bridge was wrong, which saved them the nine men and cost you the foreman.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { enchanter: 2, arcanist: 1 },
+          background: { craftsman: 1 },
+          skill: { scholar: 1, cartographer: 1 },
+        },
+      },
+      {
+        id: 'price',
+        label: 'Wait. A village that is going to lose everything by the thaw will pay anything by the thaw, and you would rather be paid than thanked.',
+        told: 'waited for the thaw to raise the price, because you would rather be paid than thanked.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { pactbound: 2, trickster: 1 },
+          background: { merchant: 1 },
+          skill: { haggler: 1, cunning: 1 },
         },
       },
     ],

@@ -3298,13 +3298,22 @@ const TALENT_SETS = [
          the designer     the answers, in chat on 2026-09-08, which reversed two
                           of the conversion's own readings.
 
-       **The conversion is superseded and its centrepiece is gone.** Both older
-       sources price a rune in *permanent* maximum Willpower: you inscribe a
-       spell, your ceiling comes down by what the spell would have cost, and it
-       stays down until the rune is cut away. The conversion built a whole
-       Special Feature tab around it. Jules dropped it: the limit is the slate,
-       and the slate is a count. Nothing subtracts from a maximum anywhere on
-       this sheet, and now nothing has to.
+       **The centrepiece was dropped and then put back.** Both older sources
+       price a rune in *permanent* maximum Willpower: you inscribe a spell, your
+       ceiling comes down by what the spell would have cost, and it stays down
+       until the rune comes off. Jules dropped it on 2026-09-08 in favour of the
+       count, and restored it on 2026-09-09: "reduce the maximum willpower so
+       that the spell cost is baked in". So a Runebearer is held twice, by how
+       many runes will fit and by what they are worth, and the two limits are
+       different shapes on purpose. It is the only thing on this sheet that
+       subtracts from a derived maximum. See runeDebtFrom in runes.js.
+
+       ---------------------------------------------------------------- the word
+       **Nothing here is carved, cut or scarred, and nothing is a tattoo.** Both
+       words were tried and both were refused (Jules, 2026-09-09), the first for
+       reading as a wound and the second for being the wrong trade. A rune is
+       *inscribed*, which is the old cards own verb and says nothing at all about
+       the tool that did it. The sheet never names one.
 
        ------------------------------------------------------------ the four answers
        Each one changed something, and each is written on the card it changed:
@@ -3319,7 +3328,9 @@ const TALENT_SETS = [
          the count    half your Physique plus 4 a rank, which is
                       `capacity.perStat` and the first attribute in the codex to
                       move a ceiling. Physique 4 at Rank 1 is 6 runes and
-                      Physique 8 at Rank 3 is 16.
+                      Physique 8 at Rank 3 is 16. What a Runebearer can
+                      afford runs out long before that, which is what the
+                      restored Willpower cost is for.
          the halves   an inscribed spell **can** be Overcast and Multicast, as
                       often as the spell allows. The one line the conversion
                       called "already in the site vocabulary" and kept word for
@@ -3334,8 +3345,9 @@ const TALENT_SETS = [
        ------------------------------------------------------------ the two cards moved
        INSTINCTIVE ACTIVATION and STREAMLINED PATTERNS are **not built**. Firing
        always costs an Action Point ("Acitviting those psell always cost 1 action
-       points"), which deletes the first, and there is no inscription cost left
-       for the second to discount. What Jules asked for at the top two rungs is a
+       points"), which deletes the first. STREAMLINED PATTERNS has a cost to
+       discount again now that the Willpower is back, and is still not built,
+       because what Jules asked for at the top two rungs is a
        Willpower grant and a recharge, so RUNIC NETWORK keeps the conversion's own
        Willpower half at the whole of the Physique rather than half of it, and
        RECHARGE comes up from Rank 2 to the Master rung as RECHARGED.
@@ -3349,7 +3361,7 @@ const TALENT_SETS = [
 
        Both plates and all four card pictures are unpainted. The prompts are on
        the conversion's Image Prompts tab and copied into data/README.md. */
-    tagline: 'Spells cut into the skin, one firing apiece, and nothing to pay when they go off.',
+    tagline: 'Spells inscribed on the skin, and the Willpower they cost is theirs for as long as they stay.',
     /* No plate yet. Null rather than a path to a file that is not there: the
        tiles draw the picture as a CSS background and would show nothing either
        way, but the summary and the presentation page use an `img` and would show
@@ -3377,7 +3389,7 @@ const TALENT_SETS = [
                               the printed number struck through beside it.
          `verb` and `kept`    the two words a rest window and an Abilities block
                               would otherwise say in the Arcanist's voice. A rune
-                              is inscribed and cut into you, not researched and
+                              is inscribed on you, not researched and
                               written down.
 
        No `school`, because the pool is the whole codex. The tier gate in
@@ -3388,9 +3400,9 @@ const TALENT_SETS = [
 
        `cast: 'physique'` is the set's own line and the reason it is shelved
        where it is. A spell is printed for Mind; a Runebearer rolls it off the
-       body it is cut into, and the card prints the numbers they actually roll.
+       body it is written on, and the card prints the numbers they actually roll.
 
-       No `start`. A Runebearer arrives with bare skin and fills the slate from
+       No `start`. A Runebearer arrives with nothing on them and fills the slate from
        the panel, which is the sheet's editing surface for every pool; the rest
        window grants one a night, which is what RUNEWORK actually promises. See
        the note on allowance against capacity in loadouts.js. */
@@ -3405,11 +3417,11 @@ const TALENT_SETS = [
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       research: ['long'],
       verb: 'Inscribe',
-      kept: 'cut into you',
-      section: 'What is cut into you',
-      holds: 'your skin',
+      kept: 'inscribed',
+      section: 'What is inscribed on you',
+      holds: 'your runework',
       price: { ap: 1, wp: 0, from: 'Rune Activation' },
-      note: 'One a night, cut with your Long Rest action. A rune fires once and comes back with the morning, and what it does reaches yourself or something you can touch and no further.',
+      note: 'One a night, inscribed with your Long Rest action. Each one holds its own Willpower cost off your maximum, fires once and comes back with the morning, and reaches yourself or something you can touch and no further.',
     },
     /* The ninth shape of what a set can hand over: a slate. Numbers only, and
        what they mean is runes.js's business, which is the same split minions.js,
@@ -3431,15 +3443,15 @@ const TALENT_SETS = [
       recharge: { rank: 3, rest: 'short', stat: 'physique', from: 'Recharged' },
     },
     blurb:
-      'A Runebearer carries their magic on their body. A spell is cut into the skin, and from that moment it costs almost nothing to fire: an Action Point, no Willpower, and no words. The work was done on some night years ago, by hand, with a needle. What it costs instead is room, and there is only so much skin.\n\n' + // text-style-ok: joins two clauses
-      'They excel at having something left. Every other caster is a pool that empties, and a Runebearer is a set of switches that were bought long before the fight started. Nothing a rune does reaches further than what they can put a hand on, so they work in the middle of it rather than behind it, and every rune is spent for the day once it fires.\n\n' + // text-style-ok: joins two clauses
-      'A Runebearer’s presence is a source of dependable, unspendable resilience. The body that carries the runes is the same body that pays for everything else they can do, so they grow into their own Willpower rather than into their Mind, and at the last a few hours off their feet is enough to bring part of the slate back.', // text-style-ok: joins two clauses
+      'A Runebearer carries their magic on their body. A spell is inscribed on the skin and from that moment it costs nothing to cast, because it was paid for once and paid in full: the maximum Willpower comes down by what the spell would have cost, and stays down until the rune is taken off.\n\n' + // text-style-ok: joins two clauses
+      'They excel at having something left. Every other caster is a pool that empties, and a Runebearer is a set of switches that were paid for years ago. Nothing a rune does reaches further than what they can put a hand on, so they work in the middle of it rather than behind it, and every rune is spent for the day once it fires.\n\n' + // text-style-ok: joins two clauses
+      'A Runebearer’s presence is a source of dependable, unspendable resilience. A Short Rest brings some of the runes back, the body that carries them is the same body that pays for them, and what began as a maximum given away ends as a Physique handed back.', // text-style-ok: joins two clauses
     cards: [
       {
         id: 'runework',
         rank: 1,
         name: 'Runework',
-        summary: 'Spells cut into your own skin, one a night, and nothing they do reaches past your arm.',
+        summary: 'Spells written on your own skin, one a night, each holding its cost off your maximum Willpower.',
         kind: 'talent',
         tags: ['Runebearer', 'Novice Talent', 'Long Rest'],
         ap: null,
@@ -3458,15 +3470,15 @@ const TALENT_SETS = [
            it the way it plays a Mycomancer's free hand. Flagged in
            data/README.md. */
         body:
-          'You cut spells into your own skin. A rune reaches yourself or something you can touch, whatever range the spell prints.\n\n' +
-          'Whenever you take a Long Rest, you can use your Long Rest action to cut one spell in, to cut one away or to do both. No spell can be cut twice.\n\n' +
-          'You carry half your Physique in runes, plus 4 for every Rank in Runebearer. At Rank 2 you can inscribe Adept Spells, and at Rank 3 Master Spells.', // text-style-ok: joins two clauses
+          'You inscribe spells on your own skin. A rune reaches yourself or something you can touch, whatever the spell prints.\n\n' +
+          'An inscribed spell lowers your maximum Willpower by its own cost until it is removed, and no spell can be inscribed twice. Your Long Rest action inscribes one, removes one or does both.\n\n' + // text-style-ok: joins two clauses
+          'You carry half your Physique in runes, plus 4 per Rank in Runebearer. Adept Spells at Rank 2, Master Spells at Rank 3.',
       },
       {
         id: 'rune-activation',
         rank: 1,
         name: 'Rune Activation',
-        summary: 'One rune a turn for a single Action Point, and the spell asks nothing else of you.',
+        summary: 'One rune a turn for a single Action Point. The Willpower was paid the night it went on.',
         kind: 'talent',
         /* **Passive, and the conversion tagged it Ability with 1 Action Point in
            the cost column.** Changed on the way in, because the price it prints is
@@ -3504,7 +3516,7 @@ const TALENT_SETS = [
         id: 'runic-network',
         rank: 2,
         name: 'Runic Network',
-        summary: 'The runework carries a charge of its own: Willpower equal to your whole Physique.',
+        summary: 'The runework carries a charge of its own, and gives you back a Physique of Willpower.',
         kind: 'talent',
         tags: ['Runebearer', 'Adept Talent', 'Passive'],
         ap: null,
@@ -3525,7 +3537,7 @@ const TALENT_SETS = [
         id: 'recharged',
         rank: 3,
         name: 'Recharged',
-        summary: 'A few hours off your feet, and a Physique worth of spent runes light up again.',
+        summary: 'A few hours off your feet, and a Physique worth of fired runes light up again.',
         kind: 'talent',
         tags: ['Runebearer', 'Master Talent', 'Passive'],
         ap: null,
@@ -3544,15 +3556,1070 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    id: 'spellblade',
+    name: 'Spellblade',
+    /* The fifteenth written set, and the first placeholder on the Mind shelf to
+       be filled since the Alchemist. **Handed over in chat on 2026-09-09 and
+       nowhere else**: there is no Ability tab for it, no conversion workbook and
+       no old printed page. Every card below is written here off the designer's
+       spoken description, which is why this comment carries the description
+       rather than pointing at a file.
+
+       ------------------------------------------------------------ what was said
+       In his own words, cleaned of the transcription's slips:
+
+         "A character that can [touch] your weapon, and whichever weapon [is] in
+          touch essentially has a special ability [that] turns that weapon into a
+          magic weapon. So a blade of energy, or a moon bow, or this type of
+          thing. It's like two Action Points, two Willpower [and] the weapon
+          becomes like this until [you] take a Long Rest. A weapon touched that
+          way essentially [becomes one] that use[s] Mind attribute instead of
+          anything else.
+
+          The model the Spellblade works [on] is that whenever you land an attack
+          you can also choose to cast a spell. [The] spell you cast with this, you
+          still pay for the Willpower, but they will be cast on your target of the
+          attack, on the point of impact. If you [cast something] like the
+          [rumbling] waves that deal damage then it does damage to the target.
+          Obviously you [cannot Multicast] because you're only getting one target.
+          But if you were to cast an area spell then the [area] happens centred on
+          the target. Or even if you were to make an attack and use a healing
+          field, [it] will do that.
+
+          [A] Spellblade can learn essentially a number of spells equal to one plus
+          twice their Rank in Spellblade. They can change [the] spells at the Long
+          Rest, and then when they become Masters they can change them on the Short
+          Rest if they will.
+
+          When the blade is enchanted [it] also changes damage profile to any of
+          the elemental damage, which mean cold, fire or lightning. When you reach
+          Adept the blade is also [Empowered] when it's enchanted. When I'm talking
+          here I'm not talking about Enhancement, like the measurement system in the
+          game. When you reach Master the Willpower cost of your spells is reduced
+          by one.
+
+          While it cannot [Multicast, it can be] Overcast. Overcast can be used, and
+          it is allowed to strike the ground to [deliver the] spell. [That] doesn't
+          necessarily [need] to be explained. If a spell require[s] an Attack Roll or
+          any kind of Roll, that Roll is met by the Attack Roll of the weapon [you]
+          strike [with], essentially because you [are extending] the attack. [The]
+          spell will automatically hit.
+
+          The Spellblade cost of Willpower for the ability is increased by half the
+          Action Point cost of the spell. So if the spell cost four Action Points
+          then the spell cost two additional Willpower to cast. At Master [it]
+          allow[s] the character to cast two spells on one attack. And of course
+          [the ladder is the usual one]: Rank two only [reaches] Adept spells, and
+          Rank three Master spells."
+
+       ------------------------------------------------------ the five readings
+       Five things the description leaves to be settled, each one settled here and
+       flagged in data/README.md:
+
+         the school   **any school**, and no `school` on the spec. Not said either
+                      way, and the examples say it: a wave of damage is Elemental,
+                      a healing field is Primal. The Arcanist is the only other
+                      pool in the codex with no school, and it is the same reason.
+         the rounding **up**, which is the codex's own reading of exactly this
+                      arithmetic. `moveWillpower` in martial.js already prices five
+                      Martial Moves "per 2 Action Points the attack costs, rounded
+                      up", and the note there argues the case: the rung matters and
+                      the parity does not. A 3 Action Point spell costs what a 4
+                      costs. The card prints the rate rather than the half, so the
+                      rounding never has to be said.
+         the strike   **the spells are cast through a strike and no other way.**
+                      Not said outright and the ground clause settles it: nobody
+                      needs permission to hit the floor unless hitting something is
+                      the only way the spell leaves your hands. So they are kept
+                      off the quick bar the way a Martial Move is, and the whole
+                      cost of one is worked out inside the attack's own prompt.
+         the miss     **printed, not enforced.** "Whenever you land an attack"
+                      names a hit, and this sheet has never known whether an attack
+                      landed. The Willpower is charged when the swing is paid for,
+                      which is where every other rider on a swing is charged. The
+                      table plays the miss.
+         the floor    the Master cut stops at **0 Willpower** and not at 1. No floor
+                      was named, the Arcanist's cut names one because its own card
+                      does, and a Novice spell costing nothing at Master is the
+                      rung doing what the rung is for.
+
+       No plate and no card pictures. Drop them into `data/Spellblade/` and run
+       `npm run art:cards`. */
+    tagline: 'A weapon bound to a mind, and every spell it knows arrives at the point of impact.',
+    /* No plate yet. Null rather than a path to a file that is not there, for the
+       reason the Runebearer's is. */
+    art: null,
+    /* Mind is the roster's own column and it is also the whole mechanism: a bound
+       weapon stops rolling off the arm that swings it. `martial` and
+       `spellcasting` both, which no other set in the codex carries together, and
+       that pairing is the set. */
+    tags: ['mind', 'spellcasting', 'martial', 'control'],
+    stat: 'mind',
+    /* The hand, as an ordinary pool. Everything here is loadouts.js's and only one
+       field is new to it:
+
+         `swap`   rank-indexed, `[null, ['long'], ['long'], ['long', 'short']]`,
+                  which is the shape `tiers` beside it already carries. The first
+                  pool in the codex whose *permission* moves with the rank rather
+                  than only its size, because TWINNED STRIKE hands a Short Rest the
+                  swap a Long Rest had. See swapsAtRest in loadouts.js.
+
+       No `school`, no `cast` and no `discount`. The pool is the whole codex; a
+       spell is printed for Mind and a Spellblade casts on Mind, so there is
+       nothing to override; and the Master's Willpower cut is not a discount on a
+       printed cost but a term in a price this set works out itself. See
+       `strikePrice` in spellblade.js. */
+    loadout: {
+      id: 'spellblade-spells',
+      label: 'Bound Spells',
+      noun: 'spell',
+      kind: 'spell',
+      group: 'school',
+      known: [null, 3, 5, 7],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      swap: [null, ['long'], ['long'], ['long', 'short']],
+      section: 'What your edge carries',
+      note: 'They are cast through the weapon you have bound and no other way. What one costs to carry on a strike is worked out on the strike itself.',
+    },
+    /* The tenth shape of what a set can hand over: a **bond**. Numbers only, and
+       what they mean is spellblade.js's business, which is the same split
+       minions.js, feral.js, pact.js and runes.js keep.
+
+       Nothing here is stored in a column of its own either. What is bound is one
+       row on the effects tracker carrying a `blade` payload, which is where the
+       sheet already keeps the four other things a running effect can be doing, and
+       `until: 'long'` is already what a rest reads to end one. So this set needed
+       no migration, the way the Runebearer needed none. See the note at the top
+       of spellblade.js. */
+    blade: {
+      label: 'Bound Edge',
+      from: 'Bound Edge',
+      /* BOUND EDGE's own printed price, read rather than restated: the card is
+         the source and this is the block's copy for the button it draws. */
+      ap: 2,
+      wp: 2,
+      /* "use[s] Mind attribute instead of anything else". Named here rather than
+         assumed, because a set's shelf and a set's swap are two different claims
+         and every other place in this file that moves an attribute says which. */
+      cast: 'mind',
+      /* "cold, fire or lightning", in the codex's own spelling. The order is the
+         designer's. */
+      types: ['Cold', 'Fire', 'Lightning'],
+      /* RESONANT EDGE, rank-indexed the way every other rider on a set is. */
+      empower: [null, 0, 1, 1],
+      /* TWINNED STRIKE, and both halves of it. `spells` is how many may ride one
+         swing and `cut` is what comes off each one's Willpower. */
+      spells: [null, 1, 1, 2],
+      cut: [null, 0, 0, 1],
+      /* POINT OF IMPACT's surcharge, as the rate the card prints: 1 Willpower for
+         every 2 Action Points the spell costs, rounded up. The same rate and the
+         same rounding as `moveWillpower`'s `'ap'` scale. */
+      rate: 2,
+    },
+    blurb:
+      'A Spellblade does not carry a wand or a book. They put a hand on a weapon, and for as long as the binding holds it is theirs in a way no smith could make it: an edge of cold light, a bow strung with something that is not a string, a haft that answers a mind rather than an arm. What was a piece of steel now swings on what they know.\n\n' + // text-style-ok: joins two clauses
+      'They excel at arriving. Every other caster stands off and sends the spell across the room, where it can be seen coming and stepped out of. A Spellblade carries it in on the swing. The attack and the spell are one motion and one Roll, so a spell that would have needed its own Roll simply lands, and whatever it does to the air around it happens where the blade already is.\n\n' + // text-style-ok: joins two clauses
+      'The bargain is that they have to be there. The spells go nowhere the weapon cannot reach and there are never many of them, so a Spellblade picks the handful the day is likely to ask for and then walks into the middle of it. When there is nothing worth hitting, they hit the ground.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'bound-edge',
+        rank: 1,
+        name: 'Bound Edge',
+        summary: 'A weapon you touch becomes magic, elemental and swung off your Mind until the morning.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Novice Talent', 'Ability'],
+        ap: 2,
+        wp: 2,
+        stat: 'mind',
+        /* Mechanics as data: `blade.ap`, `blade.wp`, `blade.cast` and
+           `blade.types` above, and the row it writes is spellblade.js's.
+
+           `opens` and `pays`, because the card asks two questions before it can
+           charge for anything: which weapon, and which of the three types. BREW
+           already carries the pair for the same reason, and the Ephemeral
+           Enchantment carries them in this direction: the window opens first and
+           the price is paid inside it, so backing out of the question costs
+           nothing. See ActiveBlock.jsx and BladeBlock.jsx, which raise the same
+           window.
+
+           "magic weapon" is the designer's own phrase and is left in even though
+           nothing on this sheet reads it. There is no magic-weapon flag in the
+           codex and inventing one to satisfy one card would be a rule with one
+           holder. What the sheet does read is the three things after it.
+
+           **until your next Long Rest** is bolded whole, which is the duration
+           shape `effectDuration` reads: the row this lays ends itself at the
+           right rest without anybody storing a clock. */
+        opens: 'blade',
+        pays: 'window',
+        body:
+          'Touch a weapon and bind it to you **until your next Long Rest**. It becomes a magic weapon and its attacks use your {mind} in place of the Attribute they print.\n\n' +
+          'Its damage type becomes {damage:Cold}, {damage:Fire} or {damage:Lightning}, chosen as you bind it.\n\n' +
+          'Binding a weapon releases the one you had bound before.',
+      },
+      {
+        id: 'spell-strike',
+        rank: 1,
+        name: 'Spell Strike',
+        summary: 'Spells equal to 1 plus twice your rank, cast through the weapon you bound and no other way.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `loadout` above. `Long Rest` and not
+           `Passive`, the tag every card that re-prepares a hand carries.
+
+           The pool sentence is the Mycomancer's, with the formula the designer
+           gave: "a number of spells equal to 1 + 2 x your Rank in Spellblade".
+           The rank as a number in a formula is the one way a card may name it.
+
+           The ladder sentence is FUNGAL INVOCATION's word for word but for the
+           school it names, and it is the other thing a card may say about a rank. */
+        body:
+          'You learn a number of spells equal to 1 + 2 x your Rank in Spellblade. You cast them through the weapon you have bound and no other way.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned spells.\n\n' +
+          'At Rank 2, you can learn Adept Spells, and at Rank 3, you gain access to Master Spells.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'point-of-impact',
+        rank: 1,
+        name: 'Point of Impact',
+        summary: 'Your attack carries a spell to where it lands, and the Attack Roll is the spell’s Roll.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `blade.rate` and `blade.spells` above, resolved in
+           `strikePrice` and offered in the attack's own use prompt beside the
+           Martial Moves. See spellblade.js and UsePrompt.jsx.
+
+           The price is printed as a **rate** rather than as "half the Action Point
+           cost", which is the same trade RECKLESS VIOLENCE makes on the other
+           side of the sheet: a rate needs no rounding clause after it, and the
+           rounding the designer wants is the one a rate gives. 4 Action Points is
+           2 Willpower either way; 3 Action Points is 2 under the rate and is the
+           reading martial.js already argues for.
+
+           Nothing here says the attack has to hit, and the description does. See
+           the miss, above: the sheet has never known, so the sentence says what
+           the sheet can keep and the table plays the rest. Flagged in
+           data/README.md.
+
+           Multicast and Overcast are both named because the designer named both,
+           and the second is the one a reader would otherwise assume was gone with
+           the first. */
+        body:
+          'When you attack with your bound weapon you can cast one of your spells, paying its Willpower and 1 more for every 2 Action Points it costs.\n\n' +
+          'It is cast where the attack lands, and anything it reaches beyond the target is centered there. It needs no Roll of its own: the Attack Roll carries it, and it lands.\n\n' +
+          'You can strike an empty space to place it. It can be Overcast and never Multicast.',
+      },
+      {
+        id: 'resonant-edge',
+        rank: 2,
+        name: 'Resonant Edge',
+        summary: 'The weapon you have bound deals Empowered damage.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `blade.empower` above, folded into
+           `attackModifiers` in moves.js beside the Colossus's Elevate and the
+           form's die, so the extra die is on the printed card before the swing
+           is paid for rather than remembered against it.
+
+           Empowered and not Elevated, and the designer said so twice: "the blade
+           is also [Empowered] when it's enchanted", then "I'm not talking about
+           Enhancement, like the measurement system in the game". Empowered is one
+           more die of the same kind. See cardText.js. */
+        body: 'Your bound weapon’s damage is Empowered by 1.',
+      },
+      {
+        id: 'twinned-strike',
+        rank: 3,
+        name: 'Twinned Strike',
+        summary: 'Two spells on one attack, each 1 Willpower cheaper, re-chosen on a Short Rest.',
+        kind: 'talent',
+        tags: ['Spellblade', 'Master Talent', 'Short Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `blade.spells`, `blade.cut` and the rank-indexed
+           `loadout.swap` above, all three of them.
+
+           "now" is the idiom for a card that only exists because of the rank, off
+           BESTIAL FRENZY, and it is doing real work in the first clause: one
+           spell to a strike was POINT OF IMPACT's rule and this is the rule
+           changing.
+
+           The cut has no floor and is the first in the codex without one. See
+           the floor, above. */
+        body:
+          'You can now cast 2 spells on the same attack, and your spells cost 1 less Willpower.\n\n' +
+          'Whenever you take a Short Rest, you can change any number of learned spells.',
+      },
+    ],
+  },
+  {
+    id: 'necromancer',
+    name: 'Necromancer',
+    /* The sixteenth written set, and the second placeholder on the Mind shelf to
+       be filled in two days. **Handed over in chat on 2026-09-09 and nowhere
+       else**: no Ability tab, no conversion workbook, no old printed page. Every
+       number and every card below is written here off the designer's spoken
+       description, which is why this comment carries the description rather than
+       pointing at a file.
+
+       ------------------------------------------------------------ what was said
+       In his own words, cleaned of the transcription's slips and with the two
+       reversals resolved in favour of the last thing he said:
+
+         "You have a new resource that you manage from a new block, which is going
+          to be necromantic bones or something. I'll let you imagine the terms
+          that's more fitting. Essentially it's a point system where you get free
+          points per rank, and you spend those points to animate. So the basic one
+          is to have a skeleton. It takes you three points to add one, and that
+          gives you something similar to how the Draconic ally works: you're
+          getting your block where you have what that entity can do, and you can
+          control it.
+
+          At Novice the undead you'll be able to create are an undead skeleton,
+          which has a bow and a simple sword, and all it can do is shoot its bow
+          and attack with its sword, no special move. A ghoul, which is a fast
+          agile fighter that punches and has an infected claw, so it's less
+          versatile than the skeleton because it cannot do any ranged attack, but
+          it is sturdier and faster and more of a melee character. And a wraith,
+          which is a simple ranged spellcaster, which has one attack, a four
+          Action Point attack that does magic damage at range, and then it has a
+          special ability where it can create a fog area which blinds people in
+          it, a six meter radius fog area at a point it can see, using Willpower.
+          Willpower used by your construct is the Willpower of the necromancer
+          that's being used.
+
+          On top of costing that special resource for each construct that you have
+          active, you also reduce your maximum Willpower. It's a small amount, but
+          it offsets the fact that you have several actors you control in combat.
+
+          As you go up in rank you will unlock more powerful undead that cost six
+          instead. So at Adept you would have a skeleton magus, a skeleton that
+          can learn two Novice spells on creation that it can cast, and otherwise
+          has a basic ranged attack like the wraith, just a magic bolt type of
+          thing that copies the stats so it works properly. And you also have the
+          undead knight, which is a melee tank. It's very tanky, it has a shield
+          and a sword, it can taunt and block, and as long as it's active it can
+          intercept your damage.
+
+          Then when you get to Master you unlock more that cost nine. There you
+          have the abomination, which is a flesh construct, big and very tanky,
+          a lot of Health, and its attack is the equivalent of a paired greatsword
+          attack on the target. It has a hook ability to pull targets to it, so a
+          two Action Point one Willpower thing where it can send the hook flying
+          nine meters in any direction and bring a target to it. And it has a
+          passive, a pestilence aura: any enemies adjacent to it at the start of
+          their turn take the Mind of the necromancer in necrotic damage. The
+          other Master undead is the undead cleric, capable of learning three
+          Novice or Adept Shadow or Light spells. That choice is made at creation.
+          To change the spells it knows you need to destroy it.
+
+          The amount of undead you can control is based off your Mind. The number
+          of necromantic bones you have is equal to your Mind, and it's still
+          three, six and nine to raise one.
+
+          To raise an undead, that's an action that is done during a Long Rest.
+          Only one undead at a time can be done, and to be able to do so they need
+          a corpse. If he doesn't have a fresh corpse, making an undead costs a
+          hundred Supplies. The necromancer will also automatically learn all the
+          Death spells.
+
+          In combat, having the undead minion act requires the necromancer to
+          spend two Action Points to use the Command action, which is a special
+          necromancer action. When it does it, it activates his undead as able to
+          fight. They're not autonomous.
+
+          For the stats I'll let you make some that make sense and directly
+          utilize the scales. The magus and the cleric are Mind oriented. The
+          ghoul is going to be Instinct. The skeletal archer needs to be balanced
+          because it uses Instinct and Physique. The wraith is a Mind creature.
+          The abomination is Physique, and the skeleton knight is Physique as
+          well."
+
+       ------------------------------------------------------------- the two reversals
+       He changed the arithmetic twice inside one message and the **last** answer
+       is what is built:
+
+         the pool     free points a rank, then "based off your Mind", then "we're
+                      still gonna use Mind, the number of bones you have is equal
+                      to your Mind". So the pool is the Mind column and a rank
+                      adds nothing to it. What a rank buys is *which bodies* are
+                      within reach, which is the rung gate on each kind below.
+         the prices   three, six and nine, then "so change the cost, instead of
+                      being three it's four, eight and twelve", then "scratch
+                      that, it's still three six nine". So 3, 6 and 9.
+
+       That pair together is tight, and it is flagged in data/README.md rather
+       than quietly loosened: a Master Necromancer on Mind 10 holds exactly one
+       abomination and nothing beside it.
+
+       ------------------------------------------------------------------ the word
+       "Necromantic bones or something. I'll let you imagine the terms that's more
+       fitting." **Marrow** is the term, and the block it is managed from is the
+       **Ossuary**. Bones read oddly as a count ("you have 9 bones"), and what the
+       pool actually measures is animating substance that stays in a body for as
+       long as the body stands and drains back out of it when the body falls.
+       Marrow says that; his own word is the one it is made of. His to veto. */
+    tagline: 'A keeper of the Ossuary, who spends their own Marrow to stand the dead up and command them.',
+    art: null,
+    /* Mind because the pool *is* the Mind column: what a Necromancer can hold on
+       the board is that number and nothing else moves it. Spellcasting for the
+       whole Death family arriving at once, Martial for seven bodies that fight,
+       and Control for the fog, the hook and the taunt. */
+    tags: ['mind', 'spellcasting', 'martial', 'control'],
+    stat: 'mind',
+    /* --------------------------------------------------------------- the pool
+       The tenth shape of what a talent set can hand over, beside a fixed hand, a
+       `loadout`, a `brewing` spec, an `enchanting` one, a `minion`, the
+       Trickster's `tricks`, the Duelist's `martial`, the Feral Curse's `feral`,
+       the Pact's `pact` and the Runebearer's `runes`. This one hands over a
+       **graveyard**: a pool measured off an attribute, a menu of bodies priced
+       against it, and a debt on the maximum Willpower for every body standing.
+
+       undead.js is what resolves all of it. Everything here is data. */
+    undead: {
+      id: 'ossuary',
+      label: 'Ossuary',
+      resource: 'Marrow',
+      noun: 'undead',
+      /* What the rest window's own row is called. Written out rather than built
+         out of the noun, because "Raise undead" is what a noun with no article
+         gets you and every other row in that list reads like a sentence. */
+      raising: 'Raise an undead',
+      /* What a list of them is called, for every line that counts more than one.
+         "3 risen" rather than "3 undeads", which is not a word. */
+      plural: 'risen',
+      /* "The number of necromantic bones you have is equal to your Mind." One
+         term, and a rank is deliberately not in it. Written as a rule rather
+         than a number so a second such set, or a ruling that adds a rank term,
+         is a line in the codex and no change in undead.js. */
+      marrow: { stat: 'mind', per: 1 },
+      /* "For each construct that you have active you also reduce your maximum
+         Willpower. It's a small amount, but it offsets the fact that you have
+         several actors you control in combat."
+
+         Per **body** and not per Marrow, which is the whole of what he said it
+         was for: three skeletons cost three times what one abomination costs,
+         because three skeletons are three things taking their turn. Indexed by
+         rank the way every other rank rider in this file is, and THE CHARNEL
+         COURT is what takes it down to 1. Flagged: he gave the shape and no
+         number, so 2 is this file's. */
+      burden: [null, 2, 2, 1],
+      /* "To raise an undead, that's an action that is done during a Long Rest.
+         Only one undead at a time can be done." */
+      rests: ['long'],
+      perRest: 1,
+      /* "To be able to do so they need a corpse. If he doesn't have a fresh
+         corpse, making an undead costs a hundred Supplies." */
+      supplies: 100,
+      /* And the rank at which your own dead are corpse enough, which is DEEPER
+         GRAVES. Nothing he said, and the reason it is here rather than in a
+         card's prose is that the raise window can actually offer it: a destroyed
+         body on the sheet becomes the third answer to the corpse question, and
+         raising over it is what finally sweeps it away. */
+      remains: 2,
+      /* "Having the undead minion act requires the necromancer to spend two
+         Action Points to use the Command action." The card is an ordinary card
+         and the cost is printed on it; this is the pointer the bodies read, so
+         each of them can say whether it may act. See `commandedBy` in
+         minions.js. */
+      command: { card: 'command-the-dead' },
+    },
+    /* ------------------------------------------------------------- the bodies
+       Seven of them, which is why this is a `roster` rather than a body: see
+       "one body, or a roster" at the top of minions.js. Everything true of every
+       undead is written once here and a kind says only what is its own.
+
+       ------------------------------------------------------------- the stat blocks
+       "For the stats I'll let you make some that make sense and directly utilize
+       the scales." So every number below is this file's, built against the two
+       stat blocks the codex already has: a character's own (10 Health a level and
+       10 a Physique, `deriveStats`) and a draconic ally's (5 and 5, and 16 points
+       of attribute at level 1). An undead is cheaper than either, so a Novice
+       body opens on 9 points of attribute where the ally opens on 16, and the
+       rungs run 9, 12 and 14.
+
+       Each kind's Defense is the sum of the two attributes it is built on, which
+       is the rule the ally's own Notes set down ("a Defense equal to its Grit")
+       read as a rule rather than as one creature's line. The abomination is the
+       exception and it is the designer's own reading: it is huge and it does not
+       dodge, so it answers on bare Physique and pays for it in Health. */
+    minion: {
+      id: 'risen',
+      label: 'Risen',
+      noun: 'undead',
+      kin: 'body you raised',
+      lead: 'It rose on a night, over a corpse, and it is yours. Give it a name and a face, and it takes two blocks of its own on your Character tab.',
+      /* "If its health reach 0 it instantly is shown as dead, it cannot go in
+         negative" is the ally's rule and it is this one's too. What "dead" means
+         is where the two part company: an ally retreats into a shadow, and an
+         undead is simply broken. `perish` is what says a Long Rest sweeps it up
+         instead of standing it back up. */
+      floor: 0,
+      returns: 'long',
+      perish: true,
+      down: 'Destroyed. Its Marrow is already back in your Ossuary, and a Long Rest is what sweeps up the rest of it.',
+      swept: 'The Marrow came back when it fell. This is the bones going in the ground.',
+      command: { card: 'command-the-dead' },
+      roster: [
+        /* ------------------------------------------------------- Novice, 3 Marrow */
+        {
+          /* "An undead skeleton, which has a bow and a simple sword, and all it
+             can do is shoot its bow and attack with its sword, no special move."
+             And: "the skeletal archer needs to be balanced because it uses
+             Instinct and Physique." So the one body in the set that grows both
+             evenly, and the only Novice one that can reach anything at range. */
+          id: 'skeleton-archer',
+          label: 'Skeleton Archer',
+          noun: 'skeleton',
+          tag: 'Skeleton Archer',
+          cost: 3,
+          rank: 1,
+          kin: 'skeleton with a bow across its back',
+          base: { physique: 4, instinct: 4, mind: 1 },
+          growth: { odd: ['instinct'], even: ['physique'] },
+          health: { perLevel: 3, perPhysique: 3 },
+          defense: 'reflex',
+        },
+        {
+          /* "A ghoul, which is a fast agile fighter that punches and has an
+             infected claw, so it's less versatile than the skeleton because it
+             cannot do any ranged attack, but it is sturdier and faster and more
+             of a melee character."
+
+             Sturdier is a point of Health a level over the skeleton, faster is
+             the Instinct its Speed is half of, and less versatile is having
+             nothing that reaches past a meter. */
+          id: 'ghoul',
+          label: 'Ghoul',
+          noun: 'ghoul',
+          tag: 'Ghoul',
+          cost: 3,
+          rank: 1,
+          kin: 'ghoul that has not eaten',
+          base: { physique: 4, instinct: 5, mind: 0 },
+          growth: { odd: ['instinct'], even: ['physique'] },
+          health: { perLevel: 4, perPhysique: 3 },
+          defense: 'reflex',
+        },
+        {
+          /* "A wraith, which is a simple ranged spellcaster, which has one
+             attack, a four Action Point attack that does magic damage at range,
+             and then it has a special ability where it can create a fog area
+             which blinds people in it." And: "the wraith is a Mind creature." */
+          id: 'wraith',
+          label: 'Wraith',
+          noun: 'wraith',
+          tag: 'Wraith',
+          cost: 3,
+          rank: 1,
+          kin: 'wraith that is barely there',
+          base: { physique: 2, instinct: 3, mind: 4 },
+          growth: { odd: ['mind'], even: ['instinct', 'physique'] },
+          health: { perLevel: 4, perPhysique: 2 },
+          defense: 'grit',
+        },
+
+        /* -------------------------------------------------------- Adept, 6 Marrow */
+        {
+          /* "A skeleton magus, a skeleton that can learn two Novice spells on
+             creation that it can cast, and otherwise has a basic ranged attack
+             like the wraith." And: "the magus and the cleric are Mind oriented."
+
+             `spells` is the choice made the night it stands up, and it is stored
+             on the body rather than on the set: two magi are two spellbooks. Any
+             Novice spell in the codex, which is what he said, and it is wide.
+             Flagged in data/README.md against narrowing it to Primal. */
+          id: 'skeleton-magus',
+          label: 'Skeleton Magus',
+          noun: 'magus',
+          tag: 'Skeleton Magus',
+          cost: 6,
+          rank: 2,
+          kin: 'skeleton that remembers being taught',
+          base: { physique: 3, instinct: 3, mind: 6 },
+          growth: { odd: ['mind'], even: ['instinct', 'physique'] },
+          health: { perLevel: 4, perPhysique: 3 },
+          defense: 'grit',
+          spells: { count: 2, tiers: ['Novice'] },
+        },
+        {
+          /* "The undead knight, which is a melee tank. It's very tanky, it has a
+             shield and a sword, it can taunt and block, and as long as it's
+             active it can intercept your damage." And: "the skeleton knight is
+             Physique as well."
+
+             The shield is the one piece of `armor` in the codex on a creature.
+             It is a printed number and not a piece of gear: nothing can take it
+             off it and nothing can add to it. See minionDerived in minions.js. */
+          id: 'undead-knight',
+          label: 'Undead Knight',
+          noun: 'knight',
+          tag: 'Undead Knight',
+          cost: 6,
+          rank: 2,
+          kin: 'knight that never took its plate off',
+          base: { physique: 6, instinct: 4, mind: 2 },
+          growth: { odd: ['physique'], even: ['instinct', 'physique'] },
+          health: { perLevel: 5, perPhysique: 4 },
+          defense: 'reflex',
+          armor: 3,
+        },
+
+        /* ------------------------------------------------------- Master, 9 Marrow */
+        {
+          /* "The abomination, which is a flesh construct, big and very tanky, a
+             lot of Health, and its attack is the equivalent of a paired
+             greatsword attack on the target." And: "the abomination is Physique."
+
+             The one body whose Defense is a bare attribute rather than the sum of
+             its two. It is enormous and it does not dodge: what it has instead is
+             6 Health a level and 5 a Physique, which is the most in the codex
+             outside a character's own. */
+          id: 'abomination',
+          label: 'Abomination',
+          noun: 'abomination',
+          tag: 'Abomination',
+          cost: 9,
+          rank: 3,
+          kin: 'thing sewn out of several people',
+          base: { physique: 9, instinct: 3, mind: 2 },
+          growth: { odd: ['physique'], even: ['physique', 'instinct'] },
+          health: { perLevel: 6, perPhysique: 5 },
+          defense: 'physique',
+          /* "Add that the abomination can learn 2 martial move of any rank"
+             (Jules, 2026-09-09). Chosen the night it stands up like the two
+             casters' spells, stored on its own row like them, and every rung is
+             open: no set in the codex reaches Master moves at Rank 1 and this
+             body does, which is the designer's own call.
+
+             A move is added to a swing rather than played, so what these ride is
+             ABATTOIR SWEEP, which is why that card carries the `Weapon Attack`
+             tag: `moveRides` asks the tag and nothing else. One per swing, which
+             is the base allowance everybody has. See heldMoves in moves.js. */
+          moves: { count: 2, tiers: ['Novice', 'Adept', 'Master'] },
+        },
+        {
+          /* "The undead cleric, capable of learning three Novice or Adept Shadow
+             or Light spells. That choice is made at creation. To change the
+             spells it knows you need to destroy it." And: "the magus and the
+             cleric are Mind oriented."
+
+             The only body in the roster with no attack of its own. Its whole kit
+             is the three spells it rose knowing, which is exactly what he
+             described, and HOLLOW DEVOTION is the card that says so. */
+          id: 'undead-cleric',
+          label: 'Undead Cleric',
+          noun: 'cleric',
+          tag: 'Undead Cleric',
+          cost: 9,
+          rank: 3,
+          kin: 'cleric still saying its office',
+          base: { physique: 3, instinct: 4, mind: 8 },
+          growth: { odd: ['mind'], even: ['instinct', 'physique'] },
+          health: { perLevel: 4, perPhysique: 3 },
+          defense: 'grit',
+          spells: {
+            count: 3,
+            tiers: ['Novice', 'Adept'],
+            school: 'Ethereal',
+            families: ['Light', 'Shadow'],
+          },
+        },
+      ],
+    },
+    /* --------------------------------------------------------- the Death family
+       "The necromancer will also automatically learn all the Death spells."
+
+       Not a hand and not a library: the pool *is* the hand, which is the third
+       shape a loadout can take and the first set to want it. `all: true`, so
+       nothing is stored, nothing is chosen, and a spell added to the family
+       tomorrow is a spell every Necromancer already knows. See `isWhole` in
+       loadouts.js.
+
+       `school` and `family` both, because a Death spell is a Primal spell and a
+       Primal pool would hand over the Flora and the Wild with it. The rungs open
+       on the rank ladder every other pool uses, which is the one part of this he
+       did not say: "all the Death spells" read literally would give a Novice
+       Necromancer four Master spells. Flagged. */
+    loadout: {
+      id: 'death-spells',
+      label: 'Death Spells',
+      noun: 'spell',
+      kind: 'spell',
+      school: 'Primal',
+      family: 'Death',
+      all: true,
+      section: 'The Death family',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      note: 'Every one of them, as the rungs open. There is nothing here to choose and nothing to prepare.',
+    },
+    blurb:
+      'A Necromancer keeps an Ossuary, and what is in it is Marrow: the animating stuff of the dead, measured out in their own Mind and spent a body at a time. Over a fresh corpse and a full night they put that Marrow into something that used to be a person, and in the morning it stands up and waits to be told.\n\n' +
+      'They excel at being an army. A skeleton with a bow, a ghoul that runs, a wraith that fills a room with blinding fog, a knight that steps in front of blows meant for its master: each is bought with Marrow that stays spent for as long as the body stands, and paid for again out of the Willpower its keeper no longer has. None of them thinks. Two Action Points spent on the Command is what turns a row of standing corpses into a fight.\n\n' + // text-style-ok: joins two clauses
+      'A Necromancer at the height of their work is a small procession: an abomination hauling bodies to itself on a hook, a cleric mumbling light over the ruin and somewhere behind all of it a drifter who has given up half their own strength to keep the whole thing on its feet.',
+    cards: [
+      /* ============================================== the Necromancer's own six */
+      {
+        id: 'the-ossuary',
+        rank: 1,
+        name: 'The Ossuary',
+        summary: 'Marrow equal to your Mind, spent to stand a body up and held for as long as it stands.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You keep an Ossuary of animating Marrow, and it holds an amount equal to your {mind} [[mind]].\n\n' +
+          'A body you raise takes the Marrow it costs and keeps it until you lay the body to rest. Destroyed or standing, it is still in your Ossuary.\n\n' +
+          'While a body is in your Ossuary, your maximum Willpower is reduced by 2.',
+      },
+      {
+        id: 'raise-the-dead',
+        rank: 1,
+        name: 'Raise the Dead',
+        summary: 'One body a night over a fresh corpse, or a hundred Supplies to build one.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Novice Talent', 'Ability'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'Whenever you take a **Long Rest**, you can use your Long Rest action to raise one undead over a fresh corpse: a skeleton archer, a ghoul or a wraith, at 3 Marrow apiece.\n\n' +
+          'One a night, and what it is stays what it is. Without a corpse to work on you must build one, which takes 100 Supplies.',
+      },
+      {
+        id: 'command-the-dead',
+        rank: 1,
+        name: 'Command the Dead',
+        summary: 'Two Action Points, and every body you raised can act this turn.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Novice Talent', 'Ability'],
+        ap: 2,
+        wp: null,
+        stat: 'mind',
+        body:
+          'Every undead you have raised can act on your turn **until your next Turn End**, spending its own Action Points and Reaction Points and your Willpower.\n\n' +
+          'None of them is its own. Without this they stand where they are and do nothing at all.',
+      },
+      {
+        id: 'grave-lore',
+        rank: 1,
+        name: 'Grave Lore',
+        summary: 'Every Death spell in the codex, as the rungs open to you.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You know every Death spell in the codex, cast with your {mind} and paid for out of your own Willpower.\n\n' +
+          'The Novice ones to begin with. At Rank 2 the Adept ones open to you, and at Rank 3 the Master ones.',
+      },
+      {
+        id: 'deeper-graves',
+        rank: 2,
+        name: 'Deeper Graves',
+        summary: 'The magus and the knight at 6 Marrow, and your own dead are corpse enough.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You can raise a skeleton magus or an undead knight, at 6 Marrow apiece.\n\n' +
+          'What is left of your own risen is corpse enough. A body of yours that has been destroyed can be raised again out of its own remains, with no corpse to find and no Supplies to spend.\n\n' +
+          'Each body you hold costs 1 less of your maximum Willpower.',
+      },
+      {
+        id: 'charnel-court',
+        rank: 3,
+        name: 'The Charnel Court',
+        summary: 'The abomination and the cleric, at 9 Marrow, and every body is cheaper to keep.',
+        kind: 'talent',
+        tags: ['Necromancer', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'You can raise an abomination or an undead cleric, at 9 Marrow apiece.\n\n' +
+          'Nothing you raise is beneath your notice any more. One Command wakes every body you keep, however many of them are standing and whatever they are.',
+      },
+
+      /* ================================================ what the skeleton does */
+      {
+        id: 'bone-bow',
+        rank: 1,
+        name: 'Bone Bow',
+        summary: 'A shortbow shot at 18 meters, off its own Instinct.',
+        kind: 'talent',
+        tags: ['Skeleton Archer', 'Novice Ability'],
+        ap: 3,
+        wp: null,
+        stat: 'instinct',
+        damage: ['Sharp'],
+        body:
+          'It makes an {stat} Ranged Attack {roll} against **an entity** it can see within **18 meters (60 feet)**.\n\n' +
+          'On a hit, it deals [[1d6 + stat]] {damage} damage.',
+      },
+      {
+        id: 'rusted-sword',
+        rank: 1,
+        name: 'Rusted Sword',
+        summary: 'The plain sword it was buried with.',
+        kind: 'talent',
+        tags: ['Skeleton Archer', 'Novice Ability'],
+        ap: 3,
+        wp: null,
+        stat: 'physique',
+        damage: ['Sharp'],
+        body:
+          'It makes a {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'On a hit, it deals [[1d6 + stat]] {damage} damage.',
+      },
+
+      /* =================================================== what the ghoul does */
+      {
+        id: 'rending-punch',
+        rank: 1,
+        name: 'Rending Punch',
+        summary: 'A cheap swing it can throw three of in a turn.',
+        kind: 'talent',
+        tags: ['Ghoul', 'Novice Ability'],
+        ap: 2,
+        wp: null,
+        stat: 'instinct',
+        damage: ['Blunt'],
+        body:
+          'It makes an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'On a hit, it deals [[1d6 + stat]] {damage} damage.',
+      },
+      {
+        id: 'infected-claws',
+        rank: 1,
+        name: 'Infected Claws',
+        summary: 'Filthy claws that leave whatever they open diseased.',
+        kind: 'talent',
+        tags: ['Ghoul', 'Novice Ability'],
+        ap: 4,
+        wp: null,
+        stat: 'instinct',
+        damage: ['Sharp'],
+        body:
+          'It makes an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage} damage and the target is diseased.',
+      },
+
+      /* ================================================== what the wraith does */
+      {
+        id: 'grave-bolt',
+        rank: 1,
+        name: 'Grave Bolt',
+        summary: 'A bolt of grave cold thrown at 12 meters.',
+        kind: 'talent',
+        tags: ['Wraith', 'Novice Ability'],
+        ap: 4,
+        wp: null,
+        stat: 'mind',
+        damage: ['Necrotic'],
+        body:
+          'It makes a {stat} Ranged Attack {roll} against **an entity** it can see within **12 meters (40 feet)**.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage} damage.',
+      },
+      {
+        id: 'shroud-of-fog',
+        rank: 1,
+        name: 'Shroud of Fog',
+        summary: 'A 6 meter fog at 12 meters that blinds anything standing in it.',
+        kind: 'talent',
+        tags: ['Wraith', 'Novice Ability'],
+        ap: 4,
+        wp: 3,
+        stat: 'mind',
+        body:
+          'A grave fog rises in a **6-meter (20-foot)** radius around a point it can see within **12 meters (40 feet)**, and it lasts for **10 turns (1 minute)**.\n\n' +
+          '**All entities** inside the fog are blinded for as long as they stay in it.',
+      },
+
+      /* =================================================== what the magus does */
+      {
+        id: 'withering-bolt',
+        rank: 2,
+        name: 'Withering Bolt',
+        summary: 'The magus’s own bolt, heavier than a wraith’s and further.',
+        kind: 'talent',
+        tags: ['Skeleton Magus', 'Adept Ability'],
+        ap: 4,
+        wp: null,
+        stat: 'mind',
+        damage: ['Necrotic'],
+        body:
+          'It makes a {stat} Ranged Attack {roll} against **an entity** it can see within **15 meters (50 feet)**.\n\n' +
+          'On a hit, it deals [[2d6 + stat]] {damage} damage.',
+      },
+      {
+        id: 'rote-of-the-magus',
+        rank: 2,
+        name: 'Rote of the Magus',
+        summary: 'Two Novice spells, chosen the night it stood up and never again.',
+        kind: 'talent',
+        tags: ['Skeleton Magus', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'It rose knowing 2 Novice spells, chosen the night it stood up, and it casts them with its own {mind} out of your Willpower.\n\n' +
+          'It never learns another. To change what it knows, destroy it and raise a new one.',
+      },
+
+      /* =================================================== what the knight does */
+      {
+        id: 'grave-iron-blade',
+        rank: 2,
+        name: 'Grave-Iron Blade',
+        summary: 'A heavy sword swung from behind a shield.',
+        kind: 'talent',
+        tags: ['Undead Knight', 'Adept Ability'],
+        ap: 4,
+        wp: null,
+        stat: 'physique',
+        damage: ['Sharp'],
+        body:
+          'It makes a {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'On a hit, it deals [[2d6 + stat]] {damage} damage.',
+      },
+      {
+        id: 'bonewall',
+        rank: 2,
+        name: 'Bonewall',
+        summary: 'It steps into a blow meant for you and takes it instead.',
+        kind: 'talent',
+        tags: ['Undead Knight', 'Adept Ability'],
+        ap: 1,
+        wp: null,
+        stat: 'physique',
+        body:
+          'Whenever you would take damage while it stands within **6 meters (20 feet)** of you, it steps into the blow and takes that damage in your stead.',
+      },
+      {
+        id: 'iron-provocation',
+        rank: 2,
+        name: 'Iron Provocation',
+        summary: 'It beats its shield until nothing wants to look anywhere else.',
+        kind: 'talent',
+        tags: ['Undead Knight', 'Adept Ability'],
+        ap: 2,
+        wp: 1,
+        stat: 'physique',
+        body:
+          'It beats its shield and howls. It makes a {stat} Roll {roll} against the Grit of **all enemy entities** within **9 meters (30 feet)** that can hear it.\n\n' +
+          'On a success, their attacks must be aimed at it for **2 turns**.',
+      },
+
+      /* ============================================== what the abomination does */
+      {
+        id: 'abattoir-sweep',
+        rank: 3,
+        name: 'Abattoir Sweep',
+        summary: 'Both arms down at once, at paired-greatsword weight.',
+        kind: 'talent',
+        /* `Weapon Attack` is load-bearing: it is what lets its two Martial Moves
+           ride this swing. See `moveRides` in moves.js, and REMEMBERED VIOLENCE
+           below. */
+        tags: ['Abomination', 'Master Ability', 'Weapon Attack'],
+        ap: 5,
+        wp: null,
+        stat: 'physique',
+        damage: ['Blunt'],
+        body:
+          'It brings both arms down at once. It makes a {stat} Melee Attack {roll} against **an entity** within **2 meters (6 feet)** of it.\n\n' +
+          'On a hit, both arms land and it deals [[4d4 + 2*stat]] {damage} damage.',
+      },
+      {
+        id: 'flesh-hook',
+        rank: 3,
+        name: 'Flesh Hook',
+        summary: 'A hook thrown 9 meters that drags what it catches back.',
+        kind: 'talent',
+        tags: ['Abomination', 'Master Ability'],
+        ap: 2,
+        wp: 1,
+        stat: 'physique',
+        damage: ['Sharp'],
+        body:
+          'It throws a hook at **an entity** it can see within **9 meters (30 feet)**, making a {stat} Ranged Attack {roll}.\n\n' +
+          'On a hit, it deals [[1d6 + stat]] {damage} damage and drags the target into a free space next to it.',
+      },
+      {
+        /* Named off the term it inflicts rather than off the smell, because a
+           Necromancer knows every Death spell and PESTILENT CLOUD is one of them:
+           two cards called Pestilent, in the same set's own blocks, doing two
+           different things. See the Death family below. */
+        id: 'carrion-reek',
+        rank: 3,
+        name: 'Carrion Reek',
+        summary: 'Anything standing beside it rots at its own Turn Start.',
+        kind: 'talent',
+        tags: ['Abomination', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'The air around it rots. **All enemy entities** within **1 meter (3 feet)** of it suffer Corpse Carrion for as long as they stand there, read against your own {mind}.',
+      },
+      {
+        id: 'remembered-violence',
+        rank: 3,
+        name: 'Remembered Violence',
+        summary: 'Two Martial Moves of any rung, remembered by whatever it was sewn out of.',
+        kind: 'talent',
+        tags: ['Abomination', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        body:
+          'Something in it remembers how to fight. It rose knowing 2 Martial Moves, Novice, Adept or Master, chosen the night it stood up.\n\n' +
+          'It adds one of them to a swing of its own the way you would add one to yours, paid for out of your Willpower.',
+      },
+
+      /* ================================================== what the cleric does */
+      {
+        id: 'hollow-devotion',
+        rank: 3,
+        name: 'Hollow Devotion',
+        summary: 'Three Light or Shadow spells, chosen the night it stood up and never again.',
+        kind: 'talent',
+        tags: ['Undead Cleric', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        body:
+          'It rose knowing 3 spells of Ethereal Light or Ethereal Shadow, Novice or Adept, chosen the night it stood up. It casts them with its own {mind} out of your Willpower.\n\n' +
+          'It has nothing else. It never learns another, and to change what it knows you must destroy it and raise a new one.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------- the roster *
- * Twenty sets that have a name and nothing else.
+ * Eighteen sets that have a name and nothing else.
  *
  * The designer keeps a roster of every set the game is going to have, four
- * columns wide and cut by the attribute each one leans on. Fourteen of its
+ * columns wide and cut by the attribute each one leans on. Sixteen of its
  * slots are written and sit in the codex above (the Alchemist, the Pact of
- * Ordenance and the Runebearer were placeholders here first). These are the rest, standing in the codex
+ * Ordenance, the Runebearer, the Spellblade and the Necromancer were
+ * placeholders here first). These are the rest, standing in the codex
  * as placeholders so the wall reads as the whole plan rather than as the part of
  * it that happens to be finished.
  *
@@ -3659,8 +4726,9 @@ const TALENT_PLACEHOLDERS = [
   placeholder('sharpshooter', 'Sharpshooter', 'instinct'),
   placeholder('wilder', 'Wilder', 'instinct'),
 
-  /* Mind, rows 4 to 9. Arcanist, Enchanter and Alchemist are rows 1, 2 and 3 and
-     are written.
+  /* Mind, rows 5 and 7 to 9. Arcanist, Enchanter and Alchemist are rows 1, 2
+     and 3 and are written, and so are the Spellblade, which was row 6 until
+     2026-09-09, and the Necromancer, which was row 4 until the day after.
 
      `SpellBlade` is read as Spellblade and `Tachticain` as Tactician. Row 9 reads
      `Elemental Aspe`, which is the column cutting the cell off rather than a typo,
@@ -3671,9 +4739,7 @@ const TALENT_PLACEHOLDERS = [
      2026-08-24, when its own sheet was converted. The Alchemist and the Cauldron
      Keeper both mix things and sit on different shelves, which is the roster’s own
      arrangement and is left alone. */
-  placeholder('necromancer', 'Necromancer', 'mind'),
   placeholder('spellquill', 'Spellquill', 'mind'),
-  placeholder('spellblade', 'Spellblade', 'mind'),
   placeholder('thaumaturge', 'Thaumaturge', 'mind'),
   placeholder('tactician', 'Tactician', 'mind'),
   placeholder('elemental-aspect', 'Elemental Aspect', 'mind'),

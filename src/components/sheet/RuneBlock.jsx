@@ -13,7 +13,7 @@ import { spendCardUse } from '../../lib/uses.js';
 import { usePlayCard } from './usePlayCard.js';
 
 /**
- * The rune block: the one a talent set adds when it cuts its spells into its
+ * The rune block: the one a talent set adds when it writes its spells onto its
  * holder.
  *
  * Asked for directly (Jules, 2026-09-08): "I want to have a rune interface so a
@@ -56,7 +56,12 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
   const stack = useCardStack();
   const play = usePlayCard({ character, patch });
 
-  const { talent, pool, runes, capacity, cut, over, recharge, spent } = slate;
+  /* Whether the slate has taken the whole maximum. `willpower_max` is already
+     floored at zero by deriveStats, so this is the moment the floor is holding
+     part of the debt back rather than the sheet charging it. See runeDebtFrom. */
+  const spentOut = (Number(character?.willpower_max) || 0) <= 0;
+
+  const { talent, pool, runes, capacity, cut, over, recharge, spent, debt } = slate;
 
   /* The chooser reads the sheet's own panel state: capped at what the slate can
      hold rather than at what tonight allows, because this is the sheet and not a
@@ -100,14 +105,14 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
         <span className="stat-category-label">{pool.label}</span>
         <span className="spacer" />
         <span className={`block-count${cut < capacity ? ' is-open' : ''}`}>
-          {cut} of {capacity} cut
+          {cut} of {capacity}
         </span>
         {!readOnly && patch && (
           <button
             type="button"
             className="minion-edit"
             onClick={() => setChoosing(true)}
-            title={`Change what is cut into you. ${capacity} ${
+            title={`Change what is written on you. ${capacity} ${
               capacity === 1 ? 'rune' : 'runes'
             } in all`}
           >
@@ -122,8 +127,9 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
       <div className="rune-list">
         {runes.length === 0 ? (
           <p className="pick-line">
-            Bare skin. Your slate holds {capacity} {capacity === 1 ? 'rune' : 'runes'} and nothing
-            is cut into it yet.
+            Nothing inscribed yet. Your runework holds {capacity}{' '}
+            {capacity === 1 ? 'rune' : 'runes'}, and each one you take will hold its own Willpower
+            cost off your maximum.
           </p>
         ) : (
           runes.map((rune) => (
@@ -140,7 +146,31 @@ export default function RuneBlock({ character, slate, patch, readOnly = false })
 
       {over > 0 && (
         <p className="pick-notice is-warning">
-          {over} more than your skin holds. Cut some away.
+          {over} more than your runework holds. Take some off.
+        </p>
+      )}
+
+      {/* ---------- WHAT THEY ARE HOLDING ----------
+          The idea the whole set is built on, and the reason firing one costs
+          nothing: a rune keeps the Willpower it would have cost to cast, for as
+          long as it is on you. So the total is printed where the list is, and the
+          line turns into a warning at the moment the maximum runs out. That is
+          the workbook's own ask, that a Runebearer spending themselves down to
+          nothing should never be a silent trap. */}
+      {debt > 0 && (
+        <p className={`rune-debt${spentOut ? ' is-warning' : ''}`}>
+          {spentOut ? (
+            <>
+              <b>Your maximum Willpower is gone.</b> The runes on you are worth {debt}, which is
+              more than you had to give. Nothing that is not a rune can be paid for until you
+              take one off.
+            </>
+          ) : (
+            <>
+              <b>{debt} Willpower</b> of your maximum is in them, and it comes back with any
+              rune you take off.
+            </>
+          )}
         </p>
       )}
 
@@ -202,7 +232,7 @@ function RuneRow({ rune, stack, readOnly, onFire }) {
   if (!card) {
     return (
       <p className="pick-line">
-        {rune.id} is cut into you, and this build&rsquo;s codex has no card by that name.
+        {rune.id} is inscribed on you, and this build&rsquo;s codex has no card by that name.
       </p>
     );
   }

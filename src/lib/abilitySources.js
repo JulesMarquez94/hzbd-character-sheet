@@ -38,8 +38,8 @@ import { EQUIPMENT_SLOTS, heldItem, normalizeEquipment, normalizeTrinkets } from
 import { getLineage, lineageCards } from './lineages.js';
 import { levelForXp } from './characterModel.js';
 import { normalizeLevelPicks } from './levelPicks.js';
-import { loadoutOf, loadoutState } from './loadouts.js';
-import { isMinionCard, minionModifiers, minionState } from './minions.js';
+import { loadoutOf, loadoutState, swapRests } from './loadouts.js';
+import { isMinionCard, minionKindRiders, minionModifiers, minionState } from './minions.js';
 import { pactBoonRows, pactState } from './pact.js';
 import { cardsAtRank, getTalent, normalizeTalents, rankInfo } from './talents.js';
 import { getCard, itemEnchantments } from './weapons.js';
@@ -115,7 +115,7 @@ function kept(spec) {
  * promise one — the panel on the sheet is what changes it then, and it can do it
  * whenever.
  */
-function swapLine(spec) {
+function swapLine(spec, rank) {
   /* A library is filled rather than re-chosen, and its permission is the other
      one: ARCANE RESEARCH adds a single card a rest where FUNGAL INVOCATION
      changes any number. Said in the verb, because "changed on a long rest" is the
@@ -130,7 +130,10 @@ function swapLine(spec) {
     return `one more ${done} on ${listOut(research.map((kind) => `a ${kind} rest`))}`;
   }
 
-  const rests = Array.isArray(spec?.swap) ? spec.swap : [];
+  /* Read at the rank, because one spec's permission moves with it: a Master
+     Spellblade re-chooses on either rest and a Novice one only at the fire. See
+     swapRests in loadouts.js. */
+  const rests = swapRests(spec, rank);
   if (rests.length === 0) return 'changed on the sheet at any time';
   const words = rests.map((kind) => `a ${kind} rest`);
   return `changed on ${listOut(words)}`;
@@ -270,6 +273,22 @@ function talentSources(character) {
     const creature = creatures.find((row) => row.id === talent.id) ?? null;
     const riders = creature ? minionModifiers(character, creature) : null;
 
+    /* And for a set that hands over a *menu* of bodies, one rider per kind rather
+       than one for the set: a ghoul's claws print the ghoul's Instinct and a
+       wraith's bolt prints the wraith's Mind, and both are the Necromancer's
+       cards in the Necromancer's own block. Keyed by the tag on the card, which
+       is what says which body it belongs to. Empty for every other set. See
+       minionKindRiders in minions.js. */
+    const kinds = minionKindRiders(character, talent);
+
+    /** The rider a card is read with here: its body's, or its reader's. */
+    const riderFor = (card) => {
+      for (const tag of card.tags ?? []) {
+        if (kinds[tag]) return kinds[tag];
+      }
+      return riders && isMinionCard(card) ? riders : null;
+    };
+
     const sections = [];
     for (let rank = 1; rank <= held.rank; rank += 1) {
       const cards = cardsAtRank(talent, rank);
@@ -279,7 +298,7 @@ function talentSources(character) {
         section(
           `rank-${rank}`,
           `Rank ${rank}${title ? ` · ${title}` : ''}`,
-          cards.map((card) => entry(card, riders && isMinionCard(card) ? riders : null))
+          cards.map((card) => entry(card, riderFor(card)))
         )
       );
     }
@@ -325,7 +344,7 @@ function talentSources(character) {
            wrong the moment a set arrived whose card grants no swap at all. */
         note: `${talent.name} · ${loadout.picks.length} of ${
           loadout.library ? loadout.capacity : loadout.known
-        } ${loadout.library ? kept(loadout.spec) : 'chosen'}, ${swapLine(loadout.spec)}`,
+        } ${loadout.library ? kept(loadout.spec) : 'chosen'}, ${swapLine(loadout.spec, loadout.rank)}`,
         art: talent.art ?? null,
         sections: [
           {

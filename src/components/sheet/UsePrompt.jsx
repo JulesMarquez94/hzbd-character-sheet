@@ -29,6 +29,7 @@ import {
   ridingLine,
   withMoves,
 } from '../../lib/moves.js';
+import { clampSpells, offeredSpells, strikeAllowance, strikeCost } from '../../lib/spellblade.js';
 import { effectLine } from '../../lib/riders.js';
 import { mergeSources, sourceRow, sourceWords } from '../../lib/attribution.js';
 import { heldThing, targetPlan } from '../../lib/targeting.js';
@@ -323,6 +324,35 @@ export default function UsePrompt({
     setDenied(null);
   }
 
+  /* ---- and the spells a Spellblade can carry in on it ----
+     The same shape and the same seam as the moves above, because it is the same
+     decision: a thing added to this swing, priced into the same pay button and
+     spent by the same press. What is different is only where the list comes from
+     and what one costs, and both of those are spellblade.js's. Empty for every
+     card that is not a bound weapon's attack, which is almost every prompt. */
+  const carried = useMemo(
+    () => offeredSpells(character, request.card),
+    [character, request.card]
+  );
+  const carriable = useMemo(() => strikeAllowance(character), [character]);
+  const [rode, setRode] = useState([]);
+  const takenSpells = useMemo(
+    () => clampSpells(rode, carried, carriable),
+    [rode, carried, carriable]
+  );
+  const spellRows = useMemo(() => takenSpells.map((at) => carried[at]), [takenSpells, carried]);
+  const spellCards = useMemo(() => spellRows.map((row) => row.card), [spellRows]);
+
+  function toggleSpell(at) {
+    setRode((was) => {
+      const held = clampSpells(was, carried, carriable);
+      if (held.includes(at)) return held.filter((one) => one !== at);
+      const next = clampSpells([...held, at], carried, carriable);
+      return next.includes(at) ? next : held;
+    });
+    setDenied(null);
+  }
+
   const plan = useMemo(
     () =>
       offered
@@ -454,11 +484,14 @@ export default function UsePrompt({
     () =>
       castPlan(request, who, {
         half: times > 0,
-        riders: moveCards,
+        /* The ridden spells count as riders here exactly as the moves do: a
+           Fireball carried in on the swing inflicts its Burn on whoever the swing
+           found, and the chain reads that off the card. See castPlan. */
+        riders: [...moveCards, ...spellCards],
         statuses: ticked,
         plan: rollPlan(request.card, who, modifiers, { half: times > 0 }),
       }),
-    [request, who, times, moveCards, ticked, modifiers]
+    [request, who, times, moveCards, spellCards, ticked, modifiers]
   );
   const certain = casting.offered.filter((hit) => !hit.optional);
   const choices = casting.offered.filter((hit) => hit.optional);
@@ -495,6 +528,12 @@ export default function UsePrompt({
   const swing = request.card ?? null;
   const paid = moveCost(moveCards, cutBy, swing);
 
+  /* And what the spells add, which is Willpower and nothing else: a ridden spell
+     lays no charge and its Action Points were the attack's. The whole arithmetic
+     is spellblade.js's, worked out per spell when the list was built, so this is
+     only the sum. See strikePrice. */
+  const rideWp = strikeCost(spellRows);
+
   const base = {
     /* RECKLESS VIOLENCE, and nothing else: a move can say the attack costs no
        Action Points, and that replaces the price rather than reducing it. It wins
@@ -509,7 +548,7 @@ export default function UsePrompt({
        and this is the condition. A Wildkin's SHARP SENSE prints its 1 Willpower
        and spends it here for the same reason, and a Feral Cursed's BESTIAL SENSE
        prints nothing and costs nothing. */
-    wp: (Number(request.wp) || 0) + bringWp + paid.wp,
+    wp: (Number(request.wp) || 0) + bringWp + paid.wp + rideWp,
     health: 0,
   };
   const taken = Boolean(offer) && times > 0;
@@ -583,8 +622,14 @@ export default function UsePrompt({
      and not the price, and is named on the arrow instead. */
   const settled = taken
     ? { ...price, note: `${offer.name}: ${request.name}` }
-    : moveCards.length > 0
-      ? { ...price, note: `${request.name}: ${listAnd(moveCards.map((card) => card.name))}` }
+    : /* The moves and the spells together, because both are Willpower this swing
+         is charging that the card beside it never printed, and a ledger row
+         naming half of them would be the half that happened to be ticked first. */
+      moveCards.length + spellCards.length > 0
+      ? {
+          ...price,
+          note: `${request.name}: ${listAnd([...moveCards, ...spellCards].map((card) => card.name))}`,
+        }
       : bringWp > 0
         ? {
             ...price,
@@ -620,6 +665,20 @@ export default function UsePrompt({
          the body they land on (WOUND, REND) and the chain reads that off the
          card rather than off a name. See castPlan in combatBar.js. */
       options.riders = moveCards;
+    }
+    /* And the spells a Spellblade carried in on it. `carried` is the rows rather
+       than the names, because two different things downstream read them: the
+       chain rolls each spell's own damage after the swing's (see rollPlan in
+       usePlayCard.js), and `castPlan` reads what each one inflicts. The names go
+       out beside them for the log line, since "Strike" and "Strike carrying
+       Fireball" are not the same line at a table.
+
+       `riders` gathers both kinds, because the one thing castPlan wants is every
+       card standing on this swing whoever put it there. */
+    if (spellCards.length > 0) {
+      options.carried = spellRows.map((row) => ({ card: row.card, modifiers: row.modifiers }));
+      options.spells = spellCards.map((card) => card.name);
+      options.riders = [...moveCards, ...spellCards];
     }
     /* And the conditions the card left to a choice, as ticked here. */
     if (ticked.length > 0) options.statuses = ticked;
@@ -806,6 +865,42 @@ export default function UsePrompt({
               <span className="use-targets-note">
                 {ridingLine(modifiers) ??
                   'Nothing added: the attack goes through exactly as the card beside this reads.'}
+              </span>
+            </div>
+          )}
+
+          {/* And what the bound weapon can carry in with it. Under the moves
+              rather than beside them, because they are two different decisions
+              about one swing and the second only exists for one set: a move
+              changes what the attack does and a spell is a second thing arriving
+              where it lands. Same rows, because it is the same tick. */}
+          {carried.length > 0 && (
+            <div className="use-moves">
+              <span className="use-targets-head">
+                Bound Spells
+                <span className="use-targets-count">
+                  {takenSpells.length} of {carriable}
+                </span>
+              </span>
+
+              {carried.map((row, at) => (
+                <SpellRow
+                  key={`${row.id}-${at}`}
+                  row={row}
+                  on={takenSpells.includes(at)}
+                  full={!takenSpells.includes(at) && takenSpells.length >= carriable}
+                  allowed={carriable}
+                  onToggle={() => toggleSpell(at)}
+                  stack={cards}
+                />
+              ))}
+
+              <span className="use-targets-note">
+                {spellCards.length === 0
+                  ? 'Nothing carried: the attack lands and nothing else does.'
+                  : `${listAnd(spellCards.map((card) => card.name))} ${
+                      spellCards.length === 1 ? 'is' : 'are'
+                    } cast where this lands. The Attack Roll is its Roll, so a miss carries nothing.`}
               </span>
             </div>
           )}
@@ -1226,6 +1321,78 @@ function RunningRow({ effect }) {
  * quiet rather than vanishing, which is the same call the belt makes for a flask
  * with no charges left.
  */
+/**
+ * One bound spell on one line: what it is, what carrying it in costs here, and
+ * whether there is room left on the swing for it.
+ *
+ * The same row a Martial Move gets, deliberately. They are the same tick on the
+ * same swing and a reader has just read one list; a second list built to its own
+ * design would be the sheet asking one question two ways.
+ *
+ * The orb strikes the printed number through whenever the two differ, which is
+ * almost always: a spell's Action Points are converted into Willpower on the way
+ * in (see strikePrice in spellblade.js) and a Master takes a point back off. A
+ * row charging 5 beside a card printing 3 is exactly the kind of number the sheet
+ * is not allowed to leave unexplained.
+ */
+function SpellRow({ row, on, full, allowed, onToggle, stack }) {
+  const { card, price } = row;
+  const from = [
+    ...(price.surcharge > 0 ? ['its Action Points'] : []),
+    ...(price.cut > 0 ? ['Twinned Strike'] : []),
+  ];
+
+  return (
+    <div className="use-move">
+      <Gated
+        className={`use-move-take${on ? ' is-on' : ''}`}
+        onClick={onToggle}
+        aria-pressed={on}
+        why={
+          full
+            ? allowed === 1
+              ? 'One spell rides a strike. Untick the one you have added first.'
+              : `A strike carries ${allowed}, and ${allowed} are added. Untick one first.`
+            : null
+        }
+        title={card.summary}
+      >
+        <span className="use-move-costs">
+          {price.wp > 0 && (
+            <CostOrb
+              kind="wp"
+              value={price.wp}
+              size={26}
+              was={price.wp !== price.printed ? price.printed : null}
+              from={from}
+            />
+          )}
+          {price.wp === 0 && <span className="use-move-cut">Free</span>}
+        </span>
+
+        <span className="use-move-body">
+          <span className="use-move-name">
+            {card.name}
+            <span className="use-move-from">{row.state.talent.name}</span>
+          </span>
+          <span className="use-move-note">{card.summary}</span>
+        </span>
+      </Gated>
+
+      <button
+        type="button"
+        className="use-move-read"
+        onClick={() => stack?.openCard(card, row.modifiers)}
+        disabled={!stack}
+        title={`Read ${card.name}`}
+        aria-label={`Read the ${card.name} card`}
+      >
+        &#9432;
+      </button>
+    </div>
+  );
+}
+
 function MoveRow({ card, talent, on, full, allowance, cut, swing, onToggle, stack }) {
   /* What it costs on *this* swing, which for the five that `scale` is not what
      the plate prints: the plate quotes a rate — per 2 Action Points for four of
