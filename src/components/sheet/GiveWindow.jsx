@@ -7,6 +7,7 @@ import { useCampaignLog } from '../../context/campaign-log.js';
 import { giveEvent, postEvent } from '../../lib/campaignLog.js';
 import { listMembers } from '../../lib/campaigns.js';
 import { giftTargets, giveFromPack, parcelName, parcelRefusal } from '../../lib/handover.js';
+import { normalizePack } from '../../lib/items.js';
 import { viewUrl, isVaultImage } from '../../lib/imageViews.js';
 import { newChain } from '../../lib/logChain.js';
 
@@ -60,7 +61,16 @@ export default function GiveWindow({ character, index, item, patch, onClose }) {
   const [sending, setSending] = useState(false);
 
   const table = tables.find((row) => row.id === tableId) ?? null;
-  const refusal = parcelRefusal(character, character?.pack?.[index]);
+  /* Read through `normalizePack`, and **not** off the raw column. `index` came
+     from the pack block, which counts the normalized list; the stored column may
+     be a JSON string or carry nulls from an older save, so indexing it directly
+     lined the refusal up against the wrong entry — or, for a stored string,
+     against a single character of it. That reads as "there is nothing here this
+     build knows how to hand over" and leaves the button dead with no way to find
+     out why. `giveFromPack` normalizes too, so this is now the same entry the
+     write will act on. */
+  const entry = normalizePack(character?.pack)[index];
+  const refusal = parcelRefusal(character, entry);
 
   useEffect(() => {
     if (!tableId) return undefined;

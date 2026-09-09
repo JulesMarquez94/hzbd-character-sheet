@@ -53,6 +53,19 @@
  * the record is re-read through `normalizeForged` on arrival, so a payload from a
  * newer build cannot put a shape this one does not understand onto a sheet.
  *
+ * ------------------------------------------------------------ what the log owes
+ * Nothing here needs a schema change, which was checked rather than assumed:
+ * `campaign_events.kind` is plain text with no constraint (the schema says so on
+ * purpose, "so a new kind is a deploy of the app and not a migration"), the
+ * roster is readable by any seated member through `is_campaign_member`, and
+ * `claim_event_actor` already lets each side write rows as its own character and
+ * nobody else's — which is the whole reason the protocol is shaped this way.
+ *
+ * The one thing the log owes an offer is **time**, and it has ninety days of it:
+ * `trim_campaign_events` deletes rows older than that. An offer nobody answers
+ * for three months takes the thing with it, which is a long enough rope that it
+ * is a note rather than a bug.
+ *
  * ------------------------------------------------------------------- the leaf
  * This file reads the item codex and the forged shelf. It writes nothing and
  * talks to nothing: the events are built in campaignLog.js and the patches are
