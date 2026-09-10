@@ -13,9 +13,11 @@ import {
   magicBurdenUsed,
   placementOf,
   rarityColor,
+  weaponShelves,
 } from '../../lib/items.js';
 import { compareTags, sortItems } from '../../lib/cardOrder.js';
 import { formatWeight } from '../../lib/characterModel.js';
+import { getAttribute } from '../../lib/attributes.js';
 import { getCard } from '../../lib/weapons.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { useUnit } from '../../context/units.js';
@@ -262,12 +264,40 @@ export default function ItemBrowser({
       items: carried,
       empty: 'Nothing you are carrying matches that.',
     },
-    {
-      id: 'codex',
-      label: carriesAny || madeAny ? 'Everything else in the codex' : 'The codex',
-      items: elsewhere,
-      empty: searching ? 'Nothing else matches that.' : 'The codex holds nothing else for this slot.',
-    },
+    /* The codex shelf, and where it is a rack of weapons it comes in three: one
+       per attribute they are swung on.
+
+       Forty five weapons is a list you scroll rather than read, and the question
+       a hand slot is opened with is "my 6 is in Physique, so what can I actually
+       hold". The answer was two cards deep on every row of it — open the weapon,
+       open its attack, read the attribute off the card. The shelves under the
+       codex heading are muted the same way the one heading was, so what is yours
+       and what is not still reads at a glance.
+
+       Never the pack or the made shelf: both are short, and both answer a
+       different question. `weaponShelves` hands back null for anything that is
+       not a whole rack, which leaves this window exactly as it was for armor,
+       for a filter narrowed to one attribute, and for a slot holding one thing.
+       See items.js. */
+    ...(weaponShelves(elsewhere)?.map(({ shelf, items }) => ({
+      id: `codex-${shelf.id}`,
+      kind: 'codex',
+      label: shelf.label,
+      color: getAttribute(shelf.id)?.color,
+      note: shelf.note,
+      unit: 'weapon',
+      items,
+      empty: '',
+    })) ?? [
+      {
+        id: 'codex',
+        label: carriesAny || madeAny ? 'Everything else in the codex' : 'The codex',
+        items: elsewhere,
+        empty: searching
+          ? 'Nothing else matches that.'
+          : 'The codex holds nothing else for this slot.',
+      },
+    ]),
   ].filter(Boolean);
 
   function toggleTag(tag) {
@@ -383,13 +413,21 @@ export default function ItemBrowser({
             <p className="browser-empty">The codex holds nothing for this slot yet.</p>
           ) : (
             groups.map((group) => (
-              <div className={`browser-group browser-group-${group.id}`} key={group.id}>
+              <div className={`browser-group browser-group-${group.kind ?? group.id}`} key={group.id}>
                 <div className="browser-group-head">
-                  <span className="browser-group-label">{group.label}</span>
+                  <span className="browser-group-label" style={group.color ? { color: group.color } : undefined}>
+                    {group.label}
+                  </span>
                   <span className="browser-group-note">
-                    {group.items.length} {group.items.length === 1 ? 'item' : 'items'}
+                    {group.items.length} {group.unit ?? 'item'}
+                    {group.items.length === 1 ? '' : 's'}
                   </span>
                 </div>
+
+                {/* What the shelf means, where the shelf is not self-evident: an
+                    attribute is a heading a reader can take two ways, and this
+                    says which. */}
+                {group.note && <p className="browser-group-line">{group.note}</p>}
 
                 {group.items.length === 0 ? (
                   <p className="browser-group-empty">{group.empty}</p>

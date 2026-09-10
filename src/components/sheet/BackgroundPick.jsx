@@ -20,7 +20,8 @@ import {
   takeSkill,
   usedBackgroundTags,
 } from '../../lib/backgrounds.js';
-import { armorSetOptions, getItem, startingWeapons } from '../../lib/items.js';
+import { armorSetOptions, getItem, startingWeapons, weaponShelves } from '../../lib/items.js';
+import { getAttribute } from '../../lib/attributes.js';
 import { formatNumber } from '../../lib/characterModel.js';
 import { ARMOR_ORDER, buildKitPatch, buildReturnPatch } from '../../lib/kit.js';
 
@@ -515,6 +516,11 @@ function KitLine({ label, value, note = null, onPeek = null }) {
 function KitOutfitter({ background, character, patch, onClose }) {
   const sets = armorSetOptions();
   const guns = startingWeapons();
+  /* The rack, cut on the attribute each weapon is swung on. Every Common weapon
+     in the codex answers with one of the three, so this is three shelves today;
+     a rack that ever came out as one draws as one unheaded wall of chips, the
+     way it always did. See `weaponShelves` in items.js. */
+  const racks = weaponShelves(guns) ?? [{ shelf: { id: 'all', label: '' }, items: guns }];
   const stack = useCardStack();
 
   // Deliberately unchosen to begin with: pre-selecting the first set would
@@ -613,35 +619,50 @@ function KitOutfitter({ background, character, patch, onClose }) {
           {needed > 1 ? 'Weapons' : 'Weapon'}{' '}
           <span className="kit-step-note">
             {needed > 1
-              ? 'two: tap to choose, ⓘ to read'
-              : 'one Common and unenchanted: tap to choose, ⓘ to read'}
+              ? 'two, shelved by the attribute they are swung on: tap to choose, ⓘ to read'
+              : 'one Common and unenchanted, shelved by the attribute it is swung on: tap to choose, ⓘ to read'}
           </span>
         </h4>
-        <div className="kit-chips">
-          {guns.map((weapon) => (
-            <span
-              className={`kit-chip${weapons.includes(weapon.id) ? ' is-picked' : ''}`}
-              key={weapon.id}
-            >
-              <button
-                type="button"
-                className="kit-chip-take"
-                onClick={() => toggleWeapon(weapon.id)}
-              >
-                {weapon.name}
-              </button>
-              <button
-                type="button"
-                className="kit-chip-peek"
-                onClick={() => peek(weapon.id)}
-                aria-label={`Read the ${weapon.name} card`}
-                title={`Read the ${weapon.name} card`}
-              >
-                ⓘ
-              </button>
-            </span>
-          ))}
-        </div>
+
+        {/* Cut in three, on the attribute each one is swung on. This is the
+            first weapon anybody in the game ever picks, and it was a wall of
+            twenty names: the one thing that decides whether a weapon is any use
+            to this character was behind the ⓘ on every one of them. The chip
+            wall itself is unchanged, it is drawn three times. */}
+        {racks.map(({ shelf, items }) => (
+          <div className="kit-shelf" key={shelf.id}>
+            {shelf.label && (
+              <span className="kit-shelf-label" style={{ color: getAttribute(shelf.id)?.color }}>
+                {shelf.label}
+              </span>
+            )}
+            <div className="kit-chips">
+              {items.map((weapon) => (
+                <span
+                  className={`kit-chip${weapons.includes(weapon.id) ? ' is-picked' : ''}`}
+                  key={weapon.id}
+                >
+                  <button
+                    type="button"
+                    className="kit-chip-take"
+                    onClick={() => toggleWeapon(weapon.id)}
+                  >
+                    {weapon.name}
+                  </button>
+                  <button
+                    type="button"
+                    className="kit-chip-peek"
+                    onClick={() => peek(weapon.id)}
+                    aria-label={`Read the ${weapon.name} card`}
+                    title={`Read the ${weapon.name} card`}
+                  >
+                    ⓘ
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
       </section>
 
       <section className="kit-step">
@@ -889,9 +910,23 @@ function SkillChooser({
 
   /* A skill you hold that has not named its spell is not a finished pick, so the
      window will not call itself done. Named on the button, since a disabled Done
-     with no reason on it is the window refusing without saying why. */
+     with no reason on it is the window refusing without saying why.
+
+     **And a trade short of its skills is the same kind of unfinished** (Jules,
+     2026-09-10). One of two chosen closed clean and walked you on to the kit,
+     which left a background holding half of what it teaches and nothing on the
+     screen making you go back for the other half. The count in the footer had
+     been saying so in red the whole time. A reader is gated by neither. */
   const owing = asks.find((skill) => !skillAnswer(skill, choices)) ?? null;
-  const shut = owing ? `${owing.name} has not named ${owing.choice.placeholder} yet` : null;
+  const shut = readOnly
+    ? null
+    : owing
+      ? `${owing.name} has not named ${owing.choice.placeholder} yet`
+      : remaining > 0
+        ? `${remaining} more ${remaining === 1 ? 'skill' : 'skills'} to choose from ${
+            background.name
+          }. Take ${remaining === 1 ? 'it' : 'them'} off the wall and this closes.`
+        : null;
 
   /* Taking one is two things when the skill asks something: the skill is yours,
      and the window becomes the question it left. */
@@ -926,17 +961,18 @@ function SkillChooser({
             </button>
           )}
           {/* During the walk this button is the way on to the kit, and says so.
-              Opened on its own it only closes. Either way it waits on a spell
-              that has not been named. */}
-          <button
-            type="button"
-            className="btn btn-take btn-sm"
-            disabled={Boolean(shut)}
-            title={shut ?? undefined}
-            onClick={onClose}
-          >
-            {shut ? 'One spell to name' : walking ? 'Next: your kit' : 'Done'}
-          </button>
+              Opened on its own it only closes. Either way it waits on a skill
+              still to choose and on a spell still to name, and it says which of
+              the two it is waiting on rather than only greying out. */}
+          <Gated className="btn btn-take btn-sm" why={shut} onClick={onClose}>
+            {!shut
+              ? walking
+                ? 'Next: your kit'
+                : 'Done'
+              : owing
+                ? 'One spell to name'
+                : `${remaining} still to choose`}
+          </Gated>
         </>
       }
     >

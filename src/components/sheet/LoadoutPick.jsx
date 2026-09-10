@@ -3,6 +3,7 @@ import CardBrief from './CardBrief.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import Modal from '../Modal.jsx';
 import TagFilter from './TagFilter.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { poolTags, useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
@@ -15,6 +16,7 @@ import {
   loadoutState,
   newAtRank,
   poolAction,
+  poolOwing,
   rankPreview,
   toggleLoadoutPick,
 } from '../../lib/loadouts.js';
@@ -222,6 +224,18 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
      capacity is one being offered a night's research. See loadoutState. */
   const nightly = library && known < capacity;
 
+  /* And whether the pool still owes cards, which is what shuts Done.
+     Jules, 2026-09-10: "When player need to make choices, like spells, martial
+     move, or other. Make sure they need to make those change before the
+     confirm/finish." A rank that knows four spells and holds two is two spells
+     short, and closing on that left a hand nobody had finished dealing: the
+     block behind said "Choose 2 more spells" and nothing made you.
+
+     A debt, never room, so a spellbook with places left in it still closes. And
+     the escape hatch is the dialog's own ×, which is the law every other
+     question in this app is asked under. See poolOwing in loadouts.js. */
+  const owing = poolOwing(state);
+
   /* And whose place the next tap takes, when there is no room left for one more.
      "Replace the oldest" is a sensible rule and an invisible one: the wall says
      whose place it is, so a tap is never a card quietly disappearing. */
@@ -302,9 +316,21 @@ export function LoadoutChooser({ talent, character, state, readOnly, onToggle, o
             </button>
           )}
           <span className="spacer" />
-          <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
-            Done
-          </button>
+          {/* Shut while the rank still owes you cards, and it says how many on
+              the button rather than only in the bubble: a disabled Done with no
+              reason on it is the window refusing without saying why. A reader
+              cannot owe anything, so theirs closes. */}
+          <Gated
+            className="btn btn-take btn-sm"
+            why={
+              readOnly || !owing
+                ? null
+                : `${owing} Take what is missing off the wall and this closes.`
+            }
+            onClick={onClose}
+          >
+            {!readOnly && owing ? poolAction(state) : 'Done'}
+          </Gated>
         </>
       }
     >

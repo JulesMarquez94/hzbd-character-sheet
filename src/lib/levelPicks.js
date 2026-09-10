@@ -67,10 +67,11 @@ import {
   normalizeTalents,
   pruneTalents,
 } from './talents.js';
+import { loadoutOf, loadoutSettled } from './loadouts.js';
 import { minionOf, minionSettled } from './minions.js';
 import { feralOf, feralSettled } from './feral.js';
 import { pactOf, pactSettled, pactSkillIds } from './pact.js';
-import { MAX_LEVEL } from './characterModel.js';
+import { MAX_LEVEL, levelForXp } from './characterModel.js';
 
 /** What a level hands out. The one place the even / odd rule is written down. */
 export function levelGrants(level) {
@@ -179,6 +180,29 @@ export function levelQuestions(character, level, { talents, picks, background })
        badge needs. */
     if (slot?.filled && slot.rank === 1 && pactOf(slot.talent)) {
       asked.push(pactSettled(character, slot.talent.id));
+    }
+
+    /* And a set that deals a hand rather than teaching one asks for the cards
+       themselves: a Rank 2 Mycomancer knows four spells and a Duelist's rank
+       hands over Martial Moves on the same terms, so two of four chosen is a
+       question half answered.
+
+       Asked on the slot holding the set's **highest** rank, because that is the
+       slot its pool panel stands on (see TalentBlock) and a badge has to point
+       at a block that can answer it. A debt only: `loadoutSettled` counts what
+       a rank owes and never the room a library has left, so a spellbook with
+       thirty places in it is finished rather than thirty short.
+
+       Added 2026-09-10, with the gates on the chooser's own Done. The two are
+       one rule: a choice is made in the window that granted it, before that
+       window will call itself done, and until then the tab says so. */
+    if (slot?.filled && slot.rank === slot.entry?.rank && loadoutOf(slot.talent)) {
+      asked.push(
+        loadoutSettled(character?.talents, slot.talent, {
+          level: levelForXp(character?.xp),
+          attributes: character,
+        })
+      );
     }
   }
   if (grants.lineage) asked.push(lineageSettled(character));

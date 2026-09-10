@@ -2310,6 +2310,37 @@ export function getCard(key) {
   return CARD_BY_ID.get(key) ?? CARD_BY_NAME.get(String(key).toLowerCase()) ?? null;
 }
 
+/**
+ * The attribute a weapon swings on, read off the cards it teaches.
+ *
+ * It is nowhere on the weapon's own row and it is not going to be. A weapon *is*
+ * its two cards, each card names the attribute it rolls, and writing the word a
+ * second time on the item is a second place for it to be wrong. So the shelves,
+ * the chips and the outfitter all ask this question, and every one of them is
+ * asking the card.
+ *
+ * A card naming no attribute is not counted. SHIELD - GUARD is one passive
+ * shared by three weapons that do not agree on one (see its note above) and a
+ * Reload rolls nothing, so both are skipped and the weapon still answers with
+ * the one word its attack names. What comes back is null for anything that is
+ * not a weapon, and null again for a weapon whose cards disagree: a caller draws
+ * nothing rather than picking one of two. Every weapon in the codex answers with
+ * exactly one word, which `npm run lint:weapons` is what holds it to.
+ *
+ * **This is what the weapon is, not what this character swings it on.** A
+ * Spellblade's BOUND EDGE moves an attack onto Mind through `modifiers.stat`,
+ * which is a fact about the binding rather than about the weapon, and the shelf
+ * a Melee Light sits on in the codex does not move because somebody bound one.
+ */
+export function weaponAttribute(weapon) {
+  const named = new Set();
+  for (const id of weapon?.abilities ?? []) {
+    const stat = getCard(id)?.stat;
+    if (stat) named.add(stat);
+  }
+  return named.size === 1 ? [...named][0] : null;
+}
+
 /* enchantments.js owns the lookup now, and resolves a printed name as well as an
    id, the same way getCard does. Re-exported so no call site had to move. */
 export { getEnchantment };

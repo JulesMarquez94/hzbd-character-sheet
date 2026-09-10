@@ -16,7 +16,7 @@ import { enchantChanges } from '../../lib/enchanting.js';
 import { getItem, heldItem } from '../../lib/items.js';
 import { getEnchantment } from '../../lib/enchantments.js';
 import { getRest, labourAffordable, restActions, restPlan } from '../../lib/rest.js';
-import { pickChanges, toggleLoadoutPick } from '../../lib/loadouts.js';
+import { pickChanges, poolAction, poolOwing, toggleLoadoutPick } from '../../lib/loadouts.js';
 import { rechargeSpend, runeRecharges } from '../../lib/runes.js';
 import { scribeSummary } from '../../lib/scribing.js';
 import { raiseDraft } from '../../lib/undead.js';
@@ -216,9 +216,17 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
                 onClose();
               }}
               why={
-                plan.affordable
-                  ? null
-                  : `This rest needs ${plan.short} more Supplies than the crate holds. Restock, or take a labour off above. Nothing about the rest happens until you do.`
+                !plan.affordable
+                  ? `This rest needs ${plan.short} more Supplies than the crate holds. Restock, or take a labour off above. Nothing about the rest happens until you do.`
+                  : /* And a night's action half answered, which used to be taken
+                       anyway: a raising with no name was quietly dropped and the
+                       night was spent on nothing. Jules, 2026-09-10, on choices
+                       generally: they are made before the confirm. The slot has
+                       been saying so in red the whole time, and now the confirm
+                       waits with it. Both ways out are on the slot itself. */
+                    held?.owing
+                    ? `${held.owing} Go back into it and finish, or clear the action, and this rest goes ahead.`
+                    : null
               }
             >
               Yes, rest
@@ -666,40 +674,78 @@ function RuneRecharge({ row, chosen, onToggle }) {
 function summarise(action, { chosen, character, talents, brews, reshaped, raised, scribes }) {
   if (action.kind === 'scribe') {
     const said = scribeSummary(scribes, action.state);
-    return said ? { done: true, says: said } : { done: false, says: 'Nothing on the desk yet' };
+    return said
+      ? { done: true, says: said }
+      : {
+          done: false,
+          says: 'Nothing on the desk yet',
+          owing: 'The night is spent at the desk and nothing is written on it yet.',
+        };
   }
 
   if (action.kind === 'labour') {
     return chosen
       ? { done: true, says: `${chosen.gain ? '+' : '−'}${chosen.amount} Supplies` }
-      : { done: false, says: 'No amount chosen yet' };
+      : { done: false, says: 'No amount chosen yet', owing: 'The labour has no amount on it yet.' };
   }
 
   if (action.kind === 'raise') {
     const offer = action.offers.find((row) => row.kind.id === raised?.kind) ?? null;
-    if (!offer) return { done: false, says: 'No body chosen yet' };
+    if (!offer) {
+      return {
+        done: false,
+        says: 'No body chosen yet',
+        owing: 'The night is spent over a corpse and no body has been chosen.',
+      };
+    }
 
     const plan = raiseDraft(action.state, offer, raised);
     return plan.ready
       ? { done: true, says: `${raised.name}, ${offer.kind.label.toLowerCase()} at ${offer.cost} Marrow` }
-      : { done: false, says: `${offer.kind.label}, and something still open` };
+      : {
+          done: false,
+          says: `${offer.kind.label}, and something still open`,
+          owing: `The ${offer.kind.label.toLowerCase()} you are raising has a question still open.`,
+        };
   }
 
   if (action.kind === 'pact') {
     return reshaped
       ? { done: true, says: `Reshaped into a ${getItem(reshaped)?.name ?? reshaped}` }
-      : { done: false, says: 'No form chosen yet' };
+      : {
+          done: false,
+          says: 'No form chosen yet',
+          owing: 'The night is spent reshaping the weapon and no form has been chosen.',
+        };
   }
 
   if (action.kind === 'alchemy') {
     const said = brewSummary(brews, action.state);
-    return said ? { done: true, says: said } : { done: false, says: 'Nothing in the still yet' };
+    return said
+      ? { done: true, says: said }
+      : {
+          done: false,
+          says: 'Nothing in the still yet',
+          owing: 'The night is spent at the still and nothing is in it yet.',
+        };
   }
 
   if (action.kind === 'prepare') {
+    /* A pool the night left short, which is the one thing here that can be half
+       done rather than not started: putting two spells down and taking none back
+       up is a hand two cards short by morning. The chooser's own Done already
+       refuses it, and this is the same refusal at the window that writes. The
+       debt is worded in loadouts.js so all three refusals say it the same way. */
+    const debt = poolOwing(action.state);
+    if (debt) return { done: false, says: poolAction(action.state), owing: debt };
+
     const change = pickChanges(character.talents, talents).find(
       (row) => row.talent.id === action.talent.id
     );
+    /* Changing nothing is a real answer here, and the only place in this list
+       where it is: a night offered to re-choose a hand you are happy with is a
+       night you may sleep through. So "nothing changed yet" owes nothing, and
+       the rest goes ahead. */
     if (!change) return { done: false, says: 'Nothing changed yet' };
 
     const said = [];

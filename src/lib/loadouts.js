@@ -761,6 +761,42 @@ export function poolAction(state) {
 }
 
 /**
+ * What a pool still owes, as one sentence, or null when it owes nothing.
+ *
+ * The debt half of the reason a button is shut, and it lives beside
+ * `poolAction` for the same reason that does: the debt is named in three places
+ * now (the button that opens the pool, the button that refuses to close it, and
+ * the one that refuses to take the rest), and a debt worded three ways is a debt
+ * described wrongly in two of them. What to do about it is the caller's own
+ * clause, because the answer is different in each of the three.
+ *
+ * A debt only, never room. A spellbook with thirty places left owes nothing and
+ * closes clean, because the room a rank opens is room rather than a debt. See
+ * `owed` in loadoutState.
+ */
+export function poolOwing(state) {
+  if (!state || state.whole || !(state.owed > 0)) return null;
+
+  const { spec, owed, library } = state;
+  const verb = (library ? (spec.verb ?? 'Write in') : 'Choose').toLowerCase();
+  return `${owed} more ${plural(spec.noun, owed)} to ${verb}.`;
+}
+
+/**
+ * Whether a set has chosen everything its rank hands over, for the one caller
+ * that asks about a pool without opening it: the level ledger.
+ *
+ * The same number the panel and the chooser read, worked out the same way, so
+ * "2 more spells to choose" on the block and the badge on the tab can never
+ * disagree about whether there is anything left to do. A set with no pool at
+ * all owes nothing, which is the answer for most of the codex.
+ */
+export function loadoutSettled(talents, talent, { level = 1, attributes = null } = {}) {
+  const state = loadoutState(talents, talent, { level, capped: 'capacity', attributes });
+  return !state || !(state.owed > 0);
+}
+
+/**
  * The card a tap is about to push out, or null when there is room for one more.
  *
  * "Replace the oldest" is a sensible rule and an invisible one: a full hand tapped

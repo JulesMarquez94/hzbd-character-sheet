@@ -1117,8 +1117,11 @@ Four kinds of weapon read that table differently:
   shots.
 - **Firearms** deal their own row for 1 Action Point, and carry a magazine that runs out.
 
-The attribute a weapon uses is printed on the weapon. A heavy weapon uses Physique, a
-quick one uses Instinct, and the wielder does not get to choose.
+The attribute a weapon uses is printed on the weapon, and it is the first thing to read
+when you are choosing one. A heavy weapon uses Physique, a quick one uses Instinct, a wand
+or a staff uses Mind, and the wielder does not get to choose. Every rack of weapons is
+shelved by it: the codex, the browser you equip a hand from and the wall you pick your
+starting weapon off.
 
 ### 7.4 Bags
 

@@ -2,7 +2,15 @@ import { useMemo, useState } from 'react';
 import { ItemFoot, ItemIcon, ItemStats, ItemTags, ROW_ICON, StatText } from '../sheet/itemParts.jsx';
 import { useCardStack } from '../../context/card-stack.js';
 import { compareTags, sortItems } from '../../lib/cardOrder.js';
-import { ARMOR_SETS, CATEGORY_ORDER, ITEMS, itemCategory, rarityColor } from '../../lib/items.js';
+import {
+  ARMOR_SETS,
+  CATEGORY_ORDER,
+  ITEMS,
+  itemCategory,
+  rarityColor,
+  weaponShelves,
+} from '../../lib/items.js';
+import { getAttribute } from '../../lib/attributes.js';
 import { getCard } from '../../lib/weapons.js';
 
 /**
@@ -79,6 +87,68 @@ export default function ItemShelf() {
   function toggle(tag) {
     setTags((held) => (held.includes(tag) ? held.filter((one) => one !== tag) : [...held, tag]));
   }
+
+  /* The weapon rack reads in three, on the attribute each weapon is swung on,
+     and every other shelf is one list as before. `weaponShelves` decides which:
+     it is the rack that answers the question, and a shelf holding one armor set
+     has nothing to cut on. See items.js. */
+  const shelves = weaponShelves(shown);
+
+  /** One item, as the row every shelf on the site draws. */
+  const row = (item) => {
+    /* A belt item's one card is the item itself, so its name is only
+       worth printing when it differs. A weapon's two always do. */
+    const teaches = (item.abilities ?? [])
+      .map((id) => getCard(id)?.name)
+      .filter((name) => name && name !== item.name);
+
+    return (
+      <div key={item.id} className="item-row" style={{ borderLeftColor: rarityColor(item) }}>
+        <div className="item-row-body">
+          <span className="item-row-top">
+            <ItemIcon item={item} size={ROW_ICON} />
+            <span className="item-row-ident">
+              <span className="item-row-line">
+                <span className="item-row-name">{item.name}</span>
+              </span>
+              <ItemTags item={item} />
+            </span>
+          </span>
+
+          <ItemStats item={item} />
+
+          {item.blurb && <p className="item-row-text">{item.blurb}</p>}
+          {item.effect && (
+            <p className="item-row-text">
+              <StatText text={item.effect} />
+            </p>
+          )}
+          {teaches.length > 0 && (
+            <p className="item-row-text browser-teaches">
+              <span className="setbonus-label">Teaches</span> {teaches.join(' · ')}
+            </p>
+          )}
+          {item.set && ARMOR_SETS[item.set] && (
+            <p className="item-row-text browser-setbonus">
+              <span className="setbonus-label">Set Bonus</span>{' '}
+              <StatText text={ARMOR_SETS[item.set].bonus} />
+            </p>
+          )}
+        </div>
+
+        <ItemFoot item={item}>
+          <button
+            type="button"
+            className="btn btn-minimal btn-sm"
+            onClick={() => stack?.openItem(item)}
+            title={`${item.name} · details and lore`}
+          >
+            Read it
+          </button>
+        </ItemFoot>
+      </div>
+    );
+  };
 
   /* A shelf is switched by a different question from the one the chips answer,
      so switching one drops the other rather than carrying a Head Gear chip onto
@@ -180,67 +250,23 @@ export default function ItemShelf() {
 
       {shown.length === 0 ? (
         <p className="shelf-empty">Nothing on this shelf answers that. Drop a chip or a word.</p>
+      ) : shelves ? (
+        shelves.map(({ shelf, items }) => (
+          <section className="shelf-band" key={shelf.id}>
+            <div className="shelf-band-head">
+              <span className="shelf-band-label" style={{ color: getAttribute(shelf.id)?.color }}>
+                {shelf.label}
+              </span>
+              <span className="shelf-band-note">
+                {items.length} {items.length === 1 ? 'weapon' : 'weapons'}
+              </span>
+            </div>
+            <p className="shelf-band-line">{shelf.note}</p>
+            <div className="shelf-rows">{items.map(row)}</div>
+          </section>
+        ))
       ) : (
-        <div className="shelf-rows">
-          {shown.map((item) => {
-            /* A belt item's one card is the item itself, so its name is only
-               worth printing when it differs. A weapon's two always do. */
-            const teaches = (item.abilities ?? [])
-              .map((id) => getCard(id)?.name)
-              .filter((name) => name && name !== item.name);
-
-            return (
-              <div
-                key={item.id}
-                className="item-row"
-                style={{ borderLeftColor: rarityColor(item) }}
-              >
-                <div className="item-row-body">
-                  <span className="item-row-top">
-                    <ItemIcon item={item} size={ROW_ICON} />
-                    <span className="item-row-ident">
-                      <span className="item-row-line">
-                        <span className="item-row-name">{item.name}</span>
-                      </span>
-                      <ItemTags item={item} />
-                    </span>
-                  </span>
-
-                  <ItemStats item={item} />
-
-                  {item.blurb && <p className="item-row-text">{item.blurb}</p>}
-                  {item.effect && (
-                    <p className="item-row-text">
-                      <StatText text={item.effect} />
-                    </p>
-                  )}
-                  {teaches.length > 0 && (
-                    <p className="item-row-text browser-teaches">
-                      <span className="setbonus-label">Teaches</span> {teaches.join(' · ')}
-                    </p>
-                  )}
-                  {item.set && ARMOR_SETS[item.set] && (
-                    <p className="item-row-text browser-setbonus">
-                      <span className="setbonus-label">Set Bonus</span>{' '}
-                      <StatText text={ARMOR_SETS[item.set].bonus} />
-                    </p>
-                  )}
-                </div>
-
-                <ItemFoot item={item}>
-                  <button
-                    type="button"
-                    className="btn btn-minimal btn-sm"
-                    onClick={() => stack?.openItem(item)}
-                    title={`${item.name} · details and lore`}
-                  >
-                    Read it
-                  </button>
-                </ItemFoot>
-              </div>
-            );
-          })}
-        </div>
+        <div className="shelf-rows">{shown.map(row)}</div>
       )}
     </>
   );

@@ -28,7 +28,7 @@
  */
 
 import { cardProse } from '../src/lib/cardText.js';
-import { WEAPONS, WEAPON_ABILITIES, getCard } from '../src/lib/weapons.js';
+import { WEAPONS, WEAPON_ABILITIES, getCard, weaponAttribute } from '../src/lib/weapons.js';
 
 const LIST = process.argv.includes('--list');
 
@@ -255,6 +255,34 @@ for (const [id, [cost, stat, how]] of Object.entries(TABLE)) {
 }
 
 /* -------------------------------------------------------------- the tagging */
+
+/* --------------------------------------------------- every weapon has a shelf */
+
+/**
+ * Every weapon in the codex answers `weaponAttribute` with exactly one word.
+ *
+ * The rack is cut in three on it — the codex shelf, the hand slot's own browser
+ * and the starting kit — and every weapon row leads with it as a chip. A weapon
+ * the question comes back null on draws no chip and stands on no shelf, and it
+ * is a weapon nobody choosing by attribute would ever find.
+ *
+ * Two ways to be null and this catches both: a weapon whose cards name no
+ * attribute at all, and one whose two cards disagree. The walk above only tests
+ * the cells on the designer's table, so this is where the six that are not on it
+ * are held to the same promise: the five enchanted weapons and Claws & Teeth.
+ * See `weaponAttribute` in src/lib/weapons.js.
+ */
+for (const weapon of WEAPONS) {
+  if (weaponAttribute(weapon)) continue;
+
+  const named = [...new Set((weapon.abilities ?? []).map((id) => getCard(id)?.stat).filter(Boolean))];
+  note(
+    `${weapon.name} (${weapon.id})`,
+    named.length === 0
+      ? 'names no attribute on either card, so it stands on no shelf of the rack'
+      : `swings on ${named.join(' and ')}, and a weapon stands on one shelf of the rack`
+  );
+}
 
 /* Rebuilt with the tag pass of 2026-08-24. Every weapon carries `Weapon` and
    exactly one of Melee and Ranged, exactly one of the two hands, and a rarity. The

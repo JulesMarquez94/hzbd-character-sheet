@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import LevelLedger from '../LevelLedger.jsx';
 import LoreTab from '../LoreTab.jsx';
+import { Gated } from '../parts.jsx';
 import { CardStackProvider } from '../../CardStack.jsx';
+import { openChoices } from '../../../lib/levelPicks.js';
 
 /**
  * The free hand: making a character with every chooser open at once, in two
@@ -21,15 +23,35 @@ import { CardStackProvider } from '../../CardStack.jsx';
  * made it, every panel writes straight to it, and walking away halfway leaves a
  * half-made character rather than nothing at all. Finishing only means opening
  * the sheet.
+ *
+ * ---------------------------------------------------------- and it waits on you
+ * Finishing *means* it, though. Jules, 2026-09-10: "When player need to make
+ * choices, like spells, martial move, or other. Make sure they need to make
+ * those change before the confirm/finish." Every chooser on the first step now
+ * refuses to close on a question it left open, and this is the same law at the
+ * page's own edge: the button out of here is shut while anything level 1 handed
+ * over is unanswered, and it says how many.
+ *
+ * Not a trap. The header is above this page the whole way through, and leaving
+ * by it is what it always was: a half-made character waiting in the vault.
  */
 const STEPS = [
   { key: 'level1', title: 'The character', line: 'Everything level 1 hands you.' },
   { key: 'lore', title: 'Their story', line: 'The part the rules cannot roll for.' },
 ];
 
+/** The only level this page makes, and the one its ledger is drawn at. */
+const CREATION_LEVEL = 1;
+
 export default function FreeHand({ character, patch, onDone, unit = 'metric' }) {
   const [step, setStep] = useState(0);
   const current = STEPS[step];
+
+  /* What level 1 asked and nobody has answered: a set with no spells chosen, a
+     lineage that has not settled its blood, a nameless draconic ally. Counted by
+     the same `openChoices` the Advancement tab badges itself with, so the page
+     and the tab can never disagree about whether a character is finished. */
+  const waiting = openChoices(character, CREATION_LEVEL);
 
   return (
     <div className="tab-narrow creation">
@@ -110,9 +132,25 @@ export default function FreeHand({ character, patch, onDone, unit = 'metric' }) 
             Next: {STEPS[step + 1].title}
           </button>
         ) : (
-          <button type="button" className="btn btn-copper btn-sm" onClick={onDone}>
-            Open the sheet
-          </button>
+          /* The one confirm this page has, and it waits on the first step. The
+             reason names the step rather than the question, because the step rail
+             above is one tap and the questions are already badged where they
+             stand. */
+          <Gated
+            className="btn btn-copper btn-sm"
+            why={
+              waiting > 0
+                ? `${
+                    waiting === 1 ? 'One choice is' : `${waiting} choices are`
+                  } still open on the first step. Answer ${
+                    waiting === 1 ? 'it' : 'them'
+                  } and this opens.`
+                : null
+            }
+            onClick={onDone}
+          >
+            {waiting > 0 ? `${waiting} still open` : 'Open the sheet'}
+          </Gated>
         )}
       </div>
     </div>

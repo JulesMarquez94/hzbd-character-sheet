@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from '../Modal.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { damageStyle } from '../../lib/cardText.js';
 import { minionState, setMinionIdentity } from '../../lib/minions.js';
@@ -29,6 +30,27 @@ export function MinionWindow({ character, minion, patch, readOnly = false, onClo
 
   const write = (body) => patch(setMinionIdentity(character, minion.id, body));
 
+  /* What the creature is still short of, and what shuts Done until it has it.
+     Jules, 2026-09-10: "Make sure they need to make those change before the
+     confirm/finish. Samething with things like draconic scale color."
+
+     A nameless ally with no colour is a block that cannot print its own
+     sentence: everything it deals is "that type", and both of its blocks stand
+     on the Character tab titled after a creature nobody named. So the window
+     that granted the questions is the window that holds them, the way the pact
+     seals and the lineage settles. The escape hatch is the dialog's ×. */
+  const wants = [];
+  if (!minion.named) wants.push('give it a name');
+  if (scales.length > 0 && !minion.scale) {
+    wants.push(`choose its ${(spec.scales.label ?? 'colour').toLowerCase()}`);
+  }
+  /* The count says how the creature stands and the gate is what a player can
+     do about it, so a reader is told the truth and refused nothing. */
+  const shut =
+    readOnly || wants.length === 0
+      ? null
+      : `Still to do: ${wants.join(' and ')}. Answer that above and this closes.`;
+
   return (
     <Modal
       title={minion.named ? minion.name : `Your ${spec.noun ?? 'ally'}`}
@@ -36,10 +58,13 @@ export function MinionWindow({ character, minion, patch, readOnly = false, onClo
       accent={PICK_ACCENTS.talent}
       footer={
         <>
+          <span className={`pick-count${wants.length > 0 ? ' is-open' : ''}`}>
+            {wants.length > 0 ? `${wants.length} still open` : 'Nothing left to answer'}
+          </span>
           <span className="spacer" />
-          <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
+          <Gated className="btn btn-take btn-sm" why={shut} onClick={onClose}>
             Done
-          </button>
+          </Gated>
         </>
       }
     >

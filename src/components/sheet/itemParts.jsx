@@ -7,6 +7,8 @@ import {
   itemWeight,
   rarityColor,
 } from '../../lib/items.js';
+import { getAttribute } from '../../lib/attributes.js';
+import { weaponAttribute } from '../../lib/weapons.js';
 import { formatNumber, formatWeight, weightParts } from '../../lib/characterModel.js';
 import { useUnit } from '../../context/units.js';
 import useCodexArt from '../useCodexArt.js';
@@ -350,10 +352,40 @@ export function ItemIcon({ item, size = 40 }) {
  */
 const HIDDEN_TAGS = new Set(['Weapon', 'Common']);
 
-/** The item's tags as chips; the rarity tag carries the rarity's colour. */
+/**
+ * The item's tags as chips; the rarity tag carries the rarity's colour.
+ *
+ * **A weapon leads with the attribute it swings on**, in that attribute's own
+ * colour, and it is the one chip on the row that is not a tag. Nothing on a
+ * weapon's row ever said which of the three it rolls: the answer was on the
+ * attack card, which is behind the row, and a player choosing a weapon was
+ * choosing by name. It is derived rather than stored, so a card that changes
+ * attribute takes its weapon's chip with it — see `weaponAttribute` in
+ * weapons.js.
+ *
+ * First rather than last, because on a wall of forty five weapons it is the
+ * question the reader walked up with, and Melee - Two-Handed - Bow is the
+ * answer to a different one.
+ */
 export function ItemTags({ item }) {
+  const swing = getAttribute(weaponAttribute(item));
+
   return (
     <span className="item-tags">
+      {swing && (
+        <span
+          className="item-tag item-tag-swing"
+          style={{
+            color: swing.color,
+            borderColor: `color-mix(in srgb, ${swing.color} 45%, transparent)`,
+            backgroundColor: `color-mix(in srgb, ${swing.color} 10%, transparent)`,
+          }}
+          title={`Its attacks are rolled on your ${swing.label}, and their damage counts it.`}
+        >
+          {swing.label}
+        </span>
+      )}
+
       {item.tags.filter((tag) => !HIDDEN_TAGS.has(tag)).map((tag) => {
         const color = RARITY_COLORS[tag] ?? null;
         return (

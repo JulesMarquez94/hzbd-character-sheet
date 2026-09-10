@@ -780,6 +780,47 @@
   align-items: start;
 }
 
+/* ---------- the weapon rack, cut in three ----------
+   One band per attribute, headed with the attribute's own colour and a line
+   saying what the shelf under it means. The band is the shelf's heading, the
+   count and the sentence; the rows below it are the same .shelf-rows grid every
+   other shelf draws, so nothing about a row changes with the cut. */
+.shelf-band + .shelf-band {
+  margin-top: 1.6rem;
+}
+
+.shelf-band-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 0.35rem;
+}
+
+.shelf-band-label {
+  font-family: var(--font-headings);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.shelf-band-note {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.shelf-band-line {
+  margin: 0.4rem 0 0.8rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
 /* =========================================
    THE GLOSSARY
    ========================================= */

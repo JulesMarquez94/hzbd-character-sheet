@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from '../Modal.jsx';
+import { Gated } from './parts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
 import { feralState, setFeralIdentity } from '../../lib/feral.js';
 import PortraitField from '../images/PortraitField.jsx';
@@ -39,6 +40,22 @@ export function FeralWindow({ character, form, patch, readOnly = false, onClose 
 
   const write = (body) => patch(setFeralIdentity(character, form.id, body));
 
+  /* What the form is still short of, and what shuts Done until it has it. The
+     same law the creature window keeps, asked for on 2026-09-10: a question the
+     window granted is answered in the window, before it will call itself done.
+
+     Both halves matter here. Without a beast BEAST WITHIN has nothing to say
+     it manifests as, and without a name the block on the Character tab has no
+     heading. The two are what `feralSettled` counts, which is what badges the
+     Advancement tab, so the gate and the badge are the same question. */
+  const wants = [];
+  if (!form.chosen) wants.push('say what carnivore it is');
+  if (!form.named) wants.push('give it a name');
+  const shut =
+    readOnly || wants.length === 0
+      ? null
+      : `Still to do: ${wants.join(' and ')}. Answer that above and this closes.`;
+
   return (
     <Modal
       title={form.named ? form.name : `Your ${spec.label}`}
@@ -46,10 +63,13 @@ export function FeralWindow({ character, form, patch, readOnly = false, onClose 
       accent={PICK_ACCENTS.talent}
       footer={
         <>
+          <span className={`pick-count${wants.length > 0 ? ' is-open' : ''}`}>
+            {wants.length > 0 ? `${wants.length} still open` : 'Nothing left to answer'}
+          </span>
           <span className="spacer" />
-          <button type="button" className="btn btn-take btn-sm" onClick={onClose}>
+          <Gated className="btn btn-take btn-sm" why={shut} onClick={onClose}>
             Done
-          </button>
+          </Gated>
         </>
       }
     >

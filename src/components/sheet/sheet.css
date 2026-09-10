@@ -6190,6 +6190,18 @@ body.tray-open-left.tray-open-right .sheet {
   padding: 0.15rem 0 0.35rem;
 }
 
+/* And what the shelf means, on the same terms: the whole width, under the
+   heading. Only the weapon rack carries one — an attribute over a list of
+   weapons is a heading a reader could take two ways, so the line says which.
+   Every other shelf in here is named by what it is. */
+.browser-group-line {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  padding: 0.1rem 0 0.25rem;
+}
+
 /* A row in the codex is the shared `.item-row`: the same tile, the same tags,
    the same numbers, and its foot carrying the price beside the ⓘ, the +1 and the
    button that takes the thing. Which is the point of it. What you are reading in
@@ -6744,6 +6756,23 @@ body.tray-open-left.tray-open-right .sheet {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+}
+
+/* And the rack they hang on, one shelf per attribute. The label is a word in
+   the attribute's own colour rather than a band across the modal: three chip
+   walls of five want telling apart, not separating. */
+.kit-shelf + .kit-shelf {
+  margin-top: 0.7rem;
+}
+
+.kit-shelf-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-family: var(--font-headings);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .kit-chip {

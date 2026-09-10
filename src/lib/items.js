@@ -21,7 +21,8 @@
  * downstream had to learn that there are two kinds.
  */
 
-import { WEAPONS, itemEnchantments, itemModifiers } from './weapons.js';
+import { WEAPONS, itemEnchantments, itemModifiers, weaponAttribute } from './weapons.js';
+import { ATTRIBUTES } from './attributes.js';
 import { allGrants, damageEnchants, grantSources, laidEntries } from './enchanting.js';
 import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
 import { scrollItem } from './scrolls.js';
@@ -204,6 +205,60 @@ export const CATEGORY_ORDER = [
   'Other',
   'Notes & Oddments',
 ];
+
+/* ------------------------------------------------------------ the weapon rack */
+
+/**
+ * The three shelves a rack of weapons is cut into: the attribute each one is
+ * swung on.
+ *
+ * A weapon has said what it costs, what it weighs and what it teaches since the
+ * shelf was written, and never the one thing a reader arrives with. "My 6 is in
+ * Physique, so what can I actually hold" was two cards deep on every row: open
+ * the weapon, open its attack, read the attribute off the card. Forty five
+ * weapons is a wall you scroll rather than read, and three of them are the
+ * answer.
+ *
+ * The same cut the talent wall takes, and taken for the same reason. See
+ * `talentShelves` in talents.js, which is the shape this follows down to its one
+ * exception.
+ *
+ * The note is written off the attribute rather than typed three times: three
+ * sentences differing by one word are three chances to say something that is
+ * true of two of them.
+ */
+export const WEAPON_SHELVES = ATTRIBUTES.map(({ key, label }) => ({
+  id: key,
+  label,
+  note: `Every attack on this shelf is rolled on your ${label}, and its damage counts it.`,
+}));
+
+/**
+ * A list of items cut into those shelves, or null where the cut would say
+ * nothing.
+ *
+ * Handed whatever the caller was about to draw rather than the codex, so a
+ * filtered rack is shelved by what survived the filter and an empty shelf is
+ * left off instead of printing a heading over nothing.
+ *
+ * Null in two cases, and both mean "draw the list you already have". A list
+ * holding anything that is not a weapon has no attribute to cut on — a search
+ * across the whole codex, or the Bags shelf. And a list that comes out as one
+ * shelf is left as a plain list, because a heading over everything says nothing:
+ * a rack filtered down to the wands is a rack of Mind weapons, and it does not
+ * need to be told so twice.
+ */
+export function weaponShelves(items) {
+  const list = items ?? [];
+  if (list.length === 0 || list.some((item) => !weaponAttribute(item))) return null;
+
+  const shelves = WEAPON_SHELVES.map((shelf) => ({
+    shelf,
+    items: list.filter((item) => weaponAttribute(item) === shelf.id),
+  })).filter((row) => row.items.length > 0);
+
+  return shelves.length > 1 ? shelves : null;
+}
 
 /* ---------------------------------------------------------------- trinkets */
 
