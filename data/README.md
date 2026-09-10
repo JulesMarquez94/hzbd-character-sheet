@@ -15649,3 +15649,91 @@ already had for a set just taken.
 - **The pact walk is one row in this list** and four questions behind it. It reports settled or
   not and nothing in between, so the foot can read "1 still open" against a window with four
   things in it. That was true of the badge before this and is unchanged.
+
+## The prompts come to you, 2026-09-10
+
+Jules, on the settle screen shipped an hour earlier: "What I want is not that you see the summary
+of everything and you have to [find it] yourself. I want that the player has prompts that appear.
+Because now you have to choose your spell. Now you have to choose your lineage, and some have to
+deal with you in a sequence. So essentially you open a menu where you can select those things, and
+it doesn't take you to another page. That doesn't need to be there."
+
+**The page is gone.** The reveal stays exactly where it is when you take the character, and what
+the count could not decide arrives over it as a window, one after another, until there are none
+left and the way out opens underneath.
+
+| | The settle screen | Now |
+| --- | --- | --- |
+| After "Take this character" | a second page, the level ledger | the reveal, unchanged |
+| Finding the question | expand a folded panel that says "Chosen" | it is already open in front of you |
+| Order | whatever you clicked | the order the ledger asks them, one at a time |
+| Between two questions | scroll | the next window opens as the last one closes |
+
+### AskWindow, a switchboard and nothing else
+
+`openAsks` already said what a character owes and what kind each one is. `AskWindow.jsx` turns one
+of those rows into the dialog that answers it, so a caller holding the list can put the questions
+in front of somebody without knowing anything about spells, bargains or beasts:
+
+| The row says | The window |
+| --- | --- |
+| `lineage` | `Infernal: What It Asks You` |
+| `loadout` | `Arcanist: Spellbook`, `Guardian: Martial Moves` |
+| `minion` | `Your ally` |
+| `feral` | the form window |
+| `pact` | the pact walk |
+| `background` | the skill wall, opening on the spell a skill has not named |
+
+Every one of them is the dialog the Advancement tab already opens from its own block, wired the
+way that block wires it. Nothing about a choice is decided in the switchboard. `LineageChooser`
+and `SkillChooser` were internal to their files and are now exported; the other four already were.
+
+It **returns null for a row it has no window for**, which is the honest answer and not a blank
+dialog. That would be a door that never opens, so `askKinds.js` holds the set of kinds it covers
+and the Crossroads counts only those. A question outside it is answered on the Advancement tab
+like anything else, and the way out is not held shut on it.
+
+### The chain
+
+The Crossroads renders `AskWindow` for `owed[0]`, keyed on the question. Answering a question
+takes it off the list, which changes the key, which closes that window and opens the next. There
+is no sequencing state: the list is the sequence, and it is the same list the tab badges itself
+with. The foot counts down beside it, and the line over the reveal reads "They are on the sheet.
+2 things the road could not decide are left to you."
+
+**Shutting a prompt is allowed.** The × stops the chain rather than reopening the window under
+somebody's hand, and the foot grows an "Answer the other 3" button beside the gate. The gate
+itself is unchanged: shut while anything is open, and it says how much.
+
+### What came back out
+
+The settle screen's plumbing went with it: `openAsk` threading through `LevelLedger`, `autoAsk` on
+`TalentPick`, `autoSettle` on `LineagePick`. Nothing else ever wanted a panel to open its own
+window, and the switchboard opens them directly.
+
+**The two "Half done" fixes stay**, because they were never about the settle screen: a lineage or
+a talent set that still owes something says so on its block instead of folding away under the word
+"Chosen". See the entry above for the `asksOf` bug that hid the first of them.
+
+### Checked
+
+In the browser on a throwaway harness (`gate-test.html` plus `src/gate-test.jsx`, both deleted;
+it needs a `MemoryRouter` as well as the real `AuthProvider`, because the ally window links out):
+
+- A run landing on an Arcanist and a Draconic Bond: "Take this character" left the reveal
+  standing, no level block anywhere in the DOM, and `Arcanist: Spellbook` opened over it with the
+  foot reading "2 still open". Writing the fifth spell closed it and opened **Your ally**. Naming
+  it Ashfall and taking green scales closed that, the line changed to "everything they left to you
+  is answered", the gate opened and `onDone` fired.
+- Shutting a prompt with its ×: the reveal, a gated "3 still open" and an "Answer the other 3"
+  button that reopened the chain on `Guardian: Martial Moves`.
+- `npm run lint`, all nineteen `lint:*` and `npm run build` clean.
+
+### Still open
+
+- **A pact is one row and four questions behind it.** The foot can read "1 still open" against a
+  window asking for a bargain, a weapon, a spell and a Martial Move. True of the tab badge before
+  this and unchanged by it.
+- **Nothing auto-opens on the Advancement tab**, only here. A window that opens itself on a tab
+  you came to read is an ambush; a window that opens itself at the end of the road is the road
+  finishing its sentence.

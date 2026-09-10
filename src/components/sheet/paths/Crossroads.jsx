@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import LevelLedger from '../LevelLedger.jsx';
+import AskWindow from '../AskWindow.jsx';
 import PickBlock from '../PickBlock.jsx';
+import { askable } from '../askKinds.js';
 import { Gated } from '../parts.jsx';
 import { CardStackProvider } from '../../CardStack.jsx';
 import useCodexArt from '../../useCodexArt.js';
@@ -67,11 +68,26 @@ function madeHere(character) {
  * it can hand over a Draconic Bond and it cannot name the creature, or say
  * which damage type your scales turn. **A Crossroads character is made at level
  * 2 with two sets, so it hands over more of those blanks than any other way
- * in.** So there is a third screen after the reveal: the level ledger for the
- * two levels it just bought, with every finished block folded away and only
- * what is still open standing. The way out is shut until nothing is, and it
- * says how much, exactly as the free hand's is. A count that left nothing open
- * skips the screen and goes straight to the sheet.
+ * in.**
+ *
+ * The first answer to that was a second page, the level ledger, and Jules sent
+ * it back the same hour: "What I want is not that you see the summary of
+ * everything and you have to [find it] yourself. I want that the player has
+ * prompts that appear ... and some have to deal with you in a sequence ... and
+ * it doesn't take you to another page. That doesn't need to be there."
+ *
+ * So there is no second page. **The reveal stays where it is and the questions
+ * come to it**, as a window at a time: `openAsks` says what is owed, AskWindow
+ * turns the first of them into the dialog that asks it, and answering takes it
+ * off the list, which closes that window and opens the next. The list is the
+ * sequence; there is no sequencing state to keep in step with it. The way out
+ * under the reveal is shut until the list is empty and says how much, exactly
+ * as the free hand's is, and a count that left nothing open never stops at all.
+ *
+ * Only the questions AskWindow can actually ask are counted (`askable`), or a
+ * question with no window would be a door that never opens. Shutting a prompt
+ * stops the chain rather than reopening it under your hand, and the foot grows
+ * a button that starts it again.
  *
  * `patch` and `onDone` are the sheet's, the same ones the free hand writes and
  * finishes with. The screen never writes anything of its own.
@@ -91,8 +107,12 @@ export default function Crossroads({ character, patch, onDone }) {
      row made here with nothing left open falls through to a new run instead,
      which is what somebody who came back to this URL on purpose is asking for. */
   const [settling, setSettling] = useState(
-    () => madeHere(character) && openAsks(character, CROSSROADS_LEVEL).length > 0
+    () => madeHere(character) && openAsks(character, CROSSROADS_LEVEL).some(askable)
   );
+  /* The prompts run themselves. This is only for somebody who shut one: the
+     chain stops rather than reopening under their hand, and a button in the
+     foot brings it back. */
+  const [paused, setPaused] = useState(false);
 
   const view = useMemo(() => walk(run), [run]);
   const outcome = useMemo(() => (view.done ? resolve(run) : null), [run, view.done]);
@@ -103,8 +123,9 @@ export default function Crossroads({ character, patch, onDone }) {
      to the ledger, which opens the window that asks it: a spell to name, a hand
      of martial moves to deal, a creature waiting for one. Answering it moves
      the list on and the next window opens behind it. */
-  const owed = settling ? openAsks(character, CROSSROADS_LEVEL) : [];
+  const owed = settling ? openAsks(character, CROSSROADS_LEVEL).filter(askable) : [];
   const waiting = owed.length;
+  const asking = paused ? null : (owed[0] ?? null);
 
   useEffect(() => {
     saveRun(character.id, run);
@@ -122,7 +143,7 @@ export default function Crossroads({ character, patch, onDone }) {
        questions off the row as it will be rather than as it is: `patch` has not
        come back through props yet, and `applyOutcome` returns exactly the
        fields it changed. */
-    if (openAsks({ ...character, ...written }, CROSSROADS_LEVEL).length === 0) {
+    if (!openAsks({ ...character, ...written }, CROSSROADS_LEVEL).some(askable)) {
       onDone();
       return;
     }
@@ -138,7 +159,11 @@ export default function Crossroads({ character, patch, onDone }) {
           <h2 className="creation-title">{character.name || 'Unnamed Drifter'}</h2>
           <p className="creation-line">
             {settling
-              ? 'They are on the sheet. These are the things the road could not decide for you.'
+              ? waiting > 0
+                ? `They are on the sheet. ${
+                    waiting === 1 ? 'One thing' : `${waiting} things`
+                  } the road could not decide ${waiting === 1 ? 'is' : 'are'} left to you.`
+                : 'They are on the sheet, and everything they left to you is answered.'
               : view.done
                 ? 'Every question answered. This is who you became.'
                 : path.line}
@@ -146,16 +171,11 @@ export default function Crossroads({ character, patch, onDone }) {
           {!settling && <StageRail view={view} />}
         </header>
 
-        {settling ? (
-          <CardStackProvider character={character}>
-            <LevelLedger
-              character={character}
-              level={CROSSROADS_LEVEL}
-              patch={patch}
-              openAsk={owed[0] ?? null}
-            />
-          </CardStackProvider>
-        ) : view.done && outcome ? (
+        {/* The reveal stays where it is while the prompts run over it. There is
+            no second page to walk: what the count could not decide arrives as a
+            window, one after another, and the last of them leaves the reveal
+            standing with the way out open under it. */}
+        {view.done && outcome ? (
           <Reveal outcome={outcome} />
         ) : view.current ? (
           <Question
@@ -166,10 +186,35 @@ export default function Crossroads({ character, patch, onDone }) {
         ) : null}
       </div>
 
+      {asking && (
+        <CardStackProvider character={character}>
+          <AskWindow
+            /* Keyed on the question, so answering one closes its window and
+               opens the next rather than leaving the first standing. */
+            key={`${asking.level}:${asking.kind}:${asking.talent ?? ''}`}
+            ask={asking}
+            character={character}
+            patch={patch}
+            onClose={() => setPaused(true)}
+          />
+        </CardStackProvider>
+      )}
+
       <div className="creation-foot">
         {settling ? (
           <>
             <span className="spacer" />
+            {/* Shutting a prompt is allowed and stops the chain, so there has to
+                be a way back into it. Only drawn while one is still waiting. */}
+            {paused && waiting > 0 && (
+              <button
+                type="button"
+                className="btn btn-minimal btn-sm"
+                onClick={() => setPaused(false)}
+              >
+                {waiting === 1 ? 'Answer the last one' : `Answer the other ${waiting}`}
+              </button>
+            )}
             {/* The same gate the free hand's last step wears, for the same
                 reason. Walking it again is gone from here on purpose: the
                 character is written, and starting over now would be an undo
@@ -180,7 +225,7 @@ export default function Crossroads({ character, patch, onDone }) {
                 waiting > 0
                   ? `${
                       waiting === 1 ? 'One choice is' : `${waiting} choices are`
-                    } still open below. Answer ${waiting === 1 ? 'it' : 'them'} and this opens.`
+                    } still waiting on you. Answer ${waiting === 1 ? 'it' : 'them'} and this opens.`
                   : null
               }
               onClick={onDone}

@@ -886,7 +886,7 @@ function KitPreview({ background }) {
  * to wait in a section under the wall, where a player who had stopped reading at
  * the skill they wanted never saw it, and Done stays shut until it is answered.
  */
-function SkillChooser({
+export function SkillChooser({
   state,
   character,
   readOnly,

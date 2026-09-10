@@ -33,17 +33,7 @@ import {
  * or tracked, and pools, derived numbers and the experience curve all belong to
  * the Character tab.
  */
-export default function LevelLedger({
-  character,
-  level,
-  patch,
-  readOnly = false,
-  unit = 'metric',
-  /* The one question a settle pass wants put in front of somebody, as a row out
-     of `openAsks`. Null everywhere but the Crossroads, where the ledger is
-     drawn to collect what the count could not decide. See Crossroads.jsx. */
-  openAsk = null,
-}) {
+export default function LevelLedger({ character, level, patch, readOnly = false, unit = 'metric' }) {
   const talents = advancementState(character.talents, level);
   const picks = levelPicksState(character, level);
   const next = nextLevelPromise(level);
@@ -69,7 +59,6 @@ export default function LevelLedger({
           patch={patch}
           readOnly={readOnly}
           unit={unit}
-          openAsk={openAsk?.level === n ? openAsk : null}
         />
       ))}
 
@@ -91,7 +80,7 @@ function titleFor(level, grants) {
   return grants.talent ? 'Talent Choice' : 'Attribute & Skill';
 }
 
-function LevelBlock({ level, character, talents, picks, patch, readOnly, unit, openAsk = null }) {
+function LevelBlock({ level, character, talents, picks, patch, readOnly, unit }) {
   const grants = levelGrants(level);
   const slot = grants.talent ? talents.slots.find((entry) => entry.level === level) ?? null : null;
   const entry = picks.at(level);
@@ -112,10 +101,7 @@ function LevelBlock({ level, character, talents, picks, patch, readOnly, unit, o
      hand of spells, a creature's name, a shape, a bargain. The panel says so
      rather than folding itself away under the word "Chosen", which is the same
      rule the lineage panel keeps and for the same reason. */
-  const talentOwing = asks.some(
-    (row) => row.kind !== 'talent' && row.talent && !row.answered
-  );
-  const asking = openAsk && !openAsk.answered ? openAsk.kind : null;
+  const talentOwing = asks.some((row) => row.kind !== 'talent' && row.talent && !row.answered);
 
   const done = asked.filter(Boolean).length;
   const complete = done === asked.length;
@@ -198,23 +184,16 @@ function LevelBlock({ level, character, talents, picks, patch, readOnly, unit, o
               step={nextStep()}
               readOnly={readOnly}
               owing={talentOwing}
-              /* Keyed on the window a settle pass wants open, so answering one
-                 remounts the panel on the next rather than leaving the first
-                 standing. See openAsk above. */
-              key={`talent-${asking ?? ''}`}
-              autoAsk={openAsk?.talent === slot.talent?.id ? asking : null}
             />
           )}
 
           {grants.lineage && (
             <LineagePick
-              key={`lineage-${asking === 'lineage'}`}
               value={character.lineage}
               character={character}
               patch={patch}
               step={nextStep()}
               readOnly={readOnly}
-              autoSettle={asking === 'lineage'}
             />
           )}
 

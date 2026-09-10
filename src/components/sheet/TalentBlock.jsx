@@ -69,8 +69,6 @@ export default function TalentPick({
      Worked out in LevelLedger off `levelAsks`, so the panel and the tab badge
      read the same list. */
   owing = false,
-  /* Which of those windows a settle pass wants opened, or null. */
-  autoAsk = null,
 }) {
   const [choosing, setChoosing] = useState(false);
   const [viewing, setViewing] = useState(null);
@@ -120,7 +118,6 @@ export default function TalentPick({
           patch={patch}
           readOnly={readOnly}
           justTook={justTook}
-          autoAsk={autoAsk}
           undoAlso={undoAlso}
           onView={() => setViewing(slot.talent)}
           onUndo={
@@ -231,7 +228,6 @@ function TalentSummary({
   patch,
   readOnly,
   justTook,
-  autoAsk = null,
   undoAlso,
   onView,
   onUndo,
@@ -289,7 +285,7 @@ function TalentSummary({
               character={character}
               patch={patch}
               readOnly={readOnly}
-              autoOpen={justTook === talent.id || autoAsk === 'loadout'}
+              autoOpen={justTook === talent.id}
             />
           )}
 
@@ -302,7 +298,7 @@ function TalentSummary({
               character={character}
               patch={patch}
               readOnly={readOnly}
-              autoOpen={justTook === talent.id || autoAsk === 'minion'}
+              autoOpen={justTook === talent.id}
             />
           )}
 
@@ -315,7 +311,7 @@ function TalentSummary({
               character={character}
               patch={patch}
               readOnly={readOnly}
-              autoOpen={justTook === talent.id || autoAsk === 'feral'}
+              autoOpen={justTook === talent.id}
             />
           )}
 
@@ -327,7 +323,7 @@ function TalentSummary({
               character={character}
               patch={patch}
               readOnly={readOnly}
-              autoOpen={justTook === talent.id || autoAsk === 'pact'}
+              autoOpen={justTook === talent.id}
             />
           )}
 

@@ -110,20 +110,10 @@ function cardsNote(questions, yours, pool = null) {
   return yours ? `Yours, ${asks}` : `A preview, ${asks}`;
 }
 
-export default function LineagePick({
-  value,
-  character,
-  patch,
-  step = null,
-  readOnly = false,
-  /* A settle pass wants the window it asks its question in put in front of
-     somebody rather than left behind a button. Set by LevelLedger off
-     `openAsks`, and only where the blood is actually short of an answer. */
-  autoSettle = false,
-}) {
+export default function LineagePick({ value, character, patch, step = null, readOnly = false }) {
   /* One window in one of two states: reading the wall of ancestries, or
      settling what the one you took leaves to you. null is closed. */
-  const [mode, setMode] = useState(autoSettle ? 'settle' : null);
+  const [mode, setMode] = useState(null);
   const stack = useCardStack();
   const codexArt = useCodexArt();
 
@@ -305,7 +295,7 @@ export default function LineagePick({
  * you the blood is still open, is the difference between answering it and never
  * noticing it was asked.
  */
-function LineageChooser({
+export function LineageChooser({
   current,
   character,
   readOnly,
