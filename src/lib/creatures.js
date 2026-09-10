@@ -641,6 +641,504 @@ export const CREATURE_CARDS = withArt([
       'While any of the six braziers is lit, this creature has resistance to {damage:Fire} damage and its damage is Elevated by 1.\n\n' +
       'Douse them all and both go out with them.',
   },
+  /* ==================================================================== PAINT
+     The Brams and their paint, 2026-09-10. Ten copies of the painter Abram
+     Hollins, four kinds of Paintling and three commanders, written for the
+     one-shot Nine Blank Canvases and shaped so any table can drop them in.
+     Every copy is oil paint through and through (Paint Body) and hears the
+     other copies think (The Chorus). The man himself is neither, which is the
+     whole puzzle of the one-shot. Shared cards first, then each body's own. */
+  {
+    id: 'paint-body',
+    name: 'Paint Body',
+    summary: 'Oil paint all the way through: it shrugs off blows and burns like a rag.',
+    kind: 'passive',
+    tags: ['Creature', 'Paint', 'Passive'],
+    body:
+      'This creature is oil paint all the way through. It has resistance to {damage:Blunt} damage and is vulnerable to {damage:Fire} damage.\n\n' +
+      'What it bleeds is paint, and what it leaves behind is a stain.',
+  },
+  {
+    id: 'paint-chorus',
+    name: 'The Chorus',
+    summary: 'It hears every other copy think, all day, and they hear it.',
+    kind: 'passive',
+    tags: ['Creature', 'Paint', 'Passive'],
+    body:
+      'This creature hears the thoughts of every other copy of its painter, and they hear its. It knows where each of them is and what each is doing, and a copy can never surprise it.\n\n' +
+      'When it dies, the canvas it climbed off fills back in with its portrait, exactly as it was painted, and every other copy loses one voice from its head.',
+  },
+  {
+    id: 'corrosive-paint',
+    name: 'Corrosive Paint',
+    summary: 'A glob of paint that eats what it lands on.',
+    kind: 'creature',
+    tags: ['Creature', 'Paint'],
+    ap: 3,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-splash',
+    name: 'Splash',
+    summary: 'It throws itself at you.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Paint'],
+    ap: 3,
+    stat: 'instinct',
+    damage: ['Decay'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-spit',
+    name: 'Spit',
+    summary: 'A fleck of paint, spat at range.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Paint'],
+    ap: 3,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Ranged Attack {roll} against **an entity** you can see within **6 meters (20 feet)**.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-palette-knife',
+    name: 'Palette Knife',
+    summary: "A painter's blade, held the way a painter holds it.",
+    kind: 'creature',
+    tags: ['Creature', 'Paint'],
+    ap: 2,
+    stat: 'instinct',
+    damage: ['Sharp'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d6 + stat]] {damage} damage.',
+  },
+
+  /* ------------------------------------------------------------ the Face Taker */
+  {
+    id: 'bram-stolen-face',
+    name: 'Stolen Face',
+    summary: "While he wears the painter's face, nothing gets past it.",
+    kind: 'passive',
+    tags: ['Creature', 'Overlord', 'Paint', 'Passive'],
+    ward: 'While he wears the face',
+    while: 'While he wears the face, his Health cannot fall below half. Damage past that is spent on the face.',
+    body:
+      'While this creature wears the stolen face, its Health cannot fall below half of its maximum. Damage that would take it lower is spent on the face instead.\n\n' +
+      'When that happens the face slides off whole and can be worn again by its owner. This creature takes no action on its next turn, gains Shield up to its cap and fights on with Tongues and Paint Flood.',
+  },
+  {
+    id: 'bram-tongues',
+    name: 'Tongues',
+    summary: 'Long tongues of streaked paint, each carrying something different.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Paint'],
+    ap: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Reflex of **up to 2 entities** within **4 meters (13 feet)** of you.\n\n' +
+      'On a success, you deal [[1d6 + stat]] {damage} damage, and roll [[1d6]] for what the tongue carried: 1 poisoned, 2 blinded **until its next Turn End**, 3 frightened of you for **2 turns**, 4 asleep, 5 one stack of Bleed, 6 knocked prone.',
+  },
+  {
+    id: 'bram-paint-flood',
+    name: 'Paint Flood',
+    summary: 'The whole room, under paint.',
+    kind: 'creature',
+    tags: ['Creature', 'Overlord', 'Paint'],
+    ap: 6,
+    wp: 4,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** of you.\n\n' +
+      'On a success, you deal [[2d6 + stat]] {damage} damage, or half as much on a failure.',
+  },
+  {
+    id: 'bram-nine-voices',
+    name: 'Nine Voices',
+    summary: 'He is counting the others, and he can hear when one stops.',
+    kind: 'passive',
+    tags: ['Creature', 'Overlord', 'Paint', 'Passive'],
+    body:
+      'This creature knows where every other copy of its painter is. Whenever one of them dies, it hears the voice stop and gains 3 Reaction Points.\n\n' +
+      'Asked how many voices it hears, it says nine. Every honest copy hears eight.',
+  },
+
+  /* ------------------------------------------------------------ Wriggly Bram */
+  {
+    id: 'bram-wriggle',
+    name: 'Wriggle',
+    summary: 'Legs everywhere, and none of them where you were looking.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 2,
+    wp: 2,
+    stat: 'mind',
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** that can see you.\n\n' +
+      'On a success, each has disadvantage on Attack Rolls for **2 turns**.',
+  },
+
+  /* -------------------------------------------------------------- Tumor Bram */
+  {
+    id: 'bram-yes-or-no',
+    name: 'Yes or No',
+    summary: 'Two sounds are all it has left, and both are true.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 1,
+    stat: 'mind',
+    body:
+      'Answer one yes-or-no question put to you with the sound that means yes or the sound that means no.\n\n' +
+      'This creature cannot lie and cannot say anything else.',
+  },
+  {
+    id: 'bram-agony',
+    name: 'Agony',
+    summary: 'It grows back faster than it can be cut.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'This creature never attacks and cannot move from where it lies.\n\n' +
+      'At its Turn Start it restores all Health it has lost since its last Turn Start, unless it took {damage:Decay} damage in between.',
+  },
+
+  /* ------------------------------------------------------------- Bright Bram */
+  {
+    id: 'bram-stitching-strands',
+    name: 'Stitching Strands',
+    summary: 'Strands of dried paint that sew a wound shut.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    wp: 2,
+    stat: 'mind',
+    body:
+      '**An entity** you touch restores [[2d6 + 2*stat]] Health and sheds poisoned and Bleed. Each entity can be stitched once an hour.\n\n' +
+      'For every 3 copies of your painter that have died, add [[1d6]] to the Health restored.',
+  },
+  {
+    id: 'bram-dance-of-light',
+    name: 'Dance of Light',
+    summary: 'He sways, and the room goes white.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    wp: 3,
+    stat: 'mind',
+    damage: ['Sacred'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** that can see you.\n\n' +
+      'On a success, you deal [[1d6 + stat]] {damage} damage and each is blinded **until its next Turn End**.',
+  },
+  {
+    id: 'bram-rooted',
+    name: 'Rooted in the Closet',
+    summary: 'He cannot leave, so he sends a piece of himself.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'This creature cannot take the Move or Jump action and cannot be pushed or pulled.\n\n' +
+      'Once a fight, it may spend 3 Action Points to split off a Paintling within **1.5 meters (5 feet)** of itself. The Paintling acts on its own turn and lasts **until the fight ends**.',
+  },
+
+  /* ------------------------------------------------------------- Shadow Bram */
+  {
+    id: 'bram-hypnotic-sway',
+    name: 'Hypnotic Sway',
+    summary: 'Watch the dark move for long enough and you are gone.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** that can see you.\n\n' +
+      'On a success, each falls asleep.',
+  },
+  {
+    id: 'bram-dont-look',
+    name: "Don't Look At Me",
+    summary: 'In the dark it is nowhere until it strikes.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'In darkness this creature is hidden until it attacks, and attacks against it are made with disadvantage as if it stood in partial cover. A light within **3 meters (10 feet)** of it ends both.\n\n' +
+      'If every light goes out and nothing attacks it for a turn, it stops fighting.',
+  },
+
+  /* ---------------------------------------------------------- Bram Who Bites */
+  {
+    id: 'bram-bite',
+    name: 'Bite',
+    summary: 'One of the jaws gets you.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] {damage} damage and it gains one stack of Bleed.',
+  },
+  {
+    id: 'bram-bite-again',
+    name: 'Bite Again and Again',
+    summary: 'Three jaws, one target, no control.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Bite **an entity** within **1 meter (3 feet)** of you three times. Each bite is a {stat} Melee Attack {roll}.\n\n' +
+      'On each hit, you deal [[1d6 + stat]] {damage} damage and it gains one stack of Bleed.',
+  },
+  {
+    id: 'bram-countless-jaws',
+    name: 'Countless Jaws',
+    summary: 'Every mouth he has, at once.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 5,
+    wp: 2,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Bite **an entity** within **1 meter (3 feet)** of you five times. Each bite is a {stat} Melee Attack {roll}.\n\n' +
+      'On each hit, you deal [[1d4 + 0.5*stat]] {damage} damage and it gains one stack of Bleed.',
+  },
+  {
+    id: 'bram-reluctant-jaws',
+    name: 'Reluctant Jaws',
+    summary: 'It does not mean to. It bites anyway.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'Any entity that ends its turn within **1 meter (3 feet)** of this creature takes [[1d6]] {damage:Sharp} damage while it apologises. No roll is made and no Bleed follows.\n\n' +
+      'Something that calms it stops this for **1 hour**, and so does the death of three copies of its painter.',
+  },
+
+  /* ------------------------------------------------------------- Scared Bram */
+  {
+    id: 'bram-panic-dance',
+    name: 'Panic Dance',
+    summary: 'His fear is catching.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** that can see you.\n\n' +
+      'On a success, each is frightened of you for **3 turns**.',
+  },
+  {
+    id: 'bram-bolt-hole',
+    name: 'Bolt-hole',
+    summary: 'A wardrobe, a crate, a cupboard. Anything with a door.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'This creature hides in furniture. Inside its bolt-hole it has total cover until it comes out, and nothing can target it.\n\n' +
+      'The bolt-hole has 30 Health and Armor 2. Breaking it open makes the creature hostile.',
+  },
+
+  /* -------------------------------------------------------------- Toxic Bram */
+  {
+    id: 'bram-fling-goop',
+    name: 'Fling Goop',
+    summary: 'Green everywhere, and all of it poison.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    wp: 2,
+    stat: 'mind',
+    damage: ['Decay'],
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **all entities** within **6 meters (20 feet)** of you.\n\n' +
+      'On a success, you deal [[1d6 + stat]] {damage} damage and each is poisoned.',
+  },
+  {
+    id: 'bram-split',
+    name: 'Split',
+    summary: 'Hit it once and there are three of it.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'The first time this creature takes damage, at its next Turn Start it splits: two Toxic Fragments appear within **1.5 meters (5 feet)** of it and act on their own turns.\n\n' +
+      'Its Health cannot fall below 1 while either Fragment lives.',
+  },
+
+  /* ------------------------------------------------------------ Godhead Bram */
+  {
+    id: 'bram-hypnotic-radiance',
+    name: 'Hypnotic Radiance',
+    summary: 'Look upon him and lower your weapon.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    wp: 3,
+    stat: 'mind',
+    body:
+      'Make a {stat} Roll {roll} against the Grit of **an entity** you can see within **9 meters (30 feet)**.\n\n' +
+      'On a success, for **2 turns** it cannot make an Attack Roll against you.',
+  },
+  {
+    id: 'bram-divine-semblance',
+    name: 'Divine Semblance',
+    summary: 'The act is very good. It is still an act.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'While the act holds, an entity that has not seen through it is frightened of this creature for the first **2 turns** of a fight.\n\n' +
+      'Told plainly that it is a painting, it drops the act, and this with it.',
+  },
+
+  /* ----------------------------------------------------------- Abram Hollins */
+  {
+    id: 'bram-true-hand',
+    name: 'True Hand',
+    summary: 'Whatever he paints, he has made.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Passive'],
+    body:
+      'What this creature paints with its own palette becomes real. A door takes it an hour and a small object a day.\n\n' +
+      'It is a man under the paint that weeps from it, and nothing that is true of a Paint Body is true of him.',
+  },
+  {
+    id: 'bram-four-hands',
+    name: 'Four Hands',
+    summary: 'Two more than he was born with, and all of them steady.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Passive'],
+    body:
+      'This creature has four arms. It can hold two things at once and still paint, and the Inventory action costs it nothing.',
+  },
+
+  /* ------------------------------------------------------------ the Paintlings */
+  {
+    id: 'paint-borrowed-eyes',
+    name: 'Borrowed Eyes',
+    summary: 'Whoever it split from is watching through it.',
+    kind: 'passive',
+    tags: ['Creature', 'Minion', 'Paint', 'Passive'],
+    body:
+      'Whoever this creature split from sees through its eyes, and cannot be surprised by anything it has seen.',
+  },
+  {
+    id: 'paint-lamp-shy',
+    name: 'Lamp-shy',
+    summary: 'A piece of the dark that moves.',
+    kind: 'passive',
+    tags: ['Creature', 'Minion', 'Paint', 'Passive'],
+    body:
+      'In darkness this creature is hidden until it attacks. A light within **3 meters (10 feet)** of it ends that.',
+  },
+  {
+    id: 'paint-smother',
+    name: 'Smother',
+    summary: 'It goes for the face.',
+    kind: 'creature',
+    tags: ['Creature', 'Minion', 'Paint'],
+    ap: 3,
+    stat: 'instinct',
+    damage: ['Decay'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d4 + 0.5*stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-piece-of-the-whole',
+    name: 'Piece of the Whole',
+    summary: 'Kill the pieces first.',
+    kind: 'passive',
+    tags: ['Creature', 'Minion', 'Paint', 'Passive'],
+    body:
+      'This creature is a piece of a larger copy. While it lives, the Health of the copy it split from cannot fall below 1.',
+  },
+
+  /* ----------------------------------------------------------- the commanders */
+  {
+    id: 'paint-call-the-paintlings',
+    name: 'Call the Paintlings',
+    summary: 'It knocks on the wall and the wall answers.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 5,
+    wp: 4,
+    stat: 'mind',
+    body:
+      'Call **up to 2 Paintlings** off the nearest wet paint, at a point you can see within **9 meters (30 feet)**.\n\n' +
+      'They act on their own turns and last **until the fight ends**.',
+  },
+  {
+    id: 'paint-prime-coat',
+    name: 'Prime Coat',
+    summary: 'A fresh layer over everyone it is fond of.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    wp: 2,
+    stat: 'mind',
+    body:
+      '**All allied paint creatures** within **6 meters (20 feet)** of you gain [[stat]] Shield.',
+  },
+  {
+    id: 'paint-knife-sweep',
+    name: 'Knife Sweep',
+    summary: 'One wide stroke through two bodies.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 4,
+    stat: 'physique',
+    damage: ['Sharp'],
+    body:
+      'Make a {stat} Melee Attack {roll} against **up to 2 entities** within **2 meters (6 feet)** of you.\n\n' +
+      'On a hit, you deal [[2d6 + stat]] {damage} damage.',
+  },
+  {
+    id: 'paint-laid-on-thick',
+    name: 'Laid On Thick',
+    summary: 'Layer on layer, and every layer takes a blow.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    stat: 'physique',
+    body:
+      'At its Turn Start this creature gains [[stat]] Shield.\n\n' +
+      'An ally within **1.5 meters (5 feet)** behind it counts as standing in partial cover.',
+  },
+  {
+    id: 'paint-smear',
+    name: 'Smear',
+    summary: 'A handful of paint across the eyes.',
+    kind: 'creature',
+    tags: ['Creature', 'General', 'Paint'],
+    ap: 3,
+    stat: 'instinct',
+    damage: ['Decay'],
+    body:
+      'Make an {stat} Melee Attack {roll} against **an entity** within **1 meter (3 feet)** of you.\n\n' +
+      'On a hit, you deal [[1d6 + stat]] {damage} damage and it is blinded **until its next Turn End**.',
+  },
+  {
+    id: 'paint-wet-step',
+    name: 'Wet Step',
+    summary: 'It fits through anything and hides in what it spilled.',
+    kind: 'passive',
+    tags: ['Creature', 'General', 'Paint', 'Passive'],
+    body:
+      'This creature moves through any gap a hand fits through, and it can take the Hide action while seen if it is standing in spilled paint.\n\n' +
+      'It leaves wet paint wherever it has stood.',
+  },
 ]);
 
 const CARD_BY_ID = new Map(CREATURE_CARDS.map((card) => [card.id, card]));
@@ -656,6 +1154,8 @@ export function getCreatureCard(id) {
 /**
  * Nine creatures, three of each rank, so every rule above has something on the
  * board proving it (Jules, 2026-08-31: "Imagine three of each for the test").
+ * The paint faction of 2026-09-10 sits beside them: ten Brams, four Paintlings
+ * and three commanders, written for the one-shot Nine Blank Canvases.
  *
  * The Blightgeist is not one of the nine invented: it is the finished creature
  * off the design sheet, and its `bonus` and coefficients are set so that **at
@@ -876,6 +1376,379 @@ export const CREATURES = [
     cards: ['tyrants-breath', 'wing-buffet', 'throne-of-embers'],
     lore:
       'It sits its hoard the way a king sits a throne, which is to say badly and without ever getting up. The braziers around it have been kept lit by hands it no longer bothers to look at.',
+  },
+  /* ==================================================================== PAINT
+     The Brams and their paint, 2026-09-10. See the matching section in
+     CREATURE_CARDS. Every General and the Overlord carry +1 on their primary so
+     they reach 12 at level 12, as the checker asks of every non-Minion. The
+     Brams are written at level 3, the level of the one-shot they were made for;
+     the commanders a little above it, so a shelf sorted by level reads as a
+     ladder. */
+
+  /* ------------------------------------------------------------- the Paintlings */
+  {
+    id: 'paintling',
+    name: 'Paintling',
+    rank: 'minion',
+    level: 1,
+    xp: 8,
+    type: 'Small Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: -1, instinct: 0, mind: -3 },
+    health: { perLevel: 3, perPhysique: 3 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['paint-splash', 'paint-body'],
+    lore:
+      'A fist of wet paint that got up off the floor and decided it was somebody. It has no plan beyond reaching you, and it will reach you.',
+  },
+
+  {
+    id: 'green-paintling',
+    name: 'Green Paintling',
+    rank: 'minion',
+    level: 2,
+    xp: 8,
+    type: 'Small Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: -1, instinct: 0, mind: -3 },
+    health: { perLevel: 3, perPhysique: 3 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['paint-spit', 'paint-borrowed-eyes', 'paint-body'],
+    lore:
+      'One colour, one eye and somebody else behind the eye. Wherever a green paintling sits, the copy it came off is watching the room through it.',
+  },
+
+  {
+    id: 'shadowling',
+    name: 'Shadowling',
+    rank: 'minion',
+    level: 2,
+    xp: 8,
+    type: 'Small Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: -1, instinct: 0, mind: -3 },
+    health: { perLevel: 3, perPhysique: 3 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['paint-smother', 'paint-lamp-shy', 'paint-body'],
+    lore:
+      'A scrap of black paint that hides in the dark it was painted from. You will not see it until it is on your face, and then you will not see anything.',
+  },
+
+  {
+    id: 'toxic-fragment',
+    name: 'Toxic Fragment',
+    rank: 'minion',
+    level: 3,
+    xp: 8,
+    type: 'Small Paint Offshoot',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -1, instinct: -3, mind: 0 },
+    health: { perLevel: 5, perPhysique: 5 },
+    willpower: { perLevel: 0, perMind: 0, flat: 0 },
+    avoid_bonus: 1,
+    armor: 0,
+    speed_m: 5,
+    cards: ['paint-spit', 'paint-piece-of-the-whole', 'paint-body'],
+    lore:
+      'A third of a green man, still arguing. Toxic Bram comes apart when he is hit, and each piece keeps his temper and a share of his life.',
+  },
+
+  /* ----------------------------------------------------------------- the Brams */
+  {
+    id: 'wriggly-bram',
+    name: 'Wriggly Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: 0, instinct: 1, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 7,
+    cards: ['corrosive-paint', 'bram-wriggle', 'paint-body', 'paint-chorus'],
+    lore:
+      "The self-portrait titled Confusion: a painter's head and shoulders on a tangle of purple legs, posing. He will tell you he is the real one, and he will drop it the moment you mention the legs. What he wants after that is a friend.",
+  },
+
+  {
+    id: 'tumor-bram',
+    name: 'Tumor Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Large Paint Offshoot',
+    primary: 'physique',
+    secondary: 'mind',
+    bonus: { physique: 1, instinct: -3, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 0,
+    cards: ['bram-yes-or-no', 'bram-agony', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Agony: a heaving mound with faces surfacing in it. It cannot speak, cannot move and cannot die unless something stops it growing back, and yes, it would like you to.',
+  },
+
+  {
+    id: 'bright-bram',
+    name: 'Bright Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'physique',
+    bonus: { physique: 0, instinct: -2, mind: 1 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 0,
+    cards: [
+      'bram-stitching-strands',
+      'bram-dance-of-light',
+      'corrosive-paint',
+      'bram-rooted',
+      'paint-body',
+      'paint-chorus',
+    ],
+    lore:
+      'The self-portrait titled Blinding Light: a warm rooted mass that stitches wounds with strands of dried paint and would like to be useful. He is certain he is the real one. He is wrong, and he has never asked anyone to die for it.',
+  },
+
+  {
+    id: 'shadow-bram',
+    name: 'Shadow Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: 0, instinct: 1, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['bram-hypnotic-sway', 'corrosive-paint', 'bram-dont-look', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Darkness. It does not want to be seen and it attacks whatever sees it. Put the lamp out and walk away, and it lets you.',
+  },
+
+  {
+    id: 'bram-who-bites',
+    name: 'Bram Who Bites',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: 0, mind: -1 },
+    health: { perLevel: 10, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 5,
+    cards: [
+      'bram-bite',
+      'bram-bite-again',
+      'bram-countless-jaws',
+      'bram-reluctant-jaws',
+      'paint-body',
+      'paint-chorus',
+    ],
+    lore:
+      'The self-portrait titled Rage, in a grey beret, growing jaws along every limb. He is the kindest thing in the building and it hurts to stand near him, and he knows both.',
+  },
+
+  {
+    id: 'scared-bram',
+    name: 'Scared Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: 0, instinct: 1, mind: 0 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['bram-panic-dance', 'corrosive-paint', 'bram-bolt-hole', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Fear, tentacled and grey-blue, in a wardrobe with the door held shut from inside. He remembers being painted, and he remembers painting the one with no face. A coffee gets him out.',
+  },
+
+  {
+    id: 'toxic-bram',
+    name: 'Toxic Bram',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: 0, instinct: 0, mind: 1 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 5,
+    cards: ['corrosive-paint', 'bram-fling-goop', 'bram-split', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Treachery, one flat green from hat to boots. He sees through every green paintling in the building, he has a hat he would like you to try on, and he comes apart into three when you hit him.',
+  },
+
+  {
+    id: 'godhead-bram',
+    name: 'Godhead Bram',
+    rank: 'general',
+    level: 3,
+    xp: 130,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'physique',
+    bonus: { physique: 1, instinct: 0, mind: 1 },
+    health: { perLevel: 12, perPhysique: 12 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 2,
+    armor: 0,
+    speed_m: 5,
+    cards: ['bram-hypnotic-radiance', 'corrosive-paint', 'bram-divine-semblance', 'paint-body', 'paint-chorus'],
+    lore:
+      'The self-portrait titled Divine: gilded, four-armed, floating a hand above the bed and speaking in a doubled voice. Tell him he is a painting and he agrees, and offers you money instead.',
+  },
+
+  {
+    id: 'abram-hollins',
+    name: 'Abram Hollins',
+    rank: 'general',
+    level: 3,
+    xp: 120,
+    type: 'Medium Humanoid',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: 0, instinct: 0, mind: 1 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 0,
+    armor: 0,
+    speed_m: 6,
+    cards: ['paint-palette-knife', 'bram-true-hand', 'bram-four-hands'],
+    lore:
+      'The painter himself, called Bram: grey beret, red ring, four arms, paint weeping from his skin and no face to speak with. He is the only one of the ten whose brush makes anything real, and he would very much rather not fight you.',
+  },
+
+  /* ------------------------------------------------------------ the commanders */
+  {
+    id: 'gesso-herald',
+    name: 'Gesso Herald',
+    rank: 'general',
+    level: 4,
+    xp: 130,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: -1, instinct: 0, mind: 1 },
+    health: { perLevel: 8, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 10 },
+    avoid_bonus: 2,
+    armor: 0,
+    speed_m: 5,
+    cards: ['paint-call-the-paintlings', 'paint-prime-coat', 'corrosive-paint', 'paint-body'],
+    lore:
+      'A chalk-white figure that was a primed canvas before it was anything else. It knocks on a wet wall and paintlings come off it, and it keeps them coated while they die for it.',
+  },
+
+  {
+    id: 'impasto-warden',
+    name: 'Impasto Warden',
+    rank: 'general',
+    level: 5,
+    xp: 130,
+    type: 'Large Paint Offshoot',
+    primary: 'physique',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: -1, mind: -2 },
+    health: { perLevel: 10, perPhysique: 10 },
+    willpower: { perLevel: 2, perMind: 2, flat: 6 },
+    avoid_bonus: 0,
+    armor: 3,
+    speed_m: 4,
+    cards: ['paint-knife-sweep', 'paint-laid-on-thick', 'paint-body'],
+    lore:
+      'Paint laid on with a knife until it stands up by itself, a hand thick everywhere and thicker across the chest. It holds a doorway the way a wall does, and the small ones shelter behind it.',
+  },
+
+  {
+    id: 'smear-stalker',
+    name: 'Smear Stalker',
+    rank: 'general',
+    level: 4,
+    xp: 120,
+    type: 'Medium Paint Offshoot',
+    primary: 'instinct',
+    secondary: 'mind',
+    bonus: { physique: -1, instinct: 1, mind: 0 },
+    health: { perLevel: 8, perPhysique: 8 },
+    willpower: { perLevel: 2, perMind: 2, flat: 8 },
+    avoid_bonus: 2,
+    armor: 0,
+    speed_m: 8,
+    cards: ['paint-smear', 'corrosive-paint', 'paint-wet-step', 'paint-body'],
+    lore:
+      'A long streak of paint that runs along the skirting and up the wall, and is standing behind you by the time you have followed it with your eyes. It goes for the eyes, and then it is a stain on the floor again.',
+  },
+
+  /* ----------------------------------------------------------- the Face Taker */
+  {
+    id: 'the-face-taker',
+    name: 'The Face Taker',
+    rank: 'overlord',
+    level: 3,
+    xp: 500,
+    type: 'Medium Paint Offshoot',
+    primary: 'mind',
+    secondary: 'instinct',
+    bonus: { physique: 1, instinct: 0, mind: 1 },
+    health: { perLevel: 14, perPhysique: 14 },
+    willpower: { perLevel: 2, perMind: 3, flat: 10 },
+    avoid_bonus: 2,
+    armor: 2,
+    speed_m: 5,
+    cards: [
+      'paint-palette-knife',
+      'corrosive-paint',
+      'bram-tongues',
+      'bram-paint-flood',
+      'bram-stolen-face',
+      'bram-nine-voices',
+      'paint-body',
+    ],
+    lore:
+      "The self-portrait titled Faceless, wearing the painter's own face, beret and palette, and standing in his salon asking for help. It is the most convincing Bram in the building and the most dangerous, and the face comes off when it has taken enough.",
   },
 ];
 

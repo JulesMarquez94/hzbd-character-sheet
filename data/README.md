@@ -15737,3 +15737,79 @@ it needs a `MemoryRouter` as well as the real `AuthProvider`, because the ally w
 - **Nothing auto-opens on the Advancement tab**, only here. A window that opens itself on a tab
   you came to read is an ambush; a window that opens itself at the end of the road is the road
   finishing its sentence.
+
+## The Brams and the paint, 2026-09-10
+
+Seventeen creatures and forty cards: the first drop into the bestiary since the nine it opened
+with, and the first written from a one-shot rather than a design sheet. The one-shot is *Nine
+Blank Canvases*, a guide that lives outside the repository as an artifact, built the same day
+off Frederic and his portraits in Look Outside. Jules, on it:
+
+> "in the project, create the bram as new entities that can be used in combat. and create some
+> paitling minions and commanders. Give them themed abilityies"
+
+Everything went into `src/lib/creatures.js`, as codex data, under a PAINT section in each of
+its two arrays. No new component, no new grammar: a Bram is a shape on the curve like the
+Blightgeist and his cards are ordinary codex cards.
+
+### What went in
+
+- **Ten Brams.** Nine self-portraits of the painter Abram Hollins (Wriggly Bram, Tumor Bram,
+  Bright Bram, Shadow Bram, Bram Who Bites, Scared Bram, Toxic Bram, Godhead Bram and The Face
+  Taker) and the man himself. Eight Generals, one Overlord and Abram as a General-shaped
+  Humanoid who is not made of paint. All written at level 3, the one-shot's level.
+- **Four Paintlings.** Paintling, Green Paintling, Shadowling and Toxic Fragment: Minions at
+  levels 1 to 3, with a Splash or a Spit and one passive each.
+- **Three commanders.** Gesso Herald calls Paintlings off wet walls and coats them in Shield,
+  Impasto Warden is a wall with a knife, Smear Stalker blinds and hides in what it spilled.
+  Generals at levels 4 and 5, so the shelf sorted by level reads as a ladder.
+- **Forty cards.** Six shared (Paint Body, The Chorus, Corrosive Paint, Splash, Spit, Palette
+  Knife) and the rest belonging to one body each.
+
+### Rulings made here, all open to Jules
+
+- **Paint Body** is resistance to Blunt and vulnerability to Fire. The one-shot's turpentine
+  is not in the codex: Tumor Bram's Agony keys on Decay damage instead, which is what
+  turpentine deals at that table.
+- **The Chorus is prose.** The sheet cannot count voices in a head, so what it says is what the
+  Game Master knows. Nine Voices hands the Face Taker 3 Reaction Points per copy death, applied
+  by hand.
+- **Stolen Face is a ward**, the fifth in the codex and the first written at level 3: while it
+  holds, Health cannot fall below half. The Game Master flips the switch when the face comes
+  off, and the card says what happens then.
+- **Every General and the Overlord carries +1 on the primary**, because the checker asks every
+  non-Minion to reach 12 at level 12. Scared Bram and Abram Hollins therefore differ from the
+  guide's first printing (Instinct 8, and Mind 8 with Instinct 6). The guide was corrected to
+  the codex the same evening, and its appendix now says the creatures are in the bestiary.
+- **A card that swings more than once** is written "Bite an entity three times. Each bite is a
+  Physique Melee Attack." so `rollPlan` reads one Attack Roll and the table repeats it. There
+  was no codex precedent for a multi-hit card.
+- **Tongues** rolls a d6 for one of six conditions, written as a numbered list with no lead-in
+  words on purpose, so `inflictedStatuses` lays no rows. The table applies the one that came up.
+- **Shared cards carry no rank tag**, only Creature and Paint, because Corrosive Paint is played
+  by Minions, Generals and the Overlord alike.
+- **Yes or No** costs 1 Action Point so that Tumor Bram, who never attacks, still holds a move
+  the checker accepts. It is the first card in the codex whose whole effect is an answer.
+
+### Checked
+
+`lint:creatures --list` (26 creatures and 64 cards, every General and the Overlord at 12 by
+level 12, the Blightgeist still printing its page), `lint:cards` (608 inside the ceiling),
+`lint:text` after one serial comma came out of a lore line, `lint:halves`, `lint:combat`,
+`lint:plan`, `lint:riders`, `lint:log`, `lint:order`, eslint on creatures.js and
+`npm run build`. Rulebook 10.2 no longer says "three of each rank", since it is no longer
+true, and the comment above `CREATURES` says the paint faction sits beside the nine.
+
+### Still open
+
+- **No art.** Twelve prompts in the guide's Art section are written for these plates and
+  nothing has been generated. The cards draw the empty haze plate until then.
+- **Bodies that appear.** Call the Paintlings, Split and Rooted in the Closet say a body
+  appears; the tool does not add it. The Game Master adds Paintlings and Fragments from the
+  shelf, exactly as for Call the Vault.
+- **Abram Hollins is on the shelf** because Jules asked for all ten. He is a man who would
+  rather not fight, and his experience is for getting him out alive, which the difficulty line
+  cannot say.
+- **Whether the commanders belong to the Brams.** They are written as paint that was never a
+  portrait, so a table can use them without the one-shot. If Jules wants them tied to Abram's
+  atelier, that is one lore line each.

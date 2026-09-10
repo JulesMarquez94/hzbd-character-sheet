@@ -1377,7 +1377,7 @@ frail. Reflex, Grit, Initiative and Shield are calculated the same way a charact
 because the players' cards roll against them.
 
 Every creature carries a suggested experience value per level. The bestiary on the
-website lists the printed creatures, three of each rank. A Game Master with a paid account
+website lists the printed creatures. A Game Master with a paid account
 can build their own (see 11.6).
 
 ---
