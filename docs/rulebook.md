@@ -609,18 +609,19 @@ returned.
 
 ### 4.5 Talent set
 
-Thirty-four talent sets are named. **Seventeen are written and can be taken**: Guardian,
+Thirty-four talent sets are named. **Eighteen are written and can be taken**: Guardian,
 Mycomancer, Cauldron Keeper, Enchanter, Draconic Bond, Trickster, Duelist, Feral Curse,
 Berserker, Colossus, Arcanist, Alchemist, Pact of Ordenance, Runebearer, Spellblade,
-Necromancer and Spellquill. The rest are shown on the wall so you can see what is coming,
-but they have no cards yet and cannot be chosen.
+Necromancer, Spellquill and Weaver. The rest are shown on the wall so you can see what is
+coming, but they have no cards yet and cannot be chosen.
 
 A talent set gives you cards at Novice rank now, and more at Adept and Master as you take
 those ranks. Some sets also give you something that is not a card: a **creature** you
 control, a **form** you can turn into, a **pact** you must feed, a **spellbook** you prepare
 spells from, a **slate of runes** inscribed on your own skin, a **cauldron** you brew in, an
-**ossuary** of bodies you hold together, a **weapon you bind** and cast through, or a
-**desk** you write spells at for people who cannot cast. The set's own page explains it.
+**ossuary** of bodies you hold together, a **weapon you bind** and cast through, a **desk**
+you write spells at for people who cannot cast, or a **hand of weaves** you release through
+whatever weapon you are holding. The set's own page explains it.
 
 ### 4.6 Attributes
 
@@ -856,6 +857,27 @@ of its own. You **add it to a weapon attack** as you make the attack.
 
 Which moves you know is a hand you choose from your set's pool, the way a caster prepares
 spells, and a Long Rest lets you change it.
+
+### 5.6.2 Weaves
+
+A **weave** is magic held in the weapon you are holding and released when the attack
+lands. Like a Martial Move it is not an action of its own and is chosen inside the attack's
+own window, and everything in 5.6.1 about paying for one applies to a weave as well. Two
+things are different.
+
+- **A weave does not change the attack, it happens where the attack landed.** A move gives
+  you advantage or a bigger die; a weave is a second effect arriving on the back of the
+  first, and it rolls its own damage after the attack has rolled its.
+- **It needs no weapon of any particular kind and no preparation.** A move rides the plain
+  attack until a talent widens it; a weave rides either attack any weapon teaches, and a
+  weapon picked up in the middle of a fight will carry one.
+
+The Attack Roll is the weave's roll, so a weave never rolls to hit and never misses on its
+own. It also never lands on a miss: an attack that goes wide releases nothing, and the
+Willpower is spent all the same.
+
+Which weaves you know is a hand chosen from your set's pool and changed at a Long Rest,
+exactly as a hand of moves is.
 
 ### 5.7 Damage, in order
 
@@ -1626,6 +1648,7 @@ the website you can point at any of them on a card to read this text.
 | **Ranged Attack** | An attack made at distance, rolled against the target's Defense. |
 | **weapon attack** | Either of the two attacks the weapon in your hands teaches you. |
 | **Martial Move** | A trained manoeuvre bought with a talent, used alongside a weapon attack rather than instead of one. |
+| **Weave** | Magic bought with a talent and released through a weapon attack, arriving where the attack lands. |
 | **Melee** | An attack or spell range targeting entities that are directly adjacent to you or within physical reach. |
 | **Ranged** | An attack or spell range targeting entities at a distance up to the maximum specified range in meters (or feet). |
 
@@ -1773,10 +1796,10 @@ reading of what the cards using it imply.
    the spell that does the work has not been written. A Necromancer raising a corpse as a
    servant is a different thing: what stands up is a body under orders, not the person who
    died.
-2. **Seventeen talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
+2. **Sixteen talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
    Painseeker, Dragon Aspect, Virtuoso, Flowing Fist, Sharpshooter, Wilder,
-   Thaumaturge, Tactician, Elemental Aspect, Beastbond, Oathbound, Quartermaster,
-   Weaver and Weapon Master.
+   Thaumaturge, Tactician, Elemental Aspect, Beastbond, Oathbound, Quartermaster and
+   Weapon Master.
 3. **The world.** This is a rules book, and the setting is one sentence on the cover. It
    gets a book of its own.
 

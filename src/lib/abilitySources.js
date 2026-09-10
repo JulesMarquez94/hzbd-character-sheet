@@ -736,6 +736,11 @@ const KIND_ORDER = [
      never is. Without the entry it fell through to the fallback below and the
      overview read "Martial-moves". */
   { id: 'martial-move', label: 'Martial Move', plural: 'Martial Moves' },
+  /* And a weave, for the same reason: chosen out of a pool and swapped at a rest,
+     which is what a spell is and what a talent never is. Beside the move rather
+     than beside the spell, because the two of them are the things that ride a
+     swing and a reader counting what they can put on one wants them together. */
+  { id: 'weave', label: 'Weave', plural: 'Weaves' },
   { id: 'brew', label: 'Brew', plural: 'Brews' },
   { id: 'ability', label: 'Ability', plural: 'Abilities' },
 ];

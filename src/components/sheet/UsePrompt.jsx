@@ -30,6 +30,7 @@ import {
   withMoves,
 } from '../../lib/moves.js';
 import { clampSpells, offeredSpells, strikeAllowance, strikeCost } from '../../lib/spellblade.js';
+import { clampWeaves, offeredWeaves, weaveAllowance, weaveCost } from '../../lib/weaver.js';
 import { effectLine } from '../../lib/riders.js';
 import { mergeSources, sourceRow, sourceWords } from '../../lib/attribution.js';
 import { heldThing, targetPlan } from '../../lib/targeting.js';
@@ -367,6 +368,38 @@ export default function UsePrompt({
     setDenied(null);
   }
 
+  /* ---- and the weaves a Weaver can release through it ----
+     The third thing that can be ticked onto one swing, and the same seam again:
+     chosen here, priced into the same pay button, spent by the same press. What
+     is different from the two above is only what the list is and what one costs,
+     and both of those are weaver.js's.
+
+     No bond and no weapon to check, which is the whole of what the Weaver's own
+     cards promise: any Weapon Attack will do, so this is empty for every card
+     that is not one and for everybody who holds no weaving set. */
+  const released = useMemo(
+    () => offeredWeaves(character, request.card),
+    [character, request.card]
+  );
+  const releasable = useMemo(() => weaveAllowance(character), [character]);
+  const [letGo, setLetGo] = useState([]);
+  const takenWeaves = useMemo(
+    () => clampWeaves(letGo, released, releasable),
+    [letGo, released, releasable]
+  );
+  const weaveRows = useMemo(() => takenWeaves.map((at) => released[at]), [takenWeaves, released]);
+  const weaveCards = useMemo(() => weaveRows.map((row) => row.card), [weaveRows]);
+
+  function toggleWeave(at) {
+    setLetGo((was) => {
+      const held = clampWeaves(was, released, releasable);
+      if (held.includes(at)) return held.filter((one) => one !== at);
+      const next = clampWeaves([...held, at], released, releasable);
+      return next.includes(at) ? next : held;
+    });
+    setDenied(null);
+  }
+
   const plan = useMemo(
     () =>
       offered
@@ -548,6 +581,12 @@ export default function UsePrompt({
      only the sum. See strikePrice. */
   const rideWp = strikeCost(spellRows);
 
+  /* And what the weaves add, which is Willpower and nothing else for the same
+     two reasons: a weave has no Action Points of its own and lays no charge.
+     Worked out per weave when the list was built, so this is only the sum. See
+     weavePrice. */
+  const weaveWp = weaveCost(weaveRows);
+
   const base = {
     /* RECKLESS VIOLENCE, and nothing else: a move can say the attack costs no
        Action Points, and that replaces the price rather than reducing it. It wins
@@ -562,7 +601,7 @@ export default function UsePrompt({
        and this is the condition. A Wildkin's SHARP SENSE prints its 1 Willpower
        and spends it here for the same reason, and a Feral Cursed's BESTIAL SENSE
        prints nothing and costs nothing. */
-    wp: (Number(request.wp) || 0) + bringWp + paid.wp + rideWp,
+    wp: (Number(request.wp) || 0) + bringWp + paid.wp + rideWp + weaveWp,
     health: 0,
   };
   const taken = Boolean(offer) && times > 0;
@@ -693,6 +732,24 @@ export default function UsePrompt({
       options.carried = spellRows.map((row) => ({ card: row.card, modifiers: row.modifiers }));
       options.spells = spellCards.map((card) => card.name);
       options.riders = [...moveCards, ...spellCards];
+    }
+    /* And the weaves a Weaver let go through it, down the same two channels for
+       the same two readers: `carried` is what rolls behind the Attack Roll, and
+       it is also what makes UNRAVEL's miss rule true without anything being
+       written for it — a chain stops at a failed check, so a weave on a swing
+       that went wide rolls nothing. `riders` is what castPlan reads for the
+       Burn, the Bleed and the rooted that six of the eighteen inflict.
+
+       Appended rather than assigned, because all three can be on one swing: a
+       Spellblade who is also a Weaver may carry a spell and release a weave in
+       the same motion, and neither list may quietly replace the other. */
+    if (weaveCards.length > 0) {
+      options.carried = [
+        ...(options.carried ?? []),
+        ...weaveRows.map((row) => ({ card: row.card, modifiers: row.modifiers })),
+      ];
+      options.weaves = weaveCards.map((card) => card.name);
+      options.riders = [...moveCards, ...spellCards, ...weaveCards];
     }
     /* And the conditions the card left to a choice, as ticked here. */
     if (ticked.length > 0) options.statuses = ticked;
@@ -902,12 +959,18 @@ export default function UsePrompt({
               </span>
 
               {carried.map((row, at) => (
-                <SpellRow
+                <RideRow
                   key={`${row.id}-${at}`}
                   row={row}
                   on={takenSpells.includes(at)}
-                  full={!takenSpells.includes(at) && takenSpells.length >= carriable}
-                  allowed={carriable}
+                  why={
+                    !takenSpells.includes(at) && takenSpells.length >= carriable
+                      ? carriable === 1
+                        ? 'One spell rides a strike. Untick the one you have added first.'
+                        : `A strike carries ${carriable}, and ${carriable} are added. Untick one first.`
+                      : null
+                  }
+                  cutFrom="Twinned Strike"
                   onToggle={() => toggleSpell(at)}
                   stack={cards}
                 />
@@ -919,6 +982,52 @@ export default function UsePrompt({
                   : `${listAnd(spellCards.map((card) => card.name))} ${
                       spellCards.length === 1 ? 'is' : 'are'
                     } cast where this lands. The Attack Roll is its Roll, so a miss carries nothing.`}
+              </span>
+            </div>
+          )}
+
+          {/* And the weaves that can be let go through it. Under both of the
+              blocks above, in the order the three decisions were added to the
+              sheet: a move bends the swing, a bound spell arrives on the back of
+              it, and a weave comes out of the wound. Same rows, because it is
+              the same tick, and empty for everybody but a Weaver. */}
+          {released.length > 0 && (
+            <div className="use-moves">
+              <span className="use-targets-head">
+                Weaves
+                <span className="use-targets-count">
+                  {takenWeaves.length} of {releasable}
+                </span>
+              </span>
+
+              {released.map((row, at) => (
+                <RideRow
+                  key={`${row.id}-${at}`}
+                  row={row}
+                  on={takenWeaves.includes(at)}
+                  why={
+                    !takenWeaves.includes(at) && takenWeaves.length >= releasable
+                      ? releasable === 1
+                        ? 'One weave goes out on a hit. Untick the one you have added first.'
+                        : `A hit releases ${releasable}, and ${releasable} are added. Untick one first.`
+                      : null
+                  }
+                  cutFrom="Double Weave"
+                  onToggle={() => toggleWeave(at)}
+                  stack={cards}
+                />
+              ))}
+
+              {/* The one sentence that says what this swing is about to let go,
+                  and it says the miss out loud where the bound-spell line above
+                  only implies it: UNRAVEL prints that rule and this is the same
+                  rule at the moment it is being decided. */}
+              <span className="use-targets-note">
+                {weaveCards.length === 0
+                  ? 'Nothing released: the attack lands and nothing comes out of it.'
+                  : `${listAnd(weaveCards.map((card) => card.name))} ${
+                      weaveCards.length === 1 ? 'goes' : 'go'
+                    } out where this lands. The Attack Roll is the only Roll, so a miss releases nothing.`}
               </span>
             </div>
           )}
@@ -1340,24 +1449,36 @@ function RunningRow({ effect }) {
  * with no charges left.
  */
 /**
- * One bound spell on one line: what it is, what carrying it in costs here, and
- * whether there is room left on the swing for it.
+ * One thing on one line that rides this swing without being a Martial Move: a
+ * spell a Spellblade carries in, or a weave a Weaver lets go. What it is, what
+ * putting it on this swing costs here, and whether there is room left for it.
  *
  * The same row a Martial Move gets, deliberately. They are the same tick on the
  * same swing and a reader has just read one list; a second list built to its own
- * design would be the sheet asking one question two ways.
+ * design would be the sheet asking one question two ways. Which is also why one
+ * component draws both of these: what the two callers differ on is only their
+ * words, so the words are props.
  *
- * The orb strikes the printed number through whenever the two differ, which is
- * almost always: a spell's Action Points are converted into Willpower on the way
- * in (see strikePrice in spellblade.js) and a Master takes a point back off. A
+ *   why      the sentence a full list refuses a tick with, or null. Built by the
+ *            caller, which is the half that knows how many fit and what to call
+ *            them.
+ *   cutFrom  the card to credit under the orb when the price came down. TWINNED
+ *            STRIKE for a spell, DOUBLE WEAVE for a weave.
+ *
+ * The orb strikes the printed number through whenever the two differ, which for a
+ * spell is almost always: its Action Points are converted into Willpower on the
+ * way in (see strikePrice in spellblade.js) and a Master takes a point back off.
+ * A weave has no Action Points to convert, so only the Master's cut moves it. A
  * row charging 5 beside a card printing 3 is exactly the kind of number the sheet
  * is not allowed to leave unexplained.
  */
-function SpellRow({ row, on, full, allowed, onToggle, stack }) {
+function RideRow({ row, on, why, cutFrom, onToggle, stack }) {
   const { card, price } = row;
   const from = [
+    /* A weave has no Action Points to convert, so this half of the account is
+       the Spellblade’s alone and is simply absent on the other caller. */
     ...(price.surcharge > 0 ? ['its Action Points'] : []),
-    ...(price.cut > 0 ? ['Twinned Strike'] : []),
+    ...(price.cut > 0 ? [cutFrom] : []),
   ];
 
   return (
@@ -1366,13 +1487,7 @@ function SpellRow({ row, on, full, allowed, onToggle, stack }) {
         className={`use-move-take${on ? ' is-on' : ''}`}
         onClick={onToggle}
         aria-pressed={on}
-        why={
-          full
-            ? allowed === 1
-              ? 'One spell rides a strike. Untick the one you have added first.'
-              : `A strike carries ${allowed}, and ${allowed} are added. Untick one first.`
-            : null
-        }
+        why={why}
         title={card.summary}
       >
         <span className="use-move-costs">

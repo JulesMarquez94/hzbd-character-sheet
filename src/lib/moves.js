@@ -118,6 +118,7 @@ import { isPlainAttack, isWeaponAttack, trickArrow, trickRider } from './tricks.
 import { feralLocks, feralRiders, passesForm } from './feral.js';
 import { pactBoonRows, pactState, pactWeaponRiders } from './pact.js';
 import { bladeRiders } from './spellblade.js';
+import { weaveRiders } from './weaver.js';
 import { bendsSwing, effectRiders, riderOf } from './riders.js';
 import { mergeSources, sourceRow } from './attribution.js';
 
@@ -867,6 +868,13 @@ export function attackModifiers(character, card, base) {
      stowed bow opened from the Inventory tab prints its own numbers. See
      bladeRiders in spellblade.js. */
   const edge = swings ? bladeRiders(character, card) : null;
+  /* And a Weaver's weaving, which is TAUT WEAVE and nothing else: every weapon
+     they hold swings Empowered from Adept onward. Narrowed to neither a card nor
+     a hand, unlike the three riders above it, because the set names no weapon at
+     all: a stowed axe opened from the Inventory tab really is Empowered in those
+     hands, since picking it up is the whole of what it would take. See
+     weaveRiders in weaver.js. */
+  const woven = swings ? weaveRiders(character, card) : null;
   /* And the Feral Curse's form, which grants advantage on every attack roll and
      another die to the natural weapon's own. Read here rather than in
      `weaponRiders` because it hangs on the *shape you are in* and not on the tag
@@ -899,7 +907,8 @@ export function attackModifiers(character, card, base) {
      hand the untouched card back and drop the die size on the way out. */
   const held = (Number(worn?.elevate) || 0) + (Number(worn?.perMove) || 0);
 
-  if (!trick && !laid && !hide && !bound && !edge && passive === 0 && held === 0) return base;
+  if (!trick && !laid && !hide && !bound && !edge && !woven && passive === 0 && held === 0)
+    return base;
 
   const empower =
     (Number(base?.empower) || 0) +
@@ -908,7 +917,11 @@ export function attackModifiers(character, card, base) {
     (Number(laid?.empower) || 0) +
     /* RESONANT EDGE. A different card from every other term here, so it is a
        different source and it adds, by the stacking law. */
-    (Number(edge?.empower) || 0);
+    (Number(edge?.empower) || 0) +
+    /* TAUT WEAVE, and the same reading: another card, another source, so it adds
+       rather than taking the largest. A Spellblade who is also a Weaver swings a
+       bound weapon with both dice on it. */
+    (Number(woven?.empower) || 0);
   const elevate =
     (Number(base?.elevate) || 0) +
     (Number(trick?.elevate) || 0) +
@@ -971,7 +984,7 @@ export function attackModifiers(character, card, base) {
        of them actually did, which is what the use prompt prints under the two
        ways. "Everything that is modified need to be seen but only what modifies
        it", 2026-08-28. See attribution.js. */
-    sources: attackSources({ base, worn, hide, bound, laid, trick, edge, character }),
+    sources: attackSources({ base, worn, hide, bound, laid, trick, edge, woven, character }),
     /* The pact's best-attribute rule, riding the swing the way a loadout's
        `cast` rides a spell, and the Spellblade's Mind behind it. `modifiers.stat`
        wins over the card's own in every renderer, so only one of the two may set
@@ -1017,7 +1030,7 @@ function instinctOf(character) {
  * for the same Finesse weapon that DEXTEROUS lends an arrow for, and only one of
  * those two is changing the swing.
  */
-function attackSources({ base, worn, hide, bound, laid, trick, edge, character }) {
+function attackSources({ base, worn, hide, bound, laid, trick, edge, woven, character }) {
   const held = (worn?.from ?? []).map((row) =>
     sourceRow(row.name ?? row.talent?.name, {
       advantage: row.advantage,
@@ -1032,6 +1045,11 @@ function attackSources({ base, worn, hide, bound, laid, trick, edge, character }
      spellblade.js because that is where the rank was read, and merged here
      beside the bargain for the same reason it sits beside it in the fold. */
   const edged = edge?.sources ?? [];
+
+  /* And the weaving, which is one row: TAUT WEAVE is the only card in that set
+     that moves a number the swing prints. Built in weaver.js for the reason the
+     two above it are, which is that the rank was read there. */
+  const spun = woven?.sources ?? [];
 
   const shape = (hide?.from ?? []).map((row) =>
     sourceRow(row.talent?.name, { advantage: row.advantage, empower: row.empower })
@@ -1068,7 +1086,7 @@ function attackSources({ base, worn, hide, bound, laid, trick, edge, character }
       ]
     : [];
 
-  return mergeSources(base?.sources ?? [], held, sworn, edged, shape, tracked, stolen);
+  return mergeSources(base?.sources ?? [], held, sworn, edged, spun, shape, tracked, stolen);
 }
 
 /**

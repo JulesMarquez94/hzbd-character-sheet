@@ -72,11 +72,19 @@ export const SCROLL_NAME_MAX = 60;
  * Arcane Quartz come to.
  *
  * `coins` is the sheet's; `supplies` is that divided by ten. See the note above.
+ *
+ * `wp` is the third price and it is not the same kind of thing as the other two.
+ * The Quartz is what a **permanent** leaf costs out of the crate; the Willpower
+ * is what a **fading** one costs out of the scribe, and it is Jules's own number
+ * rather than anything on the PDF: "Ephemeral spell crafting also cost 1
+ * willpower for novice 2 for adept and 3 for master" (2026-09-10). It is on the
+ * rung with the other two because a rung is where every price of a scroll lives,
+ * which is what keeps scribing.js from carrying a table of its own.
  */
 export const SCROLL_TIERS = [
-  { tier: 'Novice', coins: 500, supplies: 50 },
-  { tier: 'Adept', coins: 1500, supplies: 150 },
-  { tier: 'Master', coins: 2000, supplies: 200 },
+  { tier: 'Novice', coins: 500, supplies: 50, wp: 1 },
+  { tier: 'Adept', coins: 1500, supplies: 150, wp: 2 },
+  { tier: 'Master', coins: 2000, supplies: 200, wp: 3 },
 ];
 
 const TIER_BY_NAME = new Map(SCROLL_TIERS.map((row) => [row.tier, row]));
@@ -105,6 +113,19 @@ export function scrollSupplies(card) {
 /** And in coin, which is what the item is worth to a shop. */
 export function scrollCoins(card) {
   return TIER_BY_NAME.get(scrollTier(card))?.coins ?? 0;
+}
+
+/**
+ * And what a fading leaf of it costs the scribe, in Willpower.
+ *
+ * Nothing but EPHEMERAL SPELL SCROLLS reads this. A permanent scroll is paid for
+ * in Supplies and a found one is paid for by whoever lost it, so the rung's
+ * Willpower is the price of writing one out of your own head on the spot. Zero
+ * for a spell no scroll may carry, which is the same nothing every other price
+ * on this file returns for one.
+ */
+export function scrollWillpower(card) {
+  return TIER_BY_NAME.get(scrollTier(card))?.wp ?? 0;
 }
 
 /**

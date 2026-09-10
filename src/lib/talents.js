@@ -4819,9 +4819,11 @@ const TALENT_SETS = [
          `wordsPerScroll` 0 until IMPROVED SYNTAX, then 1, then 2 — which is
                           ANALITIC SIGHT's "you can now include two Power Words
                           on one spell scroll".
-         `ephemeral`      whether the fading scrolls are prepared at all. How
-                          many is `floor(Mind / 2) + rank` and is worked out on
-                          the character, not here.
+         `ephemeral`      what one fading leaf costs to throw down where you
+                          stand: `{ ap }`, and nothing else. The Willpower is the
+                          spell's own rung (scrolls.js) and there is no cap on
+                          how many, because the pool is the cap. See the note on
+                          EPHEMERAL SPELL SCROLLS below.
          `forgiven`       whether AUTHOR OF TRUTH's Willpower forgiveness is
                           held. How much is Mind + level, the conversion key's
                           reading of "your Power".
@@ -4837,7 +4839,7 @@ const TALENT_SETS = [
       tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
       perRest: [null, 2, 2, 2],
       wordsPerScroll: [null, 0, 1, 2],
-      ephemeral: true,
+      ephemeral: { ap: 2 },
       forgiven: [null, false, false, true],
       at: ['long'],
       note: 'Written at the desk and carried away. Your Long Rest action buys the night’s leaves, and the crate pays for the Quartz.',
@@ -4845,7 +4847,7 @@ const TALENT_SETS = [
     blurb:
       'A Spellquill is not a caster. They are a copyist, and what they copy is the shape of a working: the exact order a spell has to be thought in, set down in ground Arcane Quartz on good parchment so that reading it out loud does the thinking for you. Somebody who has never cast anything in their life can hold a Spellquill’s leaf, say what is on it, and have it happen.\n\n' + // text-style-ok: joins two clauses
       'They excel at handing the party what the party cannot do. The scrolls are written the night before, out of the same crate everyone travels on, and the morning is when they get passed round: a healing spell into the hands of the one who has never held Willpower, a wall of fire for whoever is standing in the doorway. The scroll is destroyed in the reading, which is the whole economy of the set — a Spellquill is spending Quartz to buy somebody else a turn.\n\n' + // text-style-ok: joins two clauses
-      'Their own hand shows in the syntax. A Power Word worked into the writing bends what comes out of it, and the price of that is paid in the writing rather than the reading: a night spent on a subtle scroll is a morning with less Willpower to spend. Pressed with nothing to spare, they can still lay out a handful of leaves in fading ink, good until the next time they sleep.', // text-style-ok: joins two clauses
+      'Their own hand shows in the syntax. A Power Word worked into the writing bends what comes out of it, and the price of that is paid in the writing rather than the reading: a night spent on a subtle scroll is a morning with less Willpower to spend. Pressed for a spell they have not got, they can throw a leaf down where they stand in fading ink, and it is gone by the time they next sleep.', // text-style-ok: joins two clauses
     cards: [
       /* ================================================== Rank 1 · the leaf */
       {
@@ -4889,32 +4891,58 @@ const TALENT_SETS = [
         id: 'ephemeral-spell-scrolls',
         rank: 1,
         name: 'Ephemeral Spell Scrolls',
-        summary: 'Fading leaves prepared free every night, good until the next one.',
+        summary: 'Throw down a fading leaf where you stand, for two Action Points and its rung in Willpower.',
         kind: 'talent',
-        tags: ['Spellquill', 'Novice Talent', 'Long Rest'],
-        ap: null,
-        wp: null,
+        tags: ['Spellquill', 'Novice Talent', 'Ability'],
+        ap: 2,
+        /* The rung's own, which is not knowable until a spell is chosen: 1 at
+           Novice, 2 at Adept, 3 at Master. Same `X` EPHEMERAL ENCHANTMENT and
+           BREW print, and it means the same thing there. See `pays` below. */
+        wp: 'X',
         stat: 'mind',
-        /* Its own card rather than a paragraph of ARCANE SCRIBE, because the
-           sheet gives it its own heading and because the two are different
-           permissions: this one costs nothing, is capped by an attribute rather
-           than by a flat two, and is **not** the Long Rest action. It happens on
-           every Long Rest whatever the night was spent on, which is why it sits
-           above the action slot in the rest window rather than in it. See
-           scribing.js.
+        /* Mechanics as data. `opens` raises the window that asks which spell and
+           which Power Words; `pays` says the window is where the whole cost is
+           settled, because charging the printed 2 at the chip and the rest
+           afterwards would ask the action-or-reaction question twice and take
+           the Action Points off anybody who then closed the shelf. Same pair
+           EPHEMERAL ENCHANTMENT carries. See combatBar.js and ActiveBlock.jsx.
 
-           "half your Intelligence + your rank in Spellquill" is written as
-           `{mind}` halved plus the rank: Intelligence is Mind on this site, and
-           every halved attribute in this codex floors on its own first.
+           ---------------------------------------------------- reworked 2026-09-10
+           **This was a Long Rest card and is not one any more.** The sheet reads
+           "at the end of a long rest, you can prepare a number of Ephemeral
+           Spell Scrolls equal to half your Intelligence plus your rank", and it
+           was built that way on 2026-09-09: free, capped at `floor(Mind / 2) +
+           rank`, chosen in a chooser that sat above the rest window's action
+           slot because it was not an action.
 
-           Unlike the Alchemist's IMPROVISED BREWING, which prints its expiry and
-           is not wired, **this one is**. That card's potions "expire at the end
-           of the day" and this site has no day; a scroll expires at a Long Rest,
-           and a Long Rest is already a button. */
+           Jules replaced that outright: "rework spellquill so that ephemeral
+           scroll are created on the fly. Not after a long rest. He has an
+           ability that allow him to create one. Creating an ephemeral scroll
+           require 2 action points. The user can then choose to cast it if he can
+           or keep it in inventory or give it to someone. Ephemeral spell
+           crafting also cost 1 willpower for novice 2 for adept and 3 for
+           master."
+
+           So the count is gone with the night: **the Willpower pool is the cap
+           now**, which is what a price at the moment of use always is on this
+           sheet, and inventing a second ceiling on top of it would be inventing
+           design nobody asked for. What survives unchanged is the ink itself.
+           The leaf still expires at the start of the next Long Rest, the sweep
+           that does it is the one already written, and it still reaches a scroll
+           clipped to a belt loop as well as one in the bag. See scribing.js.
+
+           The three destinations in Jules's sentence are the three a scroll has
+           always had, and none of them needed anything new: it goes in the pack,
+           a belt loop is what makes it readable, and the handover hands it over.
+           The window says so in as many words rather than growing a fourth way
+           to do any of them. */
+        opens: 'scribe',
+        pays: 'window',
         body:
-          'At the end of a Long Rest you can prepare Ephemeral Spell Scrolls: your {mind} halved and rounded down, plus your rank in Spellquill.\n\n' +
-          'They cost no Supplies and they are written in fading ink. An Ephemeral scroll **expires at the start of your next Long Rest**, and until then it works exactly as any other scroll does.\n\n' + // text-style-ok: joins two clauses
-          'Nobody is fooled by one. They are easily identifiable as Ephemeral, and no merchant will take one.',
+          'You can write an Ephemeral Spell Scroll on the spot, in fading ink, off any list your rank has opened.\n\n' +
+          'The Willpower is the spell’s rung: **1** at Novice, **2** at Adept and **3** at Master. No Supplies and no Quartz go into one.\n\n' +
+          'Read it, carry it or hand it to somebody else. It works as any other scroll does, and it **expires at the start of your next Long Rest**.\n\n' + // text-style-ok: joins two clauses
+          'Nobody is fooled by one. They are easily identifiable as Ephemeral and no merchant will take one.',
       },
 
       /* ============================================ Rank 2 · the power words */
@@ -5013,16 +5041,305 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    /* The roster's `weaver` slot on the Other shelf, filled. The eighteenth
+       written set, and **the second with no sheet behind it at all**: no Ability
+       tab, no conversion workbook, no old printed page. The designer handed it
+       over in chat on 2026-09-10 and the whole of what was said is transcribed
+       below, because it is the only source of record. The log and the rulings are
+       at the foot of data/README.md.
+
+       ------------------------------------------------------------ what was said
+       In his own words, unedited:
+
+         "use the information you have to make the weaver whcih hte fletcher but
+          for all weapon. Effects you can choose to atctive when you hit with an
+          attack like a smite. Magic empweremnt on weapons."
+
+       Three sentences and a comparison, and the comparison is the design. Read in
+       order: a set that does for every weapon what a Fletcher does for arrows,
+       whose effects are chosen and let go on the hit rather than cast, and whose
+       other half is magic put into the weapon itself.
+
+       ------------------------------------------------------------- the Fletcher
+       **There is no Fletcher in this repository.** Nothing under `data/`, nothing
+       in `talents.js`, nothing in the roster and nothing in the history: the only
+       fletched thing in the codex is the bolt drawn on the Pact of Ordenance's
+       ammunition pips. So the word is read as the designer's own shorthand for a
+       set that prepares an arrow with an effect in it, and what it is doing in
+       that sentence is fixing the *shape* rather than naming a source to
+       transcribe. If a Fletcher sheet exists off-repository, this set is the
+       thing to check against it first. Flagged in data/README.md.
+
+       ----------------------------------------------------------- the six readings
+       Six things the description leaves to be settled, each one settled here and
+       flagged in data/README.md:
+
+         the pool     **its own eighteen weaves, house-written**, rather than the
+                      spell codex. "Effects ... like a smite" is not a spell: a
+                      smite is a fixed thing you spend on a hit, and the spell
+                      codex already arrives on a hit through the Spellblade. So
+                      the set needed a pool of its own and there was none, which
+                      is the largest invention in this file. See weaves.js, which
+                      says so at length and is written to be replaced.
+         all weapons  **no weapon is ever named or bound.** That is the whole of
+                      "but for all weapon", and it is what separates this set from
+                      the Spellblade at every seam: nothing is spent to set up,
+                      nothing is stored, nothing ends at a rest, and a weapon
+                      picked up mid-fight is woven in the hand that picked it up.
+         the hit      **released on any Weapon Attack**, plain or special, which
+                      is the broad reading of the glossary. Neither was named and
+                      the narrow reading would have made half of every weapon in
+                      the codex inert for this set.
+         the miss     **printed, and enforced by the dice.** "when you hit" names a
+                      hit, and unlike the Spellblade this set can keep the promise:
+                      a weave's damage is a link behind the Attack Roll and a chain
+                      stops dead at a failed check, so a weave released on a swing
+                      that missed rolls nothing. The Willpower still goes, because
+                      payment is unconditional on this sheet, and UNRAVEL prints
+                      both halves of that.
+         the attribute **your highest**, which is the Other shelf's own convention
+                      and the Pact of Ordenance's own rule. Not stated either way.
+                      A set that works with every weapon in the game should work
+                      for every character who can hold one, and picking Mind would
+                      have quietly made it a caster's set on a shelf that exists
+                      precisely for the sets that are nobody's.
+         empowerment  **magic weapon at Novice, Empowered from Adept.** "Magic
+                      empweremnt on weapons" is one clause and had to become two
+                      cards, so it is split the way BOUND EDGE and RESONANT EDGE
+                      split the identical clause: the word at the bottom rung and
+                      the die one rung up.
+
+       ------------------------------------------------------- what is mine here
+       All five card names, the tagline, the blurb, every number and the whole of
+       weaves.js. Nothing below traces to a written source, which is the opposite
+       of how every other set in this file was built and is the reason both this
+       comment and weaves.js are as long as they are. Two Crossroads scenes are
+       unwritten.
+
+       No plate and no card pictures. Drop them into `data/Weaver/` and run
+       `npm run art:cards`. */
+    id: 'weaver',
+    name: 'Weaver',
+    tagline: 'Magic run along the edge of whatever you are holding, and let go the moment it lands.',
+    /* No plate yet. Null rather than a path to a file that is not there, for the
+       reason the Runebearer's and the Spellblade's are. */
+    art: null,
+    /* No attribute tag: a weave rolls off whichever attribute its Weaver stands
+       highest in, which is the Other shelf's rule and the Pact of Ordenance's
+       before it. Martial because nothing here happens without a swing;
+       spellcasting because what rides the swing is magic; support for MENDTHREAD
+       and WARDTHREAD, which are two of the eighteen and the reason the set is not
+       only a damage set. */
+    tags: ['martial', 'spellcasting', 'support'],
+    /* The Other shelf, like the roster filed it: scaled on the best of you rather
+       than on one attribute you raise. */
+    stat: 'other',
+    /* The hand, as an ordinary pool. Everything here is loadouts.js's:
+
+         `known`  "2 + your Rank in Weaver", which is [null, 3, 4, 5] and is the
+                  Duelist's own number for a pool of riders rather than the
+                  Spellblade's for a pool of spells. A weave is the cheaper thing,
+                  so more of them are held and each is worth less.
+         `cast`   `'highest'`, the Other shelf's rule. The second pool in the codex
+                  to carry it after the Pact's boons.
+         `swap`   rank-indexed, the shape the Spellblade's carries: DOUBLE WEAVE
+                  hands a Short Rest the swap a Long Rest had.
+
+       No `school`, because a weave has none, and `group: 'tier'` for the reason a
+       Martial Move pool carries it: the rung is the only thing that sorts them,
+       so the chooser cuts the wall Novice, Adept, Master rather than leaving
+       eighteen cards under one heading called Unfiled.
+
+       No `discount` either. DOUBLE WEAVE's Willpower cut is not a discount on a
+       printed cost, it is a term in a price this set works out itself. See
+       `weavePrice` in weaver.js. */
+    loadout: {
+      id: 'weaver-weaves',
+      label: 'Weaves',
+      noun: 'weave',
+      kind: 'weave',
+      group: 'tier',
+      cast: 'highest',
+      known: [null, 3, 4, 5],
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      swap: [null, ['long'], ['long'], ['long', 'short']],
+      section: 'What your weapons carry',
+      note: 'They are released through a Weapon Attack and no other way, and what one costs is worked out on the swing itself.',
+    },
+    /* The eleventh shape of what a set can hand over: a **weaving**. Numbers
+       only, and what they mean is weaver.js's business, which is the same split
+       minions.js, feral.js, pact.js, runes.js and spellblade.js keep.
+
+       **Nothing about it is stored anywhere**, which makes it the cheapest of the
+       eleven to have added: no column, no migration and not even a tracker row,
+       because the set names no weapon and nothing it does outlives the swing that
+       did it. See the note at the top of weaver.js. */
+    weave: {
+      label: 'Weaving',
+      /* TAUT WEAVE is the card that moves the number, so it is the name the
+         source row under the pay button carries. A reader can look up a card. */
+      from: 'Taut Weave',
+      /* TAUT WEAVE, rank-indexed the way every other rider on a set is. */
+      empower: [null, 0, 1, 1],
+      /* UNRAVEL, and DOUBLE WEAVE on top of it: how many may be released on one
+         swing. */
+      weaves: [null, 1, 1, 2],
+      /* DOUBLE WEAVE's other half, what comes off each weave's Willpower. */
+      cut: [null, 0, 0, 1],
+    },
+    blurb:
+      'A Weaver does not enchant a weapon. Enchanting is a night of labour at a fire and what it makes stays made, where a weave is a thread of the Weaver’s own Willpower run along the edge of whatever they happen to be holding, and it lasts exactly as long as it takes to swing. A borrowed axe, a table leg, a knife off a dead man’s belt: all of it takes the thread, because the thread was never in the steel.\n\n' + // text-style-ok: joins two clauses
+      'They excel at arriving with the answer already in hand. Every other caster has to choose between the spell and the swing, and a Weaver does both in one motion: the attack opens the wound and the weave comes out of it, so the Roll that landed the blade is the Roll that landed the magic. What they can release is narrow and there are never many of it prepared, and each one is exactly the sort of thing a hit is worth spending on.\n\n' + // text-style-ok: joins two clauses
+      'The bargain is that nothing at all happens without the hit. A Weaver standing out of reach with a full night of weaving behind them has nothing, and a swing that goes wide takes the Willpower with it. So they walk in, and they decide on the way what this one is worth.', // text-style-ok: joins two clauses
+    cards: [
+      {
+        id: 'threadwork',
+        rank: 1,
+        name: 'Threadwork',
+        summary: 'Weaves equal to 2 plus your rank, released through a weapon and no other way.',
+        kind: 'talent',
+        tags: ['Weaver', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: the whole `loadout` above. `Long Rest` and not
+           `Passive`, the tag every card that re-prepares a hand carries.
+
+           The pool sentence is DEXTEROUS's, with the formula this set was given:
+           "a number of weaves equal to 2 + your Rank in Weaver". The rank as a
+           number in a formula is the one way a card may name it.
+
+           The ladder sentence is FUNGAL INVOCATION's word for word but for the
+           thing it names, which is the other thing a card may say about a rank.
+
+           `stat: 'mind'` and not `other`, because a card's stat is a key and
+           `other` is a shelf. Nothing on this card rolls anything, so the only
+           job the field has is to be a real attribute for the article rule, and
+           the pool's `cast: 'highest'` is what a reader actually sees. */
+        body:
+          'You learn a number of weaves equal to 2 + your Rank in Weaver. You release them through a Weapon Attack and no other way.\n\n' +
+          'Whenever you take a Long Rest, you can use your Long Rest action to change any number of learned weaves.\n\n' +
+          'At Rank 2, you can learn Adept Weaves, and at Rank 3, you gain access to Master Weaves.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'woven-steel',
+        rank: 1,
+        name: 'Woven Steel',
+        summary: 'Anything you pick up is a magic weapon and carries your weaves.',
+        kind: 'talent',
+        tags: ['Weaver', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: nothing, and that is the point of the card.
+
+           "magic weapon" is the designer's own phrase, carried here for the reason
+           BOUND EDGE carries it: there is no magic-weapon flag in this codex and
+           inventing one to satisfy one card would be a rule with one holder. The
+           words are the table's.
+
+           The second paragraph is the card that costs this set nothing and buys
+           it everything, and it is the whole of "but for all weapon". It is
+           printed rather than left implied because the absence of a setup step is
+           the thing a reader coming from the Spellblade will look for and not
+           find. `weaveRiders` in weaver.js is where the same reading is honoured
+           in code: it narrows to no weapon and no hand. */
+        body:
+          'Every weapon you hold is a magic weapon, and it carries your weaves.\n\n' + // text-style-ok: joins two clauses
+          'Nothing has to be prepared and no weapon has to be chosen. A weapon you pick up in the middle of a fight is woven the moment it is in your hand.',
+      },
+      {
+        id: 'unravel',
+        rank: 1,
+        name: 'Unravel',
+        summary: 'Your attack lets a weave go where it lands, and the Attack Roll is its Roll.',
+        kind: 'talent',
+        tags: ['Weaver', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `weave.weaves` and `weave.cut` above, resolved in
+           `weavePrice` and offered in the attack's own use prompt beside the
+           Martial Moves and the bound spells. See weaver.js and UsePrompt.jsx.
+
+           The second paragraph is POINT OF IMPACT's, because it is the same
+           sentence about the same seam and the codex says one thing one way. What
+           is dropped from it is the Multicast and Overcast clause: no weave in
+           weaves.js carries a second half, so a card naming two keywords nothing
+           in its pool has would be a rule with nothing to apply to.
+
+           **The third paragraph is the one the Spellblade could not print.** See
+           the miss, above: a weave's damage is a link behind the Attack Roll and a
+           chain stops at a failed check, so the first half of it is enforced. The
+           second half is the sheet's own unconditional payment, said out loud
+           because a player who has just spent 6 Willpower on a swing that went
+           wide is entitled to have read it first. */
+        body:
+          'When you make a Weapon Attack you can release one of your weaves, paying its Willpower.\n\n' +
+          'It is released where the attack lands, and anything it reaches beyond the target is centered there. It needs no Roll of its own: the Attack Roll carries it.\n\n' + // text-style-ok: joins two clauses
+          'A weave released on an attack that misses does nothing, and its Willpower is spent all the same.', // text-style-ok: joins two clauses
+      },
+      {
+        id: 'taut-weave',
+        rank: 2,
+        name: 'Taut Weave',
+        summary: 'The threads pull tight, and everything you swing hits harder.',
+        kind: 'talent',
+        tags: ['Weaver', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `weave.empower` above, folded into `attackModifiers`
+           in moves.js beside the Colossus's Elevate, the form's die and RESONANT
+           EDGE's, so the extra die is on the printed card before the swing is paid
+           for rather than remembered against it.
+
+           Empowered and not Elevated: one more die of the same kind, which is what
+           the word means on this sheet and is the same reading RESONANT EDGE takes
+           of the same clause. See cardText.js.
+
+           "Every weapon you hold" and not "the weapon in your hands", so the two
+           cards of this pair say the same thing about the same weapons. */
+        body: 'The damage of every weapon you hold is Empowered by 1.',
+      },
+      {
+        id: 'double-weave',
+        rank: 3,
+        name: 'Double Weave',
+        summary: 'Two weaves on one hit, each 1 Willpower cheaper, re-chosen on a Short Rest.',
+        kind: 'talent',
+        tags: ['Weaver', 'Master Talent', 'Short Rest'],
+        ap: null,
+        wp: null,
+        stat: 'mind',
+        /* Mechanics as data: `weave.weaves`, `weave.cut` and the rank-indexed
+           `loadout.swap` above, all three of them.
+
+           "now" is the idiom for a card that only exists because of the rank, off
+           BESTIAL FRENZY and TWINNED STRIKE, and it is doing real work in the
+           first clause: one weave to a swing was UNRAVEL's rule and this is the
+           rule changing.
+
+           The cut has no floor, which is the second in the codex without one after
+           the Spellblade's. A Novice weave costing nothing at Master is the rung
+           doing what the rung is for. */
+        body:
+          'You can now release 2 weaves on the same Weapon Attack, and your weaves cost 1 less Willpower.\n\n' + // text-style-ok: joins two clauses
+          'Whenever you take a Short Rest, you can change any number of learned weaves.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------- the roster *
- * Seventeen sets that have a name and nothing else.
+ * Sixteen sets that have a name and nothing else.
  *
  * The designer keeps a roster of every set the game is going to have, four
- * columns wide and cut by the attribute each one leans on. Seventeen of its
+ * columns wide and cut by the attribute each one leans on. Eighteen of its
  * slots are written and sit in the codex above (the Alchemist, the Pact of
- * Ordenance, the Runebearer, the Spellblade, the Necromancer and the Spellquill
- * were placeholders here first). These are the rest, standing in the codex
+ * Ordenance, the Runebearer, the Spellblade, the Necromancer, the Spellquill
+ * and the Weaver were placeholders here first). These are the rest, standing in the codex
  * as placeholders so the wall reads as the whole plan rather than as the part of
  * it that happens to be finished.
  *
@@ -5147,17 +5464,18 @@ const TALENT_PLACEHOLDERS = [
   placeholder('tactician', 'Tactician', 'mind'),
   placeholder('elemental-aspect', 'Elemental Aspect', 'mind'),
 
-  /* Other, five of six rows. Row 3 was `Pactbound`, whose slot the Pact of
+  /* Other, four of six rows. Row 3 was `Pactbound`, whose slot the Pact of
      Ordenance filled on 2026-08-27: the id stays the roster's, the name is the
-     one the designer gave the set in chat. The Draconic Bond and the Pact of
-     Ordenance are what the shelf holds written.
+     one the designer gave the set in chat. Row 5 was `Weaver`, filled on
+     2026-09-10, and that one kept the roster's name as well as its id. The
+     Draconic Bond, the Pact of Ordenance and the Weaver are what the shelf holds
+     written.
 
      Every name here is spelled as the roster spells it. Beastbond and Oathbound
      are one word each on the sheet and stay one word each. */
   placeholder('beastbond', 'Beastbond', 'other'),
   placeholder('oathbound', 'Oathbound', 'other'),
   placeholder('quartermaster', 'Quartermaster', 'other'),
-  placeholder('weaver', 'Weaver', 'other'),
   placeholder('weapon-master', 'Weapon Master', 'other'),
 ];
 

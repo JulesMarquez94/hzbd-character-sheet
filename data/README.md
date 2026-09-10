@@ -15063,3 +15063,338 @@ it unlocks all three.
   this page.
 - **GUARDIAN · JUST IN TIME needs a talent-card `grants` reader**, which is four lines plus a
   `statMath` term and would be the first flat rider a talent card carries.
+
+## The Weaver, 2026-09-10
+
+The eighteenth written set, the fifth slot filled on the Other shelf, and **the second in the
+codex with no sheet behind it at all**. There is no Ability tab for the Weaver, no conversion
+workbook and no old printed page. What there is, in full:
+
+> "use the information you have to make the weaver whcih hte fletcher but for all weapon.
+> Effects you can choose to atctive when you hit with an attack like a smite. Magic
+> empweremnt on weapons."
+
+Three sentences and a comparison. Every card, name, number and word below was written here off
+them, and the quote itself is transcribed in the comment above the set in `src/lib/talents.js`
+because it is the only source of record there is.
+
+### The Fletcher, which does not exist
+
+**There is no Fletcher anywhere in this repository.** Nothing under `data/`, nothing in
+`talents.js`, nothing on the roster, nothing in the git history. The only fletched thing in the
+codex is the bolt `AmmoPips` draws for the Pact of Ordenance. So the word is read as shorthand
+for a set that prepares an arrow with an effect in it, and what it is doing in that sentence is
+fixing the **shape** rather than naming a source to transcribe: the Fletcher's trick, given to
+every weapon there is.
+
+**If a Fletcher sheet exists off-repository, this set is the first thing to check against it.**
+
+### What the set is
+
+Five cards, and it is deliberately the Spellblade's skeleton with the Spellblade's one
+expensive part removed.
+
+**THREADWORK** (Rank 1, Long Rest) is the pool: a number of weaves equal to **2 + your Rank**,
+so 3, 4 and 5, re-chosen with the Long Rest action, Novice at Rank 1 and Adept and Master at 2
+and 3. That is the Duelist's number for a pool of riders rather than the Spellblade's number for
+a pool of spells, because a weave is the cheaper thing.
+
+**WOVEN STEEL** (Rank 1, Passive) is the empowerment, and its second paragraph is the whole
+point of the set: *every weapon you hold* is a magic weapon and carries your weaves, nothing has
+to be prepared, no weapon has to be chosen, and a weapon picked up in the middle of a fight is
+woven in the hand that picked it up. There is no Action Point cost, no binding and nothing
+stored.
+
+**UNRAVEL** (Rank 1, Passive) is the release: when you make a Weapon Attack you may release one
+weave, paying its Willpower. It goes off where the attack lands, an area centres on the target,
+and it needs no Roll of its own because the Attack Roll carries it.
+
+**TAUT WEAVE** (Rank 2) Empowers the damage of every weapon you hold by 1. **DOUBLE WEAVE**
+(Rank 3, Short Rest) releases two weaves on one attack, takes 1 Willpower off each and hands a
+Short Rest the swap a Long Rest had.
+
+The set is shelved on **Other** and its pool carries `cast: 'highest'`, so a weave rolls off
+whichever Attribute its Weaver stands highest in. A Physique 7 brute's Emberthread deals
+`1d6 + 7`.
+
+### The eighteen weaves
+
+A new card kind, `weave`, in `src/lib/weaves.js`, folded into `CARDS` the way the Martial Moves
+are: a rank opens a tier of them and raises how many you know, and no rank hands one over. The
+banner reads `WEAVE · NOVICE`, which is a Martial Move's banner order.
+
+| Rung | Willpower | Damage | The six |
+| --- | --- | --- | --- |
+| Novice | 1 | `1d6 + stat` | Emberthread, Rimethread, Arcthread, Leechthread, Wardthread, Hazethread |
+| Adept | 2 or 3 | `2d6 + 2*stat` | Burstweave, Rustweave, Sunthread, Mendthread, Hollowthread, Windthread |
+| Master | 4 to 6 | `4d6 + 4*stat` | Unmaking, Crossweave, Severing Thread, Doomthread, Shroudweave, Riftthread |
+
+Both ladders are ones the codex already keeps. The Willpower is the Martial Move tier price
+(1 at Novice, 2 or 3 at Adept, 4 to 6 at Master) and the damage is the spell codex's own stair,
+with the dice count and the stat multiplier always equal, which is how every damaging spell in
+the codex is written. A carried weave is cheaper than the same effect carried as a spell, and it
+should be: a Spellblade pays a surcharge for the spell's Action Points and can reach the entire
+codex, where a weave goes nowhere but out of a wound and there are only eighteen.
+
+Nothing in the eighteen teaches the game a new word. Every effect is a keyword the codex already
+defines (Burn, rooted, blinded, prone, Shield, Armor) or a type already in `DAMAGE_TYPES`. That
+is the one discipline that keeps an invented list from becoming an invented ruleset.
+
+**None of them carries `rides`, and none carries a second half.** A Martial Move's `rides` moves
+a number the swing's own card prints; a weave is a second thing resolving where the first one
+landed, which is the bound-spell channel's shape and not the move's. And a half that could not
+be offered would be a printed price nothing charges, so there are none.
+
+### The six readings
+
+1. **The pool is the set's own eighteen weaves, house-written.** "Effects ... like a smite" is
+   not a spell: a smite is a fixed thing you spend on a hit, and the spell codex already arrives
+   on a hit through the Spellblade. So the set needed a pool of its own and there was none. **This
+   is the largest invention in the codex to date and it is written to be replaced**: the whole
+   list is in one leaf file that says so at the top.
+2. **No weapon is ever named or bound.** That is the whole of "but for all weapon", and it is
+   what separates this set from the Spellblade at every seam: nothing is spent to set up, nothing
+   is stored, nothing ends at a rest.
+3. **A weave rides any Weapon Attack**, plain or special, which is the broad reading of the
+   glossary. Neither was named, and the narrow reading would have made half of every weapon in
+   the codex inert for this set.
+4. **The miss is printed, and the dice enforce it.** "when you hit" names a hit, and unlike the
+   Spellblade this set can keep the promise: a weave's damage is a `value` link queued behind the
+   Attack Roll and a chain stops dead at a failed check, so a weave released on a swing that
+   missed rolls nothing. The Willpower still goes, because payment is unconditional on this
+   sheet, and **UNRAVEL prints both halves of that** where POINT OF IMPACT prints neither.
+5. **A weave rolls off your highest Attribute.** Not said either way. It is the Other shelf's own
+   convention and the Pact of Ordenance's own rule, and a set that works with every weapon in the
+   game should work for every character who can hold one. Picking Mind would have quietly made it
+   a caster's set on the shelf that exists for the sets that are nobody's.
+6. **The empowerment is two cards.** "Magic empweremnt on weapons" is one clause, and it is split
+   the way BOUND EDGE and RESONANT EDGE split the identical clause: the words at Novice, the die
+   one rung up. "Magic weapon" itself rides nothing, for BOUND EDGE's reason, which is that there
+   is no magic-weapon flag in this codex and inventing one to satisfy one card would be a rule
+   with one holder.
+
+### What is built
+
+- `src/lib/weaves.js`, a leaf: the eighteen, `WEAVE_TIERS`, `getWeave`, `isWeave`, `weaveTier`
+  and `weavesAt`, all four mirroring martial.js's.
+- `src/lib/weaver.js`, **the eleventh shape of what a set can hand over**, after the fixed hand,
+  the loadout, brewing, enchanting, the minion, tricks, martial, feral, the pact, runes and the
+  bond. It hands over a **weaving**, and it is the cheapest of the eleven: no column, no
+  migration and **not even a tracker row**, because the set names no weapon and nothing it does
+  outlives the swing that did it.
+- `weaveRiders` folded into `attackModifiers` beside the bond, the pact's weapon and the
+  Colossus's grip, **narrowed to neither a card nor a hand** unlike all three of those: a stowed
+  axe opened from the Inventory tab really is Empowered in a Weaver's hands, since picking it up
+  is the whole of what it would take.
+- `SpellRow` in UsePrompt.jsx became `RideRow` and now draws both, with `why` and `cutFrom` as
+  props. The Weaves block sits under the Martial Moves and the Bound Spells, third, and all three
+  can be on one swing: `options.carried` and `options.riders` are appended to rather than
+  assigned, so a Spellblade who is also a Weaver may carry a spell and release a weave in one
+  motion.
+- The quick bar drops a weave (`ridesHit`), asked of the card alone where `ridesStrike` has to be
+  asked of the character: a bound spell is an ordinary spell somebody else can cast the ordinary
+  way, and a weave is a card nobody can hold by any other route.
+- Violet everywhere, and not the move's amber: `.ac-kind-weave`, `KIND_COLORS.weave` and the new
+  `weave` keyword all take `--haze-glow`. A weave is ticked onto a swing the way a move is and is
+  magic the way a spell is, and a colour on this sheet says what a thing is.
+- The log line gained a third clause: "with Reckless · releasing Emberthread". Its own word,
+  beside `moves` and `spells`, for the reason those two are apart.
+- Two Crossroads scenes, `youth-broom` and `road-chain`, both about the implement not mattering:
+  one takes a practice sword away and leaves a broom, the other takes every blade in the camp and
+  leaves a cook pot and four feet of cart chain. Plus `TALENT_CLOSES.weaver` and
+  `TALENT_PHRASES.weaver`.
+- Rulebook **5.6.2 Weaves** beside 5.6.1's Martial Moves, a glossary row, and 4.5 and Appendix B
+  moved from seventeen written and seventeen names to eighteen and sixteen.
+
+### Proved
+
+- Every linter clean: `lint`, `lint:text` (264 files, and the two serial commas the new scene
+  prose introduced were rewritten rather than marked), `lint:cards`, `lint:halves`, `lint:order`,
+  `lint:moves`, `lint:riders`, `lint:math`, `lint:weapons`, `lint:dice`, `lint:log`,
+  `lint:layout`, `lint:creatures`, `lint:combat`, `lint:plan`, `lint:help`, `lint:potions`,
+  `lint:images` and `lint:crossroads`.
+- `lint:cards`: **all 23 new cards are inside the 480 target**, so every one of them prints at
+  full size. The registry is 568 cards and none is over the 600 ceiling.
+- `lint:crossroads`: 93 questions in 7 stages, 8 asked a run, 4,000 walks, every written set
+  winning at least once including the Weaver, and nothing else fell out of the draw when the two
+  new scenes joined the pool.
+- Through the model, on a real character: the pool offers 6 of 18 at Rank 1 for a hand of 3 and
+  18 of 18 at Rank 3 for a hand of 5; `offeredWeaves` prices Emberthread at 1 and Burstweave at
+  3 against a Finesse Weapon's Strike; the allowance clamps two ticks to one at Rank 2 and takes
+  two at Rank 3, where Emberthread comes down to 0 Willpower and Unmaking to 5; `attackModifiers`
+  puts TAUT WEAVE's Empowered die on the printed card and credits it by name; the rest window
+  offers the swap at a Long Rest at every rank and at a Short Rest only at Rank 3; the log line
+  reads "with Reckless · releasing Emberthread · Spent 2 Action Points · at 2.Fenrat"; and a
+  Physique 7 Weaver's Emberthread resolves to `1d6 + 7` off `cast: 'highest'`.
+- The Abilities tab draws two blocks for the set, `talent:weaver` with the cards a rank granted
+  and `loadout:weaver` with the hand.
+
+### Still open
+
+- **Everything below the mechanics is mine.** All five card names, all eighteen weave names, the
+  tagline, the blurb, every Willpower number, the hand size, the two Crossroads scenes and both
+  story lines. The mechanics follow the three sentences; none of the words does.
+- **Six of the eighteen are prose the sheet does not read.** Rustweave's Armor reduction,
+  Hollowthread's Shield strip, Severing Thread's silence, Windthread's push and prone, Riftthread's
+  move and Doomthread's three turns of Decay are all sentences a table plays. The ones that
+  inflict a named status (Burn, rooted, blinded) do reach `statuses.js` through
+  `options.riders`; the rest have no field to land in, which is the same wall the Martial Moves
+  hit and is on the record there.
+- **`SEVERING THREAD` is the only card in the codex that stops a caster casting.** Nothing reads
+  it and nothing else says it. It wants Jules's eye on whether that belongs to this set at all.
+- **The Weaver is untested in the browser.** The sheet is behind auth with no bypass and the
+  working tree already carried somebody else's unfinished harness, so verification is at the model
+  layer and through the linters. The Weaves block in the use prompt has not been looked at.
+- **Two Crossroads scenes is thin**, the same thinness the Spellblade is on the record for. It is
+  scored in two scenes against the Guardian's fifty-one.
+- **No art.** No plate and no card pictures for any of the 23. Drop pictures into `data/Weaver/`
+  and run `npm run art:cards`.
+
+## The fading leaf is thrown down where you stand, 2026-09-10
+
+One ask, and it turns a Long Rest permission into a card you play: "rework spellquill so that
+ephemeral scroll are created on the fly. Not after a long rest. He has an ability that allow him
+to create one. Creating an ephemeral scroll require 2 action points. The user can then choose to
+cast it if he can or keep it in enventroy or give it to soemone. Ephemeral spell craftigin alos
+cost 1 willpower for novice 2 for adpet and 3 for master. make the ephemral scroll aciton and the
+window that goes with it."
+
+### What the card was, and what it is
+
+EPHEMERAL SPELL SCROLLS landed the day before off the sheet's own words: "at the end of a long
+rest, you can prepare a number of Ephemeral Spell Scrolls equal to half your Intelligence plus
+your rank." So it was built free, capped at `floor(Mind / 2) + rank`, and chosen in a chooser
+that sat **above** the rest window's action slot precisely because it was not an action.
+
+Jules replaced that. It is now the shape every other ability on the sheet has:
+
+| | Was | Is |
+| --- | --- | --- |
+| When | at the end of a Long Rest | whenever you like, a fight included |
+| Cost | nothing | **2 Action Points** and the spell's rung in Willpower |
+| How many | `floor(Mind / 2) + rank` a night | one a use, and the Willpower pool is the cap |
+| Where | a slot in the rest window | a chip on the quick bar |
+| Tags | `Long Rest` | `Ability` |
+
+**The count is gone with the night, and nothing replaced it.** A price at the moment of use *is*
+the cap on this sheet, and a second ceiling on top of it would be design nobody asked for. A Mind
+7 Spellquill at Rank 2 used to lay five leaves a night for free; the same character now spends
+2 Action Points and 1 to 3 Willpower a leaf out of a pool of twenty, and stops when the pool does.
+
+The Willpower ladder is Jules's own number and is on the **rung**, in `SCROLL_TIERS` beside the
+coin and the Supplies, because a rung is where every price of a scroll already lives. That is what
+keeps scribing.js from carrying a price table of its own.
+
+### What survived untouched
+
+The ink. "Ephemeral Spell Scrolls expire at the start of your next long rest" was already wired
+and already right: `fadedScrolls` sweeps every fading record on the shelf, `withoutScrolls`
+reaches the pack, the belt, the trinkets and the worn slots, and the sweep runs *before* the
+night's writing so a leaf written tonight is never mistaken for one that expired. None of it cared
+which of the two ways the leaf was written, so none of it had to change.
+
+The desk did not change either. ARCANE SCRIBE is still the Long Rest action, still two leaves,
+still priced in Supplies off the rung, still charging its Power Words against the morning's
+refill. What went is the *second* draft the rest window held: one draft now, and the `ephemeral`
+flag that ran through `normalizeScribes`, `addScribe`, `dropScribe`, `toggleScribeWord`,
+`scribeRows`, `scribedRecords`, `scribeSummary` and `scribingWillpower` is gone with the branch it
+carried. `restEphemeral` is gone outright.
+
+### The window
+
+`EphemeralWindow.jsx`, off the quick bar, on `opens: 'scribe'` and `pays: 'window'`. The pair is
+EPHEMERAL ENCHANTMENT's and means the same thing here: the card prints 2 Action Points and `X`
+Willpower, the `X` is the rung of a spell nobody has chosen yet, so charging half at the chip and
+half in the window would ask the action-or-reaction question twice and take the Action Points off
+anybody who then closed the shelf.
+
+Three questions in the order EnchantWindow asks them, and then the prompt: what is on it, what is
+worked into it, where it goes. The working is shown rather than totalled, because the cost is
+three numbers off three places (2 on the card, the rung on the spell, a Power Word's own).
+
+**The card it charges is the ability and deliberately not the spell**, which is what EnchantWindow
+would have done. `castPlan` reads the request's card, so a scroll of DEVOURING BLOSSOM passed as
+the played card would have announced the summon at the desk and one with a duration would have
+started its clock. The ability lays nothing, and the spell is printed beside the prompt in the
+window's own panel anyway.
+
+`roll: false`, for the reason brewing and enchanting both give: this pays for a cast that has not
+happened.
+
+### And then three ways
+
+"Cast it if he can or keep it in inventory or give it to someone" are the three a scroll has
+always had, and none of them needed anything new. What the window does about them is put the leaf
+somewhere useful and then say where it went.
+
+**A free belt loop by default**, which is the one place this differs from the desk. A night's
+writing goes into the pack, because a loop is a place you have chosen to put something and the
+Inventory tab is where choosing happens. But a scroll can only be *read* off a loop, and a leaf
+written mid-fight is one you meant to read, so `withLeaf` offers the first free loop and the pack
+as the other answer. A character with every loop full is offered no choice at all, because there
+is one place it can go and a control with one option is a sentence pretending to be a control.
+
+Then the readout: what was written, where it is, and the three ways said in words. None of them is
+a control there, because all three already have one somewhere better (the Quick Bar, the pack and
+the handover), and a fourth door onto one room is worse than a sentence pointing at the first
+three.
+
+### Two bugs the browser pass caught, and one of them was already shipped
+
+**`shelfTags` handed the filter row bare strings.** `useTagFilter` wants `{ id, label, kind }` and
+`TagFilter` reads `tag.label.toLowerCase()` the moment anybody types, so the first keystroke in
+the search box threw `Cannot read properties of undefined`. Three windows had a private copy of the
+wrong helper: this one, **ScribeRest** and **ScrollWindow**. The last two shipped with it on
+2026-09-09, which means searching the Spellquill's own desk has been taking the sheet down since
+the day it landed. All three are `poolTags` now, which returns the right shape, sorts the rungs up
+the ladder before the schools and drops a tag every card carries.
+
+**`null` was doing two jobs in the destination.** It meant both "the pack" and "nobody has said
+yet", so picking the pack read as picking nothing and fell straight back to the first free loop.
+Three states now: `undefined` until somebody says, a number for a loop, `null` for the pack. It
+was only ever going to be caught by pressing the button.
+
+### Proved
+
+- `npm run lint`, `npm run build` and every `lint:*` script clean, bar two findings in another
+  session's unfinished work in the same tree (see the note at the end).
+- A round trip through the lib layer, 66 assertions: the card's own shape, the three rungs a rank
+  opens, 2 AP with 1, 2 and 3 Willpower at Novice, Adept and Master, a Power Word riding on top
+  (Master with Repeat is 2 and 8), a rung the rank has not opened pricing at nothing and minting no
+  record, the word caps at each rank, the record's `ephemeral` flag, both destinations, a loop that
+  filled up and a loop that closed both falling back to the pack, the leaf resolving through
+  `heldItem` to an item named after its spell, teaching its own spell, worth 0 and tagged
+  `Ephemeral` and `Master Scroll`, the next Long Rest sweeping it off the loop and off the shelf
+  with its line, and the desk still charging 200 Supplies and holding 5 Willpower back off the
+  refill.
+- The quick bar: exactly one chip, 2 Action Points, `X` Willpower the chip does not charge,
+  `opens: 'scribe'`, `pays: 'window'`, not refused; ARCANE SCRIBE still has no chip; `castPlan` on
+  the ability laying no row, inflicting nothing and conjuring nothing; and the leaf on loop 2
+  offering its own spell at the spell's own price, spending the leaf and saying "This is the last
+  of it".
+- A browser pass on a throwaway harness (`smoke.html` plus `src/smoke-harness.jsx`, both deleted):
+  the window at Rank 3 reading "off a shelf of 143", the search filtering to one card, an Ephemeral
+  Scroll of Devouring Blossom priced "Master · 3 Willpower to write · 5 Action Points and 10
+  Willpower to read", all seven Power Words with their costs, the working printing 2 Action Points
+  and 3 Willpower with Mighty's 2 on top, the prompt offering both ways at 2 and 5, the refusal
+  notice and its override, and the leaf landing on belt loop 2 as
+  `{ spell: 'devouring-blossom', words: ['mighty'], ephemeral: true }`. Then the same again into
+  the pack. And the desk next door filtering 143 spells to 1 for "Bramble" and 10 for "Fire", with
+  its tag suggestions offering "+ Ethereal", none of which it could do the day before.
+
+### Still open
+
+- **The Willpower ladder is a ruling and the Action Points are.** Both came out of one sentence in
+  one message. Nothing on the PDF prices a fading leaf at all, because on the PDF it was free.
+- **No cap on how many you can hold.** The pool is the cap, which is the argument above, and it
+  means a Spellquill at a full pool can walk into a fight carrying five fading leaves they wrote in
+  the corridor. If that is too many, the ceiling wants to be a number Jules names rather than one
+  this file invents.
+- **AUTHOR OF TRUTH is still printed and not wired**, and it now has more to bite on: the
+  forgiveness is a discount at the moment a scroll is *read*, and a Spellquill who writes their own
+  leaves mid-fight is reading rather more of them.
+- **The Power Words are still four-sevenths prose.** Unseen, Repeat, Altered and the rest are on
+  the record from 2026-09-09 and nothing here changed them.
+- **A leaf in a fight has not been played at a table.** The window pays through the same prompt
+  every card does and the leaf reaches the bar, but nobody has written one during a running
+  encounter with the reaction gate standing.

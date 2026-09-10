@@ -7,7 +7,7 @@ import { CostOrb } from '../CostOrbs.jsx';
 import { Gated } from './parts.jsx';
 import { ItemIcon } from './itemParts.jsx';
 import { PICK_ACCENTS } from './pickAccents.js';
-import { useTagFilter } from './useTagFilter.js';
+import { poolTags, useTagFilter } from './useTagFilter.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { FORGED_NAME_MAX, forgeRecord, readCode } from '../../lib/forged.js';
 import { getItem } from '../../lib/items.js';
@@ -367,11 +367,18 @@ export default function ScrollWindow({ character, onForge, onClose }) {
   );
 }
 
-/** Every tag any scribable spell carries: the three rungs, the schools, the families. */
+/**
+ * Every tag any scribable spell carries: the three rungs, the schools, the
+ * families.
+ *
+ * **This was a set of bare tag names and it threw.** The filter row reads
+ * `tag.label` the moment anybody types in the box, so searching the codex here
+ * took the window down on the first keystroke. Found on 2026-09-10 and fixed the
+ * same way in ScribeRest, which had the same private copy of the same mistake:
+ * `poolTags` returns the `{ id, label, kind }` the row wants, sorts the rungs up
+ * the ladder before the schools, and drops a tag every card carries. The
+ * `{ card }` wrapper is the shape it takes, being written for a pool of options.
+ */
 function shelfTags() {
-  const seen = new Set();
-  for (const card of SCROLL_SPELLS) {
-    for (const tag of card.tags ?? []) seen.add(tag);
-  }
-  return [...seen];
+  return poolTags(SCROLL_SPELLS.map((card) => ({ card })));
 }

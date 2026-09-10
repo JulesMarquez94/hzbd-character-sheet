@@ -44,6 +44,7 @@ import { sourceRow } from './attribution.js';
 import { withArt } from './cardArt.js';
 import { SPELLS } from './spells.js';
 import { MARTIAL_MOVES } from './martial.js';
+import { WEAVES } from './weaves.js';
 import { ENCHANTMENTS, getEnchantment } from './enchantments.js';
 import { INGREDIENTS } from './ingredients.js';
 import { UTILITY_CARDS } from './utility.js';
@@ -93,6 +94,11 @@ export { SPELLS };
    *choice* of, so the pool has to be reachable by loadouts.js and by moves.js
    without this registry behind it. See martial.js. */
 export { MARTIAL_MOVES };
+
+/* And the Weaves, on exactly the same terms. A weave is what a Weaver's
+   THREADWORK hands over a *choice* of, so the pool has to be reachable by
+   loadouts.js and by weaver.js without this registry behind it. See weaves.js. */
+export { WEAVES };
 
 /* ------------------------------------------------------------ basic actions */
 
@@ -2258,6 +2264,10 @@ export const CARDS = [
      hand a move over, it opens a tier of them and raises how many you know. See
      martial.js. */
   ...MARTIAL_MOVES,
+  /* And a Weaver's Weaves, for the same reason again: a rank opens a tier of
+     them and raises how many you know, and no rank hands one over. See
+     weaves.js. */
+  ...WEAVES,
   ...ENCHANTMENTS,
   ...UTILITY_CARDS,
   ...TALENT_CARDS,

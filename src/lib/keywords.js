@@ -315,6 +315,17 @@ export const KEYWORDS = [
     detail:
       'A trained manoeuvre bought with a talent, used alongside a weapon attack rather than instead of one.',
   },
+  /* Violet and not the move's amber, which is the same line the card accent and
+     the quick-bar chip both draw: a weave is added to a swing the way a move is
+     and is magic the way a spell is, and a colour here says what a thing is. See
+     KIND_COLORS in tagColors.js. */
+  {
+    id: 'weave',
+    terms: ['Weaves', 'Weave'],
+    color: 'var(--haze-glow)',
+    detail:
+      'Magic bought with a talent and released through a weapon attack, arriving where the attack lands.',
+  },
 
   /* ------------------------------------------------------------ the clock */
   {

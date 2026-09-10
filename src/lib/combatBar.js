@@ -87,6 +87,7 @@ import {
 } from './characterModel.js';
 import { attackModifiers, isMartialMove } from './moves.js';
 import { ridesStrike } from './spellblade.js';
+import { ridesHit } from './weaver.js';
 import { heldThing } from './targeting.js';
 
 /* ------------------------------------------------------------------- parts */
@@ -308,6 +309,13 @@ function knownGroups(character, locks) {
            refused is the copy that came out of *this* pool: a caster who knows the
            same spell from somewhere else keeps that chip. */
         .filter(({ card }) => !ridesStrike(character, card, source.id))
+        /* **And neither is a weave.** It is released through a Weapon Attack and
+           no other way, so a chip here would be a third way to spend Willpower on
+           nothing. Asked of the card alone, where the line above has to be asked
+           of the character: a bound spell is an ordinary spell somebody else can
+           cast the ordinary way, and a weave is a card nobody can hold by any
+           other route. See ridesHit in weaver.js. */
+        .filter(({ card }) => !ridesHit(card))
         .map(({ card, modifiers }) => {
           /* Composed rather than spread straight into the row, because the last
              of these has to *read* the ones before it: a card that lays a rider

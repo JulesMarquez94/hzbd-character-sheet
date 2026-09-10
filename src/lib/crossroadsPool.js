@@ -5345,4 +5345,123 @@ export const QUESTIONS = [
       },
     ],
   },
+  {
+    /* The Weaver's pair, first half, and it is a scene about a broom on purpose.
+       Every other magic set in this pool is taught with a book, a staff, a rune
+       or a knife, and the one thing this set says that none of the others do is
+       that the implement never mattered. So the scene takes the weapon away and
+       asks what is left. */
+    id: 'youth-broom',
+    stage: 'youth',
+    scene:
+      'The woman who agrees to teach you keeps no staff, no book and no wand, which is the first thing about her that anybody warns you about. On the first morning she takes the practice sword out of your hands, puts a yard broom in them instead and says it will do. When you ask what it will do, she says that is the question and leaves you in the yard with it until dark.',
+    asks: 'What do you do?',
+    recall: 'The year your teacher took the sword away and left you a broom, you',
+    options: [
+      {
+        id: 'thread',
+        label: 'Stop trying to make the broom into a sword. Run what you have down the handle instead and let go of it on the moment the end of it lands, and by dark there is a fence post in the yard with a hole through it.',
+        told: 'stopped making the broom a sword and ran something down the handle instead, and put a hole through a fence post with it.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { weaver: 3 },
+          background: { craftsman: 1 },
+          skill: { occultist: 1 },
+        },
+      },
+      {
+        id: 'sword',
+        label: 'Go and find the practice sword where she put it, and be in the yard with it before she is up. If the lesson is that the tool does not matter, you can learn it later with a proper edge in your hand.',
+        told: 'went and got the sword back before she was up, and learned whatever the lesson was with a proper edge in your hand.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2, colossus: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
+        },
+      },
+      {
+        id: 'ask',
+        label: 'Put the broom down and go through her shelves instead, on the reasoning that somebody who owns no staff has written down why. There is nothing on the shelves, which turns out to be the answer as well.',
+        told: 'put the broom down and went through her shelves, and found the emptiness of them was the answer as well.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 2, enchanter: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1 },
+        },
+      },
+      {
+        id: 'sweep',
+        label: 'Sweep the yard. It is a broom and she did not say it was anything else. By dark the yard is clean and you have thought of four things she might have meant.',
+        told: 'swept the yard, because it was a broom and she had not said otherwise.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 2 },
+          background: { craftsman: 1 },
+          skill: { skilled: 1, helpful: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    /* The second half, and on the road rather than in the youth for the reason
+       the Spellblade's second is: the yard is where you are told the implement
+       does not matter and the road is where somebody takes every implement you
+       have. The scene leaves a cook pot and a length of chain on the ground and
+       asks which of them is a weapon. */
+    id: 'road-chain',
+    stage: 'road',
+    scene:
+      'The bandits came through the camp before first light and took the packs, the mules and every blade anybody had. What is left in the ashes is a cook pot, four feet of cart chain and a tent pole broken in the middle. Two of them are still up on the ridge in the grey, sitting down, waiting to see what the camp does about it.',
+    asks: 'What do you do?',
+    recall: 'The morning the bandits left you a cook pot and a length of chain, you',
+    options: [
+      {
+        id: 'chain',
+        label: 'Pick up the cart chain, run the whole of the night down the length of it and walk up the ridge with it swinging. It is not a weapon and it does not have to be, because what comes off the end of it when it lands was never in the iron.',
+        told: 'walked up the ridge with four feet of cart chain and something running down it that had never been in the iron.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { weaver: 3 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1 },
+        },
+      },
+      {
+        id: 'track',
+        label: 'Let the two on the ridge have their morning. Go the other way, cut the trail of the mules a mile down the valley and be somewhere they are not expecting anybody by the afternoon.',
+        told: 'let the two on the ridge keep their morning and cut the trail of the mules a mile down the valley.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 2 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, cunning: 1 },
+        },
+      },
+      {
+        id: 'stand',
+        label: 'Put the broken pole across the gap in the rocks and stand behind it, so whatever comes down off that ridge has to come through one man to get at the rest of the camp.',
+        told: 'put the broken pole across the gap and stood behind it, so the ridge had to come through you first.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 2 },
+          background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'talk',
+        label: 'Fill the cook pot, put it on the fire and wave the two of them down off the ridge to eat. Men who have taken everything you own are men with something to sell, and you have all morning.',
+        told: 'put the pot on the fire and waved the two of them down off the ridge to eat, because men who have taken everything have something to sell.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          background: { merchant: 1 },
+          skill: { haggler: 1, charismatic: 1 },
+        },
+      },
+    ],
+  },
 ];

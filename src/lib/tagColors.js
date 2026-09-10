@@ -140,6 +140,9 @@ export function tagStyle(tag) {
  *                  sheet, for the twelve rows that never change and are never
  *                  the interesting choice
  *   spell          violet, for a spell with no school of its own to lend it
+ *   weave          violet too, and not the move's amber: a weave is ticked onto
+ *                  a swing the way a move is and is magic the way a spell is,
+ *                  and this column is about what a thing is
  *   passive        lilac, a shade of that violet: a trait is magic you did not
  *                  cast
  *   talent         amber, which is what a talent card is capped with
@@ -156,6 +159,7 @@ export const KIND_COLORS = {
   ability: 'var(--copper)',
   'basic-action': 'var(--stat-armor)',
   spell: 'var(--haze-glow)',
+  weave: 'var(--haze-glow)',
   passive: 'var(--haze-lilac)',
   talent: 'var(--level-amber)',
   'martial-move': 'var(--level-amber)',

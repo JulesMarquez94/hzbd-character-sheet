@@ -97,7 +97,6 @@ import { reviveRunes } from './runes.js';
 import {
   fadedScrolls,
   normalizeScribes,
-  restEphemeral,
   restScribing,
   scribeAffordable,
   scribeRows,
@@ -476,10 +475,10 @@ export function restActions(character, kind, talents = character?.talents) {
      whatever the rank, because the rank only changes which rungs are open and
      how many words fit on a leaf.
 
-     Its sibling, the fading scrolls, is deliberately **not** here: EPHEMERAL
-     SPELL SCROLLS costs no action, so it sits above the slot in the window
-     beside a Runebearer's runes rather than in the list of ways to spend the
-     night. See `restEphemeral`. */
+     Its sibling, the fading scrolls, is deliberately **not** here and is not in
+     this window at all any more: EPHEMERAL SPELL SCROLLS is a card you play, off
+     the quick bar, for Action Points and Willpower. A night has nothing to do
+     with it. See scribing.js and EphemeralWindow.jsx. */
   const desk = restScribing(held, kind);
   if (desk) {
     const words =
@@ -708,7 +707,7 @@ export function restPlan(
   prepared = null,
   brews = [],
   reshaped = null,
-  { free = false, revived = [], raised = null, scribes = [], ephemeral = [] } = {}
+  { free = false, revived = [], raised = null, scribes = [] } = {}
 ) {
   const rest = getRest(kind);
   if (!rest) return null;
@@ -819,21 +818,16 @@ export function restPlan(
      One line a *leaf* rather than one a spell, which is the opposite of the
      still above and is right for the opposite reason: two Healing Draughts are
      interchangeable and two scrolls of Fireball with different words on them are
-     not. The fading ones are priced at nothing and still get a line, because a
-     player wants to read what tomorrow is carrying.
+     not.
 
      Priced off the character rather than off the draft for the same reason the
-     rest itself is: nothing tonight can change the rank that opened the shelf. */
+     rest itself is: nothing tonight can change the rank that opened the shelf.
+
+     The fading leaves had their own lines here until 2026-09-10. They are not
+     written at a rest any more, so a night has nothing to say about them beyond
+     sweeping up yesterday's. See scribing.js. */
   const desk = restScribing(character, kind);
-  /* The two permissions are two calls, because a night can hold either without
-     the other: a Short Rest scribes nothing and prepares nothing, and a Long
-     Rest spent raising the dead still lays out its fading leaves. `quill` is
-     whichever of the two is standing, and it is what the words are validated
-     against — the same rank either way. */
-  const inkwell = restEphemeral(character, kind);
-  const quill = desk ?? inkwell;
   const scribing = normalizeScribes(scribes, desk);
-  const fading = normalizeScribes(ephemeral, inkwell, { ephemeral: true });
 
   for (const row of scribeRows(scribing, desk)) {
     const before = supplies;
@@ -849,18 +843,6 @@ export function restPlan(
             : `${row.tier} Quartz out of the crate. The leaf goes in your pack.`
           : `Only ${formatNumber(Math.max(0, before))} left. This is beyond the crate.`,
       tone: supplies >= 0 ? 'cost' : 'warn',
-    });
-  }
-
-  for (const row of scribeRows(fading, inkwell, { ephemeral: true })) {
-    lines.push({
-      key: `faded-${row.index}-${row.spell.id}`,
-      label: `${row.name}: no Supplies`,
-      detail:
-        row.words.length > 0
-          ? `Fading ink, ${listOut(row.words.map((word) => word.name))} worked in. Gone at your next Long Rest.`
-          : 'Fading ink, and no Quartz in it. Gone at your next Long Rest.',
-      tone: 'gain',
     });
   }
 
@@ -1000,7 +982,7 @@ export function restPlan(
     });
   }
 
-  const written = scribedRecords(scribing, fading, quill);
+  const written = scribedRecords(scribing, desk);
   if (written.length > 0 || swept) {
     const shelf = { ...normalizeForged(character?.forged) };
     for (const id of gone) delete shelf[id];
@@ -1100,10 +1082,13 @@ export function restPlan(
        at maximum less nine.
 
        That is the sheet's own price in the sheet's own currency, and it is the
-       reading the Necromancer's bodies already have. Both drafts are charged,
-       because IMPROVED SYNTAX charges for a word "whenever you write a scroll"
-       and does not care which kind of leaf it went on. See scribing.js. */
-    const ink = scribingWillpower(scribing, fading, quill);
+       reading the Necromancer's bodies already have.
+
+       The desk's words only. A word worked into a fading leaf is charged where
+       that leaf is written, which is out in the field and out of the pool, so it
+       has already been paid for by the time this button is pressed. See
+       scribing.js. */
+    const ink = scribingWillpower(scribing, desk);
     const back = Math.max(0, wpMax - ink);
 
     if (wp !== back) {

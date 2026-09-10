@@ -6,6 +6,7 @@ import { AmmoPips } from './itemParts.jsx';
 import CostOrbs from '../CostOrbs.jsx';
 import BrewWindow from './BrewWindow.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
+import EphemeralWindow from './EphemeralWindow.jsx';
 import StealWindow from './StealWindow.jsx';
 import { BladeBind } from './BladeBlock.jsx';
 import { moveCount, quickBar } from '../../lib/combatBar.js';
@@ -55,6 +56,11 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
   /* Whether the Ephemeral Enchantment shelf is up. Unlike brewing it opens
      *before* anything is paid: see `pays` in combatBar.js. */
   const [enchanting, setEnchanting] = useState(false);
+  /* And the Spellquill's, as the card it was raised from, or null. Same reason
+     it opens before the payment: EPHEMERAL SPELL SCROLLS prints 2 Action Points
+     and `X` Willpower, and the `X` is the rung of a spell nobody has chosen yet.
+     See EphemeralWindow.jsx. */
+  const [scribing, setScribing] = useState(null);
   /* The Trickster's window, as `{ talent, card }` or null. STEAL opens after the
      payment, because the two Action Points bought the attempt and the window is
      only deciding what came out of the pocket. AMBUSH had one of these too, until
@@ -81,6 +87,14 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
        action-or-reaction question once the cost is actually known. */
     if (move.pays === 'window' && move.opens === 'ephemeral') {
       setEnchanting(true);
+      return;
+    }
+
+    /* And the fading leaf, for the same reason: what it costs in Willpower is
+       the rung of whichever spell goes on it. The card rides along, because it
+       is what the window's own prompt charges against. */
+    if (move.pays === 'window' && move.opens === 'scribe') {
+      setScribing(move.card ?? null);
       return;
     }
 
@@ -196,6 +210,16 @@ export default function ActiveBlock({ character, patch, readOnly = false }) {
           patch={patch}
           readOnly={readOnly}
           onClose={() => setEnchanting(false)}
+        />
+      )}
+
+      {scribing && (
+        <EphemeralWindow
+          character={character}
+          card={scribing}
+          patch={patch}
+          readOnly={readOnly}
+          onClose={() => setScribing(null)}
         />
       )}
 

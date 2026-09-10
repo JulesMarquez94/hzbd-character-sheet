@@ -338,13 +338,25 @@ export async function claimReaction(campaignId, event) {
  * on the swing. Named apart from the moves because they are two different things
  * happening to one attack and the row says which is which, "with Reckless,
  * carrying Fireball", rather than running four names together under one word.
+ *
+ * `weaves` is the third of them, for a Weaver: what the hit let go. Its own word
+ * again and for the same reason, so "with Reckless, carrying Fireball, releasing
+ * Emberthread" reads as three things rather than as five names in a heap.
  */
 export function playEvent(
   request,
   character,
   mode,
   amount,
-  { free = false, price = null, chain = null, targets = [], moves = [], spells = [] } = {}
+  {
+    free = false,
+    price = null,
+    chain = null,
+    targets = [],
+    moves = [],
+    spells = [],
+    weaves = [],
+  } = {}
 ) {
   const ap = Number(price?.ap ?? amount ?? request?.ap) || 0;
   const wp = Number(price?.wp ?? request?.wp) || 0;
@@ -368,6 +380,10 @@ export function playEvent(
     /* And what it carried, which is the same clause about a different kind of
        thing: a move changed the swing and a spell arrived on the back of it. */
     spells.length > 0 ? `carrying ${listAnd(spells)}` : null,
+    /* And what came out of it, which is the third of the same clause: a move
+       changed the swing, a spell arrived on the back of it, and a weave was let
+       go into what it hit. */
+    weaves.length > 0 ? `releasing ${listAnd(weaves)}` : null,
     free
       ? 'Waved through by the table'
       : moved

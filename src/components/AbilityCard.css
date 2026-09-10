@@ -40,8 +40,13 @@
   color: var(--text-silver);
 }
 
-/* Magic — spells and the enchantments laid on gear. */
+/* Magic — spells, the enchantments laid on gear, and a Weaver's weaves. A weave
+   takes the violet rather than the amber a Martial Move takes, and the two are
+   worth telling apart: both are ticked onto a swing, but the colour law here is
+   about what a thing *is* rather than about where it is chosen, and a weave is
+   magic. See KIND_COLORS in tagColors.js, which says the same in the other file. */
 .ac-kind-spell,
+.ac-kind-weave,
 .ac-kind-passive {
   --ac-accent: var(--haze-glow);
   --ac-accent-soft: rgba(157, 91, 255, 0.22);
