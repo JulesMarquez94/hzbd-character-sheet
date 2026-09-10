@@ -13639,6 +13639,69 @@ makes more like a short story." The backstory had been twelve sentences in a row
 - `lint:crossroads` with the chapter section clean, `npm run lint`, `lint:text` and
   `npm run build` clean, and a story read off a run in the browser.
 
+### Fifth pass, 2026-09-10: simpler, shorter, and an answer that looks after you first
+
+Jules: "Rework the text in the crossroad. Have the question and answer more simple and easy to
+read and shorter. Have more choices that can be amoral."
+
+- **Every scene and every answer is rewritten**, all 113 scenes, 452 answers and the `told`
+  clauses the backstory is built from. A scene is two or three plain sentences now (2.05 on
+  average and 29 words, against 2.9 and 48), an answer one line of 8 to 20 words (15.8 on
+  average, against 29.5) and a story beat 11 words against 17. The means are still named,
+  the picks, the acid, the word, the shoulder. What went was the second sentence that said
+  how it felt. `lint:crossroads` holds the ceilings now: three sentences and 45 words a scene,
+  20 words an answer, beside the floors it already had.
+- **Every scene has at least one way of acting that looks after the character first**, and
+  about half have two. Some were there already (the purse, the pockets, the ambush on the mill
+  road). Some seventy were rewritten to be that, each keeping its attribute lane: the child who
+  watches the barn burn instead of running the buckets, the swimmer who leaves the other three
+  in the water, the cousin's sickbed lie, the nurse who charges a silver a night, the hand that
+  digs up the ring it buried. 84 answers changed what they score and 24 changed their `did:`
+  tags (`did:theft` 14 to 36, `did:violence` 8 to 11), so the watch and the man you put down
+  come back more often.
+- **An amoral answer is not a Criminal's answer.** The first census after the rewrite had the
+  Criminal winning 24.9% of runs (from 10.7%), the Trickster 22.5% and Fey 16.8%, because forty
+  new answers all named the same trade, and how often a thing wins is how many answers name it.
+  Two passes of homes counting, 55 answers and then 22, put a fraud on the Merchant, a desertion
+  on the Mercenary, a cold experiment on the Erudit and blackmail on the Aristocrat, and left the
+  Criminal only where an answer steals or cons. Luminary went back onto eleven Mind answers it
+  had lost to Infernal and Draconic. The rule is in the pool's header.
+- Rulebook 4.9 says the scene is a line or two and that not every answer is a kind one.
+
+| under random answers | before | after the rewrite | after tuning |
+| --- | --- | --- | --- |
+| talent sets held | 3.6% (Spellblade) to 17.2% (Trickster) | 3.7% to 22.5% (Trickster) | 3.9% (Spellblade) to 18.9% (Colossus) |
+| lineages | 4.7% (Skybound) to 12.9% (Fey) | 4.5% to 16.8% (Fey) | 4.3% (Skybound) to 11.0% (Fey) |
+| backgrounds | 7.9% (Erudit) to 11.5% (Craftsman) | 6.1% to 24.9% (Criminal) | 7.9% (Erudit) to 12.9% (Outlander) |
+| Mind takes the +2 | 39.5% | 38.9% | 38.3% |
+
+### Mine, worth Jules's eye
+
+- **Every rewritten line.** The voice is plainer than the one read on 2026-09-08 and 09, and the
+  three scenes Jules gave (the hurt stranger, the gate, the fog) keep his four acts each in fewer
+  words.
+- **How dark the amoral answers go.** Most are self-interest: walk on, keep it, sell it, let them
+  blame somebody else. A few are cruel: let the lamb die and open it up, point the press gang at
+  the farm boys, sell the snared cat to the pit, dig up the ring you buried. The line is mine.
+- The Colossus tops the set census at 18.9% and Skybound is the rarest blood at 4.3%, both from
+  how many answers name them rather than from any number; the Outlander tops the trades at 12.9%
+  because walking away is an outlander's answer. The Tactician placeholder is named by 59
+  answers now, more than any written set, and arrives at the top of the census the day it is
+  written.
+- The checker cannot read morals. "At least one amoral answer a scene" is held by the reader,
+  not by `lint:crossroads`.
+
+### Proved
+
+- `lint:crossroads` with the two new ceilings, `npm run lint`, `lint:text` (no dash and no
+  serial comma in 452 answers) and `npm run build` all clean, and the diff stays inside the
+  questions array, comments and line endings untouched.
+- A run walked in the browser, signed out: the barn, the commission, the boat, the ship, the
+  armourer, the barrow, the wand and the letter, answered the selfish way where one was offered,
+  and the reveal made a level 2 Weaver and Runebearer, a Scorchbound Merchant with Haggler, Mind
+  6, and a seven-paragraph story built from the new beats. The Browser pane was hidden, so the
+  clicks were dispatched from the console and the app's own handlers ran them.
+
 ## The Runebearer, 2026-09-08
 
 The fourteenth written set, and the second placeholder on the Physique shelf to be filled.

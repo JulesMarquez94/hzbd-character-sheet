@@ -51,20 +51,38 @@
  * where the Entertainer lives, a mill rope and a ball of red thread are where
  * the Weaver does. Nothing in the engine or the stages moved.
  *
+ * **Simpler, shorter, and an answer that looks after you first, 2026-09-10.**
+ * Jules: "Have the question and answer more simple and easy to read and
+ * shorter. Have more choices that can be amoral." Every scene is now two or
+ * three plain sentences and every answer one line of eight to twenty words,
+ * the same means named and the flourish cut: the pool went from 48 words a
+ * scene and 30 an answer to 29 and 16, and the backstory's beats shortened
+ * with the `told` clauses. And every scene has at least one way of acting
+ * that looks after the character before anyone else, about half of them two:
+ * take the purse, walk on, sell what you know, let it burn. Some seventy
+ * answers were rewritten to be that. Each kept its attribute lane, and where the act
+ * changed, the sets, trade and skills under it changed to what the act shows,
+ * with one rule learned the hard way: an amoral answer is not a Criminal's
+ * answer. A fraud is a merchant's, a desertion a mercenary's, a cold
+ * experiment an erudit's, and only a theft or a con puts a point on the
+ * Criminal, or the trade wins a quarter of every run. Nothing in the engine
+ * or the stages moved.
+ *
  * ------------------------------------------------------------------- the laws
  * Five, and scripts/check-crossroads.mjs holds every question and option to them.
  *
- * **A question exposes a scene, then asks.** `scene` is two to four sentences
- * that put you there: where you stand, what you can see, what is at stake, who
- * else is present. `asks` is the question that closes it. The stages are the
+ * **A question exposes a scene, then asks.** `scene` is two or three short
+ * sentences that put you there: where you stand, what you can see and what is
+ * at stake. `asks` is the question that closes it. The stages are the
  * chapters of a life, childhood to the night you left, but nothing in them is a
  * form and nothing asks about the life in the abstract.
  *
  * **Four answers at most.**
  *
  * **An answer is a way of acting.** It names the means and what happens when
- * you use it: not "pick the lock" but the picks, the quarter of an hour, the
- * turn. A reader should be able to see the character doing it.
+ * you use it, in one plain line of eight to twenty words: not "pick the lock"
+ * but the picks and the quarter of an hour. A reader should be able to see the
+ * character doing it.
  *
  * **An answer leans one way.** Every option gives exactly one attribute, and
  * everything else it gives is built on that attribute: a talent set is either
@@ -104,7 +122,7 @@
  * -------------------------------------------------------------------- the shape
  *   id        stable; a run's answers are stored against it
  *   stage     which chapter of the life it belongs to
- *   scene     the situation, two to four sentences, printed as a paragraph
+ *   scene     the situation, two or three short sentences, printed as a paragraph
  *   asks      the question that closes it, printed as the heading
  *   recall    how the backstory begins this sentence. `recall` + the option's
  *             `told` is one sentence of the lore page's backstory
@@ -117,7 +135,7 @@
  * An option:
  *
  *   id        stable within its question
- *   label     the way of acting, as the player reads it
+ *   label     the way of acting, as the player reads it: one line, 8 to 20 words
  *   told      the clause the backstory writes after `recall`
  *   tags      optional. What this answer makes true of the life, for `requires`
  *   gives     the points, grouped by what they land on:
@@ -190,14 +208,14 @@ export const QUESTIONS = [
     id: 'child-dog',
     stage: 'childhood',
     scene:
-      'You are six years old, and the mill yard is empty except for the older children. They have a stray dog cornered against the wall, all ribs and fear, and the biggest of them has picked up a stone. He is looking at you to see what you will do.',
+      'You are six. The older boys have a stray dog cornered in the mill yard, and the biggest of them has picked up a stone.',
     asks: 'What do you do?',
     recall: 'At six, with a dog cornered behind the mill, you',
     options: [
       {
         id: 'stand',
-        label: 'Walk across the yard and put yourself between the dog and the stone. If he throws it, he throws it at you.',
-        told: 'walked across the yard and put yourself between the dog and the stone.',
+        label: 'Walk over and stand between the dog and the stone.',
+        told: 'stood between the dog and the stone.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, colossus: 1 },
@@ -207,8 +225,8 @@ export const QUESTIONS = [
       },
       {
         id: 'whistle',
-        label: 'Crouch, hold out a hand and whistle low. Dogs have always come to you, and this one comes.',
-        told: 'crouched, held out a hand and whistled low, and the dog came to you.',
+        label: 'Crouch, hold out a hand and whistle the dog over to you.',
+        told: 'whistled the dog over to you.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, 'draconic-bond': 1, beastbond: 1 },
@@ -219,8 +237,8 @@ export const QUESTIONS = [
       },
       {
         id: 'story',
-        label: 'Tell them, loudly and in detail, about the boy two valleys over who stoned a dog and what came for him that night. You make most of it up as you go.',
-        told: 'told them, loudly and in detail, about the boy who stoned a dog and what came for him that night, and made most of it up.',
+        label: 'Scare them off with a made-up story about what happens to boys who stone dogs.',
+        told: 'scared them off with a made-up story.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1 },
@@ -231,8 +249,8 @@ export const QUESTIONS = [
       },
       {
         id: 'stone',
-        label: 'Pick up a stone of your own and throw it, hard, at the boy holding his.',
-        told: 'picked up a stone of your own and threw it, hard, at the boy holding his.',
+        label: 'Pick up a stone of your own and throw it hard at the biggest boy.',
+        told: 'threw a stone of your own at the biggest boy.',
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 1 },
@@ -249,14 +267,14 @@ export const QUESTIONS = [
     id: 'child-fire',
     stage: 'childhood',
     scene:
-      'The barn is burning. Smoke is pouring from under the eaves, the calf is bawling inside and every grown-up on the farm is at the well, fifty yards away, filling buckets. You are the only one near the door.',
+      'The barn is on fire and the calf is still inside. Every grown-up is at the well, and you are the only one near the door.',
     asks: 'What do you do?',
     recall: 'When the barn burned, you',
     options: [
       {
         id: 'in',
-        label: 'Pull your shirt up over your mouth and go in low under the smoke. You have the calf by the neck and out before the roof beam catches.',
-        told: 'pulled your shirt over your mouth, went in low under the smoke and dragged the calf out by the neck.',
+        label: 'Pull your shirt over your mouth, go in low and drag the calf out.',
+        told: 'went in under the smoke and dragged the calf out.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, berserker: 1 },
@@ -267,8 +285,8 @@ export const QUESTIONS = [
       },
       {
         id: 'back',
-        label: 'Run round to the back wall where the boards are rotten, kick two of them loose and coax the calf out through the gap with your voice.',
-        told: 'ran round to the back wall, kicked two rotten boards loose and coaxed the calf out through the gap.',
+        label: 'Run round the back, kick the rotten boards loose and call the calf out.',
+        told: 'kicked the back boards loose and called the calf out.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'feral-curse': 1, 'draconic-bond': 1 },
@@ -279,19 +297,21 @@ export const QUESTIONS = [
       },
       {
         id: 'well',
-        label: 'Run to the well and take charge of the buckets. Two people filling and two carrying put more water on a fire than six people running about.',
-        told: 'ran to the well and took charge of the buckets, two filling and two carrying.',
+        label: 'Go through the empty house while everyone is at the well, and take what you like.',
+        told: 'went through the empty house while everyone was at the well.',
+        tags: ['did:theft'],
         gives: {
-          attribute: { mind: 1 },
-          talent: { alchemist: 1 },
-          background: { military: 1, aristocrat: 1 },
-          skill: { mastermind: 1, helpful: 1 },
+          attribute: { instinct: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { scorchbound: 1 },
+          background: { criminal: 1 },
+          skill: { streetwise: 1, scavenger: 1 },
         },
       },
       {
         id: 'roof',
-        label: 'Stand back and watch how the fire moves through the timbers. You see that the roof will fall within the minute, and you shout for everyone to get clear before it does.',
-        told: 'watched how the fire moved through the timbers, saw the roof was about to fall and shouted everyone clear before it did.',
+        label: 'Stand back and watch how the fire moves. You have never seen one this close.',
+        told: 'stood back and watched how the fire moved.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, 'elemental-aspect': 1 },
@@ -307,14 +327,14 @@ export const QUESTIONS = [
     id: 'child-market',
     stage: 'childhood',
     scene:
-      'You are eight, at the autumn market, with a single copper in your fist. The thing you want, a knife with a bone handle, costs three. The stallholder has turned to serve a farmer, and his back is to you.',
+      'You are eight, at the market, with one copper. The knife you want costs three, and the stallholder has his back turned.',
     asks: 'What do you do?',
     recall: 'At eight, with a coin that was not enough, you',
     options: [
       {
         id: 'take',
-        label: 'Slide the knife off the board and into your sleeve while his back is turned, then walk away at an ordinary pace. Running is what gets you caught.',
-        told: 'slid the knife into your sleeve while his back was turned and walked away at an ordinary pace.',
+        label: 'Slide the knife into your sleeve and walk away at an ordinary pace.',
+        told: 'slid the knife into your sleeve and walked away.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
@@ -325,20 +345,20 @@ export const QUESTIONS = [
       },
       {
         id: 'promise',
-        label: 'Wait for him to turn round, put your copper on the board and offer him the other two by the winter fair, on your word. You mean it, and he can see that you mean it.',
-        told: 'put your copper on the board and offered the rest by the winter fair, on your word.',
+        label: 'Promise him the other two coppers by the winter fair, knowing you will never pay.',
+        told: 'promised him the rest by the winter fair, and never paid.',
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 1 },
+          talent: { pactbound: 1, tactician: 1 },
           lineage: { celestial: 1 },
-          background: { merchant: 1, aristocrat: 1, entertainer: 1 },
+          background: { merchant: 1, entertainer: 1 },
           skill: { haggler: 1, charismatic: 1 },
         },
       },
       {
         id: 'crates',
-        label: 'Offer to carry his crates and stack his stall until the market closes, and take the knife as your wage. It is a long day, and the crates are heavy.',
-        told: 'carried his crates and stacked his stall until the market closed, and took the knife as your wage.',
+        label: 'Offer to carry his crates all day and take the knife as your wage.',
+        told: 'carried his crates all day and took the knife as your wage.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1 },
@@ -349,8 +369,8 @@ export const QUESTIONS = [
       },
       {
         id: 'make',
-        label: 'Put the copper back in your pocket and look hard at how the knife is made: the rivets, the grind of the edge, the fit of the bone. You will make one yourself at the forge at home, and it will be better.',
-        told: 'looked hard at how the knife was made and went home to make a better one at the forge.',
+        label: 'Look hard at how the knife is made and go home to make a better one.',
+        told: 'studied how the knife was made and made a better one at home.',
         gives: {
           attribute: { mind: 1 },
           talent: { enchanter: 1, spellblade: 1 },
@@ -365,14 +385,14 @@ export const QUESTIONS = [
     id: 'child-dark',
     stage: 'childhood',
     scene:
-      'The cellar door has swung shut behind you and the latch has dropped. Your candle went out in the draught. It is completely dark, the stairs are somewhere behind you and nobody in the house heard the door.',
+      'The cellar door has shut behind you and your candle has gone out. Nobody in the house heard the latch drop.',
     asks: 'What do you do?',
     recall: 'Shut in the dark cellar, you',
     options: [
       {
         id: 'shoulder',
-        label: 'Find the door by feel, set your shoulder against it and drive at it, again and again, until the latch tears out of the wood.',
-        told: 'found the door by feel and shouldered it, again and again, until the latch tore out of the wood.',
+        label: 'Find the door by feel and drive your shoulder into it until the latch breaks.',
+        told: 'shouldered the door until the latch broke.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1 },
@@ -383,8 +403,8 @@ export const QUESTIONS = [
       },
       {
         id: 'listen',
-        label: 'Sit down on the step, stay perfectly still and let your eyes and ears learn the dark. In a while you can make out the shelves, the barrels and the grey line of light under the door.',
-        told: 'sat still on the step until your eyes and ears had learned the dark.',
+        label: 'Sit still on the step and let your eyes get used to the dark.',
+        told: 'sat still until your eyes learned the dark.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, wilder: 1, mycomancer: 1 },
@@ -395,8 +415,8 @@ export const QUESTIONS = [
       },
       {
         id: 'walls',
-        label: 'Work your way along the wall with your hands, counting the shelves, the jars and the courses of stone, until you have the whole room mapped in your head and can walk it blind.',
-        told: 'worked your way along the walls by hand until you had the whole room mapped and could walk it blind.',
+        label: 'Feel your way along the walls until you know the whole room by heart.',
+        told: 'mapped the whole room with your hands.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1 },
@@ -406,8 +426,8 @@ export const QUESTIONS = [
       },
       {
         id: 'speak',
-        label: 'Speak into the dark to whatever you can feel is down there with you. Ask it to show you the door. Something answers.',
-        told: 'spoke into the dark to whatever was down there with you, and something answered.',
+        label: 'Speak to whatever is down there with you and ask it to show you the door.',
+        told: 'spoke to whatever was down there, and something answered.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -425,14 +445,14 @@ export const QUESTIONS = [
     id: 'home-debt',
     stage: 'home',
     scene:
-      'You are twelve. A man in a good coat is at the door asking for your father, who owes him money and who is three villages away until tomorrow. Your mother is at the market. The man has not moved off the step, and does not look as if he intends to.',
+      'You are twelve. A man in a good coat is on the step asking for your father, who owes him money and is away until tomorrow.',
     asks: 'What do you do?',
     recall: 'When the debt collector came and your father was out, you',
     options: [
       {
         id: 'doorway',
-        label: 'Fill the doorway as best you can, tell him there is no man in the house to speak to and that he can come back when there is. Then stand there until he goes.',
-        told: 'filled the doorway, told him to come back when there was a man in the house and stood there until he went.',
+        label: 'Fill the doorway and tell him to come back when your father is home.',
+        told: 'filled the doorway and told him to come back tomorrow.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, colossus: 1 },
@@ -443,8 +463,8 @@ export const QUESTIONS = [
       },
       {
         id: 'talk',
-        label: 'Invite him in, pour him the last of the cider and talk to him about the harvest, the roads and the price of grain until, without quite noticing, he has agreed to take half the debt at midwinter.',
-        told: 'invited him in, poured him the last of the cider and talked him down to half the debt at midwinter.',
+        label: 'Invite him in, pour him the last of the cider and talk him down to half the debt.',
+        told: 'talked him down to half the debt over the last of the cider.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -455,26 +475,26 @@ export const QUESTIONS = [
       },
       {
         id: 'follow',
-        label: 'Tell him your father is out and shut the door. Then go out the back and follow him through the village at a distance, to see where he lives and where he keeps his ledger.',
-        told: 'shut the door on him, went out the back and followed him home to see where he kept his ledger.',
+        label: 'Shut the door, then follow him home to see where he keeps his ledger.',
+        told: 'followed him home to see where he kept his ledger.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'feral-curse': 1 },
           lineage: { fey: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1, streetwise: 1 },
+          background: { investigator: 1 },
+          skill: { streetwise: 1, vigilant: 1 },
         },
       },
       {
         id: 'ask',
-        label: 'Ask him, politely, what the debt is really for. A man in a coat like that is not sent for a farmer’s few coins, and you watch his face while he answers.',
-        told: 'asked him what the debt was really for, and watched his face while he answered.',
+        label: 'Offer him what you know about where your father keeps his money, for a cut.',
+        told: 'sold him what you knew about your father’s money, for a cut.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
-          lineage: { infernal: 1 },
-          background: { investigator: 1, aristocrat: 1 },
-          skill: { inquisitor: 1, empath: 1 },
+          talent: { tactician: 1, enchanter: 1 },
+          lineage: { stonebound: 1 },
+          background: { merchant: 1, investigator: 1 },
+          skill: { haggler: 1, frugal: 1 },
         },
       },
     ],
@@ -484,14 +504,14 @@ export const QUESTIONS = [
     id: 'home-sick',
     stage: 'home',
     scene:
-      'Your sister has had a fever for three days. The village healer has tried her poultices and shaken her head, and the nearest physician is in the market town, two days’ walk each way. Your sister is getting worse by the hour.',
+      'Your sister has had a fever for three days and the village healer has given up. The nearest physician is two days’ walk away.',
     asks: 'What do you do?',
     recall: 'When your sister’s fever would not break, you',
     options: [
       {
         id: 'go',
-        label: 'Fill a waterskin, take your father’s boots and go for the physician. You run the first day and walk the second, and you bring him back in three.',
-        told: 'took your father’s boots and went for the physician, running the first day and walking the second.',
+        label: 'Take your father’s boots and run for the physician, two days there and back.',
+        told: 'ran two days for the physician and brought him back.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1 },
@@ -502,8 +522,8 @@ export const QUESTIONS = [
       },
       {
         id: 'gather',
-        label: 'Go down to the stream and gather the willow bark, the feverfew and the moss your grandmother used, boil them the way she did and get the tea into your sister a spoon at a time.',
-        told: 'gathered willow bark and feverfew by the stream, boiled them the way your grandmother did and spooned the tea into her.',
+        label: 'Gather willow bark and feverfew by the stream and boil them the way your grandmother did.',
+        told: 'boiled willow bark and feverfew the way your grandmother did.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'cauldron-keeper': 1, wilder: 1 },
@@ -514,8 +534,8 @@ export const QUESTIONS = [
       },
       {
         id: 'read',
-        label: 'Take the physician’s almanac down from the shelf and read every page on fevers by candlelight until you find hers, and the treatment written under it.',
-        told: 'read the physician’s almanac by candlelight until you found her fever and its treatment.',
+        label: 'Read the physician’s almanac by candlelight until you find her fever and its cure.',
+        told: 'read the almanac by candlelight until you found her fever.',
         gives: {
           attribute: { mind: 2 },
           talent: { alchemist: 1 },
@@ -525,8 +545,8 @@ export const QUESTIONS = [
       },
       {
         id: 'promise',
-        label: 'Sit by her bed through the nights with her hand in yours and promise anything, to anyone who might be listening, if she lives. On the third night the fever breaks.',
-        told: 'sat by her through the nights and promised anything to anyone listening, and on the third night the fever broke.',
+        label: 'Sit by her bed and promise anything to anyone listening, if she lives.',
+        told: 'promised anything to anyone listening, and the fever broke.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -542,14 +562,14 @@ export const QUESTIONS = [
     id: 'home-feast',
     stage: 'home',
     scene:
-      'The harvest feast, the whole village at the long tables. Your uncle is drunk, and he has started, loudly, on the story about your mother that the family does not tell. Heads are turning. Your mother has gone white.',
+      'At the harvest feast your drunk uncle starts, loudly, on the story about your mother that the family never tells. Heads are turning.',
     asks: 'What do you do?',
     recall: 'When your drunk uncle started the story nobody tells, you',
     options: [
       {
         id: 'back',
-        label: 'Get up, walk round the table and put him on his back in the yard with one blow, before he reaches the end of the sentence.',
-        told: 'walked round the table and put him on his back in the yard with one blow.',
+        label: 'Walk round the table and put him on his back in the yard with one blow.',
+        told: 'put him on his back in the yard with one blow.',
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
@@ -561,8 +581,8 @@ export const QUESTIONS = [
       },
       {
         id: 'song',
-        label: 'Stand up on the bench and start the harvest song at the top of your voice. The table joins in on the second line, and by the chorus nobody remembers what he was saying.',
-        told: 'stood on the bench and started the harvest song, and by the chorus nobody remembered what he had been saying.',
+        label: 'Stand on the bench and start the harvest song until nobody remembers what he was saying.',
+        told: 'started the harvest song until nobody remembered what he had said.',
         gives: {
           attribute: { instinct: 1 },
           talent: { virtuoso: 1 },
@@ -574,24 +594,25 @@ export const QUESTIONS = [
       },
       {
         id: 'ask',
-        label: 'Let him finish. Then, when the table has moved on, sit down beside him and ask him quietly for the parts he left out.',
-        told: 'let him finish, then sat beside him and asked quietly for the parts he had left out.',
+        label: 'Let him finish. You want to hear the rest, and later you can use it.',
+        told: 'let him finish, and kept the rest for later use.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
-          background: { investigator: 1, entertainer: 1 },
-          skill: { inquisitor: 1, empath: 1 },
+          talent: { tactician: 1, spellquill: 1 },
+          lineage: { infernal: 1 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { inquisitor: 1, cunning: 1 },
         },
       },
       {
         id: 'cup',
-        label: 'Refill his cup yourself, with a pinch of the valerian from your mother’s shelf stirred in. He is asleep with his head on the table inside a minute.',
-        told: 'refilled his cup with a pinch of valerian stirred in, and he was asleep on the table inside a minute.',
+        label: 'Refill his cup with a pinch of your mother’s valerian in it. He is asleep in a minute.',
+        told: 'put valerian in his cup, and he was asleep in a minute.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 1, trickster: 1 },
-          lineage: { fey: 1 },
-          background: { criminal: 1 },
+          talent: { 'cauldron-keeper': 1, virtuoso: 1 },
+          lineage: { wildheart: 1 },
+          background: { entertainer: 1 },
           skill: { apothecary: 1, cunning: 1 },
         },
       },
@@ -602,14 +623,14 @@ export const QUESTIONS = [
     id: 'home-leave',
     stage: 'home',
     scene:
-      'Your family is leaving the valley for good. The cart is loaded to the rails, your mother is counting the children, and your father says there is room for one more thing of yours, and only one. Everything else stays.',
+      'Your family is leaving the valley for good. The cart is full, and your father says there is room for one more thing of yours.',
     asks: 'What do you take?',
     recall: 'When the family left the valley, you took',
     options: [
       {
         id: 'hammer',
-        label: 'Your father’s long-handled hammer from the forge. It is heavier than you are, and you carry it on your shoulder the whole way rather than give up the space in the cart.',
-        told: 'your father’s long-handled hammer, heavier than you were. You carried it on your shoulder the whole way.',
+        label: 'Your father’s long-handled hammer from the forge, carried on your shoulder the whole way.',
+        told: 'your father’s long-handled hammer, carried on your shoulder the whole way.',
         gives: {
           attribute: { physique: 1 },
           talent: { colossus: 1, runebearer: 1 },
@@ -621,8 +642,8 @@ export const QUESTIONS = [
       },
       {
         id: 'book',
-        label: 'The book from the chest under the stairs, the one written in a hand that nobody in the house can read. You have looked at it every night for a year.',
-        told: 'the book from under the stairs that nobody in the house could read.',
+        label: 'The book from under the stairs that nobody in the house can read.',
+        told: 'the book from under the stairs that nobody could read.',
         gives: {
           attribute: { mind: 1 },
           talent: { arcanist: 1 },
@@ -633,8 +654,8 @@ export const QUESTIONS = [
       },
       {
         id: 'hound',
-        label: 'The hound. It is not a thing and it does not fit, and you lift it into the cart anyway, and nobody quite manages to say no.',
-        told: 'the hound, which was not a thing and did not fit, and nobody managed to say no.',
+        label: 'The hound. It is not a thing and it does not fit, and nobody manages to say no.',
+        told: 'the hound, which was not a thing and did not fit.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'draconic-bond': 1, beastbond: 1 },
@@ -645,14 +666,15 @@ export const QUESTIONS = [
       },
       {
         id: 'nothing',
-        label: 'Nothing. You walk beside the cart with your hands free and your eyes on the hedgerows, and you are the first to see the men waiting at the ford.',
-        told: 'nothing, and walked beside the cart with your hands free and your eyes on the hedgerows.',
+        label: 'Nothing of yours. You take the neighbour’s good knife off his bench on the way out.',
+        told: 'nothing of yours, and the neighbour’s good knife off his bench.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 1, wilder: 1 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
           lineage: { wildheart: 1 },
-          background: { outlander: 1 },
-          skill: { vigilant: 1, survivalist: 1 },
+          background: { criminal: 1, outlander: 1 },
+          skill: { cunning: 1, 'quick-draw': 1 },
         },
       },
     ],
@@ -663,14 +685,14 @@ export const QUESTIONS = [
     id: 'blood-cliff',
     stage: 'blood',
     scene:
-      'The path along the cliff is gone, washed out by a week of rain, and there is a thirty-foot face of wet rock between you and where it starts again. Below you is the sea. Behind you is a day’s walk back to the last village.',
+      'The cliff path has washed away, leaving thirty feet of wet rock between you and where it starts again. The sea is below, and the last village is a day behind you.',
     asks: 'How do you get across?',
     recall: 'With the cliff path gone, you',
     options: [
       {
         id: 'climb',
-        label: 'Climb it. You go up the wet rock hand over hand, your fingers finding the holds before your eyes do. The drop under you never once enters your mind.',
-        told: 'climbed the wet rock hand over hand, your fingers finding the holds before your eyes did.',
+        label: 'Climb the wet rock hand over hand, never once thinking about the drop.',
+        told: 'climbed the wet rock hand over hand.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1 },
@@ -681,8 +703,8 @@ export const QUESTIONS = [
       },
       {
         id: 'stones',
-        label: 'Go down to where the path fell and haul the stones back up, one at a time, until you have built enough of it again to walk across.',
-        told: 'hauled the fallen stones back up one at a time and built the path again.',
+        label: 'Haul the fallen stones back up one at a time and rebuild the path.',
+        told: 'hauled the stones back up and rebuilt the path.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1 },
@@ -693,19 +715,19 @@ export const QUESTIONS = [
       },
       {
         id: 'read',
-        label: 'Sit down and study the face for an hour, reading the fault lines and the water stains, until you have worked out the one route that will hold and the three that look easier and will not.',
-        told: 'studied the face for an hour and worked out the one route that would hold.',
+        label: 'Wait for the next traveller to try it first, and watch which holds take his weight.',
+        told: 'waited for the next traveller to try it first.',
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 1 },
+          talent: { tactician: 1, arcanist: 1 },
           background: { investigator: 1 },
-          skill: { cartographer: 1, scholar: 1 },
+          skill: { cartographer: 1, cunning: 1 },
         },
       },
       {
         id: 'step',
-        label: 'Step off the edge. You have never told anyone why you are so sure the wind will hold you, and it holds you.',
-        told: 'stepped off the edge, and the wind held you, as you had always known it would.',
+        label: 'Step off the edge. You have always known the wind would hold you.',
+        told: 'stepped off the edge, and the wind held you.',
         tags: ['did:magic'],
         gives: {
           attribute: { instinct: 1 },
@@ -719,14 +741,14 @@ export const QUESTIONS = [
     id: 'blood-river',
     stage: 'blood',
     scene:
-      'The ferry is on the far bank and the river is in flood, brown and fast. A child has gone in off the landing stage and is already ten yards out, going under and coming up. The mother is screaming. Nobody else is moving.',
+      'The river is in flood and a child has gone in off the landing stage. The mother is screaming, and nobody else is moving.',
     asks: 'What do you do?',
     recall: 'When the child went into the flood, you',
     options: [
       {
         id: 'dive',
-        label: 'Dive in after the child. The cold and the current never take hold of you the way they take hold of other people, and you have the child by the collar before the bend.',
-        told: 'dived in, and the cold and the current never took hold of you, and you had the child before the bend.',
+        label: 'Dive in. The cold and the current never take hold of you the way they take others.',
+        told: 'dived in, and the cold and the current never took hold of you.',
         gives: {
           attribute: { instinct: 1 },
           talent: { wilder: 1, 'feral-curse': 1 },
@@ -737,8 +759,8 @@ export const QUESTIONS = [
       },
       {
         id: 'bank',
-        label: 'Run the bank downstream faster than the water, wade in up to your chest where the river shallows over the gravel and catch the child as the current brings it to you.',
-        told: 'ran the bank ahead of the current, waded in where it shallowed and caught the child as it came.',
+        label: 'Run the bank ahead of the current and wade in where the river shallows.',
+        told: 'ran the bank ahead of the current and caught the child in the shallows.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, colossus: 1 },
@@ -749,19 +771,19 @@ export const QUESTIONS = [
       },
       {
         id: 'rope',
-        label: 'Grab the ferry rope off the post, loop it round your waist, throw the weighted end past the child and haul. Two people in the water is two people drowned.',
-        told: 'looped the ferry rope round your waist, threw the weighted end past the child and hauled.',
+        label: 'Stay on the bank. Two in the water is two drowned, and it is not your child.',
+        told: 'stayed on the bank, because two in the water is two drowned.',
         gives: {
           attribute: { mind: 1 },
-          talent: { weaver: 1 },
-          background: { military: 1 },
+          talent: { tactician: 1, weaver: 1 },
+          background: { investigator: 1, erudit: 1 },
           skill: { mastermind: 1, survivalist: 1 },
         },
       },
       {
         id: 'word',
-        label: 'Stretch out your hand towards the water and speak a word you did not know you knew. The river slows around the child, just for a moment, and a moment is long enough.',
-        told: 'spoke a word you did not know you knew, and the river slowed around the child for just long enough.',
+        label: 'Reach out and speak a word you did not know you knew. The river slows around the child.',
+        told: 'spoke a word you did not know, and the river slowed around the child.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -779,14 +801,14 @@ export const QUESTIONS = [
     id: 'blood-forge',
     stage: 'blood',
     scene:
-      'The smith has gone up to the house for his dinner and left the forge lit, a bar of iron glowing in the coals and the door standing open. You are alone with it, and nobody will be back for an hour.',
+      'The smith has gone up to his dinner and left the forge lit, with a bar glowing in the coals. You are alone with it for an hour.',
     asks: 'What do you do?',
     recall: 'Alone in the smith’s open forge, you',
     options: [
       {
         id: 'hammer',
-        label: 'Take the bar out with the tongs, lay it on the anvil and pick up the hammer. Your arm falls into the rhythm before you have decided anything, and by the time he is back it is a blade.',
-        told: 'took the bar to the anvil and picked up the hammer, and your arm fell into the rhythm before you had decided anything.',
+        label: 'Take the bar to the anvil and pick up the hammer. Your arm knows the rhythm already.',
+        told: 'took the bar to the anvil, and your arm knew the rhythm already.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1 },
@@ -798,8 +820,8 @@ export const QUESTIONS = [
       },
       {
         id: 'bare',
-        label: 'Reach into the coals and pull the bar out with your bare hand to look at it. It is a moment before you notice you are holding it, and another before you think to let go.',
-        told: 'pulled the glowing bar out of the coals with your bare hand, and only noticed afterwards.',
+        label: 'Pull the glowing bar out of the coals with your bare hand to look at it.',
+        told: 'pulled the glowing bar out with your bare hand.',
         gives: {
           attribute: { physique: 1 },
           talent: { berserker: 1, painseeker: 1, hemoturgy: 1 },
@@ -809,8 +831,8 @@ export const QUESTIONS = [
       },
       {
         id: 'study',
-        label: 'Touch nothing. Study the colour of the steel, the quench trough and the way the tools are laid out in order of use, until you understand how the whole thing works and how you would do it better.',
-        told: 'touched nothing, and studied the steel, the quench and the tools until you understood the whole of it.',
+        label: 'Touch nothing. Study the steel, the quench and the tools until you understand it all.',
+        told: 'touched nothing and studied the whole of it.',
         gives: {
           attribute: { mind: 2 },
           talent: { alchemist: 1, spellblade: 1 },
@@ -820,8 +842,8 @@ export const QUESTIONS = [
       },
       {
         id: 'chisel',
-        label: 'Take the good chisel off the bench, the one with the ash handle, put it inside your coat and be out of the yard before his door opens.',
-        told: 'took the good chisel off the bench and were out of the yard before his door opened.',
+        label: 'Take the good chisel off the bench and be gone before his door opens.',
+        told: 'took the good chisel and were gone before his door opened.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
@@ -839,14 +861,14 @@ export const QUESTIONS = [
     id: 'blood-wolves',
     stage: 'blood',
     scene:
-      'Night, three days from the nearest town. The fire has burned low, and there are three pairs of eyes at the edge of the light, low to the ground and moving. The horses have smelled them and are screaming on the picket line.',
+      'Three days from the nearest town, the fire has burned low. Three pairs of eyes are at the edge of the light, and the horses are screaming.',
     asks: 'What do you do?',
     recall: 'With wolves at the edge of the firelight, you',
     options: [
       {
         id: 'roar',
-        label: 'Snatch a burning brand out of the fire, stand up to your full height and roar at them. Something in your voice makes the lead wolf flatten its ears and think again.',
-        told: 'snatched a brand from the fire, stood to your full height and roared, and something in your voice made the lead wolf think again.',
+        label: 'Snatch a burning brand, stand to your full height and roar at them.',
+        told: 'snatched a brand and roared, and the lead wolf thought again.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, 'dragon-aspect': 1, 'draconic-bond': 1 },
@@ -857,8 +879,8 @@ export const QUESTIONS = [
       },
       {
         id: 'eyes',
-        label: 'Walk out to the edge of the light, crouch and meet the lead wolf’s eyes, and hold them. It knows you, or it knows what you are, and after a long moment it turns away.',
-        told: 'walked to the edge of the light and held the lead wolf’s eyes until it turned away.',
+        label: 'Walk out to the edge of the light and hold the lead wolf’s eyes until it turns away.',
+        told: 'held the lead wolf’s eyes until it turned away.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, 'draconic-bond': 1, beastbond: 1 },
@@ -869,8 +891,8 @@ export const QUESTIONS = [
       },
       {
         id: 'shield',
-        label: 'Take the shield off the cart, put your back to the horses and stand between them and the dark, and let the wolves come to you if they are coming.',
-        told: 'took the shield off the cart and stood between the horses and the dark.',
+        label: 'Take up the shield and stand between the horses and the dark.',
+        told: 'stood between the horses and the dark with the shield.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, oathbound: 1 },
@@ -883,13 +905,13 @@ export const QUESTIONS = [
       },
       {
         id: 'powder',
-        label: 'Throw a pinch of the flash powder from your pouch into the fire. The white flare sends them running, and while they are running you are out in the dark gathering the herbs you were short of.',
-        told: 'threw flash powder into the fire, and the flare sent them running.',
+        label: 'Cut the worst horse loose and drive it at them. Wolves with a kill do not follow.',
+        told: 'cut the worst horse loose and drove it at them.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 1, enchanter: 1 },
-          background: { erudit: 1 },
-          skill: { apothecary: 1, scavenger: 1 },
+          talent: { tactician: 1, alchemist: 1 },
+          background: { military: 1, outlander: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
         },
       },
     ],
@@ -899,14 +921,14 @@ export const QUESTIONS = [
     id: 'blood-grave',
     stage: 'blood',
     scene:
-      'You wake face down in a ditch, in the rain, with a wound in your side that should have finished you. Your purse is gone and so are your boots. You can hear the men who did it laughing a hundred yards up the road.',
+      'You wake face down in a ditch with a wound that should have killed you. Your purse and boots are gone, and the men who did it are laughing up the road.',
     asks: 'What do you do?',
     recall: 'Waking in the ditch where they left you for dead, you',
     options: [
       {
         id: 'up',
-        label: 'Get up. It hurts a great deal less than it should, and you walk the four miles to the next inn in your bare feet with your hand pressed to your side.',
-        told: 'got up, and it hurt less than it should have, and you walked four miles to the inn in your bare feet.',
+        label: 'Get up. It hurts less than it should, and you walk four miles barefoot to the inn.',
+        told: 'got up and walked four miles barefoot to the inn.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, painseeker: 1 },
@@ -917,8 +939,8 @@ export const QUESTIONS = [
       },
       {
         id: 'still',
-        label: 'Lie still in the mud until the laughing has moved off down the road. Then get up and follow them, at a distance, until you know where every one of them sleeps.',
-        told: 'lay still until they had gone, then followed them at a distance until you knew where they slept.',
+        label: 'Lie still until they move off, then follow them until you know where each one sleeps.',
+        told: 'followed them until you knew where each one slept.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'feral-curse': 1 },
@@ -929,8 +951,8 @@ export const QUESTIONS = [
       },
       {
         id: 'bind',
-        label: 'Pack the wound with the moss from the ditch bank, tear your shirt into a bandage and bind it tight, then lie still and count your pulse until morning so that you know whether you are dying.',
-        told: 'packed the wound with moss, bound it with your shirt and counted your pulse until morning.',
+        label: 'Pack the wound with moss, bind it with your shirt and count your pulse till morning.',
+        told: 'packed the wound with moss and counted your pulse till morning.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1, thaumaturge: 1 },
@@ -941,8 +963,8 @@ export const QUESTIONS = [
       },
       {
         id: 'promise',
-        label: 'Lie in the ditch and make a promise, out loud, to anything that will hear it: whatever it wants, in return for the morning. Something hears it.',
-        told: 'made a promise, out loud, to anything that would hear it, and something did.',
+        label: 'Promise anything that will listen whatever it wants, in return for the morning.',
+        told: 'promised anything that would listen whatever it wanted.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -959,14 +981,14 @@ export const QUESTIONS = [
     id: 'youth-duel',
     stage: 'youth',
     scene:
-      'The miller’s son has called you out in front of the whole village, in the square, on market day. He is bigger than you and he has been waiting for this. Everyone has stopped to watch, and nobody is going to stop it.',
+      'The miller’s son has called you out in the square on market day. He is bigger than you, and the whole village has stopped to watch.',
     asks: 'What do you do?',
     recall: 'Called out in front of everyone, you',
     options: [
       {
         id: 'first',
-        label: 'Hit him now, before he has finished talking. Keep hitting him until he stays down.',
-        told: 'hit him before he had finished talking and kept hitting him until he stayed down.',
+        label: 'Hit him now, before he finishes talking. Keep hitting until he stays down.',
+        told: 'hit him before he finished talking and kept hitting until he stayed down.',
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
@@ -979,8 +1001,8 @@ export const QUESTIONS = [
       },
       {
         id: 'hour',
-        label: 'Name the hour, tomorrow at dawn, and the place, and tell him to bring a second. Then go home and spend the evening with a whetstone. It will be done properly.',
-        told: 'named the hour and the place and told him to bring a second, and it was done properly.',
+        label: 'Name the hour and the place, tell him to bring a second and go home to your whetstone.',
+        told: 'named the hour and the place and went home to your whetstone.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, 'weapon-master': 1 },
@@ -992,8 +1014,8 @@ export const QUESTIONS = [
       },
       {
         id: 'laugh',
-        label: 'Laugh, agree cheerfully with every word he has said about you and buy him a cup of cider from the stall. The crowd is laughing with you before he works out what has happened.',
-        told: 'laughed, agreed with every word and bought him a cider, and the crowd was laughing with you before he understood.',
+        label: 'Laugh, agree with everything he says and buy him a cider. The crowd laughs with you.',
+        told: 'laughed, agreed with everything and bought him a cider.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -1004,14 +1026,14 @@ export const QUESTIONS = [
       },
       {
         id: 'walk',
-        label: 'Turn round and walk away, with the whole square watching. There will be a night when he is alone on the mill road, and you already know which one.',
-        told: 'walked away with the whole square watching, and waited for a night when he was alone.',
+        label: 'Walk away with the square watching. You know which night he walks the mill road alone.',
+        told: 'walked away, and waited for a night he was alone on the mill road.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1 },
+          talent: { duelist: 1, 'feral-curse': 1 },
           lineage: { infernal: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1, vigilant: 1 },
+          background: { mercenary: 1 },
+          skill: { vigilant: 1, survivalist: 1 },
         },
       },
     ],
@@ -1021,14 +1043,14 @@ export const QUESTIONS = [
     id: 'youth-lock',
     stage: 'youth',
     scene:
-      'You are standing in front of a locked iron gate in a cellar corridor. Through the bars you can see the strongbox you came for, sitting on a table ten feet away. The gate is old, the lock is older, and nobody is coming down here before morning.',
+      'You are standing in front of a locked iron gate in a cellar. Through the bars you can see the strongbox you came for, and nobody is coming down before morning.',
     asks: 'How do you get through?',
     recall: 'Faced with a locked gate, you',
     options: [
       {
         id: 'shoulder',
-        label: 'Take hold of the bars with both hands, set your feet against the wall and pull, again and again, until the grid comes out of the stone.',
-        told: 'took hold of the bars and pulled until the grid came out of the stone.',
+        label: 'Take the bars in both hands, set your feet and pull until the grid comes out of the stone.',
+        told: 'pulled the grid out of the stone with your hands.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1 },
@@ -1040,8 +1062,8 @@ export const QUESTIONS = [
       },
       {
         id: 'pick',
-        label: 'Take out your lockpicks and work the lock by feel. It is old and stiff and it takes a quarter of an hour, and then it turns.',
-        told: 'worked the lock with your picks for a quarter of an hour, and then it turned.',
+        label: 'Work the lock with your picks. It takes a quarter of an hour, and then it turns.',
+        told: 'worked the lock with your picks for a quarter of an hour.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
@@ -1054,8 +1076,8 @@ export const QUESTIONS = [
       },
       {
         id: 'acid',
-        label: 'Take the vial of acid from your belt and pour it over the hinge pins, then wait with your sleeve over your face against the fumes until the metal is soft enough to lever the gate off.',
-        told: 'poured the vial of acid over the hinge pins and levered the gate off when the metal had gone soft.',
+        label: 'Pour the vial of acid over the hinge pins and lever the gate off when they soften.',
+        told: 'poured acid on the hinge pins and levered the gate off.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1, enchanter: 1 },
@@ -1065,8 +1087,8 @@ export const QUESTIONS = [
       },
       {
         id: 'spell',
-        label: 'Speak the words that let your hand pass through iron as if it were water, reach through the lock plate and turn the bolt from the other side.',
-        told: 'spoke the words that let your hand pass through iron and turned the bolt from the other side.',
+        label: 'Speak the words that let your hand pass through iron and turn the bolt from the other side.',
+        told: 'passed your hand through the iron and turned the bolt from inside.',
         gives: {
           attribute: { mind: 2 },
           talent: { thaumaturge: 1, spellblade: 1 },
@@ -1081,14 +1103,14 @@ export const QUESTIONS = [
     id: 'youth-hurt',
     stage: 'youth',
     scene:
-      'A man is lying in the gutter of the high street with a knife wound in his thigh, bleeding onto the cobbles, and the crowd is stepping round him. Whoever did it is gone. You are the only one who has stopped.',
+      'A man is bleeding in the gutter of the high street with a knife wound in his thigh. The crowd is stepping round him, and you are the only one who has stopped.',
     asks: 'What do you do?',
-    recall: 'When someone lay bleeding in the street, you',
+    recall: 'When a man lay bleeding in the street, you',
     options: [
       {
         id: 'flask',
-        label: 'Kneel, tie off the leg above the wound with your belt and pour the healing draught from your flask down his throat. The bleeding slows while you watch.',
-        told: 'tied off the leg with your belt and poured the healing draught from your flask down his throat.',
+        label: 'Tie off the leg with your belt and pour the healing draught from your flask down his throat.',
+        told: 'tied off the leg and gave him the draught from your flask.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1, thaumaturge: 1 },
@@ -1099,8 +1121,8 @@ export const QUESTIONS = [
       },
       {
         id: 'carry',
-        label: 'Get him over your shoulder and carry him the three streets to the watch house yourself. Waiting for the watch to come to him would take longer than he has.',
-        told: 'got him over your shoulder and carried him three streets to the watch house.',
+        label: 'Get him over your shoulder and carry him three streets to the watch house.',
+        told: 'carried him three streets to the watch house.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, painseeker: 1 },
@@ -1111,8 +1133,8 @@ export const QUESTIONS = [
       },
       {
         id: 'pockets',
-        label: 'Kneel beside him as if to help, check his pulse with one hand and his purse with the other, and be three streets away with the purse before anyone looks twice.',
-        told: 'knelt as if to help, took his purse while you checked his pulse and were gone before anyone looked twice.',
+        label: 'Kneel as if to help, take his purse while you check his pulse and be gone.',
+        told: 'took his purse while you checked his pulse, and were gone.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
@@ -1124,14 +1146,14 @@ export const QUESTIONS = [
       },
       {
         id: 'find',
-        label: 'Look at the blood on the cobbles and which way the drops fall, and go after the man who did it. He is not far, he is not running and he is not expecting anyone.',
-        told: 'read which way the blood drops fell and went after the man who did it.',
+        label: 'Follow the blood to the man who did it, and find out what he will pay for your silence.',
+        told: 'followed the blood to the man who did it and named a price for your silence.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, 'feral-curse': 1 },
-          lineage: { wildkin: 1 },
-          background: { investigator: 1 },
-          skill: { vigilant: 1, inquisitor: 1 },
+          lineage: { undead: 1 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { inquisitor: 1, haggler: 1 },
         },
       },
     ],
@@ -1141,14 +1163,14 @@ export const QUESTIONS = [
     id: 'youth-book',
     stage: 'youth',
     scene:
-      'A travelling scholar is snoring upstairs in the inn, and his trunk is in the corner of the taproom where he left it, the lid unlocked and a dozen books showing. The fire is down to embers and you are the last one awake.',
+      'A travelling scholar is snoring upstairs and his trunk is open in the taproom, a dozen books showing. You are the last one awake.',
     asks: 'What do you do?',
-    recall: 'With the scholar’s trunk unlocked and the scholar asleep, you',
+    recall: 'With the scholar’s trunk open and the scholar asleep, you',
     options: [
       {
         id: 'read',
-        label: 'Sit down by the embers and read, one book after another, until the window greys. Then put every one back exactly as it lay, spine out, in the order you found them.',
-        told: 'read by the embers until dawn and put every book back exactly as it had lain.',
+        label: 'Read by the embers until dawn, then put every book back exactly as it lay.',
+        told: 'read until dawn and put every book back exactly as it lay.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, enchanter: 1 },
@@ -1158,8 +1180,8 @@ export const QUESTIONS = [
       },
       {
         id: 'clasp',
-        label: 'Take the small one with the brass clasp, the one that looks valuable and light, and put it in your pack. He has eleven others.',
-        told: 'took the small book with the brass clasp and left him the eleven others.',
+        label: 'Take the small one with the brass clasp. He has eleven others.',
+        told: 'took the small book with the brass clasp.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
@@ -1171,8 +1193,8 @@ export const QUESTIONS = [
       },
       {
         id: 'lock',
-        label: 'Leave the books alone. In the morning, sell him the lock off your own bag for three times what it cost you. Then sell him a strongbox to put it on.',
-        told: 'left the books alone and sold him a lock in the morning at three times its cost.',
+        label: 'Leave the books, and in the morning sell him a lock for three times what it cost you.',
+        told: 'sold him a lock in the morning at three times its cost.',
         gives: {
           attribute: { mind: 1 },
           talent: { enchanter: 1 },
@@ -1183,8 +1205,8 @@ export const QUESTIONS = [
       },
       {
         id: 'door',
-        label: 'Drag a chair to the foot of the stairs and sit in it with your back to the trunk until he comes down. Somebody in this inn should.',
-        told: 'sat with your back to the trunk until he came down in the morning.',
+        label: 'Drag a chair to the stairs and sit with your back to the trunk until he comes down.',
+        told: 'sat with your back to the trunk until he came down.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, oathbound: 1 },
@@ -1200,14 +1222,14 @@ export const QUESTIONS = [
     id: 'youth-beast',
     stage: 'youth',
     scene:
-      'There is a wildcat in a poacher’s snare at the edge of the wood, the wire deep in its hind leg, and it has torn the ground bare around it. It is hurt and exhausted, and it will take the hand off anyone who comes within reach.',
+      'A wildcat is caught in a poacher’s snare at the edge of the wood, the wire deep in its leg. It will take the hand off anyone who comes close.',
     asks: 'What do you do?',
     recall: 'Finding a wounded beast in a snare, you',
     options: [
       {
         id: 'talk',
-        label: 'Get down on your knees at the edge of its reach and talk to it, low and steady, for as long as it takes. When it stops hissing, you cut the wire.',
-        told: 'knelt at the edge of its reach and talked to it, low and steady, until it let you cut the wire.',
+        label: 'Kneel at the edge of its reach and talk low and steady until it lets you cut the wire.',
+        told: 'talked to it low and steady until it let you cut the wire.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'draconic-bond': 1, beastbond: 1 },
@@ -1218,8 +1240,8 @@ export const QUESTIONS = [
       },
       {
         id: 'end',
-        label: 'End it with one clean blow of the hatchet, quickly, before it suffers any longer. Take the meat and the pelt so that none of it is wasted.',
-        told: 'ended it with one clean blow of the hatchet and took the meat and the pelt.',
+        label: 'Kill it with one clean blow of the hatchet and take the meat and the pelt.',
+        told: 'killed it with one blow and took the meat and the pelt.',
         gives: {
           attribute: { physique: 1 },
           talent: { berserker: 1, painseeker: 1, 'weapon-master': 1 },
@@ -1230,19 +1252,19 @@ export const QUESTIONS = [
       },
       {
         id: 'dust',
-        label: 'Blow a pinch of the sleeping dust from your pouch into its face from arm’s length and wait for its head to drop. Then work the wire out of the leg and dress the wound.',
-        told: 'blew sleeping dust into its face, waited for its head to drop and worked the wire out of the leg.',
+        label: 'Blow sleeping dust in its face, and carry it to the man who buys live cats for the pit.',
+        told: 'put it to sleep with dust and sold it live to the pit.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 1, enchanter: 1 },
-          background: { erudit: 1 },
-          skill: { apothecary: 1, physician: 1 },
+          talent: { alchemist: 1, tactician: 1 },
+          background: { entertainer: 1, craftsman: 1 },
+          skill: { apothecary: 1, haggler: 1 },
         },
       },
       {
         id: 'bind',
-        label: 'Drop your coat over its head, bind the jaws with a bootlace before it can get free of the cloth, then free the leg and pack the wound with the moss the old trapper showed you.',
-        told: 'dropped your coat over its head, bound the jaws with a bootlace and packed the wound with moss.',
+        label: 'Drop your coat over its head, bind the jaws and pack the wound with moss.',
+        told: 'dropped your coat over its head and packed the wound with moss.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'cauldron-keeper': 1, wilder: 1 },
@@ -1259,14 +1281,14 @@ export const QUESTIONS = [
     stage: 'youth',
     requires: ['did:theft'],
     scene:
-      'There is a fist on the door and a voice behind it saying the watch, open up. Through the shutter you can see two of them in the street, with a third at the back. They have a description of you from the market, and it is a good one.',
+      'There is a fist on the door and a voice saying the watch, open up. They have a good description of you from the market.',
     asks: 'What do you do?',
     recall: 'When the watch came to the door with a warrant, you',
     options: [
       {
         id: 'roofs',
-        label: 'Go out the back window onto the wash-house roof, across two more and down the ivy at the end of the row. The watch never looks up.',
-        told: 'went out the window, across three roofs and down the ivy at the end of the row.',
+        label: 'Go out the back window, across three roofs and down the ivy at the end of the row.',
+        told: 'went out the window and across three roofs.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1 },
@@ -1277,8 +1299,8 @@ export const QUESTIONS = [
       },
       {
         id: 'warrant',
-        label: 'Open the door, ask to see the warrant and read it slowly in front of them. It names the wrong street, and you point that out.',
-        told: 'opened the door, read the warrant slowly and pointed out that it named the wrong street.',
+        label: 'Open the door, read the warrant slowly and point out that it names the wrong street.',
+        told: 'read the warrant slowly and pointed out it named the wrong street.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellquill: 1 },
@@ -1288,8 +1310,8 @@ export const QUESTIONS = [
       },
       {
         id: 'doorway',
-        label: 'Open the door, fill it and tell them they are welcome to try. The one at the front looks at your shoulders and decides to come back with more men.',
-        told: 'opened the door, filled it and told them they were welcome to try.',
+        label: 'Open the door, fill it and tell them they are welcome to try.',
+        told: 'filled the doorway and told them they were welcome to try.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1 },
@@ -1300,8 +1322,8 @@ export const QUESTIONS = [
       },
       {
         id: 'bargain',
-        label: 'Open the door and start talking prices. Everything they came for is for sale, and the name of the man who paid you to take it is the most valuable thing you own.',
-        told: 'opened the door and sold them the name of the man who had paid you.',
+        label: 'Open the door and sell them the name of the man who paid you.',
+        told: 'sold them the name of the man who had paid you.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1 },
@@ -1318,14 +1340,14 @@ export const QUESTIONS = [
     stage: 'youth',
     requires: ['did:magic'],
     scene:
-      'A letter arrives for you, by a rider who will not say who sent him, sealed in grey wax with a mark you have never seen. Inside, in a fine hand, it says that the academy has been watching you since the day the thing happened, and that a place is open.',
+      'A rider who will not say who sent him brings a letter sealed in grey wax. The academy has been watching you since the day it happened, and a place is open.',
     asks: 'What do you do?',
     recall: 'When the academy’s letter came, you',
     options: [
       {
         id: 'go',
-        label: 'Pack that night and go to the academy. Whatever they saw in you, they have a name for it, and you want to hear it said.',
-        told: 'packed that night and went to the academy to hear what they had seen in you called by its name.',
+        label: 'Pack that night and go. Whatever they saw in you, they have a name for it.',
+        told: 'packed that night and went to hear what they called it.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, enchanter: 1 },
@@ -1336,8 +1358,8 @@ export const QUESTIONS = [
       },
       {
         id: 'burn',
-        label: 'Put the letter in the fire and watch the grey wax run. Nothing that has watched you from a distance for years means you any good, and you leave the district that week.',
-        told: 'put the letter in the fire and left the district that week.',
+        label: 'Burn the letter and leave the district that week. Nothing that watches you means you well.',
+        told: 'burned the letter and left the district that week.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'feral-curse': 1, mycomancer: 1 },
@@ -1348,8 +1370,8 @@ export const QUESTIONS = [
       },
       {
         id: 'price',
-        label: 'Write back, in your best hand, asking what the place pays and what being watched is worth, and name a figure for both.',
-        told: 'wrote back and named a price for the place and another for having been watched.',
+        label: 'Write back asking what the place pays and what being watched is worth, and name a figure.',
+        told: 'wrote back and named a price for the place and another for the watching.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1 },
@@ -1360,8 +1382,8 @@ export const QUESTIONS = [
       },
       {
         id: 'nail',
-        label: 'Walk to the academy, nail the letter to its front door with your own knife and stand beside it in the rain until somebody comes out to explain.',
-        told: 'nailed the letter to the academy’s door with your knife and stood beside it until somebody came out to explain.',
+        label: 'Nail the letter to the academy’s door with your knife and wait for someone to come out.',
+        told: 'nailed the letter to the academy’s door and waited.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, berserker: 1 },
@@ -1386,14 +1408,14 @@ export const QUESTIONS = [
     id: 'youth-rune',
     stage: 'youth',
     scene:
-      'The old soldier who works out of the back of the tannery does this for coin: a rune worked into the skin of anybody who will sit still long enough, and a word said over the work at the end. Whatever goes on you tonight is on you for the rest of your life. There are two men ahead of you in the queue and one of them has stopped pretending it does not hurt.',
+      'The old soldier behind the tannery will work a rune into your skin for coin, and say a word over it. Whatever goes on you tonight is there for life.',
     asks: 'What do you do?',
-    recall: 'In the back room of the tannery, with two men ahead of you in the queue, you',
+    recall: 'In the back room of the tannery, you',
     options: [
       {
         id: 'shoulder',
-        label: 'Strip to the waist and ask for the whole of the shoulder, and down the arm from there. It takes four hours and you make no sound in any of them. When it is finished there is a mark on your arm that warms when you close your fist.',
-        told: 'stripped to the waist and sat four hours without a sound, then walked out with a mark on your arm that warmed when you closed your fist.',
+        label: 'Strip to the waist and take the whole shoulder, four hours without a sound.',
+        told: 'took the whole shoulder, four hours without a sound.',
         gives: {
           attribute: { physique: 2 },
           talent: { runebearer: 1, painseeker: 1 },
@@ -1404,8 +1426,8 @@ export const QUESTIONS = [
       },
       {
         id: 'watch',
-        label: 'Give up your place in the queue and watch from the corner instead, for as long as they will have you there. By the third man you know the order the lines go on and which of them the word is said over.',
-        told: 'gave up your place and watched from the corner until you knew the order the lines went on.',
+        label: 'Give up your place and watch from the corner until you know the order the lines go on.',
+        told: 'watched from the corner until you knew how the lines went on.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, spellblade: 1 },
@@ -1415,8 +1437,8 @@ export const QUESTIONS = [
       },
       {
         id: 'wrist',
-        label: 'Hold out one hand and ask for something small on the inside of the wrist, where a sleeve covers it. You are out in a quarter of an hour and nobody on the street is any the wiser.',
-        told: 'took something small on the inside of your wrist where a sleeve covers it, and were out in a quarter of an hour.',
+        label: 'Take something small on the inside of the wrist, where a sleeve hides it.',
+        told: 'took something small on the wrist, where a sleeve hides it.',
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -1427,14 +1449,14 @@ export const QUESTIONS = [
       },
       {
         id: 'price',
-        label: 'Ask what the word costs on its own, without the rune. They laugh, and then they see that you are serious, and the price they name is most of what you have on you.',
-        told: 'asked what the word cost on its own, and paid most of what you had for it.',
+        label: 'Wait until he is drunk, and take the word off him for nothing.',
+        told: 'waited until he was drunk and took the word off him for nothing.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1, spellblade: 1 },
           lineage: { infernal: 1 },
-          background: { merchant: 1 },
-          skill: { haggler: 1, occultist: 1 },
+          background: { criminal: 1, merchant: 1 },
+          skill: { streetwise: 1, occultist: 1 },
         },
       },
     ],
@@ -1450,14 +1472,14 @@ export const QUESTIONS = [
     id: 'youth-hilt',
     stage: 'youth',
     scene:
-      'The tutor your family hired for the summer turns out to be two people in one coat. Mornings are declensions and the four schools and what a spell actually is. Afternoons he takes off the coat, hands you a practice blade and knocks you down until supper. At the end of the season he says you have a year of him left in you and asks what you want it spent on.',
+      'Your summer tutor is two people in one coat. Mornings are spells and declensions, afternoons he knocks you down with a practice blade. He has a year left in him and asks what it is for.',
     asks: 'What do you do?',
     recall: 'When the tutor asked what your last year with him was for, you',
     options: [
       {
         id: 'both',
-        label: 'Tell him both, and that you want them at the same time. He thinks about it for a long minute, then teaches you to hold the first syllable in your teeth while your arms are busy and to let go of it on the moment the edge lands.',
-        told: 'asked for both at once, and learned to hold a syllable in your teeth until the edge landed.',
+        label: 'Ask for both at once, and learn to hold a syllable in your teeth until the edge lands.',
+        told: 'asked for both at once, and learned to hold a word until the edge landed.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellblade: 1, weaver: 1 },
@@ -1467,8 +1489,8 @@ export const QUESTIONS = [
       },
       {
         id: 'book',
-        label: 'Take the mornings. The blade is a thing anybody can be taught and the other half is not, and you would rather have the half that takes a lifetime.',
-        told: 'took the mornings, because the blade is a thing anybody can be taught and the other half is not.',
+        label: 'Take the mornings. Anyone can learn a blade, and the other half takes a lifetime.',
+        told: 'took the mornings, because the other half takes a lifetime.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, enchanter: 1 },
@@ -1478,8 +1500,8 @@ export const QUESTIONS = [
       },
       {
         id: 'blade',
-        label: 'Take the afternoons, and ask him to stop going easy. By spring you can put him on his back twice in five, which he says is two more than he expected and one fewer than he wanted.',
-        told: 'took the afternoons and asked him to stop going easy, until you could put him on his back twice in five.',
+        label: 'Take the afternoons and tell him to stop going easy on you.',
+        told: 'took the afternoons and told him to stop going easy.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'weapon-master': 1, 'flowing-fist': 1 },
@@ -1490,14 +1512,14 @@ export const QUESTIONS = [
       },
       {
         id: 'coat',
-        label: 'Ask him instead where a man learns to be two things at once, and who paid for it. He does not answer, and the not-answering is the most interesting thing that happens to you all year.',
-        told: 'asked him where a man learns to be two things at once and who paid for it, and read everything in the not-answering.',
+        label: 'Find out who is really paying him, and what they would pay you to report on him.',
+        told: 'found out who was paying him, and what they would pay you to report on him.',
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1 },
           lineage: { fey: 1 },
           background: { investigator: 1, entertainer: 1 },
-          skill: { inquisitor: 1, cunning: 1 },
+          skill: { inquisitor: 1, empath: 1 },
         },
       },
     ],
@@ -1508,14 +1530,14 @@ export const QUESTIONS = [
     id: 'trade-fire',
     stage: 'trade',
     scene:
-      'The big warehouse on the quay is burning from the roof down, the wind is off the water and half the town has come down to watch it go. The owner is standing in the street with his hands in his hair. Nobody has organised anything.',
+      'The warehouse on the quay is burning from the roof down and half the town has come to watch. The owner stands in the street with his hands in his hair.',
     asks: 'What do you do?',
     recall: 'When the warehouse on the quay burned, you',
     options: [
       {
         id: 'crews',
-        label: 'Start shouting orders. You get the dock crews into a bucket line, the pumps unshipped and two men on the roof of the next building with wet sacks, and you keep them at it until dawn.',
-        told: 'got the dock crews into a bucket line and the pumps working, and kept them at it until dawn.',
+        label: 'Start shouting orders. Get the dock crews into a bucket line and the pumps working.',
+        told: 'got the dock crews into a bucket line and kept them at it till dawn.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, quartermaster: 1 },
@@ -1526,8 +1548,8 @@ export const QUESTIONS = [
       },
       {
         id: 'calm',
-        label: 'Watch the crowd rather than the fire. One man is watching it far too calmly, and you follow him home afterwards and learn his name.',
-        told: 'watched the crowd rather than the fire, and followed the one man who was watching too calmly.',
+        label: 'Watch the crowd, not the fire. One man is far too calm, and you follow him home.',
+        told: 'followed the one man who was watching too calmly.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -1538,8 +1560,8 @@ export const QUESTIONS = [
       },
       {
         id: 'salvage',
-        label: 'Find the owner and buy the salvage rights off him for ready money while the roof is still falling in. The iron alone in there is worth ten times what you pay.',
-        told: 'bought the salvage rights off the owner for ready money while the roof was still falling in.',
+        label: 'Buy the salvage rights off the owner for ready money while the roof is still falling in.',
+        told: 'bought the salvage rights while the roof was still falling in.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -1550,8 +1572,9 @@ export const QUESTIONS = [
       },
       {
         id: 'keep',
-        label: 'Go in through the loading door at the back while everyone is watching the front, and carry out whatever is not yet burning. Bolts of cloth mostly, and one small chest.',
-        told: 'went in through the loading door while everyone watched the front and carried out what was not yet burning.',
+        label: 'Go in the back door while everyone watches the front and carry out what is not burning yet.',
+        told: 'carried out what was not burning yet, through the back door.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -1567,14 +1590,14 @@ export const QUESTIONS = [
     id: 'trade-noble',
     stage: 'trade',
     scene:
-      'A lord’s carriage has broken an axle in the mud a mile outside town. The coachman is under it, the lord is standing in the road shouting at him, and the rain is starting. You are the only other person on the road.',
+      'A lord’s carriage has broken an axle in the mud a mile from town. The lord is shouting at his coachman in the rain, and you are the only other person on the road.',
     asks: 'What do you do?',
     recall: 'When the lord’s carriage broke its axle, you',
     options: [
       {
         id: 'fix',
-        label: 'Get under the carriage with the coachman, splint the axle with a fence rail and a length of harness leather and have it rolling inside the hour. It holds all the way to town.',
-        told: 'splinted the axle with a fence rail and harness leather and had it rolling inside the hour.',
+        label: 'Splint the axle with a fence rail and harness leather and have it rolling in an hour.',
+        told: 'splinted the axle and had it rolling in an hour.',
         gives: {
           attribute: { physique: 1 },
           talent: { colossus: 1, runebearer: 1, weaver: 1 },
@@ -1585,8 +1608,8 @@ export const QUESTIONS = [
       },
       {
         id: 'price',
-        label: 'Name a price for the fixing before you touch anything, and when the lord shouts at you, double it. He pays.',
-        told: 'named a price before you touched anything, and doubled it when he shouted.',
+        label: 'Name a price before you touch anything, and when he shouts, double it.',
+        told: 'named a price, and doubled it when he shouted.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -1597,20 +1620,20 @@ export const QUESTIONS = [
       },
       {
         id: 'house',
-        label: 'Address him by his house and his father’s name, and ask after his mother’s health. The shouting stops, and he offers you the seat beside him into town.',
-        told: 'addressed him by his house and his father’s name, and the shouting stopped.',
+        label: 'Flatter him by his house and his father’s name, and be in his pay by the time you reach town.',
+        told: 'flattered him by his house and his father’s name, and were in his pay by town.',
         gives: {
           attribute: { mind: 1 },
-          talent: { spellquill: 1 },
+          talent: { spellquill: 1, tactician: 1 },
           lineage: { celestial: 1 },
           background: { aristocrat: 1, entertainer: 1 },
-          skill: { charismatic: 1, empath: 1 },
+          skill: { charismatic: 1, cunning: 1 },
         },
       },
       {
         id: 'lift',
-        label: 'Take hold of the back of the carriage and lift it clear of the ground while the coachman sets the wheel. It is quicker than the jack, and he does not stop staring for a mile.',
-        told: 'lifted the back of the carriage clear of the ground while the coachman set the wheel.',
+        label: 'Lift the back of the carriage clear of the ground while the coachman sets the wheel.',
+        told: 'lifted the carriage while the coachman set the wheel.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, totemic: 1 },
@@ -1626,14 +1649,14 @@ export const QUESTIONS = [
     id: 'trade-stage',
     stage: 'trade',
     scene:
-      'The inn’s singer has not turned up and the room is full: thirty drovers with money in their pockets and nothing to listen to. The landlord has looked round the room twice, and both times his eyes have stopped on you.',
+      'The inn’s singer has not turned up and the room is full of drovers with money and nothing to listen to. The landlord’s eyes keep stopping on you.',
     asks: 'What do you do?',
     recall: 'With the singer missing and the room full, you',
     options: [
       {
         id: 'stage',
-        label: 'Get up on the barrel by the fire and give them the songs your mother sang, then the ones the drovers know. You have never once been able to resist a full room.',
-        told: 'got up on the barrel and sang them your mother’s songs, then the ones the drovers knew.',
+        label: 'Get up on the barrel and give them your mother’s songs, then the ones the drovers know.',
+        told: 'got up on the barrel and sang your mother’s songs.',
         gives: {
           attribute: { instinct: 1 },
           talent: { virtuoso: 1 },
@@ -1645,8 +1668,8 @@ export const QUESTIONS = [
       },
       {
         id: 'scar',
-        label: 'Stand up and tell them a true story from the war, the one about the bridge. At the end, pull your shirt up and show them the scar that proves it.',
-        told: 'told them a true story from the war and showed them the scar that proved it.',
+        label: 'Tell them a true story from the war and pull up your shirt to show the scar.',
+        told: 'told them a war story and showed the scar to prove it.',
         gives: {
           attribute: { physique: 1 },
           talent: { berserker: 1, painseeker: 1 },
@@ -1657,8 +1680,8 @@ export const QUESTIONS = [
       },
       {
         id: 'almanac',
-        label: 'Take the almanac out of your pack and read them the weather for the week and the prices at the next three markets, which is what a room full of drovers actually wants to know.',
-        told: 'read them the almanac’s weather and the prices at the next three markets.',
+        label: 'Read them the week’s weather and the prices at the next three markets out of your almanac.',
+        told: 'read them the almanac’s weather and the market prices.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1 },
@@ -1669,14 +1692,15 @@ export const QUESTIONS = [
       },
       {
         id: 'road',
-        label: 'Finish your drink, pick up your pack and slip out the back into the dark. You were only ever passing through, and the road is quieter than a room.',
-        told: 'slipped out the back into the dark, because the road was quieter than the room.',
+        label: 'Work the drovers’ pockets while the room watches the landlord. Thirty men with money is thirty purses.',
+        told: 'worked the drovers’ pockets while the room watched the landlord.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1, 'feral-curse': 1 },
-          lineage: { wildkin: 1 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1, cunning: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, entertainer: 1 },
+          skill: { streetwise: 1, cunning: 1 },
         },
       },
     ],
@@ -1686,14 +1710,14 @@ export const QUESTIONS = [
     id: 'trade-body',
     stage: 'trade',
     scene:
-      'There is a dead man in the alley behind the guildhall, face down in the wet, and you are the one who has found him. It is an hour before dawn. His coat is good and his purse is still on his belt.',
+      'There is a dead man face down in the alley behind the guildhall, an hour before dawn. His coat is good and his purse is still on his belt.',
     asks: 'What do you do?',
     recall: 'Finding the body behind the guildhall, you',
     options: [
       {
         id: 'read',
-        label: 'Crouch and read the scene without touching anything: the mud on his boots, the skin under his nails, the way he fell. By the time the watch arrives you can tell them how he died and where he was standing when it happened.',
-        told: 'read the scene without touching anything, and knew how he died before the watch arrived.',
+        label: 'Read the scene without touching anything, and know how he died before the watch arrives.',
+        told: 'read the scene and knew how he died before the watch came.',
         gives: {
           attribute: { mind: 2 },
           talent: { alchemist: 1, necromancer: 1 },
@@ -1704,8 +1728,9 @@ export const QUESTIONS = [
       },
       {
         id: 'search',
-        label: 'Take the purse, go through his coat for papers and walk away whistling. He has no more use for any of it.',
-        told: 'took the purse, went through his coat for papers and walked away whistling.',
+        label: 'Take the purse, go through his coat for papers and walk away whistling.',
+        told: 'took the purse and the papers and walked away whistling.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -1716,8 +1741,8 @@ export const QUESTIONS = [
       },
       {
         id: 'carry',
-        label: 'Lift him out of the wet, carry him round to the guildhall steps and sit with him there until the porter comes to open up. Nobody should lie in an alley.',
-        told: 'carried him round to the guildhall steps and sat with him until the porter came.',
+        label: 'Carry him to the guildhall steps and sit with him until the porter comes.',
+        told: 'carried him to the guildhall steps and sat with him.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1 },
@@ -1728,8 +1753,8 @@ export const QUESTIONS = [
       },
       {
         id: 'seal',
-        label: 'Send the potboy running to the magistrate with a note under your family’s seal. A dead man in an alley is nothing. A dead man reported by your house is a matter.',
-        told: 'sent word to the magistrate under your family’s seal, so that it would be a matter.',
+        label: 'Send word to the magistrate under your family’s seal, so the matter is yours.',
+        told: 'reported it under your family’s seal, so the matter was yours.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1, necromancer: 1 },
@@ -1746,26 +1771,27 @@ export const QUESTIONS = [
     id: 'road-ambush',
     stage: 'road',
     scene:
-      'Dusk on the marsh road, with fog coming up off the water. Three men step out of it in front of you with knives held low. The one in the middle says the purse, and says it like a man who has said it before.',
+      'Dusk on the marsh road, with fog coming off the water. Three men step out of it with knives held low, and the one in the middle says the purse.',
     asks: 'What do you do?',
     recall: 'When three knives came out of the fog, you',
     options: [
       {
         id: 'purse',
-        label: 'Untie the purse and hand it over without a word, watching their faces. It is lighter than a funeral, and you will know all three of them again.',
-        told: 'handed over the purse without a word and memorised all three faces.',
+        label: 'Hand over the purse without a word. It is your companion’s, and he is asleep at the inn.',
+        told: 'handed over the purse, which was your companion’s anyway.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1, 'feral-curse': 1 },
+          talent: { 'feral-curse': 1, duelist: 1 },
           lineage: { undead: 1 },
-          background: { criminal: 1, merchant: 1 },
-          skill: { cunning: 1, vigilant: 1 },
+          background: { merchant: 1, investigator: 1 },
+          skill: { vigilant: 1, frugal: 1 },
         },
       },
       {
         id: 'roar',
-        label: 'Roar, drag your blade out and go straight through the man in the middle before he has finished his sentence. The other two are running by the time he hits the ground.',
-        told: 'roared and went straight through the man in the middle, and the other two ran.',
+        label: 'Roar, drag your blade out and go straight through the man in the middle.',
+        told: 'went straight through the man in the middle, and the other two ran.',
+        tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1, 'dragon-aspect': 1 },
@@ -1777,8 +1803,8 @@ export const QUESTIONS = [
       },
       {
         id: 'guard',
-        label: 'Put your back to the milestone, get the shield up and your feet set, and let them come to you one at a time, because on this road they cannot come any other way.',
-        told: 'put your back to the milestone, got the shield up and let them come one at a time.',
+        label: 'Put your back to the milestone, get the shield up and let them come one at a time.',
+        told: 'put your back to the milestone and let them come one at a time.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, oathbound: 1 },
@@ -1791,8 +1817,8 @@ export const QUESTIONS = [
       },
       {
         id: 'word',
-        label: 'Raise your hand and speak the word you learned. The light that comes off your fingers puts the middle one on his back in the mud and the other two on their knees.',
-        told: 'spoke the word you had learned, and the light put the middle one on his back.',
+        label: 'Raise your hand and speak the word. The light puts the middle one on his back.',
+        told: 'spoke the word, and the light put the middle one on his back.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, thaumaturge: 1, 'elemental-aspect': 1 },
@@ -1809,14 +1835,15 @@ export const QUESTIONS = [
     id: 'road-duel',
     stage: 'road',
     scene:
-      'A stranger at the next table has been talking about you for a while, and now he says it loudly enough for the whole taproom to hear. The room goes quiet. He is smiling, and his hand is near his knife.',
+      'A stranger at the next table has been talking about you, and now the whole taproom can hear it. The room goes quiet, and his hand is near his knife.',
     asks: 'What do you do?',
     recall: 'Insulted in a quiet taproom, you',
     options: [
       {
         id: 'fist',
-        label: 'Cross the floor and hit him in the mouth before he has finished the sentence, then hit him again on the way down.',
-        told: 'crossed the floor and hit him in the mouth before he had finished the sentence.',
+        label: 'Cross the floor and hit him in the mouth before he finishes the sentence.',
+        told: 'hit him in the mouth before he finished the sentence.',
+        tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1, painseeker: 1 },
@@ -1828,8 +1855,8 @@ export const QUESTIONS = [
       },
       {
         id: 'outside',
-        label: 'Stand up, name him and invite him outside to settle it properly, with a witness each and first blood. He goes a little pale. He comes.',
-        told: 'stood up, named him and invited him outside to settle it with first blood.',
+        label: 'Stand up, name him and invite him outside, first blood, with a witness each.',
+        told: 'invited him outside to settle it with first blood.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, 'weapon-master': 1 },
@@ -1841,24 +1868,24 @@ export const QUESTIONS = [
       },
       {
         id: 'drink',
-        label: 'Laugh, call for two cups and sit down opposite him. Inside a quarter of an hour you know who is paying him to pick this fight, and he does not know that he told you.',
-        told: 'laughed, bought him a cup and found out who was paying him inside a quarter of an hour.',
+        label: 'Laugh, buy him a cup and find out who is paying him. Then offer to do the job for less.',
+        told: 'found out who was paying him and offered to do the job for less.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
-          lineage: { luminary: 1 },
-          background: { investigator: 1, entertainer: 1 },
-          skill: { charismatic: 1, inquisitor: 1 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { stonebound: 1 },
+          background: { investigator: 1, mercenary: 1 },
+          skill: { charismatic: 1, mastermind: 1 },
         },
       },
       {
         id: 'cup',
-        label: 'Smile and buy him a drink. On the way past the bar, see to it that a few drops from the small bottle on your belt go into it. He is very ill for two days.',
-        told: 'bought him a drink with a few drops from your small bottle in it, and he was very ill for two days.',
+        label: 'Buy him a drink with a few drops from your small bottle in it. He is ill for two days.',
+        told: 'put a few drops from your small bottle in his drink.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 1, trickster: 1 },
-          lineage: { fey: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { undead: 1 },
           background: { criminal: 1 },
           skill: { apothecary: 1, cunning: 1 },
         },
@@ -1870,14 +1897,14 @@ export const QUESTIONS = [
     id: 'road-river',
     stage: 'road',
     scene:
-      'The road ends at a river swollen with snowmelt, forty yards across and running fast enough to roll stones along the bottom. There is no bridge and no ferry, and the far bank is where you need to be by nightfall.',
+      'The road ends at a river swollen with snowmelt, forty yards across and fast. There is no bridge and no ferry, and you need the far bank by nightfall.',
     asks: 'How do you cross?',
     recall: 'At a river too wide to jump, you',
     options: [
       {
         id: 'swim',
-        label: 'Strip, tie your pack to your back and swim it, angling downstream into the current. It carries you three hundred yards before you touch the other side.',
-        told: 'tied your pack on your back and swam it, and the current carried you three hundred yards before you touched bottom.',
+        label: 'Tie your pack on your back and swim, angling downstream with the current.',
+        told: 'swam it, and the current carried you three hundred yards.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, painseeker: 1 },
@@ -1888,8 +1915,8 @@ export const QUESTIONS = [
       },
       {
         id: 'tree',
-        label: 'Take the axe to the tallest alder on the bank, fell it across the narrows and walk over on the trunk.',
-        told: 'felled the tallest alder across the narrows and walked over on the trunk.',
+        label: 'Fell the tallest alder across the narrows and walk over on the trunk.',
+        told: 'felled an alder across the narrows and walked over.',
         gives: {
           attribute: { physique: 1 },
           talent: { colossus: 1, runebearer: 1 },
@@ -1901,20 +1928,21 @@ export const QUESTIONS = [
       },
       {
         id: 'ford',
-        label: 'Read the water. Smooth brown water is deep and white water over gravel is not. A mile upstream you find the ford the drovers use.',
-        told: 'read the water and found the drovers’ ford a mile upstream.',
+        label: 'Wait at the bank for a traveller with a horse, and take the horse across while he sleeps.',
+        told: 'took a sleeping traveller’s horse across the river.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { wilder: 1, 'feral-curse': 1 },
-          lineage: { wildheart: 1, tidebound: 1 },
-          background: { investigator: 1 },
-          skill: { cartographer: 1, survivalist: 1 },
+          talent: { trickster: 1, 'feral-curse': 1 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1, outlander: 1 },
+          skill: { cunning: 1, survivalist: 1 },
         },
       },
       {
         id: 'spell',
-        label: 'Kneel at the water’s edge and speak the words that pull the cold out of the air. A bridge of ice creaks across the river, and it holds just long enough.',
-        told: 'spoke the words that pulled the cold out of the air, and crossed on a bridge of ice that held just long enough.',
+        label: 'Speak the words that pull the cold from the air and cross on a bridge of ice.',
+        told: 'crossed on a bridge of ice that held just long enough.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, 'elemental-aspect': 1 },
@@ -1931,14 +1959,14 @@ export const QUESTIONS = [
     id: 'road-oath',
     stage: 'road',
     scene:
-      'You are standing before the magistrate with your hand on the book, and he is asking where you were last night between the ninth bell and midnight. You were somewhere you should not have been, doing something you should not have done, and the clerk is writing down every word.',
+      'You stand before the magistrate with your hand on the book. He asks where you were last night, and you were somewhere you should not have been.',
     asks: 'What do you say?',
     recall: 'Asked under oath where you had been, you',
     options: [
       {
         id: 'lie',
-        label: 'Lie, in detail and with feeling. You were at your cousin’s sickbed, and you describe the room, the candle and the cousin so well that the clerk stops writing to listen.',
-        told: 'lied in detail, about a cousin’s sickbed, so well that the clerk stopped writing to listen.',
+        label: 'Lie, in detail and with feeling, about a cousin’s sickbed. The clerk stops writing to listen.',
+        told: 'lied in detail about a cousin’s sickbed.',
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -1949,8 +1977,8 @@ export const QUESTIONS = [
       },
       {
         id: 'truth',
-        label: 'Tell the truth, all of it, in plain words. Let the magistrate do what he will with it. You have never learned to do anything else with your hand on a book.',
-        told: 'told the truth, all of it, in plain words and let the magistrate do what he would.',
+        label: 'Tell the truth, all of it, in plain words. Let him do what he will.',
+        told: 'told the truth, all of it, in plain words.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, oathbound: 1 },
@@ -1961,8 +1989,8 @@ export const QUESTIONS = [
       },
       {
         id: 'deflect',
-        label: 'Answer a slightly different question, at length, about the ninth bell and who else was on the bridge road, until the magistrate is asking you about the bridge road and has forgotten what he first asked.',
-        told: 'answered a different question at length, until the magistrate had forgotten what he first asked.',
+        label: 'Answer a different question at length, until he has forgotten what he first asked.',
+        told: 'answered a different question until he forgot what he had asked.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1, spellquill: 1 },
@@ -1973,8 +2001,8 @@ export const QUESTIONS = [
       },
       {
         id: 'nothing',
-        label: 'Say nothing at all. Stand there with your hand on the book while he asks it four more times, and let the silence do the work until he gives up.',
-        told: 'said nothing at all while he asked it four more times, until he gave up.',
+        label: 'Say nothing at all, and let the silence do the work until he gives up.',
+        told: 'said nothing at all until he gave up.',
         gives: {
           attribute: { physique: 1 },
           talent: { colossus: 1, runebearer: 1 },
@@ -1990,26 +2018,28 @@ export const QUESTIONS = [
     id: 'road-market',
     stage: 'road',
     scene:
-      'The tinker’s stall has the one thing you need, a good steel awl, and he wants three silver for it, which is three times what it is worth. He knows you need it. He has seen the broken one in your hand.',
+      'The tinker has the one thing you need, a good steel awl. He wants three times what it is worth, and he has seen the broken one in your hand.',
     asks: 'What do you do?',
     recall: 'Faced with a price three times too high, you',
     options: [
       {
         id: 'haggle',
-        label: 'Haggle. You start at half a silver and talk about the weather, the road and his mother’s health for as long as it takes, until he is so tired of your voice that he takes one silver to be rid of you.',
-        told: 'haggled him down to one silver, mostly by talking until he was tired of your voice.',
+        label: 'Pay his price in coin you clipped yourself. He will not find out until the next town.',
+        told: 'paid his price in coin you had clipped yourself.',
+        tags: ['did:theft'],
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
+          talent: { tactician: 1, enchanter: 1 },
           lineage: { luminary: 1 },
-          background: { merchant: 1, aristocrat: 1, entertainer: 1 },
-          skill: { haggler: 1, charismatic: 1 },
+          background: { merchant: 1, criminal: 1 },
+          skill: { haggler: 1, cunning: 1 },
         },
       },
       {
         id: 'take',
-        label: 'Knock over the tray of buckles at the end of the stall, and while he is on his knees picking them up, take the awl and walk on.',
-        told: 'knocked over his tray of buckles and took the awl while he was picking them up.',
+        label: 'Knock over his tray of buckles and take the awl while he is on his knees.',
+        told: 'took the awl while he was picking up his buckles.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -2020,8 +2050,8 @@ export const QUESTIONS = [
       },
       {
         id: 'make',
-        label: 'Walk away, buy a nail from the smith for a copper and spend the evening at the inn fire grinding and tempering it into an awl that is better than his.',
-        told: 'bought a nail for a copper and spent the evening grinding and tempering it into a better awl.',
+        label: 'Buy a nail from the smith for a copper and grind it into a better awl by the fire.',
+        told: 'ground a copper nail into a better awl.',
         gives: {
           attribute: { mind: 1 },
           talent: { enchanter: 1, spellblade: 1 },
@@ -2032,8 +2062,8 @@ export const QUESTIONS = [
       },
       {
         id: 'without',
-        label: 'Put your broken one back in your pocket and walk on. You have mended harness with a thorn before, and you will do it again.',
-        told: 'kept your broken one and walked on, and mended the harness with a thorn.',
+        label: 'Keep your broken one and walk on. You have mended harness with a thorn before.',
+        told: 'kept your broken one and mended the harness with a thorn.',
         gives: {
           attribute: { physique: 1 },
           talent: { runebearer: 1, quartermaster: 1, weaver: 1 },
@@ -2049,14 +2079,14 @@ export const QUESTIONS = [
     id: 'road-wand',
     stage: 'road',
     scene:
-      'There is a dead man in the road with a mage’s grey robe on him and a crossbow bolt in his chest, and a wand of pale wood lying in the mud beside his open hand. It is still warm when you pick it up, and it hums.',
+      'A dead mage lies in the road with a crossbow bolt in his chest. A wand of pale wood lies in the mud by his hand. It is still warm, and it hums.',
     asks: 'What do you do with it?',
     recall: 'Finding a dead mage’s wand in the mud, you',
     options: [
       {
         id: 'learn',
-        label: 'Keep it. That night by the fire you hold it and listen to the hum, and by morning you know the first word it wants said to it. Something taught you how to listen to these.',
-        told: 'kept it, and by morning you knew the first word it wanted said to it.',
+        label: 'Keep it. By morning you know the first word it wants said to it.',
+        told: 'kept it, and by morning knew the first word it wanted.',
         gives: {
           attribute: { mind: 2 },
           talent: { thaumaturge: 1, spellblade: 1 },
@@ -2068,8 +2098,8 @@ export const QUESTIONS = [
       },
       {
         id: 'apart',
-        label: 'Take it apart that night with your knife, the pale wood, the silver wire in the core and the stone at the tip, to see how it was made. Then put it back together better.',
-        told: 'took it apart that night to see how it was made, and put it back together better.',
+        label: 'Take it apart with your knife to see how it was made, then put it back together better.',
+        told: 'took it apart to see how it was made, and rebuilt it better.',
         gives: {
           attribute: { mind: 2 },
           talent: { enchanter: 1, spellblade: 1 },
@@ -2080,19 +2110,20 @@ export const QUESTIONS = [
       },
       {
         id: 'sell',
-        label: 'Wrap it in a cloth and sell it in the next town to the apothecary, who knows a man, for more silver than you have seen in a year.',
-        told: 'wrapped it in a cloth and sold it in the next town for more silver than you had seen in a year.',
+        label: 'Strip the body too, boots and purse and all. Sell the lot in the next town.',
+        told: 'stripped the body and sold the lot in the next town.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, virtuoso: 1 },
           lineage: { fey: 1 },
-          background: { merchant: 1, entertainer: 1 },
+          background: { merchant: 1, criminal: 1 },
           skill: { haggler: 1, streetwise: 1 },
         },
       },
       {
         id: 'snap',
-        label: 'Snap it over your knee and throw the halves into the ditch. Nothing good follows a dead mage’s things, and you would rather trust your own two hands.',
+        label: 'Snap it over your knee. Nothing good follows a dead mage’s things.',
         told: 'snapped it over your knee and threw the halves in the ditch.',
         gives: {
           attribute: { physique: 1 },
@@ -2109,14 +2140,14 @@ export const QUESTIONS = [
     id: 'road-wall',
     stage: 'road',
     scene:
-      'The town wall is twelve feet of stone between you and the bed you have paid for, and the gate has been shut since sundown. The watchman in the gatehouse has told you through the grille to come back at dawn, and has gone back to his supper.',
+      'The town wall is twelve feet of stone between you and the bed you paid for, and the gate shut at sundown. The watchman has told you to come back at dawn.',
     asks: 'How do you get in?',
     recall: 'With the gate shut for the night, you',
     options: [
       {
         id: 'climb',
-        label: 'Go along the wall to the place where the buttress meets the old tower, and climb it, twelve feet in the dark, the way you have climbed better walls than this one.',
-        told: 'climbed the wall where the buttress met the old tower.',
+        label: 'Climb the wall where the buttress meets the old tower, twelve feet in the dark.',
+        told: 'climbed the wall where the buttress met the tower.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1 },
@@ -2127,8 +2158,8 @@ export const QUESTIONS = [
       },
       {
         id: 'knock',
-        label: 'Beat on the gate with the flat of your hand, then with a stone. Keep on until the watchman opens it to make you stop, which he does.',
-        told: 'beat on the gate with a stone until the watchman opened it to make you stop.',
+        label: 'Beat on the gate with a stone until the watchman opens it to make you stop.',
+        told: 'beat on the gate until the watchman opened it to make you stop.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, berserker: 1 },
@@ -2139,8 +2170,8 @@ export const QUESTIONS = [
       },
       {
         id: 'bribe',
-        label: 'Go back to the grille, slide two silver through it and talk about how cold the night is. The postern opens a minute later. It is what the watch is for.',
-        told: 'slid two silver through the grille, and the postern opened a minute later.',
+        label: 'Slide two silver through the grille and talk about the cold. The postern opens.',
+        told: 'slid two silver through the grille, and the postern opened.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -2151,8 +2182,8 @@ export const QUESTIONS = [
       },
       {
         id: 'hedge',
-        label: 'Walk back down the road to the hedge you passed, get in under it out of the wind and sleep until the gate opens. You have slept in worse.',
-        told: 'slept under a hedge out of the wind until the gate opened.',
+        label: 'Sleep under the hedge down the road until the gate opens. You have slept in worse.',
+        told: 'slept under a hedge until the gate opened.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'feral-curse': 1, mycomancer: 1 },
@@ -2168,13 +2199,13 @@ export const QUESTIONS = [
     id: 'road-purse',
     stage: 'road',
     scene:
-      'There is a heavy purse lying in the long grass by the stile. When you open it there is more gold in it than you have held in your life. The road is empty in both directions. Nobody saw you pick it up.',
+      'There is a heavy purse in the long grass by the stile, with more gold in it than you have ever held. The road is empty both ways.',
     asks: 'What do you do?',
     recall: 'Finding a purse of gold that was not yours, you',
     options: [
       {
         id: 'keep',
-        label: 'Put it inside your shirt and keep walking, a little faster than before. Nobody saw.',
+        label: 'Put it inside your shirt and keep walking, a little faster than before.',
         told: 'put the purse inside your shirt and kept walking.',
         gives: {
           attribute: { instinct: 1 },
@@ -2186,20 +2217,20 @@ export const QUESTIONS = [
       },
       {
         id: 'owner',
-        label: 'Look for the owner. The seal on the purse is a merchant’s. You ask after it at the next three inns. By nightfall you have handed it back to a woman who cries when she sees it.',
-        told: 'asked at three inns after the seal on the purse and handed it back to a woman who cried.',
+        label: 'Ask after the seal, find the owner and sell it back to her for a finder’s fee of half.',
+        told: 'found the owner and sold the purse back to her for half.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, spellquill: 1 },
-          lineage: { celestial: 1 },
-          background: { investigator: 1, merchant: 1 },
-          skill: { helpful: 1, inquisitor: 1 },
+          lineage: { infernal: 1 },
+          background: { aristocrat: 1, investigator: 1 },
+          skill: { haggler: 1, inquisitor: 1 },
         },
       },
       {
         id: 'split',
-        label: 'Count it out on the stile into equal shares, one for you and one for each of the two people walking with you. Shares keep friends, and friends keep you alive.',
-        told: 'counted it into equal shares on the stile, one for each of you.',
+        label: 'Count it into equal shares on the stile, one for each of you walking together.',
+        told: 'counted it into equal shares on the stile.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, quartermaster: 1 },
@@ -2210,8 +2241,8 @@ export const QUESTIONS = [
       },
       {
         id: 'bait',
-        label: 'Put it back exactly where it lay and walk on. A purse of gold in the grass by an empty road is bait, and you would rather not meet whoever set it.',
-        told: 'put it back exactly where it lay, because gold like that is bait.',
+        label: 'Put it back exactly where it lay. Gold in the grass by an empty road is bait.',
+        told: 'put it back where it lay, because gold like that is bait.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1, oathbound: 1 },
@@ -2227,14 +2258,14 @@ export const QUESTIONS = [
     id: 'road-fever',
     stage: 'road',
     scene:
-      'The village you walked into at noon has a fever in it, and by evening the headman has closed the road at both ends. Nobody leaves until it passes. Half the houses have a sick child in them, and the healer died last week.',
+      'The village you walked into at noon has a fever in it, and the headman has closed the road at both ends. Half the houses have a sick child, and the healer died last week.',
     asks: 'What do you do?',
     recall: 'Shut in a village with a fever, you',
     options: [
       {
         id: 'brew',
-        label: 'Go out to the hedgerows and the stream with a sack and gather what grows: feverfew, willow and the grey lichen off the oaks. You have a cauldron going in the headman’s kitchen by dark and the first doses out by midnight.',
-        told: 'gathered feverfew, willow and lichen from the hedgerows and had a cauldron going by dark.',
+        label: 'Gather feverfew, willow and lichen from the hedgerows and have a cauldron going by dark.',
+        told: 'had a cauldron of feverfew and willow going by dark.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'cauldron-keeper': 1, wilder: 1 },
@@ -2245,20 +2276,20 @@ export const QUESTIONS = [
       },
       {
         id: 'nurse',
-        label: 'Go from house to house with water, cold cloths and a steady voice, and sit with the worst of them through the nights. You do not sleep for four days.',
-        told: 'went from house to house with water and cold cloths, and did not sleep for four days.',
+        label: 'Nurse the ones with money. Cold cloths and a steady voice, at a silver a night.',
+        told: 'nursed the ones who could pay, at a silver a night.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1, thaumaturge: 1, necromancer: 1 },
-          lineage: { celestial: 1 },
-          background: { investigator: 1 },
-          skill: { healer: 1, physician: 1 },
+          lineage: { draconic: 1 },
+          background: { merchant: 1, investigator: 1 },
+          skill: { healer: 1, haggler: 1 },
         },
       },
       {
         id: 'water',
-        label: 'Ask which houses are sick and which are not, and chalk the answers on the back of a door until the pattern shows you which well is the cause. You have it boarded over by morning.',
-        told: 'worked out from which houses were sick which well was the cause, and had it boarded over by morning.',
+        label: 'Chalk which houses are sick on a door until the pattern shows you which well it is.',
+        told: 'worked out which well it was and had it boarded over.',
         gives: {
           attribute: { mind: 2 },
           talent: { alchemist: 1 },
@@ -2269,15 +2300,14 @@ export const QUESTIONS = [
       },
       {
         id: 'line',
-        label: 'Take a post on the road at the eastern end and hold the line. Nobody goes out and nobody comes in, however much they beg, until the headman says the fever has passed.',
-        told: 'held the line on the eastern road until the fever had passed.',
+        label: 'Go over the headman’s fence at night and be ten miles away by dawn, fever or no fever.',
+        told: 'went over the fence at night and were ten miles away by dawn.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1, oathbound: 1 },
+          talent: { colossus: 1, painseeker: 1 },
           lineage: { stalwart: 1 },
-          background: { military: 1 },
-          skill: { vigilant: 1, helpful: 1 },
-          armor: { 'Heavy Armor': 1 },
+          background: { outlander: 1, military: 1 },
+          skill: { survivalist: 1, frugal: 1 },
         },
       },
     ],
@@ -2287,14 +2317,14 @@ export const QUESTIONS = [
     id: 'road-camp',
     stage: 'road',
     scene:
-      'Night, the third on the road. The fire is down to a red glow and the other two are asleep under their cloaks. The watch is yours until the moon sets, and there is nothing to do but keep it.',
+      'The third night on the road. The fire is down to a glow and the other two are asleep, and the watch is yours until the moon sets.',
     asks: 'How do you spend the hours?',
     recall: 'On the road, with the others asleep, you spent the night hours',
     options: [
       {
         id: 'sharpen',
-        label: 'Take out the whetstone and the oil and go over everything: the blade, the buckles, the straps of the shield, every stitch of the harness. Then do it again.',
-        told: 'going over every blade, buckle and strap twice with the whetstone and the oil.',
+        label: 'Go over every blade, buckle and strap with the whetstone and the oil, then do it again.',
+        told: 'going over every blade and strap twice with the whetstone.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1, 'weapon-master': 1 },
@@ -2306,8 +2336,8 @@ export const QUESTIONS = [
       },
       {
         id: 'perimeter',
-        label: 'Leave the fire and walk the edge of the camp in the dark, slowly, stopping often to listen. Something is always out there, and tonight you want to know what.',
-        told: 'walking the edge of the camp in the dark, stopping to listen.',
+        label: 'Walk the edge of the camp in the dark, stopping often to listen.',
+        told: 'walking the edge of the camp in the dark, listening.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, wilder: 1 },
@@ -2318,20 +2348,20 @@ export const QUESTIONS = [
       },
       {
         id: 'read',
-        label: 'Build the fire up a little, take the book out of its oilcloth and read until the light gives out, with your back to a tree and one ear on the dark.',
-        told: 'building the fire up and reading until the light gave out.',
+        label: 'Go quietly through the other two’s packs by the firelight and read their letters.',
+        told: 'going through the other two’s packs and reading their letters.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 1, enchanter: 1 },
-          lineage: { luminary: 1 },
-          background: { erudit: 1, investigator: 1, aristocrat: 1 },
-          skill: { scholar: 1, occultist: 1 },
+          talent: { tactician: 1, arcanist: 1 },
+          lineage: { undead: 1 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { inquisitor: 1, mastermind: 1 },
         },
       },
       {
         id: 'creature',
-        label: 'Sit with the creature that travels with you, its head on your knee. Say nothing at all until the moon goes down. It watches the dark for both of you.',
-        told: 'sitting with the creature that travels with you until the moon went down.',
+        label: 'Sit with the creature that travels with you, head on your knee. Say nothing until the moon sets.',
+        told: 'sitting with the creature that travels with you.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
@@ -2347,14 +2377,14 @@ export const QUESTIONS = [
     id: 'road-bridge',
     stage: 'road',
     scene:
-      'The only bridge for ten miles has a toll, and the man collecting it is the size of a door. He looks you up and down, decides the toll is double for you and puts his hand out.',
+      'The only bridge for ten miles has a toll, and the man collecting it is the size of a door. He looks you over, doubles the toll and puts his hand out.',
     asks: 'How do you get across?',
     recall: 'At the bridge where the toll had doubled, you',
     options: [
       {
         id: 'pay',
-        label: 'Pay him double, smile, ask after his knees in this weather and be across before he has thought of asking for triple.',
-        told: 'paid him double, asked after his knees and were across before he thought of triple.',
+        label: 'Pay double, smile and ask after his knees. You are across before he thinks of triple.',
+        told: 'paid double and were across before he thought of triple.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -2365,8 +2395,8 @@ export const QUESTIONS = [
       },
       {
         id: 'lift',
-        label: 'Take him under the arms, lift him off his feet and set him down gently on the other side of the road, then walk across.',
-        told: 'lifted him off his feet, set him down on the other side of the road and walked across.',
+        label: 'Lift him off his feet, set him down on the other side of the road and walk across.',
+        told: 'lifted him off his feet, set him aside and walked across.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, brawler: 1 },
@@ -2377,26 +2407,26 @@ export const QUESTIONS = [
       },
       {
         id: 'wade',
-        label: 'Nod and walk back the way you came until the bend hides you. Then wade the river under the bridge while he is still working out the arithmetic.',
-        told: 'walked back to the bend and waded the river under the bridge.',
+        label: 'Walk back to the bend and wade the river under the bridge while he is still counting.',
+        told: 'waded the river under the bridge.',
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, wilder: 1 },
           lineage: { tidebound: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1, survivalist: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, frugal: 1 },
         },
       },
       {
         id: 'flask',
-        label: 'Offer him a drink from your flask against the cold. The brew in it is your own, and he will not remember you passing, or much else about the afternoon.',
-        told: 'offered him a drink from your flask, and he did not remember you passing.',
+        label: 'Offer him a drink from your flask. He will not remember you passing, or much else.',
+        told: 'gave him a drink from your flask, and he did not remember you passing.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 1, trickster: 1 },
-          lineage: { fey: 1 },
-          background: { criminal: 1 },
-          skill: { apothecary: 1, cunning: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { tidebound: 1 },
+          background: { craftsman: 1 },
+          skill: { apothecary: 1, haggler: 1 },
         },
       },
     ],
@@ -2406,14 +2436,14 @@ export const QUESTIONS = [
     id: 'road-child',
     stage: 'road',
     scene:
-      'A small child is standing alone in the market crowd, crying for its mother. A man you do not like the look of is walking towards it too quickly, with his eyes on the child and not on the crowd.',
+      'A small child is crying alone in the market crowd. A man you do not like the look of is walking towards it too quickly.',
     asks: 'What do you do?',
     recall: 'Seeing a man close on a lost child in the market, you',
     options: [
       {
         id: 'between',
-        label: 'Step into his path and stand there, between him and the child, and let him understand that whatever he wants he can want it through you.',
-        told: 'stepped into his path and stood between him and the child.',
+        label: 'Step into his path and stand between him and the child.',
+        told: 'stepped between him and the child.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, oathbound: 1 },
@@ -2424,8 +2454,8 @@ export const QUESTIONS = [
       },
       {
         id: 'wrist',
-        label: 'Take his wrist as he reaches for the child and hold it. Look at him without a word until he decides to be somewhere else.',
-        told: 'took his wrist as he reached, and looked at him until he decided to be somewhere else.',
+        label: 'Take his wrist as he reaches for the child and hold it until he decides to leave.',
+        told: 'took his wrist and held it until he decided to leave.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, 'feral-curse': 1, 'flowing-fist': 1 },
@@ -2436,8 +2466,8 @@ export const QUESTIONS = [
       },
       {
         id: 'call',
-        label: 'Lift the child onto a barrel and call its description across the whole market in a voice that carries to the far stalls. Crowds find mothers, and the man melts into this one.',
-        told: 'lifted the child onto a barrel and called its description across the market until the mother came.',
+        label: 'Lift the child onto a barrel and call its description across the whole market.',
+        told: 'called the child’s description across the market until the mother came.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1 },
@@ -2448,14 +2478,14 @@ export const QUESTIONS = [
       },
       {
         id: 'watch',
-        label: 'Do nothing yet. Watch the man, note his face and his coat, and when the mother appears and he turns away, follow him. He is not the father, and you want to know where he goes.',
-        told: 'watched the man, and followed him when the mother came, to see where he went.',
+        label: 'Do nothing. It is not your child, and you have somewhere to be.',
+        told: 'did nothing, because it was not your child.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
           lineage: { undead: 1 },
-          background: { investigator: 1 },
-          skill: { inquisitor: 1, cunning: 1 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { cunning: 1, frugal: 1 },
         },
       },
     ],
@@ -2465,26 +2495,26 @@ export const QUESTIONS = [
     id: 'road-storm',
     stage: 'road',
     scene:
-      'The storm has taken the roof off the inn. The family who keep it are out in the yard in the rain with a baby, the thatch in the mud around them and the wind still rising.',
+      'The storm has taken the roof off the inn. The family are out in the yard in the rain with a baby, and the wind is still rising.',
     asks: 'What do you do?',
     recall: 'When the storm took the roof off the inn, you',
     options: [
       {
         id: 'beam',
-        label: 'Get under the main beam where it has come off the wall and hold it up on your shoulders while they get the thatch back over it. It takes all night, so you hold it all night.',
-        told: 'held the main beam up on your shoulders all night while they got the thatch back over it.',
+        label: 'Take the dry room in the stable for yourself. Their roof is their problem.',
+        told: 'took the dry room in the stable and left them to their roof.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, painseeker: 1 },
           lineage: { stonebound: 1 },
-          background: { craftsman: 1 },
-          skill: { helpful: 1, survivalist: 1 },
+          background: { craftsman: 1, outlander: 1 },
+          skill: { survivalist: 1, frugal: 1 },
         },
       },
       {
         id: 'baby',
-        label: 'Put the baby inside your coat against your chest and walk into the wind to the next farm, two miles in the dark. You know the way without seeing it.',
-        told: 'put the baby inside your coat and walked two miles into the wind to the next farm.',
+        label: 'Put the baby inside your coat and walk two miles into the wind to the next farm.',
+        told: 'carried the baby two miles into the wind to the next farm.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'feral-curse': 1, wilder: 1, 'draconic-bond': 1 },
@@ -2495,8 +2525,8 @@ export const QUESTIONS = [
       },
       {
         id: 'fire',
-        label: 'Get everyone down into the cellar and make a fire out of wet wood, a handful of the powder from your pouch and nothing else, and have them warm inside the quarter hour.',
-        told: 'got everyone into the cellar and made a fire out of wet wood and a handful of your powder.',
+        label: 'Get everyone into the cellar and make a fire out of wet wood and a pinch of your powder.',
+        told: 'made a fire in the cellar out of wet wood and your powder.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1, 'elemental-aspect': 1 },
@@ -2507,8 +2537,8 @@ export const QUESTIONS = [
       },
       {
         id: 'speak',
-        label: 'Stand in the middle of the yard with your face to the wind and speak to the storm, the way you did once before. It listens, a little. The wind drops enough to work in.',
-        told: 'stood in the yard and spoke to the storm, and it listened a little.',
+        label: 'Stand in the yard and speak to the storm the way you did once before. It listens, a little.',
+        told: 'spoke to the storm, and it listened a little.',
         gives: {
           attribute: { mind: 1 },
           talent: { arcanist: 1, 'elemental-aspect': 1 },
@@ -2525,14 +2555,14 @@ export const QUESTIONS = [
     stage: 'road',
     requires: ['did:violence'],
     scene:
-      'The man you put on his back years ago is standing in the taproom doorway, and he has brought four friends. He has recognised you. He is pointing.',
+      'The man you put on his back years ago is in the taproom doorway with four friends. He has recognised you, and he is pointing.',
     asks: 'What do you do?',
     recall: 'When the man you once put down found you with four friends, you',
     options: [
       {
         id: 'again',
-        label: 'Get up and do it again, and this time make sure of it. Then turn round to see whether the four friends still want any part of this.',
-        told: 'got up and did it again, and this time made sure of it.',
+        label: 'Get up and do it again, and this time make sure of it.',
+        told: 'got up and did it again, and made sure of it.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1, painseeker: 1 },
@@ -2543,7 +2573,7 @@ export const QUESTIONS = [
       },
       {
         id: 'table',
-        label: 'Turn the table over between them and the rest of the room, so that whatever happens next happens to you and not to the people behind you.',
+        label: 'Turn the table over between them and the rest of the room.',
         told: 'turned the table over between them and the room.',
         gives: {
           attribute: { physique: 1 },
@@ -2556,8 +2586,8 @@ export const QUESTIONS = [
       },
       {
         id: 'window',
-        label: 'Be out through the window behind you before he has finished pointing. You have paid for the drink, and the alley is dark.',
-        told: 'were out through the window behind you before he had finished pointing.',
+        label: 'Point at the stranger beside you and say that is him, then be out the window.',
+        told: 'pointed at the stranger beside you and were out the window.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1 },
@@ -2568,8 +2598,8 @@ export const QUESTIONS = [
       },
       {
         id: 'drink',
-        label: 'Call for five cups, wave them over to your table and ask after his mother, by name, because you remember it. It is very hard to hit a man who remembers your mother’s name.',
-        told: 'bought all five of them a drink and asked after his mother by name.',
+        label: 'Call for five cups, wave them over and ask after his mother by name.',
+        told: 'bought all five a drink and asked after his mother by name.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -2588,14 +2618,14 @@ export const QUESTIONS = [
     id: 'road-bleeding',
     stage: 'road',
     scene:
-      'A cart has gone over on the bend and one of the drovers is under the wheel with his leg opened to the bone. The blood is coming faster than anybody can pack it and there is no surgeon within a day of here. The ring of people standing round him are all looking at somebody else.',
+      'A cart has gone over on the bend and a drover is under the wheel with his leg opened to the bone. There is no surgeon within a day, and everyone is looking at somebody else.',
     asks: 'What do you do?',
-    recall: 'On the road, with a drover bleeding out under a cart wheel, you',
+    recall: 'With a drover bleeding out under a cart wheel, you',
     options: [
       {
         id: 'hands',
-        label: 'Kneel in it, put both hands flat on the leg and hold them there. The mark on your forearm goes cold, the bleeding stops, and you are grey to the lips for an hour afterwards.',
-        told: 'knelt in the blood and held both hands on the leg until the mark on your forearm went cold and the bleeding stopped.',
+        label: 'Kneel in the blood and hold both hands on the leg until the mark on your arm goes cold.',
+        told: 'held both hands on the leg until the mark on your arm went cold.',
         gives: {
           attribute: { physique: 2 },
           talent: { runebearer: 1, hemoturgy: 1, painseeker: 1 },
@@ -2606,8 +2636,8 @@ export const QUESTIONS = [
       },
       {
         id: 'vial',
-        label: 'Get the small green bottle off your belt, tip half of it into the wound and the other half into him. It burns going in and he screams the yard down, and then the bleeding slows.',
-        told: 'tipped half a green bottle into the wound and the other half into the man, and the bleeding slowed.',
+        label: 'Tip half the green bottle into the wound and the other half into him.',
+        told: 'tipped half a green bottle into the wound and half into him.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1, thaumaturge: 1 },
@@ -2618,8 +2648,8 @@ export const QUESTIONS = [
       },
       {
         id: 'axle',
-        label: 'Get your shoulder under the axle and stand up with it, and keep standing while two of them drag him clear. Nobody thinks to count how long you hold it.',
-        told: 'got your shoulder under the axle and stood up with it until they had dragged him clear.',
+        label: 'Get your shoulder under the axle and stand up with it while they drag him clear.',
+        told: 'lifted the axle while they dragged him clear.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, totemic: 1 },
@@ -2630,14 +2660,14 @@ export const QUESTIONS = [
       },
       {
         id: 'strap',
-        label: 'Cut a strap off the harness, get it round the thigh above the wound and twist it down with the handle of your knife until the bleeding stops. It takes you eleven seconds.',
-        told: 'cut a strap off the harness and twisted a tourniquet down on the leg with your knife handle.',
+        label: 'Walk on. A leg like that is a dead man, and a dead man is a day’s delay.',
+        told: 'walked on, because a leg like that is a dead man.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 1, 'flowing-fist': 1, weaver: 1 },
+          talent: { duelist: 1, 'feral-curse': 1 },
           lineage: { wildheart: 1 },
-          background: { military: 1 },
-          skill: { physician: 1, vigilant: 1 },
+          background: { mercenary: 1, outlander: 1 },
+          skill: { survivalist: 1, cunning: 1 },
         },
       },
     ],
@@ -2652,14 +2682,14 @@ export const QUESTIONS = [
     id: 'road-lantern',
     stage: 'road',
     scene:
-      'Something has been following the caravan for three nights and it only comes close on the fourth. It is fast, it is low to the ground, and it goes straight through the two guards at the tail. The nearest lantern is thirty paces behind you and everything that matters is going to happen inside the next four seconds.',
+      'Something has followed the caravan for three nights, and on the fourth it comes straight through the two guards at the tail. The lantern is thirty paces behind you.',
     asks: 'What do you do?',
     recall: 'The night the thing took the tail of the caravan, you',
     options: [
       {
         id: 'meet',
-        label: 'Walk into it. Get a hand on the axe at your belt, say the one word you know all the way through and put both of them into the same place at the same time. What comes off the blade is not steel and it goes into the thing rather than across the yard.',
-        told: 'walked into it with a word and an axe going into the same place at the same moment.',
+        label: 'Walk into it with the axe and the one word you know, both landing in the same place.',
+        told: 'walked into it with a word and an axe landing together.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellblade: 1, weaver: 1 },
@@ -2670,8 +2700,8 @@ export const QUESTIONS = [
       },
       {
         id: 'far',
-        label: 'Get distance. Back off past the wagon, get the width of the yard between you and it, and put everything you have into the space it has to cross to reach you.',
-        told: 'backed off past the wagon and filled the ground it had to cross to reach you.',
+        label: 'Get distance. Put the width of the yard between you and fill the ground it has to cross.',
+        told: 'backed off and filled the ground it had to cross.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, 'elemental-aspect': 1, thaumaturge: 1 },
@@ -2682,8 +2712,8 @@ export const QUESTIONS = [
       },
       {
         id: 'lantern',
-        label: 'Go for the lantern instead. Thirty paces back, up onto the wagon and swing it round so the whole tail of the caravan is lit, and let the six people with spears do what six people with spears are for.',
-        told: 'went thirty paces back for the lantern and lit the whole tail of the caravan for the people with spears.',
+        label: 'Go for the lantern and light the whole tail so the people with spears can do their work.',
+        told: 'lit the whole tail of the caravan for the people with spears.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, quartermaster: 1 },
@@ -2694,14 +2724,14 @@ export const QUESTIONS = [
       },
       {
         id: 'bait',
-        label: 'Cut the traces on the last mule and drive it back down the road past the thing. Whatever it is, it goes after the loud warm thing running away rather than the quiet cold one standing still.',
-        told: 'cut a mule loose and drove it back down the road, and the thing went after the loud warm one.',
+        label: 'Cut the mules loose and run. Whatever it is, it is eating guards, not you.',
+        told: 'cut the mules loose and ran while it ate the guards.',
         gives: {
           attribute: { instinct: 1 },
           talent: { mycomancer: 1, wilder: 1 },
-          lineage: { fey: 1 },
-          background: { criminal: 1 },
-          skill: { survivalist: 1, cunning: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
         },
       },
     ],
@@ -2712,14 +2742,14 @@ export const QUESTIONS = [
     id: 'leaving-night',
     stage: 'leaving',
     scene:
-      'It is the night you leave the life you had. Behind you the house is burning, the roof already gone. The whole street is coming out of doors in their nightshirts. Someone is still inside.',
+      'It is the night you leave. Behind you the house is burning and the street is coming out in nightshirts, and someone is still inside.',
     asks: 'What do you do?',
     recall: 'The night you left, with the house burning behind you, you',
     options: [
       {
         id: 'back',
-        label: 'Turn round and go back in through the front door, into the smoke, for the one who is still inside. Come out with them.',
-        told: 'went back in through the smoke for the one who was still inside.',
+        label: 'Go back in through the smoke for the one who is still inside.',
+        told: 'went back in through the smoke for the one still inside.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, painseeker: 1 },
@@ -2730,7 +2760,7 @@ export const QUESTIONS = [
       },
       {
         id: 'lit',
-        label: 'Keep walking, and do not look round. You lit it, and the flask that did it is empty in your pocket.',
+        label: 'Keep walking. You lit it, and the flask that did it is empty in your pocket.',
         told: 'kept walking without looking round. You lit it.',
         gives: {
           attribute: { mind: 1 },
@@ -2742,8 +2772,8 @@ export const QUESTIONS = [
       },
       {
         id: 'watch',
-        label: 'Stand in the road and watch until the roof falls in and the walls go. You needed to see it end, and then you go.',
-        told: 'stood in the road and watched until the walls went, and then left.',
+        label: 'Stand in the road and watch until the walls go. Then go.',
+        told: 'watched until the walls went, and then left.',
         gives: {
           attribute: { physique: 1 },
           talent: { berserker: 1, runebearer: 1, painseeker: 1 },
@@ -2754,14 +2784,14 @@ export const QUESTIONS = [
       },
       {
         id: 'run',
-        label: 'Run, with the hound at your heel and nothing in your hands, down the lane and over the fields, and do not stop until dawn.',
-        told: 'ran with the hound at your heel and did not stop until dawn.',
+        label: 'Run with the hound at your heel and nothing in your hands, and do not stop until dawn.',
+        told: 'ran with the hound at your heel until dawn.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'draconic-bond': 1, 'feral-curse': 1, wilder: 1 },
           lineage: { wildkin: 1 },
-          background: { outlander: 1, criminal: 1 },
-          skill: { survivalist: 1, cunning: 1 },
+          background: { outlander: 1, military: 1 },
+          skill: { survivalist: 1, vigilant: 1 },
         },
       },
     ],
@@ -2771,14 +2801,14 @@ export const QUESTIONS = [
     id: 'leaving-carry',
     stage: 'leaving',
     scene:
-      'You have one hand free and the cart is already moving out of the yard. Whatever you do not pick up in the next ten seconds stays here for good.',
+      'You have one hand free and the cart is already moving. Whatever you do not pick up in ten seconds stays here for good.',
     asks: 'What do you take?',
     recall: 'Out of the life you left, you carried',
     options: [
       {
         id: 'great',
-        label: 'The weapon from over the door, the one that was your grandfather’s and is too big for the doorway. You get it out by turning it sideways.',
-        told: 'the weapon from over the door, too big for the doorway. You got it out sideways.',
+        label: 'Your grandfather’s weapon from over the door, too big for the doorway. You get it out sideways.',
+        told: 'the weapon from over the door, which you got out sideways.',
         gives: {
           attribute: { physique: 1 },
           talent: { colossus: 1, berserker: 1, 'weapon-master': 1 },
@@ -2790,8 +2820,9 @@ export const QUESTIONS = [
       },
       {
         id: 'blades',
-        label: 'The blade from under the bed and its twin from the chest, one in each hand. Not one thing more.',
-        told: 'the blade from under the bed and its twin from the chest, and nothing more.',
+        label: 'The blade from under the bed, its twin from the chest and the household purse off the hook.',
+        told: 'the two blades and the household purse off the hook.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, 'weapon-master': 1, 'flowing-fist': 1 },
@@ -2803,7 +2834,7 @@ export const QUESTIONS = [
       },
       {
         id: 'book',
-        label: 'The book you were never supposed to have, from under the loose board by the window, wrapped in your spare shirt.',
+        label: 'The book you were never supposed to have, wrapped in your spare shirt.',
         told: 'the book you were never supposed to have, wrapped in your spare shirt.',
         gives: {
           attribute: { mind: 1 },
@@ -2816,8 +2847,8 @@ export const QUESTIONS = [
       },
       {
         id: 'shield',
-        label: 'The shield from the wall, with a name painted on the inside of it that is not yours yet.',
-        told: 'the shield from the wall, with a name inside it that was not yours yet.',
+        label: 'The shield from the wall, with a name painted inside it that is not yours yet.',
+        told: 'the shield from the wall, with a name inside it not yet yours.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1, oathbound: 1 },
@@ -2835,14 +2866,14 @@ export const QUESTIONS = [
     id: 'leaving-pack',
     stage: 'leaving',
     scene:
-      'Your pack is on your back and there is room in the top of it for one more thing. Someone is calling your name from the road, and they will not call twice.',
+      'Your pack is on your back and there is room for one more thing. Someone is calling your name from the road, and they will not call twice.',
     asks: 'What goes in?',
     recall: 'Into the pack, with someone calling from the road, went',
     options: [
       {
         id: 'cauldron',
-        label: 'The small cauldron from the hearth, the bundle of dried herbs from the beam and the stoppered jar of something that moves when you tilt it.',
-        told: 'the small cauldron, the bundle of herbs from the beam and the jar of something that moved.',
+        label: 'The small cauldron, the herbs from the beam and the jar of something that moves.',
+        told: 'the small cauldron, the herbs and the jar of something that moved.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'cauldron-keeper': 1, wilder: 1 },
@@ -2853,7 +2884,7 @@ export const QUESTIONS = [
       },
       {
         id: 'pistol',
-        label: 'The pistol from the drawer, the lantern and the folded list of names you have been keeping since the winter.',
+        label: 'The pistol from the drawer, the lantern and the list of names you have kept since winter.',
         told: 'the pistol, the lantern and the list of names.',
         gives: {
           attribute: { instinct: 1 },
@@ -2866,7 +2897,7 @@ export const QUESTIONS = [
       },
       {
         id: 'contract',
-        label: 'The contract from the bottom of the chest, the one signed in something that was not ink, in a hand that was not quite yours.',
+        label: 'The contract from the chest, signed in something that was not ink.',
         told: 'the contract signed in something that was not ink.',
         gives: {
           attribute: { mind: 1 },
@@ -2878,8 +2909,8 @@ export const QUESTIONS = [
       },
       {
         id: 'nothing',
-        label: 'Nothing. You pull the straps tight over what is already there and go. Your two hands and the anger have always been enough.',
-        told: 'nothing at all, because your hands and the anger had always been enough.',
+        label: 'Nothing. Your two hands and the anger have always been enough.',
+        told: 'nothing at all, because your hands and the anger were enough.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1, painseeker: 1 },
@@ -2896,14 +2927,14 @@ export const QUESTIONS = [
     id: 'leaving-fight',
     stage: 'leaving',
     scene:
-      'The first real fight after you leave. A dead-end alley behind the coaching inn, two men who followed you out of the taproom and no way past them but through them.',
+      'Your first real fight after you leave. A dead-end alley behind the coaching inn, two men who followed you out and no way past them but through.',
     asks: 'How does it end?',
     recall: 'Your first real fight on the road ended',
     options: [
       {
         id: 'wall',
-        label: 'With your back against the alley wall and the shield up, taking everything they have to give until they tire. Neither of them ever gets past you.',
-        told: 'with your back to the wall and the shield up, and neither of them past you.',
+        label: 'With your back to the wall and the shield up until they tire. Neither gets past you.',
+        told: 'with your back to the wall and the shield up, and neither past you.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, oathbound: 1 },
@@ -2916,7 +2947,7 @@ export const QUESTIONS = [
       },
       {
         id: 'over',
-        label: 'With both of them on the cobbles and you standing over them breathing hard, and no memory at all of the middle part.',
+        label: 'With both of them on the cobbles and no memory at all of the middle part.',
         told: 'with both of them on the cobbles and no memory of the middle.',
         gives: {
           attribute: { physique: 2 },
@@ -2929,8 +2960,9 @@ export const QUESTIONS = [
       },
       {
         id: 'behind',
-        label: 'Before it starts. While they were looking at where you had been standing, you were already behind them. Then it was over.',
-        told: 'before it started, because you were already behind them.',
+        label: 'Before it starts, with your knife in the first one’s back and his purse in your hand.',
+        told: 'before it started, with a knife in the first one’s back and his purse in your hand.',
+        tags: ['did:violence', 'did:theft'],
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1 },
@@ -2941,8 +2973,8 @@ export const QUESTIONS = [
       },
       {
         id: 'fire',
-        label: 'With the far end of the alley on fire, the two of them running from it, and you having touched neither of them.',
-        told: 'with the alley on fire and you having touched neither of them.',
+        label: 'With the far end of the alley on fire and both of them running from it.',
+        told: 'with the alley on fire and neither of them touched.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, 'elemental-aspect': 1 },
@@ -2959,14 +2991,14 @@ export const QUESTIONS = [
     id: 'leaving-road',
     stage: 'leaving',
     scene:
-      'The road forks at the milestone under a grey sky: left to the city, right into the forest, straight on to the coast and the mountain pass behind you. Nobody is waiting for you on any of them, and nobody is coming after you.',
+      'The road forks at the milestone: left to the city, right into the forest, straight on to the coast and the pass behind you. Nobody is waiting on any of them.',
     asks: 'Which way do you go?',
     recall: 'At the milestone where the road forked, you took',
     options: [
       {
         id: 'wild',
-        label: 'Into the forest. Something under the trees has been saying your name since you were a child, and it is time you found out what.',
-        told: 'the forest road, where something had been saying your name since you were a child.',
+        label: 'Into the forest. Something under the trees has said your name since you were a child.',
+        told: 'the forest road, where something had said your name since childhood.',
         gives: {
           attribute: { instinct: 1 },
           talent: { mycomancer: 1, 'feral-curse': 1, 'draconic-bond': 1 },
@@ -2977,19 +3009,19 @@ export const QUESTIONS = [
       },
       {
         id: 'city',
-        label: 'To the city. There is work there for someone who can make things, and a bench and a fire to make them at.',
-        told: 'the city road, where there was work for someone who could make things.',
+        label: 'To the city, where there is money to be made off people who do not know you yet.',
+        told: 'the city road, where there was money to be made off strangers.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1, spellblade: 1 },
-          lineage: { luminary: 1 },
-          background: { craftsman: 1, merchant: 1 },
-          skill: { skilled: 1, haggler: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, entertainer: 1 },
+          skill: { haggler: 1, charismatic: 1 },
         },
       },
       {
         id: 'pass',
-        label: 'Up into the pass. Whatever is on the other side of the mountain, you can carry what you need to get there on your own back.',
+        label: 'Up into the pass. You can carry what you need on your own back.',
         told: 'the pass, carrying what you needed on your own back.',
         gives: {
           attribute: { physique: 1 },
@@ -3001,7 +3033,7 @@ export const QUESTIONS = [
       },
       {
         id: 'sea',
-        label: 'Down to the coast, and the first ship that will take a hand. You have never once been afraid of deep water.',
+        label: 'Down to the coast and the first ship that will take a hand.',
         told: 'the coast road and the first ship that would take a hand.',
         gives: {
           attribute: { instinct: 1 },
@@ -3023,14 +3055,14 @@ export const QUESTIONS = [
     id: 'youth-barrow',
     stage: 'youth',
     scene:
-      'It is the second plague summer and there is nobody left to carry the dead but children and the very old. They put you on the cart with a man who has done it before and stopped talking about it. Forty in the barrow by the end of the week, and none of them have anybody left to say a word over them.',
+      'It is the second plague summer and only children and the very old are left to carry the dead. They put you on the cart. Forty in the barrow by the end of the week.',
     asks: 'What do you do?',
     recall: 'On the plague cart the summer you were a child, you',
     options: [
       {
         id: 'names',
-        label: 'Learn every one of their names and say them over the barrow at the end, in the order they came. The old man watches you do it on the fourth night and tells you to stop, because things that are named keep listening.',
-        told: 'learned all forty names and said them over the barrow, until the old man told you that things which are named keep listening.',
+        label: 'Learn every name and say them over the barrow at the end, in the order they came.',
+        told: 'learned all forty names and said them over the barrow.',
         gives: {
           attribute: { mind: 2 },
           talent: { necromancer: 1 },
@@ -3041,7 +3073,7 @@ export const QUESTIONS = [
       },
       {
         id: 'hands',
-        label: 'Say nothing and lift. Two a trip and forty by Friday, and the only thing you decide all week is where your hands go so that nothing comes apart on the way.',
+        label: 'Say nothing and lift. Two a trip, forty by Friday.',
         told: 'said nothing and lifted, two a trip and forty by Friday.',
         gives: {
           attribute: { physique: 2 },
@@ -3053,8 +3085,8 @@ export const QUESTIONS = [
       },
       {
         id: 'why',
-        label: 'Start opening them instead. You want to know why it took the miller in a night and left his wife, and by the end of the week you have a fair guess and a smell you cannot wash out.',
-        told: 'started opening them instead, to find out why it took the miller in a night and left his wife.',
+        label: 'Open a few of them to find out why it took the miller in a night and left his wife.',
+        told: 'opened a few of them to find out why it took some and not others.',
         gives: {
           attribute: { mind: 2 },
           talent: { alchemist: 1, necromancer: 1 },
@@ -3065,14 +3097,14 @@ export const QUESTIONS = [
       },
       {
         id: 'run',
-        label: 'Get off the cart on the second morning and do not come back. There is fruit going soft in three gardens whose owners are in the barrow, and somebody is going to eat it.',
-        told: 'got off the cart on the second morning and lived off three gardens whose owners were in the barrow.',
+        label: 'Get off the cart on the second morning and live off the gardens of the dead.',
+        told: 'got off the cart and lived off the gardens of the dead.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { mycomancer: 1, wilder: 1 },
-          lineage: { fey: 1 },
-          background: { criminal: 1 },
-          skill: { scavenger: 1, streetwise: 1 },
+          talent: { mycomancer: 1, wilder: 1, 'cauldron-keeper': 1 },
+          lineage: { undead: 1 },
+          background: { outlander: 1 },
+          skill: { scavenger: 1, survivalist: 1 },
         },
       },
     ],
@@ -3086,14 +3118,14 @@ export const QUESTIONS = [
     id: 'road-shorthanded',
     stage: 'road',
     scene:
-      'The bridge crew is nine men short of finishing before the thaw and the nine are in the churchyard, which is where the last winter put them. The foreman is drunk in the middle of the day and the village has begun to talk about what happens to all of them if the bridge is not up.',
+      'The bridge crew is nine men short of finishing before the thaw, and the nine are in the churchyard. The foreman is drunk at noon.',
     asks: 'What do you do?',
     recall: 'At the bridge that was nine men short of the thaw, you',
     options: [
       {
         id: 'nine',
-        label: 'Go and get the nine. They work through the night and they do not complain about the cold, and by the third night nobody from the village will come down to the water while you are standing there.',
-        told: 'went and got the nine out of the churchyard, and by the third night nobody would come down to the water while you stood there.',
+        label: 'Go and get the nine. They work all night and never complain about the cold.',
+        told: 'got the nine out of the churchyard to work the nights.',
         gives: {
           attribute: { mind: 2 },
           talent: { necromancer: 1, spellquill: 1 },
@@ -3104,8 +3136,8 @@ export const QUESTIONS = [
       },
       {
         id: 'foreman',
-        label: 'Take the foreman apart in front of his own crew, sober him up in the trough and put the work back on its feet by making the whole village afraid of you instead of the thaw.',
-        told: 'took the foreman apart in front of his crew and put the work back on its feet.',
+        label: 'Sober the foreman up in the trough in front of his crew and put the work back on its feet.',
+        told: 'sobered the foreman in the trough and put the work back on its feet.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1 },
@@ -3116,8 +3148,8 @@ export const QUESTIONS = [
       },
       {
         id: 'stone',
-        label: 'Look at what they have actually built and find the four places it is wrong. Fixing those saves them the nine men, and the foreman never forgives you for it.',
-        told: 'found the four places the bridge was wrong, which saved them the nine men and cost you the foreman.',
+        label: 'Find the four places the bridge is wrong. Fixing those saves the nine men.',
+        told: 'found the four places the bridge was wrong.',
         gives: {
           attribute: { mind: 2 },
           talent: { enchanter: 1 },
@@ -3128,8 +3160,8 @@ export const QUESTIONS = [
       },
       {
         id: 'price',
-        label: 'Wait. A village that is going to lose everything by the thaw will pay anything by the thaw, and you would rather be paid than thanked.',
-        told: 'waited for the thaw to raise the price, because you would rather be paid than thanked.',
+        label: 'Wait. A village that will lose everything by the thaw will pay anything by the thaw.',
+        told: 'waited for the thaw to raise the price.',
         gives: {
           attribute: { instinct: 2 },
           talent: { pactbound: 1, virtuoso: 1 },
@@ -3151,14 +3183,14 @@ export const QUESTIONS = [
     id: 'youth-scriptorium',
     stage: 'youth',
     scene:
-      'The abbey pays in bread for a copyist with a steady hand, and yours is steady. Forty prayers a week, and then a page turns up in the pile that is not a prayer at all: it is instructions, and the last line of it is a thing that will happen if the words are said in the right order.',
+      'The abbey pays in bread for a steady copying hand. One day a page turns up in the pile that is not a prayer but instructions, and the last line is a thing that will happen.',
     asks: 'What do you do?',
     recall: 'In the abbey scriptorium, over the page that was not a prayer, you',
     options: [
       {
         id: 'copy',
-        label: 'Copy it. You never do learn it, but you can see the shape of how it works. By the third copy you have made one that a carter who cannot read at all says out loud, and it happens anyway.',
-        told: 'copied the page until a carter who could not read said it out loud and it happened anyway.',
+        label: 'Copy it, and slip the copy into the prior’s prayers to see what happens when he reads it aloud.',
+        told: 'slipped a copy into the prior’s prayers to see what would happen.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellquill: 1, enchanter: 1 },
@@ -3168,8 +3200,8 @@ export const QUESTIONS = [
       },
       {
         id: 'learn',
-        label: 'Learn it, properly, the way it is meant to be learned. It takes eleven weeks and at the end of them the page is nothing you need, because the whole of it is in your head.',
-        told: 'spent eleven weeks learning it properly, until the page was nothing you needed.',
+        label: 'Learn it properly. It takes eleven weeks, and then you no longer need the page.',
+        told: 'spent eleven weeks learning it until you no longer needed the page.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, thaumaturge: 1 },
@@ -3179,8 +3211,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sell',
-        label: 'Find out what it is worth. Two men in the town will pay for it and one of them will pay more if the other never hears it existed, and that is the arithmetic you actually enjoy.',
-        told: 'found out what the page was worth, and which of the two buyers would pay more for the other never hearing of it.',
+        label: 'Find the two men in town who will pay for it, and sell it to the one who pays more.',
+        told: 'sold the page to the one of two buyers who paid more.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -3191,8 +3223,8 @@ export const QUESTIONS = [
       },
       {
         id: 'burn',
-        label: 'Put it in the brazier. You have read the last line twice and you would rather be the only person who ever did.',
-        told: 'read the last line twice and then put the page in the brazier.',
+        label: 'Put it in the brazier. You would rather be the only one who ever read the last line.',
+        told: 'read the last line twice and put the page in the brazier.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, berserker: 1 },
@@ -3213,26 +3245,26 @@ export const QUESTIONS = [
     id: 'road-illiterate-guard',
     stage: 'road',
     scene:
-      'The caravan’s hired guard is worth every coin of her wage and cannot read a word. Something is following the wagons at a distance that has not closed for two nights, and the one thing in the whole train that would answer it is a working nobody aboard can hold in their head.',
+      'The caravan’s guard is worth her wage and cannot read a word. Something has followed the wagons for two nights, and the one working that would answer it is written down.',
     asks: 'What do you do?',
     recall: 'On the caravan the thing followed for two nights, you',
     options: [
       {
         id: 'write',
-        label: 'Sit up with a lamp and put the working on parchment in a hand she can sound out. She reads it off the leaf on the third night without understanding one word of it, and the thing does not come back.',
-        told: 'put the working on parchment in a hand the guard could sound out, and she read it off the leaf on the third night.',
+        label: 'Write it out, hand it to her and sleep. If it does not work, it was her reading.',
+        told: 'wrote the working out, handed it to the guard and slept.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellquill: 1, arcanist: 1 },
           lineage: { luminary: 1 },
-          background: { merchant: 1 },
-          skill: { scholar: 1, mastermind: 1 },
+          background: { mercenary: 1 },
+          skill: { scholar: 1, cunning: 1 },
         },
       },
       {
         id: 'stand',
-        label: 'Stand the third watch yourself and let it close. Whatever it is, it has been deciding for two nights, and you would rather it decided while you were awake and facing it.',
-        told: 'stood the third watch yourself and let the thing close while you were facing it.',
+        label: 'Stand the third watch yourself and let it come while you are awake and facing it.',
+        told: 'stood the third watch and let the thing come while you faced it.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, berserker: 1, oathbound: 1 },
@@ -3243,8 +3275,8 @@ export const QUESTIONS = [
       },
       {
         id: 'teach',
-        label: 'Teach her the letters. It takes the whole crossing and she is furious with you for most of it, and by the far side she can read her own name and a contract.',
-        told: 'taught the guard her letters across the whole crossing, over her objections.',
+        label: 'Teach her the letters. It takes the whole crossing and she hates you for most of it.',
+        told: 'taught the guard her letters across the whole crossing.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1, enchanter: 1 },
@@ -3255,14 +3287,14 @@ export const QUESTIONS = [
       },
       {
         id: 'track',
-        label: 'Go out and find out what it is. Two nights at a steady distance is a thing making up its mind, and you would rather meet it on ground you picked than on the one it did.',
-        told: 'went out to find out what had been keeping its distance for two nights.',
+        label: 'Slip away in the dark. Whatever follows wagons wants wagons, and you are one traveller on foot.',
+        told: 'slipped away in the dark and left the wagons to it.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { mycomancer: 1, 'feral-curse': 1 },
-          lineage: { wildheart: 1, wildkin: 1 },
-          background: { investigator: 1 },
-          skill: { inquisitor: 1, survivalist: 1 },
+          talent: { duelist: 1, 'feral-curse': 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1, mercenary: 1 },
+          skill: { survivalist: 1, frugal: 1 },
         },
       },
     ],
@@ -3275,14 +3307,14 @@ export const QUESTIONS = [
     id: 'child-ice',
     stage: 'childhood',
     scene:
-      'The pond has been frozen a fortnight and the miller’s boy has gone through it, forty feet out from the bank. He is holding the edge with both arms and the ice is going grey around him. There are four of you on the bank and you are the oldest by a year.',
+      'The miller’s boy has gone through the pond ice, forty feet out. There are four of you on the bank and you are the oldest.',
     asks: 'What do you do?',
-    recall: 'On the grey ice the winter the miller’s boy went through, you',
+    recall: 'The winter the miller’s boy went through the ice, you',
     options: [
       {
         id: 'rail',
-        label: 'Pull a rail off the fence, break the ice all the way in to him and haul him out through the water instead of over it.',
-        told: 'broke the ice in to him with a fence rail and hauled him out through the water.',
+        label: 'Pull a rail off the fence, break the ice out to him and haul him through the water.',
+        told: 'broke the ice out to him with a fence rail and hauled him in.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1, weaver: 1 },
@@ -3293,8 +3325,8 @@ export const QUESTIONS = [
       },
       {
         id: 'flat',
-        label: 'Go out flat on your belly with your arms and legs spread, sliding, until you have a hand on his collar and can be pulled back by the ankles.',
-        told: 'went out flat on your belly until you had a hand on his collar.',
+        label: 'Slide out flat on your belly until you can grab his collar.',
+        told: 'slid out on your belly and grabbed his collar.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1 },
@@ -3305,19 +3337,19 @@ export const QUESTIONS = [
       },
       {
         id: 'door',
-        label: 'Send the lightest of the four out on the barn door with a rope on it, and stand on the bank working out the angle and the count.',
-        told: 'sent the lightest of you out on the barn door with a rope, and worked the angle from the bank.',
+        label: 'Send the smallest of the four out on the barn door with a rope, and stay dry on the bank.',
+        told: 'sent the smallest of you out on the barn door and stayed dry.',
         gives: {
           attribute: { mind: 2 },
-          talent: { enchanter: 1 },
-          background: { military: 1 },
-          skill: { mastermind: 1, helpful: 1 },
+          talent: { enchanter: 1, tactician: 1 },
+          background: { military: 1, aristocrat: 1 },
+          skill: { mastermind: 1, cunning: 1 },
         },
       },
       {
         id: 'swim',
-        label: 'Go in on purpose off the open bank and swim to him under the edge of the ice. The cold does not reach you the way it reaches other people.',
-        told: 'went into the open water on purpose and swam to him under the edge of the ice.',
+        label: 'Go in off the open bank and swim to him under the ice. The cold never bothers you.',
+        told: 'swam to him under the ice, and the cold did not touch you.',
         gives: {
           attribute: { instinct: 1 },
           talent: { wilder: 1, 'feral-curse': 1 },
@@ -3333,14 +3365,14 @@ export const QUESTIONS = [
     id: 'child-tithe',
     stage: 'childhood',
     scene:
-      'The tithe-man has the family’s grain out in the yard and a tally stick in his hand, and he is counting eleven sacks where you know there are nine. Your father is standing with his hat off, saying nothing. The tithe-man has a boy with him and a mule, and neither of them is looking at the sacks.',
+      'The tithe-man is counting eleven sacks of your family’s grain where there are nine. Your father stands with his hat off and says nothing.',
     asks: 'What do you do?',
-    recall: 'In the yard the year the tithe-man counted eleven sacks of nine, you',
+    recall: 'The year the tithe-man counted eleven sacks of nine, you',
     options: [
       {
         id: 'count',
-        label: 'Say the number out loud in front of the boy, broken down sack by sack, the way you have been doing it in your head since he started.',
-        told: 'said the true number out loud, sack by sack, in front of the tithe-man’s own boy.',
+        label: 'Say the true number out loud, sack by sack, in front of his own boy.',
+        told: 'said the true number out loud, sack by sack.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1 },
@@ -3350,8 +3382,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sacks',
-        label: 'Move two sacks behind the cart while the boy is busy with the mule, so that the count he writes down is the count you want written.',
-        told: 'moved two sacks behind the cart, so the count he wrote down was the one you wanted.',
+        label: 'Move two sacks behind the cart while his boy is busy with the mule.',
+        told: 'moved two sacks behind the cart while the boy was busy.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
@@ -3363,8 +3395,8 @@ export const QUESTIONS = [
       },
       {
         id: 'stick',
-        label: 'Put your hand on the tally stick and keep it there. You are nine years old and he has to decide, in front of your father, what he is going to do about that.',
-        told: 'put your hand on the tally stick and made him decide, in front of your father, what to do about it.',
+        label: 'Put your hand on his tally stick and keep it there until he decides.',
+        told: 'put your hand on the tally stick and kept it there.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, colossus: 1 },
@@ -3375,14 +3407,14 @@ export const QUESTIONS = [
       },
       {
         id: 'temple',
-        label: 'Ask him, in a small voice, what happens to a man who miscounts for the temple. Let the boy and the mule and your father all hear a child ask it.',
-        told: 'asked him in a small voice what happens to a man who miscounts for the temple.',
+        label: 'Tell him quietly that you will keep his secret for a share of the two extra sacks.',
+        told: 'offered to keep his secret for a share of the two sacks.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1 },
           lineage: { infernal: 1 },
-          background: { aristocrat: 1, entertainer: 1 },
-          skill: { charismatic: 1, empath: 1 },
+          background: { aristocrat: 1, investigator: 1 },
+          skill: { haggler: 1, mastermind: 1 },
         },
       },
     ],
@@ -3392,14 +3424,14 @@ export const QUESTIONS = [
     id: 'child-bell',
     stage: 'childhood',
     scene:
-      'You are up the chapel tower because it is the one place nobody looks for you, and from the window there is smoke on the ridge road, moving. It is not a hearth fire and it is not a charcoal burner. The bell rope is by your hand and nobody has told you to pull it.',
+      'You are up the chapel tower where nobody looks for you. There is smoke moving on the ridge road, and the bell rope is by your hand.',
     asks: 'What do you do?',
     recall: 'Up the chapel tower, with smoke moving on the ridge road, you',
     options: [
       {
         id: 'pull',
-        label: 'Pull it with both hands and keep pulling until the rope has taken the skin off your palms and the whole valley is awake and out of doors.',
-        told: 'pulled the bell rope until it took the skin off your palms and the whole valley was out of doors.',
+        label: 'Pull the rope with both hands until the whole valley is awake.',
+        told: 'rang the bell until the whole valley was awake.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, runebearer: 1, weaver: 1 },
@@ -3410,8 +3442,8 @@ export const QUESTIONS = [
       },
       {
         id: 'count',
-        label: 'Count the smoke first. Riders make one kind of dust and a burning steading makes another, and you would rather ring the right bell than the loud one.',
-        told: 'counted the smoke first, because you would rather ring the right bell than the loud one.',
+        label: 'Watch the smoke first and work out what it is before you ring anything.',
+        told: 'watched the smoke first, to ring the right bell.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1 },
@@ -3421,20 +3453,20 @@ export const QUESTIONS = [
       },
       {
         id: 'ridge',
-        label: 'Go out the tower window and down the ridge to look at it yourself, and be back before anybody has noticed the bell was not rung.',
-        told: 'went out the tower window to look at the smoke yourself, and were back before anybody missed the bell.',
+        label: 'Say nothing and climb down. Whatever is coming, you would rather be gone before it gets here.',
+        told: 'climbed down and were gone before it arrived.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, wilder: 1 },
           lineage: { skybound: 1 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1, cunning: 1 },
+          background: { outlander: 1, entertainer: 1 },
+          skill: { survivalist: 1, vigilant: 1 },
         },
       },
       {
         id: 'word',
-        label: 'Say the word scratched inside the bell housing, which you found two summers ago and have been waiting for a reason to use. The bell rings itself.',
-        told: 'said the word scratched inside the bell housing, and the bell rang itself.',
+        label: 'Say the word scratched inside the bell and let it ring itself.',
+        told: 'said the word scratched inside the bell, and it rang itself.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -3451,13 +3483,13 @@ export const QUESTIONS = [
     id: 'child-lamb',
     stage: 'childhood',
     scene:
-      'The ewe has thrown a lamb wrong and the lamb is alive and will not be by morning. Your grandmother has put the knife down on the straw beside you and gone back to the house, which is how she says things. The barn is cold and the ewe will not stop.',
+      'The lamb was born wrong and will not live till morning. Your grandmother has left the knife on the straw beside you and gone inside.',
     asks: 'What do you do?',
-    recall: 'In the cold barn the night the ewe threw wrong, you',
+    recall: 'The night the ewe threw wrong, you',
     options: [
       {
         id: 'knife',
-        label: 'Use the knife. It takes you two tries and you never tell anybody about the first one.',
+        label: 'Use the knife. It takes you two tries, and you tell nobody about the first.',
         told: 'used the knife, and never told anybody it took two tries.',
         gives: {
           attribute: { physique: 1 },
@@ -3469,8 +3501,8 @@ export const QUESTIONS = [
       },
       {
         id: 'coat',
-        label: 'Get the lamb inside your coat against your skin and hold it there all night. It lives, and the ewe knows you now.',
-        told: 'held the lamb inside your coat all night until it lived, and the ewe knew you afterwards.',
+        label: 'Hold the lamb inside your coat against your skin all night until it lives.',
+        told: 'held the lamb inside your coat all night until it lived.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, 'draconic-bond': 1, beastbond: 1 },
@@ -3481,19 +3513,19 @@ export const QUESTIONS = [
       },
       {
         id: 'milk',
-        label: 'Warm milk, a goose quill and honey off the shelf, and feed it a spoon at a time until first light. Three of the four things you try are your own idea.',
-        told: 'fed it warm milk through a goose quill until first light, and three of the four things you tried were your own idea.',
+        label: 'Let it die, and open it up afterwards to see what went wrong inside.',
+        told: 'let it die and opened it up to see what had gone wrong.',
         gives: {
           attribute: { mind: 2 },
-          talent: { alchemist: 1, thaumaturge: 1 },
-          background: { craftsman: 1 },
-          skill: { apothecary: 1, physician: 1 },
+          talent: { alchemist: 1, necromancer: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { physician: 1, apothecary: 1 },
         },
       },
       {
         id: 'words',
-        label: 'Sit with it and say the words your grandmother says over the dying, all of them, in the right order, though nobody has ever taught you them.',
-        told: 'said the words your grandmother says over the dying, in the right order, though nobody had taught you them.',
+        label: 'Say the words your grandmother says over the dying, though nobody taught you them.',
+        told: 'said the words your grandmother says over the dying.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -3510,14 +3542,14 @@ export const QUESTIONS = [
     id: 'child-skull',
     stage: 'childhood',
     scene:
-      'The plough has turned up a skull in the top field, small and brown and not a sheep’s. That field has been ploughed every spring of your life. Your father has already decided to say nothing about it to anybody and has gone to fetch a sack.',
+      'The plough has turned up a small skull in the top field. Your father has gone for a sack and means to say nothing.',
     asks: 'What do you do?',
-    recall: 'Over the skull the plough turned up in the top field, you',
+    recall: 'Over the skull the plough turned up, you',
     options: [
       {
         id: 'ask',
-        label: 'Ask it who it was. Not out loud, and not expecting anything, and you are still standing there when something in the field answers.',
-        told: 'asked it who it was, and were still standing there when something in the field answered.',
+        label: 'Ask it who it was, not out loud. Wait to see if anything answers.',
+        told: 'asked it who it was, and something in the field answered.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -3529,8 +3561,8 @@ export const QUESTIONS = [
       },
       {
         id: 'dig',
-        label: 'Dig where the plough found it, all afternoon, until you have the rest of them laid out straight and put a stone over it with a mark cut into the stone.',
-        told: 'dug up the rest of them and laid them straight under a stone with a mark cut into it.',
+        label: 'Dig up the rest of the bones and bury them under a marked stone.',
+        told: 'dug up the rest and buried them under a marked stone.',
         gives: {
           attribute: { physique: 2 },
           talent: { runebearer: 1, colossus: 1 },
@@ -3541,8 +3573,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sell',
-        label: 'Say nothing and take it. There is a man in the market town who buys curiosities and does not ask which field they came out of.',
-        told: 'took it to the man in the market town who buys curiosities and does not ask which field they came from.',
+        label: 'Say nothing, take it and sell it to the man in town who buys curiosities.',
+        told: 'sold it to the man in town who buys curiosities.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
@@ -3554,8 +3586,8 @@ export const QUESTIONS = [
       },
       {
         id: 'almshouse',
-        label: 'Get the shape of it into your head, then walk to the almshouse and ask the oldest person there what happened in that field, and keep asking until somebody tells you.',
-        told: 'walked to the almshouse and kept asking what had happened in that field until somebody told you.',
+        label: 'Go to the almshouse and keep asking the old people what happened in that field.',
+        told: 'kept asking at the almshouse until somebody told you.',
         gives: {
           attribute: { mind: 1 },
           talent: { necromancer: 1 },
@@ -3570,14 +3602,14 @@ export const QUESTIONS = [
     id: 'child-slate',
     stage: 'childhood',
     scene:
-      'The schoolmaster pays a farthing a page to whoever will copy his letters out fair, and his hand shakes now, so it is you. Forty pages by Sunday. Halfway down the stack there is a page in a different hand altogether, and it is a list of names with money written beside them.',
+      'You copy the schoolmaster’s letters for a farthing a page. Halfway down the pile is a list of names with money beside them, in a different hand.',
     asks: 'What do you do?',
     recall: 'Copying the schoolmaster’s letters at a farthing a page, you',
     options: [
       {
         id: 'twice',
-        label: 'Copy it fair with the rest, and copy it twice, and keep the second one. A page in your own hand is a page anybody can read, including you, in ten years.',
-        told: 'copied the page twice and kept the second one, because a page in your own hand is one anybody can read.',
+        label: 'Copy the list twice and keep the second copy for yourself.',
+        told: 'copied the list twice and kept one.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellquill: 1 },
@@ -3587,8 +3619,8 @@ export const QUESTIONS = [
       },
       {
         id: 'hand',
-        label: 'Learn the other hand. By Sunday you can write a line in it that the schoolmaster himself would swear he had not written.',
-        told: 'learned the other hand well enough to write a line the schoolmaster would swear he had not written.',
+        label: 'Learn the other hand until you can write a line the schoolmaster would swear was his.',
+        told: 'learned the other hand well enough to pass for the schoolmaster.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
@@ -3600,8 +3632,8 @@ export const QUESTIONS = [
       },
       {
         id: 'name',
-        label: 'Take the page to the name at the top of it and find out what he will pay for the schoolmaster not to have it.',
-        told: 'took the page to the name at the top of it and found out what he would pay for it.',
+        label: 'Take the page to the first name on it and ask what he will pay for it.',
+        told: 'sold the page to the first name on it.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1 },
@@ -3612,8 +3644,8 @@ export const QUESTIONS = [
       },
       {
         id: 'forty',
-        label: 'Finish the forty pages, take your farthings and say nothing at all about the one in the middle. Your hand aches for two days afterwards.',
-        told: 'finished all forty pages and said nothing about the one in the middle, and your hand ached for two days.',
+        label: 'Finish the forty pages, take your farthings and say nothing about the list.',
+        told: 'finished the forty pages and said nothing about the list.',
         gives: {
           attribute: { physique: 2 },
           talent: { runebearer: 1, guardian: 1 },
@@ -3631,14 +3663,14 @@ export const QUESTIONS = [
     id: 'home-winter',
     stage: 'home',
     scene:
-      'It is the third week of a bad winter and the woodpile is down to two days. Your mother has counted it twice and stopped counting. The forest behind the house belongs to a man who has hanged people for less than a cord of wood.',
+      'It is the third week of a bad winter and the woodpile is down to two days. The forest behind the house belongs to a man who hangs people for less.',
     asks: 'What do you do?',
-    recall: 'The bad winter the woodpile came down to two days, you',
+    recall: 'The winter the woodpile came down to two days, you',
     options: [
       {
         id: 'axe',
-        label: 'Go up at first light with the axe and come back at dusk with more than you can carry. Twice a day, then again the next day.',
-        told: 'went up with the axe at first light and came back at dusk with more than you could carry.',
+        label: 'Take the axe up at first light and cut his wood in the open, twice a day.',
+        told: 'cut his wood in the open with the axe, twice a day.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, berserker: 1 },
@@ -3650,8 +3682,8 @@ export const QUESTIONS = [
       },
       {
         id: 'deadfall',
-        label: 'Take the deadfall only, at night, in three small loads by three different paths, so that nothing on the ground says anybody was ever up there.',
-        told: 'took the deadfall at night by three different paths, so nothing on the ground said you had been there.',
+        label: 'Take the deadfall at night, in small loads by different paths, so nothing shows.',
+        told: 'took the deadfall at night by three different paths.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
@@ -3663,8 +3695,8 @@ export const QUESTIONS = [
       },
       {
         id: 'hearth',
-        label: 'Rebuild the hearth instead. You have watched the smoke go up that chimney all your life and you are fairly sure you know where the heat has been going.',
-        told: 'rebuilt the hearth instead, because you had worked out where the heat had been going.',
+        label: 'Rebuild the hearth instead. You have worked out where the heat has been going.',
+        told: 'rebuilt the hearth, because you knew where the heat was going.',
         gives: {
           attribute: { mind: 2 },
           talent: { enchanter: 1, alchemist: 1 },
@@ -3675,14 +3707,14 @@ export const QUESTIONS = [
       },
       {
         id: 'work',
-        label: 'Go and ask the man for work. He has a woodlot and no sons, and by the end of the winter you know his dogs by name and they know yours.',
-        told: 'went and asked the man for work, and by the end of the winter his dogs knew your name.',
+        label: 'Tell the man which of your neighbours have been taking his wood, and take the reward in logs.',
+        told: 'told the man which neighbours had been taking his wood, for a reward in logs.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'draconic-bond': 1, wilder: 1 },
-          lineage: { wildkin: 1 },
-          background: { outlander: 1 },
-          skill: { charismatic: 1, helpful: 1 },
+          talent: { virtuoso: 1, wilder: 1 },
+          lineage: { infernal: 1 },
+          background: { military: 1, investigator: 1 },
+          skill: { streetwise: 1, frugal: 1 },
         },
       },
     ],
@@ -3692,14 +3724,14 @@ export const QUESTIONS = [
     id: 'home-brother',
     stage: 'home',
     scene:
-      'Your brother has taken the priest’s silver spoon and hidden it under the loose board in the room the two of you sleep in. The priest has been to the house twice. Your brother is younger than you and has told you, in the dark, that he will say it was you.',
+      'Your brother has hidden the priest’s silver spoon under a loose board in your room. He says that if it comes out, he will say it was you.',
     asks: 'What do you do?',
     recall: 'Over the priest’s spoon under your brother’s loose board, you',
     options: [
       {
         id: 'take',
-        label: 'Take it. Let him say what he likes, and stand in front of the priest saying nothing at all, and take what comes with your hands at your sides.',
-        told: 'took the blame with your hands at your sides and let your brother say what he liked.',
+        label: 'Take the blame, stand in front of the priest and say nothing at all.',
+        told: 'took the blame and said nothing at all.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1, oathbound: 1 },
@@ -3710,8 +3742,8 @@ export const QUESTIONS = [
       },
       {
         id: 'back',
-        label: 'Put it back where the priest will find it himself, in a place that makes both of you look innocent and the housekeeper look careless.',
-        told: 'put the spoon back where the priest would find it himself and the housekeeper would be blamed.',
+        label: 'Put the spoon back where the housekeeper will be blamed for it.',
+        told: 'put the spoon where the housekeeper would be blamed.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -3722,8 +3754,8 @@ export const QUESTIONS = [
       },
       {
         id: 'want',
-        label: 'Work out what your brother actually wants, get it for him another way and then tell him what you know and what it will cost him to keep you quiet.',
-        told: 'found out what your brother really wanted, got it for him another way and named your price for silence.',
+        label: 'Find out what your brother wants, get it for him and name your price for your silence.',
+        told: 'named your price for your silence.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1 },
@@ -3734,8 +3766,8 @@ export const QUESTIONS = [
       },
       {
         id: 'yard',
-        label: 'Take your brother out to the yard and settle it there, and then go to the priest together with the spoon and a bruise each.',
-        told: 'settled it with your brother in the yard, and went to the priest together with the spoon and a bruise each.',
+        label: 'Settle it with your brother in the yard, then go to the priest together with the spoon.',
+        told: 'settled it in the yard and went to the priest with the spoon.',
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
@@ -3752,14 +3784,14 @@ export const QUESTIONS = [
     id: 'home-match',
     stage: 'home',
     scene:
-      'There is a man in the front room with your father and a contract on the table, and the contract is a marriage. He is thirty and he has a mill. You are fifteen and you have been listening at the door for a quarter of an hour.',
+      'There is a man in the front room with your father and a marriage contract on the table. He is thirty and has a mill. You are fifteen.',
     asks: 'What do you do?',
     recall: 'The afternoon they put a marriage contract on the table, you',
     options: [
       {
         id: 'read',
-        label: 'Go in and read the contract. There are four things wrong with it, you point at each of them in front of both men and the second one ends the afternoon.',
-        told: 'went in, read the contract and pointed at the four things wrong with it in front of both men.',
+        label: 'Go in, read the contract and point out the four things wrong with it.',
+        told: 'read the contract and pointed out the four things wrong with it.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -3769,8 +3801,8 @@ export const QUESTIONS = [
       },
       {
         id: 'gone',
-        label: 'Be gone by the time they open the door. There is a cart leaving for the market town at dawn and you know the driver well enough.',
-        told: 'were gone before they opened the door, on the dawn cart to the market town.',
+        label: 'Be gone before they open the door, on the dawn cart to the market town.',
+        told: 'were gone on the dawn cart before they opened the door.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, wilder: 1 },
@@ -3781,8 +3813,8 @@ export const QUESTIONS = [
       },
       {
         id: 'agree',
-        label: 'Go in and agree to it, and spend the next hour finding out exactly what the mill is worth and which of the two men needs this more.',
-        told: 'agreed to it, and spent the hour finding out what the mill was worth and which man needed it more.',
+        label: 'Agree, and spend the hour working out what the mill is worth and how soon it could be yours.',
+        told: 'agreed, and worked out how soon the mill could be yours.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1 },
@@ -3793,8 +3825,8 @@ export const QUESTIONS = [
       },
       {
         id: 'fire',
-        label: 'Open the door, put the contract in the fire and stand in front of the fire. Nobody in that room is going to move you off it.',
-        told: 'put the contract in the fire and stood in front of the fire, and nobody in the room moved you off it.',
+        label: 'Put the contract in the fire and stand in front of the fire.',
+        told: 'put the contract in the fire and stood in front of it.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, berserker: 1 },
@@ -3810,14 +3842,14 @@ export const QUESTIONS = [
     id: 'home-well',
     stage: 'home',
     scene:
-      'The village well has gone bad, two children are sick and somebody has remembered that your family’s land lies uphill of it. There are eleven people at your gate and the one doing the talking is the smith. Your mother has bolted the door and put her back against it.',
+      'The well has gone bad and two children are sick, and your family’s land lies uphill of it. Eleven villagers are at your gate and the smith is doing the talking.',
     asks: 'What do you do?',
     recall: 'The day eleven of the village came to the gate about the well, you',
     options: [
       {
         id: 'spring',
-        label: 'Go out and take them up to the well. Show them the dead sheep in the upper spring that nobody has looked at, and make the smith look at it first.',
-        told: 'took them up to the well and made the smith look at the dead sheep in the upper spring.',
+        label: 'Take them up to the spring and show them the dead sheep nobody has looked at.',
+        told: 'showed them the dead sheep in the upper spring.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1 },
@@ -3827,8 +3859,8 @@ export const QUESTIONS = [
       },
       {
         id: 'gate',
-        label: 'Go out and stand in the gateway. Eleven is not so many when the first two of them have to get past you, and the smith knows it.',
-        told: 'stood in the gateway, because eleven is not so many when the first two have to get past you.',
+        label: 'Stand in the gateway. Eleven is not many when the first two have to get past you.',
+        told: 'stood in the gateway and let them work out who came first.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, painseeker: 1 },
@@ -3839,20 +3871,20 @@ export const QUESTIONS = [
       },
       {
         id: 'children',
-        label: 'Go over the back wall and get the two sick children out to your grandmother, who has never once been wrong about a fever, before anybody at the gate has finished shouting.',
-        told: 'got the two sick children over the back wall to your grandmother before the shouting at the gate had finished.',
+        label: 'Go over the back wall and be gone. Whoever they blame, it will not be you.',
+        told: 'went over the back wall and left them to it.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'cauldron-keeper': 1, trickster: 1 },
+          talent: { trickster: 1, 'feral-curse': 1 },
           lineage: { wildheart: 1 },
-          background: { outlander: 1 },
-          skill: { healer: 1, apothecary: 1 },
+          background: { outlander: 1, investigator: 1 },
+          skill: { survivalist: 1, streetwise: 1 },
         },
       },
       {
         id: 'boil',
-        label: 'Boil it. Every drop the village drinks for a fortnight, in your mother’s copper, over a fire you keep alight yourself for fourteen days.',
-        told: 'boiled every drop the village drank for a fortnight over a fire you kept alight yourself.',
+        label: 'Boil every drop the village drinks for a fortnight, over a fire you keep alight yourself.',
+        told: 'boiled every drop the village drank for a fortnight.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1 },
@@ -3868,13 +3900,13 @@ export const QUESTIONS = [
     id: 'home-levy',
     stage: 'home',
     scene:
-      'The levy has come through and it takes one from every house that has more than one. There are three of you and your brother is lame. The sergeant is writing names at the table and your mother has not said anything for a full minute.',
+      'The levy takes one from every house with more than one. There are three of you and your brother is lame, and the sergeant is writing names.',
     asks: 'What do you do?',
-    recall: 'The morning the levy came for one body from every house, you',
+    recall: 'The morning the levy came for one from every house, you',
     options: [
       {
         id: 'own',
-        label: 'Say your own name before anybody else can. You are the biggest thing in that house and the only argument that matters is standing up.',
+        label: 'Say your own name before anybody else in the house can.',
         told: 'said your own name before anybody else could.',
         gives: {
           attribute: { physique: 2 },
@@ -3886,8 +3918,8 @@ export const QUESTIONS = [
       },
       {
         id: 'warrant',
-        label: 'Read the warrant over his shoulder. It says one able body a house and it does not say which house, and there is a cousin two fields over who would go for money.',
-        told: 'read the warrant over his shoulder and found the cousin two fields over who would go for money.',
+        label: 'Read the warrant and point him at the cousin two fields over who will go for money.',
+        told: 'pointed the sergeant at a cousin who would go for money.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1 },
@@ -3897,25 +3929,25 @@ export const QUESTIONS = [
       },
       {
         id: 'hedge',
-        label: 'Be somewhere else. You are out of the window and into the hedge before he reaches the second name, and you sleep in the wood for nine days.',
-        told: 'were out the window before he reached the second name, and slept in the wood for nine days.',
+        label: 'Be out of the window and into the hedge before he reaches the second name.',
+        told: 'went out the window before he reached the second name.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, wilder: 1, 'cauldron-keeper': 1, mycomancer: 1 },
-          lineage: { fey: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1, survivalist: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
         },
       },
       {
         id: 'trade',
-        label: 'Offer him something better. You know where the deserters are camped and he has been looking for a fortnight, and one of those facts is worth the other.',
-        told: 'traded him the deserters’ camp, which he had been looking for a fortnight.',
+        label: 'Sell him the deserters’ camp instead. He has been looking for it for a fortnight.',
+        told: 'sold him the deserters’ camp instead.',
         gives: {
           attribute: { instinct: 1 },
           talent: { pactbound: 1 },
           lineage: { infernal: 1 },
-          background: { criminal: 1, merchant: 1, entertainer: 1 },
+          background: { merchant: 1, entertainer: 1, military: 1 },
           skill: { haggler: 1, streetwise: 1 },
         },
       },
@@ -3926,14 +3958,14 @@ export const QUESTIONS = [
     id: 'home-loom',
     stage: 'home',
     scene:
-      'Your father has been dead a month and the workshop is yours or it is nobody’s. There is a half-finished commission on the bench, a book of his patterns and a man coming on Thursday for the piece. You have watched this work all your life and never once been allowed to do it.',
+      'Your father has been dead a month and his workshop is yours or nobody’s. A half-finished commission sits on the bench, and the customer comes on Thursday.',
     asks: 'What do you do?',
     recall: 'The month after your father died, over his half-finished commission, you',
     options: [
       {
         id: 'finish',
-        label: 'Finish it. Twelve hours a day until Thursday with your father’s tools, and the man takes it without a word about whose hands were on it.',
-        told: 'finished it in twelve-hour days, and the man took it without a word about whose hands had been on it.',
+        label: 'Finish it yourself with his tools, twelve hours a day until Thursday.',
+        told: 'finished it yourself, twelve hours a day until Thursday.',
         gives: {
           attribute: { physique: 2 },
           talent: { runebearer: 1, weaver: 1 },
@@ -3944,8 +3976,8 @@ export const QUESTIONS = [
       },
       {
         id: 'pattern',
-        label: 'Read the pattern book first, every page of it, then finish the piece better than the pattern says. The man notices and comes back in the spring.',
-        told: 'read every page of his pattern book and then finished the piece better than the pattern said.',
+        label: 'Read his pattern book first, then finish the piece better than the pattern says.',
+        told: 'read his pattern book and finished the piece better than it said.',
         gives: {
           attribute: { mind: 2 },
           talent: { enchanter: 1, alchemist: 1, weaver: 1 },
@@ -3955,8 +3987,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sell',
-        label: 'Sell the tools, the pattern book and the commission, in that order, to three different people before Thursday.',
-        told: 'sold the tools, the book and the commission to three different people before Thursday.',
+        label: 'Sell the tools, the pattern book and the commission to three different people before Thursday.',
+        told: 'sold the tools, the book and the commission before Thursday.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -3967,8 +3999,8 @@ export const QUESTIONS = [
       },
       {
         id: 'mark',
-        label: 'Cut your father’s mark into the underside of the piece and finish it in his hand rather than your own, and let the man believe what he likes.',
-        told: 'cut your father’s mark into the underside and finished the piece in his hand rather than your own.',
+        label: 'Cut your father’s mark into it and let the man believe it is his work.',
+        told: 'cut your father’s mark into it and let the man believe what he liked.',
         tags: ['did:theft'],
         gives: {
           attribute: { mind: 1 },
@@ -3988,14 +4020,14 @@ export const QUESTIONS = [
     id: 'blood-lightning',
     stage: 'blood',
     scene:
-      'The storm catches you on the open hill with the flock and there is nowhere to be. The air goes wrong, your hair lifts off your neck and the ewe six feet away drops where she stands. You are still on your feet and the rain has not touched you yet.',
+      'The storm catches you on the open hill with the flock. Your hair lifts off your neck, and the ewe six feet away drops dead where she stands.',
     asks: 'What do you do?',
-    recall: 'On the open hill the day the storm dropped a ewe six feet from you, you',
+    recall: 'On the hill the day the storm dropped a ewe beside you, you',
     options: [
       {
         id: 'up',
-        label: 'Stand up into it. You have never once been afraid of a high place or a hard wind, and the storm goes over you and takes nothing.',
-        told: 'stood up into the storm, and it went over you and took nothing.',
+        label: 'Stand up into it. You have never been afraid of a high place or a hard wind.',
+        told: 'stood up into the storm, and it took nothing from you.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, wilder: 1 },
@@ -4006,20 +4038,20 @@ export const QUESTIONS = [
       },
       {
         id: 'flock',
-        label: 'Get the flock off the hill. Two under each arm and the rest driven, four trips, and you are the last thing standing up there for an hour.',
-        told: 'got the whole flock off the hill in four trips, two under each arm.',
+        label: 'Butcher the dead ewe on the spot and carry the meat home. Lightning is a fair price for mutton.',
+        told: 'butchered the dead ewe and carried the meat home.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, totemic: 1, 'draconic-bond': 1 },
+          talent: { colossus: 1, painseeker: 1 },
           lineage: { skybound: 1 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1, helpful: 1 },
+          background: { outlander: 1, craftsman: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
         },
       },
       {
         id: 'iron',
-        label: 'Put every piece of iron you have on the ground twelve feet away, lie flat in the wet and count the gaps between the light and the sound until they get longer.',
-        told: 'put your iron on the ground twelve feet off and lay flat, counting the gaps until they got longer.',
+        label: 'Lay your iron twelve feet away and lie flat, counting the gaps between flash and thunder.',
+        told: 'lay flat with your iron twelve feet off, counting the gaps.',
         gives: {
           attribute: { mind: 1 },
           talent: { arcanist: 1, alchemist: 1 },
@@ -4029,8 +4061,8 @@ export const QUESTIONS = [
       },
       {
         id: 'answer',
-        label: 'Answer it. You do not decide to, and afterwards you can find the shape it left on your palm with your thumb in the dark.',
-        told: 'answered the storm without deciding to, and carried the shape it left on your palm afterwards.',
+        label: 'Answer it. Afterwards you can feel the shape it left on your palm.',
+        told: 'answered the storm, and carried the shape it left on your palm.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -4047,14 +4079,14 @@ export const QUESTIONS = [
     id: 'blood-fever',
     stage: 'blood',
     scene:
-      'The sweating sickness has taken nine houses in the row and both your parents are in one of them. You have been in and out of that room for eleven days, sleeping on the floor of it and drinking out of the same cup. You have not been ill for an hour.',
+      'The sweating sickness has taken nine houses in the row, your parents’ among them. You have slept on that floor for eleven days and not been ill for an hour.',
     asks: 'What do you do?',
     recall: 'Through eleven days of the sweating sickness that never touched you, you',
     options: [
       {
         id: 'carry',
-        label: 'Keep going. Carry water, carry the dead out, carry the priest home when he can no longer walk and be the last one standing in the row.',
-        told: 'carried water and carried the dead, and were the last one standing in the row.',
+        label: 'Keep going. Carry water, carry out the dead and be the last one standing in the row.',
+        told: 'carried water and carried the dead, and were the last one standing.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, painseeker: 1 },
@@ -4065,8 +4097,8 @@ export const QUESTIONS = [
       },
       {
         id: 'why',
-        label: 'Find out why not you. The same cup, the same room, the same air and eleven days, and there is an answer in that and you mean to have it.',
-        told: 'set out to find why the same cup and the same air had not touched you.',
+        label: 'Find out why not you. Same cup, same room and same air, and there is an answer in that.',
+        told: 'set out to find why it had not touched you.',
         gives: {
           attribute: { mind: 2 },
           talent: { alchemist: 1 },
@@ -4076,8 +4108,8 @@ export const QUESTIONS = [
       },
       {
         id: 'brew',
-        label: 'Go out to the woods and come back with what your grandmother used to bring back, and brew it in the yard for the whole row.',
-        told: 'brewed what your grandmother used to bring out of the woods, in the yard, for the whole row.',
+        label: 'Go to the woods for what your grandmother used and brew it in the yard for the row.',
+        told: 'brewed what your grandmother used, in the yard, for the whole row.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'cauldron-keeper': 1, wilder: 1 },
@@ -4088,14 +4120,15 @@ export const QUESTIONS = [
       },
       {
         id: 'sit',
-        label: 'Sit with the ones nobody else will sit with, and be the one who says the last words, because you have found out that you can and that it costs you nothing.',
-        told: 'sat with the ones nobody else would sit with and said the last words over them.',
+        label: 'Go through the empty houses, coolly, for anything worth keeping. The dead are past needing it.',
+        told: 'went through the empty houses for anything worth keeping.',
+        tags: ['did:theft'],
         gives: {
           attribute: { mind: 1 },
           talent: { necromancer: 1 },
           lineage: { undead: 1 },
-          background: { erudit: 1, aristocrat: 1 },
-          skill: { occultist: 1, empath: 1 },
+          background: { criminal: 1, investigator: 1 },
+          skill: { scavenger: 1, occultist: 1 },
         },
       },
     ],
@@ -4105,25 +4138,26 @@ export const QUESTIONS = [
     id: 'blood-glass',
     stage: 'blood',
     scene:
-      'The house has one good window and you have been looking into it since you were small, because the room reflected in it is not always the room behind you. Tonight there is somebody standing in the reflected doorway. There is nobody standing in the real one.',
+      'The room reflected in the good window is not always the room behind you. Tonight somebody is standing in the reflected doorway, and the real one is empty.',
     asks: 'What do you do?',
-    recall: 'The night the window showed somebody in a doorway that was empty, you',
+    recall: 'The night the window showed somebody in an empty doorway, you',
     options: [
       {
         id: 'watch',
-        label: 'Watch it. All night if it takes all night, without moving. Write down in the morning what it did and in what order.',
-        told: 'watched it all night without moving, and wrote down in the morning what it had done and in what order.',
+        label: 'Ask it what it will pay you to be let through.',
+        told: 'asked it what it would pay to be let through.',
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 1 },
+          talent: { pactbound: 1, arcanist: 1 },
+          lineage: { infernal: 1 },
           background: { erudit: 1 },
-          skill: { occultist: 1, scholar: 1 },
+          skill: { occultist: 1, haggler: 1 },
         },
       },
       {
         id: 'stand',
-        label: 'Go and stand in the doorway yourself, the real one, to see which of the two of you the window decides to show.',
-        told: 'stood in the real doorway to see which of the two of you the window would show.',
+        label: 'Go and stand in the real doorway to see which of you the window shows.',
+        told: 'stood in the real doorway to see which of you the window showed.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1 },
@@ -4134,8 +4168,8 @@ export const QUESTIONS = [
       },
       {
         id: 'break',
-        label: 'Break the window. It costs you a winter of cold and a beating, and you have never once regretted it.',
-        told: 'broke the window, and paid for it with a winter of cold and a beating you never regretted.',
+        label: 'Break the window. It costs you a winter of cold and a beating.',
+        told: 'broke the window and paid for it with a cold winter and a beating.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, brawler: 1 },
@@ -4146,8 +4180,8 @@ export const QUESTIONS = [
       },
       {
         id: 'speak',
-        label: 'Speak to it. Not in your own language, because the one that comes out of you is not, and it answers you in the same.',
-        told: 'spoke to it in a language that was not yours, and it answered you in the same.',
+        label: 'Speak to it in a language that is not yours, and it answers you in the same.',
+        told: 'spoke to it in a language that was not yours, and it answered.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -4163,14 +4197,14 @@ export const QUESTIONS = [
     id: 'blood-salt',
     stage: 'blood',
     scene:
-      'The boat has gone over a mile out and the other three are in the water with you. The cold takes the oldest of them in about four minutes and you can feel it doing it. It is not doing it to you.',
+      'The boat has gone over a mile out and the other three are in the water with you. The cold is killing the oldest of them, and it is not touching you.',
     asks: 'What do you do?',
     recall: 'A mile out, in the water the cold could not get into, you',
     options: [
       {
         id: 'hull',
-        label: 'Get all three of them up onto the hull and stay in the water yourself, holding it steady, for the two hours it takes the tide to put you on the sand.',
-        told: 'held the hull steady from the water for two hours while the tide carried all four of you in.',
+        label: 'Get all three onto the hull and hold it steady from the water for two hours.',
+        told: 'held the hull steady from the water for two hours.',
         gives: {
           attribute: { instinct: 2 },
           talent: { wilder: 1, 'cauldron-keeper': 1 },
@@ -4181,8 +4215,8 @@ export const QUESTIONS = [
       },
       {
         id: 'point',
-        label: 'Swim for the point with the youngest of them on your back. It is half a mile, you do not stop, and you do not look back at the other two.',
-        told: 'swam half a mile to the point with the youngest on your back, and did not look back at the other two.',
+        label: 'Swim for the point alone. Half a mile, and you do not look back at the other three.',
+        told: 'swam for the point alone and did not look back.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, berserker: 1 },
@@ -4193,8 +4227,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sail',
-        label: 'Cut the sail free and get it under all four of you, because a wet sail full of air is a boat for as long as anybody needs one.',
-        told: 'cut the sail free and got it under all four of you, because a wet sail full of air is a boat.',
+        label: 'Cut the sail loose and get it under all four of you. It floats.',
+        told: 'cut the sail loose and got it under all four of you.',
         gives: {
           attribute: { mind: 1 },
           talent: { enchanter: 1, weaver: 1 },
@@ -4204,8 +4238,8 @@ export const QUESTIONS = [
       },
       {
         id: 'ask',
-        label: 'Ask the water. You have been doing it since you were four, quietly, and it has never once said no to you.',
-        told: 'asked the water, the way you had since you were four, and it did not say no.',
+        label: 'Ask the water, the way you have since you were four. It has never said no.',
+        told: 'asked the water, and it did not say no.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -4221,14 +4255,14 @@ export const QUESTIONS = [
     id: 'blood-stone',
     stage: 'blood',
     scene:
-      'The quarry face has come down on the shift below yours and there are men under it. The foreman has said the word he says when there is no getting them out. You are fourteen and you are on the rope, and somewhere under thirty tons of it something is still knocking.',
+      'The quarry face has come down on the shift below yours and men are under it. The foreman says there is no getting them out, but something under the stone is still knocking.',
     asks: 'What do you do?',
     recall: 'On the rope the day the quarry face came down, you',
     options: [
       {
         id: 'hands',
-        label: 'Go down and start moving it with your hands. Nobody counts the hours, and by the end of it you have shifted stone two men could not, and one of them is alive.',
-        told: 'went down and moved stone two men could not, until one of them came out alive.',
+        label: 'Go down and move stone with your hands until one of them comes out alive.',
+        told: 'moved stone with your hands until one of them came out alive.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1 },
@@ -4239,8 +4273,8 @@ export const QUESTIONS = [
       },
       {
         id: 'face',
-        label: 'Look at the face before anybody touches it. There is one block holding the rest, it can be taken out from the side, and you can say which one it is.',
-        told: 'read the face before anybody touched it and named the one block holding the rest.',
+        label: 'Read the face first and name the one block holding the rest up.',
+        told: 'named the one block holding the rest of the face up.',
         gives: {
           attribute: { mind: 2 },
           talent: { enchanter: 1 },
@@ -4251,8 +4285,8 @@ export const QUESTIONS = [
       },
       {
         id: 'gap',
-        label: 'Go in through the gap nobody else can fit through, on your belly, with a line tied to your ankle, to find out which of the knocking is worth digging for.',
-        told: 'went in on your belly through the gap nobody else could fit, to find which knocking was worth digging for.',
+        label: 'Go in on your belly through the gap nobody else fits, with a line on your ankle.',
+        told: 'went in through the gap nobody else fit, on your belly.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, wilder: 1, mycomancer: 1 },
@@ -4263,14 +4297,14 @@ export const QUESTIONS = [
       },
       {
         id: 'palm',
-        label: 'Put your hand flat on the face and wait. The knocking comes up through the stone into your palm, and after a while you know exactly where they are.',
-        told: 'put your hand flat on the face until the knocking came up through the stone and told you where they were.',
+        label: 'Go back up the rope. Dead men’s wages are paid to the ones who are still working.',
+        told: 'went back up the rope, because the wages go to the living.',
         gives: {
           attribute: { physique: 1 },
-          talent: { runebearer: 1, totemic: 1 },
+          talent: { colossus: 1, painseeker: 1 },
           lineage: { stonebound: 1 },
-          background: { craftsman: 1 },
-          skill: { vigilant: 1 },
+          background: { craftsman: 1, military: 1 },
+          skill: { frugal: 1, vigilant: 1 },
         },
       },
     ],
@@ -4282,14 +4316,14 @@ export const QUESTIONS = [
     id: 'youth-cards',
     stage: 'youth',
     scene:
-      'You are eleven silver down at a table in a room over a tannery, and the man across from you has been dealing off the bottom for an hour. Two of the four other players know it. Nobody has said anything, because the man has friends by the door.',
+      'You are eleven silver down at a table over a tannery, and the dealer has been cheating for an hour. Nobody says anything, because his friends are by the door.',
     asks: 'What do you do?',
     recall: 'Eleven silver down in the room over the tannery, you',
     options: [
       {
         id: 'bottom',
-        label: 'Deal off the bottom yourself. He is watching your face and not your hands, and by midnight you are eight up and he still does not know how.',
-        told: 'dealt off the bottom yourself, and were eight up by midnight without his working out how.',
+        label: 'Deal off the bottom yourself. He watches faces and not hands, and by midnight you are eight up.',
+        told: 'dealt off the bottom yourself and were eight up by midnight.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, 'flowing-fist': 1 },
@@ -4300,8 +4334,8 @@ export const QUESTIONS = [
       },
       {
         id: 'say',
-        label: 'Say it. Out loud, with the count of every hand he has taken. Let the other four do the arithmetic in front of him.',
-        told: 'said it out loud with the count of every hand he had taken, and let the table do the arithmetic.',
+        label: 'Say it out loud with the count of every hand he has taken, and let the table do the sum.',
+        told: 'said it out loud with the count of every hand he had taken.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1 },
@@ -4311,8 +4345,8 @@ export const QUESTIONS = [
       },
       {
         id: 'table',
-        label: 'Turn the table over. There are three of them and one of you, it takes a while, and you leave with your eleven silver and somebody else’s coat.',
-        told: 'turned the table over, and left with your eleven silver and somebody else’s coat.',
+        label: 'Turn the table over and leave with your eleven silver and somebody else’s coat.',
+        told: 'turned the table over and left with your silver and somebody else’s coat.',
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
@@ -4324,8 +4358,8 @@ export const QUESTIONS = [
       },
       {
         id: 'follow',
-        label: 'Lose the rest of it slowly and cheerfully, and then follow him home. What he does with it afterwards is worth more than eleven silver.',
-        told: 'lost the rest cheerfully and followed him home, because what he did with it was worth more than the money.',
+        label: 'Lose the rest cheerfully and follow him home. What he does with it is worth more.',
+        told: 'lost the rest and followed him home.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1 },
@@ -4341,14 +4375,14 @@ export const QUESTIONS = [
     id: 'youth-ship',
     stage: 'youth',
     scene:
-      'You went into a dockside inn for the bread and you have woken up on a deck with a headache and no coast in sight. The mate has your name on his list in a hand that is not yours. Four days out, and the man in the hammock beside you has been on this ship nine years.',
+      'You went into a dockside inn for bread and woke on a deck with no coast in sight. The mate has your name on his list in a hand that is not yours.',
     asks: 'What do you do?',
-    recall: 'On the ship you woke up on four days out from the dock, you',
+    recall: 'On the ship you woke up on four days out, you',
     options: [
       {
         id: 'work',
-        label: 'Work. Harder than anybody, for nine weeks, until the bosun would rather have you willing than have you flogged and come off that ship with a wage and a trade.',
-        told: 'worked harder than anybody for nine weeks, and came off that ship with a wage and a trade.',
+        label: 'Work harder than anybody for nine weeks and come off the ship with a wage and a trade.',
+        told: 'worked harder than anybody and came off with a wage and a trade.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1, weaver: 1 },
@@ -4359,20 +4393,20 @@ export const QUESTIONS = [
       },
       {
         id: 'learn',
-        label: 'Learn the ship. Every hatch, every watch and every man’s habits, and go over the side into a harbour boat on the ninth night without a sound.',
-        told: 'learned every hatch and every watch, and went over the side into a harbour boat on the ninth night.',
+        label: 'Learn every hatch and every watch, and go over the side on the ninth night.',
+        told: 'learned every watch and went over the side on the ninth night.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1 },
           lineage: { tidebound: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1, seafarer: 1 },
+          background: { military: 1 },
+          skill: { seafarer: 1, vigilant: 1 },
         },
       },
       {
         id: 'charts',
-        label: 'Learn the navigation. The mate cannot do it sober and the master is sixty, and by the second month the charts are yours and nobody mentions the list again.',
-        told: 'learned the navigation, and by the second month the charts were yours and nobody mentioned the list again.',
+        label: 'Learn the navigation. The mate cannot do it sober, and by the second month the charts are yours.',
+        told: 'learned the navigation, and by the second month the charts were yours.',
         gives: {
           attribute: { mind: 2 },
           talent: { enchanter: 1 },
@@ -4382,14 +4416,14 @@ export const QUESTIONS = [
       },
       {
         id: 'hold',
-        label: 'Find out what is in the hold. Nine years is a long time to keep a crew, the hatch aft is nailed rather than locked, and whatever is behind it has been fed.',
-        told: 'found out what was behind the nailed hatch aft, and what had been feeding it.',
+        label: 'Find out what is in the nailed hatch aft, and what the master would pay to keep it quiet.',
+        told: 'found what was in the nailed hatch, and what the master would pay for quiet.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 1, 'draconic-bond': 1 },
+          talent: { 'cauldron-keeper': 1, duelist: 1 },
           lineage: { wildheart: 1 },
-          background: { investigator: 1 },
-          skill: { inquisitor: 1, streetwise: 1 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { inquisitor: 1, haggler: 1 },
         },
       },
     ],
@@ -4399,14 +4433,14 @@ export const QUESTIONS = [
     id: 'youth-mine',
     stage: 'youth',
     scene:
-      'The seam has closed forty feet in and you are on the right side of it. There are five men on the wrong side and the timber crew is saying six hours. You can hear one of them through the fall and he can hear you.',
+      'The seam has closed forty feet in, with five men on the wrong side of it. The timber crew says six hours, and you can hear one of them through the fall.',
     asks: 'What do you do?',
-    recall: 'The day the seam closed on five men with you on the right side of it, you',
+    recall: 'The day the seam closed on five men, you',
     options: [
       {
         id: 'dig',
-        label: 'Start digging and do not stop when the crew tells you to. Four hours, no shoring, and you are the reason two of the five come out at all.',
-        told: 'dug for four hours without shoring, and were the reason two of the five came out.',
+        label: 'Dig without shoring, and do not stop when the crew tells you to.',
+        told: 'dug without shoring until two of the five came out.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, painseeker: 1 },
@@ -4417,8 +4451,8 @@ export const QUESTIONS = [
       },
       {
         id: 'talk',
-        label: 'Talk to him through the fall. Get the shape of what is behind it out of him foot by foot, and hand the crew a map of a place none of them can see.',
-        told: 'talked him through the fall foot by foot, and handed the crew a map of a place none of them could see.',
+        label: 'Talk to him through the fall and map what is behind it for the crew, foot by foot.',
+        told: 'mapped what was behind the fall from his voice, foot by foot.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1 },
@@ -4428,8 +4462,8 @@ export const QUESTIONS = [
       },
       {
         id: 'round',
-        label: 'Go round. There is an old working above this one that everybody says is flooded, and you have been up in it twice and it is not.',
-        told: 'went round through the old working above, which everybody said was flooded and was not.',
+        label: 'Go round through the old working above, which everybody says is flooded and is not.',
+        told: 'went round through the old working everybody said was flooded.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, mycomancer: 1 },
@@ -4440,13 +4474,13 @@ export const QUESTIONS = [
       },
       {
         id: 'air',
-        label: 'Get them air. A leather hose, a bellows off the smith, and six hours becomes a thing five men can live through, and you build it in twenty minutes.',
-        told: 'built them air out of a leather hose and the smith’s bellows in twenty minutes.',
+        label: 'Take the crew’s six hours at their word and go up. Five men’s wages are about to come free.',
+        told: 'went up, because five men’s wages were about to come free.',
         gives: {
           attribute: { mind: 1 },
-          talent: { enchanter: 1, alchemist: 1, weaver: 1 },
-          background: { craftsman: 1 },
-          skill: { skilled: 1, helpful: 1 },
+          talent: { tactician: 1, weaver: 1 },
+          background: { craftsman: 1, erudit: 1 },
+          skill: { mastermind: 1, frugal: 1 },
         },
       },
     ],
@@ -4456,14 +4490,14 @@ export const QUESTIONS = [
     id: 'youth-pit',
     stage: 'youth',
     scene:
-      'The fighting pit behind the horse fair pays a silver to stand up for three rounds and two silver to win, and you have watched it every market day for a year. The man taking names has looked at you twice. The one who won last week has a bad hand and everybody in the crowd knows it.',
+      'The fighting pit behind the horse fair pays a silver to last three rounds and two to win. Last week’s winner has a bad hand, and everybody knows it.',
     asks: 'What do you do?',
     recall: 'At the fighting pit behind the horse fair, you',
     options: [
       {
         id: 'hand',
-        label: 'Give your name and take the bad hand. Nothing you do in there is hard and everything in it is exact, and you are out in four minutes with two silver.',
-        told: 'took the man with the bad hand, and were out in four minutes with two silver.',
+        label: 'Take the man with the bad hand and be out in four minutes with two silver.',
+        told: 'took the man with the bad hand and won in four minutes.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1, 'weapon-master': 1 },
@@ -4475,8 +4509,8 @@ export const QUESTIONS = [
       },
       {
         id: 'biggest',
-        label: 'Give your name and take the biggest man there instead. You lose the first round badly and then you do not lose again, and the crowd remembers your face for a year.',
-        told: 'took the biggest man there, lost the first round badly and did not lose again.',
+        label: 'Take the biggest man there. You lose the first round badly and then you do not lose again.',
+        told: 'took the biggest man there and did not lose after the first round.',
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
@@ -4489,8 +4523,8 @@ export const QUESTIONS = [
       },
       {
         id: 'book',
-        label: 'Take the book instead. You have watched a year of these and you know which of them fall in the second round, and by dusk you have made nine silver without being hit.',
-        told: 'took the book instead, and made nine silver by dusk without being hit once.',
+        label: 'Take the book instead. You know who falls in the second round, and by dusk you have nine silver.',
+        told: 'took the book instead and made nine silver by dusk.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -4501,8 +4535,8 @@ export const QUESTIONS = [
       },
       {
         id: 'odds',
-        label: 'Fight, and lose on purpose twice, and then win the third time at eleven to one against with everything you own riding on yourself.',
-        told: 'lost twice on purpose and then won at eleven to one with everything you owned on yourself.',
+        label: 'Lose twice on purpose, then win the third at eleven to one with everything you own on yourself.',
+        told: 'lost twice on purpose and won at eleven to one.',
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1 },
@@ -4518,26 +4552,26 @@ export const QUESTIONS = [
     id: 'youth-garden',
     stage: 'youth',
     scene:
-      'The abbey’s physic garden is walled and locked, the brother who keeps it is dying, and there is nobody else in that house who knows what half of it is for. You have been over that wall since you were nine. He knows, and has never once said so.',
+      'The abbey’s physic garden is walled and locked, and the brother who keeps it is dying. You have been over that wall since you were nine, and he knows.',
     asks: 'What do you do?',
     recall: 'Over the wall of the abbey’s physic garden, the year the brother was dying, you',
     options: [
       {
         id: 'sit',
-        label: 'Go in by the wall as usual and sit with him in the garden until he has told you all of it, bed by bed, over five weeks.',
-        told: 'sat with him in the garden for five weeks until he had told you all of it, bed by bed.',
+        label: 'Sit with him, and learn which beds are poison, because that is worth more than the rest.',
+        told: 'sat with him and learned which beds were poison.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'cauldron-keeper': 1, mycomancer: 1 },
           lineage: { wildkin: 1 },
-          background: { outlander: 1 },
-          skill: { apothecary: 1, healer: 1 },
+          background: { outlander: 1, erudit: 1 },
+          skill: { apothecary: 1, scholar: 1 },
         },
       },
       {
         id: 'copy',
-        label: 'Copy the book. Every page of the garden book in a fair hand, twice, so that when he is gone the house still has it and so do you.',
-        told: 'copied every page of the garden book twice, so that the house kept it and so did you.',
+        label: 'Copy every page of the garden book twice, one for the house and one for you.',
+        told: 'copied the garden book twice, one for the house and one for you.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellquill: 1, alchemist: 1 },
@@ -4548,8 +4582,8 @@ export const QUESTIONS = [
       },
       {
         id: 'cuttings',
-        label: 'Take cuttings. A little of everything, rooted in a cold frame two miles off. In three years there is a second garden and it is yours.',
-        told: 'took cuttings of everything, and in three years there was a second garden and it was yours.',
+        label: 'Take cuttings of everything and root them two miles off. In three years the garden is yours.',
+        told: 'took cuttings of everything, and in three years had a garden of your own.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
@@ -4561,8 +4595,8 @@ export const QUESTIONS = [
       },
       {
         id: 'dig',
-        label: 'Dig it over for him. He cannot lift a spade and the whole of it is going to seed, and you are there every morning for a month before anybody thinks to ask why.',
-        told: 'dug the garden over for him every morning for a month before anybody thought to ask why.',
+        label: 'Dig it over for him every morning for a month, because he cannot lift a spade.',
+        told: 'dug the garden over for him every morning for a month.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, runebearer: 1 },
@@ -4581,14 +4615,14 @@ export const QUESTIONS = [
     id: 'trade-caravan',
     stage: 'trade',
     scene:
-      'The caravan master is four days from the pass and has lost two people to the fever, and he is hiring at the last inn before the climb. There are nine of you in the yard and he needs three. He has been looking at the yard for ten minutes without saying anything.',
+      'The caravan master has lost two people to fever and is hiring three of the nine in the inn yard. He has looked at the yard for ten minutes without a word.',
     asks: 'What do you do?',
     recall: 'In the inn yard below the pass, where the caravan master needed three of nine, you',
     options: [
       {
         id: 'lift',
-        label: 'Pick up the heaviest thing in the yard, put it on the wagon he is standing next to, then look at him.',
-        told: 'put the heaviest thing in the yard on his wagon, and then looked at him.',
+        label: 'Pick up the heaviest thing in the yard, put it on his wagon and look at him.',
+        told: 'put the heaviest thing in the yard on his wagon.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, quartermaster: 1 },
@@ -4600,8 +4634,8 @@ export const QUESTIONS = [
       },
       {
         id: 'wheels',
-        label: 'Tell him, in that order, what is wrong with his wheels, his mules and his two remaining guards, and where the pass will get him if he does not fix them.',
-        told: 'told him what was wrong with his wheels, his mules and his guards, and where the pass would get him.',
+        label: 'Tell him what is wrong with his wheels, his mules and his guards, in that order.',
+        told: 'told him what was wrong with his wheels, his mules and his guards.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, wilder: 1 },
@@ -4612,8 +4646,8 @@ export const QUESTIONS = [
       },
       {
         id: 'manifest',
-        label: 'Read his manifest upside down off the table while he talks, work out what he is actually carrying and offer him the one thing that cargo needs.',
-        told: 'read his manifest upside down off the table and offered him the one thing his cargo needed.',
+        label: 'Read his manifest upside down while he talks and offer him the one thing that cargo needs.',
+        told: 'read his manifest upside down and offered what the cargo needed.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1, enchanter: 1 },
@@ -4624,8 +4658,8 @@ export const QUESTIONS = [
       },
       {
         id: 'aboard',
-        label: 'Be on the wagon when it leaves. He can find out he hired you somewhere up the road, where it is too late to be particular about it.',
-        told: 'were on the wagon when it left, and let him find out he had hired you somewhere up the road.',
+        label: 'Be on the wagon when it leaves. He can find out he hired you up the road.',
+        told: 'were on the wagon when it left, hired or not.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
@@ -4642,14 +4676,14 @@ export const QUESTIONS = [
     id: 'trade-ward',
     stage: 'trade',
     scene:
-      'The sisters at the fever house will take anybody who can stand the smell, and they pay in a bed and two meals. There are forty beds and four of them. The one who shows you round has been awake since the night before last.',
+      'The fever house pays in a bed and two meals for anyone who can stand the smell. There are forty beds and four sisters, and the one showing you round has not slept in two days.',
     asks: 'Which work do you take?',
     recall: 'At the fever house with forty beds and four sisters, you',
     options: [
       {
         id: 'hopeless',
-        label: 'Take the ones nobody expects to live, and go through everything the house has, one thing at a time, until you find out what actually works on them.',
-        told: 'took the ones nobody expected to live and worked through everything the house had until you found what helped.',
+        label: 'Take the ones nobody expects to live. Nobody minds what you try on them.',
+        told: 'took the hopeless ones, because nobody minded what you tried on them.',
         gives: {
           attribute: { mind: 2 },
           talent: { alchemist: 1, thaumaturge: 1 },
@@ -4660,8 +4694,8 @@ export const QUESTIONS = [
       },
       {
         id: 'brewing',
-        label: 'Take the brewing. Their store is empty, everything in it can be got within a day’s walk of the door, and you know where all of it grows.',
-        told: 'took the brewing, and filled their empty store from a day’s walk around the door.',
+        label: 'Take the brewing. Their store is empty and you know where everything grows.',
+        told: 'took the brewing and filled their empty store.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'cauldron-keeper': 1, wilder: 1 },
@@ -4672,8 +4706,8 @@ export const QUESTIONS = [
       },
       {
         id: 'carrying',
-        label: 'Take the lifting and the carrying and the dead. Forty beds turn over twice a week and somebody has to be the one who does not flinch at it.',
-        told: 'took the lifting and the carrying and the dead, twice a week, without flinching at it.',
+        label: 'Take the lifting, the carrying and the dead, twice a week, without flinching.',
+        told: 'took the lifting and the dead, without flinching.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, painseeker: 1 },
@@ -4684,14 +4718,14 @@ export const QUESTIONS = [
       },
       {
         id: 'register',
-        label: 'Take the register. Names, dates, what they came in with and what they went out as, and in a year you have the only account of the sickness anybody has written.',
-        told: 'took the register, and in a year had the only written account of the sickness anybody had.',
+        label: 'Take the register, and note which of the dying have nobody coming for their things.',
+        told: 'took the register, and noted which of the dying had nobody coming.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1, necromancer: 1 },
           lineage: { undead: 1 },
-          background: { erudit: 1, investigator: 1 },
-          skill: { scholar: 1, occultist: 1 },
+          background: { investigator: 1, erudit: 1 },
+          skill: { scholar: 1, inquisitor: 1 },
         },
       },
     ],
@@ -4701,14 +4735,14 @@ export const QUESTIONS = [
     id: 'trade-court',
     stage: 'trade',
     scene:
-      'The magistrate’s clerk has died and the court sits on Monday. There are eleven cases, forty pages of writ and a queue at the door. The magistrate cannot read his own hand and has stopped pretending otherwise.',
+      'The magistrate’s clerk has died and the court sits on Monday. Eleven cases, forty pages of writ, a queue at the door and a magistrate who cannot read his own hand.',
     asks: 'What do you take on?',
     recall: 'At the magistrate’s court the week his clerk died, you',
     options: [
       {
         id: 'desk',
-        label: 'Take the desk. By Monday the forty pages are fair, the eleven cases are in an order that makes sense and the magistrate says in open court that he does not know how he managed before.',
-        told: 'took the desk, and by Monday the writs were fair and the magistrate said so in open court.',
+        label: 'Take the desk. By Monday the forty pages are fair and the cases are in order.',
+        told: 'took the desk, and by Monday the writs were fair.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellquill: 1 },
@@ -4719,8 +4753,8 @@ export const QUESTIONS = [
       },
       {
         id: 'queue',
-        label: 'Take the queue. Eleven cases at the door means eleven people who will each pay to be heard on Monday rather than in the spring.',
-        told: 'took the queue, where eleven people each paid to be heard on Monday rather than in the spring.',
+        label: 'Take the queue. Eleven people will each pay to be heard on Monday rather than in spring.',
+        told: 'took the queue, and eleven people paid to be heard on Monday.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -4731,20 +4765,20 @@ export const QUESTIONS = [
       },
       {
         id: 'lies',
-        label: 'Read all eleven and find the two that are lies. One of them is the magistrate’s own cousin and you put it in front of him anyway.',
-        told: 'read all eleven and put the two that were lies in front of him, one of them his own cousin’s.',
+        label: 'Read all eleven, find the two that are lies and sell the liars a quiet word before Monday.',
+        told: 'found the two lies and sold the liars a quiet word before Monday.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, spellquill: 1 },
           lineage: { luminary: 1 },
           background: { investigator: 1, aristocrat: 1 },
-          skill: { inquisitor: 1, empath: 1 },
+          skill: { inquisitor: 1, haggler: 1 },
         },
       },
       {
         id: 'door',
-        label: 'Take the door. Forty people, one narrow stair and a magistrate who is going to need somebody standing between him and the fourth case.',
-        told: 'took the door, and stood between the magistrate and the fourth case.',
+        label: 'Take the door, and stand between the magistrate and the fourth case.',
+        told: 'took the door and stood between the magistrate and the fourth case.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, oathbound: 1 },
@@ -4761,14 +4795,14 @@ export const QUESTIONS = [
     id: 'trade-ledger',
     stage: 'trade',
     scene:
-      'The counting house on the quay wants somebody who can hold a column in their head, and it pays better than anything else on that street. The man interviewing you has a ledger open and one finger on a line. The line is wrong and he does not know it yet.',
+      'The counting house on the quay wants somebody who can hold a column in their head. The man interviewing you has his finger on a line, and the line is wrong.',
     asks: 'What do you do?',
     recall: 'In the counting house on the quay, over a line the man had his finger on, you',
     options: [
       {
         id: 'line',
-        label: 'Tell him which line, and what it should say, and what the difference has cost him every month since the spring.',
-        told: 'told him which line was wrong and what it had cost him every month since the spring.',
+        label: 'Tell him which line is wrong and what it has cost him every month since spring.',
+        told: 'told him which line was wrong and what it had cost him.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1, enchanter: 1 },
@@ -4779,32 +4813,32 @@ export const QUESTIONS = [
       },
       {
         id: 'quiet',
-        label: 'Say nothing about the line. Take the work, find out who has been feeding it and decide later which of the two of them you would rather be owed by.',
-        told: 'said nothing about the line, took the work and found out who had been feeding it.',
+        label: 'Say nothing, take the work and find out who has been feeding that line.',
+        told: 'said nothing, took the work and found who was feeding the line.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1 },
           lineage: { infernal: 1 },
-          background: { criminal: 1, investigator: 1 },
-          skill: { cunning: 1, streetwise: 1 },
+          background: { investigator: 1, erudit: 1 },
+          skill: { streetwise: 1, mastermind: 1 },
         },
       },
       {
         id: 'six',
-        label: 'Ask to see the six ledgers behind that one. By the end of the afternoon you can name the clerk, the ship and the month, and you have never had a better afternoon.',
-        told: 'asked for the six ledgers behind it, and by evening could name the clerk, the ship and the month.',
+        label: 'Ask for the six ledgers behind it, and by evening know enough to bleed the clerk for years.',
+        told: 'asked for the six ledgers, and by evening knew enough to bleed the clerk for years.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, spellquill: 1 },
           lineage: { luminary: 1 },
-          background: { investigator: 1 },
-          skill: { inquisitor: 1, scholar: 1 },
+          background: { investigator: 1, criminal: 1 },
+          skill: { inquisitor: 1, cunning: 1 },
         },
       },
       {
         id: 'quay',
-        label: 'Take the work on the quay instead. The counting house is four flights up and everything it counts comes off a ship on somebody’s back, and you would rather be the back.',
-        told: 'took the work on the quay instead, and carried what the counting house only counted.',
+        label: 'Take the work on the quay instead, carrying what the counting house only counts.',
+        told: 'took the work on the quay instead.',
         gives: {
           attribute: { physique: 1 },
           talent: { colossus: 1, runebearer: 1, quartermaster: 1 },
@@ -4820,14 +4854,14 @@ export const QUESTIONS = [
     id: 'trade-company',
     stage: 'trade',
     scene:
-      'The free company is taking names in the market square and paying a month up front. Their sergeant has one eye and a list, and the man in the queue in front of you is fifteen. Everybody in the square knows where the company is going and what happened to the last one that went there.',
+      'The free company is taking names in the square and paying a month up front. The man in front of you is fifteen, and everybody knows what happened to the last company.',
     asks: 'What do you do?',
     recall: 'In the square where the free company was taking names, you',
     options: [
       {
         id: 'boy',
-        label: 'Sign, and then go back down the queue and tell the fifteen-year-old to go home, and stand there until he does.',
-        told: 'signed, and then stood over the fifteen-year-old in the queue until he went home.',
+        label: 'Sign, then go back down the queue and stand over the fifteen-year-old until he goes home.',
+        told: 'signed, and stood over the fifteen-year-old until he went home.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, oathbound: 1 },
@@ -4839,21 +4873,21 @@ export const QUESTIONS = [
       },
       {
         id: 'blade',
-        label: 'Sign, and spend the month up front on your own blade rather than their issue, because the issue is most of what happened to the last company.',
-        told: 'signed, and spent the month up front on your own blade rather than their issue.',
+        label: 'Sign, take the month up front and be gone before the company marches.',
+        told: 'took the month up front and were gone before the company marched.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 1, sharpshooter: 1, 'weapon-master': 1 },
+          talent: { duelist: 1, sharpshooter: 1 },
           lineage: { wildheart: 1 },
-          background: { mercenary: 1 },
+          background: { mercenary: 1, military: 1 },
           skill: { 'quick-draw': 1, frugal: 1 },
           weapon: { 'paired-finesse': 1 },
         },
       },
       {
         id: 'clerk',
-        label: 'Sign as their clerk. A company that cannot count its own powder is a company that loses, and by the second month you are the one saying where it goes.',
-        told: 'signed as their clerk, and by the second month you were the one saying where the powder went.',
+        label: 'Sign as their clerk. A company that cannot count its own powder loses.',
+        told: 'signed as their clerk, and by the second month said where the powder went.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, quartermaster: 1 },
@@ -4864,8 +4898,8 @@ export const QUESTIONS = [
       },
       {
         id: 'behind',
-        label: 'Do not sign. Follow them out at two days’ distance instead, because what a company leaves behind it on that road is going to be worth picking up.',
-        told: 'followed the company out at two days’ distance, for what it left behind on the road.',
+        label: 'Do not sign. Follow them at two days’ distance for what they leave behind on the road.',
+        told: 'followed the company at two days’ distance for what it left behind.',
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, mycomancer: 1 },
@@ -4881,26 +4915,26 @@ export const QUESTIONS = [
     id: 'trade-hall',
     stage: 'trade',
     scene:
-      'The guild will not have you and the great house will, as something between a tutor and a curiosity. The letter is on the table and your mother has read it four times. Whatever else it is, it is a room in a house with eleven hundred books in it.',
+      'The guild will not have you, and the great house will, as something between a tutor and a curiosity. It is a room in a house with eleven hundred books.',
     asks: 'What do you do?',
     recall: 'When the guild refused you and the great house did not, you',
     options: [
       {
         id: 'read',
-        label: 'Go, and read all eleven hundred. It takes nine years, and at the end of them there is nothing in that house you do not know, including what the family did in the war.',
-        told: 'went, and read all eleven hundred books, including everything the family had done in the war.',
+        label: 'Go, read what the family did in the war and keep the pages that would ruin them.',
+        told: 'read what the family did in the war and kept the pages that would ruin them.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 1, enchanter: 1 },
+          talent: { arcanist: 1, tactician: 1 },
           lineage: { luminary: 1 },
           background: { erudit: 1, aristocrat: 1 },
-          skill: { scholar: 1, occultist: 1 },
+          skill: { scholar: 1, mastermind: 1 },
         },
       },
       {
         id: 'curiosity',
-        label: 'Go, and be the thing they think you are, and be so good at it that by the second winter the whole county wants you at their table instead.',
-        told: 'went, and were such a curiosity that by the second winter the whole county wanted you at table.',
+        label: 'Go, and be so good at being their curiosity that the whole county wants you at table.',
+        told: 'went, and were such a curiosity the whole county wanted you at table.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -4911,8 +4945,8 @@ export const QUESTIONS = [
       },
       {
         id: 'marry',
-        label: 'Go, and marry into it. The letter is an opening and eleven hundred books is a dowry, and you have read enough of them to know how these houses fall.',
-        told: 'went, and married into it, having read enough of their own books to know how such houses fall.',
+        label: 'Go, and marry into it. Eleven hundred books is a dowry, and you know how these houses fall.',
+        told: 'went, and married into it.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1, spellquill: 1 },
@@ -4923,8 +4957,8 @@ export const QUESTIONS = [
       },
       {
         id: 'quarry',
-        label: 'Do not go. Take the guild’s refusal to the quarry instead, where nobody asks whose son you are and be the best hand on the face inside two years.',
-        told: 'took the guild’s refusal to the quarry, and were the best hand on the face inside two years.',
+        label: 'Do not go. Take the refusal to the quarry, where nobody asks whose child you are.',
+        told: 'took the guild’s refusal to the quarry instead.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1, painseeker: 1 },
@@ -4942,26 +4976,27 @@ export const QUESTIONS = [
     id: 'road-ferry',
     stage: 'road',
     scene:
-      'The river is up and the ferryman will not cross. There are eleven of you on the near bank and a fair in the town on the far one, and he has taken the oars out of the boat and gone into his hut. Two of the eleven have goods that will not keep.',
+      'The river is up and the ferryman will not cross. Eleven of you are on the near bank with a fair on the far one, and he has taken the oars into his hut.',
     asks: 'What do you do?',
     recall: 'On the near bank the day the ferryman would not cross, you',
     options: [
       {
         id: 'pole',
-        label: 'Take the boat over yourself, twice, standing, with the pole. It is harder than he said it was and you do it anyway.',
-        told: 'took the boat over twice yourself, standing, with the pole.',
+        label: 'Take the oars out of his hut while he sleeps and charge the eleven a copper each to cross.',
+        told: 'took his oars while he slept and charged the eleven a copper each.',
+        tags: ['did:theft'],
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, painseeker: 1, weaver: 1 },
-          lineage: { stonebound: 1, tidebound: 1 },
-          background: { mercenary: 1 },
-          skill: { seafarer: 1, survivalist: 1 },
+          talent: { colossus: 1, weaver: 1 },
+          lineage: { tidebound: 1 },
+          background: { mercenary: 1, merchant: 1 },
+          skill: { seafarer: 1, haggler: 1 },
         },
       },
       {
         id: 'shallows',
-        label: 'Go upstream to the shallows nobody uses because of the stones, and be in the town with your own load before the ferryman has finished his dinner.',
-        told: 'went up to the stony shallows nobody uses, and were in the town before the ferryman finished his dinner.',
+        label: 'Go up to the stony shallows nobody uses and be in the town before he finishes his dinner.',
+        told: 'crossed at the stony shallows and were in town before he finished dinner.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, wilder: 1 },
@@ -4972,8 +5007,8 @@ export const QUESTIONS = [
       },
       {
         id: 'water',
-        label: 'Look at the river. It has two more hours of rising in it and then four of falling, and you tell the eleven when it will cross and you are right to the quarter hour.',
-        told: 'read the river and told the eleven the hour it would cross, and were right to the quarter.',
+        label: 'Read the river and tell the eleven the hour it will be safe to cross.',
+        told: 'read the river and named the hour it would cross.',
         gives: {
           attribute: { mind: 1 },
           talent: { arcanist: 1, alchemist: 1 },
@@ -4984,8 +5019,8 @@ export const QUESTIONS = [
       },
       {
         id: 'freeze',
-        label: 'Freeze it. Not the whole river, only the width of the boat and only for as long as the eleven need, and afterwards nobody on that bank will look at you.',
-        told: 'froze the width of the boat for as long as the eleven needed, and nobody on that bank would look at you.',
+        label: 'Freeze it, only the width of the boat and only as long as the eleven need.',
+        told: 'froze the width of the boat for as long as the eleven needed.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -5003,25 +5038,26 @@ export const QUESTIONS = [
     id: 'road-shrine',
     stage: 'road',
     scene:
-      'There is a shrine at the fork with a bowl on it and something in the bowl, and the road you want goes past it. The last four travellers have left the bowl alone. There is a smell coming off the shrine that is not incense, and the trees behind it have no birds in them.',
+      'A shrine at the fork has a bowl on it with something inside, and the last four travellers left it alone. The trees behind it have no birds.',
     asks: 'What do you do?',
-    recall: 'At the shrine on the fork where the trees had no birds in them, you',
+    recall: 'At the shrine on the fork where the trees had no birds, you',
     options: [
       {
         id: 'base',
-        label: 'Read the shrine. There is a name cut into the base of it under the moss, and it is not the name of anything that was ever worshipped by choice.',
-        told: 'read the name cut into the base of the shrine, which was not one anything was worshipped by choice.',
+        label: 'Take what is in the bowl. The last four were fools to leave it.',
+        told: 'took what was in the bowl.',
+        tags: ['did:theft'],
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 1, necromancer: 1 },
+          talent: { necromancer: 1, arcanist: 1 },
           lineage: { undead: 1 },
-          background: { erudit: 1, investigator: 1 },
-          skill: { occultist: 1, scholar: 1 },
+          background: { criminal: 1, investigator: 1 },
+          skill: { occultist: 1, scavenger: 1 },
         },
       },
       {
         id: 'ditch',
-        label: 'Put the shrine in the ditch. It takes both arms and a while, the smell gets worse before it stops, and the birds are back by morning.',
+        label: 'Put the whole shrine in the ditch. The birds are back by morning.',
         told: 'put the shrine in the ditch, and the birds were back by morning.',
         gives: {
           attribute: { physique: 2 },
@@ -5033,20 +5069,20 @@ export const QUESTIONS = [
       },
       {
         id: 'round',
-        label: 'Leave the bowl and take the long way round through the trees, quietly, to be past the fork before whatever the bowl is for has noticed anybody came.',
-        told: 'went the long way round through the trees, and were past the fork before anything noticed you had come.',
+        label: 'Go the long way round through the trees, quietly, before anything notices you came.',
+        told: 'went the long way round before anything noticed you.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, wilder: 1, mycomancer: 1 },
           lineage: { wildheart: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1, survivalist: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, vigilant: 1 },
         },
       },
       {
         id: 'add',
-        label: 'Add to the bowl. Whatever is owed there you would rather be a creditor than a stranger, and you say so out loud in a form of words you did not learn from anybody.',
-        told: 'added to the bowl, and said so out loud in a form of words you had not learned from anybody.',
+        label: 'Add to the bowl and say so out loud. Better a creditor than a stranger.',
+        told: 'added to the bowl, and said so out loud.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -5063,14 +5099,14 @@ export const QUESTIONS = [
     id: 'road-pass',
     stage: 'road',
     scene:
-      'The pass closes in a day and the party ahead of you is not going to make it, because one of them has a leg and the rest have four days of food between eleven. You have the pass in front of you and the weather behind. Their leader has come back down the trail to ask you for nothing in particular.',
+      'The pass closes tomorrow and the party ahead will not make it. One of them has a bad leg, and eleven of them share four days of food.',
     asks: 'What do you do?',
     recall: 'A day before the pass closed, with eleven people on the trail below it, you',
     options: [
       {
         id: 'leg',
-        label: 'Carry the leg. Eleven days of somebody else’s weight over a pass that is closing, and you put him down on the far side and go on.',
-        told: 'carried the man with the leg over the closing pass, put him down on the far side and went on.',
+        label: 'Carry the man with the bad leg over the pass and put him down on the far side.',
+        told: 'carried the man with the bad leg over the pass.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, painseeker: 1 },
@@ -5081,8 +5117,8 @@ export const QUESTIONS = [
       },
       {
         id: 'split',
-        label: 'Split the party. Six over now with the food and five into the shepherd’s hut with the fire, and say it plainly enough that they actually do it.',
-        told: 'split the party, six over the pass and five into the shepherd’s hut, and said it plainly enough that they did it.',
+        label: 'Split the party: six over now with the food, five into the shepherd’s hut.',
+        told: 'split the party, six over the pass and five into the hut.',
         gives: {
           attribute: { mind: 2 },
           talent: { quartermaster: 1, spellquill: 1 },
@@ -5093,8 +5129,8 @@ export const QUESTIONS = [
       },
       {
         id: 'feed',
-        label: 'Feed them. Eleven people is nine snares, a frozen hillside and two hours, and you have done it in worse country than this.',
-        told: 'fed all eleven off a frozen hillside in two hours, having done it in worse country.',
+        label: 'Feed all eleven off a frozen hillside in two hours. You have done it in worse country.',
+        told: 'fed all eleven off a frozen hillside in two hours.',
         gives: {
           attribute: { instinct: 2 },
           talent: { mycomancer: 1, wilder: 1 },
@@ -5105,8 +5141,8 @@ export const QUESTIONS = [
       },
       {
         id: 'ahead',
-        label: 'Go over alone tonight and send help up from the far valley in the morning. It is the only answer in which somebody who can actually help them hears in time.',
-        told: 'went over alone that night and sent help up from the far valley in the morning.',
+        label: 'Go over alone tonight with your own food. Eleven is not your problem, and the pass is.',
+        told: 'went over alone that night with your own food.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, 'feral-curse': 1 },
@@ -5122,14 +5158,14 @@ export const QUESTIONS = [
     id: 'road-robbers',
     stage: 'road',
     scene:
-      'The barrow on the heath has been opened from the side and there are three men down in the hole with a lantern, and a fourth on the top with a crossbow watching the road. What they have taken out is stacked on a cloth. One piece of it is still moving.',
+      'Three men are down in an opened barrow with a lantern, and a fourth watches the road with a crossbow. What they have taken out is stacked on a cloth, and one piece is moving.',
     asks: 'What do you do?',
     recall: 'At the barrow on the heath that was opened from the side, you',
     options: [
       {
         id: 'moving',
-        label: 'Take the piece that is moving. It is a blade, the three in the hole have no idea what it is and the one on the top cannot see the cloth.',
-        told: 'took the blade that was still moving, which none of the four of them understood.',
+        label: 'Take the piece that is moving. It is a blade, and none of the four knows what it is.',
+        told: 'took the blade that was still moving.',
         gives: {
           attribute: { mind: 2 },
           talent: { spellblade: 1, necromancer: 1 },
@@ -5140,8 +5176,8 @@ export const QUESTIONS = [
       },
       {
         id: 'hole',
-        label: 'Go and put them back in the hole. The crossbow gets one shot and you are on top of the barrow before he has the crank turned.',
-        told: 'put all four of them back in the hole, and were on top of the barrow before the crossbow was cranked.',
+        label: 'Put them back in the hole. The crossbow gets one shot before you are on him.',
+        told: 'put all four of them back in the hole.',
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
@@ -5154,7 +5190,7 @@ export const QUESTIONS = [
       },
       {
         id: 'tell',
-        label: 'Tell them what they have dug into. Not to save them, because it is already too late for the man with the lantern, and you would rather be the one standing outside.',
+        label: 'Tell them what they have dug into, too late for the man with the lantern.',
         told: 'told them what they had dug into, too late for the man with the lantern.',
         gives: {
           attribute: { mind: 1 },
@@ -5166,8 +5202,8 @@ export const QUESTIONS = [
       },
       {
         id: 'morning',
-        label: 'Wait for the barrow to finish with them and take what is left in the morning. It costs you a cold night and nothing else at all.',
-        told: 'waited for the barrow to finish with them and took what was left in the morning.',
+        label: 'Wait for the barrow to finish with them and take what is left in the morning.',
+        told: 'waited for the barrow to finish with them and took what was left.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, mycomancer: 1 },
@@ -5183,14 +5219,14 @@ export const QUESTIONS = [
     id: 'road-press',
     stage: 'road',
     scene:
-      'There is a press gang in the taproom and the door behind you has a man against it. Six of them, and they are not looking for volunteers. The innkeeper has taken his money off the bar and gone into the back.',
+      'Six of a press gang are in the taproom and one of them has the door. They are not looking for volunteers, and the innkeeper has gone into the back.',
     asks: 'What do you do?',
     recall: 'In the taproom with a press gang in it and a man on the door, you',
     options: [
       {
         id: 'door',
-        label: 'Go through the man on the door. He is the smallest of the six because they always put the smallest on the door, and that is the last mistake they make tonight.',
-        told: 'went through the smallest of the six, who was the one they had put on the door.',
+        label: 'Go through the man on the door. He is the smallest, which is why they put him there.',
+        told: 'went through the smallest of the six, who had the door.',
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
@@ -5203,8 +5239,8 @@ export const QUESTIONS = [
       },
       {
         id: 'coat',
-        label: 'Be somebody else. There is a sea officer’s coat on the peg, and by the time they get to you it is you asking them for their warrant.',
-        told: 'put on the sea officer’s coat off the peg, and asked them for their warrant instead.',
+        label: 'Put on the officer’s coat from the peg, and point them at the two farm boys in the corner instead.',
+        told: 'put on the officer’s coat and pointed them at the farm boys in the corner.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, 'flowing-fist': 1 },
@@ -5215,8 +5251,8 @@ export const QUESTIONS = [
       },
       {
         id: 'hilt',
-        label: 'Put a hand on the hilt at your belt and say the other half of it under your breath, and let all six of them watch what the blade does about that.',
-        told: 'put a hand on the hilt and said the other half of it under your breath, in front of all six of them.',
+        label: 'Put a hand on the hilt and say the other half of it under your breath.',
+        told: 'put a hand on the hilt and said the other half of it.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -5228,13 +5264,13 @@ export const QUESTIONS = [
       },
       {
         id: 'shilling',
-        label: 'Take the shilling and be over the side in the first harbour. A fortnight of their food and a fortnight’s pay is not the worst trade you have made.',
-        told: 'took the shilling and were over the side in the first harbour.',
+        label: 'Take the shilling and go over the side in the first harbour.',
+        told: 'took the shilling and went over the side in the first harbour.',
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, 'cauldron-keeper': 1 },
           lineage: { tidebound: 1 },
-          background: { criminal: 1 },
+          background: { mercenary: 1 },
           skill: { seafarer: 1, frugal: 1 },
         },
       },
@@ -5245,14 +5281,14 @@ export const QUESTIONS = [
     id: 'road-hound',
     stage: 'road',
     scene:
-      'Something has been following the wagons since the third night, keeping to the treeline, and this morning it is sitting in the road ahead of you. It is thin and enormous and not a dog. The drovers have stopped and one of them has a bow up.',
+      'Something has followed the wagons since the third night, and this morning it is sitting in the road ahead. It is thin and enormous and not a dog.',
     asks: 'What do you do?',
     recall: 'The morning the thing that had followed the wagons sat down in the road, you',
     options: [
       {
         id: 'hand',
-        label: 'Walk up to it. You put out a hand at the last of it, it decides and after that it walks where you walk for eleven years.',
-        told: 'walked up and put out a hand, and it walked where you walked for eleven years afterwards.',
+        label: 'Walk up and put out a hand. It decides, and after that it walks where you walk.',
+        told: 'put out a hand, and it walked where you walked for eleven years.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
@@ -5263,8 +5299,8 @@ export const QUESTIONS = [
       },
       {
         id: 'bow',
-        label: 'Get in front of the bow and then in front of the thing, and let it work out for itself which of the two of you is in its road.',
-        told: 'got in front of the bow and then in front of the thing, and let it decide which of you was in the road.',
+        label: 'Get in front of the bow and then in front of the thing, and let it choose.',
+        told: 'got in front of the bow and then in front of the thing.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, berserker: 1 },
@@ -5275,20 +5311,20 @@ export const QUESTIONS = [
       },
       {
         id: 'what',
-        label: 'Find out what it is first. Thin, enormous, three nights of following and no kill, and every one of those facts says something about what it wants.',
-        told: 'worked out what it was from three nights of following and no kill.',
+        label: 'Work out what it is, and what a man in the next town would pay for it alive.',
+        told: 'worked out what it was and what a buyer would pay for it alive.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, alchemist: 1 },
           lineage: { luminary: 1 },
-          background: { investigator: 1 },
-          skill: { inquisitor: 1, scholar: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { haggler: 1, inquisitor: 1 },
         },
       },
       {
         id: 'feed',
-        label: 'Feed it. Whatever has followed a wagon train for three nights without taking a beast is hungry for something else, and you would rather find out cheaply.',
-        told: 'fed it, because whatever follows a wagon train for three nights without taking a beast wants something else.',
+        label: 'Feed it. Whatever follows wagons for three nights without a kill wants something else.',
+        told: 'fed it, because it wanted something other than the mules.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'cauldron-keeper': 1, wilder: 1, 'draconic-bond': 1 },
@@ -5306,14 +5342,14 @@ export const QUESTIONS = [
     id: 'leaving-door',
     stage: 'leaving',
     scene:
-      'Your pack is by the door and your mother is standing in front of the door. She has not raised her voice and she is not going to move, and everything she is saying about the road is true. It is an hour before the carrier goes.',
+      'Your pack is by the door and your mother is standing in front of it. She has not raised her voice, and everything she says about the road is true.',
     asks: 'What do you do?',
     recall: 'On the last night, with your mother standing in front of the door, you',
     options: [
       {
         id: 'lift',
-        label: 'Pick her up, gently, put her down to one side and go. She is still standing in the road when the carrier turns the corner.',
-        told: 'picked her up gently, put her to one side and went, and she was still in the road at the corner.',
+        label: 'Pick her up gently, put her down to one side and go.',
+        told: 'picked her up gently, put her to one side and went.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, totemic: 1 },
@@ -5324,8 +5360,8 @@ export const QUESTIONS = [
       },
       {
         id: 'answer',
-        label: 'Answer all of it. Every objection in order, out loud, until there is nothing left standing between you and the door, and then go through it having won.',
-        told: 'answered every objection in order until there was nothing left between you and the door.',
+        label: 'Answer every objection in order until nothing is left between you and the door.',
+        told: 'answered every objection until nothing was left between you and the door.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, spellquill: 1 },
@@ -5336,8 +5372,9 @@ export const QUESTIONS = [
       },
       {
         id: 'window',
-        label: 'Go out the window. The pack is already outside underneath it, because you have known for a week how this hour was going to go.',
-        told: 'went out the window to the pack you had left under it a week before.',
+        label: 'Go out the window, with the housekeeping money from the jar. She will manage.',
+        told: 'went out the window with the housekeeping money.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1 },
@@ -5348,8 +5385,8 @@ export const QUESTIONS = [
       },
       {
         id: 'promise',
-        label: 'Promise her something, in the form of words you use for the kind of promise that keeps itself. Then go, and carry it.',
-        told: 'promised her something in the form of words that keeps itself, and then went and carried it.',
+        label: 'Promise her something in the form of words that keeps itself, then go and carry it.',
+        told: 'promised her something in the form of words that keeps itself.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -5366,14 +5403,14 @@ export const QUESTIONS = [
     id: 'leaving-name',
     stage: 'leaving',
     scene:
-      'The clerk at the gate writes down everybody who goes out on the north road, and he has the pen in his hand and is waiting. There is nothing behind you worth being followed by. Nobody on the road ahead has ever heard of you.',
+      'The clerk at the north gate writes down everybody who goes out, and his pen is waiting. Nobody on the road ahead has ever heard of you.',
     asks: 'What do you say?',
     recall: 'At the gate on the north road, with the clerk’s pen waiting, you',
     options: [
       {
         id: 'made',
-        label: 'Give him a name you have made up, spelled the way a family with land spells it, then watch him sit up a little straighter as he writes it down.',
-        told: 'gave him a made-up name spelled the way a family with land spells it, and watched him sit up straighter.',
+        label: 'Give him a made-up name spelled the way a family with land spells it.',
+        told: 'gave him a made-up name spelled like a family with land.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -5384,8 +5421,8 @@ export const QUESTIONS = [
       },
       {
         id: 'own',
-        label: 'Give him your own. It is the only thing your father left you and you are not going to be the one who puts it down.',
-        told: 'gave him your own name, because it was the only thing your father left you.',
+        label: 'Give him your own. It is the only thing your father left you.',
+        told: 'gave him your own name, the only thing your father left you.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, runebearer: 1, oathbound: 1 },
@@ -5396,20 +5433,20 @@ export const QUESTIONS = [
       },
       {
         id: 'write',
-        label: 'Write it yourself. He is glad of the help, and it goes into the book in a hand nobody at that gate can match, which is a thing worth having in a book.',
-        told: 'wrote it into the book yourself, in a hand nobody at that gate could match.',
+        label: 'Write it yourself, and scratch out the entry two lines up while the book is open.',
+        told: 'wrote it yourself, and scratched out an entry two lines up while the book was open.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 1, enchanter: 1 },
+          talent: { spellquill: 1, tactician: 1 },
           lineage: { luminary: 1 },
-          background: { erudit: 1, aristocrat: 1 },
-          skill: { scholar: 1, mastermind: 1 },
+          background: { criminal: 1, erudit: 1 },
+          skill: { scholar: 1, cunning: 1 },
         },
       },
       {
         id: 'owed',
-        label: 'Give him the name of the thing you owe. It is going to be written next to yours eventually and you would rather be the one who put it there.',
-        told: 'gave him the name of the thing you owe, rather than wait for it to be written next to yours.',
+        label: 'Give him the name of the thing you owe. It will be written next to yours eventually.',
+        told: 'gave him the name of the thing you owe.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -5426,14 +5463,14 @@ export const QUESTIONS = [
     id: 'leaving-debt',
     stage: 'leaving',
     scene:
-      'You owe eleven silver in this town and you are leaving in the morning, and the man you owe it to has a daughter who has been kind to you. Eleven silver is what the road costs. He has not asked for it in a month.',
+      'You owe eleven silver in this town, to a man whose daughter has been kind to you. Eleven silver is what the road costs, and you leave in the morning.',
     asks: 'What do you do?',
     recall: 'With eleven silver owed in that town and the road costing exactly that, you',
     options: [
       {
         id: 'work',
-        label: 'Work it off tonight. Whatever there is in his yard that needs a back, and you are on the road at noon instead of dawn and you owe nobody anything.',
-        told: 'worked it off in his yard through the night, and went at noon owing nobody anything.',
+        label: 'Work it off tonight in his yard and leave at noon owing nobody anything.',
+        told: 'worked it off in his yard through the night.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1 },
@@ -5444,8 +5481,8 @@ export const QUESTIONS = [
       },
       {
         id: 'owed',
-        label: 'Leave before dawn and leave it owed. You have carried worse than eleven silver and you have never once gone back for any of it.',
-        told: 'left before dawn and left it owed, the way you had left worse than eleven silver.',
+        label: 'Leave before dawn and leave it owed. You have never gone back for anything.',
+        told: 'left before dawn and left it owed.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, wilder: 1 },
@@ -5456,20 +5493,20 @@ export const QUESTIONS = [
       },
       {
         id: 'better',
-        label: 'Leave him something better than eleven silver. What you know about the man who supplies him is worth four times that, and he finds it out on Thursday.',
-        told: 'left him what you knew about his supplier, which was worth four times eleven silver.',
+        label: 'Ask the daughter for it. She has been kind to you, and she will be kind about this too.',
+        told: 'asked the daughter for it, knowing she would be kind about it too.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
-          lineage: { infernal: 1 },
-          background: { merchant: 1, investigator: 1 },
-          skill: { mastermind: 1, haggler: 1 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { celestial: 1 },
+          background: { aristocrat: 1, entertainer: 1 },
+          skill: { charismatic: 1, empath: 1 },
         },
       },
       {
         id: 'sign',
-        label: 'Sign for it. Properly, in a form that holds. Put the leaf in his hand so he can read what he is owed and by whom and for how long.',
-        told: 'signed for it in a form that holds, and put the leaf in his hand.',
+        label: 'Sign for it properly, in a form that holds. Put the leaf in his hand.',
+        told: 'signed for it in a form that holds.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1 },
@@ -5485,14 +5522,14 @@ export const QUESTIONS = [
     id: 'leaving-horse',
     stage: 'leaving',
     scene:
-      'There is a horse in the stable that is not yours and will not be missed until Thursday, and the road you are taking is four days on foot and one and a half on that. The stable boy is asleep. You have put your hand on the bolt once already and taken it off again.',
+      'There is a horse in the stable that is not yours and will not be missed until Thursday. Four days on foot, or a day and a half on that.',
     asks: 'What do you do?',
     recall: 'Over the bolt of a stable door on the last night, you',
     options: [
       {
         id: 'take',
-        label: 'Take it, and put it in a field at the far end with the bridle on the gate, so the man gets it back a week later in better condition than he kept it.',
-        told: 'took the horse and left it in a field at the far end, in better condition than the man kept it.',
+        label: 'Take it, and leave it in a field at the far end in better condition than he kept it.',
+        told: 'took the horse and left it in a field at the far end.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
@@ -5504,8 +5541,8 @@ export const QUESTIONS = [
       },
       {
         id: 'walk',
-        label: 'Walk. Four days is four days, and you have not once in your life taken a thing you would afterwards have to explain.',
-        told: 'walked the four days, never having taken a thing you would afterwards have to explain.',
+        label: 'Walk. Four days is four days, and you have never taken a thing you would have to explain.',
+        told: 'walked the four days.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, runebearer: 1, oathbound: 1 },
@@ -5516,8 +5553,8 @@ export const QUESTIONS = [
       },
       {
         id: 'talk',
-        label: 'Talk to the horse. It comes out of the box for you and follows you down the lane, and no bolt is drawn and nothing is stolen exactly, and it never goes home.',
-        told: 'talked the horse out of its box, and it followed you down the lane and never went home.',
+        label: 'Talk the horse out of its box. It follows you down the lane, and nothing is stolen exactly.',
+        told: 'talked the horse out of its box, and it followed you.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
@@ -5528,8 +5565,8 @@ export const QUESTIONS = [
       },
       {
         id: 'buy',
-        label: 'Buy it. Wake the boy, name a price that is under the horse and over his loyalty, and be four days ahead by Thursday with a bill of sale in your boot.',
-        told: 'woke the boy and bought it at a price under the horse and over his loyalty.',
+        label: 'Wake the boy and buy it at a price under the horse and over his loyalty.',
+        told: 'woke the boy and bought it at a price over his loyalty.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1, spellquill: 1 },
@@ -5545,25 +5582,25 @@ export const QUESTIONS = [
     id: 'leaving-letter',
     stage: 'leaving',
     scene:
-      'There is an hour before the carrier and there is paper in the house. Everybody who is going to wonder where you went is asleep upstairs. Whatever you leave on this table is the last thing any of them ever hear from you.',
+      'There is an hour before the carrier and paper in the house. Everyone who will wonder where you went is asleep upstairs.',
     asks: 'What do you leave?',
     recall: 'On the table, in the hour before the carrier, you left',
     options: [
       {
         id: 'pages',
-        label: 'Write it all. Four pages, where you have gone and why and what is to be done about the roof, in a hand every one of them can read.',
-        told: 'four pages in a hand all of them could read, down to what was to be done about the roof.',
+        label: 'A bill. Four pages of what they owe you for eighteen years, and where to send it.',
+        told: 'a bill for eighteen years, and where to send it.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 1, enchanter: 1 },
+          talent: { spellquill: 1, tactician: 1 },
           lineage: { luminary: 1 },
-          background: { erudit: 1, aristocrat: 1 },
-          skill: { scholar: 1, helpful: 1 },
+          background: { aristocrat: 1, merchant: 1 },
+          skill: { scholar: 1, haggler: 1 },
         },
       },
       {
         id: 'axe',
-        label: 'Leave the axe. Sharpened, on the table, where the letter would have been, because there is nothing you could write that says it better.',
+        label: 'The axe, sharpened, on the table where the letter would have been.',
         told: 'the axe, sharpened, where the letter would have been.',
         gives: {
           attribute: { physique: 2 },
@@ -5576,8 +5613,8 @@ export const QUESTIONS = [
       },
       {
         id: 'nothing',
-        label: 'Leave nothing at all. A page is a thing somebody can follow, and you are not going to be followed by anybody, including the people you love.',
-        told: 'nothing at all, because a page is a thing somebody can follow.',
+        label: 'Nothing at all. A page is a thing somebody can follow.',
+        told: 'nothing at all, because a page can be followed.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'feral-curse': 1 },
@@ -5588,8 +5625,8 @@ export const QUESTIONS = [
       },
       {
         id: 'line',
-        label: 'Leave one line, in the form you were taught, so that whoever reads it out loud is standing in a room that is safe for as long as they need it to be.',
-        told: 'one line in the form you were taught, so that whoever read it out loud stood in a safe room.',
+        label: 'One line in the form you were taught, so whoever reads it aloud stands in a safe room.',
+        told: 'one line in the form you were taught, that made the room safe.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -5606,14 +5643,14 @@ export const QUESTIONS = [
     id: 'leaving-grave',
     stage: 'leaving',
     scene:
-      'The carrier goes at dawn and there is one grave in this town you are not going to see again. It is an hour’s walk out and back and you have the hour. There is frost on everything and nobody knows you are awake.',
+      'The carrier goes at dawn and there is one grave in this town you will not see again. It is an hour’s walk out and back, and you have the hour.',
     asks: 'What do you do?',
     recall: 'In the frost before dawn, over the one grave you were leaving behind, you',
     options: [
       {
         id: 'say',
-        label: 'Go, and say the whole thing out loud, all of it, in the order it happened. Something in that churchyard is listening and you have known it since you were nine.',
-        told: 'said the whole thing out loud in the order it happened, to something in the churchyard that was listening.',
+        label: 'Go and say the whole thing out loud, in order. Something in that churchyard is listening.',
+        told: 'said the whole thing out loud to something in the churchyard that listened.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -5625,8 +5662,8 @@ export const QUESTIONS = [
       },
       {
         id: 'stone',
-        label: 'Go, and put the stone straight. It has been leaning four years, you are the only one who was ever going to do it, and it takes the hour and both hands.',
-        told: 'put the leaning stone straight, which took the hour and both hands.',
+        label: 'Go and put the leaning stone straight. It takes the hour and both hands.',
+        told: 'put the leaning stone straight.',
         gives: {
           attribute: { physique: 2 },
           talent: { runebearer: 1, colossus: 1 },
@@ -5637,8 +5674,8 @@ export const QUESTIONS = [
       },
       {
         id: 'road',
-        label: 'Do not go. You have said everything you are going to say, and you would rather spend the hour making sure nobody sees which road you take.',
-        told: 'did not go, and spent the hour making sure nobody saw which road you took.',
+        label: 'Do not go. Spend the hour making sure nobody sees which road you take.',
+        told: 'did not go, and spent the hour covering which road you took.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, wilder: 1 },
@@ -5649,14 +5686,15 @@ export const QUESTIONS = [
       },
       {
         id: 'earth',
-        label: 'Go, and take something off the grave with you. A handful of the earth in a twist of cloth, because you are not leaving all of them behind and never intended to.',
-        told: 'took a handful of the earth off it in a twist of cloth, because you never intended to leave all of them.',
+        label: 'Go, and take the silver ring off the hand you buried it on. It is doing nothing down there.',
+        told: 'dug up the ring you had buried with them, because it was doing nothing down there.',
+        tags: ['did:theft'],
         gives: {
           attribute: { mind: 1 },
           talent: { necromancer: 1 },
           lineage: { undead: 1 },
-          background: { investigator: 1 },
-          skill: { occultist: 1, survivalist: 1 },
+          background: { criminal: 1, investigator: 1 },
+          skill: { occultist: 1, scavenger: 1 },
         },
       },
     ],
@@ -5670,14 +5708,14 @@ export const QUESTIONS = [
     id: 'youth-broom',
     stage: 'youth',
     scene:
-      'The woman who agrees to teach you keeps no staff, no book and no wand, which is the first thing about her that anybody warns you about. On the first morning she takes the practice sword out of your hands, puts a yard broom in them instead and says it will do. When you ask what it will do, she says that is the question and leaves you in the yard with it until dark.',
+      'The woman who agrees to teach you keeps no staff, no book and no wand. On the first morning she swaps your practice sword for a yard broom and leaves you with it until dark.',
     asks: 'What do you do?',
     recall: 'The year your teacher took the sword away and left you a broom, you',
     options: [
       {
         id: 'thread',
-        label: 'Stop trying to make the broom into a sword. Run what you have down the handle instead and let go of it on the moment the end of it lands, and by dark there is a fence post in the yard with a hole through it.',
-        told: 'stopped making the broom a sword and ran something down the handle instead, and put a hole through a fence post with it.',
+        label: 'Stop trying to make it a sword. Run what you have down the handle and let go when it lands.',
+        told: 'ran something down the handle and put a hole through a fence post.',
         gives: {
           attribute: { instinct: 2 },
           talent: { weaver: 1 },
@@ -5688,8 +5726,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sword',
-        label: 'Go and find the practice sword where she put it, and be in the yard with it before she is up. If the lesson is that the tool does not matter, you can learn it later with a proper edge in your hand.',
-        told: 'went and got the sword back before she was up, and learned whatever the lesson was with a proper edge in your hand.',
+        label: 'Find the sword where she put it and be in the yard with it before she is up.',
+        told: 'got the sword back before she was up.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, 'weapon-master': 1 },
@@ -5700,8 +5738,8 @@ export const QUESTIONS = [
       },
       {
         id: 'ask',
-        label: 'Put the broom down and go through her shelves instead, on the reasoning that somebody who owns no staff has written down why. There is nothing on the shelves, which turns out to be the answer as well.',
-        told: 'put the broom down and went through her shelves, and found the emptiness of them was the answer as well.',
+        label: 'Put the broom down and go through her shelves for the reason. There is nothing on them.',
+        told: 'went through her shelves and found the emptiness was the answer.',
         gives: {
           attribute: { mind: 2 },
           talent: { arcanist: 1, enchanter: 1 },
@@ -5712,14 +5750,14 @@ export const QUESTIONS = [
       },
       {
         id: 'sweep',
-        label: 'Sweep the yard. It is a broom and she did not say it was anything else. By dark the yard is clean and you have thought of four things she might have meant.',
-        told: 'swept the yard, because it was a broom and she had not said otherwise.',
+        label: 'Sweep the yard, then charge her for the sweeping. A day of your work is a day of your work.',
+        told: 'swept the yard and then charged her for it.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
           lineage: { luminary: 1 },
-          background: { craftsman: 1 },
-          skill: { skilled: 1, helpful: 1 },
+          background: { merchant: 1, craftsman: 1 },
+          skill: { haggler: 1, skilled: 1 },
         },
       },
     ],
@@ -5734,14 +5772,14 @@ export const QUESTIONS = [
     id: 'road-chain',
     stage: 'road',
     scene:
-      'The bandits came through the camp before first light and took the packs, the mules and every blade anybody had. What is left in the ashes is a cook pot, four feet of cart chain and a tent pole broken in the middle. Two of them are still up on the ridge in the grey, sitting down, waiting to see what the camp does about it.',
+      'Bandits took the packs, the mules and every blade before first light. You are left with a cook pot, four feet of chain and a broken tent pole. Two of them are watching from the ridge.',
     asks: 'What do you do?',
     recall: 'The morning the bandits left you a cook pot and a length of chain, you',
     options: [
       {
         id: 'chain',
-        label: 'Pick up the cart chain, run the whole of the night down the length of it and walk up the ridge with it swinging. It is not a weapon and it does not have to be, because what comes off the end of it when it lands was never in the iron.',
-        told: 'walked up the ridge with four feet of cart chain and something running down it that had never been in the iron.',
+        label: 'Run the night down the length of the chain and walk up the ridge with it swinging.',
+        told: 'walked up the ridge with the chain and something running down it.',
         gives: {
           attribute: { physique: 2 },
           talent: { weaver: 1, runebearer: 1 },
@@ -5752,20 +5790,20 @@ export const QUESTIONS = [
       },
       {
         id: 'track',
-        label: 'Let the two on the ridge have their morning. Go the other way, cut the trail of the mules a mile down the valley and be somewhere they are not expecting anybody by the afternoon.',
-        told: 'let the two on the ridge keep their morning and cut the trail of the mules a mile down the valley.',
+        label: 'Leave the camp to the bandits and the others to themselves. Follow the mules’ trail alone.',
+        told: 'left the camp to its luck and followed the mules’ trail alone.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, wilder: 1 },
           lineage: { wildheart: 1 },
-          background: { outlander: 1, criminal: 1 },
-          skill: { survivalist: 1, cunning: 1 },
+          background: { outlander: 1, military: 1 },
+          skill: { survivalist: 1, cartographer: 1 },
         },
       },
       {
         id: 'stand',
-        label: 'Put the broken pole across the gap in the rocks and stand behind it, so whatever comes down off that ridge has to come through one man to get at the rest of the camp.',
-        told: 'put the broken pole across the gap and stood behind it, so the ridge had to come through you first.',
+        label: 'Put the broken pole across the gap in the rocks and stand behind it.',
+        told: 'put the broken pole across the gap and stood behind it.',
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, oathbound: 1, weaver: 1 },
@@ -5776,8 +5814,8 @@ export const QUESTIONS = [
       },
       {
         id: 'talk',
-        label: 'Fill the cook pot, put it on the fire and wave the two of them down off the ridge to eat. Men who have taken everything you own are men with something to sell, and you have all morning.',
-        told: 'put the pot on the fire and waved the two of them down off the ridge to eat, because men who have taken everything have something to sell.',
+        label: 'Cook, and wave the two of them down off the ridge to eat. Thieves always have something to sell.',
+        told: 'waved the two of them down off the ridge to eat and trade.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -5797,14 +5835,14 @@ export const QUESTIONS = [
     id: 'child-fair',
     stage: 'childhood',
     scene:
-      'The fair has come to the green and the players have lost their smallest actor to a fever. The man in the painted coat is up on the cart looking over the children at the front, and the part is four lines and a fall off a ladder. He points at you.',
+      'The players at the fair have lost their smallest actor to a fever. The man in the painted coat points at you: four lines and a fall off a ladder.',
     asks: 'What do you do?',
     recall: 'At the fair, when the players were a child short, you',
     options: [
       {
         id: 'climb',
-        label: 'Climb up on the cart and learn the four lines in the time it takes them to paint your face. You take the fall twice, because the first one got a laugh.',
-        told: 'climbed up on the cart, learned the four lines while they painted your face and took the fall twice.',
+        label: 'Climb up, learn the four lines while they paint your face and take the fall twice.',
+        told: 'learned the lines while they painted your face and took the fall twice.',
         gives: {
           attribute: { instinct: 2 },
           talent: { virtuoso: 1 },
@@ -5815,8 +5853,8 @@ export const QUESTIONS = [
       },
       {
         id: 'terms',
-        label: 'Ask what the part pays before you climb anything, and settle it in front of the crowd, who are enjoying this more than the play.',
-        told: 'asked what the part paid before you climbed anything, and settled it in front of the crowd.',
+        label: 'Ask what the part pays, and when he names it, tell him the sick boy was paid double.',
+        told: 'talked the pay up in front of the crowd before you climbed anything.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
@@ -5827,8 +5865,8 @@ export const QUESTIONS = [
       },
       {
         id: 'ladder',
-        label: 'Say yes to the fall and nothing else. You have come off higher things than that ladder and you would rather not say four lines to anybody.',
-        told: 'said yes to the fall and nothing else, because you had come off higher things than that ladder.',
+        label: 'Take the fall and nothing else. You would rather not say four lines to anybody.',
+        told: 'took the fall and said no lines.',
         gives: {
           attribute: { physique: 1 },
           talent: { colossus: 1, painseeker: 1 },
@@ -5839,8 +5877,8 @@ export const QUESTIONS = [
       },
       {
         id: 'mend',
-        label: 'Go round behind the cart to the sick boy instead, with the flask off your mother’s shelf and the leaves you keep in your pocket.',
-        told: 'went round behind the cart to the sick boy instead, with your mother’s flask and the leaves in your pocket.',
+        label: 'Go round behind the cart to the sick boy with your mother’s flask and your leaves.',
+        told: 'went to the sick boy behind the cart with your mother’s flask.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'cauldron-keeper': 1, wilder: 1 },
@@ -5856,14 +5894,14 @@ export const QUESTIONS = [
     id: 'child-tide',
     stage: 'childhood',
     scene:
-      'The tide has come in over the causeway faster than anybody expected and the pony cart is stuck halfway across with the whole morning’s fish in it. The water is at the axles and rising. The men on the shore are arguing about whose cart it is.',
+      'The tide has caught the fish cart on the causeway and the water is at the axles. The men on the shore are arguing about whose cart it is.',
     asks: 'What do you do?',
     recall: 'When the tide caught the fish cart on the causeway, you',
     options: [
       {
         id: 'wade',
-        label: 'Wade out to the axles, put your shoulder against the wheel and walk the whole cart off the causeway a foot at a time.',
-        told: 'waded out to the axles and walked the whole cart off the causeway a foot at a time.',
+        label: 'Wade out, put your shoulder to the wheel and walk the cart off a foot at a time.',
+        told: 'waded out and walked the cart off the causeway a foot at a time.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, quartermaster: 1 },
@@ -5874,8 +5912,8 @@ export const QUESTIONS = [
       },
       {
         id: 'swim',
-        label: 'Go into the channel where it is over your head, get a hand in the pony’s bridle and swim its head round until it will follow you.',
-        told: 'swam out into the channel and turned the pony’s head until it would follow you.',
+        label: 'Swim out to the pony, take its bridle and turn its head for the shore.',
+        told: 'swam to the pony and turned its head for the shore.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, wilder: 1, 'draconic-bond': 1 },
@@ -5886,8 +5924,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sell',
-        label: 'Stay on the shore and tell the arguing men what a cart of fish is worth at noon and what it will be worth at dusk. One of them stops arguing.',
-        told: 'told the arguing men what the fish was worth at noon and what it would be worth at dusk.',
+        label: 'Buy the whole cart off the arguing men for a copper while it is still sinking.',
+        told: 'bought the sinking cart off the arguing men for a copper.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, pactbound: 1 },
@@ -5898,8 +5936,8 @@ export const QUESTIONS = [
       },
       {
         id: 'read',
-        label: 'Watch the water on the stones instead and say how long the causeway has left. You are right to the minute, and one of the men remembers it for years.',
-        told: 'watched the water on the stones and said how long the causeway had left, and you were right to the minute.',
+        label: 'Watch the water on the stones and tell them how long the causeway has left.',
+        told: 'read the water and said how long the causeway had left.',
         gives: {
           attribute: { mind: 1 },
           talent: { arcanist: 1, alchemist: 1, 'elemental-aspect': 1 },
@@ -5915,14 +5953,14 @@ export const QUESTIONS = [
     id: 'child-kite',
     stage: 'childhood',
     scene:
-      'The wind off the ridge has taken your brother’s kite up over the quarry and dropped it in the top of the one dead pine. He is seven and he is crying. The tree is forty feet of dead branch and nothing has climbed it in years.',
+      'Your little brother’s kite is stuck in the top of the dead pine above the quarry. He is seven and crying, and the tree is forty feet of rotten branch.',
     asks: 'What do you do?',
     recall: 'When the kite went into the dead pine above the quarry, you',
     options: [
       {
         id: 'up',
-        label: 'Go up it. Forty feet of dead branch, each one tested with a hand before you put weight on it, then down again with the kite in your teeth.',
-        told: 'went up forty feet of dead branch and came down again with the kite in your teeth.',
+        label: 'Climb it, testing every dead branch with a hand before you trust it.',
+        told: 'climbed the dead pine and came down with the kite.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1 },
@@ -5933,8 +5971,8 @@ export const QUESTIONS = [
       },
       {
         id: 'fell',
-        label: 'Fetch the axe and put the whole tree on the ground. It is dead, it was going to come down on somebody eventually, and the kite is in one piece.',
-        told: 'fetched the axe and put the whole dead tree on the ground, and the kite came down in one piece.',
+        label: 'Fetch the axe and put the whole tree on the ground.',
+        told: 'put the whole dead tree on the ground with the axe.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, berserker: 1 },
@@ -5945,8 +5983,8 @@ export const QUESTIONS = [
       },
       {
         id: 'line',
-        label: 'Tie a stone to a line, throw it over the branch and run what you have down the line until the branch decides to let go of the kite.',
-        told: 'threw a line over the branch and ran what you had down it until the branch let go of the kite.',
+        label: 'Throw a weighted line over the branch and run what you know down it until the branch lets go.',
+        told: 'ran what you knew down a line, and the branch let go.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -5958,14 +5996,14 @@ export const QUESTIONS = [
       },
       {
         id: 'new',
-        label: 'Leave it up there and make him a better one by dark, out of the good ash and your own shirt, which flies higher than the first one ever did.',
-        told: 'left it up there and made him a better kite by dark, which flew higher than the first one ever did.',
+        label: 'Make him a new one out of the good ash, and charge him his supper for it.',
+        told: 'made him a new kite and charged him his supper for it.',
         gives: {
           attribute: { mind: 1 },
-          talent: { enchanter: 1, alchemist: 1 },
+          talent: { enchanter: 1, tactician: 1 },
           lineage: { skybound: 1 },
           background: { craftsman: 1, entertainer: 1 },
-          skill: { skilled: 1, helpful: 1 },
+          skill: { skilled: 1, haggler: 1 },
         },
       },
     ],
@@ -5975,14 +6013,14 @@ export const QUESTIONS = [
     id: 'child-hive',
     stage: 'childhood',
     scene:
-      'The bees have swarmed and hung themselves in a black beard off the low branch of the apple tree, twenty feet from the kitchen door. It has been there since noon. Nobody in the house will go out for the washing and your mother has given up asking them to.',
+      'The bees have swarmed onto the low branch of the apple tree, twenty feet from the kitchen door. Nobody in the house will go out for the washing.',
     asks: 'What do you do?',
     recall: 'When the swarm hung in the apple tree all afternoon, you',
     options: [
       {
         id: 'hands',
-        label: 'Walk up to it bare-armed and take it down by hand, into the basket, in one piece. You are stung twice and you do not hurry either time.',
-        told: 'walked up to the swarm bare-armed and took it down into the basket in one piece.',
+        label: 'Walk up bare-armed and take the swarm down into a basket by hand.',
+        told: 'took the swarm down bare-armed into a basket.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'feral-curse': 1, 'draconic-bond': 1, mycomancer: 1 },
@@ -5993,8 +6031,8 @@ export const QUESTIONS = [
       },
       {
         id: 'smoke',
-        label: 'Light a smoulder of damp straw under it, work the smoke up into the beard with your hat and box the whole swarm while it is sleepy.',
-        told: 'smoked the swarm sleepy with damp straw and boxed the whole of it.',
+        label: 'Smoke it sleepy with damp straw and box the whole swarm.',
+        told: 'smoked the swarm sleepy and boxed it.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'cauldron-keeper': 1, wilder: 1 },
@@ -6005,8 +6043,8 @@ export const QUESTIONS = [
       },
       {
         id: 'honey',
-        label: 'Work out what a hive is worth over ten years, then walk to the neighbour who keeps bees and sell him a swarm he can see from his own gate.',
-        told: 'worked out what a hive was worth over ten years and sold the swarm to the neighbour who kept bees.',
+        label: 'Sell the swarm to the neighbour who keeps bees before your mother thinks to claim it.',
+        told: 'sold the swarm to the neighbour before your mother could claim it.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, pactbound: 1 },
@@ -6017,8 +6055,8 @@ export const QUESTIONS = [
       },
       {
         id: 'branch',
-        label: 'Take the branch off at the trunk with one cut and carry the whole thing, bees and all, out to the far hedge on your shoulder.',
-        told: 'took the branch off at the trunk and carried the whole thing, bees and all, out to the far hedge.',
+        label: 'Cut the branch off at the trunk and carry it, bees and all, to the far hedge.',
+        told: 'carried the branch, bees and all, out to the far hedge.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, berserker: 1, painseeker: 1 },
@@ -6037,14 +6075,14 @@ export const QUESTIONS = [
     id: 'home-mill',
     stage: 'home',
     scene:
-      'The mill wheel has jammed on a drowned branch and the whole village’s flour is behind it. The miller is up to his chest in the race trying to get a rope on the thing and he is losing the light. Your father sent you down an hour ago to watch and learn.',
+      'The mill wheel has jammed on a drowned branch and the village’s flour is behind it. The miller is chest-deep in the race, losing the light.',
     asks: 'What do you do?',
     recall: 'When the mill wheel jammed on the drowned branch, you',
     options: [
       {
         id: 'rope',
-        label: 'Go into the race beside him and take the other end of the rope. It takes both of you until dark and you are the one still pulling at the end of it.',
-        told: 'went into the race beside him and were the one still pulling on the rope at dark.',
+        label: 'Go into the race beside him and pull on the rope until dark.',
+        told: 'went into the race beside him and pulled until dark.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1, weaver: 1 },
@@ -6055,8 +6093,8 @@ export const QUESTIONS = [
       },
       {
         id: 'run',
-        label: 'Get a hand on the rope, run what you know down the length of it and let go of it where the rope meets the branch. The branch comes apart under the water.',
-        told: 'ran what you knew down the length of the rope and let go of it at the branch, and the branch came apart.',
+        label: 'Put your hand on the rope and run what you know down it. The branch comes apart.',
+        told: 'ran what you knew down the rope, and the branch came apart.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -6068,8 +6106,8 @@ export const QUESTIONS = [
       },
       {
         id: 'wheel',
-        label: 'Stop the wheel a different way. The sluice above, the gate on the far side and a count of forty, and the race is dry enough to walk into.',
-        told: 'stopped the wheel with the sluice, the gate and a count of forty, and walked into a dry race.',
+        label: 'Shut the sluice above, open the far gate and walk into a dry race.',
+        told: 'shut the sluice and walked into a dry race.',
         gives: {
           attribute: { mind: 1 },
           talent: { enchanter: 1, alchemist: 1 },
@@ -6080,8 +6118,8 @@ export const QUESTIONS = [
       },
       {
         id: 'price',
-        label: 'Let it jam. Be on the road to the market town before anybody else has thought about what a fortnight without flour does to the price of bread.',
-        told: 'let it jam and were on the road to the market town before anybody thought about the price of bread.',
+        label: 'Let it jam. Be in the market town buying flour before the price of bread moves.',
+        told: 'let it jam and bought flour before the price of bread moved.',
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -6097,14 +6135,14 @@ export const QUESTIONS = [
     id: 'home-guest',
     stage: 'home',
     scene:
-      'A rider in your lord’s colours has come to the door out of the rain and is to be fed and put up. The house has one chicken, four chairs and a dirt floor. Your mother has gone very quiet, and everyone is waiting to see how the evening is going to be done.',
+      'A rider in the lord’s colours has come out of the rain to be fed and put up. The house has one chicken, four chairs and a dirt floor.',
     asks: 'What do you do?',
     recall: 'The night the lord’s rider was put up at your house, you',
     options: [
       {
         id: 'table',
-        label: 'Lay the table as though the house had always done this, sit him at the head of it and talk to him steadily through the whole meal so that nobody else has to.',
-        told: 'laid the table as though the house had always done this and talked to him through the whole meal.',
+        label: 'Lay the table as if the house did this every night and talk him through the meal.',
+        told: 'laid the table as if the house did this every night.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, spellquill: 1 },
@@ -6115,8 +6153,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sing',
-        label: 'Sing for him afterwards. Everything you know, in order, until the rain stops and he has forgotten what the floor is made of.',
-        told: 'sang for him afterwards, everything you knew, until he had forgotten what the floor was made of.',
+        label: 'Sing for him afterwards until he has forgotten what the floor is made of.',
+        told: 'sang for him until he forgot what the floor was made of.',
         gives: {
           attribute: { instinct: 1 },
           talent: { virtuoso: 1 },
@@ -6127,20 +6165,21 @@ export const QUESTIONS = [
       },
       {
         id: 'horse',
-        label: 'Take his horse instead. Rub it down, walk it dry and stay out in the stable with it the whole evening, which suits both of you.',
-        told: 'took his horse instead and stayed out in the stable with it the whole evening.',
+        label: 'See to his horse, and go through his saddlebags while you are out there.',
+        told: 'saw to his horse and went through his saddlebags.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
-          lineage: { wildkin: 1 },
-          background: { outlander: 1, military: 1 },
-          skill: { survivalist: 1, helpful: 1 },
+          talent: { 'feral-curse': 1, 'draconic-bond': 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, outlander: 1 },
+          skill: { cunning: 1, streetwise: 1 },
         },
       },
       {
         id: 'chicken',
-        label: 'Go back out into the rain and come home with something better than the chicken. It takes you two hours in the dark and nobody asks where it came from.',
-        told: 'went back out into the rain and came home with something better than the chicken.',
+        label: 'Go out in the rain and come back with something better than the chicken. Nobody asks where from.',
+        told: 'came back out of the rain with something better than the chicken.',
         gives: {
           attribute: { physique: 1 },
           talent: { berserker: 1, painseeker: 1 },
@@ -6156,14 +6195,14 @@ export const QUESTIONS = [
     id: 'home-blade',
     stage: 'home',
     scene:
-      'Your father’s sword has come off the wall for the first time in your life, because there are men on the road and the village has been told to arm. It is old and the edge is long gone. He has put it in your hands rather than his own and gone back out to the yard.',
+      'There are men on the road and the village has been told to arm. Your father takes his old sword off the wall and puts it in your hands.',
     asks: 'What do you do with it?',
     recall: 'The night your father put his old sword in your hands, you',
     options: [
       {
         id: 'edge',
-        label: 'Sit up with the stone and the oil and put an edge back on it. It takes until the small hours and by morning it will cut the hair off your arm.',
-        told: 'sat up with the stone and the oil until the old sword would cut the hair off your arm.',
+        label: 'Sit up all night with the stone and the oil until it will cut hair.',
+        told: 'sat up all night until the old sword would cut hair.',
         gives: {
           attribute: { physique: 2 },
           talent: { runebearer: 1, 'weapon-master': 1 },
@@ -6175,8 +6214,8 @@ export const QUESTIONS = [
       },
       {
         id: 'word',
-        label: 'Say the word nobody taught you over it just once and feel the steel take it the way dry ground takes rain. You do not tell your father about that part.',
-        told: 'said the word nobody taught you over the steel and felt it take.',
+        label: 'Say the word nobody taught you over the steel and feel it take.',
+        told: 'said the word nobody taught you over the steel.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -6188,8 +6227,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sell',
-        label: 'Walk it into the town before dawn and come back with two of something newer, and the difference in your pocket, and an argument to have later.',
-        told: 'walked it into town before dawn and came back with two of something newer and the difference in your pocket.',
+        label: 'Sell it in town before dawn and come back with two cheaper blades and the difference.',
+        told: 'sold it before dawn and came back with two cheaper blades and the difference.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, pactbound: 1 },
@@ -6200,8 +6239,8 @@ export const QUESTIONS = [
       },
       {
         id: 'hand',
-        label: 'Put it back on the table and take the knife you already know instead. A blade you cannot move quickly is a blade somebody else takes off you.',
-        told: 'put it back on the table and took the knife you already knew instead.',
+        label: 'Put it down and take the knife you already know. A slow blade gets taken off you.',
+        told: 'put it down and took the knife you already knew.',
         gives: {
           attribute: { instinct: 2 },
           talent: { duelist: 1, 'flowing-fist': 1 },
@@ -6218,14 +6257,14 @@ export const QUESTIONS = [
     id: 'home-funeral',
     stage: 'home',
     scene:
-      'Your grandmother is laid out in the front room and the house is full of people who did not come while she was alive. There is one night before the burial. Somebody has to sit up with her, and nobody has said who.',
+      'Your grandmother is laid out in the front room, and the house is full of people who never came while she lived. Somebody has to sit up with her tonight.',
     asks: 'What do you do?',
     recall: 'On the night before your grandmother was buried, you',
     options: [
       {
         id: 'sit',
-        label: 'Sit up with her the whole night and say back to her, out loud, every single thing she ever said to you. Somewhere near dawn it stops feeling like talking to nobody.',
-        told: 'sat up with her all night saying back every single thing she had said to you.',
+        label: 'Sit up with her all night and say back everything she ever said to you.',
+        told: 'sat up with her all night saying back everything she said to you.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -6237,8 +6276,8 @@ export const QUESTIONS = [
       },
       {
         id: 'room',
-        label: 'Work the other room instead. Fill cups, sit down beside people and find out by midnight which of them came for the house and which for the field behind it.',
-        told: 'worked the other room and knew by midnight which of them had come for the house and which for the field.',
+        label: 'Work the other room and learn by midnight who has come for the house and who for the field.',
+        told: 'learned by midnight who had come for the house and who for the field.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, spellquill: 1 },
@@ -6249,8 +6288,8 @@ export const QUESTIONS = [
       },
       {
         id: 'tell',
-        label: 'Stand up in front of all of them and tell the story of her, the whole of it, including the parts the family leaves out, until the ones who did not come are crying.',
-        told: 'stood up and told the whole story of her, including the parts the family leaves out.',
+        label: 'Stand up and tell the whole story of her, including the parts the family leaves out.',
+        told: 'told the whole story of her, including the parts the family leaves out.',
         gives: {
           attribute: { instinct: 1 },
           talent: { virtuoso: 1 },
@@ -6261,14 +6300,15 @@ export const QUESTIONS = [
       },
       {
         id: 'dig',
-        label: 'Go out with the spade and dig the grave yourself rather than pay the man who does it. It takes most of the night and the sides are straight.',
-        told: 'went out with the spade and dug the grave yourself, and the sides were straight.',
+        label: 'Carry her good chest out to the cart while the house is busy downstairs. It is yours now.',
+        told: 'carried her good chest out to the cart while the house was busy.',
+        tags: ['did:theft'],
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, runebearer: 1, painseeker: 1 },
-          lineage: { stonebound: 1, undead: 1 },
-          background: { craftsman: 1 },
-          skill: { frugal: 1, survivalist: 1 },
+          talent: { colossus: 1, painseeker: 1 },
+          lineage: { undead: 1 },
+          background: { craftsman: 1, criminal: 1 },
+          skill: { frugal: 1, scavenger: 1 },
         },
       },
     ],
@@ -6281,14 +6321,14 @@ export const QUESTIONS = [
     id: 'blood-ember',
     stage: 'blood',
     scene:
-      'The charcoal burners’ stack has broken open in the night and the wind has walked the fire into the standing timber. You are downwind of it with a shovel and no help nearer than the village. The burners’ boy is somewhere between you and the burn.',
+      'The charcoal stack has broken open in the night and the wind has walked the fire into the timber. The burners’ boy is somewhere between you and the burn.',
     asks: 'What do you do?',
     recall: 'The night the charcoal stack broke open, you',
     options: [
       {
         id: 'break',
-        label: 'Cut a break across the wind. Two hundred yards of it with a shovel and a billhook, alone, and the fire comes up to it at dawn and stops.',
-        told: 'cut two hundred yards of firebreak across the wind alone, and the fire came up to it and stopped.',
+        label: 'Cut a firebreak across the wind, alone, with a shovel and a billhook.',
+        told: 'cut a firebreak across the wind alone.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, berserker: 1 },
@@ -6299,8 +6339,8 @@ export const QUESTIONS = [
       },
       {
         id: 'walk',
-        label: 'Walk into the burn for the boy. The heat does not do to you what it is doing to the trees, and you come out the far side carrying him.',
-        told: 'walked into the burn for the boy and came out the far side carrying him.',
+        label: 'Walk into the burn for the boy. The heat does not touch you the way it touches the trees.',
+        told: 'walked into the burn for the boy and came out carrying him.',
         gives: {
           attribute: { physique: 1 },
           talent: { berserker: 1, painseeker: 1 },
@@ -6311,20 +6351,20 @@ export const QUESTIONS = [
       },
       {
         id: 'wind',
-        label: 'Read the wind before you move at all. Where it is now, where it turns at first light and which side of the fire will be safe to stand on in an hour.',
-        told: 'read the wind before you moved, and knew which side of the fire would be safe to stand on by dawn.',
+        label: 'Read the wind, and go the other way. The boy is the burners’ boy, not yours.',
+        told: 'read the wind and went the other way.',
         gives: {
           attribute: { mind: 1 },
           talent: { arcanist: 1, 'elemental-aspect': 1 },
           lineage: { skybound: 1, scorchbound: 1 },
-          background: { erudit: 1 },
+          background: { erudit: 1, investigator: 1 },
           skill: { cartographer: 1, survivalist: 1 },
         },
       },
       {
         id: 'smother',
-        label: 'Smother it the way the burners do, armful by armful of green stuff off the wet ground, until the edge of it is only smoke.',
-        told: 'smothered the edge of it with armfuls of green stuff off the wet ground until it was only smoke.',
+        label: 'Smother the edge with armfuls of wet green stuff until it is only smoke.',
+        told: 'smothered the edge with wet green stuff until it was only smoke.',
         gives: {
           attribute: { instinct: 1 },
           talent: { mycomancer: 1, wilder: 1 },
@@ -6340,14 +6380,14 @@ export const QUESTIONS = [
     id: 'blood-hawk',
     stage: 'blood',
     scene:
-      'There is a hawk on the fence post at the top of the field and it has not moved while you crossed the whole field towards it. Nobody else working the field can see it. It is looking at you the way a person looks at you.',
+      'A hawk on the fence post has watched you cross the whole field. Nobody else can see it, and it looks at you the way a person does.',
     asks: 'What do you do?',
     recall: 'When the hawk on the fence post would not look away, you',
     options: [
       {
         id: 'hand',
-        label: 'Put out your arm and wait. It comes onto your wrist much heavier than you expected and stays there while you walk the length of the field.',
-        told: 'put out your arm, and it came onto your wrist and stayed there the length of the field.',
+        label: 'Put out your arm and wait. It comes onto your wrist, heavier than you expected.',
+        told: 'put out your arm, and it came onto your wrist.',
         gives: {
           attribute: { instinct: 2 },
           talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
@@ -6358,20 +6398,20 @@ export const QUESTIONS = [
       },
       {
         id: 'still',
-        label: 'Stand still and look back at it until one of the two of you gives way, which takes a quarter of an hour and is not you.',
-        told: 'stood and looked back at it for a quarter of an hour, until it was the hawk that gave way.',
+        label: 'Net it and sell it. A hawk that lets you walk up to it is worth a month’s wages.',
+        told: 'netted it and sold it for a month’s wages.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 1, wilder: 1 },
+          talent: { wilder: 1, 'draconic-bond': 1 },
           lineage: { skybound: 1 },
-          background: { outlander: 1, mercenary: 1 },
-          skill: { vigilant: 1, survivalist: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, survivalist: 1 },
         },
       },
       {
         id: 'name',
-        label: 'Say out loud what you think it actually is, using the name for it. Then watch what happens in its face when you get the name right.',
-        told: 'said out loud what you thought it was and watched its face when you got the name right.',
+        label: 'Say out loud what you think it really is, and watch its face when you get it right.',
+        told: 'said out loud what it really was, and watched its face.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -6383,8 +6423,8 @@ export const QUESTIONS = [
       },
       {
         id: 'stone',
-        label: 'Put a stone through it. A thing that watches you across a whole field is a thing that was sent, and you would rather send something back.',
-        told: 'put a stone through it, because a thing that watches you across a field has been sent.',
+        label: 'Put a stone through it. A thing that watches you like that was sent.',
+        told: 'put a stone through it, because a thing that watches like that was sent.',
         gives: {
           attribute: { physique: 1 },
           talent: { berserker: 1, brawler: 1, painseeker: 1 },
@@ -6400,14 +6440,14 @@ export const QUESTIONS = [
     id: 'blood-orchard',
     stage: 'blood',
     scene:
-      'Every tree in the orchard has gone over to a grey bloom in a single week and the fruit is coming off soft and black. The old men have said to burn the lot before it crosses the lane. You have been out there since first light with your hands in it.',
+      'A grey bloom has taken every tree in the orchard in a week. The old men say burn the lot before it crosses the lane.',
     asks: 'What do you do?',
     recall: 'The week the grey bloom took the whole orchard, you',
     options: [
       {
         id: 'learn',
-        label: 'Stay out there with it until you know what it is, what it feeds on and what it will not touch. By the fourth day you can tell which tree it takes next.',
-        told: 'stayed out in the orchard until you could tell which tree the bloom would take next.',
+        label: 'Stay out in it until you know what it feeds on and which tree it takes next.',
+        told: 'stayed in the orchard until you knew which tree it would take next.',
         gives: {
           attribute: { instinct: 2 },
           talent: { mycomancer: 1, wilder: 1 },
@@ -6418,8 +6458,8 @@ export const QUESTIONS = [
       },
       {
         id: 'burn',
-        label: 'Burn the lot. Tree by tree, down to the roots, with the wind at your back and the torch in your own hand, and the lane never catches.',
-        told: 'burned the orchard down to the roots, tree by tree, with the torch in your own hand.',
+        label: 'Burn the lot yourself, tree by tree, down to the roots, torch in hand.',
+        told: 'burned the orchard down to the roots with your own torch.',
         gives: {
           attribute: { physique: 2 },
           talent: { berserker: 1, painseeker: 1 },
@@ -6430,8 +6470,8 @@ export const QUESTIONS = [
       },
       {
         id: 'jar',
-        label: 'Take a jar of it back to the bench and spend a fortnight finding out what kills it, what only slows it and what feeds it instead.',
-        told: 'took a jar of it to the bench and spent a fortnight finding out what killed it and what fed it.',
+        label: 'Take a jar of it to the bench and spend a fortnight learning what kills it.',
+        told: 'spent a fortnight at the bench learning what killed it.',
         gives: {
           attribute: { mind: 2 },
           talent: { alchemist: 1, thaumaturge: 1 },
@@ -6442,14 +6482,14 @@ export const QUESTIONS = [
       },
       {
         id: 'graft',
-        label: 'Save the four trees that are still clean. Cuttings off all four, wrapped and carried two miles, and in three years there is an orchard again somewhere else.',
-        told: 'took cuttings off the four clean trees and carried them two miles, and in three years there was an orchard again.',
+        label: 'Sell cuttings from the four clean trees to the next valley, and say nothing about the bloom.',
+        told: 'sold cuttings to the next valley and said nothing about the bloom.',
         gives: {
           attribute: { mind: 1 },
-          talent: { enchanter: 1, alchemist: 1 },
-          lineage: { celestial: 1 },
-          background: { craftsman: 1, merchant: 1 },
-          skill: { skilled: 1, frugal: 1 },
+          talent: { enchanter: 1, tactician: 1 },
+          lineage: { luminary: 1 },
+          background: { craftsman: 1, erudit: 1 },
+          skill: { haggler: 1, cunning: 1 },
         },
       },
     ],
@@ -6459,14 +6499,14 @@ export const QUESTIONS = [
     id: 'blood-coin',
     stage: 'blood',
     scene:
-      'The pedlar has spread his tray on the churchyard wall and there is one thing on it you cannot look away from: a ring of red gold with a scale pattern cut into the band. You have never in your life wanted anything the way you want this. You are eleven and you have nothing to trade.',
+      'The pedlar has spread his tray on the churchyard wall. There is a ring of red gold on it with a scale pattern, and you are eleven with nothing to trade.',
     asks: 'What do you do?',
     recall: 'When the pedlar’s red gold ring would not let you go, you',
     options: [
       {
         id: 'take',
-        label: 'Take it while he is counting somebody else’s coppers, and be at the far end of the churchyard before he has finished counting them.',
-        told: 'took it while he was counting somebody else’s coppers and was gone before he finished.',
+        label: 'Take it while he is counting somebody else’s coppers and be gone before he finishes.',
+        told: 'took it while he counted somebody else’s coppers.',
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
@@ -6478,8 +6518,8 @@ export const QUESTIONS = [
       },
       {
         id: 'earn',
-        label: 'Come back to him every day for a month with something worth a little of it: a rabbit, a load of kindling, a morning’s work, until the ring is yours.',
-        told: 'came back to the pedlar every day for a month with something worth a little of it, until the ring was yours.',
+        label: 'Come back every day for a month with something worth a little of it, until it is yours.',
+        told: 'came back every day for a month until the ring was yours.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1 },
@@ -6490,8 +6530,8 @@ export const QUESTIONS = [
       },
       {
         id: 'ask',
-        label: 'Ask him where it came from. Then ask again, and again, past the answer he gives everybody, until he puts the tray away and will not look at you.',
-        told: 'asked him where it came from until he put the tray away and would not look at you.',
+        label: 'Ask him where it came from, and keep asking until he puts the tray away.',
+        told: 'asked where it came from until he put the tray away.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, necromancer: 1 },
@@ -6502,8 +6542,8 @@ export const QUESTIONS = [
       },
       {
         id: 'warm',
-        label: 'Put one finger on it and know, before he has said a word about it, that the metal is warm and has no business being warm on a wall in November.',
-        told: 'put one finger on it and knew the metal was warm, which it had no business being.',
+        label: 'Touch it with one finger and know that the metal is warm, and should not be.',
+        told: 'touched it and knew the metal was warm, which it should not have been.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -6523,14 +6563,14 @@ export const QUESTIONS = [
     id: 'trade-troupe',
     stage: 'trade',
     scene:
-      'The troupe that came through in the spring is back, two players and a wagon short, wintering in the yard behind the inn. The woman who runs them has watched you work that room three nights running. This morning she asked what you are still doing in this town.',
+      'The troupe from the spring is back, two players short, wintering behind the inn. The woman who runs them asked this morning what you are still doing in this town.',
     asks: 'What do you take on?',
     recall: 'When the troupe asked what you were still doing in that town, you',
     options: [
       {
         id: 'boards',
-        label: 'Take the boards. By the spring you have four parts, a voice that reaches the back of a market square and a name in two counties.',
-        told: 'took the boards, and by spring you had four parts and a name in two counties.',
+        label: 'Take the boards. By spring you have four parts and a name in two counties.',
+        told: 'took the boards, and by spring had a name in two counties.',
         gives: {
           attribute: { instinct: 2 },
           talent: { virtuoso: 1 },
@@ -6542,20 +6582,21 @@ export const QUESTIONS = [
       },
       {
         id: 'books',
-        label: 'Take the books. A troupe that cannot count its own gate is a troupe that starves in March, and by March they are not starving.',
-        told: 'took the books, because a troupe that cannot count its own gate starves in March.',
+        label: 'Take the books, and skim the gate. A troupe that cannot count will never notice.',
+        told: 'took the books and skimmed the gate.',
+        tags: ['did:theft'],
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1, pactbound: 1 },
+          talent: { tactician: 1, enchanter: 1 },
           lineage: { luminary: 1 },
-          background: { merchant: 1, aristocrat: 1 },
-          skill: { mastermind: 1, haggler: 1 },
+          background: { merchant: 1, criminal: 1 },
+          skill: { mastermind: 1, cunning: 1 },
         },
       },
       {
         id: 'wagon',
-        label: 'Take the wagon, the horses and everything in the show that has to be lifted, put up before dark and taken down again by lamplight.',
-        told: 'took the wagon, the horses and everything in the show that had to be lifted.',
+        label: 'Take the wagon, the horses and everything that has to be lifted before dark.',
+        told: 'took the wagon, the horses and everything that had to be lifted.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, guardian: 1, quartermaster: 1 },
@@ -6566,8 +6607,8 @@ export const QUESTIONS = [
       },
       {
         id: 'paint',
-        label: 'Take the paint, the wire and the flash powder: everything that makes a stage do the things a stage is not supposed to be able to do.',
-        told: 'took the paint, the wire and the flash powder, and made the stage do what a stage should not.',
+        label: 'Take the paint, the wire and the flash powder that make a stage do impossible things.',
+        told: 'took the paint, the wire and the flash powder.',
         gives: {
           attribute: { mind: 1 },
           talent: { alchemist: 1, 'elemental-aspect': 1 },
@@ -6583,26 +6624,26 @@ export const QUESTIONS = [
     id: 'trade-house',
     stage: 'trade',
     scene:
-      'The house on the square has taken you on for the season. On the third morning the steward puts a ring of keys in your hand and says the family will be down at eleven. Nobody has yet told you which of the eleven people in this house you actually work for.',
+      'The house on the square has taken you on for the season. On the third morning the steward hands you the keys and says the family will be down at eleven.',
     asks: 'What do you do first?',
     recall: 'When the steward handed you the keys of the house on the square, you',
     options: [
       {
         id: 'learn',
-        label: 'Learn all eleven of them by the end of the week: what each one wants, what each one is afraid of and which two of them are not speaking.',
-        told: 'learned all eleven of them by the end of the week, down to which two were not speaking.',
+        label: 'Learn all eleven of them by the end of the week, especially what each would pay to keep quiet.',
+        told: 'learned all eleven of them, and what each would pay to keep quiet.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1, pactbound: 1 },
-          lineage: { luminary: 1 },
+          lineage: { infernal: 1 },
           background: { aristocrat: 1, investigator: 1 },
           skill: { empath: 1, mastermind: 1 },
         },
       },
       {
         id: 'keys',
-        label: 'Learn the keys instead. Which doors the ring opens, which it does not, and what is behind the two doors nobody on that ring can get into.',
-        told: 'learned the keys instead, and what was behind the two doors the ring would not open.',
+        label: 'Learn the keys. Which doors the ring opens, and what is behind the two it does not.',
+        told: 'learned the keys, and what was behind the two doors they did not open.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -6613,8 +6654,8 @@ export const QUESTIONS = [
       },
       {
         id: 'work',
-        label: 'Do the work that is in front of you and be the one thing in that house that nobody upstairs ever has to think about, for the whole season.',
-        told: 'did the work in front of you and were the one thing in that house nobody upstairs had to think about.',
+        label: 'Do the work in front of you and be the one thing upstairs never has to think about.',
+        told: 'did the work and were the one thing upstairs never thought about.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, runebearer: 1, oathbound: 1 },
@@ -6625,8 +6666,8 @@ export const QUESTIONS = [
       },
       {
         id: 'kitchen',
-        label: 'Go down to the kitchen, where the cook has been thirty years and has the whole house in her head, and make yourself useful over a pot.',
-        told: 'went down to the kitchen, where the cook had thirty years of the house in her head.',
+        label: 'Go down to the kitchen, where the cook has thirty years of the house in her head.',
+        told: 'went down to the kitchen, where the cook had the house in her head.',
         gives: {
           attribute: { instinct: 1 },
           talent: { 'cauldron-keeper': 1, trickster: 1 },
@@ -6642,26 +6683,26 @@ export const QUESTIONS = [
     id: 'trade-bank',
     stage: 'trade',
     scene:
-      'The counting house on the bridge will lend to anybody with a name, and you have spent two years making one. The man across the table has your figures in front of him and a decision to make. There are four people in the queue behind you listening to all of it.',
+      'The counting house on the bridge lends to anybody with a name, and you have spent two years making one. Four people in the queue behind you are listening.',
     asks: 'What do you do?',
     recall: 'When the counting house on the bridge weighed your name, you',
     options: [
       {
         id: 'figures',
-        label: 'Let the figures do it. Every column of them, out loud, in order, until the only honest thing left for him to do is sign.',
-        told: 'let the figures do it, out loud and in order, until the only honest thing left was to sign.',
+        label: 'Let the figures do it. Two of the columns are invented, and he will never check.',
+        told: 'let the figures do it, two columns of them invented.',
         gives: {
           attribute: { mind: 2 },
           talent: { tactician: 1, enchanter: 1 },
           lineage: { luminary: 1 },
-          background: { merchant: 1, erudit: 1 },
-          skill: { mastermind: 1, haggler: 1 },
+          background: { merchant: 1, criminal: 1 },
+          skill: { mastermind: 1, cunning: 1 },
         },
       },
       {
         id: 'name',
-        label: 'Spend the name instead. Let him work out, with four people listening, exactly what refusing you in public is going to cost him by Friday.',
-        told: 'spent the name instead, and let him work out what refusing you in public would cost him.',
+        label: 'Spend the name. Let him work out, with four people listening, what refusing you will cost him.',
+        told: 'let him work out what refusing you in public would cost him.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1 },
@@ -6672,8 +6713,8 @@ export const QUESTIONS = [
       },
       {
         id: 'walk',
-        label: 'Stand up, thank him for his afternoon and walk out past the four in the queue. He sends a boy after you before you are off the bridge.',
-        told: 'thanked him and walked out, and he sent a boy after you before you were off the bridge.',
+        label: 'Thank him and walk out. He sends a boy after you before you are off the bridge.',
+        told: 'walked out, and he sent a boy after you before you were off the bridge.',
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -6684,8 +6725,8 @@ export const QUESTIONS = [
       },
       {
         id: 'guard',
-        label: 'Take the other work the house is offering instead: the strongroom, the night, the door and a bed in the room behind it.',
-        told: 'took the other work the house was offering: the strongroom, the night and the door.',
+        label: 'Take the other work the house offers: the strongroom, the night and the door.',
+        told: 'took the strongroom, the night and the door instead.',
         gives: {
           attribute: { physique: 1 },
           talent: { guardian: 1, oathbound: 1 },
@@ -6702,14 +6743,14 @@ export const QUESTIONS = [
     id: 'trade-smith',
     stage: 'trade',
     scene:
-      'The armourer on the lower street has more orders than hands and one bench free. He puts three things on it in front of you: a blade with no edge left, a mail shirt with a hole through the back of it and a customer who has been waiting an hour.',
+      'The armourer has more orders than hands and one bench free. He puts three things on it: a blade with no edge, a mail shirt with a hole in the back and a customer who has waited an hour.',
     asks: 'Which do you take?',
     recall: 'When the armourer put three things on his free bench, you',
     options: [
       {
         id: 'blade',
-        label: 'Take the blade, and put rather more into the finishing of it than an edge. The man who collects it never does work out why it never needs sharpening.',
-        told: 'took the blade and put rather more into the finishing of it than an edge.',
+        label: 'Take the blade, and put more into the finishing than an edge. It never needs sharpening again.',
+        told: 'took the blade and put more into it than an edge.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
@@ -6721,8 +6762,8 @@ export const QUESTIONS = [
       },
       {
         id: 'mail',
-        label: 'Take the mail shirt. Two hundred rings drawn, cut, closed and riveted by hand, four hours of it, and the repair is stronger than the shirt.',
-        told: 'took the mail shirt and closed two hundred rings by hand until the repair was stronger than the shirt.',
+        label: 'Take the mail shirt. Two hundred rings closed by hand, and the repair is stronger than the shirt.',
+        told: 'closed two hundred rings by hand until the repair was stronger than the shirt.',
         gives: {
           attribute: { physique: 2 },
           talent: { runebearer: 1, colossus: 1 },
@@ -6734,20 +6775,21 @@ export const QUESTIONS = [
       },
       {
         id: 'customer',
-        label: 'Take the customer, who has been standing there an hour and is worth more to that shop than either of the other two things on the bench.',
-        told: 'took the customer, who was worth more to the shop than either thing on the bench.',
+        label: 'Take the customer, sell him the shop’s best blade at twice the price and keep the difference.',
+        told: 'sold the customer the best blade at twice the price and kept the difference.',
+        tags: ['did:theft'],
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1, spellquill: 1 },
-          lineage: { celestial: 1 },
-          background: { merchant: 1, aristocrat: 1 },
-          skill: { haggler: 1, charismatic: 1 },
+          talent: { tactician: 1, enchanter: 1 },
+          lineage: { scorchbound: 1 },
+          background: { merchant: 1, craftsman: 1 },
+          skill: { haggler: 1, skilled: 1 },
         },
       },
       {
         id: 'bench',
-        label: 'Take the bench itself. By the end of the month the orders come to you first and the armourer is working down a list in your hand.',
-        told: 'took the bench itself, and by the end of the month the armourer was working down a list in your hand.',
+        label: 'Take the bench itself. By the end of the month the orders come to you first.',
+        told: 'took the bench itself, and by the end of the month the orders came to you.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, virtuoso: 1 },
@@ -6766,26 +6808,26 @@ export const QUESTIONS = [
     id: 'leaving-oath',
     stage: 'leaving',
     scene:
-      'There is a company forming in the square at dawn and they are swearing the men in one at a time, on a book, in front of everybody. Your pack is on your back and the carrier goes in four hours. The sergeant has now seen you standing there twice.',
+      'A company is forming in the square at dawn, swearing men in one at a time on a book. The carrier goes in four hours, and the sergeant has seen you twice.',
     asks: 'What do you do?',
     recall: 'On the morning the company swore men in on the square, you',
     options: [
       {
         id: 'swear',
-        label: 'Go and stand in the line and swear it, all of it, with your hand on the book and your name said loudly enough for the back of the square.',
-        told: 'stood in the line and swore it with your hand on the book, loudly enough for the back of the square.',
+        label: 'Swear it, take the bounty and be on the carrier with it before the ink is dry.',
+        told: 'swore it, took the bounty and were on the carrier before the ink dried.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 1, runebearer: 1, oathbound: 1 },
+          talent: { berserker: 1, painseeker: 1 },
           lineage: { stalwart: 1 },
-          background: { military: 1, mercenary: 1 },
-          skill: { vigilant: 1, helpful: 1 },
+          background: { mercenary: 1, military: 1 },
+          skill: { frugal: 1, streetwise: 1 },
         },
       },
       {
         id: 'read',
-        label: 'Ask to read the book first, and then read the whole of it, slowly, in front of the queue, because a thing you swear to is a thing you have read.',
-        told: 'asked to read the book first, and read the whole of it in front of the queue.',
+        label: 'Ask to read the book first, and read the whole of it in front of the queue.',
+        told: 'read the whole book first, in front of the queue.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1 },
@@ -6796,8 +6838,8 @@ export const QUESTIONS = [
       },
       {
         id: 'carrier',
-        label: 'Take the carrier. You are past the end of the square before the sergeant has finished with the man in front of him.',
-        told: 'took the carrier, and were past the end of the square before the sergeant looked up.',
+        label: 'Take the carrier and be past the square before the sergeant looks up.',
+        told: 'took the carrier before the sergeant looked up.',
         gives: {
           attribute: { instinct: 2 },
           talent: { trickster: 1, wilder: 1 },
@@ -6808,8 +6850,8 @@ export const QUESTIONS = [
       },
       {
         id: 'sell',
-        label: 'Sell them the four hours instead: a name for their book that is not quite yours, and a horse they are going to need by noon.',
-        told: 'sold them a name for their book that was not quite yours, and a horse they needed by noon.',
+        label: 'Sell them a name that is not quite yours, and a horse they will need by noon.',
+        told: 'sold them a false name and a horse they needed by noon.',
         gives: {
           attribute: { mind: 1 },
           talent: { pactbound: 1 },
@@ -6825,13 +6867,13 @@ export const QUESTIONS = [
     id: 'leaving-tide',
     stage: 'leaving',
     scene:
-      'The tide turns at four and the coaster in the harbour is one hand short. The master will take you as far as the next port and no further. The alternative is eleven days of road in the wrong season, and you have to say now.',
+      'The tide turns at four and the coaster in the harbour is one hand short, as far as the next port. The other way is eleven days of road in the wrong season.',
     asks: 'What do you do?',
     recall: 'On the turning tide, with the coaster a hand short, you',
     options: [
       {
         id: 'ship',
-        label: 'Take the berth. You are up the side with your pack before he has finished saying what the work is, and you are good at it by the second day.',
+        label: 'Take the berth. You are up the side before he finishes saying what the work is.',
         told: 'took the berth, and were good at it by the second day.',
         gives: {
           attribute: { instinct: 1 },
@@ -6843,8 +6885,8 @@ export const QUESTIONS = [
       },
       {
         id: 'cargo',
-        label: 'Take the berth and then take an interest in the cargo, so that by the next port you own a share of what is in the hold and he owes you for it.',
-        told: 'took the berth and an interest in the cargo, and owned a share of the hold by the next port.',
+        label: 'Take the berth, then take an interest in the cargo until you own a share of the hold.',
+        told: 'took the berth and a share of the hold by the next port.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, pactbound: 1 },
@@ -6855,8 +6897,8 @@ export const QUESTIONS = [
       },
       {
         id: 'road',
-        label: 'Take the eleven days. Wrong season, wrong boots and nobody to answer to, and you walk into the next town owing no man an hour of your life.',
-        told: 'took the eleven days of road instead, and walked into the next town owing nobody an hour.',
+        label: 'Take the eleven days. Wrong season, wrong boots and nobody to answer to.',
+        told: 'took the eleven days of road, owing nobody an hour.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, runebearer: 1, painseeker: 1 },
@@ -6867,8 +6909,8 @@ export const QUESTIONS = [
       },
       {
         id: 'weather',
-        label: 'Go and stand on the harbour wall and read the sky for a quarter of an hour before you answer either way. What it says decides it.',
-        told: 'stood on the harbour wall and read the sky for a quarter of an hour, and let that decide it.',
+        label: 'Read the sky from the harbour wall for a quarter of an hour, and let that decide.',
+        told: 'read the sky from the harbour wall and let that decide.',
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
@@ -6885,14 +6927,14 @@ export const QUESTIONS = [
     id: 'leaving-crowd',
     stage: 'leaving',
     scene:
-      'There is a fair on the morning you go and the square is packed wall to wall. Whatever you do in the next hour, four hundred people are going to watch you do it. One of them has been asking after you by name since yesterday.',
+      'There is a fair on the morning you go and the square is packed. Four hundred people will watch whatever you do, and one of them has been asking for you by name.',
     asks: 'What do you do?',
     recall: 'On the morning you left, with the fair filling the square, you',
     options: [
       {
         id: 'stage',
-        label: 'Get up on the mounting block and give them one last song, then go out of the square while they are still shouting for another.',
-        told: 'gave them one last song off the mounting block and went while they were still shouting.',
+        label: 'Get up on the mounting block and give them one last song, then go while they shout for more.',
+        told: 'gave them one last song and went while they shouted for more.',
         gives: {
           attribute: { instinct: 2 },
           talent: { virtuoso: 1 },
@@ -6904,8 +6946,9 @@ export const QUESTIONS = [
       },
       {
         id: 'crowd',
-        label: 'Go into the crowd and be four hundred other people all the way across it, and come out of the far side as somebody nobody was asking after.',
-        told: 'went into the crowd and came out the far side as somebody nobody was asking after.',
+        label: 'Work the crowd on your way through it. Four hundred people is four hundred purses.',
+        told: 'worked the crowd on your way through it.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
           talent: { trickster: 1, 'flowing-fist': 1, virtuoso: 1 },
@@ -6916,8 +6959,8 @@ export const QUESTIONS = [
       },
       {
         id: 'through',
-        label: 'Walk down the middle of it at your own pace looking at nobody, and let four hundred people work out for themselves how to get out of the way.',
-        told: 'walked down the middle of it at your own pace and let the square work out how to move.',
+        label: 'Walk down the middle at your own pace and let four hundred people get out of the way.',
+        told: 'walked down the middle and let the square get out of your way.',
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, guardian: 1 },
@@ -6928,8 +6971,8 @@ export const QUESTIONS = [
       },
       {
         id: 'find',
-        label: 'Find the one who has been asking after you before they find you, and be the one who opens the conversation, in a place of your choosing.',
-        told: 'found the one who had been asking after you first, and opened the conversation yourself.',
+        label: 'Find the one asking after you before they find you, and open the conversation yourself.',
+        told: 'found the one asking after you first.',
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, pactbound: 1 },
@@ -6945,38 +6988,39 @@ export const QUESTIONS = [
     id: 'leaving-hearth',
     stage: 'leaving',
     scene:
-      'The fire is banked for the last time and the shelf over it is your mother’s: forty jars, a copper pot and forty years of knowing what is in each one. She is asleep in the next room. The carrier goes in an hour.',
+      'The fire is banked for the last time. The shelf over it is your mother’s: forty jars, a copper pot and forty years of knowing what is in each one. She is asleep.',
     asks: 'What do you take off the shelf?',
     recall: 'From your mother’s shelf, in the last hour, you took',
     options: [
       {
         id: 'pot',
-        label: 'The copper pot, and as many of the jars as will go in the pack without breaking, wrapped one at a time in everything you own.',
-        told: 'the copper pot and as many jars as would go in the pack, wrapped in everything you owned.',
+        label: 'The copper pot, the jars and the coin she keeps in the fortieth one.',
+        told: 'the copper pot, the jars and the coin from the fortieth one.',
+        tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          talent: { 'cauldron-keeper': 1, trickster: 1 },
           lineage: { wildheart: 1 },
-          background: { outlander: 1, craftsman: 1 },
-          skill: { apothecary: 1, frugal: 1 },
+          background: { criminal: 1, outlander: 1 },
+          skill: { apothecary: 1, cunning: 1 },
         },
       },
       {
         id: 'book',
-        label: 'The one thing on that shelf that is not a jar: her book, forty years of it, in a hand you can only just read.',
-        told: 'her book, forty years of it, in a hand you could only just read.',
+        label: 'Her book, to sell. Forty years of receipts is worth a year on the road to the right apothecary.',
+        told: 'her book, to sell to the right apothecary.',
         gives: {
           attribute: { mind: 1 },
-          talent: { spellquill: 1, alchemist: 1 },
+          talent: { alchemist: 1, tactician: 1 },
           lineage: { luminary: 1 },
           background: { erudit: 1, craftsman: 1 },
-          skill: { scholar: 1, apothecary: 1 },
+          skill: { haggler: 1, scholar: 1 },
         },
       },
       {
         id: 'thread',
-        label: 'The ball of red thread from the back of the shelf, the one she never once let you touch, and you still do not know why you took that.',
-        told: 'the ball of red thread she never let you touch, and you still do not know why.',
+        label: 'The ball of red thread she never let you touch. You still do not know why.',
+        told: 'the ball of red thread she never let you touch.',
         gives: {
           attribute: { physique: 1 },
           talent: { weaver: 1, runebearer: 1, totemic: 1 },
@@ -6987,8 +7031,8 @@ export const QUESTIONS = [
       },
       {
         id: 'nothing',
-        label: 'Nothing off the shelf at all. You write out the forty labels in a fair hand for whoever comes after and leave the list under the pot.',
-        told: 'nothing at all, and left forty labels written out in a fair hand under the pot.',
+        label: 'Nothing. You write out forty labels for whoever comes after and leave them under the pot.',
+        told: 'nothing at all, and left forty labels written out under the pot.',
         gives: {
           attribute: { mind: 1 },
           talent: { spellquill: 1 },

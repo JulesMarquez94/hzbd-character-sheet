@@ -127,7 +127,13 @@ section('every question is whole');
   for (const question of QUESTIONS) {
     const where = question.id;
     check(`${where}: stage is known`, stageIds.has(question.stage), true);
-    check(`${where}: exposes a scene of at least two sentences`, (question.scene?.match(/[.!?](\s|$)/g) ?? []).length >= 2, true);
+    const sentences = (question.scene?.match(/[.!?](\s|$)/g) ?? []).length;
+    check(`${where}: exposes a scene of at least two sentences`, sentences >= 2, true);
+    /* And no more than three, in forty-five words. Jules, 2026-09-10: "more
+       simple and easy to read and shorter". A scene says where you stand and
+       what is at stake, and stops. */
+    check(`${where}: and no more than three`, sentences <= 3, true);
+    check(`${where}: the scene is short`, question.scene.trim().split(/\s+/).length <= 45, true);
     check(`${where}: asks something`, Boolean(question.asks?.trim()), true);
     check(`${where}: the scene ends by asking`, /\?$/.test(question.asks.trim()), true);
     check(`${where}: the question is a question, not the scene`, question.asks.trim().length <= 60, true);
@@ -143,7 +149,11 @@ section('every question is whole');
       check(`${at}: has a label`, Boolean(option.label?.trim()), true);
       /* A way of acting, not a quip: the means and what comes of it takes more
          than a handful of words to say. */
-      check(`${at}: the answer says how`, option.label.trim().split(/\s+/).length >= 8, true);
+      const said = option.label.trim().split(/\s+/).length;
+      check(`${at}: the answer says how`, said >= 8, true);
+      /* And says it in one line. Twenty words is the ceiling since 2026-09-10,
+         when every answer was cut back to the means and what comes of it. */
+      check(`${at}: and says it in one line`, said <= 20, true);
       check(`${at}: has a told clause`, Boolean(option.told?.trim()), true);
       const sentence = sentenceOf({ question, option });
       check(`${at}: the story sentence ends`, /[.!?]$/.test(sentence), true);
