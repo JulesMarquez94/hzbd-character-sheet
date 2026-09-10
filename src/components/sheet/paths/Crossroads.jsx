@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import LevelLedger from '../LevelLedger.jsx';
 import PickBlock from '../PickBlock.jsx';
+import { Gated } from '../parts.jsx';
+import { CardStackProvider } from '../../CardStack.jsx';
 import useCodexArt from '../../useCodexArt.js';
 import { useAuth } from '../../../context/auth-context.js';
 import { ATTRIBUTES, ATTRIBUTE_BASE, attributeLabel } from '../../../lib/attributes.js';
-import { attributeTotals, lineageBonuses } from '../../../lib/levelPicks.js';
+import { attributeTotals, lineageBonuses, openChoices } from '../../../lib/levelPicks.js';
 import { creationPath } from '../../../lib/creationPaths.js';
 import { STAGES } from '../../../lib/crossroadsPool.js';
 import {
   CROSSROADS_LEVEL,
+  CROSSROADS_NOTE,
   answer,
   applyOutcome,
   back,
@@ -30,6 +34,15 @@ import { pactOf } from '../../../lib/pact.js';
 import { enchantingOf, rankInfo } from '../../../lib/talents.js';
 
 /**
+ * Whether this row was made at the Crossroads. The ledger is the record of every
+ * level a sheet has and `applyOutcome` stamps its own note on the experience it
+ * hands over, so the row says so itself and nothing has to be stored twice.
+ */
+function madeHere(character) {
+  return (character?.ledger ?? []).some((row) => row?.note === CROSSROADS_NOTE);
+}
+
+/**
  * The Crossroads: making a character by answering for them.
  *
  * The fourth of the four ways in, and the one for anybody who would rather be
@@ -43,7 +56,22 @@ import { enchantingOf, rankInfo } from '../../../lib/talents.js';
  * answers add up to, laid out in the same panels the level-1 block uses and in
  * the same colours, so what you are looking at is recognisably the Advancement
  * tab you are about to be handed. Taking it writes the whole character in one
- * patch and opens the sheet. Walking it again draws a new run.
+ * patch. Walking it again draws a new run.
+ *
+ * ------------------------------------------------------- and then it asks you
+ * Taking it does not always finish it. Jules, 2026-09-10: "make sure that if
+ * the characte creaiton once done reuqire choice form palyer such as aspells,
+ * enchantment ect prompt them to take it before finalizing."
+ *
+ * The count can decide a Mycomancer and it cannot decide which four spells;
+ * it can hand over a Draconic Bond and it cannot name the creature, or say
+ * which damage type your scales turn. **A Crossroads character is made at level
+ * 2 with two sets, so it hands over more of those blanks than any other way
+ * in.** So there is a third screen after the reveal: the level ledger for the
+ * two levels it just bought, with every finished block folded away and only
+ * what is still open standing. The way out is shut until nothing is, and it
+ * says how much, exactly as the free hand's is. A count that left nothing open
+ * skips the screen and goes straight to the sheet.
  *
  * `patch` and `onDone` are the sheet's, the same ones the free hand writes and
  * finishes with. The screen never writes anything of its own.
@@ -55,9 +83,24 @@ export default function Crossroads({ character, patch, onDone }) {
      honours if a question it named has since changed. */
   const [run, setRun] = useState(() => repair(loadRun(character.id) ?? newRun()));
   const [taking, setTaking] = useState(false);
+  /* True once the outcome is on the row and the two levels it bought still have
+     questions in them. The run is over by then and the reveal is behind us.
+     Read off the row on the way in as well as set on the way through, because a
+     refresh in the middle of answering them forgets the run and would otherwise
+     open question one of a fresh walk over a character who is already made. A
+     row made here with nothing left open falls through to a new run instead,
+     which is what somebody who came back to this URL on purpose is asking for. */
+  const [settling, setSettling] = useState(
+    () => madeHere(character) && openChoices(character, CROSSROADS_LEVEL) > 0
+  );
 
   const view = useMemo(() => walk(run), [run]);
   const outcome = useMemo(() => (view.done ? resolve(run) : null), [run, view.done]);
+
+  /* What the count could not decide, counted by the same `openChoices` the
+     Advancement tab badges itself with, so this page and that tab can never
+     disagree about whether a character is finished. */
+  const waiting = settling ? openChoices(character, CROSSROADS_LEVEL) : 0;
 
   useEffect(() => {
     saveRun(character.id, run);
@@ -66,11 +109,21 @@ export default function Crossroads({ character, patch, onDone }) {
   function take() {
     if (!outcome || taking) return;
     setTaking(true);
-    /* One write, then out. The sheet's onDone flushes what is pending before it
-       navigates, so the character is on the row before the row is reopened. */
-    patch(applyOutcome(character, outcome));
+    const written = applyOutcome(character, outcome);
+    patch(written);
     forgetRun(character.id);
-    onDone();
+
+    /* The sheet's onDone flushes what is pending before it navigates, so the
+       character is on the row before the row is reopened. Read the open
+       questions off the row as it will be rather than as it is: `patch` has not
+       come back through props yet, and `applyOutcome` returns exactly the
+       fields it changed. */
+    if (openChoices({ ...character, ...written }, CROSSROADS_LEVEL) === 0) {
+      onDone();
+      return;
+    }
+    setTaking(false);
+    setSettling(true);
   }
 
   return (
@@ -80,12 +133,20 @@ export default function Crossroads({ character, patch, onDone }) {
           <span className="creation-eyebrow">New character · {path.title}</span>
           <h2 className="creation-title">{character.name || 'Unnamed Drifter'}</h2>
           <p className="creation-line">
-            {view.done ? 'Every question answered. This is who you became.' : path.line}
+            {settling
+              ? 'They are on the sheet. These are the things the road could not decide for you.'
+              : view.done
+                ? 'Every question answered. This is who you became.'
+                : path.line}
           </p>
-          <StageRail view={view} />
+          {!settling && <StageRail view={view} />}
         </header>
 
-        {view.done && outcome ? (
+        {settling ? (
+          <CardStackProvider character={character}>
+            <LevelLedger character={character} level={CROSSROADS_LEVEL} patch={patch} />
+          </CardStackProvider>
+        ) : view.done && outcome ? (
           <Reveal outcome={outcome} />
         ) : view.current ? (
           <Question
@@ -97,27 +158,52 @@ export default function Crossroads({ character, patch, onDone }) {
       </div>
 
       <div className="creation-foot">
-        <button
-          type="button"
-          className="btn btn-minimal btn-sm"
-          disabled={view.answered === 0 || taking}
-          onClick={() => setRun((held) => back(held))}
-        >
-          Back
-        </button>
-        <span className="spacer" />
-        <button
-          type="button"
-          className="btn btn-minimal btn-sm"
-          disabled={taking}
-          onClick={() => setRun(newRun())}
-        >
-          {view.done ? 'Walk it again' : 'Start over'}
-        </button>
-        {view.done && outcome && (
-          <button type="button" className="btn btn-copper btn-sm" disabled={taking} onClick={take}>
-            {taking ? 'Making them…' : 'Take this character'}
-          </button>
+        {settling ? (
+          <>
+            <span className="spacer" />
+            {/* The same gate the free hand's last step wears, for the same
+                reason. Walking it again is gone from here on purpose: the
+                character is written, and starting over now would be an undo
+                nobody asked for. The Advancement tab can change all of it. */}
+            <Gated
+              className="btn btn-copper btn-sm"
+              why={
+                waiting > 0
+                  ? `${
+                      waiting === 1 ? 'One choice is' : `${waiting} choices are`
+                    } still open below. Answer ${waiting === 1 ? 'it' : 'them'} and this opens.`
+                  : null
+              }
+              onClick={onDone}
+            >
+              {waiting > 0 ? `${waiting} still open` : 'Open the sheet'}
+            </Gated>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              disabled={view.answered === 0 || taking}
+              onClick={() => setRun((held) => back(held))}
+            >
+              Back
+            </button>
+            <span className="spacer" />
+            <button
+              type="button"
+              className="btn btn-minimal btn-sm"
+              disabled={taking}
+              onClick={() => setRun(newRun())}
+            >
+              {view.done ? 'Walk it again' : 'Start over'}
+            </button>
+            {view.done && outcome && (
+              <button type="button" className="btn btn-copper btn-sm" disabled={taking} onClick={take}>
+                {taking ? 'Making them…' : 'Take this character'}
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

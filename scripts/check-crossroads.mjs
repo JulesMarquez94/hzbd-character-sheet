@@ -1,21 +1,25 @@
 /**
  * The Crossroads pool, and the character a run of it makes.
  *
- * Ninety-one questions written by hand, each option carrying points for things
- * that live in five other registries. Two things go wrong quietly with a pool
- * like that: an id that names nothing (a skill renamed, a weapon retired), and a
- * set that nothing scores, which can never be made at the Crossroads and nobody
- * would notice until a player asked why. So this reads every id against the
- * codex, and then walks the road a few thousand times with random answers and
- * counts who came out the other end.
+ * A hundred and thirteen questions written by hand, each option carrying points
+ * for things that live in five other registries. Three things go wrong quietly
+ * with a pool like that: an id that names nothing (a skill renamed, a weapon
+ * retired), a set that nothing scores, and a set that is scored only ever
+ * beside a bigger one, which gathers points all run and never wins. None of
+ * them would be noticed until a player asked why. So this reads every id
+ * against the codex, and then walks the road a few thousand times with random
+ * answers and counts who came out the other end.
  *
  *   node scripts/check-crossroads.mjs        report and exit 1 on any finding
  *   node scripts/check-crossroads.mjs --list print every case and the census
  *
  * The census at the foot is the part worth reading after a change to the pool:
  * how often each set, lineage and background wins, and how often each question
- * is asked. A set that wins one run in a thousand is not broken, but it is a
- * number the designer should see.
+ * is asked. Since every point outside the attribute is a 1, a win rate is very
+ * nearly a count of how many answers name the thing, so the census is the only
+ * honest way to see what a point edit did. One run in a hundred is the floor
+ * the walks enforce; the pool as shipped runs three to four times that at its
+ * thinnest.
  */
 
 import { ARMOR_DEFAULTS, QUESTIONS, STAGES, WEAPON_DEFAULTS } from '../src/lib/crossroadsPool.js';
@@ -51,7 +55,7 @@ import { LINEAGES } from '../src/lib/lineages.js';
 import { BACKGROUNDS, SKILLS, normalizeKit, skillPicks } from '../src/lib/backgrounds.js';
 import { ARMOR_SETS, startingWeapons } from '../src/lib/items.js';
 import { BLANK_CHARACTER, XP_TABLE } from '../src/lib/characterModel.js';
-import { levelPicksState } from '../src/lib/levelPicks.js';
+import { levelPicksState, openChoices } from '../src/lib/levelPicks.js';
 
 const LIST = process.argv.includes('--list');
 const RUNS = 4000;
@@ -171,6 +175,24 @@ section('every point lands on something real');
         for (const [id, value] of Object.entries(points)) {
           check(`${at}: ${group} ${id} exists`, known.has(id), true);
           check(`${at}: ${group} ${id} is a positive whole number`, Number.isInteger(value) && value > 0, true);
+        }
+      }
+    }
+  }
+}
+
+section('a point is a single point');
+{
+  /* Outside the attribute, no answer ever weighs one thing twice. An answer that
+     used to put two on a set now names two things the same act points at, so a
+     set wins by being what several answers had in common. The attribute is the
+     exception and is not a spread: an answer gives exactly one, at 1 or 2. */
+  for (const question of QUESTIONS) {
+    for (const option of question.options) {
+      for (const [group, points] of Object.entries(option.gives ?? {})) {
+        if (group === 'attribute') continue;
+        for (const [id, value] of Object.entries(points)) {
+          check(`${question.id}/${option.id}: ${group} ${id} is worth one point`, value, 1);
         }
       }
     }
@@ -429,9 +451,17 @@ section(`${RUNS} walks`);
   check('every run asks the whole road', [...lengths], [RUN_LENGTH]);
   check('every outcome is a whole character', shape, null);
 
-  for (const talent of WRITTEN) check(`${talent.name} wins at least once`, (wins.talent.get(talent.id) ?? 0) > 0, true);
-  for (const lineage of LINEAGES) check(`${lineage.name} wins at least once`, (wins.lineage.get(lineage.id) ?? 0) > 0, true);
-  for (const background of BACKGROUNDS) check(`${background.name} wins at least once`, (wins.background.get(background.id) ?? 0) > 0, true);
+  /* Not "wins at least once", which a set held twice in four thousand runs
+     passes. Every point is one point now, so what decides a race is how many
+     answers name a thing, and a thing named by too few of them is unreachable
+     in practice rather than in principle. One run in a hundred is the floor;
+     the pool as shipped runs three to four times that at its thinnest, and a
+     set that falls under it has been shadowed by a bigger one, not written
+     badly. See the census below for where each of them actually stands. */
+  const FLOOR = RUNS / 100;
+  for (const talent of WRITTEN) check(`${talent.name} is held in one run in a hundred`, (wins.talent.get(talent.id) ?? 0) >= FLOOR, true);
+  for (const lineage of LINEAGES) check(`${lineage.name} wins one run in a hundred`, (wins.lineage.get(lineage.id) ?? 0) >= FLOOR, true);
+  for (const background of BACKGROUNDS) check(`${background.name} wins one run in a hundred`, (wins.background.get(background.id) ?? 0) >= FLOOR, true);
   for (const key of ATTRIBUTE_KEYS) check(`${key} takes the +2 at least once`, (wins.major.get(key) ?? 0) > 0, true);
 
   const neverAsked = QUESTIONS.filter((question) => !askedCount.has(question.id)).map((question) => question.id);
@@ -577,6 +607,38 @@ section('the patch makes a level 2 character');
     if (problems.length) problem = `seed ${seed}: ${problems.join(', ')}`;
   }
   check('three hundred patches, each a whole level 2 character', problem, null);
+}
+
+section('and a patch is not the end of it');
+{
+  /* A count decides a Mycomancer and cannot decide which four spells, hands over
+     a Draconic Bond and cannot name the creature. Those blanks are what the
+     third screen of Crossroads.jsx waits on, so the number worth knowing is how
+     often there is one: if it were near zero the screen would be dead code, and
+     if a change ever made a blank the level ledger cannot answer the gate would
+     be a trap. Every question counted here comes from a level at or under the
+     one the Crossroads makes, which is the whole of what makes it answerable. */
+  const hist = new Map();
+  let above = null;
+  for (let seed = 1; seed <= 300; seed += 1) {
+    const { run } = randomWalk(seed);
+    const blank = { ...BLANK_CHARACTER, id: `local-${seed}` };
+    const made = { ...blank, ...applyOutcome(blank, resolve(run)) };
+    const open = openChoices(made, CROSSROADS_LEVEL);
+    hist.set(open, (hist.get(open) ?? 0) + 1);
+    /* Nothing above the level it made can be owed, or the ledger the screen
+       draws would not hold the panel that answers it. */
+    if (above === null && openChoices(made, CROSSROADS_LEVEL) !== openChoices(made, made.level)) {
+      above = `seed ${seed}`;
+    }
+  }
+  const owing = 300 - (hist.get(0) ?? 0);
+  check('a made character can still owe a choice', owing > 0, true);
+  check('and never one above the level it was made at', above, null);
+  if (LIST) {
+    const rows = [...hist].sort((a, b) => a[0] - b[0]).map(([n, count]) => `${n}:${count}`);
+    console.log(`  info  ${((100 * owing) / 300).toFixed(0)}% of made characters still owe a choice (open:runs ${rows.join(' ')})`);
+  }
 }
 
 section('a second take does not double anything');

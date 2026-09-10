@@ -41,8 +41,18 @@
  * three and the Spellblade in one in seventy. See data/README.md for both
  * tables.
  *
+ * **The points spread, 2026-09-10.** Jules: "avoid having thing give mutlipe
+ * points to 1, and have them spread out on more options. The goals is to have
+ * cross over. add 20 more secnarios." Every number outside the attribute is now
+ * a 1, and every answer names more things (see the fifth law below). Ninety-one
+ * questions became a hundred and thirteen, four more in each of the five stages
+ * that were thinnest against their own draw. The twenty new scenes were sited
+ * where the count had nobody: a fair, a causeway, a swarm and a troupe are
+ * where the Entertainer lives, a mill rope and a ball of red thread are where
+ * the Weaver does. Nothing in the engine or the stages moved.
+ *
  * ------------------------------------------------------------------- the laws
- * Four, and scripts/check-crossroads.mjs holds every question and option to them.
+ * Five, and scripts/check-crossroads.mjs holds every question and option to them.
  *
  * **A question exposes a scene, then asks.** `scene` is two to four sentences
  * that put you there: where you stand, what you can see, what is at stake, who
@@ -65,6 +75,24 @@
  * Colossus and a heavy blade, all at once, and nothing else. That is what makes
  * the count add up to somebody: a player who answers like a brawler ends up a
  * brawler, and never a Mind 6 holding a Guardian's shield.
+ *
+ * **A point is a single point.** Outside the attribute, nothing is ever weighed
+ * twice by one answer. Where an answer used to put two on a set it now names
+ * two sets that the same act points at, so a thing wins a count by being what
+ * several answers had in common rather than by one answer choosing it. That is
+ * the crossover: tearing the gate out is a point for the Berserker and a point
+ * for the Colossus, and which of them you end up holding is decided by the
+ * other seven answers. The attribute is the one exception, and it is not a
+ * spread: an answer gives exactly one attribute, at 1 or 2 depending on how
+ * hard it leans.
+ *
+ * The consequence is worth knowing before touching a number. **How often a
+ * thing wins is very nearly how many answers name it**, so the pool is balanced
+ * by counting homes rather than by weighing them, and two sets that always
+ * appear together are one set as far as the count is concerned. That is how the
+ * Spellblade came to be scored in twelve answers and never once alone, and to
+ * be held in one run in two hundred. Run `lint:crossroads --list` after any
+ * change and read the census at the foot of it.
  *
  * Backgrounds and skills are free of the last law, since a Criminal may be
  * built on any attribute. The other ten lineages are free of it too, and are
@@ -104,10 +132,12 @@
  *               weapon      a Common weapon's id, for the kit
  *               armor       a set name: Light, Heavy or Magic Armor
  *
- * A point is a point wherever it lands. The trade stage hands out three at a
- * time because what you did for a living is most of what a background is; a
- * night on the road hands out one or two because a single night says less about
- * a life than ten years did.
+ * A point is a point wherever it lands, and every one of them outside the
+ * attribute is a 1. What an answer says about a life is said by how many things
+ * it names and which, not by how heavily it names them: a night on the road
+ * names two or three because a single night says less than ten years did, and
+ * a trade names four or five because what you did for a living is most of what
+ * a background is.
  *
  * ------------------------------------------------------------------- the voice
  * The reader is `you`, and the scene is told to the character rather than to the
@@ -170,10 +200,9 @@ export const QUESTIONS = [
         told: 'walked across the yard and put yourself between the dog and the stone.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2 },
-          lineage: { stalwart: 1 },
+          talent: { guardian: 1, colossus: 1 },
           background: { military: 1 },
-          skill: { helpful: 1 },
+          skill: { helpful: 1, vigilant: 1 },
         },
       },
       {
@@ -182,10 +211,10 @@ export const QUESTIONS = [
         told: 'crouched, held out a hand and whistled low, and the dog came to you.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'feral-curse': 1, 'draconic-bond': 2 },
+          talent: { 'feral-curse': 1, 'draconic-bond': 1, beastbond: 1 },
           lineage: { wildkin: 1 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1 },
+          background: { entertainer: 1 },
+          skill: { survivalist: 1, empath: 1 },
         },
       },
       {
@@ -194,8 +223,9 @@ export const QUESTIONS = [
         told: 'told them, loudly and in detail, about the boy who stoned a dog and what came for him that night, and made most of it up.',
         gives: {
           attribute: { mind: 1 },
+          talent: { spellquill: 1 },
           lineage: { infernal: 1 },
-          background: { entertainer: 2 },
+          background: { entertainer: 1, aristocrat: 1 },
           skill: { troubadour: 1, charismatic: 1 },
         },
       },
@@ -206,9 +236,10 @@ export const QUESTIONS = [
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 1 },
-          talent: { berserker: 2, brawler: 1 },
+          talent: { berserker: 1, brawler: 1 },
           lineage: { draconic: 1 },
           background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, streetwise: 1 },
         },
       },
     ],
@@ -229,8 +260,9 @@ export const QUESTIONS = [
         gives: {
           attribute: { physique: 2 },
           talent: { guardian: 1, berserker: 1 },
-          lineage: { scorchbound: 2 },
+          lineage: { scorchbound: 1 },
           background: { military: 1 },
+          skill: { helpful: 1, survivalist: 1 },
         },
       },
       {
@@ -239,6 +271,7 @@ export const QUESTIONS = [
         told: 'ran round to the back wall, kicked two rotten boards loose and coaxed the calf out through the gap.',
         gives: {
           attribute: { instinct: 1 },
+          talent: { 'feral-curse': 1, 'draconic-bond': 1 },
           lineage: { wildkin: 1 },
           background: { craftsman: 1 },
           skill: { survivalist: 1, cunning: 1 },
@@ -250,7 +283,7 @@ export const QUESTIONS = [
         told: 'ran to the well and took charge of the buckets, two filling and two carrying.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
+          talent: { alchemist: 1 },
           background: { military: 1, aristocrat: 1 },
           skill: { mastermind: 1, helpful: 1 },
         },
@@ -261,10 +294,10 @@ export const QUESTIONS = [
         told: 'watched how the fire moved through the timbers, saw the roof was about to fall and shouted everyone clear before it did.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 1, alchemist: 1 },
-          lineage: { luminary: 1 },
-          background: { erudit: 2 },
-          skill: { scholar: 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
+          lineage: { scorchbound: 1 },
+          background: { erudit: 1 },
+          skill: { scholar: 1, vigilant: 1 },
         },
       },
     ],
@@ -285,9 +318,8 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2 },
-          lineage: { fey: 1 },
-          background: { criminal: 2 },
+          talent: { trickster: 1 },
+          background: { criminal: 1, entertainer: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
@@ -297,8 +329,9 @@ export const QUESTIONS = [
         told: 'put your copper on the board and offered the rest by the winter fair, on your word.',
         gives: {
           attribute: { mind: 1 },
+          talent: { pactbound: 1 },
           lineage: { celestial: 1 },
-          background: { merchant: 2, aristocrat: 2 },
+          background: { merchant: 1, aristocrat: 1, entertainer: 1 },
           skill: { haggler: 1, charismatic: 1 },
         },
       },
@@ -308,9 +341,9 @@ export const QUESTIONS = [
         told: 'carried his crates and stacked his stall until the market closed, and took the knife as your wage.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1, colossus: 1 },
+          talent: { guardian: 1, runebearer: 1 },
           lineage: { stalwart: 1 },
-          background: { craftsman: 1, military: 1 },
+          background: { craftsman: 1 },
           skill: { frugal: 1, helpful: 1 },
         },
       },
@@ -320,9 +353,9 @@ export const QUESTIONS = [
         told: 'looked hard at how the knife was made and went home to make a better one at the forge.',
         gives: {
           attribute: { mind: 1 },
-          talent: { enchanter: 3, alchemist: 1 },
+          talent: { enchanter: 1, spellblade: 1 },
           background: { craftsman: 1 },
-          skill: { skilled: 1 },
+          skill: { skilled: 1, scholar: 1 },
         },
       },
     ],
@@ -342,8 +375,10 @@ export const QUESTIONS = [
         told: 'found the door by feel and shouldered it, again and again, until the latch tore out of the wood.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 1, colossus: 1 },
-          lineage: { stalwart: 1 },
+          talent: { berserker: 1, brawler: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+          skill: { vigilant: 1 },
         },
       },
       {
@@ -352,9 +387,10 @@ export const QUESTIONS = [
         told: 'sat still on the step until your eyes and ears had learned the dark.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'feral-curse': 2, trickster: 1 },
-          lineage: { wildkin: 1, wildheart: 1 },
-          skill: { vigilant: 1 },
+          talent: { 'feral-curse': 1, wilder: 1, mycomancer: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { vigilant: 1, survivalist: 1 },
         },
       },
       {
@@ -363,10 +399,9 @@ export const QUESTIONS = [
         told: 'worked your way along the walls by hand until you had the whole room mapped and could walk it blind.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 1, enchanter: 1 },
-          lineage: { luminary: 1 },
+          talent: { arcanist: 1 },
           background: { investigator: 1 },
-          skill: { skilled: 1 },
+          skill: { skilled: 1, cartographer: 1 },
         },
       },
       {
@@ -376,8 +411,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2 },
+          talent: { pactbound: 1, necromancer: 1 },
           lineage: { infernal: 1 },
+          background: { investigator: 1 },
           skill: { occultist: 1 },
         },
       },
@@ -399,9 +435,10 @@ export const QUESTIONS = [
         told: 'filled the doorway, told him to come back when there was a man in the house and stood there until he went.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, colossus: 1 },
+          lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -410,7 +447,9 @@ export const QUESTIONS = [
         told: 'invited him in, poured him the last of the cider and talked him down to half the debt at midwinter.',
         gives: {
           attribute: { mind: 1 },
-          background: { merchant: 2, aristocrat: 1 },
+          talent: { tactician: 1 },
+          lineage: { celestial: 1 },
+          background: { merchant: 1, aristocrat: 1, entertainer: 1 },
           skill: { haggler: 1, charismatic: 1 },
         },
       },
@@ -420,7 +459,9 @@ export const QUESTIONS = [
         told: 'shut the door on him, went out the back and followed him home to see where he kept his ledger.',
         gives: {
           attribute: { instinct: 1 },
-          background: { criminal: 2, investigator: 1 },
+          talent: { 'feral-curse': 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
@@ -432,7 +473,7 @@ export const QUESTIONS = [
           attribute: { mind: 1 },
           talent: { tactician: 1 },
           lineage: { infernal: 1 },
-          background: { investigator: 2 },
+          background: { investigator: 1, aristocrat: 1 },
           skill: { inquisitor: 1, empath: 1 },
         },
       },
@@ -453,10 +494,10 @@ export const QUESTIONS = [
         told: 'took your father’s boots and went for the physician, running the first day and walking the second.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1 },
+          talent: { guardian: 1, runebearer: 1 },
           lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { survivalist: 1 },
+          skill: { survivalist: 1, healer: 1 },
         },
       },
       {
@@ -465,8 +506,10 @@ export const QUESTIONS = [
         told: 'gathered willow bark and feverfew by the stream, boiled them the way your grandmother did and spooned the tea into her.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 2, mycomancer: 2 },
-          skill: { apothecary: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { apothecary: 1, healer: 1 },
         },
       },
       {
@@ -475,9 +518,8 @@ export const QUESTIONS = [
         told: 'read the physician’s almanac by candlelight until you found her fever and its treatment.',
         gives: {
           attribute: { mind: 2 },
-          talent: { alchemist: 1, arcanist: 1 },
-          lineage: { luminary: 1 },
-          background: { erudit: 2 },
+          talent: { alchemist: 1 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { physician: 1, scholar: 1 },
         },
       },
@@ -488,9 +530,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 1 },
-          lineage: { celestial: 1, infernal: 1 },
-          skill: { healer: 1 },
+          talent: { pactbound: 1, necromancer: 1 },
+          lineage: { celestial: 1 },
+          skill: { healer: 1, empath: 1 },
         },
       },
     ],
@@ -511,9 +553,10 @@ export const QUESTIONS = [
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, brawler: 1 },
+          talent: { berserker: 1, brawler: 1, 'dragon-aspect': 1 },
           lineage: { draconic: 1 },
           background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, streetwise: 1 },
         },
       },
       {
@@ -523,8 +566,8 @@ export const QUESTIONS = [
         gives: {
           attribute: { instinct: 1 },
           talent: { virtuoso: 1 },
-          lineage: { fey: 1 },
-          background: { entertainer: 3 },
+          lineage: { celestial: 1 },
+          background: { entertainer: 1, aristocrat: 1 },
           skill: { troubadour: 1, charismatic: 1 },
           weapon: { 'enchanted-instrument': 1 },
         },
@@ -535,7 +578,8 @@ export const QUESTIONS = [
         told: 'let him finish, then sat beside him and asked quietly for the parts he had left out.',
         gives: {
           attribute: { mind: 1 },
-          background: { investigator: 1, erudit: 1 },
+          talent: { tactician: 1 },
+          background: { investigator: 1, entertainer: 1 },
           skill: { inquisitor: 1, empath: 1 },
         },
       },
@@ -545,7 +589,9 @@ export const QUESTIONS = [
         told: 'refilled his cup with a pinch of valerian stirred in, and he was asleep on the table inside a minute.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 2, trickster: 1 },
+          talent: { 'cauldron-keeper': 1, trickster: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
           skill: { apothecary: 1, cunning: 1 },
         },
       },
@@ -566,8 +612,10 @@ export const QUESTIONS = [
         told: 'your father’s long-handled hammer, heavier than you were. You carried it on your shoulder the whole way.',
         gives: {
           attribute: { physique: 1 },
-          talent: { colossus: 2 },
+          talent: { colossus: 1, runebearer: 1 },
+          lineage: { stonebound: 1 },
           background: { craftsman: 1 },
+          skill: { skilled: 1, frugal: 1 },
           weapon: { 'melee-heavy': 1 },
         },
       },
@@ -577,8 +625,7 @@ export const QUESTIONS = [
         told: 'the book from under the stairs that nobody in the house could read.',
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 2, enchanter: 1 },
-          lineage: { luminary: 1 },
+          talent: { arcanist: 1 },
           background: { erudit: 1 },
           skill: { scholar: 1, occultist: 1 },
           weapon: { 'psychic-tome': 1 },
@@ -590,8 +637,10 @@ export const QUESTIONS = [
         told: 'the hound, which was not a thing and did not fit, and nobody managed to say no.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'draconic-bond': 3, 'feral-curse': 1 },
+          talent: { 'draconic-bond': 1, beastbond: 1 },
           lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, helpful: 1 },
         },
       },
       {
@@ -600,10 +649,10 @@ export const QUESTIONS = [
         told: 'nothing, and walked beside the cart with your hands free and your eyes on the hedgerows.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 1 },
+          talent: { duelist: 1, wilder: 1 },
           lineage: { wildheart: 1 },
           background: { outlander: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, survivalist: 1 },
         },
       },
     ],
@@ -624,9 +673,10 @@ export const QUESTIONS = [
         told: 'climbed the wet rock hand over hand, your fingers finding the holds before your eyes did.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 1 },
-          lineage: { skybound: 3, wildkin: 1 },
-          skill: { survivalist: 1 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
+          lineage: { skybound: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, vigilant: 1 },
         },
       },
       {
@@ -635,9 +685,10 @@ export const QUESTIONS = [
         told: 'hauled the fallen stones back up one at a time and built the path again.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, guardian: 1 },
-          lineage: { stonebound: 3 },
+          talent: { colossus: 1, runebearer: 1 },
+          lineage: { stonebound: 1 },
           background: { craftsman: 1 },
+          skill: { survivalist: 1, skilled: 1 },
         },
       },
       {
@@ -646,10 +697,9 @@ export const QUESTIONS = [
         told: 'studied the face for an hour and worked out the one route that would hold.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
-          lineage: { luminary: 1 },
+          talent: { arcanist: 1 },
           background: { investigator: 1 },
-          skill: { cartographer: 1 },
+          skill: { cartographer: 1, scholar: 1 },
         },
       },
       {
@@ -659,7 +709,7 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { instinct: 1 },
-          lineage: { fey: 2, skybound: 1, celestial: 1, infernal: 1 },
+          lineage: { skybound: 1 },
         },
       },
     ],
@@ -679,8 +729,10 @@ export const QUESTIONS = [
         told: 'dived in, and the cold and the current never took hold of you, and you had the child before the bend.',
         gives: {
           attribute: { instinct: 1 },
-          lineage: { tidebound: 3 },
-          skill: { seafarer: 1 },
+          talent: { wilder: 1, 'feral-curse': 1 },
+          lineage: { tidebound: 1 },
+          background: { outlander: 1 },
+          skill: { seafarer: 1, survivalist: 1 },
         },
       },
       {
@@ -689,9 +741,10 @@ export const QUESTIONS = [
         told: 'ran the bank ahead of the current, waded in where it shallowed and caught the child as it came.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, colossus: 1 },
+          lineage: { tidebound: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, seafarer: 1 },
         },
       },
       {
@@ -700,7 +753,7 @@ export const QUESTIONS = [
         told: 'looped the ferry rope round your waist, threw the weighted end past the child and hauled.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
+          talent: { weaver: 1 },
           background: { military: 1 },
           skill: { mastermind: 1, survivalist: 1 },
         },
@@ -712,8 +765,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2 },
-          lineage: { tidebound: 1, celestial: 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
+          lineage: { tidebound: 1 },
+          background: { erudit: 1 },
           skill: { 'innate-spell-novice': 1 },
           weapon: { 'frost-wand': 1 },
         },
@@ -735,9 +789,10 @@ export const QUESTIONS = [
         told: 'took the bar to the anvil and picked up the hammer, and your arm fell into the rhythm before you had decided anything.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, berserker: 1 },
+          talent: { colossus: 1, runebearer: 1 },
           lineage: { scorchbound: 1 },
           background: { craftsman: 1 },
+          skill: { skilled: 1, frugal: 1 },
           weapon: { 'melee-heavy': 1 },
         },
       },
@@ -747,8 +802,9 @@ export const QUESTIONS = [
         told: 'pulled the glowing bar out of the coals with your bare hand, and only noticed afterwards.',
         gives: {
           attribute: { physique: 1 },
-          talent: { berserker: 1 },
-          lineage: { scorchbound: 3, draconic: 1, undead: 1 },
+          talent: { berserker: 1, painseeker: 1, hemoturgy: 1 },
+          lineage: { scorchbound: 1, draconic: 1 },
+          background: { mercenary: 1 },
         },
       },
       {
@@ -757,9 +813,9 @@ export const QUESTIONS = [
         told: 'touched nothing, and studied the steel, the quench and the tools until you understood the whole of it.',
         gives: {
           attribute: { mind: 2 },
-          talent: { enchanter: 3, alchemist: 1 },
-          background: { craftsman: 2 },
-          skill: { skilled: 1 },
+          talent: { alchemist: 1, spellblade: 1 },
+          background: { craftsman: 1 },
+          skill: { skilled: 1, scholar: 1 },
         },
       },
       {
@@ -769,9 +825,9 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 2 },
+          talent: { trickster: 1, virtuoso: 1 },
           lineage: { fey: 1 },
-          background: { criminal: 2 },
+          background: { criminal: 1 },
           skill: { cunning: 1, streetwise: 1 },
           weapon: { 'finesse-weapon': 1 },
         },
@@ -793,9 +849,10 @@ export const QUESTIONS = [
         told: 'snatched a brand from the fire, stood to your full height and roared, and something in your voice made the lead wolf think again.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2 },
-          lineage: { draconic: 3 },
+          talent: { berserker: 1, 'dragon-aspect': 1, 'draconic-bond': 1 },
+          lineage: { draconic: 1 },
           background: { military: 1 },
+          skill: { vigilant: 1, survivalist: 1 },
         },
       },
       {
@@ -804,9 +861,10 @@ export const QUESTIONS = [
         told: 'walked to the edge of the light and held the lead wolf’s eyes until it turned away.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'feral-curse': 3, 'draconic-bond': 1 },
-          lineage: { wildkin: 2 },
-          skill: { survivalist: 1 },
+          talent: { 'feral-curse': 1, 'draconic-bond': 1, beastbond: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, vigilant: 1 },
         },
       },
       {
@@ -815,8 +873,10 @@ export const QUESTIONS = [
         told: 'took the shield off the cart and stood between the horses and the dark.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 3 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
           background: { military: 1 },
+          skill: { vigilant: 1 },
           weapon: { 'melee-light-shield': 1 },
           armor: { 'Heavy Armor': 1 },
         },
@@ -827,8 +887,9 @@ export const QUESTIONS = [
         told: 'threw flash powder into the fire, and the flare sent them running.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 2 },
-          skill: { apothecary: 1 },
+          talent: { alchemist: 1, enchanter: 1 },
+          background: { erudit: 1 },
+          skill: { apothecary: 1, scavenger: 1 },
         },
       },
     ],
@@ -848,9 +909,10 @@ export const QUESTIONS = [
         told: 'got up, and it hurt less than it should have, and you walked four miles to the inn in your bare feet.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 1 },
-          lineage: { undead: 3 },
+          talent: { berserker: 1, painseeker: 1 },
+          lineage: { undead: 1 },
           background: { mercenary: 1 },
+          skill: { survivalist: 1, healer: 1 },
         },
       },
       {
@@ -859,8 +921,8 @@ export const QUESTIONS = [
         told: 'lay still until they had gone, then followed them at a distance until you knew where they slept.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, duelist: 1 },
-          lineage: { wildheart: 1 },
+          talent: { duelist: 1, 'feral-curse': 1 },
+          lineage: { undead: 1 },
           background: { investigator: 1 },
           skill: { cunning: 1, vigilant: 1 },
         },
@@ -871,7 +933,7 @@ export const QUESTIONS = [
         told: 'packed the wound with moss, bound it with your shirt and counted your pulse until morning.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 1 },
+          talent: { alchemist: 1, thaumaturge: 1 },
           lineage: { celestial: 1 },
           background: { erudit: 1 },
           skill: { physician: 1, healer: 1 },
@@ -884,9 +946,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 3 },
-          lineage: { infernal: 2 },
-          skill: { occultist: 1 },
+          talent: { pactbound: 1, necromancer: 1 },
+          lineage: { infernal: 1 },
+          skill: { occultist: 1, empath: 1 },
         },
       },
     ],
@@ -908,8 +970,10 @@ export const QUESTIONS = [
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, brawler: 1 },
-          background: { mercenary: 2 },
+          talent: { berserker: 1, brawler: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, streetwise: 1 },
           weapon: { 'melee-light': 1 },
         },
       },
@@ -919,9 +983,10 @@ export const QUESTIONS = [
         told: 'named the hour and the place and told him to bring a second, and it was done properly.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 3 },
-          background: { aristocrat: 1 },
-          skill: { 'quick-draw': 1 },
+          talent: { duelist: 1, 'weapon-master': 1 },
+          lineage: { celestial: 1 },
+          background: { aristocrat: 1, entertainer: 1 },
+          skill: { 'quick-draw': 1, vigilant: 1 },
           weapon: { 'finesse-weapon': 1 },
         },
       },
@@ -931,7 +996,9 @@ export const QUESTIONS = [
         told: 'laughed, agreed with every word and bought him a cider, and the crowd was laughing with you before he understood.',
         gives: {
           attribute: { mind: 1 },
-          background: { entertainer: 2, merchant: 1 },
+          talent: { tactician: 1 },
+          lineage: { celestial: 1 },
+          background: { entertainer: 1, merchant: 1 },
           skill: { charismatic: 1, empath: 1 },
         },
       },
@@ -941,8 +1008,10 @@ export const QUESTIONS = [
         told: 'walked away with the whole square watching, and waited for a night when he was alone.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 2 },
-          skill: { cunning: 1 },
+          talent: { trickster: 1 },
+          lineage: { infernal: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, vigilant: 1 },
         },
       },
     ],
@@ -962,7 +1031,10 @@ export const QUESTIONS = [
         told: 'took hold of the bars and pulled until the grid came out of the stone.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 1, colossus: 1, brawler: 1 },
+          talent: { berserker: 1, brawler: 1 },
+          lineage: { stonebound: 1 },
+          background: { mercenary: 1 },
+          skill: { scavenger: 1 },
           weapon: { 'melee-heavy': 1 },
         },
       },
@@ -973,9 +1045,10 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2 },
-          background: { criminal: 2 },
-          skill: { cunning: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, skilled: 1 },
           weapon: { 'finesse-weapon': 1 },
         },
       },
@@ -985,9 +1058,9 @@ export const QUESTIONS = [
         told: 'poured the vial of acid over the hinge pins and levered the gate off when the metal had gone soft.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 2 },
+          talent: { alchemist: 1, enchanter: 1 },
           background: { craftsman: 1 },
-          skill: { apothecary: 1 },
+          skill: { apothecary: 1, skilled: 1 },
         },
       },
       {
@@ -996,8 +1069,9 @@ export const QUESTIONS = [
         told: 'spoke the words that let your hand pass through iron and turned the bolt from the other side.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2, enchanter: 1 },
-          skill: { 'innate-spell-novice': 1 },
+          talent: { thaumaturge: 1, spellblade: 1 },
+          background: { erudit: 1 },
+          skill: { 'innate-spell-novice': 1, occultist: 1 },
         },
       },
     ],
@@ -1017,8 +1091,9 @@ export const QUESTIONS = [
         told: 'tied off the leg with your belt and poured the healing draught from your flask down his throat.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 2 },
+          talent: { alchemist: 1, thaumaturge: 1 },
           lineage: { celestial: 1 },
+          background: { erudit: 1 },
           skill: { healer: 1, physician: 1 },
         },
       },
@@ -1028,10 +1103,10 @@ export const QUESTIONS = [
         told: 'got him over your shoulder and carried him three streets to the watch house.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, colossus: 1 },
+          talent: { guardian: 1, painseeker: 1 },
           lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { helpful: 1 },
+          skill: { helpful: 1, healer: 1 },
         },
       },
       {
@@ -1041,8 +1116,9 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 2 },
-          background: { criminal: 2 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { infernal: 1 },
+          background: { criminal: 1 },
           skill: { streetwise: 1, cunning: 1 },
         },
       },
@@ -1054,7 +1130,7 @@ export const QUESTIONS = [
           attribute: { instinct: 1 },
           talent: { duelist: 1, 'feral-curse': 1 },
           lineage: { wildkin: 1 },
-          background: { investigator: 1, mercenary: 1 },
+          background: { investigator: 1 },
           skill: { vigilant: 1, inquisitor: 1 },
         },
       },
@@ -1075,9 +1151,8 @@ export const QUESTIONS = [
         told: 'read by the embers until dawn and put every book back exactly as it had lain.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2, enchanter: 1 },
-          lineage: { luminary: 1 },
-          background: { erudit: 3 },
+          talent: { arcanist: 1, enchanter: 1 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { scholar: 1, occultist: 1 },
         },
       },
@@ -1088,10 +1163,10 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
           lineage: { fey: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1 },
+          background: { criminal: 1, merchant: 1 },
+          skill: { cunning: 1, haggler: 1 },
         },
       },
       {
@@ -1100,8 +1175,10 @@ export const QUESTIONS = [
         told: 'left the books alone and sold him a lock in the morning at three times its cost.',
         gives: {
           attribute: { mind: 1 },
-          background: { merchant: 2, craftsman: 1 },
-          skill: { haggler: 1 },
+          talent: { enchanter: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, entertainer: 1 },
+          skill: { haggler: 1, skilled: 1 },
         },
       },
       {
@@ -1110,9 +1187,10 @@ export const QUESTIONS = [
         told: 'sat with your back to the trunk until he came down in the morning.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
     ],
@@ -1132,10 +1210,10 @@ export const QUESTIONS = [
         told: 'knelt at the edge of its reach and talked to it, low and steady, until it let you cut the wire.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'draconic-bond': 3, 'feral-curse': 2 },
+          talent: { 'draconic-bond': 1, beastbond: 1 },
           lineage: { wildkin: 1 },
           background: { outlander: 1 },
-          skill: { survivalist: 1 },
+          skill: { survivalist: 1, healer: 1 },
         },
       },
       {
@@ -1144,7 +1222,7 @@ export const QUESTIONS = [
         told: 'ended it with one clean blow of the hatchet and took the meat and the pelt.',
         gives: {
           attribute: { physique: 1 },
-          talent: { berserker: 1 },
+          talent: { berserker: 1, painseeker: 1, 'weapon-master': 1 },
           background: { mercenary: 1 },
           skill: { survivalist: 1, scavenger: 1 },
           weapon: { 'melee-light': 1 },
@@ -1156,8 +1234,9 @@ export const QUESTIONS = [
         told: 'blew sleeping dust into its face, waited for its head to drop and worked the wire out of the leg.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 2 },
-          skill: { apothecary: 1 },
+          talent: { alchemist: 1, enchanter: 1 },
+          background: { erudit: 1 },
+          skill: { apothecary: 1, physician: 1 },
         },
       },
       {
@@ -1166,8 +1245,9 @@ export const QUESTIONS = [
         told: 'dropped your coat over its head, bound the jaws with a bootlace and packed the wound with moss.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 2, mycomancer: 3 },
-          background: { outlander: 2 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
           skill: { healer: 1, survivalist: 1 },
         },
       },
@@ -1189,10 +1269,10 @@ export const QUESTIONS = [
         told: 'went out the window, across three roofs and down the ivy at the end of the row.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2 },
-          lineage: { fey: 1, skybound: 1 },
-          background: { criminal: 2 },
-          skill: { cunning: 1 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
+          lineage: { skybound: 1 },
+          background: { criminal: 1, entertainer: 1 },
+          skill: { cunning: 1, streetwise: 1 },
         },
       },
       {
@@ -1201,7 +1281,7 @@ export const QUESTIONS = [
         told: 'opened the door, read the warrant slowly and pointed out that it named the wrong street.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 1 },
+          talent: { spellquill: 1 },
           background: { investigator: 1, aristocrat: 1 },
           skill: { inquisitor: 1, mastermind: 1 },
         },
@@ -1212,9 +1292,10 @@ export const QUESTIONS = [
         told: 'opened the door, filled it and told them they were welcome to try.',
         gives: {
           attribute: { physique: 2 },
-          talent: { brawler: 1, colossus: 1, berserker: 1 },
-          lineage: { stalwart: 1, undead: 1 },
+          talent: { berserker: 1, brawler: 1 },
+          lineage: { undead: 1 },
           background: { mercenary: 1 },
+          skill: { vigilant: 1, streetwise: 1 },
         },
       },
       {
@@ -1226,7 +1307,7 @@ export const QUESTIONS = [
           talent: { pactbound: 1 },
           lineage: { infernal: 1 },
           background: { merchant: 1 },
-          skill: { haggler: 1 },
+          skill: { haggler: 1, streetwise: 1 },
         },
       },
     ],
@@ -1247,10 +1328,10 @@ export const QUESTIONS = [
         told: 'packed that night and went to the academy to hear what they had seen in you called by its name.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2, enchanter: 1 },
-          lineage: { luminary: 1, celestial: 1 },
-          background: { erudit: 2 },
-          skill: { scholar: 1 },
+          talent: { arcanist: 1, enchanter: 1 },
+          lineage: { celestial: 1 },
+          background: { erudit: 1, aristocrat: 1 },
+          skill: { scholar: 1, occultist: 1 },
         },
       },
       {
@@ -1259,10 +1340,10 @@ export const QUESTIONS = [
         told: 'put the letter in the fire and left the district that week.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'feral-curse': 2, mycomancer: 2 },
+          talent: { 'feral-curse': 1, mycomancer: 1 },
           lineage: { wildkin: 1 },
           background: { outlander: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, survivalist: 1 },
         },
       },
       {
@@ -1273,8 +1354,8 @@ export const QUESTIONS = [
           attribute: { mind: 1 },
           talent: { pactbound: 1 },
           lineage: { infernal: 1 },
-          background: { merchant: 1 },
-          skill: { haggler: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, scholar: 1 },
         },
       },
       {
@@ -1283,8 +1364,10 @@ export const QUESTIONS = [
         told: 'nailed the letter to the academy’s door with your knife and stood beside it until somebody came out to explain.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1 },
+          talent: { guardian: 1, berserker: 1 },
+          lineage: { draconic: 1 },
           background: { military: 1 },
+          skill: { vigilant: 1 },
         },
       },
     ],
@@ -1313,9 +1396,10 @@ export const QUESTIONS = [
         told: 'stripped to the waist and sat four hours without a sound, then walked out with a mark on your arm that warmed when you closed your fist.',
         gives: {
           attribute: { physique: 2 },
-          talent: { runebearer: 3 },
+          talent: { runebearer: 1, painseeker: 1 },
           lineage: { stonebound: 1 },
-          skill: { survivalist: 1 },
+          background: { mercenary: 1 },
+          skill: { survivalist: 1, healer: 1 },
         },
       },
       {
@@ -1324,8 +1408,8 @@ export const QUESTIONS = [
         told: 'gave up your place and watched from the corner until you knew the order the lines went on.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2, enchanter: 1 },
-          background: { erudit: 1 },
+          talent: { arcanist: 1, spellblade: 1 },
+          background: { erudit: 1, investigator: 1 },
           skill: { scholar: 1, occultist: 1 },
         },
       },
@@ -1335,8 +1419,9 @@ export const QUESTIONS = [
         told: 'took something small on the inside of your wrist where a sleeve covers it, and were out in a quarter of an hour.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 2 },
-          background: { criminal: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, entertainer: 1 },
           skill: { streetwise: 1, cunning: 1 },
         },
       },
@@ -1346,7 +1431,8 @@ export const QUESTIONS = [
         told: 'asked what the word cost on its own, and paid most of what you had for it.',
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2 },
+          talent: { pactbound: 1, spellblade: 1 },
+          lineage: { infernal: 1 },
           background: { merchant: 1 },
           skill: { haggler: 1, occultist: 1 },
         },
@@ -1374,9 +1460,9 @@ export const QUESTIONS = [
         told: 'asked for both at once, and learned to hold a syllable in your teeth until the edge landed.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellblade: 3 },
-          lineage: { luminary: 1 },
-          skill: { occultist: 1 },
+          talent: { spellblade: 1, weaver: 1 },
+          background: { mercenary: 1 },
+          skill: { occultist: 1, 'quick-draw': 1 },
         },
       },
       {
@@ -1385,9 +1471,9 @@ export const QUESTIONS = [
         told: 'took the mornings, because the blade is a thing anybody can be taught and the other half is not.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2, enchanter: 1 },
-          background: { erudit: 1 },
-          skill: { scholar: 1 },
+          talent: { arcanist: 1, enchanter: 1 },
+          background: { erudit: 1, aristocrat: 1 },
+          skill: { scholar: 1, occultist: 1 },
         },
       },
       {
@@ -1396,9 +1482,10 @@ export const QUESTIONS = [
         told: 'took the afternoons and asked him to stop going easy, until you could put him on his back twice in five.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 3 },
-          background: { military: 1 },
-          skill: { vigilant: 1 },
+          talent: { duelist: 1, 'weapon-master': 1, 'flowing-fist': 1 },
+          lineage: { wildheart: 1 },
+          background: { military: 1, mercenary: 1 },
+          skill: { vigilant: 1, 'quick-draw': 1 },
         },
       },
       {
@@ -1407,8 +1494,9 @@ export const QUESTIONS = [
         told: 'asked him where a man learns to be two things at once and who paid for it, and read everything in the not-answering.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 2 },
-          background: { investigator: 1 },
+          talent: { trickster: 1 },
+          lineage: { fey: 1 },
+          background: { investigator: 1, entertainer: 1 },
           skill: { inquisitor: 1, cunning: 1 },
         },
       },
@@ -1430,9 +1518,10 @@ export const QUESTIONS = [
         told: 'got the dock crews into a bucket line and the pumps working, and kept them at it until dawn.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1 },
-          background: { military: 3 },
-          skill: { vigilant: 1 },
+          talent: { guardian: 1, quartermaster: 1 },
+          lineage: { scorchbound: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -1441,7 +1530,9 @@ export const QUESTIONS = [
         told: 'watched the crowd rather than the fire, and followed the one man who was watching too calmly.',
         gives: {
           attribute: { mind: 1 },
-          background: { investigator: 3 },
+          talent: { tactician: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1 },
           skill: { inquisitor: 1, cunning: 1 },
         },
       },
@@ -1451,8 +1542,10 @@ export const QUESTIONS = [
         told: 'bought the salvage rights off the owner for ready money while the roof was still falling in.',
         gives: {
           attribute: { mind: 1 },
-          background: { merchant: 3 },
-          skill: { haggler: 1 },
+          talent: { tactician: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, frugal: 1 },
         },
       },
       {
@@ -1461,8 +1554,10 @@ export const QUESTIONS = [
         told: 'went in through the loading door while everyone watched the front and carried out what was not yet burning.',
         gives: {
           attribute: { instinct: 1 },
-          background: { criminal: 3 },
-          skill: { streetwise: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { scorchbound: 1 },
+          background: { criminal: 1 },
+          skill: { streetwise: 1, scavenger: 1 },
         },
       },
     ],
@@ -1482,7 +1577,9 @@ export const QUESTIONS = [
         told: 'splinted the axle with a fence rail and harness leather and had it rolling inside the hour.',
         gives: {
           attribute: { physique: 1 },
-          background: { craftsman: 3 },
+          talent: { colossus: 1, runebearer: 1, weaver: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1 },
           skill: { skilled: 1, tailor: 1 },
         },
       },
@@ -1492,8 +1589,10 @@ export const QUESTIONS = [
         told: 'named a price before you touched anything, and doubled it when he shouted.',
         gives: {
           attribute: { mind: 1 },
-          background: { merchant: 2, mercenary: 1 },
-          skill: { haggler: 1 },
+          talent: { tactician: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1 },
+          skill: { haggler: 1, frugal: 1 },
         },
       },
       {
@@ -1502,8 +1601,10 @@ export const QUESTIONS = [
         told: 'addressed him by his house and his father’s name, and the shouting stopped.',
         gives: {
           attribute: { mind: 1 },
-          background: { aristocrat: 3 },
-          skill: { charismatic: 1 },
+          talent: { spellquill: 1 },
+          lineage: { celestial: 1 },
+          background: { aristocrat: 1, entertainer: 1 },
+          skill: { charismatic: 1, empath: 1 },
         },
       },
       {
@@ -1512,9 +1613,10 @@ export const QUESTIONS = [
         told: 'lifted the back of the carriage clear of the ground while the coachman set the wheel.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2 },
-          lineage: { stalwart: 1 },
-          background: { craftsman: 1, mercenary: 1 },
+          talent: { colossus: 1, totemic: 1 },
+          lineage: { stonebound: 1 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, skilled: 1 },
         },
       },
     ],
@@ -1535,8 +1637,8 @@ export const QUESTIONS = [
         gives: {
           attribute: { instinct: 1 },
           talent: { virtuoso: 1 },
-          lineage: { fey: 1 },
-          background: { entertainer: 3 },
+          lineage: { celestial: 1 },
+          background: { entertainer: 1, merchant: 1 },
           skill: { troubadour: 1, charismatic: 1 },
           weapon: { 'enchanted-instrument': 1 },
         },
@@ -1547,9 +1649,10 @@ export const QUESTIONS = [
         told: 'told them a true story from the war and showed them the scar that proved it.',
         gives: {
           attribute: { physique: 1 },
-          talent: { berserker: 1 },
-          background: { mercenary: 2, military: 1 },
-          skill: { charismatic: 1 },
+          talent: { berserker: 1, painseeker: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+          skill: { charismatic: 1, vigilant: 1 },
         },
       },
       {
@@ -1558,9 +1661,10 @@ export const QUESTIONS = [
         told: 'read them the almanac’s weather and the prices at the next three markets.',
         gives: {
           attribute: { mind: 1 },
+          talent: { spellquill: 1 },
           lineage: { luminary: 1 },
-          background: { erudit: 3 },
-          skill: { scholar: 1 },
+          background: { erudit: 1, merchant: 1 },
+          skill: { scholar: 1, cartographer: 1 },
         },
       },
       {
@@ -1569,9 +1673,10 @@ export const QUESTIONS = [
         told: 'slipped out the back into the dark, because the road was quieter than the room.',
         gives: {
           attribute: { instinct: 1 },
-          lineage: { wildheart: 1 },
-          background: { outlander: 3 },
-          skill: { survivalist: 1 },
+          talent: { trickster: 1, 'feral-curse': 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, cunning: 1 },
         },
       },
     ],
@@ -1591,8 +1696,9 @@ export const QUESTIONS = [
         told: 'read the scene without touching anything, and knew how he died before the watch arrived.',
         gives: {
           attribute: { mind: 2 },
+          talent: { alchemist: 1, necromancer: 1 },
           lineage: { luminary: 1 },
-          background: { investigator: 3 },
+          background: { investigator: 1 },
           skill: { inquisitor: 1, physician: 1 },
         },
       },
@@ -1602,8 +1708,10 @@ export const QUESTIONS = [
         told: 'took the purse, went through his coat for papers and walked away whistling.',
         gives: {
           attribute: { instinct: 1 },
-          background: { criminal: 3 },
-          skill: { streetwise: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { undead: 1 },
+          background: { criminal: 1 },
+          skill: { streetwise: 1, scavenger: 1 },
         },
       },
       {
@@ -1612,9 +1720,10 @@ export const QUESTIONS = [
         told: 'carried him round to the guildhall steps and sat with him until the porter came.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, runebearer: 1 },
           lineage: { celestial: 1 },
-          background: { craftsman: 2, military: 1 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, healer: 1 },
         },
       },
       {
@@ -1623,7 +1732,9 @@ export const QUESTIONS = [
         told: 'sent word to the magistrate under your family’s seal, so that it would be a matter.',
         gives: {
           attribute: { mind: 1 },
-          background: { aristocrat: 3 },
+          talent: { spellquill: 1, necromancer: 1 },
+          lineage: { luminary: 1 },
+          background: { aristocrat: 1, merchant: 1, entertainer: 1 },
           skill: { charismatic: 1, mastermind: 1 },
         },
       },
@@ -1645,8 +1756,10 @@ export const QUESTIONS = [
         told: 'handed over the purse without a word and memorised all three faces.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1 },
-          skill: { cunning: 1 },
+          talent: { trickster: 1, 'feral-curse': 1 },
+          lineage: { undead: 1 },
+          background: { criminal: 1, merchant: 1 },
+          skill: { cunning: 1, vigilant: 1 },
         },
       },
       {
@@ -1655,9 +1768,11 @@ export const QUESTIONS = [
         told: 'roared and went straight through the man in the middle, and the other two ran.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 3 },
-          lineage: { draconic: 2 },
-          weapon: { 'melee-heavy': 1, 'melee-great': 1 },
+          talent: { berserker: 1, brawler: 1, 'dragon-aspect': 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+          skill: { 'quick-draw': 1 },
+          weapon: { 'melee-heavy': 1 },
         },
       },
       {
@@ -1666,8 +1781,10 @@ export const QUESTIONS = [
         told: 'put your back to the milestone, got the shield up and let them come one at a time.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 2 },
-          lineage: { stonebound: 2 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stonebound: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
           weapon: { 'melee-light-shield': 1 },
           armor: { 'Heavy Armor': 1 },
         },
@@ -1678,9 +1795,10 @@ export const QUESTIONS = [
         told: 'spoke the word you had learned, and the light put the middle one on his back.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2 },
+          talent: { arcanist: 1, thaumaturge: 1, 'elemental-aspect': 1 },
           lineage: { celestial: 1 },
-          skill: { 'unseen-spellwork': 1 },
+          background: { erudit: 1 },
+          skill: { 'unseen-spellwork': 1, 'innate-spell-novice': 1 },
           weapon: { 'lightning-wand': 1 },
         },
       },
@@ -1701,8 +1819,10 @@ export const QUESTIONS = [
         told: 'crossed the floor and hit him in the mouth before he had finished the sentence.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, brawler: 1 },
-          background: { mercenary: 2 },
+          talent: { berserker: 1, brawler: 1, painseeker: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, streetwise: 1 },
           weapon: { 'melee-light': 1 },
         },
       },
@@ -1712,8 +1832,10 @@ export const QUESTIONS = [
         told: 'stood up, named him and invited him outside to settle it with first blood.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 3 },
-          background: { aristocrat: 1 },
+          talent: { duelist: 1, 'weapon-master': 1 },
+          lineage: { celestial: 1 },
+          background: { aristocrat: 1, entertainer: 1 },
+          skill: { 'quick-draw': 1, vigilant: 1 },
           weapon: { 'finesse-weapon': 1 },
         },
       },
@@ -1723,6 +1845,8 @@ export const QUESTIONS = [
         told: 'laughed, bought him a cup and found out who was paying him inside a quarter of an hour.',
         gives: {
           attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          lineage: { luminary: 1 },
           background: { investigator: 1, entertainer: 1 },
           skill: { charismatic: 1, inquisitor: 1 },
         },
@@ -1733,8 +1857,9 @@ export const QUESTIONS = [
         told: 'bought him a drink with a few drops from your small bottle in it, and he was very ill for two days.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 2 },
+          talent: { 'cauldron-keeper': 1, trickster: 1 },
           lineage: { fey: 1 },
+          background: { criminal: 1 },
           skill: { apothecary: 1, cunning: 1 },
         },
       },
@@ -1755,9 +1880,10 @@ export const QUESTIONS = [
         told: 'tied your pack on your back and swam it, and the current carried you three hundred yards before you touched bottom.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 1 },
-          lineage: { tidebound: 3 },
-          skill: { seafarer: 1 },
+          talent: { berserker: 1, painseeker: 1 },
+          lineage: { tidebound: 1 },
+          background: { outlander: 1 },
+          skill: { seafarer: 1, survivalist: 1 },
         },
       },
       {
@@ -1766,9 +1892,10 @@ export const QUESTIONS = [
         told: 'felled the tallest alder across the narrows and walked over on the trunk.',
         gives: {
           attribute: { physique: 1 },
-          talent: { colossus: 2 },
+          talent: { colossus: 1, runebearer: 1 },
           lineage: { stonebound: 1 },
-          skill: { survivalist: 1 },
+          background: { craftsman: 1 },
+          skill: { survivalist: 1, skilled: 1 },
           weapon: { 'melee-heavy': 1 },
         },
       },
@@ -1778,8 +1905,9 @@ export const QUESTIONS = [
         told: 'read the water and found the drovers’ ford a mile upstream.',
         gives: {
           attribute: { instinct: 1 },
-          lineage: { wildheart: 1 },
-          background: { outlander: 2 },
+          talent: { wilder: 1, 'feral-curse': 1 },
+          lineage: { wildheart: 1, tidebound: 1 },
+          background: { investigator: 1 },
           skill: { cartographer: 1, survivalist: 1 },
         },
       },
@@ -1789,7 +1917,9 @@ export const QUESTIONS = [
         told: 'spoke the words that pulled the cold out of the air, and crossed on a bridge of ice that held just long enough.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
+          lineage: { tidebound: 1 },
+          background: { erudit: 1 },
           skill: { 'innate-spell-novice': 1 },
           weapon: { 'frost-wand': 1 },
         },
@@ -1811,9 +1941,9 @@ export const QUESTIONS = [
         told: 'lied in detail, about a cousin’s sickbed, so well that the clerk stopped writing to listen.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 2 },
+          talent: { trickster: 1, virtuoso: 1 },
           lineage: { fey: 1 },
-          background: { entertainer: 1, criminal: 1 },
+          background: { entertainer: 1 },
           skill: { cunning: 1, charismatic: 1 },
         },
       },
@@ -1823,9 +1953,10 @@ export const QUESTIONS = [
         told: 'told the truth, all of it, in plain words and let the magistrate do what he would.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1 },
+          talent: { guardian: 1, oathbound: 1 },
           lineage: { celestial: 1 },
           background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -1834,9 +1965,9 @@ export const QUESTIONS = [
         told: 'answered a different question at length, until the magistrate had forgotten what he first asked.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 1 },
+          talent: { tactician: 1, spellquill: 1 },
           lineage: { infernal: 1 },
-          background: { aristocrat: 1, investigator: 1 },
+          background: { aristocrat: 1, investigator: 1, entertainer: 1 },
           skill: { mastermind: 1, empath: 1 },
         },
       },
@@ -1846,9 +1977,10 @@ export const QUESTIONS = [
         told: 'said nothing at all while he asked it four more times, until he gave up.',
         gives: {
           attribute: { physique: 1 },
-          talent: { colossus: 1 },
-          lineage: { stonebound: 2, undead: 2 },
+          talent: { colossus: 1, runebearer: 1 },
+          lineage: { stonebound: 1 },
           background: { mercenary: 1 },
+          skill: { vigilant: 1 },
         },
       },
     ],
@@ -1868,8 +2000,10 @@ export const QUESTIONS = [
         told: 'haggled him down to one silver, mostly by talking until he was tired of your voice.',
         gives: {
           attribute: { mind: 1 },
-          background: { merchant: 2 },
-          skill: { haggler: 2 },
+          talent: { tactician: 1 },
+          lineage: { luminary: 1 },
+          background: { merchant: 1, aristocrat: 1, entertainer: 1 },
+          skill: { haggler: 1, charismatic: 1 },
         },
       },
       {
@@ -1878,9 +2012,10 @@ export const QUESTIONS = [
         told: 'knocked over his tray of buckles and took the awl while he was picking them up.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 2 },
-          background: { criminal: 2 },
-          skill: { cunning: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, merchant: 1 },
+          skill: { cunning: 1, streetwise: 1 },
         },
       },
       {
@@ -1889,9 +2024,10 @@ export const QUESTIONS = [
         told: 'bought a nail for a copper and spent the evening grinding and tempering it into a better awl.',
         gives: {
           attribute: { mind: 1 },
-          talent: { enchanter: 3, alchemist: 1 },
-          background: { craftsman: 2 },
-          skill: { skilled: 1 },
+          talent: { enchanter: 1, spellblade: 1 },
+          lineage: { scorchbound: 1 },
+          background: { craftsman: 1, merchant: 1 },
+          skill: { skilled: 1, frugal: 1 },
         },
       },
       {
@@ -1900,7 +2036,8 @@ export const QUESTIONS = [
         told: 'kept your broken one and walked on, and mended the harness with a thorn.',
         gives: {
           attribute: { physique: 1 },
-          lineage: { stalwart: 1, undead: 1 },
+          talent: { runebearer: 1, quartermaster: 1, weaver: 1 },
+          lineage: { undead: 1 },
           background: { outlander: 1 },
           skill: { frugal: 1, scavenger: 1 },
         },
@@ -1922,10 +2059,11 @@ export const QUESTIONS = [
         told: 'kept it, and by morning you knew the first word it wanted said to it.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2 },
+          talent: { thaumaturge: 1, spellblade: 1 },
           lineage: { celestial: 1 },
-          skill: { 'innate-spell-novice': 1 },
-          weapon: { 'fire-wand': 1, 'lightning-wand': 1 },
+          background: { erudit: 1 },
+          skill: { 'innate-spell-novice': 1, occultist: 1 },
+          weapon: { 'fire-wand': 1 },
         },
       },
       {
@@ -1934,7 +2072,8 @@ export const QUESTIONS = [
         told: 'took it apart that night to see how it was made, and put it back together better.',
         gives: {
           attribute: { mind: 2 },
-          talent: { enchanter: 3 },
+          talent: { enchanter: 1, spellblade: 1 },
+          lineage: { luminary: 1 },
           background: { craftsman: 1 },
           skill: { skilled: 1, 'arcane-marshal': 1 },
         },
@@ -1945,7 +2084,9 @@ export const QUESTIONS = [
         told: 'wrapped it in a cloth and sold it in the next town for more silver than you had seen in a year.',
         gives: {
           attribute: { instinct: 1 },
-          background: { merchant: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { merchant: 1, entertainer: 1 },
           skill: { haggler: 1, streetwise: 1 },
         },
       },
@@ -1955,9 +2096,10 @@ export const QUESTIONS = [
         told: 'snapped it over your knee and threw the halves in the ditch.',
         gives: {
           attribute: { physique: 1 },
-          talent: { berserker: 1 },
-          lineage: { stalwart: 1 },
-          skill: { 'spell-eater': 1 },
+          talent: { berserker: 1, runebearer: 1, brawler: 1 },
+          lineage: { undead: 1 },
+          background: { mercenary: 1 },
+          skill: { 'spell-eater': 1, vigilant: 1 },
         },
       },
     ],
@@ -1977,9 +2119,10 @@ export const QUESTIONS = [
         told: 'climbed the wall where the buttress met the old tower.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1 },
-          lineage: { skybound: 2, fey: 1 },
-          skill: { cunning: 1 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
+          lineage: { skybound: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, survivalist: 1 },
         },
       },
       {
@@ -1989,7 +2132,9 @@ export const QUESTIONS = [
         gives: {
           attribute: { physique: 2 },
           talent: { colossus: 1, berserker: 1 },
+          lineage: { stalwart: 1 },
           background: { military: 1 },
+          skill: { vigilant: 1 },
         },
       },
       {
@@ -1998,8 +2143,9 @@ export const QUESTIONS = [
         told: 'slid two silver through the grille, and the postern opened a minute later.',
         gives: {
           attribute: { mind: 1 },
+          talent: { tactician: 1 },
           lineage: { infernal: 1 },
-          background: { merchant: 1, criminal: 1 },
+          background: { merchant: 1 },
           skill: { haggler: 1, streetwise: 1 },
         },
       },
@@ -2009,8 +2155,9 @@ export const QUESTIONS = [
         told: 'slept under a hedge out of the wind until the gate opened.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'feral-curse': 1, mycomancer: 2 },
-          background: { outlander: 2 },
+          talent: { 'feral-curse': 1, mycomancer: 1 },
+          lineage: { wildheart: 1, wildkin: 1 },
+          background: { outlander: 1 },
           skill: { survivalist: 1, frugal: 1 },
         },
       },
@@ -2031,10 +2178,10 @@ export const QUESTIONS = [
         told: 'put the purse inside your shirt and kept walking.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
           lineage: { fey: 1 },
-          background: { criminal: 2 },
-          skill: { cunning: 1 },
+          background: { criminal: 1, merchant: 1, entertainer: 1 },
+          skill: { cunning: 1, streetwise: 1 },
         },
       },
       {
@@ -2043,8 +2190,9 @@ export const QUESTIONS = [
         told: 'asked at three inns after the seal on the purse and handed it back to a woman who cried.',
         gives: {
           attribute: { mind: 1 },
-          lineage: { celestial: 2 },
-          background: { investigator: 1 },
+          talent: { tactician: 1, spellquill: 1 },
+          lineage: { celestial: 1 },
+          background: { investigator: 1, merchant: 1 },
           skill: { helpful: 1, inquisitor: 1 },
         },
       },
@@ -2054,9 +2202,10 @@ export const QUESTIONS = [
         told: 'counted it into equal shares on the stile, one for each of you.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 1 },
+          talent: { duelist: 1, quartermaster: 1 },
+          lineage: { wildheart: 1 },
           background: { mercenary: 1, entertainer: 1 },
-          skill: { charismatic: 1 },
+          skill: { charismatic: 1, frugal: 1 },
         },
       },
       {
@@ -2065,9 +2214,10 @@ export const QUESTIONS = [
         told: 'put it back exactly where it lay, because gold like that is bait.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1 },
+          talent: { guardian: 1, runebearer: 1, oathbound: 1 },
           lineage: { stonebound: 1 },
-          skill: { vigilant: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1, frugal: 1 },
         },
       },
     ],
@@ -2087,8 +2237,10 @@ export const QUESTIONS = [
         told: 'gathered feverfew, willow and lichen from the hedgerows and had a cauldron going by dark.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 3, mycomancer: 2 },
-          skill: { apothecary: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildheart: 1, wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { apothecary: 1, healer: 1 },
         },
       },
       {
@@ -2097,9 +2249,10 @@ export const QUESTIONS = [
         told: 'went from house to house with water and cold cloths, and did not sleep for four days.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 1 },
-          lineage: { celestial: 2 },
-          skill: { healer: 2, physician: 1 },
+          talent: { alchemist: 1, thaumaturge: 1, necromancer: 1 },
+          lineage: { celestial: 1 },
+          background: { investigator: 1 },
+          skill: { healer: 1, physician: 1 },
         },
       },
       {
@@ -2108,9 +2261,9 @@ export const QUESTIONS = [
         told: 'worked out from which houses were sick which well was the cause, and had it boarded over by morning.',
         gives: {
           attribute: { mind: 2 },
-          talent: { alchemist: 1, arcanist: 1 },
+          talent: { alchemist: 1 },
           lineage: { luminary: 1 },
-          background: { investigator: 1 },
+          background: { investigator: 1, aristocrat: 1 },
           skill: { scholar: 1, physician: 1 },
         },
       },
@@ -2120,9 +2273,10 @@ export const QUESTIONS = [
         told: 'held the line on the eastern road until the fever had passed.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, helpful: 1 },
           armor: { 'Heavy Armor': 1 },
         },
       },
@@ -2143,9 +2297,10 @@ export const QUESTIONS = [
         told: 'going over every blade, buckle and strap twice with the whetstone and the oil.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1 },
-          background: { military: 1, mercenary: 1 },
-          skill: { vigilant: 1 },
+          talent: { guardian: 1, runebearer: 1, 'weapon-master': 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1, frugal: 1 },
           armor: { 'Heavy Armor': 1 },
         },
       },
@@ -2155,9 +2310,10 @@ export const QUESTIONS = [
         told: 'walking the edge of the camp in the dark, stopping to listen.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'feral-curse': 3, duelist: 1 },
-          lineage: { wildkin: 1, wildheart: 1 },
-          skill: { survivalist: 1 },
+          talent: { 'feral-curse': 1, wilder: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, vigilant: 1 },
         },
       },
       {
@@ -2168,8 +2324,8 @@ export const QUESTIONS = [
           attribute: { mind: 2 },
           talent: { arcanist: 1, enchanter: 1 },
           lineage: { luminary: 1 },
-          background: { erudit: 2 },
-          skill: { scholar: 1 },
+          background: { erudit: 1, investigator: 1, aristocrat: 1 },
+          skill: { scholar: 1, occultist: 1 },
         },
       },
       {
@@ -2178,8 +2334,10 @@ export const QUESTIONS = [
         told: 'sitting with the creature that travels with you until the moon went down.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'draconic-bond': 3 },
+          talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
           lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { empath: 1, survivalist: 1 },
         },
       },
     ],
@@ -2199,7 +2357,9 @@ export const QUESTIONS = [
         told: 'paid him double, asked after his knees and were across before he thought of triple.',
         gives: {
           attribute: { mind: 1 },
-          background: { merchant: 1, aristocrat: 2 },
+          talent: { tactician: 1 },
+          lineage: { celestial: 1 },
+          background: { merchant: 1, aristocrat: 1, entertainer: 1 },
           skill: { haggler: 1, charismatic: 1 },
         },
       },
@@ -2209,7 +2369,10 @@ export const QUESTIONS = [
         told: 'lifted him off his feet, set him down on the other side of the road and walked across.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 3, brawler: 1 },
+          talent: { colossus: 1, brawler: 1 },
+          lineage: { stalwart: 1 },
+          background: { mercenary: 1 },
+          skill: { helpful: 1 },
         },
       },
       {
@@ -2218,7 +2381,9 @@ export const QUESTIONS = [
         told: 'walked back to the bend and waded the river under the bridge.',
         gives: {
           attribute: { instinct: 1 },
-          lineage: { tidebound: 2 },
+          talent: { trickster: 1, wilder: 1 },
+          lineage: { tidebound: 1 },
+          background: { criminal: 1 },
           skill: { cunning: 1, survivalist: 1 },
         },
       },
@@ -2228,9 +2393,10 @@ export const QUESTIONS = [
         told: 'offered him a drink from your flask, and he did not remember you passing.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 3 },
+          talent: { 'cauldron-keeper': 1, trickster: 1 },
           lineage: { fey: 1 },
-          skill: { apothecary: 1 },
+          background: { criminal: 1 },
+          skill: { apothecary: 1, cunning: 1 },
         },
       },
     ],
@@ -2250,9 +2416,10 @@ export const QUESTIONS = [
         told: 'stepped into his path and stood between him and the child.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 3 },
+          talent: { guardian: 1, oathbound: 1 },
           lineage: { celestial: 1 },
           background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -2261,10 +2428,10 @@ export const QUESTIONS = [
         told: 'took his wrist as he reached, and looked at him until he decided to be somewhere else.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 2, 'feral-curse': 1 },
+          talent: { duelist: 1, 'feral-curse': 1, 'flowing-fist': 1 },
           lineage: { wildkin: 1 },
-          background: { mercenary: 1 },
-          skill: { vigilant: 1 },
+          background: { mercenary: 1, investigator: 1 },
+          skill: { vigilant: 1, 'quick-draw': 1 },
         },
       },
       {
@@ -2273,8 +2440,9 @@ export const QUESTIONS = [
         told: 'lifted the child onto a barrel and called its description across the market until the mother came.',
         gives: {
           attribute: { mind: 1 },
+          talent: { spellquill: 1 },
           lineage: { celestial: 1 },
-          background: { entertainer: 2, aristocrat: 1 },
+          background: { entertainer: 1, aristocrat: 1 },
           skill: { charismatic: 1, helpful: 1 },
         },
       },
@@ -2285,7 +2453,8 @@ export const QUESTIONS = [
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
-          background: { investigator: 2 },
+          lineage: { undead: 1 },
+          background: { investigator: 1 },
           skill: { inquisitor: 1, cunning: 1 },
         },
       },
@@ -2306,9 +2475,10 @@ export const QUESTIONS = [
         told: 'held the main beam up on your shoulders all night while they got the thatch back over it.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, guardian: 1 },
-          lineage: { stonebound: 2 },
+          talent: { colossus: 1, painseeker: 1 },
+          lineage: { stonebound: 1 },
           background: { craftsman: 1 },
+          skill: { helpful: 1, survivalist: 1 },
         },
       },
       {
@@ -2317,8 +2487,9 @@ export const QUESTIONS = [
         told: 'put the baby inside your coat and walked two miles into the wind to the next farm.',
         gives: {
           attribute: { instinct: 1 },
-          lineage: { skybound: 3 },
-          background: { outlander: 1 },
+          talent: { 'feral-curse': 1, wilder: 1, 'draconic-bond': 1 },
+          lineage: { skybound: 1 },
+          background: { military: 1 },
           skill: { survivalist: 1, cartographer: 1 },
         },
       },
@@ -2328,10 +2499,10 @@ export const QUESTIONS = [
         told: 'got everyone into the cellar and made a fire out of wet wood and a handful of your powder.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 2 },
+          talent: { alchemist: 1, 'elemental-aspect': 1 },
           lineage: { scorchbound: 1 },
           background: { craftsman: 1 },
-          skill: { survivalist: 1 },
+          skill: { survivalist: 1, skilled: 1 },
         },
       },
       {
@@ -2340,9 +2511,10 @@ export const QUESTIONS = [
         told: 'stood in the yard and spoke to the storm, and it listened a little.',
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 1, pactbound: 1 },
-          lineage: { skybound: 1, celestial: 1 },
-          skill: { 'innate-spell-novice': 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
+          lineage: { skybound: 1 },
+          background: { erudit: 1 },
+          skill: { 'innate-spell-novice': 1, occultist: 1 },
         },
       },
     ],
@@ -2363,9 +2535,10 @@ export const QUESTIONS = [
         told: 'got up and did it again, and this time made sure of it.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, brawler: 1 },
+          talent: { berserker: 1, brawler: 1, painseeker: 1 },
           lineage: { draconic: 1 },
           background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, streetwise: 1 },
         },
       },
       {
@@ -2374,8 +2547,10 @@ export const QUESTIONS = [
         told: 'turned the table over between them and the room.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
           background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
           armor: { 'Heavy Armor': 1 },
         },
       },
@@ -2385,9 +2560,10 @@ export const QUESTIONS = [
         told: 'were out through the window behind you before he had finished pointing.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2 },
-          lineage: { fey: 1 },
-          skill: { cunning: 1 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
+          lineage: { skybound: 1 },
+          background: { criminal: 1, entertainer: 1 },
+          skill: { cunning: 1, streetwise: 1 },
         },
       },
       {
@@ -2396,7 +2572,9 @@ export const QUESTIONS = [
         told: 'bought all five of them a drink and asked after his mother by name.',
         gives: {
           attribute: { mind: 1 },
-          background: { merchant: 1, entertainer: 2 },
+          talent: { tactician: 1 },
+          lineage: { celestial: 1 },
+          background: { merchant: 1, entertainer: 1 },
           skill: { charismatic: 1, empath: 1 },
         },
       },
@@ -2420,9 +2598,10 @@ export const QUESTIONS = [
         told: 'knelt in the blood and held both hands on the leg until the mark on your forearm went cold and the bleeding stopped.',
         gives: {
           attribute: { physique: 2 },
-          talent: { runebearer: 3 },
-          lineage: { stalwart: 1 },
-          skill: { healer: 1 },
+          talent: { runebearer: 1, hemoturgy: 1, painseeker: 1 },
+          lineage: { undead: 1 },
+          background: { mercenary: 1 },
+          skill: { healer: 1, physician: 1 },
         },
       },
       {
@@ -2431,8 +2610,9 @@ export const QUESTIONS = [
         told: 'tipped half a green bottle into the wound and the other half into the man, and the bleeding slowed.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 2 },
-          background: { erudit: 1 },
+          talent: { alchemist: 1, thaumaturge: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1, investigator: 1 },
           skill: { apothecary: 1, physician: 1 },
         },
       },
@@ -2442,8 +2622,10 @@ export const QUESTIONS = [
         told: 'got your shoulder under the axle and stood up with it until they had dragged him clear.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, guardian: 1 },
+          talent: { colossus: 1, totemic: 1 },
           lineage: { stonebound: 1 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, healer: 1 },
         },
       },
       {
@@ -2452,7 +2634,8 @@ export const QUESTIONS = [
         told: 'cut a strap off the harness and twisted a tourniquet down on the leg with your knife handle.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 1, trickster: 1 },
+          talent: { duelist: 1, 'flowing-fist': 1, weaver: 1 },
+          lineage: { wildheart: 1 },
           background: { military: 1 },
           skill: { physician: 1, vigilant: 1 },
         },
@@ -2479,9 +2662,10 @@ export const QUESTIONS = [
         told: 'walked into it with a word and an axe going into the same place at the same moment.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellblade: 3 },
+          talent: { spellblade: 1, weaver: 1 },
           lineage: { luminary: 1 },
-          skill: { vigilant: 1 },
+          background: { mercenary: 1 },
+          skill: { vigilant: 1, occultist: 1 },
         },
       },
       {
@@ -2490,9 +2674,10 @@ export const QUESTIONS = [
         told: 'backed off past the wagon and filled the ground it had to cross to reach you.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 3 },
-          background: { erudit: 1 },
-          skill: { occultist: 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1, thaumaturge: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { occultist: 1, 'unseen-spellwork': 1 },
         },
       },
       {
@@ -2501,7 +2686,8 @@ export const QUESTIONS = [
         told: 'went thirty paces back for the lantern and lit the whole tail of the caravan for the people with spears.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, quartermaster: 1 },
+          lineage: { scorchbound: 1 },
           background: { military: 1 },
           skill: { helpful: 1, vigilant: 1 },
         },
@@ -2512,8 +2698,9 @@ export const QUESTIONS = [
         told: 'cut a mule loose and drove it back down the road, and the thing went after the loud warm one.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 2 },
-          background: { outlander: 1 },
+          talent: { mycomancer: 1, wilder: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
           skill: { survivalist: 1, cunning: 1 },
         },
       },
@@ -2535,9 +2722,10 @@ export const QUESTIONS = [
         told: 'went back in through the smoke for the one who was still inside.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 3 },
-          lineage: { scorchbound: 1, celestial: 1 },
+          talent: { guardian: 1, painseeker: 1 },
+          lineage: { scorchbound: 1 },
           background: { military: 1 },
+          skill: { helpful: 1, healer: 1 },
         },
       },
       {
@@ -2546,8 +2734,10 @@ export const QUESTIONS = [
         told: 'kept walking without looking round. You lit it.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 1, pactbound: 1 },
-          lineage: { infernal: 2 },
+          talent: { alchemist: 1 },
+          lineage: { scorchbound: 1 },
+          background: { criminal: 1 },
+          skill: { apothecary: 1, cunning: 1 },
         },
       },
       {
@@ -2556,9 +2746,10 @@ export const QUESTIONS = [
         told: 'stood in the road and watched until the walls went, and then left.',
         gives: {
           attribute: { physique: 1 },
-          talent: { berserker: 2 },
-          lineage: { draconic: 1, undead: 2 },
+          talent: { berserker: 1, runebearer: 1, painseeker: 1 },
+          lineage: { draconic: 1 },
           background: { mercenary: 1 },
+          skill: { vigilant: 1 },
         },
       },
       {
@@ -2567,10 +2758,10 @@ export const QUESTIONS = [
         told: 'ran with the hound at your heel and did not stop until dawn.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'draconic-bond': 2, 'feral-curse': 2 },
+          talent: { 'draconic-bond': 1, 'feral-curse': 1, wilder: 1 },
           lineage: { wildkin: 1 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1 },
+          background: { outlander: 1, criminal: 1 },
+          skill: { survivalist: 1, cunning: 1 },
         },
       },
     ],
@@ -2590,8 +2781,11 @@ export const QUESTIONS = [
         told: 'the weapon from over the door, too big for the doorway. You got it out sideways.',
         gives: {
           attribute: { physique: 1 },
-          talent: { colossus: 3 },
-          weapon: { 'melee-great': 1, 'long-bow': 1 },
+          talent: { colossus: 1, berserker: 1, 'weapon-master': 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1 },
+          skill: { frugal: 1 },
+          weapon: { 'melee-great': 1 },
         },
       },
       {
@@ -2600,9 +2794,11 @@ export const QUESTIONS = [
         told: 'the blade from under the bed and its twin from the chest, and nothing more.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 3 },
+          talent: { duelist: 1, 'weapon-master': 1, 'flowing-fist': 1 },
+          lineage: { wildheart: 1 },
+          background: { mercenary: 1, criminal: 1 },
           skill: { 'quick-draw': 1 },
-          weapon: { 'paired-finesse': 1, 'finesse-weapon': 1 },
+          weapon: { 'paired-finesse': 1 },
         },
       },
       {
@@ -2611,10 +2807,11 @@ export const QUESTIONS = [
         told: 'the book you were never supposed to have, wrapped in your spare shirt.',
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 2, enchanter: 1 },
-          background: { erudit: 2 },
-          skill: { occultist: 1 },
-          weapon: { 'psychic-tome': 1, 'sacred-tome': 1 },
+          talent: { arcanist: 1, spellquill: 1 },
+          lineage: { celestial: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { occultist: 1, scholar: 1 },
+          weapon: { 'psychic-tome': 1 },
         },
       },
       {
@@ -2623,7 +2820,10 @@ export const QUESTIONS = [
         told: 'the shield from the wall, with a name inside it that was not yours yet.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 3 },
+          talent: { guardian: 1, runebearer: 1, oathbound: 1 },
+          lineage: { celestial: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
           weapon: { 'melee-light-shield': 1 },
           armor: { 'Heavy Armor': 1 },
         },
@@ -2645,8 +2845,10 @@ export const QUESTIONS = [
         told: 'the small cauldron, the bundle of herbs from the beam and the jar of something that moved.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 3 },
-          skill: { apothecary: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
+          skill: { apothecary: 1, scavenger: 1 },
         },
       },
       {
@@ -2656,8 +2858,9 @@ export const QUESTIONS = [
         gives: {
           attribute: { instinct: 1 },
           talent: { duelist: 1, sharpshooter: 1 },
-          background: { investigator: 1, mercenary: 1 },
-          skill: { vigilant: 1 },
+          lineage: { wildheart: 1, undead: 1 },
+          background: { investigator: 1 },
+          skill: { vigilant: 1, inquisitor: 1 },
           weapon: { 'flintlock-pistol': 1 },
         },
       },
@@ -2667,8 +2870,10 @@ export const QUESTIONS = [
         told: 'the contract signed in something that was not ink.',
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 3 },
-          lineage: { infernal: 1 },
+          talent: { pactbound: 1, necromancer: 1 },
+          lineage: { infernal: 1, undead: 1 },
+          background: { aristocrat: 1 },
+          skill: { occultist: 1 },
         },
       },
       {
@@ -2677,8 +2882,10 @@ export const QUESTIONS = [
         told: 'nothing at all, because your hands and the anger had always been enough.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 3 },
+          talent: { berserker: 1, brawler: 1, painseeker: 1 },
           lineage: { draconic: 1 },
+          background: { mercenary: 1, criminal: 1 },
+          skill: { frugal: 1 },
           weapon: { 'melee-light': 1 },
         },
       },
@@ -2699,7 +2906,10 @@ export const QUESTIONS = [
         told: 'with your back to the wall and the shield up, and neither of them past you.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 3 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stonebound: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1 },
           weapon: { 'melee-light-shield': 1 },
           armor: { 'Heavy Armor': 1 },
         },
@@ -2710,8 +2920,10 @@ export const QUESTIONS = [
         told: 'with both of them on the cobbles and no memory of the middle.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 3 },
-          lineage: { draconic: 2 },
+          talent: { berserker: 1, brawler: 1, 'dragon-aspect': 1 },
+          lineage: { draconic: 1, undead: 1 },
+          background: { mercenary: 1, criminal: 1 },
+          skill: { 'quick-draw': 1 },
           weapon: { 'melee-heavy': 1 },
         },
       },
@@ -2721,10 +2933,10 @@ export const QUESTIONS = [
         told: 'before it started, because you were already behind them.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 3 },
-          lineage: { fey: 1 },
-          background: { criminal: 1 },
-          skill: { cunning: 1 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
+          lineage: { skybound: 1 },
+          background: { criminal: 1, entertainer: 1 },
+          skill: { cunning: 1, 'quick-draw': 1 },
         },
       },
       {
@@ -2733,8 +2945,10 @@ export const QUESTIONS = [
         told: 'with the alley on fire and you having touched neither of them.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 3 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
           lineage: { scorchbound: 1 },
+          background: { erudit: 1, criminal: 1 },
+          skill: { 'unseen-spellwork': 1, occultist: 1 },
           weapon: { 'fire-wand': 1 },
         },
       },
@@ -2755,9 +2969,10 @@ export const QUESTIONS = [
         told: 'the forest road, where something had been saying your name since you were a child.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { mycomancer: 3, 'feral-curse': 1 },
+          talent: { mycomancer: 1, 'feral-curse': 1, 'draconic-bond': 1 },
           lineage: { wildkin: 1 },
-          background: { outlander: 2 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
         },
       },
       {
@@ -2766,8 +2981,10 @@ export const QUESTIONS = [
         told: 'the city road, where there was work for someone who could make things.',
         gives: {
           attribute: { mind: 1 },
-          talent: { enchanter: 3, alchemist: 1 },
+          talent: { alchemist: 1, spellblade: 1 },
+          lineage: { luminary: 1 },
           background: { craftsman: 1, merchant: 1 },
+          skill: { skilled: 1, haggler: 1 },
         },
       },
       {
@@ -2776,9 +2993,10 @@ export const QUESTIONS = [
         told: 'the pass, carrying what you needed on your own back.',
         gives: {
           attribute: { physique: 1 },
-          talent: { colossus: 1, guardian: 1 },
-          lineage: { stonebound: 2 },
+          talent: { colossus: 1, runebearer: 1 },
+          lineage: { stonebound: 1 },
           background: { mercenary: 1 },
+          skill: { survivalist: 1, frugal: 1 },
         },
       },
       {
@@ -2787,10 +3005,10 @@ export const QUESTIONS = [
         told: 'the coast road and the first ship that would take a hand.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 1 },
-          lineage: { tidebound: 3 },
-          background: { merchant: 1, outlander: 1 },
-          skill: { seafarer: 1 },
+          talent: { duelist: 1, wilder: 1 },
+          lineage: { tidebound: 1 },
+          background: { merchant: 1 },
+          skill: { seafarer: 1, cartographer: 1 },
         },
       },
     ],
@@ -2815,9 +3033,10 @@ export const QUESTIONS = [
         told: 'learned all forty names and said them over the barrow, until the old man told you that things which are named keep listening.',
         gives: {
           attribute: { mind: 2 },
-          talent: { necromancer: 3 },
+          talent: { necromancer: 1 },
           lineage: { undead: 1 },
-          skill: { occultist: 1 },
+          background: { erudit: 1, aristocrat: 1 },
+          skill: { occultist: 1, empath: 1 },
         },
       },
       {
@@ -2826,9 +3045,10 @@ export const QUESTIONS = [
         told: 'said nothing and lifted, two a trip and forty by Friday.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, guardian: 1 },
+          talent: { colossus: 1, runebearer: 1 },
+          lineage: { undead: 1 },
           background: { outlander: 1 },
-          skill: { survivalist: 1 },
+          skill: { survivalist: 1, helpful: 1 },
         },
       },
       {
@@ -2837,7 +3057,8 @@ export const QUESTIONS = [
         told: 'started opening them instead, to find out why it took the miller in a night and left his wife.',
         gives: {
           attribute: { mind: 2 },
-          talent: { alchemist: 2, arcanist: 1 },
+          talent: { alchemist: 1, necromancer: 1 },
+          lineage: { undead: 1 },
           background: { investigator: 1 },
           skill: { physician: 1, apothecary: 1 },
         },
@@ -2848,7 +3069,8 @@ export const QUESTIONS = [
         told: 'got off the cart on the second morning and lived off three gardens whose owners were in the barrow.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2 },
+          talent: { mycomancer: 1, wilder: 1 },
+          lineage: { fey: 1 },
           background: { criminal: 1 },
           skill: { scavenger: 1, streetwise: 1 },
         },
@@ -2874,9 +3096,10 @@ export const QUESTIONS = [
         told: 'went and got the nine out of the churchyard, and by the third night nobody would come down to the water while you stood there.',
         gives: {
           attribute: { mind: 2 },
-          talent: { necromancer: 3 },
+          talent: { necromancer: 1, spellquill: 1 },
           lineage: { infernal: 1 },
-          skill: { mastermind: 1 },
+          background: { erudit: 1, investigator: 1, aristocrat: 1 },
+          skill: { mastermind: 1, occultist: 1 },
         },
       },
       {
@@ -2885,9 +3108,10 @@ export const QUESTIONS = [
         told: 'took the foreman apart in front of his crew and put the work back on its feet.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, berserker: 1 },
+          talent: { berserker: 1, brawler: 1 },
+          lineage: { draconic: 1 },
           background: { military: 1 },
-          skill: { charismatic: 1 },
+          skill: { charismatic: 1, vigilant: 1 },
         },
       },
       {
@@ -2896,7 +3120,8 @@ export const QUESTIONS = [
         told: 'found the four places the bridge was wrong, which saved them the nine men and cost you the foreman.',
         gives: {
           attribute: { mind: 2 },
-          talent: { enchanter: 2, arcanist: 1 },
+          talent: { enchanter: 1 },
+          lineage: { stonebound: 1 },
           background: { craftsman: 1 },
           skill: { scholar: 1, cartographer: 1 },
         },
@@ -2907,7 +3132,8 @@ export const QUESTIONS = [
         told: 'waited for the thaw to raise the price, because you would rather be paid than thanked.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { pactbound: 2, trickster: 1 },
+          talent: { pactbound: 1, virtuoso: 1 },
+          lineage: { infernal: 1 },
           background: { merchant: 1 },
           skill: { haggler: 1, cunning: 1 },
         },
@@ -2935,8 +3161,8 @@ export const QUESTIONS = [
         told: 'copied the page until a carter who could not read said it out loud and it happened anyway.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 3 },
-          background: { erudit: 1 },
+          talent: { spellquill: 1, enchanter: 1 },
+          background: { erudit: 1, investigator: 1 },
           skill: { scholar: 1, occultist: 1 },
         },
       },
@@ -2946,9 +3172,9 @@ export const QUESTIONS = [
         told: 'spent eleven weeks learning it properly, until the page was nothing you needed.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 3 },
-          background: { erudit: 1 },
-          skill: { scholar: 1 },
+          talent: { arcanist: 1, thaumaturge: 1 },
+          background: { erudit: 1, aristocrat: 1 },
+          skill: { scholar: 1, occultist: 1 },
         },
       },
       {
@@ -2957,8 +3183,9 @@ export const QUESTIONS = [
         told: 'found out what the page was worth, and which of the two buyers would pay more for the other never hearing of it.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, pactbound: 1 },
-          background: { merchant: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, entertainer: 1 },
           skill: { haggler: 1, streetwise: 1 },
         },
       },
@@ -2968,7 +3195,8 @@ export const QUESTIONS = [
         told: 'read the last line twice and then put the page in the brazier.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, berserker: 1 },
+          lineage: { scorchbound: 1 },
           background: { military: 1 },
           skill: { vigilant: 1 },
         },
@@ -2995,7 +3223,8 @@ export const QUESTIONS = [
         told: 'put the working on parchment in a hand the guard could sound out, and she read it off the leaf on the third night.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 3 },
+          talent: { spellquill: 1, arcanist: 1 },
+          lineage: { luminary: 1 },
           background: { merchant: 1 },
           skill: { scholar: 1, mastermind: 1 },
         },
@@ -3006,9 +3235,10 @@ export const QUESTIONS = [
         told: 'stood the third watch yourself and let the thing close while you were facing it.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, berserker: 1 },
+          talent: { guardian: 1, berserker: 1, oathbound: 1 },
+          lineage: { undead: 1 },
           background: { mercenary: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -3017,8 +3247,9 @@ export const QUESTIONS = [
         told: 'taught the guard her letters across the whole crossing, over her objections.',
         gives: {
           attribute: { mind: 2 },
-          talent: { enchanter: 2, arcanist: 1 },
-          background: { erudit: 1 },
+          talent: { tactician: 1, enchanter: 1 },
+          lineage: { celestial: 1 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { charismatic: 1, scholar: 1 },
         },
       },
@@ -3028,8 +3259,9 @@ export const QUESTIONS = [
         told: 'went out to find out what had been keeping its distance for two nights.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { mycomancer: 2, trickster: 1 },
-          background: { outlander: 1 },
+          talent: { mycomancer: 1, 'feral-curse': 1 },
+          lineage: { wildheart: 1, wildkin: 1 },
+          background: { investigator: 1 },
           skill: { inquisitor: 1, survivalist: 1 },
         },
       },
@@ -3053,9 +3285,10 @@ export const QUESTIONS = [
         told: 'broke the ice in to him with a fence rail and hauled him out through the water.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, runebearer: 1 },
+          talent: { colossus: 1, runebearer: 1, weaver: 1 },
+          lineage: { tidebound: 1 },
           background: { military: 1 },
-          skill: { helpful: 1 },
+          skill: { helpful: 1, survivalist: 1 },
         },
       },
       {
@@ -3064,9 +3297,10 @@ export const QUESTIONS = [
         told: 'went out flat on your belly until you had a hand on his collar.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 1, trickster: 1, 'feral-curse': 1 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
           lineage: { wildheart: 1 },
-          skill: { survivalist: 1 },
+          background: { entertainer: 1 },
+          skill: { survivalist: 1, helpful: 1 },
         },
       },
       {
@@ -3075,7 +3309,7 @@ export const QUESTIONS = [
         told: 'sent the lightest of you out on the barn door with a rope, and worked the angle from the bank.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2, enchanter: 1 },
+          talent: { enchanter: 1 },
           background: { military: 1 },
           skill: { mastermind: 1, helpful: 1 },
         },
@@ -3086,9 +3320,10 @@ export const QUESTIONS = [
         told: 'went into the open water on purpose and swam to him under the edge of the ice.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { wilder: 1 },
-          lineage: { tidebound: 3 },
-          skill: { seafarer: 1 },
+          talent: { wilder: 1, 'feral-curse': 1 },
+          lineage: { tidebound: 1 },
+          background: { outlander: 1 },
+          skill: { seafarer: 1, survivalist: 1 },
         },
       },
     ],
@@ -3108,9 +3343,8 @@ export const QUESTIONS = [
         told: 'said the true number out loud, sack by sack, in front of the tithe-man’s own boy.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2, enchanter: 1 },
-          lineage: { luminary: 1 },
-          background: { investigator: 1 },
+          talent: { tactician: 1 },
+          background: { investigator: 1, merchant: 1, entertainer: 1 },
           skill: { mastermind: 1, inquisitor: 1 },
         },
       },
@@ -3121,9 +3355,9 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
           lineage: { fey: 1 },
-          background: { criminal: 2 },
+          background: { criminal: 1, merchant: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
@@ -3133,10 +3367,10 @@ export const QUESTIONS = [
         told: 'put your hand on the tally stick and made him decide, in front of your father, what to do about it.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 2, berserker: 1 },
+          talent: { guardian: 1, colossus: 1 },
           lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, frugal: 1 },
         },
       },
       {
@@ -3145,9 +3379,9 @@ export const QUESTIONS = [
         told: 'asked him in a small voice what happens to a man who miscounts for the temple.',
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2 },
+          talent: { pactbound: 1 },
           lineage: { infernal: 1 },
-          background: { aristocrat: 1 },
+          background: { aristocrat: 1, entertainer: 1 },
           skill: { charismatic: 1, empath: 1 },
         },
       },
@@ -3168,10 +3402,10 @@ export const QUESTIONS = [
         told: 'pulled the bell rope until it took the skin off your palms and the whole valley was out of doors.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, runebearer: 1 },
+          talent: { guardian: 1, runebearer: 1, weaver: 1 },
           lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -3180,9 +3414,8 @@ export const QUESTIONS = [
         told: 'counted the smoke first, because you would rather ring the right bell than the loud one.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2, enchanter: 1 },
-          lineage: { luminary: 1 },
-          background: { investigator: 1 },
+          talent: { arcanist: 1 },
+          background: { investigator: 1, aristocrat: 1 },
           skill: { inquisitor: 1, cartographer: 1 },
         },
       },
@@ -3192,8 +3425,8 @@ export const QUESTIONS = [
         told: 'went out the tower window to look at the smoke yourself, and were back before anybody missed the bell.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, duelist: 1 },
-          lineage: { wildheart: 1 },
+          talent: { duelist: 1, wilder: 1 },
+          lineage: { skybound: 1 },
           background: { outlander: 1 },
           skill: { survivalist: 1, cunning: 1 },
         },
@@ -3205,9 +3438,10 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { spellquill: 2, arcanist: 1 },
+          talent: { spellquill: 1, weaver: 1, spellblade: 1 },
           lineage: { celestial: 1 },
-          skill: { occultist: 1 },
+          background: { erudit: 1 },
+          skill: { occultist: 1, 'innate-spell-novice': 1 },
         },
       },
     ],
@@ -3227,9 +3461,10 @@ export const QUESTIONS = [
         told: 'used the knife, and never told anybody it took two tries.',
         gives: {
           attribute: { physique: 1 },
-          talent: { berserker: 1, painseeker: 2 },
+          talent: { berserker: 1, painseeker: 1 },
+          lineage: { undead: 1 },
           background: { mercenary: 1 },
-          skill: { survivalist: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
         },
       },
       {
@@ -3238,7 +3473,7 @@ export const QUESTIONS = [
         told: 'held the lamb inside your coat all night until it lived, and the ewe knew you afterwards.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'feral-curse': 2, 'draconic-bond': 1 },
+          talent: { 'feral-curse': 1, 'draconic-bond': 1, beastbond: 1 },
           lineage: { wildkin: 1 },
           background: { outlander: 1 },
           skill: { survivalist: 1, helpful: 1 },
@@ -3250,7 +3485,7 @@ export const QUESTIONS = [
         told: 'fed it warm milk through a goose quill until first light, and three of the four things you tried were your own idea.',
         gives: {
           attribute: { mind: 2 },
-          talent: { alchemist: 2, thaumaturge: 1 },
+          talent: { alchemist: 1, thaumaturge: 1 },
           background: { craftsman: 1 },
           skill: { apothecary: 1, physician: 1 },
         },
@@ -3262,8 +3497,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { necromancer: 2, spellquill: 1 },
+          talent: { necromancer: 1 },
           lineage: { undead: 1 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { occultist: 1, healer: 1 },
         },
       },
@@ -3285,9 +3521,10 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
-          talent: { necromancer: 3 },
+          talent: { necromancer: 1 },
           lineage: { undead: 1 },
-          skill: { occultist: 1 },
+          background: { investigator: 1 },
+          skill: { occultist: 1, inquisitor: 1 },
         },
       },
       {
@@ -3296,9 +3533,10 @@ export const QUESTIONS = [
         told: 'dug up the rest of them and laid them straight under a stone with a mark cut into it.',
         gives: {
           attribute: { physique: 2 },
-          talent: { runebearer: 3, colossus: 1 },
+          talent: { runebearer: 1, colossus: 1 },
           lineage: { stonebound: 1 },
-          skill: { survivalist: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, helpful: 1 },
         },
       },
       {
@@ -3308,7 +3546,8 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
           background: { criminal: 1, merchant: 1 },
           skill: { haggler: 1, streetwise: 1 },
         },
@@ -3319,7 +3558,7 @@ export const QUESTIONS = [
         told: 'walked to the almshouse and kept asking what had happened in that field until somebody told you.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1 },
+          talent: { necromancer: 1 },
           background: { investigator: 1 },
           skill: { inquisitor: 1, scholar: 1 },
         },
@@ -3341,9 +3580,8 @@ export const QUESTIONS = [
         told: 'copied the page twice and kept the second one, because a page in your own hand is one anybody can read.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 3 },
-          lineage: { luminary: 1 },
-          background: { erudit: 1 },
+          talent: { spellquill: 1 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { scholar: 1, mastermind: 1 },
         },
       },
@@ -3354,8 +3592,9 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, virtuoso: 2 },
-          background: { criminal: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, entertainer: 1 },
           skill: { cunning: 1, skilled: 1 },
         },
       },
@@ -3365,7 +3604,7 @@ export const QUESTIONS = [
         told: 'took the page to the name at the top of it and found out what he would pay for it.',
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2 },
+          talent: { pactbound: 1 },
           lineage: { infernal: 1 },
           background: { merchant: 1 },
           skill: { haggler: 1, streetwise: 1 },
@@ -3377,7 +3616,7 @@ export const QUESTIONS = [
         told: 'finished all forty pages and said nothing about the one in the middle, and your hand ached for two days.',
         gives: {
           attribute: { physique: 2 },
-          talent: { runebearer: 2, guardian: 1 },
+          talent: { runebearer: 1, guardian: 1 },
           lineage: { stalwart: 1 },
           background: { craftsman: 1 },
           skill: { frugal: 1, skilled: 1 },
@@ -3402,7 +3641,7 @@ export const QUESTIONS = [
         told: 'went up with the axe at first light and came back at dusk with more than you could carry.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, berserker: 2 },
+          talent: { colossus: 1, berserker: 1 },
           lineage: { stalwart: 1 },
           background: { outlander: 1 },
           skill: { survivalist: 1, frugal: 1 },
@@ -3416,8 +3655,8 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, 'feral-curse': 2 },
-          lineage: { wildheart: 1 },
+          talent: { 'feral-curse': 1, wilder: 1, mycomancer: 1 },
+          lineage: { fey: 1 },
           background: { criminal: 1 },
           skill: { cunning: 1, survivalist: 1 },
         },
@@ -3428,7 +3667,8 @@ export const QUESTIONS = [
         told: 'rebuilt the hearth instead, because you had worked out where the heat had been going.',
         gives: {
           attribute: { mind: 2 },
-          talent: { enchanter: 3, alchemist: 1 },
+          talent: { enchanter: 1, alchemist: 1 },
+          lineage: { scorchbound: 1 },
           background: { craftsman: 1 },
           skill: { skilled: 1, frugal: 1 },
         },
@@ -3439,7 +3679,7 @@ export const QUESTIONS = [
         told: 'went and asked the man for work, and by the end of the winter his dogs knew your name.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'draconic-bond': 3, wilder: 1 },
+          talent: { 'draconic-bond': 1, wilder: 1 },
           lineage: { wildkin: 1 },
           background: { outlander: 1 },
           skill: { charismatic: 1, helpful: 1 },
@@ -3462,10 +3702,10 @@ export const QUESTIONS = [
         told: 'took the blame with your hands at your sides and let your brother say what he liked.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 2, oathbound: 1 },
-          lineage: { stalwart: 1 },
+          talent: { guardian: 1, runebearer: 1, oathbound: 1 },
+          lineage: { celestial: 1 },
           background: { military: 1 },
-          skill: { helpful: 1 },
+          skill: { helpful: 1, vigilant: 1 },
         },
       },
       {
@@ -3474,8 +3714,9 @@ export const QUESTIONS = [
         told: 'put the spoon back where the priest would find it himself and the housekeeper would be blamed.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, 'feral-curse': 1 },
-          background: { criminal: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, investigator: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
@@ -3485,7 +3726,8 @@ export const QUESTIONS = [
         told: 'found out what your brother really wanted, got it for him another way and named your price for silence.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2, pactbound: 1 },
+          talent: { tactician: 1 },
+          lineage: { infernal: 1 },
           background: { investigator: 1, aristocrat: 1 },
           skill: { mastermind: 1, empath: 1 },
         },
@@ -3497,9 +3739,10 @@ export const QUESTIONS = [
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, brawler: 1, guardian: 1 },
+          talent: { berserker: 1, brawler: 1 },
           lineage: { draconic: 1 },
           background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, helpful: 1 },
         },
       },
     ],
@@ -3519,9 +3762,8 @@ export const QUESTIONS = [
         told: 'went in, read the contract and pointed at the four things wrong with it in front of both men.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2, enchanter: 1 },
-          lineage: { luminary: 1 },
-          background: { aristocrat: 2 },
+          talent: { tactician: 1 },
+          background: { aristocrat: 1 },
           skill: { scholar: 1, mastermind: 1 },
         },
       },
@@ -3531,8 +3773,8 @@ export const QUESTIONS = [
         told: 'were gone before they opened the door, on the dawn cart to the market town.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, duelist: 2 },
-          lineage: { wildheart: 1 },
+          talent: { duelist: 1, wilder: 1 },
+          lineage: { fey: 1 },
           background: { outlander: 1 },
           skill: { cunning: 1, survivalist: 1 },
         },
@@ -3543,8 +3785,9 @@ export const QUESTIONS = [
         told: 'agreed to it, and spent the hour finding out what the mill was worth and which man needed it more.',
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2 },
-          background: { merchant: 2 },
+          talent: { pactbound: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, aristocrat: 1, entertainer: 1 },
           skill: { haggler: 1, empath: 1 },
         },
       },
@@ -3554,8 +3797,9 @@ export const QUESTIONS = [
         told: 'put the contract in the fire and stood in front of the fire, and nobody in the room moved you off it.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, berserker: 1, colossus: 1 },
-          lineage: { scorchbound: 2 },
+          talent: { guardian: 1, berserker: 1 },
+          lineage: { scorchbound: 1, draconic: 1 },
+          background: { military: 1 },
           skill: { vigilant: 1 },
         },
       },
@@ -3576,7 +3820,7 @@ export const QUESTIONS = [
         told: 'took them up to the well and made the smith look at the dead sheep in the upper spring.',
         gives: {
           attribute: { mind: 1 },
-          talent: { alchemist: 2, arcanist: 1 },
+          talent: { alchemist: 1 },
           background: { investigator: 1 },
           skill: { inquisitor: 1, physician: 1 },
         },
@@ -3587,10 +3831,10 @@ export const QUESTIONS = [
         told: 'stood in the gateway, because eleven is not so many when the first two have to get past you.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, colossus: 1 },
-          lineage: { stalwart: 1 },
+          talent: { guardian: 1, painseeker: 1 },
+          lineage: { stonebound: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -3599,7 +3843,8 @@ export const QUESTIONS = [
         told: 'got the two sick children over the back wall to your grandmother before the shouting at the gate had finished.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'cauldron-keeper': 2, mycomancer: 1 },
+          talent: { 'cauldron-keeper': 1, trickster: 1 },
+          lineage: { wildheart: 1 },
           background: { outlander: 1 },
           skill: { healer: 1, apothecary: 1 },
         },
@@ -3610,8 +3855,8 @@ export const QUESTIONS = [
         told: 'boiled every drop the village drank for a fortnight over a fire you kept alight yourself.',
         gives: {
           attribute: { physique: 1 },
-          talent: { guardian: 1, colossus: 1 },
-          lineage: { scorchbound: 2 },
+          talent: { guardian: 1, runebearer: 1 },
+          lineage: { scorchbound: 1 },
           background: { craftsman: 1 },
           skill: { helpful: 1, frugal: 1 },
         },
@@ -3633,10 +3878,10 @@ export const QUESTIONS = [
         told: 'said your own name before anybody else could.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, berserker: 1 },
+          talent: { guardian: 1, oathbound: 1 },
           lineage: { stalwart: 1 },
-          background: { military: 2 },
-          skill: { vigilant: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -3645,7 +3890,7 @@ export const QUESTIONS = [
         told: 'read the warrant over his shoulder and found the cousin two fields over who would go for money.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2 },
+          talent: { tactician: 1 },
           background: { investigator: 1, aristocrat: 1 },
           skill: { mastermind: 1, inquisitor: 1 },
         },
@@ -3656,9 +3901,9 @@ export const QUESTIONS = [
         told: 'were out the window before he reached the second name, and slept in the wood for nine days.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, 'feral-curse': 2 },
-          lineage: { wildheart: 1 },
-          background: { criminal: 1, outlander: 1 },
+          talent: { 'feral-curse': 1, wilder: 1, 'cauldron-keeper': 1, mycomancer: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
           skill: { cunning: 1, survivalist: 1 },
         },
       },
@@ -3668,8 +3913,9 @@ export const QUESTIONS = [
         told: 'traded him the deserters’ camp, which he had been looking for a fortnight.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { pactbound: 2, trickster: 1 },
-          background: { criminal: 1, merchant: 1 },
+          talent: { pactbound: 1 },
+          lineage: { infernal: 1 },
+          background: { criminal: 1, merchant: 1, entertainer: 1 },
           skill: { haggler: 1, streetwise: 1 },
         },
       },
@@ -3690,8 +3936,9 @@ export const QUESTIONS = [
         told: 'finished it in twelve-hour days, and the man took it without a word about whose hands had been on it.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, runebearer: 2 },
-          background: { craftsman: 2 },
+          talent: { runebearer: 1, weaver: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1 },
           skill: { skilled: 1, tailor: 1 },
         },
       },
@@ -3701,8 +3948,7 @@ export const QUESTIONS = [
         told: 'read every page of his pattern book and then finished the piece better than the pattern said.',
         gives: {
           attribute: { mind: 2 },
-          talent: { enchanter: 3, alchemist: 1 },
-          lineage: { luminary: 1 },
+          talent: { enchanter: 1, alchemist: 1, weaver: 1 },
           background: { craftsman: 1 },
           skill: { skilled: 1, scholar: 1 },
         },
@@ -3713,8 +3959,9 @@ export const QUESTIONS = [
         told: 'sold the tools, the book and the commission to three different people before Thursday.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1 },
-          background: { merchant: 2 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { merchant: 1, entertainer: 1 },
           skill: { haggler: 1, cunning: 1 },
         },
       },
@@ -3725,7 +3972,8 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { mind: 1 },
-          talent: { spellquill: 2, enchanter: 1 },
+          talent: { spellquill: 1, weaver: 1, spellblade: 1 },
+          lineage: { fey: 1 },
           background: { criminal: 1 },
           skill: { skilled: 1, cunning: 1 },
         },
@@ -3750,9 +3998,10 @@ export const QUESTIONS = [
         told: 'stood up into the storm, and it went over you and took nothing.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 1 },
-          lineage: { skybound: 3, wildheart: 1 },
-          skill: { survivalist: 1 },
+          talent: { duelist: 1, wilder: 1 },
+          lineage: { skybound: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, vigilant: 1 },
         },
       },
       {
@@ -3761,9 +4010,10 @@ export const QUESTIONS = [
         told: 'got the whole flock off the hill in four trips, two under each arm.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, guardian: 1, totemic: 1 },
+          talent: { colossus: 1, totemic: 1, 'draconic-bond': 1 },
+          lineage: { skybound: 1 },
           background: { outlander: 1 },
-          skill: { survivalist: 1 },
+          skill: { survivalist: 1, helpful: 1 },
         },
       },
       {
@@ -3772,8 +4022,7 @@ export const QUESTIONS = [
         told: 'put your iron on the ground twelve feet off and lay flat, counting the gaps until they got longer.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2, arcanist: 1 },
-          lineage: { luminary: 1 },
+          talent: { arcanist: 1, alchemist: 1 },
           background: { erudit: 1 },
           skill: { scholar: 1, cartographer: 1 },
         },
@@ -3785,9 +4034,10 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 2, 'elemental-aspect': 1 },
-          lineage: { skybound: 1, celestial: 1 },
-          skill: { 'innate-spell-novice': 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
+          lineage: { skybound: 1 },
+          background: { erudit: 1 },
+          skill: { 'innate-spell-novice': 1, occultist: 1 },
         },
       },
     ],
@@ -3807,10 +4057,10 @@ export const QUESTIONS = [
         told: 'carried water and carried the dead, and were the last one standing in the row.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, colossus: 1 },
-          lineage: { undead: 2, stalwart: 1 },
+          talent: { guardian: 1, painseeker: 1 },
+          lineage: { undead: 1 },
           background: { military: 1 },
-          skill: { helpful: 1 },
+          skill: { helpful: 1, healer: 1 },
         },
       },
       {
@@ -3819,7 +4069,7 @@ export const QUESTIONS = [
         told: 'set out to find why the same cup and the same air had not touched you.',
         gives: {
           attribute: { mind: 2 },
-          talent: { alchemist: 3, arcanist: 1 },
+          talent: { alchemist: 1 },
           background: { investigator: 1 },
           skill: { physician: 1, apothecary: 1 },
         },
@@ -3830,7 +4080,8 @@ export const QUESTIONS = [
         told: 'brewed what your grandmother used to bring out of the woods, in the yard, for the whole row.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'cauldron-keeper': 3, mycomancer: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildkin: 1 },
           background: { outlander: 1 },
           skill: { apothecary: 1, healer: 1 },
         },
@@ -3841,8 +4092,9 @@ export const QUESTIONS = [
         told: 'sat with the ones nobody else would sit with and said the last words over them.',
         gives: {
           attribute: { mind: 1 },
-          talent: { necromancer: 2 },
-          lineage: { undead: 1, celestial: 1 },
+          talent: { necromancer: 1 },
+          lineage: { undead: 1 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { occultist: 1, empath: 1 },
         },
       },
@@ -3863,7 +4115,7 @@ export const QUESTIONS = [
         told: 'watched it all night without moving, and wrote down in the morning what it had done and in what order.',
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 2, spellquill: 1 },
+          talent: { arcanist: 1 },
           background: { erudit: 1 },
           skill: { occultist: 1, scholar: 1 },
         },
@@ -3874,8 +4126,9 @@ export const QUESTIONS = [
         told: 'stood in the real doorway to see which of the two of you the window would show.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 1, trickster: 1 },
-          lineage: { fey: 2, celestial: 1 },
+          talent: { duelist: 1 },
+          lineage: { celestial: 1 },
+          background: { investigator: 1 },
           skill: { vigilant: 1, cunning: 1 },
         },
       },
@@ -3885,9 +4138,10 @@ export const QUESTIONS = [
         told: 'broke the window, and paid for it with a winter of cold and a beating you never regretted.',
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, brawler: 1, painseeker: 1 },
-          lineage: { draconic: 2 },
+          talent: { berserker: 1, brawler: 1 },
+          lineage: { draconic: 1 },
           background: { mercenary: 1 },
+          skill: { streetwise: 1 },
         },
       },
       {
@@ -3897,8 +4151,8 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2, spellblade: 2 },
-          lineage: { fey: 1, infernal: 2 },
+          talent: { pactbound: 1, necromancer: 1 },
+          lineage: { infernal: 1 },
           skill: { occultist: 1 },
         },
       },
@@ -3919,8 +4173,8 @@ export const QUESTIONS = [
         told: 'held the hull steady from the water for two hours while the tide carried all four of you in.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 1 },
-          lineage: { tidebound: 3 },
+          talent: { wilder: 1, 'cauldron-keeper': 1 },
+          lineage: { tidebound: 1 },
           background: { outlander: 1 },
           skill: { seafarer: 1, helpful: 1 },
         },
@@ -3931,10 +4185,10 @@ export const QUESTIONS = [
         told: 'swam half a mile to the point with the youngest on your back, and did not look back at the other two.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, berserker: 2 },
-          lineage: { stalwart: 1 },
+          talent: { colossus: 1, berserker: 1 },
+          lineage: { tidebound: 1 },
           background: { mercenary: 1 },
-          skill: { seafarer: 1 },
+          skill: { seafarer: 1, survivalist: 1 },
         },
       },
       {
@@ -3943,7 +4197,7 @@ export const QUESTIONS = [
         told: 'cut the sail free and got it under all four of you, because a wet sail full of air is a boat.',
         gives: {
           attribute: { mind: 1 },
-          talent: { enchanter: 2, tactician: 1 },
+          talent: { enchanter: 1, weaver: 1 },
           background: { craftsman: 1, merchant: 1 },
           skill: { seafarer: 1, skilled: 1 },
         },
@@ -3955,8 +4209,8 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 2, 'elemental-aspect': 1 },
-          lineage: { tidebound: 1, celestial: 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
+          lineage: { tidebound: 1 },
           skill: { 'innate-spell-novice': 1, seafarer: 1 },
         },
       },
@@ -3977,9 +4231,10 @@ export const QUESTIONS = [
         told: 'went down and moved stone two men could not, until one of them came out alive.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 3 },
-          lineage: { stonebound: 2, stalwart: 1 },
+          talent: { colossus: 1, runebearer: 1 },
+          lineage: { stonebound: 1 },
           background: { craftsman: 1 },
+          skill: { survivalist: 1, helpful: 1 },
         },
       },
       {
@@ -3988,9 +4243,9 @@ export const QUESTIONS = [
         told: 'read the face before anybody touched it and named the one block holding the rest.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2, enchanter: 1 },
-          lineage: { luminary: 1 },
-          background: { craftsman: 1, investigator: 1 },
+          talent: { enchanter: 1 },
+          lineage: { stonebound: 1 },
+          background: { craftsman: 1 },
           skill: { cartographer: 1, scholar: 1 },
         },
       },
@@ -4000,7 +4255,7 @@ export const QUESTIONS = [
         told: 'went in on your belly through the gap nobody else could fit, to find which knocking was worth digging for.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, 'feral-curse': 2 },
+          talent: { 'feral-curse': 1, wilder: 1, mycomancer: 1 },
           lineage: { wildheart: 1 },
           background: { outlander: 1 },
           skill: { survivalist: 1, cunning: 1 },
@@ -4012,8 +4267,9 @@ export const QUESTIONS = [
         told: 'put your hand flat on the face until the knocking came up through the stone and told you where they were.',
         gives: {
           attribute: { physique: 1 },
-          talent: { runebearer: 3, totemic: 1 },
+          talent: { runebearer: 1, totemic: 1 },
           lineage: { stonebound: 1 },
+          background: { craftsman: 1 },
           skill: { vigilant: 1 },
         },
       },
@@ -4036,8 +4292,9 @@ export const QUESTIONS = [
         told: 'dealt off the bottom yourself, and were eight up by midnight without his working out how.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, virtuoso: 1 },
-          background: { criminal: 1, entertainer: 2 },
+          talent: { trickster: 1, 'flowing-fist': 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, entertainer: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
@@ -4047,8 +4304,8 @@ export const QUESTIONS = [
         told: 'said it out loud with the count of every hand he had taken, and let the table do the arithmetic.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2 },
-          background: { aristocrat: 2, investigator: 1 },
+          talent: { spellquill: 1 },
+          background: { aristocrat: 1, entertainer: 1 },
           skill: { mastermind: 1, charismatic: 1 },
         },
       },
@@ -4059,10 +4316,10 @@ export const QUESTIONS = [
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, brawler: 2 },
-          lineage: { draconic: 2 },
+          talent: { berserker: 1, brawler: 1 },
+          lineage: { draconic: 1 },
           background: { mercenary: 1 },
-          skill: { streetwise: 1 },
+          skill: { streetwise: 1, 'quick-draw': 1 },
         },
       },
       {
@@ -4071,8 +4328,9 @@ export const QUESTIONS = [
         told: 'lost the rest cheerfully and followed him home, because what he did with it was worth more than the money.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { duelist: 2, pactbound: 1 },
-          background: { investigator: 1, criminal: 1 },
+          talent: { duelist: 1 },
+          lineage: { wildheart: 1 },
+          background: { investigator: 1 },
           skill: { cunning: 1, inquisitor: 1 },
         },
       },
@@ -4093,8 +4351,9 @@ export const QUESTIONS = [
         told: 'worked harder than anybody for nine weeks, and came off that ship with a wage and a trade.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, runebearer: 2 },
-          background: { mercenary: 1, military: 1 },
+          talent: { colossus: 1, runebearer: 1, weaver: 1 },
+          lineage: { tidebound: 1 },
+          background: { mercenary: 1 },
           skill: { seafarer: 1, frugal: 1 },
         },
       },
@@ -4104,7 +4363,8 @@ export const QUESTIONS = [
         told: 'learned every hatch and every watch, and went over the side into a harbour boat on the ninth night.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, duelist: 2 },
+          talent: { trickster: 1 },
+          lineage: { tidebound: 1 },
           background: { criminal: 1 },
           skill: { cunning: 1, seafarer: 1 },
         },
@@ -4115,8 +4375,7 @@ export const QUESTIONS = [
         told: 'learned the navigation, and by the second month the charts were yours and nobody mentioned the list again.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2, enchanter: 1 },
-          lineage: { luminary: 1 },
+          talent: { enchanter: 1 },
           background: { erudit: 1, merchant: 1 },
           skill: { cartographer: 1, scholar: 1 },
         },
@@ -4127,8 +4386,9 @@ export const QUESTIONS = [
         told: 'found out what was behind the nailed hatch aft, and what had been feeding it.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 2, mycomancer: 1 },
-          background: { investigator: 1, criminal: 1 },
+          talent: { 'cauldron-keeper': 1, 'draconic-bond': 1 },
+          lineage: { wildheart: 1 },
+          background: { investigator: 1 },
           skill: { inquisitor: 1, streetwise: 1 },
         },
       },
@@ -4149,8 +4409,10 @@ export const QUESTIONS = [
         told: 'dug for four hours without shoring, and were the reason two of the five came out.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, berserker: 2, painseeker: 1 },
-          skill: { survivalist: 1 },
+          talent: { colossus: 1, painseeker: 1 },
+          lineage: { stonebound: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, helpful: 1 },
         },
       },
       {
@@ -4159,7 +4421,7 @@ export const QUESTIONS = [
         told: 'talked him through the fall foot by foot, and handed the crew a map of a place none of them could see.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2 },
+          talent: { spellquill: 1 },
           background: { erudit: 1, investigator: 1 },
           skill: { cartographer: 1, mastermind: 1 },
         },
@@ -4170,9 +4432,9 @@ export const QUESTIONS = [
         told: 'went round through the old working above, which everybody said was flooded and was not.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, 'feral-curse': 2 },
+          talent: { 'feral-curse': 1, mycomancer: 1 },
           lineage: { wildheart: 1 },
-          background: { outlander: 1, criminal: 1 },
+          background: { outlander: 1 },
           skill: { survivalist: 1, cunning: 1 },
         },
       },
@@ -4182,7 +4444,7 @@ export const QUESTIONS = [
         told: 'built them air out of a leather hose and the smith’s bellows in twenty minutes.',
         gives: {
           attribute: { mind: 1 },
-          talent: { enchanter: 3, alchemist: 1 },
+          talent: { enchanter: 1, alchemist: 1, weaver: 1 },
           background: { craftsman: 1 },
           skill: { skilled: 1, helpful: 1 },
         },
@@ -4204,9 +4466,10 @@ export const QUESTIONS = [
         told: 'took the man with the bad hand, and were out in four minutes with two silver.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 3, 'flowing-fist': 1 },
-          background: { mercenary: 1 },
-          skill: { 'quick-draw': 1 },
+          talent: { duelist: 1, 'flowing-fist': 1, 'weapon-master': 1 },
+          lineage: { wildheart: 1 },
+          background: { mercenary: 1, entertainer: 1 },
+          skill: { 'quick-draw': 1, vigilant: 1 },
           weapon: { 'fist-weapon': 1 },
         },
       },
@@ -4217,9 +4480,10 @@ export const QUESTIONS = [
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, painseeker: 2, brawler: 1 },
-          lineage: { draconic: 2 },
+          talent: { berserker: 1, painseeker: 1, brawler: 1 },
+          lineage: { draconic: 1 },
           background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, streetwise: 1 },
           weapon: { 'melee-light': 1 },
         },
       },
@@ -4229,8 +4493,9 @@ export const QUESTIONS = [
         told: 'took the book instead, and made nine silver by dusk without being hit once.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2, pactbound: 1 },
-          background: { merchant: 2 },
+          talent: { tactician: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, aristocrat: 1 },
           skill: { mastermind: 1, haggler: 1 },
         },
       },
@@ -4240,8 +4505,9 @@ export const QUESTIONS = [
         told: 'lost twice on purpose and then won at eleven to one with everything you owned on yourself.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1, duelist: 2, virtuoso: 1 },
-          background: { criminal: 1, entertainer: 2 },
+          talent: { trickster: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, entertainer: 1 },
           skill: { cunning: 1, charismatic: 1 },
         },
       },
@@ -4262,7 +4528,8 @@ export const QUESTIONS = [
         told: 'sat with him in the garden for five weeks until he had told you all of it, bed by bed.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'cauldron-keeper': 3, mycomancer: 2 },
+          talent: { 'cauldron-keeper': 1, mycomancer: 1 },
+          lineage: { wildkin: 1 },
           background: { outlander: 1 },
           skill: { apothecary: 1, healer: 1 },
         },
@@ -4273,7 +4540,8 @@ export const QUESTIONS = [
         told: 'copied every page of the garden book twice, so that the house kept it and so did you.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 3, alchemist: 1 },
+          talent: { spellquill: 1, alchemist: 1 },
+          lineage: { luminary: 1 },
           background: { erudit: 1 },
           skill: { scholar: 1, apothecary: 1 },
         },
@@ -4285,9 +4553,9 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { mycomancer: 3, 'cauldron-keeper': 1 },
-          lineage: { wildheart: 1 },
-          background: { criminal: 1, outlander: 1 },
+          talent: { mycomancer: 1, wilder: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
           skill: { survivalist: 1, scavenger: 1 },
         },
       },
@@ -4297,7 +4565,7 @@ export const QUESTIONS = [
         told: 'dug the garden over for him every morning for a month before anybody thought to ask why.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 1, runebearer: 2, colossus: 1 },
+          talent: { guardian: 1, runebearer: 1 },
           lineage: { stalwart: 1 },
           background: { craftsman: 1 },
           skill: { helpful: 1, frugal: 1 },
@@ -4323,9 +4591,10 @@ export const QUESTIONS = [
         told: 'put the heaviest thing in the yard on his wagon, and then looked at him.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, quartermaster: 1 },
-          background: { mercenary: 3 },
-          skill: { vigilant: 1 },
+          talent: { colossus: 1, quartermaster: 1 },
+          lineage: { stalwart: 1 },
+          background: { mercenary: 1 },
+          skill: { vigilant: 1, helpful: 1 },
           armor: { 'Heavy Armor': 1 },
         },
       },
@@ -4335,8 +4604,9 @@ export const QUESTIONS = [
         told: 'told him what was wrong with his wheels, his mules and his guards, and where the pass would get him.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 1, trickster: 1 },
-          background: { outlander: 3 },
+          talent: { duelist: 1, wilder: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
           skill: { cartographer: 1, survivalist: 1 },
         },
       },
@@ -4346,8 +4616,9 @@ export const QUESTIONS = [
         told: 'read his manifest upside down off the table and offered him the one thing his cargo needed.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2, enchanter: 1 },
-          background: { merchant: 3 },
+          talent: { tactician: 1, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { merchant: 1, investigator: 1 },
           skill: { haggler: 1, mastermind: 1 },
         },
       },
@@ -4358,8 +4629,9 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1 },
-          background: { criminal: 3 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
@@ -4380,8 +4652,9 @@ export const QUESTIONS = [
         told: 'took the ones nobody expected to live and worked through everything the house had until you found what helped.',
         gives: {
           attribute: { mind: 2 },
-          talent: { alchemist: 2, arcanist: 1 },
-          background: { investigator: 3 },
+          talent: { alchemist: 1, thaumaturge: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1 },
           skill: { physician: 1, apothecary: 1 },
         },
       },
@@ -4391,8 +4664,9 @@ export const QUESTIONS = [
         told: 'took the brewing, and filled their empty store from a day’s walk around the door.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'cauldron-keeper': 3, mycomancer: 1 },
-          background: { outlander: 3 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildheart: 1, wildkin: 1 },
+          background: { outlander: 1 },
           skill: { apothecary: 1, healer: 1 },
         },
       },
@@ -4402,8 +4676,9 @@ export const QUESTIONS = [
         told: 'took the lifting and the carrying and the dead, twice a week, without flinching at it.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 1, colossus: 1, painseeker: 1 },
-          background: { military: 3 },
+          talent: { guardian: 1, painseeker: 1 },
+          lineage: { undead: 1 },
+          background: { military: 1 },
           skill: { helpful: 1, vigilant: 1 },
         },
       },
@@ -4413,9 +4688,9 @@ export const QUESTIONS = [
         told: 'took the register, and in a year had the only written account of the sickness anybody had.',
         gives: {
           attribute: { mind: 1 },
-          talent: { spellquill: 2, necromancer: 1 },
-          lineage: { luminary: 1 },
-          background: { erudit: 3 },
+          talent: { spellquill: 1, necromancer: 1 },
+          lineage: { undead: 1 },
+          background: { erudit: 1, investigator: 1 },
           skill: { scholar: 1, occultist: 1 },
         },
       },
@@ -4436,8 +4711,9 @@ export const QUESTIONS = [
         told: 'took the desk, and by Monday the writs were fair and the magistrate said so in open court.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 3, tactician: 1 },
-          background: { aristocrat: 3 },
+          talent: { spellquill: 1 },
+          lineage: { luminary: 1 },
+          background: { aristocrat: 1 },
           skill: { scholar: 1, mastermind: 1 },
         },
       },
@@ -4447,8 +4723,9 @@ export const QUESTIONS = [
         told: 'took the queue, where eleven people each paid to be heard on Monday rather than in the spring.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, pactbound: 2 },
-          background: { merchant: 3 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, entertainer: 1 },
           skill: { haggler: 1, streetwise: 1 },
         },
       },
@@ -4458,8 +4735,9 @@ export const QUESTIONS = [
         told: 'read all eleven and put the two that were lies in front of him, one of them his own cousin’s.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2 },
-          background: { investigator: 3 },
+          talent: { tactician: 1, spellquill: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1, aristocrat: 1 },
           skill: { inquisitor: 1, empath: 1 },
         },
       },
@@ -4469,9 +4747,10 @@ export const QUESTIONS = [
         told: 'took the door, and stood between the magistrate and the fourth case.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2 },
-          background: { military: 3 },
-          skill: { vigilant: 1 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
           armor: { 'Heavy Armor': 1 },
         },
       },
@@ -4492,8 +4771,9 @@ export const QUESTIONS = [
         told: 'told him which line was wrong and what it had cost him every month since the spring.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 2, enchanter: 1 },
-          background: { merchant: 3 },
+          talent: { tactician: 1, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { merchant: 1, aristocrat: 1 },
           skill: { haggler: 1, mastermind: 1 },
         },
       },
@@ -4503,8 +4783,9 @@ export const QUESTIONS = [
         told: 'said nothing about the line, took the work and found out who had been feeding it.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, pactbound: 2 },
-          background: { criminal: 3 },
+          talent: { trickster: 1 },
+          lineage: { infernal: 1 },
+          background: { criminal: 1, investigator: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
@@ -4515,7 +4796,8 @@ export const QUESTIONS = [
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1, spellquill: 1 },
-          background: { investigator: 3 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1 },
           skill: { inquisitor: 1, scholar: 1 },
         },
       },
@@ -4525,8 +4807,9 @@ export const QUESTIONS = [
         told: 'took the work on the quay instead, and carried what the counting house only counted.',
         gives: {
           attribute: { physique: 1 },
-          talent: { colossus: 1, runebearer: 2 },
-          background: { mercenary: 2, craftsman: 1 },
+          talent: { colossus: 1, runebearer: 1, quartermaster: 1 },
+          lineage: { tidebound: 1 },
+          background: { mercenary: 1 },
           skill: { frugal: 1, seafarer: 1 },
         },
       },
@@ -4547,9 +4830,10 @@ export const QUESTIONS = [
         told: 'signed, and then stood over the fifteen-year-old in the queue until he went home.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, berserker: 1 },
-          background: { mercenary: 3, military: 1 },
-          skill: { vigilant: 1 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
+          background: { mercenary: 1 },
+          skill: { vigilant: 1, helpful: 1 },
           weapon: { 'melee-heavy': 1 },
         },
       },
@@ -4559,9 +4843,10 @@ export const QUESTIONS = [
         told: 'signed, and spent the month up front on your own blade rather than their issue.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 3, sharpshooter: 1 },
-          background: { mercenary: 3 },
-          skill: { 'quick-draw': 1 },
+          talent: { duelist: 1, sharpshooter: 1, 'weapon-master': 1 },
+          lineage: { wildheart: 1 },
+          background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, frugal: 1 },
           weapon: { 'paired-finesse': 1 },
         },
       },
@@ -4571,8 +4856,9 @@ export const QUESTIONS = [
         told: 'signed as their clerk, and by the second month you were the one saying where the powder went.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2, quartermaster: 1 },
-          background: { military: 3 },
+          talent: { tactician: 1, quartermaster: 1 },
+          lineage: { luminary: 1 },
+          background: { military: 1, merchant: 1 },
           skill: { mastermind: 1, cartographer: 1 },
         },
       },
@@ -4582,8 +4868,9 @@ export const QUESTIONS = [
         told: 'followed the company out at two days’ distance, for what it left behind on the road.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1, mycomancer: 2 },
-          background: { outlander: 1, criminal: 1 },
+          talent: { trickster: 1, mycomancer: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1 },
           skill: { scavenger: 1, survivalist: 1 },
         },
       },
@@ -4604,9 +4891,9 @@ export const QUESTIONS = [
         told: 'went, and read all eleven hundred books, including everything the family had done in the war.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2, enchanter: 1 },
+          talent: { arcanist: 1, enchanter: 1 },
           lineage: { luminary: 1 },
-          background: { erudit: 3 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { scholar: 1, occultist: 1 },
         },
       },
@@ -4616,9 +4903,9 @@ export const QUESTIONS = [
         told: 'went, and were such a curiosity that by the second winter the whole county wanted you at table.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { virtuoso: 2, trickster: 1 },
-          lineage: { fey: 1 },
-          background: { entertainer: 3 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1, celestial: 1 },
+          background: { entertainer: 1, aristocrat: 1 },
           skill: { troubadour: 1, charismatic: 1 },
         },
       },
@@ -4628,8 +4915,9 @@ export const QUESTIONS = [
         told: 'went, and married into it, having read enough of their own books to know how such houses fall.',
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 1, tactician: 1 },
-          background: { aristocrat: 3 },
+          talent: { pactbound: 1, spellquill: 1 },
+          lineage: { infernal: 1 },
+          background: { aristocrat: 1, merchant: 1 },
           skill: { charismatic: 1, empath: 1 },
         },
       },
@@ -4639,9 +4927,9 @@ export const QUESTIONS = [
         told: 'took the guild’s refusal to the quarry, and were the best hand on the face inside two years.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, runebearer: 2 },
-          lineage: { stonebound: 1, stalwart: 1 },
-          background: { craftsman: 3 },
+          talent: { colossus: 1, runebearer: 1, painseeker: 1 },
+          lineage: { stonebound: 1 },
+          background: { craftsman: 1 },
           skill: { skilled: 1, frugal: 1 },
         },
       },
@@ -4664,8 +4952,9 @@ export const QUESTIONS = [
         told: 'took the boat over twice yourself, standing, with the pole.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, berserker: 1, painseeker: 1 },
-          lineage: { stonebound: 1 },
+          talent: { colossus: 1, painseeker: 1, weaver: 1 },
+          lineage: { stonebound: 1, tidebound: 1 },
+          background: { mercenary: 1 },
           skill: { seafarer: 1, survivalist: 1 },
         },
       },
@@ -4675,9 +4964,9 @@ export const QUESTIONS = [
         told: 'went up to the stony shallows nobody uses, and were in the town before the ferryman finished his dinner.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { duelist: 2 },
+          talent: { duelist: 1, wilder: 1 },
           lineage: { wildheart: 1, tidebound: 1 },
-          background: { outlander: 1 },
+          background: { merchant: 1 },
           skill: { cartographer: 1, survivalist: 1 },
         },
       },
@@ -4687,7 +4976,8 @@ export const QUESTIONS = [
         told: 'read the river and told the eleven the hour it would cross, and were right to the quarter.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2, arcanist: 1 },
+          talent: { arcanist: 1, alchemist: 1 },
+          lineage: { tidebound: 1 },
           background: { investigator: 1 },
           skill: { cartographer: 1, scholar: 1 },
         },
@@ -4699,8 +4989,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 2, 'elemental-aspect': 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
           lineage: { tidebound: 1 },
+          background: { erudit: 1 },
           skill: { 'innate-spell-novice': 1 },
           weapon: { 'frost-wand': 1 },
         },
@@ -4722,8 +5013,9 @@ export const QUESTIONS = [
         told: 'read the name cut into the base of the shrine, which was not one anything was worshipped by choice.',
         gives: {
           attribute: { mind: 1 },
-          talent: { arcanist: 2, necromancer: 1 },
-          background: { erudit: 1 },
+          talent: { arcanist: 1, necromancer: 1 },
+          lineage: { undead: 1 },
+          background: { erudit: 1, investigator: 1 },
           skill: { occultist: 1, scholar: 1 },
         },
       },
@@ -4733,9 +5025,10 @@ export const QUESTIONS = [
         told: 'put the shrine in the ditch, and the birds were back by morning.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, berserker: 2 },
-          lineage: { scorchbound: 2, undead: 1 },
-          skill: { vigilant: 1 },
+          talent: { colossus: 1, berserker: 1 },
+          lineage: { scorchbound: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -4744,9 +5037,9 @@ export const QUESTIONS = [
         told: 'went the long way round through the trees, and were past the fork before anything noticed you had come.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, 'feral-curse': 2 },
+          talent: { 'feral-curse': 1, wilder: 1, mycomancer: 1 },
           lineage: { wildheart: 1 },
-          background: { outlander: 1 },
+          background: { criminal: 1 },
           skill: { cunning: 1, survivalist: 1 },
         },
       },
@@ -4757,9 +5050,10 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2, necromancer: 1 },
-          lineage: { infernal: 2 },
-          skill: { occultist: 1 },
+          talent: { pactbound: 1, necromancer: 1 },
+          lineage: { undead: 1 },
+          background: { investigator: 1 },
+          skill: { occultist: 1, empath: 1 },
         },
       },
     ],
@@ -4779,8 +5073,9 @@ export const QUESTIONS = [
         told: 'carried the man with the leg over the closing pass, put him down on the far side and went on.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 3 },
-          lineage: { stalwart: 1 },
+          talent: { colossus: 1, painseeker: 1 },
+          lineage: { stonebound: 1 },
+          background: { mercenary: 1 },
           skill: { helpful: 1, survivalist: 1 },
         },
       },
@@ -4790,8 +5085,9 @@ export const QUESTIONS = [
         told: 'split the party, six over the pass and five into the shepherd’s hut, and said it plainly enough that they did it.',
         gives: {
           attribute: { mind: 2 },
-          talent: { tactician: 3 },
-          background: { aristocrat: 1, military: 1 },
+          talent: { quartermaster: 1, spellquill: 1 },
+          lineage: { luminary: 1 },
+          background: { aristocrat: 1 },
           skill: { mastermind: 1, cartographer: 1 },
         },
       },
@@ -4801,8 +5097,8 @@ export const QUESTIONS = [
         told: 'fed all eleven off a frozen hillside in two hours, having done it in worse country.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { mycomancer: 3, 'cauldron-keeper': 1 },
-          lineage: { wildheart: 1 },
+          talent: { mycomancer: 1, wilder: 1 },
+          lineage: { wildheart: 1, wildkin: 1 },
           background: { outlander: 1 },
           skill: { survivalist: 1, scavenger: 1 },
         },
@@ -4813,7 +5109,7 @@ export const QUESTIONS = [
         told: 'went over alone that night and sent help up from the far valley in the morning.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1, duelist: 2 },
+          talent: { duelist: 1, 'feral-curse': 1 },
           lineage: { skybound: 1 },
           background: { mercenary: 1 },
           skill: { cunning: 1, survivalist: 1 },
@@ -4836,8 +5132,9 @@ export const QUESTIONS = [
         told: 'took the blade that was still moving, which none of the four of them understood.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellblade: 3, necromancer: 2 },
+          talent: { spellblade: 1, necromancer: 1 },
           lineage: { undead: 1 },
+          background: { investigator: 1 },
           skill: { occultist: 1, cunning: 1 },
         },
       },
@@ -4848,9 +5145,10 @@ export const QUESTIONS = [
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, colossus: 1, painseeker: 1 },
+          talent: { berserker: 1, painseeker: 1 },
           lineage: { draconic: 1 },
           background: { mercenary: 1 },
+          skill: { 'quick-draw': 1, vigilant: 1 },
           weapon: { 'melee-great': 1 },
         },
       },
@@ -4860,7 +5158,8 @@ export const QUESTIONS = [
         told: 'told them what they had dug into, too late for the man with the lantern.',
         gives: {
           attribute: { mind: 1 },
-          talent: { necromancer: 2, arcanist: 1 },
+          talent: { necromancer: 1, arcanist: 1 },
+          lineage: { undead: 1 },
           background: { investigator: 1 },
           skill: { inquisitor: 1, occultist: 1 },
         },
@@ -4871,8 +5170,9 @@ export const QUESTIONS = [
         told: 'waited for the barrow to finish with them and took what was left in the morning.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, 'feral-curse': 2 },
-          background: { criminal: 1, outlander: 1 },
+          talent: { 'feral-curse': 1, mycomancer: 1 },
+          lineage: { undead: 1 },
+          background: { criminal: 1 },
           skill: { scavenger: 1, vigilant: 1 },
         },
       },
@@ -4894,9 +5194,10 @@ export const QUESTIONS = [
         tags: ['did:violence'],
         gives: {
           attribute: { physique: 2 },
-          talent: { berserker: 2, brawler: 2, guardian: 1 },
-          lineage: { draconic: 2 },
-          background: { mercenary: 1 },
+          talent: { berserker: 1, brawler: 1 },
+          lineage: { draconic: 1 },
+          background: { mercenary: 1, criminal: 1 },
+          skill: { 'quick-draw': 1, streetwise: 1 },
           weapon: { 'melee-light': 1 },
         },
       },
@@ -4906,8 +5207,9 @@ export const QUESTIONS = [
         told: 'put on the sea officer’s coat off the peg, and asked them for their warrant instead.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, virtuoso: 2 },
-          background: { criminal: 1, entertainer: 2 },
+          talent: { trickster: 1, 'flowing-fist': 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, entertainer: 1 },
           skill: { cunning: 1, charismatic: 1 },
         },
       },
@@ -4918,7 +5220,8 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
-          talent: { spellblade: 3, arcanist: 1 },
+          talent: { spellblade: 1, weaver: 1 },
+          lineage: { infernal: 1 },
           background: { mercenary: 1 },
           skill: { occultist: 1, 'quick-draw': 1 },
         },
@@ -4929,8 +5232,9 @@ export const QUESTIONS = [
         told: 'took the shilling and were over the side in the first harbour.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { trickster: 1, duelist: 1, pactbound: 1 },
-          background: { criminal: 1, mercenary: 1 },
+          talent: { duelist: 1, 'cauldron-keeper': 1 },
+          lineage: { tidebound: 1 },
+          background: { criminal: 1 },
           skill: { seafarer: 1, frugal: 1 },
         },
       },
@@ -4951,10 +5255,10 @@ export const QUESTIONS = [
         told: 'walked up and put out a hand, and it walked where you walked for eleven years afterwards.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'draconic-bond': 3, 'feral-curse': 1, beastbond: 1 },
-          lineage: { wildkin: 2 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1 },
+          talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
+          lineage: { wildkin: 1 },
+          background: { entertainer: 1 },
+          skill: { survivalist: 1, empath: 1 },
         },
       },
       {
@@ -4963,10 +5267,10 @@ export const QUESTIONS = [
         told: 'got in front of the bow and then in front of the thing, and let it decide which of you was in the road.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 1, colossus: 1, berserker: 2 },
+          talent: { guardian: 1, berserker: 1 },
           lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, helpful: 1 },
         },
       },
       {
@@ -4975,7 +5279,7 @@ export const QUESTIONS = [
         told: 'worked out what it was from three nights of following and no kill.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 1, alchemist: 1, arcanist: 1 },
+          talent: { tactician: 1, alchemist: 1 },
           lineage: { luminary: 1 },
           background: { investigator: 1 },
           skill: { inquisitor: 1, scholar: 1 },
@@ -4987,8 +5291,8 @@ export const QUESTIONS = [
         told: 'fed it, because whatever follows a wagon train for three nights without taking a beast wants something else.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 2, mycomancer: 2, wilder: 1 },
-          lineage: { wildheart: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1, 'draconic-bond': 1 },
+          lineage: { wildheart: 1, wildkin: 1 },
           background: { outlander: 1 },
           skill: { apothecary: 1, survivalist: 1 },
         },
@@ -5012,9 +5316,10 @@ export const QUESTIONS = [
         told: 'picked her up gently, put her to one side and went, and she was still in the road at the corner.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 2, guardian: 1 },
+          talent: { colossus: 1, totemic: 1 },
           lineage: { stalwart: 1 },
-          skill: { helpful: 1 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, frugal: 1 },
         },
       },
       {
@@ -5023,8 +5328,9 @@ export const QUESTIONS = [
         told: 'answered every objection in order until there was nothing left between you and the door.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2 },
-          background: { aristocrat: 1 },
+          talent: { tactician: 1, spellquill: 1 },
+          lineage: { luminary: 1 },
+          background: { aristocrat: 1, entertainer: 1 },
           skill: { mastermind: 1, charismatic: 1 },
         },
       },
@@ -5034,10 +5340,10 @@ export const QUESTIONS = [
         told: 'went out the window to the pack you had left under it a week before.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, duelist: 2 },
+          talent: { trickster: 1 },
           lineage: { wildheart: 1 },
           background: { criminal: 1 },
-          skill: { cunning: 1 },
+          skill: { cunning: 1, streetwise: 1 },
         },
       },
       {
@@ -5047,9 +5353,10 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2, spellquill: 1 },
-          lineage: { celestial: 1, infernal: 1 },
-          skill: { occultist: 1 },
+          talent: { pactbound: 1, necromancer: 1 },
+          lineage: { celestial: 1 },
+          background: { aristocrat: 1 },
+          skill: { occultist: 1, empath: 1 },
         },
       },
     ],
@@ -5069,8 +5376,9 @@ export const QUESTIONS = [
         told: 'gave him a made-up name spelled the way a family with land spells it, and watched him sit up straighter.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, virtuoso: 2 },
-          background: { criminal: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, entertainer: 1 },
           skill: { cunning: 1, charismatic: 1 },
         },
       },
@@ -5080,10 +5388,10 @@ export const QUESTIONS = [
         told: 'gave him your own name, because it was the only thing your father left you.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, runebearer: 1, oathbound: 1 },
+          talent: { guardian: 1, runebearer: 1, oathbound: 1 },
           lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, frugal: 1 },
         },
       },
       {
@@ -5092,9 +5400,9 @@ export const QUESTIONS = [
         told: 'wrote it into the book yourself, in a hand nobody at that gate could match.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 3, tactician: 1 },
+          talent: { spellquill: 1, enchanter: 1 },
           lineage: { luminary: 1 },
-          background: { erudit: 1 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { scholar: 1, mastermind: 1 },
         },
       },
@@ -5105,8 +5413,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2, necromancer: 1 },
-          lineage: { infernal: 2 },
+          talent: { pactbound: 1, necromancer: 1 },
+          lineage: { infernal: 1, undead: 1 },
+          background: { investigator: 1 },
           skill: { occultist: 1 },
         },
       },
@@ -5127,7 +5436,7 @@ export const QUESTIONS = [
         told: 'worked it off in his yard through the night, and went at noon owing nobody anything.',
         gives: {
           attribute: { physique: 2 },
-          talent: { colossus: 1, runebearer: 2, guardian: 1 },
+          talent: { colossus: 1, runebearer: 1 },
           lineage: { stalwart: 1 },
           background: { craftsman: 1 },
           skill: { frugal: 1, helpful: 1 },
@@ -5139,9 +5448,9 @@ export const QUESTIONS = [
         told: 'left before dawn and left it owed, the way you had left worse than eleven silver.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, duelist: 2 },
+          talent: { duelist: 1, wilder: 1 },
           lineage: { fey: 1 },
-          background: { criminal: 1, outlander: 1 },
+          background: { criminal: 1 },
           skill: { cunning: 1, streetwise: 1 },
         },
       },
@@ -5151,7 +5460,8 @@ export const QUESTIONS = [
         told: 'left him what you knew about his supplier, which was worth four times eleven silver.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2, enchanter: 1 },
+          talent: { tactician: 1 },
+          lineage: { infernal: 1 },
           background: { merchant: 1, investigator: 1 },
           skill: { mastermind: 1, haggler: 1 },
         },
@@ -5162,8 +5472,9 @@ export const QUESTIONS = [
         told: 'signed for it in a form that holds, and put the leaf in his hand.',
         gives: {
           attribute: { mind: 1 },
-          talent: { spellquill: 3, pactbound: 2 },
-          background: { aristocrat: 1 },
+          talent: { spellquill: 1 },
+          lineage: { celestial: 1 },
+          background: { aristocrat: 1, merchant: 1 },
           skill: { scholar: 1, occultist: 1 },
         },
       },
@@ -5185,7 +5496,7 @@ export const QUESTIONS = [
         tags: ['did:theft'],
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2, duelist: 2 },
+          talent: { trickster: 1 },
           lineage: { fey: 1 },
           background: { criminal: 1 },
           skill: { cunning: 1, streetwise: 1 },
@@ -5197,8 +5508,8 @@ export const QUESTIONS = [
         told: 'walked the four days, never having taken a thing you would afterwards have to explain.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 1, colossus: 1, oathbound: 2 },
-          lineage: { stalwart: 1 },
+          talent: { guardian: 1, runebearer: 1, oathbound: 1 },
+          lineage: { stalwart: 1, undead: 1 },
           background: { military: 1 },
           skill: { frugal: 1, survivalist: 1 },
         },
@@ -5209,10 +5520,10 @@ export const QUESTIONS = [
         told: 'talked the horse out of its box, and it followed you down the lane and never went home.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'draconic-bond': 3, 'feral-curse': 1 },
-          lineage: { wildkin: 2 },
-          background: { outlander: 1 },
-          skill: { survivalist: 1 },
+          talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1, entertainer: 1 },
+          skill: { survivalist: 1, empath: 1 },
         },
       },
       {
@@ -5221,8 +5532,9 @@ export const QUESTIONS = [
         told: 'woke the boy and bought it at a price under the horse and over his loyalty.',
         gives: {
           attribute: { mind: 1 },
-          talent: { pactbound: 2, tactician: 1 },
-          background: { merchant: 2 },
+          talent: { pactbound: 1, spellquill: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, aristocrat: 1, entertainer: 1 },
           skill: { haggler: 1, mastermind: 1 },
         },
       },
@@ -5243,9 +5555,9 @@ export const QUESTIONS = [
         told: 'four pages in a hand all of them could read, down to what was to be done about the roof.',
         gives: {
           attribute: { mind: 2 },
-          talent: { spellquill: 3, tactician: 1 },
+          talent: { spellquill: 1, enchanter: 1 },
           lineage: { luminary: 1 },
-          background: { erudit: 1 },
+          background: { erudit: 1, aristocrat: 1 },
           skill: { scholar: 1, helpful: 1 },
         },
       },
@@ -5255,10 +5567,10 @@ export const QUESTIONS = [
         told: 'the axe, sharpened, where the letter would have been.',
         gives: {
           attribute: { physique: 2 },
-          talent: { runebearer: 3, colossus: 1 },
-          lineage: { stalwart: 1 },
+          talent: { runebearer: 1, colossus: 1 },
+          lineage: { stalwart: 1, stonebound: 1 },
           background: { craftsman: 1 },
-          skill: { skilled: 1 },
+          skill: { skilled: 1, frugal: 1 },
           weapon: { 'melee-heavy': 1 },
         },
       },
@@ -5268,10 +5580,10 @@ export const QUESTIONS = [
         told: 'nothing at all, because a page is a thing somebody can follow.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, duelist: 1, 'feral-curse': 2 },
-          lineage: { wildheart: 1 },
+          talent: { duelist: 1, 'feral-curse': 1 },
+          lineage: { wildheart: 1, undead: 1 },
           background: { criminal: 1 },
-          skill: { cunning: 1 },
+          skill: { cunning: 1, vigilant: 1 },
         },
       },
       {
@@ -5281,8 +5593,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 1 },
-          talent: { spellquill: 2, arcanist: 1 },
+          talent: { spellquill: 1, thaumaturge: 1 },
           lineage: { celestial: 1 },
+          background: { erudit: 1 },
           skill: { occultist: 1, 'innate-spell-novice': 1 },
         },
       },
@@ -5304,8 +5617,9 @@ export const QUESTIONS = [
         tags: ['did:magic'],
         gives: {
           attribute: { mind: 2 },
-          talent: { necromancer: 3, spellquill: 1 },
+          talent: { necromancer: 1, spellquill: 1 },
           lineage: { undead: 1 },
+          background: { erudit: 1, investigator: 1, aristocrat: 1 },
           skill: { occultist: 1, empath: 1 },
         },
       },
@@ -5315,9 +5629,10 @@ export const QUESTIONS = [
         told: 'put the leaning stone straight, which took the hour and both hands.',
         gives: {
           attribute: { physique: 2 },
-          talent: { runebearer: 3, colossus: 1, guardian: 1 },
+          talent: { runebearer: 1, colossus: 1 },
           lineage: { stonebound: 1 },
-          skill: { helpful: 1 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, skilled: 1 },
         },
       },
       {
@@ -5326,7 +5641,7 @@ export const QUESTIONS = [
         told: 'did not go, and spent the hour making sure nobody saw which road you took.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 1, duelist: 2 },
+          talent: { duelist: 1, wilder: 1 },
           lineage: { wildheart: 1 },
           background: { criminal: 1 },
           skill: { cunning: 1, vigilant: 1 },
@@ -5338,9 +5653,10 @@ export const QUESTIONS = [
         told: 'took a handful of the earth off it in a twist of cloth, because you never intended to leave all of them.',
         gives: {
           attribute: { mind: 1 },
-          talent: { necromancer: 2, pactbound: 1 },
-          lineage: { undead: 1, infernal: 1 },
-          skill: { occultist: 1 },
+          talent: { necromancer: 1 },
+          lineage: { undead: 1 },
+          background: { investigator: 1 },
+          skill: { occultist: 1, survivalist: 1 },
         },
       },
     ],
@@ -5364,9 +5680,10 @@ export const QUESTIONS = [
         told: 'stopped making the broom a sword and ran something down the handle instead, and put a hole through a fence post with it.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { weaver: 3 },
-          background: { craftsman: 1 },
-          skill: { occultist: 1 },
+          talent: { weaver: 1 },
+          lineage: { fey: 1 },
+          background: { craftsman: 1, entertainer: 1 },
+          skill: { occultist: 1, skilled: 1 },
         },
       },
       {
@@ -5375,9 +5692,10 @@ export const QUESTIONS = [
         told: 'went and got the sword back before she was up, and learned whatever the lesson was with a proper edge in your hand.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2, colossus: 1 },
+          talent: { guardian: 1, 'weapon-master': 1 },
+          lineage: { stalwart: 1 },
           background: { military: 1 },
-          skill: { vigilant: 1 },
+          skill: { vigilant: 1, 'quick-draw': 1 },
         },
       },
       {
@@ -5386,9 +5704,10 @@ export const QUESTIONS = [
         told: 'put the broom down and went through her shelves, and found the emptiness of them was the answer as well.',
         gives: {
           attribute: { mind: 2 },
-          talent: { arcanist: 2, enchanter: 1 },
-          background: { erudit: 1 },
-          skill: { scholar: 1 },
+          talent: { arcanist: 1, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { scholar: 1, occultist: 1 },
         },
       },
       {
@@ -5397,7 +5716,8 @@ export const QUESTIONS = [
         told: 'swept the yard, because it was a broom and she had not said otherwise.',
         gives: {
           attribute: { mind: 1 },
-          talent: { tactician: 2 },
+          talent: { tactician: 1 },
+          lineage: { luminary: 1 },
           background: { craftsman: 1 },
           skill: { skilled: 1, helpful: 1 },
         },
@@ -5424,9 +5744,10 @@ export const QUESTIONS = [
         told: 'walked up the ridge with four feet of cart chain and something running down it that had never been in the iron.',
         gives: {
           attribute: { physique: 2 },
-          talent: { weaver: 3 },
+          talent: { weaver: 1, runebearer: 1 },
+          lineage: { stalwart: 1 },
           background: { outlander: 1 },
-          skill: { survivalist: 1 },
+          skill: { survivalist: 1, occultist: 1 },
         },
       },
       {
@@ -5435,8 +5756,9 @@ export const QUESTIONS = [
         told: 'let the two on the ridge keep their morning and cut the trail of the mules a mile down the valley.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { trickster: 2 },
-          background: { outlander: 1 },
+          talent: { 'feral-curse': 1, wilder: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1, criminal: 1 },
           skill: { survivalist: 1, cunning: 1 },
         },
       },
@@ -5446,7 +5768,8 @@ export const QUESTIONS = [
         told: 'put the broken pole across the gap and stood behind it, so the ridge had to come through you first.',
         gives: {
           attribute: { physique: 2 },
-          talent: { guardian: 2 },
+          talent: { guardian: 1, oathbound: 1, weaver: 1 },
+          lineage: { stonebound: 1 },
           background: { military: 1 },
           skill: { vigilant: 1, helpful: 1 },
         },
@@ -5458,8 +5781,1220 @@ export const QUESTIONS = [
         gives: {
           attribute: { mind: 1 },
           talent: { tactician: 1 },
-          background: { merchant: 1 },
+          lineage: { celestial: 1 },
+          background: { merchant: 1, entertainer: 1 },
           skill: { haggler: 1, charismatic: 1 },
+        },
+      },
+    ],
+  },
+  /* ===================================================== childhood, third drop
+     Four more, added 2026-09-10 with the drop that spread the points. Every new
+     scene here is sited where the count was thin: a fair, a causeway, a dead
+     pine and a swarm hand the Entertainer, the tide, the sky and the brewer's
+     shelf somewhere to be scored. See data/README.md. */
+  {
+    id: 'child-fair',
+    stage: 'childhood',
+    scene:
+      'The fair has come to the green and the players have lost their smallest actor to a fever. The man in the painted coat is up on the cart looking over the children at the front, and the part is four lines and a fall off a ladder. He points at you.',
+    asks: 'What do you do?',
+    recall: 'At the fair, when the players were a child short, you',
+    options: [
+      {
+        id: 'climb',
+        label: 'Climb up on the cart and learn the four lines in the time it takes them to paint your face. You take the fall twice, because the first one got a laugh.',
+        told: 'climbed up on the cart, learned the four lines while they painted your face and took the fall twice.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { entertainer: 1, merchant: 1 },
+          skill: { troubadour: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'terms',
+        label: 'Ask what the part pays before you climb anything, and settle it in front of the crowd, who are enjoying this more than the play.',
+        told: 'asked what the part paid before you climbed anything, and settled it in front of the crowd.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1 },
+          lineage: { luminary: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'ladder',
+        label: 'Say yes to the fall and nothing else. You have come off higher things than that ladder and you would rather not say four lines to anybody.',
+        told: 'said yes to the fall and nothing else, because you had come off higher things than that ladder.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { colossus: 1, painseeker: 1 },
+          lineage: { stalwart: 1 },
+          background: { entertainer: 1 },
+          skill: { helpful: 1, vigilant: 1 },
+        },
+      },
+      {
+        id: 'mend',
+        label: 'Go round behind the cart to the sick boy instead, with the flask off your mother’s shelf and the leaves you keep in your pocket.',
+        told: 'went round behind the cart to the sick boy instead, with your mother’s flask and the leaves in your pocket.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildheart: 1 },
+          background: { entertainer: 1 },
+          skill: { apothecary: 1, healer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-tide',
+    stage: 'childhood',
+    scene:
+      'The tide has come in over the causeway faster than anybody expected and the pony cart is stuck halfway across with the whole morning’s fish in it. The water is at the axles and rising. The men on the shore are arguing about whose cart it is.',
+    asks: 'What do you do?',
+    recall: 'When the tide caught the fish cart on the causeway, you',
+    options: [
+      {
+        id: 'wade',
+        label: 'Wade out to the axles, put your shoulder against the wheel and walk the whole cart off the causeway a foot at a time.',
+        told: 'waded out to the axles and walked the whole cart off the causeway a foot at a time.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, quartermaster: 1 },
+          lineage: { tidebound: 1 },
+          background: { outlander: 1 },
+          skill: { seafarer: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'swim',
+        label: 'Go into the channel where it is over your head, get a hand in the pony’s bridle and swim its head round until it will follow you.',
+        told: 'swam out into the channel and turned the pony’s head until it would follow you.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1, wilder: 1, 'draconic-bond': 1 },
+          lineage: { tidebound: 1, wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { seafarer: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'sell',
+        label: 'Stay on the shore and tell the arguing men what a cart of fish is worth at noon and what it will be worth at dusk. One of them stops arguing.',
+        told: 'told the arguing men what the fish was worth at noon and what it would be worth at dusk.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { tidebound: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, frugal: 1 },
+        },
+      },
+      {
+        id: 'read',
+        label: 'Watch the water on the stones instead and say how long the causeway has left. You are right to the minute, and one of the men remembers it for years.',
+        told: 'watched the water on the stones and said how long the causeway had left, and you were right to the minute.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 1, alchemist: 1, 'elemental-aspect': 1 },
+          lineage: { tidebound: 1, skybound: 1 },
+          background: { erudit: 1, merchant: 1 },
+          skill: { cartographer: 1, seafarer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-kite',
+    stage: 'childhood',
+    scene:
+      'The wind off the ridge has taken your brother’s kite up over the quarry and dropped it in the top of the one dead pine. He is seven and he is crying. The tree is forty feet of dead branch and nothing has climbed it in years.',
+    asks: 'What do you do?',
+    recall: 'When the kite went into the dead pine above the quarry, you',
+    options: [
+      {
+        id: 'up',
+        label: 'Go up it. Forty feet of dead branch, each one tested with a hand before you put weight on it, then down again with the kite in your teeth.',
+        told: 'went up forty feet of dead branch and came down again with the kite in your teeth.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
+          lineage: { skybound: 1, wildkin: 1 },
+          background: { outlander: 1, entertainer: 1 },
+          skill: { survivalist: 1, vigilant: 1 },
+        },
+      },
+      {
+        id: 'fell',
+        label: 'Fetch the axe and put the whole tree on the ground. It is dead, it was going to come down on somebody eventually, and the kite is in one piece.',
+        told: 'fetched the axe and put the whole dead tree on the ground, and the kite came down in one piece.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, berserker: 1 },
+          lineage: { stonebound: 1 },
+          background: { craftsman: 1, military: 1 },
+          skill: { survivalist: 1, skilled: 1 },
+        },
+      },
+      {
+        id: 'line',
+        label: 'Tie a stone to a line, throw it over the branch and run what you have down the line until the branch decides to let go of the kite.',
+        told: 'threw a line over the branch and ran what you had down it until the branch let go of the kite.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { weaver: 1, enchanter: 1 },
+          lineage: { skybound: 1 },
+          background: { craftsman: 1 },
+          skill: { occultist: 1, skilled: 1 },
+        },
+      },
+      {
+        id: 'new',
+        label: 'Leave it up there and make him a better one by dark, out of the good ash and your own shirt, which flies higher than the first one ever did.',
+        told: 'left it up there and made him a better kite by dark, which flew higher than the first one ever did.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { enchanter: 1, alchemist: 1 },
+          lineage: { skybound: 1 },
+          background: { craftsman: 1, entertainer: 1 },
+          skill: { skilled: 1, helpful: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'child-hive',
+    stage: 'childhood',
+    scene:
+      'The bees have swarmed and hung themselves in a black beard off the low branch of the apple tree, twenty feet from the kitchen door. It has been there since noon. Nobody in the house will go out for the washing and your mother has given up asking them to.',
+    asks: 'What do you do?',
+    recall: 'When the swarm hung in the apple tree all afternoon, you',
+    options: [
+      {
+        id: 'hands',
+        label: 'Walk up to it bare-armed and take it down by hand, into the basket, in one piece. You are stung twice and you do not hurry either time.',
+        told: 'walked up to the swarm bare-armed and took it down into the basket in one piece.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'feral-curse': 1, 'draconic-bond': 1, mycomancer: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1, entertainer: 1 },
+          skill: { survivalist: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'smoke',
+        label: 'Light a smoulder of damp straw under it, work the smoke up into the beard with your hat and box the whole swarm while it is sleepy.',
+        told: 'smoked the swarm sleepy with damp straw and boxed the whole of it.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildheart: 1, scorchbound: 1 },
+          background: { craftsman: 1 },
+          skill: { apothecary: 1, skilled: 1 },
+        },
+      },
+      {
+        id: 'honey',
+        label: 'Work out what a hive is worth over ten years, then walk to the neighbour who keeps bees and sell him a swarm he can see from his own gate.',
+        told: 'worked out what a hive was worth over ten years and sold the swarm to the neighbour who kept bees.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { luminary: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'branch',
+        label: 'Take the branch off at the trunk with one cut and carry the whole thing, bees and all, out to the far hedge on your shoulder.',
+        told: 'took the branch off at the trunk and carried the whole thing, bees and all, out to the far hedge.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, berserker: 1, painseeker: 1 },
+          lineage: { draconic: 1 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, survivalist: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ========================================================== home, third drop
+     Four more: a jammed wheel, a rider at the door, a sword off the wall and a
+     night before a burial. */
+  {
+    id: 'home-mill',
+    stage: 'home',
+    scene:
+      'The mill wheel has jammed on a drowned branch and the whole village’s flour is behind it. The miller is up to his chest in the race trying to get a rope on the thing and he is losing the light. Your father sent you down an hour ago to watch and learn.',
+    asks: 'What do you do?',
+    recall: 'When the mill wheel jammed on the drowned branch, you',
+    options: [
+      {
+        id: 'rope',
+        label: 'Go into the race beside him and take the other end of the rope. It takes both of you until dark and you are the one still pulling at the end of it.',
+        told: 'went into the race beside him and were the one still pulling on the rope at dark.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, runebearer: 1, weaver: 1 },
+          lineage: { tidebound: 1 },
+          background: { craftsman: 1 },
+          skill: { helpful: 1, seafarer: 1 },
+        },
+      },
+      {
+        id: 'run',
+        label: 'Get a hand on the rope, run what you know down the length of it and let go of it where the rope meets the branch. The branch comes apart under the water.',
+        told: 'ran what you knew down the length of the rope and let go of it at the branch, and the branch came apart.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { weaver: 1, arcanist: 1 },
+          lineage: { tidebound: 1 },
+          background: { craftsman: 1 },
+          skill: { occultist: 1, skilled: 1 },
+        },
+      },
+      {
+        id: 'wheel',
+        label: 'Stop the wheel a different way. The sluice above, the gate on the far side and a count of forty, and the race is dry enough to walk into.',
+        told: 'stopped the wheel with the sluice, the gate and a count of forty, and walked into a dry race.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { enchanter: 1, alchemist: 1 },
+          lineage: { luminary: 1 },
+          background: { craftsman: 1, merchant: 1 },
+          skill: { skilled: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'price',
+        label: 'Let it jam. Be on the road to the market town before anybody else has thought about what a fortnight without flour does to the price of bread.',
+        told: 'let it jam and were on the road to the market town before anybody thought about the price of bread.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { merchant: 1, criminal: 1 },
+          skill: { haggler: 1, streetwise: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-guest',
+    stage: 'home',
+    scene:
+      'A rider in your lord’s colours has come to the door out of the rain and is to be fed and put up. The house has one chicken, four chairs and a dirt floor. Your mother has gone very quiet, and everyone is waiting to see how the evening is going to be done.',
+    asks: 'What do you do?',
+    recall: 'The night the lord’s rider was put up at your house, you',
+    options: [
+      {
+        id: 'table',
+        label: 'Lay the table as though the house had always done this, sit him at the head of it and talk to him steadily through the whole meal so that nobody else has to.',
+        told: 'laid the table as though the house had always done this and talked to him through the whole meal.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, spellquill: 1 },
+          lineage: { celestial: 1 },
+          background: { aristocrat: 1, entertainer: 1 },
+          skill: { charismatic: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'sing',
+        label: 'Sing for him afterwards. Everything you know, in order, until the rain stops and he has forgotten what the floor is made of.',
+        told: 'sang for him afterwards, everything you knew, until he had forgotten what the floor was made of.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { entertainer: 1, aristocrat: 1 },
+          skill: { troubadour: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'horse',
+        label: 'Take his horse instead. Rub it down, walk it dry and stay out in the stable with it the whole evening, which suits both of you.',
+        told: 'took his horse instead and stayed out in the stable with it the whole evening.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1, military: 1 },
+          skill: { survivalist: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'chicken',
+        label: 'Go back out into the rain and come home with something better than the chicken. It takes you two hours in the dark and nobody asks where it came from.',
+        told: 'went back out into the rain and came home with something better than the chicken.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { berserker: 1, painseeker: 1 },
+          lineage: { stalwart: 1, draconic: 1 },
+          background: { outlander: 1, mercenary: 1 },
+          skill: { survivalist: 1, scavenger: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-blade',
+    stage: 'home',
+    scene:
+      'Your father’s sword has come off the wall for the first time in your life, because there are men on the road and the village has been told to arm. It is old and the edge is long gone. He has put it in your hands rather than his own and gone back out to the yard.',
+    asks: 'What do you do with it?',
+    recall: 'The night your father put his old sword in your hands, you',
+    options: [
+      {
+        id: 'edge',
+        label: 'Sit up with the stone and the oil and put an edge back on it. It takes until the small hours and by morning it will cut the hair off your arm.',
+        told: 'sat up with the stone and the oil until the old sword would cut the hair off your arm.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { runebearer: 1, 'weapon-master': 1 },
+          lineage: { scorchbound: 1 },
+          background: { craftsman: 1, military: 1 },
+          skill: { skilled: 1, vigilant: 1 },
+          weapon: { 'melee-heavy': 1 },
+        },
+      },
+      {
+        id: 'word',
+        label: 'Say the word nobody taught you over it just once and feel the steel take it the way dry ground takes rain. You do not tell your father about that part.',
+        told: 'said the word nobody taught you over the steel and felt it take.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellblade: 1, enchanter: 1 },
+          lineage: { scorchbound: 1 },
+          background: { military: 1, erudit: 1 },
+          skill: { occultist: 1, 'quick-draw': 1 },
+        },
+      },
+      {
+        id: 'sell',
+        label: 'Walk it into the town before dawn and come back with two of something newer, and the difference in your pocket, and an argument to have later.',
+        told: 'walked it into town before dawn and came back with two of something newer and the difference in your pocket.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, frugal: 1 },
+        },
+      },
+      {
+        id: 'hand',
+        label: 'Put it back on the table and take the knife you already know instead. A blade you cannot move quickly is a blade somebody else takes off you.',
+        told: 'put it back on the table and took the knife you already knew instead.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { duelist: 1, 'flowing-fist': 1 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1, mercenary: 1 },
+          skill: { 'quick-draw': 1, cunning: 1 },
+          weapon: { 'finesse-weapon': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'home-funeral',
+    stage: 'home',
+    scene:
+      'Your grandmother is laid out in the front room and the house is full of people who did not come while she was alive. There is one night before the burial. Somebody has to sit up with her, and nobody has said who.',
+    asks: 'What do you do?',
+    recall: 'On the night before your grandmother was buried, you',
+    options: [
+      {
+        id: 'sit',
+        label: 'Sit up with her the whole night and say back to her, out loud, every single thing she ever said to you. Somewhere near dawn it stops feeling like talking to nobody.',
+        told: 'sat up with her all night saying back every single thing she had said to you.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { necromancer: 1, pactbound: 1 },
+          lineage: { undead: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { occultist: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'room',
+        label: 'Work the other room instead. Fill cups, sit down beside people and find out by midnight which of them came for the house and which for the field behind it.',
+        told: 'worked the other room and knew by midnight which of them had come for the house and which for the field.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, spellquill: 1 },
+          lineage: { luminary: 1 },
+          background: { aristocrat: 1, investigator: 1 },
+          skill: { inquisitor: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'tell',
+        label: 'Stand up in front of all of them and tell the story of her, the whole of it, including the parts the family leaves out, until the ones who did not come are crying.',
+        told: 'stood up and told the whole story of her, including the parts the family leaves out.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { entertainer: 1, aristocrat: 1 },
+          skill: { troubadour: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'dig',
+        label: 'Go out with the spade and dig the grave yourself rather than pay the man who does it. It takes most of the night and the sides are straight.',
+        told: 'went out with the spade and dug the grave yourself, and the sides were straight.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, runebearer: 1, painseeker: 1 },
+          lineage: { stonebound: 1, undead: 1 },
+          background: { craftsman: 1 },
+          skill: { frugal: 1, survivalist: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ========================================================= blood, third drop
+     Four more: a stack that broke in the night, a hawk that would not look away,
+     an orchard gone grey and a ring of red gold. */
+  {
+    id: 'blood-ember',
+    stage: 'blood',
+    scene:
+      'The charcoal burners’ stack has broken open in the night and the wind has walked the fire into the standing timber. You are downwind of it with a shovel and no help nearer than the village. The burners’ boy is somewhere between you and the burn.',
+    asks: 'What do you do?',
+    recall: 'The night the charcoal stack broke open, you',
+    options: [
+      {
+        id: 'break',
+        label: 'Cut a break across the wind. Two hundred yards of it with a shovel and a billhook, alone, and the fire comes up to it at dawn and stops.',
+        told: 'cut two hundred yards of firebreak across the wind alone, and the fire came up to it and stopped.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, berserker: 1 },
+          lineage: { scorchbound: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'walk',
+        label: 'Walk into the burn for the boy. The heat does not do to you what it is doing to the trees, and you come out the far side carrying him.',
+        told: 'walked into the burn for the boy and came out the far side carrying him.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { berserker: 1, painseeker: 1 },
+          lineage: { scorchbound: 1, draconic: 1 },
+          background: { mercenary: 1, military: 1 },
+          skill: { healer: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'wind',
+        label: 'Read the wind before you move at all. Where it is now, where it turns at first light and which side of the fire will be safe to stand on in an hour.',
+        told: 'read the wind before you moved, and knew which side of the fire would be safe to stand on by dawn.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
+          lineage: { skybound: 1, scorchbound: 1 },
+          background: { erudit: 1 },
+          skill: { cartographer: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'smother',
+        label: 'Smother it the way the burners do, armful by armful of green stuff off the wet ground, until the edge of it is only smoke.',
+        told: 'smothered the edge of it with armfuls of green stuff off the wet ground until it was only smoke.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { mycomancer: 1, wilder: 1 },
+          lineage: { wildheart: 1, scorchbound: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, apothecary: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-hawk',
+    stage: 'blood',
+    scene:
+      'There is a hawk on the fence post at the top of the field and it has not moved while you crossed the whole field towards it. Nobody else working the field can see it. It is looking at you the way a person looks at you.',
+    asks: 'What do you do?',
+    recall: 'When the hawk on the fence post would not look away, you',
+    options: [
+      {
+        id: 'hand',
+        label: 'Put out your arm and wait. It comes onto your wrist much heavier than you expected and stays there while you walk the length of the field.',
+        told: 'put out your arm, and it came onto your wrist and stayed there the length of the field.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { 'draconic-bond': 1, 'feral-curse': 1, beastbond: 1 },
+          lineage: { skybound: 1, wildkin: 1 },
+          background: { outlander: 1, entertainer: 1 },
+          skill: { survivalist: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'still',
+        label: 'Stand still and look back at it until one of the two of you gives way, which takes a quarter of an hour and is not you.',
+        told: 'stood and looked back at it for a quarter of an hour, until it was the hawk that gave way.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 1, wilder: 1 },
+          lineage: { skybound: 1 },
+          background: { outlander: 1, mercenary: 1 },
+          skill: { vigilant: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'name',
+        label: 'Say out loud what you think it actually is, using the name for it. Then watch what happens in its face when you get the name right.',
+        told: 'said out loud what you thought it was and watched its face when you got the name right.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 1, necromancer: 1 },
+          lineage: { skybound: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { occultist: 1, inquisitor: 1 },
+        },
+      },
+      {
+        id: 'stone',
+        label: 'Put a stone through it. A thing that watches you across a whole field is a thing that was sent, and you would rather send something back.',
+        told: 'put a stone through it, because a thing that watches you across a field has been sent.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { berserker: 1, brawler: 1, painseeker: 1 },
+          lineage: { draconic: 1, undead: 1 },
+          background: { mercenary: 1, criminal: 1 },
+          skill: { vigilant: 1, scavenger: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-orchard',
+    stage: 'blood',
+    scene:
+      'Every tree in the orchard has gone over to a grey bloom in a single week and the fruit is coming off soft and black. The old men have said to burn the lot before it crosses the lane. You have been out there since first light with your hands in it.',
+    asks: 'What do you do?',
+    recall: 'The week the grey bloom took the whole orchard, you',
+    options: [
+      {
+        id: 'learn',
+        label: 'Stay out there with it until you know what it is, what it feeds on and what it will not touch. By the fourth day you can tell which tree it takes next.',
+        told: 'stayed out in the orchard until you could tell which tree the bloom would take next.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { mycomancer: 1, wilder: 1 },
+          lineage: { wildheart: 1, wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { apothecary: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'burn',
+        label: 'Burn the lot. Tree by tree, down to the roots, with the wind at your back and the torch in your own hand, and the lane never catches.',
+        told: 'burned the orchard down to the roots, tree by tree, with the torch in your own hand.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 1, painseeker: 1 },
+          lineage: { scorchbound: 1 },
+          background: { military: 1, mercenary: 1 },
+          skill: { survivalist: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'jar',
+        label: 'Take a jar of it back to the bench and spend a fortnight finding out what kills it, what only slows it and what feeds it instead.',
+        told: 'took a jar of it to the bench and spent a fortnight finding out what killed it and what fed it.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { alchemist: 1, thaumaturge: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { apothecary: 1, physician: 1 },
+        },
+      },
+      {
+        id: 'graft',
+        label: 'Save the four trees that are still clean. Cuttings off all four, wrapped and carried two miles, and in three years there is an orchard again somewhere else.',
+        told: 'took cuttings off the four clean trees and carried them two miles, and in three years there was an orchard again.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { enchanter: 1, alchemist: 1 },
+          lineage: { celestial: 1 },
+          background: { craftsman: 1, merchant: 1 },
+          skill: { skilled: 1, frugal: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'blood-coin',
+    stage: 'blood',
+    scene:
+      'The pedlar has spread his tray on the churchyard wall and there is one thing on it you cannot look away from: a ring of red gold with a scale pattern cut into the band. You have never in your life wanted anything the way you want this. You are eleven and you have nothing to trade.',
+    asks: 'What do you do?',
+    recall: 'When the pedlar’s red gold ring would not let you go, you',
+    options: [
+      {
+        id: 'take',
+        label: 'Take it while he is counting somebody else’s coppers, and be at the far end of the churchyard before he has finished counting them.',
+        told: 'took it while he was counting somebody else’s coppers and was gone before he finished.',
+        tags: ['did:theft'],
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { draconic: 1 },
+          background: { criminal: 1, merchant: 1 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'earn',
+        label: 'Come back to him every day for a month with something worth a little of it: a rabbit, a load of kindling, a morning’s work, until the ring is yours.',
+        told: 'came back to the pedlar every day for a month with something worth a little of it, until the ring was yours.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, runebearer: 1 },
+          lineage: { draconic: 1 },
+          background: { craftsman: 1, military: 1 },
+          skill: { frugal: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'ask',
+        label: 'Ask him where it came from. Then ask again, and again, past the answer he gives everybody, until he puts the tray away and will not look at you.',
+        told: 'asked him where it came from until he put the tray away and would not look at you.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, necromancer: 1 },
+          lineage: { draconic: 1 },
+          background: { investigator: 1, erudit: 1 },
+          skill: { inquisitor: 1, occultist: 1 },
+        },
+      },
+      {
+        id: 'warm',
+        label: 'Put one finger on it and know, before he has said a word about it, that the metal is warm and has no business being warm on a wall in November.',
+        told: 'put one finger on it and knew the metal was warm, which it had no business being.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 1, spellblade: 1 },
+          lineage: { draconic: 1 },
+          background: { erudit: 1, aristocrat: 1 },
+          skill: { occultist: 1, 'innate-spell-novice': 1 },
+        },
+      },
+    ],
+  },
+
+  /* ========================================================= trade, third drop
+     Four more: a wintering troupe, a house on the square, a counting house on
+     the bridge and an armourer's free bench. */
+  {
+    id: 'trade-troupe',
+    stage: 'trade',
+    scene:
+      'The troupe that came through in the spring is back, two players and a wagon short, wintering in the yard behind the inn. The woman who runs them has watched you work that room three nights running. This morning she asked what you are still doing in this town.',
+    asks: 'What do you take on?',
+    recall: 'When the troupe asked what you were still doing in that town, you',
+    options: [
+      {
+        id: 'boards',
+        label: 'Take the boards. By the spring you have four parts, a voice that reaches the back of a market square and a name in two counties.',
+        told: 'took the boards, and by spring you had four parts and a name in two counties.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { entertainer: 1, merchant: 1 },
+          skill: { troubadour: 1, charismatic: 1 },
+          weapon: { 'enchanted-instrument': 1 },
+        },
+      },
+      {
+        id: 'books',
+        label: 'Take the books. A troupe that cannot count its own gate is a troupe that starves in March, and by March they are not starving.',
+        told: 'took the books, because a troupe that cannot count its own gate starves in March.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { luminary: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { mastermind: 1, haggler: 1 },
+        },
+      },
+      {
+        id: 'wagon',
+        label: 'Take the wagon, the horses and everything in the show that has to be lifted, put up before dark and taken down again by lamplight.',
+        told: 'took the wagon, the horses and everything in the show that had to be lifted.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, guardian: 1, quartermaster: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1, entertainer: 1 },
+          skill: { helpful: 1, skilled: 1 },
+        },
+      },
+      {
+        id: 'paint',
+        label: 'Take the paint, the wire and the flash powder: everything that makes a stage do the things a stage is not supposed to be able to do.',
+        told: 'took the paint, the wire and the flash powder, and made the stage do what a stage should not.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { alchemist: 1, 'elemental-aspect': 1 },
+          lineage: { scorchbound: 1 },
+          background: { craftsman: 1, entertainer: 1 },
+          skill: { skilled: 1, apothecary: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-house',
+    stage: 'trade',
+    scene:
+      'The house on the square has taken you on for the season. On the third morning the steward puts a ring of keys in your hand and says the family will be down at eleven. Nobody has yet told you which of the eleven people in this house you actually work for.',
+    asks: 'What do you do first?',
+    recall: 'When the steward handed you the keys of the house on the square, you',
+    options: [
+      {
+        id: 'learn',
+        label: 'Learn all eleven of them by the end of the week: what each one wants, what each one is afraid of and which two of them are not speaking.',
+        told: 'learned all eleven of them by the end of the week, down to which two were not speaking.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { luminary: 1 },
+          background: { aristocrat: 1, investigator: 1 },
+          skill: { empath: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'keys',
+        label: 'Learn the keys instead. Which doors the ring opens, which it does not, and what is behind the two doors nobody on that ring can get into.',
+        told: 'learned the keys instead, and what was behind the two doors the ring would not open.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { criminal: 1, investigator: 1 },
+          skill: { cunning: 1, vigilant: 1 },
+        },
+      },
+      {
+        id: 'work',
+        label: 'Do the work that is in front of you and be the one thing in that house that nobody upstairs ever has to think about, for the whole season.',
+        told: 'did the work in front of you and were the one thing in that house nobody upstairs had to think about.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 1, runebearer: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1, military: 1 },
+          skill: { helpful: 1, frugal: 1 },
+        },
+      },
+      {
+        id: 'kitchen',
+        label: 'Go down to the kitchen, where the cook has been thirty years and has the whole house in her head, and make yourself useful over a pot.',
+        told: 'went down to the kitchen, where the cook had thirty years of the house in her head.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 1, trickster: 1 },
+          lineage: { wildheart: 1 },
+          background: { entertainer: 1, aristocrat: 1 },
+          skill: { apothecary: 1, empath: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-bank',
+    stage: 'trade',
+    scene:
+      'The counting house on the bridge will lend to anybody with a name, and you have spent two years making one. The man across the table has your figures in front of him and a decision to make. There are four people in the queue behind you listening to all of it.',
+    asks: 'What do you do?',
+    recall: 'When the counting house on the bridge weighed your name, you',
+    options: [
+      {
+        id: 'figures',
+        label: 'Let the figures do it. Every column of them, out loud, in order, until the only honest thing left for him to do is sign.',
+        told: 'let the figures do it, out loud and in order, until the only honest thing left was to sign.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 1, enchanter: 1 },
+          lineage: { luminary: 1 },
+          background: { merchant: 1, erudit: 1 },
+          skill: { mastermind: 1, haggler: 1 },
+        },
+      },
+      {
+        id: 'name',
+        label: 'Spend the name instead. Let him work out, with four people listening, exactly what refusing you in public is going to cost him by Friday.',
+        told: 'spent the name instead, and let him work out what refusing you in public would cost him.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 1 },
+          lineage: { infernal: 1 },
+          background: { aristocrat: 1, merchant: 1 },
+          skill: { charismatic: 1, haggler: 1 },
+        },
+      },
+      {
+        id: 'walk',
+        label: 'Stand up, thank him for his afternoon and walk out past the four in the queue. He sends a boy after you before you are off the bridge.',
+        told: 'thanked him and walked out, and he sent a boy after you before you were off the bridge.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { merchant: 1, entertainer: 1 },
+          skill: { cunning: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'guard',
+        label: 'Take the other work the house is offering instead: the strongroom, the night, the door and a bed in the room behind it.',
+        told: 'took the other work the house was offering: the strongroom, the night and the door.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
+          background: { mercenary: 1, military: 1 },
+          skill: { vigilant: 1, frugal: 1 },
+          armor: { 'Heavy Armor': 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'trade-smith',
+    stage: 'trade',
+    scene:
+      'The armourer on the lower street has more orders than hands and one bench free. He puts three things on it in front of you: a blade with no edge left, a mail shirt with a hole through the back of it and a customer who has been waiting an hour.',
+    asks: 'Which do you take?',
+    recall: 'When the armourer put three things on his free bench, you',
+    options: [
+      {
+        id: 'blade',
+        label: 'Take the blade, and put rather more into the finishing of it than an edge. The man who collects it never does work out why it never needs sharpening.',
+        told: 'took the blade and put rather more into the finishing of it than an edge.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 2 },
+          talent: { spellblade: 1, enchanter: 1 },
+          lineage: { scorchbound: 1 },
+          background: { craftsman: 1, mercenary: 1 },
+          skill: { skilled: 1, occultist: 1 },
+        },
+      },
+      {
+        id: 'mail',
+        label: 'Take the mail shirt. Two hundred rings drawn, cut, closed and riveted by hand, four hours of it, and the repair is stronger than the shirt.',
+        told: 'took the mail shirt and closed two hundred rings by hand until the repair was stronger than the shirt.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { runebearer: 1, colossus: 1 },
+          lineage: { stonebound: 1, stalwart: 1 },
+          background: { craftsman: 1, military: 1 },
+          skill: { skilled: 1, frugal: 1 },
+          armor: { 'Heavy Armor': 1 },
+        },
+      },
+      {
+        id: 'customer',
+        label: 'Take the customer, who has been standing there an hour and is worth more to that shop than either of the other two things on the bench.',
+        told: 'took the customer, who was worth more to the shop than either thing on the bench.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, spellquill: 1 },
+          lineage: { celestial: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, charismatic: 1 },
+        },
+      },
+      {
+        id: 'bench',
+        label: 'Take the bench itself. By the end of the month the orders come to you first and the armourer is working down a list in your hand.',
+        told: 'took the bench itself, and by the end of the month the armourer was working down a list in your hand.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, virtuoso: 1 },
+          lineage: { fey: 1 },
+          background: { merchant: 1, criminal: 1 },
+          skill: { cunning: 1, skilled: 1 },
+        },
+      },
+    ],
+  },
+
+  /* ======================================================= leaving, third drop
+     Four more for the last morning: a company swearing men in, a coaster short a
+     hand, a fair filling the square and a shelf over a banked fire. */
+  {
+    id: 'leaving-oath',
+    stage: 'leaving',
+    scene:
+      'There is a company forming in the square at dawn and they are swearing the men in one at a time, on a book, in front of everybody. Your pack is on your back and the carrier goes in four hours. The sergeant has now seen you standing there twice.',
+    asks: 'What do you do?',
+    recall: 'On the morning the company swore men in on the square, you',
+    options: [
+      {
+        id: 'swear',
+        label: 'Go and stand in the line and swear it, all of it, with your hand on the book and your name said loudly enough for the back of the square.',
+        told: 'stood in the line and swore it with your hand on the book, loudly enough for the back of the square.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 1, runebearer: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1, mercenary: 1 },
+          skill: { vigilant: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'read',
+        label: 'Ask to read the book first, and then read the whole of it, slowly, in front of the queue, because a thing you swear to is a thing you have read.',
+        told: 'asked to read the book first, and read the whole of it in front of the queue.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { spellquill: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1, aristocrat: 1 },
+          skill: { scholar: 1, inquisitor: 1 },
+        },
+      },
+      {
+        id: 'carrier',
+        label: 'Take the carrier. You are past the end of the square before the sergeant has finished with the man in front of him.',
+        told: 'took the carrier, and were past the end of the square before the sergeant looked up.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { trickster: 1, wilder: 1 },
+          lineage: { wildheart: 1 },
+          background: { criminal: 1 },
+          skill: { cunning: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'sell',
+        label: 'Sell them the four hours instead: a name for their book that is not quite yours, and a horse they are going to need by noon.',
+        told: 'sold them a name for their book that was not quite yours, and a horse they needed by noon.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { pactbound: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, criminal: 1 },
+          skill: { haggler: 1, streetwise: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'leaving-tide',
+    stage: 'leaving',
+    scene:
+      'The tide turns at four and the coaster in the harbour is one hand short. The master will take you as far as the next port and no further. The alternative is eleven days of road in the wrong season, and you have to say now.',
+    asks: 'What do you do?',
+    recall: 'On the turning tide, with the coaster a hand short, you',
+    options: [
+      {
+        id: 'ship',
+        label: 'Take the berth. You are up the side with your pack before he has finished saying what the work is, and you are good at it by the second day.',
+        told: 'took the berth, and were good at it by the second day.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { duelist: 1, wilder: 1 },
+          lineage: { tidebound: 1, skybound: 1 },
+          background: { merchant: 1 },
+          skill: { seafarer: 1, cartographer: 1 },
+        },
+      },
+      {
+        id: 'cargo',
+        label: 'Take the berth and then take an interest in the cargo, so that by the next port you own a share of what is in the hold and he owes you for it.',
+        told: 'took the berth and an interest in the cargo, and owned a share of the hold by the next port.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { tidebound: 1 },
+          background: { merchant: 1, aristocrat: 1 },
+          skill: { haggler: 1, mastermind: 1 },
+        },
+      },
+      {
+        id: 'road',
+        label: 'Take the eleven days. Wrong season, wrong boots and nobody to answer to, and you walk into the next town owing no man an hour of your life.',
+        told: 'took the eleven days of road instead, and walked into the next town owing nobody an hour.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, runebearer: 1, painseeker: 1 },
+          lineage: { stonebound: 1, stalwart: 1 },
+          background: { outlander: 1, mercenary: 1 },
+          skill: { survivalist: 1, frugal: 1 },
+        },
+      },
+      {
+        id: 'weather',
+        label: 'Go and stand on the harbour wall and read the sky for a quarter of an hour before you answer either way. What it says decides it.',
+        told: 'stood on the harbour wall and read the sky for a quarter of an hour, and let that decide it.',
+        tags: ['did:magic'],
+        gives: {
+          attribute: { mind: 1 },
+          talent: { arcanist: 1, 'elemental-aspect': 1 },
+          lineage: { skybound: 1, tidebound: 1 },
+          background: { erudit: 1, merchant: 1 },
+          skill: { cartographer: 1, seafarer: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'leaving-crowd',
+    stage: 'leaving',
+    scene:
+      'There is a fair on the morning you go and the square is packed wall to wall. Whatever you do in the next hour, four hundred people are going to watch you do it. One of them has been asking after you by name since yesterday.',
+    asks: 'What do you do?',
+    recall: 'On the morning you left, with the fair filling the square, you',
+    options: [
+      {
+        id: 'stage',
+        label: 'Get up on the mounting block and give them one last song, then go out of the square while they are still shouting for another.',
+        told: 'gave them one last song off the mounting block and went while they were still shouting.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { virtuoso: 1 },
+          lineage: { celestial: 1 },
+          background: { entertainer: 1, aristocrat: 1 },
+          skill: { troubadour: 1, charismatic: 1 },
+          weapon: { 'enchanted-instrument': 1 },
+        },
+      },
+      {
+        id: 'crowd',
+        label: 'Go into the crowd and be four hundred other people all the way across it, and come out of the far side as somebody nobody was asking after.',
+        told: 'went into the crowd and came out the far side as somebody nobody was asking after.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { trickster: 1, 'flowing-fist': 1, virtuoso: 1 },
+          lineage: { fey: 1, skybound: 1 },
+          background: { criminal: 1, entertainer: 1 },
+          skill: { cunning: 1, streetwise: 1 },
+        },
+      },
+      {
+        id: 'through',
+        label: 'Walk down the middle of it at your own pace looking at nobody, and let four hundred people work out for themselves how to get out of the way.',
+        told: 'walked down the middle of it at your own pace and let the square work out how to move.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { colossus: 1, guardian: 1 },
+          lineage: { draconic: 1, stalwart: 1 },
+          background: { mercenary: 1, military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'find',
+        label: 'Find the one who has been asking after you before they find you, and be the one who opens the conversation, in a place of your choosing.',
+        told: 'found the one who had been asking after you first, and opened the conversation yourself.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, pactbound: 1 },
+          lineage: { infernal: 1 },
+          background: { investigator: 1, aristocrat: 1 },
+          skill: { inquisitor: 1, empath: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'leaving-hearth',
+    stage: 'leaving',
+    scene:
+      'The fire is banked for the last time and the shelf over it is your mother’s: forty jars, a copper pot and forty years of knowing what is in each one. She is asleep in the next room. The carrier goes in an hour.',
+    asks: 'What do you take off the shelf?',
+    recall: 'From your mother’s shelf, in the last hour, you took',
+    options: [
+      {
+        id: 'pot',
+        label: 'The copper pot, and as many of the jars as will go in the pack without breaking, wrapped one at a time in everything you own.',
+        told: 'the copper pot and as many jars as would go in the pack, wrapped in everything you owned.',
+        gives: {
+          attribute: { instinct: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          lineage: { wildheart: 1 },
+          background: { outlander: 1, craftsman: 1 },
+          skill: { apothecary: 1, frugal: 1 },
+        },
+      },
+      {
+        id: 'book',
+        label: 'The one thing on that shelf that is not a jar: her book, forty years of it, in a hand you can only just read.',
+        told: 'her book, forty years of it, in a hand you could only just read.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { spellquill: 1, alchemist: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1, craftsman: 1 },
+          skill: { scholar: 1, apothecary: 1 },
+        },
+      },
+      {
+        id: 'thread',
+        label: 'The ball of red thread from the back of the shelf, the one she never once let you touch, and you still do not know why you took that.',
+        told: 'the ball of red thread she never let you touch, and you still do not know why.',
+        gives: {
+          attribute: { physique: 1 },
+          talent: { weaver: 1, runebearer: 1, totemic: 1 },
+          lineage: { stalwart: 1 },
+          background: { craftsman: 1, entertainer: 1 },
+          skill: { tailor: 1, skilled: 1 },
+        },
+      },
+      {
+        id: 'nothing',
+        label: 'Nothing off the shelf at all. You write out the forty labels in a fair hand for whoever comes after and leave the list under the pot.',
+        told: 'nothing at all, and left forty labels written out in a fair hand under the pot.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { spellquill: 1 },
+          lineage: { celestial: 1 },
+          background: { erudit: 1, aristocrat: 1 },
+          skill: { scholar: 1, helpful: 1 },
         },
       },
     ],

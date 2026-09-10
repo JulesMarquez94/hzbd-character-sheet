@@ -37,6 +37,13 @@
  * the deepest roots, and then on the codex's own order. Written talent sets
  * only: a roster placeholder can gather points and never wins.
  *
+ * Every point outside the attribute is a 1, so a count is really a tally of how
+ * many of your eight answers pointed at the same thing, and the winner is the
+ * thread that runs through the run rather than the one answer that shouted. See
+ * the fifth law at the top of crossroadsPool.js. Ties are common under that and
+ * are meant to be: the earliest-scored rule is what breaks them, and it breaks
+ * them toward the child you were.
+ *
  * ------------------------------------------------------------ it has to add up
  * Jules, 2026-09-08: "it shouldn't be possible for you to get something like a
  * Duelist and Guardian, which are marked as Instinct and Physique, and to have

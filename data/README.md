@@ -15398,3 +15398,167 @@ was only ever going to be caught by pressing the button.
 - **A leaf in a fight has not been played at a table.** The window pays through the same prompt
   every card does and the leaf reaches the bar, but nobody has written one during a running
   encounter with the reaction gate standing.
+
+## Every point is one point, twenty more forks, and the road stops before it is finished, 2026-09-10
+
+Two asks in one sitting. "In the crossroads system, avoid having thing give mutlipe points to 1,
+and have them spread out on more options. The goals is to have cross over. add 20 more secnarios."
+And then: "make sure that if the characte creaiton once done reuqire choice form palyer such as
+aspells, enchantment ect prompt them to take it before finalizing."
+
+### The fifth law: a point is a single point
+
+Outside the attribute, no answer weighs anything twice any more. Where an answer used to put a 2 or
+a 3 on one set it now names two or three sets the same act points at, so a thing wins a count by
+being **what several answers had in common** rather than by one answer choosing it. Tearing the
+gate out of the stone is a point for the Berserker and a point for the Colossus, and which of them
+you end up holding is decided by the other seven answers. That is the crossover Jules asked for.
+
+The attribute is the one exception and it is not a spread: an answer still gives exactly one, at 1
+or 2 depending on how hard it leans, because the lane is what makes the count add up to somebody
+and there is nothing to spread it across.
+
+`lint:crossroads` holds all 452 answers to it in a section of its own, and the law is written
+fifth at the top of `crossroadsPool.js`.
+
+**What that does to a pool is not obvious and is the reason this took four passes.** With every
+number a 1, *how often a thing wins is very nearly how many answers name it*, so the pool is now
+balanced by counting homes rather than by weighing them. The first draft of the flattening kept
+every id where it was and only cut the numbers, and the census came back worse than what it
+replaced:
+
+| | Before the drop | Points flattened, nothing moved | Shipped |
+| --- | --- | --- | --- |
+| Trickster | 24.7% | **35.5%** | 17.2% |
+| Guardian | 24.7% | 29.9% | 16.0% |
+| Spellblade | 3.3% | **0.2%** | 3.6% |
+| Cauldron Keeper | 6.7% | **0.3%** | 5.5% |
+| Weaver | 1.3% | 0.9% | 7.2% |
+| Luminary (lineage) | 8.4% | **32.1%** | 8.6% |
+| Entertainer (background) | 7.0% | **0.8%** | 10.4% |
+
+Luminary was on 101 of 372 answers because it is the lineage that raises Mind and I had put it on
+almost every Mind answer as the default; at two points a throw that was a nudge, and at one point
+a head count it wins outright. The trades went the same way: the Mercenary was named by 101
+answers and the Entertainer by 29, which under weights read as "the Mercenary is a common life"
+and under a head count reads as "you are a Mercenary".
+
+So the whole pool was re-laid against a homes census rather than by eye. The three registries now
+run:
+
+| | Was | Now |
+| --- | --- | --- |
+| Talent sets (18 written) | 1.3% to 24.7% | **3.6% to 17.2%** |
+| Lineages (13) | 5.5% to 10.8% | **4.7% to 12.9%** |
+| Backgrounds (10) | 7.0% to 12.3% | **7.9% to 11.5%** |
+
+### Two sets were gathering points and could never win
+
+The census found a failure the old weights had hidden. **The Spellblade was scored in twelve
+answers and never once alone**: every one of them also named the Arcanist or the Enchanter, and
+both of those are named by three times as many answers, so the Spellblade lost every count it was
+ever in. It was held in one run in five hundred. The Cauldron Keeper had the same shape against the
+Mycomancer, which stood beside it in 26 of its 29 answers.
+
+Both are fixed by splitting rather than by adding, on the line the codex already draws: **the
+Keeper brews and the Mycomancer grows.** A cup, a flask, a pot, a tea and a poultice are the
+Keeper's; what is in the ground, the rot and the forage are the Mycomancer's; five weeks of a
+garden bed by bed is honestly both and scores both. The Spellblade came out from behind the
+Arcanist the same way, and lost the two answers that were never its own: the half of a lesson that
+*refuses* the blade, and a tome, which does not swing.
+
+This is worth knowing before touching a number: under the fifth law, **two sets that always appear
+together are one set as far as the count is concerned.**
+
+### Twenty more scenes, and they were written for the census
+
+Ninety-three questions became a hundred and thirteen. Four went to each of the five stages that
+were thinnest against their own draw, so a question is now asked in 5.9% to 8.0% of runs against
+5.9% to 12.5%:
+
+| Stage | Draw | Was | Now |
+| --- | --- | --- | --- |
+| Childhood | 1 | 10 | 14 |
+| Home | 1 | 10 | 14 |
+| Blood | 1 | 10 | 14 |
+| Youth | 1 | 17 | 17 |
+| Trade | 1 | 10 | 14 |
+| The Road | 2 | 25 | 25 |
+| Leaving | 1 | 11 | 15 |
+
+Unlike the forty of the day before, **these were sited at things the count had nobody for.** A
+fair with a part going spare, a house on a square with eleven people in it, a wintering troupe and
+a counting house on a bridge are where the Entertainer, the Aristocrat and the Merchant live. A
+mill rope, a kite line and a ball of red thread on a shelf are where the Weaver does. A causeway
+under the tide, a hawk on a fence post and a charcoal stack that broke in the night are Tidebound,
+Skybound and Scorchbound, which were the three rarest bloods in the pool. An armourer's free bench
+and a father's sword off the wall are the Spellblade's only two scenes in the whole codex where a
+word goes into steel and nothing else is happening.
+
+Everything else about them is the four laws as before: a situation in two to four sentences, at
+most four answers, each a way of acting with a means you can picture, each leaning exactly one way.
+
+### The road stops before it says it is finished
+
+The second ask is the same law the free hand got the day before, at the other way in. A Crossroads
+character is made at **level 2 with two talent sets**, so it hands over more blanks than any other
+path: the count can decide a Mycomancer and it cannot decide which four spells, it can hand over a
+Draconic Bond and it cannot name the creature, and a Scorchbound has a lineage card whose sentence
+has a spell-shaped hole in it. **93 of every 100 Crossroads characters land owing at least one
+choice**, and until now every one of them went straight to the sheet with the blanks in.
+
+There is now a third screen after the reveal. Taking the character writes it, exactly as before,
+and then draws **the level ledger for the two levels it just bought** with every finished block
+folded away, so what is standing is only what is still open. The way out is `Gated` and says how
+much: "3 still open", "3 choices are still open below. Answer them and this opens." A count that
+left nothing open skips the screen and goes to the sheet as it always did.
+
+Counted by `openChoices`, which is the same function the Advancement tab badges itself with and
+the same one the free hand's last step waits on, so the three can never disagree about whether a
+character is finished. "Walk it again" is gone from that screen on purpose: the character is
+written by then, and starting over would be an undo nobody asked for. The Advancement tab can
+change every part of it afterwards, as it always could.
+
+### Checked
+
+- `lint:crossroads`: 113 questions in 7 stages, 8 asked a run, 4,000 walks. Two new sections. **A
+  point is a single point** holds all 452 answers to a 1 outside the attribute. **And a patch is
+  not the end of it** makes 300 characters and asserts that one can still owe a choice and that no
+  owed choice is above the level the Crossroads made, which is what keeps the new gate from being
+  a trap; it prints the distribution under `--list` (0 open in 7%, 1 in 32%, 2 in 37%, 3 in 19%,
+  4 in 6%).
+- The old "wins at least once" is now **"is held in one run in a hundred"** for all three
+  registries. A set held twice in four thousand runs passed the old check, which is exactly what
+  the Spellblade was doing.
+- `npm run lint`, `lint:text` clean across 263 files. Eleven serial commas the new prose introduced
+  were restyled rather than marked.
+- In the browser on a throwaway harness (`gate-test.html` plus `src/gate-test.jsx`, both deleted):
+  eight questions answered, the reveal, "Take this character" writing a level 2 Berserker and
+  Spellquill and **not** calling `onDone`; the settle screen reading "They are on the sheet. These
+  are the things the road could not decide for you." over a folded ledger; the way out gated at
+  "1 still open" with the reason; the Scorchbound's INNATE FIRE answered with Kindle Weapon; the
+  gate opening to "Open the sheet" and `onDone` firing on the press. A second run landed at 3 open
+  and gated the same way.
+
+### Still open
+
+- **Mind takes the +2 in 40% of random runs**, Instinct 32% and Physique 29%, because 177 of the
+  452 answers lean Mind against 129 that lean Physique. It was 37% before this drop and the twenty
+  new scenes moved it two points further. Nothing here is a numbers fix: the lanes are a property
+  of the scenes, and levelling it means writing physical answers into scenes that are currently
+  read-it-and-think. Worth a ruling before the next drop rather than a quiet re-laning of scenes
+  Jules has already read.
+- **The Spellblade is still the floor at 3.6%**, and it is not a tuning problem. It is scored in
+  eighteen answers because a word carried into a blade needs a blade in the scene and a Mind lean
+  in the answer, and a pool of villages, mills and roads has about that many. Lifting it further
+  means scenes written for it, not points moved onto it.
+- **The three gated scenes got rarer again.** `road-reputation` is asked in 0.7 runs of 100,
+  `youth-watch` 0.9 and `youth-letter` 2.4, because the pool they are drawn from grew by a fifth
+  and the draw did not learn to favour a gate the run has earned. That is the same ruling the
+  eight-question drop flagged, still not made.
+- **A placeholder is now as big as a written set.** The Tactician is named by 44 answers against
+  the Guardian's 48, and it can never win because it has no cards. Under weights that did not
+  matter much; under a head count it means the day the Tactician is written it arrives near the
+  top of the census with nothing else changing. Worth reading the homes column before writing any
+  stub, and 31 of the 452 answers put nothing on a written set at all because the roster has no
+  card for talking a man round or holding a room. That was 53 of 372 before this drop.

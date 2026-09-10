@@ -664,7 +664,10 @@ what you did earlier, when the watch comes for a thief.
 
 Nothing is written to the sheet while you answer. Each answer scores points towards
 attributes, talent sets, lineages, backgrounds, skills and gear, and at the end the points
-are counted. The highest attribute takes the +2 and the second the +1. Your two talent sets
+are counted. No answer ever weighs the same thing twice: it puts a single point on each of
+the several things that way of acting points at, so what wins a count is what your answers
+had in common rather than any one of them. The highest attribute takes the +2 and the
+second the +1. Your two talent sets
 are the strongest of those built on your two highest attributes, the first at level 1 and
 the second at level 2, both at Novice. The highest lineage and background are yours, the
 background's skills are the ones your answers leaned towards and the outfitter's armor and
