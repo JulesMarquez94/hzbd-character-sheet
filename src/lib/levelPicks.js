@@ -140,20 +140,30 @@ export function lineageSettled(character) {
 }
 
 /**
- * What one level asked for, as one boolean per question: true where it has been
- * answered. The order is the order the panels stand in on the block.
+ * What one level asked for, one row a question, in the order the panels stand
+ * in on the block. `answered` says whether it has been;
+ * `kind` and `talent` are what the panel needs to know *which* question is open,
+ * so a screen can put the right window in front of somebody rather than only
+ * counting.
  *
  * The third argument is state already derived for the whole character — its
  * talents, its level picks and its background — so a ledger of twelve levels
  * derives it once rather than twelve times over.
+ *
+ * One list, read three ways: the level block numbers its panels off it, the tab
+ * badges itself off it, and the Crossroads opens its prompts off it. Anything
+ * that asks a question of a character belongs here and nowhere else, or the
+ * three of them drift.
  */
-export function levelQuestions(character, level, { talents, picks, background }) {
+export function levelAsks(character, level, { talents, picks, background }) {
   const grants = levelGrants(level);
   const asked = [];
+  const ask = (kind, answered, talent = null) =>
+    asked.push({ level, kind, talent: talent?.id ?? null, answered: Boolean(answered) });
 
   if (grants.talent) {
     const slot = talents.slots.find((entry) => entry.level === level);
-    asked.push(Boolean(slot?.filled));
+    ask('talent', slot?.filled);
 
     /* A set that puts a creature on the board asks a second question at the
        level that bought its first rank: what it is called, and what colour. Only
@@ -161,7 +171,7 @@ export function levelQuestions(character, level, { talents, picks, background })
        creature that already has a name. An unnamed one badges the tab exactly
        the way an unanswered lineage card does. */
     if (slot?.filled && slot.rank === 1 && minionOf(slot.talent)) {
-      asked.push(minionSettled(character, slot.talent.id));
+      ask('minion', minionSettled(character, slot.talent.id), slot.talent);
     }
 
     /* And a set that turns you into something asks the same kind of second
@@ -169,7 +179,7 @@ export function levelQuestions(character, level, { talents, picks, background })
        you choose a Carnivore Mammal." Only Rank 1 asks — the curse is caught
        once, and the ranks above it are the same animal getting better at it. */
     if (slot?.filled && slot.rank === 1 && feralOf(slot.talent)) {
-      asked.push(feralSettled(character, slot.talent.id));
+      ask('feral', feralSettled(character, slot.talent.id), slot.talent);
     }
 
     /* And a set that strikes a bargain asks four at once: which pact, what
@@ -179,7 +189,7 @@ export function levelQuestions(character, level, { talents, picks, background })
        asks them as one walk and "the pact is not sealed" is the one fact the
        badge needs. */
     if (slot?.filled && slot.rank === 1 && pactOf(slot.talent)) {
-      asked.push(pactSettled(character, slot.talent.id));
+      ask('pact', pactSettled(character, slot.talent.id), slot.talent);
     }
 
     /* And a set that deals a hand rather than teaching one asks for the cards
@@ -197,31 +207,53 @@ export function levelQuestions(character, level, { talents, picks, background })
        one rule: a choice is made in the window that granted it, before that
        window will call itself done, and until then the tab says so. */
     if (slot?.filled && slot.rank === slot.entry?.rank && loadoutOf(slot.talent)) {
-      asked.push(
+      ask(
+        'loadout',
         loadoutSettled(character?.talents, slot.talent, {
           level: levelForXp(character?.xp),
           attributes: character,
-        })
+        }),
+        slot.talent
       );
     }
   }
-  if (grants.lineage) asked.push(lineageSettled(character));
-  if (grants.background) asked.push(Boolean(background?.complete && background?.taken));
-  if (grants.boosts) asked.push(Boolean(picks.spreadDone));
+  if (grants.lineage) ask('lineage', lineageSettled(character));
+  if (grants.background) ask('background', background?.complete && background?.taken);
+  if (grants.boosts) ask('boosts', picks.spreadDone);
   if (grants.attribute) {
-    asked.push((picks.at(level).raised ?? []).length >= ATTRIBUTE_POINTS);
+    ask('attribute', (picks.at(level).raised ?? []).length >= ATTRIBUTE_POINTS);
   }
   if (grants.skill) {
     const learned = getBackgroundSkill(picks.at(level).skill);
-    asked.push(Boolean(learned));
+    ask('skill', learned);
 
     /* A skill can leave a question behind it, exactly as a lineage card can:
        Innate Spell Novice promises a spell and does not name one. An unanswered
        one badges the tab the same way, because it is the same blank. */
-    if (learned?.choice) asked.push(Boolean(skillAnswer(learned, character?.choices)));
+    if (learned?.choice) ask('skill-choice', skillAnswer(learned, character?.choices));
   }
 
   return asked;
+}
+
+/**
+ * Every question still open on a character, across every level reached, in the
+ * order the ledger draws them. `openChoices` is its length and the Crossroads
+ * settle step takes the first of them, so what the tab badges and what a window
+ * is opened on can never be two different questions.
+ */
+export function openAsks(character, level) {
+  if (!character) return [];
+
+  const state = {
+    talents: advancementState(character.talents, level),
+    picks: levelPicksState(character, level),
+    background: backgroundState(character),
+  };
+
+  return ledgerLevels(level).flatMap((n) =>
+    levelAsks(character, n, state).filter((row) => !row.answered)
+  );
 }
 
 /**
@@ -231,19 +263,7 @@ export function levelQuestions(character, level, { talents, picks, background })
  * thing on the sheet nobody should have to go looking for.
  */
 export function openChoices(character, level) {
-  if (!character) return 0;
-
-  const state = {
-    talents: advancementState(character.talents, level),
-    picks: levelPicksState(character, level),
-    background: backgroundState(character),
-  };
-
-  let open = 0;
-  for (const n of ledgerLevels(level)) {
-    open += levelQuestions(character, n, state).filter((answered) => !answered).length;
-  }
-  return open;
+  return openAsks(character, level).length;
 }
 
 /* ---------------------------------------------------------- reading the row */

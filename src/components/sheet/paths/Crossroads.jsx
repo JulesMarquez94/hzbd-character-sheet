@@ -6,7 +6,7 @@ import { CardStackProvider } from '../../CardStack.jsx';
 import useCodexArt from '../../useCodexArt.js';
 import { useAuth } from '../../../context/auth-context.js';
 import { ATTRIBUTES, ATTRIBUTE_BASE, attributeLabel } from '../../../lib/attributes.js';
-import { attributeTotals, lineageBonuses, openChoices } from '../../../lib/levelPicks.js';
+import { attributeTotals, lineageBonuses, openAsks } from '../../../lib/levelPicks.js';
 import { creationPath } from '../../../lib/creationPaths.js';
 import { STAGES } from '../../../lib/crossroadsPool.js';
 import {
@@ -91,16 +91,20 @@ export default function Crossroads({ character, patch, onDone }) {
      row made here with nothing left open falls through to a new run instead,
      which is what somebody who came back to this URL on purpose is asking for. */
   const [settling, setSettling] = useState(
-    () => madeHere(character) && openChoices(character, CROSSROADS_LEVEL) > 0
+    () => madeHere(character) && openAsks(character, CROSSROADS_LEVEL).length > 0
   );
 
   const view = useMemo(() => walk(run), [run]);
   const outcome = useMemo(() => (view.done ? resolve(run) : null), [run, view.done]);
 
-  /* What the count could not decide, counted by the same `openChoices` the
+  /* What the count could not decide, read off the same `openAsks` the
      Advancement tab badges itself with, so this page and that tab can never
-     disagree about whether a character is finished. */
-  const waiting = settling ? openChoices(character, CROSSROADS_LEVEL) : 0;
+     disagree about whether a character is finished. The first of them is handed
+     to the ledger, which opens the window that asks it: a spell to name, a hand
+     of martial moves to deal, a creature waiting for one. Answering it moves
+     the list on and the next window opens behind it. */
+  const owed = settling ? openAsks(character, CROSSROADS_LEVEL) : [];
+  const waiting = owed.length;
 
   useEffect(() => {
     saveRun(character.id, run);
@@ -118,7 +122,7 @@ export default function Crossroads({ character, patch, onDone }) {
        questions off the row as it will be rather than as it is: `patch` has not
        come back through props yet, and `applyOutcome` returns exactly the
        fields it changed. */
-    if (openChoices({ ...character, ...written }, CROSSROADS_LEVEL) === 0) {
+    if (openAsks({ ...character, ...written }, CROSSROADS_LEVEL).length === 0) {
       onDone();
       return;
     }
@@ -144,7 +148,12 @@ export default function Crossroads({ character, patch, onDone }) {
 
         {settling ? (
           <CardStackProvider character={character}>
-            <LevelLedger character={character} level={CROSSROADS_LEVEL} patch={patch} />
+            <LevelLedger
+              character={character}
+              level={CROSSROADS_LEVEL}
+              patch={patch}
+              openAsk={owed[0] ?? null}
+            />
           </CardStackProvider>
         ) : view.done && outcome ? (
           <Reveal outcome={outcome} />

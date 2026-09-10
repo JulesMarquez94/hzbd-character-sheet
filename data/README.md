@@ -15562,3 +15562,90 @@ change every part of it afterwards, as it always could.
   top of the census with nothing else changing. Worth reading the homes column before writing any
   stub, and 31 of the 452 answers put nothing on a written set at all because the roster has no
   card for talking a man round or holding a room. That was 53 of 372 before this drop.
+
+## The question the screen would not show you, 2026-09-10
+
+Jules, an hour after the gate shipped: "so again I became infernal at the end oteh corssraods it
+should have allwo me to select which spell i want before finalzing. as pop prompt."
+
+The gate was working and counting correctly. **The screen it gated was hiding the question.**
+
+### One line, and every lineage question in the codex was invisible
+
+`asksOf` in `LineagePick.jsx` is what the block reads to know whether the blood still owes an
+answer:
+
+```js
+return lineageCards(lineage, choices).filter((card) => card.choice);
+```
+
+`lineageCards` hands back `{ card, modifiers }` rows, not cards. A row has no `choice`, so the
+filter dropped every one of them and **`asksOf` always returned empty**. Everything downstream
+of it was wrong in the same direction:
+
+- the block computed `done` as true and **folded itself away saying "Chosen"**,
+- the "Answer 1 question" button never appeared, because it is drawn on `asks.length > 0`,
+- the settle window drew its page with no question on it,
+- and `hasAsks` was false, so **taking a lineage never walked you into that window at all**,
+  which is the behaviour asked for on 2026-08-19 and shipped as working.
+
+Meanwhile `openChoices` reads `lineageSettled` in `levelPicks.js`, which unwraps the row properly.
+So the tab, the free hand and the new Crossroads gate all counted a choice correctly and pointed
+at a panel that said "Chosen" and would not open. An Infernal is the commonest way to meet it:
+INNATE SHADOW promises a Novice Shadow Spell and names none.
+
+**The talent panel had the same shape of bug for a different reason.** `TalentPick` set
+`done={slot.filled}`, so a set with a hand still to deal folded away under "Chosen" too. It now
+takes an `owing` prop worked out in the ledger and reads **Half done**, which is what the lineage
+panel has said since it was written.
+
+### One list of questions, and now it says which
+
+`levelQuestions` returned an array of booleans, which is enough to count and not enough to act.
+It is now `levelAsks`, returning one row a question, `{ level, kind, talent, answered }`, and
+`openAsks(character, level)` is every unanswered row across the ledger. `openChoices` is its
+length, so nothing about the badge changed. `levelQuestions` is gone: nothing called it once the
+ledger read rows.
+
+That is what makes a pop prompt possible without a second list of questions to keep in step.
+
+### The road asks, in a window, one at a time
+
+The Crossroads settle step hands the ledger `openAsk`, the first unanswered row. The ledger passes
+it to the panel that owns it, and that panel opens the window that asks it:
+
+| What is owed | What opens |
+| --- | --- |
+| a lineage card or a pool | `Infernal: What It Asks You` |
+| a rank's hand | `Guardian: Martial Moves` |
+| a creature | the minion window |
+| a shape | the feral window |
+| a bargain | the pact walk |
+
+Each panel is keyed on the window the settle pass wants open, so **answering one remounts it on
+the next**: the Guardian's two martial moves are chosen, its window closes, the Infernal's spell
+window opens behind it, and the foot counts down 2 → 1 → "Open the sheet". Every window is the
+one that already exists on the Advancement tab, opened through the `autoOpen` prop the sections
+already had for a set just taken.
+
+### Checked
+
+- In the browser on a throwaway harness: a Crossroads run landing on Infernal with a Pact and a
+  Weaver opened `Pact of Ordenance: seal the pact` with `pact, lineage, loadout:weaver` owed. A
+  Guardian and an Infernal opened the martial moves first, both panels reading **Half done**, and
+  answering the two moves flipped that panel to Chosen and popped the Infernal spell window with
+  its four Novice Shadow Spells. Learning Gloom Spike closed it, opened the gate and `onDone`
+  fired.
+- The free hand is untouched by the new props (they default to null): four questions waiting, no
+  window on mount, and **taking Infernal there now walks into its settle window**, which it never
+  did before.
+- `npm run lint` and all nineteen `lint:*` scripts clean.
+
+### Still open
+
+- **Nothing auto-opens on the Advancement tab**, only on the Crossroads settle pass. A player who
+  leaves a question open and comes back later still finds it as a badge and a "Half done" panel,
+  which is right for a sheet and would be an ambush on a tab you opened to read.
+- **The pact walk is one row in this list** and four questions behind it. It reports settled or
+  not and nothing in between, so the foot can read "1 still open" against a window with four
+  things in it. That was true of the badge before this and is unchanged.

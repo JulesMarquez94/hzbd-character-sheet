@@ -42,18 +42,29 @@ function pickedOn(card, choices) {
  * The cards of a lineage that leave something to the player. Often none.
  *
  * The cards it *holds*, which for a Wildkin is the two they took: one who took a
- * trait with a question of its own would be asked it like anybody else. None of
- * the eight asks anything today, and the day one does this already covers it.
+ * trait with a question of its own would be asked it like anybody else.
+ *
+ * `lineageCards` hands back `{ card, modifiers }` rows and not cards, and this
+ * read the row's own `choice` for a while, which is always undefined. So it
+ * always came back empty: every ancestry with a question in it reported nothing
+ * open, the block folded itself away saying "Chosen", the settle window drew a
+ * page with no question on it, and taking one never walked you into that window
+ * at all. `openChoices` reads `lineageSettled` in levelPicks.js, which unwraps
+ * the row properly, so the tab badged a choice the screen would not show you.
+ * Found 2026-09-10 from an Infernal made at the Crossroads.
  */
 function asksOf(lineage, choices) {
-  return lineageCards(lineage, choices).filter((card) => card.choice);
+  return lineageCards(lineage, choices)
+    .map((row) => row.card)
+    .filter((card) => card.choice);
 }
 
 /**
- * How much of a lineage is still open: the questions on the cards it holds, plus
- * the cards a pool is still short of.
+ * How much of one lineage is still open: the questions on the cards it holds,
+ * plus the cards a pool is still short of. Not `openAsks` in levelPicks.js,
+ * which is every question on a whole character.
  */
-function openAsks(lineage, choices) {
+function unansweredOf(lineage, choices) {
   return (
     asksOf(lineage, choices).filter((card) => !pickedOn(card, choices)).length +
     openPicks(lineage, choices)
@@ -99,10 +110,20 @@ function cardsNote(questions, yours, pool = null) {
   return yours ? `Yours, ${asks}` : `A preview, ${asks}`;
 }
 
-export default function LineagePick({ value, character, patch, step = null, readOnly = false }) {
+export default function LineagePick({
+  value,
+  character,
+  patch,
+  step = null,
+  readOnly = false,
+  /* A settle pass wants the window it asks its question in put in front of
+     somebody rather than left behind a button. Set by LevelLedger off
+     `openAsks`, and only where the blood is actually short of an answer. */
+  autoSettle = false,
+}) {
   /* One window in one of two states: reading the wall of ancestries, or
      settling what the one you took leaves to you. null is closed. */
-  const [mode, setMode] = useState(null);
+  const [mode, setMode] = useState(autoSettle ? 'settle' : null);
   const stack = useCardStack();
   const codexArt = useCodexArt();
 
@@ -112,7 +133,7 @@ export default function LineagePick({ value, character, patch, step = null, read
   const pool = lineage?.pool ?? null;
   const held = lineageCards(lineage, choices);
   const asks = asksOf(lineage, choices);
-  const unanswered = openAsks(lineage, choices);
+  const unanswered = unansweredOf(lineage, choices);
 
   // One card's answer at a time; the rest of the bag is left alone.
   const answer = (cardId, optionId) =>

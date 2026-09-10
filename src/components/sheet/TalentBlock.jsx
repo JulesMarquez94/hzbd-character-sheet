@@ -65,6 +65,12 @@ export default function TalentPick({
   openAt,
   step = null,
   readOnly = false,
+  /* Whether the set on this slot still owes one of the questions it granted.
+     Worked out in LevelLedger off `levelAsks`, so the panel and the tab badge
+     read the same list. */
+  owing = false,
+  /* Which of those windows a settle pass wants opened, or null. */
+  autoAsk = null,
 }) {
   const [choosing, setChoosing] = useState(false);
   const [viewing, setViewing] = useState(null);
@@ -79,8 +85,20 @@ export default function TalentPick({
       kind="talent"
       step={step}
       title="Talent Set"
-      done={slot.filled}
-      state={slot.filled ? 'Chosen' : isOpen ? 'Waiting on you' : `After level ${openAt}`}
+      /* A set with a hand still to deal is not finished, and a panel that
+         folded itself away saying "Chosen" was hiding the one thing left to do
+         on it. The lineage panel has read "Half done" since it was written;
+         this one now does too. */
+      done={slot.filled && !owing}
+      state={
+        slot.filled
+          ? owing
+            ? 'Half done'
+            : 'Chosen'
+          : isOpen
+            ? 'Waiting on you'
+            : `After level ${openAt}`
+      }
       foldable
       summary={
         slot.filled ? `${slot.entry.name} · Rank ${slot.rank}` : 'No set chosen yet.'
@@ -102,6 +120,7 @@ export default function TalentPick({
           patch={patch}
           readOnly={readOnly}
           justTook={justTook}
+          autoAsk={autoAsk}
           undoAlso={undoAlso}
           onView={() => setViewing(slot.talent)}
           onUndo={
@@ -206,7 +225,17 @@ export default function TalentPick({
 }
 
 /** What a filled block shows: the set, the rank this level bought, its cards. */
-function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, onView, onUndo }) {
+function TalentSummary({
+  slot,
+  character,
+  patch,
+  readOnly,
+  justTook,
+  autoAsk = null,
+  undoAlso,
+  onView,
+  onUndo,
+}) {
   const { talent, entry, rank } = slot;
   const info = rankInfo(rank);
   const cards = talent ? cardsAtRank(talent, rank) : [];
@@ -260,7 +289,7 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
               character={character}
               patch={patch}
               readOnly={readOnly}
-              autoOpen={justTook === talent.id}
+              autoOpen={justTook === talent.id || autoAsk === 'loadout'}
             />
           )}
 
@@ -273,7 +302,7 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
               character={character}
               patch={patch}
               readOnly={readOnly}
-              autoOpen={justTook === talent.id}
+              autoOpen={justTook === talent.id || autoAsk === 'minion'}
             />
           )}
 
@@ -286,7 +315,7 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
               character={character}
               patch={patch}
               readOnly={readOnly}
-              autoOpen={justTook === talent.id}
+              autoOpen={justTook === talent.id || autoAsk === 'feral'}
             />
           )}
 
@@ -298,7 +327,7 @@ function TalentSummary({ slot, character, patch, readOnly, justTook, undoAlso, o
               character={character}
               patch={patch}
               readOnly={readOnly}
-              autoOpen={justTook === talent.id}
+              autoOpen={justTook === talent.id || autoAsk === 'pact'}
             />
           )}
 
