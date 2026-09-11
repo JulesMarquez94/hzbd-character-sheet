@@ -55,10 +55,10 @@ import {
   normalizeBackgroundSkills,
   skillAnswer,
   skillCards,
-  skillGrantSources,
   skillLevel,
 } from './backgrounds.js';
 import { checkCards } from './checks.js';
+import { characterSkillGrantSources, heldSkillIds } from './items.js';
 import { getLineage, lineageCards, openPicks } from './lineages.js';
 import {
   advancementState,
@@ -71,15 +71,12 @@ import { loadoutOf, loadoutSettled } from './loadouts.js';
 import { minionOf, minionSettled } from './minions.js';
 import { feralOf, feralSettled } from './feral.js';
 import { pactOf, pactSettled, pactSkillIds } from './pact.js';
-import { MAX_LEVEL, levelForXp } from './characterModel.js';
+import { MAX_LEVEL, levelForXp, levelGrants } from './levels.js';
 
-/** What a level hands out. The one place the even / odd rule is written down. */
-export function levelGrants(level) {
-  const n = Math.max(1, Math.floor(Number(level) || 1));
-  if (n === 1) return { talent: true, lineage: true, background: true, boosts: true };
-  if (n % 2 === 0) return { talent: true };
-  return { attribute: true, skill: true };
-}
+/* `levelGrants` moved to levels.js on 2026-09-11 so backgrounds.js could read
+   which levels sell a skill, and is re-exported here because every caller on the
+   site asks this file for it. See the note on it in levels.js. */
+export { levelGrants };
 
 /** Every level this character has reached — the ledger, top to bottom. */
 export function ledgerLevels(level) {
@@ -386,49 +383,12 @@ export function lineageBonuses(lineage) {
   return bonuses;
 }
 
-/**
- * Every skill this character holds, by id, from all three places one can come
- * from: the life they led, the odd levels they climbed and what a pact taught
- * them.
- *
- * Three rather than two. A pact's skill boon is held exactly the way a
- * background's is — `skillOptionsAt` below already refuses to sell it twice —
- * so a Frugal claimed off the pact giver has to cut the price of a rest the same
- * as a Frugal learned at a mother's table. Claimed rungs only, which is
- * `pactSkillIds`'s own rule: a lapsed boon is not held.
- *
- * This is the only file that can see all three, which is why the composed
- * reading below lives here rather than in backgrounds.js.
- */
-export function heldSkillIds(character) {
-  const picks = normalizeLevelPicks(character?.level_picks);
-  const background = getBackground(character?.background);
-
-  return new Set([
-    ...normalizeBackgroundSkills(background, character?.background_skills),
-    ...Object.values(picks)
-      .map((entry) => entry.skill)
-      .filter(Boolean),
-    ...pactSkillIds(character),
-  ]);
-}
-
-/**
- * What those skills do to the sheet's own numbers, one named row per skill that
- * does anything.
- *
- * The composed reading of `skillGrantSources` in backgrounds.js, and the one
- * every consumer wants: `restCut` in rest.js takes FRUGAL's two Supplies off
- * both rests, and the Loadout block takes QUICK DRAW's Action Point off SWAP
- * WEAPONS. Composed here for the reason `characterGrantSources` is composed in
- * items.js: this is the file that knows where a skill can have come from.
- *
- * A skill and an enchantment are different sources, so their cuts stack and the
- * same-source law never reaches across them. See grantsFrom in enchanting.js.
- */
-export function characterSkillGrantSources(character) {
-  return skillGrantSources(heldSkillIds(character));
-}
+/* `heldSkillIds` and the composed reading below it moved to items.js on
+   2026-09-11 and are re-exported here, because every window on the site asks the
+   ledger for them. What moved them: `deriveStats` reads what a skill grants and
+   sits below this file, and items.js is the one place that can see all three
+   sources *and* what is worn. See the note on them in items.js. */
+export { characterSkillGrantSources, heldSkillIds };
 
 /**
  * And every card this character can bring to a Skill Check, composed the same

@@ -183,13 +183,38 @@ export function copiesOf(picks, cardId) {
 }
 
 /**
+ * Which sub-schools a pool is cut to, which is one of three answers.
+ *
+ * Two of them were always here: a spec naming an array of families is cut to
+ * those, and a spec naming none is cut to nothing at all and takes its school
+ * whole.
+ *
+ * The third is the Oathbound's and arrived on 2026-09-11. A spec may say that its
+ * families are **the holder's** rather than its own, by carrying something that is
+ * not a list (`families: 'oath'`), and then the caller supplies them: one spec,
+ * and as many pools as there are vows to swear. See `oathFamilies` in
+ * oathbound.js, and the note on the Doctrine in talents.js.
+ *
+ * A deferred spec read with nothing supplied is cut to the **empty** list, which
+ * refuses the whole codex. That is the right answer rather than a failure: an
+ * Oathbound who has sworn nothing has no doctrine, and a rank preview drawn with
+ * no character behind it has nobody to ask.
+ */
+function familyGate(spec, families) {
+  if (Array.isArray(families)) return families;
+  if (Array.isArray(spec?.families)) return spec.families;
+  if (spec?.families) return [];
+  return null;
+}
+
+/**
  * Every card in the pool this rank may legally hold.
  *
  * The gates, in one place, because two callers need them: `loadoutOptions`, which
  * has to say *why* a card was refused, and everything about a whole pool, which
  * only needs the list. A gate added here is added to both.
  */
-function gateOf(spec, card, legalTiers) {
+function gateOf(spec, card, legalTiers, families = null) {
   if (card.placeholder) {
     return { gate: 'school', reason: 'a stand-in for a school not written yet' };
   }
@@ -204,6 +229,20 @@ function gateOf(spec, card, legalTiers) {
      with no `family` is unchanged by it. */
   if (spec.family && subSchoolOf(card) !== spec.family) {
     return { gate: 'school', reason: `${subSchoolOf(card) ?? 'no family'}, not ${spec.family}` };
+  }
+  /* And the same gate widened to a *pair*, which is the Oathbound's: a vow opens
+     two sub-schools and the pool is both of them and nothing else. The list may
+     be the spec's own or the holder's; see `familyGate` above. An empty list
+     refuses everything, which is what an unsworn vow should do. */
+  const pair = familyGate(spec, families);
+  if (pair && !pair.includes(subSchoolOf(card))) {
+    return {
+      gate: 'school',
+      reason:
+        pair.length === 0
+          ? 'no Oath sworn, so nothing is open yet'
+          : `${subSchoolOf(card) ?? 'no family'}, not ${pair.join(' or ')}`,
+    };
   }
   /* No `tier &&` guard any more, and that is a real change. A card off the
      ladder used to pass this gate, and it was safe only because the school
@@ -231,11 +270,11 @@ function gateOf(spec, card, legalTiers) {
  * by the registry's order, because it is read as a list of spells rather than
  * chosen from.
  */
-export function wholePool(spec, rank) {
+export function wholePool(spec, rank, families = null) {
   if (!isWhole(spec) || !(Math.floor(Number(rank) || 0) > 0)) return [];
   const legalTiers = tiersAt(spec, rank);
   return loadoutPool(spec)
-    .filter((card) => gateOf(spec, card, legalTiers) === null)
+    .filter((card) => gateOf(spec, card, legalTiers, families) === null)
     .sort(compareCards);
 }
 
@@ -248,8 +287,8 @@ export function wholePool(spec, rank) {
  * rank preview counts it, and `TalentBlock` compares two ranks of it to decide
  * whether a rank just widened the pool enough to open the chooser.
  */
-export function knownAt(spec, rank, level = 1, attributes = null) {
-  if (isWhole(spec)) return wholePool(spec, rank).length;
+export function knownAt(spec, rank, level = 1, attributes = null, families = null) {
+  if (isWhole(spec)) return wholePool(spec, rank, families).length;
   if (isLibrary(spec)) return capacityAt(spec, rank, level, attributes);
   return spec?.known?.[rank] ?? 0;
 }
@@ -278,8 +317,8 @@ export function knownAt(spec, rank, level = 1, attributes = null) {
  * not a float that rounds where nobody is looking, and floored on its own before
  * the other two terms join it: half of 5 is 2, and 2 + 4 is 6.
  */
-export function capacityAt(spec, rank, level = 1, attributes = null) {
-  if (isWhole(spec)) return wholePool(spec, rank).length;
+export function capacityAt(spec, rank, level = 1, attributes = null, families = null) {
+  if (isWhole(spec)) return wholePool(spec, rank, families).length;
   if (!isLibrary(spec)) return spec?.known?.[rank] ?? 0;
   if (!(Math.floor(Number(rank) || 0) > 0)) return 0;
 
@@ -480,7 +519,7 @@ export function heldPicks(talents, talentId) {
  * not waiting on a rank and counting them as though they were is a sentence the
  * set can never make good on.
  */
-export function loadoutOptions({ talent, rank, picks }) {
+export function loadoutOptions({ talent, rank, picks, families = null }) {
   const spec = loadoutOf(talent);
   if (!spec) return [];
 
@@ -506,7 +545,7 @@ export function loadoutOptions({ talent, rank, picks }) {
          were the only two cards that ever carried the flag, and the Ethereal
          school retired both on 2026-08-25 by simply existing. See `gateOf`, and
          "the stand-ins" at the foot of spells.js. */
-      const refused = gateOf(spec, card, legalTiers);
+      const refused = gateOf(spec, card, legalTiers, families);
       return refused ? { ...row, ok: false, ...refused } : { ...row, ok: true };
     })
     /* What you may take first, and then the law in cardOrder.js: the rung, the
@@ -560,7 +599,16 @@ export function loadoutOptions({ talent, rank, picks }) {
 export function loadoutState(
   talents,
   talent,
-  { level = 1, grant = 0, capped = 'allowance', base = null, attributes = null } = {}
+  {
+    level = 1,
+    grant = 0,
+    capped = 'allowance',
+    base = null,
+    attributes = null,
+    /* The sub-schools a deferred pool is cut to, supplied by a caller holding the
+       character. Only the Oathbound's Doctrine has one; see `familyGate`. */
+    families = null,
+  } = {}
 ) {
   const spec = loadoutOf(talent);
   if (!spec) return null;
@@ -578,7 +626,7 @@ export function loadoutState(
      a chooser: there is nothing in here anybody may change. */
   if (isWhole(spec)) {
     const modifiers = loadoutModifiers(spec, rank);
-    const cards = wholePool(spec, rank);
+    const cards = wholePool(spec, rank, families);
     const picks = cards.map((card) => ({
       id: card.id,
       key: card.id,
@@ -603,12 +651,12 @@ export function loadoutState(
       owed: 0,
       over: 0,
       complete: true,
-      options: loadoutOptions({ talent, rank, picks: cards.map((card) => card.id) }),
+      options: loadoutOptions({ talent, rank, picks: cards.map((card) => card.id), families }),
       tiers: tiersAt(spec, rank),
     };
   }
 
-  const options = loadoutOptions({ talent, rank, picks: entry?.picks ?? [] });
+  const options = loadoutOptions({ talent, rank, picks: entry?.picks ?? [], families });
 
   // A rank lost, or a codex that dropped a card, can leave a stored pick that
   // is no longer legal. It is shown as held and counted, because quietly
@@ -999,32 +1047,34 @@ export function pickChanges(before, after) {
  * than to an empty one. "This rank opens no new spells" is true but useless
  * next to a blank page.
  */
-function rankOptions(talent, rank) {
+function rankOptions(talent, rank, families = null) {
   const spec = loadoutOf(talent);
-  const legal = loadoutOptions({ talent, rank, picks: [] }).filter((option) => option.ok);
+  const legal = loadoutOptions({ talent, rank, picks: [], families }).filter(
+    (option) => option.ok
+  );
   const opened = openedAt(spec, rank);
   const fresh = opened.length > 0 ? legal.filter((option) => opened.includes(option.tier)) : legal;
   return { legal, fresh, opened, widens: opened.length > 0 };
 }
 
 /** Which cards a rank adds to the pool, for the preview that lists them. */
-export function newAtRank(talent, rank) {
+export function newAtRank(talent, rank, families = null) {
   if (!loadoutOf(talent)) return [];
-  return rankOptions(talent, rank).fresh;
+  return rankOptions(talent, rank, families).fresh;
 }
 
 /** What a rank would open up, for the preview page that has not taken it yet. */
-export function rankPreview(talent, rank, level = 1, attributes = null) {
+export function rankPreview(talent, rank, level = 1, attributes = null, families = null) {
   const spec = loadoutOf(talent);
   if (!spec) return null;
 
   /* For a library these two are ceilings rather than hands, so `gained` below is
      room made and not cards handed over. The note that prints it says which, and
      it is the reason `library` rides along. See LoadoutRankNote. */
-  const known = knownAt(spec, rank, level, attributes);
-  const previous = knownAt(spec, rank - 1, level, attributes);
+  const known = knownAt(spec, rank, level, attributes, families);
+  const previous = knownAt(spec, rank - 1, level, attributes, families);
   const tiers = tiersAt(spec, rank);
-  const { legal, fresh, opened, widens } = rankOptions(talent, rank);
+  const { legal, fresh, opened, widens } = rankOptions(talent, rank, families);
 
   return {
     spec,

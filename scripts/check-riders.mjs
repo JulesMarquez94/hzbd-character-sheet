@@ -29,9 +29,27 @@ const LIST = process.argv.includes('--list');
 /** A weapon attack to print the riders against. Any of the two a sword teaches. */
 const SWING = 'melee-light-strike';
 
+/**
+ * What a *measured* rider has to be laid on before it is worth anything.
+ *
+ * Almost every rider is a constant and a blank sheet proves it: lay the row, the
+ * tile moves. BERSERKER'S RAGE is the one read against the character wearing it —
+ * "additional Physique equal to your Berserker Rank" — so a blank sheet is a
+ * Berserker Rank of nothing and the row correctly moves nothing at all. Testing
+ * it on one would prove only that zero is zero.
+ *
+ * So a rider may name the columns its own sheet needs, and both sheets of the
+ * pair get them: the point is that the row moved the tile, not that the set did.
+ * An entry here is a rider whose number depends on its holder, and `measure` in
+ * riders.js is the whole of what that means.
+ */
+const HOLDERS = {
+  'berserkers-rage': { talents: [{ id: 'berserker', name: 'Berserker', rank: 3 }] },
+};
+
 /** A level-1 sheet with nothing on it but the row under test. */
-function sheet(effects = []) {
-  const full = { ...BLANK_CHARACTER, effects };
+function sheet(effects = [], holder = null) {
+  const full = { ...BLANK_CHARACTER, ...(holder ?? {}), effects };
   const derived = syncDerived(full);
   return liveCharacter(derived ? { ...full, ...derived } : full);
 }
@@ -76,23 +94,27 @@ for (const [id, rider] of Object.entries(EFFECT_RIDERS)) {
   if (!offer) note(id, 'the picker does not offer it, so the rider can never be laid');
   else if (!offer.label) note(id, 'is offered with no duration at all, so the dial says nothing');
 
-  const bent = sheet([row(id, 5)]);
+  /* Both sheets of the pair wear whatever a measured rider needs, so the only
+     difference between them is the row itself. See HOLDERS above. */
+  const holder = HOLDERS[id] ?? null;
+  const bare = holder ? sheet([], holder) : plain;
+  const bent = sheet([row(id, 5)], holder);
 
   if (bendsSheet(rider)) {
     const moved =
-      bent.speed_m !== plain.speed_m ||
-      bent.avoid !== plain.avoid ||
-      bent.defense !== plain.defense ||
-      bent.health_max !== plain.health_max ||
-      bent.willpower_max !== plain.willpower_max ||
-      bent.physique !== plain.physique ||
-      bent.instinct !== plain.instinct ||
-      bent.mind !== plain.mind;
+      bent.speed_m !== bare.speed_m ||
+      bent.avoid !== bare.avoid ||
+      bent.defense !== bare.defense ||
+      bent.health_max !== bare.health_max ||
+      bent.willpower_max !== bare.willpower_max ||
+      bent.physique !== bare.physique ||
+      bent.instinct !== bare.instinct ||
+      bent.mind !== bare.mind;
     if (!moved) note(id, 'claims to move a tile and no tile moved');
   }
 
   if (bendsSwing(rider)) {
-    const before = attackModifiers(plain, swing, { damage: ['Sharp'], empower: 0 });
+    const before = attackModifiers(bare, swing, { damage: ['Sharp'], empower: 0 });
     const after = attackModifiers(bent, swing, { damage: ['Sharp'], empower: 0 });
     const same =
       (before.empower ?? 0) === (after.empower ?? 0) &&
@@ -105,9 +127,9 @@ for (const [id, rider] of Object.entries(EFFECT_RIDERS)) {
 
   /* Off again. The whole reason a rider is read rather than stored: the row
      comes off and the sheet is the sheet it was. */
-  const back = sheet([]);
+  const back = sheet([], holder);
   for (const key of ['speed_m', 'avoid', 'defense', 'health_max', 'willpower_max']) {
-    if (back[key] !== plain[key]) note(id, `${key} did not come back off with the row`);
+    if (back[key] !== bare[key]) note(id, `${key} did not come back off with the row`);
   }
 
   if (LIST) console.log(`${id.padEnd(16)} ${rider.line}`);

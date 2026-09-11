@@ -120,17 +120,19 @@
  *   2. **Unseen Spellwork asks for "a Cunning skill check", and Cunning is not
  *      an attribute.** The three are Physique, Instinct and Mind, and Cunning is
  *      the name of another skill on the same tab. Printed as written.
- *   3. **"You gain +2 to Armor" is a number the sheet does not yet add.** Heavy
- *      Armor Mastery, Light Armor Mastery and Spelled Armor Mastery each change
- *      a derived stat while a full set is worn, and none of the three is wired
- *      into `deriveStats`. All three are level 5, so nothing is missing from a
- *      level-1 sheet, and all three print what they promise.
+ *   3. ~~**"You gain +2 to Armor" is a number the sheet does not yet add.**~~
+ *      **Closed 2026-09-11.** The three Armor Masteries each move a derived stat
+ *      while a full set is worn, and what had been missing was nowhere to put the
+ *      condition: `grants` was a flat rider and a set bonus is not. A skill may
+ *      now carry `when` beside it, `skillGrantSources` below answers it off what
+ *      the caller knows about the loadout, and all three go on with the third
+ *      piece and come off with it. Heavy is +2 Armor, Light is +1.5 metres of
+ *      Movement Speed and Spelled is +4 Willpower.
  *
- *      The place to wire one exists now: a skill card may carry a `grants` map
- *      beside its prose, which is what FRUGAL's Supplies and QUICK DRAW's Action
- *      Point ride. See `skillGrantSources` below. These three are left alone
- *      because a set bonus is conditional on what is worn, and `grants` is a
- *      flat rider with nowhere to put the condition.
+ *      **"Spelled Armor" is the designer's word for the set items.js calls Magic
+ *      Armor**, which is the only read any of the three needed: the wall runs
+ *      Heavy, Light and Magic, the other two Masteries name their own, and there
+ *      is no third family it could mean.
  *   4. **Tailor asks for two items that do not exist.** Its cell asks for a
  *      Disguise Kit ("advantage on skill checks to deceive for the day") and for
  *      Bandages as a one-use consumable. `bandage-roll` in utility.js is already
@@ -464,6 +466,12 @@ const HEAVY_ARMOR_MASTERY = {
   tags: ['Skill', 'Passive', 'Warfare'],
   minLevel: 5,
   summary: 'Armor +2 in a full set of heavy armor.',
+  /* The first three conditional riders in the codex. `when.fullSet` is the whole
+     of the condition and `deriveStats` answers it off the armor slots, so the two
+     points go on when the third piece is equipped and come off when it is stowed,
+     the way a Duelist's AGILE follows the weapon in hand. See grants.js. */
+  grants: { armor: 2 },
+  when: { fullSet: 'Heavy Armor' },
   body: 'When wearing a full set of heavy armor, you gain +2 to Armor.',
 };
 
@@ -474,6 +482,8 @@ const LIGHT_ARMOR_MASTERY = {
   tags: ['Skill', 'Passive', 'Warfare'],
   minLevel: 5,
   summary: 'Movement Speed +1.5 meters in a full set of light armor.',
+  grants: { speed: 1.5 },
+  when: { fullSet: 'Light Armor' },
   body:
     'When wearing a full set of light armor, your Movement Speed is increased by ' +
     '**1.5 meters (5 feet)**.',
@@ -486,6 +496,13 @@ const SPELLED_ARMOR_MASTERY = {
   tags: ['Skill', 'Passive', 'Warfare'],
   minLevel: 5,
   summary: 'Willpower +4 in a full set of Spelled Armor.',
+  /* **"Spelled Armor" is the designer's word for the set items.js calls Magic
+     Armor.** There is no third family it could mean: the wall runs Heavy, Light
+     and Magic, and the other two Masteries name their own. The card keeps the
+     word it was written with and the condition names the set as the codex holds
+     it, which is the same trade every other read on this page makes. */
+  grants: { willpowerMax: 4 },
+  when: { fullSet: 'Magic Armor' },
   body: 'When wearing a full set of Spelled Armor, your Willpower is increased by 4.',
 };
 
@@ -1207,14 +1224,33 @@ function dedupeIds(ids) {
  * answer: a rest that cost 8 instead of 10 has to say what cut it, and so does a
  * swap that cost 1 instead of 2. Whoever is reading knows which field it wants
  * and sums that one. Wiring the next rider is a `grants` on the card and one
- * short reduction where the number is spent: the three Armor Masteries' "+2 to
- * Armor" is the next one, and is still printed only. See data/README.md.
+ * short reduction where the number is spent.
+ *
+ * ------------------------------------------------------------------- `when`
+ * A skill may say *when* its rider counts, which no other codex needs yet: the
+ * three Armor Masteries each hang on a full set being worn, and a set bonus that
+ * counted while the breastplate sat in the pack would be a lie the sheet told.
+ * The condition is answered by the caller and handed in as `state`, because this
+ * file is a leaf and has never been able to see a character's equipment.
+ *
+ * Today `state.fullSet` is the whole vocabulary. A skill with a `when` this
+ * reading has no answer for is left out rather than let through: an unproved
+ * condition is a condition that failed, which is the safe direction for a bonus.
  */
-export function skillGrantSources(ids) {
+export function skillGrantSources(ids, state = null) {
   return dedupeIds(ids)
     .map(getBackgroundSkill)
-    .filter((skill) => skill?.grants)
+    .filter((skill) => skill?.grants && skillWhenMet(skill.when, state))
     .map((skill) => ({ name: skill.name, ...skill.grants }));
+}
+
+/** Whether a skill's `when` is satisfied by what the caller knows. */
+function skillWhenMet(when, state) {
+  if (!when) return true;
+  for (const [key, wanted] of Object.entries(when)) {
+    if (state?.[key] !== wanted) return false;
+  }
+  return true;
 }
 
 /**

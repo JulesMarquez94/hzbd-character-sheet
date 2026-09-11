@@ -48,6 +48,7 @@ import {
   minionOf,
   minionState,
 } from './minions.js';
+import { heldOathCards, oathFamilies, oathRiders } from './oathbound.js';
 import { pactBoonRows, pactState } from './pact.js';
 import { cardsAtRank, getTalent, normalizeTalents, rankInfo } from './talents.js';
 import { commandRiders } from './undead.js';
@@ -309,9 +310,17 @@ function talentSources(character) {
        print one number. See `commandRiders` in undead.js. */
     const commands = commandRiders(character, talent.id);
 
+    /* And for a set bound to a vow, the rider every one of its cards is read
+       with: the Attribute its holder stands highest in, bent by the Faith bar,
+       plus what the ranks did to the Aura and the damage type the Oath deals.
+       Keyed by card id like the Command above, and empty for every set that
+       swears nothing. See `oathRiders` in oathbound.js. */
+    const vows = oathRiders(character, talent.id);
+
     /** The rider a card is read with here: its body's, its own, or its reader's. */
     const riderFor = (card) => {
       if (commands[card.id]) return commands[card.id];
+      if (vows[card.id]) return vows[card.id];
       for (const tag of card.tags ?? []) {
         if (kinds[tag]) return kinds[tag];
       }
@@ -352,8 +361,13 @@ function talentSources(character) {
     for (let rank = 1; rank <= held.rank; rank += 1) {
       /* A roster's bodies keep their cards off this list: they belong to the
           creature and not to its keeper. See "and the bodies" above. */
-      const cards = cardsAtRank(talent, rank).filter(
-        (card) => !previews || !isMinionCard(card)
+      /* A vow's ten Auras are ten cards in the codex and one card in a
+         holder's hands, so the nine they did not swear come off here. Every other
+         set is handed back untouched. See `heldOathCards` in oathbound.js. */
+      const cards = heldOathCards(
+        character,
+        talent,
+        cardsAtRank(talent, rank).filter((card) => !previews || !isMinionCard(card))
       );
       const bodies = bodiesAt(rank);
       if (cards.length === 0 && bodies.length === 0) continue;
@@ -396,6 +410,11 @@ function talentSources(character) {
              reads the same numbers the Advancement tab's panel does: a library capped
              at what it can hold rather than at what tonight allows. See loadoutState. */
           capped: 'capacity',
+          /* And the two sub-schools a vow opens, for the one pool in the codex
+             whose families are the holder's rather than the spec's. Empty for
+             every other set, which changes nothing about any of them. See
+             `familyGate` in loadouts.js. */
+          families: oathFamilies(character, talent.id),
         })
       : null;
     if (loadout) {

@@ -15876,3 +15876,393 @@ true, and the comment above `CREATURES` says the paint faction sits beside the n
 - **Whether the commanders belong to the Brams.** They are written as paint that was never a
   portrait, so a table can use them without the one-shot. If Jules wants them tied to Abram's
   atelier, that is one lore line each.
+
+## Every card that names a number, made to move it, 2026-09-11
+
+One line from Jules: "Mineral skin not adding to defence, review all the cards, again make sure
+that their effect are actualy always effective as they should on teh character sheet."
+
+MINERAL SKIN was real and it was one of twelve. The 2026-09-09 sweep had found most of these and
+reported them; this drop wires them. **Twelve cards moved from printed to wired**, and the two
+things that had been blocking half of them are built.
+
+### What a card can now say
+
+`grants` on a card was a flat map of numbers a lineage card could carry, read by `deriveStats`
+for four fields. It is now `src/lib/grants.js`, one leaf holding the rider's whole vocabulary and
+the three readings that are not sums, and **three codexes carry it** rather than one: a lineage
+card, a talent card and a background skill, each handing back the same `{ name, ...grants }` rows
+an enchantment already handed back. Four different sources by the stacking law, so they add.
+
+Three things are new in it:
+
+| Field | What it is |
+| --- | --- |
+| `defense` | the stat a reader calls Defense. `flat` never summed it, so `avoid` only ever took a point from the tracker. Two cards ride it. |
+| `healthPerLevel` | **a rate, not a lump.** Three cards say "you gain N Health per level in Fortitude and Physique instead of 10", which buys both halves of the formula. Composed as differences from 10 rather than summed, so two of them could never make 27. |
+| `when` | **a condition.** The three Armor Masteries hang on a full set being worn, which is why they were left alone in August: `grants` was flat and a set bonus is not. `skillGrantSources` answers it off what the caller knows about the loadout. |
+
+And a talent card's `grants`, which only checks.js had ever read, is now read by `deriveStats`
+too. `checkWp` and `checkAdvantage` sit in the same map and are simply fields no stat line asks
+for.
+
+### The twelve
+
+| Card | Says | Rides |
+| --- | --- | --- |
+| MINERAL SKIN | Defense +1 | `grants.defense` |
+| SCALEY | Defense +1 | `grants.defense` |
+| INNER TIDE | Willpower +4 | `grants.willpowerMax` |
+| WILD SWIFTNESS | Movement Speed +1.5m | `grants.speed`, its wired twin WIND GRACE's |
+| FEY BLOOD | 7 Health a level instead of 10 | `grants.healthPerLevel` |
+| HEARTHY | 12 instead of 10 | `grants.healthPerLevel` |
+| UNDEATH RESILIENCE | 15 instead of 10, and rests barely mend you | `grants.healthPerLevel` and `grants.restHealth` |
+| GUARDIAN · JUST IN TIME | Movement Speed +1 | the first flat rider a talent card carries |
+| GUARDIAN · SHIELD EXPERTISE | Defense +1 with a shield | `martial.grants`, where AGILE already was |
+| HEAVY ARMOR MASTERY | Armor +2 in a full heavy set | `grants` and `when.fullSet` |
+| LIGHT ARMOR MASTERY | Speed +1.5m in a full light set | `grants` and `when.fullSet` |
+| SPELLED ARMOR MASTERY | Willpower +4 in a full Spelled set | `grants` and `when.fullSet` |
+
+Two are worth knowing about beyond the table:
+
+**UNDEATH RESILIENCE is the largest number any card on this sheet moves, and the only one that
+makes a rest worse.** At level 3 with a Physique of 6 an Undead read 90 Health against its own
+card's 135. Its second sentence is wired too: a Short Rest restores no Health at all now and a
+Long Rest gives half your maximum, and the rest window's line says which card did that rather
+than leaving somebody to think the button is broken. **A Fey's maximum Health falls by a third**
+on the same mechanism, from 90 to 63, which is what its card has always said it costs for the
+flight.
+
+**SHIELD EXPERTISE was wrong on the record.** The Guardian's `martial` spec said its point of
+Defense "lands through `equipmentEffects` in items.js where the other shielded weapons' numbers
+land". It never did: what lands there is the *weapon's* own printed point, and the Guardian's
+extra one had nothing carrying it. It is a `martial.grants` entry on the `Shielded` tag now, so
+it goes on with the shield and comes off on the swap, exactly as a Duelist's AGILE does. The
+advantage the same sentence grants is deliberately not wired: `advantage` in that spec is dice on
+an **attack** roll and this one is on Instinct contested rolls, which is a different roll.
+
+### And a thirteenth, which is a rider rather than a grant
+
+**BERSERKER'S RAGE now raises the Physique it says it raises.** "You gain additional Physique
+equal to your Berserker Rank" had no home because every entry in `EFFECT_RIDERS` is a literal
+constant: a rider is keyed on the card and not on the caster, so the sheet holding a row laid by
+somebody else cannot look up a number living on them. **The Rage was never actually stuck behind
+that.** Nobody but you can put a Rage on you, so the rank it scales on is on the sheet the row is
+sitting on.
+
+So a rider field may be a function of its holder, resolved by `measure` in riders.js on the way
+past, and `who` is threaded through `runningRiders`, `effectRiders`, `riderShift` and the two
+term helpers in statMath.js. **It is the only measured entry and the others stay unwired for the
+stated reason**: VIGOR's "3 x your Mind" is the caster's Mind, and SEVER LIFE's is the damage
+dealt, which nobody knows until the dice land. The Rage's Elevate rides with it, and its
+compulsion stays on the card, because the sheet does not know where anybody is standing.
+
+### Two files moved, to untie a knot
+
+`deriveStats` had to read what a *skill* grants, and the reading that composed the three places a
+skill comes from lived in levelPicks.js, which sits above characterModel.js. Two files each
+wanting one thing from the other is a cycle, so the smaller halves moved:
+
+- **`src/lib/levels.js`** is new and holds `MAX_LEVEL`, the XP table, `levelForXp`, `xpForLevel`,
+  `xpProgress` and `levelGrants`. characterModel.js and levelPicks.js both re-export what they
+  used to own, so not one caller anywhere changed.
+- **`heldSkillIds` and `characterSkillGrantSources` moved to items.js**, for the reason
+  `characterGrants` is already there: it is the file that can see all three places at once, and
+  it is the file that knows what is worn, which is the only condition any skill names.
+  levelPicks.js re-exports both.
+
+There are **no import cycles in `src/lib`**, checked before and after.
+
+### Checked
+
+- All twenty linters, before and after. `lint:math` runs 24 sheets against 16: seven new fixtures
+  cover a Stonebound, a Tidebound, an Undead's rate, a Wildkin's two pool cards at once, a
+  Guardian wearing both new kinds of rider, the same Guardian with the set broken so the skill's
+  bonus comes back off, a shield in hand, and a Rank 3 Berserker mid-rage.
+- `lint:riders` learned about measured riders. `bendsSheet` now counts a function as a field, so a
+  broken measured rider is a finding instead of a silence, and `HOLDERS` in the checker gives the
+  Rage's fixture a Berserker to be measured against: testing it on a blank sheet would have proved
+  only that zero is zero.
+- A scratchpad harness, 36 checks. Every tile above against a real character through
+  `deriveStats`, every math line naming the right card, and no line reading `unaccounted` on any
+  of them. The Armor Masteries were checked from both sides, worn and stowed.
+- In the browser, through a throwaway harness at the project root (deleted, `git status`
+  checked): nine sheets rendering real `AttrTile`s, every number and every hover line correct.
+- `npm run build`.
+
+### Still open, and each one is a sentence the sheet cannot hold
+
+- **VENOMOUS's "additional 1d4 Decay" is the one that could be wired and is not.** It is a whole
+  extra damage roll of another type on every weapon attack, and `attackModifiers` has no field
+  for one: `damage` is a list of *types*, `empower` adds a die of the type already there, and
+  `bonus` is flat. A new field would reach the dice roller, the card renderer and combatApply.
+  Worth Jules's word on whether it is a die or flat damage before anybody builds it.
+- **BASTION'S FURY is three event clauses**: a Reaction Point on an Intercept, the next attack
+  carrying the damage you blocked, and a Willpower off a move riding an attack SHIELD EXPERTISE
+  already discounted. The sheet tracks none of intercepting, blocking or how much was blocked.
+- **SHIELD EXPERTISE's own last sentence** is the same shape: "after blocking damage with a
+  shield, your next weapon attack costs 1 less Action Point".
+- **The Rampage cards still spend turns of the Rage by announcement.** RAGING BLOW takes one off
+  and IGNORE PAIN and RECKLESS VIOLENCE take two, and nothing on the sheet has ever moved that
+  row's count. Unchanged by this drop, and now the only Berserker clause left.
+- **QUICK DRAW's second half**, the advantage on the attack after a swap, as before.
+- **What is not a number this sheet holds, and never will be**: FEY BLOOD's flight, AMPHIBIAN's
+  and DRACONIC SCALES' resistances, STICKY's walls and ceilings, and the Rage's compulsion.
+## The Oathbound, 2026-09-11
+
+The nineteenth written set, the sixth slot filled on the Other shelf, and **the third in
+the codex built off a spoken description with no sheet behind it** after the Spellblade and
+the Weaver. What arrived was long and detailed, which is the opposite of the Weaver's three
+sentences, and it is transcribed in full below because it is the only source of record
+there is.
+
+### What was said
+
+> "The way it works: when you become an Oathbound, you take a vow, and that vow binds you
+> to having to follow certain tenets. Each of these vows has three tenets. So for example
+> one could be the Oath of Protection, which means you would protect people, you would make
+> sure they get to safety, and you would not be the one to initiate violence.
+>
+> And based on that choice, you'll get to learn all the spells of two sub-schools. So for
+> example, if you had the Oath of Vindication that might be Light and Fire, and at Rank 1
+> you would know all the Novice Fire and Light spells, at Rank 2 all the Adept Fire and
+> Light spells, and so on until you are Rank 3 and you know all the Master of both
+> sub-schools.
+>
+> There are many Oaths, and each of the Oaths, on top of knowing two spell schools, has a
+> mechanic which is your Faith meter. Your Oathbound abilities are always scaled off your
+> highest stat, whichever is your highest Attribute, but you also get modifiers based on
+> your Faith. You start at neutral zero. Whenever you do things that go in line with your
+> tenets, when you do an action that is toward your tenets, you gain Faith. And if you do
+> anything that's against, then you lose Faith. If your Faith bar is in the positive, then
+> you essentially have a +1 to whatever your highest Attribute rolls. So if you're in the
+> positive and your Mind is very high, then the stat for your spell will be your Mind plus
+> one. On the other hand, if your Faith is low because you've been sinning against your
+> tenets, then it's the opposite effect, you have a -1. So part of your job is to maintain
+> this bar. This is like a minus hundred to a hundred with a zero in the middle, and taking
+> a Long Rest always gives you minus five to that score. So essentially you have to keep
+> doing good deeds based on the tenets to continue to maintain your Faith. When you start,
+> someone that starts as an Oathbound starts with fifty points right up there, so they
+> don't have to worry too much about it.
+>
+> Then at Rank 1 you always have, on top of the spells you learn, two abilities, which is
+> your Aura, and the Aura is based on your tenets. So here you'll have to be creative
+> because, for example, the Aura of Vindication is: whenever an ally is hit by an enemy,
+> that enemy also takes damage equal to your maximum Attribute plus your Faith bonus. Then
+> you have Smite, and the way Smite works is that whenever you see someone that has done
+> something that goes against one of your tenets, you can use Smite to do a large amount of
+> damage to them. So if a tenet says protecting life and someone's actively trying to
+> destroy life, then you can argue with your DM that this is sealing in front of you and
+> you'd like to smite it. It's a ranged spell attack that deals a bunch of damage and is
+> done with advantage.
+>
+> When you level up, the strength of your Aura is also increased. So your Aura is more
+> efficient as your rank is higher. The Aura you have to activate. It is an upkeep ability.
+> So once you have it, you have to activate it and then maintain the upkeep. The Aura is a
+> powerful and expensive ability that affects all your allies that can see you.
+>
+> At the Adept level you get the ability to mark a Sanctuary for your Oath. Essentially you
+> choose a space and during a Long Rest you make it your Sanctuary, and it becomes kind of
+> like a manifestation of your Faith, like a mini chapel or consecrated ground. While you
+> are on these grounds, anything you do has advantage. So if you take a rest in the tavern
+> room and you're going to stay there for longer, you can choose to use your Long Rest
+> action to create the Sanctuary and this place becomes your Sanctuary, and you get
+> advantage for anything you do inside of the Sanctuary. The limit of the Sanctuary is that
+> it cannot affect anything bigger than a living room.
+>
+> When you reach Master, the Sanctuary becomes more powerful. It also becomes not just the
+> space, but when you create it, it becomes a distorted space so it becomes bigger, and
+> instead of just a consecrated place it becomes something that matches your Oath. So if
+> you have an angelic Oath of Vindication then it becomes a large place that looks like
+> something an angelic temple would look like. The advantage is that whenever you or your
+> group takes a Long Rest in the Sanctuary, everybody has the Bolster effect on the next
+> day, but maintaining the Sanctuary will take away like eight Willpower points on the next
+> day from the Oathbound. Also another ability, which allows him to teleport himself and up
+> to twenty entities back to his Sanctuary. If it's an ally they can choose to just be
+> taken, but enemies can make a contested roll, you roll against the enemy roll to see if
+> you succeed into grabbing them to your Sanctuary. The enemy can choose to fail as well.
+> And in the Sanctuary, the enemies have disadvantage on everything.
+>
+> For the different Oaths, I'd like you to make at least ten different ones. An Oath is
+> always comprised of a core principle, three tenets which are the things you need to abide
+> by, and in your character sheet a new block appears that tracks your Faith meter and
+> tracks the tenets, and where you can interact with adding and removing from your Faith
+> meter, like any other resource you would manage. An example of a tenet should be, if
+> you're in a life-oriented one where maybe you have Life and Light magic, your tenet would
+> be to heal the people you pass across injured. And an example of a breach of that would
+> be if you pass someone that's clearly hurt and you could help them and you decide not to,
+> then there will be a negative thing against your own tenets."
+
+### The word
+
+**"Faith" is a reading of a speech-to-text transcript that consistently said "face".**
+The transcript renders "Oath" as "os", "Vindication" as "vindict" and "Oathbound" as "phase
+bound", so a dropped "th" is the commonest thing it does, and "Faith meter" is what the
+surrounding words are about: tenets, sinning, good deeds, a consecrated ground, a Smite. The
+idiom "gain face / lose face" is the other reading and it is not impossible. **It is one
+word in one constant** (`oath.label` in talents.js) and renaming it changes nothing else.
+**Jules's to settle.**
+
+### What is built
+
+- `src/lib/oaths.js`, a leaf codex: the ten Oaths, each a principle, three tenets, two
+  families, a damage type, a Master sanctum and its Aura. Plus `OATH_AURAS`, which builds
+  the ten Aura cards out of the ten rows so the parts ten cards share are written once.
+- `src/lib/oathbound.js`, **the twelfth shape of what a set can hand over**, after the fixed
+  hand, the loadout, brewing, enchanting, the minion, tricks, martial, feral, the pact,
+  runes, the blade and the weaving. It hands over a **vow**: the Faith ledger, the bend it
+  puts on an Attribute, the riders on the set's cards, the Sanctuary and what a night costs.
+- One `oath` jsonb column, keyed by the granting set:
+  `{ "oathbound": { oath, faith, log, sanctuary } }`. In `BLANK_CHARACTER`, in
+  `supabase/schema.sql` twice (the create and the alter).
+- `OathBlock.jsx` and `OathPick.jsx`, and `cell-oath` on the Character tab.
+- **`families: 'oath'` on a loadout**, which is new: every other pool in the codex names its
+  school and its family outright, and this one names *where to ask*. `familyGate` in
+  loadouts.js reads an array from the spec, an array from the caller, or refuses everything
+  when the spec defers and nobody answered. One spec, ten pools.
+- The ninth Long Rest action, `sanctuary`, in `restActions`, `restPlan` and `RestPrompt`.
+- `faithRest` in `restPlan`: every Long Rest logs its own -5 as a ledger row rather than
+  moving the bar quietly.
+- `sanctuaryBurden` in `deriveStats` and `statMath`: **the third thing in the codex that
+  subtracts from a derived maximum**, after a Runebearer's slate and a Necromancer's bodies.
+- A riders.js entry on CONSECRATION, so tracking the card while you stand on the ground puts
+  the advantage on the swing.
+- `TALENT_CLOSES.oathbound` and `TALENT_PHRASES.oathbound` in the Crossroads, and rulebook
+  4.5, 8.1 and the unwritten list.
+
+### The set
+
+Eight cards of its own plus the ten Auras, eighteen in all.
+
+| Rank | Card | Cost | What it does |
+| --- | --- | --- | --- |
+| 1 | The Oath | passive | Swear one, take its three tenets, and the bar bends your best Attribute |
+| 1 | Doctrine | passive | Both of your Oath's sub-schools, known in full, a rung a rank |
+| 1 | Aura of *x* | 3 AP, 4 WP, Upkeep 2 | Ten cards, one per vow, reaching every ally who can see you |
+| 1 | Smite | 4 AP, 6 WP | `4d6 + 4*stat` with advantage at anything that has broken a tenet |
+| 2 | Consecration | Long Rest | One room becomes your Sanctuary. Advantage on everything inside it |
+| 2 | Unwavering | passive | The Aura is Empowered, and costs 1 less Action Point to raise |
+| 3 | Hallowed Ground | Long Rest | The Sanctuary becomes a space of its own. A night in it is {{Bolster}} for a day, and holding it costs 8 maximum Willpower |
+| 3 | Call to Sanctuary | 5 AP, 10 WP | Open the way for you and 20 more. Enemies contest it and fight you on your ground with disadvantage |
+| 3 | Absolute Conviction | passive | The Aura is Empowered again, and a night costs 2 Faith instead of 5 |
+
+### The ten Oaths, and what they open
+
+| Oath | Families | Aura | Smite |
+| --- | --- | --- | --- |
+| Vindication | Light, Fire | an ally is hit, the attacker takes it back | Sacred |
+| Succor | Life, Light | every ally mends at your Turn Start | Sacred |
+| the Bulwark | Earth, Flora | every ally gains Shield at your Turn Start | Blunt |
+| the Untamed | Wild, Flora | anything that moves in or ends its turn in it is torn | Sharp |
+| the Tempest | Storm, Lightning | an ally is hit, the attacker is shocked and slowed | Lightning |
+| the Last Rite | Death, Shadow | every enemy in it withers and cannot heal | Necrotic |
+| the Ferry | Water, Time | you take an ally's damage onto yourself | Frost |
+| the Anvil | Magma, Earth | your allies' Weapon Attacks come out of the fire hot | Fire |
+| the Threshold | Spacial, Shadow | an enemy entering it is hurt and slowed | Force |
+| the Fallow | Mud, Life | an enemy loses what an ally gains | Decay |
+
+All fifteen complete families are used, none more than twice.
+
+### The readings
+
+Eleven places the spec had two readings and this pass had to pick one.
+
+1. **The ten Oaths are mine.** "I'd like you to make at least ten different ones", and two
+   were sketched: an Oath of Protection ("protect people, make sure they get to safety, and
+   not be the one to initiate violence") and a Life-and-Light one whose tenet is "to heal
+   the people you pass across injured". Those two are the **Oath of the Bulwark** and the
+   **Oath of Succor**, written as closely to his sentences as the shape allows. The other
+   eight, all thirty tenets and all thirty breaches are written here.
+2. **Two families, not two schools.** "Two schools to sub schools" corrects itself
+   mid-sentence, and the worked example is "Light and Fire", which are two families in two
+   different schools. Every vow opens two families; the Untamed opens two out of the same
+   school, which nothing forbids.
+3. **The rungs open on the rank ladder**, which is said outright and is worth recording
+   because the Necromancer's identical clause was *not* said and had to be inferred.
+4. **The bend is on the card, never on the sheet.** "The stat for your spell will be your
+   Mind plus one" is a fact about a roll, so it is a rider carrying a bent `actor`, which is
+   `foeModifiers`'s exact shape. Nothing on the Character tab moves: no Health arrives with
+   a Physique and no Willpower with a Mind. The rider names the Attribute **as a key** and
+   not as the HIGHEST rule, because a -1 on a 6 / 6 / 4 spread would leave the bent sheet at
+   5 / 6 / 4 and HIGHEST read against that would name the Attribute the penalty missed.
+5. **Zero is neither.** "You start at neutral zero" and "in the positive" make 0 the middle
+   rather than the bottom of the positive half.
+6. **Every Aura's number is a live value with dice in it.** His worked example is a bare
+   Attribute (`[[stat]]`), and a bare stat has nothing for a rank to grow: "when you level
+   up, the strength of your Aura is also increased" needs a die to Empower. So the base is
+   `[[1d6 + stat]]` and two cards Empower it. **The Faith bonus is inside the `stat`**, which
+   is his "plus your Faith bonus", because the Attribute the card resolves against is bent.
+7. **Smite is flat across the ranks.** Its growth was never mentioned and the Aura's was,
+   twice. So the rank money goes on the Aura. Smite is priced once, at the Adept spell rate
+   the codex already uses for `4d6 + 4*stat` (Savage Slam, 4 AP and 5 WP), with a Willpower
+   on top for the printed advantage.
+8. **A deed is worth 5 Faith and the player names it.** Never said. Five is the one number
+   the spec does give, so one act in line with a tenet undoes one night off the road, the
+   50 a new Oathbound starts with is ten nights of grace, and a vow kept keeps pace with
+   the clock. The block offers +5 and -5 on each tenet and writes the tenet into the ledger.
+9. **The Sanctuary's 8 Willpower is a standing cost, not a morning charge.** "Maintaining
+   the sanctuary will take away like eight Willpower points on the next day" reads two ways
+   and only one of them is a thing a sheet can keep: it comes off the maximum for as long as
+   the ground is held, which is the Necromancer's reading of the same shape.
+10. **Call to Sanctuary reaches 18 meters.** No range was named, and a teleport with no
+    range at all is a card that can empty a city. It is the same reach Smite has.
+11. **Swearing a second vow throws the bar and the ledger away.** Never said. A Faith that
+    has changed its mind about what it believes is not the same Faith, so it goes back to
+    the 50 a new Oathbound starts at, the ledger empties and the consecrated ground goes.
+    The chooser asks before it does any of that.
+
+### Proved
+
+- Every linter clean: `lint`, `lint:text` (271 files), `lint:cards`, `lint:halves`,
+  `lint:riders`, `lint:order`, `lint:moves`, `lint:math`, `lint:weapons`, `lint:dice`,
+  `lint:log`, `lint:layout`, `lint:creatures`, `lint:combat`, `lint:plan`, `lint:help`,
+  `lint:potions`, `lint:images` and `lint:crossroads`.
+- `lint:cards`: **all 18 new cards are inside the 480 target**, the widest at 470 (Aura of
+  the Tempest), so every one prints at full size. The registry is 626 cards.
+- `lint:math`: the Sanctuary's 8 Willpower lands in `deriveStats` and in `statMath`
+  identically across 24 sheets.
+- Through the model, on a real character: an unsworn Oathbound knows 0 spells; a Rank 1
+  Oathbound of Vindication knows 7 and a Rank 3 of the Last Rite knows 24; the Abilities tab
+  draws `talent:oathbound` with one Aura out of ten and `loadout:oathbound` with the whole
+  Doctrine; a Mind of 8 at +50 Faith reads the Aura as `1d6 + 9` and at -20 as `1d6 + 7`; a
+  Physique 8 / Instinct 8 / Mind 4 spread at -20 correctly names Physique and prints 7; a
+  Rank 3 Aura reads `3d6 + 9` for 2 Action Points with the printed 3 struck through and
+  Unwavering named; the Long Rest offers `Consecrate your Sanctuary`, and taking it writes
+  "Faith 40 to 35" and "Sanctuary consecrated" in one patch.
+- In the browser, through a throwaway harness (see the Weaver's note on how): the block
+  renders at exactly 636 of a 640 cell with the tenets, the ground, the Aura and the ledger
+  scrolling under a fixed bar; the chooser walls all ten with their family colours; swearing
+  writes the vow and sets the bar to 50; pressing a tenet writes the tenet's own sentence
+  into the ledger; eleven presses of a breach drive the bar to -5 and the fill goes rose on
+  the left of the zero tick; consecrating drops maximum Willpower from 28 to 20.
+
+### Still open
+
+- **The word "Faith"**, above. One constant.
+- **Two families are one spell a rung.** An Oath of the Tempest knows 2 spells at Rank 1
+  where an Oath of the Last Rite knows 8, because Storm, Lightning, Magma and Mud each hold
+  one spell a rung and the older families hold three or four. The pool is `all: true`, so
+  every spell added to one of those families tomorrow is a spell every Oathbound of that vow
+  already knows and this corrects itself as the Elemental school fills out. **Until it does,
+  four of the ten vows are markedly thinner than the other six.**
+- **Smite may be hot.** `4d6 + 4*stat` with advantage, unlimited, at Rank 1, is an Adept
+  spell's damage on a Novice card. What holds it back is fiction rather than arithmetic: the
+  target has to have broken one of your tenets, and the spec says that is argued with the
+  Game Master. If it wants a leash, a `uses` and a `recharge` is the shape.
+- **Four Auras name a trigger the sheet cannot see.** Vindication and the Tempest fire when
+  an ally is hit, the Untamed and the Threshold when an enemy enters. None of those is an
+  event on this sheet, so all four are sentences the table plays, the same wall six of the
+  eighteen weaves hit.
+- **"Everything you do inside your Sanctuary is rolled with advantage" is narrower than it
+  reads.** The riders.js entry puts the advantage on the Attack Roll, which is the half the
+  sheet holds. A skill check is still the table's, exactly as the two clovers are.
+- **The Sanctuary is a name and a note, and the sheet does not know where you are.** It
+  cannot: the ground is a real place at a real table. The block holds what it is called so
+  the table can point at it.
+- **The Aura, Smite and Call to Sanctuary have no art**, and neither has the set. Drop
+  pictures into `data/Oathbound/` and run `npm run art:cards`.
+- **No Crossroads scenes.** The set has a closing line and a phrase, so it can be reached
+  and named, but nothing in the 113 questions scores toward it yet. The Weaver is on the
+  record with the same thinness at two scenes; this is at zero.
+- **An unsworn Oathbound still draws an empty Doctrine block** on the Abilities tab, reading
+  "0 of 0 chosen". Honest and useless. It wants a line saying why.

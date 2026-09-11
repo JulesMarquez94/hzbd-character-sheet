@@ -894,7 +894,9 @@ export function attackModifiers(character, card, base) {
      WEAPON changes what the *blade* is made of, so on anything that is not a
      weapon attack it is skipped rather than folded. See riders.js. */
   const bendable = swings || (card?.damage ?? []).length > 0;
-  const running = bendable ? effectRiders(character?.effects, { weapon: swings }) : null;
+  const running = bendable
+    ? effectRiders(character?.effects, { weapon: swings, who: character })
+    : null;
   const laid = running && bendsSwing(running) ? running : null;
   const passive =
     (Number(worn?.advantage) || 0) +

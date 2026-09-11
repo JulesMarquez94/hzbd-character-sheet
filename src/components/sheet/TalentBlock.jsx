@@ -21,6 +21,7 @@ import { brewPreview } from '../../lib/brews.js';
 import { enchantmentsAt } from '../../lib/enchantments.js';
 import { levelForXp } from '../../lib/characterModel.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
+import { heldOathCards, oathFamilies } from '../../lib/oathbound.js';
 import { feralOf } from '../../lib/feral.js';
 import { isMinionCard, minionKindRows, minionKinds, minionOf } from '../../lib/minions.js';
 import { pactOf } from '../../lib/pact.js';
@@ -178,7 +179,9 @@ export default function TalentPick({
             /* A library widens with every rank too, so this opens the book the
                moment a rank buys room in it. The level is not threaded here on
                purpose: both sides read the same one, so it cancels. */
-            if (spec && knownAt(spec, rank) > knownAt(spec, from)) setJustTook(id);
+            const opens = oathFamilies(character, id);
+            if (spec && knownAt(spec, rank, 1, null, opens) > knownAt(spec, from, 1, null, opens))
+              setJustTook(id);
 
             /* And the same for a set that lays rather than picks. WIELDER OF
                WONDER says "choose one **when becoming an enchanter**", which is
@@ -234,7 +237,7 @@ function TalentSummary({
 }) {
   const { talent, entry, rank } = slot;
   const info = rankInfo(rank);
-  const cards = talent ? cardsAtRank(talent, rank) : [];
+  const cards = talent ? heldOathCards(character, talent, cardsAtRank(talent, rank)) : [];
   const stack = useCardStack();
   const art = useCodexArt()(talent?.art);
 
@@ -581,7 +584,15 @@ function TalentPresentation({ option, character }) {
         /* The character rides along for the one ceiling that reads an attribute: a
            Runebearer's slate is half their Physique plus 4 a rank, and a preview
            worked out without them would under-report it. See capacityAt. */
-        const choice = rankPreview(talent, rank, levelForXp(character?.xp), character);
+        /* And the two sub-schools a vow opens, for the one pool whose families are
+           the holder's. Empty for every other set. See `familyGate` in loadouts.js. */
+        const choice = rankPreview(
+          talent,
+          rank,
+          levelForXp(character?.xp),
+          character,
+          oathFamilies(character, talent.id)
+        );
         const brewing = brewPreview(talent, rank);
         const enchanting = enchantPreview(talent, rank);
         const alchemy = alchemyPreview(talent, rank);

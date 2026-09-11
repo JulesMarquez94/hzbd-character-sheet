@@ -355,6 +355,10 @@ Movement Speed can end in a half metre. Every other number rounds down.
 
 Wearing a full set of armor can change what Defense is built from. See 7.2.
 
+A few lineages buy Health at a different rate. Where one does, the card says so and the
+new number replaces the ten in both halves of the line above, so it is worth the same on
+your level as it is on your Physique. The sheet works that out for you as well.
+
 ### 2.3 Health, dying and death
 
 Health is the only pool that can go below zero.
@@ -609,10 +613,10 @@ returned.
 
 ### 4.5 Talent set
 
-Thirty-four talent sets are named. **Eighteen are written and can be taken**: Guardian,
+Thirty-four talent sets are named. **Nineteen are written and can be taken**: Guardian,
 Mycomancer, Cauldron Keeper, Enchanter, Draconic Bond, Trickster, Duelist, Feral Curse,
 Berserker, Colossus, Arcanist, Alchemist, Pact of Ordenance, Runebearer, Spellblade,
-Necromancer, Spellquill and Weaver. The rest are shown on the wall so you can see what is
+Necromancer, Spellquill, Weaver and Oathbound. The rest are shown on the wall so you can see what is
 coming, but they have no cards yet and cannot be chosen.
 
 A talent set gives you cards at Novice rank now, and more at Adept and Master as you take
@@ -620,8 +624,9 @@ those ranks. Some sets also give you something that is not a card: a **creature*
 control, a **form** you can turn into, a **pact** you must feed, a **spellbook** you prepare
 spells from, a **slate of runes** inscribed on your own skin, a **cauldron** you brew in, an
 **ossuary** of bodies you hold together, a **weapon you bind** and cast through, a **desk**
-you write spells at for people who cannot cast, or a **hand of weaves** you release through
-whatever weapon you are holding. The set's own page explains it.
+you write spells at for people who cannot cast, a **hand of weaves** you release through
+whatever weapon you are holding, or a **vow** with three tenets and a bar that says how
+well you have kept them. The set's own page explains it.
 
 ### 4.6 Attributes
 
@@ -983,8 +988,8 @@ cap.
 **Nothing heals on its own.** Health does not come back with time. It comes back from
 three places only:
 
-- **A rest.** A Short Rest returns half your maximum Health. A Long Rest returns all of it.
-  Both cost Supplies (see Chapter Eight).
+- **A rest.** A Short Rest returns half your maximum Health. A Long Rest returns all of it,
+  unless your lineage says otherwise. Both cost Supplies (see Chapter Eight).
 - **A card.** Any spell or ability that says it heals.
 - **A potion or field care.** A potion anyone can drink, or a skill that lets somebody
   treat you in the field.
@@ -1092,8 +1097,9 @@ Two rules settle how set bonuses combine with everything else:
 
 - **All Armor counts towards Heavy's half.** Armor is one number wherever it came from, a
   breastplate, an enchantment or a talent, and the half is taken from the whole of it.
-- **Flat Defense from gear adds on top of a set bonus.** A full Light set makes your
-  Defense equal to your Reflex, and a shield's Defense is then added to that. A set bonus
+- **Flat Defense adds on top of a set bonus, wherever it came from.** A full Light set
+  makes your Defense equal to your Reflex, and a shield's Defense, a point your blood
+  gives you and a point your training gives you are then added to that. A set bonus
   changes what Defense is built from. It does not stop other bonuses applying.
 
 ### 7.3 Weapons
@@ -1213,6 +1219,10 @@ everything a rest is about to change before you confirm it.
 A Long Rest ends everything a Short Rest ends, and never the other way round. An effect
 written "until your next Long Rest" survives a Short Rest.
 
+What a rest gives back in Health is the one row a lineage can change. Where one does, the
+card says so and the sheet applies it, and the rest window names the card beside the
+smaller number so nobody mistakes it for the button going wrong.
+
 Both rests also refill whatever was waiting on one: a flask's charges, a card's uses, a
 prepared hand of spells.
 
@@ -1234,6 +1244,8 @@ what your character can do:
 - **Raising**: a Necromancer stands a body up out of their ossuary and holds it together
   with their own Willpower.
 - **Reshaping**: a Pact of Ordenance remakes the weapon the debt gave them.
+- **Consecrating**: an Oathbound makes the ground they rested on their Sanctuary, and
+  everything they do inside it is rolled with advantage.
 
 Some skills and enchantments make rests cheaper. A skill and an enchantment are different
 sources, so their reductions add together.
@@ -1804,10 +1816,10 @@ reading of what the cards using it imply.
    the spell that does the work has not been written. A Necromancer raising a corpse as a
    servant is a different thing: what stands up is a body under orders, not the person who
    died.
-2. **Sixteen talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
+2. **Fifteen talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
    Painseeker, Dragon Aspect, Virtuoso, Flowing Fist, Sharpshooter, Wilder,
-   Thaumaturge, Tactician, Elemental Aspect, Beastbond, Oathbound, Quartermaster and
-   Weapon Master.
+   Thaumaturge, Tactician, Elemental Aspect, Beastbond, Quartermaster and Weapon
+   Master.
 3. **The world.** This is a rules book, and the setting is one sentence on the cover. It
    gets a book of its own.
 

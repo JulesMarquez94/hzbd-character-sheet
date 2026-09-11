@@ -154,6 +154,160 @@ const SHEETS = [
     },
   },
   {
+    /* The other five lineage riders, wired 2026-09-11 and every one of them a
+       different line. MINERAL SKIN is the one that started it: a Stonebound's
+       Defense tile read their bare Instinct while the card in their hand said
+       +1. The rest were the same bug on four other tiles. */
+    name: 'a Stonebound, whose skin is worth a point of Defense',
+    row: { xp: 7500, level_picks: LADDER, lineage: 'Stonebound' },
+    expect: (math, fail) => {
+      const named = math.avoid.terms.find((t) => t.label === 'Mineral Skin');
+      if (named?.value !== 1) fail(`Mineral Skin is worth ${named?.value ?? 0}, want 1`);
+    },
+  },
+  {
+    name: 'a Tidebound, whose blood is worth four Willpower',
+    row: { xp: 7500, level_picks: LADDER, lineage: 'Tidebound' },
+    expect: (math, fail) => {
+      const named = math.willpower_max.terms.find((t) => t.label === 'Inner Tide');
+      if (named?.value !== 4) fail(`Inner Tide is worth ${named?.value ?? 0}, want 4`);
+    },
+  },
+  {
+    /* The rate, which is the one grant that is not a lump: it replaces the 10 in
+       *both* halves of the Health formula rather than adding a term beside them,
+       so a term named after the card is the only way the line can explain a
+       number nobody else's arithmetic produces. Three cards carry one and this is
+       the largest of the three. */
+    name: 'an Undead, who buys Health at 15 a point rather than 10',
+    row: { xp: 7500, level_picks: LADDER, lineage: 'Undead' },
+    expect: (math, fail) => {
+      for (const half of ['your level', 'Physique']) {
+        const named = math.health_max.terms.find((t) => t.label === `${half} (Undeath Resilience)`);
+        if (!named) fail(`the Health line does not name Undeath Resilience beside ${half}`);
+      }
+      if (math.health_max.total % 15 !== 0) {
+        fail(`a Health of ${math.health_max.total} is not bought at 15 a point`);
+      }
+    },
+  },
+  {
+    /* And the pool, which is the case a fixture on an ancestry cannot catch: a
+       Wildkin's riders are the two cards they kept, so a card worth nothing until
+       it is taken has to be worth its rider the moment it is. Two at once, on two
+       different lines. */
+    name: 'a Wildkin who kept Scaley and Wild Swiftness',
+    row: {
+      xp: 7500,
+      level_picks: LADDER,
+      lineage: 'Wildkin',
+      choices: { 'wildkin-traits': ['scaley', 'wild-swiftness'] },
+    },
+    expect: (math, fail) => {
+      const point = math.avoid.terms.find((t) => t.label === 'Scaley');
+      if (point?.value !== 1) fail(`Scaley is worth ${point?.value ?? 0}, want 1`);
+      const stride = math.speed_m.terms.find((t) => t.label === 'Wild Swiftness');
+      if (stride?.value !== 1.5) fail(`Wild Swiftness is worth ${stride?.value ?? 0}, want 1.5`);
+    },
+  },
+  {
+    /* The first flat rider a *talent* card ever carried, and the first conditional
+       rider a *skill* ever carried, on one sheet because they land on the same
+       tile. JUST IN TIME is a metre a rank-2 Guardian keeps wherever they are
+       standing; LIGHT ARMOR MASTERY is a metre and a half that has to come off the
+       moment a piece of the set is stowed, which is the half a flat `grants`
+       could never have said. */
+    name: 'a Guardian in a full light set, with both kinds of new rider',
+    row: {
+      xp: 24000,
+      lineage: 'Wildheart',
+      level_picks: { ...LADDER, 5: { raised: ['mind', 'physique'], skill: 'light-armor-mastery' } },
+      talents: [{ id: 'guardian', rank: 2, taken: [2, 4] }],
+      equipment: {
+        head: 'leather-helm',
+        torso: 'leather-vest',
+        legs: 'leather-pants',
+        main_hand: null,
+        off_hand: null,
+      },
+    },
+    expect: (math, fail) => {
+      const card = math.speed_m.terms.find((t) => t.label === 'Just In Time');
+      if (card?.value !== 1) fail(`Just In Time is worth ${card?.value ?? 0}, want 1`);
+      const skill = math.speed_m.terms.find((t) => t.label === 'Light Armor Mastery');
+      if (skill?.value !== 1.5) fail(`Light Armor Mastery is worth ${skill?.value ?? 0}, want 1.5`);
+    },
+  },
+  {
+    /* And the same skill's condition proved from the other side: the identical
+       sheet with one piece of the set swapped for a heavy one grants nothing, and
+       the Speed line must not name the card at all. A bonus that stayed on when
+       the set came off would be the sheet telling a lie nobody could see. */
+    name: 'the same Guardian with the set broken, and the metre and a half gone',
+    row: {
+      xp: 24000,
+      lineage: 'Wildheart',
+      level_picks: { ...LADDER, 5: { raised: ['mind', 'physique'], skill: 'light-armor-mastery' } },
+      talents: [{ id: 'guardian', rank: 2, taken: [2, 4] }],
+      equipment: {
+        head: 'leather-helm',
+        torso: 'chainmail-hauberk',
+        legs: 'leather-pants',
+        main_hand: null,
+        off_hand: null,
+      },
+    },
+    expect: (math, fail) => {
+      if (math.speed_m.terms.some((t) => t.label === 'Light Armor Mastery')) {
+        fail('Light Armor Mastery is still on the Speed line with the set broken');
+      }
+    },
+  },
+  {
+    /* SHIELD EXPERTISE, which is neither of the two above: it hangs on the weapon
+       in hand, so it rides the move system the way a Duelist's AGILE does and the
+       Defense line names the card rather than the set. The shielded weapon's own
+       printed point is the term beside it, and the two are different sources. */
+    name: 'a Guardian with a shield up, worth a point of Defense over the weapon',
+    row: {
+      xp: 7500,
+      lineage: 'Wildheart',
+      level_picks: LADDER,
+      talents: [{ id: 'guardian', rank: 1, taken: [2] }],
+      equipment: {
+        head: null,
+        torso: null,
+        legs: null,
+        main_hand: 'melee-light-shield',
+        off_hand: null,
+      },
+    },
+    expect: (math, fail) => {
+      const named = math.avoid.terms.find((t) => t.label === 'Shield Expertise');
+      if (named?.value !== 1) fail(`Shield Expertise is worth ${named?.value ?? 0}, want 1`);
+    },
+  },
+  {
+    /* The one rider on the tracker whose number is read against the character
+       wearing it rather than printed in the table. A Rank 3 Berserker raging is
+       +3 Physique, and the Physique line has to name the card: the point is worth
+       10 Health and 1 Reflex besides itself, so a tile that showed the Physique
+       and could not say where the third point came from would be the worst kind
+       of unexplained number. See `measure` in riders.js. */
+    name: 'a Rank 3 Berserker mid-rage, whose rider is measured and not printed',
+    row: {
+      xp: 24000,
+      lineage: 'Stalwart',
+      level_picks: LADDER,
+      talents: [{ id: 'berserker', rank: 3, taken: [2, 4, 6] }],
+      effects: [{ id: 'rage', name: 'Berserker’s Rage', card: 'berserkers-rage', turns: 10 }],
+    },
+    expect: (math, fail) => {
+      const named = math.physique.terms.find((t) => t.label === 'Berserker’s Rage');
+      if (named?.value !== 3) fail(`the Rage is worth ${named?.value ?? 0} Physique, want 3`);
+    },
+  },
+  {
     name: 'a Master Trickster with a creature on the board',
     row: {
       xp: 44000,

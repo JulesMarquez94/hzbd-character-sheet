@@ -66,7 +66,15 @@
  */
 
 import { brewAffordable, brewRows, brewedItems, normalizeBrews, restAlchemy } from './alchemy.js';
-import { appendLedger, clamp, formatNumber, levelForXp, newLedgerId } from './characterModel.js';
+import {
+  appendLedger,
+  clamp,
+  formatNumber,
+  grantRows,
+  levelForXp,
+  newLedgerId,
+} from './characterModel.js';
+import { restHealth } from './grants.js';
 import { TURN_SECONDS, normalizeEffects } from './combatTurn.js';
 import { getBackgroundSkill, normalizeBackgroundSkills, getBackground } from './backgrounds.js';
 import { characterSkillGrantSources, normalizeLevelPicks } from './levelPicks.js';
@@ -92,6 +100,7 @@ import { cardProse } from './cardText.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
 import { beltRest, characterGrantSources, getItem, heldItem, normalizePack } from './items.js';
 import { normalizeForged } from './forged.js';
+import { consecrate, faithRest, oathState } from './oathbound.js';
 import { pactState, reshapePactWeapon, writePactForm } from './pact.js';
 import { reviveRunes } from './runes.js';
 import {
@@ -207,6 +216,26 @@ export function restCut(character) {
     amount: rows.reduce((sum, row) => sum + row.amount, 0),
     names: rows.map((row) => row.name),
   };
+}
+
+/**
+ * The one line under a Health row, naming the card when a card made it smaller.
+ *
+ * "All of it." and "Half your maximum back." are what every rest has always
+ * said. The third answer is new and it is the only one that has to explain
+ * itself: a Long Rest that mended half is a rest somebody will otherwise think
+ * is broken, so it says which card did that.
+ */
+function restHealthDetail(gives, rows, kind) {
+  if (gives === 'full') return 'All of it.';
+
+  const named = rows
+    .filter((row) => row?.restHealth?.[kind === 'long' ? 'long' : 'short'])
+    .map((row) => row.name);
+
+  return named.length > 0
+    ? `Half your maximum back, which is ${named.join(' and ')}.`
+    : 'Half your maximum back.';
 }
 
 /**
@@ -387,6 +416,7 @@ export function restEnchanting(character, kind) {
  *   `pact`     THE PACT, and the shape its weapon takes tomorrow
  *   `raise`    the OSSUARY, and the body that stands up out of it
  *   `scribe`   SCRIBING, and the leaves the desk turns out for the night
+ *   `sanctuary` CONSECRATION, and the ground a night makes yours
  *
  * Rulebook 8.1 lists the same set in the players' own words, so a kind added
  * here is a bullet there.
@@ -576,6 +606,27 @@ export function restActions(character, kind, talents = character?.talents) {
     });
   }
 
+  /* ---- and the ground a night consecrates ----
+     CONSECRATION: "you can use your Long Rest action to consecrate the ground
+     you rested on, up to the size of a single room." One at a time, which the
+     slot already enforces, and consecrating a second place lets the first one
+     go. Offered from the rank that opens it and at no short rest, because
+     nothing about the card names one. See oathbound.js. */
+  for (const vow of oathState(held)) {
+    if (kind !== 'long' || !vow.sworn || !vow.consecrates) continue;
+    const ground = vow.spec.sanctuary?.label ?? 'Sanctuary';
+    rows.push({
+      id: `sanctuary:${vow.id}`,
+      kind: 'sanctuary',
+      label: `Consecrate your ${ground}`,
+      from: `${vow.talent.name} · ${vow.oath.name}`,
+      note: vow.consecrated
+        ? `${vow.sanctuary.name ?? 'Ground you already hold'} is yours tonight. Consecrating somewhere else lets it go.`
+        : `One room, and everything you do inside it is rolled with advantage.`,
+      state: vow,
+    });
+  }
+
   return rows;
 }
 
@@ -707,7 +758,7 @@ export function restPlan(
   prepared = null,
   brews = [],
   reshaped = null,
-  { free = false, revived = [], raised = null, scribes = [] } = {}
+  { free = false, revived = [], raised = null, scribes = [], consecrated = null } = {}
 ) {
   const rest = getRest(kind);
   if (!rest) return null;
@@ -996,18 +1047,27 @@ export function restPlan(
     patch.pack = [...normalizePack(patch.pack ?? character?.pack), ...written.map((row) => row.id)];
   }
 
-  /* ---- health ---- */
+  /* ---- health ----
+     A Long Rest gives all of it back and a Short Rest half your maximum, for
+     everybody except an Undead. UNDEATH RESILIENCE is the only card in the codex
+     that makes a rest *worse*: "Short Rests no longer restore Health, and Long
+     Rests only let you regain half your maximum Health." Read off the cards they
+     hold rather than off the ancestry, so a card taken away takes its clause with
+     it, and named on the line so a rest that mended half of what it used to says
+     which card did that. See restHealth in grants.js. */
   const healthMax = Math.max(0, Math.floor(Number(character?.health_max) || 0));
   const health = Math.floor(Number(character?.health) || 0);
-  const backTo =
-    kind === 'long' ? healthMax : clamp(health + Math.floor(healthMax / 2), health, healthMax);
+  const rows = grantRows(character);
+  const gives = restHealth(rows)[kind === 'long' ? 'long' : 'short'];
+  const half = clamp(health + Math.floor(healthMax / 2), health, healthMax);
+  const backTo = gives === 'full' ? healthMax : gives === 'half' ? half : health;
 
   if (backTo !== health) {
     patch.health = backTo;
     lines.push({
       key: 'health',
       label: `Health ${health} to ${backTo}`,
-      detail: kind === 'long' ? 'All of it.' : 'Half your maximum back.',
+      detail: restHealthDetail(gives, rows, kind),
       tone: 'gain',
     });
   }
@@ -1239,6 +1299,42 @@ export function restPlan(
     );
     Object.assign(patch, body);
     lines.push(...raiseLines(state, draft, name));
+  }
+
+  /* ---- and what the night cost your vow ----
+     THE OATH: "taking a Long Rest always gives you minus five to that score."
+     Always, and that is the word: nothing about the night earns it back and
+     nothing about the night can refuse it. Keeping a vow is a thing you do
+     between rests. See faithRest in oathbound.js. */
+  const faith = faithRest(character, kind);
+  if (faith) {
+    Object.assign(patch, faith.patch);
+    lines.push(...faith.lines);
+  }
+
+  /* ---- and the ground the night made yours ----
+     `consecrated` is what the window's step named the place, or null for a
+     night the slot went elsewhere. No Supplies move: the card prices it at the
+     night's one action and nothing else. Written onto whatever the Faith above
+     already put in this patch rather than onto the character's own column, so
+     one night can both lose 5 Faith and consecrate a room. */
+  if (consecrated) {
+    for (const vow of oathState(character)) {
+      if (vow.id !== consecrated.set || !vow.consecrates) continue;
+      const written = consecrate({ ...character, oath: patch.oath ?? character?.oath }, vow, consecrated);
+      if (!written) continue;
+
+      Object.assign(patch, written);
+      lines.push({
+        key: `sanctuary-${vow.id}`,
+        label: `${vow.spec.sanctuary?.label ?? 'Sanctuary'} consecrated`,
+        detail: vow.greater
+          ? `${consecrated.name}. It is a space of its own now, and holding it costs ${vow.spec.sanctuary?.willpower ?? 0} of your maximum Willpower.`
+          : `${consecrated.name}. Everything you do inside it is rolled with advantage.`,
+        tone: 'gain',
+      });
+      break;
+    }
   }
 
   /* ---- what the rest ends ----

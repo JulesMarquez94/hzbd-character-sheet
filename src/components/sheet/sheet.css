@@ -14902,3 +14902,413 @@ button.tgt-chip:disabled {
   text-decoration: line-through;
   text-decoration-color: color-mix(in srgb, var(--half-accent) 60%, transparent);
 }
+/* ============================================================== the Oath block
+   A vow, a bar with a middle, three tenets and the ledger of everything that
+   moved it. Sacred is the set's colour, because the one thing every Oath in the
+   codex has in common is the damage its Smite deals when the vow does not name
+   another. See oaths.js. */
+.sheet-cell.cell-oath {
+  border-top-color: var(--dmg-sacred);
+}
+
+/* Head, bar, bend, tenets and ground all keep their place. The ledger is the
+   only part with no natural length, so the ledger is the part that scrolls.
+   Same arrangement `.ossuary-block` makes with its list. */
+.oath-block {
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.oath-id {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.oath-id-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.oath-principle {
+  margin: 0;
+  font-size: 0.74rem;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* ---------- the bar ----------
+   The one meter on this site with a middle. Everything else runs 0 to a maximum
+   and fills from the left; this runs -100 to 100 and fills *out of the zero* in
+   whichever direction it has gone, so the length of the fill is how far from
+   neutral you are and the side of the tick is which way. */
+.oath-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.oath-track {
+  position: relative;
+  display: block;
+  height: 20px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--dmg-sacred) 14%, var(--bg-black));
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  overflow: hidden;
+}
+
+.oath-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--dmg-sacred);
+  box-shadow: 0 0 8px var(--dmg-sacred);
+  transition: left 0.18s ease, width 0.18s ease;
+}
+
+.oath-fill.is-fallen {
+  background: var(--danger-rose);
+  box-shadow: 0 0 8px var(--danger-rose);
+}
+
+/* Where the zero is. Drawn over the fill rather than under it, because the one
+   thing a reader needs at a glance is which side of it they are on. */
+.oath-zero {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+  background: rgba(233, 238, 240, 0.55);
+}
+
+.oath-meter-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text-bright);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+.oath-meter-ends {
+  display: flex;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+.oath-bend {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-silver);
+}
+
+.oath-bend b {
+  color: var(--dmg-sacred);
+}
+
+/* ---------- the tenets ----------
+   Three rows, each the rule on the first line and the breach on the second, with
+   the two presses on the right. The breach is the half that earns its line: a
+   table needs to recognise a broken tenet more often than a kept one. */
+.oath-tenet-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.oath-tenet {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid var(--dmg-sacred);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+.oath-tenet-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.oath-tenet-keep {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-silver);
+}
+
+.oath-tenet-break {
+  font-size: 0.66rem;
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--danger-rose) 62%, var(--text-muted));
+}
+
+.oath-tenet-tools {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* ---------- the ground ---------- */
+.oath-ground {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid rgba(148, 167, 176, 0.16);
+  border-left: 2px solid var(--focus-cyan);
+  border-radius: 4px;
+  background-color: var(--inset-bg);
+}
+
+.oath-ground-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.oath-ground-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-silver);
+}
+
+.oath-ground-note {
+  font-size: 0.66rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+/* ---------- the Aura ----------
+   A pointer, not a control: the card is played off the quick bar like anything
+   else. It is on the block because it is the one piece of a vow that lives
+   somewhere else, and a reader looking at their Oath should be one tap from it. */
+.oath-aura {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--dmg-sacred) 30%, transparent);
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--dmg-sacred) 7%, var(--inset-bg));
+}
+
+.oath-aura-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.oath-aura-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--dmg-sacred);
+}
+
+.oath-aura-note {
+  font-size: 0.66rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+/* The one scrolling region. Head, bar and bend keep their place above it and the
+   foot keeps its place below, which is `.ossuary-block`'s arrangement: three
+   tenets, a Sanctuary, an Aura and a ledger is more than a 360x640 cell holds.
+   `min-height: 0` because a flex child will not shrink below its content
+   otherwise, and the whole block would grow instead of the region scrolling. */
+.oath-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.oath-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.oath-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--dmg-sacred) 35%, transparent);
+  border-radius: 3px;
+}
+
+/* ---------- the ledger ---------- */
+.oath-log {
+  display: flex;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  scrollbar-width: thin;
+}
+
+.oath-log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.oath-log-delta {
+  flex: 0 0 2.2rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--danger-rose);
+}
+
+.oath-log-row.is-gain .oath-log-delta {
+  color: var(--vital-green);
+}
+
+.oath-log-note {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oath-log-at {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: rgba(148, 167, 176, 0.6);
+}
+
+.oath-foot {
+  margin: 0;
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* ============================================ the Oath chooser
+   Ten vows on one wall, at the three-block measure, so a reader compares three
+   at a time on a desktop and one at a time on a phone. Every row carries the
+   whole vow: nothing here is a summary you have to open something to read. */
+.oath-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+}
+
+.oath-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  border-radius: 6px;
+  background-color: var(--inset-bg);
+}
+
+.oath-card.is-on {
+  border-color: var(--dmg-sacred);
+  background-color: color-mix(in srgb, var(--dmg-sacred) 7%, var(--inset-bg));
+}
+
+.oath-card-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.oath-card-name {
+  flex: 1 1 auto;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.oath-card.is-on .oath-card-name {
+  color: var(--dmg-sacred);
+}
+
+.oath-card-schools {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* The two families, each in its own family colour, which is the one thing on
+   this wall a reader can match against a spell they already know. The colour is
+   inline off tagColors.js; everything else about the chip is here. */
+.oath-family {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  background-color: color-mix(in srgb, currentColor 10%, rgba(9, 17, 21, 0.6));
+}
+
+.oath-card-principle {
+  margin: 0;
+  font-size: 0.76rem;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--text-silver);
+}
+
+.oath-tenets {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.oath-tenets li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.oath-tenets .oath-tenet-keep {
+  font-size: 0.72rem;
+}
+
+.oath-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+  padding-top: 0.2rem;
+}
+
+/* Swearing over a vow you already hold throws the bar and the ledger away, so
+   the press asks first and the two answers sit where the one button was. Same
+   arrangement `.ossuary-row-ask` makes. */
+.oath-card-ask {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.25rem;
+}

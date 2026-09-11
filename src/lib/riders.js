@@ -68,12 +68,37 @@
  * the turn wearing "Ended" so you can see what expired, and a thing that has
  * expired is not still bending a number.
  *
- * This file is a leaf. It reads no codex and no character, only a card id and
- * the numbers beside it, which is what lets characterModel.js and moves.js both
- * import it without either of them pulling the other in.
+ * ------------------------------------------------------- and the one exception
+ * **BERSERKER'S RAGE is measured against the holder**, and it is the only entry
+ * that is. "Additional Physique equal to your Berserker Rank" scales on the sheet
+ * the row is sitting on rather than on whoever cast it, and nobody but a
+ * Berserker can put a Rage on you, so the number really is in front of this file.
+ * A field may therefore be a function of that holder, resolved by `measure` on
+ * the way past, and every other field in the table is a constant for the reason
+ * above: VIGOR's "3 x your Mind" is the *caster's* Mind and stays unwired.
+ *
+ * This file reads one thing off a character, the rank they hold a set at, and
+ * nothing else — no equipment, no codex entry, no derived stat. It imports
+ * talents.js for that alone, which reaches nothing that reaches back, so
+ * characterModel.js and moves.js can both still import it freely.
  */
 
 import { statusOf } from './statuses.js';
+import { normalizeTalents } from './talents.js';
+
+/**
+ * What rank this character holds a talent set at, or 0 for a set they do not
+ * hold. What a measured rider is measured with.
+ *
+ * Read off the stored column rather than through `getTalent`, because a rank is
+ * the one thing about a held set that is on the row itself: this file is read on
+ * every render of the tracker and has no business resolving a codex entry to
+ * learn a number that is already in front of it.
+ */
+function rankHeld(who, id) {
+  const held = normalizeTalents(who?.talents).find((row) => row.id === id);
+  return held ? Math.max(0, Math.floor(Number(held.rank) || 0)) : 0;
+}
 
 /* ------------------------------------------------------------- the shape */
 
@@ -131,6 +156,24 @@ export const EFFECT_RIDERS = {
     line: 'Movement Speed doubled, and your damage Empowered by 1',
   },
 
+  /* "While in this state, you gain additional Physique equal to your Berserker
+     Rank. Your Damage Dice are Elevated by 1."
+
+     **The one rider in this table measured against the character rather than
+     printed**, and the only one that can be: a Rage is put on you by you, so the
+     rank it scales on is on the sheet holding the row. Everything else here is a
+     constant because a rider is keyed on the card and a card cannot know whose
+     Mind cast it. See `measure` below.
+
+     The compulsion is not in it and cannot be: "you attack the nearest target,
+     even if it is an ally" is a rule about where people are standing, and this
+     sheet does not know where anybody is. It stays on the card. */
+  'berserkers-rage': {
+    attributes: { physique: (who) => rankHeld(who, 'berserker') },
+    elevate: 1,
+    line: 'Physique raised by your Berserker Rank, and your damage Elevated by 1',
+  },
+
   /* "The target gains [[2d6 + 2*stat]] in Shield and +1 Defense."
 
      The Shield is a roll the table makes and lands in the pool by hand. The
@@ -173,6 +216,20 @@ export const EFFECT_RIDERS = {
   'wisp-of-mist': {
     speedFactor: 1.5,
     line: 'Movement Speed increased by half',
+  },
+
+  /* "Everything you do inside your Sanctuary is rolled with advantage."
+     CONSECRATION, and the one entry here whose *condition* is a place. The sheet
+     knows the ground exists (see the Sanctuary on the Oathbound's block) and has
+     no idea whether you are standing on it, which is exactly the wall every other
+     entry in this table was written to get over: you track the card while you are
+     on it, and the swing knows.
+
+     Only the Attack Roll, like the two clovers below it. "Everything you do" is
+     wider than the sheet can reach and the rest of it stays the table's. */
+  consecration: {
+    advantage: 1,
+    line: 'Advantage while you are standing in your Sanctuary',
   },
 
   /* "Entities affected by a Lucky Brew gain Advantage on their next Skill Check
@@ -456,7 +513,7 @@ function rows(effects) {
  * is the names in the order they were met, which is what a tile or an arrow
  * credits.
  */
-export function runningRiders(effects, { weapon = true } = {}) {
+export function runningRiders(effects, { weapon = true, who = null } = {}) {
   const total = noRider();
   const seen = new Set();
 
@@ -465,7 +522,8 @@ export function runningRiders(effects, { weapon = true } = {}) {
 
     const found = riderFor(row);
     if (!found || seen.has(found.key)) continue;
-    const { key: id, rider } = found;
+    const { key: id, rider: printed } = found;
+    const rider = measure(printed, who);
     /* A rider whose printed clause names a weapon has nothing to say about a
        spell. `weapon: false` is a caller asking about something that is not a
        weapon attack, and KINDLE WEAPON is the one entry it drops: "when the
@@ -504,6 +562,46 @@ export function runningRiders(effects, { weapon = true } = {}) {
 }
 
 /**
+ * A rider read against the character actually wearing it.
+ *
+ * ------------------------------------------------- a rider measured, not printed
+ * Every entry in the table above is a literal constant, deliberately: a rider is
+ * keyed on the *card* and not on whoever cast it, so a sheet holding a row laid
+ * by somebody else cannot look up a number that lives on the caster. VIGOR's
+ * "3 x your Mind" and SEVER LIFE's "the damage dealt" are both stuck behind that,
+ * and both are still stuck.
+ *
+ * **BERSERKER'S RAGE is the one that was never stuck**, and until 2026-09-11 it
+ * was treated as though it were. "You gain additional Physique equal to your
+ * Berserker Rank" is measured against the *holder*, who is by definition the
+ * sheet the row is sitting on — nobody else can put a Rage on you. So a field may
+ * be a function of that holder, resolved here, once, on the way past.
+ *
+ * Nothing else changes: a function is only ever called with the sheet wearing the
+ * row, a constant stays a constant, and a caller that has no character to offer
+ * gets the same nothing it would get from a card it cannot measure.
+ */
+function measure(rider, who) {
+  let bent = null;
+
+  for (const [field, value] of Object.entries(rider)) {
+    if (typeof value !== 'function') continue;
+    bent ??= { ...rider };
+    bent[field] = who ? value(who) : 0;
+  }
+  /* `attributes` is the one nested field, and the only one any measured rider
+     uses today. Walked separately rather than generically, because a rider is a
+     flat map everywhere else and a general walk would invite a second shape. */
+  for (const [key, value] of Object.entries(rider.attributes ?? {})) {
+    if (typeof value !== 'function') continue;
+    bent ??= { ...rider };
+    bent.attributes = { ...bent.attributes, [key]: who ? value(who) : 0 };
+  }
+
+  return bent ?? rider;
+}
+
+/**
  * The same sum, or null when nothing is running.
  *
  * Every caller is on a render path and every caller has a cheap answer for
@@ -522,8 +620,8 @@ export function effectRiders(effects, options) {
  * is not shifting any tile, and crediting it on one would be the sheet pointing
  * at a number that never moved.
  */
-export function riderShift(effects) {
-  const total = runningRiders(effects);
+export function riderShift(who) {
+  const total = runningRiders(who?.effects, { who });
   if (!total.any) return [];
 
   return total.from
@@ -531,19 +629,27 @@ export function riderShift(effects) {
     .map(({ name, rider }) => ({ name, rider }));
 }
 
-/** Whether a rider moves a stat tile rather than only a swing. */
+/**
+ * Whether a rider moves a stat tile rather than only a swing.
+ *
+ * Asked of a *measured* rider by `riderShift`, where every field is already a
+ * number, and of a *printed* one by scripts/check-riders.mjs, where a measured
+ * field is still the function that will produce it. A function counts: what the
+ * question means is "does this card belong on a tile", and BERSERKER'S RAGE
+ * belongs on the Physique tile whether or not the sheet asking holds the set.
+ */
 export function bendsSheet(rider) {
   if (!rider) return false;
 
-  const attributes = Object.values(rider.attributes ?? {}).some((value) => Number(value) || 0);
+  const some = (value) => typeof value === 'function' || Boolean(Number(value) || 0);
   return Boolean(
-    attributes ||
-      rider.healthMax ||
-      rider.willpowerMax ||
-      rider.speed ||
+    Object.values(rider.attributes ?? {}).some(some) ||
+      some(rider.healthMax) ||
+      some(rider.willpowerMax) ||
+      some(rider.speed) ||
       (rider.speedFactor && Number(rider.speedFactor) !== 1) ||
-      rider.defense ||
-      rider.armor
+      some(rider.defense) ||
+      some(rider.armor)
   );
 }
 

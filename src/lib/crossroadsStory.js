@@ -183,6 +183,7 @@ export const TALENT_CLOSES = {
   necromancer: 'You did not leave alone, and what walked out behind you had been in the ground that morning.',
   spellquill: 'You left with a case of blank parchment and the certainty that somebody would need what you could put on it.',
   weaver: 'You went out with nothing in your hands, which by then had stopped being a problem.',
+  oathbound: 'You left having said three things out loud, and you have not been alone with yourself since.',
 };
 
 /* ----------------------------------------------------------- who you became */
@@ -229,6 +230,7 @@ export const TALENT_PHRASES = {
   necromancer: 'a way of looking at the dead as though they were still owed work',
   spellquill: 'a scribe’s hand and a case of leaves that other people can read out loud',
   weaver: 'a habit of picking things up and finding out they are weapons',
+  oathbound: 'three sentences you said out loud once and have been paying for ever since',
 };
 
 const BECAME_OPENS = ['That is how', 'So it was that'];

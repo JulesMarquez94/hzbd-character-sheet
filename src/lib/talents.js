@@ -82,6 +82,8 @@
 
 import { ATTRIBUTES, HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
+import { OATH_AURAS } from './oaths.js';
+import { sumGrants } from './grants.js';
 
 /* --------------------------------------------------------------- the ranks */
 
@@ -268,11 +270,27 @@ const TALENT_SETS = [
        this until 2026-09-02: it taught the moves and moved nothing about them, so
        a Master Guardian added one to a swing the way a Rank 1 did. */
     martial: {
-      /* BULWARK FORM at Rank 2 and PERFECT GUARD at Rank 3. No `weapon` and no
-         `grants`: SHIELD EXPERTISE's own advantage and Defense hang on wielding a
-         shield, and that is gear rather than a move-system rule, so it lands
-         through `equipmentEffects` in items.js where the other shielded weapons'
-         numbers land. */
+      /* BULWARK FORM at Rank 2 and PERFECT GUARD at Rank 3.
+         --------------------------------------------------------------------
+         **And SHIELD EXPERTISE's point of Defense, from 2026-09-11.** It used to
+         say here that a shield is gear and so the point would land through
+         `equipmentEffects` in items.js. It never did: what lands there is the
+         *weapon's* own printed Defense, and the Guardian's extra point had
+         nothing carrying it, so a Guardian with a shield up read one Defense
+         short of their own card.
+
+         It is a weapon rider and not a flat `grants`, because the card hangs it
+         on what is in your hand: `weaponRiders` puts it on while a Shielded
+         weapon is wielded and takes it straight back off on the swap, exactly as
+         a Duelist's AGILE behaves. `Shielded` is the tag all three of the
+         shield-bearing weapons carry.
+
+         From Rank 1, because the card is a Rank 1 card. The advantage the same
+         sentence grants is deliberately *not* here: `advantage` in this spec is
+         extra dice on an **attack** roll, and SHIELD EXPERTISE's is on Instinct
+         contested rolls, which is a different roll and has no rider yet. */
+      weapon: 'Shielded',
+      grants: [{ from: 'Shield Expertise', weapon: 'Shielded', defense: [null, 1, 1, 1] }],
       special: [null, false, true, true],
       perAttack: [null, 1, 1, 2],
       onReaction: [null, false, false, true],
@@ -344,6 +362,12 @@ const TALENT_SETS = [
         ap: null,
         wp: null,
         stat: 'instinct',
+        /* The last line of the body, said again as a rider, and **the first flat
+           grant a talent card has ever carried**. Flat, unconditional and
+           permanent, which is the shape WIND GRACE's rider already had: a rank-2
+           Guardian's Speed tile reads a metre longer from the level they take it.
+           See talentGrantSources below and the Speed line in statMath.js. */
+        grants: { speed: 1 },
         body:
           'You can now use {{Intercept}} on **any entity** you can see and could reach with a Move Action.\n\n' +
           'When you do, you move to an empty space in melee range of that entity, and the cost of {{Intercept}} is increased by 1 Action Point.\n\n' + // text-style-ok: joins two clauses
@@ -5330,6 +5354,383 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    /* ---------------------------------------------------------- the Oathbound
+       The nineteenth written set, the sixth slot filled on the Other shelf, and
+       the third in the codex built off a spoken description with no sheet behind
+       it. Handed over in chat on 2026-09-11. The spec is long and is quoted where
+       each piece of it is built; the whole of it, and the eleven readings it left
+       open, are in data/README.md under "The Oathbound, 2026-09-11".
+
+       ------------------------------------------------------------ what it is
+       A set that hands over a **vow**. Everything else follows from which one:
+
+         the vow      ten of them, each a core principle and three tenets. The
+                      tenets are the set. See oaths.js.
+         the magic    "based on that choice, you'll get to learn all the spells of
+                      two sub-schools". The whole of both families, as the rungs
+                      open, nothing chosen and nothing prepared.
+         the bar      Faith, -100 to 100, starting at 50, minus 5 every Long Rest.
+                      Acting on a tenet raises it and acting against one lowers it.
+         the bend     "if your Faith bar is in the positive you have a +1 to
+                      whatever your highest Attribute rolls ... if your Faith is
+                      low because you've been sinning against your tenets, it's the
+                      opposite effect, you have a -1."
+         the Aura     one per vow, an Upkeep, reaching every ally who can see you,
+                      and growing at Rank 2 and Rank 3.
+         Smite        a ranged strike, with advantage, at anything that has broken
+                      one of your tenets.
+         the ground   a Sanctuary consecrated with a Long Rest action from Rank 2,
+                      and a distorted space of its own from Rank 3.
+
+       ------------------------------------------------------- the six readings
+       Each of these is a place the spoken spec had two readings and this file had
+       to pick one. All six are in data/README.md with the reasoning.
+
+         the ten      **the vows are mine.** "There is many Oaths ... I'd like you
+                      to make at least ten different ones", and two were sketched:
+                      an Oath of Protection ("you would protect people, you would
+                      make sure they get to safety, and you would not be the one to
+                      initiate violence") and a Life-and-Light one whose tenet is
+                      "to heal the people you pass across injured". Those two are
+                      the Oath of the Bulwark and the Oath of Succor. The other
+                      eight, and all thirty tenets, are written here.
+         the pairs    **two families, not two schools.** "two schools to sub
+                      schools" corrected itself mid-sentence, and the worked
+                      example is "Light and Fire", which are two families in two
+                      different schools. Every vow opens two families and one vow
+                      opens two out of the same school.
+         the bonus    **the bend is on the card, never on the sheet.** "The stat
+                      for your spell will be your Mind plus one" is a fact about
+                      a roll. Nothing on the Character tab moves, so no Health
+                      arrives with a Physique and no Willpower with a Mind. See
+                      the note at the top of oathbound.js.
+         the Aura     **a live value with dice in it**, where his worked example
+                      was a bare Attribute. A rank has to be able to grow it and
+                      there is nothing to grow in a bare stat, so the base is
+                      `1d6 + stat` and two cards Empower it.
+         Smite        **flat across the ranks.** Its growth was never mentioned;
+                      the Aura's was, twice. So the rank money goes on the Aura
+                      and Smite is priced once and left alone.
+         the deed     **5 Faith a deed, and the player names it.** What a deed is
+                      worth was never said. Five is the one number the spec does
+                      give (the nightly loss), so one act in line with a tenet
+                      undoes one night off the road, and a vow kept keeps pace.
+
+       ------------------------------------------------------- what is mine here
+       All ten vows, all thirty tenets, all ten Auras, all eight card names, every
+       number that is not quoted above, the tagline and the blurb.
+
+       No plate and no card pictures for any of the eighteen. Drop them into
+       `data/Oathbound/` and run `npm run art:cards`. */
+    id: 'oathbound',
+    name: 'Oathbound',
+    tagline: 'A vow with three tenets, and a bar that says how well you have kept it.',
+    /* No plate yet. Null rather than a path to a file that is not there, for the
+       reason the Weaver's and the Runebearer's are. */
+    art: null,
+    /* No attribute tag: every card here rolls whichever attribute its holder
+       stands highest in, which is the Other shelf's rule. Spellcasting because
+       two whole families arrive with the vow; support and defense because the
+       Auras and the Sanctuary are mostly other people's numbers; control because
+       four of the ten hold ground rather than clear it. */
+    tags: ['spellcasting', 'support', 'defense', 'control'],
+    /* The Other shelf, like the roster filed it: scaled on the best of you rather
+       than on one attribute you raise. */
+    stat: 'other',
+    /* ------------------------------------------------------------- the DOCTRINE
+       "You'll get to learn all the spells of two sub-schools ... at Rank 1 you
+       would know all the Novice Fire and Light spells, at Rank 2 all the Adept,
+       and so on until you are Rank 3 and you know all the Master."
+
+       A **whole pool**, which is the Necromancer's third loadout shape: the pool
+       is the hand, nothing is stored, nothing is chosen, and a spell added to one
+       of these families tomorrow is a spell every Oathbound of that vow already
+       knows. See `isWhole` in loadouts.js.
+
+       What is new is `families: 'oath'`. Every other pool in the codex names its
+       school and its family outright; this one names *where to ask*, and the vow
+       on the sheet answers. One spec, ten pools. See `oathFamilies` in
+       oathbound.js and `loadoutOf` in loadouts.js, which is the one place the two
+       meet.
+
+       An Oathbound who has sworn nothing has an empty family list, and an empty
+       list refuses the whole codex, so the pool is empty until the vow is taken.
+       That is the correct answer and not an accident: there is no doctrine
+       without an Oath.
+
+       `cast: 'highest'` is "your Oathbound abilities are always scaled off your
+       highest stat", and it is the second half of what makes this set work on the
+       Other shelf. The Faith bend is *not* here: a pool spec has no character to
+       measure one against, so it arrives as a rider at the moment a card is read.
+       See `oathModifiers` in oathbound.js.
+
+       No `swap` and no `research`. There is nothing to change: what you know is
+       what your vow opens. */
+    loadout: {
+      id: 'oathbound-doctrine',
+      label: 'Doctrine',
+      noun: 'spell',
+      kind: 'spell',
+      cast: 'highest',
+      all: true,
+      families: 'oath',
+      group: 'school',
+      tiers: [null, ['Novice'], ['Novice', 'Adept'], ['Novice', 'Adept', 'Master']],
+      section: 'What your Oath opens',
+      note: 'Every spell of both families, as the rungs open. There is nothing here to choose and nothing to prepare.',
+    },
+    /* ------------------------------------------------------------ the twelfth
+       shape of what a set can hand over: a **vow**. Numbers only, and what they
+       mean is oathbound.js's business, which is the same split minions.js,
+       feral.js, pact.js, runes.js, spellblade.js and weaver.js all keep.
+
+       Every number here is quoted in the comment above the set except three, and
+       those three are the ones the spec left open:
+
+         `step`         5, the deed. See "the six readings".
+         `empower`      the Aura's growth, one die at Rank 2 and two at Rank 3.
+         `apCut`        UNWAVERING's Action Point off the raise.
+
+       `restCut`, `empower` and `apCut` are indexed by rank the way every other
+       rank grant in this file is, and `empowerFrom` is indexed the same way so the
+       arrow on the card names the rank's own card rather than the set. */
+    oath: {
+      label: 'Faith',
+      noun: 'Oath',
+      unsworn: 'No Oath sworn',
+      start: 50,
+      floor: -100,
+      ceiling: 100,
+      step: 5,
+      bonus: 1,
+      restCut: [null, 5, 5, 2],
+      empower: [null, 0, 1, 2],
+      empowerFrom: [null, null, 'Unwavering', 'Absolute Conviction'],
+      apCut: [null, 0, 1, 1],
+      apCutFrom: 'Unwavering',
+      apFloor: 1,
+      /* The one card of the eight that wears the vow's own damage type, since it
+         is one card standing in for ten. The ten Auras print theirs. */
+      smite: 'smite',
+      sanctuary: {
+        label: 'Sanctuary',
+        rank: 2,
+        greater: 3,
+        card: 'consecration',
+        greaterCard: 'hallowed-ground',
+        /* "Maintaining the sanctuary will take away like eight Willpower points
+           on the next day from the Oathbound." Read as a standing cost on the
+           maximum for as long as the ground is held rather than as a one-morning
+           charge, which is the Necromancer's reading of the same shape and the
+           only one the sheet can keep. Flagged in data/README.md. */
+        willpower: 8,
+      },
+    },
+    blurb:
+      'An Oathbound is not a believer, they are a signatory. What they swore is three sentences long and every one of them is a thing you can fail to do on an ordinary afternoon: tend the hurt you come across, never throw the first blow, bury what you leave behind. The power arrives with the vow and it is not a reward for it. It is the same power whether you keep your word or not.\n\n' +
+      'What changes is how well it answers. Faith is a bar with a middle, and it goes down every single night whether or not anything happened, so a vow is kept by doing something about it rather than by having meant it. Above the middle, whatever you are best at is a point better. Below it, a point worse. Nobody else at the table has a number that moves because of what they walked past.\n\n' +
+      'They excel at holding a place. The Aura reaches every ally who can see them and does not care how far away that is, the Sanctuary turns a rented room into ground that answers to them, and at their height they can open it from anywhere and drag half a battlefield inside. Two whole families of magic come with the vow, and which two says more about the character than any spell in them.', // text-style-ok: joins two clauses
+    cards: [
+      /* ============================================== the Oathbound's own eight */
+      {
+        id: 'the-oath',
+        rank: 1,
+        name: 'The Oath',
+        summary: 'A vow, three tenets and a bar that bends whatever you are best at.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* Mechanics as data: the whole `oath` spec above, and the card is the
+           printed half of it. Nothing here is parsed out of this prose.
+
+           The range, the start and the nightly loss are all printed because all
+           three are things a player has to plan around. The +1 and the -1 are
+           written as what an Attribute "counts as" rather than as a bonus,
+           because that is what they are: the number the card resolves against
+           moves, and nothing on the Character tab does. */
+        body:
+          'You swear an Oath and take its three tenets as your own. Everything this set gives you is cast with your highest Attribute.\n\n' +
+          'Your Faith runs from -100 to 100 and starts at 50. Acting on a tenet raises it, and acting against one lowers it.\n\n' + // text-style-ok: joins two clauses
+          'Above 0 that Attribute counts as 1 higher. Below 0 it counts as 1 lower. Every Long Rest costs you 5 Faith.',
+      },
+      {
+        id: 'doctrine',
+        rank: 1,
+        name: 'Doctrine',
+        summary: 'Two sub-schools of magic, known in full, as the rungs open.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* Mechanics as data: the `loadout` above. The rung ladder is printed
+           because it is pool access, which is the one thing a card may say about
+           a rank it does not belong to. */
+        body:
+          'Your Oath opens two sub-schools of magic to you, and you know every spell in both of them.\n\n' + // text-style-ok: joins two clauses
+          'Novice Spells at Rank 1, Adept Spells at Rank 2 and Master Spells at Rank 3. There is nothing here to prepare and nothing to choose.',
+      },
+      {
+        id: 'smite',
+        rank: 1,
+        name: 'Smite',
+        summary: 'A strike with advantage at anything that has broken one of your tenets.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Ability'],
+        ap: 4,
+        wp: 6,
+        stat: HIGHEST,
+        /* Sacred is the printed type, and a sworn Oathbound reads it in their
+           vow's own: `oathRiders` lays `damage` on this card and nothing else.
+           Printed rather than left blank so the card says what it deals when it
+           is read in the codex with nobody holding it.
+
+           The advantage is printed and not a rider. A rider would put an arrow in
+           the corner crediting a source, and there is no source: the card is
+           simply made with advantage, the way GIANT SLAYER's is not. */
+        damage: ['Sacred'],
+        body:
+          'You call the weight of your Oath down on **an entity** you can see within **18 meters (60 feet)** that has broken one of your tenets.\n\n' +
+          'Make a {stat} Ranged Attack {roll} with advantage. On a hit, you deal [[4d6 + 4*stat]] {damage} damage.',
+      },
+
+      /* ------------------------------------------------------------- and the Aura
+         The ten of them, one per vow, spread in from oaths.js. Every one is a Rank
+         1 card and a holder holds exactly one: the one their vow names. See
+         `heldOathCards` in oathbound.js, which is what drops the other nine, and
+         OATH_AURAS in oaths.js, which is what builds them.
+
+         They are in this array rather than off to one side because a set's cards
+         are what `TALENT_CARDS` folds into the registry, and a card outside it has
+         no art, no {{link}} and no place in a search. Being in the codex and being
+         held are different questions and only the second one is a character's. */
+      ...OATH_AURAS,
+
+      {
+        id: 'consecration',
+        rank: 2,
+        name: 'Consecration',
+        summary: 'A night makes one room yours. Everything you do inside it is rolled with advantage.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Adept Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "You choose a space and during a Long Rest you make it your Sanctuary
+           ... while you are on these grounds, anything you do has advantage. The
+           limit of the Sanctuary is that it cannot affect anything bigger than a
+           living room."
+
+           "Your Long Rest action" is the site's idiom for spending the night's
+           one slot, off FUNGAL INVOCATION and ARCANE RESEARCH. The size is printed
+           as a room, which is his own comparison rendered in a word the codex
+           already uses for a space.
+
+           The advantage is a rider keyed on this card in riders.js rather than
+           something the sheet applies on its own, for the reason every riders.js
+           entry exists: the sheet cannot know where you are standing. You track
+           the card while you are on the ground and the swing knows. */
+        body:
+          'You can use your Long Rest action to consecrate the ground you rested on, up to the size of a single room.\n\n' +
+          'Everything you do inside your Sanctuary is rolled with advantage. It holds until you consecrate somewhere else.',
+      },
+      {
+        id: 'unwavering',
+        rank: 2,
+        name: 'Unwavering',
+        summary: 'Your Aura is Empowered, and cheaper to raise.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "When you level up, the strength of your Aura is also increased." The
+           Arcanist's OVERLOAD is the shape: a rank's card that states the boost
+           rather than the boosted card printing its own growth, which would make
+           it print a number it is already showing. `oath.empower[2]` and
+           `oath.apCut[2]` are the arithmetic and this is the sentence. */
+        body: 'Your Aura is Empowered, and raising it costs 1 less Action Point.',
+      },
+      {
+        id: 'hallowed-ground',
+        rank: 3,
+        name: 'Hallowed Ground',
+        summary: 'Your Sanctuary becomes a place of its own, and a night in it is worth a day of advantage.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Master Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "It becomes a distorted space, so it becomes bigger, and instead of just
+           a consecrated place it becomes something that matches your Oath ...
+           whenever you or your group takes a Long Rest in the Sanctuary, everybody
+           has the Bolster effect on the next day, but maintaining the Sanctuary
+           will take away like eight Willpower points on the next day from the
+           Oathbound."
+
+           Bolster is a real card and this is a {{link}} to it, which is the second
+           in the codex after GUARDIAN ANGEL's: a halo granting advantage on
+           everything for an hour. "For the next day" stretches that hour and is
+           his own word for it, so the duration printed here is the day and the
+           link is what says what the halo does.
+
+           The eight is a standing cost on the maximum rather than a charge one
+           morning, which is the only reading the sheet can actually keep. See the
+           note on `sanctuary.willpower` above. */
+        body:
+          'Your Sanctuary becomes a space of its own, larger than the room that holds it and shaped by your Oath.\n\n' +
+          'Anyone who takes a Long Rest inside it gains the benefits of {{Bolster}} for **1 day**. Holding the ground costs you 8 of your maximum Willpower.',
+      },
+      {
+        id: 'call-to-sanctuary',
+        rank: 3,
+        name: 'Call to Sanctuary',
+        summary: 'Open the way from anywhere and take twenty with you. Your enemies fight you on your ground.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Master Talent', 'Ability'],
+        ap: 5,
+        wp: 10,
+        stat: HIGHEST,
+        /* "Another ability, which allows him to teleport himself and up to twenty
+           entities back to his Sanctuary. If it's an ally they can choose to just
+           be taken, but enemies can make a contested roll, you roll against the
+           enemy roll to see if you succeed in grabbing them to your Sanctuary. The
+           enemy can choose to fail as well. And in the Sanctuary, the enemies have
+           disadvantage on everything."
+
+           The twenty, the contest and the choice to come quietly are all his. The
+           range is not: no distance was named and a teleport with no range at all
+           is a card that can empty a city, so it is the same 18 meters SMITE
+           reaches. Flagged in data/README.md. */
+        body:
+          'You open the way to your Sanctuary for yourself and **up to 20 entities** you can see within **18 meters (60 feet)**.\n\n' +
+          'An ally comes if it wants to. Anything else may come willingly or make a {stat} contested roll {roll} against yours to stay where it is.\n\n' +
+          'An enemy inside your Sanctuary rolls everything with disadvantage.',
+      },
+      {
+        id: 'absolute-conviction',
+        rank: 3,
+        name: 'Absolute Conviction',
+        summary: 'Your Aura is Empowered again, and the nights cost you less.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* The second half of the Aura's growth, and the one thing in the codex
+           that changes the nightly loss. `oath.empower[3]` and `oath.restCut[3]`
+           are the arithmetic.
+
+           The 5 and the 2 are printed because a card that moved a number the
+           player plans their week around and did not say so would be the sheet
+           keeping a secret. */
+        body: 'Your Aura is Empowered again, and a Long Rest costs you 2 Faith instead of 5.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------- the roster *
@@ -5474,7 +5875,6 @@ const TALENT_PLACEHOLDERS = [
      Every name here is spelled as the roster spells it. Beastbond and Oathbound
      are one word each on the sheet and stay one word each. */
   placeholder('beastbond', 'Beastbond', 'other'),
-  placeholder('oathbound', 'Oathbound', 'other'),
   placeholder('quartermaster', 'Quartermaster', 'other'),
   placeholder('weapon-master', 'Weapon Master', 'other'),
 ];
@@ -5570,6 +5970,57 @@ export function cardsAtRank(talent, rank) {
 /** Everything a character holding this talent at `rank` has earned from it. */
 export function cardsThroughRank(talent, rank) {
   return (talent?.cards ?? []).filter((card) => card.rank <= rank);
+}
+
+/* -------------------------------------------------------- what a card is worth
+ *
+ * A talent card has carried `grants` since the Skill Check action arrived, and
+ * until 2026-09-11 only checks.js read it: a card could say what it cost to tick
+ * onto a roll and nothing else. JUST IN TIME's "your Movement Speed is increased
+ * by 1" was the card that showed what that left out — a rank-2 Guardian's Speed
+ * tile read the same 5.5 metres it had at rank 1.
+ *
+ * So the rider a lineage card carries is now the rider a talent card carries,
+ * in the same shape and read by the same two things. `checkWp` and
+ * `checkAdvantage` sit in the same map and are simply fields nothing on a stat
+ * line asks for: `flat` in characterModel.js picks the fields it wants by name
+ * and `kept` in statMath.js drops a term worth nothing, so a card that grants
+ * only a check rider never appears on a tile.
+ *
+ * **Read through the rank held, not at it.** A rank-3 Guardian still has JUST IN
+ * TIME. This is `cardsThroughRank`'s own rule and the same one
+ * `characterCheckCards` reads by.
+ */
+
+/**
+ * What this character's training does to the sheet's own numbers, one row per
+ * held card that does anything, named after the card.
+ *
+ * Named after the card and not the set, for the reason `lineageGrantSources`
+ * is: a Guardian's Speed hovers to `3 base + 2 half your Instinct + 1 Just In
+ * Time`, and the card is the thing a reader can go and look at.
+ *
+ * Only *flat and unconditional* riders belong here. A Guardian's SHIELD
+ * EXPERTISE also grants a point of Defense and is deliberately not in it: that
+ * point hangs on a shield being in hand, so it rides `martial.grants` and comes
+ * off again the moment the weapon is swapped. See weaponRiders in moves.js.
+ */
+export function talentGrantSources(talents) {
+  const rows = [];
+
+  for (const held of normalizeTalents(talents)) {
+    const talent = getTalent(held.id);
+    if (!talent) continue;
+    for (const card of cardsThroughRank(talent, held.rank)) {
+      if (card.grants) rows.push({ name: card.name, ...card.grants });
+    }
+  }
+  return rows;
+}
+
+/** The same rows summed per field, which is the shape `deriveStats` reads. */
+export function talentGrants(talents) {
+  return sumGrants(talentGrantSources(talents));
 }
 
 /* --------------------------------------------------------- the enchanting spec

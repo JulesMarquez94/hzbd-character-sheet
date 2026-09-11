@@ -9,6 +9,7 @@ import { MinionActionsBlock, MinionStatsBlock } from './MinionBlock.jsx';
 import PactBlock from './PactBlock.jsx';
 import PassiveBlock from './PassiveBlock.jsx';
 import BladeBlock from './BladeBlock.jsx';
+import OathBlock from './OathBlock.jsx';
 import OssuaryBlock from './OssuaryBlock.jsx';
 import RuneBlock from './RuneBlock.jsx';
 import TurnBlock from './TurnBlock.jsx';
@@ -46,6 +47,7 @@ import {
 import { feralBlockIds, feralState } from '../../lib/feral.js';
 import { minionBlockIds, minionState } from '../../lib/minions.js';
 import { pactBlockIds, pactState } from '../../lib/pact.js';
+import { oathBlockIds, oathState } from '../../lib/oathbound.js';
 import { runeBlockIds, runeState } from '../../lib/runes.js';
 import { marrowState, ossuaryBlockIds } from '../../lib/undead.js';
 import { bladeBlockIds, bladeState } from '../../lib/spellblade.js';
@@ -204,6 +206,12 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      missions, there for as long as the set is held. See pact.js. */
   const pacts = useMemo(() => pactState(character), [character]);
 
+  /* And the vows. One block each: which Oath was sworn, where the Faith bar
+     stands, the three tenets with a press on either side and everything that has
+     moved it. There for as long as the set is held, whether or not anything has
+     been sworn. See oathbound.js. */
+  const vows = useMemo(() => oathState(character), [character]);
+
   /* And the slates. One block each: every rune cut into this character, what
      firing one costs and which of them have been fired since the last Long
      Rest. There for as long as the set is held. See runes.js. */
@@ -236,6 +244,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ...pactBlockIds(character),
       ...runeBlockIds(character),
       ...ossuaryBlockIds(character),
+      ...oathBlockIds(character),
       ...bladeBlockIds(character),
       ...tables.map((table) => `log:${table.id}`),
       /* And the fight at each of those tables, beside its log: the same order
@@ -337,6 +346,17 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
           : { name: String(id), note: null };
       }
 
+      const bound = /^oath:(.+)$/.exec(String(id));
+      if (bound) {
+        const vow = vows.find((one) => one.id === bound[1]);
+        return vow
+          ? {
+              name: vow.title,
+              note: `${vow.talent.name}: the ${vow.label} bar, the tenets and what moved it`,
+            }
+          : { name: String(id), note: null };
+      }
+
       const buried = /^ossuary:(.+)$/.exec(String(id));
       if (buried) {
         const grave = graves.find((row) => row.id === buried[1]);
@@ -362,7 +382,7 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             note: `${minion.spec.label}: attributes, defenses, Health and Shield`,
           };
     },
-    [minions, forms, pacts, slates, edges, graves, tables]
+    [minions, forms, pacts, slates, edges, graves, vows, tables]
   );
 
   /* Arranging happens in a modal rather than on the tab itself. Dragging a
@@ -719,6 +739,16 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
       ])
     ),
 
+    /* ============ A VOW'S ONE ============
+       Only there when a set binds its holder to one. What was sworn, where the
+       bar stands, the three tenets and the ledger of every deed that moved it. */
+    ...Object.fromEntries(
+      vows.map((vow) => [
+        `oath:${vow.id}`,
+        <OathBlock character={character} row={vow} patch={patch} readOnly={readOnly} />,
+      ])
+    ),
+
     /* ============ A TABLE'S TWO ============
        Only there when this character is linked to a campaign, one pair per
        campaign: what the whole party has been doing, and the fight the runner
@@ -793,6 +823,8 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
                 String(id).startsWith('rune:') ? ' cell-rune' : ''
               }${String(id).startsWith('blade:') ? ' cell-blade' : ''}${
                 String(id).startsWith('ossuary:') ? ' cell-ossuary' : ''
+              }${
+                String(id).startsWith('oath:') ? ' cell-oath' : ''
               }`}
             >
               {blocks[id]}

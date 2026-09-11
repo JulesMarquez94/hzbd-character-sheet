@@ -11,6 +11,7 @@ import { cardHaystack } from '../../lib/abilitySources.js';
 import { cardCost } from '../../lib/cardText.js';
 import { compareWords } from '../../lib/cardOrder.js';
 import { levelForXp } from '../../lib/characterModel.js';
+import { oathFamilies } from '../../lib/oathbound.js';
 import {
   displacedBy,
   loadoutState,
@@ -74,6 +75,9 @@ export default function LoadoutSection({
        slate is half their Physique plus 4 a rank. See capacityAt in
        loadouts.js. */
     attributes: character,
+    /* And the two sub-schools a vow opens, for the one pool whose families are
+       the holder's rather than the spec's. See `familyGate` in loadouts.js. */
+    families: oathFamilies(character, talent.id ?? talent),
   });
   if (!state) return null;
 
@@ -605,7 +609,13 @@ function heldTitle(spec, library) {
  */
 export function LoadoutRankNote({ talent, rank, character = null }) {
   const [open, setOpen] = useState(false);
-  const preview = rankPreview(talent, rank, levelForXp(character?.xp), character);
+  const preview = rankPreview(
+    talent,
+    rank,
+    levelForXp(character?.xp),
+    character,
+    oathFamilies(character, talent.id)
+  );
   if (!preview || preview.known === 0) return null;
 
   const { spec, known, gained, opened, count, library, granted } = preview;

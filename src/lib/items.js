@@ -26,7 +26,14 @@ import { ATTRIBUTES } from './attributes.js';
 import { allGrants, damageEnchants, grantSources, laidEntries } from './enchanting.js';
 import { forgedItem, forgedRecord, isForgedId, normalizeForged } from './forged.js';
 import { scrollItem } from './scrolls.js';
-import { pactState, pactWeaponEnch } from './pact.js';
+import { pactSkillIds, pactState, pactWeaponEnch } from './pact.js';
+import { MAX_LEVEL, levelGrants } from './levels.js';
+import {
+  getBackground,
+  getBackgroundSkill,
+  normalizeBackgroundSkills,
+  skillGrantSources,
+} from './backgrounds.js';
 import { BAG_ITEMS } from './bags.js';
 import { compareTags } from './cardOrder.js';
 import { TRINKET_ITEMS } from './trinkets.js';
@@ -1199,6 +1206,74 @@ export function characterGrants(character) {
  */
 export function characterGrantSources(character) {
   return grantSources(character, gearEnchantIds(character));
+}
+
+/* ------------------------------------------------------------ and the skills
+ *
+ * The same argument one file down. A skill comes from three places — the life
+ * they led, the odd levels they climbed and what a pact taught them — and until
+ * 2026-09-11 the reading that composed them lived in levelPicks.js, which sits
+ * *above* characterModel.js. `deriveStats` then needed it, to put the three
+ * Armor Masteries' riders on the sheet, and a ledger that reaches down into the
+ * derived stats is a cycle.
+ *
+ * So it is here, for exactly the reason `characterGrants` above is here: this is
+ * the file that can see all three places at once, and it is the file that knows
+ * what is worn, which is the only condition any skill names. levelPicks.js
+ * re-exports both, so every window that already asked the ledger still does.
+ */
+
+/**
+ * Every skill this character holds, by id.
+ *
+ * Three places rather than two. A pact's skill boon is held exactly the way a
+ * background's is — `skillOptionsAt` in levelPicks.js already refuses to sell it
+ * twice — so a Frugal claimed off the pact giver cuts the price of a rest the
+ * same as a Frugal learned at a mother's table. Claimed rungs only, which is
+ * `pactSkillIds`'s own rule: a lapsed boon is not held.
+ *
+ * The ledger is read by its own rule and not a looser one: a level outside the
+ * climb is skipped, a level that sells no skill is skipped, and an id the codex
+ * has since dropped resolves to nothing and falls out. That is what
+ * `normalizeLevelPicks` does with the same record, which is why the two cannot
+ * disagree about a skill.
+ */
+export function heldSkillIds(character) {
+  const background = getBackground(character?.background);
+  const held = [...normalizeBackgroundSkills(background, character?.background_skills)];
+
+  let picks = character?.level_picks;
+  if (typeof picks === 'string') {
+    try {
+      picks = JSON.parse(picks);
+    } catch {
+      picks = null;
+    }
+  }
+  for (const [rawLevel, entry] of Object.entries(picks && typeof picks === 'object' ? picks : {})) {
+    const level = Math.floor(Number(rawLevel) || 0);
+    if (!(level >= 1 && level <= MAX_LEVEL)) continue;
+    if (!levelGrants(level).skill) continue;
+    if (getBackgroundSkill(entry?.skill)) held.push(entry.skill);
+  }
+
+  return new Set([...held, ...pactSkillIds(character)]);
+}
+
+/**
+ * What those skills do to the sheet's own numbers, one named row per skill that
+ * does anything.
+ *
+ * The armor set is read here and handed down, because a skill's `when` is
+ * answered by what the character is wearing and backgrounds.js is a leaf that
+ * cannot see an equipment map. The three Armor Masteries are the only skills
+ * that ask; every other rider is unconditional and comes back either way.
+ *
+ * A skill and an enchantment are different sources, so their riders stack and
+ * the same-source law never reaches across them. See grantsFrom in enchanting.js.
+ */
+export function characterSkillGrantSources(character) {
+  return skillGrantSources(heldSkillIds(character), { fullSet: armorSetName(character) });
 }
 
 export function itemsForSlot(slotKey) {

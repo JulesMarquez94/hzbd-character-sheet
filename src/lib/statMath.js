@@ -58,7 +58,7 @@
  */
 
 import { ATTRIBUTE_BASE, ATTRIBUTE_KEYS } from './attributes.js';
-import { SHIELD_SHARE, karmaCap, levelForXp, shieldCapFor } from './characterModel.js';
+import { SHIELD_SHARE, grantRows, karmaCap, levelForXp, shieldCapFor } from './characterModel.js';
 import {
   ARMOR_SLOTS,
   BAG_SLOT_KEY,
@@ -86,11 +86,12 @@ import {
 } from './items.js';
 import { feralArmorFrom, feralShieldShare, feralState } from './feral.js';
 import { levelGrants, levelPicksState, lineageBonuses } from './levelPicks.js';
-import { lineageGrantSources } from './lineages.js';
+import { healthRate, healthRateSources } from './grants.js';
 import { weaponRiders } from './moves.js';
 import { runningRiders } from './riders.js';
 import { spellbookWillpowerFrom } from './spellbook.js';
 import { runeDebtFrom, runeWillpowerFrom } from './runes.js';
+import { sanctuaryBurdenFrom } from './oathbound.js';
 import { undeadBurdenFrom } from './undead.js';
 import { pointCeilings, tricksterOf } from './tricks.js';
 
@@ -275,7 +276,7 @@ function attributeMath(character, stored, level, sources) {
 
     // And the other bend `liveCharacter` applies without storing: a card on the
     // tracker. Nothing in the codex raises an attribute this way yet.
-    terms.push(...riderAttrTerms(character.effects, key));
+    terms.push(...riderAttrTerms(character, key));
 
     math[key] = settle(terms, Math.floor(Number(character[key]) || 0));
   }
@@ -378,15 +379,15 @@ function grantTerms(sources, field, floor = true) {
  * The Movement Speed factor is the one field this cannot do, because a factor is
  * not a term. It is folded in where the Speed is summed. See `statMath`.
  */
-function riderTerms(effects, field) {
-  return runningRiders(effects).from.map(({ name, rider }) =>
+function riderTerms(who, field) {
+  return runningRiders(who?.effects, { who }).from.map(({ name, rider }) =>
     term(Math.floor(Number(rider[field]) || 0), name)
   );
 }
 
 /** The same, for one of the three attributes a rider could raise. */
-function riderAttrTerms(effects, key) {
-  return runningRiders(effects).from.map(({ name, rider }) =>
+function riderAttrTerms(who, key) {
+  return runningRiders(who?.effects, { who }).from.map(({ name, rider }) =>
     term(Math.floor(Number(rider.attributes?.[key]) || 0), name)
   );
 }
@@ -429,15 +430,33 @@ export function statMath(character) {
   const i = Math.floor(Number(character.instinct) || 0);
   const m = Math.floor(Number(character.mind) || 0);
 
+  /* And every rider a *card* they hold lays on this sheet, named after the card.
+     Three codexes hand these back in one shape — a lineage card, a talent card
+     and a background skill — and `deriveStats` adds all three exactly as it adds
+     an enchantment. Read once here for the same reason `sources` is: five lines
+     below want them and five reads would be four too many. See grants.js. */
+  const held = grantRows(character);
+
   const math = attributeMath(character, stored, level, sources);
 
-  /* ---- Health, Willpower and the ceiling Shield is read against ---- */
+  /* ---- Health, Willpower and the ceiling Shield is read against ----
+     Ten a level and ten a Physique for almost everybody, and a rate three cards
+     replace rather than add to. The term is named after the card when one has,
+     because a Fey reading `7 your level + 42 Physique` off a formula everyone
+     else gets 10 from has no other way to find out why. See healthRate. */
+  const perLevel = healthRate(held);
+  const rated = (value, label) => {
+    const named = healthRateSources(held).map((row) => row.name);
+    return term(value, named.length > 0 ? `${label} (${named.join(' and ')})` : label);
+  };
+
   math.health_max = settle(
     [
-      term(10 * level, 'your level'),
-      term(10 * p, 'Physique'),
+      rated(perLevel * level, 'your level'),
+      rated(perLevel * p, 'Physique'),
       ...grantTerms(sources, 'healthMax'),
-      ...riderTerms(character.effects, 'healthMax'),
+      ...grantTerms(held, 'healthMax'),
+      ...riderTerms(character, 'healthMax'),
     ],
     Math.floor(Number(character.health_max) || 0)
   );
@@ -452,7 +471,9 @@ export function statMath(character) {
     term(2 * level, 'your level'),
     term(2 * m, 'Mind'),
     ...grantTerms(sources, 'willpowerMax'),
-    ...riderTerms(character.effects, 'willpowerMax'),
+    /* INNER TIDE's four, and SPELLED ARMOR MASTERY's four while the set is on. */
+    ...grantTerms(held, 'willpowerMax'),
+    ...riderTerms(character, 'willpowerMax'),
     /* Named after the set and not the card, the way a form's hide is: what a
        reader wants from a Willpower of 62 is the word "Arcanist", and the set
        is what they can go and look at. */
@@ -464,13 +485,16 @@ export function statMath(character) {
     ),
   ];
 
-  /* And the two things that come off, in the order `deriveStats` takes them off:
-     the runes first, then the bodies out of whatever is left. Both floored
-     against the same room, which is what keeps this breakdown from disagreeing
-     with the column it is promising to add up to. */
+  /* And the three things that come off, in the order `deriveStats` takes them
+     off: the runes first, then the bodies out of whatever is left, then the
+     consecrated ground out of what is left after that. All three floored against
+     the same room, which is what keeps this breakdown from disagreeing with the
+     column it is promising to add up to. */
   const room = willpowerAdds.reduce((total, row) => total + row.value, 0);
   const inscribed = runeDebtFrom(character.talents, room);
   const owed = inscribed.reduce((total, row) => total + row.willpower, 0);
+  const ossuaries = undeadBurdenFrom(character, { physique: p, instinct: i, mind: m }, room - owed);
+  const inBodies = ossuaries.reduce((total, row) => total + row.willpower, 0);
 
   math.willpower_max = settle(
     [
@@ -484,8 +508,13 @@ export function statMath(character) {
          reason: what a reader wants of a Willpower gone quietly missing is the
          word "bodies", and the block beside it is where they can go and count
          them. See undead.js. */
-      ...undeadBurdenFrom(character, { physique: p, instinct: i, mind: m }, room - owed).map(
+      ...ossuaries.map(
         (row) => term(-row.willpower, row.bodies === 1 ? 'a body raised' : `${row.bodies} bodies raised`)
+      ),
+      /* And what a Sanctuary is holding open, named the same way again. See
+         `sanctuaryBurdenFrom` in oathbound.js. */
+      ...sanctuaryBurdenFrom(character, room - owed - inBodies).map((row) =>
+        term(-row.willpower, 'a Sanctuary held')
       ),
     ],
     Math.floor(Number(character.willpower_max) || 0)
@@ -498,13 +527,15 @@ export function statMath(character) {
     [
       ...gearTerms(places, 'armor'),
       ...grantTerms(sources, 'armor'),
-      ...riderTerms(character.effects, 'armor'),
+      /* HEAVY ARMOR MASTERY's two, while all three pieces are worn. */
+      ...grantTerms(held, 'armor'),
+      ...riderTerms(character, 'armor'),
       ...feralArmorFrom(character, i).map((row) => term(row.armor, row.talent.name)),
     ],
     Math.floor(Number(character.defense) || 0)
   );
 
-  math.avoid = avoidMath(character, places, { physique: p, instinct: i, mind: m });
+  math.avoid = avoidMath(character, places, { physique: p, instinct: i, mind: m }, sources, held);
 
   /* ---- The three an attribute buys outright ---- */
   math.initiative = settle(
@@ -526,7 +557,7 @@ export function statMath(character) {
      speed the tile is not showing. Named for what did it, like every other term:
      what a reader wants from a Speed of 2.5 is the word "overloaded". */
   const carry = carryState(character);
-  const running = runningRiders(character.effects);
+  const running = runningRiders(character.effects, { who: character });
   const speedTerms = [
     term(3, 'base'),
     term(i / 2, 'half your Instinct'),
@@ -535,7 +566,7 @@ export function statMath(character) {
        the same helper an enchantment is, because `lineageGrantSources` hands back
        the same shape. Unfloored, for the same reason the enchantment line is: 1.5
        metres is a real distance and 1 is the wrong one. */
-    ...grantTerms(lineageGrantSources(character.lineage, character.choices), 'speed', false),
+    ...grantTerms(held, 'speed', false),
     ...grantTerms(sources, 'speed', false),
   ];
   let speedRaw = speedTerms.reduce((total, row) => total + row.value, 0);
@@ -654,7 +685,7 @@ function shieldMath(character, items, mind) {
  * Armor is the one set that adds instead of replacing, and its rider reads the
  * same Armor stat the tile beside it shows.
  */
-function avoidMath(character, places, { physique, instinct, mind }) {
+function avoidMath(character, places, { physique, instinct, mind }, sources = [], held = []) {
   const set = armorSetName(character);
   const reflex = physique + instinct;
   const grit = instinct + mind;
@@ -670,13 +701,21 @@ function avoidMath(character, places, { physique, instinct, mind }) {
     terms.push(term(Math.floor(armor / 2), 'half your Armor (Heavy Armor)'));
   }
 
+  /* What the weapon in hand is worth: a Duelist's AGILE, and a Guardian's SHIELD
+     EXPERTISE beside it. Named after the *card* where the grant named one, which
+     is what `weaponRiders` hands back on `name`; the set is the fallback, which
+     is what AGILE always read as. */
   for (const row of weaponRiders(character).from) {
-    if (row.defense > 0) terms.push(term(row.defense, row.talent.name));
+    if (row.defense > 0) terms.push(term(row.defense, row.name ?? row.talent.name));
   }
+
+  /* And every flat point from a card they simply hold or a working they wear —
+     MINERAL SKIN and SCALEY are the two riding it today. */
+  terms.push(...grantTerms(held, 'defense'), ...grantTerms(sources, 'defense'));
 
   /* And whatever is on the tracker. BARKSKIN's point is a point like the ones
      above it, named after the row so a reader knows where to take it off. */
-  for (const { name, rider } of runningRiders(character.effects).from) {
+  for (const { name, rider } of runningRiders(character.effects, { who: character }).from) {
     const point = Math.floor(Number(rider.defense) || 0);
     if (point) terms.push(term(point, name));
   }

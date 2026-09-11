@@ -108,6 +108,11 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      Willpower, so a night has nothing to prepare and nothing to ask. See
      EphemeralWindow.jsx. */
   const [scribes, setScribes] = useState([]);
+  /* And the ground an Oathbound is consecrating tonight: `{ set, name, note }`,
+     or null for a night the slot went elsewhere. Held here rather than written
+     as it is typed, like every other draft in this window, so backing out of the
+     rest leaves the room exactly as unconsecrated as it was. See oathbound.js. */
+  const [consecrated, setConsecrated] = useState(null);
 
   /* Whether the list of actions is up, and which one's step is. */
   const [menu, setMenu] = useState(false);
@@ -133,8 +138,9 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         revived,
         raised,
         scribes,
+        consecrated,
       }),
-    [character, kind, picked, prepared, brews, reshaped, revived, raised, scribes]
+    [character, kind, picked, prepared, brews, reshaped, revived, raised, scribes, consecrated]
   );
 
   /* What a Short Rest could bring back, per set that can bring anything back.
@@ -151,6 +157,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setReshaped(null);
     setRaised(null);
     setScribes([]);
+    setConsecrated(null);
   }
 
   /** Fill the slot. Whatever was in it, and whatever it did, goes first. */
@@ -162,6 +169,11 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setReshaped(null);
     setScribes([]);
     setRaised(row.kind === 'raise' ? { set: row.state.id } : null);
+    setConsecrated(
+      row.kind === 'sanctuary'
+        ? { set: row.state.id, name: row.state.sanctuary?.name ?? '', note: '' }
+        : null
+    );
     setActionId(row.id);
 
     setMenu(false);
@@ -172,7 +184,16 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
   if (!rest || !plan) return null;
 
   const held = action
-    ? summarise(action, { chosen, character, talents, brews, reshaped, raised, scribes })
+    ? summarise(action, {
+        chosen,
+        character,
+        talents,
+        brews,
+        reshaped,
+        raised,
+        scribes,
+        consecrated,
+      })
     : null;
 
   return (
@@ -468,6 +489,65 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         />
       )}
 
+      {/* CONSECRATION, and the one step in this window that asks for nothing but a
+          name. The ground is real and the sheet has no idea where it is, so what
+          it holds is what the table will call it and whatever the player wants to
+          remember about it. Written when the rest is. */}
+      {step?.kind === 'sanctuary' && (
+        <Modal
+          title={`Consecrate your ${step.state.spec.sanctuary?.label ?? 'Sanctuary'}`}
+          onClose={() => setStepId(null)}
+          footer={
+            <>
+              <span className="spacer" />
+              <button
+                type="button"
+                className="btn btn-take btn-sm"
+                onClick={() => setStepId(null)}
+              >
+                ← Back to the rest
+              </button>
+            </>
+          }
+        >
+          <p className="frame-foot" style={{ marginTop: 0 }}>
+            {step.state.greater
+              ? `A space of its own, shaped by ${step.state.oath.name}: ${step.state.oath.sanctum}. Anyone who takes a Long Rest inside it wakes Bolstered, and holding it costs you ${step.state.spec.sanctuary?.willpower ?? 0} of your maximum Willpower.`
+              : 'One room, no larger. Everything you do inside it is rolled with advantage, and it holds until you consecrate somewhere else.'}
+          </p>
+
+          <label className="form-label" htmlFor="sanctuary-name">
+            What is this place
+          </label>
+          <input
+            className="form-input"
+            id="sanctuary-name"
+            type="text"
+            maxLength={60}
+            value={consecrated?.name ?? ''}
+            placeholder="The back room at the Drowned Crow"
+            onChange={(event) =>
+              setConsecrated((live) => ({ ...live, set: step.state.id, name: event.target.value }))
+            }
+          />
+
+          <label className="form-label" htmlFor="sanctuary-note">
+            Anything worth remembering about it
+          </label>
+          <textarea
+            className="form-input"
+            id="sanctuary-note"
+            rows={3}
+            maxLength={240}
+            value={consecrated?.note ?? ''}
+            placeholder="Second floor, one window, the landlord thinks we are praying"
+            onChange={(event) =>
+              setConsecrated((live) => ({ ...live, set: step.state.id, note: event.target.value }))
+            }
+          />
+        </Modal>
+      )}
+
       {step?.kind === 'worn' && (
         <Modal
           title="On your own person"
@@ -671,7 +751,16 @@ function RuneRecharge({ row, chosen, onToggle }) {
   );
 }
 
-function summarise(action, { chosen, character, talents, brews, reshaped, raised, scribes }) {
+function summarise(action, {
+  chosen,
+  character,
+  talents,
+  brews,
+  reshaped,
+  raised,
+  scribes,
+  consecrated,
+}) {
   if (action.kind === 'scribe') {
     const said = scribeSummary(scribes, action.state);
     return said
@@ -706,6 +795,17 @@ function summarise(action, { chosen, character, talents, brews, reshaped, raised
           done: false,
           says: `${offer.kind.label}, and something still open`,
           owing: `The ${offer.kind.label.toLowerCase()} you are raising has a question still open.`,
+        };
+  }
+
+  if (action.kind === 'sanctuary') {
+    const named = String(consecrated?.name ?? '').trim();
+    return named
+      ? { done: true, says: `${named} consecrated` }
+      : {
+          done: false,
+          says: 'The place has no name yet',
+          owing: 'The night is spent consecrating ground and the place has not been named.',
         };
   }
 

@@ -11,16 +11,22 @@ import {
   encumberedSpeed,
   equipmentEffects,
   gearEnchantIds,
+  characterSkillGrantSources,
 } from './items.js';
 import { ephemeralGrants, wornIds } from './enchanting.js';
 import { pointCeilings } from './tricks.js';
 import { martialDefense } from './moves.js';
 import { feralArmor, feralShieldShare } from './feral.js';
 import { spellbookWillpower } from './spellbook.js';
+import { sanctuaryBurden } from './oathbound.js';
 import { runeDebt, runeWillpower } from './runes.js';
 import { undeadBurden } from './undead.js';
 import { effectRiders, riderShift } from './riders.js';
-import { lineageGrants } from './lineages.js';
+import { lineageGrants, lineageGrantSources } from './lineages.js';
+import { talentGrants, talentGrantSources } from './talents.js';
+
+import { healthRate, sumGrants } from './grants.js';
+import { MAX_LEVEL, XP_TABLE, levelForXp, xpForLevel, xpProgress } from './levels.js';
 
 export const BLANK_CHARACTER = {
   name: 'Unnamed Drifter',
@@ -121,6 +127,12 @@ export const BLANK_CHARACTER = {
   // progress fed into it and every boon claimed off it. pact.js owns the
   // shape, and a sheet with no such set never writes the column.
   pact: {},
+  // The vows a talent set has bound this character to, keyed by the set that
+  // granted one: { "oathbound": { oath, faith, log, sanctuary } }. Which of the
+  // ten Oaths was sworn, where the Faith bar stands, what moved it and what
+  // ground has been consecrated. oathbound.js owns the shape, and a sheet with
+  // no such set never writes the column.
+  oath: {},
   // Everything a level handed out that isn't a talent, keyed by the level that
   // granted it: the +2 / +1 spread at level 1, and an attribute point and a
   // learned skill at every odd level after. levelPicks.js owns the shape.
@@ -198,7 +210,8 @@ export const SHEET_BLOCK_IDS = [1, 2, 3, 4, 5, 6];
  * more, named `minion:<set>` and `minion:<set>:bar` (see minionBlockIds in
  * minions.js), and one that turns its holder into something adds a single
  * `feral:<set>` (see feralBlockIds in feral.js). A set that keeps an Ossuary
- * adds one of those too, `ossuary:<set>`, and then **two more for every body it
+ * adds one of those too, `ossuary:<set>`, a set that binds its holder to a vow
+ * adds `oath:<set>` (see oathBlockIds in oathbound.js), and then **two more for every body it
  * raises**, which is the first thing on this tab that grows and shrinks inside a
  * session rather than only at a rank. Those arrive when the set is
  * taken and leave when it is handed back, so they are matched the way
@@ -465,6 +478,28 @@ export function normalizeGridColumns(value) {
  * worked into what you are wearing" needs the equipment map, the trinkets and the
  * forge registry together. Every call site already spread a character in.
  */
+
+/**
+ * Every grant row standing on this character from a card they hold, named.
+ *
+ * The three codexes that carry `grants` — a lineage card, a talent card and a
+ * background skill — in one list, which is what the two readings that need the
+ * *rows* rather than the sum ask for: `healthRate` has to compose rates rather
+ * than add them, and `restHealth` reads something that is not a number at all.
+ * An enchantment is deliberately not in it: nothing worked into a ring changes a
+ * rate or a rest, and `characterGrantSources` is its own reading.
+ *
+ * `statMath.js` builds the same list for its breakdown lines, out of the same
+ * three readers, so a tile can name the card that moved a number.
+ */
+export function grantRows(character) {
+  return [
+    ...lineageGrantSources(character?.lineage, character?.choices),
+    ...talentGrantSources(character?.talents),
+    ...characterSkillGrantSources(character),
+  ];
+}
+
 export function deriveStats(character, extra = null, running = null) {
   const { physique, instinct, mind, level } = character;
   const worn = characterGrants(character).worn;
@@ -490,16 +525,43 @@ export function deriveStats(character, extra = null, running = null) {
      lineageGrants in lineages.js. */
   const blood = lineageGrants(character?.lineage, character?.choices);
 
-  /* The flat riders, blood, worn and running, summed once each. `extra` is only
-     ever the ephemeral half; the worn half is already in `worn`. And `running` is
-     whatever is on the tracker, which is a fourth source and adds like one. */
+  /* And what their *training* is worth, in the identical shape and for the
+     identical reason. A talent card has carried `grants` since the Skill Check
+     action arrived and only checks.js ever read it, so GUARDIAN · JUST IN TIME
+     said "your Movement Speed is increased by 1" and the tile never moved. Read
+     through the rank held, so a rank-3 Guardian keeps what rank 2 bought. See
+     talentGrants in talents.js. */
+  const training = talentGrants(character?.talents);
+
+  /* And what the life before this one taught them. A skill may name a condition
+     and the only one any of them names is a full armor set: the three Armor
+     Masteries are worth their rider while the third piece is worn and nothing the
+     moment it is stowed, the way a Duelist's AGILE follows the weapon in hand.
+     The condition is answered inside the reading, which is why this takes the
+     whole character rather than a list of ids. See items.js. */
+  const learned = sumGrants(characterSkillGrantSources(character));
+
+  /* The flat riders — blood, training, what was learned, what is worn and what is
+     running — summed once each. `extra` is only ever the ephemeral half; the worn
+     half is already in `worn`. Six different sources, so they add rather than
+     taking the largest: the same-source law bites inside each of them and never
+     across them. See the note in grants.js. */
   const flat = (key) =>
     (worn[key] ?? 0) +
     (blood[key] ?? 0) +
+    (training[key] ?? 0) +
+    (learned[key] ?? 0) +
     (Number(extra?.[key]) || 0) +
     (Number(running?.[key]) || 0);
 
-  const health_max = Math.floor(10 * lvl + 10 * p) + Math.floor(flat('healthMax'));
+  /* Ten Health a level and ten a Physique for almost everybody, and a rate three
+     cards replace rather than add to: UNDEATH RESILIENCE's 15, HEARTHY's 12 and
+     FEY BLOOD's 7. It buys *both* halves, because all three say "per level in
+     Fortitude and Physique", which is worth 45 Health to a level-3 Undead with a
+     Physique of 6 and the largest single number any card on this sheet moves.
+     See healthRate in grants.js. */
+  const perLevel = healthRate(grantRows(character));
+  const health_max = Math.floor(perLevel * lvl + perLevel * p) + Math.floor(flat('healthMax'));
   const reflex = Math.floor(p + i);
   const grit = Math.floor(i + m);
 
@@ -509,19 +571,22 @@ export function deriveStats(character, extra = null, running = null) {
      off the effective Physique, so a ring that lends the body strength lends the
      Willpower that comes with it. See spellbook.js and runes.js.
 
-     Then the two things that take it away. A Runebearer pays a spell's Willpower
+     Then the three things that take it away. A Runebearer pays a spell's Willpower
      once, on the night it goes on, and the maximum stays down for as long as the
-     rune does; that is why firing one costs nothing. And a Necromancer pays for
-     every body in their Ossuary, for as long as they are holding it together.
-     **They are the only two things on this sheet that subtract from a derived
+     rune does; that is why firing one costs nothing. A Necromancer pays for every
+     body in their Ossuary, for as long as they are holding it together. And an
+     Oathbound at Master pays for the Sanctuary they are holding open, for as long
+     as the ground is theirs.
+     **They are the only three things on this sheet that subtract from a derived
      maximum**, which is why they are worked out here rather than inline: the sum
      above them is the room they are floored against, so a maximum can never go
      below zero, and `statMath` floors against the same number in the same order
      so the tile's breakdown cannot disagree with the column.
 
-     The runes go first and the bodies get what is left. Arbitrary, and it only
-     ever matters to a drifter carrying both who has run out: the total is the
-     same either way, and floored the same. See runes.js and undead.js. */
+     The runes go first, the bodies get what is left and the ground gets what is
+     left after that. Arbitrary, and it only ever matters to a drifter carrying all
+     three who has run out: the total is the
+     same either way, and floored the same. See runes.js, undead.js and oathbound.js. */
   const willpowerHeld =
     2 * lvl +
     2 * m +
@@ -535,7 +600,8 @@ export function deriveStats(character, extra = null, running = null) {
     { physique: p, instinct: i, mind: m },
     willpowerHeld - runesOwed
   );
-  const willpowerOwed = runesOwed + bodiesOwed;
+  const groundOwed = sanctuaryBurden(character, willpowerHeld - runesOwed - bodiesOwed);
+  const willpowerOwed = runesOwed + bodiesOwed + groundOwed;
 
   const gear = equipmentEffects(character);
   const points = pointCeilings(character?.talents);
@@ -575,9 +641,16 @@ export function deriveStats(character, extra = null, running = null) {
      rather than printed on the card as a warning: swap to a two-hander and
      syncDerived takes the point straight back off. See moves.js. */
   avoid += martialDefense(character);
-  /* And what is running on the tracker. BARKSKIN's "+1 Defense" is a point like
-     any other, and it comes off on the render its row is dropped. */
-  avoid += Math.floor(Number(running?.defense) || 0);
+  /* And every flat point of it from anywhere else — a lineage card, a talent
+     card, a skill, a working, and whatever is on the tracker. `defense` is the
+     field's name in every codex that carries it, because "Defense" is what a
+     reader calls this stat: the stored column says `avoid` and that is the
+     relabel CharacterTab.jsx explains, not a second stat.
+
+     MINERAL SKIN and SCALEY are the two cards riding it, and BARKSKIN is the
+     tracker row that always did — it comes off on the render its row is
+     dropped, and so does a Stonebound's point on the render the card is. */
+  avoid += Math.floor(flat('defense'));
 
   /* The factor on the Movement Speed, applied to everything the Speed is already
      made of: GIANT GROWTH doubles the Speed you have, gear and all, rather than
@@ -691,7 +764,7 @@ export function liveCharacter(character) {
   if (!character) return character;
 
   const grants = characterGrants(character);
-  const running = effectRiders(character?.effects);
+  const running = effectRiders(character?.effects, { who: character });
   if (!grants.any && !running) return character;
 
   /* The attribute *columns* are the level ledger's, and nothing here may write
@@ -750,7 +823,7 @@ export function liveShift(character) {
   /* And the cards. Only the ones actually moving a tile: a row lending a die to
      the next swing is running, and it is not what any of these tiles is showing.
      See riders.js. */
-  for (const { name, rider } of riderShift(character?.effects)) {
+  for (const { name, rider } of riderShift(character)) {
     said.push(`${name} (${rider.line})`);
   }
 
@@ -877,77 +950,12 @@ export const MAX_ATTRIBUTE = 12;
 
 /* ---------------------------------------------------------------- experience */
 
-export const MAX_LEVEL = 12;
-
-/**
- * Cumulative XP needed to *reach* each level — `xp` on a character is the
- * lifetime total, never a per-level counter that resets.
- *
- * Every step costs more than the one before it: the climb from 11 to 12 is
- * worth seventeen level-1s, so late levels stay an event rather than a
- * formality.
- */
-export const XP_TABLE = [
-  null, // no level 0
-  0,      // 1
-  1000,   // 2   +1,000
-  2500,   // 3   +1,500
-  4500,   // 4   +2,000
-  7500,   // 5   +3,000
-  11500,  // 6   +4,000
-  17000,  // 7   +5,500
-  24000,  // 8   +7,000
-  33000,  // 9   +9,000
-  44000,  // 10  +11,000
-  58000,  // 11  +14,000
-  75000,  // 12  +17,000
-];
-
-function clampLevel(level) {
-  return Math.min(MAX_LEVEL, Math.max(1, Math.floor(Number(level) || 1)));
-}
-
-/** The level a lifetime XP total buys, capped at the table's last row. */
-export function levelForXp(xp) {
-  const total = Math.max(0, Number(xp) || 0);
-  let level = 1;
-  for (let n = 2; n <= MAX_LEVEL; n += 1) {
-    if (total < XP_TABLE[n]) break;
-    level = n;
-  }
-  return level;
-}
-
-/**
- * Cumulative XP that opens the *next* level. At the cap it returns the level-12
- * threshold, so `xp_max` always holds a real number for the progress bars.
- */
-export function xpForLevel(level) {
-  const n = clampLevel(level);
-  return n >= MAX_LEVEL ? XP_TABLE[MAX_LEVEL] : XP_TABLE[n + 1];
-}
-
-/** Everything the bars and badges need from a lifetime XP total. */
-export function xpProgress(xp) {
-  const total = Math.max(0, Number(xp) || 0);
-  const level = levelForXp(total);
-  const isMax = level >= MAX_LEVEL;
-  const floor = XP_TABLE[level];
-  const ceil = isMax ? XP_TABLE[MAX_LEVEL] : XP_TABLE[level + 1];
-  const span = Math.max(1, ceil - floor);
-
-  return {
-    level,
-    isMax,
-    floor,
-    ceil,
-    total,
-    into: total - floor,
-    span,
-    toNext: isMax ? 0 : Math.max(0, ceil - total),
-    percent: isMax ? 100 : Math.min(100, ((total - floor) / span) * 100),
-  };
-}
+/* The climb moved to its own leaf on 2026-09-11 and is re-exported here, because
+   every reader on the site asks characterModel for it and none of them should have
+   had to change. What moved it: `deriveStats` below now reads what a *skill*
+   grants, which lives behind `heldSkillIds` in levelPicks.js, and levelPicks.js
+   was already reading `MAX_LEVEL` from here. See levels.js. */
+export { MAX_LEVEL, XP_TABLE, levelForXp, xpForLevel, xpProgress };
 
 /* -------------------------------------------------------------------- ledger */
 

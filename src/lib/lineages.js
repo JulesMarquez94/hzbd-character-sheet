@@ -156,13 +156,20 @@
  * grants below were declared, and Defense, Willpower, Health per level and
  * Movement Speed were printed and not read by anything.
  *
- * **A card can carry its own number now.** `grants` on a card is the sentence
- * written as a rider, and `lineageGrantSources` below hands the lot to
- * `deriveStats` and to the Speed tile's own math line. WIND GRACE is the first
- * and so far only card to use it: its 1.5 metres are 1.5 metres. MINERAL SKIN
- * and SCALEY's Defense, INNER TIDE's Willpower, WILD SWIFTNESS's own 1.5 metres
- * and the four cards that change Health per level are one `grants` each away and
- * are still printed only. See data/README.md.
+ * **A card carries its own number now, and every card that names one does.**
+ * `grants` on a card is the sentence written as a rider, and
+ * `lineageGrantSources` below hands the lot to `deriveStats` and to the tile's
+ * own math line. WIND GRACE was the first, on 2026-08-28; the other six followed
+ * on 2026-09-11 off a one-line report that MINERAL SKIN was not adding to
+ * Defense. WIND GRACE and WILD SWIFTNESS carry a Movement Speed each, MINERAL
+ * SKIN and SCALEY a point of Defense, INNER TIDE four Willpower, and FEY BLOOD,
+ * HEARTHY and UNDEATH RESILIENCE the rate Health is bought at. See grants.js.
+ *
+ * **Three sentences on these cards are still the table's**, and none of them is a
+ * number this sheet holds: FEY BLOOD's flight, AMPHIBIAN's and DRACONIC SCALES'
+ * resistances, STICKY's walls and ceilings, and VENOMOUS's extra 1d4 of Decay on
+ * a weapon attack, which is the one of them the sheet could carry and has no
+ * field for. See data/README.md.
  *
  * --------------------------------------------------------------- card text
  * Card bodies use the same markers as every other card — see the header of
@@ -179,6 +186,7 @@
 import { HIGHEST } from './attributes.js';
 import { withArt } from './cardArt.js';
 import { sortCards } from './cardOrder.js';
+import { sumGrants } from './grants.js';
 import { castModifier } from './cardText.js';
 import { SPELLS } from './spells.js';
 
@@ -351,6 +359,11 @@ const SCALEY = own('Wildkin', {
   id: 'scaley',
   name: 'Scaley',
   summary: 'Defense +1.',
+  /* `defense` is the stat a reader calls Defense, which the stored column calls
+     `avoid`. The two names are the relabel `CharacterTab.jsx` explains and the
+     rider table in riders.js already spells it this way, so a card and a potion
+     that both say "+1 Defense" carry the same word. MINERAL SKIN is its twin. */
+  grants: { defense: 1 },
   body: 'Your Defense is increased by 1.',
 });
 
@@ -396,6 +409,10 @@ const HEARTHY = own('Wildkin', {
   id: 'hearthy',
   name: 'Hearthy',
   summary: '12 Health per level instead of 10.',
+  /* A *rate*, not a lump, and the only kind of grant that is: it buys both halves
+     of the Health formula, so 12 is worth two points a level and two more a
+     Physique. See healthRate in characterModel.js. */
+  grants: { healthPerLevel: 12 },
   body: 'You gain 12 Health per level in Fortitude and {physique} instead of 10.',
 });
 
@@ -403,6 +420,9 @@ const WILD_SWIFTNESS = own('Wildkin', {
   id: 'wild-swiftness',
   name: 'Wild Swiftness',
   summary: 'Movement Speed +1.5 meters.',
+  /* The same 1.5 metres WIND GRACE carries, and it has to be the same rider or
+     the two cards disagree about whether the sheet believes them. */
+  grants: { speed: 1.5 },
   body: 'Your Movement Speed is permanently increased by **1.5 meters (5 feet)**.',
 });
 
@@ -504,6 +524,11 @@ const LINEAGE_CODEX = [
         id: 'fey-blood',
         name: 'Fey Blood',
         summary: 'Permanent flight, paid for with 7 Health per level instead of 10.',
+        /* The flight is the table's, because nothing on this sheet knows how high
+           anything is. The price is the sheet's: 7 a level rather than 10 is the
+           one grant that moves a *rate*, and a Fey at level 3 with Physique 6
+           reads 42 Health rather than 90. See healthRate in characterModel.js. */
+        grants: { healthPerLevel: 7 },
         body:
           'You permanently gain the ability to fly.\n\n' +
           'However, you gain 7 Health per level in Fortitude and {physique} instead of 10.',
@@ -576,6 +601,9 @@ const LINEAGE_CODEX = [
         id: 'inner-tide',
         name: 'Inner Tide',
         summary: 'Willpower +4.',
+        /* The maximum, which is what "your Willpower" means everywhere else on a
+           card: SPELLED ARMOR MASTERY says the same four the same way. */
+        grants: { willpowerMax: 4 },
         body: 'Your Willpower is increased by 4.',
       }),
       INNATE_WATER,
@@ -595,6 +623,9 @@ const LINEAGE_CODEX = [
         id: 'mineral-skin',
         name: 'Mineral Skin',
         summary: 'Defense +1.',
+        /* Defense, which is how hard you are to hit, and not Armor. SCALEY is the
+           identical card in the Wildkin pool and carries the identical rider. */
+        grants: { defense: 1 },
         body: 'Your Defense is increased by 1.',
       }),
       INNATE_EARTH,
@@ -716,6 +747,12 @@ const LINEAGE_CODEX = [
         id: 'undeath-resilience',
         name: 'Undeath Resilience',
         summary: '15 Health per level instead of 10, and rests barely mend you.',
+        /* Both halves are riders, and they are the largest pair in the codex. The
+           rate is 15 rather than 10, worth 45 Health to a level-3 Undead with a
+           Physique of 6; `restHealth` is the other half, and it is the only thing
+           in the game that takes a *rest* away rather than a number. See
+           healthRate in characterModel.js and restHealth in rest.js. */
+        grants: { healthPerLevel: 15, restHealth: { short: 'none', long: 'half' } },
         body:
           'You gain 15 Health per level in Fortitude and {physique} instead of 10.\n\n' +
           'However Short Rests no longer restore Health, and Long Rests only let you regain half your maximum Health.', // text-style-ok: joins two clauses
@@ -934,21 +971,19 @@ export function lineageGrantSources(key, choices) {
  *
  * Whatever a card declares lands in the map whether or not anything reads it
  * yet, so wiring the next one is a `grants` on the card and, if the stat is not
- * already summed through `flat`, one word where it is. WIND GRACE's Speed is the
- * only rider declared today; MINERAL SKIN's Defense, INNER TIDE's Willpower and
- * the four cards that change Health per level are still printed and not wired.
- * See data/README.md.
+ * already summed through `flat`, one word where it is. Six ride it today: WIND
+ * GRACE and WILD SWIFTNESS a Speed each, MINERAL SKIN and SCALEY a Defense,
+ * INNER TIDE a Willpower, and the three rate cards their Health per level.
+ *
+ * **Only the flat fields are summed here.** A rate is not a lump — two cards
+ * saying "instead of 10" do not make 27 — and `restHealth` is not a number at
+ * all. Both come off the *rows* instead, through `healthRate` and `restHealth`,
+ * so the sum this hands back stays what `flat` can add up. Anything that is not
+ * a finite number is skipped rather than coerced to a zero that would read as a
+ * declared nothing.
  */
 export function lineageGrants(key, choices) {
-  const total = {};
-
-  for (const row of lineageGrantSources(key, choices)) {
-    for (const [field, value] of Object.entries(row)) {
-      if (field === 'name') continue;
-      total[field] = (total[field] ?? 0) + (Number(value) || 0);
-    }
-  }
-  return total;
+  return sumGrants(lineageGrantSources(key, choices));
 }
 
 /** How many of a pool's picks are still outstanding. Zero when there is no pool. */
