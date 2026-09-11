@@ -33,6 +33,7 @@ import { minionOf } from '../../../lib/minions.js';
 import { feralOf } from '../../../lib/feral.js';
 import { pactOf } from '../../../lib/pact.js';
 import { enchantingOf, rankInfo } from '../../../lib/talents.js';
+import { oathOf } from '../../../lib/oathbound.js';
 
 /**
  * Whether this row was made at the Crossroads. The ledger is the record of every
@@ -396,6 +397,7 @@ function asksMore(talent) {
       minionOf(talent.id) ||
       feralOf(talent.id) ||
       pactOf(talent.id) ||
+      oathOf(talent.id) ||
       (enchantingOf(talent.id)?.worn?.[1] ?? 0) > 0
   );
 }

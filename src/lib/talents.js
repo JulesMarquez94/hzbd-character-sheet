@@ -5383,7 +5383,7 @@ const TALENT_SETS = [
          the ground   a Sanctuary consecrated with a Long Rest action from Rank 2,
                       and a distorted space of its own from Rank 3.
 
-       ------------------------------------------------------- the six readings
+       ----------------------------------------------------- the main readings
        Each of these is a place the spoken spec had two readings and this file had
        to pick one. All six are in data/README.md with the reasoning.
 
@@ -5393,8 +5393,21 @@ const TALENT_SETS = [
                       make sure they get to safety, and you would not be the one to
                       initiate violence") and a Life-and-Light one whose tenet is
                       "to heal the people you pass across injured". Those two are
-                      the Oath of the Bulwark and the Oath of Succor. The other
-                      eight, and all thirty tenets, are written here.
+                      the Oath of Protection and the Oath of Mercy. The other eight,
+                      all thirty tenets and all ten pages of lore are written here.
+         the creed    **an Oath is a sub-talent set, and a tenet is a principle.**
+                      "Imagine that Oathbound is like multiple talents inside of a
+                      single talent set", and "the tenets need to be less action
+                      specific, more of an overall creed, so players have real leeway
+                      to play around them". The first draft wrote procedures and job
+                      titles (an Oath of the Anvil, "name the crime out loud before
+                      you answer it"); this one writes beliefs (an Oath of Creation,
+                      "you answer for everything that leaves your hands") with the
+                      concrete instance in its own field. See oaths.js.
+         sworn once   **the vow is chosen when the set is taken and never changes.**
+                      It is an `oath` row in `levelAsks`, the panel on this set opens
+                      on it the moment a rank is bought, and nothing on the sheet
+                      unswears. Handing the rank back is the only way out.
          the pairs    **two families, not two schools.** "two schools to sub
                       schools" corrected itself mid-sentence, and the worked
                       example is "Light and Fire", which are two families in two
@@ -5528,7 +5541,7 @@ const TALENT_SETS = [
       },
     },
     blurb:
-      'An Oathbound is not a believer, they are a signatory. What they swore is three sentences long and every one of them is a thing you can fail to do on an ordinary afternoon: tend the hurt you come across, never throw the first blow, bury what you leave behind. The power arrives with the vow and it is not a reward for it. It is the same power whether you keep your word or not.\n\n' +
+      'An Oathbound is not a believer, they are a signatory. What they swore is three sentences long, and every one of them is a thing you can fail to do on an ordinary afternoon: tend whatever is hurt in front of you, never throw the first blow, put back what you take. The power arrives with the vow and it is not a reward for it. It is the same power whether you keep your word or not.\n\n' +
       'What changes is how well it answers. Faith is a bar with a middle, and it goes down every single night whether or not anything happened, so a vow is kept by doing something about it rather than by having meant it. Above the middle, whatever you are best at is a point better. Below it, a point worse. Nobody else at the table has a number that moves because of what they walked past.\n\n' +
       'They excel at holding a place. The Aura reaches every ally who can see them and does not care how far away that is, the Sanctuary turns a rented room into ground that answers to them, and at their height they can open it from anywhere and drag half a battlefield inside. Two whole families of magic come with the vow, and which two says more about the character than any spell in them.', // text-style-ok: joins two clauses
     cards: [
@@ -5595,6 +5608,51 @@ const TALENT_SETS = [
         body:
           'You call the weight of your Oath down on **an entity** you can see within **18 meters (60 feet)** that has broken one of your tenets.\n\n' +
           'Make a {stat} Ranged Attack {roll} with advantage. On a hit, you deal [[4d6 + 4*stat]] {damage} damage.',
+      },
+
+      {
+        id: 'divine-fervor',
+        rank: 1,
+        name: 'Divine Fervor',
+        summary: 'Willpower buys advantage on anything your Oath asks of you.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* "As long as you are doing an action which is in line with one of your
+           tenets, you can spend Willpower to give yourself advantage. So when I do a
+           skill check, you can spend the Willpower to give yourself advantage to a
+           skill check that is in line with your tenets" (Jules, 2026-09-11).
+
+           Wired the way the thirteen background domain skills are, and it is the
+           same sentence with a wider domain: `checkWp` and `checkAdvantage` are what
+           the SKILL CHECK prompt charges and adds, and `speaksToACheck` in checks.js
+           finds the card by its prose. So it appears in that prompt beside a
+           Cartographer's and a Feral Cursed's without a line being added anywhere.
+
+           **The domain is the widest in the codex**, which is the point: a skill
+           says "whenever you make a skill check to read a map" and this says
+           "whenever you are doing what you swore to do". Whether that is true of
+           this attempt is exactly the judgement the thirteen already leave to the
+           table, one size larger.
+
+           2 Willpower where a skill charges 1. Not said, and it is the price of the
+           domain: a skill's covers one kind of attempt and this one covers a whole
+           creed. Flagged in data/README.md.
+
+           "A roll" as well as a skill check, because he said "an action which is in
+           line with one of your tenets" first and narrowed to checks second. The
+           check is the half the sheet can charge for; the rest is the table's, the
+           way BESTIAL SENSE’s is. */
+        grants: {
+          checkWp: 2,
+          checkAdvantage: 1,
+          checkWhen: 'Advantage on anything you are doing in line with one of your tenets.',
+        },
+        body:
+          'Whenever you make a skill check or a roll toward one of your tenets, you can spend 2 Willpower to make it with advantage.\n\n' +
+          'Whether what you are doing is in line with a tenet is your Game Master’s call.',
       },
 
       /* ------------------------------------------------------------- and the Aura

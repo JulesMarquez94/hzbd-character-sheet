@@ -70,6 +70,7 @@ import {
 import { loadoutOf, loadoutSettled } from './loadouts.js';
 import { minionOf, minionSettled } from './minions.js';
 import { feralOf, feralSettled } from './feral.js';
+import { oathOf, oathSettled } from './oathbound.js';
 import { pactOf, pactSettled, pactSkillIds } from './pact.js';
 import { MAX_LEVEL, levelForXp, levelGrants } from './levels.js';
 
@@ -187,6 +188,15 @@ export function levelAsks(character, level, { talents, picks, background }) {
        badge needs. */
     if (slot?.filled && slot.rank === 1 && pactOf(slot.talent)) {
       ask('pact', pactSettled(character, slot.talent.id), slot.talent);
+    }
+
+    /* And a set that binds its holder to a vow asks which vow, at the level that
+       bought Rank 1 and at no other. "You need to select the Oath before you finish
+       the selection ... that's permanent, so you cannot change it later" (Jules,
+       2026-09-11), so this is the one ask in the list that can never be reopened
+       once it is answered. See oathbound.js. */
+    if (slot?.filled && slot.rank === 1 && oathOf(slot.talent)) {
+      ask('oath', oathSettled(character, slot.talent.id), slot.talent);
     }
 
     /* And a set that deals a hand rather than teaching one asks for the cards

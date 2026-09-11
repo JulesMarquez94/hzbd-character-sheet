@@ -7,6 +7,7 @@ import LoadoutSection, { LoadoutRankNote } from './LoadoutPick.jsx';
 import MinionSection from './MinionPick.jsx';
 import MinionPreview from './MinionPreview.jsx';
 import PactSection, { PactRankNote } from './PactPick.jsx';
+import { OathSection } from './OathPick.jsx';
 import WornEnchants from './WornEnchants.jsx';
 import { BrewRankNote } from './BrewWindow.jsx';
 import { AlchemyRankNote } from './BrewRest.jsx';
@@ -21,7 +22,7 @@ import { brewPreview } from '../../lib/brews.js';
 import { enchantmentsAt } from '../../lib/enchantments.js';
 import { levelForXp } from '../../lib/characterModel.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
-import { heldOathCards, oathFamilies } from '../../lib/oathbound.js';
+import { heldOathCards, oathFamilies, oathOf } from '../../lib/oathbound.js';
 import { feralOf } from '../../lib/feral.js';
 import { isMinionCard, minionKindRows, minionKinds, minionOf } from '../../lib/minions.js';
 import { pactOf } from '../../lib/pact.js';
@@ -205,6 +206,13 @@ export default function TalentPick({
                sealed once, at Rank 1: which of the two it is, the weapon's
                form and FIRST BOON's two picks all belong to this moment. */
             if (rank === 1 && pactOf(id)) setJustTook(id);
+
+            /* And a set that binds you to a *vow*. "You need to select the Oath
+               before you finish the selection. It's not something you select
+               later" (Jules, 2026-09-11), so the page opens on top of the take
+               and the tab badges the level until it is answered. Rank 1 only:
+               the vow is sworn once and cannot be changed at all. */
+            if (rank === 1 && oathOf(id)) setJustTook(id);
           }}
           onClose={() => setChoosing(false)}
         />
@@ -322,6 +330,19 @@ function TalentSummary({
               once at Rank 1: the ranks above deepen a debt already owed. */}
           {rank === 1 && talent.pact && (
             <PactSection
+              talent={talent}
+              character={character}
+              patch={patch}
+              readOnly={readOnly}
+              autoOpen={justTook === talent.id}
+            />
+          )}
+
+          {/* And the vow it binds you to, for a set that swears one. Sworn once at
+              Rank 1, the way a pact is sealed once, and unlike a pact it can never
+              be changed: the ranks above it are the same vow kept for longer. */}
+          {rank === 1 && talent.oath && (
+            <OathSection
               talent={talent}
               character={character}
               patch={patch}
@@ -573,8 +594,15 @@ function TalentPresentation({ option, character }) {
            they keep them off the Abilities tab: they belong to the creature. What
            the rank shows instead is the bodies themselves, each a press behind a
            block. See "and the bodies" in abilitySources.js, and MinionPreview. */
-        const cards = cardsAtRank(talent, rank).filter(
-          (card) => !roster || !isMinionCard(card)
+        /* And a vow's ten Auras come down to one, for the reason a roster's bodies
+           come off this page: nine of them are not this character's and never will
+           be. An Oathbound who has not sworn yet sees none of the ten and a line
+           under the rank saying so, rather than ten cards of which nine are wrong.
+           See `heldOathCards` in oathbound.js. */
+        const cards = heldOathCards(
+          character,
+          talent,
+          cardsAtRank(talent, rank).filter((card) => !roster || !isMinionCard(card))
         );
         const bodies = roster
           ? minionKindRows(character, talent, { rank }).filter(

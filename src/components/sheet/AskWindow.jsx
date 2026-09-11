@@ -4,12 +4,14 @@ import { LoadoutChooser } from './LoadoutPick.jsx';
 import { MinionWindow } from './MinionPick.jsx';
 import { FeralWindow } from './FeralPick.jsx';
 import { PactWindow } from './PactPick.jsx';
+import OathWindow from './OathPick.jsx';
 import { backgroundState, dropSkill, skillAnswer, takeSkill } from '../../lib/backgrounds.js';
 import { getLineage, togglePoolPick } from '../../lib/lineages.js';
 import { loadoutState, toggleLoadoutPick } from '../../lib/loadouts.js';
 import { minionState } from '../../lib/minions.js';
 import { feralState } from '../../lib/feral.js';
 import { pactState } from '../../lib/pact.js';
+import { oathState } from '../../lib/oathbound.js';
 import { getTalent, setTalentPicks } from '../../lib/talents.js';
 import { levelForXp } from '../../lib/characterModel.js';
 
@@ -103,6 +105,12 @@ export default function AskWindow({ ask, character, patch, onClose }) {
     const state = pactState(character).find((row) => row.id === talent.id);
     if (!state) return null;
     return <PactWindow character={character} state={state} patch={patch} onClose={onClose} />;
+  }
+
+  if (ask?.kind === 'oath' && talent) {
+    const row = oathState(character).find((one) => one.id === talent.id);
+    if (!row) return null;
+    return <OathWindow character={character} row={row} patch={patch} onClose={onClose} />;
   }
 
   if (ask?.kind === 'background') {

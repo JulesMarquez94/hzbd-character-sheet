@@ -20,6 +20,7 @@ export const ASKABLE_KINDS = new Set([
   'minion',
   'feral',
   'pact',
+  'oath',
   'background',
 ]);
 

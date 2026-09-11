@@ -21,11 +21,13 @@ import { getCard } from '../../lib/weapons.js';
  *                empty end, because it runs -100 to 100 and the zero is the
  *                thing you are trying to stay above. Under it, the one sentence
  *                the bar is for: which Attribute it is bending and to what.
- *   the tenets   all three, each with the breach printed under it and a press
- *                on either side. Pressing one moves the bar **and writes down
- *                which tenet it was**, which is the whole reason they are here
- *                rather than being three lines of flavour on a card: a Faith
- *                that fell 40 should be able to say what it fell for.
+ *   the tenets   all three by name, the principle under each and a press on
+ *                either side. Pressing one moves the bar **and writes that
+ *                tenet's own sentence into the ledger**, which is the whole
+ *                reason they are here rather than being flavour on a card: a
+ *                Faith that fell 40 should be able to say what it fell for.
+ *                The breach and the worked example live on the Oath’s page,
+ *                which is the only surface with room for them.
  *   the ground   what has been consecrated, if anything, and the press that
  *                lets it go. Consecrating is a Long Rest action and happens in
  *                the rest window, which is the only place it could.
@@ -74,9 +76,13 @@ export default function OathBlock({ character, row, patch, readOnly = false }) {
             type="button"
             className="minion-edit"
             onClick={() => setChoosing(true)}
-            title={row.sworn ? `Read or change ${row.oath.name}` : 'Swear an Oath'}
+            title={
+              row.sworn
+                ? `Read ${row.oath.name}: the creed, the tenets and everything it opens`
+                : 'Choose your Oath. It is sworn once and does not change'
+            }
           >
-            {row.sworn ? 'Oath' : 'Swear one'}
+            {row.sworn ? 'Read it' : 'Choose one'}
           </button>
         )}
       </div>
@@ -100,7 +106,7 @@ export default function OathBlock({ character, row, patch, readOnly = false }) {
         )}
       </div>
 
-      {row.sworn && <p className="oath-principle">{row.oath.principle}</p>}
+      {row.sworn && <p className="oath-principle">{row.oath.creed}</p>}
 
       {/* ---------- THE BAR ----------
           Its own drawing rather than the sheet's ResourceBar, and this is the
@@ -162,19 +168,23 @@ export default function OathBlock({ character, row, patch, readOnly = false }) {
           <div className="stat-category-label">The tenets</div>
           <ol className="oath-tenet-list">
             {row.tenets.map((tenet, index) => (
-              <li key={tenet.keep} className="oath-tenet">
+              <li key={tenet.name} className="oath-tenet">
                 <span className="oath-tenet-body">
+                  <span className="oath-tenet-name">{tenet.name}</span>
                   <span className="oath-tenet-keep">{tenet.keep}</span>
-                  <span className="oath-tenet-break">Broken: {tenet.break.toLowerCase()}</span>
                 </span>
 
+                {/* The breach is on the press rather than under the rule. A tenet is
+                    a principle now and its principle is two lines long, so three of
+                    them and their three breaches is more than a 360px column has.
+                    The page has room for all of it and this is where you use it. */}
                 {!locked && (
                   <span className="oath-tenet-tools">
                     <button
                       type="button"
                       className="rest-opt is-gain"
                       onClick={() => move(row.step, tenet.keep, index)}
-                      title={`Kept it. +${row.step} ${row.label}`}
+                      title={`Kept it: ${tenet.keep} +${row.step} ${row.label}`}
                     >
                       +{row.step}
                     </button>
@@ -182,7 +192,7 @@ export default function OathBlock({ character, row, patch, readOnly = false }) {
                       type="button"
                       className="rest-opt"
                       onClick={() => move(-row.step, tenet.break, index)}
-                      title={`Broke it. -${row.step} ${row.label}`}
+                      title={`Broke it: ${tenet.break} -${row.step} ${row.label}`}
                     >
                       -{row.step}
                     </button>
@@ -194,8 +204,8 @@ export default function OathBlock({ character, row, patch, readOnly = false }) {
         </>
       ) : (
         <p className="pick-line">
-          No Oath sworn. Until there is one you have no tenets, no Aura and not a single spell:
-          everything this set gives you comes out of the vow.
+          No Oath sworn. It is chosen on the Advancement tab the moment the set is taken. Until
+          there is one you have no tenets, no Aura and not a single spell.
         </p>
       )}
 

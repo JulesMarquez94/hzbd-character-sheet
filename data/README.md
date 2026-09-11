@@ -16148,6 +16148,10 @@ Eight cards of its own plus the ten Auras, eighteen in all.
 
 ### The ten Oaths, and what they open
 
+**Superseded the same day.** Six of these ten were renamed and all thirty tenets rewritten
+a few hours later. See "The Oaths are creeds" below for the list as it stands; the table here
+is the first draft and is kept for the record.
+
 | Oath | Families | Aura | Smite |
 | --- | --- | --- | --- |
 | Vindication | Light, Fire | an ally is hit, the attacker takes it back | Sacred |
@@ -16266,3 +16270,170 @@ Eleven places the spec had two readings and this pass had to pick one.
   record with the same thinness at two scenes; this is at zero.
 - **An unsworn Oathbound still draws an empty Doctrine block** on the Abilities tab, reading
   "0 of 0 chosen". Honest and useless. It wants a line saying why.
+## The Oaths are creeds, and they are sworn once, 2026-09-11
+
+Six asks, the same evening the set landed, and between them they change what an Oath **is**.
+The first pass wrote ten jobs with procedures attached. This one writes ten beliefs.
+
+> "When you select the Oathbound, you need to select the Oath before you finish the
+> selection. It's not something you select later, it's something you select at character
+> creation, and that's permanent, so you cannot change it later. So you're making an
+> Oathbound, you choose directly the Oath.
+>
+> And in the preview, don't preview all the Smites. Just preview the ones related to the one
+> you're observing. So there should be a page where you can see the Oath, the tenets you're
+> gonna take, a little bit of lore about what that means, and then the specific, because the
+> Smite should have damage related to your Oath. If you're Oath of Vindication you should
+> probably do Fire damage.
+>
+> I want a new ability which is called Divine Fervor, which is essentially that as long as
+> you're doing an action which is in line with one of your tenets, you can spend Willpower
+> to give yourself advantage. So when I do a skill check, you can spend the Willpower to give
+> yourself advantage to a skill check that is in line with your tenets.
+>
+> The Oaths and the tenets need to be less action specific. They just need to be more of an
+> overall creed. Like, if we talk about the life one, the Oath of Succor, as you wrote it,
+> 'nobody bleeds within your reach' is more about be sure to tend to the wounded, this type
+> of thing, but not in a specific. They need to be more generic, so players have real leeway
+> to play around them. Having examples is good, but because you're gonna be making a page per
+> Oath to explain what you get and the difference of it and the spells to preview, you can
+> expand a bit more.
+>
+> Imagine that Oathbound is like multiple talents inside of a single talent set. It has sub
+> talent sets, essentially. So remake the Oaths, make them less specific about things. So if
+> you have an Oath of the Anvil, make it more like an Oath of Creation, so it's more generic.
+> If you have enough, things like Oath of Renewal, Oath of Decay, Oath of Vindication and so
+> on."
+
+### An Oath is a sub-talent set
+
+That sentence is the one everything else follows from. A vow decides the three rules you
+play under, the two sub-schools you know in full, what your Smite deals and which Aura you
+raise. It is not a chip on a set, it **is** a set, so each of the ten now carries what a set
+carries: a creed, a page of lore and three tenets a player can hold in their head.
+
+### The ten, renamed and rewritten
+
+| Was | Is | Families | Smite |
+| --- | --- | --- | --- |
+| Vindication | **Vindication** | Light, Fire | Fire |
+| Succor | **Mercy** | Life, Light | Sacred |
+| the Bulwark | **Protection** | Earth, Flora | Blunt |
+| the Untamed | **the Wild** | Wild, Flora | Sharp |
+| the Fallow | **Renewal** | Mud, Life | Decay |
+| the Last Rite | **Decay** | Death, Shadow | Necrotic |
+| the Tempest | **Defiance** | Storm, Lightning | Lightning |
+| the Ferry | **Constancy** | Water, Time | Frost |
+| the Anvil | **Creation** | Magma, Earth | Fire |
+| the Threshold | **Trust** | Spacial, Shadow | Force |
+
+Four of the ten keep their name; six become the belief the job was standing in for. The
+family pairs are untouched, so all fifteen complete families are still used and none more
+than twice. Vindication's Smite is **Fire** on his own instruction, which puts two Fires on
+the list beside Creation's; that is honest rather than a clash, since both vows carry a
+Fire-shaped family.
+
+### A tenet is a principle plus an instance
+
+The shape changed, and that is what made "wide" possible without making it vague:
+
+```js
+{
+  name: 'Tend what is hurt',           // two or three words, for the block's narrow column
+  keep: 'Whoever is suffering where you can reach them is your business, whatever they have
+         done and whichever side they were on an hour ago.',
+  break: 'Walking past, or deciding whose pain counts.',
+  example: 'The bandit who shot at you is bleeding out in the ditch. You leave him there.',
+}
+```
+
+The first draft had one sentence trying to be all four: *"Tend the hurt you come across,
+whoever they are"* with the breach underneath it. That is a procedure, and a table reading it
+asks "does this count" about the wording rather than about the belief. Now the belief is the
+rule, the breach is its shape and the example is one instance of it, clearly set apart on the
+page so nobody mistakes the instance for the rule.
+
+**The block prints the name and the principle. The page prints all four.** Three principles
+and three breaches and three examples is nine lines a tenet-block, and a 360x640 cell holds
+none of that, which is exactly why the page had to exist.
+
+### The page
+
+`OathPick.jsx` is no longer a wall of ten tiles. It is a **list and a page**: the pool
+chooser's two panes with the proportions turned round, because there are only ten things to
+choose between and each of them is a page.
+
+The page carries the creed, the two family chips in their own colours, the lore, all three
+tenets in full, the Aura, **Smite wearing this Oath's own damage type**, the Master sanctum
+and every spell the vow opens listed rung by rung with the rank each opens at. Every card
+name on it opens the real card on the stack, and Smite opens with `{ damage: [oath.damage] }`
+laid on by hand, exactly as `oathRiders` lays it on a sworn one. That is "don't preview all
+the Smites, just the one you're observing", answered on both surfaces:
+
+- the **page** shows one Oath's Aura and one Oath's Smite, never ten;
+- the **rank list** on the Advancement tab now runs through `heldOathCards`, so an Oathbound
+  sees the one Aura they swore and an Oathbound who has not sworn sees none of the ten rather
+  than ten cards of which nine will never be theirs.
+
+### Sworn once
+
+"That's permanent, so you cannot change it later." So:
+
+- `swearOath` refuses outright when a vow is already held. It is the rule and not a guard on
+  a button.
+- The chooser's press exists only while nothing is sworn. Afterwards the window is a reader,
+  the page is still there, and the sworn vow is marked in the list whichever page is open.
+- **`Forswear it` is gone from the sheet.** `forswearOath` survives as the function the
+  Advancement tab's undo calls, which is giving the whole rank back rather than changing your
+  mind about what you believe.
+- The question is asked **where the set is taken**. `levelAsks` gained an `oath` row at Rank
+  1, `askKinds.js` gained the kind, `AskWindow.jsx` gained the case, and `OathSection` on the
+  talent block opens the page on top of the take the way `FeralSection` and `PactSection` do.
+  So the tab badges an Oathbound who has taken the rank and chosen nothing, and the Crossroads
+  path counts it in `asksMore`.
+
+### Divine Fervor
+
+One new Rank 1 card, and it needed no new machinery at all:
+
+```
+Whenever you make a skill check or a roll toward one of your tenets, you can spend
+2 Willpower to make it with advantage.
+
+Whether what you are doing is in line with a tenet is your Game Master's call.
+```
+
+`speaksToACheck` in checks.js finds it by its prose and `grants.checkWp` / `checkAdvantage` /
+`checkWhen` price it, which is the same rider the thirteen background domain skills carry. So
+it appears in the SKILL CHECK prompt beside a Cartographer's and a Feral Cursed's without a
+line being added anywhere. **Its domain is the widest in the codex**, which is the point: a
+skill says "to read a map" and this says "toward what you swore".
+
+### Proved
+
+- Every linter clean, and the build.
+- Through the model: all ten vows resolve a pool at all three ranks; swearing a second vow
+  returns null; `oathSettled` flips the `levelAsks` row; `characterCheckCards` lists Divine
+  Fervor at 2 Willpower for one die; and Smite reads `4d6 + 36 Fire` for a Vindication and
+  `4d6 + 36 Necrotic` for a Decay off the same card.
+- In the browser, through a throwaway harness: the page lists ten and reads one, with the
+  creed, three paragraphs of lore, the tenets in four parts each and 7 / 7 / 7 spells across
+  three rungs; swearing writes the vow and removes the press from **all ten** pages; the
+  block redraws with the sworn Oath's three tenets and still fits 636 of a 640 cell; pressing
+  a tenet writes that tenet's own sentence into the ledger.
+
+### Still open
+
+- **2 Willpower for Divine Fervor** is mine. A background skill charges 1 for a narrow
+  domain, and this is a whole creed, so it is double. Nothing was said either way.
+- **Divine Fervor is at Rank 1**, which makes Rank 1 the heavy rung: four of the set's own
+  cards plus the Aura. It is the most basic possible expression of a vow and an Oathbound
+  without it is missing the point, so it went at the bottom rather than balancing the ladder.
+- **"Faith" is still a reading of a transcript that said "face"**, from the first pass. One
+  constant.
+- **Two families are still one spell a rung.** Defiance knows 2 spells at Rank 1 and Creation
+  4, against Decay's 8, because Storm, Lightning, Magma and Mud each hold one spell a rung.
+  The pool is `all: true`, so it corrects itself as the Elemental school fills out.
+- **The lore is ten pages of mine.** Every word of it, and the ten creeds, and every one of
+  the thirty tenets with their thirty breaches and thirty examples.
+- **Still no art and still no Crossroads scenes** for the set.

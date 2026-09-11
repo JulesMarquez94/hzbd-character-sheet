@@ -35,6 +35,21 @@
  *   the start     "someone that starts as an Oathbound starts with fifty points
  *                  right up there, so they don't have to worry too much about it."
  *
+ * ------------------------------------------------------------- sworn once
+ * **The vow is chosen when the set is taken, and it does not change.** "You need
+ * to select the Oath before you finish the selection. It is not something you
+ * select later, it is something you select at character creation, and that is
+ * permanent, so you cannot change it later" (Jules, 2026-09-11).
+ *
+ * So `swearOath` refuses a sheet that already holds one, and there is no press
+ * anywhere that unswears. The one way back is the one way back from any level:
+ * hand the rank in on the Advancement tab, which takes the whole set with it.
+ * `forswearOath` is what that path calls, and nothing else calls it.
+ *
+ * The question is asked where the set is taken rather than found later. It is an
+ * `oath` row in `levelAsks`, so the Advancement tab badges a sheet that has taken
+ * the set and not chosen, exactly as an unnamed creature or an unsealed pact does.
+ *
  * ------------------------------------------------------------------- the bend
  * **The bonus bends the Attribute, not the sheet.** "The stat for your spell will
  * be your Mind plus one" is a fact about the card being read, in the same way a
@@ -342,6 +357,19 @@ export function oathState(character) {
   });
 }
 
+/**
+ * Whether this set has answered the question it asks at the moment it is taken.
+ *
+ * The shape `feralSettled` and `pactSettled` both keep, and read the same way: it
+ * is what `levelAsks` badges the Advancement tab with, and what the panel on the
+ * set checks before it calls itself done. An Oathbound who has taken the rank and
+ * sworn nothing owes the sheet an answer.
+ */
+export function oathSettled(character, talentId) {
+  const row = oathState(character).find((one) => one.id === talentId) ?? null;
+  return Boolean(row?.sworn);
+}
+
 /** The vow a block id names, or null. */
 export function oathForBlock(list, id) {
   const match = /^oath:(.+)$/.exec(String(id));
@@ -526,21 +554,19 @@ export function writeOath(character, id, body) {
 }
 
 /**
- * Swearing it, which is the one write on this sheet that cannot be half made.
+ * Swearing it, which happens once and never again.
  *
- * A vow sets the bar to the spec's own start and clears whatever was logged
- * against the last one: "someone that starts as an Oathbound starts with fifty
- * points". Swearing a second vow is a new bar and a new ledger rather than a
- * rename of the old one, because none of those entries is about this vow.
+ * A vow sets the bar to the spec's own start: "someone that starts as an
+ * Oathbound starts with fifty points".
  *
- * The consecrated ground goes with it for the same reason. A Sanctuary is a
- * manifestation of the Faith that made it, and a Faith that changed its mind
- * about what it believes does not keep the chapel.
+ * **A sheet that already holds one is refused here**, which is the rule rather
+ * than a guard on the button: the chooser offers no press once a vow is sworn,
+ * and this refuses one anyway. See "sworn once" at the top of this file. The one
+ * way back is handing the rank in, which goes through `forswearOath`.
  */
 export function swearOath(character, row, oathId) {
   const oath = getOath(oathId);
-  if (!row || !oath) return null;
-  if (row.oath?.id === oath.id) return null;
+  if (!row || !oath || row.sworn) return null;
 
   return writeOath(character, row.id, {
     oath: oath.id,
@@ -550,7 +576,13 @@ export function swearOath(character, row, oathId) {
   });
 }
 
-/** Handing it back: the vow, the bar and everything under it, gone. */
+/**
+ * Handing it back: the vow, the bar and everything under it, gone.
+ *
+ * **Not a press on the sheet.** A vow is permanent, so the only thing that calls
+ * this is giving the whole rank back on the Advancement tab, which is undoing the
+ * level rather than changing your mind about what you believe.
+ */
 export function forswearOath(character, row) {
   if (!row) return null;
   return writeOath(character, row.id, { oath: null, faith: row.start, log: [], sanctuary: null });
