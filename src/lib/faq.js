@@ -20,7 +20,7 @@
  */
 
 /** Where feedback goes. Also the only support channel worth naming. */
-export const DISCORD_INVITE = 'https://discord.gg/GQY2Ym8vDd';
+export const DISCORD_INVITE = 'https://discord.gg/TBzZSjSxQq';
 
 /**
  * `q` is the question as somebody would ask it. `a` is an array of paragraphs
