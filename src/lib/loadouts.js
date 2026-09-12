@@ -201,10 +201,20 @@ export function copiesOf(picks, cardId) {
  * no character behind it has nobody to ask.
  */
 function familyGate(spec, families) {
-  if (Array.isArray(families)) return families;
-  if (Array.isArray(spec?.families)) return spec.families;
-  if (spec?.families) return [];
-  return null;
+  /* A pool that names no families has no family gate, whatever a caller hands
+     in. Every panel on the sheet hands every set the holder's Oath families
+     (see LoadoutSection and TalentBlock), and for the thirty-three sets that
+     swear nothing that list is empty. Until 2026-09-12 an empty list was read
+     as "no Oath sworn, so nothing is open yet" for all of them, which shut a
+     Guardian's and a Duelist's Martial Move shelves on the Advancement tab and
+     left both sets impossible to finish. Found from the Walkthrough, whose gate
+     read the same debt. */
+  if (!spec?.families) return null;
+  /* A spec that names its own pair keeps it; only a spec whose families are the
+     holder's (`families: 'oath'`) reads the list handed in, and an unsworn vow
+     hands in nothing, which is what refuses everything. */
+  if (Array.isArray(spec.families)) return spec.families;
+  return Array.isArray(families) ? families : [];
 }
 
 /**
@@ -701,9 +711,23 @@ export function loadoutState(
      room, not a debt, so a spellbook holding its five with thirty places left is
      finished rather than four fifths unfinished, and the button on it reads "open
      your spellbook" instead of "write in 30 more spells". */
-  const owed = isLibrary(spec)
+  const debt = isLibrary(spec)
     ? Math.max(0, Math.min(capacity, Math.max(0, Math.floor(Number(spec.start) || 0))) - picks.length)
     : Math.max(0, known - picks.length);
+
+  /* And never more than the codex can actually hand over. A Rank 1 Guardian
+     knows two martial moves and this build's codex holds none for it yet, so
+     until 2026-09-12 the set owed two cards nobody could take, and a debt with
+     nothing to pay it in held every way out of the creation screen shut for
+     good: the free hand's, the Crossroads' and the Walkthrough's gates all read
+     `openAsks`, and `openAsks` read this. What can still be taken is the legal
+     cards not already held; a pool that allows copies is bounded by its count
+     alone, since one card can fill every place. `remaining` keeps the full
+     count on purpose, so the panel still says how many the set *knows*. */
+  const takeable = allowsRepeat(spec)
+    ? Infinity
+    : options.filter((row) => row.ok && !row.known).length;
+  const owed = Math.min(debt, takeable);
 
   return {
     spec,

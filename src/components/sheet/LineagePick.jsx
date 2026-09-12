@@ -110,7 +110,17 @@ function cardsNote(questions, yours, pool = null) {
   return yours ? `Yours, ${asks}` : `A preview, ${asks}`;
 }
 
-export default function LineagePick({ value, character, patch, step = null, readOnly = false }) {
+export default function LineagePick({
+  value,
+  character,
+  patch,
+  step = null,
+  readOnly = false,
+  /* Whether a finished panel folds itself away. The ledger wants it to; the
+     Walkthrough, where this panel stands alone beside the lesson about it, does
+     not. See PickBlock.jsx. */
+  foldable = true,
+}) {
   /* One window in one of two states: reading the wall of ancestries, or
      settling what the one you took leaves to you. null is closed. */
   const [mode, setMode] = useState(null);
@@ -144,7 +154,7 @@ export default function LineagePick({ value, character, patch, step = null, read
       title="Lineage"
       done={Boolean(written) && unanswered === 0}
       state={!written ? 'Waiting on you' : unanswered > 0 ? 'Half done' : 'Chosen'}
-      foldable
+      foldable={foldable}
       summary={
         lineage
           ? `${lineage.name} · ${held.length} ${held.length === 1 ? 'trait' : 'traits'}`

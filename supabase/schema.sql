@@ -235,6 +235,12 @@ create table if not exists public.characters (
   -- null until the kit is taken.
   background_skills jsonb not null default '[]'::jsonb,
   background_kit    jsonb,
+  -- Where an unfinished way in stopped, or null:
+  --   { "path": "guided", "step": "talent", "ts": "..." }
+  -- The Walkthrough writes the step it is on so a character can be picked up
+  -- where it was left, from any device, and finishing any way in clears it.
+  -- See src/lib/walkthrough.js.
+  creation     jsonb,
   -- Everything a level handed out that is not a talent, keyed by the level
   -- that granted it. Level 1 records the attribute spread, and every odd level
   -- after it records that level's point and the skill learned there:
@@ -374,6 +380,9 @@ alter table public.characters add column if not exists forged      jsonb not nul
 -- flask on the belt carries, and this counts what has gone. The rest that the
 -- card names is what empties it again.
 alter table public.characters add column if not exists card_uses   jsonb not null default '{}'::jsonb;
+-- Where an unfinished Walkthrough stopped, so the dashboard can offer the way
+-- back to it. Null for every finished character. See src/lib/walkthrough.js.
+alter table public.characters add column if not exists creation    jsonb;
 
 create index if not exists characters_user_id_idx on public.characters (user_id);
 

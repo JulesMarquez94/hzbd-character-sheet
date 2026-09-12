@@ -522,5 +522,6 @@ npm run lint:plan      # every card says what it rolls
 npm run lint:help      # every offer made after a roll is one that could help
 npm run lint:legal     # no checkout can ship pointing at an unfinished contract
 npm run lint:crossroads # every id in the Crossroads pool names something real
+npm run lint:walkthrough # every step of the Walkthrough points at a rule that exists
 npm run lint:images    # picture slots, the three shapes and the crop clamp
 ```

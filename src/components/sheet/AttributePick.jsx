@@ -44,6 +44,10 @@ export default function AttributeSpreadPick({
   step = null,
   readOnly = false,
   unit = 'metric',
+  /* Whether a finished panel folds itself away. The ledger wants it to; the
+     Walkthrough, where this panel stands alone beside the lesson about it, does
+     not. See PickBlock.jsx. */
+  foldable = true,
 }) {
   const [choosing, setChoosing] = useState(false);
 
@@ -67,7 +71,7 @@ export default function AttributeSpreadPick({
   );
 
   return (
-    <PickBlock kind="attribute" step={step} title="Attributes" done={spreadDone} foldable>
+    <PickBlock kind="attribute" step={step} title="Attributes" done={spreadDone} foldable={foldable}>
       <p className="pick-lead">
         Your three <b>attributes</b> are the numbers everything else on this sheet is built from.
         Each one starts at <b>{ATTRIBUTE_BASE}</b>. Level 1 hands you two boosts, a <b>+2</b> and a{' '}

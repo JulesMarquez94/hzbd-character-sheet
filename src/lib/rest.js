@@ -100,7 +100,15 @@ import { cardProse } from './cardText.js';
 import { SUPPLIES_PER_BURDEN, getEnchantment } from './enchantments.js';
 import { beltRest, characterGrantSources, getItem, heldItem, normalizePack } from './items.js';
 import { normalizeForged } from './forged.js';
-import { consecrate, faithRest, oathState } from './oathbound.js';
+import {
+  canMeditate,
+  consecrate,
+  faithRest,
+  meditate,
+  meditationGain,
+  normalizeOath,
+  oathState,
+} from './oathbound.js';
 import { pactState, reshapePactWeapon, writePactForm } from './pact.js';
 import { reviveRunes } from './runes.js';
 import {
@@ -417,6 +425,7 @@ export function restEnchanting(character, kind) {
  *   `raise`    the OSSUARY, and the body that stands up out of it
  *   `scribe`   SCRIBING, and the leaves the desk turns out for the night
  *   `sanctuary` CONSECRATION, and the ground a night makes yours
+ *   `meditate`  MEDITATION, and the Faith a night sitting with a vow gives back
  *
  * Rulebook 8.1 lists the same set in the players' own words, so a kind added
  * here is a bullet there.
@@ -606,6 +615,25 @@ export function restActions(character, kind, talents = character?.talents) {
     });
   }
 
+  /* ---- and the night spent sitting with a vow ----
+     MEDITATION: "an ability which is to meditate during a Long Rest. It allows
+     them to regain 10 Faith." One row per vow sworn, and none at all for an
+     Oathbound who has not sworn one: there is nothing to sit with. The night
+     still costs its own Faith, so the row says what it really nets. See
+     oathbound.js. */
+  for (const vow of oathState(held)) {
+    if (kind !== 'long' || !canMeditate(vow)) continue;
+    const gain = meditationGain(vow.spec);
+    rows.push({
+      id: `meditate:${vow.id}`,
+      kind: 'meditate',
+      label: vow.spec.meditate?.label ?? 'Meditate',
+      from: `${vow.talent.name} · ${vow.oath.name}`,
+      note: `${gain} ${vow.label} back, against the ${vow.decay} the night costs. A quiet week still climbs.`,
+      state: vow,
+    });
+  }
+
   /* ---- and the ground a night consecrates ----
      CONSECRATION: "you can use your Long Rest action to consecrate the ground
      you rested on, up to the size of a single room." One at a time, which the
@@ -758,7 +786,14 @@ export function restPlan(
   prepared = null,
   brews = [],
   reshaped = null,
-  { free = false, revived = [], raised = null, scribes = [], consecrated = null } = {}
+  {
+    free = false,
+    revived = [],
+    raised = null,
+    scribes = [],
+    consecrated = null,
+    meditated = null,
+  } = {}
 ) {
   const rest = getRest(kind);
   if (!rest) return null;
@@ -1310,6 +1345,30 @@ export function restPlan(
   if (faith) {
     Object.assign(patch, faith.patch);
     lines.push(...faith.lines);
+  }
+
+  /* ---- and what sitting with the vow gave back ----
+     Written after the night's own toll and onto the column that toll just wrote,
+     so a meditating night reads as two lines and one net: "Faith 40 to 35" and
+     then "Faith 35 to 45". Both are real and both are worth seeing. */
+  if (meditated) {
+    for (const vow of oathState(character)) {
+      if (vow.id !== meditated || !canMeditate(vow)) continue;
+      const written = meditate({ ...character, oath: patch.oath ?? character?.oath }, vow);
+      if (!written) continue;
+
+      const before = normalizeOath(patch.oath ?? character?.oath)[vow.id]?.faith ?? vow.faith;
+      const after = normalizeOath(written.oath)[vow.id]?.faith ?? before;
+
+      Object.assign(patch, written);
+      lines.push({
+        key: `meditate-${vow.id}`,
+        label: `${vow.label} ${before} to ${after}`,
+        detail: `A night sitting with ${vow.oath.name}, going back over what you have done.`,
+        tone: 'gain',
+      });
+      break;
+    }
   }
 
   /* ---- and the ground the night made yours ----

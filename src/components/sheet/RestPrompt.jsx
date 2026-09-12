@@ -113,6 +113,10 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
      as it is typed, like every other draft in this window, so backing out of the
      rest leaves the room exactly as unconsecrated as it was. See oathbound.js. */
   const [consecrated, setConsecrated] = useState(null);
+  /* And the vow an Oathbound sat with tonight: a set id, or null. The one action
+     in this window with nothing to ask, so it has no step and the slot is filled
+     the moment it is chosen. */
+  const [meditated, setMeditated] = useState(null);
 
   /* Whether the list of actions is up, and which one's step is. */
   const [menu, setMenu] = useState(false);
@@ -139,8 +143,21 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         raised,
         scribes,
         consecrated,
+        meditated,
       }),
-    [character, kind, picked, prepared, brews, reshaped, revived, raised, scribes, consecrated]
+    [
+      character,
+      kind,
+      picked,
+      prepared,
+      brews,
+      reshaped,
+      revived,
+      raised,
+      scribes,
+      consecrated,
+      meditated,
+    ]
   );
 
   /* What a Short Rest could bring back, per set that can bring anything back.
@@ -158,6 +175,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
     setRaised(null);
     setScribes([]);
     setConsecrated(null);
+    setMeditated(null);
   }
 
   /** Fill the slot. Whatever was in it, and whatever it did, goes first. */
@@ -174,11 +192,13 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         ? { set: row.state.id, name: row.state.sanctuary?.name ?? '', note: '' }
         : null
     );
+    setMeditated(row.kind === 'meditate' ? row.state.id : null);
     setActionId(row.id);
 
     setMenu(false);
-    // A labour is finished the moment its amount is chosen; the rest need a step.
-    if (row.kind !== 'labour') setStepId(row.id);
+    /* A labour is finished the moment its amount is chosen and a meditation the
+       moment it is chosen at all; everything else needs a step. */
+    if (row.kind !== 'labour' && row.kind !== 'meditate') setStepId(row.id);
   }
 
   if (!rest || !plan) return null;
@@ -193,6 +213,7 @@ export default function RestPrompt({ kind, character, onRest, onClose }) {
         raised,
         scribes,
         consecrated,
+        meditated,
       })
     : null;
 
@@ -760,6 +781,7 @@ function summarise(action, {
   raised,
   scribes,
   consecrated,
+  meditated,
 }) {
   if (action.kind === 'scribe') {
     const said = scribeSummary(scribes, action.state);
@@ -796,6 +818,15 @@ function summarise(action, {
           says: `${offer.kind.label}, and something still open`,
           owing: `The ${offer.kind.label.toLowerCase()} you are raising has a question still open.`,
         };
+  }
+
+  if (action.kind === 'meditate') {
+    /* Nothing to choose, so nothing to owe: picking the row is the whole action.
+       It still reports what it did, because every other row in this list does and
+       a blank line beside a filled slot reads as a slot that is not filled. */
+    return meditated
+      ? { done: true, says: `${action.state.oath.name}, sat with` }
+      : { done: false, says: 'Not settled', owing: 'The night is spent meditating and nothing was set.' };
   }
 
   if (action.kind === 'sanctuary') {

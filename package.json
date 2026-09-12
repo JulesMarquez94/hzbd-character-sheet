@@ -25,6 +25,7 @@
     "lint:help": "node scripts/check-help.mjs",
     "lint:legal": "node scripts/check-legal.mjs",
     "lint:crossroads": "node scripts/check-crossroads.mjs",
+    "lint:walkthrough": "node scripts/check-walkthrough.mjs",
     "lint:images": "node scripts/check-images.mjs",
     "sb:login": "npx supabase@2 login",
     "sb:link": "npx supabase@2 link",

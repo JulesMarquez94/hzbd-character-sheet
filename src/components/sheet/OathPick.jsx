@@ -10,7 +10,7 @@ import { oathOffers, oathState, swearOath } from '../../lib/oathbound.js';
 import { getCard } from '../../lib/weapons.js';
 
 /**
- * The Oath chooser: ten vows down one side, and the chosen one's **page** on the
+ * The Oath chooser: five vows down one side, and the chosen one's **page** on the
  * other.
  *
  * Asked for in as many words: "there should be a page where you can see the
@@ -18,14 +18,17 @@ import { getCard } from '../../lib/weapons.js';
  * means, and then the specific" cards it hands over. And: "don't preview all the
  * Smites, just the ones related to the one you're observing."
  *
- * So this is not a wall of ten summaries any more. It is a **list and a page**,
+ * So this is not a wall of tiles any more. It is a **list and a page**,
  * the pool chooser's two panes with the proportions turned round: a vow is one
- * of ten things you pick between, and everything that matters about it is too
+ * of five things you pick between, and everything that matters about it is too
  * long to fit in a tile. An Oath is a sub-talent set, and this reads like a
  * talent set's own presentation page.
  *
  * -------------------------------------------------------------- what a page has
  *   the creed       the one line the whole vow comes down to
+ *   what it is sworn on   gods, institutions, people and the bare principle in
+ *                   one line, because an Oathbound's power comes out of believing
+ *                   something and the codex does not care what
  *   the two chips   the sub-schools it opens, in their own family colours
  *   the lore        what it means and who swears it, which is the only place on
  *                   the site that has room for it
@@ -48,7 +51,7 @@ import { getCard } from '../../lib/weapons.js';
  */
 export default function OathWindow({ character, row, patch, onClose, readOnly = false }) {
   const offers = oathOffers(row.spec);
-  /* Open on what is sworn, or on the first of the ten. A reader coming back to
+  /* Open on what is sworn, or on the first of them. A reader coming back to
      their own vow should land on it rather than on somebody else's. */
   const [showing, setShowing] = useState(row.oath?.id ?? offers[0]?.id ?? null);
   const locked = readOnly || !patch || row.sworn;
@@ -83,15 +86,16 @@ export default function OathWindow({ character, row, patch, onClose, readOnly = 
           </>
         ) : (
           <>
-            A vow decides three things at once: the tenets you are held to, the two sub-schools of
-            magic you know in full, and what your Smite deals. Read them, then swear one.{' '}
+            An Oathbound draws power out of believing something, so a vow decides three things at
+            once: the tenets you are held to, the two sub-schools of magic you know in full, and
+            what your Smite deals. Read them, then swear one.{' '}
             <b>You cannot change it afterwards.</b>
           </>
         )}
       </p>
 
       <div className="oath-pick">
-        {/* ---- the ten ---- */}
+        {/* ---- the five ---- */}
         <div className="oath-list">
           {offers.map((one) => (
             <button
@@ -102,8 +106,8 @@ export default function OathWindow({ character, row, patch, onClose, readOnly = 
               }`}
               onClick={() => setShowing(one.id)}
             >
-              {/* The name without its "Oath of", because ten rows all starting the
-                  same way is ten rows you have to read past. The article an Oath
+              {/* The name without its "Oath of", because five rows all starting the
+                  same way is five rows you have to read past. The article an Oath
                   keeps ("the Wild") takes a capital here, since this is a label
                   rather than a sentence. */}
               <span className="oath-row-name">{shortOath(one.name)}</span>
@@ -200,6 +204,14 @@ function OathPage({ oath, row, sworn, onSwear }) {
       </div>
 
       <p className="oath-page-creed">{oath.creed}</p>
+
+      {/* What people actually swear this one on. A god belongs here and so does
+          nothing at all: the magic answers to the conviction rather than to
+          whoever was listening, which is the whole difference between this set
+          and the Pact of Ordenance. */}
+      <p className="oath-page-sworn">
+        <b>Sworn on</b> {oath.swornTo}.
+      </p>
 
       {/* ---- what it means ---- */}
       {oath.lore.split('\n\n').map((line) => (
@@ -304,7 +316,7 @@ function OathPage({ oath, row, sworn, onSwear }) {
             </>
           ) : (
             <>
-              <span className="pick-line">This is permanent. Read the other nine first.</span>
+              <span className="pick-line">This is permanent. Read the other four first.</span>
               <span className="spacer" />
               <button type="button" className="btn btn-take btn-sm" onClick={() => setAsking(true)}>
                 Swear {oath.name}

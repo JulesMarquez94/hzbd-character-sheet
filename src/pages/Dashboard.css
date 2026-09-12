@@ -349,8 +349,11 @@
 }
 
 /* Lifted over the link stretched across the card, the way the name is, so
-   the press reaches the button and not the sheet behind it. */
-.char-keep {
+   the press reaches the button and not the sheet behind it. `.char-resume` is
+   the same lift for the other button a card can grow: the way back into an
+   unfinished Walkthrough. */
+.char-keep,
+.char-resume {
   position: relative;
   z-index: 1;
   align-self: flex-start;

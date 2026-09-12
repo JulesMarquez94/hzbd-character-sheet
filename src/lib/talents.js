@@ -5365,8 +5365,9 @@ const TALENT_SETS = [
        ------------------------------------------------------------ what it is
        A set that hands over a **vow**. Everything else follows from which one:
 
-         the vow      ten of them, each a core principle and three tenets. The
-                      tenets are the set. See oaths.js.
+         the vow      five of them, each a creed and three tenets, and the power
+                      comes out of believing it rather than out of anybody granting
+                      it. The tenets are the set. See oaths.js.
          the magic    "based on that choice, you'll get to learn all the spells of
                       two sub-schools". The whole of both families, as the rungs
                       open, nothing chosen and nothing prepared.
@@ -5387,14 +5388,32 @@ const TALENT_SETS = [
        Each of these is a place the spoken spec had two readings and this file had
        to pick one. All six are in data/README.md with the reasoning.
 
-         the ten      **the vows are mine.** "There is many Oaths ... I'd like you
-                      to make at least ten different ones", and two were sketched:
+         the five     **the vows are mine.** "There is many Oaths ... I'd like you
+                      to make at least ten different ones" built ten, and
+                      2026-09-12 cut them to five: Vindication, Mercy, Protection,
+                      Decay and Renewal. Two of the five were sketched by him:
                       an Oath of Protection ("you would protect people, you would
                       make sure they get to safety, and you would not be the one to
                       initiate violence") and a Life-and-Light one whose tenet is
                       "to heal the people you pass across injured". Those two are
-                      the Oath of Protection and the Oath of Mercy. The other eight,
-                      all thirty tenets and all ten pages of lore are written here.
+                      the Oath of Protection and the Oath of Mercy. The other
+                      three, all fifteen tenets and all five pages of lore are
+                      written here.
+         belief       **nothing grants an Oathbound anything.** "They gain power
+                      from belief. This can be belief in a principle or belief
+                      associated with a deity or powerful being. But by swearing on
+                      something to live on, they gain, and the stronger this
+                      conviction the stronger they are." So there is no patron on
+                      the other end, which is exactly what separates this set from
+                      the Pact of Ordenance: a pact is a debt owed to somebody and
+                      an Oath is a conviction held by you. `swornTo` on each row is
+                      the menu, and it mixes gods, institutions, people and the bare
+                      principle on purpose.
+         the timing   **no Aura fires at your own Turn Start.** "Some effect
+                      triggers make no sense as it would only happen next turn." An
+                      Aura is raised on your turn, so a clause waiting for your next
+                      Turn Start buys nothing for a round. A timed Aura fires at the
+                      Turn Start of whoever it is about, or at your Turn End.
          the creed    **an Oath is a sub-talent set, and a tenet is a principle.**
                       "Imagine that Oathbound is like multiple talents inside of a
                       single talent set", and "the tenets need to be less action
@@ -5523,9 +5542,16 @@ const TALENT_SETS = [
       apCut: [null, 0, 1, 1],
       apCutFrom: 'Unwavering',
       apFloor: 1,
-      /* The one card of the eight that wears the vow's own damage type, since it
-         is one card standing in for ten. The ten Auras print theirs. */
+      /* The one card of the nine that wears the vow's own damage type, since it
+         is one card standing in for five. The five Auras print theirs. */
       smite: 'smite',
+      /* "Give the Oathbound a new ability which is to meditate during a Long
+         Rest. It allows them to regain 10 Faith" (Jules, 2026-09-12). Ten against
+         the night's own five, so a night on it is worth +5 and an Oathbound who
+         meditates every night climbs at half the rate one good deed does. The
+         tenth kind of Long Rest action, and the only one that asks nothing: there
+         is no step, because there is nothing to choose. See oathbound.js. */
+      meditate: { faith: 10, label: 'Meditate on your Oath', card: 'meditation' },
       sanctuary: {
         label: 'Sanctuary',
         rank: 2,
@@ -5541,8 +5567,8 @@ const TALENT_SETS = [
       },
     },
     blurb:
-      'An Oathbound is not a believer, they are a signatory. What they swore is three sentences long, and every one of them is a thing you can fail to do on an ordinary afternoon: tend whatever is hurt in front of you, never throw the first blow, put back what you take. The power arrives with the vow and it is not a reward for it. It is the same power whether you keep your word or not.\n\n' +
-      'What changes is how well it answers. Faith is a bar with a middle, and it goes down every single night whether or not anything happened, so a vow is kept by doing something about it rather than by having meant it. Above the middle, whatever you are best at is a point better. Below it, a point worse. Nobody else at the table has a number that moves because of what they walked past.\n\n' +
+      'An Oathbound draws power out of believing something, and nothing else. Some of them believe in a god and some in a bare principle, and the magic cannot tell the difference: what it answers to is how hard the conviction is held. Swearing is the act of putting that belief into words you have to live by, and it is the words, rather than whoever heard them, that do the work.\n\n' +
+      'So an Oath is three sentences long and every one of them is a thing you can fail to do on an ordinary afternoon: tend whatever is hurt in front of you, never throw the first blow, put back what you take. Faith is the measure of how well you have meant it lately. It falls every single night whether or not anything happened, so a vow is kept by doing something about it rather than by having felt strongly once. Above the middle, whatever you are best at is a point better. Below it, a point worse.\n\n' +
       'They excel at holding a place. The Aura reaches every ally who can see them and does not care how far away that is, the Sanctuary turns a rented room into ground that answers to them, and at their height they can open it from anywhere and drag half a battlefield inside. Two whole families of magic come with the vow, and which two says more about the character than any spell in them.', // text-style-ok: joins two clauses
     cards: [
       /* ============================================== the Oathbound's own eight */
@@ -5655,10 +5681,33 @@ const TALENT_SETS = [
           'Whether what you are doing is in line with a tenet is your Game Master’s call.',
       },
 
+      {
+        id: 'meditation',
+        rank: 1,
+        name: 'Meditation',
+        summary: 'A night sitting with your Oath, and 10 Faith back for it.',
+        kind: 'talent',
+        tags: ['Oathbound', 'Novice Talent', 'Long Rest'],
+        ap: null,
+        wp: null,
+        stat: HIGHEST,
+        /* Mechanics as data: `oath.meditate` above. "Your Long Rest action" is the
+           site's idiom for spending the night's one slot, off FUNGAL INVOCATION
+           and ARCANE RESEARCH.
+
+           The card does not say "so a night of it nets 5". The night's own toll is
+           on THE OATH and the rest window prints both movements as two lines; a
+           card doing the subtraction for the reader would be one more number to
+           keep in step with a spec. */
+        body:
+          'Whenever you take a Long Rest, you can use your Long Rest action to sit with your Oath and go back over everything you have done since the last time.\n\n' +
+          'You regain 10 Faith.',
+      },
+
       /* ------------------------------------------------------------- and the Aura
-         The ten of them, one per vow, spread in from oaths.js. Every one is a Rank
-         1 card and a holder holds exactly one: the one their vow names. See
-         `heldOathCards` in oathbound.js, which is what drops the other nine, and
+         The five of them, one per vow, spread in from oaths.js. Every one is a
+         Rank 1 card and a holder holds exactly one: the one their vow names. See
+         `heldOathCards` in oathbound.js, which is what drops the other four, and
          OATH_AURAS in oaths.js, which is what builds them.
 
          They are in this array rather than off to one side because a set's cards

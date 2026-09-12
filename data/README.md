@@ -16314,6 +16314,9 @@ carries: a creed, a page of lore and three tenets a player can hold in their hea
 
 ### The ten, renamed and rewritten
 
+**Superseded the next day.** Five of these ten were cut on 2026-09-12. See "Five Oaths, and a
+night spent in meditation" below for the list as it stands.
+
 | Was | Is | Families | Smite |
 | --- | --- | --- | --- |
 | Vindication | **Vindication** | Light, Fire | Fire |
@@ -16437,3 +16440,257 @@ skill says "to read a map" and this says "toward what you swore".
 - **The lore is ten pages of mine.** Every word of it, and the ten creeds, and every one of
   the thirty tenets with their thirty breaches and thirty examples.
 - **Still no art and still no Crossroads scenes** for the set.
+## Five Oaths, and a night spent in meditation, 2026-09-12
+
+Five asks, and one of them is about where the magic comes from.
+
+> "Change Aura of Decay to not have the no-healing effect.
+>
+> Some effect triggers make no sense as it would only happen next turn. Make the Aura trigger
+> either be on other entities' Turn Start or your Turn End.
+>
+> Reduce the Oaths to Vindication, Mercy, Protection, Decay and Renewal.
+>
+> Give the Oathbound a new ability which is to meditate during a Long Rest. It allows them to
+> regain 10 Faith.
+>
+> Shape the Oathbound lore-wise that they gain power from belief. This can be belief in a
+> principle or belief associated with a deity or powerful being. But by swearing on something
+> to live on, they gain, and the stronger this conviction the stronger they are."
+
+### Where the power comes from
+
+**Nothing grants an Oathbound anything.** That is the ruling the last ask settles, and it is
+what finally separates this set from the Pact of Ordenance, which is the only other set in the
+codex built on a promise: a pact is a debt owed to somebody on the other end of it, and an Oath
+is a conviction held by you with nobody on the other end at all.
+
+A god may be involved and often is. Swearing Mercy to a healing deity and swearing it to
+nothing whatsoever are the same Oath at the same strength, and the difference is what the
+character says out loud when somebody asks. So each Oath gained a **`swornTo`** line that
+deliberately mixes deities, institutions, people and the bare principle:
+
+> **Sworn on** a god of scales, a court that stopped sitting, a murdered name, or nothing at
+> all but the certainty that somebody has to.
+
+It prints between the creed and the lore on the Oath's page, because it answers the question
+the creed raises, which is who on earth you said it to. The set's blurb was rewritten to open
+on it, and the chooser's own line now reads "An Oathbound draws power out of believing
+something, so a vow decides three things at once".
+
+### Ten came down to five
+
+Vindication, Mercy, Protection, Decay and Renewal. **The Wild, Defiance, Constancy, Creation
+and Trust are gone**, and with them the Wild, Storm, Lightning, Water, Time, Magma and Spacial
+families, and one slot each of Earth and Shadow. What is left:
+
+| Oath | Families | Smite | Spells at 1 / 2 / 3 |
+| --- | --- | --- | --- |
+| Vindication | Light, Fire | Fire | 7 / 14 / 21 |
+| Mercy | Life, Light | Sacred | 8 / 16 / 24 |
+| Protection | Earth, Flora | Blunt | 7 / 14 / 21 |
+| Decay | Death, Shadow | Necrotic | 8 / 16 / 24 |
+| Renewal | Mud, Life | Decay | 5 / 10 / 15 |
+
+**The spread got much better by accident.** Ten vows ran from 2 spells at Rank 1 (Defiance,
+on Storm and Lightning) to 8; the five that survived run 5 to 8, because the four thinnest
+compound Elemental families were all on vows that were cut. The open ruling about thin vows is
+down to one row: Renewal, whose Mud half holds one spell a rung.
+
+**Nothing in the code cared.** `families: 'oath'` means a pool is whatever the vow names, so
+removing a vow removes a pool; `heldOathCards` drops every Aura but the one sworn, so removing
+four Auras removed four cards from the registry and touched nothing else. A saved sheet holding
+a dropped vow reads as unsworn, which `getOath` already answered for.
+
+### No Aura fires at your own Turn Start
+
+The timing complaint is a real bug and it was in three of the five. An Aura is **raised on your
+turn**, for 3 Action Points, so a clause that waits for your *next* Turn Start does nothing at
+all for a full round: you pay, and then everybody waits.
+
+So the law is now written at the top of oaths.js: a timed Aura fires either at **the Turn Start
+of whoever it is about**, which is inside the same round, or at **your Turn End**, which is the
+same turn you paid for it. A reactive Aura has no timing to get wrong.
+
+| | Was | Is |
+| --- | --- | --- |
+| Vindication | when an ally is hit | unchanged, reactive |
+| Mercy | at your Turn Start | at the Turn Start of each ally in the Aura |
+| Protection | at your Turn Start | at the Turn Start of each ally in the Aura |
+| Decay | at your Turn End | at the Turn Start of each enemy in the Aura |
+| Renewal | at your Turn End | unchanged, already legal |
+
+"At the Turn Start of **each ally in the Aura**" is the codex's own shape, off EARTHQUAKE's
+"At the Turn Start of **any entity** in the area".
+
+And **Decay lost its no-healing clause**, which was the one rider on any Aura that inflicted a
+state rather than dealing a number. It now reads as the plainest of the five: everything
+hostile standing in it is quietly being finished, a turn at a time.
+
+### Meditation
+
+One new Rank 1 card and **the tenth kind of Long Rest action**:
+
+```
+Whenever you take a Long Rest, you can use your Long Rest action to sit with your Oath and go
+back over everything you have done since the last time.
+
+You regain 10 Faith.
+```
+
+Ten against the night's own five, so **a night spent meditating is worth +5**, not +10. That is
+the number doing the design work: an Oathbound who meditates every single night climbs at half
+the rate one good deed does, so it is what you do in a week where nothing happened rather than
+a replacement for keeping the vow. It also costs the night's one action, so it competes with
+consecrating a Sanctuary, brewing, enchanting and everything else.
+
+It is the only action in the rest window with **no step**, because there is nothing to choose:
+picking the row is the whole action, the way a labour is finished once its amount is picked.
+The window prints both movements rather than the net, which is right: "Faith 50 to 45" and
+"Faith 45 to 55" are two true things that happened, and one line reading "+5" would hide the
+toll the set is built around.
+
+### Proved
+
+- Every linter clean, and the build. `lint:cards`: 623 cards, all 15 of the set's inside the
+  480 target.
+- Through the model: the five resolve pools of 7 / 8 / 7 / 8 / 5 at Rank 1; every Aura prints
+  its new trigger; a meditating night reads 40 to 35 to 45 with both ledger rows written; a
+  bar at 98 clamps to 100 rather than 103; and an unsworn Oathbound is offered neither
+  meditation nor consecration.
+- In the browser: the chooser lists five with the "Sworn on" line under each creed, the rest
+  window offers "Meditate on your Oath" with "10 Faith back, against the 5 the night costs",
+  taking it fills the slot with no step, and confirming the rest lands Faith at 55 with
+  "+10 Meditate on your Oath" and "-5 A night passed" both in the block's ledger.
+
+### Still open
+
+- **10 Faith for a night** is his. **2 Willpower for Divine Fervor** is still mine, and so is
+  Divine Fervor sitting at Rank 1.
+- **"Faith" is still a reading of a transcript that said "face."**
+- **Renewal is the thin one now**, at 5 spells where the others have 7 or 8, because Mud holds
+  one spell a rung. The pool is `all: true`, so it fixes itself when Mud fills out.
+- **The five auras' triggers are still the table's to run.** "At the Turn Start of each enemy
+  in the Aura" is not an event this sheet fires; the combat runner announces turns and does not
+  walk auras. Same wall as before, one clause narrower.
+- **Still no art and still no Crossroads scenes.**
+
+## The Walkthrough, 2026-09-12
+
+> "I want to build the guide character creation. The goal of it is to help someone create a
+> character while explaining the system. To do so it takes step by step each element of the
+> character creation. Explain the rules and explain how the block work. This process can be
+> started and if the player leave in the middle of it i save the progress so they can
+> continue later. So create it and make a special interface for it that allow all the
+> essential to be learned while making a character."
+
+The third of the four ways in, the one the chooser has called **Walkthrough** since the four
+were named, is built: `guided` is `ready: true` in creationPaths.js and the dashboard's foot
+line says three of the four are built. See `src/lib/walkthrough.js`, `paths/Walkthrough.jsx`
+and `paths/WalkthroughLessons.jsx`.
+
+### Seven steps, two columns
+
+One screen a step. The lesson stands in one column and the panel that makes the choice in the
+other; under 980px the panel follows the lesson. The steps:
+
+| | Step | Asks | Teaches |
+| --- | --- | --- | --- |
+| 1 | How it works | the name and the campaign | the roll and its three names, cards, what Action Points, Reaction Points, Willpower, Health, Shield, Supplies and coins are, and what the walk will ask |
+| 2 | Attributes | the +2 and the +1 | the three attributes, the 4 they start at and the 12 they stop at, and every number they buy with its arithmetic |
+| 3 | Talent set | a set at Rank 1 | the three ranks and the levels they open at, the shelf by attribute, and that a set can ask for more |
+| 4 | Lineage | an ancestry | blood not race, chosen once, cards and a possible attribute point, the question a card can leave |
+| 5 | Background | a trade, its skills and its kit | skills as cards that are never rolled, the Skill Check, the kit, the purse and the trade between them |
+| 6 | Their story | nothing, optional | the lore page |
+| 7 | Your sheet | nothing, the way out | the pools, the five tabs, the six blocks, the two rests, level 2, and what is still to answer |
+
+**The panels are the level-1 block's own.** AttributeSpreadPick, TalentPick, LineagePick and
+BackgroundPick are drawn with the same arguments LevelLedger hands them, so a player who has
+learned this screen has learned the Advancement tab. The four grew a `foldable` prop (default
+true) so the Walkthrough can keep a finished panel open beside the lesson that is still
+talking about it; the ledger folds as before.
+
+**No number in a lesson is typed.** The base, the ceiling, the rank titles and levels, the
+skill range, the coins per skill count, the Supplies, what a rest costs and the width of the
+critical band are read off the code that enforces them, and the character's own numbers are
+printed through `statMath`, which is the arithmetic every tile on the Character tab shows on
+hover. So the first thing a new player reads about Health is `10 your level + 60 Physique =
+70`, and it is the same line they will hover later. Step one puts a practice roll on the dice
+tray (`present`, `log: false`, against a DC of 10) and prints three basic actions as briefs
+that deal onto the card stack. Every lesson closes on the rulebook: the headings each step
+points at are in `STEPS`, and the links open the book in a new tab.
+
+**Attributes first, on purpose.** The level-1 block prints talent, lineage, background,
+attributes. The walk goes attributes, talent, lineage, background: the three attributes are
+what every other number is built from, and the talent wall is shelved by attribute, so a
+player who has placed the +2 is told which shelf to read first (the lesson reads the spread
+off the row and says "Your +2 is on Physique"). The rail goes anywhere in any order and
+nothing is locked; the one gate is the way out, which is the free hand's and the Crossroads'
+gate on `openChoices`, and the last lesson lists the steps still waiting with a button each.
+
+### The bookmark
+
+The row already saved every choice; what nobody saved was where you were. A new `creation`
+jsonb column holds `{ path: 'guided', step: 'talent', ts }`, written through `patch` whenever
+the step changes and read on mount, so a walk survives a reload, a closed tab and a change of
+device. `onDone` in CharacterSheet.jsx clears it for every path, so a character finished on
+the free hand after starting the walk is not still bookmarked. The dashboard card wears a
+`Walkthrough · 3 of 7` tag and a **Continue the Walkthrough** button that opens
+`/new?path=guided`; the screen reads the step off the row. The step is stored by key rather
+than by index so the list can grow without sending anybody back to the wrong screen.
+
+**The SQL still has to be run.** `supabase/schema.sql` carries the column and the
+`add column if not exists`; until it is run against the live database the write is dropped
+with the usual console warning and everything else still saves, so an account character can
+walk the whole thing and only loses its place on a reload. A device character keeps its place
+already, because its row is localStorage.
+
+The Crossroads still keeps its run in sessionStorage. The column is shaped so it could hold
+that too, and nothing was changed there.
+
+### Two bugs, one old and one older
+
+**Every Martial Move shelf on the Advancement tab was empty.** `familyGate` in loadouts.js
+read any array it was handed as the pool's families, and LoadoutSection and TalentBlock hand
+every set `oathFamilies(character, id)`, which for the thirty-three sets that swear nothing is
+`[]`. An empty list means "no Oath sworn, so nothing is open yet", so a Guardian's and a
+Duelist's moves were refused to the last card, the chooser printed "This build's codex holds
+no martial moves this rank can take yet", and the set owed two cards nobody could take, which
+held the free hand's, the Crossroads' and the Walkthrough's ways out shut. Since the Oathbound
+first pass (df65417). Fixed: a spec with no `families` has no family gate whatever a caller
+hands in, a spec with its own list keeps it, and only `families: 'oath'` reads the holder's.
+
+**A pool could owe what the codex cannot pay.** `owed` was the count minus the picks, so a
+pool whose shelf was truly empty would badge the tab and shut the way out for ever. It is now
+capped at the legal cards not yet held (unbounded for a pool that allows copies). This is
+mine, and it only bites when a codex shelf is empty at a rank.
+
+### Proved
+
+- `npm run lint:walkthrough`, new: every rulebook reference resolves to a heading that
+  exists, every kind level 1 asks is owned by exactly one step, the bookmark round-trips
+  (string column, unknown step, garbage, another path's record), a blank character has four
+  steps open and a character made through `setBoosts`, `chooseAt`, `setLineage`, `takeSkill`
+  and `buildKitPatch` has none, with the tab badge agreeing at both ends.
+- eslint, `lint:text`, `lint:crossroads`, `lint:cards` and the build all clean.
+- In the browser, signed out on a device character: the enlist box offered the path and
+  opened it; the numbers moved on the spread (Health 50 to 70, Reflex 8 to 10); Stalwart put
+  the row at 7 / 4 / 5 and Health at 80; the Guardian shelf showed six Novice moves after the
+  fix and took Concuss and Wound; Military taught Vigilant and Quick Draw and the kit landed
+  Magic Armor, two weapons, 4,000 coins and 70 Supplies; a reload reopened step 7; the
+  dashboard card read `Walkthrough · 7 of 7` and Continue landed on step 7; Open the sheet
+  opened the tabs with no badge, cleared the bookmark and offered to keep the character; at
+  375px the body is one column, lesson first, with no sideways scroll.
+
+### Still open
+
+- **The step order is mine.** Attributes before the set is the argument above and Jules has
+  not ruled on it.
+- **The `owed` cap is mine**, see above.
+- **The practice roll's DC of 10** and the three sample actions (Move, Skill Check,
+  Anticipate) are mine.
+- **Rulebook links open in a new tab.** Leaving mid-walk is remembered, so the same tab would
+  also do; the new tab is a call about reading habits, not rules.
+- **Only the dashboard offers the way back.** A bookmarked character opened straight on its
+  sheet says nothing about the unfinished walk; the Advancement badge is the only sign.
+- **Ready-Made is the one path left.**

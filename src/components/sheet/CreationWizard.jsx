@@ -2,6 +2,7 @@ import { DEFAULT_PATH, creationPath } from '../../lib/creationPaths.js';
 import Crossroads from './paths/Crossroads.jsx';
 import FreeHand from './paths/FreeHand.jsx';
 import PathSoon from './paths/PathSoon.jsx';
+import Walkthrough from './paths/Walkthrough.jsx';
 
 /**
  * Making a character, whichever way you chose to.
@@ -21,6 +22,7 @@ import PathSoon from './paths/PathSoon.jsx';
  */
 const PATH_VIEWS = {
   freeform: FreeHand,
+  guided: Walkthrough,
   crossroads: Crossroads,
 };
 

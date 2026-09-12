@@ -425,8 +425,8 @@ export function oathModifiers(character, row) {
  *                   card that gave them rather than to the set, because the
  *                   arrow and the struck-through orb have room for one name and
  *                   a reader with two sources needs to know which came off.
- *   the damage      the Oath's own type, on SMITE. The ten Auras print theirs,
- *                   since each is one Oath's card; SMITE is one card for ten
+ *   the damage      the Oath's own type, on SMITE. The five Auras print theirs,
+ *                   since each is one Oath's card; SMITE is one card for five
  *                   vows and cannot.
  *
  * Empty for a set nobody has sworn under, which keeps every card exactly as the
@@ -470,7 +470,7 @@ export function oathRiders(character, talentId = null) {
       riders[auraId] = grown;
     }
 
-    /* And SMITE gets the Oath's damage type, since it is one card for ten vows. */
+    /* And SMITE gets the Oath's damage type, since it is one card for five vows. */
     const smiteId = row.spec.smite;
     if (smiteId && riders[smiteId] && row.oath?.damage) {
       riders[smiteId] = {
@@ -497,14 +497,14 @@ function cardIdsOf(row) {
 
 /**
  * The set's cards this character really holds, which is every one of them minus
- * the nine Auras they did not swear.
+ * the four Auras they did not swear.
  *
  * A card carrying `oath` belongs to one vow (see OATH_AURAS in oaths.js), and an
- * Oathbound of Vindication holds one Aura rather than ten. Nothing else in the
+ * Oathbound of Vindication holds one Aura rather than five. Nothing else in the
  * codex carries the field, so a set with no vow system loses nothing by being
  * passed through here.
  *
- * An Oathbound who has sworn nothing yet holds none of the ten, which is right:
+ * An Oathbound who has sworn nothing yet holds none of the five, which is right:
  * there is no Aura until there is an Oath to raise.
  */
 export function heldOathCards(character, talent, cards) {
@@ -521,7 +521,7 @@ export function heldOathCards(character, talent, cards) {
  * The two sub-schools a character's vow opens, as the `families` a loadout gate
  * reads.
  *
- * This is what makes one `all: true` pool behave as ten different ones: the spec
+ * This is what makes one `all: true` pool behave as five different ones: the spec
  * in talents.js names no family at all, and the vow on the sheet supplies the
  * pair. An Oathbound who has sworn nothing gets an empty list, and an empty list
  * refuses every card in the codex, so an unsworn Oathbound knows no spells. See
@@ -657,6 +657,57 @@ export function consecrate(character, row, { name, note } = {}) {
 
   ground.at = new Date().toISOString();
   return writeOath(character, row.id, { sanctuary: ground });
+}
+
+/* ------------------------------------------------------------- meditation */
+
+/**
+ * What a night spent sitting with the vow is worth, off the spec.
+ *
+ * "Give the Oathbound a new ability which is to meditate during a Long Rest. It
+ * allows them to regain 10 Faith" (Jules, 2026-09-12). Ten against the night's
+ * own five, so a night spent meditating is worth **+5** rather than +10, and an
+ * Oathbound who spends every night on it climbs at half the rate a single good
+ * deed does. That is the point of it: meditation is what you do in a week where
+ * nothing happened, and it costs the night's one action to do.
+ */
+export function meditationGain(spec) {
+  return Math.max(0, Math.floor(Number(spec?.meditate?.faith) || 0));
+}
+
+/** Whether this vow can be meditated on at all, which is whether there is one. */
+export function canMeditate(row) {
+  return Boolean(row?.sworn) && meditationGain(row.spec) > 0;
+}
+
+/**
+ * Sitting with it: the Faith back, and the ledger row saying where it came from.
+ *
+ * The same shape `adjustFaith` hands back and deliberately not a call to it: a
+ * night's meditation is written on top of whatever the night has already taken,
+ * so the caller passes a character carrying the rest's own patch and the two
+ * edits land on one column. See `restPlan` in rest.js.
+ */
+export function meditate(character, row) {
+  if (!canMeditate(row)) return null;
+
+  const held = normalizeOath(character?.oath)[row.id] ?? {};
+  const faith = clampFaith(row.spec, held.faith ?? row.faith);
+  const next = clampFaith(row.spec, faith + meditationGain(row.spec));
+  if (next === faith) return null;
+
+  const entry = {
+    id: newFaithId(),
+    ts: new Date().toISOString(),
+    delta: next - faith,
+    faith: next,
+    note: row.spec.meditate?.label ?? 'Meditation',
+  };
+
+  return writeOath(character, row.id, {
+    faith: next,
+    log: [entry, ...(held.log ?? row.log ?? [])].slice(0, FAITH_LOG_LIMIT),
+  });
 }
 
 /** Letting the ground go without consecrating anywhere else. */

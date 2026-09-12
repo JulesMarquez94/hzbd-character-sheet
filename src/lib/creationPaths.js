@@ -48,7 +48,7 @@ export const CREATION_PATHS = [
     blurb:
       'The same choices as the free hand, asked in order, with what each one does to your numbers spelled out as you go. Made for a first character, and for anyone who would rather be told why.',
     accent: 'var(--vital-green)',
-    ready: false,
+    ready: true,
   },
   {
     key: 'crossroads',

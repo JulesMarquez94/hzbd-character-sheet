@@ -26,6 +26,7 @@ import {
 } from './parts.jsx';
 import BlockArrange from './BlockArrange.jsx';
 import BlockTrays from './BlockTrays.jsx';
+import { BLOCK_NAMES } from './blockNames.js';
 import { CardStackProvider } from '../CardStack.jsx';
 import { useAuth } from '../../context/auth-context.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
@@ -124,24 +125,10 @@ const BURDEN_INFO =
 /** Every block is designed now; the list stays for whatever comes next. */
 const PLACEHOLDERS = [];
 
-/**
- * What each block is, in words. The arranger shows a list of rows rather than
- * the blocks themselves, so it needs a name for each one, and these are the
- * names the block comments above use.
- *
- * The six are every character's. A talent set that puts a creature on the board
- * adds two more that are not in this table, and one that turns its holder into
- * something adds a third, because all three of those are named after the thing
- * rather than after the block — see `describeBlock` below.
- */
-const BLOCK_NAMES = {
-  1: { name: 'Identity & Attributes', note: 'Name, lineage, background, the three attributes' },
-  2: { name: 'Combat Profile', note: 'Defense, Armor, Reflex, Grit, Initiative, Speed' },
-  3: { name: 'Loadout', note: 'What you are holding, and what it lets you do' },
-  4: { name: 'Quick Bar', note: 'Everything you can spend points on, in reaching order' },
-  5: { name: 'Always On', note: 'The passives you never have to play' },
-  6: { name: 'Turn & Effects', note: 'The clock, and what is currently on you' },
-};
+/* What each block is, in words, for the arranger's rows: see blockNames.js,
+   which the Walkthrough reads too. The six are every character's; a creature's
+   two, a form's one and the rest are named after the thing rather than after the
+   block — see `describeBlock` below. */
 
 /**
  * Block 1 is a readout, not a form. Name, lineage, background and the three

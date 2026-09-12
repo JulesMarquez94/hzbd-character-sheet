@@ -15,6 +15,7 @@ import {
   listCharacters,
 } from '../lib/api.js';
 import { creationPath } from '../lib/creationPaths.js';
+import { standing } from '../lib/walkthrough.js';
 import {
   LOCAL_CHARACTER_SLOTS,
   isLocalCharacter,
@@ -54,11 +55,18 @@ function TalentTag({ talent }) {
  * `onKeep` is handed in for a character kept on this device while somebody is
  * signed in: the one card that has a second thing to do, which is to move into
  * the account. The button paints over the link the way the name does.
+ *
+ * `onResume` is the other second thing a card can have to do. A character left
+ * part-way through the Walkthrough carries the step it stopped at on its row
+ * (see src/lib/walkthrough.js), and the card says so and offers the way back.
+ * The link across the card still opens the sheet, because a half-made character
+ * is a whole sheet with some choices waiting on its Advancement tab.
  */
-function CharacterCard({ character, onDelete, onKeep = null }) {
+function CharacterCard({ character, onDelete, onKeep = null, onResume = null }) {
   const xp = xpProgress(character.xp);
   const dead = isDead(character);
   const local = isLocalCharacter(character);
+  const resume = standing(character);
 
   return (
     <div className="char-card">
@@ -94,6 +102,14 @@ function CharacterCard({ character, onDelete, onKeep = null }) {
             {local && (
               <span className="tag tag-muted" title="Saved in this browser only, not in an account">
                 This device
+              </span>
+            )}
+            {resume && (
+              <span
+                className="tag tag-muted"
+                title={`Part-way through the ${resume.title}, on step ${resume.index + 1} of ${resume.total}: ${resume.step.title}`}
+              >
+                {resume.title} · {resume.index + 1} of {resume.total}
               </span>
             )}
             {character.lineage && <span className="tag tag-lineage">{character.lineage}</span>}
@@ -140,6 +156,16 @@ function CharacterCard({ character, onDelete, onKeep = null }) {
               onClick={() => onKeep(character)}
             >
               Save to my account
+            </button>
+          )}
+          {resume && onResume && (
+            <button
+              type="button"
+              className="btn btn-copper btn-sm char-keep char-resume"
+              onClick={() => onResume(character, resume)}
+              title={`Back to step ${resume.index + 1}: ${resume.step.title}`}
+            >
+              Continue the {resume.title}
             </button>
           )}
         </div>
@@ -290,6 +316,13 @@ export default function Dashboard() {
     }
   }
 
+  /** Back into an unfinished Walkthrough, at the step its card says it stopped
+      on. The path rides in the URL as it does for a fresh row; the step is read
+      off the row by the screen itself. */
+  function handleResume(character, where) {
+    navigate(`/characters/${character.id}/new?path=${where.path}`);
+  }
+
   /** The move across, from the card's button. KeepCharacter shows the failure. */
   async function handleKeep() {
     const kept = await adoptCharacter(keeping.id, userId, tier);
@@ -327,7 +360,12 @@ export default function Dashboard() {
       ) : (
         <div className="char-grid">
           {mine.map((character) => (
-            <CharacterCard key={character.id} character={character} onDelete={setPendingDelete} />
+            <CharacterCard
+              key={character.id}
+              character={character}
+              onDelete={setPendingDelete}
+              onResume={handleResume}
+            />
           ))}
 
           {!atLimit && (
@@ -382,6 +420,7 @@ export default function Dashboard() {
                 character={character}
                 onDelete={setPendingDelete}
                 onKeep={setKeeping}
+                onResume={handleResume}
               />
             ))}
           </div>
@@ -478,8 +517,8 @@ export default function Dashboard() {
               <CreationPathPick onPick={setPathKey} />
 
               <p className="form-hint path-foot">
-                Two of the four are built today, the free hand and the crossroads. The other two are
-                on their way.
+                Three of the four are built today: the free hand, the walkthrough and the
+                crossroads. Ready-Made is on its way.
               </p>
             </>
           )}

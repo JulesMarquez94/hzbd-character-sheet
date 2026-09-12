@@ -58,7 +58,16 @@ import { ARMOR_ORDER, buildKitPatch, buildReturnPatch } from '../../lib/kit.js';
  * window, and the spell you name joins your hand behind it. Same shape the
  * lineage chooser uses, and the same picker.
  */
-export default function BackgroundPick({ character, patch, step = null, readOnly = false }) {
+export default function BackgroundPick({
+  character,
+  patch,
+  step = null,
+  readOnly = false,
+  /* Whether a finished panel folds itself away. The ledger wants it to; the
+     Walkthrough, where this panel stands alone beside the lesson about it, does
+     not. See PickBlock.jsx. */
+  foldable = true,
+}) {
   /* Which window is open: the wall of trades, the skill pool, the outfitter, or
      nothing. The walking flag says whether we got here by taking a trade a moment
      ago, which is what decides whether closing one window opens the next. Opening
@@ -120,7 +129,7 @@ export default function BackgroundPick({ character, patch, step = null, readOnly
             ? 'Chosen'
             : 'Half done'
       }
-      foldable
+      foldable={foldable}
       summary={
         background
           ? `${background.name} · ${state.skills.map((skill) => skill.name).join(', ') || 'no skills'}`

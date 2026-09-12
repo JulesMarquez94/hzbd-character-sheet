@@ -399,6 +399,11 @@ export default function CharacterSheet({ creating = false }) {
             patch={patch}
             unit={unit}
             onDone={async () => {
+              /* Whichever way in this was, finishing it closes the bookmark a
+                 resumable path left on the row: see `creation` in
+                 characterModel.js and src/lib/walkthrough.js. Through `patch`,
+                 so it rides the same flush as the last choice. */
+              if (character.creation) patch({ creation: null });
               /* The sheet route remounts this component and refetches the row,
                  so the last edits must be on the server before we go — a
                  fire-and-forget flush can lose the race against that fetch. */

@@ -106,6 +106,14 @@ export const BLANK_CHARACTER = {
   background_skills: [],
   background_kit: null,
 
+  // Where an unfinished way in stopped, or null: { path: 'guided', step:
+  // 'talent', ts }. The Walkthrough writes the step it is on so the dashboard
+  // can offer the way back to it, and finishing any path clears it. The path
+  // itself still rides in the URL (see creationPaths.js): this is the bookmark,
+  // which is a state of the character and not how you got here. walkthrough.js
+  // owns the shape.
+  creation: null,
+
   talents: [],
   // The creatures a talent set has put on the board, keyed by the set that
   // granted one: { "draconic-bond": { name, scale, portrait_url, health,

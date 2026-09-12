@@ -71,6 +71,10 @@ export default function TalentPick({
      Worked out in LevelLedger off `levelAsks`, so the panel and the tab badge
      read the same list. */
   owing = false,
+  /* Whether a finished panel folds itself away. The ledger wants it to; the
+     Walkthrough, where this panel stands alone beside the lesson about it, does
+     not. See PickBlock.jsx. */
+  foldable = true,
 }) {
   const [choosing, setChoosing] = useState(false);
   const [viewing, setViewing] = useState(null);
@@ -99,7 +103,7 @@ export default function TalentPick({
             ? 'Waiting on you'
             : `After level ${openAt}`
       }
-      foldable
+      foldable={foldable}
       summary={
         slot.filled ? `${slot.entry.name} · Rank ${slot.rank}` : 'No set chosen yet.'
       }

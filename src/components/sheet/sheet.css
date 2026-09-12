@@ -15342,6 +15342,21 @@ button.tgt-chip:disabled {
   color: var(--text-bright);
 }
 
+/* What people swear this Oath on: a god, a guild, a person, or nothing at all.
+   Set between the creed and the lore because it answers the question the creed
+   raises, which is who on earth you said it to. */
+.oath-page-sworn {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.oath-page-sworn b {
+  color: var(--dmg-sacred);
+  font-weight: 700;
+}
+
 .oath-page-lore {
   margin: 0;
   font-size: 0.76rem;
@@ -15520,4 +15535,312 @@ button.tgt-chip:disabled {
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: var(--dmg-sacred);
+}
+
+
+/* =========================================================
+   THE WALKTHROUGH — one choice at a time, with the rules
+   beside it. The lesson stands in one column and the level-1
+   block's own panel in the other. See paths/Walkthrough.jsx
+   and src/lib/walkthrough.js.
+   ========================================================= */
+
+/* The path's own colour rides the container, the way the Crossroads' does. */
+.walkthrough {
+  --path-accent: var(--vital-green);
+}
+
+/* Two columns want more than the document measure. The lesson is prose and
+   the panel is a wall of cards; at 860px one of them was always cramped. */
+.tab-narrow.walkthrough {
+  max-width: 1240px;
+}
+
+/* The head stands in a panel of its own, so the rule under it goes: the panel's
+   own edge is the rule now. */
+.wt-head {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+/* The rail wears the path's colour rather than copper, and a finished step
+   wears its tick in the same colour. */
+.wt-steps .creation-step.is-here button {
+  border-color: var(--path-accent);
+  color: var(--path-accent);
+}
+
+.wt-steps .creation-step.is-done .creation-step-n {
+  color: var(--path-accent);
+}
+
+/* ---------- the two columns ---------- */
+.wt-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 980px) {
+  .wt-body {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 1.25rem;
+  }
+}
+
+/* The lesson: a boxed column capped in the path's colour, like every other
+   panel on the site. */
+.wt-lesson {
+  padding: 1rem 1.1rem 1.15rem;
+  border: 1px solid rgba(148, 167, 176, 0.14);
+  border-top: 2px solid color-mix(in srgb, var(--path-accent) 60%, transparent);
+  border-radius: 6px;
+  background-color: rgba(9, 17, 21, 0.32);
+  min-width: 0;
+}
+
+.wt-lesson-eyebrow {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--path-accent);
+}
+
+.wt-lesson-title {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-headings);
+  font-size: 1.2rem;
+  letter-spacing: 0.8px;
+  color: var(--text-bright);
+}
+
+/* The panel's column. A pick block carries a top margin for the ledger it was
+   drawn for; the first one here sits flush with the lesson's top edge. The lore
+   page brings its own narrow measure and is told to fill the column instead. */
+.wt-work {
+  min-width: 0;
+}
+
+.wt-work > .pick-block:first-child {
+  margin-top: 0;
+}
+
+.wt-work .tab-narrow {
+  max-width: none;
+}
+
+/* ---------- one part of a lesson ---------- */
+.wt-section {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.wt-section-title {
+  margin: 0;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.wt-section p {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--text-silver);
+}
+
+.wt-section p b {
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+/* The part about the panel itself, set apart in the path's colour so a reader
+   can find "what do I press" without reading the rule again. */
+.wt-section-how {
+  padding: 0.85rem 0.95rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--path-accent) 30%, transparent);
+  border-radius: 5px;
+  background-color: color-mix(in srgb, var(--path-accent) 6%, transparent);
+}
+
+.wt-section-how .wt-section-title {
+  color: var(--path-accent);
+}
+
+.wt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0 0 0 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-silver);
+}
+
+.wt-list b {
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.wt-list-numbered {
+  padding-left: 1.3rem;
+}
+
+/* A small table of the game's own numbers, read off the code. */
+.wt-table {
+  width: 100%;
+  margin-top: 0.6rem;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.wt-table th {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.wt-table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid rgba(148, 167, 176, 0.07);
+  color: var(--text-silver);
+}
+
+.wt-table td:first-child {
+  font-family: var(--font-headings);
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+/* ---------- the character's own numbers ----------
+   A stat, its value and the arithmetic under it: the same line the tile's
+   tooltip prints on the Character tab, laid out flat so it can be read before
+   anybody knows to hover. */
+.wt-numbers {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+}
+
+.wt-numbers + .wt-numbers {
+  margin-top: 2px;
+}
+
+.wt-number {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.4rem 0.6rem;
+  border-radius: 3px;
+  background-color: var(--inset-bg);
+}
+
+.wt-number-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-silver);
+}
+
+.wt-number-value {
+  font-family: var(--font-headings);
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-bright);
+}
+
+.wt-number-math {
+  grid-column: 1 / -1;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* ---------- a roll to try ---------- */
+.wt-roll {
+  margin-top: 0.6rem;
+}
+
+.wt-roll-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+/* Each button wears its attribute's colour, which is what the attribute *is*
+   everywhere else on the sheet. */
+.wt-roll-button {
+  border-color: color-mix(in srgb, var(--attr-color) 45%, transparent);
+  color: var(--attr-color);
+}
+
+.wt-roll-button:hover,
+.wt-roll-button:focus-visible {
+  border-color: var(--attr-color);
+  color: var(--attr-color);
+}
+
+.wt-cards {
+  margin-top: 0.6rem;
+}
+
+/* ---------- where the book says it ---------- */
+.wt-more-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.wt-more-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(148, 167, 176, 0.2);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  color: var(--text-silver);
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.wt-more-link:hover,
+.wt-more-link:focus-visible {
+  border-color: var(--path-accent);
+  color: var(--path-accent);
+}
+
+/* The steps still waiting, on the last lesson, each a way back. */
+.wt-waiting {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+/* Where the walk stands, in the foot, beside Back. */
+.wt-where {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
 }

@@ -82,7 +82,7 @@ same thing everywhere.
 | **One** | **The Dice** · the roll and its three kinds, choosing the attribute, rolls made against you, the four results, Advantage, exploding dice, the difficulty ladder |
 | **Two** | **The Character** · the three attributes, everything they buy, dying, the pools |
 | **Three** | **Advancement** · experience, what a level grants, talent ranks |
-| **Four** | **Making a Character** · step by step, as the website walks you through it, with the Crossroads at the end |
+| **Four** | **Making a Character** · step by step, as the website walks you through it, with the Crossroads and the Walkthrough at the end |
 | **Five** | **The Fight** · initiative, distance, your turn step by step, reactions, the basic actions, damage |
 | **Six** | **Magic** · the schools, what a spell costs, the four second halves |
 | **Seven** | **Gear and Coin** · slots, armor, weapons, bags, money, Supplies, buying and selling |
@@ -539,10 +539,11 @@ On your dashboard, press **Create Character**. It asks you to choose a way in, t
 things: your character's name and the name of the campaign they are for. Both can be
 changed later. The character is created at once, and the creation page opens.
 
-Four ways in are offered and two are built. **Free Hand** opens every level 1 choice at
+Four ways in are offered and three are built. **Free Hand** opens every level 1 choice at
 once, and 4.2 to 4.8 describe it. **Crossroads** asks you about the life your character
-led and makes the character from your answers. See 4.9. Ready-Made and Walkthrough are on
-their way. All four end on the same sheet.
+led and makes the character from your answers. See 4.9. **Walkthrough** asks the same
+choices as the free hand one at a time, with the rules beside each one. See 4.10.
+Ready-Made is on its way. All four end on the same sheet.
 
 On the free hand, the creation page has two steps at the top: **The character**, which is
 everything level 1 gives you, and **Their story**, which is the lore. Every choice saves as
@@ -692,6 +693,27 @@ A character made at the Crossroads starts at **level 2**, with 1,000 experience 
 ledger and both talent choices spent. A talent set that has no cards yet can gather points
 but is never chosen. Everything the Crossroads decided can be changed afterwards from the
 Advancement tab, exactly as if you had chosen it by hand.
+
+### 4.10 The Walkthrough
+
+The Walkthrough is the way in for a first character, or for anyone who would rather be
+told why as they go. It asks the same four level 1 choices as the free hand, one screen at
+a time, and every screen has the rules on one side and the panel that makes the choice on
+the other. The panels are the ones on the Advancement tab, so what you learn to use here
+is the sheet you are handed at the end.
+
+The steps run in this order: how the game works, your attributes, your talent set, your
+lineage, your background, their story and then your sheet, read through once before it
+opens. Attributes come first because everything else is built on them, and the talent
+wall is shelved by attribute, so placing your +2 first tells you which shelf to read. The
+lesson beside each panel says what the rule is, how the panel works and where in this
+book the rule is written in full. The first step lets you try a roll on the dice tray, and
+the last one shows your numbers with the arithmetic behind each of them.
+
+Every choice is written to your character the moment you make it, and so is the step you
+are on. If you leave in the middle, the card on your dashboard says which step you reached
+and offers to bring you back to it, from any device you sign in on. The steps along the top
+can be taken in any order, and the sheet opens once every level 1 question is answered.
 
 ---
 
@@ -1246,6 +1268,8 @@ what your character can do:
 - **Reshaping**: a Pact of Ordenance remakes the weapon the debt gave them.
 - **Consecrating**: an Oathbound makes the ground they rested on their Sanctuary, and
   everything they do inside it is rolled with advantage.
+- **Meditating**: an Oathbound sits with their vow and goes back over what they have
+  done, and some of their Faith comes back.
 
 Some skills and enchantments make rests cheaper. A skill and an enchantment are different
 sources, so their reductions add together.
