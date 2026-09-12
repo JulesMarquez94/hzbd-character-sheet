@@ -16770,3 +16770,376 @@ that lands, Shield stands in front of Health when a fight starts.
 On a Physique 6, Instinct 4, Mind 5 spread at level 1 the table reads Light 13 / 0 / 0 /
 7.5 kg, Heavy 8 / 9 / 0 / 19.5 kg, Magic 9 / 0 / 15 / 3.5 kg, with Light marked. Willpower is
 not a column, because no Common set moves it.
+
+## The Beastbond, 2026-09-12
+
+The twentieth written set, the seventh slot filled on the Other shelf, and **the fourth in
+the codex built off a spoken description with no sheet behind it**, after the Spellblade, the
+Weaver and the Oathbound. What arrived was four sentences and a comparison, and it is
+transcribed here because it is the only source of record there is.
+
+### What was said
+
+> "Make the Beastbond now. It works very similarly to the Draconic Ally, with the exception
+> that instead of choosing a dragon the player chooses a mammal predator, a reptile predator
+> or an avian predator. Each of the three types has a different bonus, but is a controlled
+> melee attack during combat. Sturdier than the dragon counterpart. Instead of Dragon's
+> Favor, any time you can justify your companion helping you in a task they give you
+> advantage (to skill checks)."
+
+Cleaned of the transcription's slips and nothing else. The same words are in the comment
+above the `beastbond` entry in `src/lib/talents.js`.
+
+### The skeleton is the dragon's
+
+"Works very similarly" was read as an instruction, so the set is the Draconic Bond card for
+card, and what changed is exactly what the four sentences name.
+
+| Rank | Draconic Bond | Beastbond | What changed |
+| --- | --- | --- | --- |
+| 1 | One and the Same | Hunting Pair | the shadow becomes dragging itself clear, and "if you die, it dies" becomes the bond breaking |
+| 1 | Wyrm Bolt | Pack Bite, Crushing Jaws or Swooping Talons | one ranged bolt becomes three melee strikes, and a companion holds one |
+| 1 | Dragon's Favor | At Your Side | 1 Willpower to turn a near miss becomes free advantage on any check you can justify the companion helping with |
+| 1 | Draconic Recall | Call to Heel | the same 3 Action Points, no shadow |
+| 2 | Draconic Mark | Marked Prey | the same mechanic, on the codex's own `marked` |
+| 2 | Dragon Breath | Go for the Throat | a cone against Reflex becomes one throat: `2d6 + 2 x Physique` and a stack of Bleed |
+| 3 | Empowered Bond | Apex Predator | the same mount and the same Elevate, and an avian carries you through the air |
+| 3 | Frightful Roar | Hunting Cry | the same Roll against Grit, on Physique, and without "While Empowered" |
+| 3 | Draconic Link | Shared Senses | the trance stays, the spell origin goes |
+
+The Tags column split is the dragon's too: `Beastbond` on the six cards the bonded plays and
+`Beast Companion` on the five the companion does, so the two quick bars are cut the same way
+and nothing is paid out of the wrong pool.
+
+### The body
+
+| | The draconic ally | The beast companion |
+| --- | --- | --- |
+| base | 5 / 4 / 7 | 6 / 5 / 4 |
+| growth | Mind every odd level, Physique and Instinct alternating on the even ones | Physique every odd level, Instinct and Mind alternating on the even ones |
+| Health | 5 a level and 5 a Physique | **10 a level and 5 a Physique** |
+| Defense | its Grit | **its Reflex** |
+| at nothing | retreats into your shadow until a Long Rest | drags itself clear until a Long Rest |
+| Rank 3 | damage Elevated by 1 | damage Elevated by 1 |
+
+"Sturdier than the dragon counterpart" is the Health line: a character's own level share and
+the dragon's Physique share. Its Defense is its Reflex rather than its Grit, and because the
+two bodies grow their two Defense attributes on the same schedule the number comes out the
+same at every level. So the pair are equally hard to hit and this one has more to lose.
+
+| Level | Companion Health | Dragon Health | Defense, both |
+| --- | --- | --- | --- |
+| 1 | 40 | 30 | 11 |
+| 4 | 75 | 50 | 13 |
+| 8 | 125 | 75 | 16 |
+| 12 | 175 | 100 | 19 |
+
+### The kind is a gate, and not a second body
+
+"Instead of choosing a dragon the player chooses a mammal predator, a reptile predator or an
+avian predator." The choice is asked in the naming window, in the slot the dragon's scale
+colour takes, and it is stored in the same field. What it decides is **which of three Rank 1
+strikes the companion holds**, and nothing about its stat block, because "sturdier" was said
+of the set and the bonus was said of the type.
+
+| Kind | Strike | The bonus |
+| --- | --- | --- |
+| Mammal predator | Pack Bite | made with advantage when you are within 1 meter of the target too |
+| Reptile predator | Crushing Jaws | on a hit the target is grappled by it |
+| Avian predator | Swooping Talons | declared at 9 meters, resolved as a Melee Attack beside the target, and the only place the codex says it flies |
+
+All three are 4 Action Points for `2d4 + Physique`, which is Wyrm Bolt's price and Wyrm
+Bolt's dice brought to a meter: the strike is the dragon's bolt without the range, and the
+bonus is what the missing range buys. Every bonus is a word the codex already defines.
+
+What the sheet grew for it, all generic:
+
+- **`scale: '<kind>'` on a card** gates it on the creature's choice, the way `oath` gates an
+  Aura on a vow. All three strikes are in the set's `cards` so the registry, the art and
+  every link resolve. `heldMinionCards` in minions.js is `heldOathCards`'s shape read against
+  a creature, and it sits beside it in the three places a rank's list is read: the Abilities
+  tab, the Advancement tab's summary and the chooser's presentation page. `minionCards` took
+  the kind as a fifth argument for the companion's own bar.
+- **While the kind is unchosen, all three show**, on the bar and on every list, so a player
+  choosing can compare them. The naming window's Done is shut until one is picked, the same
+  gate the dragon's colour already had.
+- **Three fields on `scales`**: `noun` ("kind"), which the block's chip and the section's
+  line say when the choice is still open, where the dragon's said "colour"; `note`, the
+  button's second line, where the dragon's shows its damage type; and `hint`, the window's
+  sentence about what the choice decides, where the dragon's talked about breath. The block's
+  chip stops at the label when the option has no damage type.
+- The kind-gate touched nothing in `minionState`, the pools, the rests or the blocks.
+
+### The favour became a check card
+
+"Any time you can justify your companion helping you in a task they give you advantage."
+AT YOUR SIDE is a passive on the bonded, written to the phrase checks.js reads ("you make a
+skill check") and carrying `grants.checkAdvantage: 1` with no `checkWp`, so the Skill Check
+prompt offers it beside the background skills at no cost, the way BESTIAL SENSE is offered.
+The justification is the player's answer and never the sheet's, which is the law every check
+card in the codex already keeps: no column says whether a hawk can help you read a map.
+
+### The six readings
+
+1. **One body, three strikes.** Said above. The alternative was three bodies read over the
+   spec the way a roster kind is, and it was refused because nothing in the four sentences
+   says a hawk is built differently from a bear, and a body per kind would have needed a
+   preview in the naming window that a choice between three cards does not.
+2. **The bonus is a rider on the strike.** Advantage, grappled and reach. Pack Bite's
+   condition is prose the sheet does not roll, exactly as the Fenrat's PACK TACTICS is: where
+   the bonded stands is nobody's column. Crushing Jaws lays its Grappled row through
+   statuses.js and Go for the Throat its Bleed; both are proved below.
+3. **Sturdier is 10 and 5, and Reflex.** Said above. The numbers are mine.
+4. **The favour is free.** Dragon's Favor costs 1 Willpower for a nudge after the roll. "They
+   give you advantage" names no price, and the two brought cards that cost nothing (BESTIAL
+   SENSE, SKULK) are the precedent.
+5. **The link keeps the trance and loses the spell origin.** A wolf is nobody's point of
+   origin for a Fireball, so SHARED SENSES's second half is knowing where the companion is
+   and how badly it is hurt, in or out of the trance, which is what a scout at heel is for.
+6. **Death breaks the bond.** "If you die, it dies along with you" is the dragon's knotted
+   life. A living animal is not knotted to yours, so the last line of HUNTING PAIR says the
+   bond breaks and it goes back to the wild. This is the one line on the set that is a ruling
+   rather than a transcription of the dragon's.
+
+### What is built
+
+- The `beastbond` entry in `src/lib/talents.js`, eleven cards, and the placeholder line
+  gone. Twenty written and fourteen placeholders.
+- `heldMinionCards` and `kindHolds` in `src/lib/minions.js`; `minionCards` takes the kind.
+- `abilitySources.js` and `TalentBlock.jsx` wrap `heldOathCards` in `heldMinionCards`, in
+  the three places the rank lists are cut.
+- `MinionPick.jsx`: the option button draws `note` where there is no damage type, the hint
+  is the spec's when it has one, and `choiceLine` says the kind where the dragon's line said
+  scales and a damage type.
+- `MinionBlock.jsx`: the chip stops at the label without a damage type, and the open chip
+  says "No kind chosen".
+- Two Crossroads scenes, `youth-whelp` and `road-hare`, each with one answer in which the
+  animal is the whole point and nobody's dragon is, plus `TALENT_CLOSES.beastbond` and
+  `TALENT_PHRASES.beastbond`. Four existing animal answers gained the Beastbond beside what
+  they already named: the wounded animal bound with moss, the camp edge walked in the dark,
+  the hound at your heel and the hawk that lets you walk up to it.
+- Rulebook 4.5 and Appendix B moved from nineteen written and fifteen names to twenty and
+  fourteen.
+- A fixture in `check-stat-math.mjs`: an Adept Beastbond with a mammal at heel, so the
+  Reflex Defense and the 10 a level both have a sheet that proves their hover lines add up.
+
+### Proved
+
+- Every linter clean: `lint`, `lint:text`, `lint:cards` (634 cards inside the ceiling, and
+  **all eleven new cards inside the 480 target**), `lint:halves`, `lint:math` (25 sheets),
+  `lint:riders`, `lint:order`, `lint:combat`, `lint:log`, `lint:dice`, `lint:walkthrough`,
+  `lint:layout`, `lint:moves`, `lint:creatures`, `lint:plan`, `lint:help`, `lint:legal`,
+  `lint:potions`, `lint:weapons`, `lint:images`, `lint:codex` and `lint:crossroads`.
+- `lint:crossroads`: 115 questions in 7 stages, 4,000 walks, every written set reachable.
+  The Beastbond is held in **60 runs of 4,000**, over the one-in-a-hundred floor. Before its
+  two scenes it was held in 19, and never first: every one of the nine answers that named it
+  also named the Draconic Bond, the two tied on every count and the tie went to the codex's
+  order, so it stood second nineteen times and won nothing.
+- Through the model, on a real sheet: the companion opens at 6 / 5 / 4 with 40 Health and
+  Defense 11 and stands at level 8 with 125 Health, Defense 16 and its damage Elevated; a
+  dragon on the same sheet at the same level keeps its 75 and its 16 and its four cards. A
+  mammal holds Pack Bite and nothing else of the three, a reptile Crushing Jaws, an avian
+  Swooping Talons; with no kind chosen the bar shows all three and the creature is not
+  settled, so the Advancement tab badges it. The Abilities tab lists nine of the eleven for
+  an avian at Rank 3, the companion's own bar carries its three, and the character's bar
+  carries none of them and does carry Call to Heel. Swooping Talons at level 8 prints
+  `2d6 + 9`, the companion's Physique on the Elevated die. The Skill Check prompt offers At
+  Your Side from the Beastbond at 0 Willpower and 1 advantage, and none of the companion's
+  cards. Crushing Jaws lays Grappled, Go for the Throat lays Bleed, Pack Bite lays nothing
+  and Hunting Cry counts 2 turns.
+
+### Still open
+
+- **Everything below the mechanics is mine.** The eleven card names, the three kind names and
+  their notes, the tagline, the blurb, every number in the body, the two scenes and both
+  story lines. The mechanics follow the four sentences; none of the words does.
+- **10 Health a level and 5 a Physique** is one reading of "sturdier". 175 Health at level 12
+  is three quarters of a character's, against the dragon's half.
+- **The strike is the bolt's dice.** `2d4 + Physique` for 4 Action Points, in melee, with a
+  rider. A melee body that has to stand next to what it bites may deserve `2d6`, and the
+  choice was made on the dragon's side of the line.
+- **Pack Bite's advantage is prose.** Nothing on the sheet knows where the bonded stands, so
+  the die is the table's to add, the same as the Fenrat's.
+- **An avian companion is a flying mount at Rank 3.** One clause on Apex Predator, and a big
+  one at a table.
+- **Shared Senses dropped the spell origin.** If a Beastbond should cast through its wolf the
+  way a Draconic Bond casts through its dragon, the dragon's second paragraph goes back.
+- **Death breaks the bond.** Reading 6. If the companion should die with its bonded, one
+  sentence changes.
+- **Call to Heel keeps the dragon's ambiguity**: whether keeping clear costs the 3 Action
+  Points or only the call back does. Draconic Recall reads the same way and was transcribed
+  as written.
+- **The Beastbond is untested in the browser.** The sheet is behind auth with no bypass, so
+  verification is at the model layer and through the linters. The kind buttons in the naming
+  window and the chip on the block have not been looked at.
+- **No art.** No plate and no card pictures for any of the eleven. Drop pictures into
+  `data/Beastbond/` and run `npm run art:cards`.
+
+## The Walkthrough leads, and the Free Hand starts above level 1, 2026-09-12
+
+> "Ok make the walkthrough the main first choice for character creation. Then we are going to
+> change the freehand pick to be made when you are creating character above level 1. ... instead
+> of campaign name you should have campaign code so character can be linked that way to a
+> campaign. ... for the freepick now you can also when you choose name select what you want to
+> set as starting level. you also get 1000 coins per level. Aslo at level 6 you get a full tier 2
+> armor choice instead of the basic. At level 8 you get to also choose in enchanted ring of mind,
+> physique or instinct. At level at level 10 you get hiehste quality armor. for each 2 level
+> above 1 yo uget a healing potion."
+
+### The chooser
+
+- `CREATION_PATHS` is dealt Walkthrough, Crossroads, Free Hand, Ready-Made. The Walkthrough
+  carries `recommended: true` and its card wears **Start here**; `DEFAULT_PATH` is `guided`,
+  so a `/new` URL naming no path and PathSoon's "take the way in that is" both open it. The
+  dashboard's two hint lines and rulebook 4.1 say so.
+- The Free Hand's line is "Start above level 1, with every choice at once." and it carries
+  `asksLevel: true`, the one flag the enlist box reads to ask for a level.
+
+### The campaign field is a join code
+
+- The enlist box asks for a **Campaign Code** instead of a campaign name, and only when signed
+  in: a device character sits at no table. On Create the row is inserted, then `joinCampaign` is
+  called with the code, then the campaign's name is copied into the old `campaign` text column
+  so the card's chip still says where the character plays. **A code nothing answers to takes the
+  fresh row back with it** and the box stays open with the message, so a mistyped code never
+  leaves a character at no table.
+- `CampaignJoin.jsx` (src/components/campaign) is the same field on the sheet: the tables the
+  sheet sits at, read off `campaign_members`, a code input and a Join button. It replaced the
+  free-text Campaign input on the Advancement tab's identity frame and on the Free Hand's. A
+  device character is told to save to an account first; a signed-out reader is told to sign in.
+
+### Starting above level 1
+
+`src/lib/startingLevel.js` is the rule, and `startingPatch` is applied to the blank in the
+dashboard's `handleCreate` before the row exists, so the creation page opens on a ledger that
+already stands at the level.
+
+| Level | Coins | Potions | Kit armor | Ring |
+| --- | --- | --- | --- | --- |
+| 2 | 2,000 | 0 | Common | |
+| 3 | 3,000 | 1 | Common | |
+| 5 | 5,000 | 2 | Common | |
+| 6 | 6,000 | 2 | Rare | |
+| 8 | 8,000 | 3 | Rare | one of three |
+| 10 | 10,000 | 4 | Epic | one of three |
+| 12 | 12,000 | 5 | Epic | one of three |
+
+- **Coins:** level x 1,000, into the wealth ledger. **Potions:** floor((level - 1) / 2) Healing
+  Potions, into the pack. Both logged under one note, `Made at level N`, beside the experience
+  stamp, the way the Crossroads writes "Made at the Crossroads".
+- **Armor:** the tier rides the background's kit. `buildKitPatch` takes `rarity`,
+  `armorSetOptions(rarity)` and `armorSetPieces(set, rarity)` pick the tier, the receipt records
+  it (a receipt written before tiers reads Common) and `KitOutfitter` reads
+  `startingArmorRarity(levelForXp(character.xp))`: Common below 6, Rare from 6, Epic from 10.
+  The window says "one full Rare set" and "At level 8 every set is offered at its Rare tier
+  rather than Common."
+- **Ring:** from level 8 the enlist box grows a second select, Ring of Physique, Instinct or
+  Mind, and Create refuses without an answer. The ring is a **Silver Ring** minted as a forged
+  record with Bodily Vigor, Primal Sense or Mental Focus worked in, named for its attribute and
+  put on `trinkets`, so it is a ring the forge could have made and can be taken off, renamed or
+  handed on.
+- The Free Hand screen draws `LevelLedger` at the character's own level, gates "Open the sheet"
+  on `openChoices` at that level, and prints a **Made at level N** frame off the ledger note:
+  the rows above and a line saying where each thing went.
+- Rulebook 4.1 and 4.10 rewritten, 4.11 "Starting above level 1" added; the primer's first step
+  rewritten to match.
+
+### Proved
+
+- `npm run lint:start`, new (scripts/check-start.mjs): the chooser's order and default, the
+  ladder at every level, every armor set with three pieces at Common, Rare and Epic, the kit
+  dressing and handing back at each tier, and a character made at every level 2 to 12 read
+  back: the threshold, the coins, the potions, the two ledger lines, the ring resolving through
+  `heldItem` to a worked Silver Ring with `liveCharacter` showing the point, and the count of
+  open choices (4, then 1 an even level and 2 an odd one: 15 at level 8).
+- `lint:walkthrough` gained the first card and the default; eslint, `lint:text`,
+  `lint:crossroads`, `lint:help`, `lint:plan`, `lint:math`, `lint:legal`, `lint:layout` and
+  the build all clean.
+- In the browser, signed out on a device character: the enlist box dealt Walkthrough (Start
+  here), Crossroads, Free Hand and Ready-Made (Soon); the Free Hand pane offered levels 2 to 12
+  and no code field; at level 8 the ring select appeared and the rows read 8,000 coins, 3
+  Healing Potions, Rare armor and, once chosen, "Ring of Mind · Mental Focus: 1 Mind"; Create
+  landed on `/new?path=freeform` reading "New character · Free Hand · Level 8" with eight level
+  blocks and the Made at level 8 frame; the stored row held xp 24,000, wealth 8,000, three
+  potions in the pack, the forged ring worn and two ledger lines under "Made at level 8";
+  Military's kit window read "one full Rare set" with Greater Runed, Half Plate and Studded
+  Leather pieces.
+
+### Still open
+
+- **1,000 a level is literal**, so a level 2 start holds 2,000 coins beside a background purse
+  of 2,000 to 6,000. The other reading, 1,000 a level above the first, is one line in
+  `startingCoins`.
+- **The armor tier follows the level the kit is taken at**, not the level the character was made
+  at: a level 1 character who leaves the kit untaken until level 6 is dressed Rare. Keying it on
+  `madeAtLevel` instead is one line in KitOutfitter, at the cost of a Crossroads or Walkthrough
+  character never reaching a tier.
+- **Level 1 is no longer offered on the Free Hand.** The select runs 2 to 12; `?path=freeform`
+  on a level 1 row still draws the one block it always did.
+- **The potions go to the pack, not the belt**, so the background kit's own belt items keep the
+  loops. Clipping them is one line in `startingPatch`.
+- **The ring's base is a Silver Ring**, the codex's own example of a ring worth wearing for what
+  is put in it, and the name is "Ring of <Attribute>". Both are mine.
+- **A bad code deletes the fresh row.** The alternative, keeping the character and carrying the
+  error onto the creation page, would leave a character at no table; the refusal was preferred.
+- **The joined campaign's name is copied into the `campaign` text column** for the dashboard
+  chip; two tables leave the last one joined there. The column itself is untouched and no longer
+  editable from the sheet.
+- **The join-code path is untested in the browser**: it needs a signed-in account and a live
+  campaign, and the sheet is behind auth with no bypass. Verified against the schema's
+  `join_campaign` only.
+
+## The roster goes behind the friend gate, 2026-09-12
+
+> "So that the talent set that are not finished. Only the admins can see it. So hide for all
+> non Admin and non friend unfinished talent sets."
+
+Until today every account saw the fourteen placeholders on the chooser wall, locked and
+reading "Not written yet", so a shelf read as the whole plan. That was the ruling of
+2026-08-24, and it is narrowed rather than reversed: a friend or an admin still sees the plan,
+and everybody else is shown the game as it stands.
+
+### Built
+
+- `roster` is a capability in `src/lib/tiers.js`, set at `friend`, the same rung as the art
+  and for the same kind of reason: unfinished work is for the table's own people. UI only,
+  with nothing behind it on purpose, because a placeholder holds nothing a policy could
+  protect.
+- `optionsAt` takes a `roster` flag beside `all`. Off, which is the default, it leaves every
+  `stub: true` set out before the `all` split, so the read-only wall and the chooser are
+  held to the same rule. The chooser passes `can('roster')`.
+- `chooseAt` is untouched. It refused a placeholder at every tier before and still does.
+- The Walkthrough's talent lesson says "20 of the 34 sets on the wall can be taken; the rest
+  are not written yet" only to an account that is shown the 34. Everybody else reads "20
+  sets are on the wall, and every one of them can be taken."
+- Rulebook 4.5 no longer says the rest are shown on the wall. It says they have no cards
+  yet, cannot be chosen and are named in Appendix B, which is true for every reader.
+- The roster header in `talents.js` counted sixteen placeholders and eighteen written slots.
+  It reads fourteen and nineteen now, beside the Draconic Bond.
+
+### Proved
+
+- `npm run lint:roster`, new (scripts/check-roster.mjs): the capability sits at `friend` and
+  answers false, false, true, true up the ladder; `optionsAt` hides every placeholder by
+  default and under `all`, and with `roster: true` shows every one locked with the same
+  reason; none of the fourteen can be taken while a written set can; and the two lists the
+  rulebook prints by hand, the twenty written in 4.5 and the fourteen unwritten in Appendix
+  B, match the codex count for count and name for name. The book was two sets behind twice
+  before, and this is what ends that.
+- eslint, `lint:text`, `lint:walkthrough`, `lint:crossroads` and the build clean.
+- In the browser, signed out on a device character, which reads as `free`: Wren's level 2
+  chooser drew 19 tiles under "19 sets", the written sets less the Spellquill already held,
+  shelved 4, 5, 5 and 5 with no tile reading "Not written yet"; Marra Quill's Walkthrough
+  talent step read "20 sets are on the wall, and every one of them can be taken." The friend
+  side of the gate could not be signed in to and is proved by the check alone.
+
+### Still open
+
+- **Friend was read as inside the gate.** The request said "only the admins" in one
+  sentence and "non Admin and non friend" in the next; the second was taken, and it matches
+  the art. Admin only is one word in `CAPABILITIES.roster`.
+- **Appendix B still names the fourteen for every reader**, signed out included. It is the
+  book's own list of what is not written and was left as documentation rather than treated
+  as a window onto the wall.
+- **A placeholder written into a saved sheet by hand** still prints "On the roster and not
+  written yet" on its level block at every tier. Nothing in the app can put one there.

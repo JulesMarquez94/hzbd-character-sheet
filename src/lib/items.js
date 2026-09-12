@@ -1307,10 +1307,15 @@ export function armorSetPieces(setName, rarity = 'Common') {
  * Every set a character can be outfitted in — name, its three pieces, and the
  * bonus wearing all three wakes. A set missing a piece is left out rather than
  * offered as a kit that cannot be filled.
+ *
+ * `rarity` is the tier of the three pieces. The kit is Common unless the
+ * character was made above level 1 (see startingArmorRarity in
+ * startingLevel.js), and the same three sets are offered at whichever tier is
+ * asked for.
  */
-export function armorSetOptions() {
+export function armorSetOptions(rarity = 'Common') {
   return Object.keys(ARMOR_SETS)
-    .map((name) => ({ name, pieces: armorSetPieces(name), ...ARMOR_SETS[name] }))
+    .map((name) => ({ name, pieces: armorSetPieces(name, rarity), ...ARMOR_SETS[name] }))
     .filter((option) => ARMOR_SLOTS.every(({ key }) => option.pieces[key]));
 }
 

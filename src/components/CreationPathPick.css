@@ -83,6 +83,12 @@
   transform: translateX(3px);
 }
 
+/* "Start here", on the one card for a first character. */
+.path-card-tag {
+  flex-shrink: 0;
+  color: var(--path-accent);
+}
+
 .path-card-line {
   font-size: 0.76rem;
   font-weight: 600;

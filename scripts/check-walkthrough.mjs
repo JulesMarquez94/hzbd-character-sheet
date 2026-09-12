@@ -35,7 +35,7 @@ import {
   storedStep,
   walkthroughProgress,
 } from '../src/lib/walkthrough.js';
-import { CREATION_PATHS } from '../src/lib/creationPaths.js';
+import { CREATION_PATHS, DEFAULT_PATH } from '../src/lib/creationPaths.js';
 import { BLANK_CHARACTER } from '../src/lib/characterModel.js';
 import { BACKGROUNDS, skillPicks, takeSkill } from '../src/lib/backgrounds.js';
 import { armorSetOptions, startingWeapons } from '../src/lib/items.js';
@@ -133,6 +133,8 @@ section('the steps');
   const path = CREATION_PATHS.find((entry) => entry.key === WALKTHROUGH_PATH);
   check('the chooser offers this path', Boolean(path), true);
   check('and marks it built', path?.ready, true);
+  check('and offers it first', CREATION_PATHS[0]?.key, WALKTHROUGH_PATH);
+  check('and falls back to it when the URL names none', DEFAULT_PATH, WALKTHROUGH_PATH);
 }
 
 section('every question level 1 asks belongs to one step');

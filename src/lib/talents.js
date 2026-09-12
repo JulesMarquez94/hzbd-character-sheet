@@ -49,9 +49,11 @@
  * ------------------------------------------------------- and a set may be empty
  * A set carrying `stub: true` is a **placeholder**: a name off the designer's
  * roster, the shelf it was filed under, and nothing else. No cards, no spec, no
- * prose of its own. It draws on the chooser wall so the shelf says what is
- * coming, it can never be taken, and it is replaced by a real entry the day its
- * sheet arrives. The roster and the reasoning are at the bottom of the codex.
+ * prose of its own. It draws on the chooser wall for a friend or an admin so
+ * the shelf says what is coming, it is left off the wall for every other
+ * account, it can never be taken, and it is replaced by a real entry the day
+ * its sheet arrives. The roster and the reasoning are at the bottom of the
+ * codex.
  *
  * ------------------------------------------------------------ what to roll
  * A card that asks for a roll against another entity has exactly two shapes,
@@ -5838,18 +5840,377 @@ const TALENT_SETS = [
       },
     ],
   },
+  {
+    /* The twentieth written set, the seventh slot filled on the Other shelf, and
+       the fourth in this file built off a spoken description with no sheet
+       behind it, after the Spellblade, the Weaver and the Oathbound. **Handed
+       over in chat on 2026-09-12 and nowhere else**: no Ability tab, no
+       conversion workbook, no old printed page. The description, cleaned of the
+       transcription's slips:
+
+         "Make the Beastbond now. It works very similarly to the Draconic Ally,
+          with the exception that instead of choosing a dragon the player
+          chooses a mammal predator, a reptile predator or an avian predator.
+          Each of the three types has a different bonus, but is a controlled
+          melee attack during combat. Sturdier than the dragon counterpart.
+          Instead of Dragon's Favor, any time you can justify your companion
+          helping you in a task they give you advantage (to skill checks)."
+
+       So the skeleton is the Draconic Bond's, card for card: a passive that is
+       the bond, a recall, a mark at Adept, a growth at Master that makes a mount,
+       a cry that frightens, a link that lets you see through its eyes. What
+       changed is exactly what the four sentences name, and each is a reading
+       flagged in data/README.md:
+
+         the kind      **one body, three strikes.** The kind is asked in the
+                       naming window where the dragon's colour is, stored in the
+                       same field, and what it decides is which of three Rank 1
+                       attack cards the companion holds. All three are in this
+                       array so the registry, the art and every link resolve, and
+                       `scale` on the card is what gates it: see
+                       `heldMinionCards` in minions.js, which is
+                       `heldOathCards`'s shape read against a
+                       creature's choice. The stat block is the same predator
+                       under all three, because "sturdier" was said of the set and
+                       the bonus was said of the type.
+         the bonus     **a rider on the strike, never a second body.** A mammal's
+                       bite has advantage when its bonded is on the same prey; a
+                       reptile's jaws grapple; an avian comes down from 9 meters
+                       out. Every one is a word the codex already defines.
+         sturdier      **10 Health a level and 5 a Physique**, against the dragon's
+                       5 and 5: a character's own level share and the dragon's
+                       Physique share. 40 Health at level 1 to the dragon's 30, 125
+                       at level 8 to its 75. Its Defense is its Reflex, which comes
+                       out level for level to the same number as the dragon's Grit.
+         the favour    **a passive, free, and read by the Skill Check prompt.** AT
+                       YOUR SIDE carries `grants.checkAdvantage` and is
+                       written to the phrase checks.js reads, so ticking it in the
+                       prompt puts the die on the roll and the receipt in the log.
+                       Whether the companion could plausibly help is the player's
+                       answer, which is the law every check card already keeps.
+         the link      **the trance stays, the spell origin goes.** DRACONIC LINK
+                       lets you cast through the dragon; a wolf is nobody's point
+                       of origin, so the second half is knowing where it is and
+                       how hurt it is, which is what a scout at heel is for.
+
+       ------------------------------------------------------- what is mine here
+       Every card name, the kind names, the tagline, the blurb, every number and
+       both Crossroads lines. The mechanics follow the four sentences; none of
+       the words does. No plate and no card pictures: drop them into
+       `data/Beastbond/` and run `npm run art:cards`. */
+    id: 'beastbond',
+    name: 'Beastbond',
+    tagline: 'A drifter with a predator at heel, which fights where they point and helps wherever a beast can.',
+    /* No plate yet. Null rather than a path to a file that is not there, for the
+       reason the Weaver's and the Oathbound's are. */
+    art: null,
+    /* Level, the Draconic Bond's own tag and for the same reason: what the set
+       buys is the stat block below, and every number in it grows on the level.
+       Martial because the companion is a body on the field that bites; support
+       for the half of the set spent on somebody else's roll (a check, a mark, a
+       wound taken in its stead); control for the jaws and the cry. */
+    tags: ['level', 'martial', 'support', 'control'],
+    stat: 'level',
+    /* The second single body in the codex. Everything here is minions.js's, and
+       the two blocks that draw a draconic ally draw this without a line changed.
+
+       The set names its creature's tag rather than the sheet guessing at one,
+       the way the Draconic Bond's Tags column did: `Beast Companion` on the
+       cards the companion plays and `Beastbond` on the ones its bonded plays. */
+    minion: {
+      id: 'beast-companion',
+      label: 'Beast Companion',
+      noun: 'companion',
+      kin: 'predator',
+      tag: 'Beast Companion',
+      lead: 'A predator has taken to you and will not be sent away. Give it a name, say what kind of hunter it is, and it stands on your Character tab with two blocks of its own.',
+      /* A Physique body where the dragon is a Mind one: 6 / 5 / 4 against its
+         5 / 4 / 7, so it opens on 15 points of attribute to the dragon's 16 and
+         makes them up in Health. Every roll it makes is a Physique roll. */
+      base: { physique: 6, instinct: 5, mind: 4 },
+      /* The dragon's growth with the main attribute swapped: Physique every odd
+         level, Instinct and Mind alternating on the even ones. */
+      growth: { odd: ['physique'], even: ['instinct', 'mind'] },
+      /* "Sturdier than the dragon counterpart." A character's own 10 a level and
+         the dragon's 5 a Physique. See the reading above. */
+      health: { perLevel: 10, perPhysique: 5 },
+      /* Reflex where the dragon answers on Grit: a predator is hit or missed on
+         its body and its speed. Physique plus Instinct comes to the same number
+         as the dragon's Instinct plus Mind at every level, so the two are equally
+         hard to hit and this one has more to lose. */
+      defense: 'reflex',
+      /* The dragon's rule, kept: it cannot go below nothing, and it is a Long
+         Rest that brings it back. */
+      floor: 0,
+      returns: 'long',
+      down: 'Dragged itself clear of the fight. It cannot return until you take a Long Rest.',
+      /* APEX PREDATOR, at Rank 3: "its damage is Elevated by 1". Indexed by rank
+         the way the dragon's is. */
+      elevate: [null, 0, 0, 1],
+      /* The one choice the creature asks for, in the slot the dragon's colour
+         takes. Not a colour and not a damage type: what an option decides here
+         is which Rank 1 strike the companion holds, through `scale` on the
+         card. `noun` is what the block and the window call the choice when
+         it is still open, and `note` is the button's second line, where the
+         dragon's shows its damage type. */
+      scales: {
+        label: 'Kind',
+        noun: 'kind',
+        prompt: 'What kind of predator is it?',
+        hint: 'Its kind decides which strike it brings to a fight. Everything else about it is the same predator.',
+        options: [
+          { id: 'mammal', label: 'Mammal predator', note: 'Hunts as a pair' },
+          { id: 'reptile', label: 'Reptile predator', note: 'Holds what it bites' },
+          { id: 'avian', label: 'Avian predator', note: 'Strikes from the air' },
+        ],
+      },
+    },
+    blurb:
+      'Those who take the Beastbond are never alone on the road again. A predator has taken to them, a wolf or a bear, a crocodile or a great hawk, and the two of them go on as a hunting pair: the companion spends its own Action Points and Reaction Points, draws on its bonded\u2019s Willpower and fights with tooth and claw wherever it is pointed.\n\n' +
+      'They excel wherever two are better than one. A mammal predator hunts as a pair and bites hardest when its bonded is on the same prey. A reptile predator closes its jaws and does not let go. An avian predator comes down out of the sky from 9 meters away. Out of a fight the companion is a nose, a set of eyes and a set of teeth its bonded can call on for almost any task, and a wound it takes can be pulled across and borne instead.\n\n' + // text-style-ok: joins two clauses
+      'A Beastbond\u2019s companion is sturdier than most things that will stand against it, and it only grows more so. Grown to the size of a horse it is a mount as well as a weapon. Its cry at the last leaves a field of enemies frightened of the pair of them, and its bonded can see through its eyes from wherever they stand.', // text-style-ok: joins two clauses
+    cards: [
+      /* ------------------------------------------------------------- Rank 1 */
+      {
+        id: 'hunting-pair',
+        rank: 1,
+        name: 'Hunting Pair',
+        summary: 'A predator that spends its own points, and a life you can take the wounds for.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* ONE AND THE SAME, said of a beast. The shadow is the dragon's and a
+           predator has none, so what happens at nothing is that it drags itself
+           clear, and the Long Rest is still what brings it back (`returns` on
+           the spec). "If you die, it dies along with you" was the dragon's, and a
+           bond to a living animal breaks rather than kills: the last sentence is
+           the one line here that is a ruling and not a transcription. */
+        body:
+          'You have bonded with a predator, and on your turn you control it as well as yourself. It spends its own Action Points and Reaction Points, and your Willpower.\n\n' +
+          'Whenever your companion takes damage, you can take any amount of it yourself in its stead.\n\n' +
+          'If it would die, it instead drags itself clear of the fight **until you take a Long Rest**. If you die, the bond breaks and it goes back to the wild.',
+      },
+      /* ---- the three strikes, one held ----
+         "Each of the three types has a different bonus, but is a controlled
+         melee attack during combat." Three cards at the price and the dice of
+         WYRM BOLT, 4 Action Points for 2d4 plus the attribute, so the strike is
+         the dragon's bolt brought to a meter and the bonus is what the meter
+         buys. `scale` on each is the kind that holds it; the two the companion
+         is not are dropped by `heldMinionCards` everywhere its cards are read,
+         and shown side by side only while the kind is still unchosen, so a
+         player choosing can compare them. */
+      {
+        id: 'pack-bite',
+        rank: 1,
+        name: 'Pack Bite',
+        summary: 'Its bite, with advantage when the two of you are on the same prey.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Novice Ability'],
+        scale: 'mammal',
+        ap: 4,
+        wp: null,
+        stat: 'physique',
+        /* The Fenrat's own PACK TACTICS, read for a pack of two. The condition
+           is prose the sheet does not roll, the same as the Fenrat's: where the
+           bonded stands is nobody's column. */
+        body:
+          'Your companion bites **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'It makes a {stat} Melee Attack {roll}, with advantage if you are also within **1 meter (3 feet)** of the target.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage:Sharp} damage.',
+      },
+      {
+        id: 'crushing-jaws',
+        rank: 1,
+        name: 'Crushing Jaws',
+        summary: 'Its jaws close and hold. What it bites is grappled.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Novice Ability'],
+        scale: 'reptile',
+        ap: 4,
+        wp: null,
+        stat: 'physique',
+        /* GRAPPLE's own outcome on a hit rather than on a Roll against Reflex,
+           which is the bonus: the basic action costs 2 and holds nothing else,
+           this costs 4 and bites first. "is grappled" is the lead-in statuses.js
+           reads, so the row lands on the target. Blunt, because the jaws crush. */
+        body:
+          'Your companion clamps its jaws on **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'It makes a {stat} Melee Attack {roll}.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage:Blunt} damage and the target is grappled by it.',
+      },
+      {
+        id: 'swooping-talons',
+        rank: 1,
+        name: 'Swooping Talons',
+        summary: 'It comes down from 9 meters out and rakes what it lands on.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Novice Ability'],
+        scale: 'avian',
+        ap: 4,
+        wp: null,
+        stat: 'physique',
+        /* The Ashmaw's POUNCE with wings: declared at range, resolved as a Melee
+           Attack beside the target. The reach is the bonus, and the sentence is
+           the only place the codex says an avian companion flies, which is why
+           it says so in as many words. */
+        body:
+          'Your companion takes to the air and drops onto **an entity** it can see within **9 meters (30 feet)**, landing beside it.\n\n' +
+          'It makes a {stat} Melee Attack {roll}.\n\n' +
+          'On a hit, it deals [[2d4 + stat]] {damage:Sharp} damage.',
+      },
+      {
+        id: 'at-your-side',
+        rank: 1,
+        name: 'At Your Side',
+        summary: 'Advantage on any skill check you can justify your companion helping with.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Novice Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* "Instead of Dragon's Favor, any time you can justify your companion
+           helping you in a task they give you advantage (to skill checks)."
+
+           Written to the phrase checks.js reads ("you make a skill check") and
+           carrying the die it lends, so the Skill Check prompt offers it beside
+           the background skills at no Willpower, the way BESTIAL SENSE is. What
+           it does not carry is the judgement: whether a hawk can help you read a
+           map is the table's, said out loud, which is the law every check card
+           in the codex keeps. See `speaksToACheck`. */
+        grants: { checkAdvantage: 1 },
+        body:
+          'Your companion is never far, and it lends itself to whatever you are trying.\n\n' +
+          'Whenever you make a skill check, if you can justify your companion helping you with the task, you make it with advantage.',
+      },
+      {
+        id: 'call-to-heel',
+        rank: 1,
+        name: 'Call to Heel',
+        summary: 'Send your companion clear of the fight, and call it back to your side.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Novice Talent', 'Ability'],
+        ap: 3,
+        wp: null,
+        stat: 'physique',
+        /* DRACONIC RECALL without the shadow. Keeping clear is the beast's way
+           of being nowhere: off the board, out of reach and untargetable, and
+           the same 3 Action Points bring it back to a free space beside you. */
+        body:
+          'You can have your companion slip away from the fight and keep clear of it; while it does, it stays out of reach and cannot be targeted.\n\n' +
+          'If it is keeping clear, you can use this ability to call it back to a free space next to you.',
+      },
+
+      /* ------------------------------------------------------------- Rank 2 */
+      {
+        id: 'marked-prey',
+        rank: 2,
+        name: 'Marked Prey',
+        summary: 'Whatever your companion hurts, your next attack on it is made with advantage.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Adept Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* DRACONIC MARK, word for word in its mechanic. "marked" is the codex's
+           own term and lights. */
+        body:
+          'Whenever your companion deals damage to **an enemy**, that enemy is marked as your prey **until your next Turn End**.\n\n' +
+          'The next time you make an Attack Roll against it, you can do so with advantage.',
+      },
+      {
+        id: 'go-for-the-throat',
+        rank: 2,
+        name: 'Go for the Throat',
+        summary: 'A lunge for 2d6 plus twice its Physique that leaves the target bleeding.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Adept Ability'],
+        ap: 4,
+        wp: 2,
+        stat: 'physique',
+        /* DRAGON BREATH's slot and price, brought to one target at a meter: the
+           cone's 2d4 plus twice the attribute against everything becomes 2d6
+           plus twice the attribute against one thing, and Bleed is what a throat
+           does that a cone does not. Every kind holds it. */
+        body:
+          'Your companion lunges for the throat of **an entity** within **1 meter (3 feet)** of it.\n\n' +
+          'It makes a {stat} Melee Attack {roll}.\n\n' +
+          'On a hit, it deals [[2d6 + 2*stat]] {damage:Sharp} damage and the target gains one stack of Bleed.',
+      },
+
+      /* ------------------------------------------------------------- Rank 3 */
+      {
+        id: 'apex-predator',
+        rank: 3,
+        name: 'Apex Predator',
+        summary: 'Your companion grows to the size of a horse, carries you and Elevates its damage.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* EMPOWERED BOND, with one clause the dragon never needed: a horse-sized
+           hawk is a mount that flies, and a card that grew it and did not say so
+           would leave the table arguing. The Elevate is `elevate` on the spec. */
+        body:
+          'Your companion has grown to the size of a large horse. It can be used as a mount which can carry up to 300 kg, and an avian companion carries you through the air.\n\n' +
+          'Its damage is Elevated by 1.',
+      },
+      {
+        id: 'hunting-cry',
+        rank: 3,
+        name: 'Hunting Cry',
+        summary: 'A cry heard at 18 meters that leaves enemies frightened of the pair of you.',
+        kind: 'talent',
+        tags: ['Beast Companion', 'Master Ability'],
+        ap: 4,
+        wp: 4,
+        stat: 'physique',
+        /* FRIGHTFUL ROAR, rolled on Physique because that is what the body is
+           built on. The dragon's "While Empowered" is not here: APEX PREDATOR is
+           a Rank 3 card and so is this one, so every companion that can cry has
+           already grown, and the clause would be the rank restating itself. */
+        body:
+          'Your companion lets out a cry that **all enemy entities** within **18 meters (60 feet)** can hear.\n\n' +
+          'It makes a {stat} Roll {roll} against the entities\u2019 Grit.\n\n' +
+          'On a success, they are frightened of you and your companion for the next **2 turns**.',
+      },
+      {
+        id: 'shared-senses',
+        rank: 3,
+        name: 'Shared Senses',
+        summary: 'See through your companion\u2019s eyes, and always know where it is.',
+        kind: 'talent',
+        tags: ['Beastbond', 'Master Talent', 'Passive'],
+        ap: null,
+        wp: null,
+        stat: 'physique',
+        /* DRACONIC LINK's trance, and not its second half. See the reading at
+           the top of the set. */
+        body:
+          'Your bond now lets you see through your companion\u2019s senses by going into a trance; while you do, you lose control of your own body.\n\n' +
+          'In or out of the trance, you always know where your companion is and how badly it is hurt, and it always knows where you are.',
+      },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------- the roster *
- * Sixteen sets that have a name and nothing else.
+ * Fourteen sets that have a name and nothing else.
  *
  * The designer keeps a roster of every set the game is going to have, four
- * columns wide and cut by the attribute each one leans on. Eighteen of its
- * slots are written and sit in the codex above (the Alchemist, the Pact of
- * Ordenance, the Runebearer, the Spellblade, the Necromancer, the Spellquill
- * and the Weaver were placeholders here first). These are the rest, standing in the codex
- * as placeholders so the wall reads as the whole plan rather than as the part of
- * it that happens to be finished.
+ * columns wide and cut by the attribute each one leans on. Nineteen of its
+ * slots are written and sit in the codex above beside the Draconic Bond, which
+ * is on no roster at all (the Alchemist, the Pact of Ordenance, the Runebearer,
+ * the Spellblade, the Necromancer, the Spellquill, the Weaver, the Oathbound
+ * and the Beastbond were placeholders here first). These are the rest, standing
+ * in the codex as placeholders so the wall reads as the whole plan rather than
+ * as the part of it that happens to be finished.
+ *
+ * That wall is a friend's and an admin's. Every other account is shown the
+ * finished part only, which is `roster` in tiers.js and the `roster` option on
+ * `optionsAt` below; the placeholders themselves neither know nor care.
  *
  * A placeholder reserves three things and promises nothing:
  *
@@ -5869,8 +6230,11 @@ const TALENT_SETS = [
  *
  * `stub: true` is what says so, and it is load-bearing in exactly one place:
  * `optionsAt` refuses to let a level be spent on one, and `chooseAt` refuses it
- * again in case anything ever asks around the wall. The tile still draws, on its
- * own shelf, reading "Not written yet" where a price would be.
+ * again in case anything ever asks around the wall. Whether the tile draws at
+ * all is the account's: a friend or an admin sees it on its own shelf, reading
+ * "Not written yet" where a price would be, and every other account is handed
+ * the written sets alone. That is `roster` in tiers.js and the `roster` option
+ * on `optionsAt`, ruled 2026-09-12; see data/README.md.
  *
  * The day a set's Ability tab lands, its placeholder is replaced by the real
  * entry in the codex above and its line here goes. Nothing else has to change.
@@ -5972,16 +6336,16 @@ const TALENT_PLACEHOLDERS = [
   placeholder('tactician', 'Tactician', 'mind'),
   placeholder('elemental-aspect', 'Elemental Aspect', 'mind'),
 
-  /* Other, four of six rows. Row 3 was `Pactbound`, whose slot the Pact of
+  /* Other, two of six rows. Row 3 was `Pactbound`, whose slot the Pact of
      Ordenance filled on 2026-08-27: the id stays the roster's, the name is the
      one the designer gave the set in chat. Row 5 was `Weaver`, filled on
-     2026-09-10, and that one kept the roster's name as well as its id. The
-     Draconic Bond, the Pact of Ordenance and the Weaver are what the shelf holds
-     written.
+     2026-09-10, and that one kept the roster's name as well as its id. Row 1 was
+     `Beastbond`, filled on 2026-09-12 the same way. The Draconic Bond, the
+     Pact of Ordenance, the Weaver, the Oathbound and the Beastbond are what the
+     shelf holds written.
 
      Every name here is spelled as the roster spells it. Beastbond and Oathbound
-     are one word each on the sheet and stay one word each. */
-  placeholder('beastbond', 'Beastbond', 'other'),
+     were one word each on the sheet and stayed one word each. */
   placeholder('quartermaster', 'Quartermaster', 'other'),
   placeholder('weapon-master', 'Weapon Master', 'other'),
 ];
@@ -6369,8 +6733,15 @@ export function advancementState(talents, level) {
 /**
  * Every talent set measured against one slot: what taking it there would buy,
  * and — when it would buy nothing — the one sentence the tile should say.
+ *
+ * `all` keeps the sets this character cannot buy at this level, for a reader
+ * rather than a chooser. `roster` keeps the placeholders, and it is the
+ * caller's tier: the chooser passes `can('roster')`, so a friend or an admin
+ * reads the shelf as the whole plan and everybody else reads it as the finished
+ * game. It defaults off, so a caller that forgets to ask shows less rather than
+ * more, which is the way round tiers.js already leans.
  */
-export function optionsAt(list, level, { all = false } = {}) {
+export function optionsAt(list, level, { all = false, roster = false } = {}) {
   const owned = new Map(list.map((entry) => [entry.id, entry]));
 
   const options = TALENTS.map((talent) => {
@@ -6407,13 +6778,21 @@ export function optionsAt(list, level, { all = false } = {}) {
      Master sets that are finished, and ranks the level cannot reach, are left
      off it. `all` is for the reader that wants the whole codex anyway.
 
-     A roster placeholder is the exception, and it is kept on purpose. The other
-     two are about *this* character: a set they have finished, a rank they have
-     not reached yet, and both come back the moment that changes. A placeholder is
-     about the game, it will not come back for anybody, and the whole point of
-     standing it on the wall is that the shelf says what is coming. Ruled by the
-     designer on 2026-08-24; see data/README.md. */
-  return all ? options : options.filter((option) => option.ok || option.talent.stub);
+     A roster placeholder is the exception, and it is kept on purpose for the
+     accounts that see one at all. The other two are about *this* character: a
+     set they have finished, a rank they have not reached yet, and both come back
+     the moment that changes. A placeholder is about the game, it will not come
+     back for anybody, and the whole point of standing it on the wall is that the
+     shelf says what is coming. Ruled by the designer on 2026-08-24; see
+     data/README.md.
+
+     And below `friend` it is not on the wall at all. Jules, 2026-09-12: an
+     unfinished set is for the table's own people, and everybody else is shown
+     the game as it stands. Cut before the `all` split so a reader is held to the
+     same rule as a chooser: the read-only wall is the whole codex as this
+     account is allowed to see it. */
+  const shown = roster ? options : options.filter((option) => !option.talent.stub);
+  return all ? shown : shown.filter((option) => option.ok || option.talent.stub);
 }
 
 /* ---------------------------------------------------- writing the talent list

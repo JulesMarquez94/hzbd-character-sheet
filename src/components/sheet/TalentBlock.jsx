@@ -16,6 +16,7 @@ import { PICK_ACCENTS } from './pickAccents.js';
 import TagFilter from './TagFilter.jsx';
 import useCodexArt from '../useCodexArt.js';
 import { useTagFilter } from './useTagFilter.js';
+import { useAuth } from '../../context/auth-context.js';
 import { useCardStack } from '../../context/card-stack.js';
 import { alchemyPreview } from '../../lib/alchemy.js';
 import { brewPreview } from '../../lib/brews.js';
@@ -24,7 +25,13 @@ import { levelForXp } from '../../lib/characterModel.js';
 import { knownAt, loadoutOf, rankPreview } from '../../lib/loadouts.js';
 import { heldOathCards, oathFamilies, oathOf } from '../../lib/oathbound.js';
 import { feralOf } from '../../lib/feral.js';
-import { isMinionCard, minionKindRows, minionKinds, minionOf } from '../../lib/minions.js';
+import {
+  heldMinionCards,
+  isMinionCard,
+  minionKindRows,
+  minionKinds,
+  minionOf,
+} from '../../lib/minions.js';
 import { pactOf } from '../../lib/pact.js';
 import {
   TALENT_RANKS,
@@ -249,7 +256,11 @@ function TalentSummary({
 }) {
   const { talent, entry, rank } = slot;
   const info = rankInfo(rank);
-  const cards = talent ? heldOathCards(character, talent, cardsAtRank(talent, rank)) : [];
+  /* The vow's one Aura and the companion's one strike, out of the codex's five
+     and three. See `heldOathCards` and `heldMinionCards`. */
+  const cards = talent
+    ? heldMinionCards(character, talent, heldOathCards(character, talent, cardsAtRank(talent, rank)))
+    : [];
   const stack = useCardStack();
   const art = useCodexArt()(talent?.art);
 
@@ -426,9 +437,14 @@ function TalentChooser({ level, list, character, onTake, onClose, startAt = null
 
   const filter = useTagFilter(usedTalentTags(), { searchable: true });
 
-  // Reading a set is not taking one: the reader sees the whole codex, the
-  // chooser only what this level can actually buy.
-  const options = optionsAt(list, level, { all: readOnly });
+  /* Reading a set is not taking one: the reader sees the whole codex, the
+     chooser only what this level can actually buy. And "the whole codex" is as
+     much of it as this account is shown: the roster's placeholders stand on the
+     wall for a friend or an admin and for nobody else. UI only, like every
+     capability, and with nothing behind it to protect: a placeholder has no
+     cards, and `chooseAt` refuses one at every tier. See src/lib/tiers.js. */
+  const { can } = useAuth();
+  const options = optionsAt(list, level, { all: readOnly, roster: can('roster') });
   const visible = options.filter(
     (option) =>
       filter.matches(option.talent.tags) &&
@@ -603,10 +619,18 @@ function TalentPresentation({ option, character }) {
            be. An Oathbound who has not sworn yet sees none of the ten and a line
            under the rank saying so, rather than ten cards of which nine are wrong.
            See `heldOathCards` in oathbound.js. */
-        const cards = heldOathCards(
+        /* And a companion's three strikes come down to the one its kind holds,
+           once a kind is chosen. A reader with no companion yet sees all three,
+           which is what a page for choosing between them is for. See
+           `heldMinionCards` in minions.js. */
+        const cards = heldMinionCards(
           character,
           talent,
-          cardsAtRank(talent, rank).filter((card) => !roster || !isMinionCard(card))
+          heldOathCards(
+            character,
+            talent,
+            cardsAtRank(talent, rank).filter((card) => !roster || !isMinionCard(card))
+          )
         );
         const bodies = roster
           ? minionKindRows(character, talent, { rank }).filter(

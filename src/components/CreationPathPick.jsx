@@ -13,6 +13,9 @@ import './CreationPathPick.css';
  * A path that is not built yet is shown in full and cannot be taken. It keeps
  * its copy and loses its colour, because the colour is the part that arrives
  * with the path.
+ *
+ * The first card is the one for a first character and wears "Start here"; the
+ * order and the mark are the table's (see creationPaths.js), not this file's.
  */
 
 /* One glyph each, drawn rather than borrowed: nothing in the icon set says
@@ -88,6 +91,7 @@ export default function CreationPathPick({ onPick }) {
               <PathGlyph pathKey={path.key} />
             </span>
             <span className="path-card-title">{path.title}</span>
+            {path.recommended && <span className="tag tag-muted path-card-tag">Start here</span>}
             {path.ready ? (
               <span className="path-card-go" aria-hidden="true">
                 &rsaquo;

@@ -857,3 +857,30 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--level-amber);
   white-space: nowrap;
 }
+
+/* =========================================================
+   WHAT A START ABOVE LEVEL 1 HANDS OVER
+   One row a grant: coins, potions, the armor tier, the ring. Drawn in the
+   enlist box under the level and again on the creation page, so it is global.
+   See src/lib/startingLevel.js.
+   ========================================================= */
+.start-grants {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid rgba(148, 167, 176, 0.14);
+    border-radius: 4px;
+    background-color: rgba(9, 17, 21, 0.32);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.start-grants b {
+    margin-right: 0.4rem;
+    font-weight: 600;
+    color: var(--text-silver);
+}

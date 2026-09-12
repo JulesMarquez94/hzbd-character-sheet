@@ -320,6 +320,19 @@ const SHEETS = [
     },
   },
   {
+    /* The second single body in the codex, and the first whose Defense is its
+       Reflex and whose Health is 10 a level: both lines have to name what they
+       are made of, and a kind that is not a damage type has to leave the chip
+       and the line alone. */
+    name: 'an Adept Beastbond with a companion at heel',
+    row: {
+      xp: 24000,
+      level_picks: LADDER,
+      talents: [{ id: 'beastbond', rank: 2, taken: [1, 4] }],
+      minions: { beastbond: { name: 'Sable', scale: 'mammal' } },
+    },
+  },
+  {
     /* Three pieces of plate in three slots, which is the case the coarseness rule
        was written for: what a reader wants from an Armor of 15 is the word
        "Armor", not the helm and the cuirass and the greaves added up by hand. */

@@ -76,6 +76,16 @@
  * from its quick bar, paid out of its Action Points, and they are kept off the
  * character's own bar so that nothing is ever paid out of the wrong pool.
  *
+ * A creature's one choice can also decide **which** of a set's cards it holds.
+ * The Beastbond (2026-09-12) asks for a kind where the Draconic Bond asks for a
+ * colour, in the same `scales` slot and the same stored field, and each of its
+ * three Rank 1 strikes carries `scale: '<kind>'`: a card gated on a kind is held
+ * by a companion that chose it and dropped for one that chose another. While the
+ * kind is still unchosen all three show, so a player choosing can compare them.
+ * `heldMinionCards` is that rule for every reader of a set's cards, and
+ * `minionCards` applies it to the creature's own bar. A card carrying no `scale`
+ * is untouched, which is every card in every other set.
+ *
  * A body may also **know a Martial Move outright**, which is the one thing it
  * plays that is not a card of its own: `knows: ['reckless']` on the kind, and
  * the move is offered inside its own swing's prompt exactly as a Duelist's is.
@@ -160,6 +170,36 @@ export const MINION_TAGS = new Set(
 /** True for a card some creature plays rather than the character holding it. */
 export function isMinionCard(card) {
   return (card?.tags ?? []).some((tag) => MINION_TAGS.has(tag));
+}
+
+/**
+ * Whether a card gated on a creature's choice is held by a creature that chose
+ * `scale`. A card with no gate is held by everybody; a gate against no choice
+ * yet is held too, so the three strikes stand side by side until one is picked.
+ */
+function kindHolds(card, scale) {
+  return !card?.scale || !scale || card.scale === scale;
+}
+
+/**
+ * A set's cards with the ones its creature did not choose taken out.
+ *
+ * `heldOathCards`'s shape, read against a creature instead of a vow: the
+ * Beastbond's three strikes are all in its `cards`, and a mammal holds one of
+ * them. Read off the stored row rather than through `minionState`, because
+ * every reader of a rank's list calls this once per rank and the answer is one
+ * field. A set whose cards carry no gate is handed back untouched, which is
+ * every set but the one.
+ */
+export function heldMinionCards(character, talent, cards) {
+  const list = cards ?? talent?.cards ?? [];
+  if (!list.some((card) => card.scale)) return list;
+
+  const set = typeof talent === 'string' ? getTalent(talent) : talent;
+  const row = normalizeMinions(character?.minions)[set?.id] ?? {};
+  const chosen = scaleOf(minionOf(set), row.scale)?.id ?? null;
+
+  return list.filter((card) => kindHolds(card, chosen));
 }
 
 /* --------------------------------------------------------- what a level buys */
@@ -436,8 +476,9 @@ function resolveMinion(character, { talent, spec, entry, kind, id, row, level })
     moves,
     /* What the creature does to its own cards: the damage its scales are made
        of, and whatever its ranks have Elevated. `actor` is what makes the
-       numbers on those cards *its* numbers rather than its bonded's. */
-    cards: minionCards(talent, rank, body, spells),
+       numbers on those cards *its* numbers rather than its bonded's. The kind it
+       chose rides along, for the one set whose strikes are gated on it. */
+    cards: minionCards(talent, rank, body, spells, scale?.id ?? null),
     /* And its Martial Moves, deliberately **not** among them. A move is added to
        a swing inside that swing's own prompt and is never played on its own (see
        "added, not laid" in moves.js), so a chip for one would be a way to spend
@@ -590,13 +631,18 @@ export function minionKindRiders(character, talent) {
  * way a loadout's picks are resolved, and a pick the codex no longer answers for
  * is dropped rather than drawn as a hole: a spell nobody can print is a chip
  * nobody can press.
+ *
+ * `scale` is the kind this body chose, for the one set whose strikes are gated
+ * on it (see `kindHolds`). Null, which is every other creature, holds them all.
  */
-export function minionCards(talent, rank, spec = null, spells = []) {
+export function minionCards(talent, rank, spec = null, spells = [], scale = null) {
   const body = spec ?? minionOf(talent);
   const tag = body?.tag;
 
   const own = tag
-    ? cardsThroughRank(talent, rank).filter((card) => (card.tags ?? []).includes(tag))
+    ? cardsThroughRank(talent, rank).filter(
+        (card) => (card.tags ?? []).includes(tag) && kindHolds(card, scale)
+      )
     : [];
   if (spells.length === 0) return own;
 

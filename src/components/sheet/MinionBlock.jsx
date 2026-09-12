@@ -212,10 +212,14 @@ export function MinionStatsBlock({ character, minion, patch, readOnly = false, u
                   className="minion-chip minion-chip-scale"
                   style={tone ? { '--scale-tone': tone.color } : undefined}
                 >
-                  {minion.scale.label} · {minion.scale.damage}
+                  {/* A dragon's chip is its colour and its damage; a companion's
+                      choice is a kind with no type behind it, so the chip stops
+                      at the label. */}
+                  {minion.scale.label}
+                  {minion.scale.damage ? ` · ${minion.scale.damage}` : ''}
                 </span>
               ) : (
-                <span className="minion-chip is-open">No colour chosen</span>
+                <span className="minion-chip is-open">No {spec.scales.noun ?? 'colour'} chosen</span>
               ))}
             <span className="minion-chip">{minion.talent.name}</span>
 

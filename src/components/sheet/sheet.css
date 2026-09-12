@@ -15871,3 +15871,36 @@ button.tgt-chip:disabled {
   font-size: 0.68rem;
   color: var(--danger-rose);
 }
+
+/* =========================================================
+   THE CAMPAIGN FIELD, AS A JOIN CODE
+   Which tables the sheet sits at, and the code that seats it at one more.
+   Identity frame of the Advancement tab and of the Free Hand. See
+   src/components/campaign/CampaignJoin.jsx.
+   ========================================================= */
+.camp-join-seated {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  color: var(--text-silver);
+}
+
+.camp-join-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.camp-join-row .form-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.camp-join-code {
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.camp-join-note {
+  margin-top: 0.45rem;
+}

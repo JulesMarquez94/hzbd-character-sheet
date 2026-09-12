@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import LedgerModal from './LedgerModal.jsx';
 import LevelLedger from './LevelLedger.jsx';
+import CampaignJoin from '../campaign/CampaignJoin.jsx';
 import { CardStackProvider } from '../CardStack.jsx';
 import { formatNumber, xpProgress } from '../../lib/characterModel.js';
 
@@ -76,17 +77,14 @@ export default function AdvancementTab({ character, patch, readOnly = false, uni
                   onBlur={(e) => !e.target.value.trim() && patch({ name: 'Unnamed Drifter' })}
                 />
               </div>
+              {/* The campaign is a join code, and redeeming it is the link to
+                  the table. See CampaignJoin.jsx. */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" htmlFor="adv-campaign">
-                  Campaign
-                </label>
-                <input
-                  className="form-input"
+                <CampaignJoin
+                  character={character}
+                  patch={patch}
                   readOnly={readOnly}
                   id="adv-campaign"
-                  value={character.campaign || ''}
-                  placeholder="The Drowned Season"
-                  onChange={(e) => patch({ campaign: e.target.value })}
                 />
               </div>
             </div>

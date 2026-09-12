@@ -1341,6 +1341,10 @@ export function normalizeKit(value) {
       }))
       .filter((entry) => entry.id && Number.isFinite(entry.index) && entry.index >= 0),
     pack: (Array.isArray(source.pack) ? source.pack : []).filter((id) => typeof id === 'string'),
+    // The tier the set was handed out at. A receipt written before tiers
+    // existed has none, and was Common: see startingArmorRarity in
+    // startingLevel.js.
+    rarity: typeof source.rarity === 'string' && source.rarity ? source.rarity : 'Common',
     coins: Math.max(0, Math.floor(Number(source.coins) || 0)),
     supplies: Math.max(0, Math.floor(Number(source.supplies) || 0)),
     ts: typeof source.ts === 'string' ? source.ts : '',

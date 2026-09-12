@@ -113,6 +113,9 @@ export function MinionWindow({ character, minion, patch, readOnly = false, onClo
 
           <div className="minion-scales">
             {scales.map((option) => {
+              /* A dragon's option is a damage type and wears its colour; a
+                 companion's is a kind and carries a note instead. The button
+                 draws whichever the option has, in the same two slots. */
               const tone = damageStyle(option.damage);
               return (
                 <button
@@ -125,20 +128,40 @@ export function MinionWindow({ character, minion, patch, readOnly = false, onClo
                 >
                   <span className="minion-scale-swatch" aria-hidden="true" />
                   <span className="minion-scale-name">{option.label}</span>
-                  <span className="minion-scale-dmg">{option.damage}</span>
+                  <span className="minion-scale-dmg">{option.damage ?? option.note ?? ''}</span>
                 </button>
               );
             })}
           </div>
 
+          {/* The spec's own sentence about what the choice decides, when it has
+              one. The default is the dragon's, and it is about a damage type, so
+              a spec whose options carry none has to say its own. */}
           <p className="form-hint">
-            The colour is what its breath and its bolts are made of. Everything it deals is{' '}
-            {minion.scale ? minion.scale.damage : 'that type'}.
+            {spec.scales.hint ?? (
+              <>
+                The colour is what its breath and its bolts are made of. Everything it deals is{' '}
+                {minion.scale ? minion.scale.damage : 'that type'}.
+              </>
+            )}
           </p>
         </div>
       )}
     </Modal>
   );
+}
+
+/**
+ * The tail of the section's sentence: what the creature chose, or that it has
+ * not. A dragon's choice is a colour that is also a damage type, so its line
+ * says both; a companion's is a kind, so its line says the kind. What an open
+ * choice is called comes off the spec (`scales.noun`), since "no colour chosen"
+ * is wrong of a beast.
+ */
+function choiceLine(spec, scale) {
+  if (!scale) return `no ${spec.scales?.noun ?? 'colour'} chosen`;
+  if (scale.damage) return `${scale.label} scales that deal ${scale.damage}`;
+  return `it is a ${scale.label.toLowerCase()}`;
 }
 
 /**
@@ -183,8 +206,7 @@ export default function MinionSection({
       <p className="pick-line">
         {minion.named
           ? `${minion.name} stands at level ${minion.level} with ${minion.stats.health_max} Health, ` +
-            `Defense ${minion.stats.avoid}, and ${minion.scale ? `${minion.scale.label} scales` : 'no colour chosen'}` +
-            `${minion.scale ? ` that deal ${minion.scale.damage}` : ''}.`
+            `Defense ${minion.stats.avoid}, and ${choiceLine(spec, minion.scale)}.`
           : `Nothing named yet. Your ${spec.kin ?? 'ally'} takes two blocks on the Character tab as soon as it has a name.`}
       </p>
 

@@ -1267,7 +1267,7 @@ export const QUESTIONS = [
         told: 'dropped your coat over its head and packed the wound with moss.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { 'cauldron-keeper': 1, wilder: 1 },
+          talent: { 'cauldron-keeper': 1, wilder: 1, beastbond: 1 },
           lineage: { wildkin: 1 },
           background: { outlander: 1 },
           skill: { healer: 1, survivalist: 1 },
@@ -2340,7 +2340,7 @@ export const QUESTIONS = [
         told: 'walking the edge of the camp in the dark, listening.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'feral-curse': 1, wilder: 1 },
+          talent: { 'feral-curse': 1, wilder: 1, beastbond: 1 },
           lineage: { wildkin: 1 },
           background: { outlander: 1 },
           skill: { survivalist: 1, vigilant: 1 },
@@ -2788,7 +2788,7 @@ export const QUESTIONS = [
         told: 'ran with the hound at your heel until dawn.',
         gives: {
           attribute: { instinct: 2 },
-          talent: { 'draconic-bond': 1, 'feral-curse': 1, wilder: 1 },
+          talent: { 'draconic-bond': 1, 'feral-curse': 1, wilder: 1, beastbond: 1 },
           lineage: { wildkin: 1 },
           background: { outlander: 1, military: 1 },
           skill: { survivalist: 1, vigilant: 1 },
@@ -5826,6 +5826,132 @@ export const QUESTIONS = [
       },
     ],
   },
+
+  /* ===================================================== the Beastbond's two
+     Added 2026-09-12 with the set. Nine answers already named the Beastbond,
+     and every one of them named the Draconic Bond beside it, so the two tied on
+     every count and the tie went to the codex's order: in four thousand walks
+     the Beastbond stood second nineteen times and first never. A set that is an
+     animal at heel needs an answer in which the animal is the whole point and
+     nobody's dragon is, and these are the two. One in the youth, where the pup
+     is nobody's, and one on the road, where the thing following the cart is. */
+  {
+    id: 'youth-whelp',
+    stage: 'youth',
+    scene:
+      'The keeper’s hound dies whelping in the straw and leaves one pup, long in the leg and already growling at the lamp. The keeper says it goes in the river at first light.',
+    asks: 'What do you do?',
+    recall: 'The year the keeper’s hound died whelping and left one growling pup, you',
+    options: [
+      {
+        id: 'raise',
+        label: 'Take it before first light and raise it on scraps and patience. Whatever it is, it is yours.',
+        told: 'took the pup before first light and raised it on scraps and patience.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { beastbond: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'door',
+        label: 'Stand in the kennel door at first light and tell the keeper he will have to go through you.',
+        told: 'stood in the kennel door and told the keeper he would have to go through you.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { guardian: 1, oathbound: 1 },
+          lineage: { stalwart: 1 },
+          background: { military: 1 },
+          skill: { vigilant: 1, helpful: 1 },
+        },
+      },
+      {
+        id: 'books',
+        label: 'Ask what sired it. The keeper will not say, so go through his books until you find the wolf.',
+        told: 'went through the keeper’s books until you found the wolf in the pup.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { arcanist: 1, spellquill: 1 },
+          lineage: { luminary: 1 },
+          background: { erudit: 1, investigator: 1 },
+          skill: { scholar: 1, inquisitor: 1 },
+        },
+      },
+      {
+        id: 'sell',
+        label: 'Take it off his hands for nothing and sell it at the fair as a wolfhound. Nobody checks a pup.',
+        told: 'took the pup for nothing and sold it at the fair as a wolfhound.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { tactician: 1, quartermaster: 1 },
+          lineage: { fey: 1 },
+          background: { merchant: 1, entertainer: 1 },
+          skill: { haggler: 1, cunning: 1 },
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'road-hare',
+    stage: 'road',
+    scene:
+      'Something has followed the cart for two days. On the third morning a hare lies on the tailboard, still warm. A pair of eyes waits at the tree line to see what you do with it.',
+    asks: 'What do you do?',
+    recall: 'The morning something left a hare on your tailboard and waited at the tree line, you',
+    options: [
+      {
+        id: 'share',
+        label: 'Cook the hare and leave half at the tree line. Do it again the next morning, and the next.',
+        told: 'cooked the hare and left half at the tree line, morning after morning.',
+        gives: {
+          attribute: { instinct: 2 },
+          talent: { beastbond: 1 },
+          lineage: { wildkin: 1 },
+          background: { outlander: 1 },
+          skill: { survivalist: 1, empath: 1 },
+        },
+      },
+      {
+        id: 'lamp',
+        label: 'Walk out to the tree line with a lamp and a stick and settle it, whatever it is.',
+        told: 'walked out to the tree line with a lamp and a stick to settle it.',
+        gives: {
+          attribute: { physique: 2 },
+          talent: { berserker: 1, colossus: 1 },
+          lineage: { stalwart: 1 },
+          background: { mercenary: 1, military: 1 },
+          skill: { vigilant: 1, survivalist: 1 },
+        },
+      },
+      {
+        id: 'ground',
+        label: 'Read the ground at the tree line, the prints and the gait. Know what it is before it knows you.',
+        told: 'read the prints at the tree line and knew what it was before it knew you.',
+        gives: {
+          attribute: { mind: 2 },
+          talent: { tactician: 1, alchemist: 1 },
+          lineage: { luminary: 1 },
+          background: { investigator: 1, erudit: 1 },
+          skill: { cartographer: 1, scholar: 1 },
+        },
+      },
+      {
+        id: 'market',
+        label: 'Sell the hare at the next village and say nothing about where it came from. Free meat is free meat.',
+        told: 'sold the hare at the next village and said nothing about where it came from.',
+        gives: {
+          attribute: { mind: 1 },
+          talent: { quartermaster: 1, spellquill: 1 },
+          lineage: { infernal: 1 },
+          background: { merchant: 1, criminal: 1 },
+          skill: { haggler: 1, streetwise: 1 },
+        },
+      },
+    ],
+  },
   /* ===================================================== childhood, third drop
      Four more, added 2026-09-10 with the drop that spread the points. Every new
      scene here is sited where the count was thin: a fair, a causeway, a dead
@@ -6402,7 +6528,7 @@ export const QUESTIONS = [
         told: 'netted it and sold it for a month’s wages.',
         gives: {
           attribute: { instinct: 1 },
-          talent: { wilder: 1, 'draconic-bond': 1 },
+          talent: { wilder: 1, 'draconic-bond': 1, beastbond: 1 },
           lineage: { skybound: 1 },
           background: { merchant: 1, aristocrat: 1 },
           skill: { haggler: 1, survivalist: 1 },

@@ -26,6 +26,8 @@
     "lint:legal": "node scripts/check-legal.mjs",
     "lint:crossroads": "node scripts/check-crossroads.mjs",
     "lint:walkthrough": "node scripts/check-walkthrough.mjs",
+    "lint:start": "node scripts/check-start.mjs",
+    "lint:roster": "node scripts/check-roster.mjs",
     "lint:images": "node scripts/check-images.mjs",
     "lint:codex": "node scripts/check-codex-art.mjs",
     "sb:login": "npx supabase@2 login",
@@ -39,6 +41,7 @@
     "art": "node scripts/pull-card-art.mjs && node scripts/pull-item-art.mjs",
     "art:cards": "node scripts/pull-card-art.mjs",
     "art:items": "node scripts/pull-item-art.mjs",
+    "art:missing": "node scripts/missing-art.mjs",
     "art:push": "node scripts/push-codex-art.mjs",
     "art:push:dry": "node scripts/push-codex-art.mjs --dry"
   },

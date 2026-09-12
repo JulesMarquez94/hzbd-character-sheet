@@ -22,8 +22,9 @@ import {
 } from '../../lib/backgrounds.js';
 import { armorSetOptions, getItem, startingWeapons, weaponShelves } from '../../lib/items.js';
 import { getAttribute } from '../../lib/attributes.js';
-import { formatNumber } from '../../lib/characterModel.js';
+import { formatNumber, levelForXp } from '../../lib/characterModel.js';
 import { ARMOR_ORDER, buildKitPatch, buildReturnPatch } from '../../lib/kit.js';
+import { startingArmorRarity } from '../../lib/startingLevel.js';
 
 /**
  * Background — the life your character led before any of this started.
@@ -523,7 +524,13 @@ function KitLine({ label, value, note = null, onPeek = null }) {
  * the read**. Nobody should have to pick a weapon by its name alone.
  */
 function KitOutfitter({ background, character, patch, onClose }) {
-  const sets = armorSetOptions();
+  /* The tier the kit dresses you in follows the level the kit is taken at:
+     Common at level 1, Rare from 6, Epic from 10. A character made above level 1
+     takes the kit at that level, which is the whole point of the rule. See
+     startingArmorRarity in startingLevel.js. */
+  const level = levelForXp(character.xp);
+  const rarity = startingArmorRarity(level);
+  const sets = armorSetOptions(rarity);
   const guns = startingWeapons();
   /* The rack, cut on the attribute each weapon is swung on. Every Common weapon
      in the codex answers with one of the three, so this is three shelves today;
@@ -570,7 +577,7 @@ function KitOutfitter({ background, character, patch, onClose }) {
             className="btn btn-take btn-sm"
             why={ready ? null : reason}
             onClick={() => {
-              patch(buildKitPatch({ character, background, armorSet, weapons }));
+              patch(buildKitPatch({ character, background, armorSet, weapons, rarity }));
               onClose();
             }}
           >
@@ -580,15 +587,20 @@ function KitOutfitter({ background, character, patch, onClose }) {
       }
     >
       <p className="frame-foot" style={{ marginTop: 0 }}>
-        Taken once, at level 1. The set you choose goes <b>on</b>, the weapon goes in your hand and
+        Taken once. The set you choose goes <b>on</b>, the weapon goes in your hand and
         the trade&rsquo;s odds and ends go on your <b>belt</b>; anything that has nowhere to go waits
         in your pack, and a slot you have already filled is never disturbed. Coins and Supplies go
         through their ledgers, and you can hand the whole thing back afterwards.
       </p>
+      {rarity !== 'Common' && (
+        <p className="frame-foot" style={{ marginTop: 0 }}>
+          At level {level} every set is offered at its <b>{rarity}</b> tier rather than Common.
+        </p>
+      )}
 
       <section className="kit-step">
         <h4 className="kit-step-head">
-          Armor <span className="kit-step-note">one full Common set, all three pieces</span>
+          Armor <span className="kit-step-note">one full {rarity} set, all three pieces</span>
         </h4>
         <div className="kit-options">
           {sets.map((set) => (

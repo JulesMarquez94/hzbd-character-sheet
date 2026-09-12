@@ -40,6 +40,7 @@ import { levelForXp } from './characterModel.js';
 import { normalizeLevelPicks } from './levelPicks.js';
 import { loadoutOf, loadoutState, swapRests } from './loadouts.js';
 import {
+  heldMinionCards,
   isMinionCard,
   minionKindRiders,
   minionKindRows,
@@ -363,11 +364,19 @@ function talentSources(character) {
           creature and not to its keeper. See "and the bodies" above. */
       /* A vow's ten Auras are ten cards in the codex and one card in a
          holder's hands, so the nine they did not swear come off here. Every other
-         set is handed back untouched. See `heldOathCards` in oathbound.js. */
-      const cards = heldOathCards(
+         set is handed back untouched. See `heldOathCards` in oathbound.js.
+
+         And a companion's three strikes come down to the one its kind holds, for
+         the same reason and by the same shape. See `heldMinionCards` in
+         minions.js. */
+      const cards = heldMinionCards(
         character,
         talent,
-        cardsAtRank(talent, rank).filter((card) => !previews || !isMinionCard(card))
+        heldOathCards(
+          character,
+          talent,
+          cardsAtRank(talent, rank).filter((card) => !previews || !isMinionCard(card))
+        )
       );
       const bodies = bodiesAt(rank);
       if (cards.length === 0 && bodies.length === 0) continue;

@@ -121,6 +121,23 @@ export const CAPABILITIES = {
    */
   art: 'friend',
   /**
+   * See the sets on the roster that are not written yet.
+   *
+   * Fourteen talent sets in the codex are a name and a shelf and nothing else
+   * (`stub: true` in src/lib/talents.js). Until 2026-09-12 every account saw
+   * them on the chooser wall, locked, so a shelf read as the whole plan. Jules's
+   * ruling that day: an unfinished set is for the table's own people, and
+   * everybody else is shown the game as it stands. So this asks for `friend`,
+   * the same rung as the art and for the same kind of reason: the open web gets
+   * what is finished.
+   *
+   * UI only, and with nothing behind it on purpose. A placeholder holds no
+   * cards, no spec and no prose of its own, so there is nothing a policy could
+   * protect: hiding one changes what a shelf shows and nothing about what a
+   * sheet may hold, because `chooseAt` refuses it at every tier.
+   */
+  roster: 'friend',
+  /**
    * Roll on a physics table rather than a flat one.
    *
    * The one capability that changes nothing about what happens. Every roll is

@@ -358,3 +358,11 @@
   z-index: 1;
   align-self: flex-start;
 }
+
+/* The campaign field in the enlist box is a join code: read out loud across a
+   table, so it is set the way the Campaigns page sets one. */
+.enlist-code {
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}

@@ -535,18 +535,21 @@ There are no points to buy, no dice to roll and no arithmetic to do.
 
 ### 4.1 Start on the dashboard
 
-On your dashboard, press **Create Character**. It asks you to choose a way in, then for two
-things: your character's name and the name of the campaign they are for. Both can be
-changed later. The character is created at once, and the creation page opens.
+On your dashboard, press **Create Character**. It asks you to choose a way in, then for your
+character's name. If your Game Master has given you a campaign's join code, enter it there
+too and the character sits at that table from the start. The code can also be entered later,
+from the Advancement tab. The character is created at once, and the creation page opens.
 
-Four ways in are offered and three are built. **Free Hand** opens every level 1 choice at
-once, and 4.2 to 4.8 describe it. **Crossroads** asks you about the life your character
-led and makes the character from your answers. See 4.9. **Walkthrough** asks the same
-choices as the free hand one at a time, with the rules beside each one. See 4.10.
-Ready-Made is on its way. All four end on the same sheet.
+Four ways in are offered and three are built. **Walkthrough** is the place to start: it asks
+the four level 1 choices one at a time, with the rules beside each one. See 4.10.
+**Crossroads** asks you about the life your character led and makes the character from your
+answers. See 4.9. **Free Hand** is for a character who starts above level 1: you choose the
+level, and every choice from level 1 up to it opens at once. See 4.11. Ready-Made is on its
+way. All four end on the same sheet, and 4.2 to 4.8 describe the four choices of level 1
+that every way in makes.
 
 On the free hand, the creation page has two steps at the top: **The character**, which is
-everything level 1 gives you, and **Their story**, which is the lore. Every choice saves as
+everything the levels give you, and **Their story**, which is the lore. Every choice saves as
 you make it, so you can close the page and come back.
 
 ### 4.2 The four choices of level 1
@@ -614,11 +617,11 @@ returned.
 
 ### 4.5 Talent set
 
-Thirty-four talent sets are named. **Nineteen are written and can be taken**: Guardian,
+Thirty-four talent sets are named. **Twenty are written and can be taken**: Guardian,
 Mycomancer, Cauldron Keeper, Enchanter, Draconic Bond, Trickster, Duelist, Feral Curse,
 Berserker, Colossus, Arcanist, Alchemist, Pact of Ordenance, Runebearer, Spellblade,
-Necromancer, Spellquill, Weaver and Oathbound. The rest are shown on the wall so you can see what is
-coming, but they have no cards yet and cannot be chosen.
+Necromancer, Spellquill, Weaver, Oathbound and Beastbond. The rest have no cards yet and
+cannot be chosen. Appendix B names them.
 
 A talent set gives you cards at Novice rank now, and more at Adept and Master as you take
 those ranks. Some sets also give you something that is not a card: a **creature** you
@@ -696,9 +699,9 @@ Advancement tab, exactly as if you had chosen it by hand.
 
 ### 4.10 The Walkthrough
 
-The Walkthrough is the way in for a first character. It asks the same four level 1 choices
-as the free hand, one screen at a time, with the rules on one side and the panel that makes
-the choice on the other. The panels are the ones on the Advancement tab, so what you learn
+The Walkthrough is the way in for a first character, and the first one the dashboard
+offers. It asks the four level 1 choices one screen at a time, with the rules on one side
+and the panel that makes the choice on the other. The panels are the ones on the Advancement tab, so what you learn
 to use here is the sheet you are handed at the end.
 
 Six steps: your attributes, with the roll and the pools explained first; your talent set;
@@ -714,6 +717,29 @@ Every choice is written to your character the moment you make it, and so is the 
 are on. If you leave in the middle, the card on your dashboard says which step you reached
 and offers to bring you back to it, from any device you sign in on. The steps along the top
 can be taken in any order, and the sheet opens once every level 1 question is answered.
+
+### 4.11 Starting above level 1
+
+The Free Hand is the way in for a character who joins a table already under way. When you
+name them you choose the level they start at, from 2 to 12. The creation page then opens
+every choice from level 1 up to that level at once: the four choices of level 1, a talent
+choice at every even level and an attribute point and a skill at every odd one. The sheet
+opens once every one of them is answered.
+
+Starting above level 1 also hands over what the levels would have bought along the road.
+
+- **1,000 coins a level.** A character made at level 6 has 6,000 coins in the ledger.
+- **A Healing Potion for every two levels above the first**, in the pack: one at level 3,
+  two at level 5 and five at level 11.
+- **Better armor.** From level 6 the background's kit offers each armor set at its second
+  tier, Rare, instead of Common. From level 10 it offers the third, Epic.
+- **An enchanted ring at level 8.** A Silver Ring worked with Bodily Vigor, Primal Sense or
+  Mental Focus, your choice, for 1 Physique, Instinct or Mind. It is worn from the start,
+  and it is a forged ring like any other: it can be taken off, renamed or handed on.
+
+Everything else is chosen by hand, exactly as if the character had climbed there. The
+experience and the coins are logged in the ledger under "Made at level 6", so the history
+still adds up.
 
 ---
 
@@ -1840,10 +1866,9 @@ reading of what the cards using it imply.
    the spell that does the work has not been written. A Necromancer raising a corpse as a
    servant is a different thing: what stands up is a body under orders, not the person who
    died.
-2. **Fifteen talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
+2. **Fourteen talent sets are names without cards**: Brawler, Hemoturgy, Totemic,
    Painseeker, Dragon Aspect, Virtuoso, Flowing Fist, Sharpshooter, Wilder,
-   Thaumaturge, Tactician, Elemental Aspect, Beastbond, Quartermaster and Weapon
-   Master.
+   Thaumaturge, Tactician, Elemental Aspect, Quartermaster and Weapon Master.
 3. **The world.** This is a rules book, and the setting is one sentence on the cover. It
    gets a book of its own.
 

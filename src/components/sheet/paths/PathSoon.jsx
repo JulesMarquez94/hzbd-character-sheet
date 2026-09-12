@@ -31,9 +31,8 @@ export default function PathSoon({ path, character, onDone }) {
           <h3 className="path-soon-title">{path.title} is not built yet</h3>
           <p className="path-soon-blurb">{path.blurb}</p>
           <p className="path-soon-note">
-            Until it is, take the way in that is. {built.title} opens every level-1 chooser at
-            once, and nothing you do there closes this path off later: all four end on the same
-            sheet.
+            Until it is, take the way in that is. {built.title}: {built.line} Nothing you do
+            there closes this path off later, because all four end on the same sheet.
           </p>
         </div>
       </div>

@@ -1,20 +1,39 @@
 import { useState } from 'react';
+import CampaignJoin from '../../campaign/CampaignJoin.jsx';
 import LevelLedger from '../LevelLedger.jsx';
 import LoreTab from '../LoreTab.jsx';
 import { Gated } from '../parts.jsx';
 import { CardStackProvider } from '../../CardStack.jsx';
+import { levelForXp } from '../../../lib/characterModel.js';
+import { creationPath } from '../../../lib/creationPaths.js';
 import { openChoices } from '../../../lib/levelPicks.js';
+import {
+  madeAtLevel,
+  startingGrants,
+  startingPotions,
+  startingRing,
+} from '../../../lib/startingLevel.js';
 
 /**
  * The free hand: making a character with every chooser open at once, in two
- * pages. The first of the four ways in, and the only one that existed before
- * there were four. See src/lib/creationPaths.js.
+ * pages. The only way in that existed before there were four, and since
+ * 2026-09-12 the way in for a character who starts **above level 1**. Jules:
+ * "change the freehand pick to be made when you are creating character above
+ * level 1." See src/lib/creationPaths.js.
  *
- * The dashboard box asks for a name and a campaign, because those are the only
- * two things about a character that are not a choice with its own chooser.
- * Everything else is one, and every one of them already exists on the
- * Advancement tab, so this page is the level-1 block and nothing else: the same
- * panels, in the same order, writing to the same row.
+ * The dashboard box asks for a name, the level to start at and, for an
+ * account, a campaign's join code, because those are the only things about a
+ * character that are not a choice with its own chooser. Everything else is
+ * one, and every one of them already exists on the Advancement tab, so this
+ * page is the level ledger drawn at the character's own level and nothing
+ * else: the same panels, in the same order, writing to the same row. A start
+ * at level 6 is six blocks. A start at level 1, which only a URL reaches now,
+ * is the one block it always was.
+ *
+ * What the level handed over besides its choices (the coins, the potions, the
+ * ring and the tier the kit will come at) is printed in a frame of its own,
+ * read off the ledger's "Made at level N" note rather than off a column. See
+ * src/lib/startingLevel.js.
  *
  * The second page is the lore, which is the part nobody can do for you and the
  * part most people want to do last.
@@ -29,37 +48,56 @@ import { openChoices } from '../../../lib/levelPicks.js';
  * choices, like spells, martial move, or other. Make sure they need to make
  * those change before the confirm/finish." Every chooser on the first step now
  * refuses to close on a question it left open, and this is the same law at the
- * page's own edge: the button out of here is shut while anything level 1 handed
- * over is unanswered, and it says how many.
+ * page's own edge: the button out of here is shut while anything the levels
+ * handed over is unanswered, and it says how many.
  *
  * Not a trap. The header is above this page the whole way through, and leaving
  * by it is what it always was: a half-made character waiting in the vault.
  */
 const STEPS = [
-  { key: 'level1', title: 'The character', line: 'Everything level 1 hands you.' },
+  { key: 'levels', title: 'The character' },
   { key: 'lore', title: 'Their story', line: 'The part the rules cannot roll for.' },
 ];
 
-/** The only level this page makes, and the one its ledger is drawn at. */
-const CREATION_LEVEL = 1;
-
 export default function FreeHand({ character, patch, onDone, unit = 'metric' }) {
+  const path = creationPath('freeform');
   const [step, setStep] = useState(0);
   const current = STEPS[step];
 
-  /* What level 1 asked and nobody has answered: a set with no spells chosen, a
-     lineage that has not settled its blood, a nameless draconic ally. Counted by
-     the same `openChoices` the Advancement tab badges itself with, so the page
-     and the tab can never disagree about whether a character is finished. */
-  const waiting = openChoices(character, CREATION_LEVEL);
+  /* The level the ledger is drawn at: the character's own, which a start above
+     level 1 put at the threshold before this page ever opened. */
+  const level = levelForXp(character.xp);
+
+  /* What the levels asked and nobody has answered: a set with no spells chosen,
+     a lineage that has not settled its blood, a nameless draconic ally, a skill
+     not yet learned at level 3. Counted by the same `openChoices` the
+     Advancement tab badges itself with, so the page and the tab can never
+     disagree about whether a character is finished. */
+  const waiting = openChoices(character, level);
+
+  /* What the start handed over, for a character made above level 1. */
+  const made = madeAtLevel(character);
+  const ring = startingRing(character);
+  const grants = made ? startingGrants(made, ring?.key ?? null) : [];
+  const potions = made ? startingPotions(made) : 0;
+
+  const line =
+    step === 0
+      ? level > 1
+        ? `Everything levels 1 to ${level} hand you.`
+        : 'Everything level 1 hands you.'
+      : current.line;
 
   return (
     <div className="tab-narrow creation">
       <div className="panel">
         <header className="creation-head">
-          <span className="creation-eyebrow">New character</span>
+          <span className="creation-eyebrow">
+            New character · {path.title}
+            {level > 1 ? ` · Level ${level}` : ''}
+          </span>
           <h2 className="creation-title">{character.name || 'Unnamed Drifter'}</h2>
-          <p className="creation-line">{current.line}</p>
+          <p className="creation-line">{line}</p>
 
           <ol className="creation-steps">
             {STEPS.map((entry, index) => (
@@ -92,27 +130,40 @@ export default function FreeHand({ character, patch, onDone, unit = 'metric' }) 
                   />
                 </div>
 
+                {/* The campaign is a join code, and redeeming it is the link to
+                    the table. See CampaignJoin.jsx. */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" htmlFor="new-character-campaign">
-                    Campaign
-                  </label>
-                  <input
-                    className="form-input"
-                    id="new-character-campaign"
-                    value={character.campaign || ''}
-                    placeholder="The Drowned Season"
-                    onChange={(e) => patch({ campaign: e.target.value })}
-                  />
+                  <CampaignJoin character={character} patch={patch} id="new-character-campaign" />
                 </div>
               </div>
 
               <p className="frame-foot">
-                Both can be changed later, from the Advancement tab.
+                The name can be changed later, from the Advancement tab, and a table can be joined
+                from there too.
               </p>
             </div>
 
+            {made && (
+              <div className="frame">
+                <h3 className="frame-heading">Made at level {made}</h3>
+                <ul className="start-grants">
+                  {grants.map((row) => (
+                    <li key={row.id}>
+                      <b>{row.label}</b>
+                      <span>{row.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="frame-foot">
+                  {`The coins are in your ledger${potions > 0 ? ' and the potions in your pack' : ''}${
+                    ring ? ', and the ring is already on' : ''
+                  }. The armor arrives with your background's kit, in the level 1 block below.`}
+                </p>
+              </div>
+            )}
+
             <CardStackProvider character={character}>
-              <LevelLedger character={character} level={1} patch={patch} unit={unit} />
+              <LevelLedger character={character} level={level} patch={patch} unit={unit} />
             </CardStackProvider>
           </>
         )}

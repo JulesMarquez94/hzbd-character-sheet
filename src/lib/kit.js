@@ -41,8 +41,13 @@ const HANDS = ['main_hand', 'off_hand'];
  * and the Supplies), `armorSet` is a set name and `weapons` a list of weapon ids
  * as long as the kit allows. Nothing here checks that count: the outfitter and
  * the Crossroads both hand over exactly what the trade allows.
+ *
+ * `rarity` is the tier the set is handed out at: Common unless the character
+ * was made above level 1, when the outfitter reads the tier off the level (see
+ * startingArmorRarity in startingLevel.js). The receipt records it for the
+ * reader; handing back finds the pieces by id and needs nothing else.
  */
-export function buildKitPatch({ character, background, armorSet, weapons }) {
+export function buildKitPatch({ character, background, armorSet, weapons, rarity = 'Common' }) {
   const kit = background.kit;
   const equipment = normalizeEquipment(character.equipment);
   const belt = normalizeBelt(character.belt);
@@ -62,7 +67,7 @@ export function buildKitPatch({ character, background, armorSet, weapons }) {
     granted.equipment[slot] = id;
   }
 
-  const pieces = armorSetPieces(armorSet);
+  const pieces = armorSetPieces(armorSet, rarity);
   for (const slot of ARMOR_ORDER) {
     if (pieces[slot]) wear(slot, pieces[slot]);
   }
@@ -128,6 +133,7 @@ export function buildKitPatch({ character, background, armorSet, weapons }) {
     background_kit: {
       background: background.id,
       armorSet,
+      rarity,
       weapons: [...weapons],
       equipment: granted.equipment,
       belt: granted.belt,

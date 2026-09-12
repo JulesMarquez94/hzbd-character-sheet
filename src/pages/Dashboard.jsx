@@ -13,8 +13,20 @@ import {
   createCharacter,
   deleteCharacter,
   listCharacters,
+  updateCharacter,
 } from '../lib/api.js';
+import { getCampaign, joinCampaign } from '../lib/campaigns.js';
+import { attributeLabel } from '../lib/attributes.js';
 import { creationPath } from '../lib/creationPaths.js';
+import {
+  RING_CHOICES,
+  STARTING_LEVEL_MIN,
+  clampStartingLevel,
+  grantsRing,
+  startingGrants,
+  startingLevels,
+  startingPatch,
+} from '../lib/startingLevel.js';
 import { standing } from '../lib/walkthrough.js';
 import {
   LOCAL_CHARACTER_SLOTS,
@@ -23,6 +35,7 @@ import {
   listLocalCharacters,
 } from '../lib/localCharacters.js';
 import {
+  BLANK_CHARACTER,
   compactNumber,
   formatNumber,
   initialsOf,
@@ -31,6 +44,10 @@ import {
 } from '../lib/characterModel.js';
 import './Dashboard.css';
 import { viewUrl } from '../lib/imageViews.js';
+
+/* What the enlist box asks for, empty. The level and the ring only matter to
+   the Free Hand, which is the way in for a character above level 1. */
+const EMPTY_DRAFT = { name: '', code: '', level: STARTING_LEVEL_MIN, ring: '' };
 
 function TalentTag({ talent }) {
   const rank = Math.max(0, Math.min(3, Number(talent.rank) || 0));
@@ -229,7 +246,10 @@ export default function Dashboard() {
   const [pendingDelete, setPendingDelete] = useState(null);
   /* The device character whose move into the account is being offered. */
   const [keeping, setKeeping] = useState(null);
-  const [draft, setDraft] = useState({ name: '', campaign: '' });
+  const [draft, setDraft] = useState(EMPTY_DRAFT);
+  /* What went wrong inside the enlist box, shown inside it: the page's own
+     error line is behind the dialog while the box is up. */
+  const [boxError, setBoxError] = useState('');
   /* Which way in they took, and the enlist box's two panes in one value: null
      is the pane that asks, a key is the pane that asks for a name. Nothing is
      written until a path has been taken, so reading what the unbuilt three will
@@ -237,6 +257,8 @@ export default function Dashboard() {
   const [pathKey, setPathKey] = useState(null);
 
   const path = pathKey ? creationPath(pathKey) : null;
+  /* The level the Free Hand starts at. Every other path makes a level 1. */
+  const level = path?.asksLevel ? clampStartingLevel(draft.level) : 1;
   const userId = user?.id;
 
   useEffect(() => {
@@ -277,27 +299,56 @@ export default function Dashboard() {
 
   async function handleCreate(e) {
     e.preventDefault();
-    if (!draft.name.trim()) {
-      setError('Give your character a name.');
+    const name = draft.name.trim();
+    if (!name) {
+      setBoxError('Give your character a name.');
       return;
     }
+    /* The ring is the one grant that is a choice, and the level that hands it
+       over does not go through without it. */
+    if (path.asksLevel && grantsRing(level) && !draft.ring) {
+      setBoxError('Choose the ring: Physique, Instinct or Mind.');
+      return;
+    }
+    const code = user ? draft.code.trim() : '';
 
     try {
-      /* A name and a campaign are all this box asks for. Everything else a
-         character is made of is a level-1 choice with its own chooser, so the
-         row is created blank and the creation pages ask for the rest. With
-         nobody signed in the row is kept on this device: see api.js. */
-      const created = await createCharacter(userId ?? null, {
-        name: draft.name.trim(),
-        campaign: draft.campaign.trim(),
-      });
+      /* A name, a way in and, for the Free Hand, a level: that is all this box
+         asks for. Everything else a character is made of is a choice with its
+         own chooser on the creation pages. A start above level 1 writes what
+         the levels hand over onto the blank before the row exists (see
+         src/lib/startingLevel.js). With nobody signed in the row is kept on
+         this device: see api.js. */
+      const start = path.asksLevel ? startingPatch(BLANK_CHARACTER, level, { ring: draft.ring }) : {};
+      const created = await createCharacter(userId ?? null, { ...start, name });
+
+      /* The campaign is a join code, and redeeming it is the link. A code
+         nothing answers to takes the row back with it: a character made on a
+         mistyped code would be a character at no table, which is not what was
+         asked for, and the box stays open for a second try. The campaign's
+         name goes into the old text column afterwards, for the card's chip. */
+      if (code) {
+        try {
+          const campaignId = await joinCampaign(code, created.id);
+          const campaign = await getCampaign(campaignId).catch(() => null);
+          if (campaign?.name) {
+            await updateCharacter(created.id, { campaign: campaign.name }).catch(() => {});
+          }
+        } catch (err) {
+          await deleteCharacter(created.id).catch(() => {});
+          setBoxError(
+            `${err.message} Nothing was created. Check the code and try again, or leave it blank and join from the sheet later.`
+          );
+          return;
+        }
+      }
 
       setCreating(false);
       /* The path rides in the URL rather than on the row: it is how you got
          here, not something the character is. See src/lib/creationPaths.js. */
       navigate(`/characters/${created.id}/new?path=${path.key}`);
     } catch (err) {
-      setError(err.message);
+      setBoxError(err.message);
     }
   }
 
@@ -374,6 +425,8 @@ export default function Dashboard() {
               className="create-card"
               onClick={() => {
                 setPathKey(null);
+                setDraft(EMPTY_DRAFT);
+                setBoxError('');
                 setCreating(true);
               }}
             >
@@ -428,15 +481,15 @@ export default function Dashboard() {
       )}
 
       {/* Two panes, and `path` is which one you are on: choose a way in, then
-          name them. The cards are first because three of the four are not built
+          name them. The cards are first because one of the four is not built
           yet, and finding that out after filling in a form would be worse than
           finding it out before. */}
       {creating && (
         <Modal
           title={path ? 'Name Your Character' : 'Make a Character'}
           onClose={() => setCreating(false)}
-          /* Four cards want the roomy measure. A two-field form does not: the
-             same form spread over 900px reads worse than it does at 560. */
+          /* Four cards want the roomy measure. A short form does not: the same
+             form spread over 900px reads worse than it does at 560. */
           wide={!path}
           footer={
             path ? (
@@ -488,37 +541,114 @@ export default function Dashboard() {
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="new-campaign">
-                  Campaign
-                </label>
-                <input
-                  className="form-input"
-                  id="new-campaign"
-                  value={draft.campaign}
-                  onChange={(e) => setDraft({ ...draft, campaign: e.target.value })}
-                  placeholder="The Glass Spires"
-                />
-              </div>
+              {/* The Free Hand is the way in for a character above level 1, so
+                  it asks which level here, where the name is asked, and prints
+                  what the level hands over under the answer. The ring is the
+                  one grant that is a choice, so it is asked the moment the
+                  level reaches it. See src/lib/startingLevel.js. */}
+              {path.asksLevel && (
+                <>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="new-level">
+                        Starting Level
+                      </label>
+                      <select
+                        className="form-select"
+                        id="new-level"
+                        value={level}
+                        onChange={(e) => setDraft({ ...draft, level: Number(e.target.value) })}
+                      >
+                        {startingLevels().map((n) => (
+                          <option key={n} value={n}>
+                            Level {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {grantsRing(level) && (
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="new-ring">
+                          Enchanted Ring
+                        </label>
+                        <select
+                          className="form-select"
+                          id="new-ring"
+                          value={draft.ring}
+                          onChange={(e) => setDraft({ ...draft, ring: e.target.value })}
+                          required
+                        >
+                          <option value="">Physique, Instinct or Mind</option>
+                          {RING_CHOICES.map((choice) => (
+                            <option key={choice.key} value={choice.key}>
+                              {choice.name} · 1 {attributeLabel(choice.key)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <ul className="start-grants">
+                    {startingGrants(level, draft.ring).map((row) => (
+                      <li key={row.id}>
+                        <b>{row.label}</b>
+                        <span>{row.detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {/* The campaign is a join code, and redeeming it is the link: see
+                  CampaignJoin.jsx for the same field on the sheet. Only for an
+                  account, because a campaign seats database rows and a character
+                  kept on this device is not one. */}
+              {user && (
+                <div className="form-group">
+                  <label className="form-label" htmlFor="new-code">
+                    Campaign Code
+                  </label>
+                  <input
+                    className="form-input enlist-code"
+                    id="new-code"
+                    value={draft.code}
+                    onChange={(e) => setDraft({ ...draft, code: e.target.value })}
+                    placeholder="KQ2M-8VXR"
+                    spellCheck="false"
+                    autoComplete="off"
+                  />
+                  <p className="form-hint">
+                    Optional. The join code your Game Master hands out seats the character at
+                    their table from the start. It can also be entered later, from the
+                    Advancement tab.
+                  </p>
+                </div>
+              )}
+
+              {boxError && <p className="form-error">{boxError}</p>}
 
               <p className="form-hint">
-                That is all this box needs. Your lineage, background, talent set and attributes are
-                level-1 choices with their own choosers, and {path.title} is where you make them.
+                That is all this box needs.{' '}
+                {path.asksLevel
+                  ? `Every choice from level 1 to level ${level} has its own chooser, and ${path.title} opens all of them at once.`
+                  : `Your lineage, background, talent set and attributes are level 1 choices with their own choosers, and ${path.title} is where you make them.`}
                 {!user && ' The character is saved in this browser until you make an account to keep it.'}
               </p>
             </form>
           ) : (
             <>
               <p className="form-hint path-lead">
-                Four ways in, all of them ending on the same sheet. Take whichever suits how you
-                like to make a character.
+                Four ways in, all of them ending on the same sheet. The Walkthrough is the place
+                to start.
               </p>
 
               <CreationPathPick onPick={setPathKey} />
 
               <p className="form-hint path-foot">
-                Three of the four are built today: the free hand, the walkthrough and the
-                crossroads. Ready-Made is on its way.
+                Three of the four are built: the Walkthrough, the Crossroads and the Free Hand,
+                which makes a character above level 1. Ready-Made is on its way.
               </p>
             </>
           )}

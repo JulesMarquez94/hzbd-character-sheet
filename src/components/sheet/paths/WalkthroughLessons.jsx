@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BLOCK_NAMES } from '../blockNames.js';
+import { useAuth } from '../../../context/auth-context.js';
 import { useDiceTray } from '../../../context/dice-tray.js';
 import { ATTRIBUTES, ATTRIBUTE_BASE, attributeLabel } from '../../../lib/attributes.js';
 import {
@@ -291,6 +292,11 @@ export function AttributesLesson({ character, step, unit }) {
 }
 
 export function TalentLesson({ state, step, go }) {
+  /* The wall this lesson counts is the wall this account is shown: a friend or
+     an admin sees the roster's placeholders standing locked among the written
+     sets, everybody else sees the written sets alone. See `roster` in
+     src/lib/tiers.js. */
+  const { can } = useAuth();
   const written = TALENTS.filter((talent) => !talent.stub);
   const major = state.picks.boosts?.major ?? null;
   const shelf = major
@@ -305,8 +311,14 @@ export function TalentLesson({ state, step, go }) {
           What your character can do. Three ranks: <b>{novice.title}</b> now, <b>{adept.title}</b>{' '}
           from level {adept.minLevel}, <b>{master.title}</b> from level {master.minLevel}. Every
           even level buys the next rank of a set you hold, or a new set at {novice.title}.{' '}
-          {written.length} of the {TALENTS.length} sets on the wall can be taken; the rest are not
-          written yet.
+          {can('roster') ? (
+            <>
+              {written.length} of the {TALENTS.length} sets on the wall can be taken; the rest are
+              not written yet.
+            </>
+          ) : (
+            <>{written.length} sets are on the wall, and every one of them can be taken.</>
+          )}
         </p>
       </Lesson>
 
