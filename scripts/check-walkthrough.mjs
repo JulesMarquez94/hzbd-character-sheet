@@ -218,7 +218,8 @@ section('a blank character has every step still to do');
 {
   const blank = { ...BLANK_CHARACTER };
   const progress = walkthroughProgress(blank);
-  check('seven steps', progress.length, STEPS.length);
+  check('six steps', progress.length, STEPS.length);
+  check('the walk opens on the attributes', STEPS[0].key, 'attributes');
   check('none is done', progress.filter((entry) => entry.done).map((entry) => entry.step.key), []);
   check(
     'the four that ask are open',
@@ -228,8 +229,10 @@ section('a blank character has every step still to do');
   check(
     'the lessons ask nothing',
     progress.filter((entry) => !entry.asked).map((entry) => entry.step.key),
-    ['begin', 'story', 'sheet']
+    ['story', 'sheet']
   );
+  /* The step the list used to open with still lands somewhere: on the first. */
+  check('an old bookmark on the dropped first step reads as the first', stepIndex('begin'), 0);
   check('waiting names the same four', stepsWaiting(blank).length, 4);
   check('and the tab badge agrees', openChoices(blank, WALKTHROUGH_LEVEL), 4);
 }

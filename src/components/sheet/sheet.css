@@ -15844,3 +15844,18 @@ button.tgt-chip:disabled {
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
+
+/* The one recommendation a choosing step makes: what pulls the same way as the
+   +2. A rule off the left edge rather than a box, so it reads as advice beside
+   the rules and not as another rule. */
+.wt-section-tip {
+  padding: 0.75rem 0.95rem 0.85rem;
+  border: 0;
+  border-left: 3px solid var(--path-accent);
+  border-radius: 0 5px 5px 0;
+  background-color: color-mix(in srgb, var(--path-accent) 8%, transparent);
+}
+
+.wt-section-tip .wt-section-title {
+  color: var(--path-accent);
+}

@@ -20,6 +20,20 @@
  * and comes after the rules, and the last step reads the finished sheet back
  * before it opens.
  *
+ * The first step also carries the primer: the roll, cards and the pools, in
+ * three lines. It was a step of its own for an hour, with the name and the
+ * campaign as its panel, and Jules sent it back the same day: "The first page
+ * is redundant right now because we already ask about the character name."
+ * Both are asked in the enlist box and both can be changed on the Advancement
+ * tab, so nothing here asks for them again.
+ *
+ * ---------------------------------------------------------- the recommendation
+ * Every choosing step recommends one thing, and it is always the same thing
+ * said about a different choice: build around the +2. "Focus on one attribute
+ * at the start and take the talent set and weapon that work with it" (Jules,
+ * 2026-09-12). The lessons read the spread off the row and name the shelf, the
+ * lineages and the weapons that roll it. See WalkthroughLessons.jsx.
+ *
  * --------------------------------------------------------------- the progress
  * Jules, 2026-09-12: "if the player leave in the middle of it i save the
  * progress so they can continue later."
@@ -69,7 +83,7 @@ export const WALKTHROUGH_PATH = 'guided';
 export const WALKTHROUGH_LEVEL = 1;
 
 /**
- * The seven steps, in the order they are walked.
+ * The six steps, in the order they are walked.
  *
  *   key        stored on the row as the place somebody stopped
  *   title      the pill on the rail and the heading in the summary
@@ -79,33 +93,18 @@ export const WALKTHROUGH_LEVEL = 1;
  *              a creature to name) belong to this step as well
  *   optional   a step with nothing to answer, said on the rail
  *   rules      where in the rulebook the step's lessons are written out in full
+ *
+ * A bookmark left on the step this list used to open with (`begin`) reads as
+ * the first step, which is where its lesson went.
  */
 export const STEPS = [
   {
-    key: 'begin',
-    title: 'How it works',
-    line: 'The roll, the cards and what they cost.',
-    asks: [],
-    rules: [
-      { section: 'chapter-one', rule: '1-1-the-roll', label: '1.1 The roll' },
-      {
-        section: 'chapter-one',
-        rule: '1-2-the-three-kinds-of-roll',
-        label: '1.2 The three kinds of roll',
-      },
-      {
-        section: 'chapter-two',
-        rule: '2-5-action-points-and-reaction-points',
-        label: '2.5 Action Points and Reaction Points',
-      },
-    ],
-  },
-  {
     key: 'attributes',
     title: 'Attributes',
-    line: 'Three numbers everything else is built from.',
+    line: 'The roll, and the three numbers everything else is built from.',
     asks: ['boosts'],
     rules: [
+      { section: 'chapter-one', rule: '1-1-the-roll', label: '1.1 The roll' },
       { section: 'chapter-two', rule: '2-1-the-three-attributes', label: '2.1 The three attributes' },
       {
         section: 'chapter-two',
@@ -124,7 +123,6 @@ export const STEPS = [
     rules: [
       { section: 'chapter-four', rule: '4-5-talent-set', label: '4.5 Talent set' },
       { section: 'chapter-three', rule: '3-3-talent-ranks', label: '3.3 Talent ranks' },
-      { section: 'chapter-three', rule: '3-2-what-a-level-grants', label: '3.2 What a level grants' },
     ],
   },
   {
@@ -142,7 +140,6 @@ export const STEPS = [
     rules: [
       { section: 'chapter-four', rule: '4-4-background', label: '4.4 Background' },
       { section: 'chapter-seven', rule: '7-7-supplies', label: '7.7 Supplies' },
-      { section: 'chapter-seven', rule: '7-6-money', label: '7.6 Money' },
     ],
   },
   {

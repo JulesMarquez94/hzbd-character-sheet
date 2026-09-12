@@ -696,19 +696,18 @@ Advancement tab, exactly as if you had chosen it by hand.
 
 ### 4.10 The Walkthrough
 
-The Walkthrough is the way in for a first character, or for anyone who would rather be
-told why as they go. It asks the same four level 1 choices as the free hand, one screen at
-a time, and every screen has the rules on one side and the panel that makes the choice on
-the other. The panels are the ones on the Advancement tab, so what you learn to use here
-is the sheet you are handed at the end.
+The Walkthrough is the way in for a first character. It asks the same four level 1 choices
+as the free hand, one screen at a time, with the rules on one side and the panel that makes
+the choice on the other. The panels are the ones on the Advancement tab, so what you learn
+to use here is the sheet you are handed at the end.
 
-The steps run in this order: how the game works, your attributes, your talent set, your
-lineage, your background, their story and then your sheet, read through once before it
-opens. Attributes come first because everything else is built on them, and the talent
-wall is shelved by attribute, so placing your +2 first tells you which shelf to read. The
-lesson beside each panel says what the rule is, how the panel works and where in this
-book the rule is written in full. The first step lets you try a roll on the dice tray, and
-the last one shows your numbers with the arithmetic behind each of them.
+Six steps: your attributes, with the roll and the pools explained first; your talent set;
+your lineage; your background; their story; then your sheet, read through before it opens.
+Each step recommends a choice that pulls the same way as your +2: the talent shelf built on
+that attribute, a lineage that adds a point to it, the weapon shelf that rolls it and the
+armor set that gives you the most Defense as your numbers stand. You can take the
+recommendation or ignore it. The first step lets you try a roll on the dice tray, and the
+last one shows your numbers with the arithmetic behind each of them.
 
 Every choice is written to your character the moment you make it, and so is the step you
 are on. If you leave in the middle, the card on your dashboard says which step you reached

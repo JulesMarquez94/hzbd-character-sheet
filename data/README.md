@@ -16694,3 +16694,52 @@ mine, and it only bites when a codex shelf is empty at a rank.
 - **Only the dashboard offers the way back.** A bookmarked character opened straight on its
   sheet says nothing about the unfinished walk; the Advancement badge is the only sign.
 - **Ready-Made is the one path left.**
+
+## The Walkthrough, second pass, 2026-09-12
+
+> "Lets try to be more to the point and more direct, less text. The first page is redundant
+> right now because we already ask about the character name. Combine it with the following
+> page. Make recommendation along the way like focus on one attribute at the start and take
+> the talent set and weapon that work with it."
+
+**Six steps, not seven.** The first page (the primer, with the name and the campaign as its
+panel) is gone. Both fields are asked in the enlist box and both sit on the Advancement tab,
+so the walk asks for neither. The primer went into the Attributes step as three lines (one
+roll, everything is a card, everything has a price) with the practice roll under them, and
+the three sample basic actions went with the page. A bookmark left on `begin` reads as the
+first step, which is where its lesson now is.
+
+**Every lesson was cut to a few lines**: the rule, one recommendation, the panel in a
+sentence or two, the rulebook links. The ranks table became one sentence off `TALENT_RANKS`.
+The story step lost its "how" section; text boxes need none.
+
+**One recommendation a choosing step, all of them the same advice.** Build around the +2:
+
+| Step | Recommends | Read off |
+| --- | --- | --- |
+| Attributes | put the +2 on the attribute you want to build around | nothing, it is the advice itself |
+| Talent set | the shelf built on the +2, naming the written sets on it | `talentCategory` over `TALENTS` |
+| Lineage | the lineages that add a point to the +2 attribute | `lineageBonuses` over `LINEAGES` |
+| Background | the weapon shelf that rolls the +2, with how many weapons stand on it, and the armor set with the most Defense right now | `weaponShelves(startingWeapons())`, and `deriveStats` with each set worn |
+
+The armor line is the one that computes rather than looks up: each Common set is put on the
+character in turn and the Defense read back through the sheet's own arithmetic, so a Mind
+build is told Magic Armor and a Physique build is told Light or Heavy, with the numbers.
+Before the spread is placed the talent and lineage tips say to place it first, and the talent
+step keeps its button back to Attributes.
+
+### Proved
+
+- `lint:walkthrough`, eslint, `lint:text` and the build clean; the checker now holds the
+  walk to opening on Attributes and to reading an old `begin` bookmark as the first step.
+- In the browser, signed out on a device character: six pills; the first step shows the
+  primer, the three attributes, the numbers and the recommendation with no name field; after
+  a +2 on Physique the talent tip names the Physique shelf's four written sets, the lineage
+  tip names Stalwart, and the background tip names the Physique shelf and Light Armor at 13
+  Defense against 9 for Magic and 8 for Heavy. The first draft of that tip listed all twelve
+  Physique weapons by name and was cut to the count.
+
+### Still open
+
+- The recommendation wording is mine, and so is recommending armor by Defense alone: Heavy
+  Armor's weight and Magic Armor's Willpower are not weighed in it.

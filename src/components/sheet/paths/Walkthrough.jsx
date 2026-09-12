@@ -28,7 +28,6 @@ import {
 import {
   AttributesLesson,
   BackgroundLesson,
-  BeginLesson,
   LineageLesson,
   SheetLesson,
   StoryLesson,
@@ -37,7 +36,6 @@ import {
 
 /** The lesson for each step, by the step's key. See WalkthroughLessons.jsx. */
 const LESSONS = {
-  begin: BeginLesson,
   attributes: AttributesLesson,
   talent: TalentLesson,
   lineage: LineageLesson,
@@ -55,9 +53,9 @@ const LESSONS = {
  * it takes step by step each element of the character creation. Explain the
  * rules and explain how the block work."
  *
- * Seven steps, one screen each. Every screen is two columns: the lesson on one
- * side, which says what the rule is and how the panel beside it works, and the
- * panel itself on the other. **The panels are the level-1 block's own**, the
+ * Six steps, one screen each. Every screen is two columns: the lesson on one
+ * side, which says what the rule is, recommends a choice and says how the panel
+ * beside it works, and the panel itself on the other. **The panels are the level-1 block's own**, the
  * same AttributeSpreadPick, TalentPick, LineagePick and BackgroundPick the
  * Advancement tab draws and the free hand opens all at once, so what somebody
  * learns to use here is exactly the tab they are handed at the end. Nothing
@@ -269,9 +267,6 @@ function StepRail({ at, progress, onGo }) {
  */
 function Work({ step, character, patch, state, progress, go, unit }) {
   switch (step.key) {
-    case 'begin':
-      return <Identity character={character} patch={patch} />;
-
     case 'attributes':
       return (
         <AttributeSpreadPick
@@ -324,53 +319,6 @@ function Work({ step, character, patch, state, progress, go, unit }) {
     default:
       return null;
   }
-}
-
-/**
- * The name and the campaign: the two things about a character that are not a
- * choice with a chooser. The dashboard box asked for both already; this is where
- * they can be changed, and the same two fields sit at the top of the Advancement
- * tab afterwards.
- */
-function Identity({ character, patch }) {
-  return (
-    <div className="frame">
-      <h3 className="frame-heading">Identity</h3>
-
-      <div className="form-row">
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" htmlFor="wt-name">
-            Name
-          </label>
-          <input
-            className="form-input"
-            id="wt-name"
-            value={character.name || ''}
-            onChange={(e) => patch({ name: e.target.value })}
-            onBlur={(e) => !e.target.value.trim() && patch({ name: 'Unnamed Drifter' })}
-          />
-        </div>
-
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" htmlFor="wt-campaign">
-            Campaign
-          </label>
-          <input
-            className="form-input"
-            id="wt-campaign"
-            value={character.campaign || ''}
-            placeholder="The Drowned Season"
-            onChange={(e) => patch({ campaign: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <p className="frame-foot">
-        Both can be changed later, from the Advancement tab. Everything else about your character
-        is a choice with a panel of its own, and the steps ahead take them one at a time.
-      </p>
-    </div>
-  );
 }
 
 /* --------------------------------------------------------------- the summary */
