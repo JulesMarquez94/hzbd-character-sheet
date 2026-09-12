@@ -15,6 +15,7 @@ import {
   deriveStats,
   formatNumber,
   formatSpeed,
+  formatWeight,
   karmaCap,
   levelForXp,
   liveCharacter,
@@ -22,7 +23,16 @@ import {
 } from '../../../lib/characterModel.js';
 import { CHECK_DICE, CRIT_BAND } from '../../../lib/dice.js';
 import { REST_HEALTH } from '../../../lib/grants.js';
-import { armorSetOptions, normalizeEquipment, startingWeapons, weaponShelves } from '../../../lib/items.js';
+import {
+  armorSetOptions,
+  carryState,
+  combatStartEffects,
+  getItem,
+  itemWeight,
+  normalizeEquipment,
+  startingWeapons,
+  weaponShelves,
+} from '../../../lib/items.js';
 import { levelGrants } from '../../../lib/levels.js';
 import { lineageBonuses } from '../../../lib/levelPicks.js';
 import { LINEAGES } from '../../../lib/lineages.js';
@@ -44,9 +54,16 @@ import { ruleHref, stepsWaiting } from '../../../lib/walkthrough.js';
  * day). So the attributes step says to build around the +2, and every step after
  * it reads the +2 off the row and names what pulls the same way: the talent
  * shelf built on that attribute, the lineages that add a point to it, the weapon
- * shelf that rolls it, and the armor set that gives the most Defense as the
- * numbers stand. Every one of those is computed from the codex, never typed, so
- * a set added tomorrow is recommended tomorrow.
+ * shelf that rolls it, and the armor set that builds on it. Every one of those is
+ * computed from the codex, never typed, so a set added tomorrow is recommended
+ * tomorrow.
+ *
+ * **Armor is compared, not crowned.** The first draft named the set with the
+ * most Defense and Jules sent it back the same day: "does not take into account
+ * all the details of armor, the damage reduction and Defense and the Shield."
+ * So the three Common sets are each worn on the character in turn and read back
+ * through the sheet's own arithmetic, as a table: Defense, Armor, the Shield
+ * they start a fight with, and what they weigh. See `armorAdvice`.
  *
  * **No number in here is typed.** The base, the ceiling, the rank levels, the
  * coins a background is worth, what a rest costs and the width of the critical
@@ -110,7 +127,7 @@ function Tip({ children }) {
   return (
     <section className="wt-section wt-section-tip">
       <h4 className="wt-section-title">Recommended</h4>
-      <p>{children}</p>
+      {children}
     </section>
   );
 }
@@ -254,8 +271,11 @@ export function AttributesLesson({ character, step, unit }) {
       </Lesson>
 
       <Tip>
-        Pick one attribute to build around and put the <b>+2</b> there. The next steps point at
-        a talent set, a lineage and a weapon that use it, so every choice pulls the same way.
+        <p>
+          Pick one attribute to build around and put the <b>+2</b> there. The next steps point
+          at a talent set, a lineage and a weapon that use it, so every choice pulls the same
+          way.
+        </p>
       </Tip>
 
       <Lesson title="How this panel works" kind="how">
@@ -291,18 +311,20 @@ export function TalentLesson({ state, step, go }) {
       </Lesson>
 
       <Tip>
-        {major ? (
-          <>
-            Your +2 is on <b>{attributeLabel(major)}</b>. Read the {attributeLabel(major)} shelf
-            first and take a set from it: {listAnd(shelf)}. Their cards roll the attribute you
-            raised.
-          </>
-        ) : (
-          <>
-            Place your boosts first. The shelf that matches your +2 is the one to read, because
-            its cards roll the attribute you raised.
-          </>
-        )}
+        <p>
+          {major ? (
+            <>
+              Your +2 is on <b>{attributeLabel(major)}</b>. Read the {attributeLabel(major)}{' '}
+              shelf first and take a set from it: {listAnd(shelf)}. Their cards roll the
+              attribute you raised.
+            </>
+          ) : (
+            <>
+              Place your boosts first. The shelf that matches your +2 is the one to read,
+              because its cards roll the attribute you raised.
+            </>
+          )}
+        </p>
       </Tip>
       {!major && (
         <div className="pick-tools pick-tools-tight">
@@ -359,18 +381,20 @@ export function LineageLesson({ state, step }) {
       </Lesson>
 
       <Tip>
-        {raisers.length > 0 ? (
-          <>
-            {listAnd(raisers)} {raisers.length === 1 ? 'adds' : 'add'} a point of{' '}
-            <b>{attributeLabel(major)}</b> on top of your spread. Any lineage works with any
-            spread; that one pulls the same way as your +2.
-          </>
-        ) : (
-          <>
-            Any lineage works with any spread. One that adds a point to your +2 attribute pulls
-            the same way.
-          </>
-        )}
+        <p>
+          {raisers.length > 0 ? (
+            <>
+              {listAnd(raisers)} {raisers.length === 1 ? 'adds' : 'add'} a point of{' '}
+              <b>{attributeLabel(major)}</b> on top of your spread. Any lineage works with any
+              spread; that one pulls the same way as your +2.
+            </>
+          ) : (
+            <>
+              Any lineage works with any spread. One that adds a point to your +2 attribute pulls
+              the same way.
+            </>
+          )}
+        </p>
       </Tip>
 
       <Lesson title="How this panel works" kind="how">
@@ -386,34 +410,68 @@ export function LineageLesson({ state, step }) {
 }
 
 /**
- * Which armor set gives the most Defense as the numbers stand, worked out by
- * wearing each set on this character and reading the Defense back through the
- * sheet's own arithmetic: Light Armor builds Defense on Reflex, Magic Armor on
- * Grit, Heavy Armor adds half its Armor, and which wins depends on the spread.
+ * The three Common armor sets as they would stand on this character.
+ *
+ * Each set is worn in turn and read back through the sheet's own arithmetic,
+ * so the table says what the sheet will say: `deriveStats` for the Defense and
+ * the Armor, `combatStartEffects` for the Shield a set puts in front of Health
+ * when a fight starts (held to the Shield cap, as the bell holds it), the pieces'
+ * own weight, and whether that weight is over what the character can carry.
+ *
+ * `favored` is whether the set builds on the +2. Worked out rather than looked
+ * up: the +2 attribute is raised by one and the set is favored if its Defense or
+ * its Shield moves. Light Armor's Defense is Reflex, so it moves with Physique;
+ * Magic Armor's Defense is Grit and its Shield is Mind, so both move with Mind;
+ * every set builds on Instinct, so an Instinct spread favors all three.
  */
-function armorAdvice(character) {
+function armorAdvice(character, major) {
   const level = levelForXp(character?.xp);
   const worn = normalizeEquipment(character?.equipment);
 
-  return armorSetOptions()
-    .map((set) => {
-      const equipment = {
-        ...worn,
-        head: set.pieces.head,
-        torso: set.pieces.torso,
-        legs: set.pieces.legs,
-      };
-      return { name: set.name, avoid: deriveStats({ ...character, level, equipment }).avoid };
-    })
-    .sort((a, b) => b.avoid - a.avoid);
+  const wearing = (who, set) => ({
+    ...who,
+    level,
+    equipment: { ...worn, head: set.pieces.head, torso: set.pieces.torso, legs: set.pieces.legs },
+  });
+  const shieldAt = (who, stats) =>
+    Math.min(
+      stats.shield_cap,
+      combatStartEffects(who).reduce((sum, row) => sum + row.shield, 0)
+    );
+
+  const raised = major
+    ? { ...character, [major]: (Math.floor(Number(character?.[major])) || 0) + 1 }
+    : null;
+
+  return armorSetOptions().map((set) => {
+    const dressed = wearing(character, set);
+    const stats = deriveStats(dressed);
+    const shield = shieldAt(dressed, stats);
+
+    let favored = false;
+    if (raised) {
+      const up = wearing(raised, set);
+      const upStats = deriveStats(up);
+      favored = upStats.avoid > stats.avoid || shieldAt(up, upStats) > shield;
+    }
+
+    return {
+      name: set.name,
+      avoid: stats.avoid,
+      armor: stats.defense,
+      shield,
+      weight: Object.values(set.pieces).reduce((sum, id) => sum + itemWeight(getItem(id)), 0),
+      over: carryState(dressed).state !== 'clear',
+      favored,
+    };
+  });
 }
 
-export function BackgroundLesson({ character, state, step }) {
+export function BackgroundLesson({ character, state, step, unit }) {
   const major = state.picks.boosts?.major ?? null;
   const rack = weaponShelves(startingWeapons())?.find((row) => row.shelf.id === major) ?? null;
-  const armor = armorAdvice(character);
-  const best = armor.filter((set) => set.avoid === armor[0]?.avoid);
-  const rest = armor.filter((set) => set.avoid !== armor[0]?.avoid);
+  const sets = armorAdvice(character, major);
+  const favored = sets.filter((set) => set.favored);
 
   return (
     <>
@@ -443,31 +501,64 @@ export function BackgroundLesson({ character, state, step }) {
       </Lesson>
 
       <Tip>
-        {rack ? (
-          <>
-            In the outfitter, take a weapon from the <b>{attributeLabel(major)}</b> shelf: all{' '}
-            {rack.items.length} of them roll the attribute you raised.{' '}
-          </>
-        ) : (
-          <>Take a weapon from the shelf of your +2 attribute; the outfitter shelves them by it. </>
-        )}
-        {armor.length > 0 && (
-          <>
-            {best.length === 1 ? (
-              <>
-                <b>{best[0].name}</b> gives you the most Defense right now, {best[0].avoid}
-              </>
-            ) : (
-              <>
-                {listAnd(best.map((set) => set.name))} tie for the most Defense right now,{' '}
-                {best[0].avoid}
-              </>
-            )}
-            {rest.length > 0
-              ? `, against ${listAnd(rest.map((set) => `${set.avoid} for ${set.name}`))}.`
-              : '.'}
-          </>
-        )}
+        <p>
+          {rack ? (
+            <>
+              In the outfitter, take a weapon from the <b>{attributeLabel(major)}</b> shelf: all{' '}
+              {rack.items.length} of them roll the attribute you raised.
+            </>
+          ) : (
+            <>Take a weapon from the shelf of your +2 attribute; the outfitter shelves them by it.</>
+          )}
+        </p>
+
+        {/* The three sets as they would stand on you, not a winner. Defense is what
+            an attack has to roll against, Armor comes off every hit that lands,
+            and Shield is what stands in front of Health when a fight starts. */}
+        <table className="wt-table wt-armor">
+          <thead>
+            <tr>
+              <th>Armor set</th>
+              <th>Defense</th>
+              <th>Armor</th>
+              <th>Shield</th>
+              <th>Weight</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sets.map((set) => (
+              <tr key={set.name} className={set.favored ? 'is-favored' : undefined}>
+                <td>{set.name}</td>
+                <td>{set.avoid}</td>
+                <td>{set.armor}</td>
+                <td>{set.shield}</td>
+                <td>
+                  {formatWeight(set.weight, unit)}
+                  {set.over && (
+                    <span className="wt-armor-over" title="Over what you can carry: your Speed is halved">
+                      {' '}
+                      · over
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <p>
+          Defense is what an attack has to roll against. Armor comes off every hit that lands.
+          Shield is what stands in front of your Health when a fight starts.{' '}
+          {!major
+            ? 'Place your boosts first; the table moves with them.'
+            : favored.length === sets.length
+              ? `All three build on ${attributeLabel(major)}: take the column you want.`
+              : favored.length > 0
+                ? `${listAnd(favored.map((set) => set.name))} ${
+                    favored.length === 1 ? 'builds' : 'build'
+                  } on ${attributeLabel(major)}, so your +2 counts there.`
+                : ''}
+        </p>
       </Tip>
 
       <Lesson title="How this panel works" kind="how">

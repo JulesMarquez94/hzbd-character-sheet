@@ -493,7 +493,7 @@ const LINEAGE_CODEX = [
     id: 'celestial',
     name: 'Celestial',
     tagline: 'An ancestor’s pact with celestial beings, still shining through.',
-    art: '/lineages/celestial.jpg',
+    art: 'codex:lineages/celestial.full.jpg',
     tags: ['planar', 'flight', 'spellcasting'],
     blurb:
       'At some point, your ancestor made a pact with celestial beings, forever altering themselves and their descendants. These changes can manifest in various ways. You could have a radiant aura that glows softly, eyes that shine like stars, or skin with a slight, otherworldly luminescence. Some might have hair that seems to shimmer like spun gold or silver, skin marked with faint, glowing runes.', // text-style-ok: the designer's blurb, transcribed
@@ -504,7 +504,7 @@ const LINEAGE_CODEX = [
     id: 'infernal',
     name: 'Infernal',
     tagline: 'An ancestor’s bargain with infernal entities, still being paid.',
-    art: '/lineages/infernal.jpg',
+    art: 'codex:lineages/infernal.full.jpg',
     tags: ['planar', 'flight', 'spellcasting'],
     blurb:
       'At some point, your ancestor made a deal with infernal entities, forever changing themselves and their descendants. These changes can manifest in various ways. You could have horns of varying shapes and sizes, unusual skin colors like deep red, ash gray, or even black. Others could have tails, pointed ears, or hair that seems to smolder like embers.', // text-style-ok: the designer's blurb, transcribed
@@ -515,7 +515,7 @@ const LINEAGE_CODEX = [
     id: 'fey',
     name: 'Fey',
     tagline: 'Born of enchanted glades: small, winged and always aloft.',
-    art: '/lineages/fey.jpg',
+    art: 'codex:lineages/fey.full.jpg',
     tags: ['fey', 'flight'],
     blurb:
       'From living in the heart of enchanted forests and ancient glades, your ancestors have established a deep connection with the realm of the fey. This mystical bond has significantly altered your appearance. You have a smaller stature, delicate wings reminiscent of butterflies or dragonflies. Some might have hair adorned with tiny flowers or leaves, or skin that glows faintly in the dark.',
@@ -540,7 +540,7 @@ const LINEAGE_CODEX = [
     id: 'scorchbound',
     name: 'Scorchbound',
     tagline: 'Raised beside the fire, and carrying some of it.',
-    art: '/lineages/scorchbound.jpg',
+    art: 'codex:lineages/scorchbound.full.jpg',
     tags: ['elemental', 'spellcasting'],
     blurb:
       'From living in proximity to a volcano or other natural source of heat, your ancestors have established a deep connection with the element of fire. This elemental bond has significantly altered your appearance. You could have ashen skin, red eyes, fiery hair, or even glowing ember-like freckles. Some might have hair that flickers like flames or eyes that smolder with an inner heat.', // text-style-ok: the designer's blurb, transcribed
@@ -568,7 +568,7 @@ const LINEAGE_CODEX = [
     id: 'skybound',
     name: 'Skybound',
     tagline: 'Open plains and high peaks. The wind never quite let go.',
-    art: '/lineages/skybound.jpg',
+    art: 'codex:lineages/skybound.full.jpg',
     tags: ['elemental', 'movement', 'spellcasting'],
     blurb:
       'From living in open plains or atop high mountains, your ancestors have established a deep connection with the element of wind. This elemental bond has significantly altered your appearance. You could have light, almost translucent skin, hair that flows like the wind, piercing sky-blue eyes, or even skin that seems to be in constant motion. Some might have eyes that change color with the weather or hair that whispers like the breeze.', // text-style-ok: the designer's blurb, transcribed
@@ -592,7 +592,7 @@ const LINEAGE_CODEX = [
     id: 'tidebound',
     name: 'Tidebound',
     tagline: 'Raised by water, and never entirely out of it.',
-    art: '/lineages/tidebound.jpg',
+    art: 'codex:lineages/tidebound.full.jpg',
     tags: ['elemental', 'spellcasting'],
     blurb:
       'From living near oceans, rivers, or other natural sources of water, your ancestors have established a deep connection with the element of water. This elemental bond has significantly altered your appearance. You could have smooth, blue-tinged skin, flowing hair that moves like water, deep sea-green eyes, or even hair resembling seaweed. Some might have skin that shimmers or eyes that change color like the ocean.', // text-style-ok: the designer's blurb, transcribed
@@ -614,7 +614,7 @@ const LINEAGE_CODEX = [
     id: 'stonebound',
     name: 'Stonebound',
     tagline: 'Deep forest and deeper mountain. The earth answers you.',
-    art: '/lineages/stonebound.jpg',
+    art: 'codex:lineages/stonebound.full.jpg',
     tags: ['elemental', 'resilience', 'spellcasting'],
     blurb:
       'From living in the depths of forests or within the mountains, your ancestors have established a deep connection with the element of earth. This elemental bond has significantly altered your appearance. You could have rugged, stone-like skin, mossy hair, eyes that shimmer like precious gems, or even hair resembling gemstones. Some might have bark-like skin patterns or eyes that sparkle like crystals.', // text-style-ok: the designer's blurb, transcribed
@@ -636,7 +636,7 @@ const LINEAGE_CODEX = [
     id: 'draconic',
     name: 'Draconic',
     tagline: 'Dragon blood in the veins, and scales to prove it.',
-    art: '/lineages/draconic.jpg',
+    art: 'codex:lineages/draconic.full.jpg',
     tags: ['planar', 'resilience'],
     blurb:
       'Your ancestors got draconic blood mixed in their veins through rituals or other means, forever altering themselves and their descendants. These changes can manifest in various ways. Your body is covered in scales that match the color of the dragon the blood came from, as well as having potential other draconic features ranging from reptilian eyes to dragon-shaped facial features.',
@@ -682,7 +682,7 @@ const LINEAGE_CODEX = [
        and every odd level's point. */
     attributes: { physique: 1 },
     tagline: 'Bred by harsh country into something harder than most.',
-    art: '/lineages/stalwart.jpg',
+    art: 'codex:lineages/stalwart.full.jpg',
     tags: ['folk', 'attribute'],
     blurb:
       'Descended from ancestors who thrived in harsh environments, the Stalwart lineage embodies physical resilience. Their bodies, tested by the elements, result in individuals more physically imposing than typical for their race.',
@@ -701,7 +701,7 @@ const LINEAGE_CODEX = [
     name: 'Wildheart',
     attributes: { instinct: 1 },
     tagline: 'A simple life close to nature, and the instincts it leaves.',
-    art: '/lineages/wildheart.jpg',
+    art: 'codex:lineages/wildheart.full.jpg',
     tags: ['folk', 'attribute'],
     blurb:
       'Your ancestors lived a simple life close to nature, allowing you to retain a deep connection to the primal part of yourself. This lineage grants you good instincts and sharp reflexes, honed by generations of living in harmony with the wild.',
@@ -720,7 +720,7 @@ const LINEAGE_CODEX = [
     name: 'Luminary',
     attributes: { mind: 1 },
     tagline: 'A line that prized learning, and bred quicker minds for it.',
-    art: '/lineages/luminary.jpg',
+    art: 'codex:lineages/luminary.full.jpg',
     tags: ['folk', 'attribute'],
     blurb:
       'Hailing from a lineage that prioritizes education, the Luminary lineage boasts individuals with quicker minds than most. These ancestors valued knowledge and intellectual growth, passing down a legacy of sharp wit and keen intellect.',
@@ -738,7 +738,7 @@ const LINEAGE_CODEX = [
     id: 'undead',
     name: 'Undead',
     tagline: 'Cursed with undeath: very hard to kill, and slow to mend.',
-    art: '/lineages/undead.jpg',
+    art: 'codex:lineages/undead.full.jpg',
     tags: ['cursed', 'resilience'],
     blurb:
       'Regardless of your lineage’s origins, it has been cursed with undeath, bestowing upon you remarkable resilience but at the expense of a slow metabolism. This curse has left its mark on your appearance, which can range from pale skin and a malnourished look to a skeletal visage. The curse of undeath has made you unnaturally hard to kill but has also altered your physical appearance.',
@@ -779,7 +779,7 @@ const LINEAGE_CODEX = [
     id: 'wildkin',
     name: 'Wildkin',
     tagline: 'A primal bond with the beasts, and two traits of your choosing.',
-    art: '/lineages/wildkin.jpg',
+    art: 'codex:lineages/wildkin.full.jpg',
     tags: ['beastkin'],
     blurb:
       'At some point, your ancestors forged a primal bond with the beasts of the wild, forever altering themselves and their descendants. These changes can manifest in various ways. You could have prominent traits like animal ears, a sleek tail, sharp claws, or patches of soft fur, feathers, or fine scales. Some might have striking feline, avian, or reptilian eyes, elongated fangs, or hair that resembles a wild mane or feathered crest.', // text-style-ok: the designer's blurb, transcribed

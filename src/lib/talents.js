@@ -238,7 +238,7 @@ const TALENT_SETS = [
     id: 'guardian',
     name: 'Guardian',
     tagline: 'A bulwark who turns an enemy’s strength into an opening.',
-    art: '/talents/guardian.jpg',
+    art: 'codex:talents/guardian.full.jpg',
     /* Physique, and every card below still rolls Instinct. Ruled by Jules on
        2026-08-23: a Guardian is built on the body that holds the shield up, so
        Physique is the attribute somebody choosing this set is choosing it *for*,
@@ -453,7 +453,7 @@ const TALENT_SETS = [
        replacement prose for a tab that simply did not export is how a set stops
        being the designer's. Flagged rather than fixed; see data/README.md. */
     tagline: 'A conduit of the mycelial network, turning the dead into power.',
-    art: '/talents/mycomancer.jpg',
+    art: 'codex:talents/mycomancer.full.jpg',
     tags: ['instinct', 'spellcasting', 'support', 'control'],
     stat: 'instinct',
     /* A set that does not only hand you cards, it hands you a *choice* of them.
@@ -586,7 +586,7 @@ const TALENT_SETS = [
     /* The sheet's Summary column, byte for byte. */
     tagline:
       'An opportunistic alchemist who transforms raw battlefield chaos into potent, custom brews.',
-    art: '/talents/cauldron-keeper.jpg',
+    art: 'codex:talents/cauldron-keeper.full.jpg',
     /* The sheet's Tags column: "Support, Instinct". */
     tags: ['instinct', 'support'],
     stat: 'instinct',
@@ -878,7 +878,7 @@ const TALENT_SETS = [
        order so the workbook can hold the same words. Every card below is the
        Ability tab, byte for byte. */
     tagline: 'A beast-bonded drifter who sends their dragon ahead and takes its wounds in its stead.',
-    art: '/talents/draconic-bond.jpg',
+    art: 'codex:talents/draconic-bond.full.jpg',
     /* House-written with the rest of the Overview, and re-shelved on 2026-08-23.
        It read Mind, because every roll the ally makes is a Mind roll. Jules
        ruled Level instead: what a Draconic Bond actually buys is the second stat
@@ -1121,7 +1121,7 @@ const TALENT_SETS = [
        so the workbook can hold the same words. Every card below is the Ability
        tab, byte for byte. */
     tagline: 'A thief who strikes from where nobody is looking and is never standing where the blow lands.',
-    art: '/talents/trickster.jpg',
+    art: 'codex:talents/trickster.full.jpg',
     /* House-written with the rest of the Overview. Instinct because every roll
        the set asks for is an Instinct roll and it leans on nothing else; Martial
        because AMBUSH and STEAL are both spent on a weapon in hand; Defense for
@@ -2091,7 +2091,7 @@ const TALENT_SETS = [
        being read off the names, and `Source`, which says `sheet` on all nine rows.
        Nothing in this set is house-written. */
     tagline: 'Willpower poured into muscle, and every trick you pull cuts the rage shorter.',
-    art: '/talents/berserker.jpg',
+    art: 'codex:talents/berserker.full.jpg',
     /* Martial, Defense and Physique are the sheet's own Tags column. Physique is
        what the rage *raises* rather than what the set rolls: nothing here is
        contested against anybody, and the two numbers the cards move are the
@@ -2369,7 +2369,7 @@ const TALENT_SETS = [
        renamed `Colossal` to `Great` on all four, and the two cards that print the
        category print Great Weapon with it. */
     tagline: 'A weapon too big for one hand, and the training to make one swing count for everything.',
-    art: '/talents/colossus.jpg',
+    art: 'codex:talents/colossus.full.jpg',
     /* Martial and Physique are the sheet's own Tags column, and Physique earns it
        twice over: it is what somebody choosing this set is choosing it for, and it
        is what every Great Weapon is swung on. No Defense and no Control, and
@@ -2673,7 +2673,7 @@ const TALENT_SETS = [
        already has a slot for. The proposal is logged in data/README.md rather than
        thrown away, because its Overview tab is where the fantasy below comes from. */
     tagline: 'A book bound to a life, and every spell in it was copied out by hand.',
-    art: '/talents/arcanist.jpg',
+    art: 'codex:talents/arcanist.full.jpg',
     /* Mind, Support and Control are the superseded sheet's own Tags column, and
        they still fit a set whose reach is whatever it has written down. The
        fourth is added here: `spellcasting`, which is the role this whole track is,

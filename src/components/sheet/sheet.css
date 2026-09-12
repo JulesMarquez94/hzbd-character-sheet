@@ -15859,3 +15859,15 @@ button.tgt-chip:disabled {
 .wt-section-tip .wt-section-title {
   color: var(--path-accent);
 }
+
+/* The armor table inside the recommendation: the set that builds on the +2
+   wears the path's colour on its name, and a weight the character cannot carry
+   says so beside the number. */
+.wt-armor tr.is-favored td:first-child {
+  color: var(--path-accent);
+}
+
+.wt-armor-over {
+  font-size: 0.68rem;
+  color: var(--danger-rose);
+}

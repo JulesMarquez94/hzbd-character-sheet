@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { VERDICTS, rollNotation, verdictLabel } from '../lib/dice.js';
 import Die from './Die.jsx';
+import useCodexArt from './useCodexArt.js';
 
 /**
  * The flat roller: dice on a surface, without the physics.
@@ -89,6 +90,14 @@ export default function DiceSurface({
   Stage = null,
 }) {
   const { spec, result, phase } = job;
+
+  /* The header's face, gated. Every other art surface on the site asks
+     useCodexArt at the moment of drawing, and this one did not: the tray is
+     handed a plain URL by whoever raised the roll, and three callers were
+     passing `card.art_url` straight through. So the gate goes here, at the
+     point of drawing, rather than on each of them. A caller cannot leak a
+     picture past a check it does not perform. */
+  const headArt = useCodexArt()(spec.art);
 
   /* A physics table, when the tier and the machine both allow one. It replaces
      the floor and nothing else, and it owns the timing while it is up: dice
@@ -227,8 +236,8 @@ export default function DiceSurface({
         {/* The action, as a plate: the card's own face beside its name, so a
             roll reads as the thing being done rather than as loose arithmetic.
             A roll with no card behind it keeps the plate and drops the art. */}
-        <div className={`dice-head${spec.art ? ' has-art' : ''}`}>
-          {spec.art && <img className="dice-head-art" src={spec.art} alt="" loading="lazy" />}
+        <div className={`dice-head${headArt ? ' has-art' : ''}`}>
+          {headArt && <img className="dice-head-art" src={headArt} alt="" loading="lazy" />}
           <span className="dice-head-body">
             {watching && <span className="dice-whose">{spec.note || 'Someone'} rolled</span>}
             <span className="dice-head-name">{spec.name || 'A roll'}</span>

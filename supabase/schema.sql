@@ -1646,6 +1646,85 @@ create policy "portraits: owner delete" on storage.objects
   using (bucket_id = 'portraits' and public.owns_image_path(name));
 
 -- ----------------------------------------------------------------------------
+--  CODEX ART  (the private bucket the card pictures live in)
+--
+--  Every picture in the codex today is AI generated placeholder art, made for
+--  Jules and the people he plays with and nobody else. It used to ship inside
+--  the repository under public/cards, which is a public GitHub repository
+--  served from an unauthenticated origin: showsArt() decided whether a plate
+--  was *drawn*, and anyone at all could fetch the file behind it, or read it
+--  out of the repository without visiting the site at all.
+--
+--  So the pictures live here instead, in a bucket with no public route. The
+--  only way to one is a signed URL, and the policy below has to allow it before
+--  a URL can be minted. That is what turns the art rule from an interface
+--  courtesy into a boundary.
+--
+--  ------------------------------------------------------------------ the names
+--
+--    <set>/<id>.<part>.<ext>
+--
+--    cards/heal.full.webp                720px, the plate a dealt card draws
+--    cards/heal.thumb.webp               200px, the 92px plate a brief draws
+--    items/healing-potion.full.webp      720px, the item card
+--    items/healing-potion.thumb.webp     128px, the 40px icon tile
+--    lineages/celestial.full.jpg         the square plate
+--    talents/berserker.full.jpg          the square plate
+--    backgrounds/criminal.full.jpg       the square plate
+--
+--  Three dot-separated pieces after the set, always. The part is never left off
+--  a picture that has only one size, so one parser reads every name in the
+--  bucket and a second size can be added later without renaming anything.
+--
+--  The part is separated by a dot rather than by the `-thumb` the repository
+--  used, because an id is kebab-case and full of hyphens: `healing-potion-thumb`
+--  only parses if you already know `-thumb` is a reserved trailing word. A dot
+--  cannot occur in an id, so split_part is enough and there is nothing to know.
+--  It is also what the portraits bucket above already does.
+--
+--  No content hash in the name. A signed URL is minted fresh each session, so a
+--  redraw is picked up without one, and a stable name means a redrawn picture
+--  overwrites in place: nothing that already points at it has to be found and
+--  rewritten. The hash stays in the manifests src/lib/cardArt.js and
+--  src/lib/itemArt.js carry, where it still versions art served from the
+--  repository.
+--
+--  -------------------------------------------------------------- who may read
+--  friend and admin. That is CAPABILITIES.art in src/lib/tiers.js said a second
+--  time somewhere it can actually be enforced, and the two must agree.
+--
+--  Paying does not buy pictures: premium buys room to play in. The gate is on
+--  how a picture was *made*, not on what a tier is worth. When commissioned art
+--  replaces a placeholder it goes back into public/ in the repository and is
+--  served to everybody, one picture at a time, and this bucket empties as that
+--  happens.
+--
+--  ------------------------------------------------------------- who may write
+--  Nobody. There is no insert, update or delete policy on this bucket, so no
+--  browser can write to it whatever tier it holds. scripts/push-codex-art.mjs
+--  uploads with the service role key, which bypasses RLS, and that key never
+--  leaves Jules's machine.
+-- ----------------------------------------------------------------------------
+
+-- 256 KiB an object. The largest picture in the set today is 85 KB and the pull
+-- scripts cut everything to 720px of WebP before it arrives, so this is three
+-- times the worst case rather than a limit anybody will meet.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('codex', 'codex', false, 262144, array['image/webp', 'image/jpeg'])
+on conflict (id) do update
+  set public             = false,
+      file_size_limit    = 262144,
+      allowed_mime_types = array['image/webp', 'image/jpeg'];
+
+-- The tier names are spelled out rather than compared on the ladder, the same
+-- way public.image_slots does it. A tier inserted above `friend` would have to
+-- be added here by hand, which is the trade for a policy anybody can read.
+drop policy if exists "codex: friends read" on storage.objects;
+create policy "codex: friends read" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'codex' and public.account_tier() in ('friend', 'admin'));
+
+-- ----------------------------------------------------------------------------
 --  REALTIME
 --  Lets viewers see a sheet update without reloading. Realtime still honours
 --  RLS, so subscribers only receive rows they are allowed to read.

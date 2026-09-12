@@ -37,3 +37,9 @@ dist-ssr
 # deploy. It names the linked project and caches server versions, so it is local
 # machine state rather than anything the repository should carry.
 supabase/.temp/
+
+# The codex art uploader's receipt: the sha256 of every object as it was last
+# pushed, so a second run sends only what changed. Local state and nothing else.
+# Delete it and the next run re-uploads all of them, which costs time and no
+# more. See scripts/push-codex-art.mjs.
+.codex-art.json

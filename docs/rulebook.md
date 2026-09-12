@@ -704,9 +704,10 @@ to use here is the sheet you are handed at the end.
 Six steps: your attributes, with the roll and the pools explained first; your talent set;
 your lineage; your background; their story; then your sheet, read through before it opens.
 Each step recommends a choice that pulls the same way as your +2: the talent shelf built on
-that attribute, a lineage that adds a point to it, the weapon shelf that rolls it and the
-armor set that gives you the most Defense as your numbers stand. You can take the
-recommendation or ignore it. The first step lets you try a roll on the dice tray, and the
+that attribute, a lineage that adds a point to it and the weapon shelf that rolls it. For
+armor it shows the three Common sets as they would stand on you, with their Defense, their
+Armor, the Shield they start a fight with and their weight, and marks the set that builds on
+your +2. You can take the recommendation or ignore it. The first step lets you try a roll on the dice tray, and the
 last one shows your numbers with the arithmetic behind each of them.
 
 Every choice is written to your character the moment you make it, and so is the step you

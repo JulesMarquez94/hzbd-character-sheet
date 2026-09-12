@@ -16741,5 +16741,32 @@ step keeps its button back to Attributes.
 
 ### Still open
 
-- The recommendation wording is mine, and so is recommending armor by Defense alone: Heavy
-  Armor's weight and Magic Armor's Willpower are not weighed in it.
+- The recommendation wording is mine. Recommending armor by Defense alone was answered the
+  same day; see below.
+
+## The armor table, 2026-09-12
+
+> "The armor recommendation does not take into account all the details of armor, the damage
+> reduction and Defense and the Shield."
+
+The armor line named the set with the most Defense and nothing else. It is a table now: the
+three Common sets, each worn on the character in turn and read back through the sheet's own
+arithmetic, with four columns and a steer.
+
+| Column | Read off |
+| --- | --- |
+| Defense | `deriveStats` with the set worn: Reflex for Light, Grit for Magic, Instinct plus half the Armor for Heavy, and the flat points the pieces add |
+| Armor | the same, which at Common is 9 for Chainmail and 0 for the other two |
+| Shield | `combatStartEffects` with the set worn, held to the Shield cap: three Runed pieces put 3 x Mind in front of Health when a fight starts, the other sets nothing |
+| Weight | the three pieces' own weight, with "over" beside it when `carryState` says the character cannot carry it |
+
+The steer is computed too. The +2 attribute is raised by one and a set is marked as building
+on it if its Defense or its Shield moves: Light moves with Physique (Reflex), Magic with Mind
+(Grit and the Shield), and every set with Instinct, so an Instinct spread marks all three and
+the line says so. Under the table one sentence says what the three numbers are, in the
+rulebook's own words: Defense is what an attack has to roll against, Armor comes off every hit
+that lands, Shield stands in front of Health when a fight starts.
+
+On a Physique 6, Instinct 4, Mind 5 spread at level 1 the table reads Light 13 / 0 / 0 /
+7.5 kg, Heavy 8 / 9 / 0 / 19.5 kg, Magic 9 / 0 / 15 / 3.5 kg, with Light marked. Willpower is
+not a column, because no Common set moves it.

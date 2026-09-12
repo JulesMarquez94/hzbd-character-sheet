@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient.js';
 import { AuthContext } from './auth-context.js';
 import { subscribeToTable } from '../lib/realtime.js';
+import { reset as resetCodexArt } from '../lib/codexSigner.js';
 import { can, getTier, normalizeTier, showsArt } from '../lib/tiers.js';
 
 export function AuthProvider({ children }) {
@@ -96,6 +97,23 @@ export function AuthProvider({ children }) {
       onResync: refreshProfile,
     });
   }, [userId, refreshProfile]);
+
+  /**
+   * Empty the codex art desk whenever the account changes.
+   *
+   * The card pictures live in a private bucket and are drawn through signed
+   * URLs, which are minted for whoever asked for them. They must not survive a
+   * sign-out into the next person's session, and an account that has just been
+   * demoted out of the art has to stop drawing what it was drawing a moment
+   * ago. `role` is in the key as well as the id for that second reason.
+   *
+   * Here rather than beside the desk itself, because this is the file that
+   * knows when an account has changed. See src/lib/codexSigner.js.
+   */
+  const accountKey = `${userId ?? 'nobody'}:${profile?.role ?? ''}`;
+  useEffect(() => {
+    resetCodexArt();
+  }, [accountKey]);
 
   const value = useMemo(() => {
     const user = session?.user ?? null;

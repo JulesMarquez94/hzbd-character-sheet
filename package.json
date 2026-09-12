@@ -27,6 +27,7 @@
     "lint:crossroads": "node scripts/check-crossroads.mjs",
     "lint:walkthrough": "node scripts/check-walkthrough.mjs",
     "lint:images": "node scripts/check-images.mjs",
+    "lint:codex": "node scripts/check-codex-art.mjs",
     "sb:login": "npx supabase@2 login",
     "sb:link": "npx supabase@2 link",
     "sb:secrets": "npx supabase@2 secrets set",
@@ -37,7 +38,9 @@
     "preview": "vite preview",
     "art": "node scripts/pull-card-art.mjs && node scripts/pull-item-art.mjs",
     "art:cards": "node scripts/pull-card-art.mjs",
-    "art:items": "node scripts/pull-item-art.mjs"
+    "art:items": "node scripts/pull-item-art.mjs",
+    "art:push": "node scripts/push-codex-art.mjs",
+    "art:push:dry": "node scripts/push-codex-art.mjs --dry"
   },
   "dependencies": {
     "@drdreo/dice-box-threejs": "^1.1.0",

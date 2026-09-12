@@ -774,7 +774,7 @@ const BACKGROUND_CODEX = [
     id: 'criminal',
     name: 'Criminal',
     tagline: 'You learned the city from underneath it.',
-    art: '/backgrounds/criminal.jpg',
+    art: 'codex:backgrounds/criminal.full.jpg',
     tags: ['underworld', 'stealth', 'social'],
     blurb:
       'You made your living on the wrong side of a door. Maybe you ran with a crew, maybe you worked alone and slept badly for it, but either way you know which windows are never latched and which watchmen are already paid.\n\n' +
@@ -798,7 +798,7 @@ const BACKGROUND_CODEX = [
     id: 'erudit',
     name: 'Erudit',
     tagline: 'Three things you know, and nothing at all in your pockets.',
-    art: '/backgrounds/erudit.jpg',
+    art: 'codex:backgrounds/erudit.full.jpg',
     tags: ['scholarly', 'lore'],
     blurb:
       'An academy, a private library, a master who took you on and then died. You came up through books, and it shows: you have read about far more of the world than you have walked through.\n\n' +
@@ -834,7 +834,7 @@ const BACKGROUND_CODEX = [
     id: 'military',
     name: 'Military',
     tagline: 'You were paid to stand in a line and not run.',
-    art: '/backgrounds/military.jpg',
+    art: 'codex:backgrounds/military.full.jpg',
     tags: ['martial', 'warfare', 'coin'],
     blurb:
       'A regiment, a levy, a city garrison. You carried a weapon on somebody else’s order and you were good enough at it to still be here. You know how a camp is run, how a siege is dug and how long men will hold before they break.\n\n' +
@@ -861,7 +861,7 @@ const BACKGROUND_CODEX = [
     id: 'outlander',
     name: 'Outlander',
     tagline: 'No town claims you, and the road has never run out.',
-    art: '/backgrounds/outlander.jpg',
+    art: 'codex:backgrounds/outlander.full.jpg',
     tags: ['wilds', 'survival', 'supplies'],
     blurb:
       'You have been moving for as long as it matters. Outrider, trapper, pilgrim, exile. The name changes and the life does not. You have slept under more skies than roofs.\n\n' +
@@ -885,7 +885,7 @@ const BACKGROUND_CODEX = [
     id: 'craftsman',
     name: 'Craftsman',
     tagline: 'A trade, a guild mark and hands that know the work.',
-    art: '/backgrounds/craftsman.jpg',
+    art: 'codex:backgrounds/craftsman.full.jpg',
     tags: ['trade', 'craft', 'supplies'],
     blurb:
       'You served your years and came out the other side with a craft: smith, alchemist, glazier, binder, it hardly matters which. What matters is that you can look at a made thing and see how it was made.\n\n' +
@@ -913,7 +913,7 @@ const BACKGROUND_CODEX = [
     id: 'entertainer',
     name: 'Entertainer',
     tagline: 'A full room, an empty purse and somewhere else to be tomorrow.',
-    art: '/backgrounds/entertainer.jpg',
+    art: 'codex:backgrounds/entertainer.full.jpg',
     tags: ['stage', 'social'],
     blurb:
       'Taprooms, fairgrounds, a patron’s hall for one glorious season. You sang, played, tumbled, told it funnier than it happened. You have held a room of drunk strangers and you have been run out of two towns.\n\n' +
@@ -941,7 +941,7 @@ const BACKGROUND_CODEX = [
     id: 'merchant',
     name: 'Merchant',
     tagline: 'You know what everything costs, and what it is worth.',
-    art: '/backgrounds/merchant.jpg',
+    art: 'codex:backgrounds/merchant.full.jpg',
     tags: ['trade', 'coin', 'social'],
     blurb:
       'A stall, a caravan, a family firm with a name over the door. You bought low somewhere and sold high somewhere else, and you did it often enough to be carrying a float rather than a debt.\n\n' +
@@ -969,7 +969,7 @@ const BACKGROUND_CODEX = [
     id: 'aristocrat',
     name: 'Aristocrat',
     tagline: 'A name that opens doors, and the debts that come with it.',
-    art: '/backgrounds/aristocrat.jpg',
+    art: 'codex:backgrounds/aristocrat.full.jpg',
     tags: ['court', 'coin', 'social'],
     blurb:
       'You were born to a house with land, or money, or at minimum a very old grievance. You were taught to dance, to ride, to read a room and never once to cook.\n\n' +
@@ -1002,7 +1002,7 @@ const BACKGROUND_CODEX = [
     id: 'investigator',
     name: 'Investigator',
     tagline: 'Somebody was lying, and you were the one who had to find out.',
-    art: '/backgrounds/investigator.jpg',
+    art: 'codex:backgrounds/investigator.full.jpg',
     tags: ['law', 'insight', 'lore'],
     blurb:
       'A watch house, a magistrate’s office, a private practice above a chandler’s shop. You took statements, walked over the same ground four times and noticed the thing everybody else had stepped past.\n\n' +
@@ -1030,7 +1030,7 @@ const BACKGROUND_CODEX = [
     id: 'mercenary',
     name: 'Mercenary',
     tagline: 'You have never once fought for free.',
-    art: '/backgrounds/mercenary.jpg',
+    art: 'codex:backgrounds/mercenary.full.jpg',
     tags: ['martial', 'warfare', 'survival'],
     blurb:
       'A free company, a caravan guard, whichever side was hiring that season. You have fought under four banners and believed in none of them, and the contract has always mattered more than the cause.\n\n' +

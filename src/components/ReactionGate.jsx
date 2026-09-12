@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import useCodexArt from './useCodexArt.js';
 
 /**
  * The stack, standing between an action and its dice.
@@ -49,6 +50,11 @@ import { useEffect, useRef, useState } from 'react';
 export default function ReactionGate({ job, onResolve }) {
   const { spec } = job;
   const targets = spec.targets ?? [];
+
+  /* Gated at the point of drawing, for the reason set out in DiceSurface.jsx:
+     the tray takes a plain URL from whoever raised the action, and the callers
+     that raise one were not asking. */
+  const headArt = useCodexArt()(spec.art);
 
   const [wait, setWait] = useState(() => Math.max(1, Math.floor(Number(spec.hold) || 6)));
   /* The one slot: `{ key, who }` while somebody is choosing their reaction, and
@@ -138,8 +144,8 @@ export default function ReactionGate({ job, onResolve }) {
   return (
     <div className="react-gate" role="dialog" aria-modal="true" aria-label="Reactions">
       <div className="react-gate-body">
-        <div className={`dice-head${spec.art ? ' has-art' : ''}`}>
-          {spec.art && <img className="dice-head-art" src={spec.art} alt="" loading="lazy" />}
+        <div className={`dice-head${headArt ? ' has-art' : ''}`}>
+          {headArt && <img className="dice-head-art" src={headArt} alt="" loading="lazy" />}
           <span className="dice-head-body">
             <span className="dice-head-name">{spec.name || 'An action'}</span>
             {spec.note && <span className="dice-note">{spec.note}</span>}
