@@ -415,6 +415,7 @@ export function playEvent(
          a log that then shows the wrong face beside the right name has lost the
          only thing worth keeping. Rows written before this read as initials. */
       portrait: character?.portrait_url ?? null,
+      owner: ownerOf(character),
       card: request?.card?.id ?? null,
       verb: verbFor(request?.card),
       mode,
@@ -518,6 +519,30 @@ export function turnEvent(move, character, turn) {
  */
 function portraitOf(character) {
   return character?.portrait_url ?? null;
+}
+
+/**
+ * And whose body it was, where the body is somebody's.
+ *
+ * "Player controlled entities should say who they belong to the log" (Jules,
+ * 2026-09-13). A character at the table belongs to nobody and answers null here,
+ * which is every row this file wrote before today. The two things that answer
+ * are the two things a player puts on the board and plays on their own turn: a
+ * bonded creature or a risen undead, which carries its bonded's name (see
+ * `minionActor`), and a conjured body, which carries the name of whoever cast it
+ * (see `foeActor`).
+ *
+ * Copied into the row for the same reason the face and the name are: the log is
+ * a record and not a view. A necromancer who lays a skeleton to rest has not
+ * unwritten the six rows it swung in, and those rows should still say whose
+ * skeleton it was.
+ *
+ * It is only ever a name. Which sheet the body hangs off is `data.targets`'
+ * business where it matters, and a name is what the feed has room to print.
+ */
+function ownerOf(actor) {
+  const said = String(actor?.owner ?? '').trim();
+  return said && said !== actor?.name ? said : null;
 }
 
 /* ------------------------------------------------------ the fight, announced
@@ -727,7 +752,17 @@ export function reactionFailedEvent(character, name, { failed = [], chain = null
     actor: character?.name ?? '',
     title: failed.length > 0 ? `${name} fails against ${listAnd(failed)}` : `${name} fails`,
     detail: 'Undone by the reaction · the cost stays spent',
-    data: { move: 'failed', chain, card: null, failed },
+    /* The face and the owner, which this row never carried: it is written with
+       whoever acted in hand — a character, a creature or an enemy — so it is
+       held to the same law as every other row about a body. See `portraitOf`. */
+    data: {
+      move: 'failed',
+      chain,
+      card: null,
+      failed,
+      portrait: portraitOf(character),
+      owner: ownerOf(character),
+    },
   };
 }
 
@@ -824,6 +859,7 @@ export function effectLaidEvent(caster, effect, targets = [], { chain = null } =
       move: 'effect',
       chain,
       portrait: caster?.portrait ?? null,
+      owner: ownerOf(caster),
       card: effect?.card ?? null,
       effect,
       targets: targets.map((entry) => ({
@@ -865,6 +901,7 @@ export function verdictEvent(caster, name, outcomes = [], { chain = null } = {})
       move: 'verdict',
       chain,
       portrait: caster?.portrait ?? null,
+      owner: ownerOf(caster),
       card: caster?.card?.id ?? null,
       outcomes: outcomes.map((entry) => ({
         kind: entry.kind,
@@ -903,6 +940,7 @@ export function appliedEvent(caster, delta, targets = [], { chain = null } = {})
       move: 'apply',
       chain,
       portrait: caster?.portrait ?? null,
+      owner: ownerOf(caster),
       card: caster?.card?.id ?? null,
       verb,
       kind: delta.kind,
@@ -940,6 +978,7 @@ export function summonEvent(caster, body, { chain = null } = {}) {
       move: 'conjure',
       chain,
       portrait: caster?.portrait ?? null,
+      owner: ownerOf(caster),
       card: body?.card ?? null,
       key: body?.key ?? null,
       body,

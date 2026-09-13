@@ -13398,12 +13398,47 @@ button.tgt-chip:disabled {
   gap: 3px;
 }
 
-/* The name, in the site's own teal. */
+/* The name, in the site's own teal.
+
+   Held to one line as of 2026-09-13, the way `.log-title` under it always has
+   been. A creature's row now carries its owner's name on this line as well as
+   its own, and two names in 300px is where the row would have started wrapping
+   and growing — and the height of a closed entry is the one measure this whole
+   block is built on. Ellipsed rather than shrunk: a name cut short is still the
+   name, and a name at 0.6rem is nothing. */
 .log-who {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.6;
   color: var(--focus-cyan);
+}
+
+/*
+ * And whose body it was, where it is somebody's: a risen skeleton, a bonded
+ * dragon, a wall a spell put up. "Player controlled entities should say who they
+ * belong to the log" (Jules, 2026-09-13).
+ *
+ * On the name's own line and never on a line of its own, because the face beside
+ * it is the head's two lines exactly (see `.log-face`) and a third line would
+ * leave a 39px circle floating against 55px of text. It is the quietest thing in
+ * the row — muted, unbold, a dot in front of it — so the name stays what the eye
+ * lands on and this is what it finds a beat later.
+ */
+.log-owner {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* The dot every other separator on this sheet is, in the colour the owner's
+   name is already wearing. It was set to `--hairline` first, which is a border
+   at 12% alpha: correct for a rule and invisible as a glyph. */
+.log-owner::before {
+  content: '·';
+  margin: 0 0.3em;
 }
 
 .log-did {

@@ -55,6 +55,7 @@ import {
   endRun,
   foeActor,
   foeKey,
+  foeSpeaker,
   foeTurnStart,
   foldInitiative,
   initiativeAsk,
@@ -659,7 +660,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
 
       log(
         effectLaidEvent(
-          { name: foe.title, portrait: foe.creature?.portrait_url ?? null },
+          foeSpeaker(foe),
           cast,
           targets,
           /* The use that laid it, so the row reads inside that use's block
@@ -697,11 +698,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
       const deltas = applyPlan(thrown);
       if (deltas.length === 0 && !outcomes) return;
       setApply({
-        caster: {
-          name: foe.title,
-          portrait: foe.creature?.portrait_url ?? null,
-          card: request.card ?? null,
-        },
+        caster: { ...foeSpeaker(foe), card: request.card ?? null },
         title: request.name,
         deltas,
         outcomes,
@@ -740,11 +737,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         const deltas = applyPlan(thrown);
         if (deltas.length === 0) return;
         setApply({
-          caster: {
-            name: foe.title,
-            portrait: foe.creature?.portrait_url ?? null,
-            card: getCard(effect.card) ?? null,
-          },
+          caster: { ...foeSpeaker(foe), card: getCard(effect.card) ?? null },
           title: effect.name,
           deltas,
           preselect: [],
@@ -776,11 +769,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         if (!result) return;
 
         setApply({
-          caster: {
-            name: foe.title,
-            portrait: foe.creature?.portrait_url ?? null,
-            card: getCard(row.card) ?? null,
-          },
+          caster: { ...foeSpeaker(foe), card: getCard(row.card) ?? null },
           title: row.name,
           deltas: applyPlan([{ kind, total: result.total, damage: [] }]),
           preselect: clauseAim(clause) === 'self' ? [foe.key] : [],
@@ -820,6 +809,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             {
               name: current.caster.name,
               portrait: current.caster.portrait,
+              owner: current.caster.owner ?? null,
               card: current.caster.card,
             },
             delta,
@@ -887,7 +877,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
       const key = foeKey();
       const made = { ...body, key, owner: foe.title };
       patch((row) => addConjured(row, made, key));
-      log(summonEvent({ name: foe.title, portrait: foe.creature?.portrait_url ?? null }, made, { chain }));
+      log(summonEvent(foeSpeaker(foe), made, { chain }));
     },
     [patch, log]
   );

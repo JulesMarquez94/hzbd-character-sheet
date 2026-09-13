@@ -41,7 +41,10 @@ import { viewUrl, isVaultImage } from '../../lib/imageViews.js';
  * One entry is one thing somebody did, and it is a block rather than a line:
  *
  *   the face and the name    who. A portrait if the sheet has one, initials if
- *                            not, and the name in the site's own teal.
+ *                            not, and the name in the site's own teal. A body
+ *                            somebody controls says whose it is after the name:
+ *                            a risen skeleton, a bonded dragon, a conjured wall.
+ *                            See `ownerOf` in campaignLog.js.
  *   what they did            "cast Fireball", with the cost as orbs on the same
  *                            line, gold for Action Points and orange for
  *                            Reaction, exactly as the sheet prints them.
@@ -427,7 +430,7 @@ function TurnHead({ event, count }) {
 function LogEntry({ event, rolls, trail = [], stack, actor, open, onToggle }) {
   const card = event.data?.card ? getCard(event.data.card) : null;
   const verb = eventWords(event);
-  const { ap = 0, wp = 0, health = 0, mode, portrait } = event.data ?? {};
+  const { ap = 0, wp = 0, health = 0, mode, portrait, owner } = event.data ?? {};
   /* A roll made from the tray has no use above it: the entry *is* the throw. So
      the head stands in for its own child, which is what lets one component draw
      both shapes without the block above having to know which it is holding. See
@@ -455,7 +458,15 @@ function LogEntry({ event, rolls, trail = [], stack, actor, open, onToggle }) {
         <Face name={event.actor} src={portrait} />
 
         <span className="log-head-body">
-          <span className="log-who">{event.actor || 'Someone'}</span>
+          <span className="log-who">
+            {event.actor || 'Someone'}
+            {/* And whose body it was, where the body is somebody's. On the name
+                line rather than under it, because the face is exactly two lines
+                tall and a third would leave it floating: see `.log-face`. A
+                character acting for themselves carries nothing here, which is
+                every row written before 2026-09-13. */}
+            {owner && <span className="log-owner">{owner}’s</span>}
+          </span>
 
           <span className="log-did">
             {verb && <span className="log-verb">{verb} </span>}

@@ -173,7 +173,12 @@ export default function LogCall({ tables = null, mine = [], table = false }) {
           )}
 
           <span className="log-call-body">
-            <span className="log-call-who">{notice.actor || 'Someone'}</span>
+            <span className="log-call-who">
+              {notice.actor || 'Someone'}
+              {/* Whose body that was, where it is somebody's. The feed prints
+                  the same word in the same place: see `.log-owner`. */}
+              {notice.owner && <span className="log-owner">{notice.owner}’s</span>}
+            </span>
             {/* The first line is what they did. Everything after it is what came
                 of it, which arrived as its own row a moment later. */}
             {notice.lines.map((line, at) => (

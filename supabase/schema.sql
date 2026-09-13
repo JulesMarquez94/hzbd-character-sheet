@@ -837,6 +837,11 @@ create table if not exists public.campaign_events (
   -- The name that acted, copied at the time. Denormalized on purpose: a
   -- character can be renamed or deleted, and a log that then reads "someone
   -- cast Fireball" has lost the only thing worth keeping.
+  --
+  -- It is not always a player: a bonded creature, a risen undead and a conjured
+  -- wall each sign their own rows. `data.portrait` is that body's own face and
+  -- `data.owner` is whoever it answers to, both copied at the time for the same
+  -- reason this is. See `ownerOf` in src/lib/campaignLog.js.
   actor        text not null default '',
   -- What was done, and the one line under it. "Fireball", "2 Action Points and
   -- 4 Willpower · Quick Bar".

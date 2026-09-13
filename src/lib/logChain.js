@@ -669,6 +669,10 @@ export function noticeOf(row, { mine = [] } = {}) {
     key: row.data?.chain ?? row.id ?? row.title ?? '',
     actor: row.actor ?? '',
     portrait: row.data?.portrait ?? null,
+    /* And whose body that was, where it was anybody's. The same field the feed
+       prints beside the name, and it matters more here than there: a notice is
+       one card flying past, and "Rattle" alone on it names nobody. */
+    owner: row.data?.owner ?? null,
     kind: row.kind,
     line: [verb, row.title ?? ''].filter(Boolean).join(' '),
   };

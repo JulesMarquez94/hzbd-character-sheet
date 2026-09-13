@@ -248,9 +248,15 @@ export function usePlayCard({ character, patch }) {
         log(playEvent(request, actor, mode, amount, { ...options, chain: chained ? chain : null }));
       }
 
+      /* Whoever acted, as the log copies them down: the name, the face, and
+         whose body it was where the body is somebody's. The last of those is
+         null for a player playing their own card and is a bonded's name for a
+         creature playing one — see `minionActor`, and `ownerOf` in
+         campaignLog.js for what the feed does with it. */
       const speaker = {
         name: actor?.name ?? '',
         portrait: actor?.portrait_url ?? null,
+        owner: actor?.owner ?? null,
         card: request?.card ?? null,
       };
 

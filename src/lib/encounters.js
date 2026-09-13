@@ -436,8 +436,34 @@ export function foeActor(foe) {
     willpower: foe.willpower,
     willpower_max: foe.stats.willpower_max,
     portrait_url: foe.creature.portrait_url ?? null,
+    /* And whose it is, where it is anybody's. A creature out of the bestiary
+       belongs to the fight and says nothing; a conjured body belongs to the
+       player whose spell made it, and every row it writes should say so. See
+       `foeSpeaker`, and `.log-owner` in sheet.css. */
+    owner: foe.conjured?.owner ?? null,
     // Its own tracker, because a use can now lay a row on it.
     effects: foe.effects ?? [],
+  };
+}
+
+/**
+ * The enemy as a *speaker*: the three fields every row the log writes about a
+ * body copies out of it.
+ *
+ * The encounter page writes rows in half a dozen places that are not a use — an
+ * effect laid, a verdict read, damage landed, a body conjured — and each of them
+ * built this object by hand out of `foe.title` and `foe.creature.portrait_url`.
+ * Which was fine until there was a third field: six copies of a two-field
+ * literal quietly became six places where a conjured body forgets whose it is.
+ *
+ * Same shape `usePlayCard` builds for a sheet's own actor, minus the card, which
+ * is the one part that belongs to the moment rather than to the body.
+ */
+export function foeSpeaker(foe) {
+  return {
+    name: foe?.title ?? '',
+    portrait: foe?.creature?.portrait_url ?? null,
+    owner: foe?.conjured?.owner ?? null,
   };
 }
 

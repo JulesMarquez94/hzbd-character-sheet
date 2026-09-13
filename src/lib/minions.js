@@ -683,6 +683,17 @@ export function minionActor(character, minion) {
     reaction: minion.reaction,
     willpower: Number(character?.willpower) || 0,
     willpower_max: Number(character?.willpower_max) || 0,
+    /* Its own face, and the name of whoever it answers to. Both of them are for
+       the log and neither is used anywhere else: every row a use writes copies
+       `portrait_url` off whoever acted (see `portraitOf` in campaignLog.js), and
+       a creature that never handed one over signed forty rows with a blank
+       circle while its picture sat on the block two inches away.
+       `owner` is the second half of the same fix, and it is the log's only way
+       of saying that the skeleton swinging is *yours*: an undead has a name a
+       player chose, and "Rattle attacked with Claw" at a table of five names
+       nobody. See `.log-owner` in sheet.css for how it is drawn. */
+    portrait_url: minion.portrait_url ?? null,
+    owner: character?.name ?? null,
     // Borrowed with the pool it belongs to. See the note above.
     ledger: Array.isArray(character?.ledger) ? character.ledger : [],
     /* And its own tracker, because a use can now lay a row on it: a creature
