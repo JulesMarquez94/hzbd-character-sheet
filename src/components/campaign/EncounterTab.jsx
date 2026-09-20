@@ -23,11 +23,11 @@ import {
   turnCallEvent,
   unsummonEvent,
 } from '../../lib/campaignLog.js';
-import { levelForXp, liveCharacter } from '../../lib/characterModel.js';
+import { characterTypes, levelForXp, liveCharacter } from '../../lib/characterModel.js';
 import { newChain } from '../../lib/logChain.js';
 import { aimHits, applyPlan, clauseAim } from '../../lib/combatApply.js';
 import { dropEffect, layEffect, tickEffects } from '../../lib/combatTurn.js';
-import { runningNames } from '../../lib/statuses.js';
+import { runningMarks, runningNames } from '../../lib/statuses.js';
 import {
   CREATURE_MAX_LEVEL,
   RANKS,
@@ -57,6 +57,7 @@ import {
   foeKey,
   foeSpeaker,
   foeTurnStart,
+  foeTypes,
   foldInitiative,
   initiativeAsk,
   layOnFoes,
@@ -388,6 +389,11 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             /* What is running on them, by name, so their chip says so. A
                Trickster out of sight is out of sight for the whole table. */
             effects: runningNames(shown.effects),
+            /* And with the mechanics on, for the swing aimed at them and for
+               the apply window's own arithmetic. A player's sheet still has the
+               final word on what lands: this is the preview. */
+            conditions: runningMarks(shown.effects),
+            types: characterTypes(shown),
           };
         }),
     [members]
@@ -414,6 +420,11 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         shieldNow: foe.shield,
         defenses: { avoid: foe.stats.avoid, reflex: foe.stats.reflex, grit: foe.stats.grit },
         effects: runningNames(foe.effects),
+        /* The mechanical half of the same rows, for the two things that need
+           more than a name: a swing aimed at this body reads a Wound off it,
+           and the apply window halves what it is resistant to. */
+        conditions: runningMarks(foe.effects),
+        types: foeTypes(foe),
         conjured: Boolean(foe.conjured),
       })),
       ...seats.map((seat) => ({
@@ -428,6 +439,8 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         shieldNow: seat.shield,
         defenses: { avoid: seat.avoid, reflex: seat.reflex, grit: seat.grit },
         effects: seat.effects,
+        conditions: seat.conditions ?? [],
+        types: seat.types ?? null,
       })),
     ],
     [foes, seats]
@@ -801,7 +814,15 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
       for (const delta of current.deltas) {
         const keys = bodies
           .filter((body) => body.kind === 'foe')
-          .map((body) => ({ key: body.id, kind: delta.kind, landings: delta.landings }));
+          /* The types ride with the landings, because what a body is resistant
+             to is answered where the damage lands. See foeTypes in
+             encounters.js. */
+          .map((body) => ({
+            key: body.id,
+            kind: delta.kind,
+            landings: delta.landings,
+            types: delta.types ?? [],
+          }));
         if (keys.length > 0) patch((row) => applyToFoes(row, keys));
 
         log(
@@ -1137,6 +1158,8 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
                 key: entry.ref,
                 kind: row.data?.kind,
                 landings: entry.landings,
+                // What it was made of, for whatever this body halves or doubles.
+                types: row.data?.types ?? [],
               }))
             )
           );

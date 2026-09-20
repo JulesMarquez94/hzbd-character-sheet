@@ -463,7 +463,23 @@ export const MARTIAL_MOVES = withArt([
        the Game Master's, and a card that printed 3d8 against a target who turned
        out to be on 60% would be lying at the moment the player decided. So the
        condition is printed and the table applies it. Same call REND's old
-       Wound clause made, and for the same reason. */
+       Wound clause made, and for the same reason.
+
+       **A claim since 2026-09-19**, which is the same reasoning ending
+       differently: the sheet still cannot see the target's Health and the player
+       can, so the condition is a box in the swing's own prompt rather than a
+       sentence to remember. Nothing is assumed and nothing is printed until it
+       is ticked, so the card in the corner is honest either way. See riders.js,
+       where the mechanism lives, and `offeredRides` in moves.js. */
+    claims: [
+      {
+        id: 'below-half',
+        when: 'if the target is below half its maximum Health',
+        empower: 1,
+        elevate: 1,
+        line: 'Damage Empowered by 1 and Elevated once against a target under half Health',
+      },
+    ],
     body:
       'If the target is below half its maximum Health, this attack’s damage is Empowered by 1 and Elevated once.',
   },

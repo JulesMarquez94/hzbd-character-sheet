@@ -155,6 +155,83 @@ export function damageStyle(type) {
   return DAMAGE_TYPES[type] ?? null;
 }
 
+/**
+ * The three families, straight off the rulebook's own table (5.8).
+ *
+ * A card grants resistance by type ("resistance to {damage:Cold} damage"), by
+ * family ("resistance to Elemental and Physical damage", the Elixir of Slime)
+ * or to everything at once (UMBRAL FORM's "resistance to all damage"). So the
+ * thing a resistance names is one of three widths, and `coversType` below is
+ * where the three are read as one question.
+ *
+ * Frost rides in the Elemental row beside Cold because `DAMAGE_TYPES` above
+ * carries both spellings for the same cold: the weapon cards print one and the
+ * spells print the other, and a draught that answers to one has to answer to
+ * the other or the resistance would depend on which page the damage came off.
+ * Poison and Necrotic sit with Decay for the same reason, and Necrotic is Decay
+ * by the note on its own token. Poison is its own type on the designer's list
+ * and rots the same way, which is the reading DRACONIC SCALE flagged: it grants
+ * one without the other, and no family is what settles that, the type is.
+ */
+export const DAMAGE_FAMILIES = {
+  Physical: ['Sharp', 'Blunt', 'Force'],
+  Elemental: ['Fire', 'Cold', 'Frost', 'Lightning'],
+  Metaphysical: ['Sacred', 'Decay', 'Necrotic', 'Poison', 'Psychic'],
+};
+
+/** Everything, which is what UMBRAL FORM and ETHEREALNESS both name. */
+export const ALL_DAMAGE = 'All';
+
+/**
+ * The types this codex spells two ways, as one word each.
+ *
+ * Cold and Frost are the same cold: the weapon cards and the potions print one,
+ * the Elemental spells print the other, and a draught that answered to only one
+ * of them would halve a Hailstorm and not an Ice Shard. Necrotic and Decay are
+ * the same rot, which the token on `DAMAGE_TYPES` has said since it was written.
+ *
+ * **Poison is not in here, and that is the point of the pair above.** It is its
+ * own type on the designer's own list and DRACONIC SCALE grants resistance to
+ * one without the other, so folding it into Decay would hand out a resistance
+ * nobody bought. A spelling and a type are different things.
+ */
+const SPELLED_TWICE = [
+  ['cold', 'frost'],
+  ['decay', 'necrotic'],
+];
+
+/** One word for a type, so two spellings of one thing compare equal. */
+function oneWord(type) {
+  const said = String(type ?? '').trim().toLowerCase();
+  const pair = SPELLED_TWICE.find((names) => names.includes(said));
+  return pair ? pair[0] : said;
+}
+
+/**
+ * Whether a resistance or a weakness written as `named` answers to `type`.
+ *
+ * Three widths, asked in order of how much they cover: everything, a family, or
+ * the type itself. Case is ignored, because the word arrives from a card, from a
+ * tracker row a Game Master typed and from a creature's own passive, and only
+ * the first of those three is proofread.
+ *
+ * An unnamed type answers to nothing. Four Primal Masters deal damage with no
+ * type at all and a resistance cannot halve what it cannot name, which is the
+ * table's call to make rather than this file's to guess.
+ */
+export function coversType(named, type) {
+  const want = oneWord(type);
+  const said = oneWord(named);
+  if (!want || !said) return false;
+  if (said === ALL_DAMAGE.toLowerCase()) return true;
+
+  for (const [family, types] of Object.entries(DAMAGE_FAMILIES)) {
+    if (said !== family.toLowerCase()) continue;
+    return types.some((one) => oneWord(one) === want);
+  }
+  return said === want;
+}
+
 /* ------------------------------------------------- empowering and elevating
  * Two different things, and the designer's General Rules · Status & Terms sheet
  * is what tells them apart:

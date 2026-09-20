@@ -21,7 +21,17 @@
 import { BLANK_CHARACTER, liveCharacter, syncDerived } from '../src/lib/characterModel.js';
 import { trackableCards } from '../src/lib/combatTurn.js';
 import { attackModifiers, effectAdvantage } from '../src/lib/moves.js';
-import { bendsSheet, bendsSwing, EFFECT_RIDERS, riderOf } from '../src/lib/riders.js';
+import {
+  asksOf,
+  bendsAdded,
+  bendsAgainst,
+  bendsSheet,
+  bendsSwing,
+  bendsTypes,
+  EFFECT_RIDERS,
+  riderOf,
+  runningRiders,
+} from '../src/lib/riders.js';
 import { getCard } from '../src/lib/weapons.js';
 
 const LIST = process.argv.includes('--list');
@@ -54,8 +64,32 @@ function sheet(effects = [], holder = null) {
   return liveCharacter(derived ? { ...full, ...derived } : full);
 }
 
-/** One row, as the tracker would have stored it. */
+/**
+ * One row, as the tracker would have stored it, **answered**.
+ *
+ * A rider that asks a question is worth nothing until the question is answered,
+ * which is the whole promise of `ask` and is itself checked below. So a fixture
+ * row carries a plausible answer to each: a number for a number, the first
+ * option for a choice, and a type for the picker. What the walk then proves is
+ * that an *answered* row moves the tile, which is the thing that would otherwise
+ * silently stop working.
+ */
 function row(cardId, turns = 5) {
+  const card = getCard(cardId);
+  const laid = { id: `t-${cardId}`, name: card?.name ?? cardId, card: cardId, turns };
+  const asks = asksOf(laid);
+  if (asks.length === 0) return laid;
+
+  const values = {};
+  for (const ask of asks) {
+    values[ask.id] =
+      ask.kind === 'choice' ? ask.options?.[0]?.id : ask.kind === 'types' ? ['Fire'] : 5;
+  }
+  return { ...laid, values };
+}
+
+/** The same row with nothing answered, for proving a question is worth asking. */
+function unanswered(cardId, turns = 5) {
   const card = getCard(cardId);
   return { id: `t-${cardId}`, name: card?.name ?? cardId, card: cardId, turns };
 }
@@ -67,6 +101,9 @@ const note = (what, said) => findings.push(`  ${what}\n    ${said}`);
 
 const plain = sheet();
 const swing = getCard(SWING);
+/* And the plain Skill Check, for the riders written about one. A basic action
+   everybody has, which is exactly why it is the one to test a skill rider on. */
+const check = getCard('skill-check');
 
 for (const [id, rider] of Object.entries(EFFECT_RIDERS)) {
   const card = getCard(id);
@@ -80,8 +117,71 @@ for (const [id, rider] of Object.entries(EFFECT_RIDERS)) {
 
   if (!rider.line) note(id, 'carries no line, so nothing can say what it does');
 
-  if (!bendsSheet(rider) && !bendsSwing(rider)) {
+  /* Four channels now, and a rider is worth having if it reaches any of them:
+     the sheet's tiles, this body's swing, what lands on this body by damage
+     type, and what somebody swinging *at* it gets. A card whose whole rule is
+     conditional reaches none of them until a box is ticked, and its claims are
+     what say so. See riders.js. */
+  const claims = rider.claims ?? [];
+  const reaches =
+    bendsSheet(rider) ||
+    bendsSwing(rider) ||
+    bendsTypes(rider) ||
+    bendsAgainst(rider) ||
+    bendsAdded(rider) ||
+    claims.length > 0;
+  if (!reaches) {
     note(id, 'moves neither a tile nor a swing, so it is a note and not a rider');
+  }
+
+  /* A question has to be worth asking, and an unanswered one has to be worth
+     nothing. Both halves matter: a rider that bent a tile before anybody typed
+     a number would be inventing one, and a question whose answer changes nothing
+     is a dialog nobody should ever see. */
+  for (const ask of rider.ask ?? []) {
+    if (!ask.id) note(id, 'has a question with no id, so nothing can answer it');
+    if (!ask.label) note(id, `question ${ask.id} carries no label, so the box asks nothing`);
+    if (ask.kind === 'choice' && (ask.options ?? []).length < 2) {
+      note(id, `question ${ask.id} is a choice between fewer than two things`);
+    }
+  }
+  if ((rider.ask ?? []).length > 0) {
+    const open = sheet([unanswered(id, 5)], HOLDERS[id] ?? null);
+    const said = sheet([row(id, 5)], HOLDERS[id] ?? null);
+    const moved =
+      open.health_max !== said.health_max ||
+      open.speed_m !== said.speed_m ||
+      open.physique !== said.physique ||
+      JSON.stringify(runningRiders([unanswered(id, 5)])) !==
+        JSON.stringify(runningRiders([row(id, 5)]));
+    if (!moved) note(id, 'asks a question whose answer changes nothing');
+  }
+
+  /* Every claim has to be answerable and has to be worth answering. A box with
+     no condition on it is a question the player cannot read, and one that bends
+     nothing is a question not worth asking. */
+  for (const claim of claims) {
+    if (!claim.id) note(id, 'has a claim with no id, so nothing can tick it');
+    if (!claim.when) note(id, `claim ${claim.id} carries no condition, so the box asks nothing`);
+    if (!bendsSwing(claim) && !bendsSheet(claim) && !bendsAgainst(claim) && !bendsTypes(claim)) {
+      note(id, `claim ${claim.id} bends nothing, so ticking it would do nothing`);
+    }
+  }
+
+  /* A claim only counts when its own key is ticked, which is the whole promise
+     of the mechanism: an untouched box changes nothing at all. */
+  if (claims.length > 0) {
+    const laid = [row(id, 5)];
+    const shut = runningRiders(laid);
+    const open = runningRiders(laid, { claimed: claims.map((claim) => `${id}:${claim.id}`) });
+    const same =
+      shut.advantage === open.advantage &&
+      shut.disadvantage === open.disadvantage &&
+      shut.empower === open.empower &&
+      shut.elevate === open.elevate &&
+      shut.against.disadvantage === open.against.disadvantage &&
+      shut.resist.join() === open.resist.join();
+    if (same) note(id, 'its claims change nothing when they are ticked');
   }
 
   /* A rider on a card the picker never offers is a rider nobody can reach. The
@@ -113,16 +213,34 @@ for (const [id, rider] of Object.entries(EFFECT_RIDERS)) {
     if (!moved) note(id, 'claims to move a tile and no tile moved');
   }
 
+  /* Which card to walk the swing through. A rider narrowed to the skill check
+     has nothing to say about a sword, which is the whole point of `only`: LUCK
+     POTION is advantage on skill checks, so walking it through a Strike would
+     prove the opposite of what it promises. Each is walked through the card it
+     is written about, and both have to move. */
   if (bendsSwing(rider)) {
-    const before = attackModifiers(bare, swing, { damage: ['Sharp'], empower: 0 });
-    const after = attackModifiers(bent, swing, { damage: ['Sharp'], empower: 0 });
+    const on = rider.only === 'skill' ? check : swing;
+    const before = attackModifiers(bare, on, { damage: ['Sharp'], empower: 0 });
+    const after = attackModifiers(bent, on, { damage: ['Sharp'], empower: 0 });
     const same =
       (before.empower ?? 0) === (after.empower ?? 0) &&
       (before.elevate ?? 0) === (after.elevate ?? 0) &&
       (before.advantage ?? 0) === (after.advantage ?? 0) &&
       (before.disadvantage ?? 0) === (after.disadvantage ?? 0) &&
       (before.damage ?? []).join() === (after.damage ?? []).join();
-    if (same) note(id, 'claims to bend a swing and the printed attack did not move');
+    if (same) note(id, `claims to bend a ${on.name} and the printed card did not move`);
+
+    /* And the narrowing itself: a rider that named a kind of roll must leave
+       every other kind alone, or `only` is a word on a card doing nothing. */
+    if (rider.only) {
+      const other = rider.only === 'skill' ? swing : check;
+      const away = attackModifiers(bent, other, { damage: ['Sharp'], empower: 0 });
+      const flat = attackModifiers(bare, other, { damage: ['Sharp'], empower: 0 });
+      if ((away.advantage ?? 0) !== (flat.advantage ?? 0) ||
+          (away.disadvantage ?? 0) !== (flat.disadvantage ?? 0)) {
+        note(id, `is written for a ${rider.only} roll and bent a ${other.name} as well`);
+      }
+    }
   }
 
   /* Off again. The whole reason a rider is read rather than stored: the row

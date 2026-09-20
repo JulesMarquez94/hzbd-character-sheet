@@ -16,8 +16,11 @@
  * assertion could have predicted.
  */
 
-import { rollPlan } from '../src/lib/rollPlan.js';
+import { printedSwing, rollPlan } from '../src/lib/rollPlan.js';
 import { CARDS, getCard } from '../src/lib/weapons.js';
+import { attackModifiers, withClaims } from '../src/lib/moves.js';
+import { lineageSwing } from '../src/lib/lineages.js';
+import { sourceWords } from '../src/lib/attribution.js';
 
 const LIST = process.argv.includes('--list');
 const findings = [];
@@ -248,6 +251,160 @@ section('only the first check asks for a DC');
     WHO
   );
   check('one check, not two', plan.filter((l) => l.shape === 'check').length, 1);
+}
+
+/* --------------------------------------------------- a throw off no card at all */
+
+/**
+ * VENOMOUS, the one thing in the codex that adds a throw the card never printed.
+ *
+ * A Wildkin who kept it deals "an additional 1d4 Decay damage" with every weapon
+ * attack, and no weapon card anywhere is going to have that sentence on it. So
+ * the rider rides on the modifiers as `added` and the plan appends it, which
+ * makes this the only link in the file that is not read out of a body.
+ *
+ * Walked the whole way rather than handed a made-up modifiers object: from the
+ * pool pick, through `lineageSwing` and `attackModifiers`, to the dice. A rider
+ * that fell off anywhere along that line would be a card that prints a promise
+ * and rolls nothing, which is the failure this section exists to catch.
+ */
+section('a rider may add a whole throw the card never printed');
+{
+  const kept = (...ids) => ({ ...WHO, lineage: 'wildkin', choices: { 'wildkin-traits': ids } });
+  const venomous = kept('venomous', 'scaley');
+  const without = kept('sticky', 'scaley');
+
+  check('the kept card is read off the pool', lineageSwing(venomous.lineage, venomous.choices), [
+    { from: 'Venomous', card: 'venomous', dice: '1d4', damage: 'Decay' },
+  ]);
+  check('and a Wildkin who kept something else reads nothing', lineageSwing(without.lineage, without.choices), []);
+  check('and neither does another ancestry', lineageSwing('human', {}), []);
+
+  const swing = getCard('melee-light-strike');
+  const special = getCard('melee-light-swift-strike');
+  const spell = getCard('bramble-whip');
+
+  const mods = attackModifiers(venomous, swing, {});
+  check('the swing carries it', mods.added, [{ dice: '1d4', damage: 'Decay', from: 'Venomous' }]);
+  /* Every weapon, whatever its tag and whichever of its two attacks: the venom is
+     in the Wildkin rather than in the blade. */
+  check('a special weapon attack too', attackModifiers(venomous, special, {}).added, [
+    { dice: '1d4', damage: 'Decay', from: 'Venomous' },
+  ]);
+  check('a spell does not', attackModifiers(venomous, spell, {}).added, undefined);
+  check('and a Wildkin without it gets no field at all', attackModifiers(without, swing, {}).added, undefined);
+
+  /* "only what modifies it": the card is named under the pay button and the row
+     opens it. See attribution.js. */
+  check(
+    'and it is credited, in the card’s own words',
+    (mods.sources ?? []).map((row) => `${row.from}: ${sourceWords(row.gives)}`),
+    ['Venomous: adds 1d4 Decay damage']
+  );
+  check('and the row opens the card', (mods.sources ?? [])[0]?.card, 'venomous');
+
+  /* Last in the chain, so it lands after the check the swing has to pass: venom
+     on a miss is venom on nothing. */
+  check('the venom is thrown after the swing and its own damage', shape(rollPlan(swing, venomous, mods)), [
+    'check:weapon+6',
+    'damage:2d6+6',
+    'damage:1d4+0',
+  ]);
+  check('and it is Decay whatever the blade deals', rollPlan(swing, venomous, mods).at(-1).damage, ['Decay']);
+  check('and it names the card asking for it', rollPlan(swing, venomous, mods).at(-1).from, 'Venomous');
+  check('nothing is appended without it', shape(rollPlan(swing, without, attackModifiers(without, swing, {}))), [
+    'check:weapon+6',
+    'damage:2d6+6',
+  ]);
+
+  /* Empowered adds a die of the kind already rolling and Elevate grows that die.
+     Both are written against the dice the *card* rolls, and this handful is not
+     the card's: a Fire Infusion on the blade has nothing to say about the venom
+     in the hand holding it. */
+  const worked = attackModifiers(venomous, swing, { empower: 1, elevate: 1 });
+  check('Empower and Elevate grow the blade and leave the venom alone', shape(rollPlan(swing, venomous, worked)), [
+    'check:weapon+6',
+    'damage:3d8+6',
+    'damage:1d4+0',
+  ]);
+
+  /* One dose an attack, not one a landing. The card says "your weapon attack".
+     A Finesse weapon, so the swing and its landings roll off Instinct and the
+     venom off nothing at all: 1d4 is 1d4 in anybody's hands. */
+  const flurry = getCard('finesse-flurry');
+  const three = rollPlan(flurry, venomous, attackModifiers(venomous, flurry, {}));
+  check('a Flurry of three landings is still one dose', shape(three), [
+    'check:weapon+5',
+    'damage:1d6+5',
+    'damage:1d6+5',
+    'damage:1d6+5',
+    'damage:1d4+0',
+  ]);
+}
+
+/* ------------------------------------------- what a card says about its own roll
+ *
+ * New on 2026-09-19, and the plainest bug the sweep found: an Aimed Shot reads
+ * "Make an {stat} Ranged Attack {roll} **with disadvantage**" and rolled with no
+ * penalty at all, because nothing anywhere read that sentence. Seventeen cards
+ * say something about their own roll and every one of them was ignored.
+ */
+
+section('a card that bends its own roll is read');
+{
+  const shot = rollPlan(getCard('bow-aimed-shot'), WHO);
+  check('an Aimed Shot rolls with its printed disadvantage', shot[0].disadvantage, 1);
+  check('and no advantage it never claimed', shot[0].advantage, 0);
+
+  const smite = rollPlan(getCard('smite'), WHO);
+  check('a Smite rolls with its printed advantage', smite[0].advantage, 1);
+
+  const plain = rollPlan(getCard('melee-light-strike'), WHO);
+  check('a card that says nothing rolls flat', [plain[0].advantage, plain[0].disadvantage], [0, 0]);
+
+  /* The holder's own arrows are added to the card's rather than replaced by
+     them, and the dice cancel the pair. A Bolstered Aimed Shot is one of each. */
+  const both = rollPlan(getCard('bow-aimed-shot'), WHO, { advantage: 1 });
+  check('the holder and the card both count', [both[0].advantage, both[0].disadvantage], [1, 1]);
+}
+
+section('a conditional clause on a card is offered, not applied');
+{
+  const rend = printedSwing(getCard('ashmaw-rend'));
+  check('a prone clause is not rolled', [rend.advantage, rend.disadvantage], [0, 0]);
+  check('it is a claim instead', rend.claims.length, 1);
+  check('carrying the card’s own words', rend.claims[0].when, 'if it is prone');
+  check(
+    'and the dice stay flat until it is ticked',
+    rollPlan(getCard('ashmaw-rend'), WHO)[0].advantage,
+    0
+  );
+
+  /* And ticked, through the same fold the use prompt makes. */
+  const card = getCard('ashmaw-rend');
+  const ticked = withClaims({ advantage: 0 }, WHO, card, [`card:${card.id}:printed-1`]);
+  check('ticked, it lends its die', ticked.advantage, 1);
+  check('and says so on the receipt', ticked.sources?.[0]?.from, 'Rend');
+}
+
+section('a running effect reaches every roll a card asks for');
+{
+  /* The gap Jules named: "if a character is bolstered he should have advantage
+     to all roll". A tracker rider used to reach a weapon attack and a card that
+     rolled damage, and stopped there, so a Bolstered Skill Check was flat. */
+  const halo = { ...WHO, effects: [{ id: 'h', name: 'Bolster', card: 'bolster', turns: 10 }] };
+  const on = (id) => rollPlan(getCard(id), halo, attackModifiers(halo, getCard(id), null));
+
+  check('a Bolstered weapon attack', on('melee-light-strike')[0].advantage, 1);
+  check('a Bolstered Skill Check', on('skill-check')[0].advantage, 1);
+  check('a Bolstered spell that only shields', attackModifiers(halo, getCard('barrier-spell'), null).advantage, 1);
+
+  /* And the narrowing: a potion written about skill checks is not a die on a
+     sword. Both halves matter, which is why both are here. */
+  const luck = { ...WHO, effects: [{ id: 'l', name: 'Luck Potion', card: 'luck-potion', turns: 60 }] };
+  const lucky = (id) => rollPlan(getCard(id), luck, attackModifiers(luck, getCard(id), null));
+  check('a Luck Potion on a Skill Check', lucky('skill-check')[0].advantage, 1);
+  check('and nothing on a sword', lucky('melee-light-strike')[0].advantage, 0);
 }
 
 /* ------------------------------------------------------------ the whole codex */

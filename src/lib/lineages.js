@@ -165,11 +165,24 @@
  * SKIN and SCALEY a point of Defense, INNER TIDE four Willpower, and FEY BLOOD,
  * HEARTHY and UNDEATH RESILIENCE the rate Health is bought at. See grants.js.
  *
- * **Three sentences on these cards are still the table's**, and none of them is a
- * number this sheet holds: FEY BLOOD's flight, AMPHIBIAN's and DRACONIC SCALES'
- * resistances, STICKY's walls and ceilings, and VENOMOUS's extra 1d4 of Decay on
- * a weapon attack, which is the one of them the sheet could carry and has no
- * field for. See data/README.md.
+ * **A card may also carry a rider on the *swing* rather than on the sheet**, and
+ * VENOMOUS is the one that does. Its extra 1d4 of Decay is a whole throw of a
+ * type the weapon does not deal, so no column could hold it and no Empower could
+ * mean it; it is declared as `swing` and handed to `attackModifiers` by
+ * `lineageSwing` below. Wired 2026-09-17, and it was the last sentence on any of
+ * these cards that named a number the sheet could carry.
+ *
+ * **A grant may also be a damage type rather than a number**, since 2026-09-19.
+ * AMPHIBIAN's "resistant to {damage:Cold} damage" and DRACONIC SCALES' resistance
+ * to whatever colour the scales are both ride `grants` as `resist`, and the
+ * second is the first grant in the codex whose value is the holder's own answer.
+ * Neither is a lump and neither is summed: the rulebook says two resistances to
+ * one type are still half. See `answered` below and characterTypes in
+ * characterModel.js.
+ *
+ * **Two sentences on these cards are still the table's**, and neither of them is
+ * a number this sheet holds: FEY BLOOD's flight, and STICKY's walls and
+ * ceilings. See data/README.md.
  *
  * --------------------------------------------------------------- card text
  * Card bodies use the same markers as every other card — see the header of
@@ -350,6 +363,11 @@ const AMPHIBIAN = own('Wildkin', {
   id: 'amphibian',
   name: 'Amphibian',
   summary: 'Breathe underwater, swim at full speed and shrug off Cold.',
+  /* "Additionally you are resistant to {damage:Cold} damage." The lungs and the
+     swimming speed are the table's, as they always were. The resistance is a
+     number this sheet holds since 2026-09-19: half of every Cold hit, applied
+     where the hit lands. See characterTypes in characterModel.js. */
+  grants: { resist: ['Cold'] },
   body:
     'You can breathe underwater and your Movement Speed is not halved while swimming.\n\n' +
     'Additionally you are resistant to {damage:Cold} damage.',
@@ -371,6 +389,19 @@ const VENOMOUS = own('Wildkin', {
   id: 'venomous',
   name: 'Venomous',
   summary: 'Your weapon attacks deal an extra 1d4 Decay.',
+  /* The first card in the codex to add a whole *throw* to a swing rather than
+     another die to one the swing already rolls. `grants` cannot carry it: that
+     channel is the sheet's own columns and this number never touches one. So it
+     is declared as `swing`, which is what riders.js has always called the other
+     channel, and read by `lineageSwing` below.
+
+     **No weapon is named, on purpose.** Jules, 2026-09-17: "the lineage venemous
+     should apply to all weapon held by the user". The venom is in the Wildkin
+     and not in the blade, so it rides every weapon attack whatever is in their
+     hands, the way a Weaver's TAUT WEAVE does and unlike the riders that hang on
+     a tag. A stowed axe opened from the Inventory tab is venomous too, because
+     picking it up is the whole of what it would take. */
+  swing: { dice: '1d4', damage: 'Decay' },
   body: 'Your weapon attack deals an additional [[1d4]] {damage:Decay} damage.',
 });
 
@@ -646,6 +677,12 @@ const LINEAGE_CODEX = [
         name: 'Draconic Scales',
         summary: 'Resistance to one damage type, named by the colour of your scales.',
         choice: SCALE_COLOUR,
+        /* The first grant in the codex whose value is the holder's own answer.
+           Every other one is a constant on the card, and this one cannot be: the
+           type is the colour of the scales, picked at level 1 and stored in
+           `choices`. Resolved by `answered` below, beside the one function that
+           reads a lineage answer. */
+        grants: { resist: 'choice' },
         body:
           'You gain resistance to {choice} damage.\n\n' +
           'Your scales say which: red is {damage:Fire}, white {damage:Cold}, blue {damage:Lightning}, black {damage:Decay}, purple {damage:Psychic} and yellow {damage:Sacred}.',
@@ -963,7 +1000,30 @@ export function lineageGrantSources(key, choices) {
   return lineageCards(lineage, choices)
     .map(({ card }) => card)
     .filter((card) => card.grants)
-    .map((card) => ({ name: card.name, ...card.grants }));
+    .map((card) => ({ name: card.name, ...answered(card, choices) }));
+}
+
+/**
+ * One card's grants with its own answer filled in, where the card asked for one.
+ *
+ * DRACONIC SCALES is the whole of it: "You gain resistance to {choice} damage",
+ * and the type is the colour of the scales its holder picked. So its grant is
+ * written `resist: 'choice'` rather than a list, and the answer is looked up
+ * here, beside `answerOn`, which is the one place a lineage answer is read.
+ *
+ * A card that asked and has not been answered grants nothing rather than
+ * guessing a type: an unanswered choice is a blank on the sheet, and every other
+ * reader of one treats it the same way. See levelPicks.js.
+ */
+function answered(card, choices) {
+  if (card.grants?.resist !== 'choice' && card.grants?.vulnerable !== 'choice') return card.grants;
+
+  const type = answerOn(card, choices)?.damage ?? null;
+  const filled = { ...card.grants };
+  for (const field of ['resist', 'vulnerable']) {
+    if (filled[field] === 'choice') filled[field] = type ? [type] : [];
+  }
+  return filled;
 }
 
 /**
@@ -984,6 +1044,40 @@ export function lineageGrantSources(key, choices) {
  */
 export function lineageGrants(key, choices) {
   return sumGrants(lineageGrantSources(key, choices));
+}
+
+/**
+ * What this character's blood adds to a weapon attack, one row per card that
+ * adds anything.
+ *
+ * The other half of `lineageGrantSources` above, and the split is riders.js's
+ * own: a `grants` names a number the *sheet* holds and lands in `deriveStats`, a
+ * `swing` names one the *attack* carries and lands in `attackModifiers`. Nothing
+ * in between, and no card carries both.
+ *
+ * One card rides it: VENOMOUS, whose extra 1d4 of Decay is a whole throw of a
+ * type the weapon does not deal. It could never be a `grants` — there is no
+ * column for it — and it could never be an Empower either, because Empowered
+ * adds a die of the kind already being rolled and this one is Decay whatever the
+ * blade is made of.
+ *
+ *   [{ from: 'Venomous', card: 'venomous', dice: '1d4', damage: 'Decay' }]
+ *
+ * `from` is the card a reader can go and look up, which is what every receipt in
+ * attribution.js is named after, and `card` is what opens it.
+ *
+ * Reads `lineageCards` rather than `lineage.cards` for the reason the grants do:
+ * a Wildkin's hand is the two they kept, and a pool card is worth its rider the
+ * moment it is taken and nothing at all before.
+ */
+export function lineageSwing(key, choices) {
+  const lineage = getLineage(key);
+  if (!lineage) return [];
+
+  return lineageCards(lineage, choices)
+    .map(({ card }) => card)
+    .filter((card) => card.swing?.dice)
+    .map((card) => ({ from: card.name, card: card.id, ...card.swing }));
 }
 
 /** How many of a pool's picks are still outstanding. Zero when there is no pool. */

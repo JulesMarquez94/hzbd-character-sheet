@@ -1668,6 +1668,46 @@ body.tray-open-left.tray-open-right .sheet {
   color: var(--text-muted);
 }
 
+/* ---------- WHAT LANDS DIFFERENTLY ----------
+   Half damage from Cold, double from Fire. A sentence rather than a tile,
+   because a resistance is not a number the sheet holds: it is a thing that
+   happens to damage on its way in. Drawn only where there is one, which is most
+   sheets drawing nothing. */
+.stat-types {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: -2px;
+}
+
+.stat-type {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  border-left: 2px solid var(--stat-tone, var(--text-muted));
+  padding-left: 6px;
+}
+
+.stat-type b {
+  color: var(--text-bright);
+  font-weight: 700;
+}
+
+.stat-type.is-resist {
+  --stat-tone: var(--def-healing);
+}
+
+.stat-type.is-vulnerable {
+  --stat-tone: var(--danger-rose);
+}
+
+/* The same two lines on an enemy's block, where they sit between the tiles and
+   the pools rather than under a heading. */
+.foe-types {
+  margin: 2px 0 0;
+}
+
 /* ---------- A BLOCK'S HEAD ----------
    What the block is, and how full it is. Every block on the Inventory tab
    wears one, so armor, weapons, belt and the inventory itself all say how many
@@ -8681,6 +8721,22 @@ body.tray-open-left.tray-open-right .sheet {
   background-color: rgba(200, 138, 75, 0.12);
 }
 
+/* A row waiting to be told a number it cannot work out. It wears the warning
+   colour rather than the copper, because a row bending nothing while it waits
+   is the one thing on this block worth interrupting for. */
+.fx-roll.is-open {
+  color: var(--level-amber);
+  border-color: rgba(214, 158, 46, 0.55);
+  background-color: rgba(214, 158, 46, 0.12);
+}
+
+/* The questions themselves, in the window that asks them. */
+.fx-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
 /* What it does, on the second line. Off a card it is a button that opens the
    card; written in by hand it is the note it was written with. */
 .fx-read,
@@ -9746,6 +9802,14 @@ button.tgt-chip:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
+}
+
+/* A damage type picked for a Vulnerable or a Resistant row wears its own
+   colour, the same token the card text writes it in, so the row being built
+   reads the way the card that would have laid it does. */
+.fx-conditions .fx-until-opt[style*='--fx-type'].is-on {
+  border-color: var(--fx-type);
+  color: var(--fx-type);
 }
 
 /* The picker on the use prompt: a head with the count, the chips, and the one

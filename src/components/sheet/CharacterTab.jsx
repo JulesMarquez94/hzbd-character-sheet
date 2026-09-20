@@ -32,6 +32,7 @@ import { useAuth } from '../../context/auth-context.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { ATTRIBUTES } from '../../lib/attributes.js';
 import {
+  characterTypes,
   formatNumber,
   healthState,
   initialsOf,
@@ -46,6 +47,7 @@ import {
   xpProgress,
 } from '../../lib/characterModel.js';
 import { feralBlockIds, feralState } from '../../lib/feral.js';
+import { listAnd } from '../../lib/scrolls.js';
 import { minionBlockIds, minionState } from '../../lib/minions.js';
 import { pactBlockIds, pactState } from '../../lib/pact.js';
 import { oathBlockIds, oathState } from '../../lib/oathbound.js';
@@ -176,6 +178,10 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
      what is worn and the level ledger are one read each here and a dozen reads
      each if every tile asks for itself. See statMath.js. */
   const math = useMemo(() => statMath(character), [character]);
+  /* What lands on this body differently, by damage type. Not a stat and not on
+     a tile: half of a Cold hit is a thing that happens on the way in, so it is
+     read here and said in words under the defenses. */
+  const types = useMemo(() => characterTypes(character), [character]);
 
   /* The creatures on the board, if any. Two blocks each, and both of them
      movable like the six: "this block can also be moved around, both the 1 and
@@ -555,6 +561,27 @@ export default function CharacterTab({ character, readOnly = false, patch, unit 
             />
           ))}
         </div>
+
+        {/* ---------- WHAT LANDS DIFFERENTLY ----------
+            Only where there is something to say, which is most sheets saying
+            nothing. A resistance is not a stat and has no tile: it is a thing
+            that happens to damage on its way in, so it reads as the sentence it
+            is, under the numbers it modifies. Both halves come off the blood and
+            off the tracker together. See characterTypes in characterModel.js. */}
+        {(types.resist.length > 0 || types.vulnerable.length > 0) && (
+          <div className="stat-types">
+            {types.resist.length > 0 && (
+              <span className="stat-type is-resist">
+                <b>Resistant</b> {listAnd(types.resist)} · half damage
+              </span>
+            )}
+            {types.vulnerable.length > 0 && (
+              <span className="stat-type is-vulnerable">
+                <b>Vulnerable</b> {listAnd(types.vulnerable)} · double damage
+              </span>
+            )}
+          </div>
+        )}
 
         {/* ---------- RESOURCES ---------- */}
         <div className="stat-category-label">Resources</div>

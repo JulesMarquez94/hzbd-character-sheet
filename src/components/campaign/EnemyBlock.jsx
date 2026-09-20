@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import Modal from '../Modal.jsx';
 import UsePrompt from '../sheet/UsePrompt.jsx';
 import { BarChip } from '../sheet/ActiveBlock.jsx';
+import AnswerWindow from '../sheet/AnswerWindow.jsx';
 import { EffectRow } from '../sheet/TurnBlock.jsx';
 import {
   AttrTile,
@@ -18,7 +19,8 @@ import { ATTRIBUTES } from '../../lib/attributes.js';
 import { metersToFeet } from '../../lib/characterModel.js';
 import { castPlan, foeBar } from '../../lib/combatBar.js';
 import { CREATURE_MAX_LEVEL, difficultyLine } from '../../lib/creatures.js';
-import { dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
+import { asksOf, openAsks } from '../../lib/riders.js';
+import { answerEffect, dropEffect, normalizeEffects, nudgeEffect } from '../../lib/combatTurn.js';
 import { newChain } from '../../lib/logChain.js';
 import { rollPlan } from '../../lib/rollPlan.js';
 import { getCard } from '../../lib/weapons.js';
@@ -29,6 +31,7 @@ import {
   foeModifiers,
   foeOwns,
   foeSpend,
+  foeTypes,
   setFoeEffects,
   setFoeLevel,
   setFoePool,
@@ -183,6 +186,9 @@ export default function EnemyBlock({
  */
 function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove, onEdit }) {
   const { creature, rank, stats } = foe;
+  /* What it takes half or double of, off its page, its forge, its standing
+     passives and its tracker, all four in one read. See foeTypes. */
+  const types = foeTypes(foe);
 
   /* Handed to `patch` as a function of the encounter rather than as a body,
      because every writer in encounters.js rebuilds the whole `foes` list off
@@ -411,6 +417,26 @@ function FoeStats({ foe, patch, readOnly, unit, onLore, onRemove, onEdit }) {
           with Willpower added, which is a heading line, and all three bars name
           themselves inside their own track. What the heading was doing is done
           by the seam, which costs a pixel. */}
+      {/* What lands on this one differently, by damage type, drawn only where
+          there is any. Both halves at once: what its own page or its forge says,
+          what a passive says while its ward still stands, and whatever the party
+          has put on its tracker. It sits above the pools because it is the last
+          thing read before a number is taken off one. See foeTypes. */}
+      {(types.resist.length > 0 || types.vulnerable.length > 0) && (
+        <div className="stat-types foe-types">
+          {types.resist.length > 0 && (
+            <span className="stat-type is-resist">
+              <b>Resistant</b> {types.resist.join(', ')} · half damage
+            </span>
+          )}
+          {types.vulnerable.length > 0 && (
+            <span className="stat-type is-vulnerable">
+              <b>Vulnerable</b> {types.vulnerable.join(', ')} · double damage
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="foe-seam" aria-hidden="true" />
 
       <FoePool
@@ -488,6 +514,8 @@ function FoePool({ label, title, current, max, color, readOnly, onStep }) {
  */
 function FoeActions({ foe, patch, readOnly, combat = null }) {
   const [request, setRequest] = useState(null);
+  /* Which of its rows is being told what it is worth, by id. See AnswerWindow. */
+  const [answering, setAnswering] = useState(null);
   const stack = useCardStack();
   const { rank, stats } = foe;
 
@@ -795,6 +823,13 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
                       /* A wall of fire on the tracker rolls its own damage from
                          its own row. See throwable above. */
                       onRoll={links ? () => combat.rollEffect(foe, effect, links) : null}
+                      /* And the questions a row is waiting on. An enemy's *stats*
+                         take no rider, but what lands on it does: ENBRITTLE lays
+                         "vulnerable to that damage type" and the type is whatever
+                         the party throws next, so the row is answered here and
+                         `foeTypes` reads it. See AnswerWindow.jsx. */
+                      onAnswer={asksOf(effect).length > 0 ? () => setAnswering(effect.id) : null}
+                      asking={openAsks(effect).length}
                       /* An enemy's stats are printed and no rider reaches them, so
                          a row here does not claim to have moved one. Same call as
                          a creature's tracker. See riders.js. */
@@ -806,6 +841,18 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
             ))}
         </section>
       </div>
+
+      {/* One row's open questions, answered. Held by id so a tick of the clock
+          underneath cannot leave the window editing a stale copy. */}
+      {answering && (
+        <AnswerWindow
+          effect={normalizeEffects(foe.effects).find((effect) => effect.id === answering)}
+          onAnswer={(values) =>
+            patch(writeEffects(answerEffect(foe.effects, answering, values)))
+          }
+          onClose={() => setAnswering(null)}
+        />
+      )}
 
       {request && (
         <UsePrompt

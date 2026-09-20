@@ -26,8 +26,12 @@ import {
   moveCost,
   moveWillpower,
   offeredMoves,
+  offeredRides,
   ridingLine,
+  withClaims,
   withMoves,
+  withPrinted,
+  withTargets,
 } from '../../lib/moves.js';
 import { clampSpells, offeredSpells, strikeAllowance, strikeCost } from '../../lib/spellblade.js';
 import { clampWeaves, offeredWeaves, weaveAllowance, weaveCost } from '../../lib/weaver.js';
@@ -291,7 +295,11 @@ export default function UsePrompt({
      Multicast back down quietly releases the extra targets without a state
      write racing the render. */
   const fight = useFight();
-  const roster = combat?.roster ?? fight?.roster ?? [];
+  /* Held rather than recomputed, because the empty fallback is a fresh array on
+     every render and the target fold downstream is keyed on this list: without
+     the memo a prompt for a card nobody is aiming at would re-derive every
+     rider on every keystroke in the dial. */
+  const roster = useMemo(() => combat?.roster ?? fight?.roster ?? [], [combat?.roster, fight?.roster]);
   const offered = roster.length > 0;
 
   /* ---- the Martial Moves on offer, and the ones ticked ----
@@ -411,6 +419,27 @@ export default function UsePrompt({
   const reach = plan.count === null ? roster.length : Math.min(plan.count, roster.length);
   const picked = chosen.slice(0, reach);
 
+  /* The picked bodies, as the swing needs to see them: a name, and what is
+     running on them. A Wound on the thing you are swinging at is an extra die on
+     the swing, so the fold has to read their tracker as well as yours, and
+     `conditions` is what the fight hands down for it. `heard` says the row came
+     over the log rather than off the body itself, which is the difference
+     between folding it and offering it. See FightProvider.jsx and moves.js. */
+  const bodies = useMemo(
+    () =>
+      chosen
+        .slice(0, reach)
+        .map((id) => roster.find((body) => body.id === id))
+        .filter(Boolean)
+        .map((body) => ({
+          id: body.id,
+          name: body.name,
+          effects: body.conditions ?? [],
+          heard: Boolean(body.heard),
+        })),
+    [chosen, reach, roster]
+  );
+
   /* What this one reaches for, when it is a thing rather than a body: a KINDLE
      WEAPON picks whose blade catches fire, so the head asks for that instead of
      for "Targets". See heldThing in targeting.js. */
@@ -468,6 +497,44 @@ export default function UsePrompt({
      The moves are folded last and on top of what the caller handed in, because
      everything else on the swing was known before this dialog opened and they are
      the only part of it being decided in here. See withMoves in moves.js. */
+  /* ---- the conditional clauses, and which of them the player claimed ----
+     Everything running on this body, on the card and on the bodies it is aimed
+     at whose rule is conditional on something only the player can see. Jules,
+     2026-09-19: "the player should have an option that allow them to check a box
+     to allow the character to decide if it applies or not."
+
+     Read off the character, the card and the picked targets, so the list moves
+     when a target is picked and never while a half is being dialled. What is
+     ticked is folded into the modifiers below, which is what makes the card
+     beside the ways and the dice on the table agree about it. See offeredRides
+     in moves.js. */
+  const rides = useMemo(
+    () =>
+      offeredRides(who, request.card, {
+        targets: bodies,
+        half: times > 0,
+        /* The ticked moves and the carried spells count as part of this use, so
+           their own conditional clauses are asked here too: EXECUTE's "if the
+           target is below half its maximum Health" is a box on the swing it was
+           added to. Untick the move and the box goes with it. */
+        riders: [...moveCards, ...spellCards, ...weaveCards],
+      }),
+    [who, request.card, bodies, times, moveCards, spellCards, weaveCards]
+  );
+  const [claimed, setClaimed] = useState([]);
+  /* Clamped on read rather than trimmed by an effect, exactly as the targets and
+     the moves are: a box whose row expired while the dialog was open quietly
+     stops counting without a state write racing the render. */
+  const claims = useMemo(
+    () => claimed.filter((key) => rides.some((ride) => ride.key === key)),
+    [claimed, rides]
+  );
+
+  function claim(key) {
+    setClaimed((was) => (was.includes(key) ? was.filter((held) => held !== key) : [...was, key]));
+    setDenied(null);
+  }
+
   const modifiers = useMemo(() => {
     const asked = picks
       ? {
@@ -490,8 +557,41 @@ export default function UsePrompt({
           ),
         }
       : request.modifiers;
-    return withMoves(asked, moveCards, request.card ?? null);
-  }, [picks, request.modifiers, attribute, bringSwing, riding, moveCards, request.card]);
+
+    /* What the bodies this is aimed at are worth to it, then the boxes the
+       player ticked, then the moves. All three are folded *on top* of what the
+       caller handed in rather than re-derived, for the reason `withMoves` gives:
+       everything else about this card was settled before the dialog opened, and
+       a second fold of the whole tracker in here would count it twice.
+
+       The targets go first because they are the only one of the three the player
+       does not choose: picking a body is the decision, and a Wound on it is an
+       extra die whether or not anything else is ticked. See moves.js. */
+    const aimed = withTargets(asked, request.card ?? null, bodies);
+    /* And what a taken half does to this card's own dice, before the boxes, so
+       a tithe's Empowered die is on the card the boxes are read beside. */
+    const bought = withPrinted(aimed, request.card ?? null, { half: times > 0 });
+    const held = withClaims(bought, who, request.card ?? null, claims, {
+      targets: bodies,
+      half: times > 0,
+      riders: [...moveCards, ...spellCards, ...weaveCards],
+    });
+    return withMoves(held, moveCards, request.card ?? null);
+  }, [
+    picks,
+    request.modifiers,
+    attribute,
+    bringSwing,
+    riding,
+    moveCards,
+    spellCards,
+    weaveCards,
+    request.card,
+    bodies,
+    who,
+    claims,
+    times,
+  ]);
 
   /* What is on this character right now, for the list under the ways, and how
      long this use will itself be on them. Both read off the request and the
@@ -704,15 +804,24 @@ export default function UsePrompt({
        that is the shape everything downstream already reads a card with: the
        roll plan, the printed card and the log all take one `modifiers`. See
        usePlayCard.js, which folds it onto the request once. */
-    if (picks) options.modifiers = modifiers;
-    /* And the moves that were added, both the numbers and the names. The whole
-       folded object, because the swing the dice are thrown for has to be the swing
-       the card in this dialog printed: a RECKLESS ticked on is a d4 on the roll,
-       and a roll plan built off the request alone would throw the unmodified one.
-       `moves` beside it is what the log prints, since "Strike" and "Strike with
-       Wound and Reckless" are not the same line at a table. */
+    /* **Whenever this dialog changed anything about the card**, which is the one
+       rule that covers all of them: the attribute a check is rolled off, a
+       Martial Move ticked on, a box claimed, a tithe's Empowered die and the
+       Wound on the body that was picked. The swing the dice are thrown for has
+       to be the swing the card in this dialog printed, and a roll plan built off
+       the request alone throws the unmodified one.
+
+       Identity is the test, and it is an honest one: every fold in moves.js
+       hands the same object straight back when it has nothing to add, so a use
+       nobody touched sends nothing and reads exactly as it always did. Until
+       2026-09-19 this was two narrow branches — a Skill Check, and a swing with a
+       move on it — so a claimed box and a wounded target both changed the card in
+       the corner and not the dice. See moves.js. */
+    if (modifiers !== request.modifiers) options.modifiers = modifiers;
+    /* And the names of the moves that were added, beside the numbers. `moves` is
+       what the log prints, since "Strike" and "Strike with Wound and Reckless"
+       are not the same line at a table. */
     if (moveCards.length > 0) {
-      options.modifiers = modifiers;
       options.moves = moveCards.map((card) => card.name);
       /* The cards themselves too, because two of them inflict something on
          the body they land on (WOUND, REND) and the chain reads that off the
@@ -1131,6 +1240,52 @@ export default function UsePrompt({
                   is yours to place by hand.
                 </span>
               )}
+            </div>
+          )}
+
+          {/* And the clauses only the player can answer for. Last of the
+              decisions and directly above the ways, because it is the one that
+              costs nothing: a box here does not move an orb, it moves the dice.
+              Everything in it is off by default, on Jules's ruling of
+              2026-09-19, and nothing is remembered between uses, because where
+              you are standing is not a setting. */}
+          {rides.length > 0 && (
+            <div className="use-lays">
+              <span className="use-targets-head">
+                Does it apply
+                <span className="use-targets-count">
+                  {claims.length} of {rides.length}
+                </span>
+              </span>
+
+              {rides.map((ride) => {
+                const on = claims.includes(ride.key);
+                return (
+                  <button
+                    type="button"
+                    key={ride.key}
+                    className={`use-lay use-lay-take${on ? ' is-on' : ''}`}
+                    onClick={() => claim(ride.key)}
+                    aria-pressed={on}
+                    title="Only you can see whether this applies. Tick it and it rides this use."
+                  >
+                    <b>
+                      {ride.name}
+                      {ride.from !== 'you' && ride.from !== 'card' && (
+                        <span className="use-running-from">{ride.from}</span>
+                      )}
+                    </b>
+                    <span className="use-lay-line">
+                      {on ? ride.line || ride.when : `Your call: ${ride.when}`}
+                    </span>
+                  </button>
+                );
+              })}
+
+              <span className="use-targets-note">
+                The sheet cannot see where anybody is standing. Tick whatever is true right now and
+                it rides this use only.
+              </span>
             </div>
           )}
 

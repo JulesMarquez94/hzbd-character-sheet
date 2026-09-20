@@ -37,9 +37,11 @@
  * and nothing else.
  */
 
+import { coversType } from './cardText.js';
 import {
   LEDGER_NOTE_MAX,
   appendLedger,
+  characterTypes,
   clamp,
   newLedgerId,
   shieldCapFor,
@@ -49,20 +51,77 @@ import { healedEffects } from './statuses.js';
 
 /* ----------------------------------------------------------- the arithmetic */
 
+/* ------------------------------------------------------- half it, or double it
+ *
+ * Rulebook 5.9, whole: "Vulnerable to a type: you take double damage from it.
+ * Resistant to a type: you take half damage from it. Neither stacks with itself.
+ * They cancel each other."
+ *
+ * Three readings this file had to make, and each is a sentence the rulebook does
+ * not have:
+ *
+ *   where in the order   The rulebook's order is Armor, then Shield, then
+ *                        Health, and it does not say where the multiplier goes.
+ *                        **Before Armor**, on Jules's ruling of 2026-09-19: the
+ *                        doubling is a property of the damage arriving, and
+ *                        Armor is flat reduction applied to what actually hits.
+ *                        21 Fire at a resistant body with Armor 2 is 10 through
+ *                        the halving, then 8 past the Armor.
+ *   rounding             Half of 7 is 3. Nothing in the game rounds up.
+ *   several types        A hit that names two ("Sharp or Decay", which is what
+ *                        an Infusion over a blade prints) is read the way the
+ *                        word "or" reads at a table: whoever is swinging picks.
+ *                        So a resistance has to cover **every** type named to
+ *                        halve anything, and a weakness to **any** of them
+ *                        doubles. Both fall out of the attacker choosing, and
+ *                        both are flagged in data/README.md.
+ */
+
+/**
+ * What one hit is multiplied by before anything else touches it.
+ *
+ * 0.5 for a resistance, 2 for a weakness, 1 for neither and 1 again for both,
+ * because the rulebook says the two cancel. Untyped damage is never multiplied:
+ * four Primal Masters deal damage with no type at all and a resistance cannot
+ * halve what it cannot name.
+ */
+export function typeFactor({ resist = [], vulnerable = [], immune = [] } = {}, types = []) {
+  const named = (types ?? []).map((type) => String(type)).filter(Boolean);
+  if (named.length === 0) return 1;
+
+  /* Immunity first and immunity wins. Three cards say "immune to all damage"
+     outright and nothing in the rulebook makes it a bigger resistance: it is a
+     different state, so it is asked first and nothing after it can undo it.
+     Every type named has to be covered, for the same reason a resistance needs
+     all of them: the word "or" in a damage line is the attacker's pick. */
+  if (named.every((type) => immune.some((one) => coversType(one, type)))) return 0;
+
+  const halved = named.every((type) => resist.some((one) => coversType(one, type)));
+  const doubled = named.some((type) => vulnerable.some((one) => coversType(one, type)));
+  if (halved === doubled) return 1;
+  return halved ? 0.5 : 2;
+}
+
 /**
  * One landing of damage against armor, then a shield.
  *
  * `amount` is one landing, because Armor is per hit: three landings of 6
  * against Armor 2 are 12 through, not 16. Callers with several landings call
  * this once per landing over the running pools, which is what `struck` does.
+ *
+ * `factor` is the halving or the doubling, applied first and rounded down. It
+ * defaults to 1, so every caller that knows nothing about damage types lands
+ * exactly the numbers it always did.
  */
-export function landHit({ shield = 0, armor = 0 }, amount) {
-  const through = Math.max(
-    0,
-    Math.floor(Number(amount) || 0) - Math.max(0, Math.floor(Number(armor) || 0))
-  );
+export function landHit({ shield = 0, armor = 0 }, amount, factor = 1) {
+  /* `Number.isFinite` rather than `|| 1`, because **zero is a real factor**: a
+     body immune to what is coming takes none of it, and `0 || 1` is 1. Found by
+     the checker the day immunity was added. */
+  const scale = Number.isFinite(Number(factor)) ? Number(factor) : 1;
+  const arrived = Math.floor(Math.max(0, Math.floor(Number(amount) || 0)) * scale);
+  const through = Math.max(0, arrived - Math.max(0, Math.floor(Number(armor) || 0)));
   const soaked = Math.min(Math.max(0, Math.floor(Number(shield) || 0)), through);
-  return { soaked, dealt: through - soaked, through };
+  return { soaked, dealt: through - soaked, through, arrived };
 }
 
 /**
@@ -74,21 +133,27 @@ export function landHit({ shield = 0, armor = 0 }, amount) {
  * `floor` is 0 for an enemy (a body at nothing is down and stays drawn) and
  * `-health_max` for a character, whose sheet runs past zero on purpose.
  */
-export function struck(body, landings, { floor = 0 } = {}) {
+export function struck(body, landings, { floor = 0, types = [] } = {}) {
   let shield = Math.max(0, Math.floor(Number(body.shield) || 0));
   let health = Math.floor(Number(body.health) || 0);
   let soaked = 0;
   let dealt = 0;
 
+  /* Whether this body halves or doubles what is coming, read once: the factor is
+     a fact about the body and the type, and every landing of one throw is the
+     same type. `body` carrying neither list is every caller that predates the
+     damage channel, and the factor is 1 for all of them. */
+  const factor = typeFactor(body, types);
+
   for (const amount of landings) {
-    const hit = landHit({ shield, armor: body.armor }, amount);
+    const hit = landHit({ shield, armor: body.armor }, amount, factor);
     shield -= hit.soaked;
     soaked += hit.soaked;
     dealt += hit.dealt;
   }
 
   health = Math.max(floor, health - dealt);
-  return { shield, health, soaked, dealt };
+  return { shield, health, soaked, dealt, factor };
 }
 
 /**
@@ -156,9 +221,17 @@ export function characterDelta(
   if (kind === 'damage') {
     const held = { shield: Number(character?.shield) || 0, health: Number(character?.health) || 0 };
     const result = struck(
-      { ...held, armor: character?.defense },
+      /* What this body is made of, as well as what it is wearing. A resistance
+         is read here rather than by whoever threw the damage, for the same
+         reason the Armor is: it belongs to the body being hit, and the delivery
+         carries the raw landings precisely so that the sheet taking them can
+         apply its own. See characterTypes in characterModel.js. */
+      { ...held, armor: character?.defense, ...characterTypes(character) },
       list,
-      { floor: -Math.max(0, Math.floor(Number(character?.health_max) || 0)) }
+      {
+        floor: -Math.max(0, Math.floor(Number(character?.health_max) || 0)),
+        types,
+      }
     );
 
     const body = {};
@@ -169,7 +242,11 @@ export function characterDelta(
         kind: 'health',
         delta: -result.dealt,
         balance: result.health,
-        note: why,
+        /* And whether the body halved it or took it twice over, which is the one
+           thing about a delivered hit a reader cannot work out from the number:
+           "Fenrat: Blightbolt · Decay damage · resisted" is the line that
+           explains why 21 came off as 8. */
+        note: factorNote(why, result.factor),
       });
     }
     return Object.keys(body).length > 0 ? body : null;
@@ -228,6 +305,13 @@ function deltaNote(note, kind, types = []) {
   const said = String(note ?? '').trim();
   if (!what) return said;
   return said ? `${said} · ${what}` : what;
+}
+
+/** The same sentence with the halving or the doubling said, where there was one. */
+function factorNote(said, factor) {
+  if (factor === 0.5) return said ? `${said} · resisted` : 'resisted';
+  if (factor === 2) return said ? `${said} · vulnerable` : 'vulnerable';
+  return said;
 }
 
 /** One ledger line, appended the way every other writer appends one. */

@@ -56,6 +56,7 @@ import {
   registerForged,
 } from './creatures.js';
 import { BASIC_ACTIONS } from './actions.js';
+import { ALL_DAMAGE, DAMAGE_FAMILIES } from './cardText.js';
 import { BACKGROUND_CARDS } from './backgrounds.js';
 import { ENCHANTMENTS } from './enchantments.js';
 import { INGREDIENTS } from './ingredients.js';
@@ -131,6 +132,43 @@ export const FORGED_FIELDS = {
 /** How far a creature's own `bonus` may move an attribute either way. The codex
     spans -3 to +2; ten each way is room for a deliberate monster. */
 const BONUS_LIMIT = 10;
+
+/**
+ * What a forged creature may say it takes half or double of.
+ *
+ * The nine damage types, the three families and All, which are the three widths
+ * a resistance is written at anywhere in this codex. Frost, Necrotic and the
+ * unimbued placeholder are left off the list for the same reason the tracker's
+ * own picker leaves them off: `coversType` answers Cold to a Frost Bolt, so
+ * offering both spellings is two buttons for one answer.
+ *
+ * Four at most on each list. The widest card in the codex names three types, and
+ * a monster resistant to nine of them is a monster written as `All`.
+ */
+export const FORGED_TYPE_WORDS = [
+  ...DAMAGE_FAMILIES.Physical,
+  ...DAMAGE_FAMILIES.Elemental.filter((type) => type !== 'Frost'),
+  ...DAMAGE_FAMILIES.Metaphysical.filter((type) => type !== 'Necrotic' && type !== 'Poison'),
+  'Poison',
+  ...Object.keys(DAMAGE_FAMILIES),
+  ALL_DAMAGE,
+];
+
+export const FORGED_TYPES_MAX = 4;
+
+/** One of the two lists, held to words this build knows and to a sane length. */
+function types(raw) {
+  const out = [];
+  for (const entry of Array.isArray(raw) ? raw : []) {
+    const word = FORGED_TYPE_WORDS.find(
+      (known) => known.toLowerCase() === String(entry ?? '').trim().toLowerCase()
+    );
+    if (!word || out.includes(word)) continue;
+    out.push(word);
+    if (out.length >= FORGED_TYPES_MAX) break;
+  }
+  return out;
+}
 
 const ATTRIBUTE_KEYS = ['physique', 'instinct', 'mind'];
 
@@ -224,6 +262,15 @@ export function normalizeBody(raw) {
        downstream: the rule is the creature's, not the form's. */
     ap_max: held(body.ap_max, FORGED_FIELDS.ap_max, rank.ap),
     reaction_max: held(body.reaction_max, FORGED_FIELDS.reaction_max, rank.reaction),
+
+    /* What lands on it differently, which a printed creature declares on one of
+       its passives and a forged one declares outright. Jules, 2026-09-20: "For
+       roged creature add an option to have resistenace and weakens and to tweak
+       it." Two lists rather than one field, because a body can be both: a Bram
+       is half a club and double a torch. Read by `foeTypes` in encounters.js
+       beside the passives and the tracker rows. */
+    resist: types(body.resist),
+    vulnerable: types(body.vulnerable),
 
     cards,
     lore: text(body.lore, FORGED_LORE_MAX),

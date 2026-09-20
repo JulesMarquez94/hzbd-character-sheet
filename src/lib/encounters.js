@@ -85,6 +85,7 @@ import {
   getCreature,
   getRank,
 } from './creatures.js';
+import { wornTypes } from './riders.js';
 import { healedEffects } from './statuses.js';
 
 /** As many enemies as one encounter's column will carry. */
@@ -443,6 +444,13 @@ export function foeActor(foe) {
     owner: foe.conjured?.owner ?? null,
     // Its own tracker, because a use can now lay a row on it.
     effects: foe.effects ?? [],
+    /* And its passives, for the one thing a use prompt reads off them: a clause
+       whose condition is a fact about the table. PACK TACTICS is advantage "on
+       an entity another Fenrat is within 1 meter of", which nothing on any sheet
+       can check, so it is a box on the swing. A broken ward takes its passive's
+       claims with it, exactly as it takes its resistance. See offeredRides in
+       moves.js. */
+    passives: standingPassives(foe),
   };
 }
 
@@ -506,6 +514,78 @@ export function foeModifiers(actor) {
 export function foeOwns(foe, id) {
   if (!id) return false;
   return [...(foe?.moves ?? []), ...(foe?.passives ?? [])].some((card) => card.id === id);
+}
+
+/**
+ * What this enemy takes half of and double of, by damage type.
+ *
+ *   { resist: ['Frost', 'Decay'], vulnerable: [] }
+ *
+ * Two sources, the same two a character has: what it *is*, which for a creature
+ * is its passives rather than its blood, and what is running on its tracker.
+ * A Burn laid by the party makes anything vulnerable to Fire, and the Mire Hex
+ * is resistant to Frost before anybody does anything at all.
+ *
+ * **A broken ward takes its passive's resistance with it.** That is the whole
+ * point of the switch: "a shield that protects it until a pillar is destroyed"
+ * is a rule the Game Master turns off at the table, and a resistance that
+ * outlived the mire being burned would make the switch a lie. `broken` is the
+ * instance's own list of card ids, so this reads the cards that are still
+ * standing and no others.
+ *
+ * Deduplicated rather than summed, because the rulebook says neither stacks
+ * with itself. See characterTypes in characterModel.js, which is this function
+ * for the other side of the table.
+ */
+/**
+ * The passives that are still standing: everything it has, less the wards this
+ * instance has had broken.
+ *
+ * `broken` is a Set on a foe built by `encounterState` and a plain list on a row
+ * straight out of the column, so it is read through a Set either way. Both
+ * readers of a passive's data go through here, which is what stops a broken
+ * ward taking a resistance off and leaving a claim behind.
+ */
+function standingPassives(foe) {
+  const broken = new Set(foe?.broken ?? []);
+  return (foe?.passives ?? []).filter((card) => !(card.ward && broken.has(card.id)));
+}
+
+export function foeTypes(foe) {
+  const resist = [];
+  const vulnerable = [];
+  /* And the third state, which is not a bigger resistance: nothing gets
+     through at all. See typeFactor in combatApply.js. */
+  const immune = [];
+  const add = (into, list) => {
+    for (const type of list ?? []) {
+      const word = String(type ?? '').trim();
+      if (word && !into.some((held) => held.toLowerCase() === word.toLowerCase())) into.push(word);
+    }
+  };
+
+  /* What the creature itself says, which is how a *forged* one carries any:
+     the forge writes a body and not a passive, so its two lists are on the
+     record. Jules, 2026-09-20. Nothing switches these off, which is right for a
+     creature built out of a material: a table that wants one behind a condition
+     writes a passive with a ward instead. */
+  add(resist, foe?.creature?.resist ?? foe?.resist);
+  add(vulnerable, foe?.creature?.vulnerable ?? foe?.vulnerable);
+
+  for (const card of standingPassives(foe)) {
+    add(resist, card.resist);
+    add(vulnerable, card.vulnerable);
+    /* And the one passive in the codex that stops damage outright: the
+       Vaultkeeper Lich's four pillars, whose ward is what brings it down. */
+    add(immune, card.immune);
+  }
+
+  const worn = wornTypes(foe?.effects);
+  add(resist, worn.resist);
+  add(vulnerable, worn.vulnerable);
+  add(immune, worn.immune);
+
+  return { resist, vulnerable, immune };
 }
 
 /* -------------------------------------------------------------- the writers */
@@ -694,7 +774,7 @@ export function applyToFoes(encounter, rows) {
   let foes = normalizeFoes(encounter?.foes);
   let moved = false;
 
-  for (const { key, kind, landings } of rows ?? []) {
+  for (const { key, kind, landings, types = [] } of rows ?? []) {
     const foe = list.find((entry) => entry.key === key);
     if (!foe) continue;
     const held = foes.find((entry) => entry.key === key);
@@ -703,7 +783,15 @@ export function applyToFoes(encounter, rows) {
 
     const body = {};
     if (kind === 'damage') {
-      const hit = struck({ shield, health, armor: foe.stats.defense }, landings, { floor: 0 });
+      /* What this one is made of, as well as what it is wearing: a Bram takes
+         half of a club and double of a torch, and the Mire Hex shrugs off Frost
+         until the mire is burned. `types` is what the roll was made of, carried
+         from the delta that rolled it. See foeTypes above. */
+      const hit = struck(
+        { shield, health, armor: foe.stats.defense, ...foeTypes(foe) },
+        landings,
+        { floor: 0, types }
+      );
       if (hit.soaked > 0) body.shield = hit.shield;
       if (hit.dealt > 0) body.health = hit.health;
     } else if (kind === 'healing') {

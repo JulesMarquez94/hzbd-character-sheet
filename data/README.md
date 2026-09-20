@@ -15992,11 +15992,10 @@ There are **no import cycles in `src/lib`**, checked before and after.
 
 ### Still open, and each one is a sentence the sheet cannot hold
 
-- **VENOMOUS's "additional 1d4 Decay" is the one that could be wired and is not.** It is a whole
-  extra damage roll of another type on every weapon attack, and `attackModifiers` has no field
-  for one: `damage` is a list of *types*, `empower` adds a die of the type already there, and
-  `bonus` is flat. A new field would reach the dice roller, the card renderer and combatApply.
-  Worth Jules's word on whether it is a die or flat damage before anybody builds it.
+- ~~**VENOMOUS's "additional 1d4 Decay" is the one that could be wired and is not.**~~ It was a
+  whole extra damage roll of another type on every weapon attack and `attackModifiers` had no
+  field for one. **Closed 2026-09-17**: Jules ruled it applies to every weapon the Wildkin
+  holds, it is a die, and `added` is the field. See "The venom reaches the blade" below.
 - **BASTION'S FURY is three event clauses**: a Reaction Point on an Intercept, the next attack
   carrying the damage you blocked, and a Willpower off a move riding an attack SHIELD EXPERTISE
   already discounted. The sheet tracks none of intercepting, blocking or how much was blocked.
@@ -16008,6 +16007,8 @@ There are **no import cycles in `src/lib`**, checked before and after.
 - **QUICK DRAW's second half**, the advantage on the attack after a swap, as before.
 - **What is not a number this sheet holds, and never will be**: FEY BLOOD's flight, AMPHIBIAN's
   and DRACONIC SCALES' resistances, STICKY's walls and ceilings, and the Rage's compulsion.
+  *(The two resistances were wrong about "never": the damage channel arrived on 2026-09-19 and
+  both are wired. The other three stand.)*
 ## The Oathbound, 2026-09-11
 
 The nineteenth written set, the sixth slot filled on the Other shelf, and **the third in
@@ -17143,3 +17144,415 @@ and everybody else is shown the game as it stands.
   as a window onto the wall.
 - **A placeholder written into a saved sheet by hand** still prints "On the roster and not
   written yet" on its level block at every tier. Nothing in the app can put one there.
+
+## The venom reaches the blade, 2026-09-17
+
+> "the lineage venemous should apply to all weapon held by the user, from the wildkin"
+
+VENOMOUS is a Wildkin pool card and reads "Your weapon attack deals an additional 1d4 Decay
+damage." It was the one open item left over from the drop of 2026-09-11: twelve cards that
+named a number were made to move it that day and this one was not, because there was nowhere
+on a swing to put it. Its own entry there said so and asked for a ruling, and that is the
+ruling above.
+
+### Why it had no home
+
+`attackModifiers` folds five things onto an attack and none of them is this:
+
+- `damage` is a list of **types**, and folding Decay into it would have the blade printing
+  "Sharp or Decay" as though the steel had changed.
+- `empower` adds another die **of the kind already rolling**, which is a d6 on a Melee Light
+  and never a d4 of anything else.
+- `elevate` grows that die a size.
+- `bonus` is a **flat** number, which 1d4 is not.
+- `stat` is what the swing is rolled off.
+
+So the venom is none of them. It is a second handful of dice, of a type the weapon does not
+deal, hanging on a card that will never have the sentence printed on it.
+
+### The sixth field
+
+**`added` on the modifiers object**, a list of `{ dice, damage, from }`, one entry a source.
+There is one source in the codex and the list is a list because the stacking law makes two
+different cards two sources, and because a rider that could only ever be one would have to be
+rewritten for the second.
+
+- **`swing` on a lineage card** is where it is declared, beside `grants` and deliberately not
+  inside it. riders.js has always split the riders by where the number they name lives — the
+  sheet's own columns, or the swing — and `grants` is the sheet's half. `lineageSwing` in
+  lineages.js reads the cards actually kept, so a pool card is worth its rider the moment it
+  is taken and nothing at all before.
+- **`bloodRiders` in moves.js** folds it, and `attackModifiers` hangs it on the attack.
+- **`rollPlan` appends it**, which makes it the only link in a plan that is not read out of a
+  card's own text. Last in the chain on purpose: a chain gates everything after its `{roll}`
+  on the hit, and venom on a miss is venom on nothing.
+- **`sourceRow` learned the word**, so the list under the pay button reads
+  `Venomous · adds 1d4 Decay damage` and the name opens the card.
+
+### The five readings, each of them a choice
+
+- **Every weapon, with no tag on it.** "all weapon held by the user", so `bloodRiders` is
+  narrowed to neither a card nor a hand, the way a Weaver's TAUT WEAVE is and unlike the pact,
+  the binding and the set grants. A stowed axe opened from the Inventory tab is venomous too,
+  because picking it up is the whole of what it would take.
+- **Both weapon attacks, plain and special.** The card narrows neither. That is deliberately
+  not the Martial Moves' reading: a move is bought for a swing and would be worth double on a
+  Cleave, and this was never paid for.
+- **Once an attack, not once a landing.** "your weapon attack" and not "each landing", so a
+  Flurry of three is one dose. The Bleed that counts Damage Dice still counts the blade's,
+  because `statusRows` reads the plan's *first* damage link and the venom is appended after.
+- **Empower and Elevate leave it alone.** Both are written against the dice the card rolls,
+  and a Fire Infusion on a blade has nothing to say about the venom in the hand holding it.
+- **Its own throw on the surface.** The tray heads a roll with the action's name; a link that
+  came from somewhere else heads with the card that put it there, so the player is not shown
+  the same swing asking for dice twice with no explanation.
+
+### Proved
+
+- `npm run lint:plan`, with a new section walking the whole line: the pool pick, through
+  `lineageSwing` and `attackModifiers`, to the dice. Sixteen cases. It comes on with the pick
+  and off with it, it is on both weapon attacks and on no spell, it is credited in the card's
+  own words, it is thrown last and it is Decay whatever the blade deals, Empower and Elevate
+  grow the blade and not the venom, and a Flurry is one dose.
+- Every other linter, eslint and the build, clean. No import cycles in `src/lib`, checked
+  before and after: moves.js imports lineages.js now, and lineages.js is a leaf.
+- In the browser, through a throwaway harness at the project root (deleted, `git status`
+  checked): a Wildkin's use prompt drew `Changing this · 1` under the two ways with
+  `Venomous — adds 1d4 Decay damage` on it and the card's own text unchanged beside it, the
+  plan read `weapon | 2d6+6 Sharp | 1d4 Decay`, and toggling the pool pick took the row and
+  the throw away and put them back.
+
+### Still open
+
+- **Armor comes off the venom separately.** Two damage throws are two landings and Armor is
+  per landing, so a target with Armor 2 takes it off the swing and again off the 1d4. That is
+  what `applyPlan` and `struck` already do with every multi-throw card and it is not a new
+  rule, but it is the first time one handful is a *rider* on another rather than a second
+  clause of the same card, and a 1d4 against Armor 3 is worth nothing at all. Worth a word.
+- **The card face does not print it.** The codex card is the codex's, and a rider that cannot
+  be folded into a printed number is shown in the list under the pay button, which is where
+  "everything that is modified need to be seen" put every other one. The player sees the venom
+  on their own VENOMOUS card in the lineage block and on every swing they take.
+- **The log titles both damage rows "Damage".** A roll raised by a card is logged by the kind
+  of roll it is, on the rule of 2026-08-31, so the venom's row is named like the blade's. The
+  chain summary names the types — "for 17 Sharp or Decay damage" — and that is what a reader
+  actually reads. Left alone rather than made an exception.
+- **What is still nobody's number**: FEY BLOOD's flight, AMPHIBIAN's and DRACONIC SCALES'
+  resistances, and STICKY's walls and ceilings. VENOMOUS was the last sentence on a lineage
+  card that named a number the sheet could carry. *(The two resistances landed on 2026-09-19
+  with the damage channel. See "Every effect reaches the roll" below.)*
+
+## Every effect reaches the roll, 2026-09-19
+
+> "1 - whenever an effect is conditional or not on ability, such as pack bond, the player
+> should have an option that allow them to check a box to allow the character to decide if it
+> applies or not. 2 - all card effect need to be reflected when using stuff, so if a character
+> is bolstered he should have advantage to all roll. 3 - the system need to take account
+> things like wound and resistance or weakness when attacking."
+
+Three asks, and a pass over the codex behind each one. What they had in common is that the
+sheet already knew the rule and did not apply it: BOLSTER had no rider, an Aimed Shot rolled
+without the disadvantage printed on its own face, a Wound sat on an enemy's block changing
+nothing, and half damage was a ruling the table landed by hand.
+
+### What was actually broken, proved before it was fixed
+
+A probe through `rollPlan` and `attackModifiers` on a blank sheet, which is where the work
+started:
+
+| Card | Its own text | What the dice got |
+| --- | --- | --- |
+| Bow - Aimed Shot | "with disadvantage" | nothing |
+| Smite | "with advantage" | nothing |
+| a Bolstered Strike | "advantage to all actions" | nothing, there was no rider |
+| a Poisoned Skill Check | "Disadvantage on all actions" | nothing |
+| a Poisoned Strike | the same | disadvantage 1 |
+
+The last two are the shape of the whole bug. A running effect reached a weapon attack and a
+card that rolled damage, and stopped there: `bendable` in `attackModifiers` dropped the whole
+rider for anything else, so a Bolstered Skill Check, a Poisoned cast and every potion on the
+belt rolled flat. Four of the six groups on the quick bar never called the fold at all.
+
+### One: a conditional clause is a box
+
+**`claims` on a rider**, in riders.js. A clause whose condition is a fact about the table
+carries its own `when` in the card's own words, and it is offered in the use prompt rather
+than applied. Ten cards left the "considered and left out" list at the foot of that table by
+it, and none of them was solved by arithmetic:
+
+| Card | The box |
+| --- | --- |
+| PACK BOND | two of them: where the *target* is standing, and where *you* are |
+| QUARRY | whether this swing is aimed at the quarry |
+| VERDANT FIELD | standing in the field, on a Flora spell |
+| SHARPEN SENSES, BEND LIGHT, SKILLSEED NUT, LOVE POTION | what the check is *about* |
+| DOWNPOUR, EYE OF THE STORM, SMOKE VIAL | whether the shot crosses the weather |
+| CONSECRATION, CALL TO SANCTUARY | standing on the ground, either side of it |
+| Frightened | whether this action is against whatever frightened you |
+| EXECUTE | whether the target is under half its Health |
+| ASHMAW REND, PACK BITE | their own printed "if it is prone" |
+
+CONSECRATION is the one that *changed*: it was applied outright on the reading that you track
+the card while you are standing on the ground and drop it when you leave, which asked a player
+to keep a tracker row in step with their own feet. EXECUTE is the one that was deliberately
+left unwired in the Martial Move drop for exactly the reason this mechanism now answers.
+
+Everything about the boxes follows the Martial Moves' shape, which is the other thing decided
+inside that prompt: off by default, folded on top of what the caller handed in, credited by
+name in the list under the pay button, and **forgotten the moment the prompt closes**. Where
+you are standing is not a setting.
+
+### Two: an effect reaches every roll
+
+- **`bendable` no longer drops the arrow.** Empowered and Elevate still need damage dice to
+  grow, which is what that guard was written for, but an advantage rides any roll a card asks
+  for. A Bolstered Skill Check, a Bolstered Barrier and a Bolstered swing all get the die.
+- **Four more groups fold.** The belt, the bound-in castings, the basic actions and a
+  creature's own bar all call `attackModifiers` now. A flask was the whole of the potion shelf
+  rolling flat, and SKILL CHECK is a basic action.
+- **`only` narrows a rider to a kind of roll**, read off the card's own sentence by the same
+  function that names the throw in the log. LUCK POTION is advantage on skill checks and has
+  nothing to say about a sword; POWER DRAUGHT is its twin on the Attack Roll.
+- **A card's own printed advantage is read**, by `printedSwing` in rollPlan.js, off the
+  sentence its `{roll}` is in and no other. Seventeen cards say something about their own roll
+  and every one of them was ignored: the seven Aimed Shots, both Swift Strikes, the eight
+  Paired attacks and SMITE. A hedged one ("with advantage if it is prone") becomes a box
+  instead.
+- **A taken half's own clause lands**, for the two cards in the codex that have one. BLOOD
+  SPEAR and VAMPIRIC TOUCH buy "the attack is made with advantage and the damage is Empowered
+  by 1" with a tithe, and the door is narrow on purpose: three other halves say something about
+  a roll in the same breath and none of them means this one.
+- **Eight cards got a plain rider** they should always have had: BOLSTER, SCOURGE, HAUNTING
+  SHADOWS, LUCK POTION, DARK BARGAIN, STONEFLESH, UMBRAL FORM and a Bram's wriggle.
+
+And the bug this work found in passing: **the folded modifiers only rode out on the confirm in
+two cases**, a Skill Check and a swing with a Martial Move on it. Everything else the prompt
+decided changed the card in the corner and not the dice. It is one test now, on identity, and
+every fold hands the same object back when it has nothing to add.
+
+### Three: Wound, resistance and weakness
+
+**A fourth channel, `against`**, for a rider written from the other side of the swing. A Wound
+is the whole of it: "Weapon attacks made against the entity are Empowered" is a number on
+somebody else's attack, read off the target's rows by whoever is aiming. Automatic on Jules's
+ruling: picking the target is the decision, and a sheet that can see the row and asks anyway is
+asking a question it knows the answer to. It is credited in the list under the pay button as
+`Wound · Goblin — Empowered by 1`. The keyword's own two clocks were on nothing until now
+either: a Wound closes at a rest, or the moment any Health comes back.
+
+**A fifth channel, the damage types.** Nothing on any sheet held a resistance before this.
+
+- `resist` and `vulnerable`, lists of damage types, at the three widths a card writes them:
+  a type, a family, or everything at once. `coversType` in cardText.js is where the three are
+  one question, and Cold and Frost are one cold there, as are Decay and Necrotic. Poison is
+  not, deliberately: DRACONIC SCALE grants one without the other.
+- Six cards, two lineage cards, four creature passives and two conditions carry one. AMPHIBIAN
+  shrugs off Cold, DRACONIC SCALES resists whatever colour the scales are (the first grant in
+  the codex whose value is the holder's own answer), a Bram is half a club and double a torch,
+  and Burn is the one condition that names its own type.
+- **Vulnerable and Resistant are rows a table can lay by hand**, which needed the row to learn
+  a field: `types` on the tracker, with a picker in the effect prompt, because "double damage
+  from *that* damage type" is a sentence with a blank in it.
+- The arithmetic is `typeFactor` in combatApply.js, and it holds the rulebook's rule (5.9):
+  neither stacks with itself, and the two cancel.
+- The Character tab says so, under the defenses, in words rather than on a tile: a resistance
+  is not a stat, it is a thing that happens to damage on its way in.
+
+**Three readings the rulebook does not make**, each of them a choice:
+
+- **The multiplier goes before the Armor**, on Jules's ruling. 21 Fire at a resistant body with
+  Armor 2 is 10 through the halving and 8 past the Armor. Armor first would have been 9.
+- **Half of seven is three.** Nothing in this game rounds up.
+- **A hit naming two types is read the way "or" reads at a table**: whoever is swinging picks.
+  So a resistance has to cover every type named to halve anything, and a weakness to any of
+  them doubles.
+
+### The curtain, and what may be folded without asking
+
+A player cannot read an encounter row the Game Master has not shared, and the curtain is all or
+nothing: no pools, no foes, no trackers. So an enemy's conditions cross to a player's sheet
+three ways, and only two of them may be folded silently:
+
+| Where it came from | What the swing does |
+| --- | --- |
+| a seated character's own row, live off the characters channel | folds it |
+| an open encounter's own row | folds it |
+| the table log, where a cast announced it being laid | offers it as a box |
+
+The third is hearsay: nothing there ever hears a Wound being *healed off*, so a row from it
+wears `heard` and the prompt asks "Wound · Rumour — if Rumour still has it". A wrong die is
+worse than a missing one, which is this file's oldest rule.
+
+### Proved
+
+- `npm run lint:combat`, with two new sections and forty-odd cases: the whole resistance
+  table, both orders, the rounding, the two-type reading, a Wildkin's Cold through
+  `characterDelta` to the ledger row that says `resisted`, a creature's passive behind its
+  ward, and a Wound from the status table through `takenRiders` to the Empowered swing.
+- `npm run lint:riders`, which grew three checks: a rider may now reach four channels rather
+  than two, every claim has to carry a condition and bend something, and a claim has to change
+  nothing until its own key is ticked. All 38 riders pass, and two of them caught a real bug
+  the day they were written: Frost was not Cold, and a skill rider was being walked through a
+  sword.
+- `npm run lint:plan`, with three new sections: a card that bends its own roll, a conditional
+  clause that is offered rather than applied, and a running effect reaching a weapon attack, a
+  Skill Check and a spell that only shields.
+- Every other linter, eslint and the build, clean. No import cycles in `src/lib`, checked
+  before and after.
+- In the browser, through a throwaway harness at the project root (deleted, `git status`
+  checked): the use prompt drew **Does it apply · 0 of 2** with PACK BOND and QUARRY unticked,
+  picking the wounded Goblin added `Wound · Goblin — Empowered by 1` to **Changing this** with
+  no box at all, picking the heard-about Rumour offered a box instead and folded nothing, and
+  ticking everything took the card to `4d8 + 6 Sharp` with the confirm handing back
+  `adv=2 dice=4d8+6`. The tracker's own prompt laid `{ status: 'resistant', types: ['Fire'] }`.
+
+### Still open
+
+- ~~**ENBRITTLE's "vulnerable to that damage type"** is a weakness to whatever hits next.~~
+  **Closed 2026-09-20**: there is something to write on the row now, and the row asks for it.
+- **CONTAINMENT SPHERE's breakout disadvantage** is bought with 3 Willpower at the moment
+  somebody tries to escape, so it is not a standing rider at all.
+- **WATER VORTEX's disadvantage scales with the target's height**, a metre at a time. Not a
+  flat number and not a box either.
+- ~~**SPORADIC INFUSION** hands an ally a whole extra throw on their next attack, of the
+  *caster's* Mind.~~ **Closed 2026-09-20**: the row asks for the Mind and carries the throw. See
+  "Ask for the number" below, which closes six of the entries in this list.
+- **DELAY's Elevate** is applied to the actions it held, and nothing models a held action.
+- **SLEEPING SPORES' "entities that can see you gain advantage on the roll"** is the target's
+  advantage on a roll the caster makes, which would have to be read as the caster's
+  disadvantage. That is an inversion rather than a transcription, and it wants a ruling.
+- ~~**A forged creature has no passives to carry a resistance.**~~ **Closed 2026-09-20**: the
+  forge has two rows of chips and the body carries both lists. See "Ask for the number" below.
+- **DARK BARGAIN's Overcast** buys the target Empowered and Elevated on top of the advantage,
+  and a rider is keyed on the card rather than on whether a half was paid for. Same wall
+  SICKNESS hit.
+
+## Ask for the number, 2026-09-20
+
+> "tihng you are nto sure how to track add a popup for confirmation of stat when relevant do a
+> double pass on that. For roged creature add an option to have resistenace and weakens and to
+> tweak it."
+
+Two asks. The second is small and the first is the other half of yesterday's work: yesterday a
+clause the sheet could not *see* became a tick box, and today a number the sheet cannot *know*
+becomes a question.
+
+### The forged creature's two lists
+
+A printed creature declares a resistance on one of its passives, behind a ward where the
+passive has one. A forged creature has no passives to declare anything on, so its two lists are
+on the body: `resist` and `vulnerable`, four words each, at the same three widths a card writes
+them (a type, a family, or All). The forge draws them as two rows of chips under the armor
+family, which is where the rest of "what lands on it" already is.
+
+- `foeTypes` reads the creature's own lists, then its standing passives, then its tracker. Four
+  sources into one answer, and a broken ward drops its passive's share of it.
+- **A type on both lists is allowed**, and the chip says so. The rulebook says a resistance and
+  a weakness to one type cancel, so it is a legal thing to build and a strange thing to build by
+  accident.
+- Both the enemy block and the character sheet now print what they take half and double of,
+  under the defenses, in words. A resistance is not a stat and has no tile: it is a thing that
+  happens to damage on its way in.
+
+### The question a row can carry
+
+**`ask` on a rider**, and the answer lands on the row as `values`. Three kinds:
+
+| kind | what it draws | who it is for |
+| --- | --- | --- |
+| `number` | a box | VIGOR's three times the caster's Mind, SEVER LIFE's damage dealt |
+| `choice` | named options | AIR CONTROL's two modes, SICKNESS asking which side of it you are |
+| `types` | the damage-type picker | ENBRITTLE, whose type is whatever lands next |
+
+A question carrying `from` names one of the **caster's** own numbers, so the sheet laying the
+row fills it in on the way over and the far end confirms it. That is the difference between
+confirming a number and being sent to go and ask somebody for one, and it is why the button
+says Confirm when nothing is missing and "Save what there is" when something is.
+
+**An unanswered question is worth nothing rather than worth zero.** The row sits on the block
+wearing a `?` in the warning colour, bends nothing, and offers the window. That is exactly what
+an unwired VIGOR did for a year, with the difference that the row now says so.
+
+### What that unlocked, which is the double pass
+
+Nine cards left the "cannot be wired" list, and every one of them had the reason written beside
+it in riders.js:
+
+- **VIGOR** and **SEVER LIFE**, which were the two entries that named the wall: a number on the
+  caster's sheet, and a number nobody knows until the dice land.
+- **SICKNESS** and **BLIGHT POLLEN**, whose note said word for word what would unlock them:
+  "the tracker learning which side of a card a row is on". A choice is that.
+- **AIR CONTROL**, whose note said "the tracker has nowhere to record which was chosen".
+- **ENBRITTLE**, which needed the type picker rather than a number.
+- **SPORADIC INFUSION**, which needed two things at once: an answer, and a rider able to carry a
+  whole extra *throw*. That channel is VENOMOUS's `added`, built three days earlier for a
+  lineage card, and this is the first tracker row to use it.
+- **LIFE DRAUGHT**, which needed nothing at all and nobody had noticed. Its scale is the
+  *drinker's* level and the drinker is the sheet holding the row; it was left out because
+  `runningRiders` had no character to measure against, and that argument arrived with
+  BERSERKER'S RAGE on 2026-09-11.
+- **HIBERNATION**, **ICE BLOCK** and the **ETHEREALNESS POTION**, which needed the damage
+  channel to have a third setting.
+
+### Taking no damage at all
+
+`immune`, a third list beside resist and vulnerable, written at the same three widths. It is
+asked first and nothing undoes it, not even a weakness to the same type: immunity is a different
+state rather than a bigger resistance.
+
+ICE BLOCK is the interesting one. "Immune to all non-Psychic damage" is an immunity with a hole
+in it, and it is written as the five things it *does* cover (two families and three types)
+rather than as an exception, because a list of exclusions would be a second shape for one card.
+The Vaultkeeper Lich's four pillars carry the same field behind their ward.
+
+**One bug the checker found the day it was written**: `landHit` scaled by `Number(factor) || 1`,
+and `0 || 1` is 1, so the first body immune to anything took full damage. Zero is a real factor.
+
+### A creature's conditional passive
+
+PACK TACTICS is advantage "against an entity that another Fenrat is within 1 meter of" and
+BLOOD SCENT is advantage on anything "below half their Health". Both are yesterday's tick box
+on the other side of the table, and both were unwired because a claim was read off the
+*tracker* and a creature keeps what is true of it on a passive.
+
+So `offeredRides` reads the actor's passives too, and `foeActor` hands them over with the broken
+wards already dropped. The Game Master gets a box on the Fenrat's bite, and ticking it is the
+whole of what "the litter has it surrounded" means.
+
+### Proved
+
+- `npm run lint:combat`, with two new sections: the whole ask mechanism walked from unanswered
+  to answered and back, both kinds of choice, the caster filling a box in on the way over, and
+  immunity including the hole in ICE BLOCK's.
+- `npm run lint:riders`, which grew a question round trip of its own: a fixture row now answers
+  whatever its rider asks, a question has to carry a label and bend something, and an
+  **unanswered** rider has to bend nothing. All 47 riders pass.
+- Every other linter, eslint and the build, clean. No import cycles in `src/lib`.
+- In the browser, through a throwaway harness at the project root (deleted, `git status`
+  checked): a tracker with two unanswered rows drew them wearing `?`, the window opened headed
+  "Vigor: what it is worth" saying "1 still open. It bends nothing until they are answered",
+  typing 8 turned the button to **Confirm**, and confirming took `health_max` from 70 to 94 and
+  the chip to `✓`. AIR CONTROL's Light took the Speed from 5.5 to 8.5 and Dense put it back. The
+  forge drew both damage-type rows, greyed the rest out at four, and said so when a type was on
+  both lists.
+
+### Still open after the second pass
+
+- **A rider does not reach an enemy's stats at all.** An enemy's numbers are printed, so
+  RUSTWEAVE's "the target's Armor is reduced by 2" and every card like it is unwired against
+  anything that is not a character. The damage channel and the `against` channel both cross;
+  the sheet channel does not.
+- **SLEEPING SPORES** reads the target's advantage on a roll the *caster* makes, which would
+  have to be wired as the caster's disadvantage. That is an inversion rather than a
+  transcription and wants a ruling.
+- **WATER VORTEX** scales its disadvantage by the target's height, a metre at a time. Neither a
+  flat number nor a box.
+- **WILD STRIDER's floor** ("your Movement Speed cannot be reduced") is a rule about other
+  rules, and the only thing on this sheet that reduces a Speed is being overloaded.
+- **DELAY** Elevates the actions it held, and nothing models a held action.
+- **A heal that is refused**: BLIGHT POLLEN's five turns and DEATH WAIL's "cannot restore
+  Health until a Long Rest". A number to bend is one thing and a heal to refuse is another, and
+  nothing in the apply arithmetic can say no yet.
+- **The flight and swim speeds** (WINGS OF RADIANCE, EARTH GLIDE, SEAFARER'S ELIXIR, POTION OF
+  FLYING, SPROUT WINGS). The sheet holds one Movement Speed and nowhere to say what it moves
+  through.

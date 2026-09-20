@@ -78,6 +78,14 @@ export function sourceRow(from, gives, card = null) {
   const damage = (gives?.damage ?? []).filter(Boolean);
   if (damage.length > 0) kept.damage = [...damage];
 
+  /* A whole extra throw the source hangs on the swing, as `[{ dice, damage }]`.
+     The one key here that is neither a number nor a type: VENOMOUS adds 1d4 of
+     Decay to a weapon attack, which is dice rather than an amount and a type the
+     blade does not deal rather than one replacing it. See lineageSwing in
+     lineages.js and the fold in moves.js. */
+  const added = (gives?.added ?? []).filter((one) => one?.dice);
+  if (added.length > 0) kept.added = added.map((one) => ({ ...one }));
+
   // A cast attribute is not a number and still changes every roll on the card.
   if (gives?.stat) kept.stat = String(gives.stat);
 
@@ -118,6 +126,12 @@ export function sourceWords(gives) {
   if (gives.bonus) said.push(`${gives.bonus > 0 ? '+' : ''}${gives.bonus} damage`);
   if (gives.apCut) said.push(`${gives.apCut} Action ${gives.apCut === 1 ? 'Point' : 'Points'} off`);
   if (gives.damage) said.push(`deals ${listAnd(gives.damage)}`);
+  /* "adds 1d4 Decay damage". The card's own word for it — VENOMOUS reads "deals
+     an additional 1d4 Decay damage" — rather than a plus sign in front of dice,
+     for the reason the line above this one gives. */
+  for (const one of gives.added ?? []) {
+    said.push(`adds ${[one.dice, one.damage, 'damage'].filter(Boolean).join(' ')}`);
+  }
   if (gives.stat) said.push(`rolled off ${capitalise(gives.stat)}`);
 
   return said.join(', ');

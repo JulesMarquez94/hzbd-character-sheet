@@ -33,11 +33,22 @@
  *   restHealth      not a number at all. UNDEATH RESILIENCE's second clause is
  *                   what a rest gives back. Read off the rows by `restHealth`.
  *
+ * And two are lists of words rather than numbers at all:
+ *
+ *   resist          damage types this body takes half of. AMPHIBIAN's Cold, and
+ *   vulnerable      DRACONIC SCALES' whichever-colour-you-picked. Never summed,
+ *                   because the rulebook says two resistances to one type are
+ *                   still half and the two lists cancel each other by type. Read
+ *                   off the rows by `characterTypes` in characterModel.js, and
+ *                   applied where a number lands rather than where a tile is
+ *                   drawn: a resistance is not a stat, it is a thing that
+ *                   happens to damage. See combatApply.js.
+ *
  * A leaf, and it has to stay one: nothing in here may import anything.
  */
 
 /** Fields that are real riders but must not be added together. See above. */
-export const NOT_SUMMED = new Set(['healthPerLevel']);
+export const NOT_SUMMED = new Set(['healthPerLevel', 'resist', 'vulnerable']);
 
 /**
  * The flat half of a pile of grant rows, summed per field.

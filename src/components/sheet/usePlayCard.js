@@ -483,7 +483,12 @@ async function throwChain(tray, plan, { request, actor, chain, onSettled = null 
     for (const link of plan) {
       const result = await tray.present({
         ...link,
-        name: request?.name ?? 'A roll',
+        /* The action, unless the throw is not the action's. A link `rollPlan`
+           appended rather than read off the card carries the name of whatever
+           put it there — a Wildkin's VENOMOUS and its 1d4 of Decay — so the
+           surface heading the second handful of dice says which card is asking
+           for them instead of naming the swing twice. See rollPlan.js. */
+        name: link.from ?? request?.name ?? 'A roll',
         note: actor?.name ?? '',
         card: request?.card?.id ?? null,
         /* The face on the surface's header: the card being played, so a roll

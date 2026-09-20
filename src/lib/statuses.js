@@ -19,11 +19,18 @@
  *   rider     what it does to the numbers, where the sheet holds the number.
  *             Poisoned is Disadvantage on every roll and Diseased is -1 to all
  *             three attributes, so those bend the sheet the way a GIANT GROWTH
- *             row does (see riders.js). Frightened's Disadvantage is "against
- *             the one frightening them", which is a condition the sheet cannot
- *             see, so it stays a note.
+ *             row does (see riders.js). Burn is a weakness to Fire, and a Wound
+ *             is the one written from the other side of the swing: it gives
+ *             nothing to the body wearing it and a die to whoever attacks it.
+ *   claims    the clauses whose condition the sheet cannot see, offered as a
+ *             box at the moment of use instead of applied. Frightened's
+ *             Disadvantage is "against the one frightening them", and only the
+ *             player knows whether this is them.
+ *   types     whether the row has to name a damage type before its rider means
+ *             anything. Vulnerable and Resistant both do: "double damage from
+ *             *that* damage type" is a sentence with a blank in it.
  *   heals     whether healing clears it. Poisoned goes the moment any Health
- *             comes back; Bleed loses one stack.
+ *             comes back; Bleed loses one stack, and a Wound closes.
  *   moves     whether a Move action clears it. Prone: "When the entity uses a
  *             move action the prone condition ends."
  *
@@ -74,6 +81,11 @@ export const STATUSES = {
     id: 'burn',
     name: 'Burn',
     until: 'short',
+    /* "The entity becomes vulnerable to Fire damage until they take a Short
+       Rest." The type is on the glossary entry rather than on any card, which is
+       what makes this the one weakness the sheet can apply without being told a
+       type: every Burn is a Fire Burn. */
+    rider: { vulnerable: ['Fire'] },
     line: 'Vulnerable to Fire damage until a Short Rest: it lands double.',
   },
   rooted: {
@@ -128,6 +140,18 @@ export const STATUSES = {
   frightened: {
     id: 'frightened',
     name: 'Frightened',
+    /* "Affected entities have Disadvantage on all Actions against the one
+       frightening them." Who that is is not on the row and cannot be, so this
+       was a note until 2026-09-19 and is a claim now: the player ticks it on the
+       actions aimed at whatever frightened them. See riders.js. */
+    claims: [
+      {
+        id: 'source',
+        when: 'while this is aimed at whatever frightened you',
+        disadvantage: 1,
+        line: 'Disadvantage on actions against the one frightening you',
+      },
+    ],
     line: 'Disadvantage on every action against whoever frightened them.',
   },
   marked: {
@@ -138,7 +162,27 @@ export const STATUSES = {
   vulnerable: {
     id: 'vulnerable',
     name: 'Vulnerable',
+    /* The type is the row's, not the glossary's: "double damage from *that*
+       damage type" is a sentence with a blank in it, and the blank is filled by
+       whatever card or Game Master laid the row. `'types'` is the rider saying
+       so, and the picker in EffectPrompt.jsx is where the answer is given. A row
+       with no type doubles nothing, which is the honest reading of a weakness
+       nobody named. See typesOf in riders.js. */
+    rider: { vulnerable: 'types' },
+    types: true,
     line: 'Takes double damage from the type the card names.',
+  },
+  /* The other half of the pair, and new on 2026-09-19. The glossary has defined
+     **resistance** since the Earth family was written and no row could carry it,
+     because nothing on any sheet held one. Now that the damage channel exists,
+     a table that rules a body resistant can say so on the tracker the same way
+     it can make one vulnerable. */
+  resistant: {
+    id: 'resistant',
+    name: 'Resistant',
+    rider: { resist: 'types' },
+    types: true,
+    line: 'Takes half damage from the type the card names.',
   },
   bleed: {
     id: 'bleed',
@@ -154,7 +198,22 @@ export const STATUSES = {
   wound: {
     id: 'wound',
     name: 'Wound',
-    line: 'Weapon attacks against them are Empowered.',
+    /* "Weapon attacks made against the entity are Empowered. It lasts until the
+       entity receives healing or takes a rest."
+
+       The one rider in this file written from the other side of the swing: it
+       gives nothing to the body wearing it and a die to whoever is aiming at it.
+       `weapon` is the card's own word, so a Fireball at a wounded goblin is not
+       Empowered by the hole in its side. See `takenRiders` in riders.js, and
+       `withTargets` in moves.js for where an attacker reads it.
+
+       Its two clocks are the keyword's own and were on nothing until now: a
+       Wound washes off with the first point of Health, exactly as Poisoned does,
+       and a Short Rest is a rest. */
+    rider: { against: { empower: 1, weapon: true } },
+    heals: true,
+    until: 'short',
+    line: 'Weapon attacks against them are Empowered. It ends at a rest, or the moment any Health comes back.',
   },
 };
 
@@ -168,7 +227,7 @@ export function statusRider(id) {
   return statusOf(id)?.rider ?? null;
 }
 
-/** Every condition, for the picker: name, and what ends it. */
+/** Every condition, for the picker: name, what ends it, and what it needs asked. */
 export function trackableStatuses() {
   return Object.values(STATUSES).map((status) => ({
     status: status.id,
@@ -176,6 +235,9 @@ export function trackableStatuses() {
     until: status.until ?? null,
     label: status.until ? `Until a ${status.until} rest` : 'Until it ends',
     line: status.line,
+    /* Whether picking this one leaves a question open. Two do, and a Vulnerable
+       laid with no type named is a row that doubles nothing. */
+    types: Boolean(status.types),
   }));
 }
 
@@ -380,4 +442,31 @@ export function runningNames(effects) {
   return rows(effects)
     .filter((row) => row.turns !== 0 && row.name)
     .map((row) => String(row.name));
+}
+
+/**
+ * The same rows, trimmed to what somebody *else* needs to know about them.
+ *
+ * A chip wears the names; whoever is aiming at this body needs the mechanics,
+ * because a Wound on the target is a die on their swing and PACK BOND's second
+ * clause is a box on their prompt. Both of those are read by `takenRiders` and
+ * `offeredClaims` in riders.js, and both take an effects list, so what crosses
+ * the table is an effects list with the private half taken off: no note, no
+ * provenance, no enchantment, no Martial Move waiting on a swing.
+ *
+ * What is left is what a table can see anyway. A sheet is public to read and a
+ * wounded body is visibly wounded, which is the same ruling that put the names
+ * on the chips in the first place. See FightProvider.jsx.
+ */
+export function runningMarks(effects) {
+  return rows(effects)
+    .filter((row) => row.turns !== 0 && (row.status || row.card))
+    .map((row) => ({
+      id: String(row.id ?? ''),
+      name: String(row.name ?? ''),
+      card: row.card ?? null,
+      status: row.status ?? null,
+      types: Array.isArray(row.types) ? row.types.map((type) => String(type)) : [],
+      turns: row.turns ?? null,
+    }));
 }

@@ -28,6 +28,7 @@ import {
   deltaWords,
   landHit,
   struck,
+  typeFactor,
 } from '../src/lib/combatApply.js';
 import {
   applyToFoes,
@@ -35,6 +36,7 @@ import {
   closeInitiative,
   encounterState,
   foeActor,
+  foeTypes,
   foldInitiative,
   initiativeAsk,
   layOnFoes,
@@ -42,11 +44,20 @@ import {
   rollInitiative,
 } from '../src/lib/encounters.js';
 import { initiativeCallEvent } from '../src/lib/campaignLog.js';
-import { castPlan, conjuredBody, spendUse } from '../src/lib/combatBar.js';
+import { normalizeBody } from '../src/lib/customCreatures.js';
+import { castEffect, castPlan, conjuredBody, spendUse } from '../src/lib/combatBar.js';
 import { layEffect, normalizeEffects } from '../src/lib/combatTurn.js';
 import { MARTIAL_MOVES, getMartialMove } from '../src/lib/martial.js';
-import { aimingMoves } from '../src/lib/moves.js';
-import { effectLine, runningRiders } from '../src/lib/riders.js';
+import { aimingMoves, offeredRides, withTargets } from '../src/lib/moves.js';
+import {
+  answersFrom,
+  asksOf,
+  effectLine,
+  openAsks,
+  runningRiders,
+  takenRiders,
+  wornTypes,
+} from '../src/lib/riders.js';
 import { rollPlan } from '../src/lib/rollPlan.js';
 import {
   STATUSES,
@@ -232,16 +243,19 @@ section('a landing is Armor first, then Shield, then Health');
     soaked: 0,
     dealt: 5,
     through: 5,
+    arrived: 7,
   });
   check('the Shield soaks what is left', landHit({ shield: 3, armor: 2 }, 7), {
     soaked: 3,
     dealt: 2,
     through: 5,
+    arrived: 7,
   });
   check('Armor cannot heal', landHit({ shield: 0, armor: 9 }, 4), {
     soaked: 0,
     dealt: 0,
     through: 0,
+    arrived: 4,
   });
 
   /* Three landings of 6 against Armor 2 are 12 through, not 16: Armor is per
@@ -251,6 +265,7 @@ section('a landing is Armor first, then Shield, then Health');
     health: 18,
     soaked: 0,
     dealt: 12,
+    factor: 1,
   });
   check('an enemy floors at nothing', struck({ shield: 2, health: 5, armor: 0 }, [20]).health, 0);
   check(
@@ -261,6 +276,269 @@ section('a landing is Armor first, then Shield, then Health');
     ).health,
     -50
   );
+
+  /* ------------------------------------------------ half it, or double it
+   * Rulebook 5.9, and the three readings combatApply.js had to make on top of
+   * it: the multiplier goes before the Armor (Jules, 2026-09-19), half rounds
+   * down, and a hit naming two types is read the way "or" reads at a table.
+   */
+  const FIRE = { resist: [], vulnerable: ['Fire'] };
+  const COLD = { resist: ['Cold'], vulnerable: [] };
+
+  check('a type nobody answers to lands whole', typeFactor(COLD, ['Fire']), 1);
+  check('a resistance halves', typeFactor(COLD, ['Cold']), 0.5);
+  check('a weakness doubles', typeFactor(FIRE, ['Fire']), 2);
+  check('untyped damage is never multiplied', typeFactor(FIRE, []), 1);
+  check(
+    'the two cancel, which is the rulebook saying so',
+    typeFactor({ resist: ['Fire'], vulnerable: ['Fire'] }, ['Fire']),
+    1
+  );
+  check('a family covers its own', typeFactor({ resist: ['Physical'] }, ['Blunt']), 0.5);
+  check('a family covers no other', typeFactor({ resist: ['Physical'] }, ['Fire']), 1);
+  check('All covers everything', typeFactor({ resist: ['All'] }, ['Psychic']), 0.5);
+  check('Frost and Cold are one cold', typeFactor({ resist: ['Cold'] }, ['Frost']), 0.5);
+  /* "Sharp or Decay" is the attacker's pick, so a resistance has to cover both
+     to halve anything and a weakness to either doubles. */
+  check(
+    'a resistance to one of two types halves nothing',
+    typeFactor({ resist: ['Sharp'] }, ['Sharp', 'Decay']),
+    1
+  );
+  check(
+    'a weakness to one of two types doubles',
+    typeFactor({ vulnerable: ['Decay'] }, ['Sharp', 'Decay']),
+    2
+  );
+
+  /* The order Jules ruled on: halve first, then Armor. 21 Fire at a resistant
+     body with Armor 2 is 10 through the halving and 8 past the Armor. Armor
+     first would have been 9. */
+  check(
+    'the type comes off before the Armor',
+    struck({ shield: 0, health: 40, armor: 2, ...COLD }, [21], { types: ['Cold'] }).dealt,
+    8
+  );
+  check(
+    'and doubling is doubled before the Armor takes its flat',
+    struck({ shield: 0, health: 40, armor: 2, ...FIRE }, [10], { types: ['Fire'] }).dealt,
+    18
+  );
+  check('half of seven is three', landHit({ shield: 0, armor: 0 }, 7, 0.5).dealt, 3);
+
+  /* A character's own resistance, off their blood, all the way to the ledger. */
+  const scaled = {
+    shield: 0,
+    health: 40,
+    health_max: 40,
+    defense: 0,
+    lineage: 'wildkin',
+    choices: { 'wildkin-traits': ['amphibian', 'scaley'] },
+    ledger: [],
+  };
+  check(
+    'a Wildkin who kept Amphibian takes half the Cold',
+    characterDelta(scaled, { kind: 'damage', amount: 12, types: ['Cold'], note: 'the test' })
+      .health,
+    34
+  );
+  check(
+    'and all of the Fire',
+    characterDelta(scaled, { kind: 'damage', amount: 12, types: ['Fire'], note: 'the test' })
+      .health,
+    28
+  );
+  check(
+    'the ledger row says it was resisted',
+    characterDelta(scaled, { kind: 'damage', amount: 12, types: ['Cold'], note: 'Frostbolt' })
+      .ledger[0].note.includes('resisted'),
+    true
+  );
+
+  /* And a Burn, which is the one condition that carries a type of its own. */
+  check(
+    'a Burn doubles the Fire it was lit with',
+    characterDelta(
+      { ...scaled, effects: [{ id: 'b', name: 'Burn', status: 'burn', turns: null }] },
+      { kind: 'damage', amount: 10, types: ['Fire'], note: 'the test' }
+    ).health,
+    20
+  );
+}
+
+section('a rider that has to be told a number');
+{
+  /* The other half of "the sheet cannot know this": not a condition to tick but
+     a number nobody on this sheet can work out. VIGOR's is the caster's Mind,
+     and until it is answered the row is worth exactly what an unwired VIGOR was
+     worth, which is nothing. */
+  const laid = (values = null) => [
+    { id: 'v', name: 'Vigor', card: 'vigor', turns: 10, ...(values ? { values } : {}) },
+  ];
+
+  check('VIGOR asks for one number', asksOf(laid()[0]).length, 1);
+  check('and says whose it is', asksOf(laid()[0])[0].from, 'mind');
+  check('unanswered, it raises nothing', runningRiders(laid()).healthMax, 0);
+  check('and the row says it is waiting', openAsks(laid()[0]).length, 1);
+  check('answered, it raises three times it', runningRiders(laid({ mind: 7 })).healthMax, 21);
+  check('and stops asking', openAsks(laid({ mind: 7 })[0]).length, 0);
+
+  /* The caster fills it in on the way over, which is what makes the window at
+     the far end a confirmation rather than a question. */
+  check(
+    'the caster’s own sheet knows the number',
+    answersFrom(getCard('vigor'), { mind: 9 }),
+    { mind: 9 }
+  );
+  check(
+    'and a card that asks nothing gets no field',
+    answersFrom(getCard('giant-growth'), { mind: 9 }),
+    null
+  );
+  check(
+    'the cast lays the row already answered',
+    castEffect({ card: getCard('vigor'), name: 'Vigor' }, { mind: 6 })?.values,
+    { mind: 6 }
+  );
+
+  /* A choice rather than a number, which is what AIR CONTROL's two modes are
+     and what SICKNESS needs to know before it takes a point off anybody. */
+  const air = (mode) => [{ id: 'a', name: 'Air Control', card: 'air-control', turns: 10, values: { mode } }];
+  check('Light air is three more Speed', runningRiders(air('light')).speed, 3);
+  check('and Dense air is the table’s', runningRiders(air('dense')).speed, 0);
+
+  const sick = (side) => [{ id: 's', name: 'Sickness', card: 'sickness', turns: null, values: { side } }];
+  check('the diseased one loses a point of each', runningRiders(sick('target')).attributes, {
+    physique: -1,
+    instinct: -1,
+    mind: -1,
+  });
+  check('and the caster holding a reminder loses nothing', runningRiders(sick('caster')).attributes, {
+    physique: 0,
+    instinct: 0,
+    mind: 0,
+  });
+
+  /* And a type answered after the fact, which is ENBRITTLE's whole sentence. */
+  const brittle = [
+    { id: 'e', name: 'Enbrittle', card: 'enbrittle', turns: 3, values: { types: ['Fire'] } },
+  ];
+  check('an answered Enbrittle doubles that type', typeFactor(wornTypes(brittle), ['Fire']), 2);
+  check('and nothing else', typeFactor(wornTypes(brittle), ['Cold']), 1);
+}
+
+section('taking no damage at all');
+{
+  /* The third setting of the damage channel, and the three cards that need it.
+     Immunity is not a bigger resistance: it is asked first and nothing undoes
+     it, not even a weakness to the same type. */
+  const ice = [{ id: 'i', name: 'Ice Block', card: 'ice-block', turns: 5 }];
+  check('Ice Block stops a sword', typeFactor(wornTypes(ice), ['Sharp']), 0);
+  check('and fire, and rot', typeFactor(wornTypes(ice), ['Fire']), 0);
+  check('and lets the Psychic through', typeFactor(wornTypes(ice), ['Psychic']), 1);
+  check(
+    'immunity beats a weakness to the same type',
+    typeFactor({ immune: ['Fire'], vulnerable: ['Fire'] }, ['Fire']),
+    0
+  );
+  check(
+    'and nothing lands on a body immune to everything',
+    struck({ shield: 0, health: 30, armor: 0, immune: ['All'] }, [40], { types: ['Sacred'] }).dealt,
+    0
+  );
+}
+
+section('what an enemy is made of, and what it is wearing');
+{
+  /* A Bram is oil paint: half of a club, double of a torch, and neither is on
+     its tracker. Its passive carries the two lists. */
+  const bram = { passives: [getCard('paint-body')].filter(Boolean), effects: [], broken: [] };
+  check('a passive carries the resistance', foeTypes(bram).resist, ['Blunt']);
+  check('and the weakness beside it', foeTypes(bram).vulnerable, ['Fire']);
+  check(
+    'so a club lands half on it',
+    struck({ shield: 0, health: 30, armor: 0, ...foeTypes(bram) }, [8], { types: ['Blunt'] }).dealt,
+    4
+  );
+
+  /* The Mire Hex's is behind a ward, and breaking the ward takes it off. */
+  const mire = { passives: [getCard('bog-born')].filter(Boolean), effects: [], broken: [] };
+  check('a warded passive counts while the ward stands', foeTypes(mire).resist, ['Frost', 'Decay']);
+  check('and nothing once it is broken', foeTypes({ ...mire, broken: ['bog-born'] }).resist, []);
+
+  /* And what the party laid on it: a hand-added Resistant row naming its type. */
+  const marked = {
+    passives: [],
+    broken: [],
+    effects: [
+      { id: 'r', name: 'Resistant', status: 'resistant', types: ['Sacred'], turns: null },
+    ],
+  };
+  check('a tracker row carries a resistance too', foeTypes(marked).resist, ['Sacred']);
+
+  /* And a creature a table forged for itself, which has no passives at all: its
+     two lists are on the body, written in the forge. Jules, 2026-09-20. */
+  const forged = { creature: normalizeBody({ resist: ['Physical'], vulnerable: ['Fire', 'Fire'] }) };
+  check('a forged creature carries its own', foeTypes(forged).resist, ['Physical']);
+  check('and a list deduplicates on the way in', foeTypes(forged).vulnerable, ['Fire']);
+  check(
+    'a word this build never heard of is dropped rather than stored',
+    normalizeBody({ resist: ['Sharp', 'Bogus'] }).resist,
+    ['Sharp']
+  );
+  check(
+    'and four is the cap',
+    normalizeBody({ resist: ['Sharp', 'Blunt', 'Force', 'Fire', 'Cold'] }).resist.length,
+    4
+  );
+  check(
+    'a forged family halves what it covers',
+    struck({ shield: 0, health: 30, armor: 0, ...foeTypes(forged) }, [9], { types: ['Blunt'] })
+      .dealt,
+    4
+  );
+  check(
+    'and the row says which type it is',
+    effectLine({ status: 'resistant', types: ['Sacred'] }),
+    'Takes half damage from Sacred.'
+  );
+}
+
+section('a Wound is a die on somebody else swing');
+{
+  const wounded = [{ id: 'w', name: 'Wound', status: 'wound', turns: null }];
+
+  check('a Wound gives its holder nothing', runningRiders(wounded).advantage, 0);
+  check('and whoever aims at it a die', takenRiders(wounded)?.empower, 1);
+  check('on a weapon attack only', takenRiders(wounded)?.weapon, true);
+  check('and it names itself on the receipt', takenRiders(wounded)?.from[0]?.name, 'Wound');
+
+  /* All the way through the fold a use prompt makes. */
+  const swing = getCard('melee-light-strike');
+  const target = [{ id: 'g1', name: 'Goblin', effects: wounded }];
+  check(
+    'the swing is Empowered by a wounded target',
+    withTargets({ empower: 0 }, swing, target).empower,
+    1
+  );
+  check(
+    'and a spell at the same body is not',
+    withTargets({ empower: 0 }, getCard('bramble-whip'), target).empower ?? 0,
+    0
+  );
+  check(
+    'a body only heard about is offered rather than folded',
+    withTargets({ empower: 0 }, swing, [{ ...target[0], heard: true }]).empower,
+    0
+  );
+  check(
+    'and it is offered',
+    offeredRides({}, swing, { targets: [{ ...target[0], heard: true }] }).length,
+    1
+  );
+
+  /* Healing closes it, which is the keyword's own clock and was on nothing. */
+  check('any Health at all closes a Wound', healedEffects(wounded)?.length, 0);
 }
 
 section('what a chain adds up to, one row per kind');

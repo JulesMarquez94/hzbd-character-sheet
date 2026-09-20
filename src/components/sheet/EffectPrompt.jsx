@@ -6,12 +6,31 @@ import { addEffect, trackableCards, TURNS_MAX } from '../../lib/combatTurn.js';
 /** As many offers as fit above the fold. The search box is how you get past it. */
 const PICK_LIMIT = 8;
 import { cardHaystack } from '../../lib/abilitySources.js';
-import { cardGist } from '../../lib/cardText.js';
+import { ALL_DAMAGE, DAMAGE_FAMILIES, cardGist, damageStyle } from '../../lib/cardText.js';
 import { riderLine } from '../../lib/riders.js';
 import { trackableStatuses } from '../../lib/statuses.js';
 
 /** Every condition the glossary defines, once, for the row of chips. */
 const CONDITIONS = trackableStatuses();
+
+/**
+ * What a Vulnerable or a Resistant row can name: the nine damage types, and the
+ * three families a card is as likely to say.
+ *
+ * The nine are the rulebook's own list (5.8) rather than every key in
+ * `DAMAGE_TYPES`, which carries three spellings the codex keeps for its own
+ * reasons: Frost beside Cold, Necrotic beside Decay, and the placeholder an
+ * unimbued focus deals. `coversType` answers to all of them, so picking Cold
+ * halves a Frost Bolt and there is nothing to be gained by offering both.
+ */
+const TYPE_WORDS = [
+  ...DAMAGE_FAMILIES.Physical,
+  ...DAMAGE_FAMILIES.Elemental.filter((type) => type !== 'Frost'),
+  ...DAMAGE_FAMILIES.Metaphysical.filter((type) => type !== 'Necrotic' && type !== 'Poison'),
+  'Poison',
+  ...Object.keys(DAMAGE_FAMILIES),
+  ALL_DAMAGE,
+];
 
 /** The rows whose card answers the search, or all of them when nothing is typed. */
 function hunt(list, needle) {
@@ -94,6 +113,11 @@ export default function EffectPrompt({
      and whatever the condition does to the numbers, exactly as it would have
      had a Snake put it there. See statuses.js. */
   const [condition, setCondition] = useState(null);
+  /* And the damage types a condition names, for the two that are a sentence with
+     a blank in it: "double damage from *that* damage type" says nothing until
+     somebody says which. Vulnerable and Resistant are the pair, and the row
+     carries the answer. See `types` in statuses.js and typesOf in riders.js. */
+  const [types, setTypes] = useState([]);
   const [search, setSearch] = useState('');
 
   const [all, setAll] = useState(false);
@@ -167,12 +191,19 @@ export default function EffectPrompt({
     setNote('');
     setOpen(true);
     setUntil(entry.until ?? '');
+    setTypes([]);
+  }
+
+  /** The damage types the row names, for the two conditions that are a blank. */
+  function toggleType(type) {
+    setTypes((was) => (was.includes(type) ? was.filter((held) => held !== type) : [...was, type]));
   }
 
   function clear() {
     setPicked(null);
     setCondition(null);
     setName('');
+    setTypes([]);
   }
 
   function add() {
@@ -189,6 +220,7 @@ export default function EffectPrompt({
       // turns runs out on its own before a rest is ever taken.
       until: open ? until || null : null,
       from: picked?.from ?? (condition ? 'By hand' : ''),
+      types: condition?.types ? types : [],
     });
 
     // The holder decides what the patch looks like; the window only builds the
@@ -272,6 +304,33 @@ export default function EffectPrompt({
               ))}
             </div>
           </div>
+
+          {/* ---------- AND WHICH TYPE ----------
+              Only for the two conditions that need one. Vulnerable and Resistant
+              are the only rules in the glossary written with a blank in them,
+              and a row laid without filling it halves and doubles nothing at
+              all. The three family names are offered beside the nine types,
+              because a card grants resistance at either width. */}
+          {condition?.types && (
+            <div className="fx-field">
+              <span className="fx-label">
+                {condition.name} to what · {types.length === 0 ? 'pick at least one' : types.join(', ')}
+              </span>
+              <div className="fx-conditions">
+                {TYPE_WORDS.map((word) => (
+                  <button
+                    type="button"
+                    key={word}
+                    className={`fx-until-opt${types.includes(word) ? ' is-on' : ''}`}
+                    onClick={() => toggleType(word)}
+                    style={damageStyle(word) ? { '--fx-type': damageStyle(word).color } : undefined}
+                  >
+                    {word}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ---------- OFF A CARD ----------
               Only what actually lasts. A sword swing resolves and is over, and a

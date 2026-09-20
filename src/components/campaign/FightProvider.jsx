@@ -7,7 +7,7 @@ import { getCreature, isForgedId } from '../../lib/creatures.js';
 import { loadForgedCreatures } from '../../lib/customCreatures.js';
 import { encounterState, listEncounters } from '../../lib/encounters.js';
 import { subscribeToTable } from '../../lib/realtime.js';
-import { runningNames } from '../../lib/statuses.js';
+import { runningMarks, runningNames } from '../../lib/statuses.js';
 
 /**
  * The fight, as this sheet is allowed to know it.
@@ -47,6 +47,37 @@ import { runningNames } from '../../lib/statuses.js';
  * ignored. One fight per campaign, and a sheet at several tables holds them
  * all.
  */
+
+/**
+ * What this client was told is on a body, for the bodies it can read nothing
+ * about itself.
+ *
+ * Three ways a condition reaches a chip, in order of how much they can be
+ * trusted, and this is the last of them:
+ *
+ *   a character's    live off the characters channel. A sheet is public to read.
+ *   an enemy's       off the encounter row, where the Game Master opened it.
+ *   heard            off the table log, where they did not.
+ *
+ * The first two are the body's own list and a swing folds them without asking.
+ * The third is a memory of what was *laid*, which nothing ever corrects, so it
+ * is handed over wearing `heard` and the use prompt offers it as a box. See
+ * `told` above and `offeredRides` in moves.js.
+ *
+ * Hands back nothing at all for a body already answered for, so the spread is a
+ * no-op wherever the real list arrived.
+ */
+function heard(entry, pools, told) {
+  if (entry.kind === 'member' || pools[entry.ref]) return {};
+
+  const marks = Object.values(told)
+    .map((perCampaign) => perCampaign[entry.ref])
+    .find((list) => (list ?? []).length > 0);
+  if (!marks) return {};
+
+  return { effects: marks.map((mark) => mark.name), conditions: marks, heard: true };
+}
+
 export default function FightProvider({ characterId, children }) {
   const { tables } = useCampaignLog();
   // campaignId -> { seq, order, up: { name, round, seq } | null, asking }
@@ -63,12 +94,28 @@ export default function FightProvider({ characterId, children }) {
      other sheets learn its name and its Defense. Cleared with the fight. */
   const [summons, setSummons] = useState({});
 
-  /* What is running on every seated character, by name:
-     characterId -> [names]. A sheet is public to read, so what is on a
-     tracker is not a secret the way an enemy's pools are: a Trickster out of
-     sight is out of sight for the whole table, and a Poisoned ally is a
-     Poisoned ally. Read once and kept live off the characters channel. */
+  /* What is running on every seated character, as marks:
+     characterId -> [{ name, card, status, types, turns }]. A sheet is public to
+     read, so what is on a tracker is not a secret the way an enemy's pools are:
+     a Trickster out of sight is out of sight for the whole table, and a Poisoned
+     ally is a Poisoned ally. Read once and kept live off the characters channel.
+
+     **Rows rather than names since 2026-09-19**, because a chip wears the names
+     and a *swing* needs the mechanics: a Wound on the body you are aiming at is
+     an extra die on your attack, and no list of names can say so. See
+     runningMarks in statuses.js. */
   const [worn, setWorn] = useState({});
+
+  /* And what the table has *heard* laid on a body, off the log:
+     campaignId -> ref -> [marks]. The curtain is all or nothing — an encounter a
+     player may not read hands back no foes at all, let alone their trackers — so
+     an enemy's conditions cross behind it only as far as the log carried them
+     when they were laid.
+     That is hearsay and it is treated as hearsay: a condition from here rides
+     the use prompt as a *box* rather than folding itself into the swing, because
+     nothing here hears a Wound being healed off. Where the curtain is open the
+     encounter's own row wins outright. See `offeredRides` in moves.js. */
+  const [told, setTold] = useState({});
 
   const ids = tables.map((table) => table.id).sort().join(',');
 
@@ -81,6 +128,10 @@ export default function FightProvider({ characterId, children }) {
         shield01: foe.stats.health_max > 0 ? foe.shield / foe.stats.health_max : 0,
         down: foe.down,
         effects: runningNames(foe.effects),
+        /* The same rows with their mechanics on, for whoever is aiming at it.
+           Authoritative: this is the encounter's own list, so a swing may fold
+           what it says without asking. */
+        conditions: runningMarks(foe.effects),
       };
     }
     return map;
@@ -176,6 +227,37 @@ export default function FightProvider({ characterId, children }) {
       return;
     }
 
+    /* An effect laid on somebody, heard rather than read. Kept per body under
+       the ref the caster aimed at, and only for the bodies this client cannot
+       read for itself: a seated character's own row arrives live off the
+       characters channel, and an open encounter's foes arrive off theirs. What
+       is left is an enemy behind a closed curtain, which is exactly the case
+       Jules asked to be covered ("a wounded enemy is visibly wounded").
+
+       Nothing here ever hears a row come *off*, so this list is a memory of what
+       was laid rather than a statement of what is standing. Everything that
+       reads it treats it that way. See the note on `told` above. */
+    if (row.kind === 'effect') {
+      const mark = row.data?.effect;
+      if (!mark?.name) return;
+      const refs = (row.data?.targets ?? []).map((entry) => entry.ref).filter(Boolean);
+      if (refs.length === 0) return;
+
+      setTold((held) => {
+        const mine = { ...(held[campaignId] ?? {}) };
+        for (const ref of refs) {
+          const laid = runningMarks([{ ...mark, id: `${row.id}:${ref}` }]);
+          if (laid.length === 0) continue;
+          const kept = (mine[ref] ?? []).filter(
+            (one) => one.id !== laid[0].id && (one.status ?? one.card) !== (laid[0].status ?? laid[0].card)
+          );
+          mine[ref] = [...kept, ...laid];
+        }
+        return { ...held, [campaignId]: mine };
+      });
+      return;
+    }
+
     if (row.kind !== 'turn') return;
     const move = row.data?.move;
     if (
@@ -197,6 +279,11 @@ export default function FightProvider({ characterId, children }) {
         );
         return { ...held, [campaignId]: mine };
       });
+      /* And everything the table was told was laid on anybody. A memory of what
+         was laid is worth keeping for as long as the fight it was laid in and no
+         longer: the next fight is a new set of bodies, and a Wound remembered
+         across one would be the sheet inventing a condition. */
+      setTold((held) => ({ ...held, [campaignId]: {} }));
     }
 
     setFights((held) => {
@@ -372,7 +459,8 @@ export default function FightProvider({ characterId, children }) {
       setWorn((held) => {
         const next = { ...held };
         for (const member of rows ?? []) {
-          if (member?.characters?.id) next[member.characters.id] = runningNames(member.characters.effects);
+          if (member?.characters?.id)
+            next[member.characters.id] = runningMarks(member.characters.effects);
         }
         return next;
       });
@@ -391,7 +479,7 @@ export default function FightProvider({ characterId, children }) {
               onChange: (payload) => {
                 const row = payload.new;
                 if (!row?.id) return;
-                setWorn((held) => ({ ...held, [row.id]: runningNames(row.effects) }));
+                setWorn((held) => ({ ...held, [row.id]: runningMarks(row.effects) }));
               },
               onResync: () => listMembers(campaignId).then(fold).catch(() => {}),
             })
@@ -483,8 +571,15 @@ export default function FightProvider({ characterId, children }) {
           health01: null,
           shield01: 0,
           down: false,
-          effects: entry.kind === 'member' ? (worn[entry.ref] ?? []) : [],
+          effects: entry.kind === 'member' ? (worn[entry.ref] ?? []).map((mark) => mark.name) : [],
+          conditions: entry.kind === 'member' ? (worn[entry.ref] ?? []) : [],
           ...(pools[entry.ref] ?? {}),
+          /* And what this client was only *told* about, where it could read
+             nothing for itself. Last, so a row it can actually read always wins,
+             and flagged, because a swing may fold what it reads and may only
+             offer what it heard. See `told` above, and `offeredRides` in
+             moves.js. */
+          ...heard(entry, pools, told),
           defenses: entry.defenses ?? null,
         });
       }
@@ -506,7 +601,9 @@ export default function FightProvider({ characterId, children }) {
           shield01: 0,
           down: false,
           effects: [],
+          conditions: [],
           ...(pools[key] ?? {}),
+          ...heard({ ref: key, kind: 'foe' }, pools, told),
           defenses: { avoid: body.avoid ?? 0, reflex: body.reflex ?? body.avoid ?? 0, grit: body.grit ?? body.avoid ?? 0 },
         });
       }
@@ -517,7 +614,7 @@ export default function FightProvider({ characterId, children }) {
        roster, no reactions, no turns. See ReactionCall, which reads it. */
     if (running.length === 0 && asking.length === 0) return null;
     return { live: running.length > 0, roster, fights: running, asking, pools, worn };
-  }, [fights, shared, summons, worn, tables, characterId]);
+  }, [fights, shared, summons, worn, told, tables, characterId]);
 
   return <FightContext.Provider value={value}>{children}</FightContext.Provider>;
 }

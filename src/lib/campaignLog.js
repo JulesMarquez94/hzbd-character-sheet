@@ -119,9 +119,15 @@ export async function listFightWords(campaignId, { limit = 30 } = {}) {
     .from('campaign_events')
     .select('*')
     .eq('campaign_id', campaignId)
-    .in('kind', ['turn', 'summon'])
+    .in('kind', ['turn', 'summon', 'effect'])
     /* The summons ride along, so a reload mid-fight still knows the wall is
-       standing: what was conjured and what was taken off again. */
+       standing: what was conjured and what was taken off again.
+
+       And the effects laid, since 2026-09-19, for the one thing a player cannot
+       read for themselves: what is running on an enemy behind a closed curtain.
+       A reload would otherwise forget that the goblin was Wounded, which is the
+       only record of it this sheet will ever have. See `told` in
+       FightProvider.jsx, which treats all of it as the hearsay it is. */
     .in('data->>move', [
       'init-call',
       'initiative',
@@ -129,6 +135,7 @@ export async function listFightWords(campaignId, { limit = 30 } = {}) {
       'your-turn',
       'conjure',
       'gone',
+      'effect',
     ])
     .order('seq', { ascending: false })
     .limit(limit);

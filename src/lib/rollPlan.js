@@ -93,9 +93,11 @@ const REPEATS = [
  *   card       the card being played
  *   character  whose numbers it prints. A creature plays its own.
  *   modifiers  what the holder brings: the stat it casts off, Empower, Elevate,
- *              a lent bonus, and the advantage riding the swing. The same
- *              object AbilityCard prints the card with, so the dice that land
- *              are the dice the player was looking at when they pressed use.
+ *              a lent bonus, a whole added throw, and the advantage riding the
+ *              swing. The same object AbilityCard prints the card with, so the
+ *              dice that land are the dice the player was looking at when they
+ *              pressed use. `added` is the one of them the card cannot print,
+ *              and it is appended at the foot of the chain — see below.
  *   half       whether the card's second half was paid for. Eleven halves in
  *              the codex roll dice and none of them repeats the base card's,
  *              so a paid half is extra links rather than replacement ones.
@@ -113,6 +115,12 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
      Necrotic damage". An Infusion replaces the card's printed type outright, so
      the holder's is read first, exactly as AbilityCard prints it. */
   const damage = mods.damage?.length ? mods.damage : (card?.damage ?? []);
+  /* And what the card says about its own roll, which is a different thing from
+     what the holder lends it: an Aimed Shot is made with disadvantage in
+     anybody's hands. Added to the holder's arrows rather than replacing them,
+     because they cancel one for one and the dice work that out. See
+     `printedSwing` above. */
+  const printed = printedSwing(card, { half });
 
   const links = [];
   const texts = [card?.body, half ? card?.sub_body : null];
@@ -143,13 +151,7 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
            logChain.js), and "Skill Check" is the name the game gives this one:
            it is what the thirteen domain skills say they apply to, and it is
            what the tray's own custom roll has offered since it was written. */
-        const kind = isWeaponAttack(card)
-          ? 'weapon'
-          : sentence.includes('skill check')
-            ? 'skill'
-            : sentence.includes('attack')
-              ? 'attack'
-              : 'check';
+        const kind = kindOf(card, sentence);
 
         links.push({
           shape: 'check',
@@ -160,8 +162,8 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
              because the entry above it already says which card. */
           kind,
           flat: resolveValue(attribute.key, who, stat, sums).flat,
-          advantage: Number(mods.advantage) || 0,
-          disadvantage: Number(mods.disadvantage) || 0,
+          advantage: (Number(mods.advantage) || 0) + printed.advantage,
+          disadvantage: (Number(mods.disadvantage) || 0) + printed.disadvantage,
           /* Which of the target's numbers this is judged by, when the card says.
              "against the Reflex of" and "against the Grit of" name the defense
              outright; an attack with no name rolls against Defense, which is
@@ -207,6 +209,50 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
          one d6 read three times, and each landing explodes on its own. */
       for (let i = 0; i < repeatsOf(sentence); i += 1) links.push({ ...link });
     }
+  }
+
+  /* ------------------------------------------------- and what is not on the card
+   * A whole extra throw the holder brings, appended after everything the card
+   * itself says. VENOMOUS is the one source in the codex: a Wildkin who kept it
+   * deals "an additional 1d4 Decay damage" with every weapon attack, and no card
+   * in their hands is ever going to have that sentence printed on it.
+   *
+   * Last on purpose, so it lands after the check the swing has to pass: a chain
+   * gates everything after the `{roll}` on the hit, and venom on a miss is venom
+   * on nothing. Once per attack rather than once per landing, because the card
+   * says "your weapon attack" and not "each landing" — a Flurry of three is one
+   * dose.
+   *
+   * Empower and Elevate are deliberately not applied to it. Both are written
+   * against the dice the *card* rolls, and this handful is not the card's: a Fire
+   * Infusion Empowering a blade has nothing to say about the venom in the hand
+   * holding it.
+   *
+   * Narrowed by whoever built the modifiers rather than here, exactly as `bonus`
+   * is: `attackModifiers` only hangs one on a weapon attack. See bloodRiders in
+   * moves.js.
+   */
+  for (const one of mods.added ?? []) {
+    const resolved = resolveValue(one?.dice, who, stat);
+    if (resolved.dice.length === 0) continue;
+
+    links.push({
+      shape: 'value',
+      kind: 'damage',
+      dice: resolved.dice,
+      /* And the number beside the dice, where the source brought one. VENOMOUS
+         is a bare 1d4 and SPORADIC INFUSION is "4d6 + 4 x the caster's Mind":
+         the dice are the card's and the number was answered on the row, so it
+         arrives already worked out rather than as an expression this file would
+         have to resolve against the wrong sheet. */
+      flat: resolved.flat + (Number(one.flat) || 0),
+      parts: resolved.parts,
+      askVerdict: false,
+      damage: one.damage ? [one.damage] : [],
+      /* Which card put it there, so the row in the log is not an unexplained
+         handful of dice between the swing and its own damage. */
+      from: one.from ?? null,
+    });
   }
 
   return links;
@@ -276,6 +322,223 @@ function purposeOf(after, sentence) {
  * it cannot settle: whether a Roll is an Attack Roll, and what a bare handful of
  * dice is for.
  */
+/* --------------------------------------------- what the card says about itself
+ *
+ * A card that bends its own roll says so in the sentence the `{roll}` is in:
+ * "Make an {stat} Ranged Attack {roll} **with disadvantage** against an entity",
+ * which is every Aimed Shot, both Swift Strikes, the eight Paired attacks and
+ * SMITE. Nothing read that sentence until 2026-09-19, so an Aimed Shot rolled
+ * with no penalty at all and a Smite with no die: the card said one thing and
+ * the dice did another, which is the one thing this file exists to prevent.
+ *
+ * **Only the sentence the roll is in.** RECKLESS's "the attack is made with
+ * advantage" is about a swing it rides rather than one it makes, and it is
+ * already folded by martial.js. A sentence with no `{roll}` in it is talking
+ * about somebody else's roll, some later roll or no roll at all.
+ *
+ * **And only where it is not conditional.** "with advantage if it is prone" is
+ * a fact about the table, so it is offered as a claim in the use prompt rather
+ * than applied here, exactly as PACK BOND's adjacency is. See riders.js, and
+ * `cardClaims` in moves.js for where the two lists meet.
+ *
+ * The arrow in the card's corner deliberately does not change. It is what the
+ * *holder* lends the card (see AbilityCard.jsx), and a card's own printed
+ * disadvantage is already in the words underneath it.
+ */
+
+/** "with advantage", "with 2 advantage", "takes 1 disadvantage", "gains advantage". */
+const SAYS_SWING =
+  /\b(?:with|gains?|granting|takes?)\s+(?:(\d+)\s+|double\s+)?(dis)?advantage\b/gi;
+
+/** The word that turns the clause into a question only the table can answer. */
+const CONDITIONAL = /\b(if|while|unless|when)\b/i;
+
+/**
+ * What a card's own text does to the roll it is asking for.
+ *
+ *   { advantage, disadvantage, claims }
+ *
+ * `claims` is the conditional half, in the shape riders.js uses, so the prompt
+ * can offer a card's own "if it is prone" in the same row of boxes as a tracker
+ * row's. Each carries the card's own words as its `when`.
+ */
+export function printedSwing(card, { half = false } = {}) {
+  const out = { advantage: 0, disadvantage: 0, claims: [] };
+  let at = 0;
+
+  for (const raw of [card?.body, half ? card?.sub_body : null]) {
+    if (!raw) continue;
+    const text = cardProse(raw);
+    const found = text.search(/\{roll(?::[a-zA-Z]+)?\}/);
+    /* A taken half has no `{roll}` of its own and still bends the roll the card
+       already made: BLOOD SPEAR's tithe buys "the attack is made with advantage
+       and the damage is Empowered by 1". So where there is no check to sit
+       beside, the sentence has to name *this* attack outright. That is a much
+       narrower door and it has to be: three other halves in the codex say
+       something about a roll in the same breath and none of them means this one
+       — DARK BARGAIN Empowers the target's next action, DELAY Elevates the
+       actions it held, and CONTAINMENT SPHERE gives the trapped entity
+       disadvantage on its own breakout. All three name their subject, and none
+       of them names the attack. See `ownClause` below. */
+    const sentence = found < 0 ? ownClause(text) : sentenceAround(text, found);
+    if (!sentence) continue;
+    SAYS_SWING.lastIndex = 0;
+    let match;
+    while ((match = SAYS_SWING.exec(sentence))) {
+      const [whole, count, down] = match;
+      const size = /\bdouble\b/i.test(whole) ? 2 : Math.max(1, Number(count) || 1);
+      const field = down ? 'disadvantage' : 'advantage';
+      const when = conditionIn(sentence, match.index + whole.length);
+
+      if (!when) {
+        out[field] += size;
+        continue;
+      }
+      at += 1;
+      out.claims.push({
+        id: `printed-${at}`,
+        when,
+        [field]: size,
+        line: `${down ? 'Disadvantage' : 'Advantage'}${size > 1 ? ` ${size} times` : ''} ${when}`,
+      });
+    }
+  }
+
+  return out;
+}
+
+/**
+ * What a taken half does to the card's own *dice*, as `{ empower, elevate }`.
+ *
+ * The other half of BLOOD SPEAR's tithe: "the attack is made with advantage and
+ * the damage is Empowered by 1". The advantage rides the check and is read by
+ * `printedSwing` above; this is the die, and it is read separately because the
+ * two land in different places.
+ *
+ * **Not applied here, deliberately.** An Empower changes a number the card
+ * *prints*: the damage would read 2d6 on the card and roll 3d6 on the table,
+ * which is the one thing this file exists to prevent. So it is folded onto the
+ * modifiers instead, by `withPrinted` in moves.js, which is what both the
+ * printed card and the plan are built from. The arrow is the opposite case and
+ * takes the opposite route, because the corner of a card is the *holder's* and
+ * the card's own disadvantage is already in the words under it.
+ *
+ * Only a taken half, and only a sentence about this card's own attack. The same
+ * narrow door `ownClause` opens, for the same three cards it keeps out.
+ */
+const SAYS_DICE = /\b(?:is|are)\s+(Empowered|Elevated)(?:\s+by\s+(\d+)|\s+(once|twice))?/gi;
+
+export function printedDice(card, { half = false } = {}) {
+  const out = { empower: 0, elevate: 0 };
+  if (!half || !card?.sub_body) return out;
+
+  const clause = ownClause(cardProse(card.sub_body));
+  if (!clause) return out;
+
+  SAYS_DICE.lastIndex = 0;
+  let match;
+  while ((match = SAYS_DICE.exec(clause))) {
+    const [, word, count, said] = match;
+    const size = Number(count) || (said === 'twice' ? 2 : 1);
+    if (/^empowered$/i.test(word)) out.empower += size;
+    else out.elevate += size;
+  }
+  return out;
+}
+
+/**
+ * The sentence in a half that is about *this card's own* attack, or null.
+ *
+ * The subject has to be the attack or its damage and nothing else, which is
+ * what "the attack is made with advantage" and "the damage is Empowered by 1"
+ * both say and what "it makes its breakout Roll with disadvantage" plainly does
+ * not. Two cards in the codex pass it, BLOOD SPEAR and VAMPIRIC TOUCH, and they
+ * are the same sentence: it is the Blood family's own way of writing a tithe.
+ */
+const OWN_SUBJECT = /\b(?:the|this)\s+(?:attack|damage)(?:'s|’s)?\s+(?:is|are)\s+(?:made\s+with|Empowered|Elevated)/i;
+
+function ownClause(text) {
+  for (const line of String(text).split(/(?<=[.!?])\s+|\n+/)) {
+    if (!OWN_SUBJECT.test(line)) continue;
+    /* "If you do" is the codex's own lead for a taken half, and a half is only
+       read here once it has been paid for: the condition is already answered,
+       so leaving it in would turn an Overcast the player just bought into a box
+       asking whether they bought it. statuses.js strips the same words for the
+       same reason. */
+    return line.replace(/^If you do,\s*/i, '').toLowerCase();
+  }
+  return null;
+}
+
+/**
+ * The condition attached to a clause, in the card's own words, or null.
+ *
+ * A card hedges its own roll on either side of the phrase, and both are read:
+ *
+ *   after   "with advantage **if it is prone**", which runs to the end of the
+ *           sentence. ASHMAW REND and PACK BITE.
+ *   before  "**While wielding a weapon that includes a shield**, you gain
+ *           advantage", which runs to the comma that closes it. SHIELD
+ *           EXPERTISE, whose condition is a thing in your hands and which the
+ *           set spec already answers for the Defense half.
+ *
+ * The one after wins where a sentence has both, because it is the nearer of the
+ * two and the one the clause is actually hanging on.
+ */
+function conditionIn(sentence, at) {
+  const after = sentence.slice(at);
+  const near = CONDITIONAL.exec(after);
+  if (near) return after.slice(near.index).replace(/[.\s]+$/, '').trim();
+
+  const before = sentence.slice(0, at);
+  const far = CONDITIONAL.exec(before);
+  if (!far) return null;
+
+  const clause = before.slice(far.index);
+  const comma = clause.indexOf(',');
+  return (comma < 0 ? clause : clause.slice(0, comma)).replace(/[.\s]+$/, '').trim();
+}
+
+/**
+ * What kind of roll one `{roll}` is, read off the sentence it is printed in.
+ *
+ * A weapon's swing is a Weapon Attack Roll, which is the codex's own tag for it;
+ * everything else is a Skill Check, an Attack Roll or a plain Roll depending on
+ * what the sentence says. It names the row in the log, and since 2026-09-19 it
+ * also says which running effects reach the roll: LUCK POTION's advantage is on
+ * skill checks and POWER DRAUGHT's is on Attack Rolls, and neither of them is
+ * talking about the other. See `only` in riders.js.
+ */
+function kindOf(card, sentence) {
+  if (isWeaponAttack(card)) return 'weapon';
+  if (sentence.includes('skill check')) return 'skill';
+  if (sentence.includes('attack')) return 'attack';
+  return 'check';
+}
+
+/**
+ * The kind of roll a whole card asks for, or null for one that rolls no check.
+ *
+ * The same reading `rollPlan` makes link by link, asked of the card's first
+ * `{roll}`, which is the only one a chain ever judges. Exported for the fold in
+ * moves.js, so the word a rider is narrowed by and the word the log heads the
+ * throw with can never be two different readings of one sentence.
+ *
+ * A card with no check at all answers null and every rider reaches it, which is
+ * the right answer rather than a missing one: a card that rolls no check has no
+ * kind to be wrong about, and its damage can still be Empowered.
+ */
+export function rollKind(card, { half = false } = {}) {
+  for (const raw of [card?.body, half ? card?.sub_body : null]) {
+    if (!raw) continue;
+    const text = cardProse(raw);
+    const at = text.search(/\{roll(?::[a-zA-Z]+)?\}/);
+    if (at < 0) continue;
+    return kindOf(card, sentenceAround(text, at));
+  }
+  return null;
+}
+
 function sentenceAround(text, at) {
   const from = Math.max(
     text.lastIndexOf('.', at) + 1,

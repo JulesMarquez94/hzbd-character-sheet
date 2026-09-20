@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from '../Modal.jsx';
 import TargetChip from '../TargetChip.jsx';
-import { deltaWords, landHit } from '../../lib/combatApply.js';
+import { deltaWords, landHit, typeFactor } from '../../lib/combatApply.js';
 import { isFailure } from '../../lib/dice.js';
 
 /**
@@ -194,14 +194,19 @@ function landingLine(body, delta) {
   let shield = Math.max(0, Math.floor(Number(body.shieldNow) || 0));
   let soaked = 0;
   let dealt = 0;
+  /* What this body does to damage of this type before anything else touches it:
+     half for a resistance, double for a weakness. First in the line for the same
+     reason it is first in the arithmetic. See typeFactor in combatApply.js. */
+  const factor = typeFactor(body.types ?? {}, delta.types ?? []);
   for (const landing of delta.landings) {
-    const hit = landHit({ shield, armor: body.armor }, landing);
+    const hit = landHit({ shield, armor: body.armor }, landing, factor);
     shield -= hit.soaked;
     soaked += hit.soaked;
     dealt += hit.dealt;
   }
 
   const parts = [];
+  if (factor !== 1) parts.push(factor === 0.5 ? 'resisted, halved' : 'vulnerable, doubled');
   if ((Number(body.armor) || 0) > 0) parts.push(`Armor ${body.armor}`);
   if (soaked > 0) parts.push(`Shield soaks ${soaked}`);
   parts.push(dealt > 0 ? `${dealt} to Health` : 'nothing gets through');

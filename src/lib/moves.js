@@ -119,8 +119,19 @@ import { feralLocks, feralRiders, passesForm } from './feral.js';
 import { pactBoonRows, pactState, pactWeaponRiders } from './pact.js';
 import { bladeRiders } from './spellblade.js';
 import { weaveRiders } from './weaver.js';
-import { bendsSwing, effectRiders, riderOf } from './riders.js';
-import { mergeSources, sourceRow } from './attribution.js';
+import { lineageSwing } from './lineages.js';
+import {
+  bendsAgainst,
+  bendsSheet,
+  bendsSwing,
+  claimedRiders,
+  effectRiders,
+  offeredClaims,
+  riderOf,
+  takenRiders,
+} from './riders.js';
+import { printedDice, printedSwing, rollKind } from './rollPlan.js';
+import { mergeSources, sourceRow, sourceWords } from './attribution.js';
 
 /** How many Martial Moves anybody who knows one may add to a single swing. */
 export const MOVE_ALLOWANCE = 1;
@@ -711,6 +722,312 @@ export function withMoves(modifiers, cards = []) {
   };
 }
 
+/* ------------------------------------------------------------ the claimed ones
+ *
+ * Jules, 2026-09-19: "whenever an effect is conditional or not on ability, such
+ * as pack bond, the player should have an option that allow them to check a box
+ * to allow the character to decide if it applies or not."
+ *
+ * Three places a conditional clause can come from, and they are offered in one
+ * list because a player ticking boxes does not care which file the clause is in:
+ *
+ *   your tracker    PACK BOND's adjacency, QUARRY's prey, a Frightened's
+ *                   "against whoever frightened them". Off `offeredClaims` in
+ *                   riders.js.
+ *   the card        "with advantage if it is prone", which is ASHMAW REND and
+ *                   PACK BITE. Off `printedSwing` in rollPlan.js.
+ *   the target      the other side of the same coin: a clause on *their*
+ *                   tracker that bends a swing aimed at them. PACK BOND's
+ *                   second clause and SMOKE VIAL's, which is why `against` is
+ *                   a channel at all.
+ *
+ * Everything else about them is the Martial Moves' shape: offered before the
+ * price is paid, folded on top of what the caller handed in, credited by name in
+ * the list under the pay button, and gone the moment the prompt closes. Nothing
+ * is remembered between uses, because the answer changes between uses.
+ */
+
+/**
+ * Every box this use should offer, in the order a player reads them.
+ *
+ *   [{ key, name, when, line, from }]
+ *
+ * `from` is 'you', 'card' or a target's name, which is the whole of what the
+ * reader needs to know about where a box came from. `key` is what comes back
+ * ticked, and `withClaims` is what turns the ticked ones into numbers.
+ */
+export function offeredRides(character, card, { targets = [], half = false, riders = [] } = {}) {
+  const swings = isWeaponAttack(card);
+  const rolls = rollKind(card, { half });
+
+  /* Your own, minus the ones written about somebody swinging at *you*. PACK
+     BOND carries one of each, and its second clause ("Attack Rolls against a
+     member have disadvantage") is a box for whoever is attacking you rather than
+     for you: offered here it would be a question with no answer, since nothing
+     about the swing you are making turns on it. It is offered on their prompt,
+     off your rows, in `theirs` below. */
+  const mine = offeredClaims(character?.effects, { weapon: swings, who: character, rolls })
+    .filter(({ rider }) => !bendsAgainst(rider) || bendsSwing(rider) || bendsSheet(rider))
+    .map((claim) => ({ ...claim, from: 'you' }));
+
+  /* The card's own conditional clause, and the ticked riders' with it: a Martial
+     Move added to this swing is as much a part of it as the card, and EXECUTE's
+     "if the target is below half its maximum Health" is exactly the question
+     this row of boxes exists to ask. A move not ticked offers nothing, because
+     the caller only ever hands over the ones that are.
+
+     **And a creature's own passives.** PACK TACTICS and BLOOD SCENT are both
+     conditional advantage written on a passive rather than on the attack, which
+     is where a creature keeps everything that is true of it: the passive is
+     always on and its clause is not. A character has no equivalent, because a
+     talent's conditional riders live in its set's spec. See `foeActor` in
+     encounters.js, which is what puts them within reach. */
+  const printed = [card, ...(riders ?? []), ...(character?.passives ?? [])]
+    .filter(Boolean)
+    .flatMap((one) => cardClaims(one, half));
+
+  /* And theirs. Only the clauses written against an attack aimed at them: a
+     Poisoned goblin's own disadvantage is the goblin's problem and has no
+     business on the list of things bending your swing. */
+  const theirs = (targets ?? []).flatMap((body) => {
+    const conditional = offeredClaims(body?.effects, { weapon: swings, rolls })
+      .filter(({ rider }) => bendsAgainst(rider))
+      .map((claim) => ({
+        ...claim,
+        key: `target:${body.id}:${claim.key}`,
+        from: body.name ?? 'the target',
+      }));
+
+    /* And, for a body this sheet has only *heard* about, everything else it is
+       wearing. A Wound on an enemy whose own row this client can read is folded
+       without asking (see `withTargets`); one this client only heard laid over
+       the table log may have been healed off since, and a wrong die is worse
+       than a missing one. So hearsay is a box. See FightProvider.jsx. */
+    if (!body?.heard) return conditional;
+
+    const taken = takenRiders(body?.effects);
+    if (!taken || (taken.weapon && !swings)) return conditional;
+
+    return [
+      ...conditional,
+      ...taken.from.map(({ id, name, rider }) => ({
+        key: `target:${body.id}:heard:${id}`,
+        card: null,
+        name,
+        when: `if ${body.name ?? 'the target'} still has it`,
+        line: sourceWords(rider.against) || 'Bends this attack',
+        rider: rider.against,
+        from: body.name ?? 'the target',
+      })),
+    ];
+  });
+
+  return [...mine, ...printed, ...theirs];
+}
+
+/**
+ * Every conditional clause one card carries, as boxes.
+ *
+ * Two sources and they read alike: a clause the card's own prose hedges ("with
+ * advantage if it is prone"), and one declared as data on the card the way a
+ * tracker rider declares its own. EXECUTE is the only card in the codex with
+ * the second, because its condition is a number on somebody else's block and
+ * its prose is not shaped like the first.
+ *
+ * Keyed `card:<card id>:<claim id>`, so a move ticked onto a swing and the
+ * swing's own clause can never collide.
+ */
+function cardClaims(card, half = false) {
+  const named = [...printedSwing(card, { half }).claims, ...(card?.claims ?? [])];
+
+  return named.map((claim) => ({
+    key: `card:${card?.id ?? 'card'}:${claim.id}`,
+    card: card?.id ?? null,
+    name: card?.name ?? '',
+    when: claim.when,
+    line: claim.line,
+    rider: claim,
+    from: 'card',
+  }));
+}
+
+/**
+ * The modifiers with what a *taken half* does to this card's own dice folded in.
+ *
+ * BLOOD SPEAR and VAMPIRIC TOUCH, and nothing else in the codex: pay the tithe
+ * and "the damage is Empowered by 1". Folded onto the modifiers rather than read
+ * where the dice are thrown, so the card printed beside the pay button shows the
+ * 3d6 the player is buying. See `printedDice` in rollPlan.js, which is where the
+ * sentence is read and why it is read so narrowly.
+ *
+ * Handed the half the dial is actually on, so an untaken Overcast folds nothing
+ * and the card prints what it always printed.
+ */
+export function withPrinted(modifiers, card, { half = false } = {}) {
+  const said = printedDice(card, { half });
+  if (!said.empower && !said.elevate) return modifiers;
+
+  return foldRides(modifiers, [
+    { name: card?.sub_name ?? 'The second half', rider: said, id: card?.id ?? null },
+  ]);
+}
+
+/**
+ * The modifiers with every ticked box folded in.
+ *
+ * Folded on top rather than re-derived, exactly as `withMoves` is and for the
+ * same reason: everything else on this card was settled before the dialog
+ * opened, and a second call to `attackModifiers` in here would count the whole
+ * tracker twice.
+ */
+export function withClaims(
+  modifiers,
+  character,
+  card,
+  ticked = [],
+  { targets = [], half = false, riders = [] } = {}
+) {
+  const keys = new Set(ticked ?? []);
+  if (keys.size === 0) return modifiers;
+
+  const swings = isWeaponAttack(card);
+  const rolls = rollKind(card, { half });
+  const rows = [];
+
+  /* Your own, through the same fold every other rider goes through. */
+  const mine = claimedRiders(character?.effects, {
+    weapon: swings,
+    who: character,
+    claimed: [...keys],
+    rolls,
+  });
+  if (mine) {
+    for (const { name, rider } of mine.claimed) rows.push({ name, rider });
+  }
+
+  /* The card's own conditional clauses, its riders' and the actor's passives',
+     none of which has a tracker row to come off. Read through the same function
+     that offered them, so a key that was offered is a key that folds. */
+  for (const one of [card, ...(riders ?? []), ...(character?.passives ?? [])].filter(Boolean)) {
+    for (const claim of cardClaims(one, half)) {
+      if (!keys.has(claim.key)) continue;
+      rows.push({ name: claim.name || 'This card', rider: claim.rider, id: claim.card });
+    }
+  }
+
+  /* And the target's, which bend this swing through `against` rather than
+     through their own fields: it is their Wound and your extra die. */
+  for (const body of targets ?? []) {
+    for (const claim of offeredClaims(body?.effects, { weapon: swings, rolls })) {
+      if (!keys.has(`target:${body.id}:${claim.key}`) || !bendsAgainst(claim.rider)) continue;
+      rows.push({ name: `${claim.name} · ${body.name ?? 'the target'}`, rider: claim.rider.against });
+    }
+
+    /* And the heard-about ones, which are offered whole rather than folded. */
+    if (!body?.heard) continue;
+    const taken = takenRiders(body?.effects);
+    if (!taken || (taken.weapon && !swings)) continue;
+    for (const { id, name, rider } of taken.from) {
+      if (!keys.has(`target:${body.id}:heard:${id}`)) continue;
+      rows.push({ name: `${name} · ${body.name ?? 'the target'}`, rider: rider.against });
+    }
+  }
+
+  return foldRides(modifiers, rows);
+}
+
+/**
+ * What the bodies this use is aimed at are worth to it, folded in.
+ *
+ * The one fold in this file read off somebody else's sheet. A Wound is the whole
+ * of it today: "Weapon attacks made against the entity are Empowered", which is
+ * a die the attacker rolls and a row the defender is wearing. Jules, 2026-09-19:
+ * "the system need to take account things like wound and resistance or weakness
+ * when attacking."
+ *
+ * Automatic rather than ticked, on his ruling: picking the target *is* the
+ * decision, and a sheet that can see the row and asks anyway is asking a
+ * question it already knows the answer to. The conditional half of a target's
+ * rows is still a box, through `withClaims` above.
+ *
+ * **Every target, not the worst of them.** A volley at three bodies of which one
+ * is Wounded rolls one Attack Roll, so the die is on the roll or it is not. The
+ * generous reading is the one that matches how the chain resolves: one throw,
+ * judged per body, and a card that grew for anybody grew.
+ */
+export function withTargets(modifiers, card, targets = []) {
+  if ((targets ?? []).length === 0) return modifiers;
+
+  const swings = isWeaponAttack(card);
+  const rows = [];
+
+  for (const body of targets) {
+    /* Only where this client can read the body's own row. A condition heard
+       about over the table log is offered as a box instead. See offeredRides. */
+    if (body?.heard) continue;
+    const taken = takenRiders(body?.effects);
+    if (!taken) continue;
+    /* A clause about a weapon has nothing to say about a spell: a Fireball at a
+       wounded goblin is not Empowered by the hole in its side. */
+    if (taken.weapon && !swings) continue;
+
+    for (const { name, rider } of taken.from) {
+      rows.push({ name: `${name} · ${body.name ?? 'the target'}`, rider: rider.against });
+    }
+  }
+
+  return foldRides(modifiers, rows);
+}
+
+/**
+ * A pile of `{ name, rider }` rows onto a modifiers object, with receipts.
+ *
+ * The same four fields every fold in this file adds up, in one place, because
+ * these three arrived together and three more copies of the same twelve lines
+ * is how a channel goes missing. `sourceRow` is what puts each one in the list
+ * under the pay button: "everything that is modified need to be seen but only
+ * what modifies it".
+ */
+function foldRides(modifiers, rows) {
+  if (rows.length === 0) return modifiers;
+
+  let advantage = 0;
+  let disadvantage = 0;
+  let empower = 0;
+  let elevate = 0;
+  const advantaged = [];
+  const sources = [];
+
+  for (const { name, rider, id = null } of rows) {
+    const gain = Math.max(0, Math.floor(Number(rider?.advantage) || 0));
+    const drop = Math.max(0, Math.floor(Number(rider?.disadvantage) || 0));
+    const die = Math.max(0, Math.floor(Number(rider?.empower) || 0));
+    const step = Math.max(0, Math.floor(Number(rider?.elevate) || 0));
+    if (!gain && !drop && !die && !step) continue;
+
+    advantage += gain;
+    disadvantage += drop;
+    empower += die;
+    elevate += step;
+    if (gain > 0) advantaged.push(name);
+
+    const row = sourceRow(name, { advantage: gain, disadvantage: drop, empower: die, elevate: step }, id);
+    if (row) sources.push(row);
+  }
+
+  if (sources.length === 0) return modifiers;
+
+  return {
+    ...(modifiers ?? {}),
+    advantage: (Number(modifiers?.advantage) || 0) + advantage,
+    disadvantage: (Number(modifiers?.disadvantage) || 0) + disadvantage,
+    empower: (Number(modifiers?.empower) || 0) + empower,
+    elevate: (Number(modifiers?.elevate) || 0) + elevate,
+    advantageFrom: [...(modifiers?.advantageFrom ?? []), ...advantaged],
+    sources: mergeSources(modifiers?.sources ?? [], sources),
+  };
+}
+
 /* -------------------------------------------------------- the weapon in hand */
 
 /**
@@ -828,6 +1145,41 @@ export function martialDefense(character) {
   return weaponRiders(character).defense;
 }
 
+/* ------------------------------------------------------------- what blood adds */
+
+/**
+ * What this character's ancestry hangs on a weapon attack, or null.
+ *
+ * VENOMOUS and nothing else so far: a Wildkin who kept it deals "an additional
+ * 1d4 Decay damage" with every swing. That is a whole extra *throw* rather than
+ * a bigger one, which is why it is neither an Empower (another die of the kind
+ * already rolling) nor a `bonus` (a flat number), and it rides out on the
+ * modifiers as `added` for `rollPlan` to turn into dice on the table.
+ *
+ * **Narrowed to no weapon at all**, the way `weaveRiders` is and unlike the pact,
+ * the binding and the set grants: the venom is in the Wildkin rather than in the
+ * blade, so it rides whatever they swing, held or stowed. Jules, 2026-09-17: "the
+ * lineage venemous should apply to all weapon held by the user".
+ *
+ * Both weapon attacks, plain and special, because the card narrows neither. That
+ * is the same reading TAUT WEAVE takes and deliberately not the Martial Moves'
+ * one: a move is bought for a swing and would be worth double on a Cleave, and
+ * this is a property of the swinger that was never paid for.
+ */
+function bloodRiders(character) {
+  const rows = lineageSwing(character?.lineage, character?.choices);
+  if (rows.length === 0) return null;
+
+  return {
+    added: rows.map(({ dice, damage, from }) => ({ dice, damage, from })),
+    /* One receipt a card, so the list under the pay button names the ancestry
+       card that did it and opens it. See attribution.js. */
+    sources: rows
+      .map((row) => sourceRow(row.from, { added: [{ dice: row.dice, damage: row.damage }] }, row.card))
+      .filter(Boolean),
+  };
+}
+
 /* --------------------------------------------------------- the folded rider */
 
 /**
@@ -875,6 +1227,11 @@ export function attackModifiers(character, card, base) {
      hands, since picking it up is the whole of what it would take. See
      weaveRiders in weaver.js. */
   const woven = swings ? weaveRiders(character, card) : null;
+  /* And what the swinger was born with. A Wildkin who kept VENOMOUS adds a whole
+     1d4 of Decay to every weapon attack, which no other rider here is shaped like:
+     it is a second throw rather than a bigger first one. Narrowed to neither a
+     card nor a hand for the reason the weaving above it is not. See bloodRiders. */
+  const blood = swings ? bloodRiders(character) : null;
   /* And the Feral Curse's form, which grants advantage on every attack roll and
      another die to the natural weapon's own. Read here rather than in
      `weaponRiders` because it hangs on the *shape you are in* and not on the tag
@@ -893,10 +1250,27 @@ export function attackModifiers(character, card, base) {
      `weapon` is the second narrowing and there is exactly one card in it: KINDLE
      WEAPON changes what the *blade* is made of, so on anything that is not a
      weapon attack it is skipped rather than folded. See riders.js. */
+  /* Whether Empowered and Elevate have anything to grow. Both are written
+     against damage dice, so a card that rolls none has nothing for them to do: a
+     Healing Potion is not Empowered by a GIANT GROWTH, which is what this guard
+     has always been for.
+
+     **Advantage is not in it, and was until 2026-09-19.** The same guard used to
+     drop the whole rider, so a Bolstered character rolled a plain Skill Check
+     and a Poisoned one cast with no penalty: the tracker reached a swing and
+     stopped at everything else. Jules: "all card effect need to be reflected
+     when using stuff, so if a character is bolstered he should have advantage to
+     all roll." An arrow rides every roll a card asks for, and the one thing that
+     narrows it is the card's own kind of roll. See `only` in riders.js. */
   const bendable = swings || (card?.damage ?? []).length > 0;
-  const running = bendable
-    ? effectRiders(character?.effects, { weapon: swings, who: character })
-    : null;
+  const running = effectRiders(character?.effects, {
+    weapon: swings,
+    who: character,
+    /* Which running effects reach this card at all: LUCK POTION's advantage is
+       on skill checks and has nothing to say about a swing. Read off the card's
+       own sentence, by the one function that reads it. */
+    rolls: rollKind(card),
+  });
   const laid = running && bendsSwing(running) ? running : null;
   const passive =
     (Number(worn?.advantage) || 0) +
@@ -909,14 +1283,20 @@ export function attackModifiers(character, card, base) {
      hand the untouched card back and drop the die size on the way out. */
   const held = (Number(worn?.elevate) || 0) + (Number(worn?.perMove) || 0);
 
-  if (!trick && !laid && !hide && !bound && !edge && !woven && passive === 0 && held === 0)
+  if (!trick && !laid && !hide && !bound && !edge && !woven && !blood && passive === 0 && held === 0)
     return base;
+
+  /* What a running card lends the *dice*, which is nothing at all on a card that
+     rolls none. The advantage below is not asked this question, for the reason
+     on `bendable` above: an arrow rides any roll and a die has to have a die to
+     grow. */
+  const grown = bendable ? laid : null;
 
   const empower =
     (Number(base?.empower) || 0) +
     (Number(bound?.empower) || 0) +
     (Number(hide?.empower) || 0) +
-    (Number(laid?.empower) || 0) +
+    (Number(grown?.empower) || 0) +
     /* RESONANT EDGE. A different card from every other term here, so it is a
        different source and it adds, by the stacking law. */
     (Number(edge?.empower) || 0) +
@@ -930,16 +1310,36 @@ export function attackModifiers(character, card, base) {
     /* COLOSSAL FORCE, and the first thing in the codex to Elevate a swing for the
        weapon in hand rather than for something that was paid for. */
     (Number(worn?.elevate) || 0) +
-    (Number(laid?.elevate) || 0);
+    (Number(grown?.elevate) || 0);
 
   /* A type a running card lays on the swing joins the ones already on it, the
      same way two infusions both stand: the renderer prints a list as "Decay or
      Fire" and neither of them is thrown away. Deduplicated, so a Fire Infusion
      under a KINDLE WEAPON is one Fire. */
   const damage = [...(base?.damage ?? [])];
-  for (const type of [...(laid?.damage ?? []), ...(edge?.damage ?? [])]) {
+  for (const type of [...(grown?.damage ?? []), ...(edge?.damage ?? [])]) {
     if (!damage.includes(type)) damage.push(type);
   }
+
+  /* And the whole extra throws hung on the swing, which are deliberately *not*
+     folded into the list above: VENOMOUS's Decay is a second handful of dice
+     rather than a second name for the first one, and putting it there would have
+     the blade's own damage printing as "Slashing or Decay". `rollPlan` rolls each
+     of these on its own, after the card's. Two sources would be two throws, by
+     the stacking law, and there is one today. */
+  const added = [
+    ...(base?.added ?? []),
+    ...(blood?.added ?? []),
+    /* And a throw a *running* card hung on this body's next attack, which is
+       SPORADIC INFUSION and nothing else: an ally's mycelial gift of 4d6 and
+       four times the caster's Mind, waiting on the next thing they land. Gated
+       on the card rolling damage at all, for the reason Empowered is: a gift of
+       extra damage on a Healing Potion is not a thing. */
+    ...(bendable ? (laid?.added ?? []) : []).map((one) => ({
+      ...one,
+      from: one.from ?? laid.from.find((row) => (row.rider.added ?? []).length > 0)?.name ?? null,
+    })),
+  ];
 
   /* PERFECT TECHNIQUE's die per Martial Move, carried rather than counted. Its
      number depends on how many moves end up on the swing, which nothing knows
@@ -986,7 +1386,7 @@ export function attackModifiers(character, card, base) {
        of them actually did, which is what the use prompt prints under the two
        ways. "Everything that is modified need to be seen but only what modifies
        it", 2026-08-28. See attribution.js. */
-    sources: attackSources({ base, worn, hide, bound, laid, trick, edge, woven, character }),
+    sources: attackSources({ base, worn, hide, bound, laid, trick, edge, woven, blood, character }),
     /* The pact's best-attribute rule, riding the swing the way a loadout's
        `cast` rides a spell, and the Spellblade's Mind behind it. `modifiers.stat`
        wins over the card's own in every renderer, so only one of the two may set
@@ -1000,6 +1400,9 @@ export function attackModifiers(character, card, base) {
        for. Flagged in data/README.md. */
     ...(bound?.stat ? { stat: bound.stat } : edge?.stat ? { stat: edge.stat } : {}),
     ...(perMove > 0 ? { perMove, perMoveFrom } : {}),
+    /* Left off the object entirely when there are none, so nothing downstream has
+       to read a field that is nothing on almost every sheet in the game. */
+    ...(added.length > 0 ? { added } : {}),
   };
 }
 
@@ -1032,7 +1435,7 @@ function instinctOf(character) {
  * for the same Finesse weapon that DEXTEROUS lends an arrow for, and only one of
  * those two is changing the swing.
  */
-function attackSources({ base, worn, hide, bound, laid, trick, edge, woven, character }) {
+function attackSources({ base, worn, hide, bound, laid, trick, edge, woven, blood, character }) {
   const held = (worn?.from ?? []).map((row) =>
     sourceRow(row.name ?? row.talent?.name, {
       advantage: row.advantage,
@@ -1052,6 +1455,13 @@ function attackSources({ base, worn, hide, bound, laid, trick, edge, woven, char
      that moves a number the swing prints. Built in weaver.js for the reason the
      two above it are, which is that the rank was read there. */
   const spun = woven?.sources ?? [];
+
+  /* And the blood, which is one row a lineage card. It sits here, before the
+     form, because it is the truest of the "what you are" rows: a Wildkin is
+     venomous in every shape and with every weapon. Built in lineages.js and
+     wrapped in moves.js, the way the three above it are built where their own
+     rank or rung was read. */
+  const born = blood?.sources ?? [];
 
   const shape = (hide?.from ?? []).map((row) =>
     sourceRow(row.talent?.name, { advantage: row.advantage, empower: row.empower })
@@ -1088,7 +1498,7 @@ function attackSources({ base, worn, hide, bound, laid, trick, edge, woven, char
       ]
     : [];
 
-  return mergeSources(base?.sources ?? [], held, sworn, edged, spun, shape, tracked, stolen);
+  return mergeSources(base?.sources ?? [], held, sworn, edged, spun, born, shape, tracked, stolen);
 }
 
 /**

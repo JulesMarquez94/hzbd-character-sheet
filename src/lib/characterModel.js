@@ -21,7 +21,7 @@ import { spellbookWillpower } from './spellbook.js';
 import { sanctuaryBurden } from './oathbound.js';
 import { runeDebt, runeWillpower } from './runes.js';
 import { undeadBurden } from './undead.js';
-import { effectRiders, riderShift } from './riders.js';
+import { effectRiders, riderShift, wornTypes } from './riders.js';
 import { lineageGrants, lineageGrantSources } from './lineages.js';
 import { talentGrants, talentGrantSources } from './talents.js';
 
@@ -768,6 +768,56 @@ export function karmaCap(character) {
  * enchantments and an empty tracker does no work and re-renders no more than it
  * used to.
  */
+/**
+ * What this character takes half of and double of, by damage type.
+ *
+ *   { resist: ['Cold'], vulnerable: ['Fire'] }
+ *
+ * Two sources, added because they are two sources: what the blood grants and
+ * what is running on the tracker. A Wildkin with AMPHIBIAN shrugs off Cold
+ * whatever is on their block, and a STONEFLESH over the top of it halves
+ * Physical for as long as the Shield holds.
+ *
+ * **Deduplicated rather than summed**, which is the rulebook's own rule and the
+ * only arithmetic here: "Neither stacks with itself. Two sources of
+ * vulnerability to Fire still mean double." So this is a pair of lists and the
+ * halving happens once, in `typeFactor` in combatApply.js, wherever a number
+ * actually lands on this body.
+ *
+ * A talent card could carry one and none does yet. The channel is `grants`, the
+ * same word a Defense rides on, so the day one does it is a field on the card
+ * and a line in `talentGrantSources`.
+ */
+export function characterTypes(character) {
+  const resist = [];
+  const vulnerable = [];
+  /* And the third state, which is not a bigger resistance: nothing gets through
+     at all. HIBERNATION is the one card that grants it. See typeFactor. */
+  const immune = [];
+  const add = (into, list) => {
+    for (const type of list ?? []) {
+      const word = String(type ?? '').trim();
+      if (word && !into.some((held) => held.toLowerCase() === word.toLowerCase())) into.push(word);
+    }
+  };
+
+  for (const row of [
+    ...lineageGrantSources(character?.lineage, character?.choices),
+    ...talentGrantSources(character),
+  ]) {
+    add(resist, row.resist);
+    add(vulnerable, row.vulnerable);
+    add(immune, row.immune);
+  }
+
+  const worn = wornTypes(character?.effects, { who: character });
+  add(resist, worn.resist);
+  add(vulnerable, worn.vulnerable);
+  add(immune, worn.immune);
+
+  return { resist, vulnerable, immune };
+}
+
 export function liveCharacter(character) {
   if (!character) return character;
 

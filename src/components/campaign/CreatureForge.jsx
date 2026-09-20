@@ -24,7 +24,9 @@ import {
   FORGED_KINDS,
   FORGED_LORE_MAX,
   FORGED_NAME_MAX,
+  FORGED_TYPES_MAX,
   FORGED_TYPE_MAX,
+  FORGED_TYPE_WORDS,
   FORGE_GROUPS,
   blankBody,
   createForgedCreature,
@@ -32,6 +34,7 @@ import {
   normalizeBody,
   updateForgedCreature,
 } from '../../lib/customCreatures.js';
+import { damageStyle } from '../../lib/cardText.js';
 import { tagStyle } from '../../lib/tagColors.js';
 
 /**
@@ -656,6 +659,32 @@ export default function CreatureForge({
             />
           </div>
 
+          {/* What lands on it differently, by damage type. Jules, 2026-09-20:
+              "For roged creature add an option to have resistenace and weakens
+              and to tweak it." A printed creature carries these on one of its
+              passives, behind a ward where the passive has one; a forged one has
+              no passive to carry them, so they are the body's own. Both lists
+              are offered together because a body can be both, which is what a
+              Bram is: half a club and double a torch.
+
+              The same three widths a card writes a resistance at, so a monster
+              made of stone can be resistant to Physical rather than to three
+              buttons. See coversType in cardText.js. */}
+          <TypePick
+            label="Resistant to"
+            note="Takes half damage from these."
+            picked={body.resist}
+            other={body.vulnerable}
+            onToggle={(word) => set({ resist: toggleType(body.resist, word) })}
+          />
+          <TypePick
+            label="Vulnerable to"
+            note="Takes double damage from these."
+            picked={body.vulnerable}
+            other={body.resist}
+            onToggle={(word) => set({ vulnerable: toggleType(body.vulnerable, word) })}
+          />
+
           <div className="forge-row">
             <Nudge
               label={FORGED_FIELDS.ap_max.label}
@@ -785,6 +814,69 @@ function Line({ label, a, b }) {
  * wrong control. The box is left alone while it is being typed in and cleaned on
  * the way out, so a half-typed "1." is not rewritten to 1 under the cursor.
  */
+/**
+ * One of the two damage-type lists, as a row of chips.
+ *
+ * `other` is the list it is paired with, and it is read rather than ignored: the
+ * rulebook says a resistance and a weakness to one type cancel, so a creature
+ * with Fire on both lists takes Fire exactly as written. That is a legal thing
+ * to build and a strange thing to build by accident, so the chip says so rather
+ * than being refused.
+ *
+ * Four to a list. The widest card in the codex names three types, and a monster
+ * resistant to nine of them is a monster written as All.
+ */
+function TypePick({ label, note, picked, other, onToggle }) {
+  const full = picked.length >= FORGED_TYPES_MAX;
+
+  return (
+    <div className="form-group">
+      <span className="form-label">
+        {label} {picked.length > 0 && <span className="forge-mark">{picked.join(', ')}</span>}
+      </span>
+      <div className="foe-filter">
+        {FORGED_TYPE_WORDS.map((word) => {
+          const on = picked.includes(word);
+          const cancels = on && other.includes(word);
+          return (
+            <button
+              key={word}
+              type="button"
+              className={`foe-filter-btn${on ? ' is-on' : ''}`}
+              disabled={!on && full}
+              onClick={() => onToggle(word)}
+              style={damageStyle(word) ? { '--fx-type': damageStyle(word).color } : undefined}
+              title={
+                cancels
+                  ? `${word} is on both lists, so it lands exactly as written.`
+                  : !on && full
+                    ? `Four at most. Untick one, or use a family.`
+                    : word
+              }
+            >
+              {word}
+              {cancels ? ' ·' : ''}
+            </button>
+          );
+        })}
+      </div>
+      <p className="forge-hint">
+        {picked.length === 0
+          ? note
+          : picked.some((word) => other.includes(word))
+            ? `${note} A type on both lists cancels and lands as written.`
+            : note}
+      </p>
+    </div>
+  );
+}
+
+/** One word on or off a list, held inside the cap. */
+function toggleType(list, word) {
+  if (list.includes(word)) return list.filter((held) => held !== word);
+  return list.length >= FORGED_TYPES_MAX ? list : [...list, word];
+}
+
 function Nudge({ label, value, min, max, step = 1, dp = 0, hint = null, disabled = false, onChange }) {
   const [typed, setTyped] = useState(null);
   const factor = 10 ** dp;

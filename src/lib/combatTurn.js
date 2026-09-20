@@ -93,7 +93,7 @@ import {
   normalizeBelt,
   normalizeEquipment,
 } from './items.js';
-import { cardProse } from './cardText.js';
+import { ALL_DAMAGE, DAMAGE_FAMILIES, DAMAGE_TYPES, cardProse } from './cardText.js';
 import { shieldCapFor } from './characterModel.js';
 import { CARDS, getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
@@ -420,6 +420,20 @@ export function normalizeEffects(value) {
       // the same guard `card` gets, because a condition is what riders.js reads
       // its Disadvantage off and what healing washes away. See statuses.js.
       status: statusOf(raw.status) ? String(raw.status) : null,
+      // And the damage types the row names, for the two conditions and the one
+      // brew whose rider is a blank until somebody fills it: Vulnerable,
+      // Resistant and DRACONIC SCALE all halve or double "that damage type" and
+      // none of them says which. Words rather than numbers, kept short and few
+      // for the same reason every other field here is cleaned: an effects list
+      // is stored jsonb and this is read on a render path. See typesOf in
+      // riders.js.
+      types: damageList(raw.types),
+      // And what this row was *told*, for the riders whose number is on somebody
+      // else's sheet or on nobody's: VIGOR's three times the caster's Mind,
+      // SEVER LIFE's damage dealt, AIR CONTROL's chosen mode. A small map of
+      // numbers and short words, cleaned here because it reaches deriveStats.
+      // See `ask` in riders.js.
+      values: answerMap(raw.values),
       // Whether anything has been paid for while this row stood. Only ever true
       // on a row whose card says acting breaks it, and read at one boundary:
       // your Turn End, where `endTurn` takes it off. See `stirEffects`.
@@ -428,6 +442,72 @@ export function normalizeEffects(value) {
   }
 
   return effects.slice(0, EFFECT_LIMIT);
+}
+
+/**
+ * The damage types a row names, as a short clean list.
+ *
+ * Held to the words the codex actually uses, plus the three family names and
+ * All, because a resistance is written at one of those three widths and nothing
+ * else means anything to `coversType`. Four at most: the widest card in the
+ * codex names three types, and a row naming a dozen is a row somebody has
+ * pasted a paragraph into.
+ */
+function damageList(raw) {
+  if (!Array.isArray(raw)) return [];
+
+  const known = new Set([
+    ...Object.keys(DAMAGE_TYPES),
+    ...Object.keys(DAMAGE_FAMILIES),
+    ALL_DAMAGE,
+  ].map((word) => word.toLowerCase()));
+
+  const out = [];
+  for (const entry of raw) {
+    const word = String(entry ?? '').trim();
+    if (!known.has(word.toLowerCase()) || out.some((held) => held.toLowerCase() === word.toLowerCase()))
+      continue;
+    out.push(word);
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+
+/** As many questions as any one rider asks, with room to spare. */
+const ANSWERS_MAX = 6;
+
+/** As big a number as an answer may be: a caster's Mind, a total off the table. */
+const ANSWER_MAX = 9999;
+
+/**
+ * The answers a row is carrying, cleaned.
+ *
+ * A number stays a number, a choice stays a short word and the damage-type
+ * picker's list stays a list. Everything else is dropped rather than coerced,
+ * because this map is read by `measure` in riders.js and lands in `deriveStats`:
+ * a shape nobody expected there is a stat nobody can explain.
+ */
+function answerMap(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+
+  const out = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (Object.keys(out).length >= ANSWERS_MAX) break;
+    const id = String(key).slice(0, 24);
+    if (!id) continue;
+
+    if (Array.isArray(value)) {
+      const list = damageList(value);
+      if (list.length > 0) out[id] = list;
+      continue;
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      out[id] = Math.max(-ANSWER_MAX, Math.min(ANSWER_MAX, Math.round(value)));
+      continue;
+    }
+    if (typeof value === 'string' && value.trim()) out[id] = value.trim().slice(0, 24);
+  }
+  return out;
 }
 
 /**
@@ -497,8 +577,12 @@ export function addEffect(effects, entry) {
       move: normalizeMove(entry?.move),
       // See normalizeEffects: the Spellblade's bond.
       blade: normalizeBlade(entry?.blade),
-      // See normalizeEffects: the condition a card inflicted.
+      // See normalizeEffects: the condition a card inflicted, and the damage
+      // types it named where the condition is a sentence with a blank in it.
       status: statusOf(entry?.status) ? String(entry.status) : null,
+      types: damageList(entry?.types),
+      // See normalizeEffects: what the row was told, for a rider that asks.
+      values: answerMap(entry?.values),
       // Never on a row being laid: whatever you did a moment ago, you have not
       // moved since this went down. See the note on the effects above.
       stirred: false,
@@ -544,7 +628,17 @@ export function layEffect(effects, entry) {
   const status = statusOf(entry?.status);
   if (status) {
     if (status.stacks) return addEffect(list, entry);
-    const same = list.find((effect) => effect.status === status.id);
+    /* Singular means one of *this* condition, and for the two that name a damage
+       type it is the pair that is singular: a body vulnerable to Fire and to
+       Cold is wearing two weaknesses, not one written twice. Everything else
+       matches on the condition alone, which is what "two Poisoned rows from two
+       snakes are one poisoning" means. */
+    const laid = damageList(entry?.types).join('|').toLowerCase();
+    const same = list.find(
+      (effect) =>
+        effect.status === status.id &&
+        (!status.types || (effect.types ?? []).join('|').toLowerCase() === laid)
+    );
     if (!same) return addEffect(list, entry);
     const refreshed = addEffect(
       list.filter((effect) => effect.id !== same.id),
@@ -579,6 +673,25 @@ export function nudgeEffect(effects, id, delta) {
     if (effect.turns === null) return delta > 0 ? { ...effect, turns: 1 } : effect;
     return { ...effect, turns: clampTurns(effect.turns + delta) };
   });
+}
+
+/**
+ * One row, answered.
+ *
+ * The writer beside `nudgeEffect`, and the only way a row's `values` ever move
+ * after it is laid. A rider that asks for a number is worth nothing until this
+ * runs, and it runs from the popup the row offers: see `openAsks` in riders.js
+ * and AnswerWindow.jsx.
+ *
+ * Merged rather than replaced, so answering the second of two questions does not
+ * quietly forget the first.
+ */
+export function answerEffect(effects, id, values) {
+  return normalizeEffects(effects).map((effect) =>
+    effect.id === id
+      ? { ...effect, values: answerMap({ ...effect.values, ...(values ?? {}) }) }
+      : effect
+  );
 }
 
 /* ------------------------------------------------------ broken by acting */

@@ -88,6 +88,7 @@ import {
 import { attackModifiers, isMartialMove } from './moves.js';
 import { ridesStrike } from './spellblade.js';
 import { ridesHit } from './weaver.js';
+import { answersFrom } from './riders.js';
 import { heldThing } from './targeting.js';
 
 /* ------------------------------------------------------------------- parts */
@@ -249,6 +250,11 @@ function beltGroup(character, locks) {
       return move(`belt:${index}`, card, {
         name: card?.name ?? item.name,
         source: `${item.name} · loop ${index + 1}`,
+        /* And whatever is running on the drinker. A flask is a card like any
+           other and a Bolstered hand throws a Fire Bomb with the same arrow as
+           a Bolstered sword: this group folded nothing at all until 2026-09-19,
+           so a whole shelf of the codex was rolling flat. See attackModifiers. */
+        modifiers: attackModifiers(character, card, null),
         note: charges > 0 ? chargeNote(remaining, consumable, item) : null,
         extra: shut.ok && nextBelt ? { belt: nextBelt } : null,
         spent: spent || !shut.ok,
@@ -611,6 +617,10 @@ function imbuedGroup(character, locks) {
       move(`imbued:${effect.id}:${card.id}`, card, {
         source: `${card.name} · bound in by ${effect.name}`,
         note: effect.note || null,
+        /* The same fold every other group takes. A casting bound into a ring is
+           still cast by the person wearing it, so what is running on them rides
+           it. See beltGroup above, which was blind for the same reason. */
+        modifiers: attackModifiers(character, card, null),
         /* A casting bound into a thing you are holding is both halves of what a
            form forbids: somebody else's spell, out of an item. Refused on either
            lock, with no `set` to appeal to. */
@@ -661,7 +671,13 @@ export function minionBar(character, minion) {
     .map((card) =>
       move(`minion:${minion.id}:${card.id}`, card, {
         source: `${card.name} · ${minion.title}`,
-        modifiers,
+        /* Folded against the creature rather than its bonded, because the rows
+           that bend its swing are on its own tracker: a Poisoned skeleton rolls
+           with disadvantage and its necromancer does not. `modifiers.actor` is
+           already that creature, so the fold reads the same body the card is
+           printed against. Everything else in `attackModifiers` answers nothing
+           for a creature, which has no talents, no blood and no hands. */
+        modifiers: attackModifiers(modifiers.actor, card, modifiers),
       })
     );
 
@@ -710,7 +726,11 @@ export function foeBar(foe) {
     .map((card) =>
       move(`foe:${foe.key}:${card.id}`, card, {
         source: `${card.name} · ${foe.title}`,
-        modifiers,
+        /* And whatever the party has put on it. An enemy's tracker is the same
+           tracker, so a Poisoned goblin swings with disadvantage and a Bolstered
+           one does not exist but would. Folded against the foe's own actor, the
+           way a creature's bar is. */
+        modifiers: attackModifiers(modifiers.actor, card, modifiers),
       })
     );
 
@@ -731,7 +751,7 @@ function basicGroup(character = null) {
     moves: BASIC_ACTIONS.map((card) =>
       move(`basic:${card.id}`, card, {
         source: `${card.name} · a basic action`,
-        modifiers: hideModifiers(character, card),
+        modifiers: basicModifiers(character, card),
       })
     ),
   };
@@ -756,6 +776,23 @@ function hideModifiers(character, card) {
 
   const cut = Math.max(0, Math.floor(Number(card.ap) || 0));
   return cut > 0 ? { apCut: cut, apCutFrom: ['Skulk'] } : null;
+}
+
+/**
+ * A basic action as this character takes it.
+ *
+ * SKULK's cut on a HIDE, and then the tracker over the top of it. The second is
+ * new on 2026-09-19 and it is the reason a whole group needed a fold at all: a
+ * SKILL CHECK is a basic action, a Bolstered character rolls one with advantage
+ * and a Poisoned one with disadvantage, and this group handed the card over
+ * untouched. Jules: "all card effect need to be reflected when using stuff."
+ *
+ * `character` is null on a creature's bar and on an enemy's, and both get the
+ * basic actions exactly as printed.
+ */
+function basicModifiers(character, card) {
+  const cut = hideModifiers(character, card);
+  return character ? attackModifiers(character, card, cut) : cut;
 }
 
 /**
@@ -1045,7 +1082,7 @@ export function spendUse(request, character, mode, amount, { free = false, price
      stops it: an AMBUSH *is* a row on the tracker, laid deliberately with a rider
      in it, and a second row read off the same card's prose would be the sheet
      tracking one use twice. */
-  const cast = request.extra?.effects ? null : castEffect(request);
+  const cast = request.extra?.effects ? null : castEffect(request, character);
   if (cast) body.effects = layEffect(body.effects ?? character?.effects, cast);
 
   /* Waved through. The points are what an override withholds, and nothing else
@@ -1160,10 +1197,18 @@ export function spendUse(request, character, mode, amount, { free = false, price
  * number to bend for it. A WISP OF MIST that laid no row is a WISP OF MIST whose
  * Movement Speed never moved. See `riderDuration` in combatTurn.js.
  */
-export function castEffect(request) {
+export function castEffect(request, actor = null) {
   const card = request?.card;
   const duration = trackedDuration(card);
   if (!duration || duration.vague) return null;
+
+  /* And the numbers the row is going to be measured against, where the *caster*
+     is the one who knows them. VIGOR raises a maximum Health by three times the
+     caster's Mind, and the sheet it lands on is the one sheet that cannot work
+     that out, so it is filled in here on the way over and confirmed at the far
+     end rather than asked for. A card that asks nothing gets no field at all.
+     See `answersFrom` in riders.js and AnswerWindow.jsx. */
+  const values = answersFrom(card, actor);
 
   return {
     name: shortName(card, request.name),
@@ -1171,6 +1216,7 @@ export function castEffect(request) {
     turns: duration.turns,
     until: duration.until,
     from: request.source ?? '',
+    ...(values ? { values } : {}),
   };
 }
 
@@ -1257,7 +1303,7 @@ const SHARED = /\b(?:you and|binding you|you together|yourself and)\b/i;
  */
 export function castPlan(request, actor, { half = false, riders = [], statuses = [], plan = [] } = {}) {
   const card = request?.card ?? null;
-  const own = request?.extra?.effects ? null : castEffect(request);
+  const own = request?.extra?.effects ? null : castEffect(request, actor);
 
   /* Every condition named, deduplicated with a certain reading winning over an
      optional one, off the card and off whatever rides the swing. */

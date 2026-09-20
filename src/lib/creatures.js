@@ -100,6 +100,15 @@
  * is the sentence that holds while it stands, printed on the row so nobody has
  * to open the card to be reminded what they are turning off.
  *
+ * -------------------------------------------------------- what it shrugs off
+ * A passive may also carry `resist` and `vulnerable`, lists of damage types,
+ * which are that card's prose written as numbers: half of what the type deals,
+ * or double. Four passives carry one — the Mire Hex's bog, the Lich's braziers
+ * and the Brams' paint — and three of the four are behind a ward, so breaking
+ * the ward takes the resistance with it. `foeTypes` in encounters.js is what
+ * reads them, and the arithmetic is combatApply.js's, the same halving a
+ * character's own resistance gets. See riders.js for the channel itself.
+ *
  * ------------------------------------------------------- and forged creatures
  * Everything above is the codex's. A table can also forge a creature of its own,
  * which is a row in the database rather than a page in this file, and it has to
@@ -395,6 +404,20 @@ export const CREATURE_CARDS = withArt([
     summary: 'It fights better with its litter beside it.',
     kind: 'passive',
     tags: ['Creature', 'Minion', 'Passive'],
+    /* Who is standing beside the target is a fact about the table, so it is a
+       box in the swing's own prompt rather than a die the sheet hands out. The
+       same `claims` a tracker rider carries, on a creature's passive: the Game
+       Master ticks it on the Fenrat that is actually flanking. See riders.js,
+       and `offeredRides` in moves.js for where a passive's claims are read. */
+    claims: [
+      {
+        id: 'pack',
+        when: 'if another Fenrat is within 1 meter of the target',
+        advantage: 1,
+        only: 'attack',
+        line: 'Advantage on the Attack Roll while the litter has it surrounded',
+      },
+    ],
     body:
       'This creature has advantage on its Attack Rolls against **an entity** that another Fenrat is within **1 meter (3 feet)** of.',
   },
@@ -476,6 +499,12 @@ export const CREATURE_CARDS = withArt([
     tags: ['Creature', 'General', 'Passive'],
     ward: 'While the mire is unburned',
     while: 'While the mire around it is unburned, it has resistance to Frost and Decay damage, and it moves through mud at full Movement Speed.',
+    /* What the sentence above is worth in numbers, since 2026-09-19. A creature
+       passive carries `resist` and `vulnerable` the way a lineage card carries
+       `grants`, and the apply arithmetic halves what lands. The ward is what
+       switches it off: break the mire and `foeTypes` stops reading this card.
+       The mud is still the table's, as every speed through terrain is. */
+    resist: ['Frost', 'Decay'],
     body:
       'While the mire around it is unburned, this creature has resistance to {damage:Frost} and {damage:Decay} damage, and it moves through mud at its full Movement Speed.\n\n' +
       'Burn the mire and it loses both.',
@@ -514,6 +543,18 @@ export const CREATURE_CARDS = withArt([
     summary: 'It knows which of you is already hurt.',
     kind: 'passive',
     tags: ['Creature', 'General', 'Passive'],
+    /* A target's Health is on somebody else's block, so the die is a box the
+       Game Master ticks rather than a number this creature's sheet works out.
+       The same call EXECUTE's makes, for the same clause. */
+    claims: [
+      {
+        id: 'hurt',
+        when: 'if the target is below half its Health',
+        advantage: 1,
+        only: 'attack',
+        line: 'Advantage on the Attack Roll against anything already bleeding',
+      },
+    ],
     body:
       'This creature knows the Health of every entity within **30 meters (100 feet)**, and it has advantage on Attack Rolls against any of them below half their Health.',
   },
@@ -553,6 +594,11 @@ export const CREATURE_CARDS = withArt([
     kind: 'passive',
     tags: ['Creature', 'Overlord', 'Passive'],
     ward: 'While a pillar still stands',
+    /* "this creature takes no damage: every hit is spent on the ward instead."
+       The only card in the codex that stops damage outright rather than halving
+       it, and the whole of what the switch above turns off. Wired 2026-09-20
+       with the damage channel's third setting. */
+    immune: ['All'],
     while: 'While any of the four pillars still stands, no damage reaches its Health.',
     body:
       'While any of the four pillars still stands, this creature takes no damage: every hit is spent on the ward instead.\n\n' +
@@ -637,6 +683,12 @@ export const CREATURE_CARDS = withArt([
     tags: ['Creature', 'Overlord', 'Passive'],
     ward: 'While a brazier is lit',
     while: 'While a brazier is lit, its damage is Elevated by 1 and it has resistance to Fire damage.',
+    /* Half of the sentence in numbers. The Elevate is what the throne does to
+       its *own* swings and rides nothing here, because a creature's damage is
+       already scaled on its spec: the resistance is what happens to damage
+       arriving, which is what this channel is. Douse the braziers and the ward
+       takes it off. */
+    resist: ['Fire'],
     body:
       'While any of the six braziers is lit, this creature has resistance to {damage:Fire} damage and its damage is Elevated by 1.\n\n' +
       'Douse them all and both go out with them.',
@@ -654,6 +706,11 @@ export const CREATURE_CARDS = withArt([
     summary: 'Oil paint all the way through: it shrugs off blows and burns like a rag.',
     kind: 'passive',
     tags: ['Creature', 'Paint', 'Passive'],
+    /* The only creature in the codex that carries both halves, and it has no
+       ward to switch either off: a Bram is paint until it is gone. A club does
+       half and a torch does double. */
+    resist: ['Blunt'],
+    vulnerable: ['Fire'],
     body:
       'This creature is oil paint all the way through. It has resistance to {damage:Blunt} damage and is vulnerable to {damage:Fire} damage.\n\n' +
       'What it bleeds is paint, and what it leaves behind is a stain.',

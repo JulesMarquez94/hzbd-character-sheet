@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import AnswerWindow from './AnswerWindow.jsx';
 import EffectPrompt from './EffectPrompt.jsx';
 import EnchantWindow from './EnchantWindow.jsx';
 import RestPrompt from './RestPrompt.jsx';
@@ -9,7 +10,7 @@ import { liveShift } from '../../lib/characterModel.js';
 import { getCard } from '../../lib/weapons.js';
 import { isEnchanter } from '../../lib/enchanting.js';
 import { effectAdvantage } from '../../lib/moves.js';
-import { effectLine, riderLine } from '../../lib/riders.js';
+import { asksOf, effectLine, openAsks, riderLine } from '../../lib/riders.js';
 import { statusOf } from '../../lib/statuses.js';
 import { RESTS, restPrice } from '../../lib/rest.js';
 import { rollPlan } from '../../lib/rollPlan.js';
@@ -20,6 +21,7 @@ import { useDiceTray } from '../../context/dice-tray.js';
 import { useFight } from '../../context/fight.js';
 import { restEvent, turnDoneEvent, turnEvent } from '../../lib/campaignLog.js';
 import {
+  answerEffect,
   breaksOnAction,
   combatReactionGrant,
   combatShieldGrant,
@@ -59,6 +61,8 @@ import {
  */
 export default function TurnBlock({ character, patch, readOnly = false }) {
   const [adding, setAdding] = useState(false);
+  /* Which row's open questions are being answered, by id. See AnswerWindow. */
+  const [answering, setAnswering] = useState(null);
   // Which rest is being considered ('short' | 'long'), or null.
   const [resting, setResting] = useState(null);
   /* Whether the Ephemeral Enchantment shelf is up, raised from the tracker's own
@@ -338,11 +342,28 @@ export default function TurnBlock({ character, patch, readOnly = false }) {
                 onNudge={(delta) => patch({ effects: nudgeEffect(effects, effect.id, delta) })}
                 onDrop={() => patch({ effects: dropEffect(effects, effect.id) })}
                 onRoll={links ? () => rollEffect(effect, links) : null}
+                /* And the numbers this row needs and the sheet cannot work out:
+                   the caster's Mind, the damage that was dealt, which mode of
+                   the spell was cast. Only on a row that asks for any, which is
+                   nine cards in the codex. See AnswerWindow.jsx. */
+                onAnswer={asksOf(effect).length > 0 ? () => setAnswering(effect.id) : null}
+                asking={openAsks(effect).length}
               />
             );
           })
         )}
       </div>
+
+      {/* The one row's own questions, answered. Held by id rather than by the
+          row itself so a tick of the clock underneath cannot leave the window
+          editing a copy of something that has moved on. */}
+      {answering && (
+        <AnswerWindow
+          effect={effects.find((effect) => effect.id === answering)}
+          onAnswer={(values) => patch({ effects: answerEffect(effects, answering, values) })}
+          onClose={() => setAnswering(null)}
+        />
+      )}
 
       {adding && (
         <EffectPrompt
@@ -468,7 +489,20 @@ function turnNote(turn, character) {
  * row there has to be this row: same count, same nudges, same card behind it.
  * See MinionBlock.jsx, which is where BarChip goes too.
  */
-export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, onRoll = null, bends = true }) {
+export function EffectRow({
+  effect,
+  readOnly,
+  onOpen,
+  onNudge,
+  onDrop,
+  onRoll = null,
+  bends = true,
+  /* The numbers this row needs told and the sheet cannot work out: the caster's
+     Mind, the damage that was dealt, which mode was cast. Null on every row that
+     asks for none, which is nearly every row. See AnswerWindow.jsx. */
+  onAnswer = null,
+  asking = 0,
+}) {
   const over = effect.turns === 0;
   const open = effect.turns === null;
   /* What this row is doing to a roll, when it is doing anything: a Martial Move
@@ -544,6 +578,30 @@ export function EffectRow({ effect, readOnly, onOpen, onNudge, onDrop, onRoll = 
             title="Roll what this deals"
           >
             Roll
+          </button>
+        )}
+
+        {/* And the numbers it is waiting on. Drawn as a question while any are
+            open, because a row bending nothing and saying nothing is a row that
+            reads as a bug; once they are answered it stays as a quiet way back
+            in, since the caster's Mind was a guess somebody may want to correct. */}
+        {onAnswer && !over && !readOnly && (
+          <button
+            type="button"
+            className={`fx-step fx-roll${asking > 0 ? ' is-open' : ''}`}
+            onClick={onAnswer}
+            aria-label={
+              asking > 0
+                ? `${effect.name} needs ${asking} ${asking === 1 ? 'number' : 'numbers'}`
+                : `Change what ${effect.name} was told`
+            }
+            title={
+              asking > 0
+                ? 'This needs a number before it changes anything.'
+                : 'What this was told. Tap to change it.'
+            }
+          >
+            {asking > 0 ? '?' : '✓'}
           </button>
         )}
 
