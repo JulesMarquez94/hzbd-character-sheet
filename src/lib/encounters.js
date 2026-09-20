@@ -85,7 +85,7 @@ import {
   getCreature,
   getRank,
 } from './creatures.js';
-import { wornTypes } from './riders.js';
+import { effectRiders, refusesHealing, wornTypes } from './riders.js';
 import { healedEffects } from './statuses.js';
 
 /** As many enemies as one encounter's column will carry. */
@@ -317,7 +317,20 @@ function dressFoe(creature, row = {}, { nth = 1, many = false } = {}) {
   const conjured = row.creature === CONJURED_ID && row.body ? row.body : null;
   const rank = conjured ? CONJURED_RANK : getRank(creature);
   const level = clampCreatureLevel(row.level ?? creature.level);
-  const stats = conjured ? conjuredStats(conjured) : creatureStats(creature, level);
+  /* What is running on this one, folded into its own numbers. An enemy's stats
+     were printed and nothing else until 2026-09-20: a GIANT GROWTH cast on a
+     goblin doubled nothing and a BREACH lowered no Defense, because the riders
+     reached a character's tiles and stopped at the table's edge. Now the same
+     object `deriveStats` folds for a character is handed to `creatureStats`.
+
+     `who` is null on purpose. The one rider measured against its holder is
+     BERSERKER'S RAGE, which scales on a Berserker Rank, and no creature holds a
+     talent set. A rider asking a question still works: the answer is on the row.
+
+     A conjured body has none of this. Its numbers came with the announcement
+     that put it on the table and there is nowhere for a row to sit. */
+  const running = conjured ? null : effectRiders(row.effects, { weapon: false });
+  const stats = conjured ? conjuredStats(conjured) : creatureStats(creature, level, running);
 
   const plain = conjured ? conjured.name : creature.name;
   const numbered = many ? `${nth}.${plain}` : plain;
@@ -774,7 +787,7 @@ export function applyToFoes(encounter, rows) {
   let foes = normalizeFoes(encounter?.foes);
   let moved = false;
 
-  for (const { key, kind, landings, types = [] } of rows ?? []) {
+  for (const { key, kind, landings, types = [], lands = null } of rows ?? []) {
     const foe = list.find((entry) => entry.key === key);
     if (!foe) continue;
     const held = foes.find((entry) => entry.key === key);
@@ -790,11 +803,15 @@ export function applyToFoes(encounter, rows) {
       const hit = struck(
         { shield, health, armor: foe.stats.defense, ...foeTypes(foe) },
         landings,
-        { floor: 0, types }
+        { floor: 0, types, lands }
       );
       if (hit.soaked > 0) body.shield = hit.shield;
       if (hit.dealt > 0) body.health = hit.health;
-    } else if (kind === 'healing') {
+    } else if (kind === 'healing' && !refusesHealing(foe.effects)) {
+      /* A heal an enemy cannot take. WITHERING WORD is the creature's own card
+         and the party can lay the other three on it, so the refusal is read on
+         this side of the table exactly as on a sheet: nothing is written, which
+         is what "cannot" means. See riders.js. */
       const next = clamp(health + sumOf(landings), 0, foe.stats.health_max);
       if (next !== health) {
         body.health = next;

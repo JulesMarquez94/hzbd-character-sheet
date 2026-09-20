@@ -207,6 +207,12 @@ function noRider() {
        one on every swing: `[{ dice, flat, damage }]`. A rider carries them
        since 2026-09-20, for SPORADIC INFUSION. */
     added: [],
+    /* And the one thing here that is not a number to bend but a thing to
+       *refuse*: four cards in the codex say "cannot restore Health", and the
+       apply arithmetic could say no to none of them. Read by `characterDelta`
+       and by the enemy's own applier, both of which simply do nothing with a
+       heal while it stands. See combatApply.js. */
+    noHeal: false,
     /* And what attacks made *against* this body get, which is the one channel
        written from the other side of the swing. A Wound is the whole of it
        today: "Weapon attacks made against the entity are Empowered". Read by
@@ -431,7 +437,11 @@ export const EFFECT_RIDERS = {
   'haunting-shadows': {
     disadvantage: 1,
     only: 'skill',
-    line: 'Disadvantage on skill checks while the paranoia lasts',
+    /* And the second of its three clauses, wired a day after the first: the
+       refusal channel arrived on 2026-09-20. The rest it cannot take is still
+       the table's, which is the third. */
+    noHeal: true,
+    line: 'Disadvantage on skill checks, and no Health comes back, while the paranoia lasts',
   },
 
   /* "While the Shield holds, you cannot be moved against your will or knocked
@@ -562,7 +572,33 @@ export const EFFECT_RIDERS = {
       instinct: (who, row) => sideIsTarget(row),
       mind: (who, row) => sideIsTarget(row),
     },
+    /* "they cannot restore Health for 5 turns", which is the other half of the
+       card and the half that was a wall rather than a number: not something to
+       bend but a heal to *refuse*. The channel arrived on 2026-09-20 and this is
+       one of the four cards behind it. It rides the row whichever side of the
+       card it is, because the pollen is on whoever breathed it. */
+    noHeal: true,
     line: 'Minus 1 to all three attributes while you are the diseased one, and no Health comes back for 5 turns',
+  },
+
+  /* "On a success, you deal [[4d6 + 2*stat]] damage and it cannot restore Health
+     for 3 turns." WITHERING WORD, and the plainest of the four: a clock on the
+     card, nothing else running, and a heal that does nothing while it lasts. */
+  'withering-word': {
+    noHeal: true,
+    line: 'No Health comes back for 3 turns',
+  },
+
+  /* "You cannot restore Health until you take a Long Rest, and any Health damage
+     you take kills you instantly."
+
+     DEATH WAIL, and the one of the four whose row sits on the *caster*: the ward
+     is on you and so is the price. The refusal is a field; the instant death is
+     a rule about what a hit means rather than a number it deals, and it stays
+     the table's. The Shield it grants is rolled once at the moment it triggers. */
+  'death-wail': {
+    noHeal: true,
+    line: 'No Health comes back until a Long Rest, and any Health damage kills you',
   },
 
   /* "On a success it sleeps, incapacitated and immune to all damage."
@@ -600,6 +636,62 @@ export const EFFECT_RIDERS = {
   'etherealness-potion': {
     immune: ['All'],
     line: 'Takes no damage at all, and can do nothing, for two turns',
+  },
+
+  /* ---------------------------------------------- what a swing leaves behind
+   * Four cards a swing carries rather than casts, and every one of them was
+   * printed and forgotten until 2026-09-20. Two things had to arrive first: a
+   * rider had to reach a *creature's* stats, because a move that lowers the
+   * target's Defense lowers an enemy's nine times in ten, and `castPlan` had to
+   * lay a rider's own row the way it lays a card's. Both are new that day.
+   */
+
+  /* "On a hit, the target's Defense is reduced by 2 until its next Turn End."
+     BREACH. Its row lands on whoever was hit, which `landing` reads off the
+     card's own "the target's". */
+  breach: {
+    defense: -2,
+    line: 'Defense lowered by 2 until its next Turn End',
+  },
+
+  /* "Your Defense, Grit and Reflex are each increased by 1 until your next Turn
+     Start."
+
+     GUARDED, and the one of the four whose row stays with the swinger: the card
+     says "your". Only the Defense lands. Grit and Reflex are built from the
+     attributes and this channel has no term for either, which is the same wall
+     that keeps a flat Reflex off every other rider here. Said in the line rather
+     than quietly dropped. */
+  guarded: {
+    defense: 1,
+    line: 'Defense raised by 1 until your next Turn Start. The Grit and the Reflex are the table’s',
+  },
+
+  /* "the target's Armor is reduced by 2 until its next Turn End." RUSTWEAVE, and
+     the first weave in this table. Armor rather than Defense, which is the
+     naming trap this file keeps: `armor` is the flat reduction. */
+  rustweave: {
+    armor: -2,
+    line: 'Armor lowered by 2 until its next Turn End',
+  },
+
+  /* "On a hit, the target has disadvantage on Attack Rolls and skill checks made
+     against anybody other than you."
+
+     TAUNTING, and the condition is who the target is swinging at, which is a
+     fact about the table. So it is a claim, ticked by whoever is rolling. It
+     carries no duration of its own, so the row lands open at "while it lasts"
+     and the table drops it. */
+  taunting: {
+    line: 'Taunted: it is looking at you',
+    claims: [
+      {
+        id: 'elsewhere',
+        when: 'while this is aimed at anybody but the one who taunted you',
+        disadvantage: 1,
+        line: 'Disadvantage on anything aimed away from whoever taunted you',
+      },
+    ],
   },
 
   /* "Entities affected by the Brew have their Movement Speed increased by 50%." */
@@ -1103,13 +1195,25 @@ export const EFFECT_RIDERS = {
    *                    for the whole row.
    *   delay            "every delayed action is Elevated by 1", and nothing
    *                    anywhere models a held action.
-   *   rustweave        "the target's Armor is reduced by 2", which would be an
-   *                    ordinary sheet rider except that its target is nearly
-   *                    always an enemy, and **a rider does not reach an enemy's
-   *                    stats at all**: a creature's numbers are printed. The
-   *                    damage channel and the `against` channel both cross to an
-   *                    enemy and the sheet channel does not. That is the biggest
-   *                    thing left in this file.
+   *   nightmares-curse "vulnerable to the damage dealt by your own Nightmare
+   *                    Wall spell" is a weakness to one *card* rather than to a
+   *                    type, and the damage channel keys on the type. A
+   *                    vulnerability to its type would fire on everybody else's
+   *                    Nightmare Wall too, and on anything else that deals the
+   *                    same thing.
+   *   the flight speeds WINGS OF RADIANCE, EARTH GLIDE, SEAFARER'S ELIXIR,
+   *                    POTION OF FLYING, SPROUT WINGS, CRAWLER and SOAR. Seven
+   *                    cards and one wall: this sheet holds a Movement Speed and
+   *                    has nowhere to say what it moves *through*.
+   *   the event ones   BASTION'S FURY on an Intercept, BRAM'S NINE VOICES when
+   *                    one of them dies. Both hand out a Reaction Point at a
+   *                    moment nothing tracks.
+   *
+   * **And the one that stopped being a wall on 2026-09-20**: "a rider does not
+   * reach an enemy's stats at all" held BREACH and RUSTWEAVE out of this table
+   * for as long as it was true. `creatureStats` and `minionDerived` both take
+   * the fold now, so a rider written against a target's Defense lands on the
+   * bodies it is actually aimed at.
    */
 };
 
@@ -1425,6 +1529,11 @@ function fold(total, rider, row, rolls) {
     if (one?.dice || one?.flat) total.added.push({ ...one });
   }
 
+  /* One row refusing a heal refuses it for all of them. Not a sum and not a
+     count: it is a state the body is in, and two cards saying it are one
+     refusal. */
+  if (rider.noHeal) total.noHeal = true;
+
   /* And what an attack aimed at this body gets. Summed rather than deduplicated
      for the same reason the swing's four are: two different cards are two
      sources and they add. */
@@ -1623,6 +1732,23 @@ export function bendsAgainst(rider) {
  * `grants` is read: see `characterTypes` in characterModel.js, which adds the
  * two together. A creature's are on its passives, in creatures.js.
  */
+/**
+ * Whether this body cannot take a heal at all.
+ *
+ * Four cards say it: BLIGHT POLLEN for five turns, WITHERING WORD for three,
+ * HAUNTING SHADOWS while the paranoia lasts and DEATH WAIL until a Long Rest.
+ * It is the one rider in this file that is not a number to bend but a thing to
+ * refuse, and the arithmetic could say no to none of them until 2026-09-20: the
+ * Health went up and the row on the block was a note somebody had to remember.
+ *
+ * Asked at the moment a heal lands rather than folded into a total, because
+ * there is no number to fold: see `characterDelta` in combatApply.js, which
+ * simply writes nothing.
+ */
+export function refusesHealing(effects, who = null) {
+  return runningRiders(effects, { who }).noHeal === true;
+}
+
 export function wornTypes(effects, { who = null, claimed = [] } = {}) {
   const total = runningRiders(effects, { who, claimed });
   return { resist: total.resist, vulnerable: total.vulnerable, immune: total.immune };
@@ -1694,6 +1820,11 @@ export function bendsTypes(rider) {
 export function bendsAdded(rider) {
   if (!rider) return false;
   return typeof rider.added === 'function' || (rider.added ?? []).length > 0;
+}
+
+/** Whether a rider refuses a heal outright, which is the one thing it can say no to. */
+export function bendsHeal(rider) {
+  return Boolean(rider?.noHeal);
 }
 
 /** Whether a rider changes one weapon attack rather than a stat tile. */

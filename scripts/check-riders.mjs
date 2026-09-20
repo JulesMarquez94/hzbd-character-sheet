@@ -25,6 +25,7 @@ import {
   asksOf,
   bendsAdded,
   bendsAgainst,
+  bendsHeal,
   bendsSheet,
   bendsSwing,
   bendsTypes,
@@ -129,6 +130,7 @@ for (const [id, rider] of Object.entries(EFFECT_RIDERS)) {
     bendsTypes(rider) ||
     bendsAgainst(rider) ||
     bendsAdded(rider) ||
+    bendsHeal(rider) ||
     claims.length > 0;
   if (!reaches) {
     note(id, 'moves neither a tile nor a swing, so it is a note and not a rider');

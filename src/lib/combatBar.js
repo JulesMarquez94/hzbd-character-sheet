@@ -88,7 +88,7 @@ import {
 import { attackModifiers, isMartialMove } from './moves.js';
 import { ridesStrike } from './spellblade.js';
 import { ridesHit } from './weaver.js';
-import { answersFrom } from './riders.js';
+import { answersFrom, cardHasRider } from './riders.js';
 import { heldThing } from './targeting.js';
 
 /* ------------------------------------------------------------------- parts */
@@ -1322,7 +1322,35 @@ export function castPlan(request, actor, { half = false, riders = [], statuses =
 
   const conjured = conjuredBody(card, actor, request?.modifiers);
 
-  return { own, laid, offered, landsOn: landing(card, own, laid, conjured), conjured };
+  /* And the rows the *riders* leave behind, which nothing laid until
+     2026-09-20. A Martial Move is not only a die on the swing: BREACH takes 2
+     off the target's Defense until its next Turn End and GUARDED puts 1 on
+     yours until your next Turn Start, and both were printed and forgotten.
+     A move that leaves something running is a card with a duration and a rider,
+     exactly like a spell, so it lays exactly as a spell does.
+
+     Where each one lands is read off its own prose by `landing`, the same
+     function that places the request's own row: BREACH says "the target's" and
+     GUARDED says "your", which is the whole of the difference. A rider with no
+     rider or no duration lays nothing, which is most of them. */
+  const rode = [];
+  for (const one of riders ?? []) {
+    if (!cardHasRider(one?.id)) continue;
+    const row = castEffect({ card: one, name: one.name, source: request?.source }, actor);
+    if (!row) continue;
+    rode.push({ row, mine: landing(one, row, [], null) === 'caster' });
+  }
+
+  return {
+    own,
+    laid: [...laid, ...rode.filter((entry) => !entry.mine).map((entry) => entry.row)],
+    /* The ones that stay with whoever swung. Kept apart from `own` because a
+       use has exactly one card of its own and may carry several riders. */
+    mine: rode.filter((entry) => entry.mine).map((entry) => entry.row),
+    offered,
+    landsOn: landing(card, own, laid, conjured),
+    conjured,
+  };
 }
 
 /**

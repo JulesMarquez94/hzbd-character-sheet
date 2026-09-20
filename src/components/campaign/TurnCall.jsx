@@ -206,6 +206,8 @@ export default function TurnCall({ character, patch, canEdit = false, initiative
              as its source. The delivery already carries the types; nothing here
              works them out. See `deltaNote` in combatApply.js. */
           types: row.data?.types ?? [],
+          /* And what the swing did to it: PIERCING's Armor, SUNDER's weakness. */
+          lands: row.data?.lands ?? null,
         });
         if (body) held.patch(body);
       }

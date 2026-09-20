@@ -37,7 +37,7 @@
  * and nothing else.
  */
 
-import { coversType } from './cardText.js';
+import { ALL_DAMAGE, coversType } from './cardText.js';
 import {
   LEDGER_NOTE_MAX,
   appendLedger,
@@ -47,6 +47,7 @@ import {
   shieldCapFor,
 } from './characterModel.js';
 import { isFailure, judge } from './dice.js';
+import { refusesHealing } from './riders.js';
 import { healedEffects } from './statuses.js';
 
 /* ----------------------------------------------------------- the arithmetic */
@@ -133,20 +134,31 @@ export function landHit({ shield = 0, armor = 0 }, amount, factor = 1) {
  * `floor` is 0 for an enemy (a body at nothing is down and stays drawn) and
  * `-health_max` for a character, whose sheet runs past zero on purpose.
  */
-export function struck(body, landings, { floor = 0, types = [] } = {}) {
+export function struck(body, landings, { floor = 0, types = [], lands = null } = {}) {
   let shield = Math.max(0, Math.floor(Number(body.shield) || 0));
   let health = Math.floor(Number(body.health) || 0);
   let soaked = 0;
   let dealt = 0;
 
+  /* What the swing itself does to this landing, which is two Martial Moves and
+     nothing else. PIERCING takes the Armor out of the arithmetic; SUNDER adds a
+     weakness to every type, and then the ordinary rules apply to it — which is
+     what makes the reading nobody would have written by hand come out right: a
+     target already resistant to what is coming has both at once, and the two
+     cancel, so it lands as written. See `lands` in martial.js. */
+  const armor = lands?.pierces ? 0 : body.armor;
+  const wearing = lands?.vulnerable
+    ? { ...body, vulnerable: [...(body.vulnerable ?? []), ALL_DAMAGE] }
+    : body;
+
   /* Whether this body halves or doubles what is coming, read once: the factor is
      a fact about the body and the type, and every landing of one throw is the
      same type. `body` carrying neither list is every caller that predates the
      damage channel, and the factor is 1 for all of them. */
-  const factor = typeFactor(body, types);
+  const factor = typeFactor(wearing, types);
 
   for (const amount of landings) {
-    const hit = landHit({ shield, armor: body.armor }, amount, factor);
+    const hit = landHit({ shield, armor }, amount, factor);
     shield -= hit.soaked;
     soaked += hit.soaked;
     dealt += hit.dealt;
@@ -181,6 +193,11 @@ export function applyPlan(thrown = []) {
     for (const type of one.damage ?? []) {
       if (!row.types.includes(type)) row.types.push(type);
     }
+    /* And what the swing does when it arrives, carried through to whoever
+       applies it. Merged across the throws of one kind, which is the honest
+       reading of a Flurry with a PIERCING on it: the move was bought for the
+       attack and every landing of that attack is the attack. */
+    if (one.lands) row.lands = { ...(row.lands ?? {}), ...one.lands };
   }
 
   return rows.filter((row) => row.total > 0);
@@ -211,7 +228,7 @@ export function deltaWords(row) {
  */
 export function characterDelta(
   character,
-  { kind, landings = null, amount = 0, note = '', types = [] }
+  { kind, landings = null, amount = 0, note = '', types = [], lands = null }
 ) {
   const why = deltaNote(note, kind, types);
   const list = (landings && landings.length > 0 ? landings : [amount]).map((n) =>
@@ -231,6 +248,7 @@ export function characterDelta(
       {
         floor: -Math.max(0, Math.floor(Number(character?.health_max) || 0)),
         types,
+        lands,
       }
     );
 
@@ -253,6 +271,12 @@ export function characterDelta(
   }
 
   if (kind === 'healing') {
+    /* A heal that is refused. Four cards say "cannot restore Health" and the
+       arithmetic could say no to none of them until 2026-09-20: the number
+       landed and the row on the block was a note somebody had to remember.
+       Nothing is written and nothing is logged, which is what "cannot" means. */
+    if (refusesHealing(character?.effects, character)) return null;
+
     const cap = Math.max(0, Math.floor(Number(character?.health_max) || 0));
     const held = Math.floor(Number(character?.health) || 0);
     const next = clamp(held + sum(list), -cap, cap);

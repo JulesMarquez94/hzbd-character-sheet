@@ -17538,10 +17538,9 @@ whole of what "the litter has it surrounded" means.
 
 ### Still open after the second pass
 
-- **A rider does not reach an enemy's stats at all.** An enemy's numbers are printed, so
-  RUSTWEAVE's "the target's Armor is reduced by 2" and every card like it is unwired against
-  anything that is not a character. The damage channel and the `against` channel both cross;
-  the sheet channel does not.
+- ~~**A rider does not reach an enemy's stats at all.**~~ **Closed 2026-09-20**: `creatureStats`
+  and `minionDerived` both take the fold now, which is what finally wired BREACH and RUSTWEAVE.
+  See "The second pass, done properly" below.
 - **SLEEPING SPORES** reads the target's advantage on a roll the *caster* makes, which would
   have to be wired as the caster's disadvantage. That is an inversion rather than a
   transcription and wants a ruling.
@@ -17550,9 +17549,127 @@ whole of what "the litter has it surrounded" means.
 - **WILD STRIDER's floor** ("your Movement Speed cannot be reduced") is a rule about other
   rules, and the only thing on this sheet that reduces a Speed is being overloaded.
 - **DELAY** Elevates the actions it held, and nothing models a held action.
-- **A heal that is refused**: BLIGHT POLLEN's five turns and DEATH WAIL's "cannot restore
-  Health until a Long Rest". A number to bend is one thing and a heal to refuse is another, and
-  nothing in the apply arithmetic can say no yet.
+- ~~**A heal that is refused**: BLIGHT POLLEN's five turns and DEATH WAIL's "cannot restore
+  Health until a Long Rest".~~ **Closed 2026-09-20**: `noHeal` is the channel and four cards
+  ride it. Both appliers simply write nothing.
 - **The flight and swim speeds** (WINGS OF RADIANCE, EARTH GLIDE, SEAFARER'S ELIXIR, POTION OF
   FLYING, SPROUT WINGS). The sheet holds one Movement Speed and nowhere to say what it moves
   through.
+
+## The second pass, done properly, 2026-09-20
+
+> "start with the second pass"
+
+The two drops before this one each ended with a sweep, and both swept *cards*: a
+regex over a card's whole text, a hand list of what was wired, and a review by
+eye. This one sweeps **sentences**, and cross-references each one against every
+channel that could carry it, assembled from the codex itself rather than from a
+list somebody kept up to date. What prints is the sentences nothing claims.
+
+It found 120 on the first run, 24 of them because the sweep did not know how a
+skill or an enchantment carries its numbers. The real list was 96, and most of it
+is genuinely prose. Four things in it were not.
+
+### One: a rider reaches a creature's stats
+
+**The biggest thing that was left**, and it was structural rather than a card. A
+creature's numbers were printed and nothing else: `creatureStats` read the
+creature and the level and never the instance. So a GIANT GROWTH cast on a goblin
+doubled nothing, and every card written against a target's Defense or Armor was
+unwired against the only bodies it is ever aimed at.
+
+- `creatureStats(creature, level, extra)` and `minionDerived(spec, attrs, level,
+  extra)` both take the same object `deriveStats` takes for a character, folded
+  before anything is derived from it so a bent attribute bends the Reflex too.
+- Handed in rather than read, because creatures.js is a leaf and riders.js is
+  not. `encounterState` and `resolveMinion` are the two that read it.
+- The enemy block and the bonded creature's block stop disclaiming: both said
+  `bends={false}` on every row, and a row that moves a tile now says so.
+- `who` is null on both. The one measured rider scales on a talent rank and no
+  creature holds a set; a rider that asks a question still works, because the
+  answer is on the row.
+
+### Two: a Martial Move that lasts leaves a row
+
+A move was a die on the swing and nothing else, so two of them were printed and
+forgotten. **Where each one lands is read off its own prose** by `landing`, the
+same function that places a spell's row:
+
+| Move | Its own words | Where the row goes |
+| --- | --- | --- |
+| BREACH | "the target's Defense is reduced by 2" | the target |
+| RUSTWEAVE | "the target's Armor is reduced by 2" | the target |
+| GUARDED | "**your** Defense, Grit and Reflex" | the swinger |
+
+`castPlan` hands the swinger's back as `mine` and the target's in `laid`, which
+already goes out over the log. Only the Defense of GUARDED's three lands: Grit
+and Reflex are built from the attributes and this channel has no term for
+either, which the row's own line says rather than quietly dropping.
+
+TAUNTING went in beside them as a claim, because its condition is who the target
+is swinging at.
+
+### Three: what a swing does when it *arrives*
+
+Two Master and Adept moves change the landing rather than the throw, and there
+was no channel for that at all:
+
+- **PIERCING**: "The damage of this attack ignores the target's Armor."
+- **SUNDER**: "The target is treated as vulnerable to this attack's damage."
+
+`lands` on the card, folded by `withMoves`, hung on the damage link by
+`rollPlan`, carried by `applyPlan` onto the delta, across the table in the
+delivery, and read by `struck` on whichever side applies it.
+
+**SUNDER is written as a weakness rather than as a doubling**, and that is the
+whole reason it is worth writing down: against a body already *resistant* to what
+is coming, the target now has a resistance and a weakness at once, the rulebook
+says those cancel, and the damage lands exactly as written. Nobody would have
+written that branch by hand and it is certainly right.
+
+### Four: a heal that is refused
+
+The one rider that is not a number to bend but a thing to say no to. Four cards
+say "cannot restore Health" and the arithmetic could refuse none of them: the
+Health went up and the row on the block was a note somebody had to remember.
+
+`noHeal` on the rider, `refusesHealing` on the way in, and both appliers simply
+write nothing. BLIGHT POLLEN for five turns, WITHERING WORD for three, HAUNTING
+SHADOWS while the paranoia lasts and DEATH WAIL until a Long Rest. Damage still
+lands on all of them, which is the point.
+
+### Proved
+
+- `npm run lint:combat` grew four sections: a rider moving a creature's own
+  stats and coming back off, a move's row landing where its prose says, the two
+  landing flags including the cancel, and the refusal.
+- `npm run lint:riders` learned the refusal channel. All 55 riders pass.
+- Every other linter, eslint and the build, clean. No import cycles.
+- In the browser, through a throwaway harness (deleted, `git status` checked):
+  two Fenrat side by side, one wearing a Breach, reading Defense 8 against its
+  twin's 10, and laying a GIANT GROWTH on the plain one took its Speed from 6 to
+  12 with the row underneath saying which card did it.
+
+### What the sweep leaves standing
+
+Nothing structural. What is left is a list of individual sentences, each with its
+own reason:
+
+- **SLEEPING SPORES** would have to be read as the caster's disadvantage, which
+  is an inversion rather than a transcription. Wants a ruling.
+- **WATER VORTEX** scales per metre of the target's height, per target, on a roll
+  made at somebody else's Turn Start.
+- **DELAY** Elevates the actions it held, and nothing models a held action.
+- **NIGHTMARE'S CURSE** makes you vulnerable to one *spell's* damage rather than
+  to a type, and the damage channel keys on the type.
+- **The flight and swim speeds** (WINGS OF RADIANCE, EARTH GLIDE, SEAFARER'S
+  ELIXIR, POTION OF FLYING, SPROUT WINGS, CRAWLER, SOAR). The sheet holds one
+  Movement Speed and nowhere to say what it moves through.
+- **WILD STRIDER's floor**, which is a rule about other rules.
+- **The Reaction Point events**: BASTION'S FURY on an Intercept, BRAM'S NINE
+  VOICES when one of them dies. Nothing tracks either moment.
+- **The Brew's own modifiers** (QUICKSILVER's cost, MANA CRYSTAL's Empower).
+  A Brew is built in its own window and priced there.
+- **Four cost-cutting talents** (MARTIAL SWIFTNESS, COLOSSAL GRIP, TWINNED
+  STRIKE, DOUBLE WEAVE) whose sets already discount through their own specs, and
+  which the sweep cannot see because a spec is not a card.

@@ -1956,17 +1956,34 @@ export function creatureAttributes(creature, level) {
  * "cannot get reaction" is a rule about the creature rather than a default about
  * its rank.
  */
-export function creatureStats(creature, level = null) {
+export function creatureStats(creature, level = null, extra = null) {
   const rank = getRank(creature);
   const lvl = clampCreatureLevel(level ?? creature?.level);
-  const attributes = creatureAttributes(creature, lvl);
+  const printed = creatureAttributes(creature, lvl);
+  /* What is running on *this one*, folded before anything is derived from it.
+     A creature's numbers were printed and nothing else until 2026-09-20, so a
+     GIANT GROWTH on a goblin doubled nothing and a BREACH lowered no Defense:
+     the riders reached a character's tiles and stopped at the table's edge.
+
+     Handed in rather than read here, because this file is a leaf and riders.js
+     is not. `encounterState` and `minionState` are the two that read it. The
+     shape is `runningRiders`' own, which is also the shape `deriveStats` takes
+     for a character, so the two sides of the table fold the same object. */
+  const attributes = extra?.attributes
+    ? {
+        physique: printed.physique + (Number(extra.attributes.physique) || 0),
+        instinct: printed.instinct + (Number(extra.attributes.instinct) || 0),
+        mind: printed.mind + (Number(extra.attributes.mind) || 0),
+      }
+    : printed;
   const { physique: p, instinct: i, mind: m } = attributes;
 
   const health_max = Math.max(
     1,
     Math.floor(
       (Number(creature?.health?.perLevel) || 0) * lvl +
-        (Number(creature?.health?.perPhysique) || 0) * p
+        (Number(creature?.health?.perPhysique) || 0) * p +
+        (Number(extra?.healthMax) || 0)
     )
   );
 
@@ -1975,7 +1992,8 @@ export function creatureStats(creature, level = null) {
     Math.floor(
       (Number(creature?.willpower?.perLevel) || 0) * lvl +
         (Number(creature?.willpower?.perMind) || 0) * m +
-        (Number(creature?.willpower?.flat) || 0)
+        (Number(creature?.willpower?.flat) || 0) +
+        (Number(extra?.willpowerMax) || 0)
     )
   );
 
@@ -1989,7 +2007,11 @@ export function creatureStats(creature, level = null) {
      first because Heavy's rider is taken from the whole of it, which is the
      rulebook's own ruling for a character and the same one here. */
   const armor = getCreatureArmor(creature);
-  const defense = Math.max(0, Math.floor(Number(creature?.armor) || 0));
+  /* The naming trap this whole codebase carries: a rider's `armor` is the flat
+     reduction, which a creature's row calls `defense`, and a rider's `defense`
+     is how hard it is to hit, which a creature's row calls `avoid`. See the
+     header of CharacterTab.jsx, where the relabel is explained. */
+  const defense = Math.max(0, Math.floor(Number(creature?.armor) || 0) + (Number(extra?.armor) || 0));
   const reflex = p + i;
   const grit = i + m;
   const avoidBase = armor.base === 'reflex' ? reflex : armor.base === 'grit' ? grit : i;
@@ -1997,7 +2019,8 @@ export function creatureStats(creature, level = null) {
     0,
     avoidBase +
       Math.floor(Number(creature?.avoid_bonus) || 0) +
-      (armor.half ? Math.floor(defense / 2) : 0)
+      (armor.half ? Math.floor(defense / 2) : 0) +
+      (Number(extra?.defense) || 0)
   );
 
   return {
@@ -2013,8 +2036,15 @@ export function creatureStats(creature, level = null) {
     // Which family it is wearing, so a block can say what its Defense is made of.
     armor,
     initiative: i + lvl,
-    // The one value that keeps its half, exactly as a character's does.
-    speed_m: Number(creature?.speed_m) || 0,
+    /* The one value that keeps its half, exactly as a character's does. The
+       factor multiplies what the flat already moved, which is the order
+       `deriveStats` uses and the order the cards are written in: GIANT GROWTH
+       doubles "its Movement Speed", whatever that had become. */
+    speed_m: Math.max(
+      0,
+      ((Number(creature?.speed_m) || 0) + (Number(extra?.speed) || 0)) *
+        (Number(extra?.speedFactor) || 1)
+    ),
     ap_max,
     // A Minion has none and can never be given any. The one place that is true.
     reaction_max: rank.reacts ? printedReaction : 0,

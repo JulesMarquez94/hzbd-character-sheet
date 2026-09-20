@@ -409,7 +409,14 @@ export const MARTIAL_MOVES = withArt([
     stat: 'instinct',
     /* "m,atial move htat make it ignore armor." Armor is flat reduction off
        every hit that lands, so this is the one line. Priced with GUARDED, since
-       against a heavily plated target it is worth more than a die. */
+       against a heavily plated target it is worth more than a die.
+
+       **`lands` rather than `rides`**, and the difference is where the rule
+       takes effect: `rides` bends the swing before it is thrown, and this bends
+       what happens when it arrives. The flag travels with the rolled number all
+       the way to whoever applies it, which is the target's own sheet or the
+       Game Master's page. Wired 2026-09-20. See `struck` in combatApply.js. */
+    lands: { pierces: true },
     body: 'The damage of this attack ignores the target’s Armor.',
   },
 
@@ -553,6 +560,15 @@ export const MARTIAL_MOVES = withArt([
        the swing that had the most to double — which is why this card of all of
        them should never have had one number. Flagged in data/README.md, since
        "very expensive" is a direction rather than a rate. */
+    /* "treated as vulnerable" is the glossary's own word, so it rides as the
+       glossary's own thing rather than as a doubling: the flag adds a weakness
+       to *every* type for this one landing, and `typeFactor` then does what it
+       always does. That is what makes the one reading nobody would have written
+       by hand come out right: a target already **resistant** to what is coming
+       has a resistance and a weakness at once, and the rulebook says those
+       cancel, so the damage lands as written rather than doubled. Wired
+       2026-09-20 with the damage channel. See `struck` in combatApply.js. */
+    lands: { vulnerable: true },
     body:
       'The target is treated as vulnerable to this attack’s damage.\n\n' +
       'Its cost is 3 Willpower for every 2 Action Points the attack costs.',

@@ -48,12 +48,13 @@ import { normalizeBody } from '../src/lib/customCreatures.js';
 import { castEffect, castPlan, conjuredBody, spendUse } from '../src/lib/combatBar.js';
 import { layEffect, normalizeEffects } from '../src/lib/combatTurn.js';
 import { MARTIAL_MOVES, getMartialMove } from '../src/lib/martial.js';
-import { aimingMoves, offeredRides, withTargets } from '../src/lib/moves.js';
+import { aimingMoves, offeredRides, withMoves, withTargets } from '../src/lib/moves.js';
 import {
   answersFrom,
   asksOf,
   effectLine,
   openAsks,
+  refusesHealing,
   runningRiders,
   takenRiders,
   wornTypes,
@@ -445,6 +446,148 @@ section('taking no damage at all');
     'and nothing lands on a body immune to everything',
     struck({ shield: 0, health: 30, armor: 0, immune: ['All'] }, [40], { types: ['Sacred'] }).dealt,
     0
+  );
+}
+
+section('a rider reaches a creature’s own stats');
+{
+  /* Until 2026-09-20 an enemy's numbers were printed and nothing else, so a
+     GIANT GROWTH cast on a goblin doubled nothing and a BREACH lowered no
+     Defense. The riders reached a character's tiles and stopped at the table's
+     edge, which was the biggest thing left in riders.js. */
+  const pile = (effects) => ({
+    foes: [
+      { key: 'a', creature: 'fenrat-skirmisher', level: 4 },
+      { key: 'b', creature: 'fenrat-skirmisher', level: 4, ...(effects ? { effects } : {}) },
+    ],
+  });
+  const both = (effects) => encounterState(pile(effects)).map((foe) => foe.stats);
+
+  const [plain, grown] = both([{ id: 'g', name: 'Giant Growth', card: 'giant-growth', turns: 10 }]);
+  check('a doubled Speed on an enemy really doubles', grown.speed_m, plain.speed_m * 2);
+
+  const [, breached] = both([{ id: 'b', name: 'Breach', card: 'breach', turns: 1 }]);
+  check('and a Breach really lowers its Defense', plain.avoid - breached.avoid, 2);
+
+  const [, rusted] = both([{ id: 'r', name: 'Rustweave', card: 'rustweave', turns: 1 }]);
+  check('and a Rustweave its Armor', rusted.defense, Math.max(0, plain.defense - 2));
+
+  /* Off again, which is the whole reason a rider is read rather than stored. */
+  const [, back] = both(null);
+  check('and the row coming off puts it all back', back, plain);
+
+  /* A conjured body has no page and no tracker, and must not crash on either. */
+  const wall = encounterState({
+    foes: [{ key: 'w', creature: 'conjured', body: { name: 'Wall', health_max: 20, avoid: 12 } }],
+  });
+  check('a conjured body still draws', wall.length, 1);
+}
+
+section('a Martial Move that lasts leaves its row where its own text says');
+{
+  /* A move was a die on the swing and nothing else: BREACH took 2 off the
+     target's Defense and GUARDED put 1 on yours, and neither was ever written
+     down. Where each lands is read off its own prose by the same function that
+     places a spell's row. */
+  const swing = getCard('melee-light-strike');
+  const actor = { name: 'Kaelen', physique: 6, instinct: 5, mind: 4 };
+  const withMove = (id) =>
+    castPlan({ card: swing, name: 'Strike', source: 'Longsword' }, actor, {
+      riders: [getMartialMove(id)].filter(Boolean),
+    });
+
+  check('BREACH lands on the target', withMove('breach').laid.map((row) => row.name), ['Breach']);
+  check('and keeps nothing', withMove('breach').mine, []);
+  check('GUARDED stays with the swinger', withMove('guarded').mine.map((row) => row.name), [
+    'Guarded',
+  ]);
+  check('and lands nothing on them', withMove('guarded').laid, []);
+  check('a move that lasts nothing lays nothing', withMove('reckless').laid.length, 0);
+  check('and a swing with no move at all lays nothing', withMove('nothing-at-all').laid.length, 0);
+}
+
+section('what a swing does when it arrives');
+{
+  /* Two Martial Moves change the landing rather than the throw, so the flag
+     travels with the rolled number to whoever applies it. */
+  const armoured = { shield: 0, health: 40, armor: 5 };
+  const sharp = { types: ['Sharp'] };
+
+  check('plain, the Armor comes off', struck(armoured, [12], sharp).dealt, 7);
+  check(
+    'PIERCING takes the Armor out of it',
+    struck(armoured, [12], { ...sharp, lands: { pierces: true } }).dealt,
+    12
+  );
+  check(
+    'SUNDER doubles before the Armor',
+    struck(armoured, [12], { ...sharp, lands: { vulnerable: true } }).dealt,
+    19
+  );
+  /* The reading nobody would have written by hand, and the reason SUNDER is a
+     weakness rather than a doubling: against something already resistant the
+     two cancel and it lands as written. */
+  check(
+    'and against a resistant body the two cancel',
+    struck({ ...armoured, resist: ['Sharp'] }, [12], { ...sharp, lands: { vulnerable: true } })
+      .dealt,
+    7
+  );
+  check(
+    'where the resistance alone would have halved it',
+    struck({ ...armoured, resist: ['Sharp'] }, [12], sharp).dealt,
+    1
+  );
+
+  /* And the flag survives the journey: off the card, through the plan, onto the
+     delta the delivery carries. */
+  check('the move declares it', getMartialMove('piercing')?.lands, { pierces: true });
+  check(
+    'withMoves folds it onto the swing',
+    withMoves({}, [getMartialMove('piercing')].filter(Boolean)).lands,
+    { pierces: true }
+  );
+  check(
+    'rollPlan hangs it on the damage and not on the check',
+    rollPlan(getCard('melee-light-strike'), { physique: 6 }, { lands: { pierces: true } }).map(
+      (link) => link.lands ?? null
+    ),
+    [null, { pierces: true }]
+  );
+  check(
+    'and applyPlan carries it to the delta',
+    applyPlan([{ kind: 'damage', total: 9, damage: ['Sharp'], lands: { pierces: true } }])[0].lands,
+    { pierces: true }
+  );
+}
+
+section('a heal that is refused');
+{
+  /* The one rider that is not a number to bend but a thing to say no to. Four
+     cards say "cannot restore Health" and the arithmetic could refuse none of
+     them: the Health went up and the row on the block was a note somebody had
+     to remember. */
+  const hurt = { health: 10, health_max: 40, shield: 0, defense: 0, ledger: [] };
+  const cursed = {
+    ...hurt,
+    effects: [{ id: 'w', name: 'Withering Word', card: 'withering-word', turns: 3 }],
+  };
+
+  check('an ordinary heal lands', characterDelta(hurt, { kind: 'healing', amount: 9 })?.health, 19);
+  check('a refused one writes nothing at all', characterDelta(cursed, { kind: 'healing', amount: 9 }), null);
+  check('and damage still lands on them', characterDelta(cursed, { kind: 'damage', amount: 9 })?.health, 1);
+  check('the four cards that say it', [
+    refusesHealing([{ id: '1', name: 'x', card: 'withering-word', turns: 3 }]),
+    refusesHealing([{ id: '2', name: 'x', card: 'blight-pollen', turns: 5 }]),
+    refusesHealing([{ id: '3', name: 'x', card: 'death-wail', turns: null }]),
+    refusesHealing([{ id: '4', name: 'x', card: 'haunting-shadows', turns: null }]),
+  ], [true, true, true, true]);
+  check('and a body with nothing on it', refusesHealing([]), false);
+  /* An ended row refuses nothing, which is the law every other rider keeps. */
+  check(
+    'a row that ran out refuses nothing',
+    refusesHealing([{ id: '5', name: 'x', card: 'withering-word', turns: 0 }]),
+    false
   );
 }
 

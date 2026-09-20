@@ -203,6 +203,12 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
         askVerdict: false,
         // Only damage has a type. Healing and a Shield are what they are.
         damage: kind === 'damage' ? damage : [],
+        /* And what this damage does differently when it *arrives*: PIERCING
+           ignores the Armor and SUNDER counts as a weakness. It rides the link
+           rather than changing it, because neither is anything to do with the
+           dice: the number is the number and the body it lands on is where the
+           rule applies. Only on damage, for the same reason. See moves.js. */
+        ...(kind === 'damage' && mods.lands ? { lands: mods.lands } : {}),
       };
 
       /* A landing each, rather than one throw counted twice. Three d6 are not

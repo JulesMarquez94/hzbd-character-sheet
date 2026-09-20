@@ -711,6 +711,15 @@ export function withMoves(modifiers, cards = []) {
       ? [sourceRow(modifiers?.perMoveFrom ?? 'Your set', { empower: technique })].filter(Boolean)
       : [];
 
+  /* And what the moves change about the *landing* rather than about the swing.
+     PIERCING's Armor and SUNDER's weakness both happen where the number arrives
+     rather than where it is thrown, so they travel with the rolled damage
+     instead of changing it. Merged rather than replaced, because two moves on
+     one swing may each carry one. See `lands` in martial.js. */
+  const lands = cards.reduce((held, move) => ({ ...held, ...(move.lands ?? {}) }), {
+    ...(modifiers?.lands ?? {}),
+  });
+
   return {
     ...(modifiers ?? {}),
     empower: (Number(modifiers?.empower) || 0) + empower + technique,
@@ -719,6 +728,7 @@ export function withMoves(modifiers, cards = []) {
     advantageFrom: [...(modifiers?.advantageFrom ?? []), ...advantaged],
     sources: mergeSources(modifiers?.sources ?? [], sources, held),
     riding: [...(modifiers?.riding ?? []), ...names],
+    ...(Object.keys(lands).length > 0 ? { lands } : {}),
   };
 }
 

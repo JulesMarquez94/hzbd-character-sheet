@@ -99,6 +99,7 @@
 
 import { clamp, levelForXp } from './characterModel.js';
 import { getCard } from './weapons.js';
+import { effectRiders } from './riders.js';
 import { TALENTS, cardsThroughRank, getTalent, normalizeTalents } from './talents.js';
 
 /* --------------------------------------------------------------- the spec */
@@ -256,29 +257,40 @@ export function minionAttributes(spec, level) {
  * printed body may say so. It is a number in the codex, not a piece of gear:
  * nothing can take it off and nothing can add to it.
  */
-export function minionDerived(spec, attributes, level) {
+export function minionDerived(spec, attributes, level, extra = null) {
   const lvl = Math.max(1, Math.floor(Number(level) || 1));
-  const p = Math.floor(Number(attributes?.physique) || 0);
-  const i = Math.floor(Number(attributes?.instinct) || 0);
-  const m = Math.floor(Number(attributes?.mind) || 0);
+  /* What is running on this one, folded before anything is derived from it. The
+     same argument `creatureStats` takes and `deriveStats` takes, so a bonded
+     creature, an enemy and a character all bend the same way: a GIANT GROWTH on
+     a skeleton doubles its Speed too. Handed in rather than read here, because
+     this file sits below riders.js. New on 2026-09-20. */
+  const p = Math.floor(Number(attributes?.physique) || 0) + (Number(extra?.attributes?.physique) || 0);
+  const i = Math.floor(Number(attributes?.instinct) || 0) + (Number(extra?.attributes?.instinct) || 0);
+  const m = Math.floor(Number(attributes?.mind) || 0) + (Number(extra?.attributes?.mind) || 0);
 
   const reflex = p + i;
   const grit = i + m;
 
   const perLevel = Number(spec?.health?.perLevel) || 0;
   const perPhysique = Number(spec?.health?.perPhysique) || 0;
-  const health_max = Math.max(1, Math.floor(perLevel * lvl + perPhysique * p));
+  const health_max = Math.max(
+    1,
+    Math.floor(perLevel * lvl + perPhysique * p + (Number(extra?.healthMax) || 0))
+  );
 
   const avoid = { grit, reflex, physique: p, instinct: i, mind: m }[spec?.defense ?? 'instinct'] ?? i;
 
   return {
     health_max,
     shield_cap: Math.floor(health_max / 2),
-    avoid: Math.floor(avoid),
-    defense: Math.max(0, Math.floor(Number(spec?.armor) || 0)),
+    /* The naming trap: a rider's `defense` is how hard it is to hit, which this
+       row calls `avoid`, and a rider's `armor` is the flat reduction, which this
+       row calls `defense`. See CharacterTab.jsx. */
+    avoid: Math.max(0, Math.floor(avoid) + (Number(extra?.defense) || 0)),
+    defense: Math.max(0, Math.floor(Number(spec?.armor) || 0) + (Number(extra?.armor) || 0)),
     initiative: i + lvl,
     // The one value that keeps its half, exactly as a character's does.
-    speed_m: 3 + i / 2,
+    speed_m: Math.max(0, (3 + i / 2 + (Number(extra?.speed) || 0)) * (Number(extra?.speedFactor) || 1)),
     ap_max: 6,
     reaction_max: 6,
     reflex,
@@ -418,7 +430,12 @@ function commandedBy(character, spec) {
 function resolveMinion(character, { talent, spec, entry, kind, id, row, level }) {
   const body = bodyOf(spec, kind);
   const attributes = minionAttributes(body, level);
-  const stats = minionDerived(body, attributes, level);
+  /* And whatever is running on this one's own row, which reached nothing until
+     2026-09-20: a bonded creature's tracker could hold a GIANT GROWTH and its
+     Speed tile never moved. `who` is null because the one measured rider scales
+     on a talent rank and no creature holds a set. See creatureStats, which is
+     the same fold for an enemy. */
+  const stats = minionDerived(body, attributes, level, effectRiders(row?.effects, { weapon: false }));
 
   /* A missing pool is a full one. Health is clamped rather than repaired on
      the row: a level lost shrinks the ceiling, and a stored number above it

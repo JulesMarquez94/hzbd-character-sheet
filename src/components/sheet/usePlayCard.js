@@ -15,7 +15,7 @@ import {
 import { rollPlan } from '../../lib/rollPlan.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 import { castPlan, spendUse, withoutCast } from '../../lib/combatBar.js';
-import { addEffect } from '../../lib/combatTurn.js';
+import { addEffect, layEffect } from '../../lib/combatTurn.js';
 import { foeKey } from '../../lib/encounters.js';
 import { openingEffect } from '../../lib/tricks.js';
 
@@ -229,7 +229,25 @@ export function usePlayCard({ character, patch }) {
 
       /* ---- 1. the price ---- */
       const spent = spendUse(request, actor, mode, amount, options);
-      const body = write(keepOwn ? spent : withoutCast(spent, casting.own));
+      const paid = keepOwn ? spent : withoutCast(spent, casting.own);
+      /* And the rows a *rider* leaves on whoever swung, which is a Martial Move
+         that lasts: GUARDED puts a point of Defense, Grit and Reflex on you
+         until your next Turn Start. Laid beside the card's own row rather than
+         in place of it, because a swing may carry two moves and a card of its
+         own. A move that lands on the target instead is in `casting.laid` and
+         goes out over the log with everything else. See castPlan. */
+      const mine = casting.mine ?? [];
+      const body = write(
+        mine.length === 0
+          ? paid
+          : {
+              ...paid,
+              effects: mine.reduce(
+                (held, row) => layEffect(held, { ...row, from: row.from || request?.name }),
+                paid.effects ?? actor?.effects
+              ),
+            }
+      );
       if (Object.keys(body).length > 0) patch(body);
 
       /* ---- 2. the table ----
@@ -503,7 +521,14 @@ async function throwChain(tray, plan, { request, actor, chain, onSettled = null 
       if (!result) return settle();
 
       if (link.shape === 'value') {
-        thrown.push({ kind: link.kind, total: result.total, damage: link.damage ?? [] });
+        thrown.push({
+          kind: link.kind,
+          total: result.total,
+          damage: link.damage ?? [],
+          /* And what this one does when it arrives, which travels with the
+             number rather than being applied to it. See `lands` in martial.js. */
+          ...(link.lands ? { lands: link.lands } : {}),
+        });
       }
 
       if (link.shape !== 'check') continue;

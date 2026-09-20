@@ -822,6 +822,8 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             kind: delta.kind,
             landings: delta.landings,
             types: delta.types ?? [],
+            // And what the swing did to it: PIERCING's Armor, SUNDER's weakness.
+            lands: delta.lands ?? null,
           }));
         if (keys.length > 0) patch((row) => applyToFoes(row, keys));
 
@@ -1160,6 +1162,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
                 landings: entry.landings,
                 // What it was made of, for whatever this body halves or doubles.
                 types: row.data?.types ?? [],
+                lands: row.data?.lands ?? null,
               }))
             )
           );

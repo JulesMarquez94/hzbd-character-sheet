@@ -952,6 +952,10 @@ export function appliedEvent(caster, delta, targets = [], { chain = null } = {})
       verb,
       kind: delta.kind,
       types: delta.types ?? [],
+      /* And what the swing did to this landing: PIERCING's Armor, SUNDER's
+         weakness. The applier is the target's own client, so the flag has to
+         cross with the number. See martial.js. */
+      ...(delta.lands ? { lands: delta.lands } : {}),
       targets: targets.map((entry) => ({
         kind: entry.kind,
         ref: entry.kind === 'member' ? null : entry.id,

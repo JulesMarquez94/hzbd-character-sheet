@@ -830,10 +830,10 @@ function FoeActions({ foe, patch, readOnly, combat = null }) {
                          `foeTypes` reads it. See AnswerWindow.jsx. */
                       onAnswer={asksOf(effect).length > 0 ? () => setAnswering(effect.id) : null}
                       asking={openAsks(effect).length}
-                      /* An enemy's stats are printed and no rider reaches them, so
-                         a row here does not claim to have moved one. Same call as
-                         a creature's tracker. See riders.js. */
-                      bends={false}
+                      /* An enemy's stats take riders since 2026-09-20, so a row here
+                         says what it did. Same call as a bonded creature's
+                         tracker. See creatureStats in creatures.js. */
+                      bends={true}
                     />
                   );
                 })}
