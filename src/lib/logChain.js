@@ -263,10 +263,12 @@ export function resultFromRow(row) {
 export const REPLAY_WINDOW = 25;
 
 /**
- * And how many can be waiting to play before the rest are dropped to the log.
+ * And how many can be on the table at once before the rest are dropped to the
+ * log.
  *
- * Applied by the tray, which is where the queue is. This file only knows about
- * one row at a time.
+ * They stand side by side rather than waiting their turn, so this is how wide
+ * the row is allowed to get. Applied by the tray, which is where the row is.
+ * This file only knows about one row at a time.
  */
 export const REPLAY_DEPTH = 3;
 

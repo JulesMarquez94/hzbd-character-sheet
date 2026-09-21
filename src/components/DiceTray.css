@@ -168,30 +168,141 @@
   color: var(--text-muted);
 }
 
-/* ------------------------------------------------------------ the surface
+/* ---------------------------------------------------------------- the row
 
-   A panel on the right, standing at the middle of the screen's height, and not
-   a cover. Jules, 2026-09-04: "Instead of doing a full screen lets do a
-   rectangle that pop on the right side center vertically. So it does not take
-   over everything as it happens." The dice, the DC question, the verdict and the
-   four buttons are all still here; what went is the backdrop, so the sheet
-   behind stays readable and pressable while a roll is up. Tapping the panel is
-   what tapping anywhere used to be.
+   Panels stand side by side at the right of the screen, and the row is what is
+   anchored there rather than any one of them. Jules, 2026-09-21: "when you have
+   an ongoing roll, and someone else does another roll it pop to the left of the
+   roll box instead of on top."
+
+   So a second roll takes the seat to the left and your own keeps the right-hand
+   end, where the single panel used to stand. Nothing on screen is covered by
+   anything, which is the whole point: a table rolling at once is two rolls to
+   read, not one roll hiding another.
 
    Below the header's rung would put it under the sticky tab bar, so it keeps
    the overlay-top rung: a dealt card and a modal are still what it has to win
    against. The tray's own button holds the bottom left, the knocks the top and
-   bottom right, and this stands between them at mid-height. */
+   bottom right, and this stands between them at mid-height.
 
-.dice-surface {
+   The row takes no clicks and its seats do, so the sheet behind is as pressable
+   between two panels as it was beside one. A phone takes them back further
+   down: there the row is one panel wide and has to catch the swipe. */
+
+/* It spans the screen rather than hugging its panels, and the panels are held
+   at the right end of it by the auto margin below. A row sized to its contents
+   reads as min-content to the flex algorithm the moment a seat is allowed to
+   give any width up, which quietly took 100px off a panel that was on its own
+   with a whole screen to stand in. */
+.dice-rail-wrap {
   position: fixed;
   top: 50%;
-  right: 18px;
+  left: 0;
+  right: 0;
   transform: translateY(-50%);
   z-index: var(--z-overlay-top);
 
-  width: min(400px, calc(100vw - 36px));
-  max-height: min(88vh, 720px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.dice-rail {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-height: 100vh;
+  /* The gutter the surface used to hold off the right edge itself, and room
+     above and below for the panels' own shadows, which the scroll box would
+     otherwise cut off square. */
+  padding: 24px 18px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+/* No bar across the panels. The dots say how many there are. */
+.dice-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* A seat is the width the single panel used to be, and gives some of it up
+   before it lets a neighbour hang off the edge of the screen: a roll you cannot
+   see is no better than a roll behind another one. Below 300px it stops giving,
+   and the row scrolls instead. */
+.dice-rail-slot {
+  flex: 0 1 min(400px, calc(100vw - 36px));
+  min-width: min(300px, calc(100vw - 36px));
+  scroll-snap-align: center;
+  pointer-events: auto;
+}
+
+/* What holds the row against the right edge. An auto margin rather than
+   `justify-content: flex-end`, which in a scroll box puts the overflow off the
+   *start* side where nothing can scroll to it. An auto margin gives up and
+   goes to zero the moment there is nothing spare, which is exactly when the
+   row starts scrolling instead. */
+.dice-rail-slot:first-child {
+  margin-left: auto;
+}
+
+/* One dot a panel, only when the row runs past the edge of the screen. Under
+   the right-hand panel, which is the one they are a way back to. */
+.dice-rail-dots {
+  display: flex;
+  gap: 2px;
+  margin-right: 18px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: rgba(9, 17, 21, 0.82);
+  pointer-events: auto;
+}
+
+/* A thumb-sized button around a small mark: the dot is what you see and the
+   button is what you hit. */
+.dice-rail-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dice-rail-dot::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgba(200, 138, 75, 0.55);
+  border-radius: 50%;
+}
+
+.dice-rail-dot.is-on::before {
+  border-color: var(--copper);
+  background: var(--copper);
+}
+
+/* ------------------------------------------------------------ the surface
+
+   One seat's worth: the dice, the DC question, the verdict and the four
+   buttons. Jules, 2026-09-04: "Instead of doing a full screen lets do a
+   rectangle that pop on the right side center vertically. So it does not take
+   over everything as it happens." What went then was the backdrop, and what
+   went with the row is the panel's own footing: it is placed by the row now,
+   and sized to its seat. Tapping the panel is what tapping anywhere used to
+   be. */
+
+.dice-surface {
+  width: 100%;
+  max-height: min(82vh, 720px);
   overflow-y: auto;
   padding: 18px 18px 16px;
 
@@ -206,11 +317,11 @@
 @keyframes dice-surface-in {
   from {
     opacity: 0;
-    transform: translate(12px, -50%);
+    transform: translateX(14px);
   }
   to {
     opacity: 1;
-    transform: translate(0, -50%);
+    transform: translateX(0);
   }
 }
 
@@ -360,17 +471,39 @@
   height: 100%;
 }
 
-/* On a phone there is no right side to stand at. The panel takes the width
-   and sits at the foot, above the tray's own button. */
+/* On a phone there is no right side to stand at, and no room for two panels
+   side by side. The row takes the width and sits at the foot, above the tray's
+   own button, one panel to a screen: the second roll is still to the left of
+   the first, it is just a swipe away rather than beside it. Snapping is
+   mandatory here so a swipe lands on a panel and never between two. */
 @media (max-width: 560px) {
+  .dice-rail-wrap {
+    top: auto;
+    bottom: 68px;
+    transform: none;
+    align-items: center;
+  }
+
+  .dice-rail-dots {
+    margin-right: 0;
+  }
+
+  .dice-rail {
+    padding: 16px 10px;
+    scroll-snap-type: x mandatory;
+    /* The row catches the swipe here, so it has to be touchable. It covers the
+       same band of screen the one panel used to. */
+    pointer-events: auto;
+  }
+
+  /* One to a screen, whatever else is in the row. */
+  .dice-rail-slot {
+    flex: 0 0 100%;
+    min-width: 100%;
+  }
+
   .dice-surface,
   .react-gate {
-    top: auto;
-    right: 10px;
-    left: 10px;
-    bottom: 84px;
-    transform: none;
-    width: auto;
     max-height: 70vh;
     animation: none;
   }
@@ -385,18 +518,12 @@
    The stack, standing between an action and its dice: the
    countdown, who is holding it, and the fail question. Same
    footing as the dice surface, because it is the beat before
-   it: the same panel, at the same place on the right. See
-   ReactionGate.jsx.
+   it: the same panel, in the seat the roll is about to take.
+   See ReactionGate.jsx.
    ========================================================= */
 .react-gate {
-  position: fixed;
-  top: 50%;
-  right: 18px;
-  transform: translateY(-50%);
-  z-index: var(--z-overlay-top);
-
-  width: min(400px, calc(100vw - 36px));
-  max-height: min(88vh, 720px);
+  width: 100%;
+  max-height: min(82vh, 720px);
   overflow-y: auto;
   padding: 18px 18px 16px;
 

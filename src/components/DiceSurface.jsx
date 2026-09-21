@@ -31,7 +31,9 @@ import useCodexArt from './useCodexArt.js';
  * The surface is a panel standing at the right of the screen since 2026-09-04,
  * not a cover ("a rectangle that pop on the right side center vertically. So
  * it does not take over everything"). The sheet behind it stays readable and
- * pressable while a roll is up; see the note in DiceTray.css.
+ * pressable while a roll is up. Since 2026-09-21 it is a seat in a row of them
+ * rather than the one panel there can be: the tray places it, and several can
+ * be on screen at once. See the note in DiceTray.css.
  *   rolling   they tumble. The faces flicker through values that mean nothing.
  *   settling  they land. Then every die that exploded blooms out of the die that
  *             threw it, one at a time, so the cascade is legible rather than
@@ -88,6 +90,7 @@ export default function DiceSurface({
   onSpend = null,
   offers = [],
   Stage = null,
+  hotkeys = true,
 }) {
   const { spec, result, phase } = job;
 
@@ -192,8 +195,15 @@ export default function DiceSurface({
 
      A roll waiting on the table's verdict is the one exception. It is not asking
      whether to continue, it is asking what happened, and the four buttons are
-     the only honest answers. */
+     the only honest answers.
+
+     `hotkeys` is which panel is listening. More than one surface can be up at
+     once now that they stand in a row, and a keypress that walked away from
+     your roll *and* cleared three of somebody else's would be one Escape doing
+     four things. The tray hands it to the panel in front. */
   useEffect(() => {
+    if (!hotkeys) return undefined;
+
     function onKey(event) {
       if (event.key !== 'Escape') return;
       if (phase === 'dc' || phase === 'ready') onClose();
@@ -215,11 +225,15 @@ export default function DiceSurface({
     return bursts.indexOf(one) < bloomed;
   });
 
+  /* Only your own roll claims to be modal, and even that one loosely: the sheet
+     behind it stays readable and pressable. Somebody else's is an announcement
+     standing in the row, and several panels all claiming the screen at once
+     would be telling a screen reader something plainly untrue. */
   return (
     <div
       className={`dice-surface is-${phase}${watching ? ' is-watching' : ''}`}
       role="dialog"
-      aria-modal="true"
+      aria-modal={watching ? undefined : 'true'}
       aria-label={spec.name || 'Dice'}
       onMouseDown={(event) => {
         if (event.target !== event.currentTarget) return;

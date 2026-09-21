@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { DiceTrayContext } from '../context/dice-tray.js';
 import { useAuth } from '../context/auth-context.js';
 import { previewOf, rollCheck, rollValue } from '../lib/dice.js';
@@ -43,6 +43,18 @@ import './DiceTray.css';
  * log. It resolves with null if the player closed the surface without throwing,
  * so a chain can stop rather than invent a number for a roll that never
  * happened.
+ *
+ * ------------------------------------------------------------------- the row
+ * More than one roll can be up at once, so the panels stand side by side in a
+ * row at the right of the screen rather than taking turns at one spot. Yours
+ * holds the right-hand end and the table's stand to the left of it, newest
+ * nearest, which is what Jules asked for on 2026-09-21: "when you have an
+ * ongoing roll, and someone else does another roll it pop to the left of the
+ * roll box instead of on top."
+ *
+ * A phone has no room for two, so there the row is one panel wide and you swipe
+ * between them. `focus` is which one it is showing, and it is the one panel
+ * Escape speaks to on any screen.
  *
  * ------------------------------------------------------------------- the log
  * A finished roll writes itself to every table the sheet sits at, from `finish`
@@ -127,16 +139,24 @@ export function DiceTrayProvider({ children }) {
   const [pool, setPool] = useState([]);
   const [explode, setExplode] = useState(false);
   const [job, setJob] = useState(null);
-  /* Somebody else's roll, waiting to be shown. A queue rather than a slot: two
-     players acting at once is a fight, not an error, and the second one is worth
-     watching too. Capped just below in `watch`, so it can never grow into a
-     backlog somebody has to sit through. */
+  /* Somebody else's rolls, oldest first, and every one of them on screen at
+     once: two players acting at once is a fight, not an error, and the second
+     one is worth watching too. They used to take turns at the one spot, which
+     meant a roll thrown while another was up waited for it; now they stand in
+     the row beside it. Capped just below in `watch`, so the row can never grow
+     into a wall. */
   const [queue, setQueue] = useState([]);
-  /* The one being shown is simply the head of the queue, rather than a slot of
-     its own that an effect shifts into. Two pieces of state that have to be
-     moved between are two pieces of state that can disagree, and the shifting
-     had to happen during a render to do it. */
-  const watching = queue[0] ?? null;
+
+  /* Which panel in the row the player last landed on, by swiping to it, by
+     pressing a dot, or by raising a roll of their own. Held rather than derived
+     because it is a choice, and read back through `focus` below, which is what
+     the row actually shows: a panel that has cleared itself is no longer a
+     choice anybody can be looking at. */
+  const [chosen, setChosen] = useState(null);
+  /* Whether there is more row than screen. It is what raises the dots, so they
+     appear exactly when there is something off to the side to swipe to. */
+  const [crowded, setCrowded] = useState(false);
+  const rail = useRef(null);
 
   /* The promise `present` handed out, kept off the render state: resolving is
      not a render and a resolver living in state would be copied by every
@@ -180,23 +200,26 @@ export function DiceTrayProvider({ children }) {
       return [
         ...held,
         {
-        key: replay.key,
-        job: {
-          id: `watch-${replay.key}`,
-          spec: {
-            shape: replay.result.shape,
-            name: replay.name,
-            note: replay.actor,
-            watching: true,
-            dc: replay.result.dc,
-            flat: replay.result.flat,
-            preview: [],
-            askVerdict: false,
-            askDc: false,
-          },
-          result: replay.result,
-          /* Straight to the tumble. Nobody here is going to throw it: it was
-             thrown a second ago on somebody else's screen. */
+          key: replay.key,
+          /* When its dice stopped, stamped rather than counted, so the linger
+             below can work out what is left of it. Null until they do. */
+          doneAt: null,
+          job: {
+            id: `watch-${replay.key}`,
+            spec: {
+              shape: replay.result.shape,
+              name: replay.name,
+              note: replay.actor,
+              watching: true,
+              dc: replay.result.dc,
+              flat: replay.result.flat,
+              preview: [],
+              askVerdict: false,
+              askDc: false,
+            },
+            result: replay.result,
+            /* Straight to the tumble. Nobody here is going to throw it: it was
+               thrown a second ago on somebody else's screen. */
             phase: 'rolling',
           },
         },
@@ -243,16 +266,43 @@ export function DiceTrayProvider({ children }) {
     tell(result, { ...job.spec, card: null, name: offer.source });
   }
 
-  /** The head of the queue has landed. Let it be read, then move on. */
-  const dismissWatch = useCallback(() => setQueue((held) => held.slice(1)), []);
+  /** One of theirs, out of the row. */
+  const dropWatch = useCallback((key) => {
+    setQueue((held) => held.filter((one) => one.key !== key));
+  }, []);
 
-  /* And it clears itself. Nobody pressed anything to start it, so nobody should
-     have to press anything to end it. Tapping still dismisses it early. */
+  /**
+   * One of theirs has landed.
+   *
+   * Stamped with the moment rather than started on a timer here. The row is
+   * rebuilt whenever anything on it moves, and a timer restarted on every
+   * rebuild would hold a landed roll on screen for as long as the table kept
+   * rolling.
+   */
+  const landWatch = useCallback((key) => {
+    setQueue((held) => {
+      const at = held.findIndex((one) => one.key === key && one.job.phase !== 'done');
+      if (at < 0) return held;
+
+      const next = held.slice();
+      next[at] = { ...next[at], doneAt: Date.now(), job: { ...next[at].job, phase: 'done' } };
+      return next;
+    });
+  }, []);
+
+  /* And they clear themselves, each on its own clock. Nobody pressed anything
+     to start one, so nobody should have to press anything to end it. Tapping
+     still dismisses it early. */
   useEffect(() => {
-    if (watching?.job?.phase !== 'done') return undefined;
-    const id = setTimeout(dismissWatch, WATCH_LINGER_MS);
-    return () => clearTimeout(id);
-  }, [watching, dismissWatch]);
+    const landed = queue.filter((one) => one.doneAt);
+    if (landed.length === 0) return undefined;
+
+    const now = Date.now();
+    const timers = landed.map((one) =>
+      setTimeout(() => dropWatch(one.key), Math.max(0, one.doneAt + WATCH_LINGER_MS - now))
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [queue, dropWatch]);
 
   /* The reaction gate's job and the promise it settles, kept exactly the way
      the surface's are: one at a time, and a newer one closes the older out. */
@@ -268,6 +318,9 @@ export function DiceTrayProvider({ children }) {
         settleGate.current?.({ failed: false, targets: spec?.targets ?? [] });
         settleGate.current = resolve;
         setGateJob({ id: `gate-${Date.now()}`, spec: spec ?? {} });
+        /* The beat before your roll, and it takes the same seat your roll is
+           about to: it is being asked of you, so it is what the row shows. */
+        setChosen('gate');
       }),
     []
   );
@@ -290,11 +343,13 @@ export function DiceTrayProvider({ children }) {
 
         setOpen(false);
         setAsking(false);
-        /* Your own dice take the table, and whatever was queued behind them is
-           dropped rather than held. A replay is something to watch and a roll is
-           something to do, and nobody should have to sit through somebody else's
-           animation to take their turn. Every dropped one is still in the log. */
-        setQueue([]);
+        /* Whatever the rest of the table is doing stays up beside yours instead
+           of being swept off for it. A replay is something to watch and a roll
+           is something to do, and now that they are two seats in a row rather
+           than one spot taken in turn, neither is in the other's way. Your dice
+           take the right-hand end, which is the end the row opens on, so a roll
+           of your own is still the thing in front of you. */
+        setChosen('own');
         ticket.current += 1;
         const ready = normalize(spec);
         setJob({
@@ -446,6 +501,111 @@ export function DiceTrayProvider({ children }) {
     setPool([]);
   }
 
+  /* ------------------------------------------------------------------ the row
+
+     Everything that is up, in the order it stands: the table's rolls oldest
+     first, then the reaction window, then yours at the right-hand end. A roll
+     that arrives while you are mid-throw takes the seat next to yours rather
+     than the one you are sitting in. */
+  const panels = useMemo(() => {
+    const seats = queue.map((one) => ({
+      slot: `watch-${one.key}`,
+      label: one.job.spec.note ? `${one.job.spec.note}'s roll` : 'their roll',
+      watch: one,
+    }));
+    if (gateJob) seats.push({ slot: 'gate', label: 'the reaction window', gate: gateJob });
+    if (job) seats.push({ slot: 'own', label: 'your roll', own: job });
+    return seats;
+  }, [queue, gateJob, job]);
+
+  /* The panel in front: the one chosen for as long as it is still up, and the
+     right-hand end when it is not. Worked out here rather than kept in state
+     and repaired afterwards, because a roll that clears itself would leave a
+     phone looking at a gap for the render in between. On a wide screen every
+     panel is up at once and this is only the one Escape speaks to. */
+  const focus =
+    chosen && panels.some((one) => one.slot === chosen)
+      ? chosen
+      : (panels[panels.length - 1]?.slot ?? null);
+
+  /* And it is put back in front after anything moves. A roll arriving to the
+     left of the one you are reading grows the row on that side, which on a
+     phone would slide what you are reading off the screen. A panel already in
+     view is left exactly where it is: this corrects the row, it does not drag
+     it. */
+  useLayoutEffect(() => {
+    const row = rail.current;
+    if (!row || !focus) return;
+
+    const seat = row.querySelector(`[data-slot="${focus}"]`);
+    if (!seat) return;
+
+    const box = row.getBoundingClientRect();
+    const held = seat.getBoundingClientRect();
+    if (held.left >= box.left - 1 && held.right <= box.right + 1) return;
+
+    row.scrollLeft += held.left + held.width / 2 - (box.left + box.width / 2);
+  }, [focus, panels]);
+
+  /* Measured rather than counted: whether the dots are needed depends on how
+     many panels there are and how wide the screen is, and only the row knows
+     both.
+
+     Watched rather than listened for, because a window resize is not the only
+     way the row's width changes: a phone turning, a window being dragged, a
+     scrollbar arriving. The observer catches every one of them, and it caught
+     the first of them: a row measured while the page had no width at all reads
+     as crowded, and nothing then told it otherwise. */
+  useEffect(() => {
+    const row = rail.current;
+    if (!row) return undefined;
+
+    function measure() {
+      setCrowded(row.scrollWidth > row.clientWidth + 4);
+    }
+
+    measure();
+    const watcher = new ResizeObserver(measure);
+    watcher.observe(row);
+    return () => watcher.disconnect();
+  }, [panels]);
+
+  /* A swipe is the player picking a panel, so the row says which one it landed
+     on rather than being told. Without this the layout effect above would pull
+     them back to whatever was in front before they moved.
+
+     The one in front is the last one you can see whole. A phone shows exactly
+     one, so that is the one under your thumb; a wide screen shows several, and
+     the right-hand end is where the row is anchored and where your own roll
+     stands. Picking the panel nearest the middle instead reads a screen full of
+     rolls as "you are looking at the middle one", and the row then walks itself
+     leftwards a panel at a time as they arrive. Mid-swipe, when none of them is
+     whole, the nearest to the middle is the honest answer. */
+  const onRailScroll = useCallback(() => {
+    const row = rail.current;
+    if (!row) return;
+
+    const box = row.getBoundingClientRect();
+    const middle = box.left + box.width / 2;
+
+    let whole = null;
+    let nearest = null;
+    let best = Infinity;
+    for (const seat of row.children) {
+      const held = seat.getBoundingClientRect();
+      if (held.left >= box.left - 1 && held.right <= box.right + 1) whole = seat.dataset.slot;
+
+      const gap = Math.abs(held.left + held.width / 2 - middle);
+      if (gap < best) {
+        best = gap;
+        nearest = seat.dataset.slot;
+      }
+    }
+
+    const landed = whole ?? nearest;
+    if (landed) setChosen(landed);
+  }, []);
+
   const value = useMemo(
     () => ({
       character,
@@ -567,45 +727,80 @@ export function DiceTrayProvider({ children }) {
         />
       )}
 
-      {/* Somebody else's, when the table is free. Drawn by the same surface: it
-          is the same dice showing the same faces, and the only difference is
-          that this one plays itself. */}
-      {!job && watching && (
-        <DiceSurface
-          key={`watch-${watching.key}`}
-          job={watching.job}
-          Stage={stage}
-          onThrow={() => {}}
-          onCall={() => {}}
-          onDc={() => {}}
-          onDone={() =>
-            setQueue((held) =>
-              held.length === 0
-                ? held
-                : [{ ...held[0], job: { ...held[0].job, phase: 'done' } }, ...held.slice(1)]
-            )
-          }
-          onClose={dismissWatch}
-        />
-      )}
+      {/* The row. Every panel that is up, side by side, standing at the middle
+          of the screen's height with the right-hand one where the single panel
+          used to be. Somebody else's roll is drawn by the same surface as your
+          own: it is the same dice showing the same faces, and the only
+          difference is that this one plays itself.
 
-      {/* The stack, when an action is waiting on it: the reaction window and
-          the fail question, before any dice go up. See ReactionGate.jsx. */}
-      {gateJob && <ReactionGate key={gateJob.id} job={gateJob} onResolve={resolveGate} />}
+          The row takes no clicks and only its seats do, so the sheet behind
+          stays as pressable between two panels as it was beside one. A phone is
+          the exception, and takes them back, because there the row is a swipe.
+          See DiceTray.css. */}
+      {panels.length > 0 && (
+        <div className="dice-rail-wrap">
+          <div className="dice-rail" ref={rail} onScroll={onRailScroll}>
+            {panels.map((panel) => (
+              <div className="dice-rail-slot" data-slot={panel.slot} key={panel.slot}>
+                {panel.watch && (
+                  <DiceSurface
+                    key={panel.watch.job.id}
+                    job={panel.watch.job}
+                    Stage={stage}
+                    hotkeys={panel.slot === focus}
+                    onThrow={() => {}}
+                    onCall={() => {}}
+                    onDc={() => {}}
+                    onDone={() => landWatch(panel.watch.key)}
+                    onClose={() => dropWatch(panel.watch.key)}
+                  />
+                )}
 
-      {job && (
-        <DiceSurface
-          key={job.id}
-          job={job}
-          Stage={stage}
-          onThrow={throwIt}
-          onCall={call}
-          onDone={landed}
-          onDc={setDc}
-          offers={offers}
-          onSpend={spend}
-          onClose={() => finish(job.result)}
-        />
+                {/* The stack, when an action is waiting on it: the reaction
+                    window and the fail question, before any dice go up. See
+                    ReactionGate.jsx. */}
+                {panel.gate && (
+                  <ReactionGate key={panel.gate.id} job={panel.gate} onResolve={resolveGate} />
+                )}
+
+                {panel.own && (
+                  <DiceSurface
+                    key={panel.own.id}
+                    job={panel.own}
+                    Stage={stage}
+                    hotkeys={panel.slot === focus}
+                    onThrow={throwIt}
+                    onCall={call}
+                    onDone={landed}
+                    onDc={setDc}
+                    offers={offers}
+                    onSpend={spend}
+                    onClose={() => finish(panel.own.result)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* One dot a panel, when there are more of them than screen. They say
+              a roll is off to the side, which a row that runs past the edge
+              cannot say for itself, and they are the way to reach it without a
+              swipe. */}
+          {crowded && (
+            <div className="dice-rail-dots">
+              {panels.map((panel) => (
+                <button
+                  type="button"
+                  key={panel.slot}
+                  className={`dice-rail-dot${panel.slot === focus ? ' is-on' : ''}`}
+                  onClick={() => setChosen(panel.slot)}
+                  aria-label={`Show ${panel.label}`}
+                  aria-current={panel.slot === focus}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </DiceTrayContext.Provider>
   );
