@@ -56,7 +56,7 @@
  */
 
 /** The keys a source can contribute, in the order a reader wants them. */
-const GIVES = ['advantage', 'disadvantage', 'empower', 'elevate', 'bonus', 'apCut'];
+const GIVES = ['advantage', 'disadvantage', 'empower', 'elevate', 'healElevate', 'bonus', 'apCut'];
 
 /**
  * One receipt, or null when the source gave nothing.
@@ -123,6 +123,7 @@ export function sourceWords(gives) {
   if (gives.disadvantage) said.push(times('Disadvantage', gives.disadvantage));
   if (gives.empower) said.push(`Empowered by ${gives.empower}`);
   if (gives.elevate) said.push(`Elevated by ${gives.elevate}`);
+  if (gives.healElevate) said.push(`healing Elevated by ${gives.healElevate}`);
   if (gives.bonus) said.push(`${gives.bonus > 0 ? '+' : ''}${gives.bonus} damage`);
   if (gives.apCut) said.push(`${gives.apCut} Action ${gives.apCut === 1 ? 'Point' : 'Points'} off`);
   if (gives.damage) said.push(`deals ${listAnd(gives.damage)}`);

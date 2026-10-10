@@ -98,6 +98,8 @@ const REPEATS = [
  *              dice that land are the dice the player was looking at when they
  *              pressed use. `added` is the one of them the card cannot print,
  *              and it is appended at the foot of the chain — see below.
+ *              `healElevate` is the one that only grows *healing* dice: the
+ *              Healer skill's, which has nothing to say about damage.
  *   half       whether the card's second half was paid for. Eleven halves in
  *              the codex roll dice and none of them repeats the base card's,
  *              so a paid half is extra links rather than replacement ones.
@@ -111,6 +113,10 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
     elevate: Number(mods.elevate) || 0,
     bonus: Number(mods.bonus) || 0,
   };
+  /* The same sums with the Healer's steps on top, for a link that restores
+     Health. Kept apart rather than folded into `elevate`, because a Healer's
+     VAMPIRIC TOUCH still rolls its damage on the printed die. */
+  const mending = { ...sums, elevate: sums.elevate + (Number(mods.healElevate) || 0) };
   /* What kind of damage, for the line the log prints under the rolls: "Dealt 17
      Necrotic damage". An Infusion replaces the card's printed type outright, so
      the holder's is read first, exactly as AbilityCard prints it. */
@@ -181,9 +187,9 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
         continue;
       }
 
-      const resolved = resolveValue(expression, who, stat, sums);
+      const plain = resolveValue(expression, who, stat, sums);
       // A value with no dice in it is a number the card states, not a throw.
-      if (resolved.dice.length === 0) continue;
+      if (plain.dice.length === 0) continue;
 
       const sentence = sentenceAround(text, match.index);
       /* And a value inside a menu is an option, not something that happened.
@@ -194,6 +200,10 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
          the rule is here rather than an exception for it by name. */
       if (isMenuEntry(text, match.index)) continue;
       const kind = purposeOf(after, sentence);
+      const resolved =
+        kind === 'healing' && mending.elevate !== sums.elevate
+          ? resolveValue(expression, who, stat, mending)
+          : plain;
       const link = {
         shape: 'value',
         kind,
@@ -267,6 +277,27 @@ export function rollPlan(card, character, modifiers = null, { half = false } = {
 /** Whether a card is going to ask for anything at all when it is played. */
 export function rollsAnything(card, character, modifiers = null, options = {}) {
   return rollPlan(card, character, modifiers, options).length > 0;
+}
+
+/**
+ * Whether any dice on the card restore Health, either half. What the Healer
+ * skill asks before it lends a step: a Fireball is not a thing to credit it on.
+ */
+export function healsAnything(card, character = null) {
+  return rollPlan(card, character, null, { half: true }).some((link) => link.kind === 'healing');
+}
+
+/**
+ * What one live value in a stretch of card text is for, by the same reading the
+ * plan uses: the words after it, then its sentence. `at` is where the token
+ * starts in `text` and `length` is how long it is.
+ *
+ * For the renderer, which prints a value one token at a time and has to know
+ * whether the Healer's step belongs on it. See CardText.jsx.
+ */
+export function valuePurpose(text, at, length) {
+  const raw = String(text ?? '');
+  return purposeOf(cardProse(raw.slice(at + length)), cardProse(sentenceAround(raw, at)));
 }
 
 /* --------------------------------------------------------------- the reading */

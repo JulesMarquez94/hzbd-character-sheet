@@ -9565,38 +9565,40 @@ body.tray-open-left.tray-open-right .sheet {
 }
 
 /* =========================================================
-   TARGET CHIPS
-   A body in the fight at chip size: the name in the side's
-   colour, the background an actual reflection of its Health
-   bar, the Shield over it in translucent blue, and not one
-   number on it. Fixed footprint, so a row of twelve reads as
-   a row. In this file rather than Campaigns.css because the
-   chips render on the character sheet too — the picker on
-   any use in a live fight, and the fight block a linked
-   sheet grows. See TargetChip.jsx.
+   TARGET FRAMES
+   A body in the fight as a unit frame: the log's round face
+   on the left, the name in the side's colour, and the Health
+   as a bar of its own under the name with the Shield laid
+   over the same track in translucent blue. Not one number
+   on it. Fixed footprint, so a row of twelve reads as a row.
+   In this file rather than Campaigns.css because the frames
+   render on the character sheet too: the picker on any use
+   in a live fight, and the fight block a linked sheet grows.
+   See TargetChip.jsx.
    ========================================================= */
 .tgt-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
+/* Rounded at the face end with the face, square-ish at the bar end, the way a
+   unit frame sits: the picture is the anchor and the bars hang off it. */
 .tgt-chip {
   position: relative;
-  overflow: hidden;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 7px;
   flex: none;
-  width: 138px;
-  height: 30px;
-  padding: 0 8px;
-  border-radius: 3px;
+  width: 176px;
+  min-height: 46px;
+  padding: 5px 9px 5px 5px;
+  border-radius: 23px 4px 4px 23px;
   border: 1px solid color-mix(in srgb, var(--tgt-tone, var(--copper)) 35%, transparent);
-  background-color: rgba(9, 17, 21, 0.72);
-  font-size: 0.68rem;
+  background-color: rgba(9, 17, 21, 0.8);
+  font-size: 0.7rem;
   font-weight: 600;
-  color: color-mix(in srgb, var(--tgt-tone, var(--copper)) 70%, var(--text-silver));
+  color: color-mix(in srgb, var(--tgt-tone, var(--copper)) 75%, var(--text-silver));
   text-align: left;
 }
 
@@ -9614,36 +9616,91 @@ button.tgt-chip:disabled {
   opacity: 0.55;
 }
 
-/* The Health bar the chip stands on, and the Shield lying over the same track.
-   Both from the left, both behind the name, neither with a number. */
+/* The log's face at frame size, ringed in the side's colour. Two classes so it
+   wins over `.log-face` without touching how that one crops. */
+.log-face.tgt-face {
+  width: 34px;
+  height: 34px;
+  border: 2px solid color-mix(in srgb, var(--tgt-tone, var(--copper)) 75%, transparent);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.log-face.tgt-face.is-blank {
+  font-size: 0.6rem;
+  color: color-mix(in srgb, var(--tgt-tone, var(--copper)) 70%, var(--text-silver));
+}
+
+.tgt-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tgt-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.tgt-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.tgt-init {
+  flex: none;
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+/* The Health bar, on its own track rather than behind the words, so the name
+   is never read through a fill and the fill is never covered by a name. */
+.tgt-bar {
+  position: relative;
+  display: block;
+  height: 9px;
+  border-radius: 2px;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+}
+
 .tgt-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  background: color-mix(in srgb, var(--stat-health) 30%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--stat-health) 70%, #fff) 0%,
+    color-mix(in srgb, var(--stat-health) 85%, #fff) 35%,
+    var(--stat-health) 60%,
+    color-mix(in srgb, var(--stat-health) 75%, #000) 100%
+  );
+  transition: width 0.25s ease;
   pointer-events: none;
 }
 
 .tgt-shield {
   position: absolute;
   inset: 0 auto 0 0;
-  background: color-mix(in srgb, var(--stat-shield) 38%, transparent);
+  background: color-mix(in srgb, var(--stat-shield) 55%, transparent);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--stat-shield) 85%, transparent);
+  transition: width 0.25s ease;
   pointer-events: none;
 }
 
-.tgt-name {
-  position: relative;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tgt-init {
-  position: relative;
-  flex: none;
-  font-size: 0.6rem;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.75;
+/* A pool this reader may not know: the track, hatched and empty. */
+.tgt-bar.is-hidden {
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 3px, transparent 3px 7px),
+    rgba(0, 0, 0, 0.45);
 }
 
 .tgt-down {
@@ -9659,7 +9716,7 @@ button.tgt-chip:disabled {
 }
 
 /* Picked, and up. A picked target wears its own tone as a ring; whoever the
-   order stands on is unmistakable — filled, ringed, glowing and wearing the
+   order stands on is unmistakable: filled, ringed, glowing and wearing the
    pointer, because "whose turn is it" is read from across a table (Jules,
    2026-09-01: make the frame that says whose turn it is clearer). */
 .tgt-chip.is-on {
@@ -9700,34 +9757,26 @@ button.tgt-chip:disabled {
   opacity: 0.6;
 }
 
-/* What is running on the body, under its name: two names and a count, with the
-   rest in the tooltip. The chip grows a line for it and keeps its width, so a
-   row of chips stays a row and the one carrying something is the one that reads
-   taller. Lilac, because a condition is a thing somebody laid and not a side. */
-.tgt-chip.has-fx {
-  flex-wrap: wrap;
-  align-content: center;
-  height: auto;
-  min-height: 30px;
-  padding-top: 3px;
-  padding-bottom: 3px;
+.tgt-chip.is-down .tgt-face img {
+  filter: grayscale(1);
 }
 
+/* What is running on the body, under its bar: two names and a count, with the
+   rest in the tooltip. Lilac, because a condition is a thing somebody laid and
+   not a side. */
 .tgt-fx {
-  position: relative;
-  flex: 1 0 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.56rem;
+  font-size: 0.58rem;
   font-weight: 600;
   letter-spacing: 0.2px;
   line-height: 1.2;
   color: var(--haze-lilac);
 }
 
-/* A body a spell made: a wall, a flower. Violet, the colour the school of made
-   things wears, and never a bar of its own tone. */
+/* A body a spell made: a wall, a flower. Dashed, and never a bar of its own
+   tone. */
 .tgt-chip.is-conjured {
   border-style: dashed;
 }

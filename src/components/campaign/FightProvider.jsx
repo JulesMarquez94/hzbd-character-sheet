@@ -3,6 +3,7 @@ import { FightContext } from '../../context/fight.js';
 import { useCampaignLog } from '../../context/campaign-log.js';
 import { listFightWords } from '../../lib/campaignLog.js';
 import { listMembers } from '../../lib/campaigns.js';
+import { liveCharacter } from '../../lib/characterModel.js';
 import { getCreature, isForgedId } from '../../lib/creatures.js';
 import { loadForgedCreatures } from '../../lib/customCreatures.js';
 import { encounterState, listEncounters } from '../../lib/encounters.js';
@@ -27,11 +28,12 @@ import { runningMarks, runningNames } from '../../lib/statuses.js';
  * and not an act, which is the whole reason reading it off a fetch is safe.
  * See TurnCall.jsx, which is the panel.
  *
- * What crosses is deliberately less than the Game Master sees. Names, sides
- * and defenses; never pools. So the roster it hands down draws plain chips —
- * `health01: null` is "not allowed to know", and TargetChip paints no bar for
- * it — while the defenses are what arm an aimed check with its own DC (see
- * usePlayCard.js).
+ * What crosses is deliberately less than the Game Master sees. Names, sides,
+ * faces and defenses; never an enemy's pools. So an enemy's frame in the roster
+ * it hands down has a hatched bar — `health01: null` is "not allowed to know"
+ * and TargetChip invents nothing for it — while the defenses are what arm an
+ * aimed check with its own DC (see usePlayCard.js). A seated character's pools
+ * do cross, because a sheet is public to read: see vitalsOf.
  *
  * ------------------------------------------------------------------ two reads
  * A fetch on mount and the insert channel after it, so a player who reloads
@@ -78,6 +80,29 @@ function heard(entry, pools, told) {
   return { effects: marks.map((mark) => mark.name), conditions: marks, heard: true };
 }
 
+/**
+ * A seated character's frame: their face and their pools, as shares of the
+ * bar.
+ *
+ * A sheet is public to read, which is the ruling the conditions above already
+ * stand on, so an ally's Health crosses where an enemy's does not. It is what a
+ * healer needs to see when picking who to mend, and it is what tells the
+ * Healer skill a body is down. Read off `liveCharacter` for the reason the
+ * encounter page reads it: a worn enchantment moves the maximum.
+ */
+function vitalsOf(row) {
+  const shown = liveCharacter(row);
+  const health = Number(shown.health) || 0;
+  const max = Math.max(0, Number(shown.health_max) || 0);
+  const shield = Math.max(0, Number(shown.shield) || 0);
+  return {
+    portrait: shown.portrait_url ?? null,
+    health01: max > 0 ? Math.max(0, health) / max : 0,
+    shield01: max > 0 ? shield / max : 0,
+    down: health <= 0,
+  };
+}
+
 export default function FightProvider({ characterId, children }) {
   const { tables } = useCampaignLog();
   // campaignId -> { seq, order, up: { name, round, seq } | null, asking }
@@ -105,6 +130,11 @@ export default function FightProvider({ characterId, children }) {
      an extra die on your attack, and no list of names can say so. See
      runningMarks in statuses.js. */
   const [worn, setWorn] = useState({});
+
+  /* And how every seated character is standing: characterId -> { portrait,
+     health01, shield01, down }. Read off the same rows and the same channel as
+     `worn`. See vitalsOf. */
+  const [vitals, setVitals] = useState({});
 
   /* And what the table has *heard* laid on a body, off the log:
      campaignId -> ref -> [marks]. The curtain is all or nothing — an encounter a
@@ -464,6 +494,13 @@ export default function FightProvider({ characterId, children }) {
         }
         return next;
       });
+      setVitals((held) => {
+        const next = { ...held };
+        for (const member of rows ?? []) {
+          if (member?.characters?.id) next[member.characters.id] = vitalsOf(member.characters);
+        }
+        return next;
+      });
     };
 
     const watch = (campaignId) => {
@@ -480,6 +517,7 @@ export default function FightProvider({ characterId, children }) {
                 const row = payload.new;
                 if (!row?.id) return;
                 setWorn((held) => ({ ...held, [row.id]: runningMarks(row.effects) }));
+                setVitals((held) => ({ ...held, [row.id]: vitalsOf(row) }));
               },
               onResync: () => listMembers(campaignId).then(fold).catch(() => {}),
             })
@@ -563,16 +601,21 @@ export default function FightProvider({ characterId, children }) {
                 ? `var(--rank-${entry.rank})`
                 : 'var(--copper)',
           /* What a player is not allowed to know is not invented: no pools, so
-             the chip draws a plain face — unless the Game Master opened the
-             curtain, and then the bar is the encounter row's own. The defenses
+             an enemy's frame draws a hatched bar — unless the Game Master opened
+             the curtain, and then the bar is the encounter row's own. A seated
+             character's comes off their own sheet. The defenses
              cross either way; they are what a roll against this body is judged
              by. What is *running* on a body crosses too: an enemy's through
              the curtain, a character's off their own public sheet. */
           health01: null,
           shield01: 0,
           down: false,
+          /* The face the order was announced with, for an enemy. A character's
+             comes off their own row with their pools, just below. */
+          portrait: entry.portrait ?? null,
           effects: entry.kind === 'member' ? (worn[entry.ref] ?? []).map((mark) => mark.name) : [],
           conditions: entry.kind === 'member' ? (worn[entry.ref] ?? []) : [],
+          ...(entry.kind === 'member' ? (vitals[entry.ref] ?? {}) : {}),
           ...(pools[entry.ref] ?? {}),
           /* And what this client was only *told* about, where it could read
              nothing for itself. Last, so a row it can actually read always wins,
@@ -614,7 +657,7 @@ export default function FightProvider({ characterId, children }) {
        roster, no reactions, no turns. See ReactionCall, which reads it. */
     if (running.length === 0 && asking.length === 0) return null;
     return { live: running.length > 0, roster, fights: running, asking, pools, worn };
-  }, [fights, shared, summons, worn, told, tables, characterId]);
+  }, [fights, shared, summons, worn, vitals, told, tables, characterId]);
 
   return <FightContext.Provider value={value}>{children}</FightContext.Provider>;
 }

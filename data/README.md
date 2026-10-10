@@ -17704,3 +17704,47 @@ ever moved through it. It does now.
 - **Which Health.** Damage shares what got through Armor and Shield and healing
   shares what was rolled. The card says "Health lost or restored", so a ruling
   that healing shares only what the body could actually take is one line away.
+
+## The Healer heals, and a target is a unit frame, 2026-10-10
+
+Two asks in one message. The Healer skill was prose, so a Healer's Renew rolled
+the printed d6. And the target picker drew each body as a tinted strip with the
+name over the fill; Jules wanted "the same setup as with images that's used in
+the log", a round picture with a Health bar beside it, closer to a World of
+Warcraft frame, with all of it readable.
+
+- **The Healer is a rider on the caster.** `healerRider` in moves.js gives one
+  step of Elevate on any card whose dice restore Health, found by `healsAnything`
+  in rollPlan.js: a Renew, a Healing Potion off the belt, a Bandage. It rides as
+  its own field, `healElevate`, because the skill grows healing dice and nothing
+  else, and VAMPIRIC TOUCH's damage stays on the printed die. `rollPlan` reads it
+  on healing links only, and the card renderer does the same through
+  `valuePurpose`, so a Healer's Renew prints and rolls 1d8. Credited under the
+  pay button as "healing Elevated by 1".
+- **The second step is the target's.** "Or by 2 if the target is unconscious"
+  lands in `withTargets` once a picked body is down, automatic the way a Wound
+  is, since 0 Health or below is unconscious by the rulebook (2.3).
+- **A target is a frame.** `TargetChip` is a round face (the log's own, moved to
+  `Face.jsx`), the name in the side's colour and the Health on a bar of its own
+  with the Shield over it. Still no number. An enemy whose Health is behind the
+  curtain gets a hatched empty track rather than an invented one.
+- **The faces cross.** The initiative event carries each enemy's picture
+  (`foeFaces`), and a player's fight roster now carries every seated ally's
+  portrait, Health and Shield off their public sheet (`vitalsOf` in
+  FightProvider.jsx). That is also what lets a player's Healer see an ally is
+  down.
+- **Fixed in passing.** The fight block on a linked sheet handed the frame
+  tracker rows where it wanted names, which printed as "[object Object]" on
+  anyone carrying a condition since 2026-09-19.
+- **Checked** by a section in `lint:plan`.
+
+### Left open
+
+- **Renew's Turn Start heals** are rolled on the target's own sheet off the
+  card, so the caster's Healer does not reach them. Carrying the step on the
+  laid row is the fix if it should.
+- **"Yourself or an ally".** The step lands on any healing the Healer throws,
+  an enemy's included. Nobody heals an enemy often enough to have asked.
+- **An ally's Health is now visible to the party** on a player's sheet. A sheet
+  was already public to read, which is the ruling this leans on, but it is the
+  first time the fight shows it.

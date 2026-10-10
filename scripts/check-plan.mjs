@@ -18,7 +18,8 @@
 
 import { printedSwing, rollPlan } from '../src/lib/rollPlan.js';
 import { CARDS, getCard } from '../src/lib/weapons.js';
-import { attackModifiers, withClaims } from '../src/lib/moves.js';
+import { attackModifiers, withClaims, withTargets } from '../src/lib/moves.js';
+import { BACKGROUNDS } from '../src/lib/backgrounds.js';
 import { lineageSwing } from '../src/lib/lineages.js';
 import { sourceWords } from '../src/lib/attribution.js';
 
@@ -405,6 +406,44 @@ section('a running effect reaches every roll a card asks for');
   const lucky = (id) => rollPlan(getCard(id), luck, attackModifiers(luck, getCard(id), null));
   check('a Luck Potion on a Skill Check', lucky('skill-check')[0].advantage, 1);
   check('and nothing on a sword', lucky('melee-light-strike')[0].advantage, 0);
+}
+
+section('the Healer grows healing dice and nothing else');
+{
+  /* Jules, 2026-10-10: the Healer skill has to work "for the person that's
+     casting a spell like Renew". It was prose until then. */
+  const taught = BACKGROUNDS.find((one) => one.skills.some((skill) => skill.id === 'healer'));
+  const healer = { ...WHO, background: taught.id, background_skills: ['healer'] };
+  const plan = (who, id, targets = [], half = false) => {
+    const card = getCard(id);
+    return shape(rollPlan(card, who, withTargets(attackModifiers(who, card, null), card, targets), { half }));
+  };
+
+  check('a Renew without the skill', plan(WHO, 'renew'), ['healing:1d6+4']);
+  check('a Renew with it', plan(healer, 'renew'), ['healing:1d8+4']);
+  check('and its Overcast too', plan(healer, 'renew', [], true), ['healing:1d8+4', 'healing:2d8+8']);
+  check(
+    'twice over an unconscious target',
+    plan(healer, 'renew', [{ id: 'k', name: 'Kaelen', effects: [], down: true }]),
+    ['healing:1d10+4']
+  );
+  check(
+    'once over a standing one',
+    plan(healer, 'renew', [{ id: 'k', name: 'Kaelen', effects: [], down: false }]),
+    ['healing:1d8+4']
+  );
+  check('a Healing Potion off the belt', plan(healer, 'healing-potion'), ['healing:2d8+15']);
+  check('a damage card is untouched', plan(healer, 'vampiric-touch'), plan(WHO, 'vampiric-touch'));
+  check(
+    'and the skill is not credited on it',
+    attackModifiers(healer, getCard('vampiric-touch'), null)?.healElevate ?? 0,
+    0
+  );
+  check(
+    'credited by name on the one it moves',
+    (attackModifiers(healer, getCard('renew'), null).sources ?? []).map((row) => `${row.from}: ${sourceWords(row.gives)}`),
+    ['Healer: healing Elevated by 1']
+  );
 }
 
 /* ------------------------------------------------------------ the whole codex */

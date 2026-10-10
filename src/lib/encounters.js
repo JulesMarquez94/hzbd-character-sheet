@@ -490,6 +490,19 @@ export function foeSpeaker(foe) {
 }
 
 /**
+ * Every foe's face, by key, for the bodies that have one. The announced order
+ * carries it so a player's target frames can draw an enemy they cannot read the
+ * row of. See initiativeEvent in campaignLog.js.
+ */
+export function foeFaces(encounter) {
+  const faces = {};
+  for (const foe of encounterState(encounter)) {
+    if (foe.creature?.portrait_url) faces[foe.key] = foe.creature.portrait_url;
+  }
+  return faces;
+}
+
+/**
  * The rider every ability a creature *owns* is read and rolled with: its own
  * numbers, and its best attribute.
  *

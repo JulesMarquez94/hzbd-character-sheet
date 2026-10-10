@@ -621,8 +621,12 @@ export function initiativeCallEvent(asked = [], { encounter = null, call = null 
   };
 }
 
-/** The order, rolled. `order` is the run's own, already sorted. */
-export function initiativeEvent(order = [], { encounter = null } = {}) {
+/**
+ * The order, rolled. `order` is the run's own, already sorted. `faces` is ref to
+ * picture for the bodies that have one, so a sheet that cannot read the
+ * encounter row can still draw an enemy's face on its target frames.
+ */
+export function initiativeEvent(order = [], { encounter = null, faces = {} } = {}) {
   const names = order.slice(0, 4).map((entry) => entry.name);
   const rest = order.length - names.length;
 
@@ -652,6 +656,7 @@ export function initiativeEvent(order = [], { encounter = null } = {}) {
         init: entry.init,
         ...(entry.rank ? { rank: entry.rank } : {}),
         ...(entry.defenses ? { defenses: entry.defenses } : {}),
+        ...(faces?.[entry.ref] ? { portrait: faces[entry.ref] } : {}),
       })),
     },
   };

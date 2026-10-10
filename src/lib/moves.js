@@ -113,7 +113,7 @@
 import { cardsThroughRank, getTalent, normalizeTalents } from './talents.js';
 import { isMartialMove, moveWillpower } from './martial.js';
 import { loadoutOf, loadoutState } from './loadouts.js';
-import { heldItem, normalizeEquipment } from './items.js';
+import { heldItem, heldSkillIds, normalizeEquipment } from './items.js';
 import { isPlainAttack, isWeaponAttack, trickArrow, trickRider } from './tricks.js';
 import { feralLocks, feralRiders, passesForm } from './feral.js';
 import { pactBoonRows, pactState, pactWeaponRiders } from './pact.js';
@@ -130,7 +130,7 @@ import {
   riderOf,
   takenRiders,
 } from './riders.js';
-import { printedDice, printedSwing, rollKind } from './rollPlan.js';
+import { healsAnything, printedDice, printedSwing, rollKind } from './rollPlan.js';
 import { mergeSources, sourceRow, sourceWords } from './attribution.js';
 
 /** How many Martial Moves anybody who knows one may add to a single swing. */
@@ -986,7 +986,30 @@ export function withTargets(modifiers, card, targets = []) {
     }
   }
 
-  return foldRides(modifiers, rows);
+  return withMending(foldRides(modifiers, rows), targets);
+}
+
+/**
+ * The Healer's second step, "or by 2 if the target is unconscious", landed
+ * once a body that is down is picked. Automatic for the reason a Wound is:
+ * picking the body is the decision, and 0 Health or below is unconscious by the
+ * rulebook (2.3). One step however many of the picked bodies are down, because
+ * the dice are thrown once.
+ */
+function withMending(modifiers, targets = []) {
+  const step = Math.max(0, Math.floor(Number(modifiers?.healDown) || 0));
+  if (step === 0) return modifiers;
+
+  const down = (targets ?? []).find((body) => body?.down);
+  if (!down) return modifiers;
+
+  return {
+    ...modifiers,
+    healElevate: (Number(modifiers?.healElevate) || 0) + step,
+    sources: mergeSources(modifiers?.sources ?? [], [
+      sourceRow(`Healer · ${down.name ?? 'the target'} is unconscious`, { healElevate: step }, 'healer'),
+    ]),
+  };
 }
 
 /**
@@ -1293,7 +1316,23 @@ export function attackModifiers(character, card, base) {
      hand the untouched card back and drop the die size on the way out. */
   const held = (Number(worn?.elevate) || 0) + (Number(worn?.perMove) || 0);
 
-  if (!trick && !laid && !hide && !bound && !edge && !woven && !blood && passive === 0 && held === 0)
+  /* And the Healer skill, which reaches any card that restores Health and no
+     other: a Renew, a Healing Potion off the belt, VAMPIRIC TOUCH's mend and not
+     its damage. See healerRider below. */
+  const mender = healerRider(character, card);
+
+  if (
+    !trick &&
+    !laid &&
+    !hide &&
+    !bound &&
+    !edge &&
+    !woven &&
+    !blood &&
+    !mender &&
+    passive === 0 &&
+    held === 0
+  )
     return base;
 
   /* What a running card lends the *dice*, which is nothing at all on a card that
@@ -1396,7 +1435,10 @@ export function attackModifiers(character, card, base) {
        of them actually did, which is what the use prompt prints under the two
        ways. "Everything that is modified need to be seen but only what modifies
        it", 2026-08-28. See attribution.js. */
-    sources: attackSources({ base, worn, hide, bound, laid, trick, edge, woven, blood, character }),
+    sources: mergeSources(
+      attackSources({ base, worn, hide, bound, laid, trick, edge, woven, blood, character }),
+      mender ? [sourceRow(mender.from, { healElevate: mender.elevate }, mender.card)] : []
+    ),
     /* The pact's best-attribute rule, riding the swing the way a loadout's
        `cast` rides a spell, and the Spellblade's Mind behind it. `modifiers.stat`
        wins over the card's own in every renderer, so only one of the two may set
@@ -1410,10 +1452,39 @@ export function attackModifiers(character, card, base) {
        for. Flagged in data/README.md. */
     ...(bound?.stat ? { stat: bound.stat } : edge?.stat ? { stat: edge.stat } : {}),
     ...(perMove > 0 ? { perMove, perMoveFrom } : {}),
+    /* The Healer's step on healing dice, and the second one it keeps back for an
+       unconscious target, which `withTargets` lands once a body is picked. Off
+       the object entirely for everybody else. */
+    ...(mender
+      ? {
+          healElevate: (Number(base?.healElevate) || 0) + mender.elevate,
+          healDown: mender.down,
+        }
+      : {}),
     /* Left off the object entirely when there are none, so nothing downstream has
        to read a field that is nothing on almost every sheet in the game. */
     ...(added.length > 0 ? { added } : {}),
   };
+}
+
+/**
+ * The Healer skill, as a rider, or null.
+ *
+ * "When rolling dice to restore Health to yourself or an ally, the dice are
+ * elevated by 1, or by 2 if the target is unconscious." Jules, 2026-10-10: make
+ * it work "for the person that's casting a spell like Renew". It was prose until
+ * then, so a Healer's Renew rolled the printed d6.
+ *
+ * Its own field rather than `elevate`, because the skill grows healing dice and
+ * nothing else: VAMPIRIC TOUCH's damage stays on the printed die while its mend
+ * climbs. `rollPlan` and the card renderer both read which dice heal off the
+ * card's own words. The unconscious half is handed on as `down` and landed by
+ * `withTargets`, since only a picked body can be unconscious.
+ */
+function healerRider(character, card) {
+  if (!card || !heldSkillIds(character).has('healer')) return null;
+  if (!healsAnything(card, character)) return null;
+  return { elevate: 1, down: 1, from: 'Healer', card: 'healer' };
 }
 
 /** A character's Instinct, floored — what a Trickster's lent damage is worth. */

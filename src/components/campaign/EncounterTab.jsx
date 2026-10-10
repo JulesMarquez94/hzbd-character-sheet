@@ -54,6 +54,7 @@ import {
   encounterTally,
   endRun,
   foeActor,
+  foeFaces,
   foeKey,
   foeSpeaker,
   foeTurnStart,
@@ -375,6 +376,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
           return {
             character_id: member.character_id,
             name: shown.name,
+            portrait: shown.portrait_url ?? null,
             initiative: shown.initiative,
             xp: shown.xp,
             health: Number(shown.health) || 0,
@@ -413,6 +415,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         id: foe.key,
         kind: 'foe',
         name: foe.title,
+        portrait: foe.creature?.portrait_url ?? null,
         tone: foe.rank.color,
         health01: foe.stats.health_max > 0 ? foe.health / foe.stats.health_max : 0,
         shield01: foe.stats.health_max > 0 ? foe.shield / foe.stats.health_max : 0,
@@ -432,6 +435,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         id: seat.character_id,
         kind: 'member',
         name: seat.name,
+        portrait: seat.portrait,
         tone: 'var(--focus-cyan)',
         health01: seat.health_max > 0 ? Math.max(0, seat.health) / seat.health_max : 0,
         shield01: seat.health_max > 0 ? seat.shield / seat.health_max : 0,
@@ -482,8 +486,10 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
   const startFight = useCallback(
     (encounterId) => {
       let rolled = null;
+      let faces = {};
       patchEncounter(encounterId, (row) => {
         rolled = closeInitiative(row);
+        faces = foeFaces(row);
         return rolled;
       });
       if (!rolled) return;
@@ -493,7 +499,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
          are in it. Then the first turn is called at once: the order landing
          *is* the start of the fight, and a Game Master should not have to
          press twice. */
-      log(initiativeEvent(rolled.run.order, { encounter: encounterId }));
+      log(initiativeEvent(rolled.run.order, { encounter: encounterId, faces }));
       log(turnCallEvent(rolled.run.order[0], 1, { encounter: encounterId }));
     },
     [patchEncounter, log]
@@ -527,7 +533,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
 
     const asked = initiativeAsk({ ...open, ...rolled });
     if (!asked) {
-      log(initiativeEvent(rolled.run.order, { encounter: open.id }));
+      log(initiativeEvent(rolled.run.order, { encounter: open.id, faces: foeFaces(open) }));
       log(turnCallEvent(rolled.run.order[0], 1, { encounter: open.id }));
       return;
     }

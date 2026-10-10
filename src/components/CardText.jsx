@@ -2,6 +2,7 @@ import { Fragment, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { attributeOf, castArticles, castStat, damageStyle, resolveValue } from '../lib/cardText.js';
 import { getKeyword, keywordPattern } from '../lib/keywords.js';
+import { valuePurpose } from '../lib/rollPlan.js';
 
 /**
  * Card and item rules text, rendered the way the printed cards read.
@@ -19,7 +20,8 @@ import { getKeyword, keywordPattern } from '../lib/keywords.js';
  *                       this weapon, and a button that shows the working
  *   {{Cold Infusion}}   a link to another card
  *
- * `context` is what the holder brings: `{ damage, empower, elevate, bonus }`. Text
+ * `context` is what the holder brings: `{ damage, empower, elevate, bonus,
+ * healElevate }`, the last of them growing healing dice and nothing else. Text
  * with none of these markers renders as plain paragraphs, so cards typed into
  * the Abilities tab keep working untouched.
  */
@@ -149,21 +151,37 @@ function renderPlain(text, keyPrefix) {
 }
 
 
-function renderInline(text, ctx, keyPrefix) {
-  const { character, stat, damage, empower, elevate, bonus, choice, onValue, onLink } = ctx;
+/* `place` is where this stretch sits in the paragraph it came from, so a value
+   inside a bold run can still be asked what it is for by its whole sentence. */
+function renderInline(text, ctx, keyPrefix, place = { prose: text, at: 0 }) {
+  const { character, stat, damage, empower, elevate, bonus, healElevate, choice, onValue, onLink } = ctx;
+  let pos = place.at;
 
   return text.split(TOKEN).map((chunk, index) => {
     const key = `${keyPrefix}-${index}`;
+    const at = pos;
+    pos += chunk.length;
     if (!chunk) return null;
 
     if (chunk.startsWith('**') && chunk.endsWith('**')) {
-      return <strong key={key}>{renderInline(chunk.slice(2, -2), ctx, key)}</strong>;
+      return (
+        <strong key={key}>
+          {renderInline(chunk.slice(2, -2), ctx, key, { prose: place.prose, at: at + 2 })}
+        </strong>
+      );
     }
 
     /* ---- live value: [[2d6 + 2*stat]] ---- */
     if (chunk.startsWith('[[') && chunk.endsWith(']]')) {
       const expression = chunk.slice(2, -2).trim();
-      const resolved = resolveValue(expression, character, stat, { empower, elevate, bonus });
+      /* The Healer's step lands on dice that restore Health and nowhere else,
+         read the way the dice will be thrown. See rollPlan.js. */
+      const mends = healElevate > 0 && valuePurpose(place.prose, at, chunk.length) === 'healing';
+      const resolved = resolveValue(expression, character, stat, {
+        empower,
+        elevate: elevate + (mends ? healElevate : 0),
+        bonus,
+      });
 
       if (!onValue) {
         return (
@@ -281,6 +299,7 @@ export default function CardText({
   empower = 0,
   elevate = 0,
   bonus = 0,
+  healElevate = 0,
   choice = null,
   choicePrompt = null,
   onValue,
@@ -293,7 +312,19 @@ export default function CardText({
      {stat} and the number printed by [[…]] are then the same attribute by
      construction. See castStat in cardText.js. */
   const cast = castStat(stat, character);
-  const ctx = { character, stat: cast, damage, empower, elevate, bonus, choice, choicePrompt, onValue, onLink };
+  const ctx = {
+    character,
+    stat: cast,
+    damage,
+    empower,
+    elevate,
+    bonus,
+    healElevate,
+    choice,
+    choicePrompt,
+    onValue,
+    onLink,
+  };
 
   /* And the article before every {stat} made to agree with it, at the same
      moment and for the same reason. See castArticles in cardText.js. */
@@ -303,14 +334,14 @@ export default function CardText({
 }
 
 /** The same renderer without the paragraph wrapper — for one-line item text. */
-export function CardLine({ text, character, stat = 'instinct', damage = [], empower = 0, elevate = 0, bonus = 0, choice = null, onValue, onLink }) {
+export function CardLine({ text, character, stat = 'instinct', damage = [], empower = 0, elevate = 0, bonus = 0, healElevate = 0, choice = null, onValue, onLink }) {
   if (!text) return null;
   const cast = castStat(stat, character);
   return (
     <>
       {renderInline(
         castArticles(text, cast),
-        { character, stat: cast, damage, empower, elevate, bonus, choice, onValue, onLink },
+        { character, stat: cast, damage, empower, elevate, bonus, healElevate, choice, onValue, onLink },
         'line'
       )}
     </>

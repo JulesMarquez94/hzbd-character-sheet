@@ -436,6 +436,9 @@ export default function UsePrompt({
           name: body.name,
           effects: body.conditions ?? [],
           heard: Boolean(body.heard),
+          /* Down is unconscious, which is the one thing about a body the
+             Healer skill asks. See withMending in moves.js. */
+          down: Boolean(body.down),
         })),
     [chosen, reach, roster]
   );

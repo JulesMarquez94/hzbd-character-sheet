@@ -242,6 +242,8 @@ export default function AbilityCard({
   const empower = Number(modifiers?.empower) || 0;
   const elevate = Number(modifiers?.elevate) || 0;
   const bonus = Number(modifiers?.bonus) || 0;
+  // And the Healer's step, which only grows the dice that restore Health.
+  const healElevate = Number(modifiers?.healElevate) || 0;
 
   /* And what is happening to the roll this card asks for, drawn as one arrow
      under the cost orbs. Nothing on a codex card carries these: they are the
@@ -263,6 +265,7 @@ export default function AbilityCard({
     empower,
     elevate,
     bonus,
+    healElevate,
     choice,
     choicePrompt,
     onValue,
@@ -271,7 +274,7 @@ export default function AbilityCard({
   const bannerRef = useFitLine(typeLine);
   const bodyRef = useFitText(
     fit,
-    `${name}|${body}|${subBody}|${damage.join()}|${empower}|${elevate}|${bonus}|${choice?.id ?? ''}`
+    `${name}|${body}|${subBody}|${damage.join()}|${empower}|${elevate}|${bonus}|${healElevate}|${choice?.id ?? ''}`
   );
 
   const content = (

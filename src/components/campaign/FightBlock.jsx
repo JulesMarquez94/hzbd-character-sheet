@@ -11,9 +11,10 @@ import { useFight } from '../../context/fight.js';
  * draws — read off the table log rather than off the encounter row, because
  * the row is the Game Master's alone (see FightProvider.jsx).
  *
- * It is a reading, not a control. The chips are plain faces — a player is not
- * allowed to know anybody's pools, so no bar is painted — with each body's
- * rolled initiative in its corner and whoever the runner last called lit. The
+ * It is a reading, not a control. The frames are the picker's own: an enemy's
+ * bar is hatched unless the curtain is open and an ally's is off their public
+ * sheet. Each body's rolled initiative sits in its corner, and whoever the
+ * runner last called is lit. The
  * one line under them says whose turn it is, and says "yours" in so many words
  * when it is: this block is where a player glances between other people's
  * turns, and the cover already shouts when their own arrives.
@@ -36,6 +37,9 @@ export default function FightBlock({ campaignId, title = '', characterId = null 
      Trickster reads as hidden on every chip that shows them. */
   const pools = held?.pools ?? {};
   const worn = held?.worn ?? {};
+  /* The bodies as the use prompt's picker draws them: a face and, for a seated
+     character, the Health off their own public sheet. See FightProvider. */
+  const roster = held?.roster ?? [];
   const mine = Boolean(characterId) && fight?.upCharacter === characterId;
 
   return (
@@ -61,22 +65,27 @@ export default function FightBlock({ campaignId, title = '', characterId = null 
             {fight.order.map((entry) => (
               <TargetChip
                 key={`${entry.kind}:${entry.ref}`}
-                body={{
-                  id: entry.ref,
-                  kind: entry.kind,
-                  name: entry.name,
-                  tone:
-                    entry.kind === 'member'
-                      ? 'var(--focus-cyan)'
-                      : entry.rank
-                        ? `var(--rank-${entry.rank})`
-                        : 'var(--copper)',
-                  health01: null,
-                  shield01: 0,
-                  down: false,
-                  effects: entry.kind === 'member' ? (worn[entry.ref] ?? []) : [],
-                  ...(pools[entry.ref] ?? {}),
-                }}
+                body={
+                  roster.find((body) => body.id === entry.ref) ?? {
+                    id: entry.ref,
+                    kind: entry.kind,
+                    name: entry.name,
+                    tone:
+                      entry.kind === 'member'
+                        ? 'var(--focus-cyan)'
+                        : entry.rank
+                          ? `var(--rank-${entry.rank})`
+                          : 'var(--copper)',
+                    portrait: entry.portrait ?? null,
+                    health01: null,
+                    shield01: 0,
+                    down: false,
+                    /* Marks since 2026-09-19, and a frame wants their names. */
+                    effects:
+                      entry.kind === 'member' ? (worn[entry.ref] ?? []).map((mark) => mark.name) : [],
+                    ...(pools[entry.ref] ?? {}),
+                  }
+                }
                 up={
                   entry.kind === 'member' && fight.upCharacter
                     ? entry.ref === fight.upCharacter
