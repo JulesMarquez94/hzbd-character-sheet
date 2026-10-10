@@ -16,13 +16,14 @@ import { inventoryOverview } from '../../lib/items.js';
  * Blocks 1–4 are the fixed 360x640 the whole site is built on — armor, the
  * two weapons in hand, the trinkets, the utility belt. The inventory is the
  * fifth, and it is the only block on the site that is not one block wide: a
- * list has no natural length, so it takes the whole row under the others and
- * shrinks with the page, down to a single block on a phone.
+ * list has no natural length, so it takes two, and comes down to a single block
+ * on a phone.
  *
  * The four fixed blocks are the player's to arrange, exactly as the Character
  * and Abilities tabs' are, and the arrangement is stored on the character so it
  * follows the sheet rather than the browser it was set in. The inventory is not
- * in that order: it is a row wide, so it has only one place it can go.
+ * in that order: it is two blocks wide and always last, so it has only one
+ * place it can go.
  *
  * Equipping lives here rather than in any one block, so one rule covers the
  * whole tab: filling an occupied slot always asks where the old piece goes,
@@ -196,9 +197,10 @@ export default function InventoryTab({ character, patch, readOnly = false }) {
             </section>
           ))}
 
-          {/* ==== THE INVENTORY, ACROSS THE WHOLE ROW ====
-              Pinned under the others rather than ordered with them: it is
-              as wide as the row is, so there is nowhere else it could sit. */}
+          {/* ==== THE INVENTORY, ACROSS TWO BLOCKS ====
+              Pinned under the others rather than ordered with them: it is two
+              blocks wide, one on a phone, so there is nowhere else it could
+              sit. */}
           <section className="sheet-cell sheet-cell-wide">
             <PackBlock {...packProps} />
           </section>
