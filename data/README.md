@@ -17673,3 +17673,34 @@ own reason:
 - **Four cost-cutting talents** (MARTIAL SWIFTNESS, COLOSSAL GRIP, TWINNED
   STRIKE, DOUBLE WEAVE) whose sets already discount through their own specs, and
   which the sweep cannot see because a spec is not a card.
+
+## Life Link divides, 2026-10-10
+
+Jules asked whether the spell that links lives splits damage and healing. It did
+not: the card printed the rule and the cast laid a five turn row, and no number
+ever moved through it. It does now.
+
+- **The row carries its roll call.** The caster writes every target onto the
+  row they lay (`link` on the effect, built by `withLink` in `lifeLink.js`), so
+  whichever body is struck knows who else shares it. Five at most, two at least.
+- **Damage divides what got through.** The body struck is hit the ordinary way,
+  Armor and Shield first, and each member loses a whole-number share of the
+  Health that came through. Healing divides what was rolled, so a full body
+  healed still hands its share to a hurt one. Both round down.
+- **A share is never divided again.** It travels as an `apply` delivery marked
+  `link`, which lands as it stands. Players post their shares for the rest of
+  the link, the Game Master's page lands the enemies in the same write and posts
+  what the players are owed. Boundary heals and damage taken off a Turn prompt
+  go through the same door (`landLinked.js`).
+- **Checked** by three sections in `lint:combat`.
+
+### Left open
+
+- **The leash.** "More than 12 meters at its Turn End leaves the link" needs
+  positions the sheet does not have. The row is dropped by hand, and the other
+  members keep counting the one who left until the spell is recast.
+- **Health edited by hand** (a bar dragged, a Game Master pressing -5) is not a
+  hit and does not share.
+- **Which Health.** Damage shares what got through Armor and Shield and healing
+  shares what was rolled. The card says "Health lost or restored", so a ruling
+  that healing shares only what the body could actually take is one line away.

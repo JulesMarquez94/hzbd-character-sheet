@@ -71,6 +71,7 @@ import {
 } from '../../lib/encounters.js';
 import { turnTriggers } from '../../lib/turnTriggers.js';
 import { getCard } from '../../lib/weapons.js';
+import { LIFE_LINK, withLink } from '../../lib/lifeLink.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 
 /**
@@ -668,13 +669,15 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
     (foe, targets, cast, chain = null) => {
       if (targets.length === 0) return;
 
+      /* A Life Link names everybody it links, which only the cast knows. */
+      const row = withLink(cast, targets);
       const keys = targets.filter((body) => body.kind === 'foe').map((body) => body.id);
-      if (keys.length > 0) patch((row) => layOnFoes(row, keys, cast, { lay: layEffect }));
+      if (keys.length > 0) patch((held) => layOnFoes(held, keys, row, { lay: layEffect }));
 
       log(
         effectLaidEvent(
           foeSpeaker(foe),
-          cast,
+          row,
           targets,
           /* The use that laid it, so the row reads inside that use's block
              rather than as an action of its own. Null for a row laid by
@@ -800,6 +803,29 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
    * as rolled: Armor is the target's own and is read where the pools live. The
    * event carries the enemies too, because it is also the record.
    */
+  /**
+   * What a Life Link owes the players in it, after enemies were struck or healed.
+   *
+   * Enemies in the same link are landed in the write itself; a player's pools
+   * are theirs to write, so each is posted as a delivery marked `link` and
+   * their own client lands it as it stands. See lifeLink.js.
+   */
+  const postOwed = useCallback(
+    (owed) => {
+      for (const { kind, each, to } of owed) {
+        log(
+          appliedEvent(
+            { name: 'Life Link', portrait: null, owner: null, card: getCard(LIFE_LINK) ?? null },
+            { kind, total: each, types: [] },
+            [{ kind: to.kind, id: to.id, name: to.name, landings: [each] }],
+            { link: true }
+          )
+        );
+      }
+    },
+    [log]
+  );
+
   const handleApply = useCallback(
     (chosen) => {
       const current = apply;
@@ -825,7 +851,9 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
             // And what the swing did to it: PIERCING's Armor, SUNDER's weakness.
             lands: delta.lands ?? null,
           }));
-        if (keys.length > 0) patch((row) => applyToFoes(row, keys));
+        const owed = [];
+        if (keys.length > 0) patch((row) => applyToFoes(row, keys, owed));
+        postOwed(owed);
 
         log(
           appliedEvent(
@@ -847,7 +875,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         );
       }
     },
-    [apply, roster, patch, log]
+    [apply, roster, patch, log, postOwed]
   );
 
   /**
@@ -1153,6 +1181,7 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
         }
 
         if (row.kind === 'apply') {
+          const owed = [];
           patchEncounter(home.id, (enc) =>
             applyToFoes(
               enc,
@@ -1163,13 +1192,17 @@ export default function EncounterTab({ campaign, members = [], canEdit, unit = '
                 // What it was made of, for whatever this body halves or doubles.
                 types: row.data?.types ?? [],
                 lands: row.data?.lands ?? null,
-              }))
+                // A share of a Life Link lands as it stands.
+                link: Boolean(row.data?.link),
+              })),
+              owed
             )
           );
+          postOwed(owed);
         }
       },
     });
-  }, [campaignId, canEdit, patchEncounter, openId]);
+  }, [campaignId, canEdit, patchEncounter, openId, postOwed]);
 
   if (!canEdit) {
     return (

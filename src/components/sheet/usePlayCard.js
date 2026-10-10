@@ -16,6 +16,7 @@ import { rollPlan } from '../../lib/rollPlan.js';
 import { subscribeToTable } from '../../lib/realtime.js';
 import { castPlan, spendUse, withoutCast } from '../../lib/combatBar.js';
 import { addEffect, layEffect } from '../../lib/combatTurn.js';
+import { withLink } from '../../lib/lifeLink.js';
 import { foeKey } from '../../lib/encounters.js';
 import { openingEffect } from '../../lib/tricks.js';
 
@@ -219,7 +220,9 @@ export function usePlayCard({ character, patch }) {
       const toTargets = aimed
         ? [...(casting.landsOn !== 'caster' && casting.own ? [casting.own] : []), ...casting.laid]
         : [];
-      const laid = toTargets.map((row) => ({ ...row, from: actor?.name ?? row.from }));
+      /* A Life Link carries its roll call: the caster knows the whole group at
+         the cast and nobody else does. See lifeLink.js. */
+      const laid = toTargets.map((row) => withLink({ ...row, from: actor?.name ?? row.from }, targets));
 
       /* Whether the caster keeps the card's own row: always when nobody was
          picked, and otherwise only when the plan says the row is theirs (an

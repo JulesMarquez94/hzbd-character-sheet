@@ -931,12 +931,14 @@ export function verdictEvent(caster, name, outcomes = [], { chain = null } = {})
  * rolled total; what each body loses is that body's own business, worked out
  * where its pools live.
  */
-export function appliedEvent(caster, delta, targets = [], { chain = null } = {}) {
-  const verb = delta.kind === 'damage' ? 'dealt' : 'gave';
+export function appliedEvent(caster, delta, targets = [], { chain = null, link = false } = {}) {
+  const verb = delta.kind === 'damage' || delta.kind === 'loss' ? 'dealt' : 'gave';
   const words =
     delta.kind === 'damage'
       ? [delta.total, delta.types?.join(' or '), 'damage'].filter(Boolean).join(' ')
-      : `${delta.total} ${delta.kind === 'healing' ? 'Health' : 'Shield'}`;
+      : delta.kind === 'loss'
+        ? `${delta.total} Health lost to the link`
+        : `${delta.total} ${delta.kind === 'healing' ? 'Health' : 'Shield'}${link ? ' shared by the link' : ''}`;
 
   return {
     kind: 'apply',
@@ -952,6 +954,9 @@ export function appliedEvent(caster, delta, targets = [], { chain = null } = {})
       verb,
       kind: delta.kind,
       types: delta.types ?? [],
+      /* A share of a Life Link. The body that gets it takes it as it stands and
+         never divides it again. See lifeLink.js. */
+      ...(link ? { link: true } : {}),
       /* And what the swing did to this landing: PIERCING's Armor, SUNDER's
          weakness. The applier is the target's own client, so the flag has to
          cross with the number. See martial.js. */

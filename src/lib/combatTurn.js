@@ -98,6 +98,7 @@ import { shieldCapFor } from './characterModel.js';
 import { CARDS, getCard } from './weapons.js';
 import { getEnchantment } from './enchantments.js';
 import { getMartialMove } from './martial.js';
+import { normalizeLink } from './lifeLink.js';
 import { riderOf } from './riders.js';
 import { normalizeBlade } from './spellblade.js';
 import { statusOf } from './statuses.js';
@@ -438,6 +439,9 @@ export function normalizeEffects(value) {
       // on a row whose card says acting breaks it, and read at one boundary:
       // your Turn End, where `endTurn` takes it off. See `stirEffects`.
       stirred: Boolean(raw.stirred),
+      // And LIFE LINK's roll call, written by the caster on every row of one cast.
+      // Present only where there is one. See lifeLink.js.
+      ...(normalizeLink(raw.link) ? { link: normalizeLink(raw.link) } : {}),
     });
   }
 
@@ -586,6 +590,7 @@ export function addEffect(effects, entry) {
       // Never on a row being laid: whatever you did a moment ago, you have not
       // moved since this went down. See the note on the effects above.
       stirred: false,
+      ...(normalizeLink(entry?.link) ? { link: normalizeLink(entry.link) } : {}),
     },
     ...normalizeEffects(effects),
   ];

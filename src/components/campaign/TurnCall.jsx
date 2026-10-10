@@ -5,7 +5,7 @@ import { useCampaignLog } from '../../context/campaign-log.js';
 import { useDiceTray } from '../../context/dice-tray.js';
 import { useFight } from '../../context/fight.js';
 import { turnEvent } from '../../lib/campaignLog.js';
-import { characterDelta } from '../../lib/combatApply.js';
+import { landLinked } from '../sheet/landLinked.js';
 import {
   endCombat,
   layEffect,
@@ -198,7 +198,9 @@ export default function TurnCall({ character, patch, canEdit = false, initiative
         /* Through this body's own Armor and Shield, onto this body's own
            pools, with the ledger naming who did it. The landings arrive as
            rolled — Armor is the target's business, so it is done here. */
-        const body = characterDelta(held.character, {
+        landLinked(
+          held.character,
+          {
           kind: row.data?.kind,
           landings: target.landings,
           note: `${row.actor || 'The table'}: ${getCard(row.data?.card)?.name ?? row.title}`,
@@ -208,8 +210,11 @@ export default function TurnCall({ character, patch, canEdit = false, initiative
           types: row.data?.types ?? [],
           /* And what the swing did to it: PIERCING's Armor, SUNDER's weakness. */
           lands: row.data?.lands ?? null,
-        });
-        if (body) held.patch(body);
+          },
+          /* A Life Link divides what it hands out, and a share handed out lands
+             as it stands. See lifeLink.js. */
+          { patch: held.patch, log, link: Boolean(row.data?.link) }
+        );
       }
     };
 
@@ -225,7 +230,7 @@ export default function TurnCall({ character, patch, canEdit = false, initiative
     );
 
     return () => drop.forEach((off) => off());
-  }, [canEdit, characterId, ids]);
+  }, [canEdit, characterId, ids, log]);
 
   /* The panel does not hold the page still the way the cover did: a player
      reading their sheet while the call stands is the whole point of it standing

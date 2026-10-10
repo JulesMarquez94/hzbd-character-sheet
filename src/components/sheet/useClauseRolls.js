@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useDiceTray } from '../../context/dice-tray.js';
-import { characterDelta } from '../../lib/combatApply.js';
+import { useCampaignLog } from '../../context/campaign-log.js';
 import { dropEffect } from '../../lib/combatTurn.js';
+import { landLinked } from './landLinked.js';
 
 /**
  * The roll-and-take half of a boundary reminder, shared by the two surfaces
@@ -27,6 +28,7 @@ import { dropEffect } from '../../lib/combatTurn.js';
  */
 export function useClauseRolls(character, patch) {
   const tray = useDiceTray();
+  const { log } = useCampaignLog();
   const [landed, setLanded] = useState({});
   const [busy, setBusy] = useState(false);
 
@@ -53,12 +55,13 @@ export function useClauseRolls(character, patch) {
   function takeIt(row, key) {
     const hit = landed[key];
     if (!hit || !patch) return;
-    const body = characterDelta(character, {
-      kind: hit.kind,
-      amount: hit.total,
-      note: row.name,
-    });
-    if (body) patch(body);
+    /* Through the link, if this body is in one: a Renew on a linked sheet heals
+       its share and hands the rest to the others. See landLinked.js. */
+    landLinked(
+      character,
+      { kind: hit.kind, amount: hit.total, note: row.name },
+      { patch, log }
+    );
     setLanded((was) => ({ ...was, [key]: { ...hit, taken: true } }));
   }
 

@@ -49,6 +49,7 @@ import {
 import { isFailure, judge } from './dice.js';
 import { refusesHealing } from './riders.js';
 import { healedEffects } from './statuses.js';
+import { othersOf, shareOf, standingLink } from './lifeLink.js';
 
 /* ----------------------------------------------------------- the arithmetic */
 
@@ -228,7 +229,7 @@ export function deltaWords(row) {
  */
 export function characterDelta(
   character,
-  { kind, landings = null, amount = 0, note = '', types = [], lands = null }
+  { kind, landings = null, amount = 0, note = '', types = [], lands = null, split = 1 }
 ) {
   const why = deltaNote(note, kind, types);
   const list = (landings && landings.length > 0 ? landings : [amount]).map((n) =>
@@ -252,14 +253,19 @@ export function characterDelta(
       }
     );
 
+    /* A linked body is struck the ordinary way, and then keeps only its share of
+       the Health that got through. See lifeLink.js. */
+    const kept = split > 1 ? shareOf(result.dealt, split) : result.dealt;
+    const health = split > 1 ? Math.max(-Math.max(0, Math.floor(Number(character?.health_max) || 0)), held.health - kept) : result.health;
+
     const body = {};
     if (result.shield !== Math.max(0, Math.floor(held.shield))) body.shield = result.shield;
-    if (result.dealt > 0) {
-      body.health = result.health;
+    if (kept > 0) {
+      body.health = health;
       body.ledger = ledgerRow(character, {
         kind: 'health',
-        delta: -result.dealt,
-        balance: result.health,
+        delta: -kept,
+        balance: health,
         /* And whether the body halved it or took it twice over, which is the one
            thing about a delivered hit a reader cannot work out from the number:
            "Fenrat: Blightbolt · Decay damage · resisted" is the line that
@@ -279,7 +285,8 @@ export function characterDelta(
 
     const cap = Math.max(0, Math.floor(Number(character?.health_max) || 0));
     const held = Math.floor(Number(character?.health) || 0);
-    const next = clamp(held + sum(list), -cap, cap);
+    const rolled = split > 1 ? shareOf(sum(list), split) : sum(list);
+    const next = clamp(held + rolled, -cap, cap);
     if (next === held) return null;
     const body = {
       health: next,
@@ -294,6 +301,19 @@ export function characterDelta(
     return body;
   }
 
+  if (kind === 'loss') {
+    /* Health taken straight off, past Armor and Shield: a share of a Life Link
+       that another body in the link was struck for. See lifeLink.js. */
+    const held = Math.floor(Number(character?.health) || 0);
+    const floor = -Math.max(0, Math.floor(Number(character?.health_max) || 0));
+    const next = Math.max(floor, held - sum(list));
+    if (next === held) return null;
+    return {
+      health: next,
+      ledger: ledgerRow(character, { kind: 'health', delta: next - held, balance: next, note: why }),
+    };
+  }
+
   if (kind === 'shield') {
     const cap = shieldCapFor(character);
     const held = Math.max(0, Math.floor(Number(character?.shield) || 0));
@@ -302,6 +322,51 @@ export function characterDelta(
   }
 
   return null;
+}
+
+/**
+ * A delivered change applied to a body that may be in a Life Link.
+ *
+ * `{ body, shares }`: the patch this sheet writes, and what the rest of the link
+ * is owed, or null when nothing is. `self` is this body as the roll call names
+ * it (`{ kind: 'member', id }`). A delivery that is itself a share (`link`) is
+ * never divided, which is what ends the chain.
+ */
+export function characterLinked(character, args, self, { link = false } = {}) {
+  const roll = link ? null : standingLink(character?.effects);
+  if (!roll || (args.kind !== 'damage' && args.kind !== 'healing')) {
+    return { body: characterDelta(character, args), shares: null };
+  }
+
+  const list = (args.landings && args.landings.length > 0 ? args.landings : [args.amount]).map((n) =>
+    Math.max(0, Math.floor(Number(n) || 0))
+  );
+  const n = roll.length;
+
+  let each;
+  if (args.kind === 'damage') {
+    const held = { shield: Number(character?.shield) || 0, health: Number(character?.health) || 0 };
+    const hit = struck(
+      { ...held, armor: character?.defense, ...characterTypes(character) },
+      list,
+      {
+        floor: -Math.max(0, Math.floor(Number(character?.health_max) || 0)),
+        types: args.types ?? [],
+        lands: args.lands ?? null,
+      }
+    );
+    each = shareOf(hit.dealt, n);
+  } else {
+    each = shareOf(sum(list), n);
+  }
+
+  return {
+    body: characterDelta(character, { ...args, split: n }),
+    shares:
+      each > 0
+        ? { kind: args.kind === 'damage' ? 'loss' : 'healing', each, to: othersOf(roll, self) }
+        : null,
+  };
 }
 
 function sum(list) {

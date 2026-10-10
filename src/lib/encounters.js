@@ -87,6 +87,7 @@ import {
 } from './creatures.js';
 import { effectRiders, refusesHealing, wornTypes } from './riders.js';
 import { healedEffects } from './statuses.js';
+import { othersOf, shareOf, standingLink } from './lifeLink.js';
 
 /** As many enemies as one encounter's column will carry. */
 export const FOES_MAX = 60;
@@ -782,20 +783,34 @@ export function foeSpend(encounter, foe, body) {
  * one Fireball is one thing that happened and five writes racing each other
  * rebuilt five different `foes` lists.
  */
-export function applyToFoes(encounter, rows) {
+export function applyToFoes(encounter, rows, owed = null) {
   const list = encounterState(encounter);
   let foes = normalizeFoes(encounter?.foes);
   let moved = false;
 
-  for (const { key, kind, landings, types = [], lands = null } of rows ?? []) {
+  /* A queue rather than a walk, because a Life Link hands work to its other
+     members and those that are enemies here are landed in this same write. A
+     share is marked `link` and never divided again. The members who are players
+     cannot be written from here: what they are owed is pushed onto `owed` for
+     the caller to post. See lifeLink.js. */
+  const queue = [...(rows ?? [])];
+  for (let at = 0; at < queue.length; at += 1) {
+    const { key, kind, landings, types = [], lands = null, link = false } = queue[at];
     const foe = list.find((entry) => entry.key === key);
     if (!foe) continue;
     const held = foes.find((entry) => entry.key === key);
     const shield = held?.shield ?? 0;
     const health = held?.health ?? foe.stats.health_max;
 
+    const roll = link ? null : standingLink(held?.effects);
+    const split = roll && (kind === 'damage' || kind === 'healing') ? roll.length : 1;
+    let each = 0;
+
     const body = {};
-    if (kind === 'damage') {
+    if (kind === 'loss') {
+      const next = Math.max(0, health - sumOf(landings));
+      if (next !== health) body.health = next;
+    } else if (kind === 'damage') {
       /* What this one is made of, as well as what it is wearing: a Bram takes
          half of a club and double of a torch, and the Mire Hex shrugs off Frost
          until the mire is burned. `types` is what the roll was made of, carried
@@ -806,13 +821,23 @@ export function applyToFoes(encounter, rows) {
         { floor: 0, types, lands }
       );
       if (hit.soaked > 0) body.shield = hit.shield;
-      if (hit.dealt > 0) body.health = hit.health;
+      if (hit.dealt > 0) {
+        /* Struck the ordinary way, then only its share of what got through. */
+        each = split > 1 ? shareOf(hit.dealt, split) : 0;
+        body.health = split > 1 ? Math.max(0, health - each) : hit.health;
+        if (split > 1 && each === 0) delete body.health;
+      }
     } else if (kind === 'healing' && !refusesHealing(foe.effects)) {
       /* A heal an enemy cannot take. WITHERING WORD is the creature's own card
          and the party can lay the other three on it, so the refusal is read on
          this side of the table exactly as on a sheet: nothing is written, which
          is what "cannot" means. See riders.js. */
-      const next = clamp(health + sumOf(landings), 0, foe.stats.health_max);
+      if (split > 1) each = shareOf(sumOf(landings), split);
+      const next = clamp(
+        health + (split > 1 ? each : sumOf(landings)),
+        0,
+        foe.stats.health_max
+      );
       if (next !== health) {
         body.health = next;
         /* Health coming back washes Poisoned off and takes a stack of Bleed,
@@ -823,6 +848,20 @@ export function applyToFoes(encounter, rows) {
     } else if (kind === 'shield') {
       const next = clamp(shield + sumOf(landings), 0, foe.stats.shield_cap);
       if (next !== shield) body.shield = next;
+    }
+
+    /* A heal an enemy cannot take still shares: the refusal is this body's own. */
+    if (split > 1 && kind === 'healing' && each === 0) each = shareOf(sumOf(landings), split);
+
+    if (each > 0) {
+      const share = kind === 'damage' ? 'loss' : 'healing';
+      for (const other of othersOf(roll, { kind: 'foe', id: key })) {
+        if (other.kind === 'foe') {
+          queue.push({ key: other.id, kind: share, landings: [each], link: true });
+        } else {
+          owed?.push({ kind: share, each, to: other });
+        }
+      }
     }
 
     if (Object.keys(body).length === 0) continue;

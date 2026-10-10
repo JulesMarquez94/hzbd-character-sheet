@@ -71,6 +71,9 @@ import { turnTriggers } from '../src/lib/turnTriggers.js';
 import { CARDS, getCard } from '../src/lib/weapons.js';
 import { getKeyword } from '../src/lib/keywords.js';
 import { addConjured } from '../src/lib/encounters.js';
+import { characterLinked } from '../src/lib/combatApply.js';
+import { effectLaidEvent } from '../src/lib/campaignLog.js';
+import { linkFor, normalizeLink, shareOf, standingLink, withLink } from '../src/lib/lifeLink.js';
 
 const LIST = process.argv.includes('--list');
 const findings = [];
@@ -1285,6 +1288,95 @@ section('a spell that makes a body says how much Health it has');
 
   const rolled = rollInitiative(enc, [], { random: () => 0.5 });
   check('but takes no turn of its own', rolled.run.order.map((entry) => entry.ref), ['a']);
+}
+
+/* ================================================================== life link */
+
+section('a Life Link row carries its roll call, and only a Life Link does');
+{
+  const three = [
+    { kind: 'member', id: 'p1', name: 'Nyx' },
+    { kind: 'foe', id: 'a', name: 'Goblin' },
+    { kind: 'foe', id: 'b', name: 'Goblin' },
+  ];
+  const row = { name: 'Life Link', card: 'life-link', turns: 5 };
+  check('the cast writes every target onto the row', withLink(row, three).link.length, 3);
+  check('a row of any other card carries none', linkFor({ card: 'renew' }, three), null);
+  check('one body is not a link', linkFor(row, three.slice(0, 1)), null);
+  check('five is the most a link holds', normalizeLink([...three, ...three.map((x) => ({ ...x, id: x.id + '2' }))]).length, 5);
+  check('the same body twice is once', normalizeLink([three[0], three[0], three[1]]).length, 2);
+  check('whole-number shares round down', [shareOf(10, 3), shareOf(7, 2), shareOf(2, 3)], [3, 3, 0]);
+
+  const kept = normalizeEffects(layEffect([], withLink(row, three)));
+  check('and the tracker keeps the roll call through a reload', standingLink(kept)?.length, 3);
+  check('through the log row that delivers it', effectLaidEvent({ name: 'Nyx' }, withLink(row, three), [], {}).data.effect.link.length, 3);
+}
+
+section('a struck linked sheet keeps its share and owes the rest');
+{
+  const link = [
+    { kind: 'member', id: 'p1', name: 'Nyx' },
+    { kind: 'member', id: 'p2', name: 'Fen' },
+    { kind: 'foe', id: 'a', name: 'Goblin' },
+  ];
+  const nyx = {
+    id: 'p1', health: 40, health_max: 40, shield: 0, defense: 0,
+    effects: [{ id: 'e1', name: 'Life Link', card: 'life-link', turns: 5, link }],
+  };
+  const self = { kind: 'member', id: 'p1' };
+
+  const hit = characterLinked(nyx, { kind: 'damage', landings: [12] }, self);
+  check('12 damage across three is 4 on the body struck', hit.body.health, 36);
+  check('and 4 to each of the other two', [hit.shares.kind, hit.shares.each, hit.shares.to.map((one) => one.id)], ['loss', 4, ['p2', 'a']]);
+
+  const armored = characterLinked({ ...nyx, shield: 6 }, { kind: 'damage', landings: [12] }, self);
+  check('the Shield soaks the body struck first, and only Health is shared', [armored.body.shield, armored.body.health, armored.shares.each], [0, 38, 2]);
+
+  const heal = characterLinked({ ...nyx, health: 20 }, { kind: 'healing', landings: [9] }, self);
+  check('9 Health across three is 3 here and 3 to each other', [heal.body.health, heal.shares.kind, heal.shares.each], [23, 'healing', 3]);
+
+  const full = characterLinked(nyx, { kind: 'healing', landings: [9] }, self);
+  check('a full body healed still shares the heal', [full.body, full.shares.each], [null, 3]);
+
+  const share = characterLinked(nyx, { kind: 'loss', landings: [4] }, self, { link: true });
+  check('a share that arrives lands whole and owes nothing', [share.body.health, share.shares], [36, null]);
+  const again = characterLinked(nyx, { kind: 'damage', landings: [12] }, self, { link: true });
+  check('and a damage flagged as a share is not divided again', [again.body.health, again.shares], [28, null]);
+
+  const lone = characterLinked({ ...nyx, effects: [] }, { kind: 'damage', landings: [12] }, self);
+  check('a body in no link is struck as ever', [lone.body.health, lone.shares], [28, null]);
+  check('a hit smaller than the group takes nothing off Health', characterLinked(nyx, { kind: 'damage', landings: [2] }, self).body, null);
+}
+
+section('a struck linked enemy divides across the group in one write');
+{
+  const link = [
+    { kind: 'foe', id: 'a', name: '1.Blightgeist' },
+    { kind: 'foe', id: 'b', name: '2.Blightgeist' },
+    { kind: 'member', id: 'p1', name: 'Nyx' },
+  ];
+  const wear = { id: 'e1', name: 'Life Link', card: 'life-link', turns: 5, link };
+  const enc = {
+    foes: [
+      { key: 'a', creature: 'blightgeist', effects: [wear] },
+      { key: 'b', creature: 'blightgeist', effects: [wear] },
+    ],
+  };
+  const before = encounterState(enc);
+  const owed = [];
+  const wrote = applyToFoes(enc, [{ key: 'a', kind: 'damage', landings: [6] }], owed);
+  const after = encounterState({ ...enc, ...wrote });
+  check('the one struck loses a third', before[0].health - after[0].health, 2);
+  check('the enemy beside it loses a third in the same write', before[1].health - after[1].health, 2);
+  check('the player in the link is owed a third, to be posted', owed.map((one) => [one.kind, one.each, one.to.id]), [['loss', 2, 'p1']]);
+
+  const healed = applyToFoes({ ...enc, ...wrote }, [{ key: 'a', kind: 'healing', landings: [6] }], owed);
+  const mended = encounterState({ ...enc, ...wrote, ...healed });
+  check('a heal divides the same way', [mended[0].health - after[0].health, mended[1].health - after[1].health], [2, 2]);
+
+  const share = applyToFoes(enc, [{ key: 'a', kind: 'loss', landings: [3], link: true }], owed);
+  const shared = encounterState({ ...enc, ...share });
+  check('a share lands whole and is not divided again', [before[0].health - shared[0].health, before[1].health - shared[1].health, owed.length], [3, 0, 2]);
 }
 
 /* ------------------------------------------------------------------ the exit */
